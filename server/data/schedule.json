@@ -1,0 +1,74 @@
+[
+  {
+    "id": "ev_demo001",
+    "title": "Math Quiz – Addition & Subtraction",
+    "date": "2026-03-23",
+    "startTime": "09:00",
+    "endTime": "09:45",
+    "type": "deadline",
+    "note": "Chapter 3 review — place value & operations",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "tag": "Mathematics"
+  },
+  {
+    "id": "ev_demo002",
+    "title": "Science Project Due – Plant Life Cycles",
+    "date": "2026-03-25",
+    "startTime": "10:00",
+    "endTime": "10:30",
+    "type": "deadline",
+    "note": "Bring your plant growth chart",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "tag": "Science"
+  },
+  {
+    "id": "ev_demo003",
+    "title": "English Essay – Narrative Writing",
+    "date": "2026-03-27",
+    "startTime": "11:00",
+    "endTime": "11:30",
+    "type": "deadline",
+    "note": "First draft submission",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "tag": "English"
+  },
+  {
+    "id": "ev_demo004",
+    "title": "IB PYP Exhibition Prep",
+    "date": "2026-03-28",
+    "startTime": "13:00",
+    "endTime": "14:00",
+    "type": "deadline",
+    "note": "Group research presentation",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "tag": "Social Studies"
+  },
+  {
+    "id": "ev_study001",
+    "title": "Ms. Zara AI Lesson – Fractions",
+    "date": "2026-03-22",
+    "startTime": "08:30",
+    "endTime": "09:00",
+    "type": "study",
+    "note": "Interactive lesson with Ms. Zara",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "tag": "Mathematics"
+  },
+  {
+    "id": "ev_study002",
+    "title": "Science Exploration – Animal Habitats",
+    "date": "2026-03-22",
+    "startTime": "10:00",
+    "endTime": "10:45",
+    "type": "study",
+    "note": "Watch video + complete quiz",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "tag": "Science"
+  }
+]

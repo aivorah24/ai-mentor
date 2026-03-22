@@ -1,0 +1,138 @@
+{
+  "topic": "Where to Look for Numbers",
+  "chapter": 1,
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Hello! I am Ms. Zara. Today, we find numbers! Numbers are all around us. Let us look together!",
+      "emotion": "happy",
+      "visual": "Numbers Are Everywhere",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "Look at this clock. Can you see the numbers? One, two, three... all the way to twelve!",
+      "emotion": "happy",
+      "visual": "Clock: 1 to 12",
+      "sceneImage": "/data/images/scenes/ch1/scene_02.jpg"
+    },
+    {
+      "scene": 3,
+      "text": "See this door. It has a number. That is the house number. It helps us find the home!",
+      "emotion": "excited",
+      "visual": "House Door: 42",
+      "sceneImage": "/data/images/scenes/ch1/scene_03.jpg"
+    },
+    {
+      "scene": 4,
+      "text": "Here is a bus! The number tells us where it goes. Bus number seven goes to school!",
+      "emotion": "excited",
+      "visual": "Bus Number: 7",
+      "sceneImage": "/data/images/scenes/ch1/scene_04.jpg"
+    },
+    {
+      "scene": 5,
+      "text": "Look at this calendar. Every single day has a number. Today is the fifteenth!",
+      "emotion": "happy",
+      "visual": "Calendar: Day 15",
+      "sceneImage": "/data/images/scenes/ch1/scene_05.jpg"
+    },
+    {
+      "scene": 6,
+      "text": "At a shop, we see prices. This pencil costs five rupees. Can you see the number five?",
+      "emotion": "questioning",
+      "visual": "Price Tag: Rs 5",
+      "sceneImage": "/data/images/scenes/ch1/scene_06.jpg"
+    },
+    {
+      "scene": 7,
+      "text": "Open a book. Every page has a number. Can you find page ten? Great!",
+      "emotion": "questioning",
+      "visual": "Book Page: 10",
+      "sceneImage": "/data/images/scenes/ch1/scene_07.jpg"
+    },
+    {
+      "scene": 8,
+      "text": "A phone has numbers too! We press numbers to call our friends. Try it!",
+      "emotion": "celebrating",
+      "visual": "Phone: Dial 0 to 9",
+      "sceneImage": "/data/images/scenes/ch1/scene_08.jpg"
+    },
+    {
+      "scene": 9,
+      "text": "Long ago, people used marks to count. One mark for each cow. That was so smart!",
+      "emotion": "thinking",
+      "visual": "Tally Marks",
+      "sceneImage": "/data/images/scenes/ch1/scene_09.jpg"
+    },
+    {
+      "scene": 10,
+      "text": "Let us count these cows together. One, two, three, four, five. That is five cows! Well done!",
+      "emotion": "celebrating",
+      "visual": "Count: 5 Cows",
+      "sceneImage": "/data/images/scenes/ch1/scene_10.jpg"
+    },
+    {
+      "scene": 11,
+      "text": "In a game, we keep score. Team A has three. Team B has five. Who is winning?",
+      "emotion": "questioning",
+      "visual": "Score: A=3, B=5",
+      "sceneImage": "/data/images/scenes/ch1/scene_11.jpg"
+    },
+    {
+      "scene": 12,
+      "text": "Numbers help us count, compare, and find things. Numbers are everywhere. They are our friends!",
+      "emotion": "happy",
+      "visual": "Numbers Help Us!",
+      "sceneImage": "/data/images/scenes/ch1/scene_12.jpg"
+    },
+    {
+      "scene": 13,
+      "text": "Today we found numbers on clocks, doors, buses, shops, and books. That was great learning!",
+      "emotion": "happy",
+      "visual": "We Found Numbers!",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "Amazing! Now let us practice. I know you can do it. Let us go!",
+      "emotion": "celebrating",
+      "visual": "Let us Practice!",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "A clock has numbers from 1 to 12. How many numbers are on a clock face?",
+      "options": ["A. 10", "B. 11", "C. 12", "D. 14"],
+      "correct": 2,
+      "explanation": "A clock has exactly 12 numbers — from 1 to 12. Next time you see a clock, count them!"
+    },
+    {
+      "question": "Ms. Zara counts cows: one, two, three, four, five. How many cows are there?",
+      "options": ["A. 3", "B. 4", "C. 5", "D. 6"],
+      "correct": 2,
+      "explanation": "Ms. Zara counted 5 cows! When we count one by one, the last number we say is the total."
+    },
+    {
+      "question": "Team A has 3 points. Team B has 5 points. How many points in total?",
+      "options": ["A. 6", "B. 7", "C. 8", "D. 9"],
+      "correct": 2,
+      "explanation": "3 + 5 = 8 points in total! We use numbers to keep score in games."
+    },
+    {
+      "question": "A pencil costs 5 rupees. How many pencils can you buy with 15 rupees?",
+      "options": ["A. 2", "B. 3", "C. 4", "D. 5"],
+      "correct": 1,
+      "explanation": "15 ÷ 5 = 3 pencils! Numbers on price tags help us know how much things cost."
+    },
+    {
+      "question": "Today is the 15th on the calendar. What will be tomorrow's date?",
+      "options": ["A. 14", "B. 15", "C. 16", "D. 17"],
+      "correct": 2,
+      "explanation": "After the 15th comes the 16th! Every day on the calendar has a number that goes one more."
+    }
+  ]
+}

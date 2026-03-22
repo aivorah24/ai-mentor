@@ -1,0 +1,57 @@
+[
+  {
+    "id": "vid_math_addition",
+    "title": "Addition with Ms. Zara",
+    "topic": "Addition",
+    "grade": "Grade 3",
+    "url": "https://www.youtube.com/watch?v=AuX7nPBqDts",
+    "embedUrl": "https://www.youtube.com/embed/AuX7nPBqDts",
+    "description": "Learn addition step by step with fun examples",
+    "source": "youtube",
+    "createdAt": "2026-03-21T07:00:00.000Z"
+  },
+  {
+    "id": "vid_math_subtraction",
+    "title": "Subtraction with Ms. Zara",
+    "topic": "Subtraction",
+    "grade": "Grade 3",
+    "url": "https://www.youtube.com/watch?v=LLRXSMUHIk0",
+    "embedUrl": "https://www.youtube.com/embed/LLRXSMUHIk0",
+    "description": "Subtraction made easy with real-world examples",
+    "source": "youtube",
+    "createdAt": "2026-03-21T07:05:00.000Z"
+  },
+  {
+    "id": "vid_math_fractions",
+    "title": "Introduction to Fractions",
+    "topic": "Introduction to Fractions",
+    "grade": "Grade 4",
+    "url": "https://www.youtube.com/watch?v=n0FZhQ_GkKw",
+    "embedUrl": "https://www.youtube.com/embed/n0FZhQ_GkKw",
+    "description": "Understanding fractions with pizza and shapes",
+    "source": "youtube",
+    "createdAt": "2026-03-21T07:10:00.000Z"
+  },
+  {
+    "id": "vid_science_plants",
+    "title": "Plant Life Cycles",
+    "topic": "Plant Life Cycles",
+    "grade": "Grade 3",
+    "url": "https://www.youtube.com/watch?v=FfCBNL6lWK0",
+    "embedUrl": "https://www.youtube.com/embed/FfCBNL6lWK0",
+    "description": "How plants grow from seed to flower",
+    "source": "youtube",
+    "createdAt": "2026-03-21T07:15:00.000Z"
+  },
+  {
+    "id": "vid_science_solar",
+    "title": "Solar System & Planets",
+    "topic": "Solar System & Planets",
+    "grade": "Grade 5",
+    "url": "https://www.youtube.com/watch?v=libKVRa01L8",
+    "embedUrl": "https://www.youtube.com/embed/libKVRa01L8",
+    "description": "Explore the planets of our solar system",
+    "source": "youtube",
+    "createdAt": "2026-03-21T07:20:00.000Z"
+  }
+]
