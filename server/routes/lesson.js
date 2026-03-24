@@ -157,9 +157,9 @@ EMOTION OPTIONS: happy, excited, thinking, celebrating, surprised, questioning`;
   }
 });
 
-// ElevenLabs — lady voice (Matilda) for all characters
-// User confirmed: lady voice is perfect
-const ELEVENLABS_VOICE_ID = 'XrExE9yKIg1WjnnlVkGX'; // Matilda — warm, nurturing, clear
+// ElevenLabs — high-energy, playful voice for kids (client feedback: Matilda was too dull)
+// Jessica — Playful, Bright, Warm, young female (best match for cartoon energy)
+const ELEVENLABS_VOICE_ID = 'cgSgspJ2msm6clMCkdW9'; // Jessica — playful, bright, warm
 
 router.post('/tts', async (req, res) => {
   try {
@@ -171,14 +171,14 @@ router.post('/tts', async (req, res) => {
       headers: { 'Content-Type': 'application/json', 'xi-api-key': process.env.ELEVENLABS_API_KEY },
       body: JSON.stringify({
         text,
-        model_id: 'eleven_multilingual_v2',  // high-quality, clear, measured pace
+        model_id: 'eleven_multilingual_v2',
         voice_settings: {
-          stability:        0.90,   // very high = consistent, slow, clear for age 8
-          similarity_boost: 0.85,   // stay close to Matilda voice
-          style:            0.05,   // very low = calm, NOT rushed at all
+          stability:         0.38,  // low = expressive, varied, natural energy
+          similarity_boost:  0.78,  // stay close to voice character
+          style:             0.68,  // high = animated, enthusiastic, cartoon energy
           use_speaker_boost: true,
         },
-        speed: 0.85,  // 15% slower than default — clear and unhurried for children
+        speed: 1.0,  // normal speed — energetic feel
       }),
     });
 

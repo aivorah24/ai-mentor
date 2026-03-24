@@ -22,6 +22,7 @@
     { "src": "/ingest(.*)",     "dest": "server/index.js" },
     { "src": "/lesson/(.*)",    "dest": "server/index.js" },
     { "src": "/ncert/(.*)",     "dest": "server/index.js" },
+    { "src": "/modules/(.*)",  "dest": "server/index.js" },
     { "src": "/curriculum(.*)", "dest": "server/index.js" },
     { "src": "/student(.*)",    "dest": "server/index.js" },
     { "src": "/schedule(.*)",   "dest": "server/index.js" },

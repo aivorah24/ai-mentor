@@ -12,6 +12,7 @@ const studentRoute   = require('./routes/student');
 const scheduleRoute  = require('./routes/schedule');
 const videosRoute    = require('./routes/videos');
 const ncertRoute     = require('./routes/ncert');
+const modulesRoute   = require('./routes/modules');
 
 const path = require('path');
 const app = express();
@@ -30,6 +31,7 @@ app.use('/student',  studentRoute);
 app.use('/schedule', scheduleRoute);
 app.use('/videos',   videosRoute);
 app.use('/ncert',    ncertRoute);
+app.use('/modules',  modulesRoute);
 
 app.get('/health', async (req, res) => {
   try {
