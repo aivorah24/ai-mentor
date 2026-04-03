@@ -53,5 +53,16 @@
     "description": "Explore the planets of our solar system",
     "source": "youtube",
     "createdAt": "2026-03-21T07:20:00.000Z"
+  },
+  {
+    "id": "vid_science_living_nonliving_canva",
+    "title": "Living and Non-Living Things",
+    "topic": "Living and Non-Living Things",
+    "grade": "Grade 3",
+    "url": "https://www.canva.com/design/DAHFaVRRvZ4/a02c1P1QyoHIItPMuS8zBw/view",
+    "embedUrl": "https://www.canva.com/design/DAHFaVRRvZ4/a02c1P1QyoHIItPMuS8zBw/view?embed&meta",
+    "description": "NCERT Grade 3 EVS lesson deck for living and non-living things",
+    "source": "canva",
+    "createdAt": "2026-03-30T12:00:00.000Z"
   }
 ]

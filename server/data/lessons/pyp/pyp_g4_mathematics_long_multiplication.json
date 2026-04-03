@@ -1,0 +1,110 @@
+{
+  "id": "pyp_g4_mathematics_long_multiplication",
+  "title": "Long Multiplication",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "12-15 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "LONG",
+        "MULTIPLICATION",
+        "FUN"
+      ],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Get ready to learn a cool new way to multiply big numbers! Long multiplication is a secret trick that will make you a math superstar! Are you ready to give it a try?",
+      "accent": "#38bdf8",
+      "duration": 60
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "PARTIAL",
+        "PRODUCTS",
+        "MATTER"
+      ],
+      "subtext": "Understanding Partial Products",
+      "voice": "When we multiply numbers, we need to break them down into smaller parts. These smaller parts are called partial products. Let's see how it works!",
+      "accent": "#38bdf8",
+      "duration": 120
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "AREA",
+        "MODEL",
+        "HELP"
+      ],
+      "subtext": "The Area Model",
+      "voice": "The area model is a special way to visualize our multiplication. We can use it to find the product of two numbers. Watch how it works!",
+      "accent": "#38bdf8",
+      "duration": 120
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "ESTIMATION",
+        "IS",
+        "KEY"
+      ],
+      "subtext": "Estimation in Long Multiplication",
+      "voice": "Estimation is a crucial part of long multiplication. It helps us check if our answer is correct. Let's learn how to estimate.",
+      "accent": "#38bdf8",
+      "duration": 120
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "PRACTICE",
+        "MAKES",
+        "PERFECT"
+      ],
+      "subtext": "Practice Time",
+      "voice": "Now it's time to practice our long multiplication skills. Remember to use partial products, the area model, and estimation to get the correct answer.",
+      "accent": "#38bdf8",
+      "duration": 120
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "LONG"
+      ],
+      "subtext": "Quiz Time",
+      "voice": "What is long multiplication? Can you tell me?",
+      "accent": "#38bdf8",
+      "duration": 60,
+      "question": "Long multiplication is a method of multiplying two-digit numbers."
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "RECAP",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Summary",
+      "voice": "Let's recap the key points of long multiplication. We used partial products, the area model, and estimation to find the product of two numbers. Remember to practice regularly to become a math superstar!",
+      "accent": "#38bdf8",
+      "duration": 120
+    }
+  ]
+}

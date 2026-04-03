@@ -1,0 +1,111 @@
+{
+  "id": "pyp_g4_pe_wellbeing_and_mental_health",
+  "title": "Wellbeing and Mental Health",
+  "grade": "Grade 4",
+  "subject": "PE",
+  "curriculum": "IB PYP",
+  "accent": "#f97316",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "MINDFULNESS",
+        "STRESS",
+        "WELLBEING"
+      ],
+      "subtext": "Grade 4 · PE",
+      "voice": "Hey kids! Today we're going to talk about something super important: taking care of our minds and bodies. We'll learn some cool ways to feel happy and strong, even when things get tough!",
+      "accent": "#f97316",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "EMOTIONS",
+        "FEELINGS",
+        "HEART"
+      ],
+      "subtext": "Emotions: Understanding Our Feelings",
+      "voice": "Did you know that everyone has feelings, even when we don't show it? We can feel happy, sad, angry, or scared. It's okay to express our emotions and talk about how we feel.",
+      "accent": "#f97316",
+      "duration": 15
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "STRESS",
+        "ANXIETY",
+        "CALM"
+      ],
+      "subtext": "Stress: Managing Our Worries",
+      "voice": "Sometimes stress can feel like a big weight on our shoulders. We can talk to friends, family, or a trusted adult about our worries and find ways to relax, like deep breathing or drawing.",
+      "accent": "#f97316",
+      "duration": 12
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "RESILIENCE",
+        "STRONG",
+        "HOPE"
+      ],
+      "subtext": "Resilience: Bouncing Back",
+      "voice": "Resilience is like having a special power inside us. When we face challenges, we can use this power to bounce back and try again. We'll always learn something new and become stronger.",
+      "accent": "#f97316",
+      "duration": 12
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "EMPATHY",
+        "CARE",
+        "COMPASSION"
+      ],
+      "subtext": "Empathy: Caring for Others",
+      "voice": "Empathy is like having a superpower that helps us understand and care for others. We can put ourselves in someone else's shoes and show kindness and compassion.",
+      "accent": "#f97316",
+      "duration": 12
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "QUIZ",
+        "TIME",
+        "FUN"
+      ],
+      "subtext": "Test Your Knowledge!",
+      "voice": "What can we do when we're feeling stressed or overwhelmed? We can talk to a trusted adult, draw a picture, or go for a walk.",
+      "question": "What can we do when we're feeling stressed or overwhelmed?",
+      "answer": "We can talk to a trusted adult, draw a picture, or go for a walk.",
+      "duration": 8,
+      "accent": "#f97316"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "TAKE",
+        "CARE"
+      ],
+      "subtext": "Key Takeaways!",
+      "voice": "Wow, you guys are amazing! Remember: we can express our emotions, manage our stress, and show empathy to others. Taking care of our mental health is just as important as taking care of our bodies. Keep being your awesome selves and remember to take care of your mind, body, and heart!",
+      "accent": "#f97316",
+      "duration": 18
+    }
+  ]
+}

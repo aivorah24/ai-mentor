@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_science_light_and_sound",
+  "title": "Light and Sound",
+  "grade": "Grade 4",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "LIGHT",
+        "AND",
+        "SOUND"
+      ],
+      "subtext": "Grade 4 · Science",
+      "voice": "Hey kids, today we're going on an adventure to explore the amazing world of light and sound! Can you think of all the things that light and sound make possible?",
+      "accent": "#22c55e",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "REFLECTION",
+        "MIRROR",
+        "REFLECT"
+      ],
+      "subtext": "What is Reflection?",
+      "voice": "When light bounces off a smooth surface, like a mirror, it creates an image of itself. This is called reflection. Can you show me an example of a reflection at home?",
+      "accent": "#22c55e",
+      "duration": 30
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "REFRACTION",
+        "GLASS",
+        "BEND"
+      ],
+      "subtext": "What is Refraction?",
+      "voice": "When light passes through a special material like glass, it slows down and changes direction. This is called refraction. Imagine you're playing with a prism at home, what do you see?",
+      "accent": "#22c55e",
+      "duration": 30
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "SHADOW",
+        "OBJECT",
+        "LIGHT"
+      ],
+      "subtext": "What is a Shadow?",
+      "voice": "When an object blocks light from shining on a surface, it creates a shadow. Can you make a shadow using your hand and a flashlight at home?",
+      "accent": "#22c55e",
+      "duration": 30
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "PITCH",
+        "VIBRATION",
+        "HIGH"
+      ],
+      "subtext": "What is Pitch?",
+      "voice": "The high or low sound we hear is called pitch. When something vibrates quickly, it makes a high-pitched sound. Can you show me a high-pitched sound at home?",
+      "accent": "#22c55e",
+      "duration": 30
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "REFLECTION"
+      ],
+      "subtext": "What is Reflection?",
+      "voice": "Hey kids, what do you think reflection is? A) A sound that echoes back. B) A light that bounces off a surface. C) A shadow created by an object.",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "What did we learn today?",
+      "voice": "Hey kids, let's review what we learned today! We discovered reflection, refraction, and shadows in light. And we learned that pitch is the high or low sound we hear. Great job, keep exploring the world of light and sound!",
+      "accent": "#22c55e",
+      "duration": 30
+    }
+  ]
+}

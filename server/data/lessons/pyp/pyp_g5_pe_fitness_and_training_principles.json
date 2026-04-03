@@ -1,0 +1,105 @@
+{
+  "id": "pyp_g5_pe_fitness_and_training_principles",
+  "title": "Fitness and Training Principles",
+  "grade": "Grade 5",
+  "subject": "PE",
+  "curriculum": "IB PYP",
+  "accent": "#f97316",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "FITNESS",
+        "IS",
+        "FUN"
+      ],
+      "subtext": "Grade 5 · PE",
+      "voice": "Hey there, young athletes! Today we're going to learn about fitness and training principles. Are you ready to get moving and stay healthy?",
+      "accent": "#f97316",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "CARDIO",
+        "FITNESS"
+      ],
+      "subtext": "What is Cardio Fitness?",
+      "voice": "Cardio fitness is when your heart beats faster and you breathe harder. It's like running around with your friends or playing a sport. It helps keep your heart healthy and strong!",
+      "accent": "#f97316",
+      "duration": 10
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "STRENGTH",
+        "TRAINING"
+      ],
+      "subtext": "What is Strength Training?",
+      "voice": "Strength training is when you do exercises that make your muscles stronger. It's like lifting weights or doing push-ups. It helps you feel stronger and more confident!",
+      "accent": "#f97316",
+      "duration": 10
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "FLEXIBILITY",
+        "IS"
+      ],
+      "subtext": "What is Flexibility?",
+      "voice": "Flexibility is when you can move your body easily and stretch far. It's like touching your toes or bending over to pick up a pen. It helps you feel more flexible and less stiff!",
+      "accent": "#f97316",
+      "duration": 10
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "FITT",
+        "PRINCIPLE"
+      ],
+      "subtext": "What is the FITT Principle?",
+      "voice": "The FITT principle is a rule to help you train safely and effectively. It stands for Frequency, Intensity, Time, and Type. Remember, FITT is like a recipe for a great workout!",
+      "accent": "#f97316",
+      "duration": 10
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "CARDIO"
+      ],
+      "subtext": "Question Time!",
+      "voice": "What is cardio fitness? A) When you do strength training B) When you do flexibility exercises C) When your heart beats faster and you breathe harder",
+      "accent": "#f97316",
+      "duration": 8
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "TO",
+        "TRAIN"
+      ],
+      "subtext": "Summary Time!",
+      "voice": "So, remember three key points: Cardio fitness is good for your heart, strength training makes you strong, and flexibility helps you move easily. Now go ahead and train safely and effectively using the FITT principle!",
+      "accent": "#f97316",
+      "duration": 10
+    }
+  ]
+}

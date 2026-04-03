@@ -1,0 +1,111 @@
+{
+  "id": "pyp_g3_science_weather_and_seasons",
+  "title": "Weather and Seasons",
+  "grade": "Grade 3",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "WEATHER",
+        "SEASONS",
+        "EXPERIENCE"
+      ],
+      "subtext": "Grade 3 · Science",
+      "voice": "Hey there, young explorers! Today, we're going on an adventure to learn about the weather and seasons! Can you think of some exciting things that happen during different times of the year?",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "SUNNY",
+        "CLOUDY",
+        "RAIN"
+      ],
+      "subtext": "Weather Types",
+      "voice": "Let's talk about the different types of weather we experience. We have sunny days when the sun shines brightly, cloudy days when the sky is covered with fluffy white clouds, and rainy days when the rain pours down.",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "WINDY",
+        "HOT",
+        "COLD"
+      ],
+      "subtext": "Weather Conditions",
+      "voice": "And let's not forget about the different conditions we can experience. It can be windy, hot, or even cold! Each one affects us in different ways.",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "SPRING",
+        "SUMMER",
+        "AUTUMN",
+        "WINTER"
+      ],
+      "subtext": "The Four Seasons",
+      "voice": "Now, let's talk about the four seasons. We have spring, summer, autumn, and winter. Each season brings its own unique experiences and activities.",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "METEOROLOGIST",
+        "WEATHER",
+        "FORECAST"
+      ],
+      "subtext": "Weather Instruments",
+      "voice": "A meteorologist uses special instruments to predict the weather. This helps us prepare for the different conditions and enjoy the seasons.",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "WEATHER"
+      ],
+      "subtext": "Test Your Knowledge!",
+      "voice": "What is weather?",
+      "answer": "It's the condition of the air around us, like sunny, rainy, or windy.",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "LEARNED",
+        "WEATHER",
+        "SEASONS"
+      ],
+      "subtext": "You Did It!",
+      "voice": "Wow, you've learned so much about the weather and seasons! You now know about the different types of weather, the four seasons, and how meteorologists use instruments to predict the weather. Keep exploring and learning about the world around you!",
+      "accent": "#22c55e",
+      "duration": 20
+    }
+  ]
+}

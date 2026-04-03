@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_mathematics_measurement_length_and_mass",
+  "title": "Measurement — Length and Mass",
+  "grade": "Grade 3",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "MEASURING",
+        "LENGTH",
+        "AND"
+      ],
+      "subtext": "Grade 3 · Mathematics",
+      "voice": "Hey kids! Let's learn about measuring length and mass. We use different tools to measure things around us. Are you ready to become a measuring master?",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "CENTIMETRES",
+        "METRES",
+        "MEASURE"
+      ],
+      "subtext": "What's the difference?",
+      "voice": "When we measure length, we use centimetres (cm) and metres (m). One metre is equal to 100 centimetres. Can you think of something you can measure in centimetres?",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "GRAMS",
+        "KILOGRAMS",
+        "WEIGH"
+      ],
+      "subtext": "What's the difference?",
+      "voice": "When we measure mass, we use grams (g) and kilograms (kg). One kilogram is equal to 1,000 grams. Can you think of something you can weigh in grams?",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "MEASURING",
+        "TOOLS",
+        "WE"
+      ],
+      "subtext": "What tools do we use?",
+      "voice": "We use measuring tools like rulers, tape measures, and balances to measure length and mass. Can you think of other tools we can use?",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "MEASURING",
+        "LENGTH",
+        "AND"
+      ],
+      "subtext": "Putting it together",
+      "voice": "When we measure length and mass, we need to use the right units and tools. Remember, centimetres and metres for length, and grams and kilograms for mass.",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "METRE"
+      ],
+      "subtext": "Test your knowledge!",
+      "voice": "What is a metre? A) A unit of mass B) A unit of length C) A unit of time",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Celebrate your learning!",
+      "voice": "Let's review what we learned today. We know that centimetres and metres are used to measure length, and grams and kilograms are used to measure mass. We also learned about the different tools we can use to measure. Great job, kids!",
+      "accent": "#38bdf8",
+      "duration": 15
+    }
+  ]
+}

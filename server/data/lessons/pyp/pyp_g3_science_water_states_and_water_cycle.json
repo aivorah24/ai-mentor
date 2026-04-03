@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_science_water_states_and_water_cycle",
+  "title": "Water — States and Water Cycle",
+  "grade": "Grade 3",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "WATER",
+        "IS",
+        "MAGICAL"
+      ],
+      "subtext": "Grade 3 · Science",
+      "voice": "Hey kids, today we're going to explore one of the coolest things on our planet - water! Can you think of all the amazing ways water helps us and the Earth?",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "SOLID",
+        "LIQUID",
+        "GAS"
+      ],
+      "subtext": "Water States",
+      "voice": "Did you know water can change its shape? It can be a solid like ice, a liquid like the water we drink, or even a gas like the water vapor in the air. Let's learn more about these states!",
+      "accent": "#22c55e",
+      "duration": 30
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "EVAPORATION",
+        "CONDESENSE",
+        "CYCLE"
+      ],
+      "subtext": "Water Cycle",
+      "voice": "Water moves around the Earth through a process called the water cycle. When the sun heats up the water, it turns into vapor and rises into the air. Then, it cools down and turns back into liquid droplets, creating clouds. This cycle repeats over and over!",
+      "accent": "#22c55e",
+      "duration": 45
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "TRANSFORM",
+        "STATE",
+        "CHANGE"
+      ],
+      "subtext": "Water's Amazing Journey",
+      "voice": "As water changes from one state to another, it's always on the move. It flows through rivers, into oceans, and even into the air we breathe. Can you think of how important water is for our planet?",
+      "accent": "#22c55e",
+      "duration": 30
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "PRECIPITATION",
+        "RIVERS",
+        "OCEANS"
+      ],
+      "subtext": "Water's Impact",
+      "voice": "As water falls to the ground as precipitation, it helps fill our rivers and oceans. This water is essential for plants, animals, and even us humans!",
+      "accent": "#22c55e",
+      "duration": 30
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "EVAPORATION"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "What is evaporation? A) When water turns into ice B) When water turns into vapor C) When water turns into a solid D) When water turns into a gas",
+      "accent": "#22c55e",
+      "duration": 30
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "WATER",
+        "CYCLE",
+        "AWESOME"
+      ],
+      "subtext": "Summary",
+      "voice": "Wow, we've learned so much about water today! To recap, water can be solid, liquid, or gas, and it moves around the Earth through the water cycle. Water transforms from one state to another, and it's essential for our planet. Let's keep exploring and learning about this amazing resource!",
+      "accent": "#22c55e",
+      "duration": 30
+    }
+  ]
+}

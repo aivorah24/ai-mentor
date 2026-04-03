@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_science_materials_and_their_properties",
+  "title": "Materials and Their Properties",
+  "grade": "Grade 3",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "MATERIALS",
+        "ARE",
+        "EVERYWHERE"
+      ],
+      "subtext": "Grade 3 · Science",
+      "voice": "Hey kids! Today we're going to explore the amazing world of materials! We'll discover what makes them special and how we can use them in our everyday lives.",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "HARD",
+        "SOFT",
+        "TOUCH"
+      ],
+      "subtext": "",
+      "voice": "Let's start with texture. Some materials are hard, like rocks, while others are soft, like feathers. Can you think of some other materials that might be hard or soft?",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "ROUGH",
+        "SMOOTH",
+        "TOUCH"
+      ],
+      "subtext": "",
+      "voice": "Another important property of materials is their surface. Some materials are rough, like sandpaper, while others are smooth, like glass. How do these textures feel?",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "TRANSPARENT",
+        "OPAQUE",
+        "SEE"
+      ],
+      "subtext": "",
+      "voice": "Let's talk about transparency. Some materials are transparent, like glass, while others are opaque, like a brick wall. Can you see through them?",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "WATERPROOF",
+        "DRY",
+        "WET"
+      ],
+      "subtext": "",
+      "voice": "Finally, let's discuss water resistance. Some materials are waterproof, like plastic bags, while others get wet easily. How do you think these materials behave in the water?",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "HARD"
+      ],
+      "subtext": "",
+      "voice": "What is an example of a hard material?",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "TOGETHER",
+        "KEY"
+      ],
+      "subtext": "",
+      "voice": "Let's review what we've learned today. Materials can be hard or soft, rough or smooth, transparent or opaque, and waterproof or not. Great job, kids! You're now experts on materials and their properties.",
+      "accent": "#22c55e",
+      "duration": 20
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "id": "pyp_g3_mathematics_addition_and_subtraction",
+  "title": "Addition and Subtraction",
+  "grade": "Grade 3",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "ADD, BORROW, CARRY"
+      ],
+      "subtext": "Grade 3 · Mathematics",
+      "voice": "Hey kids, welcome to today's math adventure! We're going to learn all about addition and subtraction. Get ready to add and subtract like a pro!",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "CARRYING OVER",
+        "ADDITION"
+      ],
+      "subtext": "Carrying Over in Addition",
+      "voice": "When we add numbers that are too big for one digit, we need to carry over to the next digit. For example, 7 + 3 = 10, so we carry over the 1 to the next digit.",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "BORROWING",
+        "SUBTRACTION"
+      ],
+      "subtext": "Borrowing in Subtraction",
+      "voice": "When we subtract numbers and need to borrow from the next digit, we can do that too! For example, 14 - 9 = ?, so we borrow 1 from the 4 to make 3.",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "MENTAL MATH",
+        "ADD",
+        "SUBTRACT"
+      ],
+      "subtext": "Mental Math with Addition and Subtraction",
+      "voice": "We can also do addition and subtraction in our heads! Try it with me: 5 + 2 = ? or 8 - 3 = ?",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "WORD PROBLEMS",
+        "ADDITION",
+        "SUBTRACTION"
+      ],
+      "subtext": "Solving Word Problems with Addition and Subtraction",
+      "voice": "We can use addition and subtraction to solve word problems too! For example, 'If I have 5 pencils and I get 2 more, how many pencils do I have now?'",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TEST YOUR MATH"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "What is 7 + 2?",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "RECAP",
+        "3 KEYS",
+        "MATH"
+      ],
+      "subtext": "Recap",
+      "voice": "Today we learned about carrying over in addition, borrowing in subtraction, and mental math with addition and subtraction. We also solved word problems using addition and subtraction. Great job, kids!",
+      "accent": "#38bdf8",
+      "duration": 15
+    }
+  ]
+}

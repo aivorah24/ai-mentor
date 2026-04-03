@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_english_poetry_and_rhymes",
+  "title": "Poetry and Rhymes",
+  "grade": "Grade 3",
+  "subject": "English",
+  "curriculum": "IB PYP",
+  "accent": "#f59e0b",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "POETRY",
+        "FUN",
+        "ADVENTURE"
+      ],
+      "subtext": "Grade 3 · English",
+      "voice": "Hey kids! Welcome to our poetry and rhymes lesson! Today, we're going to have a fun adventure exploring the world of poetry!",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "RHYMING",
+        "WORDS",
+        "EXAMPLE"
+      ],
+      "subtext": "Rhyming Words",
+      "voice": "Did you know that rhyming words are words that sound the same at the end? For example, cat and hat are rhyming words!",
+      "accent": "#f59e0b",
+      "duration": 15
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "RHYTHM",
+        "CLAP",
+        "BEAT"
+      ],
+      "subtext": "Rhythm",
+      "voice": "Rhythm is the beat of music or the sound of words. Can you clap along with me and feel the rhythm?",
+      "accent": "#f59e0b",
+      "duration": 15
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "VERSE",
+        "LINE",
+        "STORY"
+      ],
+      "subtext": "Verses and Lines",
+      "voice": "A verse is a group of words that tell a part of a story. Each line in a verse is like a step in a story, and all the lines together make a beautiful poem!",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "IMAGERY",
+        "PICTURE",
+        "MIND"
+      ],
+      "subtext": "Imagery",
+      "voice": "Imagery is like painting a picture in your mind. When you read a poem, try to imagine what the words are describing!",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "RHYMING",
+        "WORDS"
+      ],
+      "subtext": "What are rhyming words?",
+      "voice": "What are rhyming words, kids? Remember, they're words that sound the same at the end!",
+      "answer": "Words that sound the same at the end",
+      "duration": 10,
+      "accent": "#f59e0b"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "POETRY",
+        "IMAGERY",
+        "RHYMING"
+      ],
+      "subtext": "What did we learn?",
+      "voice": "Wow, we've had so much fun today! We learned about rhyming words, rhythm, verses, and imagery. Remember, poetry is all about using your imagination and creativity to express yourself. Keep on writing and exploring the world of poetry!",
+      "duration": 15,
+      "accent": "#f59e0b"
+    }
+  ]
+}

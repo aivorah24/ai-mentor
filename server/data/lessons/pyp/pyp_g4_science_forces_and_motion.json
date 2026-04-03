@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_science_forces_and_motion",
+  "title": "Forces and Motion",
+  "grade": "Grade 4",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "FORCES",
+        "ARE",
+        "EVERYWHERE"
+      ],
+      "subtext": "Grade 4 · Science",
+      "voice": "Hey there, young explorers! Today we're going on an adventure to learn about forces and motion. Are you ready to discover what makes things move?",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "PUSH",
+        "AND",
+        "PULL"
+      ],
+      "subtext": "What are forces?",
+      "voice": "A force is a push or a pull that can move an object. Imagine you're playing tug-of-war with your friends. You're using force to pull the rope.",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "GRAVITY",
+        "IS",
+        "ALWAYS"
+      ],
+      "subtext": "What is gravity?",
+      "voice": "Gravity is a force that pulls us towards the Earth. That's why you don't float off into space when you're standing on the ground.",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "FRICTION",
+        "IS",
+        "SLIPPERY"
+      ],
+      "subtext": "What is friction?",
+      "voice": "Friction is a force that opposes motion. Imagine you're sliding on a slippery floor. The friction is making it hard for you to move.",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "SPEED",
+        "AND",
+        "DIRECTION"
+      ],
+      "subtext": "What affects motion?",
+      "voice": "Speed and direction are two things that can affect motion. If you're moving fast, you'll cover more ground. And if you're moving in a straight line, you'll get to your destination quickly.",
+      "accent": "#22c55e",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "GRAVITY"
+      ],
+      "subtext": "Test your knowledge!",
+      "voice": "What is gravity? (Answer: Gravity is a force that pulls us towards the Earth.)",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "TIME",
+        "KEY"
+      ],
+      "subtext": "You did it! Review what you've learned.",
+      "voice": "Today we learned about forces and motion. We discovered that forces can be pushes or pulls, and that gravity is a force that pulls us towards the Earth. And we also learned about friction and how it can affect motion. Great job, young explorers! You're now experts on forces and motion!",
+      "accent": "#22c55e",
+      "duration": 30
+    }
+  ]
+}

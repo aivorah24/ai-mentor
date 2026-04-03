@@ -1,10 +1,10 @@
-const { pipeline } = require('@xenova/transformers');
-
 let embedder = null;
 
 async function getEmbedder() {
   if (!embedder) {
     console.log('Loading embedding model (first time only)...');
+    // Lazy-require so the module doesn't crash on cold start in serverless envs
+    const { pipeline } = require('@xenova/transformers');
     embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
     console.log('Embedding model ready.');
   }

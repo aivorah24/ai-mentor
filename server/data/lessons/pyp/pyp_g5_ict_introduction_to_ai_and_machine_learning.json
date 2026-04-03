@@ -1,0 +1,105 @@
+{
+  "id": "pyp_g5_ict_introduction_to_ai_and_machine_learning",
+  "title": "Introduction to AI and Machine Learning",
+  "grade": "Grade 5",
+  "subject": "ICT",
+  "curriculum": "IB PYP",
+  "accent": "#06b6d4",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "ARTIFICIAL",
+        "INTELLIGENCE"
+      ],
+      "subtext": "Grade 5 · ICT",
+      "voice": "Hey kids, are you ready to learn about something super cool? It's called Artificial Intelligence, or AI for short. It's like a really smart computer that can think for itself!",
+      "accent": "#06b6d4",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "TRAINING",
+        "DATA"
+      ],
+      "subtext": "What makes AI smart?",
+      "voice": "So, how does AI become so smart? It's because of something called training data. We teach AI by giving it lots of examples, like pictures, words, or numbers. It learns from these examples and becomes better at making decisions.",
+      "accent": "#06b6d4",
+      "duration": 15
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "PATTERN",
+        "RECOGNITION"
+      ],
+      "subtext": "How AI recognizes patterns",
+      "voice": "One of the coolest things about AI is its ability to recognize patterns. It can look at lots of information and find connections between things. For example, it can recognize pictures of cats and dogs just by looking at their features.",
+      "accent": "#06b6d4",
+      "duration": 12
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "USES",
+        "OF",
+        "AI"
+      ],
+      "subtext": "Where AI is used",
+      "voice": "AI is used in lots of things we use every day, like virtual assistants like Siri or Alexa, self-driving cars, and even in medical research to help doctors find new treatments. It's really helping us make our lives easier and better.",
+      "accent": "#06b6d4",
+      "duration": 18
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "ETHICAL",
+        "AI"
+      ],
+      "subtext": "The importance of ethical AI",
+      "voice": "But, with great power comes great responsibility. We need to make sure that AI is used in a way that's fair and kind to everyone. This is called ethical AI. We need to be careful about how we use AI and make sure it doesn't hurt anyone.",
+      "accent": "#06b6d4",
+      "duration": 15
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "AI"
+      ],
+      "subtext": "Answer the question",
+      "voice": "Okay, kids! Let's see if you've learned something new. What is AI?",
+      "accent": "#06b6d4",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "AI",
+        "IS",
+        "COOL"
+      ],
+      "subtext": "Key points",
+      "voice": "So, let's review what we've learned today. AI is a super smart computer that can think for itself, it's trained with data, and it can recognize patterns. We also learned about the importance of using AI in a way that's fair and kind to everyone.",
+      "accent": "#06b6d4",
+      "duration": 12
+    }
+  ]
+}

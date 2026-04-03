@@ -12,7 +12,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 // ── Static chapter metadata ────────────────────────────────────────────────
 const CHAPTERS = [
   { id: 1, file: 'cemm101', topic: 'Where to Look for Numbers',  unit: 'Numbers',                  emoji: '🔢' },
-  { id: 2, file: 'cemm102', topic: 'Fun with Numbers',           unit: 'Numbers',                  emoji: '🎲' },
+  { id: 2, file: 'cemm105', topic: 'Shapes and Designs',         unit: 'Geometry',                 emoji: '🔷' },
   { id: 3, file: 'cemm103', topic: 'Give and Take',              unit: 'Addition & Subtraction',   emoji: '➕' },
   { id: 4, file: 'cemm104', topic: 'Long and Short',             unit: 'Measurement',              emoji: '📏' },
   { id: 5, file: 'cemm105', topic: 'Shapes and Designs',         unit: 'Geometry',                 emoji: '🔷' },
@@ -147,6 +147,205 @@ router.get('/chapter-content', async (req, res) => {
   }
 });
 
+// ── Science chapter metadata ──────────────────────────────────────────────
+const SCIENCE_CHAPTERS = [
+  { id: 1,  file: 'ceev101', topic: 'Our Families and Communities',     unit: 'Unit 1 - Our Families and Communities', icon: 'users' },
+  { id: 2,  file: 'ceev102', topic: 'Going to the Mela',                 unit: 'Unit 1 - Our Families and Communities', icon: 'map-pin' },
+  { id: 3,  file: 'ceev103', topic: 'Celebrating Festivals',             unit: 'Unit 1 - Our Families and Communities', icon: 'star' },
+  { id: 4,  file: 'ceev104', topic: 'Life Around Us',                    unit: 'Unit 2 - Living Together',              icon: 'feather' },
+  { id: 5,  file: 'ceev105', topic: 'Plants and Animals Live Together',  unit: 'Unit 2 - Living Together',              icon: 'sun' },
+  { id: 6,  file: 'ceev106', topic: 'Living in Harmony',                 unit: 'Unit 2 - Living Together',              icon: 'heart' },
+  { id: 7,  file: 'ceev107', topic: 'Gifts of Nature',                   unit: 'Unit 3 - Gifts of Nature',              icon: 'droplet' },
+  { id: 8,  file: 'ceev108', topic: 'Food We Eat',                       unit: 'Unit 3 - Gifts of Nature',              icon: 'coffee' },
+  { id: 9,  file: 'ceev109', topic: 'Staying Healthy and Happy',         unit: 'Unit 3 - Gifts of Nature',              icon: 'activity' },
+  { id: 10, file: 'ceev110', topic: 'Things Around Us',                  unit: 'Unit 4 - Things Around Us',             icon: 'box' },
+  { id: 11, file: 'ceev111', topic: 'Making Things',                     unit: 'Unit 4 - Things Around Us',             icon: 'tool' },
+  { id: 12, file: 'ceev112', topic: 'Taking Charge of Waste',            unit: 'Unit 4 - Things Around Us',             icon: 'trash-2' },
+  { id: 13, file: 'ceev113', topic: 'Living and Non-Living Things',      unit: 'Unit 2 - Living Together',              icon: 'zap' },
+];
+
+const SCIENCE_HOOKS = {
+  'Our Families and Communities':     'How does your family help you every day?',
+  'Going to the Mela':                'Have you ever been to a fair or mela? What did you see?',
+  'Celebrating Festivals':            'What is your favourite festival and why?',
+  'Life Around Us':                   'What plants and animals do you see near your home?',
+  'Plants and Animals Live Together': 'Can you find an animal hiding in a plant right now?',
+  'Living in Harmony':                'Do any animals live inside your house?',
+  'Gifts of Nature':                  'Name 3 things nature gives us for free.',
+  'Food We Eat':                      'What did you eat for breakfast today?',
+  'Staying Healthy and Happy':        'What do you do every morning to stay healthy?',
+  'Living and Non-Living Things':     'Can you name one living and one non-living thing near you?',
+  'Things Around Us':                 'Name 5 things you can see right now.',
+  'Making Things':                    'Have you ever made something with your hands?',
+  'Taking Charge of Waste':           'Where does your garbage go after it leaves your home?',
+};
+
+const SCIENCE_READY_TOPICS = new Set([
+  'Living and Non-Living Things',
+]);
+
+router.get('/science-chapters', async (req, res) => {
+  try {
+    const counts = {};
+    let offset = null;
+    do {
+      const result = await client.scroll(COLLECTION, {
+        filter: { must: [
+          { key: 'curriculum', match: { value: 'NCERT' } },
+          { key: 'subject',    match: { value: 'Science' } },
+        ]},
+        limit: 250,
+        offset: offset ?? undefined,
+        with_payload: true,
+        with_vector: false,
+      });
+      for (const pt of result.points) {
+        const topic = pt.payload?.topic;
+        if (!topic) continue;
+        counts[topic] = (counts[topic] ?? 0) + 1;
+      }
+      offset = result.next_page_offset ?? null;
+    } while (offset !== null);
+
+    const chapters = SCIENCE_CHAPTERS.map(ch => ({
+      ...ch,
+      hookQuestion: SCIENCE_HOOKS[ch.topic] || '',
+      chunkCount:   counts[ch.topic] ?? 0,
+      hasContent:   (counts[ch.topic] ?? 0) > 0 || SCIENCE_READY_TOPICS.has(ch.topic),
+    }));
+
+    res.json({ curriculum: 'NCERT', grade: 'Grade 3', book: 'Our Wondrous World', chapters });
+  } catch (err) {
+    console.error('Error in GET /ncert/science-chapters:', err.message);
+    res.status(500).json({ error: 'Failed to fetch science chapters' });
+  }
+});
+
+// ── GET /ncert/science-chapter-content?topic=... ──────────────────────────
+router.get('/science-chapter-content', async (req, res) => {
+  try {
+    const { topic } = req.query;
+    if (!topic) return res.status(400).json({ error: 'topic is required' });
+
+    const chunks = [];
+    let offset = null;
+    do {
+      const result = await client.scroll(COLLECTION, {
+        filter: { must: [
+          { key: 'curriculum', match: { value: 'NCERT' } },
+          { key: 'subject',    match: { value: 'Science' } },
+          { key: 'topic',      match: { value: topic } },
+        ]},
+        limit: 100,
+        offset: offset ?? undefined,
+        with_payload: true,
+        with_vector: false,
+      });
+      for (const pt of result.points) {
+        chunks.push({ id: pt.id, content: pt.payload.content });
+      }
+      offset = result.next_page_offset ?? null;
+    } while (offset !== null);
+
+    const ch = SCIENCE_CHAPTERS.find(c => c.topic === topic);
+    res.json({
+      topic,
+      unit:         ch?.unit || '',
+      icon:         ch?.icon || 'zap',
+      hookQuestion: SCIENCE_HOOKS[topic] || '',
+      textChunks:   chunks,
+    });
+  } catch (err) {
+    console.error('Error in GET /ncert/science-chapter-content:', err.message);
+    res.status(500).json({ error: 'Failed to fetch science chapter content' });
+  }
+});
+
+// ── POST /ncert/science-quiz ────────────────────────────────────────────────
+router.post('/science-quiz', async (req, res) => {
+  try {
+    const { topic, context = '' } = req.body;
+    if (!topic) return res.status(400).json({ error: 'topic is required' });
+
+    const prompt = `You are a Grade 3 SCIENCE teacher (NCERT "Our Wondrous World") creating a quiz about: "${topic}".
+
+STRICT RULES:
+- Exactly 5 multiple-choice questions
+- Each question has exactly 4 options (A, B, C, D)
+- Questions must be age-appropriate for 8-9 year olds
+- Use simple, clear language
+- Base questions on this context: ${context.slice(0, 800)}
+
+Return ONLY valid JSON in this exact format:
+{
+  "questions": [
+    {
+      "question": "...",
+      "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
+      "correct": "A",
+      "explanation": "Simple explanation for a Grade 3 student"
+    }
+  ]
+}`;
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.4,
+      max_tokens: 1500,
+    });
+
+    const raw  = completion.choices[0]?.message?.content || '';
+    const json = raw.match(/\{[\s\S]*\}/)?.[0];
+    if (!json) return res.status(500).json({ error: 'Failed to parse quiz' });
+    const parsed = JSON.parse(json);
+
+    // Normalize: convert correct from letter ("A","B","C","D") to 0-based index if needed
+    // The frontend PracticePhase expects correct as a number (0-3)
+    const LETTER_MAP = { A: 0, B: 1, C: 2, D: 3 };
+    const questions = (parsed.questions || []).map(q => ({
+      ...q,
+      correct: typeof q.correct === 'string'
+        ? (LETTER_MAP[q.correct.toUpperCase()] ?? 0)
+        : q.correct,
+      // Strip "A. ", "B. " prefixes from options if present
+      options: (q.options || []).map(opt => opt.replace(/^[A-D]\.\s*/i, '')),
+    }));
+
+    res.json({ questions });
+  } catch (err) {
+    console.error('Error in POST /ncert/science-quiz:', err.message);
+    res.status(500).json({ error: 'Quiz generation failed' });
+  }
+});
+
+// ── POST /ncert/science-explain ─────────────────────────────────────────────
+router.post('/science-explain', async (req, res) => {
+  try {
+    const { topic, question, wrongAnswer, correctAnswer } = req.body;
+
+    const prompt = `You are a patient, encouraging Grade 3 Science teacher. A student answered a question wrong.
+
+Topic: "${topic}"
+Question: "${question}"
+Student answered: "${wrongAnswer}"
+Correct answer: "${correctAnswer}"
+
+Give a very simple, friendly explanation (2-3 sentences max) in plain language a 8-year-old understands. Use a real-world example they can relate to. End with encouragement.`;
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.5,
+      max_tokens: 200,
+    });
+
+    res.json({ explanation: completion.choices[0]?.message?.content || '' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── POST /ncert/quiz ───────────────────────────────────────────────────────
 // Generates 5 MCQ questions for a chapter using Groq
 router.post('/quiz', async (req, res) => {
@@ -222,10 +421,15 @@ correct = index 0-3 of the right answer.`;
 // When student answers a quiz question wrong, AI explains the correct concept
 router.post('/explain-wrong', async (req, res) => {
   try {
-    const { topic, question, wrongAnswer, correctAnswer } = req.body;
+    const { topic, question, wrongAnswer, correctAnswer, subject = 'Mathematics' } = req.body;
     if (!topic || !question) return res.status(400).json({ error: 'topic and question are required' });
 
-    const prompt = `You are Ms. Zara, a warm and encouraging Grade 3 Maths teacher.
+    const isScience = subject === 'Science';
+    const teacherDesc = isScience
+      ? 'Grade 3 Science teacher (NCERT Our Wondrous World)'
+      : 'Grade 3 Maths teacher';
+
+    const prompt = `You are Ms. Zara, a warm and encouraging ${teacherDesc}.
 
 A student answered this question WRONG:
 Question: "${question}"
@@ -257,3 +461,4 @@ Be warm, simple, and supportive. No bullet points. Just natural sentences.`;
 });
 
 module.exports = router;
+

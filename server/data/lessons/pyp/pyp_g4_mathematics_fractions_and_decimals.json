@@ -1,0 +1,110 @@
+{
+  "id": "pyp_g4_mathematics_fractions_and_decimals",
+  "title": "Fractions and Decimals",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "FRACTIONS",
+        "DEVELOP",
+        "YOUR"
+      ],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hey kids, let's talk about fractions! They're parts of a whole, and understanding them will help you in many areas of math. Let's dive in!",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "EQUIVALENT",
+        "FRACTIONS",
+        "ARE"
+      ],
+      "subtext": "Equivalent Fractions",
+      "voice": "When we say that two fractions are equivalent, it means they represent the same value. For example, 1/2 and 2/4 are equivalent fractions because they both equal 0.5.",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "COMPARING",
+        "FRACTIONS",
+        "IS"
+      ],
+      "subtext": "Comparing Fractions",
+      "voice": "To compare fractions, we look at the numerator and denominator. If the numerator is bigger, the fraction is bigger too. For example, 3/4 is bigger than 1/2.",
+      "accent": "#38bdf8",
+      "duration": 35
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "TENTHS",
+        "HUNDREDTHS",
+        "ARE"
+      ],
+      "subtext": "Tenths and Hundredths",
+      "voice": "Tenths and hundredths are special fractions that help us represent decimals. For example, 1/10 is 0.1 and 1/100 is 0.01.",
+      "accent": "#38bdf8",
+      "duration": 40
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "ADDING",
+        "FRACTIONS",
+        "IS"
+      ],
+      "subtext": "Adding Fractions",
+      "voice": "When we add fractions, we need to have the same denominator. For example, 1/4 + 1/4 = 2/4.",
+      "accent": "#38bdf8",
+      "duration": 35
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "EQUIVALENT"
+      ],
+      "subtext": "What is equivalent?",
+      "voice": "What is equivalent to the fraction 2/4?",
+      "accent": "#38bdf8",
+      "duration": 20,
+      "answer": "1/2, 4/8"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "YOU",
+        "LEARNED",
+        "A"
+      ],
+      "subtext": "Summary",
+      "voice": "You learned about equivalent fractions, comparing fractions, tenths and hundredths, and adding fractions. These concepts will help you in many areas of math. Keep practicing and you'll become a math master!",
+      "accent": "#38bdf8",
+      "duration": 40
+    }
+  ]
+}

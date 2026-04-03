@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_english_report_writing",
+  "title": "Report Writing",
+  "grade": "Grade 4",
+  "subject": "English",
+  "curriculum": "IB PYP",
+  "accent": "#f59e0b",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "REPORT",
+        "WRITING",
+        "FUN"
+      ],
+      "subtext": "Grade 4 · English",
+      "voice": "Hey there, young adventurers! Today, we're going to learn about report writing. It's an exciting way to share what we've learned with others.",
+      "accent": "#f59e0b",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "STRUCTURE",
+        "IS",
+        "KEY"
+      ],
+      "subtext": "Heading, Facts, and Conclusion",
+      "voice": "So, what makes a good report? It starts with a clear structure. This means having a heading that tells us what our report is about.",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "FIND",
+        "FACTS",
+        "EASY"
+      ],
+      "subtext": "Research is Fun",
+      "voice": "We also need to find interesting facts to include in our report. This is called research. It's like being a detective and finding clues!",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "USE",
+        "FORMAL",
+        "LANGUAGE"
+      ],
+      "subtext": "Talking Like a Pro",
+      "voice": "Another important thing is to use formal language in our report. This means using big words and being very polite.",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "CONCLUSION",
+        "IS",
+        "IMPORTANT"
+      ],
+      "subtext": "Wrapping it Up",
+      "voice": "Finally, we need to write a conclusion that summarizes what we've learned. It's like putting all the puzzle pieces together!",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "REPORT"
+      ],
+      "subtext": "",
+      "voice": "So, what is report writing? It's sharing what we've learned with others in a clear and organized way. Can you think of a time when you wrote a report?",
+      "accent": "#f59e0b",
+      "duration": 5
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "KEY",
+        "POINTS",
+        "REVIEW"
+      ],
+      "subtext": "You're a Report Writing Pro!",
+      "voice": "So, let's review the key points we've learned today. Remember, structure is key, research is fun, and formal language is important. Great job, young adventurers!",
+      "accent": "#f59e0b",
+      "duration": 10
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "id": "pyp_g5_mathematics_percentages_and_ratios",
+  "title": "Percentages and Ratios",
+  "grade": "Grade 5",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "PERCENTAGES",
+        "AND",
+        "RATIOS"
+      ],
+      "subtext": "Grade 5 · Mathematics",
+      "voice": "Hey kids, today we're going on a math adventure! We'll learn about percentages, ratios, and proportions. Get ready to solve some cool problems!",
+      "accent": "#38bdf8",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "PERCENT",
+        "MEANS"
+      ],
+      "subtext": "What is a Percent?",
+      "voice": "A percent is a way to show a part of a whole. For example, if you have 100 cookies and you eat 20 of them, you've eaten 20% of the cookies.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "RATIO",
+        "IS"
+      ],
+      "subtext": "What is a Ratio?",
+      "voice": "A ratio is a way to show how two things are related. For example, if you have 2 pencils for every 3 crayons, the ratio is 2:3.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "CONVERT",
+        "PERCENT"
+      ],
+      "subtext": "Converting Percentages",
+      "voice": "We can convert percentages to fractions or decimals. For example, 25% is equal to 1/4 or 0.25.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "PROPORTION",
+        "IS"
+      ],
+      "subtext": "What is a Proportion?",
+      "voice": "A proportion is a statement that two ratios are equal. For example, if we have two ratios: 2:3 and 4:6, they are equal proportions.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TEST",
+        "YOUR",
+        "KNOWLEDGE"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "What is 25% equal to? A) 1/4, B) 0.5, C) 1/2, D) 0.25. Choose your answer.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "RECAP",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Summary",
+      "voice": "Today we learned about percentages, ratios, and proportions. We also learned how to convert percentages to fractions and decimals. Remember, a percent is a part of a whole, a ratio shows how two things are related, and a proportion is a statement that two ratios are equal.",
+      "accent": "#38bdf8",
+      "duration": 10
+    }
+  ]
+}

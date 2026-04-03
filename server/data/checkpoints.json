@@ -1,0 +1,324 @@
+{
+  "1": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "Look at a bus with the number 47 on it. What does that number tell you?",
+      "options": ["The bus is 47 years old", "The bus goes on route 47", "The bus has 47 seats", "The bus costs Rs. 47"],
+      "correct": 1,
+      "reveal": "YES! The number on a bus tells you its ROUTE — where it is going! Numbers help us navigate our whole city!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "Which of these is NOT a place where we find numbers in daily life?",
+      "options": ["A clock face", "A price tag at a shop", "A tree leaf", "A house door"],
+      "correct": 2,
+      "explanation": "A tree leaf has no numbers — it is part of nature! But clocks, price tags and house doors all use numbers to give us information. Numbers are made by people to help organise our world!"
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "Spot the BIGGEST number! Tap it!",
+      "options": ["47", "102", "85", "99"],
+      "correct": 1,
+      "explanation": "102 is the biggest! It has 1 HUNDRED — that makes it bigger than all the others which only have tens and ones. When a number has hundreds, it is always bigger than a 2-digit number!"
+    }
+  },
+  "2": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "In the number 345, which digit is in the TENS place? Have a guess!",
+      "options": ["3 (hundreds)", "4 (tens)", "5 (ones)", "0"],
+      "correct": 1,
+      "reveal": "YES! 4 is in the TENS place! Remember: H-T-O from left to right. 3 is hundreds, 4 is TENS, 5 is ones. The tens place is always the MIDDLE digit in a 3-digit number!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "Which number is GREATER — 527 or 572?",
+      "options": ["527 is greater", "572 is greater", "They are equal", "Need more info"],
+      "correct": 1,
+      "explanation": "Both have 5 hundreds — same! Now look at TENS: 527 has 2 tens, 572 has 7 tens. 7 is MORE than 2, so 572 is GREATER! Always compare from left to right: hundreds first, then tens, then ones!"
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "Spot the EVEN number! Tap it!",
+      "options": ["347", "518", "253", "671"],
+      "correct": 1,
+      "explanation": "518 is EVEN because it ends in 8! Even numbers always end in 0, 2, 4, 6, or 8. To check even or odd, just look at the ONES digit. 347 ends in 7 (odd), 253 ends in 3 (odd), 671 ends in 1 (odd). Only 518 ends in 8 — EVEN!"
+    }
+  },
+  "3": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "7 + 5 = 12. We write 2 and carry 1. What is this process called?",
+      "options": ["Subtracting", "Carrying over or Regrouping", "Multiplying", "Dividing"],
+      "correct": 1,
+      "reveal": "YES! It is called CARRYING OVER or REGROUPING! When ones add up to 10 or more, we carry 1 to the tens place. This is one of the most important skills in all of maths!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "Nandini had 125 stamps and got 43 more. How many does she have now?",
+      "options": ["158 stamps", "168 stamps", "178 stamps", "148 stamps"],
+      "correct": 1,
+      "explanation": "125 + 43! Ones: 5 + 3 = 8. Tens: 2 + 4 = 6. Hundreds: 1 + 0 = 1. Answer: 168! No regrouping needed here — ones and tens both stayed below 10. Nandini has 168 stamps!"
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "Which addition NEEDS carrying over? Tap it!",
+      "options": ["124 + 35", "47 + 38", "200 + 150", "310 + 60"],
+      "correct": 1,
+      "explanation": "47 + 38 needs carrying over! Ones: 7 + 8 = 15 — that is more than 9! We write 5 and carry 1 to the tens. The others: 4+5=9, 0+0=0, 0+0=0 — all ones add up to less than 10, so no carrying needed!"
+    }
+  },
+  "4": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "A hand span is different for every person. Why is it NOT a good standard unit?",
+      "options": ["It is too short", "Everyone's hand is a different size", "It is not a number", "Hands are too big"],
+      "correct": 1,
+      "reveal": "Exactly! Everyone's hand is a DIFFERENT SIZE! That means two people measuring the same table would get different answers. That is why we invented standard units like centimetres — same for everyone, everywhere in the world!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "How many centimetres are equal to 1 metre?",
+      "options": ["10 cm", "100 cm", "1000 cm", "50 cm"],
+      "correct": 1,
+      "explanation": "1 metre = 100 centimetres! Think of a ruler — it is 30 cm long. You would need more than 3 rulers end to end to make 1 metre! Metres are for big things (height, room length) and centimetres are for smaller things (pencil, hand span)."
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "A pencil is 15 cm long. A desk is 1 metre 20 cm. Which is LONGER?",
+      "options": ["The pencil (15 cm)", "The desk (120 cm)", "They are the same", "Cannot tell"],
+      "correct": 1,
+      "explanation": "The desk is LONGER! 1 metre 20 cm = 120 cm. The pencil is only 15 cm. 120 is much bigger than 15! Always convert to the same unit before comparing — here we converted metres to centimetres to compare easily!"
+    }
+  },
+  "5": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "A door is taller than it is wide. How many sides does it have?",
+      "options": ["3 sides — it is a triangle", "4 sides — it is a rectangle", "0 sides — it is a circle", "4 equal sides — it is a square"],
+      "correct": 1,
+      "reveal": "YES! A door is a RECTANGLE — 4 sides, but opposite sides are equal! The two long sides are equal and the two short sides are equal. NOT all four equal like a square. Rectangles are everywhere — doors, notebooks, bricks!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "Which 2D shape has NO sides and NO corners?",
+      "options": ["Square", "Triangle", "Rectangle", "Circle"],
+      "correct": 3,
+      "explanation": "A CIRCLE has no sides and no corners! It is perfectly round all the way. A bangle, a coin, a full moon — all circles! That is what makes circles so special — no straight edges at all. Just one perfect curve all the way around!"
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "Which shape has a LINE OF SYMMETRY? Tap it!",
+      "options": ["A random squiggle", "A square", "A zigzag", "A spiral"],
+      "correct": 1,
+      "explanation": "A SQUARE has lines of symmetry! Fold a square in half — both halves match perfectly. A square actually has 4 lines of symmetry! Squiggles, zigzags, and spirals are irregular — they have no line where both halves match."
+    }
+  },
+  "6": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "On a balance scale, one pan has rice and it goes DOWN. The sugar pan goes UP. What does this tell you?",
+      "options": ["Sugar is heavier than rice", "Rice is heavier than sugar", "They weigh the same", "The scale is wrong"],
+      "correct": 1,
+      "reveal": "YES! Rice is HEAVIER — the heavier side always goes DOWN! The lighter side always goes UP. This is the golden rule of balance scales. The rice has more weight pushing it down!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "How many grams are equal to 1 kilogram?",
+      "options": ["10 grams", "100 grams", "500 grams", "1000 grams"],
+      "correct": 3,
+      "explanation": "1 kilogram = 1000 grams! Think of 1000 small grains of sugar — that is about 1 gram each! Kilograms are for heavy things (rice, vegetables, flour) and grams are for light things (spices, biscuits, coins)."
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "Which is HEAVIEST? Tap it!",
+      "options": ["A biscuit (10 g)", "A small mango (200 g)", "A bag of flour (1 kg)", "A water bottle (500 g)"],
+      "correct": 2,
+      "explanation": "The bag of flour at 1 kg = 1000 grams is HEAVIEST! Compare: biscuit 10 g, mango 200 g, water bottle 500 g, flour 1000 g. Always convert to the same unit — here all in grams. 1000 is the biggest, so flour wins!"
+    }
+  },
+  "7": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "The short hand points to 3. The long hand points to 12. What time is it?",
+      "options": ["12 o'clock", "3 o'clock", "3:30", "12:03"],
+      "correct": 1,
+      "reveal": "YES! It is 3 O'CLOCK! When the long hand (minute hand) points to 12, it is always O'CLOCK time. The short hand (hour hand) tells you the hour — and it says 3. So it is 3 o'clock! Easy once you remember the two hands!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "How many minutes are there in 1 hour?",
+      "options": ["30 minutes", "45 minutes", "60 minutes", "100 minutes"],
+      "correct": 2,
+      "explanation": "1 hour = 60 minutes! The minute hand goes all the way around the clock face once — passing all 60 minute marks. That is one full hour. Half an hour = 30 minutes (half of 60). A quarter hour = 15 minutes (quarter of 60)!"
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "Which clock shows HALF PAST 4? (The long hand points to 6)",
+      "options": ["Short hand at 4, long hand at 12", "Short hand at 4, long hand at 6", "Short hand at 6, long hand at 4", "Short hand at 12, long hand at 4"],
+      "correct": 1,
+      "explanation": "Half past 4 means 4:30! The SHORT hand (hour) is between 4 and 5 — pointing towards 4. The LONG hand (minute) points to 6 — which means 30 minutes. Short hand at 4, long hand at 6 = Half past 4 = 4:30!"
+    }
+  },
+  "8": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "Without using a scale, you pick up a stone and a cotton ball. The stone feels heavier. What are you doing?",
+      "options": ["Measuring exactly", "Converting units", "Estimating weight", "Using a balance scale"],
+      "correct": 2,
+      "reveal": "You are ESTIMATING! Estimation means making a smart guess without a measuring tool. Your hands and brain work together to sense weight. Scientists, cooks, and shopkeepers all use estimation every day — it is a real superpower!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "Order these from LIGHTEST to HEAVIEST: 1 kg, 200 g, 50 g, 750 g",
+      "options": ["50 g, 200 g, 750 g, 1 kg", "1 kg, 750 g, 200 g, 50 g", "200 g, 50 g, 750 g, 1 kg", "50 g, 750 g, 200 g, 1 kg"],
+      "correct": 0,
+      "explanation": "Convert 1 kg = 1000 g. Then order: 50 g (smallest) → 200 g → 750 g → 1000 g (1 kg, biggest)! Lightest to heaviest. Always convert to the same unit before ordering — here we used grams for all four!"
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "Which weighs the SAME as 1 kilogram? Tap it!",
+      "options": ["100 grams", "500 grams", "1000 grams", "10 grams"],
+      "correct": 2,
+      "explanation": "1 kilogram = 1000 grams! They are the SAME weight, just written differently. 1 kg is the big unit and 1000 g is the same thing in small units. Just like 1 rupee = 100 paise — same value, different names!"
+    }
+  },
+  "9": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "3 sisters each get 4 flowers. Instead of adding 4+4+4, what shortcut can we use?",
+      "options": ["4 - 3 = 1", "4 × 3 = 12", "4 + 3 = 7", "4 ÷ 3"],
+      "correct": 1,
+      "reveal": "MULTIPLICATION! 4 × 3 = 12! Instead of adding the same number over and over, multiplication is the shortcut. 3 groups of 4 is written as 4 × 3. The × means 'groups of'! It is the FASTEST way to add the same number many times!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "What is 3 × 5?",
+      "options": ["8", "12", "15", "20"],
+      "correct": 2,
+      "explanation": "3 × 5 = 15! Think of it as 3 groups of 5: 5, 10, 15. Or 5 groups of 3: 3, 6, 9, 12, 15. Both give 15! Multiplication works in both directions — 3 × 5 = 5 × 3. This is called the commutative property!"
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "4 flower garlands with 5 flowers each. Which multiplication shows this?",
+      "options": ["4 + 5 = 9", "4 × 5 = 20", "5 - 4 = 1", "4 ÷ 5"],
+      "correct": 1,
+      "explanation": "4 × 5 = 20! There are 4 garlands (groups) and each has 5 flowers. 4 GROUPS of 5 = 4 × 5 = 20 flowers total! You can check: 5 + 5 + 5 + 5 = 20. Multiplication gives the same answer as repeated addition — much faster!"
+    }
+  },
+  "10": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "2, 4, 6, 8 — what comes next in this pattern?",
+      "options": ["9", "10", "11", "12"],
+      "correct": 1,
+      "reveal": "10! This is a skip counting by 2 pattern — each number goes up by 2! 2, 4, 6, 8, 10... These are even numbers! Patterns have a RULE — here the rule is +2 each time. Once you find the rule, you can predict any number in the pattern!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "What is the MISSING number? 5, 10, 15, ___, 25",
+      "options": ["18", "19", "20", "22"],
+      "correct": 2,
+      "explanation": "20! This is a skip counting by 5 pattern. Each number goes up by 5: 5, 10, 15, 20, 25. The missing number between 15 and 25 is 20! Skip counting by 5 is one of the most useful patterns — it helps you count money, minutes and more!"
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "Red, Blue, Red, Blue, Red, ___. What comes next?",
+      "options": ["Red", "Blue", "Green", "Yellow"],
+      "correct": 1,
+      "explanation": "BLUE! This is a repeating pattern with the rule: Red, Blue, Red, Blue... The pattern repeats every 2 colours. After Red always comes Blue! Repeating patterns are everywhere — on sarees, tiles, and borders. Once you see the repeating unit, you can predict forever!"
+    }
+  },
+  "11": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "We need one standard unit to measure liquids everywhere. What is the standard unit for capacity?",
+      "options": ["Kilogram", "Centimetre", "Litre", "Gram"],
+      "correct": 2,
+      "reveal": "LITRE! The litre is the standard unit for measuring liquids. Water, milk, juice, oil — all measured in litres! For smaller amounts we use millilitres (ml). 1000 ml = 1 litre. Just like grams and kilograms for weight!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "A jug holds 2 litres. You pour out 1 litre. How much is left?",
+      "options": ["3 litres", "1 litre", "2 litres", "Half a litre"],
+      "correct": 1,
+      "explanation": "2 - 1 = 1 litre left! Capacity problems use the same addition and subtraction maths you already know — just with litres instead of numbers. 2 litres full, pour out 1 litre, 1 litre remains. Maths is everywhere in the kitchen!"
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "Which container holds the MOST? Tap it!",
+      "options": ["A teacup (200 ml)", "A bottle (1 litre)", "A glass (250 ml)", "A bucket (10 litres)"],
+      "correct": 3,
+      "explanation": "A BUCKET at 10 litres holds the most! Convert all to ml: cup 200 ml, bottle 1000 ml (1L), glass 250 ml, bucket 10000 ml (10L). 10000 is the biggest! Buckets are much bigger than bottles or cups — that is why we use buckets to mop floors!"
+    }
+  },
+  "12": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "Shabnam cuts a paratha into 2 EQUAL parts and gives 1 part to Mukta. What fraction did Mukta get?",
+      "options": ["1/4 (one quarter)", "1/3 (one third)", "1/2 (one half)", "2/2 (the whole)"],
+      "correct": 2,
+      "reveal": "1/2 — ONE HALF! When you divide something into 2 equal parts, each part is ONE HALF. The number BELOW (2) tells us how many equal parts total. The number ABOVE (1) tells us how many parts we have. Shabnam and Mukta each get 1/2!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "A chocolate bar is cut into 4 equal pieces. Ravi eats 1 piece. What fraction did Ravi eat?",
+      "options": ["1/2", "1/3", "1/4", "4/1"],
+      "correct": 2,
+      "explanation": "Ravi ate 1/4 — ONE QUARTER! The bar was cut into 4 equal parts (denominator = 4). Ravi ate 1 part (numerator = 1). So 1 out of 4 = 1/4. One quarter is less than one half — always look at the denominator to understand the size of each piece!"
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "Which fraction is BIGGER — 1/2 or 1/4?",
+      "options": ["1/4 is bigger", "1/2 is bigger", "They are equal", "Cannot tell"],
+      "correct": 1,
+      "explanation": "1/2 is BIGGER than 1/4! Think of a pizza: cut into 2 pieces (1/2) each piece is large. Cut into 4 pieces (1/4) each piece is smaller. When the numerator is the same (both 1), the BIGGER denominator means SMALLER pieces. Bigger number below = smaller fraction!"
+    }
+  },
+  "13": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "You see this tally mark: |||| (4 lines) and one diagonal line crossing them. How many does it represent?",
+      "options": ["4", "5", "6", "10"],
+      "correct": 1,
+      "reveal": "5! Four vertical lines plus one diagonal crossing line = 5 tally marks! The fifth mark always crosses the previous four diagonally. This makes groups of 5 very easy to count — just count the bundles of 5! Tally marks were invented to make counting fast!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "Mango: |||| ||| (8 tallies). Apple: |||| | (6 tallies). Which fruit got MORE votes?",
+      "options": ["Apple with more votes", "Mango with more votes", "They got equal votes", "Cannot tell"],
+      "correct": 1,
+      "explanation": "Mango got MORE votes — 8 vs 6! Count the tallies: Mango has one bundle of 5 (IIII with diagonal) + 3 more = 8. Apple has one bundle of 5 + 1 more = 6. 8 > 6. Mango is the more popular fruit! Tally charts make comparing data very easy!"
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "Favourite sport: Cricket (||||| = 5), Football (||| = 3), Kabaddi (|||| = 4). Which had LEAST votes?",
+      "options": ["Cricket (5 votes)", "Football (3 votes)", "Kabaddi (4 votes)", "All the same"],
+      "correct": 1,
+      "explanation": "Football had LEAST votes with only 3! Cricket had 5, Kabaddi had 4, Football had 3. 3 is the smallest number. When reading charts, always compare the numbers — the smallest number means least popular. Data helps us make decisions based on facts!"
+    }
+  },
+  "14": {
+    "4": {
+      "type": "tap_reveal",
+      "prompt": "How many paise make 1 rupee?",
+      "options": ["10 paise", "50 paise", "100 paise", "1000 paise"],
+      "correct": 2,
+      "reveal": "100 PAISE = 1 RUPEE! Just like 100 cm = 1 metre and 1000 g = 1 kg, our money also has units! Paise are the small unit, rupees are the big unit. 50 paise is half a rupee. Today paise coins are rare but we still see them in prices like Rs. 9.50!"
+    },
+    "8": {
+      "type": "quick_check",
+      "prompt": "You give the shopkeeper Rs. 20 to pay for something that costs Rs. 13. How much change do you get?",
+      "options": ["Rs. 5", "Rs. 7", "Rs. 8", "Rs. 33"],
+      "correct": 1,
+      "explanation": "Rs. 20 - Rs. 13 = Rs. 7 change! Subtract what you paid from what you gave. 20 - 13: ones 0-3 needs borrowing, borrow 1 ten → 10-3=7, tens: 1-1=0. Answer: Rs. 7! Knowing how to calculate change is one of the most useful maths skills in daily life!"
+    },
+    "12": {
+      "type": "tap_highlight",
+      "prompt": "Aarav has one Rs. 5 coin and five Rs. 1 coins. How much money does he have in total?",
+      "options": ["Rs. 5", "Rs. 6", "Rs. 10", "Rs. 15"],
+      "correct": 2,
+      "explanation": "Rs. 10! Rs. 5 (one five-rupee coin) + Rs. 5 (five one-rupee coins = 5 × 1) = Rs. 5 + Rs. 5 = Rs. 10! Adding different coins together is like any addition problem — just add up all the values. Aarav can buy anything that costs Rs. 10 or less!"
+    }
+  }
+}

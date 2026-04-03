@@ -18,6 +18,16 @@ function writeDB(data) {
   fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
 }
 
+// ── GET /schedule/teacher?date=YYYY-MM-DD ────────────────────
+// Returns ALL events created by teacher for that date (all + specific students).
+
+router.get('/teacher', (req, res) => {
+  const { date } = req.query;
+  if (!date) return res.status(400).json({ error: 'date required' });
+  const all = readDB();
+  res.json(all.filter(e => e.date === date && e.createdBy === 'teacher'));
+});
+
 // ── GET /schedule?studentId=xxx&date=YYYY-MM-DD ──────────────
 // Returns events for a given student on a given date.
 // Includes events for 'all' students (teacher-assigned global events).

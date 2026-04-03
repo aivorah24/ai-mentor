@@ -1,0 +1,116 @@
+{
+  "id": "pyp_g3_pe_team_sports_and_fair_play",
+  "title": "Team Sports and Fair Play",
+  "grade": "Grade 3",
+  "subject": "PE",
+  "curriculum": "IB PYP",
+  "accent": "#f97316",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "TEAM SPORTS",
+        "FUN",
+        "TOGETHER"
+      ],
+      "subtext": "Grade 3 · PE",
+      "voice": "Hey friends, today we're going to learn about team sports and fair play. We'll discover how to work together, follow rules, and be good sports. Are you ready to get moving?",
+      "accent": "#f97316",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "COOPERATION",
+        "IS",
+        "KEY"
+      ],
+      "subtext": "Why Team Sports?",
+      "voice": "When we play team sports, we need to work together and help each other. We call this cooperation. It means we help our teammates to win and have fun.",
+      "accent": "#f97316",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "RULES",
+        "HELP",
+        "US"
+      ],
+      "subtext": "Following Rules",
+      "voice": "Rules are like instructions that help us play safely and fairly. We need to follow the rules so everyone can have fun and be safe.",
+      "accent": "#f97316",
+      "duration": 15
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "SPORTSMANSHIP",
+        "IS",
+        "COOL"
+      ],
+      "subtext": "Good Sports",
+      "voice": "Good sports are kind and fair to their teammates and opponents. They win or lose with a smile and respect everyone.",
+      "accent": "#f97316",
+      "duration": 15
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "TEAMWORK",
+        "IS",
+        "AWESOME"
+      ],
+      "subtext": "Leading the Team",
+      "voice": "A good team leader helps their teammates and makes sure everyone is working together. They're like a superhero, leading the team to victory!",
+      "accent": "#f97316",
+      "duration": 20
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT IS",
+        "SPORTSMANSHIP",
+        "?"
+      ],
+      "subtext": "What is Good Sportsmanship?",
+      "voice": "Think you know what good sportsmanship is? It's being kind and fair to your teammates and opponents. That's what good sports know!",
+      "accent": "#f97316",
+      "duration": 10,
+      "question": "What is good sportsmanship?",
+      "answers": [
+        "Being mean",
+        "Winning at all costs",
+        "Being kind and fair"
+      ],
+      "correct_answer": 3
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "TEAM",
+        "SPORTS"
+      ],
+      "subtext": "Recap",
+      "voice": "So, remember: team sports are fun when we cooperate with each other, follow the rules, and be good sports. Teamwork is awesome, and sportsmanship is cool! Let's keep playing together and being kind to each other.",
+      "accent": "#f97316",
+      "duration": 15
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+node_modules
+AIMentorApp/node_modules
+server/node_modules
+AIMentorApp/.expo
+AIMentorApp/web-build
+AIMentorApp/web-dev.*.log
+AIMentorApp/web-preview.*.log
+server/data/audio
+server/data/images/concepts
+server/data/images/ncert
+server/data/images/scenes
+server/data/images/generated

@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_science_magnets",
+  "title": "Magnets",
+  "grade": "Grade 3",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "MAGNETS",
+        "ARE",
+        "AWESOME"
+      ],
+      "subtext": "Grade 3 · Science",
+      "voice": "Hey there, young explorers! Today we're going on an adventure to learn about one of the coolest things in the world - MAGNETS! Are you ready to discover what makes them so awesome?",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "ATTRACTION",
+        "FORCES",
+        "MAGNETS"
+      ],
+      "subtext": "What is a Magnet?",
+      "voice": "So, what is a magnet? Well, a magnet is an object that has a special force called magnetic attraction. It can pull other objects towards it, making them stick together!",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "POLES",
+        "NORTH",
+        "SOUTH"
+      ],
+      "subtext": "Magnetic Poles",
+      "voice": "Did you know that magnets have two special ends called poles? One is the north pole and the other is the south pole. Just like how we have up and down, magnets have north and south!",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "MATERIALS",
+        "ATTRACTION",
+        "MAGNETS"
+      ],
+      "subtext": "Magnetic Materials",
+      "voice": "Some materials are special because they can be attracted to magnets. Do you know which ones? Metals like iron, nickel, and cobalt are all magnetic materials. They stick together with magnets!",
+      "accent": "#22c55e",
+      "duration": 25
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "EVERYDAY",
+        "USES",
+        "MAGNETS"
+      ],
+      "subtext": "Everyday Uses of Magnets",
+      "voice": "Magnets are all around us! We use them in fridges to hold up our favorite pictures, in speakers to make music, and even in some toys to make them move!",
+      "accent": "#22c55e",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "MAGNETIC"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "What is magnetic? A) A type of rock B) A type of metal C) Something that can be attracted to magnets. What's your answer?",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "KEY",
+        "POINTS",
+        "REVIEW"
+      ],
+      "subtext": "Summary",
+      "voice": "Wow, you're now a magnet expert! Let's review three key points: magnets have a special force called attraction, they have north and south poles, and some materials like metals can be attracted to magnets. Great job, explorers!",
+      "accent": "#22c55e",
+      "duration": 30
+    }
+  ]
+}

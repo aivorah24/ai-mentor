@@ -1,0 +1,44 @@
+[
+  {
+    "id": "asgn_demo001",
+    "title": "Numbers - Place Value Practice",
+    "subject": "Mathematics",
+    "chapter": "Where to Look For?",
+    "dueDate": "2026-03-28",
+    "type": "assignment",
+    "note": "Complete 10 place value problems from Chapter 1",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "status": "pending",
+    "score": null,
+    "createdAt": "2026-03-24T09:00:00.000Z"
+  },
+  {
+    "id": "asgn_demo002",
+    "title": "Shapes and Designs - Drawing",
+    "subject": "Mathematics",
+    "chapter": "Fun with Giving and Taking",
+    "dueDate": "2026-03-30",
+    "type": "assignment",
+    "note": "Draw 5 different shapes and label their properties",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "status": "pending",
+    "score": null,
+    "createdAt": "2026-03-24T09:00:00.000Z"
+  },
+  {
+    "id": "asgn_demo003",
+    "title": "Chapter 1 Quiz - Numbers",
+    "subject": "Mathematics",
+    "chapter": "Where to Look For?",
+    "dueDate": "2026-03-26",
+    "type": "quiz",
+    "note": "10 questions on number reading and writing",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "status": "pending",
+    "score": null,
+    "createdAt": "2026-03-23T09:00:00.000Z"
+  }
+]

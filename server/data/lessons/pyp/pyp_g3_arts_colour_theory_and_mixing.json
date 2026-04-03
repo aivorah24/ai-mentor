@@ -1,0 +1,105 @@
+{
+  "id": "pyp_g3_arts_colour_theory_and_mixing",
+  "title": "Colour Theory and Mixing",
+  "grade": "Grade 3",
+  "subject": "Arts",
+  "curriculum": "IB PYP",
+  "accent": "#ec4899",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "COLOUR",
+        "WORLD",
+        "FUN"
+      ],
+      "subtext": "Grade 3 · Arts",
+      "voice": "Hey kids, are you ready to explore the amazing world of colours? Today we're going to learn about colour theory and mixing! Let's get started!",
+      "accent": "#ec4899",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "PRIMARY",
+        "COLOURS"
+      ],
+      "subtext": "",
+      "voice": "Did you know that there are three special colours called primary colours? Red, Blue, and Yellow are the primary colours. We can't make them by mixing other colours together.",
+      "accent": "#ec4899",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "SECONDARY",
+        "COLOURS"
+      ],
+      "subtext": "",
+      "voice": "When we mix two primary colours together, we get secondary colours. For example, Red + Blue = Purple, Blue + Yellow = Green, and Red + Yellow = Orange.",
+      "accent": "#ec4899",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "WARM",
+        "COLOURS"
+      ],
+      "subtext": "",
+      "voice": "Some colours like Red, Orange, and Yellow are called warm colours. They make us feel happy and energetic.",
+      "accent": "#ec4899",
+      "duration": 15
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "COOL",
+        "COLOURS"
+      ],
+      "subtext": "",
+      "voice": "On the other hand, colours like Blue, Green, and Purple are called cool colours. They make us feel calm and relaxed.",
+      "accent": "#ec4899",
+      "duration": 15
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "SECONDARY"
+      ],
+      "subtext": "",
+      "voice": "What is a secondary colour? A) A colour that can't be made by mixing other colours. B) A colour made by mixing two primary colours. Choose the correct answer.",
+      "accent": "#ec4899",
+      "duration": 15
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "RECAP",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "",
+      "voice": "Let's recap the key points we learned today. Primary colours are Red, Blue, and Yellow. Secondary colours are made by mixing two primary colours. And warm colours like Red and Yellow make us feel happy, while cool colours like Blue make us feel calm.",
+      "accent": "#ec4899",
+      "duration": 25
+    }
+  ]
+}

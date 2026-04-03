@@ -1,0 +1,101 @@
+{
+  "id": "pyp_g3_social_studies_natural_resources",
+  "title": "Natural Resources",
+  "grade": "Grade 3",
+  "subject": "Social Studies",
+  "curriculum": "IB PYP",
+  "accent": "#a855f7",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "NATURAL",
+        "RESOURCES",
+        "ARE"
+      ],
+      "subtext": "Grade 3 · Social Studies",
+      "voice": "Hey kids, today we're going to learn about something super cool called natural resources. Can you guess what they are?",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "CLEAN AIR"
+      ],
+      "subtext": "What are natural resources?",
+      "voice": "Air is one of our natural resources. We need clean air to breathe, and it's all around us.",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "CLEAN WATER"
+      ],
+      "subtext": "What are natural resources?",
+      "voice": "We also need clean water to drink and use for washing. Just like air, water is all around us.",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "GOOD SOIL"
+      ],
+      "subtext": "What are natural resources?",
+      "voice": "Soil is another natural resource that helps us grow food. We need to take care of our soil so it stays good and healthy.",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "FORESTS"
+      ],
+      "subtext": "What are natural resources?",
+      "voice": "Forests are home to many animals, and they help us produce oxygen. We should protect our forests and not cut them down.",
+      "accent": "#a855f7",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "CONSERVE",
+        "WATER",
+        "NOW"
+      ],
+      "subtext": "Let's review! What is one way we can help conserve natural resources?",
+      "voice": "So, what can we do to help conserve natural resources? Can you remember one thing?",
+      "accent": "#a855f7",
+      "duration": 15
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "3",
+        "KEYS"
+      ],
+      "subtext": "Recap!",
+      "voice": "Let's review what we've learned today. We talked about clean air, clean water, and good soil. We also learned about forests and how we should protect them. Remember, we can conserve natural resources by reducing, reusing, and recycling.",
+      "accent": "#a855f7",
+      "duration": 25
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g5_science_solar_system_and_space",
+  "title": "Solar System and Space",
+  "grade": "Grade 5",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "SPACE",
+        "ADVENTURE",
+        "BEGIN"
+      ],
+      "subtext": "Grade 5 · Science",
+      "voice": "Imagine embarking on a journey through the vastness of space! We're going to explore our solar system, from the sun to the planets and beyond! Get ready for an out-of-this-world adventure!",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "SUN",
+        "STAR",
+        "CENTER"
+      ],
+      "subtext": "The Sun at the Center",
+      "voice": "The sun is the center of our solar system and is the reason we have day and night. It's a star that gives us light and warmth.",
+      "accent": "#22c55e",
+      "duration": 30
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "PLANETS",
+        "ORBITS",
+        "GRAVITY"
+      ],
+      "subtext": "Planets and Orbits",
+      "voice": "The planets in our solar system orbit around the sun due to gravity. It's like a big dance where the planets move in their own special paths.",
+      "accent": "#22c55e",
+      "duration": 40
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "MOON",
+        "PHASES",
+        "ECLIPSE"
+      ],
+      "subtext": "The Moon's Phases",
+      "voice": "The moon goes through different phases as it orbits around the Earth. We can see these phases change in the sky, and sometimes we even experience a lunar eclipse!",
+      "accent": "#22c55e",
+      "duration": 35
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "ASTEROID",
+        "BELT",
+        "DANGER"
+      ],
+      "subtext": "The Asteroid Belt",
+      "voice": "There's a region in our solar system called the asteroid belt where small rocks and metal pieces float through space. It's like a cosmic highway where asteroids travel.",
+      "accent": "#22c55e",
+      "duration": 35
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "GRAVITY"
+      ],
+      "subtext": "Answer: Gravity is a force that pulls objects towards each other.",
+      "voice": "What is gravity? Gravity is a force that pulls objects towards each other.",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Celebrate and Review",
+      "voice": "Let's review what we've learned today! We explored the sun, the planets, the moon's phases, and even the asteroid belt. Remember, the sun is the center of our solar system, the planets orbit around it due to gravity, and the moon goes through different phases as it orbits around the Earth.",
+      "accent": "#22c55e",
+      "duration": 45
+    }
+  ]
+}

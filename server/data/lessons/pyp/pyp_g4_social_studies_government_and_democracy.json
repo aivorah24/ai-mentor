@@ -1,0 +1,115 @@
+{
+  "id": "pyp_g4_social_studies_government_and_democracy",
+  "title": "Government and Democracy",
+  "grade": "Grade 4",
+  "subject": "Social Studies",
+  "curriculum": "IB PYP",
+  "accent": "#a855f7",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "GOVERNMENT",
+        "DEMOCRACY",
+        "WORKS"
+      ],
+      "subtext": "Grade 4 · Social Studies",
+      "voice": "Hey kids, today we're going to learn about government and democracy. Can you imagine living in a place where everyone gets to make decisions together? We're going to explore what that means and how it works in our community.",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "LAWS",
+        "RULES",
+        "US"
+      ],
+      "subtext": "How Laws Work",
+      "voice": "So, who makes the rules in our community? It's our government! Laws are like rules that everyone must follow to keep us safe and happy. Just like how you follow rules at school, our government makes laws to help us all.",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "RIGHTS",
+        "RESPONSIBILITIES",
+        "US"
+      ],
+      "subtext": "Our Rights and Responsibilities",
+      "voice": "But our government doesn't just make rules, it also gives us rights and responsibilities. Rights are like special powers that help us be happy and healthy. Responsibilities are like tasks that we need to do to help our community.",
+      "accent": "#a855f7",
+      "duration": 25
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "VOTING",
+        "CHOOSE",
+        "LEADERS"
+      ],
+      "subtext": "How We Choose Our Leaders",
+      "voice": "And did you know that we get to choose our leaders? Voting is like casting a ballot to pick who we want to help make decisions for our community. It's a special right that helps us have a say in what happens in our world.",
+      "accent": "#a855f7",
+      "duration": 25
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "LOCAL",
+        "GOVERNMENT",
+        "WORKS"
+      ],
+      "subtext": "Local Government",
+      "voice": "But government doesn't just stop at our community. There are local governments that help take care of our neighborhoods and towns. They make decisions about things like parks, schools, and roads.",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "VOTING"
+      ],
+      "subtext": "Voting Quiz",
+      "voice": "What is voting?",
+      "question": "Voting is a way for people to choose their leaders.",
+      "answers": [
+        "True",
+        "False"
+      ],
+      "correct": "True",
+      "duration": 15,
+      "accent": "#a855f7"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "RECAP",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Recap: Key Points",
+      "voice": "So, what did we learn today? We learned that government makes laws to keep us safe and happy. We also learned about our rights and responsibilities, and how we get to choose our leaders through voting. And finally, we learned about local governments that help take care of our neighborhoods and towns. Great job, kids!",
+      "accent": "#a855f7",
+      "duration": 20
+    }
+  ]
+}

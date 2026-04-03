@@ -1,0 +1,139 @@
+{
+  "topic": "Who is Heavier?",
+  "chapter": 8,
+  "unit": "Weight and Mass",
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Hello hello HELLO! I am Ms. Zara and today we answer the BIG question — WHO IS HEAVIER?! We already know about grams and kilograms. Today we go deeper — we ESTIMATE weights, ORDER many objects and become true WEIGHT DETECTIVES! Your superpower: knowing heavy from light without even touching a scale! Let us GO!",
+      "emotion": "excited",
+      "visual": "Who is Heavier?",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "ESTIMATION — guessing weight WITHOUT a scale! Hold a mango in one hand and a cotton ball in the other. Without looking at any number, which hand feels heavier? The MANGO! Your hands are natural weight detectors! Good estimation means making a smart guess based on what you FEEL and KNOW. Scientists call this intuition!",
+      "emotion": "thinking",
+      "visual": "Mango vs cotton ball",
+      "sceneImage": "/data/images/scenes/ch8/scene_02.png"
+    },
+    {
+      "scene": 3,
+      "text": "ESTIMATION PRACTICE! Look at these objects — a feather, a pencil, a brick, an apple. Without measuring, ORDER them from LIGHTEST to HEAVIEST! Feather first — very very light! Then pencil — light but solid. Then apple — you can feel the weight! Then brick — HEAVY! LIGHTEST to HEAVIEST. That is smart estimation!",
+      "emotion": "questioning",
+      "visual": "Feather, pencil, apple, brick",
+      "sceneImage": "/data/images/scenes/ch8/scene_03.png"
+    },
+    {
+      "scene": 4,
+      "text": "DIFFERENT KINDS OF SCALES! You already know the balance scale from the market and kirana shop. But there is another type — the WEIGHING MACHINE! It has a flat platform and a number display — digital or with a needle. You step ON it and the number tells you your weight directly! No balancing needed — just READ the number!",
+      "emotion": "surprised",
+      "visual": "Weighing machine — digital scale",
+      "sceneImage": "/data/images/scenes/ch8/scene_04.png"
+    },
+    {
+      "scene": 5,
+      "text": "DOCTOR VISIT! When you go to the doctor, you step on a weighing machine. A healthy 8-year-old weighs around 20 to 25 kilograms! The doctor checks: are you growing well for your age? This is your BODY WEIGHT measured in kilograms. At home your bathroom scale works the same way — step on, read the number, done!",
+      "emotion": "happy",
+      "visual": "Doctor weighing child",
+      "sceneImage": "/data/images/scenes/ch8/scene_05.png"
+    },
+    {
+      "scene": 6,
+      "text": "POSTAL WEIGHT! When you send a parcel, the post office weighs it. Letters are light — just a few grams! A small packet might be 200 grams. A big box could be 5 kilograms. The heavier the parcel, the MORE you pay to send it! Weight decides the PRICE. That is why your parents check before sending!",
+      "emotion": "excited",
+      "visual": "Post office weighing parcel",
+      "sceneImage": "/data/images/scenes/ch8/scene_06.png"
+    },
+    {
+      "scene": 7,
+      "text": "GRAMS for light, KILOGRAMS for heavy — but HOW do you CHOOSE? A good rule: if you can pick it up with just two fingers, use GRAMS. A biscuit (10 g), a stamp (1 g), a coin (5 g) — grams! If you need your whole hand or both hands to carry it, use KILOGRAMS. Your school bag, a bucket of water, a bag of rice — kilograms!",
+      "emotion": "thinking",
+      "visual": "Finger test for grams vs kg",
+      "sceneImage": "/data/images/scenes/ch8/scene_07.png"
+    },
+    {
+      "scene": 8,
+      "text": "ORDERING THREE objects! A coconut weighs 500 g. A packet of dal weighs 1 kg = 1000 g. A small lime weighs 50 g. Order LIGHTEST to HEAVIEST! Lime: 50 g — LIGHTEST! Coconut: 500 g — middle! Dal: 1000 g — HEAVIEST! Write it: 50 g < 500 g < 1000 g. Compare numbers to compare weights — they are the SAME skill!",
+      "emotion": "celebrating",
+      "visual": "Lime, coconut, dal ordered",
+      "sceneImage": "/data/images/scenes/ch8/scene_08.png"
+    },
+    {
+      "scene": 9,
+      "text": "ORDERING FOUR objects — expert level! Ravi weighs his things: maths book (300 g), water bottle (1000 g), eraser (20 g), lunch box (500 g). Order lightest to heaviest! Eraser (20 g) → Maths book (300 g) → Lunch box (500 g) → Water bottle (1000 g)! The water bottle is HEAVIEST — that is why your bag hurts your shoulders!",
+      "emotion": "surprised",
+      "visual": "4 things ordered by weight",
+      "sceneImage": "/data/images/scenes/ch8/scene_09.png"
+    },
+    {
+      "scene": 10,
+      "text": "MATHS with weights! Ravi's school bag: maths book 300 g + science book 250 g + lunch box 500 g + water bottle 1000 g. Total = 300 + 250 + 500 + 1000 = 2050 grams = 2 kg and 50 grams! His back can take 3 kg. Is the bag too heavy? 2050 g < 3000 g — NO, it is fine! You just saved Ravi's back!",
+      "emotion": "excited",
+      "visual": "School bag weight total",
+      "sceneImage": "/data/images/scenes/ch8/scene_10.png"
+    },
+    {
+      "scene": 11,
+      "text": "HEAVIER, LIGHTER or SAME — trick question! A 1 kg bag of rice vs a 1 kg bag of cotton. Which is heavier? They BOTH weigh 1 kg so they are the SAME WEIGHT! Even though cotton looks much bigger and fluffier, 1 kg is 1 kg! Weight is not about SIZE — it is about how heavy something actually IS. AMAZING and tricky!",
+      "emotion": "surprised",
+      "visual": "Rice vs cotton — same weight!",
+      "sceneImage": "/data/images/scenes/ch8/scene_11.png"
+    },
+    {
+      "scene": 12,
+      "text": "Word problem time! Priya brings 4 bags to school. Bag A: 2 kg. Bag B: 500 g. Bag C: 1 kg 200 g. Bag D: 800 g. Which bag is HEAVIEST? Convert all to grams: A = 2000 g, B = 500 g, C = 1200 g, D = 800 g. Biggest number is 2000 — so Bag A is HEAVIEST! Converting to the same unit makes comparing easy!",
+      "emotion": "happy",
+      "visual": "4 bags — find heaviest",
+      "sceneImage": null
+    },
+    {
+      "scene": 13,
+      "text": "Big recap — WHO IS HEAVIER? Estimate before measuring — use your hands and brain! Weighing machines give direct weight readings. Order objects using their weights just like ordering numbers. 1 kg of anything equals 1 kg of anything else — weight is not about size! Convert to same units before comparing. YOU got this!",
+      "emotion": "thinking",
+      "visual": "Weight detective recap!",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "WOOHOO — you are a WEIGHT DETECTIVE! You can estimate, measure, compare and order weights like a pro! Next time you carry a bag, pick up a fruit or step on a scale — you will KNOW exactly what is happening in maths terms. Ms. Zara is SO proud of you! Now quiz time — show your detective skills!",
+      "emotion": "celebrating",
+      "visual": "Weight Detective!",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Without using a scale, Anu holds a stone in one hand and a feather in the other. The stone hand feels heavier. What is Anu doing?",
+      "options": ["A. Measuring exactly", "B. Converting units", "C. Estimating weight", "D. Using a balance scale"],
+      "correct": 2,
+      "explanation": "Anu is ESTIMATING! Estimation means making a smart guess without using a measuring tool. When you pick up two objects and sense which is heavier — that is estimation. It is a real-world skill scientists and cooks use every day!"
+    },
+    {
+      "question": "Order from LIGHTEST to HEAVIEST: 750 g, 1 kg, 200 g, 500 g",
+      "options": ["A. 200 g, 500 g, 750 g, 1 kg", "B. 1 kg, 750 g, 500 g, 200 g", "C. 500 g, 200 g, 750 g, 1 kg", "D. 200 g, 750 g, 500 g, 1 kg"],
+      "correct": 0,
+      "explanation": "First convert 1 kg = 1000 g! Then order: 200 g is smallest, then 500 g, then 750 g, then 1000 g (1 kg). So lightest to heaviest: 200 g → 500 g → 750 g → 1 kg. Always convert to the same unit before comparing weights!"
+    },
+    {
+      "question": "A 1 kg bag of rice and a 1 kg bag of cotton — which is heavier?",
+      "options": ["A. The rice bag", "B. The cotton bag", "C. They weigh the same", "D. Cannot tell without a scale"],
+      "correct": 2,
+      "explanation": "They weigh EXACTLY THE SAME — both are 1 kg! Even though cotton is much fluffier and takes up more space, 1 kg is 1 kg regardless of what it is. Weight is about heaviness, not size. This is one of the most surprising facts in measurement!"
+    },
+    {
+      "question": "At the doctor's clinic, the nurse asks you to stand on a flat machine that shows a number. What machine is this?",
+      "options": ["A. A balance scale", "B. A ruler", "C. A weighing machine", "D. A measuring tape"],
+      "correct": 2,
+      "explanation": "A WEIGHING MACHINE (also called a weighing scale) shows your body weight directly as a number — no balancing needed! You just stand on it and read the number. It is different from a balance scale which compares two sides. Doctors use it to check if you are growing healthily!"
+    },
+    {
+      "question": "Meera has: book (400 g), tiffin (600 g), and pencil box (250 g). What is the TOTAL weight of all three items?",
+      "options": ["A. 1150 g", "B. 1250 g", "C. 1000 g", "D. 1350 g"],
+      "correct": 1,
+      "explanation": "Add all three weights: 400 + 600 + 250 = 1250 grams! Book 400 + Tiffin 600 = 1000 g, then add pencil box 250 g = 1250 g total. That is 1 kg and 250 g! Adding weights works exactly like adding regular numbers. Excellent maths!"
+    }
+  ]
+}

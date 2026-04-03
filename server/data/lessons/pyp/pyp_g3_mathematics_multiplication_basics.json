@@ -1,0 +1,116 @@
+{
+  "id": "pyp_g3_mathematics_multiplication_basics",
+  "title": "Multiplication Basics",
+  "grade": "Grade 3",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "MULTIPLICATION",
+        "IS FUN",
+        "WITH",
+        "GROUPS"
+      ],
+      "subtext": "Grade 3 · Mathematics",
+      "voice": "Hey kids! Today we're going to learn about multiplication. It's a way to quickly add numbers together. Are you ready to become multiplication masters?",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "EQUAL",
+        "GROUPS",
+        "MAKE"
+      ],
+      "subtext": "Multiplication is all about equal groups!",
+      "voice": "When we multiply numbers, we're creating equal groups. For example, if we have 3 groups of 4 apples, we can count the total number of apples. Can you help me count them?",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "ARRAYS",
+        "HELP",
+        "US"
+      ],
+      "subtext": "Arrays make it easy to see equal groups!",
+      "voice": "Arrays are pictures that help us see equal groups. They make it easy to count the total number of objects. Can you help me count these arrays?",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "REPEATED",
+        "ADDITION",
+        "IS",
+        "MULTIPLICATION"
+      ],
+      "subtext": "Repeated addition is the same as multiplication!",
+      "voice": "You know what's cool? Repeated addition is the same as multiplication. If we add 3 groups of 4 apples, it's the same as multiplying 3 x 4. Can you try it with me?",
+      "accent": "#38bdf8",
+      "duration": 25
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "MULTIPLICATION",
+        "TABLES",
+        "HELP",
+        "US"
+      ],
+      "subtext": "Multiplication tables make it easy to remember multiplication facts!",
+      "voice": "Multiplication tables are like a secret code to help us remember multiplication facts. Let's practice our multiplication tables 1-5. Can you help me fill in the missing numbers?",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "3",
+        "X",
+        "4"
+      ],
+      "subtext": "Test your knowledge!",
+      "voice": "What is 3 x 4? Think you know the answer? Let me know!",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "EQUAL",
+        "GROUPS",
+        "ARRAYS",
+        "MULTIPLICATION"
+      ],
+      "subtext": "Celebrate your learning!",
+      "voice": "Wow, you've learned so much today! Remember, multiplication is all about equal groups, arrays help us see equal groups, and repeated addition is the same as multiplication. You're a multiplication master now! Keep practicing and soon you'll be a multiplication expert!",
+      "accent": "#38bdf8",
+      "duration": 20
+    }
+  ]
+}

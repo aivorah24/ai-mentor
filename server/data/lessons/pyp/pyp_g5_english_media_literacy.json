@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g5_english_media_literacy",
+  "title": "Media Literacy",
+  "grade": "Grade 5",
+  "subject": "English",
+  "curriculum": "IB PYP",
+  "accent": "#f59e0b",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "MEDIA LITERACY",
+        "IS KEY",
+        "TO CRITICISM"
+      ],
+      "subtext": "Grade 5 · English",
+      "voice": "Hey there, young explorers! Today we're going on a journey to become super cool media detectives! Are you ready to uncover the secrets behind the news and advertisements?",
+      "accent": "#f59e0b",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "BIAS",
+        "IS HIDDEN",
+        "IN NEWS"
+      ],
+      "subtext": "What is bias?",
+      "voice": "Bias is like a sneaky friend that tries to influence our thoughts without us even realizing it. When writers or news anchors have a bias, they might leave out important information or present it in a way that's not entirely true.",
+      "accent": "#f59e0b",
+      "duration": 12
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "AUDIENCE",
+        "IS KEY",
+        "TO ADVERTISING"
+      ],
+      "subtext": "Who is the audience?",
+      "voice": "Advertisers want to sell us things, so they need to know what we like and want. They use clues like our age, interests, and preferences to create ads that appeal to us.",
+      "accent": "#f59e0b",
+      "duration": 15
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "PURPOSE",
+        "IS HIDDEN",
+        "IN NEWS"
+      ],
+      "subtext": "What is the purpose?",
+      "voice": "Writers and journalists have a purpose when creating news. They might want to inform us, entertain us, or even persuade us to think a certain way. It's essential to understand their purpose to make sense of the news.",
+      "accent": "#f59e0b",
+      "duration": 18
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "FAKE NEWS",
+        "IS DANGEROUS",
+        "TO KNOWLEDGE"
+      ],
+      "subtext": "What is fake news?",
+      "voice": "Fake news is like a fake friend that tricks us into believing something that's not true. It can be spread quickly through social media, but it's essential to verify information before sharing or believing it.",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT IS",
+        "MEDIA LITERACY",
+        "FOR"
+      ],
+      "subtext": "What is media literacy for?",
+      "voice": "Media literacy helps us become better critics and thinkers. It's like having a superpower that allows us to analyze and evaluate the information we receive.",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "KEY TAKEAWAYS",
+        "BIAS",
+        "AUDIENCE",
+        "PURPOSE"
+      ],
+      "subtext": "Congratulations, young explorers! You've learned about bias, audience, and purpose in media literacy. Remember, being media literate helps you make informed decisions and stay safe in the digital world.",
+      "accent": "#f59e0b",
+      "duration": 15
+    }
+  ]
+}

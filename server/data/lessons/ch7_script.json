@@ -1,0 +1,139 @@
+{
+  "topic": "Time Goes On",
+  "chapter": 7,
+  "unit": "Time",
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Hello timekeeper! I am Ms. Zara and today we are going on a TIME adventure! We will read clocks, learn about AM and PM, explore the calendar and follow Hetal's whole day! Time is all around us — in every clock, every calendar, every schedule! Let us begin!",
+      "visual": "Time Goes On!",
+      "emotion": "excited",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "Meet the CLOCK! A clock has two hands — a SHORT hand and a LONG hand. The SHORT hand is the HOUR hand — it tells us the hour. The LONG hand is the MINUTE hand — it tells us the minutes. There are also numbers 1 to 12 around the clock face. Look carefully at every clock you see!",
+      "visual": "Clock face hands",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch7/scene_02.png"
+    },
+    {
+      "scene": 3,
+      "text": "O'CLOCK! When the long (minute) hand points straight UP to 12, it is O'CLOCK! Then look at the short (hour) hand to find the hour. If the short hand points to 7 and the long hand points to 12 — it is 7 O'CLOCK! Hetal wakes up at 7 o'clock every morning. WOOHOO!",
+      "visual": "7 o'clock on clock",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch7/scene_03.png"
+    },
+    {
+      "scene": 4,
+      "text": "HALF PAST! When the long (minute) hand points straight DOWN to 6, it is HALF PAST! Half past means 30 minutes have passed. If the short hand is between 8 and 9, and the long hand is at 6 — it is HALF PAST 8, or 8:30! Hetal eats breakfast at half past seven — 7:30!",
+      "visual": "Half past 8 clock",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch7/scene_04.png"
+    },
+    {
+      "scene": 5,
+      "text": "AM and PM — MIND. BLOWN! The day has 24 hours but the clock only shows 12! So we use AM and PM. AM is from midnight (12 at night) to noon (12 in the afternoon). PM is from noon to midnight. Morning school time is AM! Evening play time is PM! Hetal's school starts at 9:00 AM!",
+      "visual": "AM and PM times",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch7/scene_05.png"
+    },
+    {
+      "scene": 6,
+      "text": "Follow Hetal's day! She wakes up at 7:00 AM, eats breakfast at 7:30 AM, reaches school at 9:00 AM, has lunch at 12:30 PM, comes home at 4:00 PM, does homework at 5:00 PM, has dinner at 8:00 PM and sleeps at 9:30 PM! See how AM and PM help us describe the WHOLE day!",
+      "visual": "Hetal's daily schedule",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch7/scene_06.png"
+    },
+    {
+      "scene": 7,
+      "text": "DAYS OF THE WEEK! There are 7 days in a week. They are: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday! After Sunday comes Monday again — they repeat in a CYCLE! School days are Monday to Friday — 5 days. Weekend is Saturday and Sunday — 2 days. Can you name them all?",
+      "visual": "7 days of week",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch7/scene_07.png"
+    },
+    {
+      "scene": 8,
+      "text": "THE CALENDAR! A year has 12 months. January, February, March, April, May, June, July, August, September, October, November, December! One full year = 365 days. Most months have 30 or 31 days. February is special — it has only 28 days (and 29 in a leap year)! AMAZING trivia!",
+      "visual": "12 months calendar",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch7/scene_08.png"
+    },
+    {
+      "scene": 9,
+      "text": "HOW MANY DAYS in each month? Here is a fun trick! Use your KNUCKLES and the valleys between them! Starting from your left fist — knuckle = 31 days (Jan), valley = 28/29 days (Feb), knuckle = 31 days (Mar)... Every knuckle is a long month, every valley is a short month! Try it RIGHT NOW!",
+      "visual": "Knuckle month trick",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch7/scene_09.png"
+    },
+    {
+      "scene": 10,
+      "text": "TIME DURATION! How long did something take? If Hetal starts reading at 4:00 PM and finishes at 5:00 PM, she read for 1 HOUR! If she starts eating at 1:00 PM and finishes at 1:30 PM, she ate for 30 MINUTES! Duration = end time minus start time. Super useful!",
+      "visual": "Duration 4pm to 5pm",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch7/scene_10.png"
+    },
+    {
+      "scene": 11,
+      "text": "BEFORE and AFTER! If today is Wednesday, YESTERDAY was Tuesday and TOMORROW will be Thursday! If this month is March, LAST month was February and NEXT month will be April! Before and after helps us talk about time without knowing exact times. Very handy in daily life!",
+      "visual": "Yesterday today tomorrow",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch7/scene_11.png"
+    },
+    {
+      "scene": 12,
+      "text": "Word problem! Hetal's cricket match starts at 3:00 PM and lasts 2 hours. What time does the match end? 3:00 PM + 2 hours = 5:00 PM! The match ends at 5 PM. Adding hours is just like adding numbers! Her team won 5-3 — she is so happy! Double celebration!",
+      "visual": "Cricket match timing",
+      "emotion": "celebrating",
+      "sceneImage": null
+    },
+    {
+      "scene": 13,
+      "text": "Time facts to remember! 60 seconds = 1 minute. 60 minutes = 1 hour. 24 hours = 1 day. 7 days = 1 week. 12 months = 1 year. 365 days = 1 year! These are the BUILDING BLOCKS of time — learn them and you will always know how to talk about time correctly!",
+      "visual": "Time facts summary",
+      "emotion": "thinking",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "WOOHOO — you are a TIME MASTER! You can read clocks, tell o'clock and half past, use AM and PM, name all 7 days and 12 months, and calculate durations! Ms. Zara is SO excited for you! Now smash that quiz and show the world your time skills!",
+      "visual": "Time Master!",
+      "emotion": "celebrating",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "The short hand of a clock points to 3 and the long hand points to 12. What time is it?",
+      "options": ["12:03", "3:30", "3:00", "12:15"],
+      "correct": 2,
+      "explanation": "When the LONG hand points to 12, it is O'CLOCK! The SHORT hand points to 3, so it is 3 O'CLOCK — written as 3:00! Remember: short hand = hour, long hand = minutes. When long hand is at 12, no minutes have passed. You are a clock STAR!"
+    },
+    {
+      "question": "Hetal goes to school at 9:00 AM and comes back at 4:00 PM. How many hours is she in school?",
+      "options": ["5 hours", "6 hours", "7 hours", "8 hours"],
+      "correct": 2,
+      "explanation": "From 9:00 AM to 4:00 PM — let us count! 9 to 10 is 1 hour, 10 to 11 is 2, 11 to 12 noon is 3, 12 to 1 PM is 4, 1 to 2 is 5, 2 to 3 is 6, 3 to 4 is 7! That is 7 hours in school. A long day — well done for counting carefully!"
+    },
+    {
+      "question": "How many days are there in one week?",
+      "options": ["5 days", "6 days", "7 days", "12 days"],
+      "correct": 2,
+      "explanation": "One week has 7 days! Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday — that is 7! School days are 5 (Mon to Fri) and weekend is 2 days (Sat and Sun). 5 + 2 = 7. Perfect week knowledge — BRILLIANT!"
+    },
+    {
+      "question": "Which part of the day is 8:00 in the morning?",
+      "options": ["PM", "AM", "Noon", "Midnight"],
+      "correct": 1,
+      "explanation": "8 in the morning is 8:00 AM! AM means the time from midnight (12 at night) to noon (12 in the afternoon). Morning times like 7 AM, 8 AM, 9 AM are all AM. PM starts at noon and goes to midnight. Morning = AM. You nailed it!"
+    },
+    {
+      "question": "If today is Thursday, what day will it be tomorrow?",
+      "options": ["Wednesday", "Saturday", "Friday", "Sunday"],
+      "correct": 2,
+      "explanation": "The days go in order: Monday, Tuesday, Wednesday, THURSDAY, FRIDAY, Saturday, Sunday! After Thursday comes FRIDAY! Tomorrow means the NEXT day. Yesterday would have been Wednesday. You know your days of the week perfectly — WOOHOO!"
+    }
+  ]
+}

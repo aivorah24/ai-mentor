@@ -1,0 +1,105 @@
+{
+  "id": "pyp_g5_science_mixtures_and_separation",
+  "title": "Mixtures and Separation",
+  "grade": "Grade 5",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "MIXTURES",
+        "SEPARATION",
+        ""
+      ],
+      "subtext": "Grade 5 · Science",
+      "voice": "Hey kids, let's explore the world of mixtures and separation! Imagine making a delicious smoothie with your favorite fruits and yogurt. But what happens when we want to separate the liquid from the solids? Let's find out!",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "MIXTURE",
+        "SOLIDS",
+        "LIQUIDS"
+      ],
+      "subtext": "What is a Mixture?",
+      "voice": "A mixture is a combination of two or more substances. These substances can be solids, liquids, or gases. For example, sand and water mixed together is a mixture.",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "SOLUTE",
+        "SOLVENT"
+      ],
+      "subtext": "What is a Solution?",
+      "voice": "When a solute dissolves in a solvent, it forms a solution. A solute is the substance that dissolves, and a solvent is the substance that does the dissolving. For example, sugar dissolving in water is a solution.",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "FILTRATION",
+        "FILTER"
+      ],
+      "subtext": "How to Filter a Mixture?",
+      "voice": "Filtration is a way to separate a mixture by passing it through a filter. The filter allows the liquid to pass through while keeping the solids behind. For example, pouring water through a coffee filter to separate the liquid from the coffee grounds.",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "EVAPORATION",
+        "VAPOR"
+      ],
+      "subtext": "How to Separate a Mixture by Evaporation?",
+      "voice": "Evaporation is a way to separate a mixture by turning the liquid into vapor. As the vapor rises, it can be collected and separated from the solids. For example, leaving a cup of water outside on a hot day to evaporate and separate the water from the solids.",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TRUE",
+        "FALSE"
+      ],
+      "subtext": "What is a Solution?",
+      "voice": "Is a solution a mixture of two or more substances? Choose true or false.",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "What did we learn today?",
+      "voice": "Today, we learned about mixtures and separation. We discovered that a mixture is a combination of two or more substances, and a solution is a mixture of a solute and a solvent. We also learned about filtration and evaporation as ways to separate mixtures. Let's review these key points and remember them for next time!",
+      "accent": "#22c55e",
+      "duration": 20
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_pe_health_and_nutrition",
+  "title": "Health and Nutrition",
+  "grade": "Grade 3",
+  "subject": "PE",
+  "curriculum": "IB PYP",
+  "accent": "#f97316",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "HEALTHY",
+        "FOOD",
+        "FUN"
+      ],
+      "subtext": "Grade 3 · PE",
+      "voice": "Hey kids, today we're going on a fun adventure to learn about what makes us strong and healthy! Charlie here and I'm excited to share some cool facts with you!",
+      "accent": "#f97316",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "FOOD",
+        "GROUPS",
+        "YUM"
+      ],
+      "subtext": "Food Groups",
+      "voice": "Did you know that there are five main food groups? Fruits, vegetables, grains, proteins, and dairy. These groups help keep our bodies working properly!",
+      "accent": "#f97316",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "BALANCED",
+        "DIET",
+        "SMILE"
+      ],
+      "subtext": "Balanced Diet",
+      "voice": "A balanced diet means eating a little bit of everything from each food group. This helps us have lots of energy to run, play and smile!",
+      "accent": "#f97316",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "EXERCISE",
+        "PLAY",
+        "FUN"
+      ],
+      "subtext": "Exercise and Play",
+      "voice": "Exercise and playtime are super important for our bodies. They help us stay strong, flexible and happy!",
+      "accent": "#f97316",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "HYGIENE",
+        "CLEAN",
+        "HEALTHY"
+      ],
+      "subtext": "Hygiene and Cleanliness",
+      "voice": "Remember to wash your hands often and keep yourself clean. This helps prevent germs and keep you healthy!",
+      "accent": "#f97316",
+      "duration": 20
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "A"
+      ],
+      "subtext": "Quiz Time",
+      "voice": "What is a balanced diet? A) Eating only fruits, B) Eating a little bit of everything, C) Eating only sweets. Choose your answer.",
+      "accent": "#f97316",
+      "duration": 20
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "3",
+        "KEYS"
+      ],
+      "subtext": "Summary",
+      "voice": "Hey kids, you've learned some super cool stuff today! Remember, a balanced diet, regular exercise and good hygiene are three keys to staying healthy and strong. Keep being your awesome selves!",
+      "accent": "#f97316",
+      "duration": 30
+    }
+  ]
+}

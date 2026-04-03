@@ -1,0 +1,95 @@
+{
+  "id": "pyp_g3_mathematics_time",
+  "title": "Time",
+  "grade": "Grade 3",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "TIME IS FUN"
+      ],
+      "subtext": "Grade 3 · Mathematics",
+      "voice": "Hey kids, today we're going to learn about time! We'll explore how to read clocks, understand hours and minutes, and even learn about am and pm. Are you ready to get started?",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "HOURS ON CLOCK"
+      ],
+      "subtext": "What is the time when the clock shows 6 o'clock?",
+      "voice": "Imagine you're waking up at 6 o'clock in the morning. What would you see on the clock? That's right, it would show 6! Let's learn more about how to read the hours on a clock.",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "MINUTES ON CLOCK"
+      ],
+      "subtext": "What is the time when the clock shows 6:45?",
+      "voice": "Now let's talk about minutes. If the clock shows 6:45, what does that mean? It means 45 minutes have passed since 6 o'clock. Let's practice reading the minutes on a clock.",
+      "accent": "#38bdf8",
+      "duration": 18
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "AM AND PM"
+      ],
+      "subtext": "What is the difference between am and pm?",
+      "voice": "Now it's time to learn about am and pm. Am is short for ante meridiem, which means 'before midday'. Pm is short for post meridiem, which means 'after midday'. Let's practice telling the time with am and pm.",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "CALENDAR"
+      ],
+      "subtext": "What day of the week is it today?",
+      "voice": "We also use calendars to keep track of the days and dates. Let's practice reading a calendar and finding the current date.",
+      "accent": "#38bdf8",
+      "duration": 22
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TEST YOUR KNOWLEDGE"
+      ],
+      "subtext": "What time is it on the clock?",
+      "voice": "It's time for a quick quiz. What time is it on the clock below?",
+      "accent": "#38bdf8",
+      "duration": 8
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "TIME IS FUN"
+      ],
+      "subtext": "Celebrating learning",
+      "voice": "Wow, you're now a time expert! You learned about hours, minutes, am and pm, and even how to read a calendar. Remember, time is fun! Keep practicing and soon you'll be a master of time.",
+      "accent": "#38bdf8",
+      "duration": 12
+    }
+  ]
+}

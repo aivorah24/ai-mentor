@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g5_social_studies_world_history_colonisation",
+  "title": "World History — Colonisation",
+  "grade": "Grade 5",
+  "subject": "Social Studies",
+  "curriculum": "IB PYP",
+  "accent": "#a855f7",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "COLONISATION",
+        "A LONG TIME",
+        "AGO"
+      ],
+      "subtext": "Grade 5 · Social Studies",
+      "voice": "Hey kids! Get ready to explore a fascinating piece of history that's still affecting us today: Colonisation! Charlie here.",
+      "accent": "#a855f7",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "WHAT IS COLONISATION?",
+        "EVEN TODAY",
+        "IT MATTERS"
+      ],
+      "subtext": "Exploring Colonisation",
+      "voice": "Colonisation is when a country or group of people takes control of another country or land. Imagine someone moving into your home without asking! That's kind of what happened in many parts of the world.",
+      "accent": "#a855f7",
+      "duration": 15
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "EMPIRES",
+        "RISE AND",
+        "FALL"
+      ],
+      "subtext": "The Rise of Empires",
+      "voice": "Empires are huge groups of countries and lands controlled by a single ruler or government. They often rose to power through trade, conquest, or clever politics. But, just like any powerful structure, empires can also fall.",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "RESISTANCE",
+        "WAS STRONG",
+        "IN MANY"
+      ],
+      "subtext": "Resistance to Colonisation",
+      "voice": "Many people resisted colonisation by fighting back, creating new cultures, and preserving their traditions. Think of it as a big wave of people saying, 'No, this isn't right!'",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "CULTURE",
+        "IMPACTED",
+        "EVERYWHERE"
+      ],
+      "subtext": "The Impact of Colonisation",
+      "voice": "Colonisation had a huge impact on cultures worldwide. It led to the exchange of ideas, technologies, and customs. However, it also caused the loss of languages, traditions, and even entire communities.",
+      "accent": "#a855f7",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT IS",
+        "COLONISATION?",
+        "ANSWER"
+      ],
+      "subtext": "Test Your Knowledge!",
+      "voice": "What is colonisation? A) When a country gives another country a gift B) When a country or group of people takes control of another country or land C) When a country shares its culture with another country",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "KEY POINTS",
+        "REVIEW",
+        "HERE"
+      ],
+      "subtext": "Recap of Key Points",
+      "voice": "Let's review the key points we've learned today: Colonisation is when a country or group takes control of another. Empires rose and fell, and people resisted colonisation. Colonisation also impacted cultures worldwide. Keep exploring and learning about this fascinating topic!",
+      "accent": "#a855f7",
+      "duration": 20
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "topic": "Smart Charts",
+  "chapter": 13,
+  "unit": "Data Handling",
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Hello HELLO! I am Ms. Zara and today we get SMART with CHARTS! Data handling means collecting information, organizing it and reading it! Scientists, doctors, cricket coaches and even chai walas use data every day! Let us learn to read and make our own SMART CHARTS!",
+      "visual": "Smart Charts!",
+      "emotion": "excited",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "TALLY MARKS! When we count things one by one and record them, we use TALLY MARKS! Each time we count one, we draw a vertical line: | is 1, || is 2, ||| is 3, |||| is 4. For the fifth one we draw a LINE ACROSS: |||| with a diagonal slash means 5! This makes counting in 5s super easy!",
+      "visual": "Tally marks 1 to 5",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch13/scene_02.png"
+    },
+    {
+      "scene": 3,
+      "text": "Let us COUNT with tally marks! The teacher asks: What is your favourite fruit? Mango: |||| ||| = 8 students! Banana: |||| = 5 students! Apple: ||| = 3 students! Guava: || = 2 students! The tally marks make it EASY to count without making mistakes! WOOHOO tally power!",
+      "visual": "Fruit tally survey",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch13/scene_03.png"
+    },
+    {
+      "scene": 4,
+      "text": "Making a TALLY TABLE! We organize tally marks into a table with two columns: one for the category (fruit name) and one for the tally count! Then we add a third column for the NUMBER. Mango: |||| ||| = 8. Banana: |||| = 5. Apple: ||| = 3. Guava: || = 2. Total students = 8 + 5 + 3 + 2 = 18!",
+      "visual": "Tally table fruits",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch13/scene_04.png"
+    },
+    {
+      "scene": 5,
+      "text": "PICTOGRAPH! A pictograph uses PICTURES to show data! Instead of writing numbers, we draw pictures! Each picture = a certain number of things. If each apple picture = 2 students who like apples, and we draw 4 apple pictures, that means 4 × 2 = 8 students like apples! Pictures make data BEAUTIFUL!",
+      "visual": "Fruit pictograph",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch13/scene_05.png"
+    },
+    {
+      "scene": 6,
+      "text": "Reading a PICTOGRAPH! Always check the KEY first! The key tells you what each picture represents. If the key says one mango = 5 students, then 3 mango pictures = 3 × 5 = 15 students! The key is the SECRET CODE of the pictograph! Always read the key before reading the chart! BRILLIANT rule!",
+      "visual": "Pictograph with key",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch13/scene_06.png"
+    },
+    {
+      "scene": 7,
+      "text": "MOST POPULAR and LEAST POPULAR! From our fruit data: Mango has the MOST students (8) — it is the MOST POPULAR fruit! Guava has the FEWEST students (2) — it is the LEAST POPULAR! Reading charts lets us find MOST and LEAST quickly, without counting everything again! Data makes decisions SMART!",
+      "visual": "Most and least chart",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch13/scene_07.png"
+    },
+    {
+      "scene": 8,
+      "text": "BAR CHARTS! A bar chart uses BARS (rectangles) to show data! The TALLER the bar, the MORE of that category! The SHORTER the bar, the FEWER! On one side we write numbers (0, 2, 4, 6, 8). On the bottom we write categories (fruits, colours, etc.). Bar charts are even EASIER to read than pictographs at a glance!",
+      "visual": "Bar chart fruits",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch13/scene_08.png"
+    },
+    {
+      "scene": 9,
+      "text": "FAVOURITE COLOURS survey! Blue: 6 students. Red: 4 students. Green: 7 students. Yellow: 3 students. Draw a bar chart! Green bar is TALLEST (7) — most popular! Yellow bar is SHORTEST (3) — least popular! You can read the chart in ONE SECOND just by looking at tall vs short bars! Charts are visual maths magic!",
+      "visual": "Colour bar chart",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch13/scene_09.png"
+    },
+    {
+      "scene": 10,
+      "text": "ASKING QUESTIONS from charts! How many MORE students like blue than yellow? 6 − 3 = 3 more students! How many students were surveyed in total? 6 + 4 + 7 + 3 = 20 students! Charts let us ANSWER QUESTIONS with data! Scientists do this all day — now YOU are a data scientist! MIND. BLOWN!",
+      "visual": "Questions from chart",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch13/scene_10.png"
+    },
+    {
+      "scene": 11,
+      "text": "COLLECT YOUR OWN DATA! Ask your classmates: How do you come to school? Walk, auto, bus or car? Make a tally table! Walk: ||||= 5. Auto: ||| = 3. Bus: |||| || = 7. Car: || = 2. Total: 5+3+7+2 = 17. Most popular: Bus! Collecting real data from real people makes maths come ALIVE!",
+      "visual": "School travel survey",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch13/scene_11.png"
+    },
+    {
+      "scene": 12,
+      "text": "Word problem! A pictograph shows animals in a zoo. Each animal picture = 3 animals. Lions: 4 pictures. Elephants: 2 pictures. Monkeys: 6 pictures. How many monkeys are there? 6 × 3 = 18 monkeys! Which animal has the most? Monkeys! How many total animals? (4+2+6) × 3 = 12 × 3 = 36 animals! Brilliant!",
+      "visual": "Zoo pictograph math",
+      "emotion": "thinking",
+      "sceneImage": null
+    },
+    {
+      "scene": 13,
+      "text": "Data handling steps to remember! COLLECT data by asking questions. ORGANIZE using tally marks and tables. DISPLAY using pictographs or bar charts. ANALYSE by finding most, least, total, and differences! These 4 steps are how REAL scientists and data analysts work every single day! You are already one of them!",
+      "visual": "4 data steps",
+      "emotion": "happy",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "WOOHOO — you are a DATA DETECTIVE! You can make tally marks, read pictographs, draw bar charts and answer data questions! From cricket scorecards to weather reports to election results — DATA CHARTS are everywhere! Ms. Zara is absolutely BEAMING with pride! Now ace that quiz!",
+      "visual": "Data Detective!",
+      "emotion": "celebrating",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "How many does |||| (four tally marks with one diagonal slash) represent?",
+      "options": ["4", "6", "5", "3"],
+      "correct": 2,
+      "explanation": "Four vertical tally marks plus one diagonal slash across them = 5! We make four lines first, and when we count the fifth item we draw a line ACROSS the four to make a bundle of 5. This makes counting faster — every bundle of 5 is easy to spot! Tally master!"
+    },
+    {
+      "question": "In a fruit survey, mango got 8 votes, banana got 5 votes, apple got 3 votes. Which fruit is MOST popular?",
+      "options": ["Banana", "Apple", "Mango", "Guava"],
+      "correct": 2,
+      "explanation": "Mango got 8 votes — the MOST! In a chart or table, the category with the HIGHEST number is the most popular! 8 > 5 > 3, so mango wins! When reading data, always compare all numbers to find the biggest. Mango is the crowd favourite!"
+    },
+    {
+      "question": "A pictograph key says: 1 flower picture = 4 students. There are 3 flower pictures. How many students does this represent?",
+      "options": ["3 students", "7 students", "12 students", "16 students"],
+      "correct": 2,
+      "explanation": "Always use the KEY! 1 picture = 4 students. So 3 pictures = 3 × 4 = 12 students! Multiply the number of pictures by what each picture represents! The key is the secret code of every pictograph. 3 × 4 = 12 — you decoded it PERFECTLY! WOOHOO!"
+    },
+    {
+      "question": "In a bar chart, the green bar reaches up to 7 and the blue bar reaches up to 4. How many MORE students like green than blue?",
+      "options": ["11", "2", "3", "4"],
+      "correct": 2,
+      "explanation": "We SUBTRACT to find the difference! 7 − 4 = 3 more students like green than blue! In charts, to find HOW MANY MORE, always subtract the smaller number from the bigger number. The tall green bar has 3 more than the shorter blue bar. Great chart reading!"
+    },
+    {
+      "question": "A class surveys how students come to school. Walk: 5, Auto: 3, Bus: 7, Car: 2. How many students were surveyed in total?",
+      "options": ["15", "17", "18", "20"],
+      "correct": 1,
+      "explanation": "We ADD all the values! 5 + 3 + 7 + 2 = 17 students total! Walk 5, plus auto 3 = 8, plus bus 7 = 15, plus car 2 = 17! The TOTAL in data is found by adding ALL categories together. 17 students were surveyed. Perfect adding and data reading!"
+    }
+  ]
+}

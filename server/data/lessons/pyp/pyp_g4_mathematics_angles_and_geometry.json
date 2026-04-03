@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_mathematics_angles_and_geometry",
+  "title": "Angles and Geometry",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "ANGLES",
+        "MATTER",
+        "MATH"
+      ],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hey kids! Today we're going on an adventure to learn about angles and geometry. Get ready to discover some cool math concepts!",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "RIGHT",
+        "ANGLE",
+        "90"
+      ],
+      "subtext": "What's a right angle?",
+      "voice": "A right angle is when two lines meet at exactly 90 degrees. Can you draw a picture of a right angle with me?",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "ACUTE",
+        "ANGLE",
+        "LESS"
+      ],
+      "subtext": "What's an acute angle?",
+      "voice": "An acute angle is when two lines meet at less than 90 degrees. It's like a little angle that's less than a right angle.",
+      "accent": "#38bdf8",
+      "duration": 18
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "OBTUSE",
+        "ANGLE",
+        "MORE"
+      ],
+      "subtext": "What's an obtuse angle?",
+      "voice": "An obtuse angle is when two lines meet at more than 90 degrees. It's like a big angle that's more than a right angle.",
+      "accent": "#38bdf8",
+      "duration": 19
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "PROTRACTOR",
+        "TOOL",
+        "ANGLES"
+      ],
+      "subtext": "Using a protractor to measure angles",
+      "voice": "A protractor is a tool that helps us measure angles. Let's practice using a protractor to measure some angles.",
+      "accent": "#38bdf8",
+      "duration": 22
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "PERPENDICULAR"
+      ],
+      "subtext": "",
+      "voice": "What is perpendicular? (wait for answer) That's right! Perpendicular means two lines meet at a right angle.",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "ANGLES",
+        "ARE"
+      ],
+      "subtext": "Summary",
+      "voice": "Hey kids, let's review what we learned today. First, we learned about right, acute, and obtuse angles. Second, we used a protractor to measure angles. Third, we discovered that perpendicular lines meet at a right angle. Great job learning about angles and geometry today!",
+      "accent": "#38bdf8",
+      "duration": 25
+    }
+  ]
+}

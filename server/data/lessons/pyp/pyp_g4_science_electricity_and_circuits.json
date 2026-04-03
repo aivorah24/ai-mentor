@@ -1,0 +1,102 @@
+{
+  "id": "pyp_g4_science_electricity_and_circuits",
+  "title": "Electricity and Circuits",
+  "grade": "Grade 4",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "ELECTRICITY",
+        "IS EVERYWHERE"
+      ],
+      "subtext": "Grade 4 · Science",
+      "voice": "Hey kids! Meet Charlie. Today we're going to learn about something really cool called electricity. Get ready to power up your knowledge!",
+      "accent": "#22c55e",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "CIRCUIT",
+        "IS A PATH"
+      ],
+      "subtext": "What is a Circuit?",
+      "voice": "A circuit is a path that electricity flows through. Imagine a wire that connects two things, like a light bulb and a battery. That's a circuit!",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "CONDUCTOR",
+        "IS A WIRE"
+      ],
+      "subtext": "What is a Conductor?",
+      "voice": "A conductor is a material that electricity flows through easily, like a wire. It's like a superhighway for electricity!",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "INSULATOR",
+        "KEEPS IT IN"
+      ],
+      "subtext": "What is an Insulator?",
+      "voice": "An insulator is a material that keeps electricity from flowing through, like a rubber stopper on a wire. It's like a door that keeps electricity from escaping!",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "BATTERY",
+        "POWERS THE LAMP"
+      ],
+      "subtext": "What is a Battery?",
+      "voice": "A battery is a special device that powers things like lamps and toys. It's like a tiny power plant that gives energy to things!",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "IS A CIRCUIT",
+        "CLOSED OR OPEN"
+      ],
+      "subtext": "Test Your Knowledge!",
+      "voice": "What is a circuit when it's complete and electricity can flow through it? A) Open or B) Closed. Choose your answer!",
+      "accent": "#22c55e",
+      "duration": 5
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY POINTS"
+      ],
+      "subtext": "You Did It!",
+      "voice": "Let's review the key points we learned today: a circuit is a path for electricity to flow through, a conductor helps electricity flow, and an insulator keeps electricity from flowing. We also learned that a battery powers things like lamps and toys. Great job, kids!",
+      "accent": "#22c55e",
+      "duration": 5
+    }
+  ]
+}

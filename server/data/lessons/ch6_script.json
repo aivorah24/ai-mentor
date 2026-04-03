@@ -1,0 +1,139 @@
+{
+  "topic": "How Much Can You Carry?",
+  "chapter": 6,
+  "unit": "Weight and Mass",
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Hello HELLO! I am Ms. Zara! Today we are at the MELA — the fair! And at the mela, everyone is carrying things and weighing things! Today we learn about WEIGHT — how heavy something is! This is SO useful in everyday life. Let us GO!",
+      "visual": "At the mela!",
+      "emotion": "excited",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "Look at this BALANCE SCALE at the mela! It has two pans — one on each side. When one side goes DOWN it is HEAVIER! When both sides are LEVEL they weigh the SAME! Balance scales are used in shops, kitchens, and even doctor's clinics. Watch closely!",
+      "visual": "Balance scale pans",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch6/scene_02.png"
+    },
+    {
+      "scene": 3,
+      "text": "Let us compare! A bag of rice goes on one pan. A bag of sugar goes on the other. The rice side goes DOWN — so rice is HEAVIER! The sugar side goes UP — so sugar is LIGHTER! HEAVIER means more weight, LIGHTER means less weight. Simple and brilliant!",
+      "visual": "Rice vs sugar pan",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch6/scene_03.png"
+    },
+    {
+      "scene": 4,
+      "text": "Before standard weights, people used STONES and PEBBLES to measure! They would put the object on one side and add stones until both sides balanced. Then count the stones. But every stone is a different size! That is a big problem — just like hand spans in measurement!",
+      "visual": "Stones as weights",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch6/scene_04.png"
+    },
+    {
+      "scene": 5,
+      "text": "So we invented STANDARD WEIGHTS! The two most important ones are GRAMS (g) and KILOGRAMS (kg). 1 kilogram = 1000 grams! A bag of flour at the kirana shop might weigh 1 kg. A single biscuit might weigh about 10 grams. KG for heavy things, grams for light things!",
+      "visual": "Grams and kilograms",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch6/scene_05.png"
+    },
+    {
+      "scene": 6,
+      "text": "Let us visit the VEGETABLE market! The aunty weighs 2 kg of tomatoes for you. On the balance scale she puts a 2 kg standard weight on one pan and adds tomatoes on the other pan until it balances! When BOTH sides are equal — you have exactly 2 kg! WOOHOO!",
+      "visual": "Veggie market scale",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch6/scene_06.png"
+    },
+    {
+      "scene": 7,
+      "text": "Real life weights you know! A 1 litre water bottle weighs about 1 kg. A school bag full of books might weigh 4 or 5 kg. A big watermelon is about 3 kg. A small mango is about 200 grams. A chocolate wrapper is about 5 grams! Can you think of more examples?",
+      "visual": "Real weight examples",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch6/scene_07.png"
+    },
+    {
+      "scene": 8,
+      "text": "MATHS with weights! If you buy 2 kg of onions and 3 kg of potatoes, how many kg of vegetables do you have in total? 2 + 3 = 5 kg! And if you can carry only 4 kg, how many kg is too much? 5 − 4 = 1 kg too heavy! You just used maths at the vegetable stall — BRILLIANT!",
+      "visual": "Onions and potatoes",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch6/scene_08.png"
+    },
+    {
+      "scene": 9,
+      "text": "Back at the MELA! Three friends carry bags for the stall. Amara carries 3 kg, Ravi carries 5 kg, Sonu carries 4 kg. Who carries the MOST? Ravi with 5 kg! Who carries the LEAST? Amara with 3 kg! The total they carry: 3 + 5 + 4 = 12 kg. MIND. BLOWN — maths at the fair!",
+      "visual": "Friends at mela stall",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch6/scene_09.png"
+    },
+    {
+      "scene": 10,
+      "text": "Converting units! 1 kg = 1000 grams. So 2 kg = 2000 grams! If a recipe needs 500 grams of flour and you have a 1 kg bag, do you have enough? Yes! Because 1 kg = 1000 grams and 1000 is MORE than 500. You have plenty! Unit conversion is SO useful in cooking!",
+      "visual": "1 kg = 1000 g",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch6/scene_10.png"
+    },
+    {
+      "scene": 11,
+      "text": "HEAVIER, LIGHTER or SAME! Look at these pairs and guess: a brick vs a feather — BRICK is heavier! A elephant vs a mouse — ELEPHANT is heavier! A 1 kg bag of rice vs a 1 kg bag of cotton — they weigh EXACTLY THE SAME! 1 kg is 1 kg no matter what it is! AMAZING!",
+      "visual": "Heavy vs light pairs",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch6/scene_11.png"
+    },
+    {
+      "scene": 12,
+      "text": "Word problem! A shopkeeper has 10 kg of sugar. He sells 4 kg in the morning and 3 kg in the afternoon. How much sugar is left? First find total sold: 4 + 3 = 7 kg. Then subtract: 10 − 7 = 3 kg left! The shopkeeper has 3 kg of sugar remaining. Excellent work!",
+      "visual": "Sugar sacks problem",
+      "emotion": "happy",
+      "sceneImage": null
+    },
+    {
+      "scene": 13,
+      "text": "Let us recap the BIG ideas! A balance scale compares weight — the heavier side goes DOWN. We measure weight in GRAMS (g) and KILOGRAMS (kg). 1 kg = 1000 g. Use kg for heavier things like vegetables and rice. Use grams for lighter things like spices and biscuits!",
+      "visual": "Weight recap",
+      "emotion": "thinking",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "WOOHOO — you are a WEIGHT WIZARD! You know heavier and lighter, balance scales, grams, kilograms and how to solve maths problems with weight! Next time you go to the vegetable market or kirana shop, you will see weights EVERYWHERE! Quiz time — show me what you know!",
+      "visual": "Weight wizard!",
+      "emotion": "celebrating",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "How many grams are equal to 1 kilogram?",
+      "options": ["100 grams", "500 grams", "10 grams", "1000 grams"],
+      "correct": 3,
+      "explanation": "1 kilogram = 1000 grams! Think of it like this: 1 kg is a big unit, 1 gram is a tiny unit, and you need 1000 of those tiny grams to make 1 big kilogram. At the vegetable market, flour and rice are sold in kilograms! Great job knowing this!"
+    },
+    {
+      "question": "On a balance scale, one pan has apples and the other has a 2 kg weight. The apple pan goes DOWN. What does this mean?",
+      "options": ["Apples weigh less than 2 kg", "Apples weigh exactly 2 kg", "Apples weigh more than 2 kg", "The scale is broken"],
+      "correct": 2,
+      "explanation": "When the apple pan goes DOWN it means the apples are HEAVIER — they weigh MORE than 2 kg! The heavier side always goes down on a balance scale. If both pans were level, the apples would weigh exactly 2 kg. You are SO smart!"
+    },
+    {
+      "question": "A bag of potatoes weighs 3 kg and a bag of onions weighs 2 kg. What is the total weight?",
+      "options": ["1 kg", "4 kg", "5 kg", "6 kg"],
+      "correct": 2,
+      "explanation": "We ADD the weights! 3 kg + 2 kg = 5 kg! Total weight of potatoes and onions together is 5 kilograms. Next time you help with vegetable shopping, you can add up the weights yourself! You are a maths STAR!"
+    },
+    {
+      "question": "Which of these is the LIGHTEST?",
+      "options": ["A school bag full of books", "A 5 kg bag of rice", "10 grams of salt", "A 2 kg watermelon"],
+      "correct": 2,
+      "explanation": "10 grams of salt is the LIGHTEST! Grams are much smaller units than kilograms. A school bag might weigh 4-5 kg, rice is 5 kg, watermelon is 2 kg — but 10 grams is tiny, like a pinch of salt! Light things are measured in grams. Brilliant thinking!"
+    },
+    {
+      "question": "Mala has 5 kg of wheat flour. She uses 2 kg for rotis. How much flour is left?",
+      "options": ["7 kg", "2 kg", "4 kg", "3 kg"],
+      "correct": 3,
+      "explanation": "We SUBTRACT! 5 kg − 2 kg = 3 kg of flour left! Mala still has 3 kilograms of wheat flour remaining. Subtraction with weights works the same as subtraction with numbers — just add the unit kg at the end! AMAZING work!"
+    }
+  ]
+}

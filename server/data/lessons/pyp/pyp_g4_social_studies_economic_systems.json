@@ -1,0 +1,114 @@
+{
+  "id": "pyp_g4_social_studies_economic_systems",
+  "title": "Economic Systems",
+  "grade": "Grade 4",
+  "subject": "Social Studies",
+  "curriculum": "IB PYP",
+  "accent": "#a855f7",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "ECONOMY",
+        "SYSTEMS",
+        "WORK"
+      ],
+      "subtext": "Grade 4 · Social Studies",
+      "voice": "Hey there, young explorers! Today we're going on a journey to learn about economic systems. Get ready to discover how people work together to make and trade goods and services!",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "PRODUCERS",
+        "CONSUMERS",
+        "MARKETS"
+      ],
+      "subtext": "Who are Producers, Consumers, and Markets?",
+      "voice": "So, who are the people involved in economic systems? Producers make goods and services, consumers buy them, and markets are where they're sold!",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "SUPPLY",
+        "DEMAND",
+        "BALANCE"
+      ],
+      "subtext": "Understanding Supply, Demand, and Balance",
+      "voice": "Imagine you have a lemonade stand. If you make too much lemonade, you have a surplus. But if you make too little, you have a shortage. That's supply and demand in action!",
+      "accent": "#a855f7",
+      "duration": 25
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "TRADE",
+        "GLOBALLY",
+        "LOCAL"
+      ],
+      "subtext": "Trade: Global and Local",
+      "voice": "Now, let's talk about trade. People trade goods and services with each other, both locally and globally. It's a big world, and we're all connected!",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "GOODS",
+        "SERVICES",
+        "EXAMPLES"
+      ],
+      "subtext": "Goods and Services: Examples",
+      "voice": "Let's look at some examples of goods and services. Goods are things we can touch, like a toy or a book. Services are actions we can do, like a haircut or a meal.",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TEST",
+        "YOUR",
+        "KNOWLEDGE"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "What is a market?",
+      "options": [
+        "A place where producers sell goods",
+        "A place where consumers buy services",
+        "A place where goods and services are sold"
+      ],
+      "duration": 30,
+      "accent": "#a855f7"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Recap and Review",
+      "voice": "Wow, you've learned so much about economic systems! Let's review the key points: Producers make goods and services, markets are where they're sold, and supply and demand help balance the economy. Great job, explorers!",
+      "accent": "#a855f7",
+      "duration": 20
+    }
+  ]
+}

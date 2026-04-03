@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g5_english_grammar_complex_sentences",
+  "title": "Grammar — Complex Sentences",
+  "grade": "Grade 5",
+  "subject": "English",
+  "curriculum": "IB PYP",
+  "accent": "#f59e0b",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "COMPLEX",
+        "SENTENCES",
+        "ARE"
+      ],
+      "subtext": "Grade 5 · English",
+      "voice": "Hey kids, have you ever tried to say something that's a little bit tricky? Like 'I ate breakfast because I was hungry.' That's a complex sentence! Let's learn more about them.",
+      "accent": "#f59e0b",
+      "duration": 15
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "SUBORDINATE",
+        "CLAUSE",
+        "IS"
+      ],
+      "subtext": "A subordinate clause is a group of words that can't stand alone.",
+      "voice": "So, what's a subordinate clause? It's a group of words that can't stand alone. It needs a main clause to make sense. For example, 'because I was hungry' is a subordinate clause.",
+      "accent": "#f59e0b",
+      "duration": 25
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "RELATIVE",
+        "CLAUSE",
+        "IS"
+      ],
+      "subtext": "A relative clause is a group of words that tells us more about someone or something.",
+      "voice": "Now, let's talk about relative clauses. These are groups of words that tell us more about someone or something. For example, 'who lived in a little cottage' is a relative clause.",
+      "accent": "#f59e0b",
+      "duration": 25
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "CONJUNCTIONS",
+        "HELP",
+        "US"
+      ],
+      "subtext": "Conjunctions like and, but, or, and so help us connect clauses.",
+      "voice": "Conjunctions are our friends when it comes to complex sentences. They help us connect clauses. We can use words like and, but, or, and so to join them together.",
+      "accent": "#f59e0b",
+      "duration": 25
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "SEMICOLONS",
+        "SEPARATE",
+        "IDEAS"
+      ],
+      "subtext": "Semicolons help us separate two independent clauses that are closely related.",
+      "voice": "And then there are semicolons. These help us separate two independent clauses that are closely related. For example, 'I love reading books; my favorite book is Harry Potter'.",
+      "accent": "#f59e0b",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "A"
+      ],
+      "subtext": "",
+      "voice": "What is a subordinate clause? A) A group of words that can stand alone B) A group of words that can't stand alone C) A word that connects clauses",
+      "accent": "#f59e0b",
+      "duration": 15
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "YOU",
+        "LEARNED",
+        "LOTS"
+      ],
+      "subtext": "Grade 5 · English",
+      "voice": "You learned that complex sentences have subordinate and relative clauses, conjunctions help connect them, and semicolons separate ideas. Great job, kids! Now, go practice making some complex sentences!",
+      "accent": "#f59e0b",
+      "duration": 20
+    }
+  ]
+}

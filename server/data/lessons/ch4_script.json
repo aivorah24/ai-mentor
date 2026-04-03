@@ -1,0 +1,139 @@
+{
+  "topic": "Long and Short",
+  "chapter": 4,
+  "unit": "Measurement of Length",
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Hello superstar! I am Ms. Zara and today we are going LONG and SHORT! We are going to measure EVERYTHING — with our hands, our feet, and even a ruler! Measurement is one of the coolest things in maths. Are you READY?",
+      "visual": "Long and Short!",
+      "emotion": "excited",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "Before rulers were invented, people used their BODIES to measure things! A HAND SPAN is the distance from your little finger to your thumb when your hand is wide open. Try it now — stretch your hand and measure your pencil box with hand spans! How many hand spans is it?",
+      "visual": "Hand span measure",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch4/scene_02.png"
+    },
+    {
+      "scene": 3,
+      "text": "Another cool unit — the CUBIT! A cubit is the distance from your elbow to the tip of your longest finger. Ancient Egyptians built PYRAMIDS using cubits — can you believe that?! In India, we call it a HATH. Measure your school bag with your cubit now!",
+      "visual": "Cubit arm measure",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch4/scene_03.png"
+    },
+    {
+      "scene": 4,
+      "text": "FOOT STEPS! You can measure a room by walking heel-to-toe across it and counting your steps. The classroom might be 10 of my foot steps — but only 8 of your teacher's! That is the PROBLEM with body measurements — everyone's body is different size!",
+      "visual": "Foot steps on floor",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch4/scene_04.png"
+    },
+    {
+      "scene": 5,
+      "text": "That is WHY we invented STANDARD units! Everyone in the whole world agrees to use CENTIMETRES and METRES. 100 centimetres = 1 metre! A ruler has centimetres marked on it. Now every measurement means the SAME thing to everyone — WOOHOO uniform units!",
+      "visual": "Ruler centimetres",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch4/scene_05.png"
+    },
+    {
+      "scene": 6,
+      "text": "Let us use a RULER! Place the zero end of the ruler at the start of the object. Read the number where the object ends — that is the LENGTH in centimetres! A pencil might be 15 cm. A notebook might be 26 cm. Always start from ZERO — that is the secret rule!",
+      "visual": "Pencil on ruler",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch4/scene_06.png"
+    },
+    {
+      "scene": 7,
+      "text": "COMPARING lengths — which is LONGER and which is SHORTER? If Riya's ribbon is 24 cm and Priya's ribbon is 18 cm, Riya's ribbon is LONGER because 24 is greater than 18! And Priya's is SHORTER. We just used maths to compare! MIND. BLOWN!",
+      "visual": "Two ribbons compared",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch4/scene_07.png"
+    },
+    {
+      "scene": 8,
+      "text": "At the CLASS PARTY, the teacher says — measure the decoration ribbon! They need 5 metres of ribbon to decorate the whole classroom. 1 metre = 100 centimetres, so 5 metres = 500 centimetres! Big lengths use METRES. Small lengths use CENTIMETRES. Easy rule!",
+      "visual": "Classroom decoration",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch4/scene_08.png"
+    },
+    {
+      "scene": 9,
+      "text": "TALLER and SHORTER! Arjun is 120 cm tall. His sister Meena is 95 cm tall. Who is taller? 120 is bigger than 95, so Arjun is TALLER! Who is shorter? Meena! We can also find the DIFFERENCE — 120 − 95 = 25 cm. Arjun is 25 cm taller than Meena!",
+      "visual": "Two kids heights",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch4/scene_09.png"
+    },
+    {
+      "scene": 10,
+      "text": "WIDER and NARROWER! We can also measure WIDTH — how wide something is from side to side. A door might be 80 cm wide. A window might be 60 cm wide. The door is WIDER! A path might be 2 metres wide — that is 200 cm! Width is just measurement going sideways!",
+      "visual": "Door vs window width",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch4/scene_10.png"
+    },
+    {
+      "scene": 11,
+      "text": "Let us do a FUN measuring activity! In class, measure the LONGEST and SHORTEST objects you can find! Measure your desk, your book, your water bottle. Make a list! The desk will probably be the LONGEST and your eraser will be the SHORTEST. Measurement makes you a real scientist!",
+      "visual": "Measuring classroom",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch4/scene_11.png"
+    },
+    {
+      "scene": 12,
+      "text": "Word problem time! A saree is 6 metres long. A dupatta is 2 metres long. How much longer is the saree? 6 − 2 = 4 metres! The saree is 4 metres longer. See — measurement and subtraction work together as a TEAM! Maths is everywhere in Indian life!",
+      "visual": "Saree length problem",
+      "emotion": "happy",
+      "sceneImage": null
+    },
+    {
+      "scene": 13,
+      "text": "Let us remember the BIG ideas! Body measurements like hand span and cubit are fun but not standard — everyone is different size. Centimetres and metres are standard — used by everyone in the world. 100 cm = 1 m. Always start measuring from ZERO!",
+      "visual": "Summary: cm and m",
+      "emotion": "thinking",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "WOOHOO — you are a measurement CHAMPION! You can use hand spans, cubits, rulers and centimetres! You can compare long and short, tall and short, wide and narrow! Ms. Zara is SO proud of you! Now crush that quiz!",
+      "visual": "Measurement champion!",
+      "emotion": "celebrating",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "How many centimetres are equal to 1 metre?",
+      "options": ["10 cm", "1000 cm", "100 cm", "50 cm"],
+      "correct": 2,
+      "explanation": "1 metre = 100 centimetres! So if something is 1 metre long, it is the same as 100 centimetres. Remember: metres are for BIG lengths like a room, centimetres are for SMALL lengths like a pencil. You got it!"
+    },
+    {
+      "question": "Raju's pencil is 14 cm long. Sita's pencil is 9 cm long. How much longer is Raju's pencil?",
+      "options": ["23 cm", "4 cm", "5 cm", "6 cm"],
+      "correct": 2,
+      "explanation": "We SUBTRACT to find the difference! 14 − 9 = 5 cm. Raju's pencil is 5 cm longer than Sita's pencil. Whenever you want to know HOW MUCH longer, you subtract the shorter from the longer. AMAZING work!"
+    },
+    {
+      "question": "Which unit should you use to measure the length of your classroom?",
+      "options": ["Centimetres", "Metres", "Hand spans", "Grams"],
+      "correct": 1,
+      "explanation": "Metres are used for BIGGER lengths like a classroom, a road, or a cricket pitch! Centimetres are for smaller things like a pencil or a book. Your classroom would be about 7 to 10 metres long. Metres are the right pick!"
+    },
+    {
+      "question": "A ribbon is 35 cm long. Another ribbon is 20 cm long. What is the total length of both ribbons?",
+      "options": ["15 cm", "45 cm", "55 cm", "65 cm"],
+      "correct": 2,
+      "explanation": "We ADD the lengths! 35 + 20 = 55 cm. When you put two ribbons end to end, you add their lengths to find the TOTAL. 55 centimetres of ribbon — perfect for a decoration! Great adding!"
+    },
+    {
+      "question": "Why is it better to measure with a ruler than with hand spans?",
+      "options": ["Rulers are more colourful", "Everyone's hand span is different size so results vary", "Hand spans are too long", "Rulers can fly"],
+      "correct": 1,
+      "explanation": "Everyone's hand is a different size! A child's hand span is smaller than a teacher's hand span — so the same object gives DIFFERENT numbers. A ruler is STANDARD — it is the same everywhere in the world. That is why we love rulers!"
+    }
+  ]
+}

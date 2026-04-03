@@ -1,0 +1,106 @@
+{
+  "id": "pyp_g3_mathematics_division_basics",
+  "title": "Division Basics",
+  "grade": "Grade 3",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "7-8 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "DIVISION",
+        "IS",
+        "FUN"
+      ],
+      "subtext": "Grade 3 · Mathematics",
+      "voice": "Hey kids, today we're going on a math adventure! We're going to learn all about division. Are you ready to become a division master?",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "SHARE",
+        "EQUALLY"
+      ],
+      "subtext": "Sharing equally",
+      "voice": "When we divide things, we're sharing them equally among a group of people. Imagine you have 12 cookies and you want to share them with your 4 friends.",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "GROUPING",
+        "IS",
+        "KEY"
+      ],
+      "subtext": "Grouping",
+      "voice": "To divide things, we need to group them together. Let's count how many cookies each friend will get if we divide them into 4 groups.",
+      "accent": "#38bdf8",
+      "duration": 25
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "DIVISION",
+        "IS",
+        "REVERSE"
+      ],
+      "subtext": "Division as reverse multiplication",
+      "voice": "Did you know that division is actually the opposite of multiplication? If we multiply, we're adding groups together. If we divide, we're splitting groups apart.",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "PRACTICE",
+        "TIME"
+      ],
+      "subtext": "Practice time",
+      "voice": "Now it's your turn to practice! Can you divide 12 cookies among 4 friends? Remember to group and share equally.",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TEST",
+        "YOURSELF"
+      ],
+      "subtext": "Quiz time",
+      "voice": "What is 12 ÷ 4? Think about it... If you have 12 cookies and you want to share them equally among 4 friends, how many cookies will each friend get?",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Summary",
+      "voice": "Wow, you're now a division master! Remember these three key points: sharing equally, grouping is key, and division is the opposite of multiplication. Keep practicing, and soon you'll be a division pro!",
+      "accent": "#38bdf8",
+      "duration": 25
+    }
+  ]
+}

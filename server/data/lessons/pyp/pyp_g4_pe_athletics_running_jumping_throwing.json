@@ -1,0 +1,98 @@
+{
+  "id": "pyp_g4_pe_athletics_running_jumping_throwing",
+  "title": "Athletics — Running Jumping Throwing",
+  "grade": "Grade 4",
+  "subject": "PE",
+  "curriculum": "IB PYP",
+  "accent": "#f97316",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "GET READY",
+        "TO RUN",
+        "FAST"
+      ],
+      "subtext": "Grade 4 · PE",
+      "voice": "Welcome to Athletics! Today we're going to learn about running, jumping, and throwing. Are you ready to get moving and have some fun?",
+      "accent": "#f97316",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "SPRINT TECHNIQUE"
+      ],
+      "subtext": "Run Like the Wind",
+      "voice": "When we sprint, we want to run as fast as we can. To do this, we need to use good technique. That means keeping our heads up, our shoulders relaxed, and our arms pumping.",
+      "accent": "#f97316",
+      "duration": 10
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "LONG JUMP"
+      ],
+      "subtext": "Jump for Distance",
+      "voice": "In long jump, we want to jump as far as we can. To do this, we need to start with a good run-up, then jump up and stretch out our legs as far as we can.",
+      "accent": "#f97316",
+      "duration": 10
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "SHOT PUT"
+      ],
+      "subtext": "Heave the Weight",
+      "voice": "In shot put, we want to throw a heavy ball as far as we can. To do this, we need to stand with our feet shoulder-width apart, then lift the ball up and push it forward with our hands.",
+      "accent": "#f97316",
+      "duration": 10
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "PERSONAL BEST"
+      ],
+      "subtext": "Beat Your Own Record",
+      "voice": "A personal best is the best time or distance you can achieve in a particular event. We want to try to beat our personal best every time we compete.",
+      "accent": "#f97316",
+      "duration": 10
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT'S YOUR GOAL"
+      ],
+      "subtext": "Do You Know?",
+      "voice": "What is a personal best in athletics?",
+      "answer": "The best time or distance you can achieve in a particular event.",
+      "duration": 5,
+      "accent": "#f97316"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW TIME"
+      ],
+      "subtext": "Let's Recap",
+      "voice": "Today we learned about sprint technique, long jump, shot put, and personal best. We also learned that we should always try to beat our personal best. Remember, practice makes perfect! Let's get moving and have some fun.",
+      "accent": "#f97316",
+      "duration": 15
+    }
+  ]
+}

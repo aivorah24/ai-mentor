@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_social_studies_cultures_and_traditions",
+  "title": "Cultures and Traditions",
+  "grade": "Grade 3",
+  "subject": "Social Studies",
+  "curriculum": "IB PYP",
+  "accent": "#a855f7",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "CULTURES",
+        "AND",
+        "TRADITIONS"
+      ],
+      "subtext": "Grade 3 · Social Studies",
+      "voice": "Hey kids! Today we're going to explore the amazing world of cultures and traditions from around the globe. Get ready for a fun learning adventure! Charlie here, your guide for today!",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "FESTIVALS",
+        "FUN",
+        "CELEBRATE"
+      ],
+      "subtext": "Festivals and Celebrations",
+      "voice": "Festivals are a big part of many cultures. They're a time to have fun, celebrate with friends and family, and show off our traditions. Can you think of some festivals you've celebrated before?",
+      "accent": "#a855f7",
+      "duration": 15
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "FOOD",
+        "SHAPES",
+        "US"
+      ],
+      "subtext": "Traditional Food",
+      "voice": "Did you know that food is a big part of our culture? It can shape who we are and bring people together. Try some new foods and see how they make you feel!",
+      "accent": "#a855f7",
+      "duration": 12
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "CLOTHES",
+        "REFLECT",
+        "US"
+      ],
+      "subtext": "Traditional Clothing",
+      "voice": "The clothes we wear can reflect our culture and identity. It's a great way to show off our heritage and traditions. Can you think of some traditional clothes you've seen before?",
+      "accent": "#a855f7",
+      "duration": 13
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "CUSTOMS",
+        "HELP",
+        "US"
+      ],
+      "subtext": "Customs and Traditions",
+      "voice": "Customs and traditions are important parts of our culture. They help us understand and respect each other's differences. Can you think of some customs that are important to you?",
+      "accent": "#a855f7",
+      "duration": 14
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "CULTURE"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "What is culture? Is it only about food and clothes? No, culture is about so much more! It's about our traditions, customs, and way of life. Can you tell me what you think culture is?",
+      "accent": "#a855f7",
+      "duration": 8
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "AND",
+        "CELEBRATE"
+      ],
+      "subtext": "Summary",
+      "voice": "Wow, you've learned so much about cultures and traditions today! Let's review what we've learned: festivals are fun, traditional food shapes us, and customs help us respect each other's differences. Keep exploring and celebrating the amazing cultures from around the world!",
+      "accent": "#a855f7",
+      "duration": 18
+    }
+  ]
+}

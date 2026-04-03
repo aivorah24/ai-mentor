@@ -1,0 +1,108 @@
+{
+  "id": "pyp_g4_science_plant_reproduction",
+  "title": "Plant Reproduction",
+  "grade": "Grade 4",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "PLANTS",
+        "GROW",
+        "REPRODUCE"
+      ],
+      "subtext": "Grade 4 · Science",
+      "voice": "Hey there, young explorers! Today we're going on an adventure to learn about how plants make more plants. Are you ready to grow your knowledge?",
+      "accent": "#22c55e",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "POLLEN",
+        "FLOWERS",
+        "TRANSFER"
+      ],
+      "subtext": "What is Pollination?",
+      "voice": "Pollination is when pollen from one plant is transferred to another plant's flower. This is usually done by bees, butterflies, or even the wind. It's like a special delivery for plants!",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "SEEDS",
+        "SPREAD",
+        "PLANTS"
+      ],
+      "subtext": "Seed Dispersal",
+      "voice": "After a plant has made seeds, they need to be spread out to grow into new plants. This is called seed dispersal. Seeds can be carried away by animals, wind, or even water.",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "GERMINATE",
+        "GROW",
+        "PLANT"
+      ],
+      "subtext": "Germination",
+      "voice": "When a seed gets the right conditions, like water and sunlight, it starts to germinate. This means it begins to grow into a new plant. It's like a tiny miracle!",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "LIFE",
+        "CYCLE",
+        "PLANT"
+      ],
+      "subtext": "The Life Cycle of a Plant",
+      "voice": "The life cycle of a plant is the journey it takes from a seed to a mature plant. It starts with germination, grows into a seedling, and eventually produces flowers and seeds of its own.",
+      "accent": "#22c55e",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "ANSWER",
+        "QUESTION"
+      ],
+      "subtext": "What is the main way that pollen is transferred from one plant to another?",
+      "voice": "What is the main way that pollen is transferred from one plant to another? A) By animals B) By wind C) By water",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Let's Review!",
+      "voice": "Let's review the key points we learned today. We learned about pollination, seed dispersal, germination, and the life cycle of a plant. These are all important steps in how plants reproduce and grow.",
+      "accent": "#22c55e",
+      "duration": 20
+    }
+  ]
+}

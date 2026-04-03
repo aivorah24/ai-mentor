@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_mathematics_large_numbers_and_place_value",
+  "title": "Large Numbers and Place Value",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "7-8 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "LARGE NUMBERS",
+        "ARE COMING!",
+        "GET READY!"
+      ],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hey kids! Today we're going to explore something really cool called large numbers. Are you ready to learn about numbers that are bigger than what we usually see?",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "THOUSANDS",
+        "MEAN 3",
+        "000"
+      ],
+      "subtext": "Large Numbers: Understanding Place Value",
+      "voice": "So, let's start with thousands. What does it mean to have thousands? Think about it like this: if you have 3 groups of 1,000 blocks, how many blocks do you have in total?",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "TEEN-THOUSANDS",
+        "MEAN 10",
+        "000"
+      ],
+      "subtext": "Rounding Numbers",
+      "voice": "Now, let's talk about rounding numbers. When we round a number, we're estimating how close it is to the nearest thousand or ten-thousand. Can you think of a time when you needed to estimate something?",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "PATTERN",
+        "RECOGNIZE",
+        "NUMBERS"
+      ],
+      "subtext": "Recognizing Number Patterns",
+      "voice": "Patterns are all around us, even in numbers! Can you find a pattern in these numbers: 1, 10, 100, 1000? What comes next?",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "ROUNDING",
+        "IS EASY",
+        "JUST ESTIMATE!"
+      ],
+      "subtext": "Estimating Numbers",
+      "voice": "Rounding numbers is easy when you practice! Just think about how close the number is to the nearest thousand or ten-thousand. Can you estimate this number: 456?",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT IS",
+        "ONE THOUSAND",
+        "WORTH?"
+      ],
+      "subtext": "Test Your Knowledge",
+      "voice": "What is one thousand worth? Is it 1 coin, 10 coins, or 100 coins?",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "KEY POINTS",
+        "REMEMBERED!",
+        "YAY!"
+      ],
+      "subtext": "Recap and Celebrate",
+      "voice": "Hey kids! Great job learning about large numbers and place value! Remember: thousands mean 3 groups of 1,000, rounding numbers is easy when you estimate, and patterns are all around us. You're amazing mathematicians! Keep practicing and soon you'll be experts in large numbers!",
+      "accent": "#38bdf8",
+      "duration": 20
+    }
+  ]
+}

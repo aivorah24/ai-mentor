@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_ict_internet_safety",
+  "title": "Internet Safety",
+  "grade": "Grade 4",
+  "subject": "ICT",
+  "curriculum": "IB PYP",
+  "accent": "#06b6d4",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "KEEPING",
+        "YOURSELF",
+        "SAFE"
+      ],
+      "subtext": "Grade 4 · ICT",
+      "voice": "Hey there, explorers! Welcome to our adventure on internet safety. We're going to talk about how to stay safe online, and it's going to be super fun!",
+      "accent": "#06b6d4",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "PASSWORD",
+        "PROTECTS",
+        "YOU"
+      ],
+      "subtext": "Why Passwords Matter",
+      "voice": "So, you know how you need a key to unlock your bedroom door? Well, a password is like a secret key that unlocks your computer or phone. It helps keep your personal information safe from others.",
+      "accent": "#06b6d4",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "DON'T",
+        "SHARE",
+        "INFO"
+      ],
+      "subtext": "Sharing Personal Info",
+      "voice": "When you're online, it's like walking down a busy street. You need to be careful about what you share with others. Never give out your address, phone number, or personal secrets to strangers.",
+      "accent": "#06b6d4",
+      "duration": 15
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "CYBER",
+        "BULLYING",
+        "STOP"
+      ],
+      "subtext": "What is Cyberbullying?",
+      "voice": "If someone is being mean to you online, that's cyberbullying! It's not okay, and you should tell a trusted adult, like a parent or teacher. They can help you stop the bullying.",
+      "accent": "#06b6d4",
+      "duration": 25
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "SCREEN",
+        "TIME",
+        "LIMITS"
+      ],
+      "subtext": "Balancing Screen Time",
+      "voice": "It's great to play games and watch videos online, but too much screen time can be bad for your eyes and body. Make sure to take breaks and do other fun things, like playing outside or reading a book.",
+      "accent": "#06b6d4",
+      "duration": 30
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "CYBER"
+      ],
+      "subtext": "What is cyberbullying?",
+      "voice": "Okay, explorers! Let's play a quick quiz. What is cyberbullying? A) Sharing your password with a friend B) Being mean to someone online C) Playing a game with a friend",
+      "accent": "#06b6d4",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "STAY",
+        "SAFE"
+      ],
+      "subtext": "Key Points",
+      "voice": "Wow, we've learned so much about internet safety today! Remember, always use a strong password to protect your information, don't share personal secrets with strangers, and tell a trusted adult if you're being cyberbullied. And don't forget to balance your screen time with other fun activities.",
+      "accent": "#06b6d4",
+      "duration": 20
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_mathematics_area_and_perimeter",
+  "title": "Area and Perimeter",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "AREA",
+        "PERIMETER",
+        "FUN"
+      ],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hey kids, today we're going to talk about area and perimeter. These are two important concepts in math that will help us solve problems in real life.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "AREA",
+        "FORMULA",
+        "IS"
+      ],
+      "subtext": "What is area?",
+      "voice": "The area of a rectangle is found by multiplying the length by the width. Let's use the formula: area = length x width. Can you remember this formula?",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "PERIMETER",
+        "FORMULA",
+        "IS"
+      ],
+      "subtext": "What is perimeter?",
+      "voice": "The perimeter of a rectangle is found by adding up the lengths of all its sides. Let's use the formula: perimeter = 2(length + width). Can you remember this formula?",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "COMPOSITE",
+        "SHAPES",
+        "CAN"
+      ],
+      "subtext": "Composite shapes",
+      "voice": "Sometimes we have composite shapes, which are made up of two or more simple shapes. To find the area and perimeter of a composite shape, we need to break it down into its simple shapes.",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "REAL-LIFE",
+        "EXAMPLES",
+        "USE"
+      ],
+      "subtext": "Real-life examples",
+      "voice": "We use area and perimeter in real life to measure the space we need for things like rooms, gardens, and even our own beds!",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TEST",
+        "YOUR",
+        "SELF"
+      ],
+      "subtext": "Quiz time!",
+      "voice": "What is the formula for the area of a rectangle? A) length + width B) length x width. Choose your answer.",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Summary",
+      "voice": "Today we learned about area and perimeter, including the formula for area and perimeter, how to break down composite shapes, and how we use area and perimeter in real life. Great job, kids!",
+      "accent": "#38bdf8",
+      "duration": 10
+    }
+  ]
+}

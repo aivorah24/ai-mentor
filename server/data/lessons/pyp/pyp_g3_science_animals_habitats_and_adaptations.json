@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_science_animals_habitats_and_adaptations",
+  "title": "Animals — Habitats and Adaptations",
+  "grade": "Grade 3",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "WELCOME",
+        "TO",
+        "WONDERLAND"
+      ],
+      "subtext": "Grade 3 · Science",
+      "voice": "Hey there, young explorers! Today we're going on a fantastic journey to learn about animals and their homes.",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "LAND",
+        "HABITAT",
+        "ANIMALS"
+      ],
+      "subtext": "Where do animals live?",
+      "voice": "Some animals live on land, where they can run, jump, and play. Can you think of some animals that live on land?",
+      "accent": "#22c55e",
+      "duration": 25
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "WATER",
+        "HABITAT",
+        "ANIMALS"
+      ],
+      "subtext": "Animals that live in water",
+      "voice": "Other animals live in water, where they can swim and dive. Some animals even live in both land and water!",
+      "accent": "#22c55e",
+      "duration": 25
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "AIR",
+        "HABITAT",
+        "ANIMALS"
+      ],
+      "subtext": "Animals that live in the air",
+      "voice": "And then there are animals that live in the air, where they can fly and soar.",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "ADAPTATION",
+        "HELP",
+        "ANIMALS"
+      ],
+      "subtext": "Adaptations",
+      "voice": "Animals have special features that help them live in their habitats. These features are called adaptations.",
+      "accent": "#22c55e",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "ADAPTATION"
+      ],
+      "subtext": "True or False: Adaptation is when an animal moves to a new habitat.",
+      "voice": "True or False: Adaptation is when an animal moves to a new habitat. The answer is False! Adaptation is when an animal develops special features to live in their habitat.",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "What did we learn?",
+      "voice": "Today we learned about land, water, and air habitats. We also discovered that animals have special features called adaptations that help them live in their habitats. And finally, we learned about the food chain and how animals are connected to each other.",
+      "accent": "#22c55e",
+      "duration": 30
+    }
+  ]
+}

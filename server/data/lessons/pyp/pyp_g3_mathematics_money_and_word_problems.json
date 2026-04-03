@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_mathematics_money_and_word_problems",
+  "title": "Money and Word Problems",
+  "grade": "Grade 3",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "MONEY MATTERS",
+        "LEARN MONEY",
+        "FUN"
+      ],
+      "subtext": "Grade 3 · Mathematics",
+      "voice": "Welcome, young explorers! Today, we're going on an adventure to learn about money in our everyday lives. Get ready to count, calculate, and solve fun money problems!",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "RUPEES",
+        "CURRENCY",
+        "INDIA"
+      ],
+      "subtext": "Understanding Rupees",
+      "voice": "In India, we use rupees as our currency. Let's see how much 10 rupees, 50 paise, and 20 paise make together. Can you add them up?",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "COINS",
+        "NOTES",
+        "COMBINATION"
+      ],
+      "subtext": "Combining Coins and Notes",
+      "voice": "We can use coins or notes to buy things. Let's see how we can combine them to make a total amount. For example, if we have 2 rupee coins and a 5 rupee note, how much do we have in total?",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "GIVING CHANGE",
+        "CALCULATING",
+        "SUBTRACTION"
+      ],
+      "subtext": "Giving Change",
+      "voice": "Sometimes, we get change when we buy something. Let's learn how to calculate the change we should give to someone. For example, if we pay 10 rupees for something that costs 5 rupees, how much change should we give?",
+      "accent": "#38bdf8",
+      "duration": 18
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "MULTI-STEP",
+        "WORDS",
+        "PROBLEMS"
+      ],
+      "subtext": "Solving Multi-Step Word Problems",
+      "voice": "Now, let's practice solving multi-step word problems. For example, if we have 5 rupees and we spend 2 rupees on a toy, then we get a 1 rupee coin as change. How much money do we have left?",
+      "accent": "#38bdf8",
+      "duration": 22
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT'S THE",
+        "CHANGE",
+        "AMOUNT"
+      ],
+      "subtext": "Answer: 3",
+      "voice": "What's the change amount if we pay 10 rupees for something that costs 7 rupees?",
+      "accent": "#38bdf8",
+      "duration": 8
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "THREE",
+        "KEY"
+      ],
+      "subtext": "Key Points",
+      "voice": "Let's recap what we learned today. First, we understand rupees and how to combine coins and notes. Second, we calculate change when we buy something. And third, we solve multi-step word problems. Great job, young explorers! You're now money masters!",
+      "accent": "#38bdf8",
+      "duration": 15
+    }
+  ]
+}

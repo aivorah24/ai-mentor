@@ -1,0 +1,138 @@
+{
+  "topic": "Fun with Numbers",
+  "chapter": 2,
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Woohooo! I am Ms. Zara and today we go on a NUMBER adventure! Numbers are not just 1, 2, 3 — they go ALL the way up to hundreds! By the end of today you will read, write and compare numbers like a total champion. READY? Let us GO!",
+      "emotion": "excited",
+      "visual": "Numbers Are Amazing!",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "Let us start with ONE digit numbers. 1, 2, 3, 4, 5, 6, 7, 8, 9 — these are ONE digit numbers! But when we get to TEN — something magical happens. We need TWO digits! 10 has a 1 and a 0. The 1 means one GROUP of ten! This is the birth of TENS!",
+      "emotion": "happy",
+      "visual": "1-digit vs 2-digit!",
+      "sceneImage": null
+    },
+    {
+      "scene": 3,
+      "text": "TENS and ONES! Look at the number 47. The 4 is in the TENS place — it means 4 groups of ten = 40. The 7 is in the ONES place — it means 7 single things. So 47 = 40 + 7! This is called PLACE VALUE. Each digit has its own special place and power!",
+      "emotion": "excited",
+      "visual": "47 = 4 tens + 7 ones",
+      "sceneImage": null
+    },
+    {
+      "scene": 4,
+      "text": "Now — THREE digit numbers! When we have 10 groups of ten, we get ONE HUNDRED! 100! That is a 1 in the HUNDREDS place, 0 in the tens, 0 in the ones. Picture 100 mangoes in a basket — that is a LOT of mangoes! HUNDREDS are BIG and POWERFUL!",
+      "emotion": "surprised",
+      "visual": "100 = 1 hundred!",
+      "sceneImage": null
+    },
+    {
+      "scene": 5,
+      "text": "Meet the PLACE VALUE CHART! It has three columns — H for Hundreds, T for Tens, O for Ones. Let us place 345 in the chart! 3 goes in H, 4 goes in T, 5 goes in O. So 345 = 300 + 40 + 5. Three hundred and forty five! Say it with me — THREE HUNDRED AND FORTY FIVE!",
+      "emotion": "celebrating",
+      "visual": "H=3, T=4, O=5",
+      "sceneImage": null
+    },
+    {
+      "scene": 6,
+      "text": "Let us try 208! What is in the hundreds place? 2 — so we have 200! What is in the tens place? 0 — so ZERO tens! What is in the ones place? 8 — so 8 ones! 208 = 200 + 0 + 8. Two hundred and eight! The ZERO in the middle is very important — never forget it!",
+      "emotion": "thinking",
+      "visual": "208 = 200 + 0 + 8",
+      "sceneImage": null
+    },
+    {
+      "scene": 7,
+      "text": "Reading numbers in WORDS is a superpower! 456 = Four hundred and fifty six. 320 = Three hundred and twenty. 105 = One hundred and five. 999 = Nine hundred and ninety nine — that is the BIGGEST three digit number! What comes after 999? TEN HUNDRED — which we call ONE THOUSAND! BOOM!",
+      "emotion": "excited",
+      "visual": "999 → 1000!",
+      "sceneImage": null
+    },
+    {
+      "scene": 8,
+      "text": "Now — COMPARING numbers! Which is bigger: 456 or 389? Look at the HUNDREDS place first! 4 hundreds vs 3 hundreds — 4 is MORE so 456 is BIGGER! We write: 456 > 389. The arrow always points to the SMALLER number. Greater than, less than — you are a comparison KING or QUEEN!",
+      "emotion": "happy",
+      "visual": "456 > 389",
+      "sceneImage": null
+    },
+    {
+      "scene": 9,
+      "text": "What if the hundreds are the same? Compare 572 and 568! Both have 5 in hundreds — SAME! Now look at TENS: 7 tens vs 6 tens — 7 is more! So 572 > 568! Always compare from LEFT to RIGHT: hundreds first, then tens, then ones. It is like reading a secret code!",
+      "emotion": "questioning",
+      "visual": "572 vs 568 — check tens!",
+      "sceneImage": null
+    },
+    {
+      "scene": 10,
+      "text": "BEFORE and AFTER! What comes before 500? 499! What comes after 699? 700! What is BETWEEN 149 and 151? It is 150! Knowing before, after and between helps you jump around the number line like a champion! Quiz yourself: what comes before 200? Yes — ONE NINETY NINE — 199!",
+      "emotion": "excited",
+      "visual": "Before — — — After",
+      "sceneImage": null
+    },
+    {
+      "scene": 11,
+      "text": "ORDERING numbers! Put these in order from SMALLEST to BIGGEST — 312, 198, 475, 230! Step one: find the smallest hundreds. 198 has only 1 hundred — so it goes FIRST! Then 230, then 312, then 475! Smallest to biggest is called ASCENDING order. Biggest to smallest is DESCENDING — like climbing DOWN stairs!",
+      "emotion": "celebrating",
+      "visual": "198 < 230 < 312 < 475",
+      "sceneImage": null
+    },
+    {
+      "scene": 12,
+      "text": "ODD and EVEN numbers — the great number families! EVEN numbers end in 0, 2, 4, 6, 8 — they can be shared equally between two friends! ODD numbers end in 1, 3, 5, 7, 9 — one will always be left over! 246 is EVEN. 357 is ODD. Just look at the ONES digit and you know instantly!",
+      "emotion": "happy",
+      "visual": "Even vs Odd!",
+      "sceneImage": null
+    },
+    {
+      "scene": 13,
+      "text": "Let us do a quick recap challenge! Is 384 greater or less than 348? Look at hundreds — both 3, same! Look at tens — 8 vs 4, eight is more! So 384 is GREATER than 348. Write it: 384 > 348! Is 520 odd or even? It ends in 0 — so it is EVEN! You solved it in seconds — you are incredible!",
+      "emotion": "excited",
+      "visual": "Quick recap challenge!",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "YOU are now a NUMBER NINJA! You know place value, hundreds tens and ones, how to compare numbers, order them and spot odd and even! Numbers go all the way to 999 in Class 3 — and YOU can handle every single one! Quiz time — let us see that ninja power!",
+      "emotion": "celebrating",
+      "visual": "Number Ninja!",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "In the number 465, which digit is in the TENS place?",
+      "options": ["A. 4", "B. 6", "C. 5", "D. 0"],
+      "correct": 1,
+      "explanation": "In 465 — 4 is in the Hundreds place, 6 is in the TENS place, and 5 is in the Ones place! The tens place is always the middle digit in a 3-digit number. So the answer is 6!"
+    },
+    {
+      "question": "Which number is GREATER: 527 or 572?",
+      "options": ["A. 527", "B. 572", "C. They are equal", "D. Cannot tell"],
+      "correct": 1,
+      "explanation": "Both have 5 in the hundreds place — same! Now look at the tens: 527 has 2 tens, 572 has 7 tens. 7 is more than 2, so 572 is GREATER! We write 572 > 527. Always compare from left to right!"
+    },
+    {
+      "question": "What number comes BETWEEN 299 and 301?",
+      "options": ["A. 298", "B. 302", "C. 300", "D. 310"],
+      "correct": 2,
+      "explanation": "Between 299 and 301 is 300! Think of it as a stepping stone: 299 → 300 → 301. The number exactly in the middle is 300 — which is also a special number because it is three hundreds!"
+    },
+    {
+      "question": "Arrange in ASCENDING order: 410, 401, 441, 104",
+      "options": ["A. 104, 401, 410, 441", "B. 441, 410, 401, 104", "C. 104, 410, 401, 441", "D. 401, 104, 410, 441"],
+      "correct": 0,
+      "explanation": "Ascending means smallest to biggest! 104 has only 1 hundred — smallest! Then 401, 410, and 441 all have 4 hundreds. Among them, 401 < 410 < 441 (compare tens: 0 < 1 < 4). So the order is 104, 401, 410, 441!"
+    },
+    {
+      "question": "Which of these is an EVEN number?",
+      "options": ["A. 347", "B. 253", "C. 418", "D. 571"],
+      "correct": 2,
+      "explanation": "To check odd or even, just look at the ONES digit! 347 ends in 7 — odd. 253 ends in 3 — odd. 418 ends in 8 — EVEN! 571 ends in 1 — odd. So 418 is the even number. Even numbers always end in 0, 2, 4, 6, or 8!"
+    }
+  ]
+}

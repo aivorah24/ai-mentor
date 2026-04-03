@@ -1,0 +1,33 @@
+Sprint,Sprint Dates,Task ID,Feature / Task,Category,Priority,Status,Owner,Est. Hours,Notes
+Sprint 1 — DEMO,Apr 1 – Apr 14 2026,S1-01,Voice modulation — swap ElevenLabs Jessica → Laura or Charlie,Voice / TTS,URGENT,To Do,Sai Mohan,1h,"Client feedback 30-03 + Prethyushaa 01-04. File: server/routes/lesson.js"
+Sprint 1 — DEMO,Apr 1 – Apr 14 2026,S1-02,Image pipeline — generate & store scene images for Grade 3 Maths Ch1–14,Content / Backend,URGENT,In Progress,Sai Mohan,3h,Demo blocker. Scripts ready in server/data/lessons/
+Sprint 1 — DEMO,Apr 1 – Apr 14 2026,S1-03,AI Coach screen — conversational tutoring UI (centrepiece of demo),Frontend,HIGH,To Do,Sai Mohan,4h,Only 20% done. Most important demo feature.
+Sprint 1 — DEMO,Apr 1 – Apr 14 2026,S1-04,Learning Paths screen — curriculum-aligned topics per grade,Frontend,HIGH,To Do,Sai Mohan,3h,Not built. Needed for demo flow.
+Sprint 1 — DEMO,Apr 1 – Apr 14 2026,S1-05,UI/UX fine tuning — implement all feedback from Prethyushaa,Frontend,HIGH,To Do,Sai Mohan,3h,Prethyushaa confirmed she has updated all feedback (01-04-2026). Review her sheet first.
+Sprint 1 — DEMO,Apr 1 – Apr 14 2026,S1-06,Leaderboard ranking bands — show top 3/top 5 buckets + improvement tips,Frontend + Backend,MED,To Do,Sai Mohan,2h,Client decision 27-03: never show exact rank
+Sprint 1 — DEMO,Apr 1 – Apr 14 2026,S1-07,Schedule UI — replace end time with duration selector (1h / 1.5h / 2h),Frontend,MED,To Do,Sai Mohan,1h,Client feedback 27-03
+Sprint 1 — DEMO,Apr 1 – Apr 14 2026,S1-08,Prototype lesson video — ElevenLabs audio + scene images merged,Content,HIGH,To Do,Sai Mohan,3h,"Experiment: video vs scene version, get kid feedback"
+Sprint 1 — DEMO,Apr 1 – Apr 14 2026,S1-09,Demo prep & polish — full walkthrough NCERT G3 Maths + Science + IB G3,QA / Demo,HIGH,To Do,Sai Mohan,2h,April 10 hard deadline
+Sprint 1 — DEMO,Apr 1 – Apr 14 2026,S1-10,PYP sample assignment sheet — collect from Prethyushaa,Content,HIGH,Waiting on Client,Prethyushaa,–,Prethyushaa to send. Do not build pipeline without this.
+,,,,,,,,,
+Sprint 2 — POST DEMO,Apr 15 – Apr 28 2026,S2-01,PDF/image-to-questions pipeline — teacher uploads worksheet → AI splits → student attempts → AI grades,Backend + AI,HIGH,Blocked (needs S1-10),Sai Mohan,4h,Needs PYP sheet from Prethyushaa first
+Sprint 2 — POST DEMO,Apr 15 – Apr 28 2026,S2-02,In-app messaging — teacher ↔ parent + teacher → student (Supabase Realtime),Backend + Frontend,MED,In Progress (~70%),Sai Mohan,2h,Must NOT use Firebase. Use Supabase Realtime or Socket.io.
+Sprint 2 — POST DEMO,Apr 15 – Apr 28 2026,S2-03,Assignment submission flow — wire AI grading/explanation broker end to end,Backend + Frontend,MED,Partial,Sai Mohan,3h,QuizModal wired; broker not connected yet
+Sprint 2 — POST DEMO,Apr 15 – Apr 28 2026,S2-04,Aivorah mascot — age-tier display (5–8 / 9–12 / 13–18) + color & dress customisation,Frontend,MED,To Do,Sai Mohan,4h,Design firm working on mascot artwork in parallel
+Sprint 2 — POST DEMO,Apr 15 – Apr 28 2026,S2-05,Progress insights — show student/parent which concepts need attention,Frontend + Backend,MED,To Do,Sai Mohan,3h,Age-appropriate framing — gentle for under-13
+Sprint 2 — POST DEMO,Apr 15 – Apr 28 2026,S2-06,Multi-LLM selector UI — Groq / Gemini / Claude switcher,Frontend,LOW,To Do,Sai Mohan,2h,Gemini service already added in server/services/gemini.js
+Sprint 2 — POST DEMO,Apr 15 – Apr 28 2026,S2-07,Playwright E2E tests — stabilise login flow + re-run all parent tests,QA,LOW,Partial,Sai Mohan,2h,77 tests scaffolded; login flow had issues at session end
+Sprint 2 — POST DEMO,Apr 15 – Apr 28 2026,S2-08,Deploy — Railway backend + Vercel frontend (production),DevOps,MED,To Do,Sai Mohan,2h,Image hosting (149MB) still unsolved
+,,,,,,,,,
+Sprint 3 — PILOT PREP,Apr 29 – May 12 2026,S3-01,Teacher dashboard — class-wide progress view + individual student drilldown,Frontend + Backend,HIGH,To Do,Sai Mohan,6h,Completely different dashboard from student/parent
+Sprint 3 — PILOT PREP,Apr 29 – May 12 2026,S3-02,Parent dashboard — polish + real data wiring,Frontend,MED,Partial (~40%),Sai Mohan,3h,De-mocked; needs polish and complete real data wiring
+Sprint 3 — PILOT PREP,Apr 29 – May 12 2026,S3-03,NCERT Grade 4 & 5 content ingestion — textbook PDFs to Qdrant,Content / Backend,MED,Blocked (ZIP pending),Sai Mohan,4h,User to provide PDF ZIP files for Grade 4 and 5
+Sprint 3 — PILOT PREP,Apr 29 – May 12 2026,S3-04,IB PYP Grade 4 & 5 — complete partial content,Content / Backend,MED,Partial,Sai Mohan,3h,Grade 3 done; Grade 4 and 5 partial
+Sprint 3 — PILOT PREP,Apr 29 – May 12 2026,S3-05,Family voice recording — integrate younger daughter + elder daughter + Pratisha voices,Voice / TTS,MED,Blocked (recordings pending),Sai Mohan,3h,"Needs ElevenLabs Creator ($22/mo) for cloning. Recordings not yet done."
+Sprint 3 — PILOT PREP,Apr 29 – May 12 2026,S3-06,Image quality upgrade — evaluate Gemini API (paid) for scene image generation,Content,LOW,To Do,Sai Mohan,2h,Currently using Hugging Face free models
+,,,,,,,,,
+Sprint 4 — PILOT LAUNCH,May 13 – May 26 2026,S4-01,Challenge system — school-run paid/free challenges + competitive leaderboard,Backend + Frontend,MED,To Do,Sai Mohan,5h,Only teachers/parents can enroll under-14 students
+Sprint 4 — PILOT LAUNCH,May 13 – May 26 2026,S4-02,Mobile publishing — iOS/Android prep (React Native already supports),Mobile,LOW,To Do,TBD,–,Parents + teachers get mobile first; students use web/tablet
+Sprint 4 — PILOT LAUNCH,May 13 – May 26 2026,S4-03,Cambridge curriculum — content ingestion + learning paths,Content,LOW,To Do,TBD,–,Later phase; IB PYP and NCERT first
+Sprint 4 — PILOT LAUNCH,May 13 – May 26 2026,S4-04,Performance optimisation — CDN / caching for images and audio,DevOps,LOW,To Do,Sai Mohan,3h,After pilot school launch
+Sprint 4 — PILOT LAUNCH,May 13 – May 26 2026,S4-05,Help Center screen,Frontend,LOW,To Do,Sai Mohan,2h,Low-hanging fruit; nice to have for pilot

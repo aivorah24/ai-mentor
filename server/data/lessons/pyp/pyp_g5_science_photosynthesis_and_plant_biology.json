@@ -1,0 +1,110 @@
+{
+  "id": "pyp_g5_science_photosynthesis_and_plant_biology",
+  "title": "Photosynthesis and Plant Biology",
+  "grade": "Grade 5",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "PHOTOSYNTHESIS",
+        "IS",
+        "AMAZING"
+      ],
+      "subtext": "Grade 5 · Science",
+      "voice": "Hey there young explorers, welcome to the amazing world of photosynthesis! Did you know that plants are superheroes that produce their own food? Let's dive in and learn more!",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "CHLOROPHYLL",
+        "IS",
+        "KEY"
+      ],
+      "subtext": "What makes photosynthesis possible?",
+      "voice": "Chlorophyll is a special green pigment that helps plants absorb sunlight. It's like a superpower that helps them convert sunlight into food!",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "GLUCOSE",
+        "IS",
+        "FOOD"
+      ],
+      "subtext": "What do plants produce through photosynthesis?",
+      "voice": "Through photosynthesis, plants produce glucose, which is their food. They use glucose to grow strong and healthy, just like how we use food to give us energy!",
+      "accent": "#22c55e",
+      "duration": 18
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "OXYGEN",
+        "IS",
+        "BYPRODUCT"
+      ],
+      "subtext": "What else do plants produce during photosynthesis?",
+      "voice": "As a bonus, plants also produce oxygen as a byproduct of photosynthesis. And guess what? We need oxygen to breathe!",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "CARBON",
+        "DISSOLVED",
+        "IN",
+        "WATER"
+      ],
+      "subtext": "What do plants absorb from the air?",
+      "voice": "Plants absorb carbon dioxide from the air, which is dissolved in water. They use this carbon dioxide to produce glucose and oxygen.",
+      "accent": "#22c55e",
+      "duration": 18
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "DO",
+        "PLANTS"
+      ],
+      "subtext": "True or False: Plants produce oxygen through respiration.",
+      "voice": "True or False: Plants produce oxygen through respiration. Think you know the answer? Let's find out!",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "KEY",
+        "POINTS",
+        "REVIEW"
+      ],
+      "subtext": "Let's review what we've learned!",
+      "voice": "So, what did we learn today? Plants use chlorophyll to make glucose from sunlight. They also produce oxygen as a byproduct. And they absorb carbon dioxide from the air. Remember, plants are superheroes that help us breathe and give us food!",
+      "accent": "#22c55e",
+      "duration": 20
+    }
+  ]
+}

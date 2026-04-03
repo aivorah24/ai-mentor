@@ -1,0 +1,110 @@
+{
+  "id": "pyp_g5_ict_cybersecurity_and_digital_citizenship",
+  "title": "Cybersecurity and Digital Citizenship",
+  "grade": "Grade 5",
+  "subject": "ICT",
+  "curriculum": "IB PYP",
+  "accent": "#06b6d4",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "CYBERSECURITY",
+        "IS",
+        "IMPORTANT"
+      ],
+      "subtext": "Grade 5 · ICT",
+      "voice": "Welcome to the world of cybersecurity! Today we're going on an adventure to learn about keeping ourselves safe online.",
+      "accent": "#06b6d4",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "ENCRYPTION",
+        "CODE",
+        "SECURITY"
+      ],
+      "subtext": "What is Encryption?",
+      "voice": "Imagine sending a secret message to your best friend. You would want to make sure that only they can read it, right? That's what encryption does. It's like a secret code that keeps our information safe.",
+      "accent": "#06b6d4",
+      "duration": 10
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "PHISHING",
+        "SCAM",
+        "WARNING"
+      ],
+      "subtext": "What is Phishing?",
+      "voice": "Phishing is like a trick that scammers use to get us to give them our secrets. They might send us a fake email or message that looks real, but it's not. Always be careful and never give out your passwords or personal info.",
+      "accent": "#06b6d4",
+      "duration": 10
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "DIGITAL",
+        "FOOTPRINT",
+        "TRAIL"
+      ],
+      "subtext": "What is a Digital Footprint?",
+      "voice": "Have you ever left a trail of crumbs when you're walking through the park? That's kind of like a digital footprint. It's the path we leave online, and it can be seen by others. Let's make sure to be kind and respectful online.",
+      "accent": "#06b6d4",
+      "duration": 10
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "COPYRIGHT",
+        "OWNERSHIP",
+        "RESPECT"
+      ],
+      "subtext": "What is Copyright?",
+      "voice": "When we create something, like a drawing or a story, it's ours. But sometimes we might see something online that looks like it was created by someone else. That's why we need to respect others' work and ask permission before using it.",
+      "accent": "#06b6d4",
+      "duration": 10
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "QUIZ",
+        "TIME",
+        "FUN"
+      ],
+      "subtext": "What is Phishing?",
+      "voice": "What is phishing? A) A type of encryption B) A scam that tries to get your secrets C) A way to keep your online footprint small",
+      "answer": "B) A scam that tries to get your secrets",
+      "accent": "#06b6d4",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "What did we learn today?",
+      "voice": "So, what did we learn today? We learned about encryption, which keeps our information safe. We learned about phishing, which is a scam that tries to get our secrets. And we learned about digital footprint, which is the path we leave online. Let's remember to be kind, respectful, and safe online!",
+      "accent": "#06b6d4",
+      "duration": 10
+    }
+  ]
+}

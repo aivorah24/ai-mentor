@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g5_social_studies_sustainability_and_environment",
+  "title": "Sustainability and Environment",
+  "grade": "Grade 5",
+  "subject": "Social Studies",
+  "curriculum": "IB PYP",
+  "accent": "#a855f7",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "SUSTAINABLE",
+        "FUTURE",
+        "EARTH"
+      ],
+      "subtext": "Grade 5 · Social Studies",
+      "voice": "Hey kids, let's talk about something super cool and important - taking care of our planet! We're going to explore some big ideas about sustainability and how we can make a difference.",
+      "accent": "#a855f7",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "SUSTAINABLE",
+        "GOALS",
+        "SDGS"
+      ],
+      "subtext": "What are the Sustainable Development Goals?",
+      "voice": "Did you know there are 17 big goals that the whole world is working on together? These are called the Sustainable Development Goals, or SDGs for short. They help us create a more sustainable world for everyone.",
+      "accent": "#a855f7",
+      "duration": 30
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "DEFORESTATION",
+        "HARMFUL",
+        "TREES"
+      ],
+      "subtext": "What's happening to our forests?",
+      "voice": "Some people are cutting down trees in our forests without replanting them. This is called deforestation. It harms the animals that live in the forest and affects the air we breathe.",
+      "accent": "#a855f7",
+      "duration": 30
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "OCEAN",
+        "POLLUTION",
+        "PROBLEM"
+      ],
+      "subtext": "What's happening to our oceans?",
+      "voice": "When we throw trash into the ocean, it hurts the fish and other creatures that live there. This is called ocean pollution. We need to take care of our oceans and keep them clean.",
+      "accent": "#a855f7",
+      "duration": 30
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "RENEWABLE",
+        "ENERGY",
+        "HELP"
+      ],
+      "subtext": "How can we use sustainable energy?",
+      "voice": "We can use energy from the sun, wind, and water instead of burning fossil fuels. This is called renewable energy. It helps reduce pollution and creates a cleaner world for us.",
+      "accent": "#a855f7",
+      "duration": 30
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "CAN",
+        "WE"
+      ],
+      "subtext": "Let's review!",
+      "voice": "What can we do to help the environment? (Wait for student response) Great answer! We can all make a difference.",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "KEY",
+        "POINTS",
+        "REVIEW"
+      ],
+      "subtext": "Let's celebrate what we've learned!",
+      "voice": "We learned about the Sustainable Development Goals, the impact of deforestation and ocean pollution, and the importance of using renewable energy. That's three big key points to help us create a more sustainable future for all.",
+      "accent": "#a855f7",
+      "duration": 10
+    }
+  ]
+}

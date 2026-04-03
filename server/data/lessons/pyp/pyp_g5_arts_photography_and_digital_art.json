@@ -1,0 +1,102 @@
+{
+  "id": "pyp_g5_arts_photography_and_digital_art",
+  "title": "Photography and Digital Art",
+  "grade": "Grade 5",
+  "subject": "Arts",
+  "curriculum": "IB PYP",
+  "accent": "#ec4899",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "WELCOME",
+        "PHOTOGRAPHY",
+        "ADVENTURE"
+      ],
+      "subtext": "Grade 5 · Arts",
+      "voice": "Hey there, young artists! Welcome to the world of photography and digital art. Get ready to capture amazing moments and unleash your creativity!",
+      "accent": "#ec4899",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "COMPOSITION",
+        "IS KEY"
+      ],
+      "subtext": "Understanding Composition",
+      "voice": "When we take a photo, we're not just pointing the camera at something. We're creating a work of art. Composition is the arrangement of visual elements in our photo to create a balanced and interesting image.",
+      "accent": "#ec4899",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "RULE OF",
+        "THIRDS"
+      ],
+      "subtext": "The Rule of Thirds",
+      "voice": "One way to create a balanced composition is to use the rule of thirds. Imagine your photo is divided into nine equal parts by two lines horizontally and two lines vertically. Place important elements along these lines for a more interesting photo.",
+      "accent": "#ec4899",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "DIGITAL",
+        "EDITING"
+      ],
+      "subtext": "Digital Editing",
+      "voice": "Now that we've taken our photo, we can enhance it using digital editing. This is where we can adjust the brightness, contrast, and color balance to make our photo look its best.",
+      "accent": "#ec4899",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "VISUAL",
+        "STORYTELLING"
+      ],
+      "subtext": "Visual Storytelling",
+      "voice": "The final step in our photography journey is visual storytelling. This is where we use our photo to tell a story or convey a message. We can use composition, lighting, and other elements to create a powerful narrative.",
+      "accent": "#ec4899",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT IS",
+        "COMPOSITION"
+      ],
+      "subtext": "Test Your Knowledge",
+      "voice": "What is composition in photography? A) The camera settings B) The arrangement of visual elements C) The lighting conditions",
+      "accent": "#ec4899",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "LEARNED TODAY"
+      ],
+      "subtext": "Key Takeaways",
+      "voice": "We've learned so much today! We understand how composition, the rule of thirds, digital editing, and visual storytelling can help us create amazing photos. Remember, photography is all about experimentation and having fun.",
+      "accent": "#ec4899",
+      "duration": 15
+    }
+  ]
+}

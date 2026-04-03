@@ -1,0 +1,112 @@
+{
+  "chapter": "science_g3_ch1",
+  "topic": "Where Do Animals Live?",
+  "subject": "Science",
+  "grade": "Grade 3",
+  "curriculum": "NCERT",
+  "intro": "Hi there, future scientist! Every animal needs a special place to stay safe, keep warm, and raise their babies. These places are called habitats or homes. Let's explore five different animal homes together!",
+  "scenes": [
+    {
+      "scene": 1,
+      "title": "The Busy Beehive",
+      "text": "Honeybees live together in a large group called a colony. They build a beehive out of wax with many tiny, six-sided rooms called cells to store sweet honey and protect their queen.",
+      "emotion": "excited",
+      "visual": "A large golden beehive on a tree with honeybees flying around it",
+      "checkpoint": {
+        "type": "quick_check",
+        "question": "What do bees use to build the tiny rooms in their hive?",
+        "options": ["Mud", "Wax", "Grass", "Silk"],
+        "correct": 1,
+        "explanation": "Bees produce wax from their bodies to build the six-sided cells inside their hive!"
+      }
+    },
+    {
+      "scene": 2,
+      "title": "The Cozy Bird's Nest",
+      "text": "Many birds build nests high up in trees using twigs, feathers, and mud. This keeps their eggs safe from animals on the ground and gives the chicks a soft place to grow.",
+      "emotion": "happy",
+      "visual": "A colourful bird sitting in a nest high up in a tree with eggs",
+      "checkpoint": {
+        "type": "quick_check",
+        "question": "Why do many birds build their nests high in trees?",
+        "options": ["To be closer to the sun", "To hide from the rain", "To stay safe from ground animals", "To practice flying faster"],
+        "correct": 2,
+        "explanation": "Birds build nests high up so predators on the ground cannot reach their eggs and baby chicks!"
+      }
+    },
+    {
+      "scene": 3,
+      "title": "The Deep Underground Burrow",
+      "text": "Animals like rabbits and foxes dig holes in the dirt called burrows. These underground tunnels stay cool during hot days and act as a secret hiding spot from predators.",
+      "emotion": "thinking",
+      "visual": "A rabbit peeking out of a burrow hole in the ground with a cozy underground tunnel",
+      "checkpoint": {
+        "type": "quick_check",
+        "question": "Which of these animals is most likely to live in a burrow?",
+        "options": ["A goldfish", "A rabbit", "An eagle", "A butterfly"],
+        "correct": 1,
+        "explanation": "Rabbits are famous for digging burrows underground — they are great at digging tunnels!"
+      }
+    },
+    {
+      "scene": 4,
+      "title": "The Shimmering Coral Reef",
+      "text": "Under the ocean, many colourful fish live in coral reefs. The coral provides lots of tiny cracks and holes for small fish to hide in so they don't get eaten by bigger fish.",
+      "emotion": "excited",
+      "visual": "Bright colourful coral reef underwater with tropical fish swimming around",
+      "checkpoint": {
+        "type": "quick_check",
+        "question": "Where would you find a coral reef home?",
+        "options": ["In the middle of a forest", "Under the salty ocean water", "On top of a snowy mountain", "In a dry sandy desert"],
+        "correct": 1,
+        "explanation": "Coral reefs are found underwater in warm, salty oceans — they are full of amazing sea life!"
+      }
+    },
+    {
+      "scene": 5,
+      "title": "The Sturdy Beaver Lodge",
+      "text": "Beavers are like little engineers! They use branches and mud to build a lodge in the middle of a pond, with a secret underwater entrance so only they can get inside.",
+      "emotion": "celebrating",
+      "visual": "A beaver lodge made of sticks and mud in a pond with a beaver swimming nearby",
+      "checkpoint": {
+        "type": "quick_check",
+        "question": "How do beavers get inside their lodge?",
+        "options": ["Through a chimney on the roof", "By knocking on the front door", "Through an underwater entrance", "By flying over the walls"],
+        "correct": 2,
+        "explanation": "Beavers enter their lodge through a hidden underwater entrance — no predator can follow them in!"
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "question": "What do bees use to build the tiny rooms in their hive?",
+      "options": ["Mud", "Wax", "Grass", "Silk"],
+      "correct": 1,
+      "explanation": "Bees produce wax from their bodies to build the six-sided cells inside their hive!"
+    },
+    {
+      "question": "Why do many birds build their nests high in trees?",
+      "options": ["To be closer to the sun", "To hide from the rain", "To stay safe from ground animals", "To practice flying faster"],
+      "correct": 2,
+      "explanation": "Birds build nests high up so predators on the ground cannot reach their eggs!"
+    },
+    {
+      "question": "Which of these animals is most likely to live in a burrow?",
+      "options": ["A goldfish", "A rabbit", "An eagle", "A butterfly"],
+      "correct": 1,
+      "explanation": "Rabbits are famous for digging burrows underground!"
+    },
+    {
+      "question": "Where would you find a coral reef home?",
+      "options": ["In the middle of a forest", "Under the salty ocean water", "On top of a snowy mountain", "In a dry sandy desert"],
+      "correct": 1,
+      "explanation": "Coral reefs are found underwater in warm salty oceans!"
+    },
+    {
+      "question": "How do beavers get inside their lodge?",
+      "options": ["Through a chimney on the roof", "By knocking on the front door", "Through an underwater entrance", "By flying over the walls"],
+      "correct": 2,
+      "explanation": "Beavers enter through a hidden underwater entrance — no predator can follow!"
+    }
+  ]
+}

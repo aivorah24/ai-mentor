@@ -1,0 +1,139 @@
+{
+  "topic": "Rupees and Paise",
+  "chapter": 14,
+  "unit": "Money",
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Hello HELLO! I am Ms. Zara and today we go SHOPPING! We are learning about RUPEES and PAISE — Indian money! Money is the most practical maths you will ever use! From buying chai to getting change at Peter uncle's shop — you need money maths EVERY day! Let us GO!",
+      "visual": "Rupees and Paise!",
+      "emotion": "excited",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "INDIAN COINS! We have coins worth 1 rupee, 2 rupees, 5 rupees, and 10 rupees! Each coin has a number on it telling you its value. The BIGGER the number, the MORE it is worth! A 10-rupee coin is worth TEN 1-rupee coins! Can you find these coins at home RIGHT NOW?",
+      "visual": "Indian coins 1 2 5 10",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch14/scene_02.png"
+    },
+    {
+      "scene": 3,
+      "text": "INDIAN NOTES! Currency notes come in bigger values: 10 rupees, 20 rupees, 50 rupees, 100 rupees, and 500 rupees! A 100-rupee note is worth ONE HUNDRED 1-rupee coins! Notes are for bigger amounts. Gandhi ji's face is on all Indian notes — have you noticed? AMAZING history in your pocket!",
+      "visual": "Indian notes 10 to 500",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch14/scene_03.png"
+    },
+    {
+      "scene": 4,
+      "text": "PAISE! 100 paise = 1 rupee! So 50 paise is HALF a rupee! We sometimes see 50 paise coins — they are worth half of 1 rupee! Very old coins had 25 paise too — that is one QUARTER rupee! Paise are smaller than rupees, just like centimetres are smaller than metres! MIND. BLOWN — same idea!",
+      "visual": "50 paise coins",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch14/scene_04.png"
+    },
+    {
+      "scene": 5,
+      "text": "COUNTING money! You have three 10-rupee notes, two 5-rupee coins and one 2-rupee coin. How much total? Notes: 3 × 10 = 30 rupees. Coins: 2 × 5 = 10 rupees, plus 2 rupees = 12 rupees. Total: 30 + 12 = 42 rupees! Always count notes first, then coins, then add! That is what BANK tellers do!",
+      "visual": "Counting notes coins",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch14/scene_05.png"
+    },
+    {
+      "scene": 6,
+      "text": "At PETER UNCLE'S SHOP! Peter uncle sells snacks at the Surajkund fair. A samosa costs 10 rupees. A chai costs 8 rupees. A biscuit packet costs 5 rupees. You have 25 rupees. Can you buy all three? 10 + 8 + 5 = 23 rupees! 25 > 23 — YES you can! And you get 25 − 23 = 2 rupees CHANGE! Brilliant!",
+      "visual": "Peter uncle snack shop",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch14/scene_06.png"
+    },
+    {
+      "scene": 7,
+      "text": "GIVING CHANGE! You buy something for 17 rupees and give 20 rupees. How much change do you get? 20 − 17 = 3 rupees change! The shopkeeper SUBTRACTS the price from the money you gave! Change = Amount given − Price! This is the most used subtraction in the ENTIRE WORLD every single day!",
+      "visual": "Give 20 get 3 change",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch14/scene_07.png"
+    },
+    {
+      "scene": 8,
+      "text": "At the SURAJKUND FAIR! There are stalls selling toys, food and gifts. A toy car costs 35 rupees. A doll costs 50 rupees. You want to buy both. How much do you need? 35 + 50 = 85 rupees! Do you have enough with 100 rupees? YES! Change = 100 − 85 = 15 rupees! Maths at the mela — WOOHOO!",
+      "visual": "Surajkund fair stalls",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch14/scene_08.png"
+    },
+    {
+      "scene": 9,
+      "text": "COMPARING PRICES! At the vegetable market: onions cost 20 rupees per kg, tomatoes cost 15 rupees per kg, potatoes cost 10 rupees per kg. Which is CHEAPEST? Potatoes at 10 rupees! Which is MOST EXPENSIVE? Onions at 20 rupees! We compare prices just like comparing numbers — biggest number is most expensive!",
+      "visual": "Veggie market prices",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch14/scene_09.png"
+    },
+    {
+      "scene": 10,
+      "text": "ADDING UP YOUR SHOPPING BILL! Mum buys: rice for 40 rupees, dal for 25 rupees, oil for 55 rupees and salt for 10 rupees. What is the TOTAL bill? 40 + 25 = 65, then 65 + 55 = 120, then 120 + 10 = 130 rupees! Total bill = 130 rupees! Adding up prices is EXACTLY what cashiers do at every shop!",
+      "visual": "Shopping bill adding",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch14/scene_10.png"
+    },
+    {
+      "scene": 11,
+      "text": "ENOUGH MONEY or NOT? Always check BEFORE you buy! Prices total: 75 rupees. You have: one 50-rupee note + two 10-rupee coins + one 5-rupee coin = 50 + 20 + 5 = 75 rupees! Exactly enough! If you had only 70 rupees — NOT enough, you are 5 rupees short! Checking money = SMART shopping!",
+      "visual": "Enough money check",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch14/scene_11.png"
+    },
+    {
+      "scene": 12,
+      "text": "Word problem! Rohan saves 5 rupees every day for 6 days. How much does he save? 5 × 6 = 30 rupees! He wants to buy a book costing 25 rupees. Does he have enough? 30 > 25 — YES! And he has 30 − 25 = 5 rupees left over! Saving money and spending wisely — brilliant life skills AND maths!",
+      "visual": "Rohan saving money",
+      "emotion": "thinking",
+      "sceneImage": null
+    },
+    {
+      "scene": 13,
+      "text": "Money facts to remember! 100 paise = 1 rupee. 50 paise = half a rupee. Coins: 1, 2, 5, 10 rupees. Notes: 10, 20, 50, 100, 500 rupees. Adding prices = how much you need. Subtracting from money given = CHANGE you receive. Always check if you have ENOUGH before buying — smart shopper rule!",
+      "visual": "Money facts summary",
+      "emotion": "happy",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "WOOHOO — you are a MONEY MATHS MASTER! You know coins, notes, paise, adding prices, giving change and saving! From the Surajkund fair to the local kirana shop to Peter uncle's stall — you can handle money like a PRO! Ms. Zara is SO proud of you! Crush that final quiz!",
+      "visual": "Money Maths Master!",
+      "emotion": "celebrating",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "How many paise make 1 rupee?",
+      "options": ["10 paise", "50 paise", "1000 paise", "100 paise"],
+      "correct": 3,
+      "explanation": "100 paise = 1 rupee! Paise are the smaller unit of Indian money, just like centimetres are smaller than metres! 50 paise is half a rupee (50 out of 100). All 100 paise together make one full rupee. This is the most important money fact to remember!"
+    },
+    {
+      "question": "Rani buys a pencil for 8 rupees and a rubber for 5 rupees. How much does she spend in total?",
+      "options": ["3 rupees", "13 rupees", "40 rupees", "85 rupees"],
+      "correct": 1,
+      "explanation": "We ADD the prices! 8 + 5 = 13 rupees total! When you buy multiple things, you ADD up all the prices to find the total amount you spend. Rani spends 13 rupees for her pencil and rubber. Perfect shopping maths — BRILLIANT!"
+    },
+    {
+      "question": "You give the shopkeeper 50 rupees and buy a toy costing 35 rupees. How much change do you get?",
+      "options": ["85 rupees", "25 rupees", "15 rupees", "20 rupees"],
+      "correct": 2,
+      "explanation": "Change = Amount given − Price! 50 − 35 = 15 rupees change! The shopkeeper takes 35 rupees for the toy and gives you back 15 rupees. Subtraction tells us the change! Always check: 35 + 15 = 50. YES — that is correct! Great money maths!"
+    },
+    {
+      "question": "Rohan has one 10-rupee note, two 5-rupee coins and three 2-rupee coins. How much money does he have in total?",
+      "options": ["17 rupees", "26 rupees", "22 rupees", "30 rupees"],
+      "correct": 1,
+      "explanation": "Count each type: one 10-rupee note = 10 rupees. Two 5-rupee coins = 2 × 5 = 10 rupees. Three 2-rupee coins = 3 × 2 = 6 rupees. Total = 10 + 10 + 6 = 26 rupees! Count notes and coins separately then add — that is the banker's method! WOOHOO 26 rupees!"
+    },
+    {
+      "question": "A mango costs 12 rupees and an apple costs 8 rupees. Which is more expensive and by how much?",
+      "options": ["Apple by 4 rupees", "Mango by 20 rupees", "Apple by 20 rupees", "Mango by 4 rupees"],
+      "correct": 3,
+      "explanation": "Mango costs 12 rupees and apple costs 8 rupees. 12 > 8, so MANGO is more expensive! By how much? 12 − 8 = 4 rupees! Mango is 4 rupees more expensive than the apple. To find HOW MUCH MORE expensive, always SUBTRACT the smaller price from the bigger price! Smart comparison!"
+    }
+  ]
+}

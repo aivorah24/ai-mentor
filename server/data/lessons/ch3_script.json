@@ -1,0 +1,139 @@
+{
+  "topic": "Give and Take",
+  "chapter": 3,
+  "unit": "Addition and Subtraction",
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Hello hello HELLO! I am Ms. Zara and today we are going to GIVE and TAKE numbers! That means addition and subtraction — two of the most powerful tools in all of maths! Ready? Let us GO!",
+      "visual": "Give and Take!",
+      "emotion": "excited",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "Meet Nandini! She has 125 stamps in her collection. Her friend Chirag gives her 43 more stamps. Woohooo — how many does she have now? We ADD them together: 125 + 43! Adding means putting things together to get MORE!",
+      "visual": "Stamp collection",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch3/scene_02.png"
+    },
+    {
+      "scene": 3,
+      "text": "Let us add 125 + 43 step by step! First we add the ONES: 5 + 3 = 8. Then the TENS: 2 + 4 = 6. Then the HUNDREDS: 1 + 0 = 1. So 125 + 43 = 168 stamps! AMAZING — Nandini has 168 stamps now!",
+      "visual": "125 + 43 = 168",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch3/scene_03.png"
+    },
+    {
+      "scene": 4,
+      "text": "Now let us learn about CARRYING OVER! If the ones add up to 10 or more, we carry a 1 to the tens place. Like 47 + 35 — the ones are 7 + 5 = 12! We write 2 and carry 1 to the tens. Mind. Blown! This is called REGROUPING!",
+      "visual": "Carrying over ones",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch3/scene_04.png"
+    },
+    {
+      "scene": 5,
+      "text": "Let us finish 47 + 35 together! Ones: 7 + 5 = 12, write 2 carry 1. Tens: 4 + 3 + 1 (carried) = 8. So 47 + 35 = 82! Woohoo! Try it with bangles — Mala has 47 bangles, she buys 35 more, now she has 82 bangles!",
+      "visual": "47 + 35 = 82",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch3/scene_05.png"
+    },
+    {
+      "scene": 6,
+      "text": "Now — SUBTRACTION! Taking away means getting LESS. If you have 10 mangoes and you eat 3, you have 7 left! We use a minus sign: 10 − 3 = 7. Subtraction is like giving some away and counting what remains!",
+      "visual": "Mangoes: 10 - 3",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch3/scene_06.png"
+    },
+    {
+      "scene": 7,
+      "text": "Let us meet the NUMBER LINE! Draw a line with numbers 0, 1, 2, 3... When we ADD we JUMP FORWARD — like a frog jumping right! When we SUBTRACT we JUMP BACKWARD — jumping left! 5 + 3 means start at 5 and jump forward 3 times — land on 8!",
+      "visual": "Number line jumps",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch3/scene_07.png"
+    },
+    {
+      "scene": 8,
+      "text": "Number line subtraction — WOOHOO! 9 − 4: start at 9 and jump BACK 4 times — 8, 7, 6, 5 — you land on 5! So 9 − 4 = 5! The number line is like a hopscotch game with numbers. Can you feel the rhythm? Jump, jump, jump!",
+      "visual": "9 - 4 on number line",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch3/scene_08.png"
+    },
+    {
+      "scene": 9,
+      "text": "Big subtraction time! Chirag had 256 stamps. He gave 134 to Nandini. How many does he have left? 256 − 134! Subtract ones: 6 − 4 = 2. Tens: 5 − 3 = 2. Hundreds: 2 − 1 = 1. Answer: 122 stamps! You are CRUSHING it!",
+      "visual": "256 - 134 = 122",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch3/scene_09.png"
+    },
+    {
+      "scene": 10,
+      "text": "Sometimes in subtraction we need to BORROW! If the top digit is smaller than the bottom digit in the ones place, we borrow a 10 from the tens. Like 52 − 27: ones are 2 − 7, we cannot do that! So we borrow — 12 − 7 = 5, and the tens become 4 − 2 = 2. Answer: 25!",
+      "visual": "Borrowing in subtract",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch3/scene_10.png"
+    },
+    {
+      "scene": 11,
+      "text": "Let us ESTIMATE! If you have about 50 mangoes and eat about 20, roughly 30 are left. Estimating means rounding to the nearest ten and getting a quick answer. At the mela, if a stall has 198 samosas and sells 102, about 100 are left! Estimation is SUPER useful in real life!",
+      "visual": "Estimating at mela",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch3/scene_11.png"
+    },
+    {
+      "scene": 12,
+      "text": "Now let us solve a word problem! A shopkeeper had 345 apples. He sold 213 apples. How many are left? 345 − 213 = 132 apples! See — maths tells us exactly how much is left in the shop. Shopkeepers use subtraction every single day!",
+      "visual": "Word problem: apples",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch3/scene_12.png"
+    },
+    {
+      "scene": 13,
+      "text": "Addition and subtraction are OPPOSITES — they undo each other! If 50 + 30 = 80, then 80 − 30 = 50. You can ALWAYS check your addition by subtracting back! This is called the inverse relationship — fancy word, BRILLIANT idea!",
+      "visual": "Add and subtract link",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch3/scene_13.png"
+    },
+    {
+      "scene": 14,
+      "text": "WOOHOO — you have mastered Give and Take! You can add big numbers with carrying, subtract with borrowing, jump on the number line, and even estimate! Nandini and Chirag would be SO proud of you! Quiz time — show me what you know!",
+      "visual": "You did it!",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch3/scene_14.png"
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Nandini has 136 stamps. Chirag gives her 52 more. How many stamps does Nandini have now?",
+      "options": ["178", "188", "184", "198"],
+      "correct": 1,
+      "explanation": "We ADD 136 + 52! Ones: 6 + 2 = 8. Tens: 3 + 5 = 8. Hundreds: 1. So 136 + 52 = 188. AMAZING — Nandini has 188 stamps! Addition means putting together to get more!"
+    },
+    {
+      "question": "A fruit seller had 275 mangoes. He sold 143 mangoes. How many mangoes are left?",
+      "options": ["122", "132", "418", "112"],
+      "correct": 1,
+      "explanation": "We SUBTRACT 275 − 143! Ones: 5 − 3 = 2. Tens: 7 − 4 = 3. Hundreds: 2 − 1 = 1. So 275 − 143 = 132 mangoes! Subtraction tells us how many are LEFT. You got this!"
+    },
+    {
+      "question": "On a number line, you start at 6 and jump forward 5 times. Where do you land?",
+      "options": ["1", "9", "11", "13"],
+      "correct": 2,
+      "explanation": "Jumping FORWARD on a number line means ADDING! 6 + 5 = 11. Start at 6 and count forward: 7, 8, 9, 10, 11 — you land on 11! The number line is like hopscotch with numbers. Woohooo!"
+    },
+    {
+      "question": "What is 64 + 28?",
+      "options": ["82", "92", "86", "96"],
+      "correct": 1,
+      "explanation": "64 + 28 — ones: 4 + 8 = 12, write 2 and CARRY 1! Tens: 6 + 2 + 1 (carried) = 9. So 64 + 28 = 92! That carrying step is the secret move — you are a maths STAR!"
+    },
+    {
+      "question": "Reena had 90 bangles. She gave 35 bangles to her friend. How many bangles does Reena have now?",
+      "options": ["125", "65", "55", "45"],
+      "correct": 2,
+      "explanation": "90 − 35! Ones: 0 − 5, we need to borrow! After borrowing: 10 − 5 = 5, and tens become 8 − 3 = 5. So 90 − 35 = 55 bangles! Reena has 55 bangles left. Brilliant subtraction!"
+    }
+  ]
+}

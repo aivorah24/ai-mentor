@@ -1,0 +1,95 @@
+{
+  "id": "pyp_g3_mathematics_number_sense_and_place_value",
+  "title": "Number Sense and Place Value",
+  "grade": "Grade 3",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "6-8 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "NUMBER SENSE"
+      ],
+      "subtext": "Grade 3 · Mathematics",
+      "voice": "Hey kids! Today we're going on a math adventure! We're going to learn about number sense and place value. Get ready to have fun with numbers!",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "ONES, TENS, HUNDREDS"
+      ],
+      "subtext": "Understanding place value",
+      "voice": "So, you know how we can count numbers like 1, 2, 3, and so on? Well, when we write numbers, we use special groups to make it easier to read. These groups are called ones, tens, and hundreds.",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "COMPARING NUMBERS"
+      ],
+      "subtext": "Comparing numbers with place value",
+      "voice": "Now that we know about ones, tens, and hundreds, let's practice comparing numbers. If we have 45 and 75, which one is bigger? We can look at the tens place to help us decide.",
+      "accent": "#38bdf8",
+      "duration": 40
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "NUMBER LINE"
+      ],
+      "subtext": "Using a number line for place value",
+      "voice": "A number line is a special tool that helps us visualize numbers. If we have 120 and we want to find 150, we can move 30 spaces to the right on the number line.",
+      "accent": "#38bdf8",
+      "duration": 50
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "ORDINAL NUMBERS"
+      ],
+      "subtext": "Understanding ordinal numbers",
+      "voice": "Ordinal numbers tell us the position of a number in a list. For example, if we have 1st, 2nd, 3rd, we know the order of the numbers.",
+      "accent": "#38bdf8",
+      "duration": 40
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TEST YOUR KNOWLEDGE"
+      ],
+      "subtext": "What is the next number in the sequence: 1, 10, 100?",
+      "voice": "Take a moment to think about the sequence. What comes next?",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW TIME"
+      ],
+      "subtext": "Let's review what we learned today!",
+      "voice": "Today we learned about number sense and place value. We discovered the importance of ones, tens, and hundreds, and how to compare numbers using place value. We also learned about ordinal numbers and how to use a number line to visualize numbers. Great job, kids!",
+      "accent": "#38bdf8",
+      "duration": 30
+    }
+  ]
+}

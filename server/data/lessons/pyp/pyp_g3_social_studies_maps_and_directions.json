@@ -1,0 +1,105 @@
+{
+  "id": "pyp_g3_social_studies_maps_and_directions",
+  "title": "Maps and Directions",
+  "grade": "Grade 3",
+  "subject": "Social Studies",
+  "curriculum": "IB PYP",
+  "accent": "#a855f7",
+  "duration_estimate": "12-13 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "MAPS",
+        "HELP",
+        "US"
+      ],
+      "subtext": "Grade 3 · Social Studies",
+      "voice": "Hey kids, today we're going on an adventure! We're going to explore how to read maps and find our way. Get ready to learn some exciting new skills!",
+      "accent": "#a855f7",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "MAP",
+        "KEY"
+      ],
+      "subtext": "What's a Map?",
+      "voice": "A map is a special tool that helps us find our way. It's like a treasure map, but instead of leading us to treasure, it helps us get to our destination. Can you think of a time when you used a map?",
+      "accent": "#a855f7",
+      "duration": 4
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "COMPASS",
+        "HELP"
+      ],
+      "subtext": "What's a Compass?",
+      "voice": "A compass is a tool that helps us find our direction. It points to North, South, East, and West. Can you remember which way is North?",
+      "accent": "#a855f7",
+      "duration": 4
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "SCALE",
+        "HELP"
+      ],
+      "subtext": "What's a Scale?",
+      "voice": "A scale is a special part of a map that helps us know how far apart things are. It's like a ruler, but for maps. Can you think of a time when you used a scale?",
+      "accent": "#a855f7",
+      "duration": 4
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "LEGEND",
+        "KEY"
+      ],
+      "subtext": "What's a Legend?",
+      "voice": "A legend is a special key that helps us understand what things on the map mean. It's like a secret code that only map readers know. Can you remember what a legend does?",
+      "accent": "#a855f7",
+      "duration": 4
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "NORTH"
+      ],
+      "subtext": "True or False: North is the direction where the sun rises.",
+      "voice": "Think you know the answer? Try it out! What is North?",
+      "accent": "#a855f7",
+      "duration": 5
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "MAPS",
+        "HELP"
+      ],
+      "subtext": "Key Points",
+      "voice": "Wow, you're a map expert now! Let's review what we learned today: Maps help us find our way, a compass points to North, South, East, and West, and a legend is a secret code that helps us understand what things on the map mean. Keep exploring and happy adventures!",
+      "accent": "#a855f7",
+      "duration": 6
+    }
+  ]
+}

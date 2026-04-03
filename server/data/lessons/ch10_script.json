@@ -1,0 +1,139 @@
+{
+  "topic": "Play with Patterns",
+  "chapter": 10,
+  "unit": "Patterns",
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Hello HELLO! I am Ms. Zara and today we PLAY with PATTERNS! Patterns are everywhere — on sarees, in temples, on rangoli, in music, in nature! When something repeats in a predictable way, that is a PATTERN! Finding patterns is one of the most exciting skills in all of maths!",
+      "visual": "Play with Patterns!",
+      "emotion": "excited",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "REPEATING PATTERNS! Red, blue, red, blue, red, blue — what comes next? RED! Circle, triangle, circle, triangle — what comes next? CIRCLE! A repeating pattern has a CORE that keeps repeating. The core in red-blue is: red, blue. Find the core and you can predict ANYTHING that comes next! WOOHOO!",
+      "visual": "Red blue repeating",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch10/scene_02.png"
+    },
+    {
+      "scene": 3,
+      "text": "PATTERNS WITH SHAPES! Look at a RANGOLI design — it has triangles and circles repeating in a beautiful way! Tiling on a floor uses the SAME shape repeated again and again to fill the space! Square tiles, hexagonal tiles — all patterns! Indian art is FULL of gorgeous mathematical patterns!",
+      "visual": "Rangoli tile pattern",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch10/scene_03.png"
+    },
+    {
+      "scene": 4,
+      "text": "PATTERNS WITH SIZE! Small, big, small, big, small, big — what comes next? BIG! Big, medium, small, big, medium, small — what comes next? BIG! Size patterns are about changing how large or small the objects are. Look at garlands and borders on sarees — they use size patterns all the time!",
+      "visual": "Small big size pattern",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch10/scene_04.png"
+    },
+    {
+      "scene": 5,
+      "text": "GROWING PATTERNS! Some patterns do not just repeat — they GROW! 1, 2, 3, 4, 5 — each time we add ONE MORE! Stairs are a growing pattern — each step is one higher than the last! A growing pattern keeps INCREASING by a fixed amount. It is like watching a plant grow taller every day! AMAZING!",
+      "visual": "Growing pattern stairs",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch10/scene_05.png"
+    },
+    {
+      "scene": 6,
+      "text": "NUMBER PATTERNS — EVEN numbers! 2, 4, 6, 8, 10, 12... each number is 2 MORE than the last! These are called EVEN numbers! They can be divided into 2 equal groups. 6 marbles: 3 + 3. 8 biscuits: 4 + 4. All even numbers end in 0, 2, 4, 6, or 8! Can you feel the rhythm — 2, 4, 6, 8!",
+      "visual": "Even number pattern",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch10/scene_06.png"
+    },
+    {
+      "scene": 7,
+      "text": "NUMBER PATTERNS — ODD numbers! 1, 3, 5, 7, 9, 11... each number is 2 MORE than the last, but they START from 1! Odd numbers end in 1, 3, 5, 7, or 9. If you try to divide 7 into equal groups of 2 you get 3 and 3 with ONE left over — that leftover makes it ODD! Odd and even — two brilliant families of numbers!",
+      "visual": "Odd number pattern",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch10/scene_07.png"
+    },
+    {
+      "scene": 8,
+      "text": "FIVES and TENS patterns! 5, 10, 15, 20, 25, 30 — that is the 5 times table! 10, 20, 30, 40, 50 — the 10 times table! These are NUMBER PATTERNS that match our multiplication tables! Maths patterns and multiplication tables are secretly the SAME THING — MIND. BLOWN! Patterns power everything in maths!",
+      "visual": "5s and 10s patterns",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch10/scene_08.png"
+    },
+    {
+      "scene": 9,
+      "text": "PATTERNS IN NATURE! A sunflower has petals growing in a spiral pattern! Leaves on a stem alternate sides — left, right, left, right! A peacock feather has repeating eye shapes! The petals on most flowers: rose (5 petals), jasmine (5 petals)! Nature is the greatest PATTERN ARTIST in the universe! WOOHOO!",
+      "visual": "Sunflower petal pattern",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch10/scene_09.png"
+    },
+    {
+      "scene": 10,
+      "text": "COMPLETE the pattern! 2, 4, 6, ___, 10 — what is missing? 8! How? Each number increases by 2, so 6 + 2 = 8! Red, blue, green, red, blue, ___ — what is missing? GREEN! To complete a pattern, find the RULE — then apply the rule to find the missing piece! You are a pattern detective!",
+      "visual": "Missing piece pattern",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch10/scene_10.png"
+    },
+    {
+      "scene": 11,
+      "text": "MAKE YOUR OWN pattern! Patterns can use colours, shapes, numbers, sounds, movements — ANYTHING! Clap, stomp, clap, stomp — that is a body pattern! You can even make PATTERNS in cooking: roti, sabzi, rice, roti, sabzi, rice! Once you see the world through pattern eyes you cannot stop!",
+      "visual": "Create your pattern",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch10/scene_11.png"
+    },
+    {
+      "scene": 12,
+      "text": "TILING PATTERNS! Can you cover a floor with one shape leaving NO GAPS and NO OVERLAPS? Squares tile perfectly! Triangles tile perfectly! Regular hexagons tile perfectly — like a honeybee's honeycomb! Circles do NOT tile — there are always gaps! Tiling is patterns meeting geometry — beautiful!",
+      "visual": "Tiling shapes hexagon",
+      "emotion": "happy",
+      "sceneImage": null
+    },
+    {
+      "scene": 13,
+      "text": "Pattern rules to remember! Repeating patterns have a CORE that keeps repeating. Growing patterns increase by a fixed amount each time. Even numbers end in 0,2,4,6,8. Odd numbers end in 1,3,5,7,9. Number patterns connect to multiplication tables! Patterns help us PREDICT what comes next!",
+      "visual": "Pattern rules summary",
+      "emotion": "thinking",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "WOOHOO — you are a PATTERN SUPERSTAR! You found patterns in colours, shapes, sizes, numbers and nature! You completed patterns and made your own! Ms. Zara is absolutely DAZZLED by your pattern skills! The whole universe is made of patterns and now you can see them! Quiz time!",
+      "visual": "Pattern Superstar!",
+      "emotion": "celebrating",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "What comes next in this pattern? 5, 10, 15, 20, ___",
+      "options": ["22", "24", "25", "30"],
+      "correct": 2,
+      "explanation": "This is the 5 times table pattern! Each number increases by 5. 20 + 5 = 25! So the next number is 25. You can also see it as skip counting by 5s: 5, 10, 15, 20, 25! Patterns and multiplication are the same magic — you spotted it PERFECTLY!"
+    },
+    {
+      "question": "Circle, Triangle, Square, Circle, Triangle, ___ What comes next?",
+      "options": ["Circle", "Triangle", "Square", "Rectangle"],
+      "correct": 2,
+      "explanation": "The repeating CORE of this pattern is: Circle, Triangle, Square! After Circle comes Triangle, after Triangle comes SQUARE! The pattern repeats every 3 shapes. You found the core — that is the secret of every repeating pattern! BRILLIANT detective work!"
+    },
+    {
+      "question": "Which of these is an EVEN number?",
+      "options": ["7", "13", "15", "18"],
+      "correct": 3,
+      "explanation": "18 is an EVEN number! Even numbers end in 0, 2, 4, 6, or 8. 18 ends in 8 — so it is even! 7, 13 and 15 all end in odd digits (7, 3, 5) so they are ODD numbers. Even numbers can always be split into two EQUAL groups. 18 = 9 + 9. Perfect!"
+    },
+    {
+      "question": "What is the missing number? 2, 4, ___, 8, 10",
+      "options": ["5", "7", "6", "3"],
+      "correct": 2,
+      "explanation": "This is the even number pattern — each number increases by 2! After 4, add 2 to get 6! 4 + 2 = 6. And checking: 6 + 2 = 8. YES that fits! The missing number is 6. Always find the RULE first — then applying it becomes easy! You are a pattern master!"
+    },
+    {
+      "question": "Which shape can be used to tile a floor with NO gaps and NO overlaps?",
+      "options": ["Circle", "Star", "Square", "Crescent"],
+      "correct": 2,
+      "explanation": "SQUARES tile perfectly — no gaps and no overlaps! When you lay square tiles side by side they fit together exactly. This is why floor tiles are mostly square or rectangular! Circles have curved edges so they leave gaps at the corners. Squares are perfect tilers!"
+    }
+  ]
+}

@@ -5,29 +5,12 @@
       "src": "server/index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["server/data/**"]
-      }
-    },
-    {
-      "src": "AIMentorApp/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
+        "includeFiles": ["server/data/**", "AIMentorApp/dist2/**"],
+        "bundle": false
       }
     }
   ],
   "routes": [
-    { "src": "/data/(.*)",      "dest": "server/index.js" },
-    { "src": "/ask",            "dest": "server/index.js" },
-    { "src": "/ingest(.*)",     "dest": "server/index.js" },
-    { "src": "/lesson/(.*)",    "dest": "server/index.js" },
-    { "src": "/ncert/(.*)",     "dest": "server/index.js" },
-    { "src": "/modules/(.*)",  "dest": "server/index.js" },
-    { "src": "/curriculum(.*)", "dest": "server/index.js" },
-    { "src": "/student(.*)",    "dest": "server/index.js" },
-    { "src": "/schedule(.*)",   "dest": "server/index.js" },
-    { "src": "/videos(.*)",     "dest": "server/index.js" },
-    { "src": "/health",         "dest": "server/index.js" },
-    { "src": "/(.*)",           "dest": "AIMentorApp/dist/$1" }
+    { "src": "/(.*)", "dest": "server/index.js" }
   ]
 }

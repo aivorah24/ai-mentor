@@ -1,0 +1,105 @@
+{
+  "id": "pyp_g3_social_studies_my_community",
+  "title": "My Community",
+  "grade": "Grade 3",
+  "subject": "Social Studies",
+  "curriculum": "IB PYP",
+  "accent": "#a855f7",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "COMMUNITY IS",
+        "WHERE WE LIVE",
+        "WITH OTHERS"
+      ],
+      "subtext": "Grade 3 · Social Studies",
+      "voice": "Hello, young adventurers! Today, we're going on a journey to explore the amazing world of MY COMMUNITY!",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "NEIGHBOURHOOD",
+        "IS MY HOME"
+      ],
+      "subtext": "A place where I live with my family and friends.",
+      "voice": "My neighbourhood is where I live with my family and friends. It's where I go to school, play, and have fun.",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "COMMUNITY",
+        "HELPS ME"
+      ],
+      "subtext": "People in my community help me in many ways.",
+      "voice": "There are special helpers in my community, like teachers, doctors, and police officers. They help me stay safe and happy.",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "I HELP",
+        "MY COMMUNITY"
+      ],
+      "subtext": "I can contribute to my community by being kind and helping others.",
+      "voice": "I can help my community by being kind to others, sharing what I have, and taking care of the environment.",
+      "accent": "#a855f7",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "WE BELONG",
+        "IN OUR COMMUNITY"
+      ],
+      "subtext": "I am a part of my community and I feel happy to be here.",
+      "voice": "I am a part of my community and I feel happy to be here. We all belong in our community, and we can make it a better place by being kind and helpful.",
+      "accent": "#a855f7",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHO HELPS",
+        "YOU IN YOUR"
+      ],
+      "subtext": "Community Helpers",
+      "voice": "What kind of people help you in your community? Let's think... Ah-ha! It's the people who work in schools, hospitals, and police stations!",
+      "accent": "#a855f7",
+      "duration": 15,
+      "question": "What kind of people help you in your community?"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "THREE",
+        "KEY POINTS"
+      ],
+      "subtext": "My Community",
+      "voice": "So, let's summarize what we've learned today! My community is where I live with my family and friends. I have special helpers in my community who keep me safe and happy. And, I can help my community by being kind and sharing what I have. We all belong in our community, and it's a great place to be!",
+      "accent": "#a855f7",
+      "duration": 25
+    }
+  ]
+}

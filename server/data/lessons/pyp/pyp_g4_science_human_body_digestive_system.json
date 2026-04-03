@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_science_human_body_digestive_system",
+  "title": "Human Body — Digestive System",
+  "grade": "Grade 4",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "DIGESTIVE",
+        "SYSTEM",
+        "EXPLAINED"
+      ],
+      "subtext": "Grade 4 · Science",
+      "voice": "Hi kids! Today we're going on a fantastic journey through the human body, to explore one of the coolest systems: the digestive system. Are you ready to learn how our body breaks down food and turns it into energy?",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "MOUTH",
+        "FOOD",
+        "ENTER"
+      ],
+      "subtext": "Step 1: Mouth",
+      "voice": "The first step in the digestive journey is the mouth. Here, we chew our food into smaller pieces with the help of our teeth. Then, our salivary glands release special enzymes that start breaking down the food.",
+      "accent": "#22c55e",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "OESOPHAGUS",
+        "SWALLOW",
+        "DOWN"
+      ],
+      "subtext": "Step 2: Oesophagus",
+      "voice": "After we chew and mix our food with saliva, it's time to swallow. The food then travels down the oesophagus, a long, muscular tube that helps push the food into the next stage of digestion.",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "STOMACH",
+        "ACID",
+        "BREAKDOWN"
+      ],
+      "subtext": "Step 3: Stomach",
+      "voice": "The food then enters the stomach, a special sac filled with strong stomach acid and enzymes. These powerful helpers break down the food into a liquidy mixture called chyme.",
+      "accent": "#22c55e",
+      "duration": 18
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "INTESTINES",
+        "ABSORB",
+        "NUTRIENTS"
+      ],
+      "subtext": "Step 4: Intestines",
+      "voice": "Finally, the chyme enters the intestines, where most of our nutrient absorption happens. The walls of the intestines have tiny finger-like projections called villi that help soak up the nutrients and send them into our bloodstream.",
+      "accent": "#22c55e",
+      "duration": 22
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "DIGESTION"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "What is the main purpose of the digestive system? Is it to move food through our body, to keep us clean, or to break down food into nutrients that our body can use?",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "KEY",
+        "POINTS",
+        "REVIEW"
+      ],
+      "subtext": "Summary",
+      "voice": "Let's review the key points of the digestive system. First, our teeth break down food in the mouth. Next, the food travels down the oesophagus and into the stomach, where it's mixed with acid and enzymes. Finally, the intestines absorb the nutrients and send them into our bloodstream. Great job, kids!",
+      "accent": "#22c55e",
+      "duration": 20
+    }
+  ]
+}

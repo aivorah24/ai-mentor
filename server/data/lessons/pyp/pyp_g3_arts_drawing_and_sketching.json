@@ -1,0 +1,95 @@
+{
+  "id": "pyp_g3_arts_drawing_and_sketching",
+  "title": "Drawing and Sketching",
+  "grade": "Grade 3",
+  "subject": "Arts",
+  "curriculum": "IB PYP",
+  "accent": "#ec4899",
+  "duration_estimate": "12-15 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "DRAWING IS FUN"
+      ],
+      "subtext": "Grade 3 · Arts",
+      "voice": "Hey kids! Welcome to the amazing world of drawing and sketching! Today, we're going to learn about lines, shapes, and how to bring our drawings to life!",
+      "accent": "#ec4899",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "LINES ARE KEY"
+      ],
+      "subtext": "Lines in Art",
+      "voice": "Did you know that lines are the foundation of any drawing? They can be straight, curved, or zigzagged. Let's practice drawing different types of lines!",
+      "accent": "#ec4899",
+      "duration": 4
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "SHAPES ARE FUN"
+      ],
+      "subtext": "Shapes in Art",
+      "voice": "Shapes are all around us! Let's learn about basic shapes like circles, squares, and triangles. We can use them to create amazing drawings!",
+      "accent": "#ec4899",
+      "duration": 4
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "SHADING IS MAGIC"
+      ],
+      "subtext": "Shading in Art",
+      "voice": "Shading is a magic trick that makes our drawings look 3D! Let's practice shading with different tools and techniques.",
+      "accent": "#ec4899",
+      "duration": 5
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "PERSPECTIVE IS COOL"
+      ],
+      "subtext": "Perspective in Art",
+      "voice": "Have you ever noticed how buildings and roads seem to fade away in the distance? That's perspective! Let's learn how to create perspective in our drawings.",
+      "accent": "#ec4899",
+      "duration": 5
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT IS PERSPECTIVE?"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "What is perspective in art? A) A type of line B) A way to shade C) A way to create depth in a drawing",
+      "accent": "#ec4899",
+      "duration": 3
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "RECAP TIME!"
+      ],
+      "subtext": "You did it!",
+      "voice": "Wow, you've learned so much today! Remember, lines are key, shapes are fun, shading is magic, and perspective is cool! Keep practicing and soon you'll be a master artist!",
+      "accent": "#ec4899",
+      "duration": 5
+    }
+  ]
+}

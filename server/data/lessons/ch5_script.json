@@ -1,0 +1,139 @@
+{
+  "topic": "Shapes and Designs",
+  "chapter": 5,
+  "unit": "Geometry",
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Woohooo! Welcome to SHAPE SAFARI! I am Ms. Zara and today we go on a shape adventure — but NOT the 3D shapes we already know! Today we explore FLAT shapes — the ones you can draw on paper! They are called 2D shapes and they are EVERYWHERE! Ready? Let us GO!",
+      "emotion": "excited",
+      "visual": "2D Shape Safari!",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "Here is something AMAZING! Take a cube — the shape of a dice. Press one face on a piece of paper and TRACE around it. What shape do you get? A SQUARE! A flat square! When you trace around a 3D shape's face, you get a 2D shape! 3D shapes and 2D shapes are CONNECTED — mind blown!",
+      "emotion": "surprised",
+      "visual": "Cube face → Square!",
+      "sceneImage": null
+    },
+    {
+      "scene": 3,
+      "text": "Let us meet the SQUARE! A square has 4 sides — and ALL FOUR sides are exactly the SAME length! It has 4 corners too — we call them vertices! Look around the classroom — a window pane, a floor tile, a chessboard square — ALL squares! Count their equal sides!",
+      "emotion": "happy",
+      "visual": "Square — 4 equal sides!",
+      "sceneImage": null
+    },
+    {
+      "scene": 4,
+      "text": "Now meet the RECTANGLE! It also has 4 sides and 4 corners — just like a square. BUT — the sides are NOT all equal! The two LONG sides are equal to each other and the two SHORT sides are equal to each other. Your notebook, a door, a brick wall — all RECTANGLES! Can you spot one right now?",
+      "emotion": "excited",
+      "visual": "Rectangle — 2 long, 2 short!",
+      "sceneImage": null
+    },
+    {
+      "scene": 5,
+      "text": "Here comes the TRIANGLE! A triangle has 3 sides and 3 corners. That is it! Simple and strong! A slice of roti or bread — triangle! The roof of a house — triangle! A mountain peak — triangle! Fun fact: a square can be cut into TWO triangles! Everything is connected in the world of shapes!",
+      "emotion": "celebrating",
+      "visual": "Triangle — 3 sides, 3 corners!",
+      "sceneImage": null
+    },
+    {
+      "scene": 6,
+      "text": "And now — the CIRCLE! A circle has NO sides and NO corners. It is perfectly ROUND all the way! A bangle is a circle. A full moon is a circle. A coin is a circle! The distance from the centre to the edge is the same all the way around — that is what makes it perfectly round! Beautiful!",
+      "emotion": "happy",
+      "visual": "Circle — perfectly round!",
+      "sceneImage": null
+    },
+    {
+      "scene": 7,
+      "text": "Let us COMPARE! Square vs Rectangle — both have 4 sides and 4 corners. But a square has ALL sides equal! So a SQUARE is a special rectangle! Just like a cube is a special cuboid! In shapes, the more equal things are, the more special the shape is! Equality is the secret of special shapes!",
+      "emotion": "thinking",
+      "visual": "Square = Special Rectangle!",
+      "sceneImage": null
+    },
+    {
+      "scene": 8,
+      "text": "SHAPE HUNT time! Look at this classroom scene. The blackboard — RECTANGLE! The clock face — CIRCLE! The corner tile — SQUARE! The paper boat — TRIANGLE! Ms. Zara's earring — CIRCLE! How many 2D shapes can you name in YOUR classroom right now? Go on — look around!",
+      "emotion": "questioning",
+      "visual": "Shape hunt in classroom!",
+      "sceneImage": null
+    },
+    {
+      "scene": 9,
+      "text": "Now — SYMMETRY! Fold a butterfly picture right down the middle. Open it up — both halves match PERFECTLY! That fold line is called the LINE OF SYMMETRY! A shape has symmetry when one half is a mirror image of the other. Butterflies, leaves, your own face — all have symmetry! Nature LOVES symmetry!",
+      "emotion": "excited",
+      "visual": "Butterfly symmetry!",
+      "sceneImage": null
+    },
+    {
+      "scene": 10,
+      "text": "Which 2D shapes have a line of symmetry? A SQUARE has 4 lines of symmetry — fold it 4 different ways and it always matches! A RECTANGLE has 2 lines of symmetry. A CIRCLE has INFINITE lines of symmetry — you can fold it any way and it matches! A triangle has at least 1! Symmetry is everywhere!",
+      "emotion": "celebrating",
+      "visual": "Lines of symmetry!",
+      "sceneImage": null
+    },
+    {
+      "scene": 11,
+      "text": "Now for DESIGNS! Have you seen a RANGOLI? It is made using repeated shapes arranged in a beautiful pattern! Triangles, circles, squares — all fitting together! The secret of rangoli is SYMMETRY and REPETITION. Both halves look the same. The design REPEATS all around. You can create your own rangoli with shapes!",
+      "emotion": "happy",
+      "visual": "Rangoli with 2D shapes!",
+      "sceneImage": null
+    },
+    {
+      "scene": 12,
+      "text": "TILING patterns! Look at the floor tiles in your school. Squares fit together with NO gaps and NO overlaps — they TILE perfectly! Rectangles tile too! Triangles can tile! But circles — circles leave GAPS when you try to tile them! Not all shapes tile. Squares and rectangles are the BEST tilers!",
+      "emotion": "surprised",
+      "visual": "Tiling — gaps vs no gaps!",
+      "sceneImage": null
+    },
+    {
+      "scene": 13,
+      "text": "Let us recap our AMAZING 2D shapes! SQUARE — 4 equal sides, 4 corners. RECTANGLE — 4 sides, opposite sides equal, 4 corners. TRIANGLE — 3 sides, 3 corners. CIRCLE — no sides, no corners, perfectly round! SYMMETRY means both halves match on a fold line. TILING means shapes fit with no gaps!",
+      "emotion": "thinking",
+      "visual": "2D Shapes Recap!",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "INCREDIBLE! You are now a SHAPE ARTIST! You know squares, rectangles, triangles and circles. You understand symmetry and can create tiling patterns. Next time you see a rangoli, a window, or a floor tile — you will see the maths hiding inside the beauty! Quiz time — show me your shape superpowers!",
+      "emotion": "celebrating",
+      "visual": "You are a Shape Artist!",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "A dice is an example of which 3D shape?",
+      "options": ["A. Triangle", "B. Square", "C. Rectangle", "D. Circle"],
+      "correct": 1,
+      "explanation": "Wait — this is a trick question! A dice face is a SQUARE (2D), but the dice itself is a CUBE (3D)! When we press a cube face on paper and trace it, we get a square. So the 2D shape connected to a cube is a SQUARE!"
+    },
+    {
+      "question": "Which 2D shape has NO sides and NO corners?",
+      "options": ["A. Square", "B. Triangle", "C. Rectangle", "D. Circle"],
+      "correct": 3,
+      "explanation": "A CIRCLE has no sides and no corners! It is perfectly round all the way. A bangle, a coin, a full moon — all circles! That is what makes the circle the most special 2D shape — it has no straight edges at all!"
+    },
+    {
+      "question": "Priya folds a shape in half and both sides match perfectly. What is this called?",
+      "options": ["A. Tiling", "B. Symmetry", "C. Pattern", "D. Tracing"],
+      "correct": 1,
+      "explanation": "When you fold a shape and both halves match perfectly, that is called SYMMETRY! The fold line is the line of symmetry. Butterflies, leaves, and your own face all have symmetry. It is nature's way of being perfectly balanced!"
+    },
+    {
+      "question": "A square is a special type of which shape?",
+      "options": ["A. Triangle", "B. Circle", "C. Rectangle", "D. Hexagon"],
+      "correct": 2,
+      "explanation": "A SQUARE is a special RECTANGLE where all 4 sides are equal! Both have 4 sides and 4 corners. In a regular rectangle, only the opposite sides are equal. When ALL sides become equal — you get a square! Every square is a rectangle, but not every rectangle is a square!"
+    },
+    {
+      "question": "Ravi wants to tile his floor with no gaps. Which shape should he choose?",
+      "options": ["A. Circle", "B. Square", "C. Triangle only", "D. Oval"],
+      "correct": 1,
+      "explanation": "SQUARE tiles perfectly with no gaps and no overlaps — that is why most floor tiles are square or rectangular! Circles leave curved gaps between them when you try to tile. Squares are the perfect tiling shape and that is why you see them on floors everywhere!"
+    }
+  ]
+}

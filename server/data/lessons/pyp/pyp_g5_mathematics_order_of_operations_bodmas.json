@@ -1,0 +1,97 @@
+{
+  "id": "pyp_g5_mathematics_order_of_operations_bodmas",
+  "title": "Order of Operations (BODMAS)",
+  "grade": "Grade 5",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "ORDER OF OPERATIONS"
+      ],
+      "subtext": "Grade 5 · Mathematics",
+      "voice": "Hey kids, today we're going to learn about the order of operations. This is a secret code to solve math problems in the right order. Let's get started!",
+      "accent": "#38bdf8",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "BRAKETS FIRST"
+      ],
+      "subtext": "The order of operations",
+      "voice": "When we have a math problem with brackets, we need to solve what's inside the brackets first. Can you think of a reason why?",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "DIVIDE THEN",
+        "MULTIPLY NEXT"
+      ],
+      "subtext": "The order of operations",
+      "voice": "After we solve the brackets, we need to divide and multiply from left to right. Remember, we do these operations in order, just like we do our daily tasks!",
+      "accent": "#38bdf8",
+      "duration": 12
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "ADD THEN",
+        "SUBTRACT LAST"
+      ],
+      "subtext": "The order of operations",
+      "voice": "Finally, we add and subtract from left to right. This is the last step in our secret code to solve math problems.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "BODMAS RULES"
+      ],
+      "subtext": "The order of operations",
+      "voice": "So, let's summarize the BODMAS rules: Brackets first, then Divide and Multiply from left to right, and finally Add and Subtract from left to right.",
+      "accent": "#38bdf8",
+      "duration": 12
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TEST YOURSELF"
+      ],
+      "subtext": "Quiz time!",
+      "voice": "What's 2 + 3 × 4? Remember, we need to solve the multiplication first and then add.",
+      "accent": "#38bdf8",
+      "duration": 8
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "LEARN TODAY"
+      ],
+      "subtext": "You're a math master!",
+      "voice": "Today we learned about the order of operations, which is a secret code to solve math problems. Remember, we do brackets first, then divide and multiply, and finally add and subtract. You can now solve math problems with confidence! Keep practicing and soon you'll be a math magician!",
+      "accent": "#38bdf8",
+      "duration": 15
+    }
+  ]
+}

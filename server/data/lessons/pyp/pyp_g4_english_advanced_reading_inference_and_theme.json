@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_english_advanced_reading_inference_and_theme",
+  "title": "Advanced Reading — Inference and Theme",
+  "grade": "Grade 4",
+  "subject": "English",
+  "curriculum": "IB PYP",
+  "accent": "#f59e0b",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "READING",
+        "FUN",
+        "GAMES"
+      ],
+      "subtext": "Grade 4 · English",
+      "voice": "Hey kids, are you ready to unlock the secrets of your favorite books? Join me on an adventure of Advanced Reading!",
+      "accent": "#f59e0b",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "INFERENCE",
+        "IS",
+        "SMART"
+      ],
+      "subtext": "Make Connections",
+      "voice": "So, what is inference? It's when you make a smart guess about something that's not directly said in the story. Think about it like a puzzle piece that helps you understand the story better.",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "THEME",
+        "IS",
+        "KEY"
+      ],
+      "subtext": "Find the Main Idea",
+      "voice": "Now, let's talk about theme! The theme is the main idea or message of the story. It's like the heart of the story that makes it meaningful.",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "AUTHOR",
+        "PURPOSE",
+        "MATTERS"
+      ],
+      "subtext": "Why Did the Author Write This?",
+      "voice": "Why do authors write their stories? To share a message, to entertain, or to teach us something new. Understanding the author's purpose can help us better understand the story.",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "POINT",
+        "OF",
+        "VIEW"
+      ],
+      "subtext": "Who's Telling the Story?",
+      "voice": "The point of view is like a special lens that shows us the story from a particular character's perspective. It can make the story more exciting and relatable.",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "INFERENCE"
+      ],
+      "subtext": "Test Your Knowledge",
+      "voice": "So, kids, are you ready to put your new skills to the test? What is inference?",
+      "accent": "#f59e0b",
+      "duration": 5
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "You Did It!",
+      "voice": "Congratulations, kids! You now know the secrets of Advanced Reading! Remember, inference is making smart guesses, theme is the main idea, and author purpose is why the author wrote the story. Keep reading and exploring to become a super reader!",
+      "accent": "#f59e0b",
+      "duration": 10
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "topic": "Jugs and Mugs",
+  "chapter": 11,
+  "unit": "Capacity",
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Hello water explorer! I am Ms. Zara and today is all about JUGS and MUGS! We are learning about CAPACITY — how much a container can HOLD! From tiny cups to giant buckets, every container has a capacity. Let us pour, fill and measure our way through this chapter!",
+      "visual": "Jugs and Mugs!",
+      "emotion": "excited",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "What is CAPACITY? Capacity is how much liquid a container can hold when it is FULL! A small glass holds less water than a big jug. A mug holds less than a bucket! We can compare capacities by asking — which container holds MORE? Which holds LESS? Let us find out!",
+      "visual": "Glass jug bucket",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch11/scene_02.png"
+    },
+    {
+      "scene": 3,
+      "text": "COMPARING without measuring! Pour the water from Container A into Container B. If it overflows — A holds MORE than B! If it does not fill B completely — A holds LESS than B! If it fills B exactly — they hold the SAME! This is how we compare capacity without any measuring units! WOOHOO!",
+      "visual": "Pouring between vessels",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch11/scene_03.png"
+    },
+    {
+      "scene": 4,
+      "text": "The MILKMAN! Every morning the milkman comes with big vessels of milk. He measures milk using cups and jugs of STANDARD sizes. He fills different cups for different customers — 1 cup, 2 cups, half a jug! But different milkmen use different size cups — we need a STANDARD unit everyone agrees on!",
+      "visual": "Milkman with vessel",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch11/scene_04.png"
+    },
+    {
+      "scene": 5,
+      "text": "THE LITRE! The standard unit of capacity is the LITRE — written as L! A litre is used all over India and the world! A standard water bottle is 1 litre. Milk packets come in 1 litre or half litre (500 mL). Cooking oil bottles are 1 litre or 2 litres! Now everyone measures the SAME way — brilliant!",
+      "visual": "1 litre water bottle",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch11/scene_05.png"
+    },
+    {
+      "scene": 6,
+      "text": "MORE THAN 1 LITRE or LESS THAN 1 LITRE? A small glass holds about 200 mL — LESS than 1 litre! A big jug holds about 2 litres — MORE than 1 litre! A bucket holds about 10 litres — WAY more than 1 litre! A teaspoon holds just 5 mL — much LESS than 1 litre! Mind. Blown — so many sizes!",
+      "visual": "More or less 1 litre",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch11/scene_06.png"
+    },
+    {
+      "scene": 7,
+      "text": "FILLING ACTIVITY! How many glasses of water fill a jug? If a glass holds 250 mL and the jug holds 1000 mL (1 litre), then 1000 ÷ 250 = 4 glasses fill the jug! If a mug holds 500 mL, only 2 mugs fill the jug! Bigger the cup, fewer cups you need — smaller the cup, MORE cups you need! AMAZING!",
+      "visual": "Glasses filling jug",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch11/scene_07.png"
+    },
+    {
+      "scene": 8,
+      "text": "REAL LIFE capacities you know! A chai cup: about 100 mL. A small water bottle: 500 mL. A standard water bottle: 1 L. A pressure cooker: 3 L. A big bucket: 10 to 15 L. A full bathtub: about 200 L! Water tanks on rooftops: 500 to 1000 L! Capacity is everywhere in Indian homes!",
+      "visual": "Capacity chart India",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch11/scene_08.png"
+    },
+    {
+      "scene": 9,
+      "text": "MATHS with capacity! A jug holds 3 litres of juice. You pour out 1 litre for guests. How much juice is left? 3 − 1 = 2 litres! Another jug has 2 litres of water. You add 1 more litre from a bottle. Now it holds 2 + 1 = 3 litres! Adding and subtracting liquids — same maths, new context!",
+      "visual": "Juice jug problem",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch11/scene_09.png"
+    },
+    {
+      "scene": 10,
+      "text": "TOTAL CAPACITY! The cook needs to fill a pot that holds 5 litres. She has a jug that holds 2 litres. How many full jugs does she need to pour? 2 + 2 = 4 (not enough), 2 + 2 + 2 = 6 (too much)! She needs 2 full jugs and then a bit more from the third jug! Clever thinking about capacity and division!",
+      "visual": "Pot and jug filling",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch11/scene_10.png"
+    },
+    {
+      "scene": 11,
+      "text": "ORDERING by capacity! Order from SMALLEST to LARGEST capacity: a teaspoon (5 mL), a glass (250 mL), a jug (1 L = 1000 mL), a bucket (10 L = 10,000 mL)! Teaspoon → Glass → Jug → Bucket! Converting all to mL (or L) makes comparing EASY! WOOHOO — you are a capacity champion!",
+      "visual": "Capacity order chart",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch11/scene_11.png"
+    },
+    {
+      "scene": 12,
+      "text": "Word problem! A water tank holds 20 litres. A family uses 5 litres for drinking, 8 litres for cooking and 4 litres for washing. How much water is left? Total used = 5 + 8 + 4 = 17 litres. Remaining = 20 − 17 = 3 litres! Just 3 litres left — time to refill the tank! Great real-life maths!",
+      "visual": "Water tank problem",
+      "emotion": "happy",
+      "sceneImage": null
+    },
+    {
+      "scene": 13,
+      "text": "Capacity facts to remember! Capacity = how much a container holds. Standard unit = LITRE (L). 1000 mL = 1 litre. More than 1 L: jug, bucket, tank. Less than 1 L: glass, mug, cup. You can add and subtract capacities just like any numbers! Always include the unit L or mL in your answer!",
+      "visual": "Capacity facts",
+      "emotion": "thinking",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "WOOHOO — you are a CAPACITY CHAMPION! You know what capacity means, how to compare containers, the litre unit and how to solve problems with liquid! Next time you see milk packets, water bottles or cooking oil at home, you will know exactly how much they hold! Quiz time — POUR IT!",
+      "visual": "Capacity Champion!",
+      "emotion": "celebrating",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "What is the standard unit used to measure capacity?",
+      "options": ["Kilogram", "Centimetre", "Litre", "Gram"],
+      "correct": 2,
+      "explanation": "The standard unit of CAPACITY is the LITRE (L)! We use litres to measure how much liquid a container holds. Milk packets, water bottles and cooking oil bottles all show their capacity in litres! Kilograms are for weight, centimetres are for length — litres are for liquids! Brilliant!"
+    },
+    {
+      "question": "A jug holds 4 litres of water. You pour out 2 litres. How much water is left in the jug?",
+      "options": ["6 litres", "2 litres", "4 litres", "1 litre"],
+      "correct": 1,
+      "explanation": "We SUBTRACT! 4 litres − 2 litres = 2 litres left! Pouring out means TAKING AWAY — that is subtraction! The jug had 4 litres and you removed 2 litres, so 2 litres remain. Capacity maths is just regular subtraction with the unit litres! AMAZING work!"
+    },
+    {
+      "question": "Which container has the GREATEST capacity?",
+      "options": ["A teacup", "A glass", "A small bucket", "A 1 litre water bottle"],
+      "correct": 2,
+      "explanation": "A small bucket has the GREATEST capacity — it holds the most water! A teacup holds about 150 mL, a glass about 250 mL, a 1 litre bottle is 1000 mL, but a small bucket holds about 5 to 10 litres = 5000 to 10000 mL! Bucket wins! Biggest container holds the most!"
+    },
+    {
+      "question": "A bottle holds 1 litre of juice. How many 250 mL glasses can you fill from it?",
+      "options": ["2 glasses", "3 glasses", "4 glasses", "5 glasses"],
+      "correct": 2,
+      "explanation": "1 litre = 1000 mL. Each glass holds 250 mL. 250 + 250 + 250 + 250 = 1000 mL! So you can fill FOUR glasses from 1 litre! This is like dividing 1000 by 250. One full bottle gives you 4 full glasses of juice — perfect for 4 friends at a party! WOOHOO!"
+    },
+    {
+      "question": "A water tank had 10 litres. The family used 6 litres. How many litres are left?",
+      "options": ["16 litres", "4 litres", "6 litres", "60 litres"],
+      "correct": 1,
+      "explanation": "10 litres − 6 litres = 4 litres left! When something is USED UP or POURED OUT, we subtract! The tank started with 10 L, 6 L was used, so 10 − 6 = 4 litres remains. Remember to write the unit LITRES in your answer. Perfect subtraction!"
+    }
+  ]
+}

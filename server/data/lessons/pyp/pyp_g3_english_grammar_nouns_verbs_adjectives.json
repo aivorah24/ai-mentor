@@ -1,0 +1,110 @@
+{
+  "id": "pyp_g3_english_grammar_nouns_verbs_adjectives",
+  "title": "Grammar — Nouns Verbs Adjectives",
+  "grade": "Grade 3",
+  "subject": "English",
+  "curriculum": "IB PYP",
+  "accent": "#f59e0b",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "GRAMMAR",
+        "FUN",
+        "TIME"
+      ],
+      "subtext": "Grade 3 · English",
+      "voice": "Hey there, young explorers! Welcome to our adventure in Grammar. Today, we're going to learn about Nouns, Verbs, and Adjectives. Are you ready?",
+      "accent": "#f59e0b",
+      "duration": 15
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "COMMON",
+        "NOUNS",
+        "EXAMPLES"
+      ],
+      "subtext": "Common Nouns",
+      "voice": "A common noun is a word that refers to a general thing or idea. For example, 'dog', 'city', and 'school' are all common nouns.",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "PROPER",
+        "NOUNS",
+        "EXAMPLES"
+      ],
+      "subtext": "Proper Nouns",
+      "voice": "A proper noun is a word that refers to a specific person, place, or thing. For example, 'John', 'London', and 'Google' are all proper nouns.",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "ACTION",
+        "VERBS",
+        "RUN",
+        "JUMP"
+      ],
+      "subtext": "Action Verbs",
+      "voice": "An action verb is a word that shows an action or movement. For example, 'run', 'jump', and 'read' are all action verbs.",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "DESCRIPTING",
+        "WORDS",
+        "BIG",
+        "SMALL"
+      ],
+      "subtext": "Describing Words",
+      "voice": "Describing words, also known as adjectives, help us describe or tell more about a person, place, or thing. For example, 'big', 'small', and 'happy' are all describing words.",
+      "accent": "#f59e0b",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TEST",
+        "YOUR",
+        "KNOWLEDGE"
+      ],
+      "subtext": "What is a common noun?",
+      "voice": "What is a common noun? Think you know the answer? Let's find out!",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "TIME"
+      ],
+      "subtext": "Key Takeaways!",
+      "voice": "Woohoo! We made it to the end of our Grammar adventure! Remember, a common noun is a word that refers to a general thing or idea. A proper noun is a word that refers to a specific person, place, or thing. And, action verbs show an action or movement, while describing words help us describe or tell more about a person, place, or thing. Great job, young explorers!",
+      "accent": "#f59e0b",
+      "duration": 25
+    }
+  ]
+}

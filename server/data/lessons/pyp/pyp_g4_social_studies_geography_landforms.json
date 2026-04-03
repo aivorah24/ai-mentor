@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_social_studies_geography_landforms",
+  "title": "Geography — Landforms",
+  "grade": "Grade 4",
+  "subject": "Social Studies",
+  "curriculum": "IB PYP",
+  "accent": "#a855f7",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "LANDFORMS",
+        "EVERYWHERE",
+        "US"
+      ],
+      "subtext": "Grade 4 · Social Studies",
+      "voice": "Hey kids! Today we're going on a journey to explore the amazing world of landforms! From towering mountains to deep valleys, and vast oceans to rolling plains, get ready to discover the incredible diversity of our planet.",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "MOUNTAINS",
+        "SO Tall",
+        "AND STEEP"
+      ],
+      "subtext": "Mountains",
+      "voice": "Let's start with mountains! Mountains are natural rock formations that rise high above the ground. They can be found on every continent and are often home to incredible peaks and valleys.",
+      "accent": "#a855f7",
+      "duration": 15
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "VALLEYS",
+        "DEEP LOW",
+        "PLACES TO EXPLORE"
+      ],
+      "subtext": "Valleys",
+      "voice": "Moving on to valleys! Valleys are areas of land that are lower than the surrounding areas. They can be formed by rivers and are often home to amazing scenery and wildlife.",
+      "accent": "#a855f7",
+      "duration": 15
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "RIVERS",
+        "WATERWAYS",
+        "CONNECT THE WORLD"
+      ],
+      "subtext": "Rivers",
+      "voice": "Now let's talk about rivers! Rivers are bodies of water that flow across the land, often creating valleys and canyons along the way. They're essential for life on Earth and play a crucial role in shaping our landscape.",
+      "accent": "#a855f7",
+      "duration": 15
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "OCEANS",
+        "ENORMOUS",
+        "COVER 70%"
+      ],
+      "subtext": "Oceans",
+      "voice": "Next up are the oceans! The oceans cover over 70% of our planet's surface and are home to an incredible array of marine life. From coral reefs to deep-sea trenches, the oceans are full of mysteries waiting to be uncovered.",
+      "accent": "#a855f7",
+      "duration": 15
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "ARE",
+        "LANDFORMS"
+      ],
+      "subtext": "What are landforms?",
+      "voice": "Can you answer this question: What are landforms? Think you know the answer? Let's find out!",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Key Takeaways",
+      "voice": "So, what did we learn today? Let's review the key points: Mountains are natural rock formations, Valleys are areas of land that are lower than the surrounding areas, and Oceans cover over 70% of our planet's surface. Great job, kids! You're now landform experts!",
+      "accent": "#a855f7",
+      "duration": 15
+    }
+  ]
+}

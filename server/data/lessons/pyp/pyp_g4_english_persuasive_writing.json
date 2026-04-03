@@ -1,0 +1,110 @@
+{
+  "id": "pyp_g4_english_persuasive_writing",
+  "title": "Persuasive Writing",
+  "grade": "Grade 4",
+  "subject": "English",
+  "curriculum": "IB PYP",
+  "accent": "#f59e0b",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "PERSUADE",
+        "YOUR",
+        "READERS"
+      ],
+      "subtext": "Grade 4 · English",
+      "voice": "Are you excited to learn about persuasive writing? It's a super cool way to express your opinions and convince others to think like you. Let's get started!",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "ARGUMENT",
+        "IS"
+      ],
+      "subtext": "What's an Argument?",
+      "voice": "An argument is when you use facts and reasons to support your point of view. It's like building a strong case to convince others that you're right.",
+      "accent": "#f59e0b",
+      "duration": 12
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "OPINION",
+        "IS"
+      ],
+      "subtext": "What's an Opinion?",
+      "voice": "An opinion is what you think or believe about something. It's like sharing your personal viewpoint with others. Just remember, opinions are not facts!",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "EVIDENCE",
+        "IS"
+      ],
+      "subtext": "What's Evidence?",
+      "voice": "Evidence is facts or examples that support your argument or opinion. It's like using proof to show that you're right. You can use statistics, quotes, or even personal experiences as evidence!",
+      "accent": "#f59e0b",
+      "duration": 12
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "RHE TORICAL",
+        "QUESTIONS"
+      ],
+      "subtext": "What's a Rhetorical Question?",
+      "voice": "A rhetorical question is when you ask a question that doesn't need an answer. It's like making a point in a clever way. For example, 'Who needs a new bike when you have a bike that's still in good condition?' is a rhetorical question!",
+      "accent": "#f59e0b",
+      "duration": 15
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS"
+      ],
+      "subtext": "Test Your Knowledge!",
+      "voice": "What is the main purpose of persuasive writing?",
+      "question": "To entertain your readers.",
+      "options": [
+        "To entertain your readers.",
+        "To inform your readers.",
+        "To persuade your readers."
+      ],
+      "correct_answer": "To persuade your readers.",
+      "duration": 10,
+      "accent": "#f59e0b"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "TO"
+      ],
+      "subtext": "You're a Persuasive Writer!",
+      "voice": "Remember to use arguments, opinions, and evidence to make your points strong. Don't forget to ask rhetorical questions to make your writing more engaging! You're now a persuasive writer, go spread your ideas and convince others to think like you!",
+      "accent": "#f59e0b",
+      "duration": 15
+    }
+  ]
+}

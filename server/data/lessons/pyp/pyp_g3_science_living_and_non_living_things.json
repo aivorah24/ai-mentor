@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_science_living_and_non_living_things",
+  "title": "Living and Non-Living Things",
+  "grade": "Grade 3",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "LIVING",
+        "THINGS",
+        "EXIST"
+      ],
+      "subtext": "Grade 3 · Science",
+      "voice": "Hey there, explorers! Today we're going on an adventure to learn about living and non-living things. Let's get started!",
+      "accent": "#22c55e",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "LIVING",
+        "THING",
+        "BREATHES"
+      ],
+      "subtext": "What makes a living thing?",
+      "voice": "So, what makes a living thing? Well, it needs to breathe in oxygen and release carbon dioxide. Can you think of an example?",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "LIVING",
+        "THING",
+        "GROWS"
+      ],
+      "subtext": "How do living things grow?",
+      "voice": "Living things grow by taking in food and water. They might even grow new parts like leaves or flowers. Isn't that cool?",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "LIVING",
+        "THING",
+        "MOVES"
+      ],
+      "subtext": "How do living things move?",
+      "voice": "Living things can move in different ways, like running, hopping, or even swimming. They might even change direction when they need to.",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "LIVING",
+        "THING",
+        "REPRODUCES"
+      ],
+      "subtext": "How do living things reproduce?",
+      "voice": "Living things can make babies or new plants by growing seeds. It's like a special way of sharing themselves with the world.",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "LIVING"
+      ],
+      "subtext": "Can you answer this question?",
+      "voice": "What is a living thing? It's something that breathes, grows, moves, and reproduces. Can you think of an example?",
+      "accent": "#22c55e",
+      "duration": 5
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "LIVING",
+        "THINGS",
+        "ROCK"
+      ],
+      "subtext": "Let's review!",
+      "voice": "Wow, you're now experts on living things! Remember, living things breathe, grow, move, and reproduce. Non-living things, like rocks, don't do these things. Keep exploring and learning, and don't forget to share what you know with your friends!",
+      "accent": "#22c55e",
+      "duration": 10
+    }
+  ]
+}

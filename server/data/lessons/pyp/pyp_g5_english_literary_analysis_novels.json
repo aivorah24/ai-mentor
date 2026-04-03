@@ -1,0 +1,110 @@
+{
+  "id": "pyp_g5_english_literary_analysis_novels",
+  "title": "Literary Analysis — Novels",
+  "grade": "Grade 5",
+  "subject": "English",
+  "curriculum": "IB PYP",
+  "accent": "#f59e0b",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "LOVE",
+        "READING",
+        "NOVELS"
+      ],
+      "subtext": "Grade 5 · English",
+      "voice": "Hey there, young adventurers! Welcome to the amazing world of literary analysis. Get ready to uncover the secrets of your favorite novels!",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "CHARACTER",
+        "DEVELOPMENT",
+        "JOURNEY"
+      ],
+      "subtext": "Character Development",
+      "voice": "When you read a novel, you get to meet new friends and see them grow. This is called character development. It's like watching a seed grow into a beautiful flower.",
+      "accent": "#f59e0b",
+      "duration": 25
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "PLOT",
+        "STRUCTURE",
+        "TWISTS"
+      ],
+      "subtext": "Plot Structure",
+      "voice": "A novel has a special structure, like a puzzle. It starts with an idea, then something happens, and it keeps getting more exciting. This is called plot structure.",
+      "accent": "#f59e0b",
+      "duration": 25
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "THEME",
+        "MESSAGE",
+        "LESSON"
+      ],
+      "subtext": "Theme",
+      "voice": "What's the main idea of the novel? What's the author trying to tell us? This is called the theme. It's like a hidden message that we need to discover.",
+      "accent": "#f59e0b",
+      "duration": 25
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "SYMBOLISM",
+        "CODE",
+        "MEANING"
+      ],
+      "subtext": "Symbolism",
+      "voice": "Authors use symbols, like flags or birds, to hide secret meanings. It's like a code that we need to crack to understand the novel better.",
+      "accent": "#f59e0b",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "SYMBOLISM"
+      ],
+      "subtext": "What is symbolism in a novel?",
+      "voice": "What is symbolism in a novel?",
+      "answer": "It's when authors use symbols to hide secret meanings.",
+      "duration": 15,
+      "accent": "#f59e0b"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Summary",
+      "voice": "Let's review what we learned today! We talked about character development, plot structure, theme, and symbolism. These are the secret ingredients that make a novel amazing!",
+      "accent": "#f59e0b",
+      "duration": 20
+    }
+  ]
+}

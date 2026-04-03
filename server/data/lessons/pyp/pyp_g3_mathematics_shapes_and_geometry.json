@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_mathematics_shapes_and_geometry",
+  "title": "Shapes and Geometry",
+  "grade": "Grade 3",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "SHAPE",
+        "ADVENTURE",
+        "BEGIN"
+      ],
+      "subtext": "Grade 3 · Mathematics",
+      "voice": "Hey kids! Today, we're going on a shape adventure! Get ready to learn about 2D and 3D shapes, and all the cool things you can do with them!",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "2D",
+        "SHAPE",
+        "TYPES"
+      ],
+      "subtext": "2D Shapes",
+      "voice": "A 2D shape is a flat shape. Can you think of some examples? Like a square, a circle, or a triangle?",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "3D",
+        "SHAPE",
+        "TYPES"
+      ],
+      "subtext": "3D Shapes",
+      "voice": "A 3D shape is a three-dimensional shape. Think of a cube, a sphere, or a pyramid. Wow, they're so cool!",
+      "accent": "#38bdf8",
+      "duration": 35
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "SIDES",
+        "CORNERS",
+        "ANGLES"
+      ],
+      "subtext": "Parts of a Shape",
+      "voice": "Did you know that a shape has sides, corners, and angles? Let's learn more about each of these parts.",
+      "accent": "#38bdf8",
+      "duration": 32
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "SYMMETRY",
+        "REFLECTION",
+        "LINE"
+      ],
+      "subtext": "Symmetry and Patterns",
+      "voice": "Symmetry is like a magic mirror that makes a shape look the same on both sides. Let's explore more about symmetry and patterns.",
+      "accent": "#38bdf8",
+      "duration": 38
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TEST",
+        "YOUR",
+        "KNOWLEDGE"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "What is the name of a 3D shape with six sides and six corners?",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Summary Time!",
+      "voice": "Wow, we learned so much today! Let's review the key points: 2D and 3D shapes, parts of a shape, and symmetry. Remember, shapes are all around us, and understanding them is super cool!",
+      "accent": "#38bdf8",
+      "duration": 45
+    }
+  ]
+}

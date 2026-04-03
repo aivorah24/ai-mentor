@@ -1,0 +1,124 @@
+{
+  "id": "pyp_g4_arts_music_rhythm_and_notation",
+  "title": "Music — Rhythm and Notation",
+  "grade": "Grade 4",
+  "subject": "Arts",
+  "curriculum": "IB PYP",
+  "accent": "#ec4899",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "MUSIC",
+        "FUN",
+        "AWESOME"
+      ],
+      "subtext": "Grade 4 · Arts",
+      "voice": "Hey kids! Today we're going to learn about music and how to read it. Let's get started!",
+      "accent": "#ec4899",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "BEAT",
+        "RHYTHM",
+        "FUN"
+      ],
+      "subtext": "What is a Beat?",
+      "voice": "A beat is the rhythm of music. It's the pattern of sounds that we hear when we listen to a song.",
+      "accent": "#ec4899",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "TEMPO",
+        "FAST",
+        "SLOW"
+      ],
+      "subtext": "What is Tempo?",
+      "voice": "Tempo is the speed of the music. It can be fast or slow, and it can change throughout the song.",
+      "accent": "#ec4899",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "NOTES",
+        "RESTS",
+        "READING"
+      ],
+      "subtext": "What are Notes and Rests?",
+      "voice": "Notes are the symbols we use to read music. Rests are the signs that tell us to be quiet for a moment.",
+      "accent": "#ec4899",
+      "duration": 25
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "READING",
+        "MUSIC",
+        "NOTATION"
+      ],
+      "subtext": "How to Read Music Notation",
+      "voice": "To read music notation, we look at the notes and rests on the staff. The staff is like a map that shows us where the notes go.",
+      "accent": "#ec4899",
+      "duration": 30
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TEST",
+        "YOUR",
+        "KNOWLEDGE"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "What is the symbol that tells us to be quiet for a moment?",
+      "answers": [
+        {
+          "id": "A",
+          "text": "Note"
+        },
+        {
+          "id": "B",
+          "text": "Rest"
+        },
+        {
+          "id": "C",
+          "text": "Beat"
+        }
+      ],
+      "correct": "B",
+      "duration": 20,
+      "accent": "#ec4899"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Let's Review!",
+      "voice": "Today we learned about beats, tempo, and reading music notation. We also learned about notes and rests. Great job, kids!",
+      "duration": 10,
+      "accent": "#ec4899"
+    }
+  ]
+}

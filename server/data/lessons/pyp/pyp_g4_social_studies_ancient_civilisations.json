@@ -1,0 +1,110 @@
+{
+  "id": "pyp_g4_social_studies_ancient_civilisations",
+  "title": "Ancient Civilisations",
+  "grade": "Grade 4",
+  "subject": "Social Studies",
+  "curriculum": "IB PYP",
+  "accent": "#a855f7",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "ANCIENT",
+        "CIVILIZATIONS",
+        "EXISTED"
+      ],
+      "subtext": "Grade 4 · Social Studies",
+      "voice": "Welcome to the amazing world of ancient civilizations! Can you imagine living thousands of years ago? Let's explore the fascinating cultures of Egypt, Mesopotamia, and the Indus Valley!",
+      "accent": "#a855f7",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "EGYPTIAN",
+        "PYRAMIDS",
+        "BUILDING"
+      ],
+      "subtext": "Building Pyramids in Ancient Egypt",
+      "voice": "Ancient Egypt was a place of grandeur and wonder. The Egyptians were skilled builders who created the magnificent pyramids. Can you imagine constructing a massive pyramid using only simple tools?",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "MESOPOTAMIA",
+        "WHEAT",
+        "FARMING"
+      ],
+      "subtext": "Farming in Ancient Mesopotamia",
+      "voice": "In Mesopotamia, people were skilled farmers who grew wheat and other crops. They used the Tigris and Euphrates rivers to irrigate their fields. This allowed them to have a stable food supply and grow their cities.",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "INDUS",
+        "VALLEY",
+        "CIVILIZATION"
+      ],
+      "subtext": "The Indus Valley Civilization",
+      "voice": "The Indus Valley civilization was known for its advanced system of writing and governance. They built sophisticated cities with streets, homes, and public baths. It's amazing to think about how advanced they were thousands of years ago.",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "WRITING",
+        "SYSTEM",
+        " DEVELOPED"
+      ],
+      "subtext": "The Development of Writing",
+      "voice": "Writing was a huge innovation in ancient civilizations. It allowed people to record their history, laws, and stories. This helped to spread knowledge and ideas across the world.",
+      "accent": "#a855f7",
+      "duration": 10
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "WAS",
+        "WRITING"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "What was writing used for in ancient civilizations?",
+      "answer": "Recording history, laws, and stories",
+      "duration": 8,
+      "accent": "#a855f7"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "KEY",
+        "POINTS",
+        "REVIEW"
+      ],
+      "subtext": "Let's Review!",
+      "voice": "Let's review what we've learned today! Ancient civilizations like Egypt, Mesopotamia, and the Indus Valley were skilled builders, farmers, and writers. They developed writing systems to record their history and laws. Can you remember these three key points?",
+      "duration": 10,
+      "accent": "#a855f7"
+    }
+  ]
+}

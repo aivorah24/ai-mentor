@@ -1,0 +1,111 @@
+{
+  "id": "pyp_g5_science_human_body_circulatory_system",
+  "title": "Human Body — Circulatory System",
+  "grade": "Grade 5",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "LET'S EXPLORE",
+        "THE HUMAN BODY",
+        "CIRCULATION"
+      ],
+      "subtext": "Grade 5 · Science",
+      "voice": "Hey kids, today we're going on an amazing journey through the human body! Get ready to learn about the circulatory system, which is like a super-efficient delivery network that keeps our bodies alive and healthy.",
+      "accent": "#22c55e",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "HEART",
+        "BEATS",
+        "FAST"
+      ],
+      "subtext": "The Heart",
+      "voice": "The heart is like a powerful pump that never stops working. It beats fast, pumping blood through our body. But did you know that our heart is actually a muscle?",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "BLOOD",
+        "CARRIES",
+        "OXYGEN"
+      ],
+      "subtext": "Blood",
+      "voice": "Blood is like a special delivery truck that carries oxygen to all parts of our body. Without it, we wouldn't be able to breathe or move!",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "ARTERIES",
+        "VEINS",
+        "CAPILLARIES"
+      ],
+      "subtext": "Blood Vessels",
+      "voice": "Arteries are like the highways that carry blood away from the heart, while veins are like the return roads that bring blood back to the heart. Capillaries are tiny roads that help oxygen and nutrients reach our cells.",
+      "accent": "#22c55e",
+      "duration": 15
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "PULSE",
+        "RATE",
+        "IMPORTANT"
+      ],
+      "subtext": "Pulse Rate",
+      "voice": "Did you know that our heart rate can change depending on what we're doing? When we're excited or exercising, our heart beats faster to help us move and think clearly.",
+      "accent": "#22c55e",
+      "duration": 10
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "THE"
+      ],
+      "subtext": "The Heart",
+      "voice": "What is the main function of the heart in our circulatory system?",
+      "question": "The heart is a pump that circulates blood throughout the body.",
+      "answer": "Yes or No",
+      "duration": 10,
+      "accent": "#22c55e"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Summary",
+      "voice": "Let's review what we've learned today! The heart is a powerful pump that never stops working, blood carries oxygen to all parts of our body, and arteries, veins, and capillaries are like roads that help the blood reach its destination. Great job exploring the circulatory system with us!",
+      "accent": "#22c55e",
+      "duration": 10
+    }
+  ]
+}

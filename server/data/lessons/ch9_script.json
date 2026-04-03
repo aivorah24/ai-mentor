@@ -1,0 +1,139 @@
+{
+  "topic": "How Many Times?",
+  "chapter": 9,
+  "unit": "Multiplication and Division",
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Hello SUPERSTAR! I am Ms. Zara and today we discover MULTIPLICATION! It is the FASTEST way to add the same number again and again! Imagine counting flower petals at Raksha Bandhan, or diyas at Diwali — multiplication makes it LIGHTNING FAST! Let us learn together!",
+      "visual": "How Many Times?",
+      "emotion": "excited",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "SKIP COUNTING! Count by 2s: 2, 4, 6, 8, 10... Count by 5s: 5, 10, 15, 20, 25... Count by 10s: 10, 20, 30, 40, 50! You are already multiplying! When you skip count by 3s — 3, 6, 9, 12 — you are saying 1×3, 2×3, 3×3, 4×3! Skip counting IS the multiplication table! MIND. BLOWN!",
+      "visual": "Skip count by 2 5 10",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch9/scene_02.png"
+    },
+    {
+      "scene": 3,
+      "text": "EQUAL GROUPS! At Raksha Bandhan, 3 sisters each get 4 flowers. How many flowers total? Instead of 4 + 4 + 4, we write 3 × 4 = 12! Three GROUPS of four! Multiplication means making equal groups and counting the TOTAL. It is repeated addition made SUPER SPEEDY!",
+      "visual": "3 groups of 4 flowers",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch9/scene_03.png"
+    },
+    {
+      "scene": 4,
+      "text": "REPEATED ADDITION = MULTIPLICATION! 5 + 5 + 5 = 15 is the same as 3 × 5 = 15! Adding 5 three times equals three fives! Can you see it? 2 + 2 + 2 + 2 = 8 is the same as 4 × 2 = 8! Multiplication is just a SHORTCUT for repeated addition. Lazy maths genius move — WOOHOO!",
+      "visual": "Repeated add = multiply",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch9/scene_04.png"
+    },
+    {
+      "scene": 5,
+      "text": "NUMBER LINE JUMPS! Multiplication on the number line — make EQUAL JUMPS! For 3 × 4, start at 0 and make 3 jumps of 4 each: jump to 4, then to 8, then to 12! You land on 12! So 3 × 4 = 12! The number line shows us multiplication as rhythmic jumping — like a dance!",
+      "visual": "Number line 3 jumps 4",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch9/scene_05.png"
+    },
+    {
+      "scene": 6,
+      "text": "TIMES TABLE OF 2! 1×2=2, 2×2=4, 3×2=6, 4×2=8, 5×2=10! These are the even numbers — 2, 4, 6, 8, 10! Counting socks: 1 pair = 2 socks, 2 pairs = 4 socks, 3 pairs = 6 socks! Table of 2 is EVERYWHERE — pairs of eyes, pairs of shoes, pairs of earrings! Can you feel the rhythm?",
+      "visual": "2 times table",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch9/scene_06.png"
+    },
+    {
+      "scene": 7,
+      "text": "TIMES TABLE OF 5! 1×5=5, 2×5=10, 3×5=15, 4×5=20, 5×5=25! Notice the pattern — all answers end in 5 or 0! Counting fingers: 1 hand = 5 fingers, 2 hands = 10 fingers, 3 hands = 15! Counting five-rupee coins: 1 coin = 5 rupees, 4 coins = 20 rupees! Table of 5 is SO useful!",
+      "visual": "5 times table",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch9/scene_07.png"
+    },
+    {
+      "scene": 8,
+      "text": "TIMES TABLE OF 10! 1×10=10, 2×10=20, 3×10=30, 4×10=40, 5×10=50! Every answer just adds a ZERO to the end! 3×10 — just write 30! Counting 10-rupee notes: 5 notes = 50 rupees! Table of 10 is the EASIEST and most useful table in the whole world. WOOHOO!",
+      "visual": "10 times table",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch9/scene_08.png"
+    },
+    {
+      "scene": 9,
+      "text": "TIMES TABLE OF 3! 1×3=3, 2×3=6, 3×3=9, 4×3=12, 5×3=15! At Diwali, each diya tray has 3 diyas. 4 trays = 4×3 = 12 diyas! Making flower garlands: each garland has 3 flowers. 5 garlands = 5×3 = 15 flowers! The table of 3 is rhythmic and FUN — 3, 6, 9, 12 — feels like music!",
+      "visual": "3 times table diyas",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch9/scene_09.png"
+    },
+    {
+      "scene": 10,
+      "text": "TIMES TABLE OF 4! 1×4=4, 2×4=8, 3×4=12, 4×4=16, 5×4=20! A car has 4 wheels. 3 cars have 3×4=12 wheels! A table has 4 legs. 5 tables have 5×4=20 legs! Counting 4-petal flowers: 6 flowers = 6×4 = 24 petals! Table of 4 is EVERYWHERE once you start looking!",
+      "visual": "4 times table cars",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch9/scene_10.png"
+    },
+    {
+      "scene": 11,
+      "text": "ZERO and ONE rules! Any number × 0 = 0! If you have 100 bags but each bag is EMPTY (0 things), total = 0! Any number × 1 = that number itself! 7 × 1 = 7, because one group of seven is just seven! These two rules are magical shortcuts — memorize them forever!",
+      "visual": "Times 0 and times 1",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch9/scene_11.png"
+    },
+    {
+      "scene": 12,
+      "text": "Word problem! At Raksha Bandhan, 5 brothers each tie 3 rakhis. How many rakhis are tied in all? 5 × 3 = 15 rakhis! And if each rakhi costs 4 rupees, total cost = 15 × 4 = 60 rupees! Two multiplication steps in one problem — you handled that like a PRO!",
+      "visual": "Raksha Bandhan math",
+      "emotion": "celebrating",
+      "sceneImage": null
+    },
+    {
+      "scene": 13,
+      "text": "Multiplication facts to remember! Multiplication is repeated addition. Equal groups × number in each group = total. The answer in multiplication is called the PRODUCT. 3 × 5 = 15 and 5 × 3 = 15 — the ORDER does not matter! This is called the COMMUTATIVE property — fancy word for a cool fact!",
+      "visual": "Multiplication facts",
+      "emotion": "thinking",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "WOOHOO — you are a MULTIPLICATION MASTER! You know skip counting, equal groups, number line jumps, and tables 2, 3, 4, 5 and 10! You just learned one of the most powerful tools in all of mathematics! Ms. Zara is BURSTING with pride for you! Crush that quiz!",
+      "visual": "Multiplication Master!",
+      "emotion": "celebrating",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "There are 4 flower garlands. Each garland has 5 flowers. How many flowers are there in total?",
+      "options": ["9", "15", "20", "25"],
+      "correct": 2,
+      "explanation": "4 garlands with 5 flowers each — we MULTIPLY! 4 × 5 = 20 flowers! You can also add: 5 + 5 + 5 + 5 = 20. But multiplication is faster! 4 equal groups of 5 gives us 20. Count the flower power — TWENTY beautiful flowers!"
+    },
+    {
+      "question": "What is 3 × 10?",
+      "options": ["13", "7", "30", "300"],
+      "correct": 2,
+      "explanation": "3 × 10 = 30! The easy trick with the 10 times table: just add a zero to the other number! 3 becomes 30. Three groups of ten = 10, 20, 30! Like counting three 10-rupee notes — you have 30 rupees! Table of 10 is the superstar of all tables!"
+    },
+    {
+      "question": "Skip count by 2s: 2, 4, 6, 8, ___",
+      "options": ["9", "10", "12", "11"],
+      "correct": 1,
+      "explanation": "Skip counting by 2s means adding 2 each time! 2, 4, 6, 8... add 2 more = 10! So the next number is 10. This is also the 2 times table: 5 × 2 = 10! All even numbers appear when you skip count by 2. You have got perfect skip counting skills!"
+    },
+    {
+      "question": "What is 6 × 0?",
+      "options": ["6", "60", "1", "0"],
+      "correct": 3,
+      "explanation": "Any number multiplied by ZERO equals ZERO! 6 × 0 = 0. Think of it this way: if you have 6 bags but each bag has 0 biscuits inside, total biscuits = 0! Zero times anything is always zero — one of the magical rules of multiplication! Superb!"
+    },
+    {
+      "question": "Which is the same as 3 + 3 + 3 + 3?",
+      "options": ["3 × 3", "4 × 3", "3 × 1", "7 × 3"],
+      "correct": 1,
+      "explanation": "3 added 4 times is 4 × 3! We have the number 3, and we add it 4 times — that means 4 GROUPS of 3! So 3 + 3 + 3 + 3 = 4 × 3 = 12! Multiplication is just a shortcut for repeated addition. The number of times you add = the first number in the multiplication!"
+    }
+  ]
+}

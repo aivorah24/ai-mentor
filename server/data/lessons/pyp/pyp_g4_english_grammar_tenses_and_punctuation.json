@@ -1,0 +1,105 @@
+{
+  "id": "pyp_g4_english_grammar_tenses_and_punctuation",
+  "title": "Grammar — Tenses and Punctuation",
+  "grade": "Grade 4",
+  "subject": "English",
+  "curriculum": "IB PYP",
+  "accent": "#f59e0b",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "ENGLISH",
+        "IS",
+        "FUN"
+      ],
+      "subtext": "Grade 4 · English",
+      "voice": "Hey kids, are you ready for an adventure in English? Let's learn about tenses and punctuation! We'll discover how to use commas, apostrophes, and speech marks to make our writing shine!",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "PAST",
+        "PRESENT",
+        "FUTURE"
+      ],
+      "subtext": "Tenses",
+      "voice": "Imagine you're telling a story about your day. You can use the past tense to say what happened yesterday. You can use the present tense to say what's happening now. And you can use the future tense to say what's going to happen tomorrow.",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "COMMAS",
+        "APOSTROPHES",
+        "SPEECH MARKS"
+      ],
+      "subtext": "Punctuation",
+      "voice": "Now, let's talk about punctuation! Commas help us separate items in a list. Apostrophes show us where to put the missing letters in a contraction. And speech marks help us show when someone is speaking.",
+      "accent": "#f59e0b",
+      "duration": 30
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "PARAGRAPHS"
+      ],
+      "subtext": "Organizing our writing",
+      "voice": "When we write, we need to organize our thoughts into paragraphs. A paragraph is a group of sentences that talk about the same thing. Let's practice writing a paragraph together!",
+      "accent": "#f59e0b",
+      "duration": 25
+    },
+    {
+      "id": "05_quiz",
+      "scene_number": 5,
+      "type": "quiz",
+      "words": [
+        "TEST",
+        "YOUR",
+        "KNOWLEDGE"
+      ],
+      "subtext": "Quiz time!",
+      "voice": "What punctuation mark is used to show where someone is speaking? A) Comma B) Apostrophe C) Speech mark",
+      "accent": "#f59e0b",
+      "duration": 15
+    },
+    {
+      "id": "06_summary",
+      "scene_number": 6,
+      "type": "summary",
+      "words": [
+        "SUMMARY",
+        "TIME"
+      ],
+      "subtext": "Let's review!",
+      "voice": "Today, we learned about tenses, punctuation, and organizing our writing into paragraphs. Remember, we use the past, present, and future tenses to tell our stories. We use commas, apostrophes, and speech marks to make our writing shine. And we use paragraphs to organize our thoughts.",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "07_outro",
+      "scene_number": 7,
+      "type": "outro",
+      "words": [
+        "THANK",
+        "YOU"
+      ],
+      "subtext": "See you next time!",
+      "voice": "Thanks for joining me on this adventure in English! See you next time, and don't forget to practice your grammar skills!",
+      "accent": "#f59e0b",
+      "duration": 5
+    }
+  ]
+}

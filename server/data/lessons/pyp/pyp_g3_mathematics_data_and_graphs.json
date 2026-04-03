@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_mathematics_data_and_graphs",
+  "title": "Data and Graphs",
+  "grade": "Grade 3",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "DATA IS",
+        "COOL AND",
+        "FUN TO"
+      ],
+      "subtext": "Grade 3 · Mathematics",
+      "voice": "Hey kids, today we're going on an adventure to explore the fascinating world of data and graphs! Imagine you're a detective trying to solve a mystery by collecting clues, and each clue is a piece of data.",
+      "accent": "#38bdf8",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "PICTOGRAPH",
+        "IS A",
+        "GRAPH"
+      ],
+      "subtext": "",
+      "voice": "A pictograph is a special kind of graph that uses pictures or symbols to show data. Let's see how it works.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "BAR GRAPH",
+        "SHOWS",
+        "DATA"
+      ],
+      "subtext": "",
+      "voice": "A bar graph is used to compare data between different groups. It's like a chart that helps us see the differences.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "TALLY CHART",
+        "HELPS",
+        "COUNT"
+      ],
+      "subtext": "",
+      "voice": "A tally chart is a tool used to count data. It's like a special counter that helps us keep track of numbers.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "COLLECT",
+        "DATA",
+        "AND"
+      ],
+      "subtext": "",
+      "voice": "To make a graph, we need to collect data first. This means gathering information and making notes.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT IS",
+        "A GRAPH?",
+        "USED"
+      ],
+      "subtext": "",
+      "voice": "What is a graph used for?",
+      "accent": "#38bdf8",
+      "duration": 5
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "TO",
+        "GRAPH"
+      ],
+      "subtext": "",
+      "voice": "Today we learned that pictographs, bar graphs, and tally charts are all different types of graphs used to show data. We also discovered how to collect data and make a graph. Keep exploring and learning about data and graphs!",
+      "accent": "#38bdf8",
+      "duration": 10
+    }
+  ]
+}

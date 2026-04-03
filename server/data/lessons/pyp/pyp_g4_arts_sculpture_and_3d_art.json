@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_arts_sculpture_and_3d_art",
+  "title": "Sculpture and 3D Art",
+  "grade": "Grade 4",
+  "subject": "Arts",
+  "curriculum": "IB PYP",
+  "accent": "#ec4899",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "CREATE",
+        "SPECTACULAR",
+        "ART"
+      ],
+      "subtext": "Grade 4 · Arts",
+      "voice": "Hey kids, are you ready to create something amazing? Today, we're going to explore the world of sculpture and 3D art! Get your creative juices flowing!",
+      "accent": "#ec4899",
+      "duration": 5
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "CLAY",
+        "MODELLING",
+        "FUN"
+      ],
+      "subtext": "Form and Texture",
+      "voice": "When we create 3D art, we use different materials like clay to shape and mold our creations. Can you think of other materials we could use?",
+      "accent": "#ec4899",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "PROPORTION",
+        "MATTERS",
+        "ART"
+      ],
+      "subtext": "Proportion",
+      "voice": "Remember, proportion is important in art. If our sculptures are too big or too small, they won't look right. Can you think of examples where proportion makes a difference?",
+      "accent": "#ec4899",
+      "duration": 25
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "ABSTRACT",
+        "VS",
+        "REALISTIC"
+      ],
+      "subtext": "Abstract vs Realistic",
+      "voice": "Sometimes, our sculptures can be abstract or realistic. What do you think is the difference between these two types of art?",
+      "accent": "#ec4899",
+      "duration": 30
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "EXPERIMENT",
+        "CREATE",
+        "FUN"
+      ],
+      "subtext": "Experimentation",
+      "voice": "The best part of creating 3D art is experimenting with different materials and techniques. Don't be afraid to try new things and make mistakes!",
+      "accent": "#ec4899",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "ABSTRACT"
+      ],
+      "subtext": "Test Your Knowledge",
+      "voice": "What is the difference between abstract and realistic art? Think you know the answer? Let's see!",
+      "accent": "#ec4899",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REVIEW",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "You Did It!",
+      "voice": "Hey kids, let's review what we learned today! Form and texture are important in sculpture. Proportion matters in art, and we can create abstract or realistic sculptures. Most importantly, remember to have fun and experiment with different materials and techniques!",
+      "accent": "#ec4899",
+      "duration": 20
+    }
+  ]
+}

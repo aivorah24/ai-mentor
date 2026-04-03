@@ -1,0 +1,139 @@
+{
+  "topic": "Can We Share?",
+  "chapter": 12,
+  "unit": "Division and Fractions",
+  "grade": "Class 3",
+  "curriculum": "NCERT",
+  "scenes": [
+    {
+      "scene": 1,
+      "text": "Hello HELLO! I am Ms. Zara and today we are asking — CAN WE SHARE? When we share something EQUALLY between friends, we are doing DIVISION and learning about FRACTIONS! Sharing fairly is one of the most important ideas in maths AND in life! Let us explore together!",
+      "visual": "Can We Share?",
+      "emotion": "excited",
+      "sceneImage": null
+    },
+    {
+      "scene": 2,
+      "text": "Meet Shabnam and Mukta! They are best friends sharing their lunch. Shabnam has a paratha. She wants to give HALF to Mukta. She folds the paratha in the MIDDLE and cuts — each piece is EQUAL! Each piece is ONE HALF — written as 1/2. Half means TWO EQUAL pieces! WOOHOO!",
+      "visual": "Folding paratha half",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch12/scene_02.png"
+    },
+    {
+      "scene": 3,
+      "text": "Understanding HALF! When you divide something into 2 EQUAL parts, each part is ONE HALF (1/2)! The number at the BOTTOM (2) tells us how many equal parts in total. The number at the TOP (1) tells us how many parts we have! 1/2 + 1/2 = 1 whole! Like two equal halves of a paratha!",
+      "visual": "1/2 fraction circle",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch12/scene_03.png"
+    },
+    {
+      "scene": 4,
+      "text": "QUARTERS! Now four friends want to share one chapati equally. Fold it in HALF, then fold in HALF again — four equal pieces! Each piece is ONE QUARTER — written as 1/4! The chapati has 4 equal parts and each friend gets 1 part = 1/4! 1/4 + 1/4 + 1/4 + 1/4 = 1 whole chapati!",
+      "visual": "Chapati 4 quarters",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch12/scene_04.png"
+    },
+    {
+      "scene": 5,
+      "text": "FOLDING to show fractions! Take a piece of paper. Fold it in half — you see 1/2! Fold it in half AGAIN — you see 1/4! Each fold DOUBLES the number of equal parts! This is exactly what the NCERT book does with a paper — fold, unfold, count the equal parts! Fractions live inside folded paper!",
+      "visual": "Paper folding halves",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch12/scene_05.png"
+    },
+    {
+      "scene": 6,
+      "text": "SHARING OBJECTS equally! 8 mangoes shared equally between 2 children. Each child gets 8 ÷ 2 = 4 mangoes! 12 biscuits shared equally among 3 children — 12 ÷ 3 = 4 biscuits each! When we divide, we split things into EQUAL GROUPS and find out how many each person gets! Division is FAIR sharing!",
+      "visual": "8 mangoes share 2",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch12/scene_06.png"
+    },
+    {
+      "scene": 7,
+      "text": "DIVISION using multiplication tables! 12 ÷ 3 = ? Think — what number times 3 gives 12? 4 × 3 = 12 — so the answer is 4! Division and multiplication are OPPOSITES — they are a team! If you know 5 × 4 = 20, then you also know 20 ÷ 4 = 5 and 20 ÷ 5 = 4! Mind. BLOWN — two facts from one!",
+      "visual": "Division times connect",
+      "emotion": "surprised",
+      "sceneImage": "/data/images/scenes/ch12/scene_07.png"
+    },
+    {
+      "scene": 8,
+      "text": "MORE FRACTIONS! If a pizza is cut into 4 equal slices and you eat 2 slices, you ate 2/4 of the pizza! If you colour 3 parts of a shape that has 4 equal parts, you coloured 3/4 — three quarters! The TOP number counts YOUR parts. The BOTTOM number counts ALL parts. Easy rule to remember!",
+      "visual": "Pizza 2/4 fraction",
+      "emotion": "excited",
+      "sceneImage": "/data/images/scenes/ch12/scene_08.png"
+    },
+    {
+      "scene": 9,
+      "text": "HALF of a GROUP! What is half of 10 mangoes? Divide 10 into 2 equal groups: 5 in each group! Half of 10 = 5! What is half of 8 rupees? 4 rupees! What is half of 14 flowers? 7 flowers! To find HALF of a number, just divide by 2! Fractions work on groups of objects too — BRILLIANT!",
+      "visual": "Half of group mangoes",
+      "emotion": "happy",
+      "sceneImage": "/data/images/scenes/ch12/scene_09.png"
+    },
+    {
+      "scene": 10,
+      "text": "EQUAL or NOT EQUAL? Look at these: a circle cut into two pieces — one big, one small. Is each piece 1/2? NO! For a fraction, ALL parts must be EQUAL SIZE! Half means two pieces of the SAME size! Always check — are all parts equal? Only then can you call it a fraction! Smart check!",
+      "visual": "Equal vs unequal parts",
+      "emotion": "thinking",
+      "sceneImage": "/data/images/scenes/ch12/scene_10.png"
+    },
+    {
+      "scene": 11,
+      "text": "Shabnam and Mukta's full lunch! They have 6 laddoos to share equally between 2 friends. 6 ÷ 2 = 3 laddoos each! They have 1 gulab jamun — they cut it in half. Each gets 1/2 gulab jamun! They have 4 pieces of halwa — each gets 4 ÷ 2 = 2 pieces! Everything shared PERFECTLY EQUALLY! WOOHOO!",
+      "visual": "Shabnam Mukta lunch",
+      "emotion": "celebrating",
+      "sceneImage": "/data/images/scenes/ch12/scene_11.png"
+    },
+    {
+      "scene": 12,
+      "text": "Word problem! 15 children want to play in teams of 3. How many teams are there? 15 ÷ 3 = 5 teams! If each team has 3 children and there are 5 teams, total children = 5 × 3 = 15. Division to split into groups, multiplication to check! That is using maths like a REAL mathematician!",
+      "visual": "Teams division problem",
+      "emotion": "happy",
+      "sceneImage": null
+    },
+    {
+      "scene": 13,
+      "text": "Key ideas to remember! Division = sharing equally. Fraction = equal parts of a whole. 1/2 = one of two equal parts. 1/4 = one of four equal parts. Parts MUST be equal to be a fraction. Half of a number = divide by 2. Division and multiplication are inverse — they undo each other!",
+      "visual": "Fractions summary",
+      "emotion": "thinking",
+      "sceneImage": null
+    },
+    {
+      "scene": 14,
+      "text": "WOOHOO — you are a SHARING SUPERSTAR! You know halves, quarters, division, and how to share any group equally! You can even find fractions of groups! Ms. Zara is SO PROUD — sharing and fairness are the most important values AND the most important maths today! Quiz time!",
+      "visual": "Sharing Superstar!",
+      "emotion": "celebrating",
+      "sceneImage": null
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Shabnam folds a paratha into 2 equal pieces and gives 1 piece to Mukta. What fraction did Mukta get?",
+      "options": ["1/4", "2/2", "1/2", "1/3"],
+      "correct": 2,
+      "explanation": "When something is divided into 2 EQUAL parts, each part is ONE HALF — written as 1/2! The bottom number 2 means 2 equal parts total. The top number 1 means Mukta got 1 of those parts. So Mukta got 1/2 of the paratha. Fair sharing is fraction sharing!"
+    },
+    {
+      "question": "12 laddoos are shared equally among 4 friends. How many laddoos does each friend get?",
+      "options": ["2", "4", "3", "6"],
+      "correct": 2,
+      "explanation": "We DIVIDE! 12 ÷ 4 = 3! Think: what times 4 equals 12? 3 × 4 = 12 — YES! So each friend gets 3 laddoos. Division = fair sharing. 12 divided into 4 equal groups of 3. Check: 3 + 3 + 3 + 3 = 12! PERFECT equal sharing!"
+    },
+    {
+      "question": "A pizza is cut into 4 equal slices. You eat 3 slices. What fraction of the pizza did you eat?",
+      "options": ["1/4", "3/3", "3/4", "4/3"],
+      "correct": 2,
+      "explanation": "The pizza has 4 equal parts total (bottom number = 4). You ate 3 parts (top number = 3). So you ate 3/4 — THREE QUARTERS of the pizza! Only 1/4 is left. The fraction always tells us: parts I have / total equal parts. You ate three-quarters — yummy and mathematical!"
+    },
+    {
+      "question": "What is half of 16?",
+      "options": ["4", "6", "8", "32"],
+      "correct": 2,
+      "explanation": "Half of a number means divide by 2! 16 ÷ 2 = 8! You can also think: what number plus itself equals 16? 8 + 8 = 16! So half of 16 is 8. Half of 16 rupees = 8 rupees. Half of 16 flowers = 8 flowers! Dividing by 2 gives you HALF every single time!"
+    },
+    {
+      "question": "18 children are divided into equal groups of 3. How many groups are there?",
+      "options": ["3", "6", "9", "15"],
+      "correct": 1,
+      "explanation": "18 ÷ 3 = 6! Think: how many times does 3 go into 18? Count by 3s: 3, 6, 9, 12, 15, 18 — that is 6 jumps! So there are 6 groups of 3 children. Check using multiplication: 6 × 3 = 18. CORRECT! Division and multiplication always work as a team!"
+    }
+  ]
+}

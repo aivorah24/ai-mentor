@@ -1,0 +1,107 @@
+{
+  "id": "pyp_g4_mathematics_probability_and_statistics",
+  "title": "Probability and Statistics",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "7-8 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "PROBABILITY",
+        "AND",
+        "STATISTICS"
+      ],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hey kids! Today we're going on an exciting adventure in the world of numbers! We're going to learn about probability and statistics. Are you ready to become math detectives?",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "LIKELY",
+        "UNLIKELY"
+      ],
+      "subtext": "What is Probability?",
+      "voice": "Probability is a way to measure how likely something is to happen. If something is likely, it's probably going to happen. If it's unlikely, it might not happen. Let's think of an example - flipping a coin. Heads or tails?",
+      "accent": "#38bdf8",
+      "duration": 60
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "CERTAIN",
+        "IMPOSSIBLE"
+      ],
+      "subtext": "More About Probability",
+      "voice": "There are three more words we need to know: certain, impossible, and unlikely. Certain means it's definitely going to happen. Impossible means it's never going to happen. Unlikely means it might happen, but it's not very likely.",
+      "accent": "#38bdf8",
+      "duration": 60
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "MEAN",
+        "MEDIAN",
+        "MODE"
+      ],
+      "subtext": "What is Statistics?",
+      "voice": "Statistics is a way to collect and analyze data. We use numbers to help us understand patterns and trends. Let's talk about three important words: mean, median, and mode. The mean is the average of a set of numbers. The median is the middle number when we put the numbers in order. The mode is the number that appears the most.",
+      "accent": "#38bdf8",
+      "duration": 80
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "DATA",
+        "SETS"
+      ],
+      "subtext": "Data Sets",
+      "voice": "A data set is a collection of numbers or information. We use data sets to analyze and make conclusions. Let's think of an example - a student's test scores. We can use the data set to see how well the student did on the test.",
+      "accent": "#38bdf8",
+      "duration": 60
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "MEAN"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "What is the mean of a set of numbers?",
+      "answer": "The average of a set of numbers.",
+      "duration": 20,
+      "accent": "#38bdf8"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "RECAP",
+        "PROBABILITY",
+        "STATISTICS"
+      ],
+      "subtext": "You Did It!",
+      "voice": "Congratulations, kids! You've learned about probability and statistics. Let's recap three key points: probability is a way to measure how likely something is to happen, statistics is a way to collect and analyze data, and a data set is a collection of numbers or information. Keep practicing and soon you'll be math detectives like us!",
+      "accent": "#38bdf8",
+      "duration": 40
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g3_english_creative_writing_stories",
+  "title": "Creative Writing — Stories",
+  "grade": "Grade 3",
+  "subject": "English",
+  "curriculum": "IB PYP",
+  "accent": "#f59e0b",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "TAKE",
+        "OUT",
+        "YOUR"
+      ],
+      "subtext": "Grade 3 · English",
+      "voice": "Hey there, young writers! Welcome to our creative writing adventure. Today, we're going to make up our own stories!",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "BEGINNING",
+        "MIDDLE",
+        "END"
+      ],
+      "subtext": "What's a Story Structure?",
+      "voice": "A story has three main parts: the beginning, middle, and end. The beginning introduces us to the characters and setting. The middle is where the exciting things happen! And the end is where we find out what happens next.",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "CHARACTERS",
+        "SETTING",
+        "PLOT"
+      ],
+      "subtext": "What Makes a Good Story?",
+      "voice": "A good story has characters that we can relate to, a setting that makes us feel like we're there, and a plot that keeps us curious. Let's think about what makes a story exciting to read!",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "DESCRIBING",
+        "WHAT",
+        "YOU"
+      ],
+      "subtext": "Using Descriptive Language",
+      "voice": "When we write, we want to describe what's happening in our story. We can use words like 'sparkly', 'big', or 'happy' to make our story come alive!",
+      "accent": "#f59e0b",
+      "duration": 15
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "PRACTICE",
+        "YOUR",
+        "WRITING"
+      ],
+      "subtext": "Let's Practice!",
+      "voice": "Now it's your turn to practice your writing skills! Think about a story you'd like to tell and start writing. Don't worry if it's not perfect – just have fun!",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "A"
+      ],
+      "subtext": "What's a Story Structure?",
+      "voice": "What are the three main parts of a story? Can you remember: beginning, middle, and end?",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "BEGINNING",
+        "MIDDLE"
+      ],
+      "subtext": "You're a Great Writer!",
+      "voice": "Wow, you're an amazing writer! Remember to think about the beginning, middle, and end of your story. Use descriptive language to make it come alive. And most importantly, have fun and be creative!",
+      "accent": "#f59e0b",
+      "duration": 15
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_mathematics_division_with_remainders",
+  "title": "Division with Remainders",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "DIVISION",
+        "FUN",
+        "TODAY"
+      ],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hey kids, today we're going to learn about division with remainders. Division is like sharing, and remainders are what you can't share equally. Are you ready to learn?",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "DIVIDEND",
+        "DIVISOR",
+        "QUOTIENT"
+      ],
+      "subtext": "Key Terms",
+      "voice": "So, let's start with the key terms. The dividend is the number we're dividing, the divisor is the number we're dividing by, and the quotient is the result. Can you remember these words?",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "LONG",
+        "DIVISION",
+        "STEP-BY-STEP"
+      ],
+      "subtext": "Long Division",
+      "voice": "Now, let's learn about long division. We'll divide the dividend by the divisor, and we might have a remainder. It's like sharing cookies among your friends, and you have some left over.",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "REMAINDER",
+        "WHAT",
+        "IS"
+      ],
+      "subtext": "Remainders",
+      "voice": "A remainder is what's left over when we can't divide the dividend by the divisor equally. It's like having 1 cookie left after sharing with your friends.",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "WORD",
+        "PROBLEMS",
+        "PRACTICE"
+      ],
+      "subtext": "Word Problems",
+      "voice": "Let's practice with word problems. We'll divide groups of objects and find the remainder. Can you help us solve this problem: If we have 18 pencils and we want to put them in bags of 3, how many bags can we make and what will be left over?",
+      "accent": "#38bdf8",
+      "duration": 40
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "QUIZ",
+        "TIME",
+        "DIVISION"
+      ],
+      "subtext": "Quiz Time",
+      "voice": "Okay kids, it's quiz time! What is the remainder when 15 is divided by 3?",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "RECAP",
+        "DIVISION",
+        "FUN"
+      ],
+      "subtext": "Recap",
+      "voice": "Wow, kids! We learned so much today about division with remainders. Remember, the key terms are dividend, divisor, and quotient. Division is like sharing, and remainders are what's left over. Long division is a step-by-step process, and word problems help us practice dividing groups of objects. Great job, and thanks for learning with us!",
+      "accent": "#38bdf8",
+      "duration": 20
+    }
+  ]
+}

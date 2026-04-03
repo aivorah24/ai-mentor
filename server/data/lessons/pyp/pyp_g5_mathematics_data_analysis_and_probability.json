@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g5_mathematics_data_analysis_and_probability",
+  "title": "Data Analysis and Probability",
+  "grade": "Grade 5",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "5-7 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "DATA",
+        "ANALYSIS",
+        "ADVENTURE"
+      ],
+      "subtext": "Grade 5 · Mathematics",
+      "voice": "Welcome to our Data Analysis and Probability adventure! Today, we'll explore how to make sense of data and understand chances. Let's get started!",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "PROBABILITY",
+        "SCALE",
+        "1-10"
+      ],
+      "subtext": "Understanding the Probability Scale",
+      "voice": "Imagine you're flipping a coin. What's the chance it lands on heads? 50%! We use a probability scale to show chances from 0 to 1. Easy, right?",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "SAMPLE",
+        "SPACE",
+        "ALL OUTCOMES"
+      ],
+      "subtext": "Identifying Sample Space",
+      "voice": "When we roll a die, what are all the possible outcomes? 1, 2, 3, 4, 5, and 6! That's our sample space. Remember, it's like a list of all the possible answers.",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "MEAN",
+        "MEDIAN",
+        "MODE"
+      ],
+      "subtext": "Calculating Mean, Median, and Mode",
+      "voice": "Let's say we have a set of numbers: 2, 4, 6, 8, 10. To find the mean, we add them up and divide by 5. The median is the middle number, and the mode is the number that appears most often. Easy peasy!",
+      "accent": "#38bdf8",
+      "duration": 45
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "RANGE",
+        "HIGH",
+        "LOW"
+      ],
+      "subtext": "Understanding Range",
+      "voice": "The range is the difference between the highest and lowest numbers in a set. For example, in our set 2, 4, 6, 8, 10, the range is 8. Remember, it's like finding the distance between the highest and lowest points.",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT IS",
+        "PROBABILITY",
+        "OF"
+      ],
+      "subtext": "Quiz Time!",
+      "voice": "Let's say we have a bag with 10 red marbles and 20 blue marbles. What's the probability of picking a blue marble?",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "RECAP",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Summary Time!",
+      "voice": "Today, we learned about probability scales, sample spaces, mean, median, mode, range, and pie charts. We even practiced calculating probabilities and understanding data sets. You're now a data analysis pro!",
+      "accent": "#38bdf8",
+      "duration": 30
+    }
+  ]
+}

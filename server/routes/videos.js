@@ -50,6 +50,11 @@ function toEmbedUrl(url) {
   const loom = url.match(/loom\.com\/share\/([a-zA-Z0-9]+)/);
   if (loom) return `https://www.loom.com/embed/${loom[1]}`;
 
+  // Canva: canva.com/design/<designId>/<token>/view
+  // Convert share/view URLs to embeddable viewer URL.
+  const canva = url.match(/canva\.com\/design\/([^/?#]+)\/([^/?#]+)/i);
+  if (canva) return `https://www.canva.com/design/${canva[1]}/${canva[2]}/view?embed&meta`;
+
   // Already an embed URL or direct MP4 — return as-is
   return url;
 }

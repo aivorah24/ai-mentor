@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g5_arts_drama_and_performance",
+  "title": "Drama and Performance",
+  "grade": "Grade 5",
+  "subject": "Arts",
+  "curriculum": "IB PYP",
+  "accent": "#ec4899",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "Drama",
+        "Performance",
+        "BEGIN"
+      ],
+      "subtext": "Grade 5 · Arts",
+      "voice": "Welcome to the world of drama and performance, where imagination and creativity come alive! Get ready to explore the magic of acting, stage directions, and voice projection.",
+      "accent": "#ec4899",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "CHARACTER",
+        "SCRIPT",
+        "STORY"
+      ],
+      "subtext": "Understanding Character and Script",
+      "voice": "To create a great performance, we need to know our character and script. A character is the person we play in the story, and a script is the words we say and do.",
+      "accent": "#ec4899",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "STAGE",
+        "DIRECTIONS",
+        "MOVEMENT"
+      ],
+      "subtext": "Understanding Stage Directions",
+      "voice": "Stage directions are instructions that help us move around the stage and use our body language. We use them to create a believable and exciting performance.",
+      "accent": "#ec4899",
+      "duration": 15
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "VOICE",
+        "PROJECTION",
+        "AUDIENCE"
+      ],
+      "subtext": "Using Your Voice to Engage the Audience",
+      "voice": "Our voice is an important tool in drama. We need to project our voice so that the audience can hear us clearly. Practice speaking loudly and clearly to engage your audience.",
+      "accent": "#ec4899",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "EMOTION",
+        "EXPRESSION",
+        "ACTING"
+      ],
+      "subtext": "Using Emotion to Bring Your Character to Life",
+      "voice": "Emotion is the key to making your character believable. Practice expressing different emotions through your voice, face, and body language to bring your character to life.",
+      "accent": "#ec4899",
+      "duration": 20
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "QUIZ",
+        "TIME",
+        "BEGIN"
+      ],
+      "subtext": "Test Your Knowledge",
+      "voice": "What is the main purpose of stage directions in drama? A) To tell a story B) To move around the stage C) To use body language",
+      "accent": "#ec4899",
+      "duration": 10
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "SUMMARY",
+        "KEY",
+        "POINTS"
+      ],
+      "subtext": "Key Takeaways",
+      "voice": "Let's review what we've learned today. We explored the importance of character and script, stage directions, voice projection, and emotion in drama. Remember, drama is all about imagination and creativity, so keep practicing and having fun!",
+      "accent": "#ec4899",
+      "duration": 15
+    }
+  ]
+}

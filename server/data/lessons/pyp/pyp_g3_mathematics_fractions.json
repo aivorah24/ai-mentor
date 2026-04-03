@@ -1,0 +1,105 @@
+{
+  "id": "pyp_g3_mathematics_fractions",
+  "title": "Fractions",
+  "grade": "Grade 3",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "FRACTIONS",
+        "ARE",
+        "FUN"
+      ],
+      "subtext": "Grade 3 · Mathematics",
+      "voice": "Hey there, young explorers! Today we're going on a math adventure to discover the world of fractions. Are you ready to learn something new and exciting?",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "HALVES",
+        "EQUAl"
+      ],
+      "subtext": "Understanding halves",
+      "voice": "Let's start with something you might already know - halves! Imagine you have a pizza that's been cut into two equal pieces. Each piece is half of the pizza.",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "THIRDs",
+        "EQUAL"
+      ],
+      "subtext": "Understanding thirds",
+      "voice": "Now, let's talk about thirds. If we cut our pizza into three equal pieces, each piece is one-third of the pizza. Can you think of a time when you might use thirds in real life?",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "QUARTERS",
+        "EQUAl"
+      ],
+      "subtext": "Understanding quarters",
+      "voice": "Next up, let's learn about quarters. If we cut our pizza into four equal pieces, each piece is one-quarter of the pizza. You might see quarters when you're shopping for candy or toys.",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "NUMERATOR",
+        "DENOMINATOR"
+      ],
+      "subtext": "Understanding numerator and denominator",
+      "voice": "So, let's talk about the numbers that help us understand fractions. The top number is called the numerator, and the bottom number is called the denominator. For example, if we have 1/2, the 1 is the numerator and the 2 is the denominator.",
+      "accent": "#38bdf8",
+      "duration": 25
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "A"
+      ],
+      "subtext": "Test your knowledge",
+      "voice": "What is the term for the top number in a fraction?",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "REMEMBER",
+        "HALVES",
+        "AND"
+      ],
+      "subtext": "Review and celebrate",
+      "voice": "Wow, you've learned so much today! Remember, fractions are fun! You learned about halves, thirds, and quarters, and you even understood the concept of numerator and denominator. Keep practicing and soon you'll be a fraction master!",
+      "accent": "#38bdf8",
+      "duration": 15
+    }
+  ]
+}

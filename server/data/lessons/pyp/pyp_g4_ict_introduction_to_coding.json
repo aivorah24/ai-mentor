@@ -1,0 +1,109 @@
+{
+  "id": "pyp_g4_ict_introduction_to_coding",
+  "title": "Introduction to Coding",
+  "grade": "Grade 4",
+  "subject": "ICT",
+  "curriculum": "IB PYP",
+  "accent": "#06b6d4",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "WHAT IS CODING?",
+        "CODE LIKE A PRO!",
+        "CREATE YOUR WORLD!"
+      ],
+      "subtext": "Grade 4 · ICT",
+      "voice": "Hey kids, today we're going on an adventure into the world of coding! Coding is like writing a secret language that computers can understand. It's a way to create games, animations, and even control robots!",
+      "accent": "#06b6d4",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "ALGORITHM",
+        "SEQUENCE",
+        "ORDER MATTERS"
+      ],
+      "subtext": "Algorithm",
+      "voice": "An algorithm is like a recipe for your computer. It's a list of steps that your computer follows to get something done. Think of it like making your favorite sandwich - you need to follow a sequence of steps, like buttering the bread, adding the cheese, and putting on the veggies!",
+      "accent": "#06b6d4",
+      "duration": 12
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "LOOP",
+        "REPEAT",
+        "OVER AND OVER"
+      ],
+      "subtext": "Loop",
+      "voice": "A loop is like a big circle that your computer follows over and over again. It's like drawing a shape and then drawing it again and again, getting bigger and bigger! Loops are super useful for making patterns and animations.",
+      "accent": "#06b6d4",
+      "duration": 11
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "CONDITIONAL",
+        "DECISION TIME",
+        "CHOOSE WISELY"
+      ],
+      "subtext": "Conditional",
+      "voice": "A conditional is like a fork in the road. Your computer has to make a decision based on what it sees. For example, if you're making a game and you hit a certain score, your computer might say 'Yay, you won!' or 'Sorry, try again!'. It's like choosing which path to take in a maze!",
+      "accent": "#06b6d4",
+      "duration": 12
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "DEBUGGING",
+        "FIND THE BUG",
+        "FIX IT TODAY"
+      ],
+      "subtext": "Debugging",
+      "voice": "Debugging is like being a superhero detective. Your computer might make a mistake or 'bug', and you have to figure out what's going on and fix it. It's like solving a mystery, and it's a super important part of being a coder!",
+      "accent": "#06b6d4",
+      "duration": 11
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "TEST YOUR SKILLS",
+        "HOW MUCH DO YOU KNOW?",
+        "LET'S FIND OUT!"
+      ],
+      "subtext": "What is the main idea of an algorithm?",
+      "voice": "Think you know what an algorithm is? An algorithm is a list of steps that your computer follows to get something done. What's an example of an algorithm in real life?",
+      "accent": "#06b6d4",
+      "duration": 8
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "YOU DID IT!",
+        "REMEMBER THESE 3 KEY POINTS",
+        "CODE LIKE A PRO!"
+      ],
+      "subtext": "Summary",
+      "voice": "Hey kids, you made it! Let's review what we learned today. An algorithm is a list of steps that your computer follows. A loop is like a big circle that your computer follows over and over. And debugging is like being a superhero detective, finding and fixing bugs in your code. You're now a coding superhero!",
+      "accent": "#06b6d4",
+      "duration": 15
+    }
+  ]
+}

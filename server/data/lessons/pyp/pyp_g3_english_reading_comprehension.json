@@ -1,0 +1,97 @@
+{
+  "id": "pyp_g3_english_reading_comprehension",
+  "title": "Reading Comprehension",
+  "grade": "Grade 3",
+  "subject": "English",
+  "curriculum": "IB PYP",
+  "accent": "#f59e0b",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "READING IS FUN!"
+      ],
+      "subtext": "Grade 3 · English",
+      "voice": "Hey kids, today we're going on an adventure! We're going to learn about reading comprehension. It's a super cool skill that will help you understand what you read.",
+      "accent": "#f59e0b",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "MAIN IDEA",
+        "IS WHAT"
+      ],
+      "subtext": "What is the main idea?",
+      "voice": "So, when you read a story or an article, there's usually one big idea that it's all about. This is called the main idea. It's like the main purpose of the story.",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "DETAILS ARE"
+      ],
+      "subtext": "What are details?",
+      "voice": "Details are the smaller things that help you understand the main idea. They're like the clues that make the story more interesting.",
+      "accent": "#f59e0b",
+      "duration": 18
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "INFERENCE IS"
+      ],
+      "subtext": "What is inference?",
+      "voice": "Inference is when you make a guess or an educated guess about what you read. It's like solving a mystery!",
+      "accent": "#f59e0b",
+      "duration": 22
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "PREDICT IS"
+      ],
+      "subtext": "What is predict?",
+      "voice": "When you predict, you make a guess about what's going to happen next in the story. It's like being a detective!",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT IS THE"
+      ],
+      "subtext": "What is the main idea?",
+      "voice": "So, let's try a question! What is the main idea of a story? Can you give me an example?",
+      "accent": "#f59e0b",
+      "duration": 20
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "YOU LEARNED",
+        "SO MUCH!"
+      ],
+      "subtext": "Recap time!",
+      "voice": "Wow, you're such a superstar reader! Today, you learned about the main idea, details, inference, and predict. You can use these skills to understand what you read and make it more fun! Keep practicing and you'll become a reading master!",
+      "accent": "#f59e0b",
+      "duration": 30
+    }
+  ]
+}

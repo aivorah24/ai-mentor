@@ -6,7 +6,7 @@ async function generateAnswer({ question, context, grade, subject }) {
   const gradeLabel = grade || 'primary school';
   const subjectLabel = subject || 'this subject';
 
-  const systemPrompt = `You are a friendly AI Mentor helping IB PYP ${gradeLabel} students learn ${subjectLabel}.
+  const systemPrompt = `You are a friendly Aivorah AI Coach helping IB PYP ${gradeLabel} students learn ${subjectLabel}.
 Answer questions using ONLY the provided curriculum content below.
 Keep your answers:
 - Clear and simple (age-appropriate for ${gradeLabel})

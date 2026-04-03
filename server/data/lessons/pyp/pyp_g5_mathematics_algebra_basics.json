@@ -1,0 +1,114 @@
+{
+  "id": "pyp_g5_mathematics_algebra_basics",
+  "title": "Algebra Basics",
+  "grade": "Grade 5",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "ALGEBRA",
+        "BASICS",
+        "HERE"
+      ],
+      "subtext": "Grade 5 · Mathematics",
+      "voice": "Welcome to algebra, a world of mystery and fun! Today, we're going to explore the basics of algebra and learn how to solve secrets.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "VARIABLE",
+        "X",
+        "THE"
+      ],
+      "subtext": "What is a variable?",
+      "voice": "A variable is a letter that can represent a value. It's like a secret code that can be anything.",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "EXPRESSION",
+        "2+X",
+        "IS"
+      ],
+      "subtext": "What is an expression?",
+      "voice": "An expression is a group of numbers, letters, and symbols that can be combined to make a value. In this case, 2 + X is an expression.",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "EQUATION",
+        "2+X=3",
+        "IS"
+      ],
+      "subtext": "What is an equation?",
+      "voice": "An equation is a statement that says two expressions are equal. If 2 + X = 3, then X is a value that makes the equation true.",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "SOLVE",
+        "FOR",
+        "X"
+      ],
+      "subtext": "How do we solve for X?",
+      "voice": "To solve for X, we need to find the value of X that makes the equation true. In this case, we can subtract 2 from both sides to get X = 1.",
+      "accent": "#38bdf8",
+      "duration": 20
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "SOLVE",
+        "FOR",
+        "X"
+      ],
+      "question": "What is the value of X in the equation 2 + X = 5?",
+      "options": [
+        "1",
+        "2",
+        "3"
+      ],
+      "correct_answer": "3",
+      "duration": 20,
+      "accent": "#38bdf8"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "ALGEBRA",
+        "IS",
+        "FUN"
+      ],
+      "subtext": "Key takeaways",
+      "voice": "Today, we learned that a variable is a letter that can represent a value, an expression is a group of numbers and letters, and an equation is a statement that says two expressions are equal. We also learned how to solve for X using substitution. Algebra is fun and exciting, and we can't wait to explore more!",
+      "accent": "#38bdf8",
+      "duration": 20
+    }
+  ]
+}

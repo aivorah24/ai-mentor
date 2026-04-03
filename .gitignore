@@ -39,6 +39,10 @@ yarn-error.log*
 
 # Large media / temp
 server/data/images/concepts/
+server/data/images/ncert/
+server/data/images/generated/
+server/data/images/scenes/
+server/data/audio/
 server/data/videos/*.mp4
 *.db
 support.db
@@ -49,3 +53,7 @@ Landing_page.html
 help-data.js
 help-data.ts
 server.js
+
+.vercel
+.mcp.json
+.claude/

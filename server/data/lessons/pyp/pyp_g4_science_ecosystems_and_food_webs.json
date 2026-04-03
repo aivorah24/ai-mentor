@@ -1,0 +1,111 @@
+{
+  "id": "pyp_g4_science_ecosystems_and_food_webs",
+  "title": "Ecosystems and Food Webs",
+  "grade": "Grade 4",
+  "subject": "Science",
+  "curriculum": "IB PYP",
+  "accent": "#22c55e",
+  "duration_estimate": "3-4 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "ECOSYSTEMS",
+        "ARE",
+        "NEVER",
+        "ALONE"
+      ],
+      "subtext": "Grade 4 · Science",
+      "voice": "Hey kids, get ready to explore the amazing world of ecosystems! They're not just single animals or plants, but entire communities working together. In today's lesson, we'll discover the fascinating relationships between living things.",
+      "accent": "#22c55e",
+      "duration": 30
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "PRODUCERS",
+        "MAKE",
+        "FOOD"
+      ],
+      "subtext": "Producers",
+      "voice": "You know how you need food to survive? Well, producers like plants and algae are the superheroes of ecosystems. They use sunlight to make food, which is called photosynthesis. This food is the energy source for almost all living things.",
+      "accent": "#22c55e",
+      "duration": 45
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "CONSUMERS",
+        "EAT",
+        "OTHERS"
+      ],
+      "subtext": "Consumers",
+      "voice": "Now, let's talk about consumers. These are animals that eat other living things, like plants or other animals. Herbivores eat plants, carnivores eat meat, and omnivores eat both. Consumers get their energy by eating other living things.",
+      "accent": "#22c55e",
+      "duration": 45
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "DECOMPOSERS",
+        "BREAK",
+        "DOWN"
+      ],
+      "subtext": "Decomposers",
+      "voice": "Decomposers like bacteria and fungi are nature's recyclers. They break down dead plants and animals into nutrients that help other living things grow. Without decomposers, ecosystems would be overwhelmed with waste.",
+      "accent": "#22c55e",
+      "duration": 45
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "FOOD",
+        "WEBS",
+        "CONNECT"
+      ],
+      "subtext": "Food Webs",
+      "voice": "Now that we've learned about producers, consumers, and decomposers, let's talk about food webs. These are the connections between living things that show how energy flows through an ecosystem. It's like a big web of relationships.",
+      "accent": "#22c55e",
+      "duration": 50
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "WHAT",
+        "IS",
+        "A",
+        "FOOD"
+      ],
+      "subtext": "What is a Food Web?",
+      "voice": "What is a food web? A food web is a network of relationships between living things that show how energy flows through an ecosystem.",
+      "accent": "#22c55e",
+      "duration": 30
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "KEY",
+        "POINTS",
+        "REVIEW"
+      ],
+      "subtext": "Key Points Review",
+      "voice": "Let's review the key points we've learned today. Producers make food, consumers eat other living things, and decomposers break down waste. Food webs connect living things and show how energy flows through ecosystems. Great job, kids! You now understand the amazing world of ecosystems and food webs!",
+      "accent": "#22c55e",
+      "duration": 45
+    }
+  ]
+}
