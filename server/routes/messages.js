@@ -83,6 +83,26 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
+// ── Demo mock relationships ──────────────────────────────
+// Fallback when Supabase tables are not seeded (for demo/testing)
+const DEMO_RELATIONSHIPS = {
+  // parent email → { children: [{name, studentEmail}], teachers: [{name, email}] }
+  'suresh@test.ai':  { children: [{ name: 'Arjun Sharma',  email: 'arjun@test.ai'  }], teachers: [{ name: 'Ms. Anjali Kumar', email: 'anjali@test.ai' }] },
+  'deepa@test.ai':   { children: [{ name: 'Priya Nair',    email: 'priya@test.ai'  }], teachers: [{ name: 'Ms. Anjali Kumar', email: 'anjali@test.ai' }] },
+  'fatima@test.ai':  { children: [{ name: 'Zara Ahmed',    email: 'zara@test.ai'   }], teachers: [{ name: 'Ms. Anjali Kumar', email: 'anjali@test.ai' }] },
+  'prakash@test.ai': { children: [{ name: 'Aanya Kapoor',  email: 'aanya@test.ai'  }], teachers: [{ name: 'Ms. Anjali Kumar', email: 'anjali@test.ai' }] },
+  'parent@demo.com': { children: [{ name: 'Aanya Kapoor',  email: 'aanya@test.ai'  }], teachers: [{ name: 'Ms. Anjali Kumar', email: 'anjali@test.ai' }] },
+};
+// teacher email → parents they can message
+const DEMO_TEACHER_CONTACTS = {
+  'anjali@test.ai': [
+    { name: 'Suresh Sharma',  email: 'suresh@test.ai',  childName: 'Arjun Sharma'  },
+    { name: 'Deepa Nair',     email: 'deepa@test.ai',   childName: 'Priya Nair'    },
+    { name: 'Fatima Ahmed',   email: 'fatima@test.ai',  childName: 'Zara Ahmed'    },
+    { name: 'Prakash Kapoor', email: 'prakash@test.ai', childName: 'Aanya Kapoor'  },
+  ],
+};
+
 // ── GET /messages/contacts?userEmail= ───────────────────
 // Returns list of people this user can message:
 //   parent  → teachers of their children
@@ -92,6 +112,27 @@ router.get('/contacts', async (req, res) => {
   try {
     const userEmail = (req.query.userEmail || '').trim().toLowerCase();
     if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
+
+    // ── Demo fallback: return mock contacts for test accounts ──
+    if (DEMO_RELATIONSHIPS[userEmail]) {
+      const rel = DEMO_RELATIONSHIPS[userEmail];
+      return res.json(rel.teachers.map(t => ({
+        id:      t.email,
+        name:    t.name,
+        email:   t.email,
+        role:    'teacher',
+        context: `Teacher of ${rel.children.map(c => c.name).join(', ')}`,
+      })));
+    }
+    if (DEMO_TEACHER_CONTACTS[userEmail]) {
+      return res.json(DEMO_TEACHER_CONTACTS[userEmail].map(p => ({
+        id:      p.email,
+        name:    p.name,
+        email:   p.email,
+        role:    'parent',
+        context: `Parent of ${p.childName}`,
+      })));
+    }
 
     // Look up the user's id, role, and school
     const { data: me, error: meErr } = await supabase
