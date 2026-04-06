@@ -1,0 +1,35 @@
+Scene 01 [excited | celebrate] (0s-4.2s)
+Welcome, explorers! Today we learn living and non-living things.
+
+Scene 02 [happy | main] (4.55s-9.28s)
+By the end, you can sort things into two groups.
+
+Scene 03 [thinking | main] (9.63s-14.83s)
+Living things are alive. They move, breathe, and grow.
+
+Scene 04 [questioning | checkpoint] (15.18s-20.91s)
+Living things need air to breathe. Animals and plants both breathe.
+
+Scene 05 [happy | main] (21.26s-27.19s)
+Living things need food and water. Food gives energy to work and play.
+
+Scene 06 [excited | celebrate] (27.54s-33.6s)
+Living things grow. A seed becomes a plant, and a puppy becomes a dog.
+
+Scene 07 [thinking | main] (33.95s-40.22s)
+Living things can feel. We feel heat, cold, touch, and pain.
+
+Scene 08 [questioning | checkpoint] (40.57s-47.03s)
+Non-living things are not alive. They do not breathe, eat, or grow.
+
+Scene 09 [happy | main] (47.38s-53.07s)
+Natural non-living things include rocks, water, soil, sand, air, and sunlight.
+
+Scene 10 [happy | main] (53.42s-59.23s)
+Man-made non-living things are made by people, like clothes, toys, and desks.
+
+Scene 11 [excited | celebrate] (59.58s-64.38s)
+Cars and buses help us move. Phones and computers use electricity.
+
+Scene 12 [celebrating | celebrate] (64.73s-70.75s)
+Great review! Living things breathe, eat, grow, and feel. Non-living things do not.

@@ -8,7 +8,7 @@ const { generateAnswer } = require('../services/llm');
 // Body: { question, curriculum?, grade?, subject? }
 router.post('/', async (req, res) => {
   try {
-    const { question, curriculum = 'IB_PYP', grade, subject } = req.body;
+    const { question, curriculum = 'IB_PYP', grade, subject, topic } = req.body;
 
     if (!question || question.trim().length === 0) {
       return res.status(400).json({ error: 'question is required' });
@@ -43,7 +43,7 @@ router.post('/', async (req, res) => {
     }));
 
     // 4. Generate answer via Groq LLaMA
-    const answer = await generateAnswer({ question, context, grade, subject });
+    const answer = await generateAnswer({ question, context, grade, subject, topic });
 
     res.json({ answer, sources });
   } catch (err) {

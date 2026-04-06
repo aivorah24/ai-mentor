@@ -1,0 +1,7 @@
+file 'C:/Users/Asus/Desktop/AI Mentor/server/data/videos/magnets/segments/01_intro.mp4'
+file 'C:/Users/Asus/Desktop/AI Mentor/server/data/videos/magnets/segments/02_invisible_force.mp4'
+file 'C:/Users/Asus/Desktop/AI Mentor/server/data/videos/magnets/segments/03_attract.mp4'
+file 'C:/Users/Asus/Desktop/AI Mentor/server/data/videos/magnets/segments/04_repel.mp4'
+file 'C:/Users/Asus/Desktop/AI Mentor/server/data/videos/magnets/segments/05_materials.mp4'
+file 'C:/Users/Asus/Desktop/AI Mentor/server/data/videos/magnets/segments/06_quiz.mp4'
+file 'C:/Users/Asus/Desktop/AI Mentor/server/data/videos/magnets/segments/07_summary.mp4'

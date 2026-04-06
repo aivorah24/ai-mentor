@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body { background: #1e1e2e; color: #e2e8f0; padding: 16px; min-width: 320px; }
+
+    h2 { font-size: 14px; font-weight: 700; color: #0ea5e9; margin-bottom: 4px; }
+    p  { font-size: 11px; color: #64748b; margin-bottom: 16px; line-height: 1.5; }
+
+    label { font-size: 11px; color: #94a3b8; display: block; margin-bottom: 4px; font-weight: 600; }
+
+    select, textarea, input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-size: 12px;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+    select:focus, textarea:focus { border-color: #0ea5e9; }
+    textarea { min-height: 140px; resize: vertical; font-family: monospace; }
+
+    .row { display: flex; gap: 8px; }
+    .row > div { flex: 1; }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    .btn-primary { background: #0ea5e9; color: #fff; }
+    .btn-primary:hover { background: #0284c7; }
+    .btn-secondary { background: #1e293b; color: #94a3b8; border: 1px solid #334155; margin-top: 6px; }
+
+    .status {
+      margin-top: 10px;
+      font-size: 11px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      display: none;
+    }
+    .status.success { background: #14532d30; border: 1px solid #22c55e50; color: #86efac; display: block; }
+    .status.error   { background: #7f1d1d30; border: 1px solid #ef444450; color: #fca5a5; display: block; }
+    .status.info    { background: #0c233350; border: 1px solid #0ea5e950; color: #7dd3fc; display: block; }
+
+    .preset-btn {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #94a3b8;
+      cursor: pointer;
+      margin: 0 4px 6px 0;
+    }
+    .preset-btn:hover { border-color: #0ea5e9; color: #0ea5e9; }
+    .divider { border: none; border-top: 1px solid #1e293b; margin: 14px 0; }
+  </style>
+</head>
+<body>
+  <h2>Aivorah — Lesson Slide Generator</h2>
+  <p>Paste your lesson JSON below and click Generate to auto-create all slides in Figma.</p>
+
+  <label>Quick Load — Sample Lesson</label>
+  <div style="margin-bottom:12px">
+    <span class="preset-btn" onclick="loadPreset('magnets')">Magnets (Science)</span>
+    <span class="preset-btn" onclick="loadPreset('living')">Living & Non-Living</span>
+    <span class="preset-btn" onclick="loadPreset('blank')">Blank Template</span>
+  </div>
+
+  <label>Lesson Title</label>
+  <input type="text" id="lessonTitle" placeholder="e.g. Living and Non-Living Things" value="Living and Non-Living Things"/>
+
+  <div class="row">
+    <div>
+      <label>Grade</label>
+      <select id="grade">
+        <option>Grade 3</option>
+        <option>Grade 4</option>
+        <option>Grade 5</option>
+      </select>
+    </div>
+    <div>
+      <label>Subject</label>
+      <select id="subject">
+        <option>Science</option>
+        <option>Mathematics</option>
+        <option>English</option>
+        <option>Social Studies</option>
+        <option>EVS</option>
+      </select>
+    </div>
+  </div>
+
+  <label>Slides JSON (array of slide objects)</label>
+  <textarea id="slidesJson" placeholder='[{"title":"Slide Title","body":"Content here","type":"intro"}]'></textarea>
+
+  <button class="btn btn-primary" onclick="generate()">Generate Slides in Figma</button>
+  <button class="btn btn-secondary" onclick="generateTemplate()">Insert Blank Template Only</button>
+
+  <div id="status" class="status"></div>
+
+  <script>
+    const MAGNETS_PRESET = JSON.stringify([
+      { type: "intro",     title: "Magnets!",                  body: "Grade 3 · Science — A world of invisible forces", accent: "#0ea5e9" },
+      { type: "concept",   title: "What Is a Magnet?",         body: "A magnet is a special object that pulls certain things toward it — like a superpower you can hold in your hand!", accent: "#22c55e" },
+      { type: "concept",   title: "Opposite Poles Attract",    body: "Every magnet has a North pole and a South pole. Opposite poles pull toward each other — N loves S!", accent: "#0ea5e9" },
+      { type: "concept",   title: "Same Poles Repel",          body: "Same poles push away from each other. North vs North — they fight! South vs South — no thanks!", accent: "#f59e0b" },
+      { type: "list",      title: "What Do Magnets Attract?",  body: "Iron · Steel · Nickel · Cobalt · Magnetic metals only!", accent: "#a855f7" },
+      { type: "list",      title: "What They Don't Attract",   body: "Wood · Plastic · Glass · Paper · Rubber · Cloth · Most metals!", accent: "#64748b" },
+      { type: "concept",   title: "Magnets in Real Life",      body: "Fridge magnets, compass needles, MRI machines, earphones, electric motors — magnets are everywhere!", accent: "#ec4899" },
+      { type: "quiz",      title: "Quick Challenge!",          body: "A paper clip, a wooden stick, and a coin are near a magnet. Which ones will be attracted? Why?", accent: "#f59e0b" },
+      { type: "summary",   title: "You're a Magnet Master!",   body: "Magnets attract iron, steel, and nickel.\n\nOpposite poles attract — same poles repel.\n\nMagnets are used in everyday devices.", accent: "#0ea5e9" },
+    ], null, 2);
+
+    const LIVING_PRESET = JSON.stringify([
+      { type: "intro",      title: "Living and Non-Living Things", body: "NCERT Grade 3 · Environmental Studies", accent: "#0ea5e9" },
+      { type: "objective",  title: "Learning Objectives",          body: "Identify and classify objects into living and non-living categories based on observable characteristics.", accent: "#f59e0b" },
+      { type: "concept",    title: "What is Living?",              body: "Living things are alive! They move, breathe, and grow. They also need food and water to stay strong.", character: "I can run and jump! I can fly!", accent: "#22c55e" },
+      { type: "concept",    title: "Living Things Breathe",        body: "Living things need air to breathe! (Gasp!) Animals breathe through lungs or gills, and plants breathe through tiny holes in their leaves.", accent: "#0ea5e9" },
+      { type: "concept",    title: "Living Things Need Food",      body: "Food is our body's fuel! Animals find their food, but plants are nature's chefs — they make their own food using sunlight!", accent: "#f59e0b" },
+      { type: "concept",    title: "Living Things Grow",           body: "A small seed grows into a giant tree, and a puppy grows into a dog. Non-living things, like your toy car, stay the same size forever.", accent: "#a855f7" },
+      { type: "concept",    title: "Living Things Feel",           body: "Living things can feel the world around them. Some plants, like the Touch-Me-Not, close their leaves if you touch them!", accent: "#ec4899" },
+      { type: "concept",    title: "What is Non-Living?",          body: "Non-living things are not alive. They don't breathe, eat, or grow. They usually need a person to help them move or work.", accent: "#64748b" },
+      { type: "list",       title: "Non-Living Things in Nature",  body: "Rocks and stones · Water · Soil and sand · The sun · Air and wind · Clouds and sunlight", accent: "#0ea5e9" },
+      { type: "list",       title: "Man-Made Non-Living Things",   body: "Things We Wear · Things We Play With · Things in Our School & Home · Transportation · Technology", accent: "#f59e0b" },
+      { type: "quiz",       title: "Quick Check!",                 body: "Can you name 3 living things and 3 non-living things around you right now?", accent: "#22c55e" },
+      { type: "summary",    title: "Let's Review!",                body: "Living things breathe, eat, grow, and move.\n\nNon-living things don't breathe, eat, or grow — they need help to move.", accent: "#0ea5e9" },
+    ], null, 2);
+
+    const BLANK_PRESET = JSON.stringify([
+      { type: "intro",    title: "Lesson Title Here", body: "Subject · Grade",              accent: "#0ea5e9" },
+      { type: "objective",title: "Learning Objectives", body: "Students will be able to...", accent: "#f59e0b" },
+      { type: "concept",  title: "Concept 1",           body: "Explain the concept here.",  accent: "#22c55e" },
+      { type: "quiz",     title: "Quick Check!",         body: "Ask a question here.",       accent: "#a855f7" },
+      { type: "summary",  title: "Let's Review!",        body: "Summary here.",             accent: "#0ea5e9" },
+    ], null, 2);
+
+    function loadPreset(name) {
+      if (name === 'magnets') {
+        document.getElementById('slidesJson').value = MAGNETS_PRESET;
+        document.getElementById('lessonTitle').value = 'Magnets';
+        document.getElementById('subject').value = 'Science';
+      } else if (name === 'living') {
+        document.getElementById('slidesJson').value = LIVING_PRESET;
+        document.getElementById('lessonTitle').value = 'Living and Non-Living Things';
+        document.getElementById('subject').value = 'Science';
+      } else {
+        document.getElementById('slidesJson').value = BLANK_PRESET;
+        document.getElementById('lessonTitle').value = 'New Lesson';
+      }
+      setStatus('Preset loaded. Click Generate to create slides.', 'info');
+    }
+
+    function setStatus(msg, type) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = 'status ' + type;
+    }
+
+    function generate() {
+      let slides;
+      try {
+        slides = JSON.parse(document.getElementById('slidesJson').value);
+      } catch(e) {
+        setStatus('Invalid JSON — please check your slides array.', 'error');
+        return;
+      }
+      const title   = document.getElementById('lessonTitle').value || 'Lesson';
+      const grade   = document.getElementById('grade').value;
+      const subject = document.getElementById('subject').value;
+
+      setStatus('Generating ' + slides.length + ' slides...', 'info');
+      parent.postMessage({ pluginMessage: { type: 'generate', title, grade, subject, slides } }, '*');
+    }
+
+    function generateTemplate() {
+      parent.postMessage({ pluginMessage: { type: 'template' } }, '*');
+    }
+
+    window.onmessage = (e) => {
+      const msg = e.data.pluginMessage;
+      if (!msg) return;
+      if (msg.type === 'done')  setStatus('Done! ' + msg.count + ' slides created.', 'success');
+      if (msg.type === 'error') setStatus('Error: ' + msg.message, 'error');
+    };
+
+    // Auto-load magnets preset on open
+    loadPreset('magnets');
+  </script>
+</body>
+</html>

@@ -3,5 +3,9 @@
     "allow": [
       "Bash(curl -s \"http://localhost:3002/curriculum?curriculum=IB_PYP\")"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ],
+  "enableAllProjectMcpServers": true
 }
