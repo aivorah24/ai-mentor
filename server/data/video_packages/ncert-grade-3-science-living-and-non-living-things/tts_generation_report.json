@@ -1,0 +1,86 @@
+[
+  {
+    "scene": 1,
+    "ok": true,
+    "file": "scene_01_excited.mp3",
+    "voiceRole": "celebrate",
+    "emotion": "excited"
+  },
+  {
+    "scene": 2,
+    "ok": true,
+    "file": "scene_02_happy.mp3",
+    "voiceRole": "main",
+    "emotion": "happy"
+  },
+  {
+    "scene": 3,
+    "ok": true,
+    "file": "scene_03_thinking.mp3",
+    "voiceRole": "main",
+    "emotion": "thinking"
+  },
+  {
+    "scene": 4,
+    "ok": true,
+    "file": "scene_04_questioning.mp3",
+    "voiceRole": "checkpoint",
+    "emotion": "questioning"
+  },
+  {
+    "scene": 5,
+    "ok": true,
+    "file": "scene_05_happy.mp3",
+    "voiceRole": "main",
+    "emotion": "happy"
+  },
+  {
+    "scene": 6,
+    "ok": true,
+    "file": "scene_06_excited.mp3",
+    "voiceRole": "celebrate",
+    "emotion": "excited"
+  },
+  {
+    "scene": 7,
+    "ok": true,
+    "file": "scene_07_thinking.mp3",
+    "voiceRole": "main",
+    "emotion": "thinking"
+  },
+  {
+    "scene": 8,
+    "ok": true,
+    "file": "scene_08_questioning.mp3",
+    "voiceRole": "checkpoint",
+    "emotion": "questioning"
+  },
+  {
+    "scene": 9,
+    "ok": true,
+    "file": "scene_09_happy.mp3",
+    "voiceRole": "main",
+    "emotion": "happy"
+  },
+  {
+    "scene": 10,
+    "ok": true,
+    "file": "scene_10_happy.mp3",
+    "voiceRole": "main",
+    "emotion": "happy"
+  },
+  {
+    "scene": 11,
+    "ok": true,
+    "file": "scene_11_excited.mp3",
+    "voiceRole": "celebrate",
+    "emotion": "excited"
+  },
+  {
+    "scene": 12,
+    "ok": true,
+    "file": "scene_12_celebrating.mp3",
+    "voiceRole": "celebrate",
+    "emotion": "celebrating"
+  }
+]

@@ -1,0 +1,204 @@
+{
+  "meta": {
+    "generatedAt": "2026-04-01T12:10:32.569Z",
+    "sourceLessonFile": "C:\\Users\\Asus\\Desktop\\AI Mentor\\server\\data\\lessons\\science_g3_living_non_living_script.json",
+    "topic": "Living and Non-Living Things",
+    "grade": "Grade 3",
+    "subject": "Science",
+    "curriculum": "NCERT",
+    "totalScenes": 12,
+    "estimatedRuntimeSec": 70.75
+  },
+  "timeline": [
+    {
+      "scene": 1,
+      "text": "Welcome, explorers! Today we learn living and non-living things.",
+      "emotion": "excited",
+      "visual": "Living vs Non-Living",
+      "voiceRole": "celebrate",
+      "durationSec": 4.2,
+      "startSec": 0,
+      "endSec": 4.2,
+      "checkpoint": null
+    },
+    {
+      "scene": 2,
+      "text": "By the end, you can sort things into two groups.",
+      "emotion": "happy",
+      "visual": "Sort Into Groups",
+      "voiceRole": "main",
+      "durationSec": 4.73,
+      "startSec": 4.55,
+      "endSec": 9.28,
+      "checkpoint": null
+    },
+    {
+      "scene": 3,
+      "text": "Living things are alive. They move, breathe, and grow.",
+      "emotion": "thinking",
+      "visual": "What Is Living?",
+      "voiceRole": "main",
+      "durationSec": 5.2,
+      "startSec": 9.63,
+      "endSec": 14.83,
+      "checkpoint": null
+    },
+    {
+      "scene": 4,
+      "text": "Living things need air to breathe. Animals and plants both breathe.",
+      "emotion": "questioning",
+      "visual": "Living Things Breathe",
+      "voiceRole": "checkpoint",
+      "durationSec": 5.73,
+      "startSec": 15.18,
+      "endSec": 20.91,
+      "checkpoint": null
+    },
+    {
+      "scene": 5,
+      "text": "Living things need food and water. Food gives energy to work and play.",
+      "emotion": "happy",
+      "visual": "Need Food and Water",
+      "voiceRole": "main",
+      "durationSec": 5.93,
+      "startSec": 21.26,
+      "endSec": 27.19,
+      "checkpoint": null
+    },
+    {
+      "scene": 6,
+      "text": "Living things grow. A seed becomes a plant, and a puppy becomes a dog.",
+      "emotion": "excited",
+      "visual": "Living Things Grow",
+      "voiceRole": "celebrate",
+      "durationSec": 6.06,
+      "startSec": 27.54,
+      "endSec": 33.6,
+      "checkpoint": null
+    },
+    {
+      "scene": 7,
+      "text": "Living things can feel. We feel heat, cold, touch, and pain.",
+      "emotion": "thinking",
+      "visual": "Living Things Feel",
+      "voiceRole": "main",
+      "durationSec": 6.27,
+      "startSec": 33.95,
+      "endSec": 40.22,
+      "checkpoint": null
+    },
+    {
+      "scene": 8,
+      "text": "Non-living things are not alive. They do not breathe, eat, or grow.",
+      "emotion": "questioning",
+      "visual": "What Is Non-Living?",
+      "voiceRole": "checkpoint",
+      "durationSec": 6.46,
+      "startSec": 40.57,
+      "endSec": 47.03,
+      "checkpoint": null
+    },
+    {
+      "scene": 9,
+      "text": "Natural non-living things include rocks, water, soil, sand, air, and sunlight.",
+      "emotion": "happy",
+      "visual": "Natural Non-Living",
+      "voiceRole": "main",
+      "durationSec": 5.69,
+      "startSec": 47.38,
+      "endSec": 53.07,
+      "checkpoint": null
+    },
+    {
+      "scene": 10,
+      "text": "Man-made non-living things are made by people, like clothes, toys, and desks.",
+      "emotion": "happy",
+      "visual": "Man-Made Non-Living",
+      "voiceRole": "main",
+      "durationSec": 5.81,
+      "startSec": 53.42,
+      "endSec": 59.23,
+      "checkpoint": null
+    },
+    {
+      "scene": 11,
+      "text": "Cars and buses help us move. Phones and computers use electricity.",
+      "emotion": "excited",
+      "visual": "Tools Around Us",
+      "voiceRole": "celebrate",
+      "durationSec": 4.8,
+      "startSec": 59.58,
+      "endSec": 64.38,
+      "checkpoint": null
+    },
+    {
+      "scene": 12,
+      "text": "Great review! Living things breathe, eat, grow, and feel. Non-living things do not.",
+      "emotion": "celebrating",
+      "visual": "Lets Review",
+      "voiceRole": "celebrate",
+      "durationSec": 6.02,
+      "startSec": 64.73,
+      "endSec": 70.75,
+      "checkpoint": null
+    }
+  ],
+  "checkpoints": [],
+  "quiz": [
+    {
+      "question": "Which one is a living thing?",
+      "options": [
+        "Rock",
+        "Tree",
+        "Table",
+        "Pencil"
+      ],
+      "correct": 1,
+      "explanation": "A tree is living because it grows and needs water."
+    },
+    {
+      "question": "What do living things need to breathe?",
+      "options": [
+        "Air",
+        "Plastic",
+        "Paint",
+        "Paper"
+      ],
+      "correct": 0,
+      "explanation": "Living things need air for breathing."
+    },
+    {
+      "question": "Which is a natural non-living thing?",
+      "options": [
+        "Toy car",
+        "School bag",
+        "Soil",
+        "Shirt"
+      ],
+      "correct": 2,
+      "explanation": "Soil is natural and non-living."
+    },
+    {
+      "question": "Which is a man-made non-living thing?",
+      "options": [
+        "Cloud",
+        "Stone",
+        "Book",
+        "Leaf"
+      ],
+      "correct": 2,
+      "explanation": "A book is made by people, so it is man-made non-living."
+    },
+    {
+      "question": "Which sentence is correct?",
+      "options": [
+        "Non-living things grow on their own",
+        "Living things cannot feel",
+        "Living things need food and water",
+        "Rocks breathe like animals"
+      ],
+      "correct": 2,
+      "explanation": "Living things need food and water to stay alive."
+    }
+  ]
+}

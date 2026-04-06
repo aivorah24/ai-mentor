@@ -1,0 +1,57 @@
+[
+  {
+    "question": "Which one is a living thing?",
+    "options": [
+      "Rock",
+      "Tree",
+      "Table",
+      "Pencil"
+    ],
+    "correct": 1,
+    "explanation": "A tree is living because it grows and needs water."
+  },
+  {
+    "question": "What do living things need to breathe?",
+    "options": [
+      "Air",
+      "Plastic",
+      "Paint",
+      "Paper"
+    ],
+    "correct": 0,
+    "explanation": "Living things need air for breathing."
+  },
+  {
+    "question": "Which is a natural non-living thing?",
+    "options": [
+      "Toy car",
+      "School bag",
+      "Soil",
+      "Shirt"
+    ],
+    "correct": 2,
+    "explanation": "Soil is natural and non-living."
+  },
+  {
+    "question": "Which is a man-made non-living thing?",
+    "options": [
+      "Cloud",
+      "Stone",
+      "Book",
+      "Leaf"
+    ],
+    "correct": 2,
+    "explanation": "A book is made by people, so it is man-made non-living."
+  },
+  {
+    "question": "Which sentence is correct?",
+    "options": [
+      "Non-living things grow on their own",
+      "Living things cannot feel",
+      "Living things need food and water",
+      "Rocks breathe like animals"
+    ],
+    "correct": 2,
+    "explanation": "Living things need food and water to stay alive."
+  }
+]

@@ -1,0 +1,114 @@
+{
+  "CHAPTER_TITLE": {
+    "type": "text",
+    "text": "Living and Non-Living Things"
+  },
+  "GRADE_LABEL": {
+    "type": "text",
+    "text": "Grade 3"
+  },
+  "SUBJECT_LABEL": {
+    "type": "text",
+    "text": "Science"
+  },
+  "INTRO_LINE": {
+    "type": "text",
+    "text": "Hello! Today we learn about living and non-living things around us."
+  },
+  "SCENE_01_TITLE": {
+    "type": "text",
+    "text": "Living vs Non-Living"
+  },
+  "SCENE_01_TEXT": {
+    "type": "text",
+    "text": "Welcome, explorers! Today we learn living and non-living things."
+  },
+  "SCENE_02_TITLE": {
+    "type": "text",
+    "text": "Sort Into Groups"
+  },
+  "SCENE_02_TEXT": {
+    "type": "text",
+    "text": "By the end, you can sort things into two groups."
+  },
+  "SCENE_03_TITLE": {
+    "type": "text",
+    "text": "What Is Living?"
+  },
+  "SCENE_03_TEXT": {
+    "type": "text",
+    "text": "Living things are alive. They move, breathe, and grow."
+  },
+  "SCENE_04_TITLE": {
+    "type": "text",
+    "text": "Living Things Breathe"
+  },
+  "SCENE_04_TEXT": {
+    "type": "text",
+    "text": "Living things need air to breathe. Animals and plants both breathe."
+  },
+  "SCENE_05_TITLE": {
+    "type": "text",
+    "text": "Need Food and Water"
+  },
+  "SCENE_05_TEXT": {
+    "type": "text",
+    "text": "Living things need food and water. Food gives energy to work and play."
+  },
+  "SCENE_06_TITLE": {
+    "type": "text",
+    "text": "Living Things Grow"
+  },
+  "SCENE_06_TEXT": {
+    "type": "text",
+    "text": "Living things grow. A seed becomes a plant, and a puppy becomes a dog."
+  },
+  "SCENE_07_TITLE": {
+    "type": "text",
+    "text": "Living Things Feel"
+  },
+  "SCENE_07_TEXT": {
+    "type": "text",
+    "text": "Living things can feel. We feel heat, cold, touch, and pain."
+  },
+  "SCENE_08_TITLE": {
+    "type": "text",
+    "text": "What Is Non-Living?"
+  },
+  "SCENE_08_TEXT": {
+    "type": "text",
+    "text": "Non-living things are not alive. They do not breathe, eat, or grow."
+  },
+  "SCENE_09_TITLE": {
+    "type": "text",
+    "text": "Natural Non-Living"
+  },
+  "SCENE_09_TEXT": {
+    "type": "text",
+    "text": "Natural non-living things include rocks, water, soil, sand, air, and sunlight."
+  },
+  "SCENE_10_TITLE": {
+    "type": "text",
+    "text": "Man-Made Non-Living"
+  },
+  "SCENE_10_TEXT": {
+    "type": "text",
+    "text": "Man-made non-living things are made by people, like clothes, toys, and desks."
+  },
+  "SCENE_11_TITLE": {
+    "type": "text",
+    "text": "Tools Around Us"
+  },
+  "SCENE_11_TEXT": {
+    "type": "text",
+    "text": "Cars and buses help us move. Phones and computers use electricity."
+  },
+  "SCENE_12_TITLE": {
+    "type": "text",
+    "text": "Lets Review"
+  },
+  "SCENE_12_TEXT": {
+    "type": "text",
+    "text": "Great review! Living things breathe, eat, grow, and feel. Non-living things do not."
+  }
+}

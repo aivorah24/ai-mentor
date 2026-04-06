@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Character Voice Preview</title>
+  <style>
+    body { font-family: sans-serif; background: #0f0f1a; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 24px; padding: 32px; }
+    h1 { font-size: 22px; margin: 0; }
+    .card { background: #1e1e2e; border-radius: 20px; padding: 28px 32px; width: 340px; display: flex; flex-direction: column; gap: 16px; }
+    .label { font-size: 20px; font-weight: 800; }
+    .desc  { font-size: 13px; color: #aaa; margin-top: -8px; }
+    button { border: none; border-radius: 12px; padding: 14px 20px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+    .zara  { background: #8b5cf6; color: #fff; }
+    .zappy { background: #f59e0b; color: #000; }
+    .luna  { background: #06b6d4; color: #000; }
+    .stop  { background: #374151; color: #fff; font-size: 13px; padding: 10px 16px; }
+    .row   { display: flex; gap: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Character Voice Preview</h1>
+  <p style="color:#aaa;margin:0;text-align:center">Click each button to hear the character voice</p>
+
+  <!-- Ms. Zara -->
+  <div class="card" style="border: 2px solid #8b5cf6aa;">
+    <div class="label" style="color:#8b5cf6">👩‍🏫 Ms. Zara</div>
+    <div class="desc">Warm, clear, patient teacher</div>
+    <div class="row">
+      <button class="zara" onclick="speak('zara', 'Hello! I am Ms. Zara. Today we are going to learn about numbers and place value. Are you ready? Let us begin!')">
+        ▶ Play Ms. Zara
+      </button>
+      <button class="stop" onclick="stop()">Stop</button>
+    </div>
+  </div>
+
+  <!-- Zappy -->
+  <div class="card" style="border: 2px solid #f59e0baa;">
+    <div class="label" style="color:#f59e0b">⚡ Zappy</div>
+    <div class="desc">Energetic, fast, super fun!</div>
+    <div class="row">
+      <button class="zappy" onclick="speak('zappy', 'Hey hey hey! I am Zappy! Numbers are SO cool! Did you know a hundred has one hundred little ones inside it? Whoa! Let us find out together!')">
+        ▶ Play Zappy
+      </button>
+      <button class="stop" onclick="stop()">Stop</button>
+    </div>
+    <div style="font-size:12px;color:#aaa">Pitch: 1.8 &nbsp;|&nbsp; Speed: 1.3× faster</div>
+  </div>
+
+  <!-- Luna -->
+  <div class="card" style="border: 2px solid #06b6d4aa;">
+    <div class="label" style="color:#06b6d4">🌙 Luna</div>
+    <div class="desc">Soft, dreamy, curious explorer</div>
+    <div class="row">
+      <button class="luna" onclick="speak('luna', 'Hello, curious one. I am Luna. Imagine the stars in the sky... each one is a number waiting to be discovered. Let us explore together, slowly and carefully.')">
+        ▶ Play Luna
+      </button>
+      <button class="stop" onclick="stop()">Stop</button>
+    </div>
+    <div style="font-size:12px;color:#aaa">Pitch: 1.55 &nbsp;|&nbsp; Speed: 0.85× slower</div>
+  </div>
+
+  <script>
+    const synth = window.speechSynthesis;
+
+    function stop() { synth.cancel(); }
+
+    function speak(character, text) {
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.volume = 1.0;
+
+      const voices = synth.getVoices();
+      const female = (
+        voices.find(v => v.name === 'Microsoft Zira - English (United States)') ||
+        voices.find(v => v.name === 'Google US English') ||
+        voices.find(v => v.name === 'Samantha') ||
+        voices.find(v => /en[-_](US|GB)/i.test(v.lang) && !v.localService) ||
+        voices.find(v => /en[-_]US/i.test(v.lang))
+      );
+
+      if (character === 'zara') {
+        utter.pitch = 1.45; utter.rate = 1.05;
+        if (female) utter.voice = female;
+      } else if (character === 'zappy') {
+        utter.pitch = 1.8;  utter.rate = 1.3;
+        if (female) utter.voice = female;
+      } else if (character === 'luna') {
+        utter.pitch = 1.55; utter.rate = 0.85;
+        if (female) utter.voice = female;
+      }
+
+      synth.speak(utter);
+    }
+
+    // Voices load async in some browsers
+    if (synth.getVoices().length === 0) {
+      synth.addEventListener('voiceschanged', () => {}, { once: true });
+    }
+  </script>
+</body>
+</html>

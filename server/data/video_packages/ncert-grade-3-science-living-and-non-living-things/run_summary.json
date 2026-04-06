@@ -1,0 +1,9 @@
+{
+  "lessonFile": "C:\\Users\\Asus\\Desktop\\AI Mentor\\server\\data\\lessons\\science_g3_living_non_living_script.json",
+  "outDir": "C:\\Users\\Asus\\Desktop\\AI Mentor\\server\\data\\video_packages\\ncert-grade-3-science-living-and-non-living-things",
+  "scenes": 12,
+  "checkpoints": 0,
+  "hasQuiz": true,
+  "ttsGenerated": true,
+  "canvaRun": false
+}

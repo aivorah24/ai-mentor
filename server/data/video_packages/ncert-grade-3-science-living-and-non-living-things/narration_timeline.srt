@@ -1,0 +1,47 @@
+1
+00:00:00,000 --> 00:00:04,200
+Welcome, explorers! Today we learn living and non-living things.
+
+2
+00:00:04,550 --> 00:00:09,280
+By the end, you can sort things into two groups.
+
+3
+00:00:09,630 --> 00:00:14,830
+Living things are alive. They move, breathe, and grow.
+
+4
+00:00:15,180 --> 00:00:20,910
+Living things need air to breathe. Animals and plants both breathe.
+
+5
+00:00:21,260 --> 00:00:27,190
+Living things need food and water. Food gives energy to work and play.
+
+6
+00:00:27,540 --> 00:00:33,600
+Living things grow. A seed becomes a plant, and a puppy becomes a dog.
+
+7
+00:00:33,950 --> 00:00:40,220
+Living things can feel. We feel heat, cold, touch, and pain.
+
+8
+00:00:40,570 --> 00:00:47,030
+Non-living things are not alive. They do not breathe, eat, or grow.
+
+9
+00:00:47,380 --> 00:00:53,070
+Natural non-living things include rocks, water, soil, sand, air, and sunlight.
+
+10
+00:00:53,420 --> 00:00:59,230
+Man-made non-living things are made by people, like clothes, toys, and desks.
+
+11
+00:00:59,580 --> 00:01:04,380
+Cars and buses help us move. Phones and computers use electricity.
+
+12
+00:01:04,730 --> 00:01:10,750
+Great review! Living things breathe, eat, grow, and feel. Non-living things do not.

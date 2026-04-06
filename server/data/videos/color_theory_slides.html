@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  width:1280px; height:720px; overflow:hidden;
+  font-family:'Arial Black','Arial',sans-serif;
+  background:#1a1a2e;
+}
+
+/* ── Scene system ── */
+.scene {
+  position:absolute; inset:0;
+  width:1280px; height:720px;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.6s ease;
+}
+.scene.active { opacity:1; pointer-events:all; }
+
+/* ── Branding bar ── */
+.brand {
+  position:absolute; top:20px; left:32px;
+  font-size:13px; font-weight:800; letter-spacing:3px;
+  color:rgba(255,255,255,0.5); text-transform:uppercase;
+}
+.scene-num {
+  position:absolute; top:20px; right:32px;
+  font-size:13px; font-weight:800; letter-spacing:2px;
+  color:rgba(255,255,255,0.4);
+}
+
+/* ════════════════════════════════════════
+   SCENE 1 — INTRO
+════════════════════════════════════════ */
+#s1 { background: linear-gradient(135deg,#1a0533 0%,#2d0b5e 40%,#0f0f2e 100%); }
+
+.rainbow-text {
+  font-size:96px; font-weight:900; line-height:1;
+  background: linear-gradient(90deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#c77dff);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  animation: textPulse 2s ease-in-out infinite;
+  text-align:center;
+}
+@keyframes textPulse {
+  0%,100%{ transform:scale(1); filter:brightness(1); }
+  50%{ transform:scale(1.04); filter:brightness(1.2); }
+}
+.subtitle {
+  font-size:26px; font-weight:700; color:rgba(255,255,255,0.7);
+  margin-top:14px; letter-spacing:2px; text-transform:uppercase;
+  animation: fadeUp 0.8s ease 0.4s both;
+}
+@keyframes fadeUp {
+  from{ transform:translateY(20px); opacity:0; }
+  to{ transform:translateY(0); opacity:1; }
+}
+
+/* Floating color blobs */
+.blob {
+  position:absolute; border-radius:50%;
+  animation: float 4s ease-in-out infinite;
+  filter:blur(2px); opacity:0.7;
+}
+@keyframes float {
+  0%,100%{ transform:translateY(0) scale(1); }
+  50%{ transform:translateY(-22px) scale(1.08); }
+}
+
+/* ════════════════════════════════════════
+   SCENE 2 — PRIMARY COLORS
+════════════════════════════════════════ */
+#s2 { background: linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 100%); }
+
+.primary-row {
+  display:flex; gap:80px; align-items:center;
+  margin-top:20px;
+}
+.color-circle {
+  display:flex; flex-direction:column; align-items:center; gap:16px;
+}
+.circle {
+  width:160px; height:160px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:36px; font-weight:900; color:white;
+  box-shadow:0 8px 40px rgba(0,0,0,0.4);
+  animation: popIn 0.7s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.circle-label {
+  font-size:22px; font-weight:800; color:white; letter-spacing:1px;
+}
+.c-red   { background:#e74c3c; animation-delay:0.1s; box-shadow:0 0 40px #e74c3c88; }
+.c-blue  { background:#3498db; animation-delay:0.3s; box-shadow:0 0 40px #3498db88; }
+.c-yellow{ background:#f1c40f; animation-delay:0.5s; box-shadow:0 0 40px #f1c40f88; color:#333; }
+
+@keyframes popIn {
+  from{ transform:scale(0) rotate(-20deg); opacity:0; }
+  to{ transform:scale(1) rotate(0); opacity:1; }
+}
+.primary-title {
+  font-size:52px; font-weight:900; color:white;
+  text-align:center; margin-bottom:10px;
+  animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+.primary-sub {
+  font-size:20px; color:rgba(255,255,255,0.6);
+  text-align:center; font-weight:700; letter-spacing:1px;
+  animation: fadeUp 0.6s ease 0.2s both;
+}
+
+/* ════════════════════════════════════════
+   SCENE 3 — MIX COLORS
+════════════════════════════════════════ */
+#s3 { background:linear-gradient(135deg,#0d1f0d 0%,#1a3d1a 100%); }
+
+.mix-row {
+  display:flex; align-items:center; gap:30px; margin-top:20px;
+}
+.mix-circle {
+  width:140px; height:140px; border-radius:50%;
+  font-size:28px; font-weight:900; color:white;
+  display:flex; align-items:center; justify-content:center;
+  animation: popIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.mix-op {
+  font-size:64px; font-weight:900; color:white; opacity:0.9;
+  animation: fadeIn 0.4s ease 0.3s both;
+}
+.mix-result {
+  width:180px; height:180px; border-radius:50%;
+  font-size:32px; font-weight:900; color:white;
+  display:flex; align-items:center; justify-content:center;
+  animation: popIn 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.6s both;
+  box-shadow: 0 0 60px rgba(255,255,255,0.3);
+}
+@keyframes fadeIn { from{opacity:0}to{opacity:1} }
+
+.mix-label {
+  font-size:18px; font-weight:700; color:white;
+  text-align:center; margin-top:8px; opacity:0.8;
+}
+.mix-title {
+  font-size:48px; font-weight:900; color:white;
+  text-align:center; margin-bottom:8px;
+}
+.mixes-grid {
+  display:flex; gap:60px; margin-top:24px;
+}
+.mix-item {
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  animation: fadeUp 0.6s ease both;
+}
+.mix-combo {
+  display:flex; align-items:center; gap:10px;
+}
+.sm-circle {
+  width:56px; height:56px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; font-weight:900; color:white;
+}
+.sm-op { font-size:28px; font-weight:900; color:white; opacity:0.8; }
+.sm-result {
+  width:70px; height:70px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:900; color:white;
+  box-shadow:0 0 20px rgba(255,255,255,0.2);
+}
+
+/* ════════════════════════════════════════
+   SCENE 4 — WARM & COOL
+════════════════════════════════════════ */
+#s4 { background:#0a0a1a; padding:0; flex-direction:row; justify-content:flex-start; align-items:stretch; }
+
+.warm-cool-split {
+  display:flex; width:1280px; height:720px;
+  flex-direction:row;
+}
+.warm-side {
+  flex:1; background:linear-gradient(135deg,#8B0000,#c0392b,#e67e22);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:20px;
+}
+.cool-side {
+  flex:1; background:linear-gradient(135deg,#1a3a5c,#2980b9,#8e44ad);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:20px;
+}
+
+.side-title {
+  font-size:52px; font-weight:900; color:white;
+  text-shadow:0 4px 20px rgba(0,0,0,0.4); letter-spacing:2px;
+}
+.side-dots { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; padding:0 20px; }
+.side-dot {
+  width:60px; height:60px; border-radius:50%;
+  animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.side-feeling {
+  font-size:18px; font-weight:700; color:rgba(255,255,255,0.85);
+  text-align:center; letter-spacing:1px;
+}
+.divider {
+  position:absolute; left:50%; top:0; bottom:0; width:6px;
+  background:white; box-shadow:0 0 30px rgba(255,255,255,0.8);
+  transform:translateX(-50%);
+}
+
+/* ════════════════════════════════════════
+   SCENE 5 — COLOR WHEEL
+════════════════════════════════════════ */
+#s5 { background:linear-gradient(135deg,#0f0f1a 0%,#1a1a3e 100%); }
+
+.wheel-container {
+  position:relative; width:360px; height:360px;
+  animation: spinSlow 8s linear infinite;
+}
+@keyframes spinSlow { from{transform:rotate(0deg)}to{transform:rotate(360deg)} }
+
+.wheel-slice {
+  position:absolute; width:0; height:0;
+  border-left:90px solid transparent;
+  border-right:90px solid transparent;
+  top:50%; left:50%;
+  transform-origin:0 0;
+}
+.wheel-center {
+  position:absolute; width:90px; height:90px; border-radius:50%;
+  background:white; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  z-index:10; display:flex; align-items:center; justify-content:center;
+  font-size:28px; animation:spinSlow 8s linear infinite reverse;
+}
+.wheel-title {
+  font-size:48px; font-weight:900; color:white;
+  text-align:center; margin-bottom:20px;
+}
+.wheel-sub {
+  font-size:20px; font-weight:700; color:rgba(255,255,255,0.6);
+  text-align:center; margin-top:20px; letter-spacing:1px;
+}
+
+/* ════════════════════════════════════════
+   SCENE 6 — QUIZ
+════════════════════════════════════════ */
+#s6 { background:linear-gradient(135deg,#0a1a0a 0%,#1a3a1a 100%); }
+
+.quiz-title {
+  font-size:64px; font-weight:900;
+  background:linear-gradient(90deg,#ffd93d,#ff6b6b);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  animation: textPulse 1.5s ease-in-out infinite;
+  margin-bottom:30px;
+}
+.quiz-q {
+  font-size:30px; font-weight:800; color:white;
+  text-align:center; margin-bottom:28px;
+  animation: fadeUp 0.5s ease both;
+}
+.quiz-options {
+  display:flex; gap:20px; flex-wrap:wrap; justify-content:center;
+}
+.quiz-opt {
+  width:160px; height:80px; border-radius:20px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; font-weight:900; color:white;
+  cursor:pointer; border:3px solid rgba(255,255,255,0.3);
+  animation:popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+  transition:transform 0.2s, box-shadow 0.2s;
+}
+.quiz-opt:hover { transform:scale(1.08); }
+.stars-row {
+  display:flex; gap:12px; margin-bottom:16px;
+  animation: fadeIn 0.5s ease both;
+}
+.star {
+  font-size:40px;
+  animation: textPulse 1.2s ease-in-out infinite;
+}
+
+/* ── Bottom progress bar ── */
+.progress-bar {
+  position:absolute; bottom:0; left:0;
+  height:5px; border-radius:0 3px 3px 0;
+  background:linear-gradient(90deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#c77dff);
+  transition:width 0.6s ease;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SCENE 1 — INTRO ══════════════ -->
+<div class="scene active" id="s1">
+  <div class="brand">Aivorah · Arts · Grade 3</div>
+  <div class="scene-num">1 / 6</div>
+
+  <!-- Floating blobs -->
+  <div class="blob" style="width:180px;height:180px;background:#e74c3c;top:60px;left:80px;animation-delay:0s;animation-duration:4s;"></div>
+  <div class="blob" style="width:140px;height:140px;background:#3498db;top:80px;right:100px;animation-delay:1s;animation-duration:5s;"></div>
+  <div class="blob" style="width:120px;height:120px;background:#f1c40f;bottom:80px;left:160px;animation-delay:2s;animation-duration:3.5s;"></div>
+  <div class="blob" style="width:160px;height:160px;background:#2ecc71;bottom:60px;right:140px;animation-delay:0.5s;animation-duration:4.5s;"></div>
+  <div class="blob" style="width:100px;height:100px;background:#9b59b6;top:50%;left:50%;animation-delay:1.5s;animation-duration:3s;margin-left:-50px;margin-top:-50px;"></div>
+
+  <div class="rainbow-text">COLOR THEORY</div>
+  <div class="subtitle">IB PYP · Arts · Grade 3</div>
+
+  <div class="progress-bar" style="width:16%;"></div>
+</div>
+
+<!-- ══════════════ SCENE 2 — PRIMARY COLORS ══════════════ -->
+<div class="scene" id="s2">
+  <div class="brand">Aivorah · Arts · Grade 3</div>
+  <div class="scene-num">2 / 6</div>
+  <div class="primary-title">PRIMARY COLORS</div>
+  <div class="primary-sub">The 3 colors that make ALL other colors</div>
+  <div class="primary-row">
+    <div class="color-circle">
+      <div class="circle c-red" style="animation-delay:0.1s">R</div>
+      <div class="circle-label" style="color:#e74c3c">RED</div>
+    </div>
+    <div class="color-circle">
+      <div class="circle c-yellow" style="animation-delay:0.3s">Y</div>
+      <div class="circle-label" style="color:#f1c40f">YELLOW</div>
+    </div>
+    <div class="color-circle">
+      <div class="circle c-blue" style="animation-delay:0.5s">B</div>
+      <div class="circle-label" style="color:#4d96ff">BLUE</div>
+    </div>
+  </div>
+  <div class="progress-bar" style="width:33%;"></div>
+</div>
+
+<!-- ══════════════ SCENE 3 — MIX COLORS ══════════════ -->
+<div class="scene" id="s3">
+  <div class="brand">Aivorah · Arts · Grade 3</div>
+  <div class="scene-num">3 / 6</div>
+  <div class="mix-title">MIX TO MAKE NEW COLORS!</div>
+  <div class="mixes-grid">
+    <!-- Red + Yellow = Orange -->
+    <div class="mix-item" style="animation-delay:0.1s">
+      <div class="mix-combo">
+        <div class="sm-circle" style="background:#e74c3c;">R</div>
+        <div class="sm-op">+</div>
+        <div class="sm-circle" style="background:#f1c40f;color:#333">Y</div>
+        <div class="sm-op">=</div>
+        <div class="sm-result" style="background:#e67e22;box-shadow:0 0 20px #e67e2255"></div>
+      </div>
+      <div class="mix-label" style="color:#e67e22;font-size:20px;font-weight:900">ORANGE 🍊</div>
+    </div>
+    <!-- Blue + Yellow = Green -->
+    <div class="mix-item" style="animation-delay:0.3s">
+      <div class="mix-combo">
+        <div class="sm-circle" style="background:#3498db;">B</div>
+        <div class="sm-op">+</div>
+        <div class="sm-circle" style="background:#f1c40f;color:#333">Y</div>
+        <div class="sm-op">=</div>
+        <div class="sm-result" style="background:#27ae60;box-shadow:0 0 20px #27ae6055"></div>
+      </div>
+      <div class="mix-label" style="color:#27ae60;font-size:20px;font-weight:900">GREEN 🌿</div>
+    </div>
+    <!-- Red + Blue = Purple -->
+    <div class="mix-item" style="animation-delay:0.5s">
+      <div class="mix-combo">
+        <div class="sm-circle" style="background:#e74c3c;">R</div>
+        <div class="sm-op">+</div>
+        <div class="sm-circle" style="background:#3498db;">B</div>
+        <div class="sm-op">=</div>
+        <div class="sm-result" style="background:#8e44ad;box-shadow:0 0 20px #8e44ad55"></div>
+      </div>
+      <div class="mix-label" style="color:#a855f7;font-size:20px;font-weight:900">PURPLE 🍇</div>
+    </div>
+  </div>
+  <div class="progress-bar" style="width:50%;"></div>
+</div>
+
+<!-- ══════════════ SCENE 4 — WARM & COOL ══════════════ -->
+<div class="scene" id="s4">
+  <div class="warm-cool-split">
+    <div class="warm-side">
+      <div class="brand" style="color:rgba(255,255,255,0.6)">Aivorah · Arts · Grade 3</div>
+      <div class="side-title">WARM</div>
+      <div class="side-dots">
+        <div class="side-dot" style="background:#e74c3c"></div>
+        <div class="side-dot" style="background:#e67e22"></div>
+        <div class="side-dot" style="background:#f1c40f"></div>
+        <div class="side-dot" style="background:#ff6b6b"></div>
+      </div>
+      <div class="side-feeling">Red · Orange · Yellow<br/>Energy · Happiness · Warmth</div>
+    </div>
+    <div class="divider"></div>
+    <div class="cool-side">
+      <div class="scene-num" style="color:rgba(255,255,255,0.5)">4 / 6</div>
+      <div class="side-title">COOL</div>
+      <div class="side-dots">
+        <div class="side-dot" style="background:#3498db"></div>
+        <div class="side-dot" style="background:#2ecc71"></div>
+        <div class="side-dot" style="background:#9b59b6"></div>
+        <div class="side-dot" style="background:#1abc9c"></div>
+      </div>
+      <div class="side-feeling">Blue · Green · Purple<br/>Calm · Peace · Nature</div>
+    </div>
+  </div>
+  <div class="progress-bar" style="width:66%;z-index:20;"></div>
+</div>
+
+<!-- ══════════════ SCENE 5 — COLOR WHEEL ══════════════ -->
+<div class="scene" id="s5">
+  <div class="brand">Aivorah · Arts · Grade 3</div>
+  <div class="scene-num">5 / 6</div>
+  <div class="wheel-title">THE COLOR WHEEL 🎨</div>
+  <div style="position:relative;display:flex;align-items:center;justify-content:center;">
+    <!-- Color wheel using conic-gradient -->
+    <div style="
+      width:340px;height:340px;border-radius:50%;
+      background:conic-gradient(
+        #e74c3c 0deg 30deg,
+        #e67e22 30deg 90deg,
+        #f1c40f 90deg 150deg,
+        #27ae60 150deg 210deg,
+        #3498db 210deg 270deg,
+        #8e44ad 270deg 330deg,
+        #e74c3c 330deg 360deg
+      );
+      animation:spinSlow 8s linear infinite;
+      box-shadow:0 0 60px rgba(255,255,255,0.2);
+    "></div>
+    <!-- Center white circle -->
+    <div style="
+      position:absolute;width:100px;height:100px;border-radius:50%;
+      background:white;display:flex;align-items:center;justify-content:center;
+      font-size:40px;z-index:10;
+      animation:spinSlow 8s linear infinite reverse;
+    ">🎨</div>
+  </div>
+  <div class="wheel-sub">All colors live together on the Color Wheel!</div>
+  <div class="progress-bar" style="width:83%;"></div>
+</div>
+
+<!-- ══════════════ SCENE 6 — QUIZ ══════════════ -->
+<div class="scene" id="s6">
+  <div class="brand">Aivorah · Arts · Grade 3</div>
+  <div class="scene-num">6 / 6</div>
+  <div class="stars-row">
+    <div class="star" style="animation-delay:0s">⭐</div>
+    <div class="star" style="animation-delay:0.2s">⭐</div>
+    <div class="star" style="animation-delay:0.4s">⭐</div>
+  </div>
+  <div class="quiz-title">QUIZ TIME!</div>
+  <div class="quiz-q">What do you get when you mix RED + BLUE?</div>
+  <div class="quiz-options">
+    <div class="quiz-opt" style="background:#27ae60;animation-delay:0.1s">GREEN</div>
+    <div class="quiz-opt" style="background:#8e44ad;animation-delay:0.2s">PURPLE ✓</div>
+    <div class="quiz-opt" style="background:#e67e22;animation-delay:0.3s">ORANGE</div>
+    <div class="quiz-opt" style="background:#3498db;animation-delay:0.4s">BLUE</div>
+  </div>
+  <div class="progress-bar" style="width:100%;"></div>
+</div>
+
+<script>
+const scenes = document.querySelectorAll('.scene');
+let current = 0;
+const SLIDE_DURATION = 5000; // 5 seconds per slide
+
+function showScene(idx) {
+  scenes.forEach((s,i) => {
+    s.classList.toggle('active', i === idx);
+  });
+}
+
+// Auto-advance
+let timer = setInterval(() => {
+  current = (current + 1) % scenes.length;
+  showScene(current);
+}, SLIDE_DURATION);
+
+// Expose for Puppeteer control
+window.goToSlide = (idx) => { clearInterval(timer); showScene(idx); };
+window.getSlideCount = () => scenes.length;
+window.SLIDE_DURATION = SLIDE_DURATION;
+</script>
+</body>
+</html>
