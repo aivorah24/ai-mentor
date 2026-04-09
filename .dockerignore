@@ -1,0 +1,56 @@
+# Git
+.git
+.gitignore
+.gitmodules
+
+# Node modules
+node_modules
+server/node_modules
+AIMentorApp/node_modules
+
+# Expo build output (built fresh in Docker)
+AIMentorApp/dist
+AIMentorApp/dist2
+AIMentorApp/.expo
+
+# Logs
+*.log
+backend*.log
+frontend*.log
+server_start*.log
+tmp-*.log
+
+# Environment — NEVER bake into image
+.env
+server/.env
+**/.env
+
+# Test files
+AIMentorApp/e2e
+AIMentorApp/playwright-report
+AIMentorApp/test-results
+AIMentorApp/coverage
+
+# Dev/temp files
+*.bat
+figma-plugin
+project details
+tmp_issue_body.md
+canva_*.html
+canva_*.json
+Dashboard.html
+Landing_page.html
+voice_preview.html
+support.db
+aivorah_sprint_plan.csv
+
+# Scripts (not needed for server runtime)
+server/scripts
+
+# Large media assets — serve from Cloudinary in production
+server/data/videos
+server/data/images/*.mp3
+
+# Docker
+Dockerfile
+.dockerignore

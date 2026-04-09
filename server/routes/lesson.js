@@ -9,6 +9,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const { generateSceneImage } = require('../services/gemini');
 const { client, COLLECTION } = require('../services/qdrant');
 const { resolveImageUrl }    = require('../services/cloudinaryUrls');
+const { logEvent }           = require('../services/analytics');
 
 // ── Audio cache ─────────────────────────────────────────────────────────────
 // Once generated, audio files are saved to disk and served forever (zero quota cost)
@@ -128,6 +129,7 @@ function injectFallbackCheckpoints(scenes) {
 
 // POST /lesson/script
 router.post('/script', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const {
       topic,
@@ -135,6 +137,8 @@ router.post('/script', async (req, res) => {
       curriculum = 'IB_PYP',
       character  = 'ZARA',
       subject    = 'Mathematics',
+      userEmail,
+      role,
     } = req.body;
     if (!topic) return res.status(400).json({ error: 'topic is required' });
 
@@ -151,6 +155,18 @@ router.post('/script', async (req, res) => {
 
       // Merge interactive checkpoints (scenes 4, 8, 12 get a checkpoint each)
       const scenesWithCheckpoints = mergeCheckpoints(enrichedScenes, fixed.chapter);
+
+      logEvent('ai_lesson_script', {
+        userEmail,
+        role,
+        source: 'lesson_script',
+        status: 'success',
+        latencyMs: Date.now() - startedAt,
+        topic,
+        subject,
+        grade,
+        meta: { mode: 'fixed', sceneCount: scenesWithCheckpoints.length },
+      }).catch(() => {});
 
       return res.json({
         topic, grade, curriculum, character,
@@ -291,6 +307,18 @@ EMOTION OPTIONS: happy, excited, thinking, celebrating, surprised, questioning`;
     const rawScenes   = parsed.scenes ?? [];
     // Ensure checkpoints exist at positions 4, 8, 12 (Groq may omit them)
     const finalScenes = injectFallbackCheckpoints(rawScenes);
+    logEvent('ai_lesson_script', {
+      userEmail,
+      role,
+      source: 'lesson_script',
+      status: 'success',
+      latencyMs: Date.now() - startedAt,
+      topic,
+      subject,
+      grade,
+      model: 'llama-3.3-70b-versatile',
+      meta: { mode: 'generated', sceneCount: finalScenes.length },
+    }).catch(() => {});
     res.json({
       topic, grade, curriculum, character,
       scenes: finalScenes,
@@ -298,6 +326,17 @@ EMOTION OPTIONS: happy, excited, thinking, celebrating, surprised, questioning`;
     });
   } catch (err) {
     console.error('Error generating lesson script:', err.message);
+    logEvent('ai_lesson_script', {
+      userEmail: req.body?.userEmail,
+      role: req.body?.role,
+      source: 'lesson_script',
+      status: 'error',
+      latencyMs: Date.now() - startedAt,
+      topic: req.body?.topic,
+      subject: req.body?.subject,
+      grade: req.body?.grade,
+      meta: { error: err.message },
+    }).catch(() => {});
     res.status(500).json({ error: 'Failed to generate lesson script' });
   }
 });
@@ -459,6 +498,7 @@ async function callElevenLabsTTS({ text, voice, emotion }) {
 }
 
 router.post('/tts', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const {
       text,
@@ -466,6 +506,10 @@ router.post('/tts', async (req, res) => {
       emotion = 'happy',
       character = 'zara',
       grade = 'Grade 3',
+      userEmail,
+      role,
+      topic,
+      subject,
     } = req.body;
     if (!text) return res.status(400).json({ error: 'text required' });
 
@@ -481,6 +525,17 @@ router.post('/tts', async (req, res) => {
 
       if (fs.existsSync(fullPath)) {
         const audio = fs.readFileSync(fullPath).toString('base64');
+        logEvent('ai_lesson_tts', {
+          userEmail,
+          role,
+          source: 'lesson_tts',
+          status: 'success',
+          latencyMs: Date.now() - startedAt,
+          topic,
+          subject,
+          grade,
+          meta: { provider, cached: true, voiceRole: normalizeVoiceRole(voice, emotion), emotion },
+        }).catch(() => {});
         return res.json({
           audioUrl,
           audio,
@@ -504,6 +559,18 @@ router.post('/tts', async (req, res) => {
           `  TTS (${provider}) cached: ${(result.buffer.length / 1024).toFixed(0)}KB (${normalizeVoiceRole(voice, emotion)}/${emotion})`
         );
 
+        logEvent('ai_lesson_tts', {
+          userEmail,
+          role,
+          source: 'lesson_tts',
+          status: 'success',
+          latencyMs: Date.now() - startedAt,
+          topic,
+          subject,
+          grade,
+          meta: { provider, cached: false, voiceRole: normalizeVoiceRole(voice, emotion), emotion },
+        }).catch(() => {});
+
         return res.json({
           audioUrl,
           audio: result.buffer.toString('base64'),
@@ -518,6 +585,17 @@ router.post('/tts', async (req, res) => {
     }
 
     console.warn('  TTS all providers failed:', failures.join(' | '));
+    logEvent('ai_lesson_tts', {
+      userEmail,
+      role,
+      source: 'lesson_tts',
+      status: 'error',
+      latencyMs: Date.now() - startedAt,
+      topic,
+      subject,
+      grade,
+      meta: { failures, emotion, voiceRole: normalizeVoiceRole(voice, emotion) },
+    }).catch(() => {});
     res.json({
       audioUrl: null,
       audio: null,
@@ -527,6 +605,17 @@ router.post('/tts', async (req, res) => {
     });
   } catch (err) {
     console.error('TTS error:', err.message);
+    logEvent('ai_lesson_tts', {
+      userEmail: req.body?.userEmail,
+      role: req.body?.role,
+      source: 'lesson_tts',
+      status: 'error',
+      latencyMs: Date.now() - startedAt,
+      topic: req.body?.topic,
+      subject: req.body?.subject,
+      grade: req.body?.grade,
+      meta: { error: err.message },
+    }).catch(() => {});
     res.json({ audioUrl: null, audio: null, cached: false, error: 'failed' });
   }
 });
@@ -606,8 +695,9 @@ router.get('/concept-image', async (req, res) => {
 // POST /lesson/hook
 // Generates a short engaging intro for a chapter — used when no HeyGen video exists
 router.post('/hook', async (req, res) => {
+  const startedAt = Date.now();
   try {
-    const { topic, context = '' } = req.body;
+    const { topic, context = '', userEmail, role, grade = 'Grade 3', subject = 'Mathematics' } = req.body;
     if (!topic) return res.status(400).json({ error: 'topic is required' });
 
     const prompt = `You are Ms. Zara, a warm and enthusiastic Grade 3 Maths teacher.
@@ -646,9 +736,31 @@ Return ONLY valid JSON, no markdown:
     if (!jsonMatch) throw new Error('No JSON in response');
 
     const parsed = JSON.parse(jsonMatch[0]);
+    logEvent('ai_lesson_hook', {
+      userEmail,
+      role,
+      source: 'lesson_hook',
+      status: 'success',
+      latencyMs: Date.now() - startedAt,
+      topic,
+      subject,
+      grade,
+      model: 'llama-3.1-8b-instant',
+    }).catch(() => {});
     res.json({ topic, intro: parsed.intro ?? '', hook: parsed.hook ?? '', visual: parsed.visual ?? '' });
   } catch (err) {
     console.error('Error generating hook:', err.message);
+    logEvent('ai_lesson_hook', {
+      userEmail: req.body?.userEmail,
+      role: req.body?.role,
+      source: 'lesson_hook',
+      status: 'error',
+      latencyMs: Date.now() - startedAt,
+      topic: req.body?.topic,
+      subject: req.body?.subject,
+      grade: req.body?.grade,
+      meta: { error: err.message },
+    }).catch(() => {});
     res.status(500).json({ error: 'Failed to generate hook' });
   }
 });

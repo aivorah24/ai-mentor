@@ -1,0 +1,88 @@
+{
+  "id": "pyp_g3_ict_computer_basics",
+  "title": "Computer Basics",
+  "grade": "Grade 3",
+  "subject": "ICT",
+  "curriculum": "IB PYP",
+  "accent": "#7AADA8",
+  "duration_estimate": "3 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": ["WELCOME", "DIGITAL", "WORLD"],
+      "subtext": "Grade 3 · ICT",
+      "voice": "Hi everyone! I'm Charlie. Welcome to our digital world! Today, we're going to explore the amazing machine called a computer and see how all its parts work together to help us learn and play!",
+      "accent": "#7AADA8",
+      "duration": 10,
+      "image_prompt": "Cinematic wide shot of a cozy, brightly lit kids' room with a colorful desk. A friendly, 3D animated robot character stands next to a modern desktop computer, waving enthusiastically. Soft bokeh background with floating digital icons like pixels and wifi symbols. High quality, Pixar-style animation."
+    },
+    {
+      "id": "02_monitor",
+      "scene_number": 2,
+      "type": "concept",
+      "words": ["MONITOR", "SCREEN", "VIEW"],
+      "subtext": "The Monitor",
+      "voice": "First, let's look at the Monitor. It's like a magic window! This is where the computer shows us pictures, videos, and our favorite games. It translates all the computer's hard work into things we can see.",
+      "accent": "#7AADA8",
+      "duration": 12,
+      "image_prompt": "Close-up of a sleek computer monitor displaying a beautiful, vibrant digital landscape with a rainbow. The screen is glowing slightly, casting a soft blue light on the desk. Around the monitor, small 3D icons of a 'play' button and a 'picture' frame float in the air. Professional lighting, 4k detail."
+    },
+    {
+      "id": "03_cpu",
+      "scene_number": 3,
+      "type": "concept",
+      "words": ["CPU", "BRAIN", "POWER"],
+      "subtext": "The CPU box",
+      "voice": "But where does the thinking happen? Inside this box! It's called the CPU. Think of it as the computer's brain. It processes every click and every key press to make sure everything runs perfectly.",
+      "accent": "#7AADA8",
+      "duration": 12,
+      "image_prompt": "Stylized 3D cutaway illustration of a computer tower (CPU box). Inside, glowing neon circuits and golden data streams pulse like a heartbeat, representing 'thinking'. A friendly brain icon is softly overlaid on the side of the box. Futuristic but warm and inviting for kids."
+    },
+    {
+      "id": "04_interaction",
+      "scene_number": 4,
+      "type": "concept",
+      "words": ["KEYBOARD", "MOUSE", "TALK"],
+      "subtext": "Interaction Tools",
+      "voice": "To talk to our computer, we use the Keyboard and the Mouse. We type our ideas with the keys and point at what we want with the mouse. They are the bridges between our hands and the digital world!",
+      "accent": "#7AADA8",
+      "duration": 15,
+      "image_prompt": "Action shot from a child's perspective showing small, clean hands using a brightly colored keyboard with large letters. To the side, a matching ergonomic mouse is being clicked. Translucent 'click' ripples and 'typing' sparkles emerge from the devices. Bright, high-contrast, educational aesthetic."
+    },
+    {
+      "id": "05_software",
+      "scene_number": 5,
+      "type": "concept",
+      "words": ["SOFTWARE", "APPS", "MAGIC"],
+      "subtext": "Digital Magic",
+      "voice": "While the parts we touch are 'Hardware', the magic inside is called 'Software'. These are the apps and games that live on the computer. Software tells the hardware exactly what to do, from drawing a masterpiece to solving a puzzle!",
+      "accent": "#7AADA8",
+      "duration": 15,
+      "image_prompt": "A magical 3D scene where various colorful app icons (a paintbrush, a musical note, a globe, and a calculator) are flying out of the monitor and circling around in the air. The icons are glossy and 3D. The atmosphere is full of wonder and digital 'magic dust'."
+    },
+    {
+      "id": "06_usage",
+      "scene_number": 6,
+      "type": "concept",
+      "words": ["GENTLE", "HANDS", "HAPPY"],
+      "subtext": "Caring for Tools",
+      "voice": "Computers are very smart but also very sensitive. We must always be gentle, keep our hands clean, and never have food or drinks nearby. When we take care of our computer, it stays happy and ready for our next adventure!",
+      "accent": "#7AADA8",
+      "duration": 15,
+      "image_prompt": "A split-screen style illustration. On one side, a child is washing their hands; on the other, they are sitting correctly at the desk with a big smile, showing a clean and organized workspace. A 'No Food/Drink' icon is shown as a friendly, stylized sticker in the corner. Warm, positive colors."
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": ["GREAT", "JOB", "SMART"],
+      "subtext": "You're a Pro!",
+      "voice": "You're doing great! Now you know the main parts of a computer and how to use them. Keep exploring, stay curious, and I'll see you in our next lesson! Bye for now!",
+      "accent": "#7AADA8",
+      "duration": 15,
+      "image_prompt": "The robot character from the intro is now high-fiving a child (only child's arm visible). The background is a mix of the cozy room and a celebratory digital firework display made of pixels. The words 'GREAT JOB!' are written in friendly, floating 3D letters. Fade to black."
+    }
+  ]
+}

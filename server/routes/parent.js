@@ -12,7 +12,7 @@ router.get('/:parentEmail/children', async (req, res) => {
     // Get linked child IDs + user info
     const { data: links, error } = await supabase
       .from('parent_children')
-      .select('child_id, added_at, users!parent_children_child_id_fkey(id, name, email, grade, school)')
+      .select('child_id, added_at, users!parent_children_child_id_fkey(id, name, email, grade, school, curriculum)')
       .eq('parent_email', parentEmail);
 
     if (error) return res.status(500).json({ error: error.message });
@@ -37,8 +37,9 @@ router.get('/:parentEmail/children', async (req, res) => {
         id:               link.child_id,
         name:             user.name    || 'Student',
         email:            user.email   || '',
-        grade:            user.grade   || 'Grade 3',
-        school:           user.school  || '',
+        grade:            user.grade      || 'Grade 3',
+        curriculum:       user.curriculum || 'NCERT',
+        school:           user.school     || '',
         xpPoints:         s.xp_points         ?? 0,
         level:            s.level             ?? 1,
         currentStreak:    s.current_streak    ?? 0,
