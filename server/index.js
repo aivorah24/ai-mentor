@@ -25,6 +25,8 @@ const userRoute        = require('./routes/user');
 const messagesRoute    = require('./routes/messages');
 const devlogRoute      = require('./routes/devlog');
 const dailyTidbitRoute = require('./routes/daily-tidbit');
+const adminRoute       = require('./routes/admin');
+const analyticsRoute   = require('./routes/analytics');
 
 // Heavy routes — lazy-loaded on first request to avoid startup crashes
 // (ingest uses pdf-parse/@napi-rs/canvas; ask/curriculum use @xenova/transformers)
@@ -59,6 +61,8 @@ app.use('/user',         userRoute);
 app.use('/messages',     messagesRoute);
 app.use('/devlog',       devlogRoute);
 app.use('/daily-tidbit', dailyTidbitRoute);
+app.use('/admin',        adminRoute);
+app.use('/analytics',    analyticsRoute);
 
 app.get('/health', async (req, res) => {
   try {

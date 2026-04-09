@@ -64,5 +64,51 @@
     "description": "NCERT Grade 3 EVS lesson deck for living and non-living things",
     "source": "canva",
     "createdAt": "2026-03-30T12:00:00.000Z"
+  },
+  {
+    "id": "vid_motorskills_grade3",
+    "title": "Fundamental Motor Skills",
+    "topic": "Fundamental Motor Skills",
+    "subject": "Physical Education",
+    "curriculum": "IB PYP",
+    "grade": "Grade 3",
+    "url": "https://res.cloudinary.com/di5iq2mmb/video/upload/v1775473202/aivorah/grade3/physical_ed/aivorah/grade3/physical_ed/motor_skills_locomotor.mp4",
+    "embedUrl": "https://res.cloudinary.com/di5iq2mmb/video/upload/v1775473202/aivorah/grade3/physical_ed/aivorah/grade3/physical_ed/motor_skills_locomotor.mp4",
+    "description": "Learn Locomotor, Non-Locomotor and Manipulative Skills. IB PYP Grade 3 PE.",
+    "source": "cloudinary",
+    "createdAt": "2026-04-06T11:00:03.122Z"
+  },
+  {
+    "id": "vid_nutrition_grade3_pyp",
+    "title": "Nutrition and Healthy Living",
+    "topic": "Nutrition and Healthy Living",
+    "grade": "Grade 3",
+    "url": "http://localhost:3001/data/videos/nutrition_lesson_final.mp4",
+    "embedUrl": "http://localhost:3001/data/videos/nutrition_lesson_final.mp4",
+    "description": "Learn about the five food groups, staying active, and superhero habits! IB PYP Grade 3 PE.",
+    "source": "custom",
+    "createdAt": "2026-04-07T16:00:00.000Z"
+  },
+  {
+    "id": "vid_ict_computer_basics_grade3",
+    "title": "Computer Basics",
+    "topic": "Computer Basics",
+    "grade": "Grade 3",
+    "url": "http://localhost:3001/data/videos/computer_basics_final.mp4",
+    "embedUrl": "http://localhost:3001/data/videos/computer_basics_final.mp4",
+    "description": "Learn about the main parts of a computer, hardware vs software, and how to take care of your digital tools.",
+    "source": "custom",
+    "createdAt": "2026-04-08T11:30:00.000Z"
+  },
+  {
+    "id": "vid_ict_internet_safety_grade3",
+    "title": "Internet Safety",
+    "topic": "Internet Safety",
+    "grade": "Grade 3",
+    "url": "http://localhost:3001/data/videos/internet_safety_final.mp4",
+    "embedUrl": "http://localhost:3001/data/videos/internet_safety_final.mp4",
+    "description": "Learn about staying safe online, keeping passwords secret, and being a kind digital citizen.",
+    "source": "custom",
+    "createdAt": "2026-04-08T13:00:00.000Z"
   }
 ]

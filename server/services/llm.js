@@ -25,18 +25,23 @@ async function generateAnswer({ question, context, grade, subject, topic }) {
     : '';
   const ageGuardrails = getAgeGuardrails(grade);
 
+  const hasContext = context && context.trim().length > 0;
+
   const systemPrompt = `You are a friendly Aivorah AI Coach helping IB PYP ${gradeLabel} students learn ${subjectLabel}.
 ${topicScope}
 ${ageGuardrails}
-Answer questions using ONLY the provided curriculum content below.
+${hasContext
+    ? 'Use the curriculum content below to answer the student\'s question.'
+    : 'Answer from your knowledge as a patient, encouraging tutor. Be accurate and age-appropriate.'}
 Keep your answers:
 - Clear and simple (age-appropriate for ${gradeLabel})
 - Encouraging and positive
 - Focused on understanding, not just facts
-- Concise (3-5 sentences max)
-If you don't have enough context to answer, say so honestly and suggest asking a teacher.`;
+- Concise (3-5 sentences max)`;
 
-  const userPrompt = `Curriculum Content:\n${context}\n\nStudent's Question: ${question}`;
+  const userPrompt = hasContext
+    ? `Curriculum Content:\n${context}\n\nStudent's Question: ${question}`
+    : `Student's Question: ${question}`;
 
   const response = await groq.chat.completions.create({
     model: 'llama-3.1-8b-instant',

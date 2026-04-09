@@ -1,6 +1,8 @@
 const express    = require('express');
 const router     = express.Router();
 const multer     = require('multer');
+const fs         = require('fs');
+const path       = require('path');
 const cloudinary = require('cloudinary').v2;
 const supabase   = require('../services/supabase');
 
@@ -11,6 +13,55 @@ cloudinary.config({
   api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+const PREFS_FILE = path.join(__dirname, '../data/student_preferences.json');
+
+async function readPreferences() {
+  try {
+    const raw = await fs.promises.readFile(PREFS_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (err) {
+    if (err.code === 'ENOENT') return {};
+    throw err;
+  }
+}
+
+async function writePreferences(data) {
+  await fs.promises.mkdir(path.dirname(PREFS_FILE), { recursive: true });
+  await fs.promises.writeFile(PREFS_FILE, JSON.stringify(data, null, 2), 'utf8');
+}
+
+function csvCell(value) {
+  const text = String(value ?? '');
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function toCsv(rows, headers) {
+  const head = headers.map(csvCell).join(',');
+  const body = rows.map((row) => headers.map((h) => csvCell(row[h])).join(',')).join('\n');
+  return `${head}\n${body}`;
+}
+
+function hasAdminExportAccess(req) {
+  const requiredKey = process.env.ADMIN_PANEL_KEY;
+  const providedKey = req.query.key || req.headers['x-admin-key'];
+  if (requiredKey && providedKey !== requiredKey) return false;
+
+  const allowedEmails = new Set(
+    [
+      'admin@aivorah.ai',
+      'preddy6678@gmail.com',
+      process.env.ADMIN_EMAIL || '',
+      ...(process.env.ADMIN_EMAILS || '').split(','),
+    ]
+      .map((email) => String(email).toLowerCase().trim())
+      .filter(Boolean),
+  );
+
+  const providedEmail = String(req.query.email || req.headers['x-admin-email'] || '').toLowerCase().trim();
+  return Boolean(providedEmail && allowedEmails.has(providedEmail));
+}
 
 // ── POST /user/sync ──────────────────────────────────────
 // Called on every login — upserts Firebase user into Supabase users table
@@ -123,6 +174,130 @@ router.post('/upload-photo', async (req, res) => {
     await supabase.from('users').update({ photo_url: photoUrl }).eq('email', userEmail.toLowerCase().trim());
 
     res.json({ photoUrl });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /user/preferences ────────────────────────────────────────────────
+// Stores student preference responses for reporting/export.
+// Body: { email, name?, role?, grade?, curriculum?, school?, location?,
+//         avatarStyle?, learningStyle?, interests?, bio?, photoUrl? }
+router.patch('/preferences', async (req, res) => {
+  try {
+    const {
+      email,
+      name,
+      role,
+      grade,
+      curriculum,
+      school,
+      location,
+      avatarStyle,
+      learningStyle,
+      interests,
+      bio,
+      photoUrl,
+    } = req.body ?? {};
+
+    if (!email) return res.status(400).json({ error: 'email required' });
+
+    const key = String(email).toLowerCase().trim();
+    const all = await readPreferences();
+    const now = new Date().toISOString();
+    const prev = all[key] ?? { email: key, createdAt: now };
+
+    const patch = {};
+    if (name != null) patch.name = String(name);
+    if (role != null) patch.role = String(role);
+    if (grade != null) patch.grade = String(grade);
+    if (curriculum != null) patch.curriculum = String(curriculum);
+    if (school != null) patch.school = String(school);
+    if (location != null) patch.location = String(location);
+    if (avatarStyle != null) patch.avatarStyle = String(avatarStyle);
+    if (learningStyle != null) patch.learningStyle = String(learningStyle);
+    if (bio != null) patch.bio = String(bio);
+    if (photoUrl != null) patch.photoUrl = String(photoUrl);
+    if (interests != null) {
+      patch.interests = Array.isArray(interests)
+        ? interests.map((x) => String(x))
+        : String(interests)
+            .split(',')
+            .map((x) => x.trim())
+            .filter(Boolean);
+    }
+
+    const next = { ...prev, ...patch, email: key, updatedAt: now };
+    all[key] = next;
+    await writePreferences(all);
+
+    res.json({ ok: true, preference: next });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /user/preferences?email=... ────────────────────────────────────────
+router.get('/preferences', async (req, res) => {
+  try {
+    const all = await readPreferences();
+    const email = req.query.email ? String(req.query.email).toLowerCase().trim() : '';
+    if (!email) return res.json(all);
+    res.json(all[email] ?? null);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /user/preferences/export.csv ───────────────────────────────────────
+// Download all captured preference responses for Excel.
+router.get('/preferences/export.csv', async (req, res) => {
+  try {
+    if (!hasAdminExportAccess(req)) {
+      return res.status(403).json({ error: 'Unauthorized admin export access' });
+    }
+    const all = await readPreferences();
+    const rows = Object.values(all)
+      .map((item) => ({
+        email: item.email ?? '',
+        name: item.name ?? '',
+        role: item.role ?? '',
+        grade: item.grade ?? '',
+        curriculum: item.curriculum ?? '',
+        school: item.school ?? '',
+        location: item.location ?? '',
+        avatarStyle: item.avatarStyle ?? '',
+        learningStyle: item.learningStyle ?? '',
+        interests: Array.isArray(item.interests) ? item.interests.join('|') : item.interests ?? '',
+        bio: item.bio ?? '',
+        photoUrl: item.photoUrl ?? '',
+        createdAt: item.createdAt ?? '',
+        updatedAt: item.updatedAt ?? '',
+      }))
+      .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+
+    const headers = [
+      'email',
+      'name',
+      'role',
+      'grade',
+      'curriculum',
+      'school',
+      'location',
+      'avatarStyle',
+      'learningStyle',
+      'interests',
+      'bio',
+      'photoUrl',
+      'createdAt',
+      'updatedAt',
+    ];
+
+    const csv = toCsv(rows, headers);
+    const date = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="student_preferences_${date}.csv"`);
+    res.status(200).send(csv);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
