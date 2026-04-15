@@ -1,14 +1,14 @@
 [
   {
-    "id": "vid_math_addition",
-    "title": "Addition with Ms. Zara",
+    "id": "vid_math_addition_pyp_grade3",
+    "title": "Addition Step-by-Step",
     "topic": "Addition",
     "grade": "Grade 3",
-    "url": "https://www.youtube.com/watch?v=AuX7nPBqDts",
-    "embedUrl": "https://www.youtube.com/embed/AuX7nPBqDts",
-    "description": "Learn addition step by step with fun examples",
-    "source": "youtube",
-    "createdAt": "2026-03-21T07:00:00.000Z"
+    "url": "https://res.cloudinary.com/di5iq2mmb/video/upload/v1776068352/aivorah/videos/addition_final.mp4",
+    "embedUrl": "https://res.cloudinary.com/di5iq2mmb/video/upload/v1776068352/aivorah/videos/addition_final.mp4",
+    "description": "Learn vertical addition with regrouping (carrying) in 3 simple steps.",
+    "source": "custom",
+    "createdAt": "2026-04-09T15:00:00.000Z"
   },
   {
     "id": "vid_math_subtraction",
@@ -55,6 +55,17 @@
     "createdAt": "2026-03-21T07:20:00.000Z"
   },
   {
+    "id": "vid_science_living_nonliving_final",
+    "title": "Living and Non-Living Things",
+    "topic": "Living and Non-Living Things",
+    "grade": "Grade 3",
+    "url": "https://res.cloudinary.com/di5iq2mmb/video/upload/v1775979374/aivorah/videos/living_nonliving_final.mp4",
+    "embedUrl": "https://res.cloudinary.com/di5iq2mmb/video/upload/v1775979374/aivorah/videos/living_nonliving_final.mp4",
+    "description": "NCERT Grade 3 EVS lesson for living and non-living things with high-energy voiceover.",
+    "source": "custom",
+    "createdAt": "2026-04-12T13:00:00.000Z"
+  },
+  {
     "id": "vid_science_living_nonliving_canva",
     "title": "Living and Non-Living Things",
     "topic": "Living and Non-Living Things",
@@ -83,8 +94,8 @@
     "title": "Nutrition and Healthy Living",
     "topic": "Nutrition and Healthy Living",
     "grade": "Grade 3",
-    "url": "http://localhost:3001/data/videos/nutrition_lesson_final.mp4",
-    "embedUrl": "http://localhost:3001/data/videos/nutrition_lesson_final.mp4",
+    "url": "https://res.cloudinary.com/di5iq2mmb/video/upload/v1775880158/aivorah/videos/nutrition_lesson_final.mp4",
+    "embedUrl": "https://res.cloudinary.com/di5iq2mmb/video/upload/v1775880158/aivorah/videos/nutrition_lesson_final.mp4",
     "description": "Learn about the five food groups, staying active, and superhero habits! IB PYP Grade 3 PE.",
     "source": "custom",
     "createdAt": "2026-04-07T16:00:00.000Z"
@@ -94,8 +105,8 @@
     "title": "Computer Basics",
     "topic": "Computer Basics",
     "grade": "Grade 3",
-    "url": "http://localhost:3001/data/videos/computer_basics_final.mp4",
-    "embedUrl": "http://localhost:3001/data/videos/computer_basics_final.mp4",
+    "url": "https://res.cloudinary.com/di5iq2mmb/video/upload/v1775880167/aivorah/videos/computer_basics_final.mp4",
+    "embedUrl": "https://res.cloudinary.com/di5iq2mmb/video/upload/v1775880167/aivorah/videos/computer_basics_final.mp4",
     "description": "Learn about the main parts of a computer, hardware vs software, and how to take care of your digital tools.",
     "source": "custom",
     "createdAt": "2026-04-08T11:30:00.000Z"
@@ -105,8 +116,8 @@
     "title": "Internet Safety",
     "topic": "Internet Safety",
     "grade": "Grade 3",
-    "url": "http://localhost:3001/data/videos/internet_safety_final.mp4",
-    "embedUrl": "http://localhost:3001/data/videos/internet_safety_final.mp4",
+    "url": "https://res.cloudinary.com/di5iq2mmb/video/upload/v1775880175/aivorah/videos/internet_safety_final.mp4",
+    "embedUrl": "https://res.cloudinary.com/di5iq2mmb/video/upload/v1775880175/aivorah/videos/internet_safety_final.mp4",
     "description": "Learn about staying safe online, keeping passwords secret, and being a kind digital citizen.",
     "source": "custom",
     "createdAt": "2026-04-08T13:00:00.000Z"

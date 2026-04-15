@@ -112,19 +112,26 @@ router.post('/sync', async (req, res) => {
 });
 
 // ── PATCH /user/profile ──────────────────────────────────
-// Updates profile fields for a logged-in user (curriculum, grade, school, location)
-// Body: { email, curriculum, grade, school, location }
+// Updates profile fields for a logged-in user — supports all roles
+// Body: { email, name?, curriculum?, grade?, school?, location?,
+//         dob?, gender?, teaches?, children?, phone?, onboardingStep? }
 
 router.patch('/profile', async (req, res) => {
   try {
-    const { email, curriculum, grade, school, location } = req.body;
+    const { email, name, curriculum, grade, school, location,
+            dob, gender, teaches, children, phone,
+            onboardingStep, complete } = req.body;
     if (!email) return res.status(400).json({ error: 'email required' });
 
-    const patch = { onboarding_complete: true };
+    const patch = {};
+    if (complete !== false) patch.onboarding_complete = true;
+    if (name)       patch.name       = name.trim();
     if (curriculum) patch.curriculum = curriculum;
     if (grade)      patch.grade      = grade;
     if (school)     patch.school     = school.trim();
     if (location)   patch.location   = location;
+    // Store onboarding step for resume capability
+    if (onboardingStep != null) patch.onboarding_step = onboardingStep;
 
     const { data, error } = await supabase
       .from('users')
@@ -134,6 +141,98 @@ router.patch('/profile', async (req, res) => {
       .single();
 
     if (error) return res.status(500).json({ error: error.message });
+
+    // Store teacher teaches[] in preferences file (no extra table needed)
+    const key = email.toLowerCase().trim();
+    if (teaches && Array.isArray(teaches)) {
+      const all = await readPreferences();
+      all[key] = { ...(all[key] || {}), email: key, teaches, updatedAt: new Date().toISOString() };
+      await writePreferences(all);
+    }
+
+    // Store parent children[] in preferences file
+    if (children && Array.isArray(children)) {
+      const all = await readPreferences();
+      all[key] = { ...(all[key] || {}), email: key, children, phone: phone || undefined, updatedAt: new Date().toISOString() };
+      await writePreferences(all);
+
+      // Also upsert parent_children rows in Supabase
+      for (const child of children) {
+        if (!child.email) continue;
+        await supabase.from('parent_children').upsert({
+          parent_email: key,
+          child_email:  child.email.toLowerCase().trim(),
+          child_name:   child.name || '',
+          child_grade:  child.grade || '',
+          child_curriculum: child.curriculum || '',
+        }, { onConflict: 'parent_email,child_email', ignoreDuplicates: false }).catch(() => {});
+      }
+    }
+
+    // Store extra fields (dob, gender, phone) in preferences
+    if (dob || gender || phone) {
+      const all = await readPreferences();
+      const prev = all[key] || { email: key };
+      if (dob)    prev.dob    = dob;
+      if (gender) prev.gender = gender;
+      if (phone)  prev.phone  = phone;
+      prev.updatedAt = new Date().toISOString();
+      all[key] = prev;
+      await writePreferences(all);
+    }
+
+    // ── Auto-link teacher ↔ students by curriculum ─────────────
+    // When onboarding completes (or curriculum/grade set), keep teacher_student in sync.
+    try {
+      const userRole = data.role;
+      const userCurriculum = data.curriculum;
+      const userId = data.id;
+
+      if (userId && userCurriculum) {
+        if (userRole === 'student') {
+          // Find all teachers with matching curriculum and link this student to them
+          const { data: teachers } = await supabase
+            .from('users')
+            .select('id')
+            .eq('role', 'teacher')
+            .eq('curriculum', userCurriculum);
+
+          if (teachers && teachers.length > 0) {
+            // Remove any existing wrong-curriculum links for this student
+            const teacherIds = teachers.map(t => t.id);
+            await supabase.from('teacher_student')
+              .delete()
+              .eq('student_id', userId)
+              .not('teacher_id', 'in', `(${teacherIds.join(',')})`);
+
+            // Upsert correct links
+            const rows = teachers.map(t => ({ teacher_id: t.id, student_id: userId, subject: userCurriculum }));
+            await supabase.from('teacher_student').upsert(rows, { onConflict: 'teacher_id,student_id', ignoreDuplicates: true });
+          }
+
+        } else if (userRole === 'teacher') {
+          // Find all students with matching curriculum and link them to this teacher
+          const { data: students } = await supabase
+            .from('users')
+            .select('id')
+            .eq('role', 'student')
+            .eq('curriculum', userCurriculum);
+
+          if (students && students.length > 0) {
+            // Remove any existing wrong-curriculum students linked to this teacher
+            const studentIds = students.map(s => s.id);
+            await supabase.from('teacher_student')
+              .delete()
+              .eq('teacher_id', userId)
+              .not('student_id', 'in', `(${studentIds.join(',')})`);
+
+            // Upsert correct links
+            const rows = students.map(s => ({ teacher_id: userId, student_id: s.id, subject: userCurriculum }));
+            await supabase.from('teacher_student').upsert(rows, { onConflict: 'teacher_id,student_id', ignoreDuplicates: true });
+          }
+        }
+      }
+    } catch (_) { /* non-blocking — don't fail onboarding */ }
 
     res.json({
       id:                 data.id,
@@ -298,6 +397,73 @@ router.get('/preferences/export.csv', async (req, res) => {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="student_preferences_${date}.csv"`);
     res.status(200).send(csv);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /user/repair-teacher-student ───────────────────────
+// Rebuilds teacher_student by curriculum + grade.
+// Teacher teaches[] grades come from preferences file; student grade from users table.
+
+router.post('/repair-teacher-student', async (req, res) => {
+  try {
+    // Fetch all users with grade info
+    const { data: allUsers, error } = await supabase
+      .from('users')
+      .select('id, email, role, curriculum, grade')
+      .in('role', ['teacher', 'student']);
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    const teachers = allUsers.filter(u => u.role === 'teacher');
+    const students = allUsers.filter(u => u.role === 'student' && u.curriculum);
+
+    // Read teacher preferences to get their teaches[] (grade+curriculum combos)
+    const prefsPath = path.join(__dirname, '../data/student_preferences.json');
+    let prefs = {};
+    try { prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf8')); } catch (_) {}
+
+    // Build teacher → [{ grade, curriculum }] map
+    // Fall back to teacher's own grade/curriculum if no teaches[] in prefs
+    function getTeacherGrades(teacher) {
+      const pref = prefs[teacher.email] || {};
+      if (Array.isArray(pref.teaches) && pref.teaches.length > 0) return pref.teaches;
+      if (teacher.curriculum && teacher.grade) return [{ grade: teacher.grade, curriculum: teacher.curriculum }];
+      return [];
+    }
+
+    // Delete all existing links and rebuild
+    await supabase.from('teacher_student').delete().neq('teacher_id', '00000000-0000-0000-0000-000000000000');
+
+    const rows = [];
+    for (const teacher of teachers) {
+      const teacherGrades = getTeacherGrades(teacher);
+      if (teacherGrades.length === 0) continue;
+
+      for (const student of students) {
+        const matches = teacherGrades.some(tg =>
+          tg.curriculum === student.curriculum && tg.grade === student.grade
+        );
+        if (matches) {
+          rows.push({ teacher_id: teacher.id, student_id: student.id, subject: student.curriculum });
+        }
+      }
+    }
+
+    if (rows.length > 0) {
+      const { error: insertErr } = await supabase.from('teacher_student').insert(rows);
+      if (insertErr) return res.status(500).json({ error: insertErr.message });
+    }
+
+    // Return summary for verification
+    const summary = teachers.map(t => ({
+      teacher: t.email,
+      teaches: getTeacherGrades(t),
+      linkedStudents: rows.filter(r => r.teacher_id === t.id).length,
+    }));
+
+    res.json({ fixed: rows.length, summary });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

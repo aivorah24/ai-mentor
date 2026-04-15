@@ -88,7 +88,7 @@
   },
   {
     "id": "asgn_a6da38ab",
-    "title": "practice maths — Due",
+    "title": "Practice Maths — Due",
     "date": "2026-04-26",
     "startTime": "23:59",
     "endTime": "23:59",
@@ -138,7 +138,7 @@
     "studentId": "all",
     "createdBy": "teacher",
     "tag": "Mathematics",
-    "createdAt": "2026-03-26T14:38:51.387Z",
+    "createdAt": "2026-03-26T14:38:51.367Z",
     "assignmentId": "95f5ee74-6e4a-4233-821a-20150ee1d53c"
   },
   {
@@ -169,27 +169,13 @@
     "assignmentId": "44e26a27-6538-40a3-b07f-344db19460d4"
   },
   {
-    "id": "asgn_ac7c6fd0",
-    "title": "Chapter 5 - Quiz â€” Due",
-    "date": "2026-03-30",
-    "startTime": "23:59",
-    "endTime": "23:59",
-    "type": "deadline",
-    "note": "Science Â· Chapter 5 Â· Grade 3",
-    "studentId": "all",
-    "createdBy": "teacher",
-    "tag": "Science",
-    "createdAt": "2026-03-29T11:28:00.514Z",
-    "assignmentId": "ac7c6fd0-4439-4c86-9f07-579ed0a5dcd8"
-  },
-  {
     "id": "asgn_72f0dbcb",
-    "title": "Chapter 5 - Quiz â€” Due",
+    "title": "Chapter 5 - Quiz — Due",
     "date": "2026-03-31",
     "startTime": "23:59",
     "endTime": "23:59",
     "type": "deadline",
-    "note": "Mathematics Â· fraction and decimal Â· Grade 3",
+    "note": "Mathematics · Fraction and Decimal · Grade 3",
     "studentId": "all",
     "createdBy": "teacher",
     "tag": "Mathematics",
@@ -197,27 +183,13 @@
     "assignmentId": "72f0dbcb-4a89-4c6c-9618-181bcc1e1525"
   },
   {
-    "id": "asgn_c3f4ec67",
-    "title": "Chapter 5 â€” Due",
-    "date": "2026-03-31",
-    "startTime": "23:59",
-    "endTime": "23:59",
-    "type": "deadline",
-    "note": "Science Â· Grade 3",
-    "studentId": "all",
-    "createdBy": "teacher",
-    "tag": "Science",
-    "createdAt": "2026-03-29T13:02:42.100Z",
-    "assignmentId": "c3f4ec67-676d-4124-abf3-c08830f6ef16"
-  },
-  {
     "id": "asgn_dfa039b9",
-    "title": "Chapter 10 - Worksheet â€” Due",
+    "title": "Chapter 10 - Worksheet — Due",
     "date": "2026-03-31",
     "startTime": "23:59",
     "endTime": "23:59",
     "type": "deadline",
-    "note": "Science Â· Farming Â· Grade 3",
+    "note": "Science · Farming · Grade 3",
     "studentId": "all",
     "createdBy": "teacher",
     "tag": "Science",
@@ -226,7 +198,7 @@
   },
   {
     "id": "ev_336x8mxemnifw6ix",
-    "title": "Maths revision",
+    "title": "Maths Revision",
     "date": "2026-04-03",
     "startTime": "10:00",
     "endTime": "11:00",
@@ -236,5 +208,19 @@
     "createdBy": "106a2ac6-1e17-4fd7-a82c-7d8ded943100",
     "tag": null,
     "createdAt": "2026-04-03T05:04:50.697Z"
+  },
+  {
+    "id": "asgn_0d3be723",
+    "title": "Maths Chapter 3 - Addition — Due",
+    "date": "2026-04-15",
+    "startTime": "23:59",
+    "endTime": "23:59",
+    "type": "deadline",
+    "note": "Mathematics · Give and Take · Grade 4",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "tag": "Mathematics",
+    "createdAt": "2026-04-12T09:41:20.120Z",
+    "assignmentId": "0d3be723-0cb7-4556-8b86-77861beeb068"
   }
 ]

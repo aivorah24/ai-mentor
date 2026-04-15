@@ -101,6 +101,101 @@ router.post('/feedback', async (req, res) => {
   res.json({ ok: true });
 });
 
+// GET /analytics/child-report?childEmail=
+// Returns per-topic analytics for a child — used by parent dashboard
+router.get('/child-report', async (req, res) => {
+  try {
+    const childEmail = String(req.query.childEmail || '').toLowerCase().trim();
+    if (!childEmail) return res.status(400).json({ error: 'childEmail required' });
+
+    const events = await readEvents();
+    const childEvents = events.filter(e =>
+      String(e.userEmail || '').toLowerCase() === childEmail
+    );
+
+    // Per-topic aggregation
+    const topicMap = {};
+    const scores = [];
+
+    for (const e of childEvents) {
+      const topic = e.topic || '';
+      if (!topic) continue;
+
+      if (!topicMap[topic]) {
+        topicMap[topic] = {
+          subject:      e.subject || '',
+          grade:        e.grade   || '',
+          aiChats:      0,
+          quizScores:   [],
+          minutesSpent: 0,
+          lastActivity: '',
+          sessionCount: 0,
+        };
+      }
+
+      const t = topicMap[topic];
+
+      // Count AI interactions (ask + lesson)
+      if (e.eventType === 'ai_ask' || e.eventType === 'ai_lesson_script' || e.eventType === 'ai_lesson_hook') {
+        t.aiChats++;
+      }
+
+      // Session time estimate: each lesson script ≈ 15 min
+      if (e.eventType === 'ai_lesson_script') {
+        t.minutesSpent += 15;
+        t.sessionCount++;
+      }
+
+      // Quiz scores
+      if ((e.eventType === 'ibpyp_quiz_result' || e.eventType === 'ncert_quiz_result') && typeof e.score === 'number') {
+        t.quizScores.push(e.score);
+        scores.push(e.score);
+      }
+
+      // Track last activity
+      if (e.timestamp && e.timestamp > t.lastActivity) {
+        t.lastActivity = e.timestamp;
+      }
+    }
+
+    // Build final topics map
+    const topics = {};
+    for (const [topic, t] of Object.entries(topicMap)) {
+      const avgScore = t.quizScores.length > 0
+        ? Math.round(t.quizScores.reduce((a, b) => a + b, 0) / t.quizScores.length)
+        : null;
+      topics[topic] = {
+        subject:      t.subject,
+        grade:        t.grade,
+        aiChats:      t.aiChats,
+        avgScore,
+        quizCount:    t.quizScores.length,
+        minutesSpent: t.minutesSpent,
+        lastActivity: t.lastActivity,
+        hasActivity:  t.aiChats > 0 || t.quizScores.length > 0,
+      };
+    }
+
+    // Global stats
+    const totalMinutes = Object.values(topicMap).reduce((s, t) => s + t.minutesSpent, 0);
+    const totalAIChats = Object.values(topicMap).reduce((s, t) => s + t.aiChats, 0);
+    const avgScore = scores.length > 0
+      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+      : null;
+
+    res.json({
+      childEmail,
+      totalMinutes,
+      totalAIChats,
+      avgScore,
+      topicCount: Object.keys(topics).length,
+      topics,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /analytics/summary (admin)
 router.get('/summary', requireAdminAccess, async (_req, res) => {
   try {

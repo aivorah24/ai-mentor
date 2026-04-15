@@ -38,7 +38,7 @@ router.get('/:parentEmail/children', async (req, res) => {
         name:             user.name    || 'Student',
         email:            user.email   || '',
         grade:            user.grade      || 'Grade 3',
-        curriculum:       user.curriculum || 'NCERT',
+        curriculum:       user.curriculum || 'IB PYP',
         school:           user.school     || '',
         xpPoints:         s.xp_points         ?? 0,
         level:            s.level             ?? 1,

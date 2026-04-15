@@ -202,7 +202,7 @@ router.get('/leaderboard', async (req, res) => {
     const userMap = {};
     (users ?? []).forEach(u => { userMap[u.id] = u; });
 
-    const ranked = studentIds
+    const allRanked = studentIds
       .map(id => ({
         id,
         name:     userMap[id]?.name  || 'Student',
@@ -211,11 +211,14 @@ router.get('/leaderboard', async (req, res) => {
         avgScore: countMap[id] > 0 ? Math.round(scoreMap[id] / countMap[id]) : 0,
         count:    countMap[id],
       }))
-      .sort((a, b) => b.xp - a.xp)
-      .slice(0, limit)
-      .map((s, i) => ({ ...s, rank: i + 1 }));
+      .sort((a, b) => b.xp - a.xp);
 
-    res.json(ranked);
+    const totalStudents = allRanked.length;
+    const ranked = allRanked
+      .slice(0, limit)
+      .map((s, i) => ({ ...s, rank: i + 1, totalStudents }));
+
+    res.json({ leaderboard: ranked, totalStudents });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
