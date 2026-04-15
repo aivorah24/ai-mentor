@@ -27,6 +27,9 @@ const devlogRoute      = require('./routes/devlog');
 const dailyTidbitRoute = require('./routes/daily-tidbit');
 const adminRoute       = require('./routes/admin');
 const analyticsRoute   = require('./routes/analytics');
+const ibpypRoute       = require('./routes/ibpyp');
+const worldRoute       = require('./routes/world');
+const helpRoute        = require('./routes/help');
 
 // Heavy routes — lazy-loaded on first request to avoid startup crashes
 // (ingest uses pdf-parse/@napi-rs/canvas; ask/curriculum use @xenova/transformers)
@@ -44,6 +47,8 @@ app.use('/data/images', express.static(path.join(__dirname, 'data/images')));
 app.use('/data/videos', express.static(path.join(__dirname, 'data/videos')));
 // Serve cached TTS audio files
 app.use('/data/audio', express.static(path.join(__dirname, 'data/audio')));
+// Serve message attachments
+app.use('/data/uploads', express.static(path.join(__dirname, 'data/uploads')));
 
 app.use('/ask',        lazyRoute('./routes/ask'));
 app.use('/ingest',     lazyRoute('./routes/ingest'));
@@ -63,6 +68,9 @@ app.use('/devlog',       devlogRoute);
 app.use('/daily-tidbit', dailyTidbitRoute);
 app.use('/admin',        adminRoute);
 app.use('/analytics',    analyticsRoute);
+app.use('/ibpyp',        ibpypRoute);
+app.use('/world',        worldRoute);
+app.use('/help',         helpRoute);
 
 app.get('/health', async (req, res) => {
   try {

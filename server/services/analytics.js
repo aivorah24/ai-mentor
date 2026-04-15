@@ -103,6 +103,22 @@ function summarizeEvents(events) {
     negative: feedbackEvents.filter((e) => e.score != null && e.score <= 2).length,
   };
 
+  // Recent feedback with comments (last 20, sorted newest first)
+  const recentFeedback = feedbackEvents
+    .slice()
+    .sort((a, b) => String(b.timestamp || '').localeCompare(String(a.timestamp || '')))
+    .slice(0, 20)
+    .map(e => ({
+      userEmail:  e.userEmail || '',
+      role:       e.role || '',
+      source:     e.source || '',
+      topic:      e.topic || '',
+      subject:    e.subject || '',
+      score:      e.score ?? null,
+      comment:    e.comment || '',
+      timestamp:  e.timestamp || '',
+    }));
+
   return {
     totalEvents: events.length,
     accessCount: accessEvents.length,
@@ -110,6 +126,7 @@ function summarizeEvents(events) {
     usersLastSeen: Object.values(usersMap).sort((a, b) => String(b.lastSeen).localeCompare(String(a.lastSeen))),
     aiMetrics,
     feedback: feedbackBreakdown,
+    recentFeedback,
   };
 }
 

@@ -1,0 +1,101 @@
+{
+  "sai@clamshelllearning.com": {
+    "email": "sai@clamshelllearning.com",
+    "createdAt": "2026-04-11T08:44:02.543Z",
+    "name": "Saimohan",
+    "role": "student",
+    "grade": "Grade 4",
+    "curriculum": "IB PYP",
+    "school": "Hyderabad International School ",
+    "location": "Hyderabad",
+    "avatarStyle": "casual",
+    "learningStyle": "hands-on",
+    "updatedAt": "2026-04-11T08:44:02.551Z"
+  },
+  "anjali@test.ai": {
+    "email": "anjali@test.ai",
+    "name": "Ms. Anjali Kumar",
+    "role": "teacher",
+    "teaches": [
+      {
+        "grade": "Grade 4",
+        "curriculum": "IB PYP"
+      },
+      {
+        "grade": "Grade 5",
+        "curriculum": "IB PYP"
+      }
+    ],
+    "updatedAt": "2026-04-12T00:00:00.000Z"
+  },
+  "priya.k@test.ai": {
+    "email": "priya.k@test.ai",
+    "name": "Priya Kapoor",
+    "role": "teacher",
+    "teaches": [
+      {
+        "grade": "Grade 3",
+        "curriculum": "IB PYP"
+      }
+    ],
+    "children": [
+      {
+        "name": "Aanya Kapoor",
+        "grade": "Grade 3",
+        "curriculum": "IB PYP",
+        "email": "aanya@test.ai"
+      }
+    ],
+    "updatedAt": "2026-04-12T00:00:00.000Z"
+  },
+  "vikram@test.ai": {
+    "email": "vikram@test.ai",
+    "name": "Vikram Sharma",
+    "role": "teacher",
+    "teaches": [
+      {
+        "grade": "Grade 3",
+        "curriculum": "IB PYP"
+      },
+      {
+        "grade": "Grade 4",
+        "curriculum": "IB PYP"
+      }
+    ],
+    "children": [
+      {
+        "name": "Diya Sharma",
+        "grade": "Grade 3",
+        "curriculum": "IB PYP",
+        "email": "diya@test.ai"
+      }
+    ],
+    "updatedAt": "2026-04-12T00:00:00.000Z"
+  },
+  "jane@gmail.com": {
+    "email": "jane@gmail.com",
+    "createdAt": "2026-04-13T12:30:18.942Z",
+    "name": "jane",
+    "role": "student",
+    "grade": "Grade 3",
+    "curriculum": "IB PYP",
+    "school": "Hyderabad International School",
+    "location": "Hyderabad",
+    "avatarStyle": "default",
+    "learningStyle": "visual",
+    "updatedAt": "2026-04-13T12:30:18.950Z"
+  },
+  "samplegenai189@gmail.com": {
+    "email": "samplegenai189@gmail.com",
+    "createdAt": "2026-04-15T04:45:34.025Z",
+    "name": "samplegenai189",
+    "role": "student",
+    "grade": "Grade 3",
+    "curriculum": "IB PYP",
+    "school": "HIS",
+    "location": "Hyderabad",
+    "avatarStyle": "casual",
+    "learningStyle": "visual",
+    "updatedAt": "2026-04-15T04:45:34.034Z"
+  }
+}

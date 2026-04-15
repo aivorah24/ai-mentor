@@ -99,6 +99,28 @@ router.get('/leaderboard', async (req, res) => {
   }
 });
 
+// ── GET /student/by-curriculum?curriculum=IB PYP ────────────
+// Must be before /:id to avoid being caught by the parameterized route
+
+router.get('/by-curriculum', async (req, res) => {
+  try {
+    const { curriculum } = req.query;
+    let query = supabase
+      .from('users')
+      .select('id, name, email, grade, curriculum, photo_url')
+      .eq('role', 'student');
+    if (curriculum) query = query.eq('curriculum', curriculum);
+    const { data, error } = await query.order('name');
+    if (error) return res.status(500).json({ error: error.message });
+    res.json((data || []).map(u => ({
+      id: u.id, name: u.name, email: u.email,
+      grade: u.grade, curriculum: u.curriculum, photoUrl: u.photo_url ?? null,
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── GET /student/:id ────────────────────────────────────────
 
 router.get('/:id', async (req, res) => {
@@ -312,6 +334,9 @@ async function resolveTeacherId(id) {
   return data?.id || id;
 }
 
+// ── GET /student/by-curriculum?curriculum=IB PYP ────────────
+// Returns all students with a given curriculum (for teacher student picker fallback)
+
 // ── GET /student/by-teacher/:teacherId ─────────────────────
 // Returns all students linked to a teacher with their stats
 
@@ -322,7 +347,7 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
 
     const { data: links, error } = await supabase
       .from('teacher_student')
-      .select('student_id, subject, users!teacher_student_student_id_fkey(id, name, email, grade, school, photo_url)')
+      .select('student_id, subject, users!teacher_student_student_id_fkey(id, name, email, grade, school, curriculum, photo_url)')
       .eq('teacher_id', teacherId ?? rawId);
 
     if (error) return res.status(500).json({ error: error.message });
@@ -351,6 +376,7 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
         email:          user.email,
         grade:          user.grade,
         school:         user.school,
+        curriculum:     user.curriculum ?? null,
         subject:        link.subject,
         xpPoints:       s.xp_points        ?? 0,
         level:          s.level            ?? 1,

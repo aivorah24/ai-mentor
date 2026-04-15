@@ -11,7 +11,9 @@ const { client, COLLECTION } = require('../services/qdrant');
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // ── Chapter type map — what skill does each unit develop? ──────────────────
+// Covers both NCERT and IB PYP unit names.
 const UNIT_SKILL = {
+  // NCERT units
   'Numbers':                   'recognizing and reading numbers in real-life situations (clocks, bus numbers, door numbers, prices, calendars, page numbers)',
   'Addition & Subtraction':    'adding and subtracting using real objects (apples, coins, students in class)',
   'Measurement':               'measuring and comparing lengths and heights using hand spans, feet, rulers',
@@ -24,6 +26,26 @@ const UNIT_SKILL = {
   'Division & Fractions':      'sharing equally and understanding halves and quarters',
   'Data Handling':             'reading and making tally marks and picture charts',
   'Money':                     'recognizing rupees and paise, adding prices, giving change',
+  // IB PYP Maths strands
+  'Number':                    'working with whole numbers, place value, addition, subtraction, multiplication and division',
+  'Shape and Space':           'identifying 2D and 3D shapes, symmetry, perimeter and spatial reasoning',
+  'Patterns and Algebra':      'recognising patterns, skip counting, sequences and simple rules',
+  // IB PYP Science / Sharing the Planet / How the World Works
+  'Sharing the Planet':        'how living things depend on each other — life cycles, habitats, food chains',
+  'How the World Works':       'physical world concepts like states of matter, light, sound, magnets, weather and the water cycle',
+  // IB PYP English
+  'Reading':                   'reading comprehension, decoding and understanding texts',
+  'Writing':                   'writing clear sentences, stories and informational texts',
+  'Grammar':                   'basic grammar — nouns, verbs, adjectives, punctuation',
+  'Word Study':                'vocabulary building and word structure',
+  // IB PYP Social Studies
+  'Where We Are in Place and Time': 'geography, maps, directions, history and communities',
+  'Who We Are':                'identity, families, cultures and communities',
+  // Arts / PE / ICT (generic)
+  'Visual Arts':               'exploring colour, line, shape and creative expression',
+  'Performing Arts':           'rhythm, movement and performance',
+  'Movement':                  'basic physical skills, coordination and team play',
+  'Digital Citizenship':       'safe and responsible use of technology',
 };
 
 // ── Helper: fetch chapter text content from Qdrant ─────────────────────────
@@ -56,19 +78,23 @@ async function getChapterContext(topic, maxChars = 2500) {
 // Generates a chapter-appropriate activity/problem — NOT generic arithmetic
 router.post('/math-helper', async (req, res) => {
   try {
-    const { topic, unit, problem, previousProblems = [] } = req.body;
+    const { topic, unit, subject = 'Mathematics', grade = 'Grade 3', curriculum = 'IB PYP', problem, previousProblems = [] } = req.body;
     if (!topic) return res.status(400).json({ error: 'topic is required' });
 
-    const context  = await getChapterContext(topic);
-    const skill    = UNIT_SKILL[unit] || `understanding ${topic}`;
+    // Only fetch textbook context for NCERT topics — IB PYP has no ingested chunks yet
+    const context = curriculum === 'NCERT' ? await getChapterContext(topic) : '';
+    const skill   = UNIT_SKILL[unit] || `understanding ${topic}`;
+    const gradeNum = (grade.match(/\d+/) || ['3'])[0];
+    const ageMap  = { '3': '8-9', '4': '9-10', '5': '10-11' };
+    const age     = ageMap[gradeNum] || '8-9';
 
-    const prompt = `You are Ms. Zara, a warm Grade 3 Maths teacher who ALWAYS shows step-by-step working.
+    const prompt = `You are Ms. Zara, a warm ${grade} ${subject} teacher for the ${curriculum} curriculum. You ALWAYS show step-by-step working.
 
-Chapter: "${topic}"
-This chapter is about: ${skill}
+Topic: "${topic}" (Unit: ${unit || 'General'})
+This topic develops: ${skill}
+Student age: ${age}
 
-Chapter content from textbook:
-${context}
+${context ? `Chapter content from textbook:\n${context}\n` : ''}
 
 ${problem
   ? `The student asks: "${problem}". Solve it step by step — show every single step clearly.`
@@ -477,15 +503,12 @@ Return ONLY valid JSON:
 // Generates a drawing activity prompt for visual math or science concepts
 router.post('/drawing-buddy', async (req, res) => {
   try {
-    const { topic, unit, subject, improveNote, usedTargets = [] } = req.body;
+    const { topic, unit, subject = 'Science', grade = 'Grade 3', curriculum = 'IB PYP', improveNote, usedTargets = [] } = req.body;
     if (!topic) return res.status(400).json({ error: 'topic is required' });
 
-    const context    = await getChapterContext(topic);
-    const isScience  = subject === 'Science';
+    const context    = curriculum === 'NCERT' ? await getChapterContext(topic) : '';
     const skill      = UNIT_SKILL[unit] || topic;
-    const subjectCtx = isScience
-      ? `Grade 3 Science (NCERT Our Wondrous World) chapter: "${topic}"`
-      : `Grade 3 Maths (NCERT Maths Mela) chapter: "${topic}", which teaches: ${skill}`;
+    const subjectCtx = `${grade} ${subject} (${curriculum}) topic: "${topic}" — which develops: ${skill}`;
 
     const improveLine = improveNote
       ? `\nIMPROVEMENT FOCUS: Student got feedback: "${improveNote}". Design this task to address that.`
@@ -502,10 +525,8 @@ router.post('/drawing-buddy', async (req, res) => {
 
 ${subjectCtx}
 
-Chapter content:
-${context}
-
-Create ONE very simple drawing task from this chapter.${improveLine}${avoidLine}
+${context ? `Chapter content:\n${context}\n` : ''}
+Create ONE very simple drawing task directly related to "${topic}".${improveLine}${avoidLine}
 
 RULES:
 - Pick ONE specific object actually mentioned in the chapter content — vary your choice each time

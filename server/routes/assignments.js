@@ -25,6 +25,44 @@ function writeSchedule(data) {
 
 // â”€â”€ GET /assignments?studentId=xxx â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+// GET /assignments/new-count?studentId=xxx&since=ISO_DATE
+// Returns count of assignments created after `since` for a student.
+router.get('/new-count', async (req, res) => {
+  const { studentId, since } = req.query;
+  if (!studentId) return res.status(400).json({ error: 'studentId required' });
+
+  const userId = await resolveUserId(studentId);
+
+  // Fetch student curriculum for filtering class-wide assignments
+  let studentCurriculum = null;
+  if (userId) {
+    const { data: uData } = await supabase.from('users').select('curriculum').eq('id', userId).single();
+    studentCurriculum = uData?.curriculum || null;
+  }
+
+  const orClause = userId
+    ? `student_id.eq.${userId},student_id.is.null`
+    : `student_id.is.null`;
+
+  let query = supabase
+    .from('assignments')
+    .select('*')
+    .or(orClause);
+
+  if (since) query = query.gt('created_at', since);
+
+  const { data: rawData, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+
+  const filtered = (rawData || []).filter(a => {
+    if (a.student_id !== null) return true;
+    if (!a.curriculum || !studentCurriculum) return true;
+    return a.curriculum === studentCurriculum;
+  });
+
+  res.json({ count: filtered.length });
+});
+
 router.get('/', async (req, res) => {
   const { studentId, teacherId } = req.query;
 
@@ -45,14 +83,32 @@ router.get('/', async (req, res) => {
   if (!studentId) return res.status(400).json({ error: 'studentId or teacherId required' });
 
   const userId = await resolveUserId(studentId);
-  const { data, error } = await supabase
+
+  // Fetch student's curriculum so class-wide assignments are filtered correctly
+  let studentCurriculum = null;
+  if (userId) {
+    const { data: uData } = await supabase.from('users').select('curriculum').eq('id', userId).single();
+    studentCurriculum = uData?.curriculum || null;
+  }
+
+  // Fetch all assignments for this student (personal) OR class-wide (student_id is null)
+  const { data: allData, error } = await supabase
     .from('assignments')
     .select('*')
     .or(`student_id.eq.${userId},student_id.is.null`)
     .order('due_date', { ascending: true });
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json((data || []).map(normalise));
+
+  // For class-wide assignments (student_id is null), only include if curriculum matches
+  // (or if the assignment has no curriculum set — legacy/catch-all)
+  const filtered = (allData || []).filter(a => {
+    if (a.student_id !== null) return true; // personally assigned — always include
+    if (!a.curriculum || !studentCurriculum) return true; // no curriculum filter set — include
+    return a.curriculum === studentCurriculum; // must match student's curriculum
+  });
+
+  res.json(filtered.map(normalise));
 });
 
 // â”€â”€ POST /assignments/generate-quiz â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -308,6 +364,72 @@ router.post('/', async (req, res) => {
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
+
+  // Auto-send message notification to student(s) + parent(s) when assignment is created
+  try {
+    const teacherRes = creatorId
+      ? await supabase.from('users').select('email, name').eq('id', creatorId).single()
+      : { data: null };
+    const teacherEmail = teacherRes.data?.email || 'teacher@aivorah.com';
+    const teacherName  = teacherRes.data?.name  || 'Your Teacher';
+    const dueStr = dueDate ? new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+    const msgContent = `New ${type === 'quiz' ? 'Quiz' : 'Assignment'} assigned: "${title}"${subject ? ` (${subject})` : ''}${dueStr ? `. Due: ${dueStr}` : ''}.`;
+
+    // Determine which students to notify
+    let studentIds = [];
+    if (userId) {
+      studentIds = [userId];
+    } else if (curriculum) {
+      // All students class-wide — find students with matching curriculum
+      const { data: classStudents } = await supabase
+        .from('users')
+        .select('id')
+        .eq('role', 'student')
+        .eq('curriculum', curriculum);
+      studentIds = (classStudents || []).map(s => s.id);
+    }
+
+    if (studentIds.length > 0) {
+      // Fetch student details
+      const { data: studentRecords } = await supabase
+        .from('users')
+        .select('id, email, name')
+        .in('id', studentIds);
+
+      const studentMsgs = (studentRecords || []).map(s => ({
+        sender_email:    teacherEmail.toLowerCase().trim(),
+        sender_name:     teacherName,
+        sender_role:     'teacher',
+        recipient_email: s.email.toLowerCase().trim(),
+        recipient_name:  s.name || s.email,
+        content:         msgContent,
+        student_id:      s.id,
+      }));
+      if (studentMsgs.length > 0) await supabase.from('messages').insert(studentMsgs);
+
+      // Notify parents of all affected students
+      const { data: parentLinks } = await supabase
+        .from('parent_children')
+        .select('parent_email, child_id')
+        .in('child_id', studentIds);
+
+      if (Array.isArray(parentLinks) && parentLinks.length > 0) {
+        const studentMap = {};
+        (studentRecords || []).forEach(s => { studentMap[s.id] = s.name || s.email; });
+
+        const parentMsgs = parentLinks.map(link => ({
+          sender_email:    teacherEmail.toLowerCase().trim(),
+          sender_name:     teacherName,
+          sender_role:     'teacher',
+          recipient_email: link.parent_email.toLowerCase().trim(),
+          recipient_name:  link.parent_email,
+          content:         `[${studentMap[link.child_id] || 'Your child'}] ${msgContent}`,
+          student_id:      link.child_id,
+        }));
+        await supabase.from('messages').insert(parentMsgs);
+      }
+    }
+  } catch (_) { /* non-blocking */ }
 
   // Auto-add deadline to schedule.json so it appears in all calendars
   try {
