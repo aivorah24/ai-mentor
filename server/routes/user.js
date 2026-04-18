@@ -181,12 +181,24 @@ router.patch('/profile', async (req, res) => {
     // Store onboarding step for resume capability
     if (onboardingStep != null) patch.onboarding_step = onboardingStep;
 
-    const { data, error } = await supabase
+    const emailLc = email.toLowerCase().trim();
+
+    // First try update; if no row matched (new signup flow), upsert instead
+    let { data, error } = await supabase
       .from('users')
       .update(patch)
-      .eq('email', email.toLowerCase().trim())
+      .eq('email', emailLc)
       .select('id, name, email, role, grade, school, curriculum, location, onboarding_complete')
       .single();
+
+    if (error && error.code === 'PGRST116') {
+      // PGRST116 = no rows returned — user row doesn't exist yet, upsert it
+      ({ data, error } = await supabase
+        .from('users')
+        .upsert({ email: emailLc, ...patch }, { onConflict: 'email' })
+        .select('id, name, email, role, grade, school, curriculum, location, onboarding_complete')
+        .single());
+    }
 
     if (error) return res.status(500).json({ error: error.message });
 
@@ -200,11 +212,10 @@ router.patch('/profile', async (req, res) => {
       await setPreferences(email, { children, ...(phone ? { phone } : {}), updatedAt: new Date().toISOString() });
 
       // Also upsert parent_children rows in Supabase
-      const emailLower = email.toLowerCase().trim();
       for (const child of children) {
         if (!child.email) continue;
         await supabase.from('parent_children').upsert({
-          parent_email: emailLower,
+          parent_email: emailLc,
           child_email:  child.email.toLowerCase().trim(),
           child_name:   child.name || '',
           child_grade:  child.grade || '',
