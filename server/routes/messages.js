@@ -8,7 +8,7 @@ const crypto   = require('crypto');
 // ── File upload config ──────────────────────────────────
 const UPLOADS_DIR = path.join(__dirname, '..', 'data', 'uploads');
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const ALLOWED_TYPES = /pdf|png|jpg|jpeg|gif|doc|docx|xls|xlsx|ppt|pptx|txt|csv/;
+const ALLOWED_TYPES = /^(pdf|png|jpg|jpeg|gif|webp)$/; // images and PDFs only (issue #45)
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
@@ -24,8 +24,11 @@ const upload = multer({
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
-    if (ALLOWED_TYPES.test(ext)) return cb(null, true);
-    cb(new Error('File type not allowed'));
+    const mime = file.mimetype || '';
+    const validExt  = ALLOWED_TYPES.test(ext);
+    const validMime = /^(image\/(jpeg|png|gif|webp)|application\/pdf)$/.test(mime);
+    if (validExt && validMime) return cb(null, true);
+    cb(new Error('Only images (JPG, PNG, GIF, WebP) and PDFs are allowed'));
   },
 });
 
@@ -383,11 +386,14 @@ router.get('/contacts', async (req, res) => {
   }
 });
 
-// ── GET /messages/conversations?userEmail= ───────────────
-// Returns all unique conversation threads for a user
+// ── GET /messages/conversations?userEmail=&role= ─────────
+// Returns unique conversation threads for a user, filtered by their active role.
+// role=teacher → show conversations with parents only
+// role=parent  → show conversations with teachers only
 router.get('/conversations', async (req, res) => {
   try {
-    const userEmail = (req.query.userEmail || '').trim().toLowerCase();
+    const userEmail  = (req.query.userEmail || '').trim().toLowerCase();
+    const activeRole = (req.query.role      || '').trim().toLowerCase(); // 'teacher' | 'parent' | ''
     if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
 
     // Get all messages where user is sender or recipient
@@ -399,17 +405,39 @@ router.get('/conversations', async (req, res) => {
 
     if (error) return res.status(500).json({ error: error.message });
 
+    // Collect unique other-party emails for role lookup
+    const otherEmails = [...new Set(
+      (data ?? []).map(msg =>
+        msg.sender_email === userEmail ? msg.recipient_email : msg.sender_email
+      ).filter(e => e && e !== userEmail)
+    )];
+
+    // Batch-lookup roles from users table
+    const roleMap = {};
+    if (otherEmails.length > 0) {
+      const { data: users } = await supabase
+        .from('users')
+        .select('email, role')
+        .in('email', otherEmails);
+      (users ?? []).forEach(u => { roleMap[u.email] = u.role; });
+    }
+
     // Group into threads — keyed by the other person's email
     const threadMap = {};
     (data ?? []).forEach(msg => {
       const otherEmail = msg.sender_email === userEmail ? msg.recipient_email : msg.sender_email;
       const otherName  = msg.sender_email === userEmail ? msg.recipient_name  : msg.sender_name;
-      const otherRole  = msg.sender_email === userEmail ? msg.recipient_role  : msg.sender_role;
+      // Use DB role lookup as source of truth; fall back to sender_role for incoming messages
+      const otherRole  = roleMap[otherEmail] || (msg.sender_email !== userEmail ? msg.sender_role : null) || 'parent';
+
+      // Filter by active role: teacher sees parents, parent sees teachers
+      if (activeRole === 'teacher' && otherRole !== 'parent') return;
+      if (activeRole === 'parent'  && otherRole !== 'teacher') return;
 
       if (!threadMap[otherEmail]) {
         threadMap[otherEmail] = {
           otherEmail,
-          otherName,
+          otherName:  otherName || otherEmail,
           otherRole,
           lastMessage: msg.content,
           lastMessageAt: msg.created_at,

@@ -1,6 +1,5 @@
 {
-  "sai@clamshelllearning.com": {
-    "email": "sai@clamshelllearning.com",
+  "0f661e3190a9b850d657d53bddf9fb39bc7b7a0531f32a5df6218e010b9596d2": {
     "createdAt": "2026-04-11T08:44:02.543Z",
     "name": "Saimohan",
     "role": "student",
@@ -10,10 +9,10 @@
     "location": "Hyderabad",
     "avatarStyle": "casual",
     "learningStyle": "hands-on",
-    "updatedAt": "2026-04-11T08:44:02.551Z"
+    "updatedAt": "2026-04-11T08:44:02.551Z",
+    "emailHash": "0f661e3190a9b850d657d53bddf9fb39bc7b7a0531f32a5df6218e010b9596d2"
   },
-  "anjali@test.ai": {
-    "email": "anjali@test.ai",
+  "b22850b6d78d0cf60801eba05689a4509678ca1a364691f233530730889a4e10": {
     "name": "Ms. Anjali Kumar",
     "role": "teacher",
     "teaches": [
@@ -26,10 +25,10 @@
         "curriculum": "IB PYP"
       }
     ],
-    "updatedAt": "2026-04-12T00:00:00.000Z"
+    "updatedAt": "2026-04-12T00:00:00.000Z",
+    "emailHash": "b22850b6d78d0cf60801eba05689a4509678ca1a364691f233530730889a4e10"
   },
-  "priya.k@test.ai": {
-    "email": "priya.k@test.ai",
+  "cd2274ee54bad0fa17c2705a39b1fe92d62ecc90b1f6843e55f28925de16fa0a": {
     "name": "Priya Kapoor",
     "role": "teacher",
     "teaches": [
@@ -46,10 +45,10 @@
         "email": "aanya@test.ai"
       }
     ],
-    "updatedAt": "2026-04-12T00:00:00.000Z"
+    "updatedAt": "2026-04-12T00:00:00.000Z",
+    "emailHash": "cd2274ee54bad0fa17c2705a39b1fe92d62ecc90b1f6843e55f28925de16fa0a"
   },
-  "vikram@test.ai": {
-    "email": "vikram@test.ai",
+  "8841886ba4c71228b67c50014e71c860e0ed8b3c3c1b3bffe836a2351ec53d85": {
     "name": "Vikram Sharma",
     "role": "teacher",
     "teaches": [
@@ -70,10 +69,10 @@
         "email": "diya@test.ai"
       }
     ],
-    "updatedAt": "2026-04-12T00:00:00.000Z"
+    "updatedAt": "2026-04-12T00:00:00.000Z",
+    "emailHash": "8841886ba4c71228b67c50014e71c860e0ed8b3c3c1b3bffe836a2351ec53d85"
   },
-  "jane@gmail.com": {
-    "email": "jane@gmail.com",
+  "988b074286b20c503e3015c2076533f3bf4ce5ca6f8a507ab52c2e0f98d620b7": {
     "createdAt": "2026-04-13T12:30:18.942Z",
     "name": "jane",
     "role": "student",
@@ -83,19 +82,117 @@
     "location": "Hyderabad",
     "avatarStyle": "default",
     "learningStyle": "visual",
-    "updatedAt": "2026-04-13T12:30:18.950Z"
+    "updatedAt": "2026-04-13T12:30:18.950Z",
+    "emailHash": "988b074286b20c503e3015c2076533f3bf4ce5ca6f8a507ab52c2e0f98d620b7"
   },
-  "samplegenai189@gmail.com": {
-    "email": "samplegenai189@gmail.com",
+  "f5964265e5931da00bcd461c7e0df565a16d1dc89d946de611ac8a05538c7936": {
     "createdAt": "2026-04-15T04:45:34.025Z",
-    "name": "samplegenai189",
+    "name": "Sai mohan",
+    "role": "parent",
+    "grade": "Grade 3",
+    "curriculum": "IB PYP",
+    "school": "",
+    "location": "Salem",
+    "avatarStyle": "default",
+    "learningStyle": "visual",
+    "updatedAt": "2026-04-15T07:31:24.219Z",
+    "children": [
+      {
+        "name": "Sai",
+        "grade": "Grade 3",
+        "school": "Hyderabad International School",
+        "curriculum": "IB PYP",
+        "email": "student@example.com"
+      }
+    ],
+    "emailHash": "f5964265e5931da00bcd461c7e0df565a16d1dc89d946de611ac8a05538c7936"
+  },
+  "4a780cbb4a2ce0a8fcdfdbcf6fe8469daf4aacae8ac552e52bb670ed95287426": {
+    "createdAt": "2026-04-15T05:54:52.326Z",
+    "name": "sam",
+    "role": "student",
+    "grade": "Grade 3",
+    "curriculum": "IB PYP",
+    "school": "Hyderabad International School",
+    "location": "Hyderabad",
+    "avatarStyle": "default",
+    "learningStyle": "visual",
+    "updatedAt": "2026-04-15T05:55:45.086Z",
+    "emailHash": "4a780cbb4a2ce0a8fcdfdbcf6fe8469daf4aacae8ac552e52bb670ed95287426"
+  },
+  "d0c3024b8ebb1f8490a6ab1011eed350fdd0650606494a8db2994e052397c585": {
+    "createdAt": "2026-04-15T06:57:40.610Z",
+    "name": "Sai",
+    "role": "student",
+    "grade": "Grade 3",
+    "curriculum": "IB PYP",
+    "school": "Hyderabad Intrenational School",
+    "location": "Hyderabad",
+    "avatarStyle": "default",
+    "learningStyle": "visual",
+    "updatedAt": "2026-04-15T07:26:41.230Z",
+    "emailHash": "d0c3024b8ebb1f8490a6ab1011eed350fdd0650606494a8db2994e052397c585"
+  },
+  "4b270bbdac116791365d30cd73791a1b1228c3b6f210aa306b99ad8f5b36351e": {
+    "createdAt": "2026-04-15T07:34:10.405Z",
+    "name": "aivorah",
+    "role": "teacher",
+    "grade": "Grade 3",
+    "curriculum": "IB PYP",
+    "school": "Hyderabad International School",
+    "location": "Hyderabad",
+    "avatarStyle": "default",
+    "learningStyle": "visual",
+    "updatedAt": "2026-04-15T07:43:19.720Z",
+    "teaches": [
+      {
+        "grade": "Grade 3",
+        "curriculum": "IB PYP",
+        "subjects": [
+          "Mathematics"
+        ]
+      },
+      {
+        "grade": "Grade 4",
+        "curriculum": "IB PYP",
+        "subjects": [
+          "Mathematics"
+        ]
+      },
+      {
+        "grade": "Grade 5",
+        "curriculum": "IB PYP",
+        "subjects": [
+          "Mathematics"
+        ]
+      }
+    ],
+    "emailHash": "4b270bbdac116791365d30cd73791a1b1228c3b6f210aa306b99ad8f5b36351e"
+  },
+  "f717ff68bef881f9b5453cd66782ace287bdae024a2520362c15b25e1e9c8c31": {
+    "createdAt": "2026-04-15T07:49:25.640Z",
+    "name": "Sai brintha T",
+    "role": "student",
+    "grade": "Grade 3",
+    "curriculum": "IB PYP",
+    "school": "Vethathiri Maharish ",
+    "location": "Salem",
+    "avatarStyle": "default",
+    "learningStyle": "visual",
+    "updatedAt": "2026-04-15T07:49:25.647Z",
+    "emailHash": "f717ff68bef881f9b5453cd66782ace287bdae024a2520362c15b25e1e9c8c31"
+  },
+  "ff41265e7f145f092358fb18025b8d58a1371a177803127e358ebec0b2e3594c": {
+    "createdAt": "2026-04-17T03:48:26.992Z",
+    "name": "Saimohan",
     "role": "student",
     "grade": "Grade 3",
     "curriculum": "IB PYP",
     "school": "HIS",
-    "location": "Hyderabad",
-    "avatarStyle": "casual",
+    "location": "",
+    "avatarStyle": "default",
     "learningStyle": "visual",
-    "updatedAt": "2026-04-15T04:45:34.034Z"
+    "updatedAt": "2026-04-17T11:33:20.313Z",
+    "emailHash": "ff41265e7f145f092358fb18025b8d58a1371a177803127e358ebec0b2e3594c"
   }
 }

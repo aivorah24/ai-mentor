@@ -6,7 +6,13 @@ function uuidv4() {
   return 'ev_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
-const DB_PATH = path.join(__dirname, '../data/schedule.json');
+const DB_PATH   = path.join(__dirname, '../data/schedule.json');
+const ASGN_PATH = path.join(__dirname, '../data/assignments.json');
+
+function readAssignments() {
+  try { return JSON.parse(fs.readFileSync(ASGN_PATH, 'utf8')); }
+  catch { return []; }
+}
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -70,11 +76,21 @@ router.get('/upcoming', (req, res) => {
 
   const today = new Date().toISOString().split('T')[0];
   const all = readDB();
+
+  // Build a set of completed assignmentIds for this student
+  const assignments = readAssignments();
+  const completedIds = new Set(
+    assignments
+      .filter(a => a.status === 'completed' && (a.studentId === studentId || a.studentId === 'all'))
+      .map(a => a.id)
+  );
+
   const deadlines = all
     .filter(e =>
       e.type === 'deadline' &&
       e.date >= today &&
-      (e.studentId === studentId || e.studentId === 'all')
+      (e.studentId === studentId || e.studentId === 'all') &&
+      !(e.assignmentId && completedIds.has(e.assignmentId))
     )
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 5);
