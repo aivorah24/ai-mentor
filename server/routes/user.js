@@ -5,6 +5,7 @@ const fs         = require('fs');
 const path       = require('path');
 const cloudinary = require('cloudinary').v2;
 const supabase   = require('../services/supabase');
+const { encrypt, decrypt, hashEmail } = require('../utils/encryption');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -15,6 +16,26 @@ cloudinary.config({
 });
 
 const PREFS_FILE = path.join(__dirname, '../data/student_preferences.json');
+
+// ── Sensitive fields encrypted at rest in the JSON file ──────────────
+const ENCRYPTED_FIELDS = ['dob', 'phone'];
+
+function encryptRecord(record) {
+  const out = { ...record };
+  for (const field of ENCRYPTED_FIELDS) {
+    if (out[field]) out[field] = encrypt(out[field]);
+  }
+  return out;
+}
+
+function decryptRecord(record) {
+  if (!record) return record;
+  const out = { ...record };
+  for (const field of ENCRYPTED_FIELDS) {
+    if (out[field]) out[field] = decrypt(out[field]);
+  }
+  return out;
+}
 
 async function readPreferences() {
   try {
@@ -30,6 +51,30 @@ async function readPreferences() {
 async function writePreferences(data) {
   await fs.promises.mkdir(path.dirname(PREFS_FILE), { recursive: true });
   await fs.promises.writeFile(PREFS_FILE, JSON.stringify(data, null, 2), 'utf8');
+}
+
+/** Get a single user's preferences, decrypted. Looks up by email hash with fallback to plain email key (migration). */
+async function getPreferences(email) {
+  const all  = await readPreferences();
+  const key  = hashEmail(email);
+  const plain = email.toLowerCase().trim();
+  const rec  = all[key] ?? all[plain] ?? null;
+  return decryptRecord(rec);
+}
+
+/** Write a single user's preferences, using hashed key + encrypted sensitive fields. */
+async function setPreferences(email, updates) {
+  const all   = await readPreferences();
+  const key   = hashEmail(email);
+  const plain = email.toLowerCase().trim();
+
+  // Migrate from plain-email key if it exists
+  const existing = all[key] ?? all[plain] ?? { emailHash: key };
+  if (all[plain] && !all[key]) delete all[plain]; // remove old plaintext key
+
+  const merged = { ...decryptRecord(existing), ...updates, emailHash: key };
+  all[key] = encryptRecord(merged);
+  await writePreferences(all);
 }
 
 function csvCell(value) {
@@ -73,7 +118,10 @@ router.post('/sync', async (req, res) => {
     if (!email) return res.status(400).json({ error: 'email required' });
 
     // Build upsert patch — only include fields that are provided
-    const patch = { name: name || email.split('@')[0], email: email.toLowerCase().trim() };
+    // IMPORTANT: only set name if explicitly provided; never fall back to email prefix
+    // (fetchSupabaseProfile calls this with only email, and we must not overwrite a real name)
+    const patch = { email: email.toLowerCase().trim() };
+    if (name)       patch.name       = name;
     if (role)       patch.role       = role;
     if (grade)      patch.grade      = grade;
     if (school)     patch.school     = school.trim();
@@ -124,7 +172,7 @@ router.patch('/profile', async (req, res) => {
     if (!email) return res.status(400).json({ error: 'email required' });
 
     const patch = {};
-    if (complete !== false) patch.onboarding_complete = true;
+    if (complete === true) patch.onboarding_complete = true;
     if (name)       patch.name       = name.trim();
     if (curriculum) patch.curriculum = curriculum;
     if (grade)      patch.grade      = grade;
@@ -143,24 +191,20 @@ router.patch('/profile', async (req, res) => {
     if (error) return res.status(500).json({ error: error.message });
 
     // Store teacher teaches[] in preferences file (no extra table needed)
-    const key = email.toLowerCase().trim();
     if (teaches && Array.isArray(teaches)) {
-      const all = await readPreferences();
-      all[key] = { ...(all[key] || {}), email: key, teaches, updatedAt: new Date().toISOString() };
-      await writePreferences(all);
+      await setPreferences(email, { teaches, updatedAt: new Date().toISOString() });
     }
 
     // Store parent children[] in preferences file
     if (children && Array.isArray(children)) {
-      const all = await readPreferences();
-      all[key] = { ...(all[key] || {}), email: key, children, phone: phone || undefined, updatedAt: new Date().toISOString() };
-      await writePreferences(all);
+      await setPreferences(email, { children, ...(phone ? { phone } : {}), updatedAt: new Date().toISOString() });
 
       // Also upsert parent_children rows in Supabase
+      const emailLower = email.toLowerCase().trim();
       for (const child of children) {
         if (!child.email) continue;
         await supabase.from('parent_children').upsert({
-          parent_email: key,
+          parent_email: emailLower,
           child_email:  child.email.toLowerCase().trim(),
           child_name:   child.name || '',
           child_grade:  child.grade || '',
@@ -169,16 +213,13 @@ router.patch('/profile', async (req, res) => {
       }
     }
 
-    // Store extra fields (dob, gender, phone) in preferences
+    // Store extra fields (dob, gender, phone) in preferences — dob + phone are encrypted
     if (dob || gender || phone) {
-      const all = await readPreferences();
-      const prev = all[key] || { email: key };
-      if (dob)    prev.dob    = dob;
-      if (gender) prev.gender = gender;
-      if (phone)  prev.phone  = phone;
-      prev.updatedAt = new Date().toISOString();
-      all[key] = prev;
-      await writePreferences(all);
+      const updates = { updatedAt: new Date().toISOString() };
+      if (dob)    updates.dob    = dob;
+      if (gender) updates.gender = gender;
+      if (phone)  updates.phone  = phone;
+      await setPreferences(email, updates);
     }
 
     // ── Auto-link teacher ↔ students by curriculum ─────────────
@@ -301,11 +342,6 @@ router.patch('/preferences', async (req, res) => {
 
     if (!email) return res.status(400).json({ error: 'email required' });
 
-    const key = String(email).toLowerCase().trim();
-    const all = await readPreferences();
-    const now = new Date().toISOString();
-    const prev = all[key] ?? { email: key, createdAt: now };
-
     const patch = {};
     if (name != null) patch.name = String(name);
     if (role != null) patch.role = String(role);
@@ -326,11 +362,11 @@ router.patch('/preferences', async (req, res) => {
             .filter(Boolean);
     }
 
-    const next = { ...prev, ...patch, email: key, updatedAt: now };
-    all[key] = next;
-    await writePreferences(all);
+    patch.updatedAt = new Date().toISOString();
+    await setPreferences(email, patch);
+    const saved = await getPreferences(email);
 
-    res.json({ ok: true, preference: next });
+    res.json({ ok: true, preference: saved });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -339,10 +375,10 @@ router.patch('/preferences', async (req, res) => {
 // ── GET /user/preferences?email=... ────────────────────────────────────────
 router.get('/preferences', async (req, res) => {
   try {
-    const all = await readPreferences();
     const email = req.query.email ? String(req.query.email).toLowerCase().trim() : '';
-    if (!email) return res.json(all);
-    res.json(all[email] ?? null);
+    if (!email) return res.json({}); // don't expose all records
+    const rec = await getPreferences(email);
+    res.json(rec ?? null);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -357,8 +393,8 @@ router.get('/preferences/export.csv', async (req, res) => {
     }
     const all = await readPreferences();
     const rows = Object.values(all)
-      .map((item) => ({
-        email: item.email ?? '',
+      .map((raw) => { const item = decryptRecord(raw); return ({
+        email: item.email ?? item.emailHash ?? '',
         name: item.name ?? '',
         role: item.role ?? '',
         grade: item.grade ?? '',
@@ -372,7 +408,7 @@ router.get('/preferences/export.csv', async (req, res) => {
         photoUrl: item.photoUrl ?? '',
         createdAt: item.createdAt ?? '',
         updatedAt: item.updatedAt ?? '',
-      }))
+      }); })
       .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
 
     const headers = [

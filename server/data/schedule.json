@@ -222,5 +222,61 @@
     "tag": "Mathematics",
     "createdAt": "2026-04-12T09:41:20.120Z",
     "assignmentId": "0d3be723-0cb7-4556-8b86-77861beeb068"
+  },
+  {
+    "id": "asgn_1b94975e",
+    "title": "2D shapes — Due",
+    "date": "2026-04-16",
+    "startTime": "23:59",
+    "endTime": "23:59",
+    "type": "deadline",
+    "note": "Mathematics · 2D shapes · Grade 3",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "tag": "Mathematics",
+    "createdAt": "2026-04-15T07:54:17.920Z",
+    "assignmentId": "1b94975e-8139-4c34-befb-45d0945036e5"
+  },
+  {
+    "id": "asgn_d76da155",
+    "title": "Paragraph — Due",
+    "date": "2026-04-16",
+    "startTime": "23:59",
+    "endTime": "23:59",
+    "type": "deadline",
+    "note": "English · Paragraph · Grade 3",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "tag": "English",
+    "createdAt": "2026-04-15T08:15:43.799Z",
+    "assignmentId": "d76da155-f356-415c-926a-97f174fb3048"
+  },
+  {
+    "id": "asgn_160b1cd3",
+    "title": "Language — Due",
+    "date": "2026-04-15",
+    "startTime": "23:59",
+    "endTime": "23:59",
+    "type": "deadline",
+    "note": "English · Language · Grade 3",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "tag": "English",
+    "createdAt": "2026-04-15T08:18:18.842Z",
+    "assignmentId": "160b1cd3-1440-4478-b7ad-a992a0f97fee"
+  },
+  {
+    "id": "asgn_1f82efab",
+    "title": "Food Chain — Due",
+    "date": "2026-04-16",
+    "startTime": "23:59",
+    "endTime": "23:59",
+    "type": "deadline",
+    "note": "Science · Food Chain · Grade 3",
+    "studentId": "all",
+    "createdBy": "teacher",
+    "tag": "Science",
+    "createdAt": "2026-04-15T08:45:53.242Z",
+    "assignmentId": "1f82efab-609c-4e52-b5dc-433905994c02"
   }
 ]

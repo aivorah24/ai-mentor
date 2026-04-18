@@ -115,6 +115,61 @@ router.get('/', async (req, res) => {
 // Generate quiz questions from Qdrant textbook content + teacher notes.
 // Body: { subject, chapter, grade, curriculum, difficulty, count, teacherNotes }
 
+
+// ── POST /assignments/generate-steps ─────────────────────────────────────
+// Use Groq AI to generate topic-specific task step labels + instructions
+// with grade/curriculum guardrails.
+// Body: { topic, subject, grade, curriculum }
+router.post('/generate-steps', async (req, res) => {
+  const { topic = '', subject = '', grade = 'Grade 3', curriculum = 'IB PYP' } = req.body;
+  if (!topic.trim()) return res.status(400).json({ error: 'topic required' });
+
+  const prompt = `You are Aivorah, a compassionate AI tutor creating a scaffolded assignment for a ${grade} ${curriculum} student.
+
+Topic: "${topic}"
+Subject: ${subject || 'General'}
+
+Create 3 task steps that are specific to this exact topic. Use age-appropriate language for ${grade} students.
+
+Return ONLY valid JSON with exactly these keys:
+{
+  "brainstorm": {
+    "label": "A short title (3-5 words) specific to ${topic}",
+    "instructions": "Ask the student to list 5-8 keywords or ideas they know about ${topic}. Be specific and encouraging."
+  },
+  "drawing": {
+    "label": "A short title (3-5 words) specific to ${topic}",
+    "instructions": "Ask the student to draw something specific related to ${topic}. Give a clear, concrete drawing task."
+  },
+  "structured_writing": {
+    "label": "A short title (3-5 words) specific to ${topic}",
+    "instructions": "Ask the student to write 3-5 sentences about ${topic} with a beginning, middle, and end. Keep it simple for ${grade}."
+  }
+}`;
+
+  try {
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 500,
+      response_format: { type: 'json_object' },
+    });
+    const raw = completion.choices[0]?.message?.content || '{}';
+    const parsed = JSON.parse(raw);
+    const steps = [];
+    for (const type of ['brainstorm', 'drawing', 'structured_writing']) {
+      if (parsed[type]?.label && parsed[type]?.instructions) {
+        steps.push({ type, label: parsed[type].label, instructions: parsed[type].instructions });
+      }
+    }
+    if (steps.length === 0) return res.status(500).json({ error: 'AI returned invalid structure' });
+    res.json({ steps });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/generate-quiz', async (req, res) => {
   const {
     subject = '', chapter = '', grade = '', curriculum = '',
@@ -634,6 +689,9 @@ JSON: {"text":"...","wellDone":"specific strength","improve":"one specific topic
         let answerDescription = '';
         const contentParts = [];
 
+        const gradeLabel = assignment.grade || 'Grade 3';
+        const currLabel  = assignment.curriculum || 'IB PYP';
+
         if (ans.type === 'brainstorm') {
           const kw = Array.isArray(ans.keywords) ? ans.keywords.filter(Boolean) : [];
           answerDescription = kw.length > 0 ? `Student brainstormed these keywords: ${kw.join(', ')}` : 'Student did not write any keywords.';
@@ -659,12 +717,12 @@ JSON: {"text":"...","wellDone":"specific strength","improve":"one specific topic
         let prompt = '';
 
         if (ans.type === 'brainstorm') {
-          prompt = `You are grading a Grade 3 student's brainstorming step for "${assignment.title}" (${assignment.subject}).
+          prompt = `You are Aivorah, grading a ${gradeLabel} ${currLabel} student's brainstorming step for "${assignment.title}" (${assignment.subject}).
 Step: "${stepLabel}" â€” ${step.instructions || ''}
 ${criteriaBlock}
 ${answerDescription}
 
-Grade this brainstorm: Are the keywords relevant to the topic? Do they show understanding?
+Grade this brainstorm: Are the keywords relevant to the topic "${assignment.title}"? Do they show understanding for ${gradeLabel}?
 - Highly relevant, 4+ keywords = 80-100%
 - Mostly relevant, 2-3 keywords = 50-75%
 - Few/irrelevant keywords = 20-45%
@@ -674,7 +732,7 @@ Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"list the k
           contentParts.push({ type: 'text', text: prompt });
 
         } else if (ans.type === 'structured_writing') {
-          prompt = `You are grading a Grade 3 student's structured writing for "${assignment.title}" (${assignment.subject}).
+          prompt = `You are Aivorah, grading a ${gradeLabel} ${currLabel} student's structured writing for "${assignment.title}" (${assignment.subject}).
 Step: "${stepLabel}" â€” ${step.instructions || ''}
 ${criteriaBlock}
 Student's writing:
@@ -685,7 +743,7 @@ Grade the writing quality per section AND overall:
 - Are sentences complete with capital letters and full stops?
 - Are ideas logical and connected?
 - Does it use relevant vocabulary?
-For Grade 3: 3-4 sentences per section is excellent. Be encouraging.
+For ${gradeLabel}: 2-4 sentences per section is excellent. Reference their actual writing in the feedback.
 
 Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"brief summary of what they wrote","correct":bool,"comment":"specific, warm feedforward for each section"}`;
           contentParts.push({ type: 'text', text: prompt });
@@ -696,7 +754,7 @@ Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"brief summ
           const imageMimeVal = ans.drawingMime || ans.photoMime || 'image/jpeg';
           if (!imageB64) return { number: i+1, stepLabel, type: ans.type, answered: false, score: 0, studentAnswer: 'No image submitted.', correct: false, comment: 'Please submit your drawing or photo next time!' };
 
-          prompt = `You are grading a Grade 3 student's ${ans.type === 'drawing' ? 'drawing' : 'photo submission'} for "${assignment.title}" (${assignment.subject}).
+          prompt = `You are Aivorah, grading a ${gradeLabel} ${currLabel} student's ${ans.type === 'drawing' ? 'drawing' : 'photo submission'} for "${assignment.title}" (${assignment.subject}).
 Step: "${stepLabel}" â€” ${step.instructions || ''}
 ${criteriaBlock}
 ${worksheetUrls.length > 0 ? `The first ${worksheetUrls.length} image(s) are the ORIGINAL WORKSHEET for context. The LAST image is the STUDENT'S ${ans.type === 'drawing' ? 'DRAWING' : 'PHOTO'}.` : 'The image is the student\'s submission.'}

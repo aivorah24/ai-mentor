@@ -360,14 +360,18 @@ const TIKTOK_VOICE = {
   checkpoint: 'en_us_001',
   comic: 'en_us_rocket',
   celebrate: 'en_us_rocket',
+  grandmother: 'en_female_emotional',  // warm female storyteller
+  grandfather: 'en_male_narration',    // calm older male narrator
 };
 
 // Voice IDs can be replaced without code changes through env vars.
 const EL_VOICE = {
-  main: process.env.EL_VOICE_MAIN || 'cgSgspJ2msm6clMCkdW9',
-  checkpoint: process.env.EL_VOICE_CHECKPOINT || process.env.EL_VOICE_MAIN || 'cgSgspJ2msm6clMCkdW9',
-  comic: process.env.EL_VOICE_COMIC || 'FGY2WhTYpPnrIDTdsKH5',
-  celebrate: process.env.EL_VOICE_CELEBRATE || process.env.EL_VOICE_COMIC || 'FGY2WhTYpPnrIDTdsKH5',
+  main:        process.env.EL_VOICE_MAIN        || 'cgSgspJ2msm6clMCkdW9', // Matilda
+  checkpoint:  process.env.EL_VOICE_CHECKPOINT  || process.env.EL_VOICE_MAIN || 'cgSgspJ2msm6clMCkdW9',
+  comic:       process.env.EL_VOICE_COMIC       || 'FGY2WhTYpPnrIDTdsKH5',
+  celebrate:   process.env.EL_VOICE_CELEBRATE   || process.env.EL_VOICE_COMIC || 'FGY2WhTYpPnrIDTdsKH5',
+  grandmother: process.env.EL_VOICE_GRANDMOTHER || 'wGcFBfKz5yUQqhqr0mVy', // Maria Moody — Grandmotherly Storykeeper (octogenarian narrator)
+  grandfather: process.env.EL_VOICE_GRANDFATHER || 'JBFqnCBsd6RMkjVDRZzb', // George — warm older male
 };
 
 const EL_SETTINGS_BY_EMOTION = {
@@ -381,10 +385,12 @@ const EL_SETTINGS_BY_EMOTION = {
 };
 
 const EL_SETTINGS_BY_ROLE = {
-  main: { stability: 0.3, similarity_boost: 0.78, style: 0.8, use_speaker_boost: true },
-  checkpoint: { stability: 0.26, similarity_boost: 0.78, style: 0.86, use_speaker_boost: true },
-  comic: { stability: 0.14, similarity_boost: 0.82, style: 1.0, use_speaker_boost: true },
-  celebrate: { stability: 0.12, similarity_boost: 0.82, style: 1.0, use_speaker_boost: true },
+  main:        { stability: 0.3,  similarity_boost: 0.78, style: 0.8,  use_speaker_boost: true },
+  checkpoint:  { stability: 0.26, similarity_boost: 0.78, style: 0.86, use_speaker_boost: true },
+  comic:       { stability: 0.14, similarity_boost: 0.82, style: 1.0,  use_speaker_boost: true },
+  celebrate:   { stability: 0.12, similarity_boost: 0.82, style: 1.0,  use_speaker_boost: true },
+  grandmother: { stability: 0.72, similarity_boost: 0.78, style: 0.50, use_speaker_boost: false }, // Maria Moody — slow, warm, grandmotherly
+  grandfather: { stability: 0.60, similarity_boost: 0.78, style: 0.55, use_speaker_boost: true }, // calm, authoritative, slow
 };
 
 // Split text at sentence boundaries (TikTok limit ~190 chars)

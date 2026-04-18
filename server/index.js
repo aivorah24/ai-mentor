@@ -30,6 +30,8 @@ const analyticsRoute   = require('./routes/analytics');
 const ibpypRoute       = require('./routes/ibpyp');
 const worldRoute       = require('./routes/world');
 const helpRoute        = require('./routes/help');
+const storiesRoute     = require('./routes/stories');
+const habitsRoute      = require('./routes/habits');
 
 // Heavy routes — lazy-loaded on first request to avoid startup crashes
 // (ingest uses pdf-parse/@napi-rs/canvas; ask/curriculum use @xenova/transformers)
@@ -71,6 +73,8 @@ app.use('/analytics',    analyticsRoute);
 app.use('/ibpyp',        ibpypRoute);
 app.use('/world',        worldRoute);
 app.use('/help',         helpRoute);
+app.use('/stories',      storiesRoute);
+app.use('/habits',       habitsRoute);
 
 app.get('/health', async (req, res) => {
   try {
