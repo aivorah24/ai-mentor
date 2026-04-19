@@ -22,24 +22,10 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker asia-south1-docker.pkg.dev
-
-      - name: Build Docker image
-        run: |
-          docker build \
-            -t asia-south1-docker.pkg.dev/aivorah-app/aivorah/aivorah-backend:${{ github.sha }} \
-            -t asia-south1-docker.pkg.dev/aivorah-app/aivorah/aivorah-backend:latest \
-            .
-
-      - name: Push Docker image
-        run: |
-          docker push --all-tags asia-south1-docker.pkg.dev/aivorah-app/aivorah/aivorah-backend
-
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy aivorah-backend \
-            --image=asia-south1-docker.pkg.dev/aivorah-app/aivorah/aivorah-backend:${{ github.sha }} \
+            --source=. \
             --region=asia-south1 \
             --project=aivorah-app \
             --platform=managed \
