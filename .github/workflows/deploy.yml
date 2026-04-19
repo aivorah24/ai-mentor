@@ -23,7 +23,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker --quiet
+        run: gcloud auth configure-docker asia-south1-docker.pkg.dev
 
       - name: Build Docker image
         run: |
