@@ -105,9 +105,17 @@ initCollection().catch(err => {
 
 // Serve the React Native web frontend (Expo export output)
 const FRONTEND_DIR = path.join(__dirname, '../AIMentorApp/dist2');
-app.use(express.static(FRONTEND_DIR));
+// Static assets (JS/CSS) are hashed — cache forever; HTML must not be cached
+app.use(express.static(FRONTEND_DIR, {
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html')) {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
 // SPA fallback — all non-API routes serve index.html
 app.get('*', (req, res) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
 });
 
