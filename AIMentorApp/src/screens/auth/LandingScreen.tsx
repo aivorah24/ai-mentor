@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Modal,
   Platform,
   Linking,
   ActivityIndicator,
@@ -169,19 +168,19 @@ function RoleChips({ selected, onSelect }: { selected: UserRole; onSelect: (r: U
 // Auth Modal shell
 // ─────────────────────────────────────────────────────────
 function AuthModal({ visible, onClose, children }: { visible: boolean; onClose: () => void; children: React.ReactNode }) {
+  if (!visible) return null;
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={s.overlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity activeOpacity={1} style={s.modal}>
-          <TouchableOpacity style={s.modalClose} onPress={onClose}>
-            <Feather name="x" size={18} color={MUTED} />
-          </TouchableOpacity>
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ maxHeight: WIN_W < 400 ? 560 : undefined }}>
-            {children}
-          </ScrollView>
+    <View style={s.overlay}>
+      <TouchableOpacity activeOpacity={1} style={s.overlayBg} onPress={onClose} />
+      <View style={s.modal}>
+        <TouchableOpacity style={s.modalClose} onPress={onClose}>
+          <Feather name="x" size={18} color={MUTED} />
         </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
+        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ maxHeight: WIN_W < 400 ? 560 : undefined }}>
+          {children}
+        </ScrollView>
+      </View>
+    </View>
   );
 }
 
@@ -1189,7 +1188,8 @@ const s = StyleSheet.create({
   footerCopy: { fontSize: 13, color: DIM },
 
   // ── Modal
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: WIN_W < 400 ? 12 : 20, paddingVertical: 20, width: '100%', height: '100%' },
+  overlay: { position: 'absolute' as any, top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: WIN_W < 400 ? 12 : 20, paddingVertical: 20 },
+  overlayBg: { position: 'absolute' as any, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)' },
   modal: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 16, padding: WIN_W < 400 ? 18 : 36, width: '100%', maxWidth: 460, alignSelf: 'center', position: 'relative' },
   modalClose: { position: 'absolute', top: 14, right: 14, padding: 6, borderRadius: 6 },
   modalTitle: { fontSize: 24, fontWeight: '700', color: FORE, marginBottom: 6 },
