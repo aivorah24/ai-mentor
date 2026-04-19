@@ -1,0 +1,254 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e5]:
+  - generic [ref=e7]:
+    - generic [ref=e8]:
+      - generic [ref=e10]: 
+      - generic [ref=e11]: Aivorah
+    - generic [ref=e12]:
+      - generic [ref=e13]: Features
+      - generic [ref=e14]: About
+      - generic [ref=e15]: Contact
+    - generic [ref=e16]:
+      - generic [ref=e18] [cursor=pointer]: Admin Panel
+      - generic [ref=e20] [cursor=pointer]: Login
+      - generic [ref=e21] [cursor=pointer]:
+        - img
+        - generic [ref=e23]: Get Started
+  - generic [ref=e25]:
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]: 
+        - generic [ref=e29]: Built for modern classrooms
+      - generic [ref=e30]: AI-Powered Learning Platform
+      - generic [ref=e31]: Empower your educational journey with intelligent insights, personalized tutoring, and seamless progress tracking for everyone involved.
+      - generic [ref=e32]:
+        - generic [ref=e33] [cursor=pointer]:
+          - img
+          - generic [ref=e35]: Start Learning Free
+        - generic [ref=e37] [cursor=pointer]: Book a Demo
+      - generic [ref=e38]:
+        - generic [ref=e39]: Quick Demo Access
+        - generic [ref=e40]:
+          - generic [ref=e41] [cursor=pointer]:
+            - generic [ref=e42]: 
+            - generic [ref=e43]: Student
+          - generic [ref=e44] [cursor=pointer]:
+            - generic [ref=e45]: 
+            - generic [ref=e46]: Teacher
+          - generic [ref=e47] [cursor=pointer]:
+            - generic [ref=e48]: 
+            - generic [ref=e49]: Parent
+        - generic [active] [ref=e50] [cursor=pointer]:
+          - generic [ref=e51]: 
+          - generic [ref=e52]: Test Accounts with Real Data
+          - generic [ref=e53]: 
+        - generic [ref=e54]:
+          - generic [ref=e55]:
+            - generic [ref=e57] [cursor=pointer]: IB PYP
+            - generic [ref=e59] [cursor=pointer]: NCERT
+          - generic [ref=e60]:
+            - generic [ref=e61]: STUDENTS
+            - generic [ref=e62]:
+              - generic [ref=e63] [cursor=pointer]:
+                - generic [ref=e64]: Aanya Kapoor
+                - generic [ref=e65]: Grade 3 · IB PYP
+              - generic [ref=e66] [cursor=pointer]:
+                - generic [ref=e67]: Ishaan Mehta
+                - generic [ref=e68]: Grade 4 · IB PYP
+              - generic [ref=e69] [cursor=pointer]:
+                - generic [ref=e70]: Rohan Patel
+                - generic [ref=e71]: Grade 5 · IB PYP
+              - generic [ref=e72] [cursor=pointer]:
+                - generic [ref=e73]: Diya Sharma
+                - generic [ref=e74]: Grade 3 · IB PYP
+          - generic [ref=e75]:
+            - generic [ref=e76]: TEACHERS
+            - generic [ref=e77]:
+              - generic [ref=e78] [cursor=pointer]:
+                - generic [ref=e79]: Ms. Anjali Kumar
+                - generic [ref=e80]: Grade 4 & 5 · IB PYP
+              - generic [ref=e81] [cursor=pointer]:
+                - generic [ref=e82]: Priya Kapoor
+                - generic [ref=e83]: Grade 3 · Teacher + Parent
+              - generic [ref=e84] [cursor=pointer]:
+                - generic [ref=e85]: Vikram Sharma
+                - generic [ref=e86]: Grade 3 & 4 · Teacher + Parent
+          - generic [ref=e87]:
+            - generic [ref=e88]: PARENTS
+            - generic [ref=e89]:
+              - generic [ref=e90] [cursor=pointer]:
+                - generic [ref=e91]: Suresh Mehta
+                - generic [ref=e92]: Parent of Ishaan
+              - generic [ref=e93] [cursor=pointer]:
+                - generic [ref=e94]: Deepa Patel
+                - generic [ref=e95]: Parent of Rohan
+    - generic [ref=e96]:
+      - generic [ref=e97]:
+        - generic [ref=e99]: 
+        - generic [ref=e100]:
+          - generic [ref=e101]: 50,000+
+          - generic [ref=e102]: Active Students
+      - generic [ref=e103]:
+        - generic [ref=e105]: 
+        - generic [ref=e106]:
+          - generic [ref=e107]: 4.9 / 5
+          - generic [ref=e108]: Average Rating
+      - generic [ref=e109]:
+        - generic [ref=e111]: 
+        - generic [ref=e112]:
+          - generic [ref=e113]: 200+
+          - generic [ref=e114]: Courses Available
+      - generic [ref=e115]:
+        - generic [ref=e117]: 
+        - generic [ref=e118]:
+          - generic [ref=e119]: 95%
+          - generic [ref=e120]: Satisfaction Rate
+    - generic [ref=e121]:
+      - generic [ref=e122]: Built for Everyone in the Classroom
+      - generic [ref=e123]: One platform, three powerful experiences — each designed around what you actually need.
+      - generic [ref=e124]:
+        - generic [ref=e125] [cursor=pointer]:
+          - generic [ref=e127]: 
+          - generic [ref=e128]: For Students
+          - generic [ref=e129]: Learn at your own pace, guided by AI
+          - generic [ref=e130]:
+            - generic [ref=e131]:
+              - generic [ref=e132]: 
+              - generic [ref=e133]: Personalized AI tutor available 24/7
+            - generic [ref=e134]:
+              - generic [ref=e135]: 
+              - generic [ref=e136]: Adaptive study plans that fit your schedule
+            - generic [ref=e137]:
+              - generic [ref=e138]: 
+              - generic [ref=e139]: Gamified XP system to keep you motivated
+            - generic [ref=e140]:
+              - generic [ref=e141]: 
+              - generic [ref=e142]: Instant feedback on every assignment
+            - generic [ref=e143]:
+              - generic [ref=e144]: 
+              - generic [ref=e145]: Track your progress with visual analytics
+          - generic [ref=e146]:
+            - generic [ref=e147]: Get started free
+            - generic [ref=e148]: 
+        - generic [ref=e149] [cursor=pointer]:
+          - generic [ref=e151]: 
+          - generic [ref=e152]: For Teachers
+          - generic [ref=e153]: Save time, teach smarter
+          - generic [ref=e154]:
+            - generic [ref=e155]:
+              - generic [ref=e156]: 
+              - generic [ref=e157]: AI-assisted lesson planning & grading
+            - generic [ref=e158]:
+              - generic [ref=e159]: 
+              - generic [ref=e160]: Spot struggling students before they fall behind
+            - generic [ref=e161]:
+              - generic [ref=e162]: 
+              - generic [ref=e163]: Real-time class performance dashboards
+            - generic [ref=e164]:
+              - generic [ref=e165]: 
+              - generic [ref=e166]: Automate repetitive administrative tasks
+            - generic [ref=e167]:
+              - generic [ref=e168]: 
+              - generic [ref=e169]: Schedule sessions with one click
+          - generic [ref=e170]:
+            - generic [ref=e171]: Get started free
+            - generic [ref=e172]: 
+        - generic [ref=e173] [cursor=pointer]:
+          - generic [ref=e175]: 
+          - generic [ref=e176]: For Parents
+          - generic [ref=e177]: Stay connected to your child's journey
+          - generic [ref=e178]:
+            - generic [ref=e179]:
+              - generic [ref=e180]: 
+              - generic [ref=e181]: Live progress reports and milestone alerts
+            - generic [ref=e182]:
+              - generic [ref=e183]: 
+              - generic [ref=e184]: Understand strengths and areas to improve
+            - generic [ref=e185]:
+              - generic [ref=e186]: 
+              - generic [ref=e187]: Direct communication with teachers
+            - generic [ref=e188]:
+              - generic [ref=e189]: 
+              - generic [ref=e190]: Weekly AI-generated learning summaries
+            - generic [ref=e191]:
+              - generic [ref=e192]: 
+              - generic [ref=e193]: No complexity — just clear, honest insights
+          - generic [ref=e194]:
+            - generic [ref=e195]: Get started free
+            - generic [ref=e196]: 
+    - generic [ref=e197]:
+      - generic [ref=e198]: How It Works
+      - generic [ref=e199]: Get from sign-up to personalized learning in under 3 minutes.
+      - generic [ref=e200]:
+        - generic [ref=e201]:
+          - generic [ref=e204]: "01"
+          - generic [ref=e206]: 
+          - generic [ref=e207]: Create your account
+          - generic [ref=e208]: Sign up in seconds — choose your role as a student, teacher, or parent and get instant access.
+        - generic [ref=e209]:
+          - generic [ref=e212]: "02"
+          - generic [ref=e214]: 
+          - generic [ref=e215]: Set up your profile
+          - generic [ref=e216]: Tell us your subjects, grade level, and goals. Our AI builds a personalized plan tailored just for you.
+        - generic [ref=e217]:
+          - generic [ref=e219]: "03"
+          - generic [ref=e221]: 
+          - generic [ref=e222]: Start learning with AI
+          - generic [ref=e223]: Chat with your AI mentor, complete adaptive assignments, and track every milestone as you grow.
+    - generic [ref=e224]:
+      - generic [ref=e225]: Powerful Features
+      - generic [ref=e226]: Everything you need to accelerate learning and improve outcomes — all in one place.
+      - generic [ref=e227]:
+        - generic [ref=e228]:
+          - generic [ref=e230]: 
+          - generic [ref=e231]: Aivorah 24/7
+          - generic [ref=e232]: An always-on intelligent assistant that explains concepts, solves problems step-by-step, and adapts to your learning style in real time.
+        - generic [ref=e233]:
+          - generic [ref=e235]: 
+          - generic [ref=e236]: Adaptive Learning Paths
+          - generic [ref=e237]: The platform continuously adjusts difficulty and content based on your performance — so you're always learning at the right level.
+        - generic [ref=e238]:
+          - generic [ref=e240]: 
+          - generic [ref=e241]: Real-time Analytics
+          - generic [ref=e242]: Beautiful dashboards for students, teachers, and parents that turn raw data into clear, actionable learning insights.
+        - generic [ref=e243]:
+          - generic [ref=e245]: 
+          - generic [ref=e246]: Gamified Challenges
+          - generic [ref=e247]: Earn XP, unlock achievements, and compete in challenges that make studying engaging and genuinely fun.
+    - generic [ref=e249]:
+      - generic [ref=e250]: Ready to transform learning?
+      - generic [ref=e251]: Join thousands of students, teachers, and parents using Aivorah today.
+      - generic [ref=e252] [cursor=pointer]:
+        - img
+        - generic [ref=e254]: Create Free Account
+    - generic [ref=e255]:
+      - generic [ref=e256]:
+        - generic [ref=e257]:
+          - generic [ref=e258]:
+            - generic [ref=e259]: 
+            - generic [ref=e260]: Aivorah
+          - generic [ref=e261]: Empowering the next generation of learners with artificial intelligence.
+        - generic [ref=e262]:
+          - generic [ref=e263]:
+            - generic [ref=e264]: Product
+            - generic [ref=e265]: Features
+            - generic [ref=e266]: Pricing
+            - generic [ref=e267]: Use Cases
+            - generic [ref=e268]: Integrations
+          - generic [ref=e269]:
+            - generic [ref=e270]: Company
+            - generic [ref=e271]: About Us
+            - generic [ref=e272]: Careers
+            - generic [ref=e273]: Blog
+            - generic [ref=e274]: Contact
+          - generic [ref=e275]:
+            - generic [ref=e276]: Legal
+            - generic [ref=e277]: Privacy Policy
+            - generic [ref=e278]: Terms of Service
+            - generic [ref=e279]: Cookie Policy
+      - generic [ref=e280]:
+        - generic [ref=e281]: © 2026 Aivorah. All rights reserved.
+        - generic [ref=e282]: Made with ❤️ for learners everywhere
+```
