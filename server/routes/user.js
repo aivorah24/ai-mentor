@@ -124,17 +124,37 @@ router.post('/sync', async (req, res) => {
     if (name)       patch.name       = name;
     if (role)       patch.role       = role;
     if (grade)      patch.grade      = grade;
-    if (school)     patch.school     = school.trim();
+    if (school)     patch.school     = school?.trim();
     if (curriculum) patch.curriculum = curriculum;
     if (location)   patch.location   = location;
 
-    const { data, error } = await supabase
-      .from('users')
-      .upsert(patch, { onConflict: 'email' })
-      .select('id, name, email, role, grade, school, curriculum, location, onboarding_complete, photo_url')
-      .single();
+    // If only email is provided (fetchSupabaseProfile call), do a SELECT only — don't upsert
+    // Upserting with only email would fail the NOT NULL constraint on the name column
+    const isReadOnly = Object.keys(patch).length === 1; // only email
 
-    if (error) return res.status(500).json({ error: error.message });
+    let data, error;
+    if (isReadOnly) {
+      ({ data, error } = await supabase
+        .from('users')
+        .select('id, name, email, role, grade, school, curriculum, location, onboarding_complete, photo_url')
+        .eq('email', patch.email)
+        .maybeSingle());
+    } else {
+      ({ data, error } = await supabase
+        .from('users')
+        .upsert(patch, { onConflict: 'email' })
+        .select('id, name, email, role, grade, school, curriculum, location, onboarding_complete, photo_url')
+        .single());
+    }
+
+    if (error) {
+      console.error('[/user/sync] Supabase error:', JSON.stringify(error));
+      console.error('[/user/sync] patch was:', JSON.stringify(patch));
+      return res.status(500).json({ error: error.message });
+    }
+
+    // No row yet — user hasn't completed signup flow
+    if (!data) return res.json({ email: patch.email, onboardingComplete: false });
 
     // Auto-create student_stats if role is student
     if ((role === 'student' || data?.role === 'student') && data?.id) {
