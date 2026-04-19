@@ -11,71 +11,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout code (including submodules)
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
-      # 2. Authenticate with GCP
-      - name: Authenticate to GCP
-        id: auth
+      - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # 3. Set up gcloud CLI
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      # 4. Configure Docker to push to GCP Artifact Registry
-      - name: Configure Docker
-        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev --quiet
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker --quiet
 
-      # 5. Build Docker image
       - name: Build Docker image
         run: |
           docker build \
-            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/aivorah/app:${{ github.sha }} \
-            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/aivorah/app:latest \
+            -t asia-south1-docker.pkg.dev/aivorah-app/aivorah/aivorah-backend:${{ github.sha }} \
+            -t asia-south1-docker.pkg.dev/aivorah-app/aivorah/aivorah-backend:latest \
             .
 
-      # 6. Push image to Artifact Registry
-      - name: Push image
+      - name: Push Docker image
         run: |
-          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/aivorah/app:${{ github.sha }}
-          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/aivorah/app:latest
+          docker push --all-tags asia-south1-docker.pkg.dev/aivorah-app/aivorah/aivorah-backend
 
-      # 7. Deploy to Cloud Run
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy aivorah \
-            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/aivorah/app:${{ github.sha }} \
-            --region ${{ secrets.GCP_REGION }} \
-            --platform managed \
+          gcloud run deploy aivorah-backend \
+            --image=asia-south1-docker.pkg.dev/aivorah-app/aivorah/aivorah-backend:${{ github.sha }} \
+            --region=asia-south1 \
+            --project=aivorah-app \
+            --platform=managed \
             --allow-unauthenticated \
-            --port 8080 \
-            --memory 1Gi \
-            --cpu 1 \
-            --timeout 300 \
-            --concurrency 80 \
-            --set-env-vars "NODE_ENV=production" \
-            --set-env-vars "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" \
-            --set-env-vars "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" \
-            --set-env-vars "SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}" \
-            --set-env-vars "QDRANT_URL=${{ secrets.QDRANT_URL }}" \
-            --set-env-vars "QDRANT_API_KEY=${{ secrets.QDRANT_API_KEY }}" \
-            --set-env-vars "ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}" \
-            --set-env-vars "ELEVENLABS_AIVORAH_KEY=${{ secrets.ELEVENLABS_AIVORAH_KEY }}" \
-            --set-env-vars "CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}" \
-            --set-env-vars "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" \
-            --set-env-vars "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" \
-            --set-env-vars "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" \
-            --set-env-vars "HF_TOKEN=${{ secrets.HF_TOKEN }}"
+            --memory=2Gi \
+            --cpu=2 \
+            --set-env-vars="QDRANT_URL=${{ secrets.QDRANT_URL }},QDRANT_API_KEY=${{ secrets.QDRANT_API_KEY }},GROQ_API_KEY=${{ secrets.GROQ_API_KEY }},ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }},ELEVENLABS_AIVORAH_KEY=${{ secrets.ELEVENLABS_AIVORAH_KEY }},CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }},CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }},CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }},SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }},NEWS_API_KEY=${{ secrets.NEWS_API_KEY }},EMAIL_USER=${{ secrets.EMAIL_USER }},EMAIL_PASS=${{ secrets.EMAIL_PASS }},ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}"
 
-      # 8. Print the live URL
-      - name: Get Live URL
+      - name: Print live URL
         run: |
-          URL=$(gcloud run services describe aivorah --region ${{ secrets.GCP_REGION }} --format 'value(status.url)')
-          echo "Live URL: $URL"
-          echo "LIVE_URL=$URL" >> $GITHUB_OUTPUT
+          URL=$(gcloud run services describe aivorah-backend --region=asia-south1 --project=aivorah-app --format='value(status.url)')
+          echo "Deployed to: $URL"
