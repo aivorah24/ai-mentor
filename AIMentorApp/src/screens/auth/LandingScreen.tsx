@@ -1189,7 +1189,7 @@ const s = StyleSheet.create({
   footerCopy: { fontSize: 13, color: DIM },
 
   // ── Modal
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: WIN_W < 400 ? 12 : 20, paddingVertical: 20 },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: WIN_W < 400 ? 12 : 20, paddingVertical: 20, width: '100%', height: '100%' },
   modal: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 16, padding: WIN_W < 400 ? 18 : 36, width: '100%', maxWidth: 460, alignSelf: 'center', position: 'relative' },
   modalClose: { position: 'absolute', top: 14, right: 14, padding: 6, borderRadius: 6 },
   modalTitle: { fontSize: 24, fontWeight: '700', color: FORE, marginBottom: 6 },
