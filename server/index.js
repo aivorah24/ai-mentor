@@ -7,7 +7,16 @@ try {
   ({ initCollection, getCollectionInfo } = require('./services/qdrant'));
 } catch(e) {
   // Return error info for debugging
+  console.error('STARTUP ERROR:', e.message, e.stack);
   module.exports = (req, res) => res.status(500).json({ startup_error: e.message, stack: e.stack });
+  // Don't return — start a minimal server so Cloud Run health check passes
+  const http = require('http');
+  http.createServer((req, res) => {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ startup_error: e.message }));
+  }).listen(process.env.PORT || 3006, () => {
+    console.error('Minimal error server listening on port', process.env.PORT || 3006);
+  });
   return;
 }
 
