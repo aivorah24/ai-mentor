@@ -45,8 +45,7 @@ jobs:
             --platform=managed \
             --allow-unauthenticated \
             --memory=2Gi \
-            --cpu=2 \
-            --set-env-vars="QDRANT_URL=${{ secrets.QDRANT_URL }},QDRANT_API_KEY=${{ secrets.QDRANT_API_KEY }},GROQ_API_KEY=${{ secrets.GROQ_API_KEY }},ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }},ELEVENLABS_AIVORAH_KEY=${{ secrets.ELEVENLABS_AIVORAH_KEY }},CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }},CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }},CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }},SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }},NEWS_API_KEY=${{ secrets.NEWS_API_KEY }},EMAIL_USER=${{ secrets.EMAIL_USER }},EMAIL_PASS=${{ secrets.EMAIL_PASS }},ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}"
+            --cpu=2
 
       - name: Print live URL
         run: |
