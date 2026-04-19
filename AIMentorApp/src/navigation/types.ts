@@ -1,0 +1,61 @@
+export type DrawerParamList = {
+  Dashboard: undefined;
+  Profile: undefined;
+  LearningPaths: undefined;
+  AICoach: undefined;
+  Schedule: undefined;
+  Assignments: undefined;
+  Challenges: undefined;
+  Leaderboard: undefined;
+  Progress: undefined;
+  Rewards: undefined;
+  HelpCenter: undefined;
+  Settings: undefined;
+  VideoLesson: { topic: string; grade: string } | undefined;
+  VideoPlayer: { topic: string; grade: string } | undefined;
+  NCERTChapters: undefined;
+  SubjectTopics: { subject: string; curriculum: string; grade: string };
+  Learn5E: { topic: string; chapterId: number } | undefined;
+  MathHelper: { topic: string; chapterId: number; unit: string; subject?: string; grade?: string; curriculum?: string };
+  AIStoryteller: { topic: string; chapterId: number; unit: string; subject?: string; grade?: string; curriculum?: string };
+  DrawingBuddy: { topic: string; chapterId: number; unit: string; subject?: string; grade?: string; curriculum?: string };
+  WordWizard: { topic: string; chapterId: number; unit: string } | undefined;
+  IBPYPQuiz: { topic: string; grade: string; subject: string; curriculum?: string };
+  WorldAndYou: undefined;
+  TopicLesson: { topic: string; grade: string; subject: string; curriculum?: string };
+  BhagavathaStories: undefined;
+  StoryReader: { storyId: string; storyTitle: string };
+  DailyHabits: undefined;
+};
+
+export type ParentDrawerParamList = {
+  ParentDashboard: undefined;
+  ParentProfile: undefined;
+  ParentMyKids: undefined;
+  ParentSchedule: undefined;
+  ParentLearning: undefined;
+  ParentAssignments: undefined;
+  ParentChallenges: undefined;
+  ParentLeaderboard: undefined;
+  ParentProgress: undefined;
+  ParentControls: undefined;
+  ParentSettings: undefined;
+  ParentHelp: undefined;
+  ParentMessages: undefined;
+};
+
+export type TeacherDrawerParamList = {
+  TeacherDashboard: undefined;
+  TeacherStudents: undefined;
+  TeacherAssignments: undefined;
+  TeacherChallenges: undefined;
+  TeacherSchedule: undefined;
+  TeacherProgress: undefined;
+  TeacherLearningPaths: undefined;
+  TeacherAchievements: undefined;
+  TeacherVideoLibrary: undefined;
+  TeacherHelp: undefined;
+  TeacherSettings: undefined;
+  TeacherMessages: undefined;
+  ProjectDetails: undefined;
+};

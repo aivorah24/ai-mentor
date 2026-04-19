@@ -1,0 +1,1478 @@
+import React, { useMemo, useState, useEffect, useCallback, memo } from 'react';
+import {
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, ActivityIndicator, Modal, RefreshControl,
+  Platform, KeyboardAvoidingView, Image, Alert,
+} from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { spacing, radius } from '../../theme';
+import type { AppColors } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import ScreenLayout from '../../components/common/ScreenLayout';
+import Header from '../../components/common/Header';
+import SERVER_URL from '../../config/serverUrl';
+
+type Assignment = {
+  id: string;
+  title: string;
+  subject: string;
+  chapter: string;
+  dueDate: string;
+  type: 'assignment' | 'quiz';
+  note: string;
+  studentId: string | null;
+  createdBy: string;
+  status: 'pending' | 'completed';
+  score: number | null;
+  createdAt: string;
+  completedAt?: string | null;
+  grade?: string | null;
+  curriculum?: string | null;
+  aiFeedback?: string | null;
+  questions?: string[];
+};
+
+interface StudentItem { id: string; name: string; grade: string; curriculum?: string | null; }
+
+type StepType = 'brainstorm' | 'drawing' | 'structured_writing';
+interface TaskStep {
+  id: string;
+  type: StepType;
+  label: string;
+  instructions: string;
+  sections: string[];   // for structured_writing
+  wordBank: string[];   // for structured_writing
+}
+
+const STEP_DEFAULTS: Record<StepType, Partial<TaskStep>> = {
+  brainstorm:         { label: 'Thinking Clouds',   instructions: 'Write keywords that come to mind about the topic.', sections: [], wordBank: [] },
+  drawing:            { label: 'Draw Your Answer',  instructions: 'Draw your answer in the space below using your finger or pen.', sections: [], wordBank: [] },
+  structured_writing: { label: 'Write a Paragraph', instructions: 'Write your answer with a clear beginning, middle, and end.', sections: ['Beginning', 'Middle', 'End'], wordBank: [] },
+};
+const STEP_ICONS: Record<StepType, string> = {
+  brainstorm: 'cloud', drawing: 'edit-3', structured_writing: 'align-left',
+};
+const STEP_COLORS: Record<StepType, string> = {
+  brainstorm: '#C5BD96', drawing: '#7AADA8', structured_writing: '#5A8A70',
+};
+
+const TABS = ['All', 'Active', 'Completed'];
+const SUBJECTS = ['Mathematics', 'Science', 'English', 'Social Studies'];
+const GRADES = ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9'];
+const TYPES = ['assignment', 'quiz'];
+// Enchanting Forest palette
+const SUBJECT_COLORS: Record<string, string> = {
+  Mathematics:    '#5F8A86',
+  Science:        '#5A8A70',
+  English:        '#B8797E',
+  'Social Studies': '#8A8358',
+};
+
+function daysUntil(dateStr: string) {
+  const diff = new Date(dateStr).getTime() - Date.now();
+  const days = Math.ceil(diff / 86400000);
+  if (days < 0) return { label: `${Math.abs(days)}d overdue`, overdue: true };
+  if (days === 0) return { label: 'Due today', overdue: false };
+  return { label: `Due in ${days}d`, overdue: false };
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+export default function TeacherAssignmentsScreen({ navigation }: any) {
+  const { colors } = useTheme();
+  const { user } = useAuth();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState('All');
+  const [showModal, setShowModal] = useState(false);
+
+  // Form state
+  const [title, setTitle] = useState('');
+  const [subject, setSubject] = useState('Mathematics');
+  const [grade, setGrade] = useState('Grade 3');
+  const teacherCurriculum = user?.teaches?.[0]?.curriculum || user?.curriculum || '';
+  const [curriculum, setCurriculum] = useState(teacherCurriculum);
+  const [chapter, setChapter] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [type, setType] = useState<'assignment' | 'quiz'>('assignment');
+  const [note, setNote] = useState('');
+  const [questions, setQuestions] = useState<string[]>(['']);
+  const [successCriteria, setSuccessCriteria] = useState<string[]>(['']);
+  const [taskSteps, setTaskSteps] = useState<TaskStep[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+  const [generatingQuiz, setGeneratingQuiz] = useState(false);
+  const [generatingSteps, setGeneratingSteps] = useState(false);
+  const [stepsError, setStepsError] = useState('');
+  const [quizDifficulty, setQuizDifficulty] = useState<'easy'|'medium'|'hard'>('medium');
+  const [quizCount, setQuizCount] = useState(5);
+  const [teacherNotes, setTeacherNotes] = useState('');
+  const [docFiles, setDocFiles] = useState<{ name: string; base64: string; mime: string; url?: string }[]>([]);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [extractingQuestions, setExtractingQuestions] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [reportAssignment, setReportAssignment] = useState<Assignment | null>(null);
+
+  // Student picker
+  const [students, setStudents] = useState<StudentItem[]>([]);
+  const [assignTo, setAssignTo] = useState<'all' | 'specific'>('all');
+  const [selectedStudent, setSelectedStudent] = useState<StudentItem | null>(null);
+  const [studentSearch, setStudentSearch] = useState('');
+
+  const teacherEmail = user?.email || 'teacher@demo.com';
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`${SERVER_URL}/assignments?teacherId=${encodeURIComponent(teacherEmail)}`);
+      if (res.ok) setAssignments(await res.json());
+    } catch {/* network */} finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [teacherEmail]);
+
+  useEffect(() => { load(); }, [load]);
+
+  // Keep curriculum in sync if user profile loads after initial render
+  useEffect(() => {
+    const c = user?.teaches?.[0]?.curriculum || user?.curriculum;
+    if (c) setCurriculum(c);
+  }, [user?.curriculum, user?.teaches]);
+
+  useEffect(() => {
+    if (!teacherEmail) return;
+    fetch(`${SERVER_URL}/student/by-teacher/${encodeURIComponent(teacherEmail)}`)
+      .then(r => r.ok ? r.json() : [])
+      .then((data: StudentItem[]) => {
+        // Filter to only show students matching the teacher's curriculum
+        const tc = user?.teaches?.[0]?.curriculum || user?.curriculum || '';
+        const matched = tc
+          ? data.filter(s => !s.curriculum || s.curriculum === tc)
+          : data;
+
+        if (matched.length > 0) {
+          setStudents(matched);
+        } else {
+          // Fallback: fetch all students by curriculum from server
+          const params = tc ? `?curriculum=${encodeURIComponent(tc)}` : '';
+          fetch(`${SERVER_URL}/student/by-curriculum${params}`)
+            .then(r => r.ok ? r.json() : [])
+            .then((fallback: StudentItem[]) => setStudents(fallback))
+            .catch(() => setStudents(matched));
+        }
+      })
+      .catch(() => {});
+  }, [teacherEmail]);
+
+  const filtered = assignments.filter(a => {
+    if (activeTab === 'Active') return a.status === 'pending';
+    if (activeTab === 'Completed') return a.status === 'completed';
+    return true;
+  });
+
+  const stats = {
+    total: assignments.length,
+    active: assignments.filter(a => a.status === 'pending').length,
+    completed: assignments.filter(a => a.status === 'completed').length,
+    overdue: assignments.filter(a => a.status === 'pending' && new Date(a.dueDate) < new Date()).length,
+  };
+
+  async function createAssignment() {
+    if (!title.trim()) { setFormError('Title is required'); return; }
+    if (!dueDate.trim()) { setFormError('Due date is required'); return; }
+    if (type === 'quiz' && quizQuestions.length === 0) { setFormError('Generate quiz questions first before assigning this quiz.'); return; }
+    setFormError('');
+    setCreating(true);
+    try {
+      const res = await fetch(`${SERVER_URL}/assignments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          subject,
+          chapter: chapter.trim(),
+          dueDate,
+          type,
+          note: note.trim(),
+          studentId: assignTo === 'specific' ? (selectedStudent?.id ?? null) : null,
+          createdById: teacherEmail,
+          createdByRole: 'teacher',
+          grade,
+          curriculum,
+          questions: questions.filter(q => q.trim()),
+          successCriteria: successCriteria.filter(c => c.trim()),
+          taskSteps: taskSteps.map(s => ({ ...s })),
+          quizQuestions: quizQuestions,
+          documentUrl: docFiles[0]?.url || null,
+          documentUrls: docFiles.map(f => f.url).filter(Boolean),
+        }),
+      });
+      if (res.ok) {
+        const created = await res.json();
+        setAssignments(prev => [created, ...prev]);
+        setShowModal(false);
+        resetForm();
+      } else {
+        const err = await res.json();
+        setFormError(err.error || 'Failed to create');
+      }
+    } catch {
+      setFormError('Network error. Check server connection.');
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  function pickDoc() {
+    if (typeof document === 'undefined') return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,application/pdf';
+    input.multiple = false;
+    input.onchange = async (e: any) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setUploadingDoc(true);
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const result = ev.target?.result as string;
+        const base64 = result.split(',')[1];
+        try {
+          const res = await fetch(`${SERVER_URL}/assignments/upload-doc`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fileBase64: base64, fileName: file.name, mimeType: file.type }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            const newFile = { name: file.name, base64, mime: file.type, url: data.url };
+            setDocFiles(prev => [...prev, newFile]);
+            setUploadingDoc(false);
+            // Extract questions from every uploaded image and merge
+            if (file.type.startsWith('image/')) {
+              setExtractingQuestions(true);
+              try {
+                const eRes = await fetch(`${SERVER_URL}/assignments/extract-questions`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ fileBase64: base64, mimeType: file.type }),
+                });
+                const eData = await eRes.json();
+                if (eRes.ok && Array.isArray(eData.questions) && eData.questions.length > 0) {
+                  setQuestions(prev => {
+                    const existing = prev.filter(q => q.trim());
+                    const merged = [...existing, ...eData.questions];
+                    // deduplicate
+                    return Array.from(new Set(merged));
+                  });
+                }
+              } catch {/* silent */}
+              finally { setExtractingQuestions(false); }
+            }
+            return;
+          } else {
+            setFormError(data.error || 'Upload failed');
+          }
+        } catch { setFormError('Upload failed. Check connection.'); }
+        finally { setUploadingDoc(false); }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  }
+
+  function resetForm() {
+    setTitle(''); setChapter(''); setDueDate(''); setNote('');
+    setSubject('Mathematics'); setGrade('Grade 3'); setCurriculum(user?.curriculum || 'NCERT');
+    setType('assignment'); setQuestions(['']); setSuccessCriteria(['']); setTaskSteps([]); setQuizQuestions([]); setTeacherNotes(''); setDocFiles([]); setFormError('');
+    setAssignTo('all'); setSelectedStudent(null); setStudentSearch('');
+    setExtractingQuestions(false);
+  }
+
+  function addTaskStep(type: StepType) {
+    setTaskSteps(prev => [...prev, {
+      id: Date.now().toString(),
+      type,
+      ...STEP_DEFAULTS[type],
+    } as TaskStep]);
+  }
+  function updateTaskStep(id: string, patch: Partial<TaskStep>) {
+    setTaskSteps(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
+  }
+  function removeTaskStep(id: string) {
+    setTaskSteps(prev => prev.filter(s => s.id !== id));
+  }
+
+  async function generateSteps() {
+    const topic = (title || chapter || subject || '').trim();
+    setStepsError('');
+    if (!topic) {
+      setStepsError('Enter a title above first (e.g. "Food Chain"), then tap Generate with AI.');
+      return;
+    }
+    setGeneratingSteps(true);
+    try {
+      console.log('[generateSteps] Calling API with topic:', topic, 'grade:', grade, 'curriculum:', curriculum, 'SERVER_URL:', SERVER_URL);
+      const res = await fetch(`${SERVER_URL}/assignments/generate-steps`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, subject, grade, curriculum }),
+      });
+      const data = await res.json();
+      console.log('[generateSteps] response:', JSON.stringify(data));
+      if (!res.ok) { setStepsError(data.error || 'Server returned an error'); return; }
+      if (Array.isArray(data.steps) && data.steps.length > 0) {
+        setTaskSteps(data.steps.map((s: any) => ({
+          id: Date.now().toString() + Math.random(),
+          type: s.type as StepType,
+          label: s.label,
+          instructions: s.instructions,
+          sections: s.type === 'structured_writing' ? ['Beginning', 'Middle', 'End'] : [],
+          wordBank: [],
+        })));
+      } else {
+        setStepsError('AI returned no steps — check browser console (F12) for details.');
+      }
+    } catch (e: any) {
+      console.error('[generateSteps] fetch error:', e);
+      setStepsError(`Failed: ${e.message || 'Cannot reach server on port 3006'}`);
+    } finally {
+      setGeneratingSteps(false);
+    }
+  }
+
+  async function generateQuiz() {
+    if (!chapter.trim() && !subject.trim()) { setFormError('Enter a chapter or topic first'); return; }
+    setGeneratingQuiz(true); setFormError('');
+
+    const applyQuestions = (items: any[]) => {
+      const normalized = (items || [])
+        .map((q: any, i: number) => {
+          const question = String(q?.question || '').trim();
+          const options = Array.isArray(q?.options)
+            ? q.options.map((o: any) => String(o).replace(/^[A-D]\.\s*/i, '').trim()).filter(Boolean)
+            : [];
+          if (!question || options.length !== 4) return null;
+
+          let correct = '';
+          if (typeof q?.correct === 'number' && options[q.correct]) {
+            correct = options[q.correct];
+          } else if (typeof q?.correct === 'string') {
+            const letter = q.correct.trim().match(/^([A-D])(?:\.|\b)/i)?.[1]?.toUpperCase();
+            if (letter) {
+              const idx = 'ABCD'.indexOf(letter);
+              correct = idx >= 0 && options[idx] ? options[idx] : q.correct.replace(/^[A-D]\.\s*/i, '').trim();
+            } else {
+              correct = q.correct.replace(/^[A-D]\.\s*/i, '').trim();
+            }
+          }
+          if (!correct || !options.some((opt: string) => opt.toLowerCase() === correct.toLowerCase())) {
+            correct = options[0];
+          } else {
+            correct = options.find((opt: string) => opt.toLowerCase() === correct.toLowerCase()) || options[0];
+          }
+
+          return {
+            id: q?.id || `q${i + 1}`,
+            question,
+            type: 'mcq',
+            options,
+            correct,
+            hint: q?.hint || '',
+            explanation: q?.explanation || '',
+          };
+        })
+        .filter((q: any) => q?.question);
+
+      if (normalized.length === 0) return false;
+      setQuizQuestions(normalized);
+      setQuestions(normalized.map((q: any) => q.question));
+      return true;
+    };
+
+    const fallbackToNcertQuiz = async () => {
+      try {
+        const topic = chapter.trim() || subject.trim();
+        const fallbackPath = subject.toLowerCase().includes('science') ? '/ncert/science-quiz' : '/ncert/quiz';
+        const fallbackRes = await fetch(`${SERVER_URL}${fallbackPath}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic, context: teacherNotes.trim() }),
+        });
+        const fallbackData = await fallbackRes.json().catch(() => null);
+        if (!fallbackRes.ok || !Array.isArray(fallbackData?.questions)) return false;
+
+        const mapped = fallbackData.questions
+          .slice(0, quizCount)
+          .map((q: any, i: number) => {
+            const options = Array.isArray(q.options) ? q.options.map((o: any) => String(o)) : [];
+            const idx = typeof q.correct === 'number' ? q.correct : Number(q.correct);
+            const validIdx = Number.isInteger(idx) && idx >= 0 && idx < options.length;
+            const correct = validIdx ? options[idx] : (typeof q.correct === 'string' ? q.correct : (options[0] || ''));
+            return {
+              id: q.id || `q${i + 1}`,
+              question: String(q.question || ''),
+              type: 'mcq',
+              options,
+              correct,
+              hint: q.hint || '',
+              explanation: q.explanation || '',
+            };
+          })
+          .filter((q: any) => q.question);
+
+        if (mapped.length === 0) return false;
+        applyQuestions(mapped);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    try {
+      const res = await fetch(`${SERVER_URL}/assignments/generate-quiz`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject, chapter: chapter.trim(), grade, curriculum, difficulty: quizDifficulty, count: quizCount, teacherNotes: teacherNotes.trim() }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && Array.isArray(data?.questions)) {
+        if (applyQuestions(data.questions)) return;
+      }
+
+      // Some local servers expose /ncert/quiz but not /assignments/generate-quiz.
+      if (res.status === 404 || !data) {
+        const recovered = await fallbackToNcertQuiz();
+        if (recovered) return;
+      }
+
+      setFormError(data?.error || 'Could not generate quiz. Check chapter/topic.');
+    } catch {
+      const recovered = await fallbackToNcertQuiz();
+      if (!recovered) setFormError('Network error generating quiz.');
+    } finally {
+      setGeneratingQuiz(false);
+    }
+  }
+
+  async function markComplete(id: string) {
+    try {
+      const res = await fetch(`${SERVER_URL}/assignments/${id}/complete`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ score: null }),
+      });
+      if (res.ok) {
+        setAssignments(prev => prev.map(a => a.id === id ? { ...a, status: 'completed' } : a));
+      }
+    } catch {/* ignore */}
+  }
+
+  async function deleteAssignment(id: string) {
+    try {
+      await fetch(`${SERVER_URL}/assignments/${id}`, { method: 'DELETE' });
+      setAssignments(prev => prev.filter(a => a.id !== id));
+    } catch {/* ignore */}
+  }
+
+  return (
+    <ScreenLayout>
+      <View style={styles.screen}>
+        <Header
+          title="Assignments"
+          subtitle="Manage and track student assignments"
+          onMenuPress={() => navigation.openDrawer()}
+        />
+
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
+        >
+          {/* Stats Row */}
+          <View style={styles.statsRow}>
+            {[
+              { label: 'Total', value: stats.total, color: colors.primary },
+              { label: 'Active', value: stats.active, color: colors.accentYellow },
+              { label: 'Completed', value: stats.completed, color: colors.accentGreen },
+              { label: 'Overdue', value: stats.overdue, color: colors.accentRed },
+            ].map((s) => (
+              <View key={s.label} style={styles.statCard}>
+                <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
+                <Text style={styles.statLabel}>{s.label}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Create button + Tabs row */}
+          <View style={styles.actionsRow}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
+              {TABS.map((tab) => (
+                <TouchableOpacity
+                  key={tab}
+                  style={[styles.tab, activeTab === tab && styles.tabActive]}
+                  onPress={() => setActiveTab(tab)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity style={styles.createBtn} onPress={() => setShowModal(true)} activeOpacity={0.85}>
+              <Feather name="plus" size={15} color="#fff" />
+              <Text style={styles.createBtnText}>New</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Assignment List */}
+          {loading ? (
+            <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
+          ) : filtered.length === 0 ? (
+            <View style={styles.empty}>
+              <Feather name="check-square" size={36} color={colors.textDim} />
+              <Text style={styles.emptyTitle}>No assignments yet</Text>
+              <Text style={styles.emptyText}>Tap "New" to create your first assignment</Text>
+            </View>
+          ) : (
+            filtered.map((a) => {
+              const due = daysUntil(a.dueDate);
+              const subjectColor = SUBJECT_COLORS[a.subject] || colors.primary;
+              return (
+                <View key={a.id} style={styles.card}>
+                  <View style={[styles.cardAccent, { backgroundColor: subjectColor }]} />
+                  <View style={styles.cardBody}>
+                    {/* Header */}
+                    <View style={styles.cardTop}>
+                      <View style={{ flex: 1 }}>
+                        <View style={styles.cardMeta}>
+                          <View style={[styles.typePill, { backgroundColor: subjectColor + '20', borderColor: subjectColor + '50' }]}>
+                            <Text style={[styles.typeText, { color: subjectColor }]}>{a.type}</Text>
+                          </View>
+                          <Text style={styles.subjectLabel}>{a.subject}</Text>
+                          {a.grade ? <Text style={styles.subjectLabel}>{a.grade}</Text> : null}
+                          {a.curriculum ? <Text style={styles.subjectLabel}>{a.curriculum}</Text> : null}
+                          {a.studentId === null && (
+                            <View style={styles.broadcastPill}>
+                              <Feather name="users" size={9} color={colors.primary} />
+                              <Text style={styles.broadcastText}>All students</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text style={styles.cardTitle}>{a.title}</Text>
+                        {a.chapter ? <Text style={styles.cardChapter}>{a.chapter}</Text> : null}
+                      </View>
+                      {a.status === 'completed' ? (
+                        <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                          {a.score != null && (
+                            <View style={[styles.completedBadge, { backgroundColor: subjectColor + '20', borderColor: subjectColor + '40' }]}>
+                              <Text style={[styles.statusText, { color: subjectColor, fontSize: 13, fontWeight: '800' }]}>{a.score}%</Text>
+                            </View>
+                          )}
+                          <View style={styles.completedBadge}>
+                            <Feather name="check" size={12} color={colors.accentGreen} />
+                            <Text style={[styles.statusText, { color: colors.accentGreen }]}>Done</Text>
+                          </View>
+                        </View>
+                      ) : (
+                        <View style={[styles.pendingBadge, due.overdue && styles.overdueBadge]}>
+                          <Feather name="clock" size={12} color={due.overdue ? colors.accentRed : colors.accentYellow} />
+                          <Text style={[styles.statusText, { color: due.overdue ? colors.accentRed : colors.accentYellow }]}>{due.label}</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Footer */}
+                    <View style={styles.cardFooter}>
+                      <Text style={styles.dueDateText}>
+                        <Feather name="calendar" size={11} /> {formatDate(a.dueDate)}
+                      </Text>
+                      <View style={styles.cardActions}>
+                        {a.status === 'completed' && a.aiFeedback && (
+                          <TouchableOpacity style={[styles.actionBtn, { borderColor: subjectColor + '50', backgroundColor: subjectColor + '12' }]} onPress={() => setReportAssignment(a)} activeOpacity={0.75}>
+                            <Feather name="bar-chart-2" size={13} color={subjectColor} />
+                            <Text style={[styles.actionBtnLabel, { color: subjectColor }]}>Report</Text>
+                          </TouchableOpacity>
+                        )}
+                        {a.status === 'pending' && (
+                          <TouchableOpacity style={styles.actionBtn} onPress={() => markComplete(a.id)} activeOpacity={0.75}>
+                            <Feather name="check" size={13} color={colors.accentGreen} />
+                          </TouchableOpacity>
+                        )}
+                        <TouchableOpacity style={styles.actionBtn} onPress={() => deleteAssignment(a.id)} activeOpacity={0.75}>
+                          <Feather name="trash-2" size={13} color={colors.accentRed} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    {a.note ? <Text style={styles.noteText}>{a.note}</Text> : null}
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </ScrollView>
+
+        {/* AI Report Modal */}
+        {reportAssignment && (
+          <AIReportModal
+            assignment={reportAssignment}
+            colors={colors}
+            onClose={() => setReportAssignment(null)}
+          />
+        )}
+
+        {/* Create Assignment Modal */}
+        <Modal visible={showModal} animationType="slide" transparent onRequestClose={() => { setShowModal(false); resetForm(); }}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalSheet}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Create Assignment</Text>
+                  <TouchableOpacity onPress={() => { setShowModal(false); resetForm(); }} activeOpacity={0.75}>
+                    <Feather name="x" size={20} color={colors.textMuted} />
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalContent}>
+                  <Text style={styles.fieldLabel}>Title *</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. Chapter 5 Worksheet"
+                    placeholderTextColor={colors.textDim}
+                    value={title}
+                    onChangeText={setTitle}
+                  />
+
+                  <Text style={styles.fieldLabel}>Subject</Text>
+                  <View style={styles.chipRow}>
+                    {SUBJECTS.map((s) => (
+                      <TouchableOpacity
+                        key={s}
+                        style={[styles.chip, subject === s && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
+                        onPress={() => setSubject(s)}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={[styles.chipText, subject === s && { color: colors.primary }]}>{s}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text style={styles.fieldLabel}>Grade</Text>
+                  <View style={styles.chipRow}>
+                    {GRADES.map((g) => (
+                      <TouchableOpacity
+                        key={g}
+                        style={[styles.chip, grade === g && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
+                        onPress={() => setGrade(g)}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={[styles.chipText, grade === g && { color: colors.primary }]}>{g}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text style={styles.fieldLabel}>Curriculum</Text>
+                  <View style={styles.chipRow}>
+                    <View style={[styles.chip, { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}>
+                      <Text style={[styles.chipText, { color: colors.primary }]}>{teacherCurriculum || curriculum}</Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.fieldLabel}>Chapter / Topic</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. Fractions and Decimals"
+                    placeholderTextColor={colors.textDim}
+                    value={chapter}
+                    onChangeText={setChapter}
+                  />
+
+                  <Text style={styles.fieldLabel}>Due Date *</Text>
+                  {Platform.OS === 'web' ? (
+                    <View style={[styles.input, { justifyContent: 'center' }]}>
+                      <input
+                        type="date"
+                        value={dueDate}
+                        onChange={(e: any) => setDueDate(e.target.value)}
+                        onClick={(e: any) => { try { e.target.showPicker?.(); } catch (_) {} }}
+                        style={{ border: 'none', outline: 'none', background: 'transparent', width: '100%', fontSize: 14, color: colors.textMain, fontFamily: 'inherit', cursor: 'pointer' }}
+                      />
+                    </View>
+                  ) : (
+                    <TextInput
+                      style={styles.input}
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor={colors.textDim}
+                      value={dueDate}
+                      onChangeText={setDueDate}
+                      keyboardType="numeric"
+                    />
+                  )}
+
+                  <Text style={styles.fieldLabel}>Type</Text>
+                  <View style={styles.chipRow}>
+                    {TYPES.map((t) => (
+                      <TouchableOpacity
+                        key={t}
+                        style={[styles.chip, type === t && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
+                        onPress={() => setType(t as any)}
+                        activeOpacity={0.75}
+                      >
+                        <Feather name={t === 'quiz' ? 'help-circle' : 'file-text'} size={13} color={type === t ? colors.primary : colors.textMuted} />
+                        <Text style={[styles.chipText, type === t && { color: colors.primary }]}>{t}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  {/* ── AI Quiz Generator (only when type = quiz) ── */}
+                  {type === 'quiz' && (
+                    <View style={{ gap: 10, padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary + '40', backgroundColor: colors.primaryGlow }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Feather name="zap" size={16} color={colors.primary} />
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: colors.primary }}>Generate Quiz with AI</Text>
+                        <Text style={{ fontSize: 11, color: colors.textDim }}>from textbook content</Text>
+                      </View>
+
+                      {/* Difficulty */}
+                      <View>
+                        <Text style={[styles.fieldLabel, { marginBottom: 6 }]}>Difficulty</Text>
+                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                          {(['easy','medium','hard'] as const).map(d => (
+                            <TouchableOpacity key={d} onPress={() => setQuizDifficulty(d)} activeOpacity={0.75}
+                              style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
+                                borderColor: quizDifficulty === d ? colors.primary : colors.borderColor,
+                                backgroundColor: quizDifficulty === d ? colors.primaryGlow : 'transparent' }}>
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: quizDifficulty === d ? colors.primary : colors.textMuted, textTransform: 'capitalize' }}>{d}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* Question count */}
+                      <View>
+                        <Text style={[styles.fieldLabel, { marginBottom: 6 }]}>Number of Questions</Text>
+                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                          {[3, 5, 8, 10].map(n => (
+                            <TouchableOpacity key={n} onPress={() => setQuizCount(n)} activeOpacity={0.75}
+                              style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
+                                borderColor: quizCount === n ? colors.primary : colors.borderColor,
+                                backgroundColor: quizCount === n ? colors.primaryGlow : 'transparent' }}>
+                              <Text style={{ fontSize: 13, fontWeight: '700', color: quizCount === n ? colors.primary : colors.textMuted }}>{n}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* Teacher notes */}
+                      <Text style={styles.fieldLabel}>Additional Instructions for AI (optional)</Text>
+                      <TextInput
+                        style={[styles.input, styles.inputMulti]}
+                        placeholder="e.g. Focus on word problems, include a question about fractions, avoid division..."
+                        placeholderTextColor={colors.textDim}
+                        value={teacherNotes}
+                        onChangeText={setTeacherNotes}
+                        multiline numberOfLines={2}
+                      />
+
+                      {/* Generate button */}
+                      <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+                          padding: 14, borderRadius: 12, backgroundColor: generatingQuiz ? colors.borderColor : colors.primary }}
+                        onPress={generateQuiz}
+                        activeOpacity={0.85}
+                        disabled={generatingQuiz}
+                      >
+                        {generatingQuiz
+                          ? <ActivityIndicator size="small" color="#fff" />
+                          : <Feather name="zap" size={16} color="#fff" />}
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#fff' }}>
+                          {generatingQuiz ? 'Generating from textbook...' : `Generate ${quizCount} Questions`}
+                        </Text>
+                      </TouchableOpacity>
+
+                      {/* Generated questions preview */}
+                      {quizQuestions.length > 0 && (
+                        <View style={{ gap: 8, marginTop: 4 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Feather name="check-circle" size={14} color={colors.accentGreen} />
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.accentGreen }}>{quizQuestions.length} questions generated from textbook</Text>
+                          </View>
+                          {quizQuestions.map((q, i) => (
+                            <View key={q.id || i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+                              padding: 10, borderRadius: 10, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor }}>
+                              <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: q.type === 'mcq' ? colors.primary : colors.accentYellow, alignItems: 'center', justifyContent: 'center' }}>
+                                <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' }}>{i+1}</Text>
+                              </View>
+                              <View style={{ flex: 1 }}>
+                                <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{q.question}</Text>
+                                <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 2 }}>
+                                  {q.type === 'mcq' ? `MCQ · ${q.options?.length || 4} options` : 'Short answer'}
+                                </Text>
+                              </View>
+                              <TouchableOpacity onPress={() => setQuizQuestions(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.7}>
+                                <Feather name="trash-2" size={14} color={colors.accentRed} />
+                              </TouchableOpacity>
+                            </View>
+                          ))}
+                          <TouchableOpacity onPress={generateQuiz} activeOpacity={0.75}
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', paddingVertical: 4 }}>
+                            <Feather name="refresh-cw" size={12} color={colors.textDim} />
+                            <Text style={{ fontSize: 12, color: colors.textDim }}>Regenerate</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  )}
+
+                  {/* ── Task Steps ── */}
+                  <View style={{ marginTop: 4 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.fieldLabel}>Task Steps</Text>
+                        <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>Build a scaffolded assignment: Brainstorm → Draw → Write</Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={generateSteps}
+                        disabled={generatingSteps}
+                        activeOpacity={0.8}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10,
+                          borderRadius: 20, backgroundColor: generatingSteps ? colors.borderColor : '#10b981',
+                          opacity: generatingSteps ? 0.7 : 1 }}
+                      >
+                        {generatingSteps
+                          ? <ActivityIndicator size="small" color="#fff" />
+                          : <Feather name="cpu" size={13} color="#fff" />}
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#fff' }}>
+                          {generatingSteps ? 'Generating...' : 'Generate with AI'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    {!!stepsError && (
+                      <View style={{ marginTop: 6, padding: 10, borderRadius: 8, backgroundColor: '#ef444418', borderWidth: 1, borderColor: '#ef444440' }}>
+                        <Text style={{ fontSize: 12, color: '#ef4444' }}>{stepsError}</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Step type picker */}
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {(['brainstorm','drawing','structured_writing'] as StepType[]).map(type => (
+                      <TouchableOpacity
+                        key={type}
+                        onPress={() => addTaskStep(type)}
+                        activeOpacity={0.75}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: STEP_COLORS[type] + '60', backgroundColor: STEP_COLORS[type] + '12' }}
+                      >
+                        <Feather name={STEP_ICONS[type] as any} size={13} color={STEP_COLORS[type]} />
+                        <Text style={{ fontSize: 12, color: STEP_COLORS[type], fontWeight: '600' }}>
+                          + {type === 'brainstorm' ? 'Brainstorm' : type === 'drawing' ? 'Drawing' : 'Writing'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  {/* Existing steps */}
+                  {taskSteps.map((step, idx) => (
+                    <View key={step.id} style={{ borderWidth: 1, borderColor: STEP_COLORS[step.type] + '40', borderRadius: 12, padding: 12, gap: 8, backgroundColor: STEP_COLORS[step.type] + '06' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: STEP_COLORS[step.type], alignItems: 'center', justifyContent: 'center' }}>
+                          <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>{idx + 1}</Text>
+                        </View>
+                        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Feather name={STEP_ICONS[step.type] as any} size={13} color={STEP_COLORS[step.type]} />
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: STEP_COLORS[step.type], textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                            {step.type === 'brainstorm' ? 'Brainstorm' : step.type === 'drawing' ? 'Drawing' : step.type === 'structured_writing' ? 'Structured Writing' : 'Photo Upload'}
+                          </Text>
+                        </View>
+                        <TouchableOpacity onPress={() => removeTaskStep(step.id)} activeOpacity={0.7}>
+                          <Feather name="x" size={16} color={colors.accentRed} />
+                        </TouchableOpacity>
+                      </View>
+
+                      <TextInput
+                        style={[styles.input, { borderColor: STEP_COLORS[step.type] + '40' }]}
+                        placeholder="Step label..."
+                        placeholderTextColor={colors.textDim}
+                        value={step.label}
+                        onChangeText={t => updateTaskStep(step.id, { label: t })}
+                      />
+                      <TextInput
+                        style={[styles.input, styles.inputMulti, { borderColor: STEP_COLORS[step.type] + '40' }]}
+                        placeholder="Instructions for student..."
+                        placeholderTextColor={colors.textDim}
+                        value={step.instructions}
+                        onChangeText={t => updateTaskStep(step.id, { instructions: t })}
+                        multiline
+                        numberOfLines={2}
+                      />
+
+                      {step.type === 'structured_writing' && (
+                        <>
+                          <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '600' }}>Sections</Text>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                            {step.sections.map((sec, si) => (
+                              <View key={si} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: STEP_COLORS[step.type] + '18', borderWidth: 1, borderColor: STEP_COLORS[step.type] + '40' }}>
+                                <Text style={{ fontSize: 12, color: STEP_COLORS[step.type], fontWeight: '600' }}>{sec}</Text>
+                                <TouchableOpacity onPress={() => updateTaskStep(step.id, { sections: step.sections.filter((_, j) => j !== si) })} activeOpacity={0.7}>
+                                  <Feather name="x" size={10} color={STEP_COLORS[step.type]} />
+                                </TouchableOpacity>
+                              </View>
+                            ))}
+                            <TouchableOpacity
+                              onPress={() => {
+                                const name = `Section ${step.sections.length + 1}`;
+                                updateTaskStep(step.id, { sections: [...step.sections, name] });
+                              }}
+                              activeOpacity={0.75}
+                              style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, borderColor: STEP_COLORS[step.type] + '40', borderStyle: 'dashed' }}
+                            >
+                              <Text style={{ fontSize: 11, color: STEP_COLORS[step.type] }}>+ Section</Text>
+                            </TouchableOpacity>
+                          </View>
+
+                          <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '600', marginTop: 4 }}>Word Bank</Text>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                            {step.wordBank.map((w, wi) => (
+                              <View key={wi} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: colors.borderColor }}>
+                                <Text style={{ fontSize: 12, color: colors.textMain, fontWeight: '600' }}>{w}</Text>
+                                <TouchableOpacity onPress={() => updateTaskStep(step.id, { wordBank: step.wordBank.filter((_, j) => j !== wi) })} activeOpacity={0.7}>
+                                  <Feather name="x" size={10} color={colors.textDim} />
+                                </TouchableOpacity>
+                              </View>
+                            ))}
+                            <TextInput
+                              style={{ fontSize: 12, color: colors.textMain, minWidth: 80, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, borderColor: colors.borderColor, backgroundColor: colors.bgDark }}
+                              placeholder="Add word..."
+                              placeholderTextColor={colors.textDim}
+                              returnKeyType="done"
+                              onSubmitEditing={(e) => {
+                                const w = e.nativeEvent.text.trim();
+                                if (w) updateTaskStep(step.id, { wordBank: [...step.wordBank, w] });
+                              }}
+                            />
+                          </View>
+                        </>
+                      )}
+                    </View>
+                  ))}
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={styles.fieldLabel}>Questions for Students</Text>
+                    {questions.length < 10 && (
+                      <TouchableOpacity
+                        onPress={() => setQuestions(prev => [...prev, ''])}
+                        activeOpacity={0.75}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                      >
+                        <Feather name="plus-circle" size={14} color={colors.primary} />
+                        <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>Add</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  {questions.map((q, i) => (
+                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <TextInput
+                        style={[styles.input, { flex: 1 }]}
+                        placeholder={`Question ${i + 1}...`}
+                        placeholderTextColor={colors.textDim}
+                        value={q}
+                        onChangeText={(t) => setQuestions(prev => prev.map((x, j) => j === i ? t : x))}
+                      />
+                      {questions.length > 1 && (
+                        <TouchableOpacity onPress={() => setQuestions(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.75}>
+                          <Feather name="trash-2" size={16} color={colors.accentRed} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ))}
+
+                  {/* ── Success Criteria ── */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.fieldLabel}>Success Criteria</Text>
+                      <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
+                        If visible in the worksheet, AI will auto-detect. Add here if not on worksheet.
+                      </Text>
+                    </View>
+                    {successCriteria.length < 10 && (
+                      <TouchableOpacity
+                        onPress={() => setSuccessCriteria(prev => [...prev, ''])}
+                        activeOpacity={0.75}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 8 }}
+                      >
+                        <Feather name="plus-circle" size={14} color={colors.primary} />
+                        <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>Add</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  {successCriteria.map((c, i) => (
+                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <View style={{ width: 20, height: 20, borderRadius: 4, borderWidth: 1.5, borderColor: colors.primary + '60', alignItems: 'center', justifyContent: 'center' }}>
+                        <Feather name="check" size={11} color={colors.primary} />
+                      </View>
+                      <TextInput
+                        style={[styles.input, { flex: 1 }]}
+                        placeholder={`e.g. Wrote a clear paragraph with beginning, middle, end`}
+                        placeholderTextColor={colors.textDim}
+                        value={c}
+                        onChangeText={(t) => setSuccessCriteria(prev => prev.map((x, j) => j === i ? t : x))}
+                      />
+                      {successCriteria.length > 1 && (
+                        <TouchableOpacity onPress={() => setSuccessCriteria(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.75}>
+                          <Feather name="trash-2" size={16} color={colors.accentRed} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ))}
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={styles.fieldLabel}>Assignment Pages / Documents</Text>
+                    {docFiles.length > 0 && <Text style={{ fontSize: 11, color: colors.textDim }}>{docFiles.length} file{docFiles.length > 1 ? 's' : ''}</Text>}
+                  </View>
+
+                  {/* Uploaded image thumbnails */}
+                  {docFiles.length > 0 && (
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                      {docFiles.map((f, idx) => (
+                        <View key={idx} style={{ width: 80, height: 80, borderRadius: 8, overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: colors.primary }}>
+                          {f.mime.startsWith('image/') ? (
+                            <Image source={{ uri: `data:${f.mime};base64,${f.base64}` }} style={{ width: 80, height: 80 }} resizeMode="cover" />
+                          ) : (
+                            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primaryGlow }}>
+                              <Feather name="file-text" size={24} color={colors.primary} />
+                            </View>
+                          )}
+                          <View style={{ position: 'absolute', top: 2, left: 4 }}>
+                            <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff', textShadowColor: '#000', textShadowRadius: 4 }}>P{idx + 1}</Text>
+                          </View>
+                          <TouchableOpacity
+                            style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, borderRadius: 9, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' }}
+                            onPress={() => { setDocFiles(prev => prev.filter((_, i) => i !== idx)); if (idx === 0) setQuestions(['']); }}
+                            activeOpacity={0.8}
+                          >
+                            <Feather name="x" size={10} color="#fff" />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Add more button */}
+                  <TouchableOpacity
+                    style={[styles.uploadDocBtn, { borderColor: colors.borderColor }]}
+                    onPress={pickDoc}
+                    activeOpacity={0.8}
+                    disabled={uploadingDoc || extractingQuestions}
+                  >
+                    {uploadingDoc ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : extractingQuestions ? (
+                      <ActivityIndicator size="small" color={colors.accentYellow} />
+                    ) : (
+                      <Feather name="plus-circle" size={18} color={colors.primary} />
+                    )}
+                    <Text style={[styles.uploadDocText, { color: colors.primary }]}>
+                      {uploadingDoc ? 'Uploading...' : extractingQuestions ? 'Extracting questions...' : docFiles.length === 0 ? 'Upload worksheet (image or PDF)' : 'Add another page'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <Text style={styles.fieldLabel}>Note (optional)</Text>
+                  <TextInput
+                    style={[styles.input, styles.inputMulti]}
+                    placeholder="Additional instructions for students..."
+                    placeholderTextColor={colors.textDim}
+                    value={note}
+                    onChangeText={setNote}
+                    multiline
+                    numberOfLines={3}
+                  />
+
+                  {/* Assign to */}
+                  <Text style={styles.fieldLabel}>Assign to</Text>
+                  <View style={styles.chipRow}>
+                    <TouchableOpacity
+                      style={[styles.chip, assignTo === 'all' && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
+                      onPress={() => { setAssignTo('all'); setSelectedStudent(null); }}
+                      activeOpacity={0.75}
+                    >
+                      <Feather name="users" size={13} color={assignTo === 'all' ? colors.primary : colors.textMuted} />
+                      <Text style={[styles.chipText, assignTo === 'all' && { color: colors.primary }]}>All students</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.chip, assignTo === 'specific' && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
+                      onPress={() => setAssignTo('specific')}
+                      activeOpacity={0.75}
+                    >
+                      <Feather name="user" size={13} color={assignTo === 'specific' ? colors.primary : colors.textMuted} />
+                      <Text style={[styles.chipText, assignTo === 'specific' && { color: colors.primary }]}>Specific student</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {assignTo === 'specific' && (
+                    <View style={styles.studentPickerBox}>
+                      {selectedStudent ? (
+                        <TouchableOpacity style={styles.selectedStudentChip} onPress={() => setSelectedStudent(null)} activeOpacity={0.7}>
+                          <Feather name="user" size={13} color={colors.primary} />
+                          <Text style={styles.selectedStudentName}>{selectedStudent.name}</Text>
+                          <Text style={styles.selectedStudentGrade}>{selectedStudent.grade}</Text>
+                          <Feather name="x" size={13} color={colors.textDim} />
+                        </TouchableOpacity>
+                      ) : (
+                        <>
+                          <TextInput
+                            style={styles.studentSearch}
+                            placeholder="Search student by name..."
+                            placeholderTextColor={colors.textDim}
+                            value={studentSearch}
+                            onChangeText={setStudentSearch}
+                          />
+                          <ScrollView style={styles.studentList} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+                            {students
+                              .filter(s => {
+                                const matchSearch = s.name?.toLowerCase().includes(studentSearch.toLowerCase());
+                                // Only show students whose curriculum matches the teacher's curriculum
+                                const matchCurriculum = !teacherCurriculum || !s.curriculum || s.curriculum === teacherCurriculum;
+                                return matchSearch && matchCurriculum;
+                              })
+                              .map(s => (
+                                <TouchableOpacity
+                                  key={s.id}
+                                  style={styles.studentRow}
+                                  onPress={() => { setSelectedStudent(s); setStudentSearch(''); }}
+                                  activeOpacity={0.7}
+                                >
+                                  <View style={styles.studentAvatar}>
+                                    <Text style={styles.studentAvatarText}>{s.name?.[0] ?? '?'}</Text>
+                                  </View>
+                                  <View style={{ flex: 1 }}>
+                                    <Text style={styles.studentRowName}>{s.name}</Text>
+                                    <Text style={styles.studentRowGrade}>{s.grade}</Text>
+                                  </View>
+                                  <Feather name="chevron-right" size={14} color={colors.textDim} />
+                                </TouchableOpacity>
+                              ))}
+                          </ScrollView>
+                        </>
+                      )}
+                    </View>
+                  )}
+
+                  {assignTo === 'all' && (
+                    <View style={styles.broadcastNote}>
+                      <Feather name="info" size={13} color={colors.primary} />
+                      <Text style={styles.broadcastNoteText}>This assignment will be sent to all your students.</Text>
+                    </View>
+                  )}
+
+                  {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
+
+                  <TouchableOpacity style={styles.submitBtn} onPress={createAssignment} activeOpacity={0.85} disabled={creating}>
+                    {creating ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <>
+                        <Feather name="send" size={15} color="#fff" />
+                        <Text style={styles.submitBtnText}>Create Assignment</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
+      </View>
+    </ScreenLayout>
+  );
+}
+
+const makeStyles = (c: AppColors) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: c.bgDark },
+  scroll: { flex: 1 },
+  content: { padding: spacing.xl, paddingBottom: 48, gap: spacing.lg },
+
+  statsRow: { flexDirection: 'row', gap: spacing.sm },
+  statCard: {
+    flex: 1, backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: radius.lg, padding: spacing.md, alignItems: 'center', gap: 2,
+  },
+  statValue: { fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
+  statLabel: { fontSize: 10, color: c.textDim, textAlign: 'center', fontWeight: '500' },
+
+  actionsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  tabs: { gap: spacing.sm },
+  tab: {
+    paddingHorizontal: spacing.md, paddingVertical: 8,
+    borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor,
+    backgroundColor: c.cardDark,
+  },
+  tabActive: { backgroundColor: c.primaryGlow, borderColor: c.primary },
+  tabText: { fontSize: 13, fontWeight: '600', color: c.textMuted },
+  tabTextActive: { color: c.primary },
+  createBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: c.primary, paddingHorizontal: spacing.md, paddingVertical: 9,
+    borderRadius: radius.md,
+  },
+  createBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
+
+  empty: { alignItems: 'center', gap: 8, paddingTop: 40, paddingBottom: 20 },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: c.textMain },
+  emptyText: { fontSize: 13, color: c.textDim },
+
+  card: {
+    backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: radius.xl, overflow: 'hidden', flexDirection: 'row',
+  },
+  cardAccent: { width: 4 },
+  cardBody: { flex: 1, padding: spacing.lg, gap: spacing.sm },
+  cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
+  typePill: {
+    paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, borderWidth: 1,
+  },
+  typeText: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
+  subjectLabel: { fontSize: 11, color: c.textDim, fontWeight: '600' },
+  broadcastPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: c.primaryGlow, borderRadius: 6,
+    paddingHorizontal: 6, paddingVertical: 2,
+  },
+  broadcastText: { fontSize: 9, color: c.primary, fontWeight: '700' },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: c.textMain },
+  cardChapter: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+
+  completedBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: c.accentGreen + '18', borderRadius: 8,
+    paddingHorizontal: 8, paddingVertical: 4,
+  },
+  pendingBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: c.accentYellow + '18', borderRadius: 8,
+    paddingHorizontal: 8, paddingVertical: 4,
+  },
+  overdueBadge: { backgroundColor: c.accentRed + '18' },
+  statusText: { fontSize: 10, fontWeight: '700' },
+
+  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  dueDateText: { fontSize: 12, color: c.textDim },
+  cardActions: { flexDirection: 'row', gap: spacing.sm },
+  actionBtn: {
+    height: 28, paddingHorizontal: 8, borderRadius: 8,
+    backgroundColor: c.borderColor, alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row', gap: 4, borderWidth: 1, borderColor: c.borderColor,
+  },
+  actionBtnLabel: { fontSize: 11, fontWeight: '700' },
+  noteText: { fontSize: 12, color: c.textDim, fontStyle: 'italic', lineHeight: 18 },
+
+  // Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  modalSheet: {
+    backgroundColor: c.cardDark, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    maxHeight: '90%', borderWidth: 1, borderColor: c.borderColor,
+  },
+  modalHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    padding: spacing.xl, borderBottomWidth: 1, borderBottomColor: c.borderColor,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: c.textMain },
+  modalContent: { padding: spacing.xl, gap: spacing.md, paddingBottom: 40 },
+
+  fieldLabel: { fontSize: 12, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  input: {
+    backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 12,
+    color: c.textMain, fontSize: 14,
+  },
+  inputMulti: { height: 80, textAlignVertical: 'top', paddingTop: 12 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.md,
+    borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark,
+  },
+  chipText: { fontSize: 13, fontWeight: '600', color: c.textMuted },
+  uploadDocBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.borderColor,
+    borderRadius: radius.md, padding: spacing.md,
+    backgroundColor: c.bgDark,
+  },
+  uploadDocText: { fontSize: 13, fontWeight: '500', color: c.textMuted, flex: 1 },
+  broadcastNote: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: c.primaryGlow, borderRadius: radius.md,
+    padding: spacing.md, borderWidth: 1, borderColor: c.primary + '30',
+  },
+  broadcastNoteText: { fontSize: 12, color: c.primary, flex: 1 },
+  errorText: { fontSize: 13, color: c.accentRed, fontWeight: '600' },
+  submitBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: c.primary, padding: 16, borderRadius: radius.md, marginTop: spacing.sm,
+  },
+  submitBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  // Student picker
+  studentPickerBox: { borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, overflow: 'hidden' },
+  studentSearch: {
+    backgroundColor: c.bgDark, borderBottomWidth: 1, borderBottomColor: c.borderColor,
+    padding: spacing.md, color: c.textMain, fontSize: 13,
+  },
+  studentList:          { maxHeight: 160 },
+  studentRow: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md,
+    borderBottomWidth: 1, borderBottomColor: c.borderColor + '60',
+  },
+  studentAvatar: {
+    width: 30, height: 30, borderRadius: 15, backgroundColor: c.primary + '30',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  studentAvatarText:    { fontSize: 13, fontWeight: '700', color: c.primary },
+  studentRowName:       { fontSize: 13, fontWeight: '600', color: c.textMain },
+  studentRowGrade:      { fontSize: 11, color: c.textDim },
+  selectedStudentChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    padding: spacing.md, backgroundColor: c.primary + '14',
+  },
+  selectedStudentName:  { fontSize: 13, fontWeight: '600', color: c.textMain, flex: 1 },
+  selectedStudentGrade: { fontSize: 11, color: c.textDim },
+});
+
+// ── AI Report Modal (teacher view) ────────────────────────────────────────────
+
+const SUBJECT_COLORS_MAP: Record<string, string> = {
+  Mathematics: '#818CF8', Science: '#34D399', English: '#FBBF24', 'Social Studies': '#22D3EE',
+};
+
+function AIReportModal({ assignment, colors, onClose }: { assignment: Assignment; colors: AppColors; onClose: () => void }) {
+  const color = SUBJECT_COLORS_MAP[assignment.subject] || colors.primary;
+
+  let feedbackText = '';
+  let stamp = '';
+  let wellDone = '';
+  let improve = '';
+  let perQuestion: any[] = [];
+  try {
+    const parsed = JSON.parse(assignment.aiFeedback || '{}');
+    feedbackText  = parsed.text        || '';
+    stamp         = parsed.stamp       || '';
+    wellDone      = parsed.wellDone    || '';
+    improve       = parsed.improve     || '';
+    perQuestion   = Array.isArray(parsed.perQuestion) ? parsed.perQuestion : [];
+  } catch {
+    feedbackText = assignment.aiFeedback || '';
+  }
+
+  return (
+    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: colors.cardDark, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '92%', borderWidth: 1, borderBottomWidth: 0, borderColor: colors.borderColor }}>
+          {/* Header */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: colors.borderColor, gap: 12 }}>
+            <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: color + '20', alignItems: 'center', justifyContent: 'center' }}>
+              <Feather name="bar-chart-2" size={18} color={color} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textMain }} numberOfLines={1}>{assignment.title}</Text>
+              <Text style={{ fontSize: 12, color: colors.textMuted }}>AI Assessment Report</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
+              <Feather name="x" size={22} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 48 }}>
+            {/* Score + Stamp */}
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={{ flex: 1, alignItems: 'center', padding: 20, borderRadius: 14, backgroundColor: color + '12', borderWidth: 1, borderColor: color + '30' }}>
+                <Text style={{ fontSize: 42, fontWeight: '900', color, letterSpacing: -1 }}>
+                  {assignment.score != null ? `${assignment.score}%` : '--'}
+                </Text>
+                <Text style={{ fontSize: 13, fontWeight: '700', color, marginTop: 4 }}>Overall Score</Text>
+              </View>
+              {stamp ? (
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 14, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor }}>
+                  <Feather name="award" size={24} color={color} />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color, textAlign: 'center', marginTop: 8 }}>{stamp}</Text>
+                </View>
+              ) : null}
+            </View>
+
+            {/* Overall feedback */}
+            {feedbackText ? (
+              <View style={{ backgroundColor: colors.bgDark, borderRadius: 12, padding: 16, gap: 6 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8 }}>Overall Feedback</Text>
+                <Text style={{ fontSize: 14, color: colors.textMain, lineHeight: 22 }}>{feedbackText}</Text>
+              </View>
+            ) : null}
+
+            {/* Well done + Improve */}
+            {wellDone ? (
+              <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.accentGreen + '40', backgroundColor: colors.accentGreen + '08' }}>
+                <Feather name="check-circle" size={16} color={colors.accentGreen} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accentGreen, textTransform: 'uppercase' }}>Strength</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>{wellDone}</Text>
+                </View>
+              </View>
+            ) : null}
+            {improve ? (
+              <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.accentYellow + '40', backgroundColor: colors.accentYellow + '08' }}>
+                <Feather name="target" size={16} color={colors.accentYellow} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accentYellow, textTransform: 'uppercase' }}>Needs Improvement</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>{improve}</Text>
+                </View>
+              </View>
+            ) : null}
+
+            {/* Per-question breakdown */}
+            {perQuestion.length > 0 && (
+              <View style={{ gap: 8 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8 }}>Question Analysis</Text>
+                {perQuestion.map((q: any, idx: number) => {
+                  const qColor = !q.answered ? colors.textDim
+                    : q.correct ? colors.accentGreen
+                    : q.score >= 50 ? colors.accentYellow
+                    : colors.accentRed;
+                  const qIcon = !q.answered ? 'minus-circle' : q.correct ? 'check-circle' : q.score >= 50 ? 'alert-circle' : 'x-circle';
+                  return (
+                    <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: qColor + '40', backgroundColor: qColor + '08' }}>
+                      <Feather name={qIcon as any} size={16} color={qColor} style={{ marginTop: 1 }} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 11, fontWeight: '800', color: qColor }}>Q{q.number ?? idx + 1}</Text>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain, lineHeight: 18, marginBottom: 3 }} numberOfLines={2}>{q.question}</Text>
+                        <Text style={{ fontSize: 12, color: q.answered ? colors.textMuted : qColor, lineHeight: 17 }}>{q.comment}</Text>
+                        {q.studentAnswer ? (
+                          <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 3, fontStyle: 'italic' }}>Student wrote: {q.studentAnswer}</Text>
+                        ) : null}
+                      </View>
+                      <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, backgroundColor: qColor + '20' }}>
+                        <Text style={{ fontSize: 13, fontWeight: '800', color: qColor }}>{q.answered ? `${q.score}%` : '--'}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: 12, backgroundColor: color }}
+              onPress={onClose} activeOpacity={0.85}
+            >
+              <Feather name="check" size={16} color="#fff" />
+              <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>Close Report</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}

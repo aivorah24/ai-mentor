@@ -1,0 +1,544 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  updateProfile,
+  sendEmailVerification,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from 'firebase/auth';
+import { auth } from '../config/firebase';
+import SERVER_URL from '../config/serverUrl';
+
+const PROFILE_KEY = 'ai_mentor_user_profile';
+
+export type UserRole = 'student' | 'teacher' | 'parent';
+
+export interface User {
+  name: string;
+  email: string;
+  role: UserRole;            // always equals activeRole — used by all existing code
+  roles?: UserRole[];        // all roles this user has (dual-role users: ['teacher','parent'])
+  activeRole?: UserRole;     // currently active profile
+  grade?: string;
+  curriculum?: string;       // e.g. 'NCERT', 'IB PYP', 'CBSE', 'IGCSE'
+  school?: string;
+  location?: string;
+  onboardingComplete?: boolean;
+  emailVerified?: boolean;
+  photoUrl?: string;
+  avatarStyle?: string;      // e.g. 'default', 'casual', 'gamer', 'creator', 'scholar', 'champion'
+  learningStyle?: string;
+  interests?: string[];
+  bio?: string;
+  // Relationship metadata
+  children?: { name: string; grade: string; email: string }[];  // for parents
+  teaches?: { grade: string; curriculum: string }[];            // for teachers
+}
+
+interface AuthContextType {
+  user: User | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  login: (user: User) => void;
+  logout: () => void;
+  updateUser: (fields: Partial<User>) => void;
+  saveProfile: (fields: { curriculum?: string; grade?: string; school?: string; location?: string }) => Promise<void>;
+  signInWithEmail: (email: string, password: string, role: UserRole) => Promise<void>;
+  signUpWithEmail: (name: string, email: string, password: string, role: UserRole, curriculum?: string) => Promise<void>;
+  signInWithGoogle: (role: UserRole) => Promise<void>;
+  demoLogin: (role?: UserRole) => void;
+  testLogin: (email: string) => void;
+  switchRole: (newRole: UserRole) => void;  // switch between teacher/parent profiles
+}
+
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  isAuthenticated: false,
+  loading: true,
+  login: () => {},
+  logout: () => {},
+  updateUser: () => {},
+  saveProfile: async () => {},
+  signInWithEmail: async () => {},
+  signUpWithEmail: async (_n, _e, _p, _r, _c) => {},
+  signInWithGoogle: async () => {},
+  demoLogin: () => {},
+  testLogin: () => {},
+  switchRole: () => {},
+});
+
+// Fetch full profile from Supabase (includes curriculum, grade, location, onboardingComplete)
+async function fetchSupabaseProfile(email: string): Promise<Partial<User>> {
+  const combined: Partial<User> = {};
+  try {
+    const res = await fetch(`${SERVER_URL}/user/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      Object.assign(combined, {
+        grade:              data.grade      || undefined,
+        curriculum:         data.curriculum || undefined,
+        school:             data.school     || undefined,
+        location:           data.location   || undefined,
+        onboardingComplete: data.onboardingComplete ?? false,
+        photoUrl:           data.photoUrl   || undefined,
+        name:               data.name       || undefined,
+        role:               data.role       || undefined,
+      });
+    }
+  } catch {}
+
+  try {
+    const prefRes = await fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(email)}`);
+    if (prefRes.ok) {
+      const pref = await prefRes.json();
+      if (pref && typeof pref === 'object') {
+        Object.assign(combined, {
+          avatarStyle: pref.avatarStyle || undefined,
+          learningStyle: pref.learningStyle || undefined,
+          interests: Array.isArray(pref.interests) ? pref.interests : undefined,
+          bio: pref.bio || undefined,
+        });
+      }
+    }
+  } catch {}
+
+  return combined;
+}
+
+let _pendingRole: UserRole = 'student';
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // If email is not verified, don't set user — stay on LandingScreen.
+        // The SignupModal handles showing "check your email" after signUpWithEmail returns.
+        // (signUpWithEmail calls signOut immediately after sending verification email,
+        //  so this listener fires briefly with an unverified user — we must ignore it.)
+        if (!firebaseUser.emailVerified) {
+          setLoading(false);
+          return;
+        }
+
+        const storedRole = (firebaseUser.displayName?.split('|')[1] as UserRole) || _pendingRole || 'student';
+        const baseUser: User = {
+          name:          firebaseUser.displayName?.split('|')[0] || firebaseUser.displayName || 'User',
+          email:         firebaseUser.email || '',
+          role:          storedRole,
+          emailVerified: firebaseUser.emailVerified,
+        };
+
+        // Load saved local profile
+        let savedLocal: Partial<User> = {};
+        try {
+          const saved = await AsyncStorage.getItem(PROFILE_KEY);
+          if (saved) savedLocal = JSON.parse(saved);
+        } catch {}
+
+        // Fetch fresh profile from Supabase BEFORE rendering — prevents flash to OnboardingScreen
+        const supaProfile = await fetchSupabaseProfile(baseUser.email);
+        const resolvedRole = (supaProfile.role as UserRole) || baseUser.role;
+
+        // Set user once with full merged profile
+        // onboardingComplete is "sticky true" — once locally confirmed, don't let
+        // a stale/missing Supabase value revert it and re-show onboarding
+        const onboardingComplete =
+          supaProfile.onboardingComplete === true || savedLocal.onboardingComplete === true;
+        setUser({ ...baseUser, ...savedLocal, ...supaProfile, onboardingComplete, role: resolvedRole });
+
+        // Persist locally
+        AsyncStorage.setItem(PROFILE_KEY, JSON.stringify({ ...savedLocal, ...supaProfile })).catch(() => {});
+        fetch(`${SERVER_URL}/analytics/track`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventType: 'app_access',
+            userEmail: baseUser.email,
+            role: resolvedRole,
+            source: 'auth',
+            meta: { provider: 'firebase' },
+          }),
+        }).catch(() => {});
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  function login(userData: User) {
+    setUser(userData);
+  }
+
+  function updateUser(fields: Partial<User>) {
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...fields };
+      AsyncStorage.setItem(PROFILE_KEY, JSON.stringify({
+        name: updated.name, grade: updated.grade, curriculum: updated.curriculum,
+        school: updated.school, location: updated.location,
+        onboardingComplete: updated.onboardingComplete,
+        avatarStyle: updated.avatarStyle,
+        learningStyle: updated.learningStyle,
+        interests: updated.interests,
+        bio: updated.bio,
+        photoUrl: updated.photoUrl,
+      })).catch(() => {});
+      fetch(`${SERVER_URL}/user/preferences`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: updated.email,
+          name: updated.name,
+          role: updated.role,
+          grade: updated.grade,
+          curriculum: updated.curriculum,
+          school: updated.school,
+          location: updated.location,
+          avatarStyle: updated.avatarStyle,
+          learningStyle: updated.learningStyle,
+          interests: updated.interests,
+          bio: updated.bio,
+          photoUrl: updated.photoUrl,
+        }),
+      }).catch(() => {});
+      return updated;
+    });
+  }
+
+  // Save curriculum/grade/school/location to Supabase and update local state
+  async function saveProfile(fields: { curriculum?: string; grade?: string; school?: string; location?: string }) {
+    if (!user?.email) return;
+    try {
+      const res = await fetch(`${SERVER_URL}/user/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, ...fields }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const updated: Partial<User> = {
+          grade:              data.grade      || undefined,
+          curriculum:         data.curriculum || undefined,
+          school:             data.school     || undefined,
+          location:           data.location   || undefined,
+          onboardingComplete: data.onboardingComplete ?? false,
+        };
+        updateUser(updated);
+      }
+    } catch {}
+  }
+
+  async function logout() {
+    await signOut(auth);
+    await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
+    setUser(null);
+  }
+
+  async function signInWithEmail(email: string, password: string, role: UserRole) {
+    _pendingRole = role;
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+
+      // Block login if email not verified
+      if (!cred.user.emailVerified) {
+        await signOut(auth);
+        throw new Error('Please verify your email before signing in. Check your inbox for the activation link.');
+      }
+
+      // Fetch full profile from Supabase + local cache in parallel
+      const [profile, savedRaw] = await Promise.all([
+        fetchSupabaseProfile(email),
+        AsyncStorage.getItem(PROFILE_KEY).catch(() => null),
+      ]);
+      const savedLocal: Partial<User> = savedRaw ? JSON.parse(savedRaw) : {};
+
+      // Prefer Supabase name (set during signup) over Firebase displayName, never fall back to email prefix
+      const name = profile.name || cred.user.displayName?.split('|')[0] || cred.user.displayName || '';
+      // Supabase role is the source of truth (set during signup); only use login-form role for brand new accounts
+      const resolvedRole: UserRole = (profile.role as UserRole) || role;
+      // onboardingComplete is sticky-true — once confirmed locally, never revert it
+      const onboardingComplete = profile.onboardingComplete === true || savedLocal.onboardingComplete === true;
+      const newUser: User = {
+        name, email, role: resolvedRole,
+        grade:              profile.grade              || (resolvedRole === 'student' ? 'Grade 3' : undefined),
+        curriculum:         profile.curriculum         || undefined,
+        school:             profile.school             || 'Hyderabad International School',
+        location:           profile.location           || 'Hyderabad, India',
+        onboardingComplete,
+        emailVerified:      cred.user.emailVerified,
+      };
+      setUser(newUser);
+      AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(newUser)).catch(() => {});
+
+      // Sync to Supabase — only send role if Supabase didn't have one yet (avoid overwriting signup role)
+      fetch(`${SERVER_URL}/user/sync`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, ...(profile.role ? {} : { role: resolvedRole }), school: newUser.school }),
+      }).catch(() => {});
+    } catch (error: any) {
+      console.error('Firebase Signin Error:', error.code, error.message);
+      // If this is a custom error we threw ourselves (no Firebase code), re-throw as-is
+      if (!error.code) throw error;
+      let message = 'An unexpected error occurred during signin.';
+
+      switch (error.code) {
+        case 'auth/user-not-found':
+          message = 'No account found with this email.';
+          break;
+        case 'auth/wrong-password':
+          message = 'Incorrect password.';
+          break;
+        case 'auth/invalid-credential':
+          message = 'Invalid email or password.';
+          break;
+        case 'auth/invalid-email':
+          message = 'The email address is badly formatted.';
+          break;
+        case 'auth/user-disabled':
+          message = 'This user account has been disabled.';
+          break;
+        case 'auth/too-many-requests':
+          message = 'Too many attempts. Please try again later.';
+          break;
+        case 'auth/network-request-failed':
+          message = 'Network error. Please check your internet connection.';
+          break;
+      }
+      throw new Error(message);
+    }
+  }
+
+  async function signUpWithEmail(name: string, email: string, password: string, role: UserRole, curriculum?: string) {
+    _pendingRole = role;
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(cred.user, { displayName: `${name}|${role}` });
+      await sendEmailVerification(cred.user);
+
+      // Sync to Supabase so the account exists
+      fetch(`${SERVER_URL}/user/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, role, curriculum: curriculum || undefined }),
+      }).catch(() => {});
+
+      // Sign out immediately — user must verify email before accessing the app
+      await signOut(auth);
+      setUser(null);
+      // Caller (SignupModal) will show the "check your email" screen
+    } catch (error: any) {
+      console.error('Firebase Signup Error:', error.code, error.message);
+      let message = 'An unexpected error occurred during signup.';
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          message = 'This email address is already in use.';
+          break;
+        case 'auth/invalid-email':
+          message = 'The email address is badly formatted.';
+          break;
+        case 'auth/operation-not-allowed':
+          message = 'Email/Password sign-in is disabled in Firebase Console.';
+          break;
+        case 'auth/weak-password':
+          message = 'The password is too weak. Please use at least 6 characters.';
+          break;
+        case 'auth/network-request-failed':
+          message = 'Network error. Please check your internet connection.';
+          break;
+      }
+      throw new Error(message);
+    }
+  }
+
+  async function signInWithGoogle(role: UserRole) {
+    _pendingRole = role;
+    if (Platform.OS === 'web') {
+      try {
+        const provider = new GoogleAuthProvider();
+        const cred = await signInWithPopup(auth, provider);
+        const name  = cred.user.displayName || cred.user.email?.split('@')[0] || 'User';
+        const email = cred.user.email || '';
+        const [profile, savedRaw] = await Promise.all([
+          fetchSupabaseProfile(email),
+          AsyncStorage.getItem(PROFILE_KEY).catch(() => null),
+        ]);
+        const savedLocal: Partial<User> = savedRaw ? JSON.parse(savedRaw) : {};
+        const onboardingComplete = profile.onboardingComplete === true || savedLocal.onboardingComplete === true;
+        const newUser: User = {
+          name, email, role,
+          grade:              profile.grade      || (role === 'student' ? 'Grade 3' : undefined),
+          curriculum:         profile.curriculum || undefined,
+          school:             profile.school     || undefined,
+          location:           profile.location   || 'Hyderabad, India',
+          onboardingComplete,
+          emailVerified:      cred.user.emailVerified,
+        };
+        setUser(newUser);
+        fetch(`${SERVER_URL}/user/sync`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, role }),
+        }).catch(() => {});
+      } catch (error: any) {
+        console.error('Google Signin Error:', error.code, error.message);
+        let message = 'An error occurred during Google signin.';
+        if (error.code === 'auth/popup-closed-by-user') {
+          message = 'Google sign-in was cancelled.';
+        } else if (error.code === 'auth/network-request-failed') {
+          message = 'Network error. Please check your connection.';
+        }
+        throw new Error(message);
+      }
+    } else {
+      demoLogin(role);
+    }
+  }
+
+  // Switch between teacher/parent profiles (dual-role users only)
+  function switchRole(newRole: UserRole) {
+    setUser(prev => {
+      if (!prev || !prev.roles?.includes(newRole)) return prev;
+      const updated = { ...prev, role: newRole, activeRole: newRole };
+      AsyncStorage.setItem(PROFILE_KEY, JSON.stringify({ ...updated })).catch(() => {});
+      return updated;
+    });
+  }
+
+  // Quick-login for test accounts — TEST_USERS data always wins over Supabase
+  async function testLogin(email: string) {
+    const S = 'Hyderabad International School';
+    const L = 'Hyderabad, India';
+    const base = { school: S, location: L, onboardingComplete: true as true, emailVerified: true as true };
+
+    const TEST_USERS: Record<string, User> = {
+
+      // ── IB PYP STUDENTS (4) — Demo for principal ──────────────────────────────
+      'aanya@test.ai': {
+        ...base, name: 'Aanya Kapoor', email: 'aanya@test.ai',
+        role: 'student', grade: 'Grade 3', curriculum: 'IB PYP',
+        avatarStyle: 'scholar',
+      },
+      'ishaan@test.ai': {
+        ...base, name: 'Ishaan Mehta', email: 'ishaan@test.ai',
+        role: 'student', grade: 'Grade 4', curriculum: 'IB PYP',
+        avatarStyle: 'gamer',
+      },
+      'rohan@test.ai': {
+        ...base, name: 'Rohan Patel', email: 'rohan@test.ai',
+        role: 'student', grade: 'Grade 5', curriculum: 'IB PYP',
+        avatarStyle: 'champion',
+      },
+      'diya@test.ai': {
+        ...base, name: 'Diya Sharma', email: 'diya@test.ai',
+        role: 'student', grade: 'Grade 3', curriculum: 'IB PYP',
+        avatarStyle: 'creator',
+      },
+
+      // ── IB PYP TEACHERS (3) ───────────────────────────────────────────────────
+      'anjali@test.ai': {
+        ...base, name: 'Ms. Anjali Kumar', email: 'anjali@test.ai',
+        role: 'teacher', roles: ['teacher'],
+        teaches: [
+          { grade: 'Grade 4', curriculum: 'IB PYP' },
+          { grade: 'Grade 5', curriculum: 'IB PYP' },
+        ],
+      },
+
+      // ── DUAL ROLE: Teacher + Parent ───────────────────────────────────────────
+      // Priya Kapoor — Grade 3 IB PYP teacher AND mother of Aanya (Grade 3)
+      'priya.k@test.ai': {
+        ...base, name: 'Priya Kapoor', email: 'priya.k@test.ai',
+        role: 'teacher', roles: ['teacher', 'parent'], activeRole: 'teacher',
+        teaches: [{ grade: 'Grade 3', curriculum: 'IB PYP' }],
+        children: [{ name: 'Aanya Kapoor', grade: 'Grade 3', curriculum: 'IB PYP', email: 'aanya@test.ai' }],
+      },
+      // Vikram Sharma — Grade 3 & 4 IB PYP teacher AND father of Diya (Grade 3)
+      'vikram@test.ai': {
+        ...base, name: 'Vikram Sharma', email: 'vikram@test.ai',
+        role: 'teacher', roles: ['teacher', 'parent'], activeRole: 'teacher',
+        teaches: [
+          { grade: 'Grade 3', curriculum: 'IB PYP' },
+          { grade: 'Grade 4', curriculum: 'IB PYP' },
+        ],
+        children: [{ name: 'Diya Sharma', grade: 'Grade 3', curriculum: 'IB PYP', email: 'diya@test.ai' }],
+      },
+
+      // ── PARENTS ONLY ──────────────────────────────────────────────────────────
+      'suresh@test.ai': {
+        ...base, name: 'Suresh Mehta', email: 'suresh@test.ai',
+        role: 'parent', roles: ['parent'],
+        children: [{ name: 'Ishaan Mehta', grade: 'Grade 4', curriculum: 'IB PYP', email: 'ishaan@test.ai' }],
+      },
+      'deepa@test.ai': {
+        ...base, name: 'Deepa Patel', email: 'deepa@test.ai',
+        role: 'parent', roles: ['parent'],
+        children: [{ name: 'Rohan Patel', grade: 'Grade 5', curriculum: 'IB PYP', email: 'rohan@test.ai' }],
+      },
+
+      // ── NCERT STUDENTS (kept for internal testing, not shown in demo) ─────────
+      'arjun@test.ai': { ...base, name: 'Arjun Sharma', email: 'arjun@test.ai', role: 'student', grade: 'Grade 3', curriculum: 'NCERT' },
+      'priya@test.ai': { ...base, name: 'Priya Nair',   email: 'priya@test.ai', role: 'student', grade: 'Grade 3', curriculum: 'NCERT' },
+      'kavya@test.ai': { ...base, name: 'Kavya Reddy',  email: 'kavya@test.ai', role: 'student', grade: 'Grade 5', curriculum: 'NCERT' },
+    };
+    const testUser = TEST_USERS[email];
+    if (!testUser) return;
+    // Set test user immediately so UI doesn't wait on network
+    setUser(testUser);
+    // Fetch live Supabase profile for photoUrl only — TEST_USERS fields always win
+    const profile = await fetchSupabaseProfile(email);
+    setUser({
+      ...testUser,
+      photoUrl: profile.photoUrl ?? testUser.photoUrl,
+      // Always preserve test user's core identity fields
+      role:       testUser.role,
+      name:       testUser.name,
+      grade:      testUser.grade,
+      curriculum: testUser.curriculum,
+    });
+    // Sync test user profile to Supabase so backend sees correct curriculum/grade
+    fetch(`${SERVER_URL}/user/sync`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: testUser.name, email: testUser.email, role: testUser.role,
+        grade: testUser.grade, curriculum: testUser.curriculum, school: testUser.school,
+      }),
+    }).catch(() => {});
+  }
+
+  function demoLogin(role: UserRole = 'student') {
+    const demos: Record<UserRole, User> = {
+      student: { name: 'Alex Richardson', email: 'alex@demo.com', role: 'student', grade: 'Grade 3', curriculum: 'IB PYP', school: 'Hyderabad International School', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true },
+      teacher: { name: 'Ms. Zara',        email: 'teacher@demo.com', role: 'teacher', school: 'Hyderabad International School', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true, teaches: [{ grade: 'Grade 3', curriculum: 'IB PYP' }] },
+      parent:  { name: 'Priya Richardson', email: 'parent@demo.com', role: 'parent', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true, children: [{ name: 'Alex Richardson', grade: 'Grade 3', curriculum: 'IB PYP', email: 'alex@demo.com' }] },
+    };
+    setUser(demos[role]);
+  }
+
+  return (
+    <AuthContext.Provider value={{
+      user, isAuthenticated: !!user, loading,
+      login, logout, updateUser, saveProfile,
+      signInWithEmail, signUpWithEmail, signInWithGoogle,
+      demoLogin, testLogin, switchRole,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
