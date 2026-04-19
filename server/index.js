@@ -105,10 +105,8 @@ app.get('*', (req, res) => {
 // Export for Vercel serverless
 module.exports = app;
 
-// Local development server
-if (require.main === module) {
-  const PORT = process.env.PORT || 3006;
-  app.listen(PORT, () => {
-    console.log(`Aivorah server running on http://localhost:${PORT}`);
-  });
-}
+// Always start the server (Cloud Run runs node index.js directly)
+const PORT = process.env.PORT || 3006;
+app.listen(PORT, () => {
+  console.log(`Aivorah server running on http://localhost:${PORT}`);
+});
