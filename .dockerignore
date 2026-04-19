@@ -8,9 +8,8 @@ node_modules
 server/node_modules
 AIMentorApp/node_modules
 
-# Expo build output (built fresh in Docker)
+# Expo build output (dist2 is pre-built and committed)
 AIMentorApp/dist
-AIMentorApp/dist2
 AIMentorApp/.expo
 
 # Logs
