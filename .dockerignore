@@ -3,11 +3,10 @@
 .gitignore
 .gitmodules
 
-# Node modules — exclude all, but allow pre-built dist2 assets (fonts/icons)
-node_modules
+# Node modules — only exclude source node_modules, NOT dist2 assets (fonts live there)
+/node_modules
 server/node_modules
 AIMentorApp/node_modules
-!AIMentorApp/dist2/assets/node_modules
 
 # Expo build output (dist2 is pre-built and committed)
 AIMentorApp/dist
