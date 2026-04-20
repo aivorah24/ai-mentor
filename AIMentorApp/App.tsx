@@ -102,12 +102,12 @@ function ThemedRoot() {
 }
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     ...Feather.font,
   });
 
-  // Wait for icon fonts before rendering to avoid blank icon boxes
-  if (!fontsLoaded) {
+  // Proceed even if fonts fail — don't block the whole app on a font decode error
+  if (!fontsLoaded && !fontError) {
     return (
       <View style={[styles.loadingScreen, { backgroundColor: colors.bgDark }]}>
         <ActivityIndicator size="large" color={colors.primary} />
