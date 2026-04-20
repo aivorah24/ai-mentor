@@ -85,6 +85,16 @@ app.use('/help',         helpRoute);
 app.use('/stories',      storiesRoute);
 app.use('/habits',       habitsRoute);
 
+// Debug: check if font files exist in container — remove after diagnosis
+app.get('/debug/fonts', (req, res) => {
+  const fs = require('fs');
+  const FRONTEND_DIR = path.join(__dirname, '../AIMentorApp/dist2');
+  const fontDir = path.join(FRONTEND_DIR, 'assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts');
+  const exists = fs.existsSync(fontDir);
+  const files = exists ? fs.readdirSync(fontDir).slice(0, 5) : [];
+  res.json({ __dirname, FRONTEND_DIR, fontDir, exists, files });
+});
+
 app.get('/health', async (req, res) => {
   try {
     const info = await getCollectionInfo();
@@ -105,6 +115,32 @@ initCollection().catch(err => {
 
 // Serve the React Native web frontend (Expo export output)
 const FRONTEND_DIR = path.join(__dirname, '../AIMentorApp/dist2');
+// Explicitly serve font assets — .dockerignore excludes node_modules dirs so
+// dist2/assets/node_modules fonts may be missing; copy them to /fonts at build
+// and serve from there as a reliable fallback.
+const FONTS_SRC  = path.join(FRONTEND_DIR, 'assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts');
+const FONTS_COPY = path.join(__dirname, 'public/fonts');
+// On startup, copy fonts to server/public/fonts if not already there
+try {
+  const fs = require('fs');
+  if (!fs.existsSync(FONTS_COPY)) {
+    fs.mkdirSync(FONTS_COPY, { recursive: true });
+    if (fs.existsSync(FONTS_SRC)) {
+      for (const f of fs.readdirSync(FONTS_SRC)) {
+        fs.copyFileSync(path.join(FONTS_SRC, f), path.join(FONTS_COPY, f));
+      }
+      console.log('[fonts] Copied icon fonts to public/fonts');
+    } else {
+      console.warn('[fonts] Source fonts not found at', FONTS_SRC);
+    }
+  }
+} catch (e) {
+  console.warn('[fonts] Font copy failed:', e.message);
+}
+// Serve fonts at the exact URL the Expo bundle expects
+app.use('/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts',
+  express.static(FONTS_COPY, { maxAge: '1y', immutable: true }));
+
 // Static assets (JS/CSS) are hashed — cache forever; HTML must not be cached
 app.use(express.static(FRONTEND_DIR, {
   setHeaders(res, filePath) {
