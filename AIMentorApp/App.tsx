@@ -3,6 +3,8 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, View, ActivityIndicator, Platform } from 'react-native';
+import { useFonts } from 'expo-font';
+import { Feather } from '@expo/vector-icons';
 
 // Set browser tab title
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -100,6 +102,19 @@ function ThemedRoot() {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    ...Feather.font,
+  });
+
+  // Wait for icon fonts before rendering to avoid blank icon boxes
+  if (!fontsLoaded) {
+    return (
+      <View style={[styles.loadingScreen, { backgroundColor: colors.bgDark }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <ThemeProvider>

@@ -65,6 +65,7 @@ export default function OnboardingScreen() {
   const steps = getSteps(role);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   // ── Shared fields ─────────────────────────────────
   const [fullName, setFullName] = useState(user?.name || '');
@@ -140,6 +141,7 @@ export default function OnboardingScreen() {
 
   async function handleFinish() {
     setSaving(true);
+    setSaveError('');
     try {
       const email = user?.email || '';
       const body: any = { email, name: fullName.trim(), school, location: city, complete: true };
@@ -164,7 +166,7 @@ export default function OnboardingScreen() {
         }];
       }
 
-      // Save profile to Supabase — must succeed before marking onboarding complete
+      // Save profile to Supabase
       const profileRes = await fetch(`${SERVER_URL}/user/profile`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -175,8 +177,8 @@ export default function OnboardingScreen() {
         throw new Error(`Profile save failed (${profileRes.status}): ${errText.slice(0, 200)}`);
       }
 
-      // Save preferences (avatar, learning style)
-      await fetch(`${SERVER_URL}/user/preferences`, {
+      // Save preferences (avatar, learning style) — fire-and-forget, don't block
+      fetch(`${SERVER_URL}/user/preferences`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -191,9 +193,9 @@ export default function OnboardingScreen() {
           learningStyle: learningStyle || undefined,
           gender: gender || undefined,
         }),
-      });
+      }).catch(() => {});
 
-      // Update local auth state
+      // Update local auth state — this triggers navigation away from OnboardingScreen
       updateUser({
         name: fullName.trim(),
         school,
@@ -206,8 +208,9 @@ export default function OnboardingScreen() {
           teaches: teachGrades.map(g => ({ grade: g, curriculum: teachCurriculum })),
         } : {}),
       } as any);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Onboarding save error:', err);
+      setSaveError('Could not save your profile. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -486,6 +489,13 @@ export default function OnboardingScreen() {
             {renderStepContent()}
           </View>
         </ScrollView>
+
+        {/* Save error */}
+        {saveError ? (
+          <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm }}>
+            <Text style={{ color: '#ef4444', fontSize: 13, textAlign: 'center' }}>{saveError}</Text>
+          </View>
+        ) : null}
 
         {/* Navigation buttons */}
         <View style={styles.navRow}>

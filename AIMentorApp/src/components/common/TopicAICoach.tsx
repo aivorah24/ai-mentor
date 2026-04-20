@@ -12,9 +12,108 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { askAIMentor } from '../../services/aiMentorApi';
+import { askAIMentorStream } from '../../services/aiMentorApi';
 import { spacing, radius } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
+
+// ── Web Speech API helpers ──────────────────────────────────────────────────
+function speakText(text: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (Platform.OS !== 'web' || !(window as any).speechSynthesis) { resolve(); return; }
+    const synth = (window as any).speechSynthesis as SpeechSynthesis;
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 1.05; utter.pitch = 1.3; utter.volume = 1.0;
+    const voices = synth.getVoices();
+    const pick = voices.find(v => /zira/i.test(v.name))
+      || voices.find(v => /google.*en.*us/i.test(v.name))
+      || voices.find(v => /en[-_]US/i.test(v.lang));
+    if (pick) utter.voice = pick;
+    utter.onend = () => resolve();
+    utter.onerror = () => resolve();
+    synth.speak(utter);
+  });
+}
+
+function stopSpeech() {
+  if (Platform.OS === 'web' && (window as any).speechSynthesis) {
+    try { (window as any).speechSynthesis.cancel(); } catch {}
+  }
+}
+
+function startSpeechRecognition(
+  onResult: (text: string) => void,
+  onListening: (listening: boolean) => void,
+  onEnd: () => void,
+  onAutoSend?: (finalText: string) => void,
+) {
+  if (Platform.OS !== 'web') return null;
+  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    console.warn('Speech Recognition not supported in this browser');
+    return null;
+  }
+  try {
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-IN';
+    recognition.continuous = false;       // single utterance — faster pickup, auto-stops on silence
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    let finalTranscript = '';
+    let silenceTimer: any = null;
+
+    recognition.onstart = () => onListening(true);
+
+    recognition.onresult = (e: any) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const transcript = e.results[i][0].transcript;
+        if (e.results[i].isFinal) {
+          finalTranscript += transcript + ' ';
+          onResult(finalTranscript.trim());
+        } else {
+          interim += transcript;
+        }
+      }
+      // Show interim results in real-time
+      if (interim) onResult((finalTranscript + interim).trim());
+
+      // Reset silence timer — auto-send 1.5s after last speech
+      if (silenceTimer) clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(() => {
+        const text = finalTranscript.trim();
+        if (text && onAutoSend) {
+          recognition.stop();
+          onAutoSend(text);
+        }
+      }, 1500);
+    };
+
+    recognition.onend = () => {
+      if (silenceTimer) clearTimeout(silenceTimer);
+      onListening(false);
+      // Auto-send whatever we have when recognition ends naturally
+      const text = finalTranscript.trim();
+      if (text && onAutoSend) {
+        onAutoSend(text);
+      }
+      onEnd();
+    };
+    recognition.onerror = (e: any) => {
+      if (silenceTimer) clearTimeout(silenceTimer);
+      console.warn('Speech recognition error:', e.error);
+      onListening(false);
+      onEnd();
+    };
+
+    recognition.start();
+    return recognition;
+  } catch (err) {
+    console.warn('Failed to start speech recognition:', err);
+    return null;
+  }
+}
 
 interface Message {
   role: 'user' | 'ai';
@@ -41,6 +140,9 @@ export default function TopicAICoach({
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [feedbackByMsg, setFeedbackByMsg] = useState<Record<number, number>>({});
+  const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
+  const [recording, setRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
 
@@ -78,6 +180,50 @@ export default function TopicAICoach({
     }
   }, [open]);
 
+  async function handleSpeak(idx: number, text: string) {
+    if (speakingIdx === idx) {
+      stopSpeech();
+      setSpeakingIdx(null);
+      return;
+    }
+    setSpeakingIdx(idx);
+    await speakText(text);
+    setSpeakingIdx(null);
+  }
+
+  const pendingSendRef = useRef<string | null>(null);
+
+  function toggleMic() {
+    if (recording) {
+      recognitionRef.current?.stop();
+      setRecording(false);
+      return;
+    }
+    const rec = startSpeechRecognition(
+      (text) => setInput(text),
+      (listening) => setRecording(listening),
+      () => { setRecording(false); recognitionRef.current = null; },
+      (finalText) => {
+        // Auto-send: set input and trigger send on next render
+        pendingSendRef.current = finalText;
+        setInput(finalText);
+      },
+    );
+    if (rec) {
+      recognitionRef.current = rec;
+    } else {
+      alert('Microphone not available. Please allow mic access in your browser.');
+    }
+  }
+
+  // Auto-send when voice input completes
+  useEffect(() => {
+    if (pendingSendRef.current && input === pendingSendRef.current && !loading) {
+      pendingSendRef.current = null;
+      send();
+    }
+  }, [input]);
+
   async function send() {
     const q = input.trim();
     if (!q || loading) return;
@@ -87,13 +233,36 @@ export default function TopicAICoach({
     setMessages(prev => [...prev, userMsg]);
     setLoading(true);
 
-    const result = await askAIMentor(q, grade, subject, curriculum, topic, user?.email, user?.role);
-    setMessages(prev => [
-      ...prev,
-      { role: 'ai', text: result.error ? 'Sorry, I had trouble connecting. Please try again!' : result.answer },
-    ]);
+    // Add an empty AI message that we'll stream into
+    const aiIdx = messages.length + 1; // +1 for the user message we just added
+    setMessages(prev => [...prev, { role: 'ai', text: '' }]);
+
+    const result = await askAIMentorStream(
+      q, grade, subject, curriculum, topic, user?.email, user?.role,
+      (token) => {
+        // Append each token to the last AI message
+        setMessages(prev => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last && last.role === 'ai') {
+            updated[updated.length - 1] = { ...last, text: last.text + token };
+          }
+          return updated;
+        });
+        scrollRef.current?.scrollToEnd({ animated: false });
+      },
+    );
+
+    // If there was an error, replace with error message
+    if (result.error) {
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { role: 'ai', text: 'Sorry, I had trouble connecting. Please try again!' };
+        return updated;
+      });
+    }
+
     setLoading(false);
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }
 
   function submitFeedback(messageIndex: number, score: number, aiText: string) {
@@ -187,27 +356,38 @@ export default function TopicAICoach({
                     {msg.text}
                   </Text>
                 </View>
-                {msg.role === 'ai' && i > 0 && (
+                {msg.role === 'ai' && (
                   <View style={styles.feedbackRow}>
                     <TouchableOpacity
-                      style={[styles.feedbackBtn, feedbackByMsg[i] === 5 && { borderColor: '#10b981', backgroundColor: '#10b98122' }]}
-                      onPress={() => submitFeedback(i, 5, msg.text)}
+                      style={[styles.feedbackBtn, speakingIdx === i && { borderColor: colors.primary, backgroundColor: colors.primary + '22' }]}
+                      onPress={() => handleSpeak(i, msg.text)}
                       activeOpacity={0.8}
                     >
-                      <Feather name="thumbs-up" size={12} color={feedbackByMsg[i] === 5 ? '#10b981' : colors.textDim} />
+                      <Feather name={speakingIdx === i ? 'volume-x' : 'volume-2'} size={12} color={speakingIdx === i ? colors.primary : colors.textDim} />
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.feedbackBtn, feedbackByMsg[i] === 1 && { borderColor: '#ef4444', backgroundColor: '#ef444422' }]}
-                      onPress={() => submitFeedback(i, 1, msg.text)}
-                      activeOpacity={0.8}
-                    >
-                      <Feather name="thumbs-down" size={12} color={feedbackByMsg[i] === 1 ? '#ef4444' : colors.textDim} />
-                    </TouchableOpacity>
+                    {i > 0 && (
+                      <>
+                        <TouchableOpacity
+                          style={[styles.feedbackBtn, feedbackByMsg[i] === 5 && { borderColor: '#10b981', backgroundColor: '#10b98122' }]}
+                          onPress={() => submitFeedback(i, 5, msg.text)}
+                          activeOpacity={0.8}
+                        >
+                          <Feather name="thumbs-up" size={12} color={feedbackByMsg[i] === 5 ? '#10b981' : colors.textDim} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.feedbackBtn, feedbackByMsg[i] === 1 && { borderColor: '#ef4444', backgroundColor: '#ef444422' }]}
+                          onPress={() => submitFeedback(i, 1, msg.text)}
+                          activeOpacity={0.8}
+                        >
+                          <Feather name="thumbs-down" size={12} color={feedbackByMsg[i] === 1 ? '#ef4444' : colors.textDim} />
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </View>
                 )}
               </View>
             ))}
-            {loading && (
+            {loading && messages[messages.length - 1]?.text === '' && (
               <View style={[styles.bubble, styles.bubbleAI, { backgroundColor: aiBubble, borderColor: colors.borderColor }]}>
                 <ActivityIndicator size="small" color={colors.primary} />
               </View>
@@ -216,6 +396,16 @@ export default function TopicAICoach({
 
           {/* Input row */}
           <View style={[styles.inputRow, { borderTopColor: colors.borderColor, backgroundColor: panelBg }]}>
+            <TouchableOpacity
+              style={[styles.micBtn, {
+                backgroundColor: recording ? '#ef444422' : colors.bgDark,
+                borderColor: recording ? '#ef4444' : colors.borderColor,
+              }]}
+              onPress={toggleMic}
+              activeOpacity={0.8}
+            >
+              <Feather name={recording ? 'mic-off' : 'mic'} size={16} color={recording ? '#ef4444' : colors.textMuted} />
+            </TouchableOpacity>
             <TextInput
               style={[styles.input, { backgroundColor: colors.bgDark, color: colors.textMain, borderColor: colors.borderColor }]}
               placeholder={`Ask about ${topic}...`}
@@ -352,6 +542,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     fontSize: 13,
     borderWidth: 1,
+  },
+  micBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sendBtn: {
     width: 40,
