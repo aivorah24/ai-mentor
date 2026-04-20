@@ -42,7 +42,7 @@ server/data/images/concepts/
 server/data/images/ncert/
 server/data/images/generated/
 server/data/images/scenes/
-server/data/audio/
+server/data/audio/*.mp3
 server/data/videos/*.mp4
 *.db
 support.db

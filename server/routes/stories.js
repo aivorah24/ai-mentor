@@ -5,7 +5,7 @@ const path    = require('path');
 const crypto  = require('crypto');
 
 const STORIES_PATH = path.join(__dirname, '../data/bhagavata_stories.json');
-const AUDIO_DIR    = path.join(__dirname, '../data/audio');
+const AUDIO_DIR    = path.join(__dirname, '../data/audio/stories');
 
 // TikTok TTS (free, no API key needed) — primary for story narration
 const TIKTOK_API = 'https://tiktok-tts.weilnet.workers.dev/api/generation';
@@ -88,9 +88,8 @@ async function generateAndCacheAudio(text, narrator) {
   if (process.env.ELEVENLABS_API_KEY) {
     try { return { buffer: await generateViaElevenLabs(text, narrator), provider: 'elevenlabs' }; }
     catch (err) {
-      // 402 = free plan can't use library voices → fall through to TikTok
-      if (!err.message.includes('402')) throw err;
-      console.log(`  EL library voice unavailable (free plan) → using TikTok for ${narrator}`);
+      // Fall through to TikTok on any ElevenLabs failure (401, 402, quota, unusual activity, etc.)
+      console.log(`  EL failed (${err.message.slice(0,80)}) → falling back to TikTok for ${narrator}`);
     }
   }
   return { buffer: await generateViaTikTok(text, narrator), provider: 'tiktok' };
