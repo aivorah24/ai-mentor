@@ -17,6 +17,10 @@ import { useAuth } from '../../context/AuthContext';
 const TEAL   = '#5F8A86';
 const GOLD   = '#C0A07E';
 const SAGE   = '#82A896';
+const AMBER  = '#C5A56A';   // warm pastel gold — premium
+
+// First N habits are free; rest require premium
+const FREE_UNLOCKED = 2;
 
 interface Habit {
   id: string;
@@ -172,49 +176,74 @@ export default function DailyHabitsScreen({ navigation }: any) {
               {/* ── Habit grid — 2 columns ── */}
               <Text style={[styles.sectionTitle, { color: colors.textDim }]}>TODAY'S HABITS</Text>
 
+              {/* Premium banner */}
+              <View style={[styles.premiumBanner, { borderColor: AMBER + '50', backgroundColor: AMBER + '10' }]}>
+                <Feather name="lock" size={13} color={AMBER} />
+                <Text style={[styles.premiumText, { color: AMBER }]}>First 2 habits free · Upgrade to unlock all</Text>
+                <TouchableOpacity style={[styles.premiumBtn, { backgroundColor: AMBER }]}>
+                  <Text style={styles.premiumBtnText}>Upgrade</Text>
+                </TouchableOpacity>
+              </View>
+
               <View style={styles.habitGrid}>
-                {data.habits.map(habit => {
-                  const done    = data.today.completed.includes(habit.id);
+                {data.habits.map((habit, index) => {
+                  const locked    = index >= FREE_UNLOCKED;
+                  const done      = !locked && data.today.completed.includes(habit.id);
                   const isLoading = checking === habit.id;
-                  const popping = coinPop?.id === habit.id;
+                  const popping   = coinPop?.id === habit.id;
                   return (
                     <TouchableOpacity
                       key={habit.id}
                       style={[styles.habitCard, {
-                        backgroundColor: done ? TEAL + '18' : colors.cardDark,
-                        borderColor: done ? TEAL + '60' : colors.borderColor,
+                        backgroundColor: locked ? colors.cardDark : done ? TEAL + '18' : colors.cardDark,
+                        borderColor: locked ? AMBER + '40' : done ? TEAL + '60' : colors.borderColor,
+                        opacity: locked ? 0.75 : 1,
                       }]}
-                      onPress={() => toggleHabit(habit.id)}
-                      activeOpacity={0.8}
-                      disabled={!!checking}
+                      onPress={() => locked ? undefined : toggleHabit(habit.id)}
+                      activeOpacity={locked ? 1 : 0.8}
+                      disabled={!!checking || locked}
                     >
                       {/* Icon */}
-                      <View style={[styles.habitIcon, { backgroundColor: done ? TEAL + '28' : colors.borderColor }]}>
+                      <View style={[styles.habitIcon, {
+                        backgroundColor: locked ? AMBER + '18' : done ? TEAL + '28' : colors.borderColor,
+                      }]}>
                         {isLoading
                           ? <ActivityIndicator size="small" color={TEAL} />
-                          : <Feather name={safeIcon(habit.icon)} size={14} color={done ? TEAL : colors.textDim} />
+                          : <Feather
+                              name={locked ? 'lock' : safeIcon(habit.icon)}
+                              size={14}
+                              color={locked ? AMBER : done ? TEAL : colors.textDim}
+                            />
                         }
                       </View>
 
                       {/* Label + coins */}
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.habitLabel, {
-                          color: done ? colors.textMain : colors.textMuted,
+                          color: locked ? colors.textDim : done ? colors.textMain : colors.textMuted,
                           fontWeight: done ? '700' : '500',
                         }]} numberOfLines={2}>{habit.label}</Text>
                         <View style={styles.habitCoinsRow}>
-                          <Feather name="star" size={9} color={GOLD} />
-                          <Text style={[styles.habitCoins, { color: GOLD }]}>+{habit.coins}</Text>
+                          {locked
+                            ? <><Feather name="lock" size={9} color={AMBER} /><Text style={[styles.habitCoins, { color: AMBER }]}>Premium</Text></>
+                            : <><Feather name="star" size={9} color={GOLD} /><Text style={[styles.habitCoins, { color: GOLD }]}>+{habit.coins}</Text></>
+                          }
                         </View>
                       </View>
 
-                      {/* Checkbox */}
-                      <View style={[styles.checkbox, {
-                        backgroundColor: done ? TEAL : 'transparent',
-                        borderColor: done ? TEAL : colors.borderColor,
-                      }]}>
-                        {done && <Feather name="check" size={11} color="#fff" />}
-                      </View>
+                      {/* Checkbox or lock */}
+                      {locked ? (
+                        <View style={[styles.checkbox, { backgroundColor: AMBER + '20', borderColor: AMBER + '50' }]}>
+                          <Feather name="lock" size={9} color={AMBER} />
+                        </View>
+                      ) : (
+                        <View style={[styles.checkbox, {
+                          backgroundColor: done ? TEAL : 'transparent',
+                          borderColor: done ? TEAL : colors.borderColor,
+                        }]}>
+                          {done && <Feather name="check" size={11} color="#fff" />}
+                        </View>
+                      )}
 
                       {/* Coin pop */}
                       {popping && (
@@ -293,11 +322,19 @@ const makeStyles = (c: any) => StyleSheet.create({
 
   sectionTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
 
+  premiumBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    padding: 10, borderRadius: radius.lg, borderWidth: 1,
+  },
+  premiumText: { flex: 1, fontSize: 11, fontWeight: '600' },
+  premiumBtn:  { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 7 },
+  premiumBtnText: { fontSize: 10, fontWeight: '800', color: '#fff' },
+
   habitGrid: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
   },
   habitCard: {
-    width: Math.floor((SCREEN_WIDTH - 32 - 32 - 8) / 2),
+    width: '48.5%',
     borderRadius: radius.md, borderWidth: 1,
     paddingHorizontal: 10, paddingVertical: 8,
     flexDirection: 'row', alignItems: 'center', gap: 8,

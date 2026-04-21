@@ -18,21 +18,21 @@ import { useNotification } from '../../context/NotificationContext';
 import { getAvatarGradient, getAvatarIcon } from '../../constants/avatarStyles';
 
 const STUDENT_NAV_ITEMS = [
-  { label: 'Dashboard', icon: 'grid', screen: 'Dashboard', group: 'MENU' },
-  { label: 'Profile', icon: 'user', screen: 'Profile', group: 'MENU' },
-  { label: 'My Learning Paths', icon: 'book-open', screen: 'LearningPaths', group: 'MENU' },
-  { label: 'AI Coach', icon: 'message-circle', screen: 'AICoach', group: 'MENU' },
-  { label: 'Schedule', icon: 'calendar', screen: 'Schedule', group: 'MENU' },
-  { label: 'The World & You', icon: 'globe', screen: 'WorldAndYou', group: 'MENU' },
-  { label: 'Bedtime Stories', icon: 'book', screen: 'BhagavathaStories', group: 'MENU' },
-  { label: 'Daily Habits', icon: 'sun', screen: 'DailyHabits', group: 'MENU' },
-  { label: 'Assignments', icon: 'check-square', screen: 'Assignments', group: 'FOCUS' },
-  { label: 'Challenges', icon: 'target', screen: 'Challenges', group: 'FOCUS' },
-  { label: 'Leaderboard', icon: 'award', screen: 'Leaderboard', group: 'FOCUS' },
-  { label: 'Progress', icon: 'bar-chart-2', screen: 'Progress', group: 'FOCUS' },
-  { label: 'Rewards', icon: 'gift', screen: 'Rewards', group: 'FOCUS' },
-  { label: 'Help Center', icon: 'help-circle', screen: 'HelpCenter', group: 'SYSTEM' },
-  { label: 'Settings', icon: 'settings', screen: 'Settings', group: 'SYSTEM' },
+  { label: 'Dashboard',        icon: 'grid',         screen: 'Dashboard',          group: 'MENU',    premium: false },
+  { label: 'Profile',          icon: 'user',         screen: 'Profile',            group: 'MENU',    premium: false },
+  { label: 'My Learning Paths',icon: 'book-open',    screen: 'LearningPaths',      group: 'MENU',    premium: false },
+  { label: 'AI Coach',         icon: 'message-circle',screen: 'AICoach',           group: 'MENU',    premium: false },
+  { label: 'Schedule',         icon: 'calendar',     screen: 'Schedule',           group: 'MENU',    premium: false },
+  { label: 'The World & You',  icon: 'globe',        screen: 'WorldAndYou',        group: 'MENU',    premium: false },
+  { label: 'Bedtime Stories',  icon: 'book',         screen: 'BhagavathaStories',  group: 'MENU',    premium: true  },
+  { label: 'Daily Habits',     icon: 'sun',          screen: 'DailyHabits',        group: 'MENU',    premium: true  },
+  { label: 'Assignments',      icon: 'check-square', screen: 'Assignments',        group: 'FOCUS',   premium: false },
+  { label: 'Challenges',       icon: 'target',       screen: 'Challenges',         group: 'FOCUS',   premium: true  },
+  { label: 'Leaderboard',      icon: 'award',        screen: 'Leaderboard',        group: 'FOCUS',   premium: false },
+  { label: 'Progress',         icon: 'bar-chart-2',  screen: 'Progress',           group: 'FOCUS',   premium: false },
+  { label: 'Rewards',          icon: 'gift',         screen: 'Rewards',            group: 'FOCUS',   premium: false },
+  { label: 'Help Center',      icon: 'help-circle',  screen: 'HelpCenter',         group: 'SYSTEM',  premium: false },
+  { label: 'Settings',         icon: 'settings',     screen: 'Settings',           group: 'SYSTEM',  premium: false },
 ];
 
 const TEACHER_NAV_ITEMS = [
@@ -128,6 +128,11 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
                     {ASSIGNMENT_SCREENS.includes(item.screen) && unreadAssignments > 0 && (
                       <View style={styles.navBadge}>
                         <Text style={styles.navBadgeText}>{unreadAssignments > 9 ? '9+' : unreadAssignments}</Text>
+                      </View>
+                    )}
+                    {(item as any).premium && (
+                      <View style={styles.premiumBadge}>
+                        <Text style={styles.premiumBadgeText}>PRO</Text>
                       </View>
                     )}
                   </TouchableOpacity>
@@ -287,6 +292,11 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingHorizontal: 4,
   },
   navBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
+  premiumBadge: {
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6,
+    backgroundColor: '#C5A56A22', borderWidth: 1, borderColor: '#C5A56A55',
+  },
+  premiumBadgeText: { fontSize: 9, fontWeight: '800', color: '#C5A56A', letterSpacing: 0.4 },
   footer: {
     borderTopWidth: 1,
     borderTopColor: c.borderColor,

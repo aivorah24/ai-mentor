@@ -16,7 +16,8 @@
     "ingest:ncert-grade3-mm": "node scripts/ingest-ncert-grade3-multimodal.js",
     "video:chapter:package": "node scripts/build-canva-chapter-package.js",
     "video:chapter:g3:living": "node scripts/build-canva-chapter-package.js --lesson science_g3_living_non_living_script.json",
-    "canva:oauth": "node scripts/canva-oauth.js"
+    "canva:oauth": "node scripts/canva-oauth.js",
+    "test": "jest --verbose"
   },
   "dependencies": {
     "@qdrant/js-client-rest": "^1.9.0",
@@ -35,6 +36,7 @@
     "puppeteer": "^24.40.0"
   },
   "devDependencies": {
+    "jest": "^30.3.0",
     "nodemon": "^3.1.0"
   }
 }

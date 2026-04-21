@@ -156,6 +156,10 @@
     .pill-rose { background: rgba(239,209,212,0.1); border-color: rgba(239,209,212,0.3); color: var(--rose); }
     .ok { color: var(--green); font-weight: 600; }
     .bad { color: var(--red); font-weight: 600; }
+    .filter-tabs { display: flex; gap: 8px; }
+    .filter-tab { background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
+    .filter-tab:hover { border-color: var(--teal2); color: var(--teal); }
+    .filter-tab.active { background: var(--teal2); border-color: var(--teal2); color: #fff; }
     .xp-bar-bg { width: 80px; height: 5px; background: var(--border); border-radius: 3px; display: inline-block; vertical-align: middle; margin-right: 6px; }
     .xp-bar { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--teal2), var(--mint)); }
 
@@ -214,6 +218,21 @@ Chart.defaults.font.family = 'Segoe UI, system-ui, sans-serif';
 
 // Register datalabels plugin globally
 Chart.register(ChartDataLabels);
+
+// Mask email: sai***@gmail.com
+function maskEmail(email) {
+  if (!email || !email.includes('@')) return email || '—';
+  const [local, domain] = email.split('@');
+  const visible = local.slice(0, Math.min(3, local.length));
+  return `${visible}***@${domain}`;
+}
+
+// Mask phone: keep last 4 digits
+function maskPhone(phone) {
+  if (!phone) return '—';
+  const s = String(phone).replace(/\D/g,'');
+  return s.length > 4 ? `****${s.slice(-4)}` : '****';
+}
 
 const COLORS = {
   teal:   '#93B0AC', teal2:  '#5F8A86', mint:   '#7AADA8',
@@ -582,7 +601,7 @@ function buildHTML(counts, onboardRate, totalXP, avgStreak, students, teachers, 
       <tbody>
         ${(an.usersLastSeen||[]).slice(0,10).map(u => `
           <tr>
-            <td>${u.email||'-'}</td>
+            <td>${maskEmail(u.email)}</td>
             <td><span class="pill ${u.role==='student'?'pill-teal':u.role==='teacher'?'pill-gold':'pill-rose'}">${u.role||'-'}</span></td>
             <td style="color:var(--muted)">${u.lastSeen ? new Date(u.lastSeen).toLocaleString() : '-'}</td>
           </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--dim);padding:20px">No activity logged yet</td></tr>'}
@@ -594,19 +613,34 @@ function buildHTML(counts, onboardRate, totalXP, avgStreak, students, teachers, 
   <div class="section-title">Students</div>
   <div class="table-card">
     <div class="table-head">
-      <div><div class="table-head-title">All Students (${students.length})</div><div class="table-head-sub">Enrolled learners with progress data</div></div>
-      <a class="btn-export" href="${api('/admin/export/students.csv')}" style="font-size:12px;">⬇ Export CSV</a>
+      <div>
+        <div class="table-head-title">Students (${students.length})</div>
+        <div class="table-head-sub">Enrolled learners with progress data</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="filterStudents('all',this)">All (${students.length})</button>
+          <button class="filter-tab" onclick="filterStudents('b2b',this)">B2B — Schools (${b2bStudents.length})</button>
+          <button class="filter-tab" onclick="filterStudents('b2c',this)">B2C — Direct (${b2cStudents.length})</button>
+        </div>
+        <a class="btn-export" href="${api('/admin/export/students.csv')}" style="font-size:12px;">⬇ Export CSV</a>
+      </div>
     </div>
-    <table>
-      <thead><tr><th>Name</th><th>Grade</th><th>Curriculum</th><th>School</th><th>XP</th><th>Streak</th><th>Topics</th><th>Study Time</th><th>Onboarded</th></tr></thead>
-      <tbody>
+    <table id="studentsTable">
+      <thead><tr><th>Name</th><th>Grade</th><th>Curriculum</th><th>School / Type</th><th>XP</th><th>Streak</th><th>Topics</th><th>Study Time</th><th>Onboarded</th></tr></thead>
+      <tbody id="studentsBody">
         ${students.map(s => {
           const xpPct = Math.min((s.xpPoints||0)/2000,1)*100;
-          return `<tr>
-            <td><div style="font-weight:600">${s.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${s.email||''}</div></td>
+          const isB2B = !!(s.school && s.school !== '—' && s.school !== '');
+          return `<tr data-segment="${isB2B?'b2b':'b2c'}">
+            <td><div style="font-weight:600">${s.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${maskEmail(s.email)}</div></td>
             <td>${s.grade ? `<span class="pill pill-teal">${s.grade}</span>` : '—'}</td>
             <td>${s.curriculum ? `<span class="pill pill-gold">${s.curriculum}</span>` : '—'}</td>
-            <td style="color:var(--muted)">${s.school||'—'}</td>
+            <td>
+              ${isB2B
+                ? `<div style="font-weight:500">${s.school}</div><span class="pill pill-teal" style="margin-top:3px;display:inline-block">B2B</span>`
+                : `<span class="pill pill-rose">B2C</span>`}
+            </td>
             <td>
               <div style="display:flex;align-items:center;gap:6px">
                 <div class="xp-bar-bg"><div class="xp-bar" style="width:${xpPct}%"></div></div>
@@ -631,7 +665,7 @@ function buildHTML(counts, onboardRate, totalXP, avgStreak, students, teachers, 
         <thead><tr><th>Name</th><th>School</th><th>Students</th><th>Onboarded</th></tr></thead>
         <tbody>
           ${teachers.map(t => `<tr>
-            <td><div style="font-weight:600">${t.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${t.email||''}</div></td>
+            <td><div style="font-weight:600">${t.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${maskEmail(t.email)}</div></td>
             <td style="color:var(--muted)">${t.school||'—'}</td>
             <td><span class="pill pill-teal">${t.totalAssignedStudents||0}</span></td>
             <td>${t.onboardingComplete ? '<span class="ok">✓</span>' : '<span class="bad">✗</span>'}</td>
@@ -645,7 +679,7 @@ function buildHTML(counts, onboardRate, totalXP, avgStreak, students, teachers, 
         <thead><tr><th>Name</th><th>Location</th><th>Children</th><th>Onboarded</th></tr></thead>
         <tbody>
           ${parents.map(p => `<tr>
-            <td><div style="font-weight:600">${p.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${p.email||''}</div></td>
+            <td><div style="font-weight:600">${p.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${maskEmail(p.email)}</div></td>
             <td style="color:var(--muted)">${p.location||'—'}</td>
             <td>${(p.children||[]).map(c=>`<div style="font-size:11px">${c.childName||c.childEmail} <span style="color:var(--dim)">${c.childGrade||''}</span></div>`).join('') || '—'}</td>
             <td>${p.onboardingComplete ? '<span class="ok">✓</span>' : '<span class="bad">✗</span>'}</td>
@@ -690,7 +724,7 @@ function buildFeedbackCard(type, title, subtitle, an) {
           return `<div class="feedback-item">
             <div class="feedback-item-top">
               <div class="score-dot" style="background:${dotColor}"></div>
-              <div class="feedback-email">${e.userEmail || 'Anonymous'}</div>
+              <div class="feedback-email">${e.userEmail ? maskEmail(e.userEmail) : 'Anonymous'}</div>
               <div class="feedback-time">${e.timestamp ? new Date(e.timestamp).toLocaleDateString() : ''}</div>
             </div>
             ${e.comment ? `<div class="feedback-comment">"${e.comment}"</div>` : ''}
@@ -699,6 +733,14 @@ function buildFeedbackCard(type, title, subtitle, an) {
       : `<div class="no-feedback">${total === 0 ? 'No feedback collected yet' : 'Collecting feedback…'}</div>`
     }
   </div>`;
+}
+
+function filterStudents(segment, btn) {
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#studentsBody tr[data-segment]').forEach(row => {
+    row.style.display = (segment === 'all' || row.dataset.segment === segment) ? '' : 'none';
+  });
 }
 
 loadAll();

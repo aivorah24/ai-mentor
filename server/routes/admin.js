@@ -229,7 +229,8 @@ router.get('/charts-data', async (_req, res) => {
       if (!c) return null; // skip unknowns
       const s = String(c).trim().toUpperCase().replace(/[_\-]/g, ' ');
       if (s === 'IB PYP') return 'IB PYP';
-      if (s === 'NCERT' || s === 'CBSE') return 'NCERT';
+      if (s === 'NCERT') return 'NCERT';
+      if (s === 'CBSE') return 'CBSE';
       return String(c).trim();
     };
     const curriculumMap = {};

@@ -11,9 +11,9 @@ import ScreenLayout from '../../components/common/ScreenLayout';
 import { spacing, radius } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
-// Aivorah teal/sage pastel palette
 const TEAL   = '#5F8A86';
 const FOREST = '#5A8A70';
+const AMBER  = '#C5A56A';  // warm pastel gold — premium
 
 interface StoryMeta {
   id: string;
@@ -27,7 +27,6 @@ interface StoryMeta {
   collection: string;
 }
 
-// Pastel gradients — always override server colors to match Aivorah theme
 const PASTEL_GRAD: Record<string, [string, string]> = {
   '#7c3aed': ['#9B8FC0', '#7BA8A4'],
   '#4f46e5': ['#8FA0C0', '#7BA8A4'],
@@ -47,20 +46,11 @@ const COLLECTION_PASTEL: Record<string, string> = {
   'Bhagavad Gita':     '#82A896',
 };
 
-// Map server icon names to valid Feather icon names
 const ICON_MAP: Record<string, string> = {
-  crown:      'award',
-  star:       'star',
-  shield:     'shield',
-  compass:    'compass',
-  zap:        'zap',
-  'book-open':'book-open',
-  heart:      'heart',
+  crown: 'award', star: 'star', shield: 'shield',
+  compass: 'compass', zap: 'zap', 'book-open': 'book-open', heart: 'heart',
 };
-
-function safeIcon(name: string): string {
-  return ICON_MAP[name] ?? 'book-open';
-}
+function safeIcon(name: string): string { return ICON_MAP[name] ?? 'book-open'; }
 
 export default function BhagavathaStoriesScreen({ navigation }: any) {
   const { colors } = useTheme();
@@ -86,6 +76,15 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
     });
     return map;
   }, [stories]);
+
+  // First story in each collection is free
+  const freeIds = useMemo(() => {
+    const ids = new Set<string>();
+    Object.values(grouped).forEach(items => { if (items[0]) ids.add(items[0].id); });
+    return ids;
+  }, [grouped]);
+
+  function isLocked(storyId: string) { return !freeIds.has(storyId); }
 
   return (
     <ScreenLayout>
@@ -116,6 +115,17 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
             </View>
           </LinearGradient>
 
+          {/* Premium notice */}
+          <View style={[styles.premiumBar, { backgroundColor: AMBER + '12', borderColor: AMBER + '40' }]}>
+            <Feather name="lock" size={13} color={AMBER} />
+            <Text style={[styles.premiumBarText, { color: AMBER }]}>
+              1 free story per collection · Upgrade to Premium to unlock all
+            </Text>
+            <TouchableOpacity style={[styles.upgradeBtn, { backgroundColor: AMBER }]}>
+              <Text style={styles.upgradeBtnText}>Upgrade</Text>
+            </TouchableOpacity>
+          </View>
+
           {loading && (
             <View style={styles.center}>
               <ActivityIndicator size="large" color={TEAL} />
@@ -135,65 +145,86 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
             const collColor = COLLECTION_PASTEL[collection] ?? TEAL;
             return (
               <View key={collection} style={styles.section}>
-                {/* Section header */}
                 <View style={styles.sectionHeader}>
                   <View style={[styles.sectionDot, { backgroundColor: collColor }]} />
                   <Text style={[styles.sectionTitle, { color: collColor }]}>{collection}</Text>
                   <View style={[styles.sectionLine, { backgroundColor: collColor + '30' }]} />
                 </View>
 
-                {/* Story cards */}
                 {items.map(story => {
-                  const grad = PASTEL_GRAD[story.coverColor] ?? ['#7BA8A4', '#82A896'];
+                  const grad   = PASTEL_GRAD[story.coverColor] ?? ['#7BA8A4', '#82A896'];
+                  const locked = isLocked(story.id);
                   return (
                     <TouchableOpacity
                       key={story.id}
-                      style={[styles.card, { backgroundColor: colors.cardDark, borderColor: colors.borderColor }]}
-                      onPress={() => navigation.navigate('StoryReader', { storyId: story.id, storyTitle: story.title })}
-                      activeOpacity={0.88}
+                      style={[styles.card, {
+                        backgroundColor: colors.cardDark,
+                        borderColor: locked ? AMBER + '50' : colors.borderColor,
+                      }]}
+                      onPress={() => {
+                        if (!locked) navigation.navigate('StoryReader', { storyId: story.id, storyTitle: story.title });
+                      }}
+                      activeOpacity={locked ? 1 : 0.88}
                     >
-                      {/* Left: cover image or gradient icon fallback */}
+                      {/* Cover image or gradient */}
                       {story.coverImageUrl ? (
                         <Image
                           source={{ uri: story.coverImageUrl.startsWith('http') ? story.coverImageUrl : `${SERVER_URL}${story.coverImageUrl}` }}
-                          style={styles.cardIcon}
+                          style={[styles.cardIcon, locked && styles.cardIconDim]}
                           resizeMode="cover"
                         />
                       ) : (
                         <LinearGradient
-                          colors={grad}
+                          colors={locked ? ['#2a2a2a', '#1e1e1e'] : grad}
                           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                           style={styles.cardIcon}
                         >
                           <View style={styles.cardIconInner}>
-                            <Feather name={safeIcon(story.coverIcon) as any} size={26} color="#fff" />
+                            <Feather
+                              name={locked ? 'lock' : safeIcon(story.coverIcon) as any}
+                              size={26}
+                              color={locked ? AMBER : '#fff'}
+                            />
                           </View>
                         </LinearGradient>
                       )}
 
-                      {/* Right: info */}
+                      {/* Info */}
                       <View style={styles.cardInfo}>
-                        <Text style={[styles.cardTitle, { color: colors.textMain }]} numberOfLines={1}>
+                        <Text style={[styles.cardTitle, { color: locked ? colors.textDim : colors.textMain }]} numberOfLines={1}>
                           {story.title}
                         </Text>
                         <Text style={[styles.cardSub, { color: colors.textMuted }]} numberOfLines={2}>
                           {story.subtitle}
                         </Text>
                         <View style={styles.cardMeta}>
-                          <View style={[styles.metaBadge, { backgroundColor: grad[0] + '20', borderColor: grad[0] + '50' }]}>
-                            <Feather name="book" size={9} color={grad[0]} />
-                            <Text style={[styles.metaText, { color: grad[0] }]}>{story.pageCount} pages</Text>
-                          </View>
-                          <View style={[styles.metaBadge, { backgroundColor: colors.borderColor, borderColor: 'transparent' }]}>
-                            <Feather name="users" size={9} color={colors.textDim} />
-                            <Text style={[styles.metaText, { color: colors.textDim }]}>Age {story.ageGroup}</Text>
-                          </View>
+                          {locked ? (
+                            <View style={[styles.metaBadge, { backgroundColor: AMBER + '15', borderColor: AMBER + '40' }]}>
+                              <Feather name="lock" size={9} color={AMBER} />
+                              <Text style={[styles.metaText, { color: AMBER }]}>Premium</Text>
+                            </View>
+                          ) : (
+                            <>
+                              <View style={[styles.metaBadge, { backgroundColor: grad[0] + '20', borderColor: grad[0] + '50' }]}>
+                                <Feather name="book" size={9} color={grad[0]} />
+                                <Text style={[styles.metaText, { color: grad[0] }]}>{story.pageCount} pages</Text>
+                              </View>
+                              <View style={[styles.metaBadge, { backgroundColor: colors.borderColor, borderColor: 'transparent' }]}>
+                                <Feather name="users" size={9} color={colors.textDim} />
+                                <Text style={[styles.metaText, { color: colors.textDim }]}>Age {story.ageGroup}</Text>
+                              </View>
+                            </>
+                          )}
                         </View>
                       </View>
 
-                      {/* Read chevron */}
-                      <View style={[styles.cardArrow, { backgroundColor: grad[0] + '18' }]}>
-                        <Feather name="chevron-right" size={18} color={grad[0]} />
+                      {/* Arrow or lock */}
+                      <View style={[styles.cardArrow, { backgroundColor: locked ? AMBER + '12' : grad[0] + '18' }]}>
+                        <Feather
+                          name={locked ? 'lock' : 'chevron-right'}
+                          size={18}
+                          color={locked ? AMBER : grad[0]}
+                        />
                       </View>
                     </TouchableOpacity>
                   );
@@ -216,41 +247,39 @@ const makeStyles = (c: any) => StyleSheet.create({
 
   hero: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    padding: spacing.lg, borderRadius: radius.xl,
-    borderWidth: 1, borderColor: TEAL + '30',
+    padding: spacing.lg, borderRadius: radius.xl, borderWidth: 1, borderColor: TEAL + '30',
   },
-  heroIcon: {
-    width: 52, height: 52, borderRadius: 14,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1,
-  },
+  heroIcon: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   heroTitle: { fontSize: 15, fontWeight: '800', marginBottom: 3 },
   heroSub:   { fontSize: 12, lineHeight: 18 },
 
-  // Section grouping
+  premiumBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    padding: 11, borderRadius: radius.lg, borderWidth: 1,
+  },
+  premiumBarText: { flex: 1, fontSize: 12, fontWeight: '600' },
+  upgradeBtn:     { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 },
+  upgradeBtnText: { fontSize: 11, fontWeight: '800', color: '#fff' },
+
   section:       { gap: spacing.sm },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
   sectionDot:    { width: 8, height: 8, borderRadius: 4 },
   sectionTitle:  { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8 },
   sectionLine:   { flex: 1, height: 1 },
 
-  // Horizontal card
   card: {
     flexDirection: 'row', alignItems: 'center',
-    borderRadius: radius.lg, borderWidth: 1,
-    overflow: 'hidden',
+    borderRadius: radius.lg, borderWidth: 1, overflow: 'hidden',
   },
-  cardIcon: {
-    width: 90, height: 90,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  cardIcon:     { width: 90, height: 90, alignItems: 'center', justifyContent: 'center' },
+  cardIconDim:  { opacity: 0.4 },
   cardIconInner: {
     width: 52, height: 52, borderRadius: 26,
     backgroundColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.30)',
   },
-  cardInfo: { flex: 1, paddingHorizontal: spacing.md, paddingVertical: spacing.md, gap: 4 },
+  cardInfo:  { flex: 1, paddingHorizontal: spacing.md, paddingVertical: spacing.md, gap: 4 },
   cardTitle: { fontSize: 14, fontWeight: '800' },
   cardSub:   { fontSize: 12, lineHeight: 17 },
   cardMeta:  { flexDirection: 'row', gap: 6, marginTop: 2 },
@@ -259,8 +288,5 @@ const makeStyles = (c: any) => StyleSheet.create({
     paddingHorizontal: 7, paddingVertical: 2, borderRadius: 12, borderWidth: 1,
   },
   metaText:  { fontSize: 10, fontWeight: '600' },
-  cardArrow: {
-    width: 36, alignSelf: 'stretch',
-    alignItems: 'center', justifyContent: 'center',
-  },
+  cardArrow: { width: 36, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
 });
