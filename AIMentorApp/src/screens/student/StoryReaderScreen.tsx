@@ -148,18 +148,15 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   }
 
   function pauseAudio() {
-    // Pause but keep position — resume will continue from here
-    if (audioRef.current) {
-      try { audioRef.current.pause(); } catch {}
-    }
-    if (bgMusicRef.current) {
-      try { bgMusicRef.current.pause(); } catch {}
+    if (audioRef.current) try { audioRef.current.pause(); } catch {}
+    // Fade out ambient music
+    if (ambientRef.current) {
+      try { ambientRef.current.master.gain.linearRampToValueAtTime(0, ambientRef.current.ctx.currentTime + 0.5); } catch {}
     }
     setPlaying(false);
   }
 
   function stopAudio() {
-    // Full stop — clears audio and resets position
     playGenRef.current++;
     if (audioRef.current) {
       try { audioRef.current.pause(); audioRef.current.currentTime = 0; } catch {}
@@ -170,18 +167,20 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   }
 
   function resumeAudio() {
-    if (audioRef.current) {
-      try {
-        audioRef.current.play();
-        if (bgMusicRef.current) bgMusicRef.current.play().catch(() => {});
-        setPlaying(true);
-      } catch {}
-    }
+    if (!audioRef.current) return;
+    try {
+      audioRef.current.play();
+      // Fade ambient back in
+      if (ambientRef.current) {
+        try { ambientRef.current.master.gain.linearRampToValueAtTime(0.06, ambientRef.current.ctx.currentTime + 1); } catch {}
+      }
+      setPlaying(true);
+    } catch {}
   }
 
   async function speakPage(pageNum: number) {
     if (!story) return;
-    // If same page audio is loaded and paused, just resume
+    // If audio loaded and paused mid-way, resume from same position
     if (audioRef.current && audioRef.current.paused && audioRef.current.currentTime > 0) {
       resumeAudio(); return;
     }
@@ -258,6 +257,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   const pastelAccent= pastelGrad[0];
   const sentences   = splitSentences(page.text);
   const isBusy      = isLoading || playing;
+  const isPaused    = !playing && !isLoading && audioRef.current && audioRef.current.currentTime > 0;
   const totalDone   = donePages.size;
 
   return (
@@ -351,15 +351,15 @@ export default function StoryReaderScreen({ route, navigation }: any) {
 
               <View style={styles.listenRow}>
                 <TouchableOpacity
-                  style={[styles.listenBtn, { backgroundColor: isBusy ? '#e11d48' : pastelAccent }]}
+                  style={[styles.listenBtn, { backgroundColor: playing ? '#e11d48' : isPaused ? '#f59e0b' : pastelAccent }]}
                   onPress={() => playing ? pauseAudio() : speakPage(page.pageNumber)}
                   activeOpacity={0.85}
                 >
                   {isLoading
                     ? <ActivityIndicator size="small" color="#fff" />
-                    : <Feather name={playing ? 'pause' : 'headphones'} size={14} color="#fff" />
+                    : <Feather name={playing ? 'pause' : isPaused ? 'play' : 'headphones'} size={14} color="#fff" />
                   }
-                  <Text style={styles.listenBtnText}>{isLoading ? 'Loading…' : playing ? 'Pause' : 'Listen'}</Text>
+                  <Text style={styles.listenBtnText}>{isLoading ? 'Loading…' : playing ? 'Pause' : isPaused ? 'Resume' : 'Listen'}</Text>
                 </TouchableOpacity>
 
                 {(Object.keys(VOICE_CONFIG) as VoiceOption[]).map(v => {
