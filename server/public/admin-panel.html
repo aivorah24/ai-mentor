@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Aivorah Admin Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <style>
     :root {
       --bg:      #0b0f14;
@@ -211,6 +212,9 @@ Chart.defaults.color = '#7a9490';
 Chart.defaults.borderColor = '#232c36';
 Chart.defaults.font.family = 'Segoe UI, system-ui, sans-serif';
 
+// Register datalabels plugin globally
+Chart.register(ChartDataLabels);
+
 const COLORS = {
   teal:   '#93B0AC', teal2:  '#5F8A86', mint:   '#7AADA8',
   rose:   '#EFD1D4', gold:   '#C5BD96', violet: '#9B7FD4',
@@ -273,6 +277,17 @@ function renderDashboard(ov, an, cd) {
 
   // ── Charts ───────────────────────────────────────────────
 
+  const donutDatalabels = {
+    datalabels: {
+      color: '#fff',
+      font: { size: 12, weight: '700' },
+      formatter: (value) => value > 0 ? value : '',
+      anchor: 'center',
+      align: 'center',
+    },
+    legend: { position: 'bottom', labels: { padding: 14, font: { size: 11 } } },
+  };
+
   // 1. Role donut
   mkChart('chartRoles', {
     type: 'doughnut',
@@ -280,7 +295,7 @@ function renderDashboard(ov, an, cd) {
       labels: ['Students', 'Teachers', 'Parents'],
       datasets: [{ data: [counts.students, counts.teachers, counts.parents], backgroundColor: [COLORS.teal, COLORS.gold, COLORS.rose], borderWidth: 2, borderColor: '#141920' }],
     },
-    options: { plugins: { legend: { position: 'bottom', labels: { padding: 14, font: { size: 11 } } } }, cutout: '68%' },
+    options: { plugins: donutDatalabels, cutout: '60%' },
   });
 
   // 2. Curriculum donut
@@ -291,7 +306,7 @@ function renderDashboard(ov, an, cd) {
       labels: currKeys,
       datasets: [{ data: currKeys.map(k => cd.curriculumMap[k]), backgroundColor: PALETTE, borderWidth: 2, borderColor: '#141920' }],
     },
-    options: { plugins: { legend: { position: 'bottom', labels: { padding: 14, font: { size: 11 } } } }, cutout: '68%' },
+    options: { plugins: donutDatalabels, cutout: '60%' },
   });
 
   // 3. Grade bar
@@ -302,7 +317,13 @@ function renderDashboard(ov, an, cd) {
       labels: gradeKeys,
       datasets: [{ label: 'Students', data: gradeKeys.map(k => cd.gradeMap[k]), backgroundColor: COLORS.mint, borderRadius: 6, borderSkipped: false }],
     },
-    options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { ticks: { stepSize: 1 }, beginAtZero: true } } },
+    options: {
+      plugins: {
+        legend: { display: false },
+        datalabels: { color: '#fff', anchor: 'end', align: 'start', font: { size: 11, weight: '700' }, formatter: v => v > 0 ? v : '' },
+      },
+      scales: { x: { grid: { display: false } }, y: { ticks: { stepSize: 1 }, beginAtZero: true } },
+    },
   });
 
   // 4. Top students by XP (bar)
@@ -318,7 +339,7 @@ function renderDashboard(ov, an, cd) {
         borderRadius: 8, borderSkipped: false,
       }],
     },
-    options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true }, y: { grid: { display: false } } } },
+    options: { indexAxis: 'y', plugins: { legend: { display: false }, datalabels: { color: '#fff', anchor: 'end', align: 'start', font: { size: 11, weight: '700' }, formatter: v => v > 0 ? v : '' } }, scales: { x: { beginAtZero: true }, y: { grid: { display: false } } } },
   });
 
   // 5. Study time bar
@@ -333,7 +354,7 @@ function renderDashboard(ov, an, cd) {
         borderRadius: 6, borderSkipped: false,
       }],
     },
-    options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } },
+    options: { plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } },
   });
 
   // 6. Assignments last 7 days
@@ -350,7 +371,7 @@ function renderDashboard(ov, an, cd) {
         fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: COLORS.coral,
       }],
     },
-    options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+    options: { plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
   });
 
   // 7. AI Metrics bar
@@ -365,7 +386,7 @@ function renderDashboard(ov, an, cd) {
           { label: 'Failed',  data: aiM.map(m => m.failed),  backgroundColor: COLORS.red   + 'cc', borderRadius: 4 },
         ],
       },
-      options: { plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, stacked: false } } },
+      options: { plugins: { legend: { position: 'top', labels: { font: { size: 11 } } }, datalabels: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, stacked: false } } },
     });
   }
 
@@ -387,6 +408,29 @@ function renderDashboard(ov, an, cd) {
 function buildHTML(counts, onboardRate, totalXP, avgStreak, students, teachers, parents, an, cd) {
   const assignStats = cd.assignmentStats || {};
 
+  // B2B vs B2C: B2B = students with a school, B2C = parent-enrolled (no school)
+  const b2bStudents = students.filter(s => s.school && s.school !== '—' && s.school !== '');
+  const b2cStudents = students.filter(s => !s.school || s.school === '—' || s.school === '');
+
+  // School drill-down: group students by school
+  const schoolMap = {};
+  for (const s of b2bStudents) {
+    const name = s.school;
+    if (!schoolMap[name]) schoolMap[name] = { students: 0, teachers: 0, avgXP: 0, totalXP: 0 };
+    schoolMap[name].students++;
+    schoolMap[name].totalXP += (s.xpPoints || 0);
+  }
+  for (const t of teachers) {
+    if (t.school && t.school !== '—') {
+      if (!schoolMap[t.school]) schoolMap[t.school] = { students: 0, teachers: 0, avgXP: 0, totalXP: 0 };
+      schoolMap[t.school].teachers++;
+    }
+  }
+  for (const k of Object.keys(schoolMap)) {
+    schoolMap[k].avgXP = schoolMap[k].students > 0 ? Math.round(schoolMap[k].totalXP / schoolMap[k].students) : 0;
+  }
+  const schools = Object.entries(schoolMap).sort((a,b) => b[1].students - a[1].students);
+
   return `
   <!-- KPIs -->
   <div class="section-title">Platform Overview</div>
@@ -398,6 +442,56 @@ function buildHTML(counts, onboardRate, totalXP, avgStreak, students, teachers, 
     <div class="kpi c5"><div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B7FD4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="kpi-val">${totalXP.toLocaleString()}</div><div class="kpi-label">Total XP Earned</div><div class="kpi-sub">Across all students</div></div>
     <div class="kpi c6"><div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C47A68" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><div class="kpi-val">${assignStats.total || 0}</div><div class="kpi-label">Assignments</div><div class="kpi-sub">${assignStats.completed || 0} completed</div></div>
   </div>
+
+  <!-- B2B vs B2C -->
+  <div class="section-title">B2B vs B2C Split</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi c2">
+      <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7AADA8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
+      <div class="kpi-val" style="color:var(--mint)">${b2bStudents.length}</div>
+      <div class="kpi-label">B2B Students</div>
+      <div class="kpi-sub">School-enrolled</div>
+    </div>
+    <div class="kpi c4">
+      <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EFD1D4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+      <div class="kpi-val" style="color:var(--rose)">${b2cStudents.length}</div>
+      <div class="kpi-label">B2C Students</div>
+      <div class="kpi-sub">Parent-enrolled (direct)</div>
+    </div>
+    <div class="kpi c3">
+      <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C5BD96" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+      <div class="kpi-val" style="color:var(--gold)">${schools.length}</div>
+      <div class="kpi-label">Schools</div>
+      <div class="kpi-sub">Institutions onboard</div>
+    </div>
+    <div class="kpi c5">
+      <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B7FD4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+      <div class="kpi-val" style="color:var(--violet)">${counts.students > 0 ? Math.round(b2bStudents.length/counts.students*100) : 0}%</div>
+      <div class="kpi-label">B2B Share</div>
+      <div class="kpi-sub">Of total students</div>
+    </div>
+  </div>
+
+  <!-- School Drill-Down -->
+  ${schools.length > 0 ? `
+  <div class="section-title">School Drill-Down</div>
+  <div class="table-card">
+    <div class="table-head">
+      <div><div class="table-head-title">Schools (${schools.length})</div><div class="table-head-sub">Students and teachers per institution</div></div>
+    </div>
+    <table>
+      <thead><tr><th>School</th><th>Students</th><th>Teachers</th><th>Avg XP / Student</th><th>Total XP</th></tr></thead>
+      <tbody>
+        ${schools.map(([name, info]) => `<tr>
+          <td style="font-weight:600">${name}</td>
+          <td><span class="pill pill-teal">${info.students}</span></td>
+          <td><span class="pill pill-gold">${info.teachers}</span></td>
+          <td style="color:var(--violet);font-weight:600">${info.avgXP.toLocaleString()}</td>
+          <td style="color:var(--teal)">${info.totalXP.toLocaleString()}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>` : ''}
 
   <!-- User Distribution + Curriculum + Grades -->
   <div class="section-title">User Distribution</div>
