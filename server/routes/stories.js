@@ -146,7 +146,7 @@ router.get('/:id/audio/:pageNumber', async (req, res) => {
 
   const cacheKey  = storyCacheKey(story.id, pageNum, narrator);
   const cacheFile = path.join(AUDIO_DIR, `${cacheKey}.mp3`);
-  const audioUrl  = `/data/audio/${cacheKey}.mp3`;
+  const audioUrl  = `/data/audio/stories/${cacheKey}.mp3`;
 
   // ── Serve from cache instantly ───────────────────────────────────────────
   if (fs.existsSync(cacheFile)) {
