@@ -147,7 +147,19 @@ export default function StoryReaderScreen({ route, navigation }: any) {
     });
   }
 
+  function pauseAudio() {
+    // Pause but keep position — resume will continue from here
+    if (audioRef.current) {
+      try { audioRef.current.pause(); } catch {}
+    }
+    if (bgMusicRef.current) {
+      try { bgMusicRef.current.pause(); } catch {}
+    }
+    setPlaying(false);
+  }
+
   function stopAudio() {
+    // Full stop — clears audio and resets position
     playGenRef.current++;
     if (audioRef.current) {
       try { audioRef.current.pause(); audioRef.current.currentTime = 0; } catch {}
@@ -157,8 +169,22 @@ export default function StoryReaderScreen({ route, navigation }: any) {
     setIsLoading(false); setPlaying(false);
   }
 
+  function resumeAudio() {
+    if (audioRef.current) {
+      try {
+        audioRef.current.play();
+        if (bgMusicRef.current) bgMusicRef.current.play().catch(() => {});
+        setPlaying(true);
+      } catch {}
+    }
+  }
+
   async function speakPage(pageNum: number) {
     if (!story) return;
+    // If same page audio is loaded and paused, just resume
+    if (audioRef.current && audioRef.current.paused && audioRef.current.currentTime > 0) {
+      resumeAudio(); return;
+    }
     stopAudio();
     const gen = ++playGenRef.current;
     setIsLoading(true);
@@ -326,7 +352,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
               <View style={styles.listenRow}>
                 <TouchableOpacity
                   style={[styles.listenBtn, { backgroundColor: isBusy ? '#e11d48' : pastelAccent }]}
-                  onPress={() => isBusy ? stopAudio() : speakPage(page.pageNumber)}
+                  onPress={() => playing ? pauseAudio() : speakPage(page.pageNumber)}
                   activeOpacity={0.85}
                 >
                   {isLoading
