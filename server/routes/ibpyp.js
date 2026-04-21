@@ -218,7 +218,7 @@ router.post('/track-result', async (req, res) => {
 });
 
 // ── GET /ibpyp/lesson-content — serve pre-written lesson JSON ─────────────────
-router.get('/lesson-content', (req, res) => {
+router.get('/lesson-content', async (req, res) => {
   const { topic, grade, subject } = req.query;
   if (!topic || !grade) return res.status(400).json({ error: 'topic and grade required' });
 
@@ -262,7 +262,92 @@ router.get('/lesson-content', (req, res) => {
     return res.json(JSON.parse(fs.readFileSync(path.join(dir, bestFile), 'utf8')));
   }
 
-  res.status(404).json({ error: `No lesson found for "${topic}" / ${grade}`, topicSlug, gradeSlugB });
+  // No pre-built lesson file — generate dynamically using Groq
+  try {
+    // Look up topic description from Qdrant
+    const { client, COLLECTION } = require('../services/qdrant');
+    const curriculum = req.query.curriculum || 'CBSE';
+    let topicDesc = '';
+    let textbook = '';
+
+    try {
+      const scroll = await client.scroll(COLLECTION, {
+        filter: { must: [
+          { key: 'curriculum', match: { value: curriculum.replace(/ /g, '_') } },
+          { key: 'grade',      match: { value: grade } },
+          { key: 'topic',      match: { value: topic } },
+        ]},
+        limit: 1, with_payload: true, with_vector: false,
+      });
+      if (scroll.points.length > 0) {
+        const p = scroll.points[0].payload;
+        topicDesc = p.text || p.description || '';
+        textbook  = p.textbook || '';
+      }
+    } catch (_) { /* Qdrant not available, proceed without */ }
+
+    if (!topicDesc) {
+      topicDesc = `${topic} — a chapter in ${subject || 'Mathematics'} for ${grade}`;
+    }
+
+    const gradeNum = (grade.match(/\d+/) || ['3'])[0];
+    const age = parseInt(gradeNum) + 5;
+
+    const prompt = `You are Ms. Zara, a warm and patient teacher for ${age}-year-old students.
+Generate a lesson for the chapter "${topic}" from ${textbook || subject || 'Mathematics'} for ${grade}.
+
+CHAPTER DESCRIPTION:
+${topicDesc}
+
+Create exactly 6 scenes. Each scene teaches one concept from this specific chapter.
+The content MUST be specific to "${topic}" — use actual concepts, examples, and terms from this chapter.
+
+RULES:
+- Maximum 10 words per sentence
+- Simple everyday words only
+- One concept per scene
+- Include real examples related to the chapter content
+- Age ${age} appropriate language
+
+Return ONLY valid JSON (no markdown):
+{
+  "id": "lesson_${slug(grade)}_${slug(subject || 'maths')}_${slug(topic)}",
+  "title": "${topic}",
+  "grade": "${grade}",
+  "subject": "${subject || 'Mathematics'}",
+  "accent": "#5F8A86",
+  "scenes": [
+    {
+      "id": "01",
+      "scene_number": 1,
+      "type": "intro",
+      "words": ["WORD1", "WORD2", "WORD3"],
+      "subtext": "Short subtitle (max 5 words)",
+      "accent": "#5F8A86",
+      "voice": "Ms. Zara's speech for this scene (2-3 sentences, simple language)"
+    }
+  ]
+}
+
+Scene types: scene 1 = "intro", scenes 2-3 = "concept", scene 4 = "example", scene 5 = "example", scene 6 = "summary".
+The "words" array should have 3-4 KEY WORDS from the concept being taught (all uppercase).`;
+
+    const chat = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 2000,
+    });
+
+    let raw = (chat.choices[0]?.message?.content || '').trim();
+    // Strip markdown fences
+    raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+    const lesson = JSON.parse(raw);
+    return res.json(lesson);
+  } catch (err) {
+    console.error('Dynamic lesson generation failed:', err.message);
+    res.status(404).json({ error: `No lesson found for "${topic}" / ${grade}`, topicSlug, gradeSlugB });
+  }
 });
 
 module.exports = router;

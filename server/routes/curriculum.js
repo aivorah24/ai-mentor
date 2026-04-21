@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
             subject:     p.subject,
             unit:        p.unit,
             topic:       p.topic,
-            description: p.description || '',
+            description: p.description || p.text || '',
             source:      p.source || '',
           });
         }
@@ -112,8 +112,9 @@ router.get('/subjects', async (req, res) => {
           if (!topicMap[p.subject]) topicMap[p.subject] = [];
           topicMap[p.subject].push({
             topic:       p.topic,
-            unit:        p.unit,
-            description: p.description || '',
+            unit:        p.unit || p.textbook || '',
+            description: p.description || p.text || '',
+            chapter:     p.chapter || 0,
           });
         }
       }
@@ -124,7 +125,7 @@ router.get('/subjects', async (req, res) => {
     const subjects = Object.entries(topicMap).map(([subject, topics]) => ({
       subject,
       topicCount: topics.length,
-      topics:     topics.sort((a, b) => a.topic.localeCompare(b.topic)),
+      topics:     topics.sort((a, b) => (a.chapter ?? 0) - (b.chapter ?? 0) || a.topic.localeCompare(b.topic)),
     })).sort((a, b) => a.subject.localeCompare(b.subject));
 
     res.json({ grade, curriculum, subjects });
