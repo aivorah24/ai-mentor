@@ -16,7 +16,12 @@ COPY server/ ./server/
 
 # Copy pre-built frontend (built locally via: npx expo export --platform web --output-dir dist2)
 # server/index.js serves from path.join(__dirname, '../AIMentorApp/dist2')
-COPY AIMentorApp/dist2 ./AIMentorApp/dist2
+COPY AIMentorApp/dist2/_expo        ./AIMentorApp/dist2/_expo
+COPY AIMentorApp/dist2/index.html   ./AIMentorApp/dist2/index.html
+COPY AIMentorApp/dist2/favicon.ico  ./AIMentorApp/dist2/favicon.ico
+COPY AIMentorApp/dist2/metadata.json ./AIMentorApp/dist2/metadata.json
+# Copy font assets explicitly — avoids .dockerignore node_modules exclusion
+COPY AIMentorApp/dist2/assets       ./AIMentorApp/dist2/assets
 
 EXPOSE 8080
 

@@ -576,7 +576,7 @@ const HOW_IT_WORKS = [
 export default function LandingScreen() {
   const { signInWithEmail, signUpWithEmail, signInWithGoogle, demoLogin, testLogin } = useAuth();
   const [showTestAccounts, setShowTestAccounts] = useState(false);
-  const [testCurriculum, setTestCurriculum] = useState<'IB PYP' | 'NCERT'>('IB PYP');
+  const [testCurriculum, setTestCurriculum] = useState<'IB PYP' | 'NCERT' | 'CBSE'>('IB PYP');
   const [showLogin,    setShowLogin]    = useState(false);
   const [showSignup,   setShowSignup]   = useState(false);
   const [showForgot,   setShowForgot]   = useState(false);
@@ -750,7 +750,7 @@ export default function LandingScreen() {
               <View style={{ marginTop: 10, gap: 8 }}>
                 {/* Curriculum toggle */}
                 <View style={{ flexDirection: 'row', alignSelf: 'center', borderRadius: 20, borderWidth: 1, borderColor: BORDER, overflow: 'hidden' }}>
-                  {(['IB PYP', 'NCERT'] as const).map(c => (
+                  {(['IB PYP', 'NCERT', 'CBSE'] as const).map(c => (
                     <TouchableOpacity
                       key={c}
                       style={{ paddingHorizontal: 14, paddingVertical: 5, backgroundColor: testCurriculum === c ? CYAN + '22' : 'transparent' }}
@@ -764,29 +764,40 @@ export default function LandingScreen() {
                   ))}
                 </View>
 
-                {(testCurriculum === 'IB PYP' ? [
-                  { label: 'Students', color: CYAN, accounts: [
-                    { name: 'Aanya Kapoor', email: 'aanya@test.ai',  sub: 'Grade 3 · IB PYP' },
-                    { name: 'Ishaan Mehta', email: 'ishaan@test.ai', sub: 'Grade 4 · IB PYP' },
-                    { name: 'Rohan Patel',  email: 'rohan@test.ai',  sub: 'Grade 5 · IB PYP' },
-                    { name: 'Diya Sharma',  email: 'diya@test.ai',   sub: 'Grade 3 · IB PYP' },
-                  ]},
-                  { label: 'Teachers', color: PURPLE, accounts: [
-                    { name: 'Ms. Anjali Kumar', email: 'anjali@test.ai',  sub: 'Grade 4 & 5 · IB PYP' },
-                    { name: 'Priya Kapoor',     email: 'priya.k@test.ai', sub: 'Grade 3 · Teacher + Parent' },
-                    { name: 'Vikram Sharma',    email: 'vikram@test.ai',  sub: 'Grade 3 & 4 · Teacher + Parent' },
-                  ]},
-                  { label: 'Parents', color: GREEN, accounts: [
-                    { name: 'Suresh Mehta', email: 'suresh@test.ai', sub: 'Parent of Ishaan' },
-                    { name: 'Deepa Patel',  email: 'deepa@test.ai',  sub: 'Parent of Rohan' },
-                  ]},
-                ] : [
-                  { label: 'Students', color: AMBER, accounts: [
-                    { name: 'Arjun Sharma', email: 'arjun@test.ai', sub: 'Grade 3 · NCERT' },
-                    { name: 'Priya Nair',   email: 'priya@test.ai', sub: 'Grade 3 · NCERT' },
-                    { name: 'Kavya Reddy',  email: 'kavya@test.ai', sub: 'Grade 5 · NCERT' },
-                  ]},
-                ] as { label: string; color: string; accounts: { name: string; email: string; sub: string }[] }[]).map(group => (
+                {({
+                  'IB PYP': [
+                    { label: 'Students', color: CYAN, accounts: [
+                      { name: 'Aanya Kapoor', email: 'aanya@test.ai',  sub: 'Grade 3 · IB PYP' },
+                      { name: 'Ishaan Mehta', email: 'ishaan@test.ai', sub: 'Grade 4 · IB PYP' },
+                      { name: 'Rohan Patel',  email: 'rohan@test.ai',  sub: 'Grade 5 · IB PYP' },
+                      { name: 'Diya Sharma',  email: 'diya@test.ai',   sub: 'Grade 3 · IB PYP' },
+                    ]},
+                    { label: 'Teachers', color: PURPLE, accounts: [
+                      { name: 'Ms. Anjali Kumar', email: 'anjali@test.ai',  sub: 'Grade 4 & 5 · IB PYP' },
+                      { name: 'Priya Kapoor',     email: 'priya.k@test.ai', sub: 'Grade 3 · Teacher + Parent' },
+                      { name: 'Vikram Sharma',    email: 'vikram@test.ai',  sub: 'Grade 3 & 4 · Teacher + Parent' },
+                    ]},
+                    { label: 'Parents', color: GREEN, accounts: [
+                      { name: 'Suresh Mehta', email: 'suresh@test.ai', sub: 'Parent of Ishaan' },
+                      { name: 'Deepa Patel',  email: 'deepa@test.ai',  sub: 'Parent of Rohan' },
+                    ]},
+                  ],
+                  'NCERT': [
+                    { label: 'Students', color: AMBER, accounts: [
+                      { name: 'Arjun Sharma', email: 'arjun@test.ai', sub: 'Grade 3 · NCERT' },
+                      { name: 'Priya Nair',   email: 'priya@test.ai', sub: 'Grade 3 · NCERT' },
+                      { name: 'Kavya Reddy',  email: 'kavya@test.ai', sub: 'Grade 5 · NCERT' },
+                    ]},
+                  ],
+                  'CBSE': [
+                    { label: 'Students', color: CYAN, accounts: [
+                      { name: 'Tanvi Gupta',  email: 'tanvi@test.ai',  sub: 'Grade 3 · CBSE' },
+                      { name: 'Meera Joshi',  email: 'meera@test.ai',  sub: 'Grade 4 · CBSE' },
+                      { name: 'Vivaan Kumar', email: 'vivaan@test.ai', sub: 'Grade 5 · CBSE' },
+                      { name: 'Aarav Singh',  email: 'aarav@test.ai',  sub: 'Grade 6 · CBSE' },
+                    ]},
+                  ],
+                }[testCurriculum] as { label: string; color: string; accounts: { name: string; email: string; sub: string }[] }[]).map(group => (
                   <View key={group.label}>
                     <Text style={{ fontSize: 10, color: group.color, fontWeight: '700', marginBottom: 4, letterSpacing: 0.5 }}>
                       {group.label.toUpperCase()}

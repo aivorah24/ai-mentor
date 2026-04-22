@@ -144,11 +144,27 @@ export default function OnboardingScreen() {
     setSaveError('');
     try {
       const email = user?.email || '';
-      const body: any = { email, name: fullName.trim(), school, location: city, complete: true };
+
+      // ── Pre-flight validation ──────────────────────────────────────────
+      // Catch empty values before hitting the server — empty string is falsy
+      // on the server and would be silently skipped, leaving nulls in Supabase.
+      if (role === 'student') {
+        if (!grade.trim())      throw new Error('Please select your grade before continuing.');
+        if (!curriculum.trim()) throw new Error('Please select your curriculum before continuing.');
+      }
+
+      const body: any = {
+        email,
+        role,                        // send role so server can validate without an extra DB lookup
+        name: fullName.trim(),
+        school,
+        location: city,
+        complete: true,
+      };
 
       if (role === 'student') {
-        body.grade = grade;
-        body.curriculum = curriculum;
+        body.grade = grade.trim();
+        body.curriculum = curriculum.trim();
       } else if (role === 'teacher') {
         body.curriculum = teachCurriculum;
         body.teaches = teachGrades.map(g => ({
@@ -177,6 +193,17 @@ export default function OnboardingScreen() {
         throw new Error(`Profile save failed (${profileRes.status}): ${errText.slice(0, 200)}`);
       }
 
+      // ── Verify server actually persisted the data ──────────────────────
+      // Parse the response and confirm grade + curriculum are present for students.
+      // If the server returned nulls, we reject and show an error instead of
+      // marking onboarding complete with corrupt data.
+      const saved = await profileRes.json().catch(() => ({}));
+      if (role === 'student') {
+        if (!saved.grade || !saved.curriculum) {
+          throw new Error('Your profile could not be saved correctly. Please try again.');
+        }
+      }
+
       // Save preferences (avatar, learning style) — fire-and-forget, don't block
       fetch(`${SERVER_URL}/user/preferences`, {
         method: 'PATCH',
@@ -185,8 +212,8 @@ export default function OnboardingScreen() {
           email,
           name: fullName.trim(),
           role,
-          grade: role === 'student' ? grade : undefined,
-          curriculum: role === 'student' ? curriculum : teachCurriculum || undefined,
+          grade: role === 'student' ? grade.trim() : undefined,
+          curriculum: role === 'student' ? curriculum.trim() : teachCurriculum || undefined,
           school,
           location: city,
           avatarStyle,
@@ -195,14 +222,14 @@ export default function OnboardingScreen() {
         }),
       }).catch(() => {});
 
-      // Update local auth state — this triggers navigation away from OnboardingScreen
+      // Only mark onboarding complete locally after server confirmed the save
       updateUser({
         name: fullName.trim(),
         school,
         location: city,
         onboardingComplete: true,
         avatarStyle,
-        ...(role === 'student' ? { grade, curriculum } : {}),
+        ...(role === 'student' ? { grade: saved.grade, curriculum: saved.curriculum } : {}),
         ...(role === 'teacher' ? {
           curriculum: teachCurriculum,
           teaches: teachGrades.map(g => ({ grade: g, curriculum: teachCurriculum })),
@@ -210,7 +237,7 @@ export default function OnboardingScreen() {
       } as any);
     } catch (err: any) {
       console.error('Onboarding save error:', err);
-      setSaveError('Could not save your profile. Please try again.');
+      setSaveError(err?.message || 'Could not save your profile. Please try again.');
     } finally {
       setSaving(false);
     }

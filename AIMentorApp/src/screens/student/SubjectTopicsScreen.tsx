@@ -25,6 +25,7 @@ interface TopicItem {
 const SUBJECT_META: Record<string, { icon: any; color: string; bg: string }> = {
   'Mathematics':        { icon: 'trending-up', color: '#5F8A86', bg: '#1E4A46' },
   'Science':            { icon: 'zap',         color: '#5A8A70', bg: '#1A3D2A' },
+  'EVS':                { icon: 'sun',         color: '#8A9E4A', bg: '#2A3D1A' },
   'Social Studies':     { icon: 'globe',       color: '#8A8358', bg: '#38320C' },
   'English':            { icon: 'book-open',   color: '#B8797E', bg: '#4A2228' },
   'Arts':               { icon: 'feather',     color: '#C4836A', bg: '#4A2418' },
@@ -46,6 +47,10 @@ const SUBJECT_MODULES: Record<string, Array<{ label: string; icon: any; color: s
     { label: 'Start Learning', icon: 'play-circle',  color: '#5A8A70', route: 'Learn5E'      },
     { label: 'Practice Test',  icon: 'check-square', color: '#3D8A60', route: 'IBPYPQuiz'   },
     { label: 'Drawing Buddy',  icon: 'edit-3',       color: '#B8797E', route: 'DrawingBuddy' },
+  ],
+  'EVS': [
+    { label: 'Start Learning', icon: 'play-circle',  color: '#8A9E4A', route: 'Learn5E'      },
+    { label: 'Practice Test',  icon: 'check-square', color: '#6A8A3A', route: 'IBPYPQuiz'   },
   ],
   'English': [
     { label: 'Start Learning', icon: 'play-circle',  color: '#B8797E', route: 'Learn5E'   },
@@ -254,7 +259,7 @@ const IB_PYP_STATIC_TOPICS: Record<string, Record<string, TopicItem[]>> = {
 };
 
 function getStaticTopics(curriculum: string, grade: string, subject: string): TopicItem[] {
-  const isPYP = curriculum === 'IB_PYP' || curriculum === 'IB PYP';
+  const isPYP = /^ib.?pyp$/i.test(curriculum.trim());
   if (!isPYP) return [];
   return IB_PYP_STATIC_TOPICS[grade]?.[subject] ?? [];
 }

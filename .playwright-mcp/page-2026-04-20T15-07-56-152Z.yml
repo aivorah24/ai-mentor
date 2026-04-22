@@ -1,0 +1,484 @@
+- generic [ref=e6]:
+  - generic [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e11]: 
+      - generic [ref=e12]: Aivorah
+    - generic:
+      - generic:
+        - generic:
+          - generic [ref=e13]: MENU
+          - generic [ref=e14] [cursor=pointer]:
+            - generic [ref=e16]: 
+            - generic [ref=e17]: Dashboard
+          - generic [ref=e18] [cursor=pointer]:
+            - generic [ref=e19]: 
+            - generic [ref=e20]: Profile
+          - generic [ref=e21] [cursor=pointer]:
+            - generic [ref=e22]: 
+            - generic [ref=e23]: My Learning Paths
+          - generic [ref=e24] [cursor=pointer]:
+            - generic [ref=e25]: 
+            - generic [ref=e26]: AI Coach
+          - generic [ref=e27] [cursor=pointer]:
+            - generic [ref=e28]: 
+            - generic [ref=e29]: Schedule
+          - generic [ref=e30] [cursor=pointer]:
+            - generic [ref=e31]: 
+            - generic [ref=e32]: The World & You
+          - generic [ref=e33] [cursor=pointer]:
+            - generic [ref=e34]: 
+            - generic [ref=e35]: Bedtime Stories
+          - generic [ref=e36] [cursor=pointer]:
+            - generic [ref=e37]: 
+            - generic [ref=e38]: Daily Habits
+        - generic:
+          - generic [ref=e39]: FOCUS
+          - generic [ref=e40] [cursor=pointer]:
+            - generic [ref=e41]: 
+            - generic [ref=e42]: Assignments
+          - generic [ref=e43] [cursor=pointer]:
+            - generic [ref=e44]: 
+            - generic [ref=e45]: Challenges
+          - generic [ref=e46] [cursor=pointer]:
+            - generic [ref=e47]: 
+            - generic [ref=e48]: Leaderboard
+          - generic [ref=e49] [cursor=pointer]:
+            - generic [ref=e50]: 
+            - generic [ref=e51]: Progress
+          - generic [ref=e52] [cursor=pointer]:
+            - generic [ref=e53]: 
+            - generic [ref=e54]: Rewards
+        - generic:
+          - generic [ref=e55]: SYSTEM
+          - generic [ref=e56] [cursor=pointer]:
+            - generic [ref=e57]: 
+            - generic [ref=e58]: Help Center
+          - generic [ref=e59] [cursor=pointer]:
+            - generic [ref=e60]: 
+            - generic [ref=e61]: Settings
+    - generic:
+      - generic:
+        - generic [ref=e62]: Theme
+        - generic [ref=e63]:
+          - generic [ref=e64] [cursor=pointer]:
+            - generic [ref=e65]: 
+            - generic [ref=e66]: Dark
+          - generic [ref=e67] [cursor=pointer]:
+            - generic [ref=e68]: 
+            - generic [ref=e69]: Light
+          - generic [ref=e70] [cursor=pointer]:
+            - generic [ref=e71]: 
+            - generic [ref=e72]: Auto
+      - generic [ref=e73]:
+        - generic [ref=e76]: 
+        - generic:
+          - generic: Sai Mohan
+          - generic: student
+      - generic [ref=e77] [cursor=pointer]:
+        - generic [ref=e78]: 
+        - generic [ref=e79]: Logout
+  - generic [ref=e86]:
+    - generic [ref=e87]:
+      - generic [ref=e88]:
+        - generic [ref=e90]: 
+        - generic [ref=e91]: Aivorah
+      - generic [ref=e93]:
+        - generic [ref=e94]:
+          - generic [ref=e95]: MENU
+          - generic [ref=e96] [cursor=pointer]:
+            - generic [ref=e98]: 
+            - generic [ref=e99]: Dashboard
+          - generic [ref=e100] [cursor=pointer]:
+            - generic [ref=e101]: 
+            - generic [ref=e102]: Profile
+          - generic [ref=e103] [cursor=pointer]:
+            - generic [ref=e104]: 
+            - generic [ref=e105]: My Learning Paths
+          - generic [ref=e106] [cursor=pointer]:
+            - generic [ref=e107]: 
+            - generic [ref=e108]: AI Coach
+          - generic [ref=e109] [cursor=pointer]:
+            - generic [ref=e110]: 
+            - generic [ref=e111]: Schedule
+          - generic [ref=e112] [cursor=pointer]:
+            - generic [ref=e113]: 
+            - generic [ref=e114]: The World & You
+          - generic [ref=e115] [cursor=pointer]:
+            - generic [ref=e116]: 
+            - generic [ref=e117]: Bedtime Stories
+          - generic [ref=e118] [cursor=pointer]:
+            - generic [ref=e119]: 
+            - generic [ref=e120]: Daily Habits
+        - generic [ref=e121]:
+          - generic [ref=e122]: FOCUS
+          - generic [ref=e123] [cursor=pointer]:
+            - generic [ref=e124]: 
+            - generic [ref=e125]: Assignments
+          - generic [ref=e126] [cursor=pointer]:
+            - generic [ref=e127]: 
+            - generic [ref=e128]: Challenges
+          - generic [ref=e129] [cursor=pointer]:
+            - generic [ref=e130]: 
+            - generic [ref=e131]: Leaderboard
+          - generic [ref=e132] [cursor=pointer]:
+            - generic [ref=e133]: 
+            - generic [ref=e134]: Progress
+          - generic [ref=e135] [cursor=pointer]:
+            - generic [ref=e136]: 
+            - generic [ref=e137]: Rewards
+        - generic [ref=e138]:
+          - generic [ref=e139]: SYSTEM
+          - generic [ref=e140] [cursor=pointer]:
+            - generic [ref=e141]: 
+            - generic [ref=e142]: Help Center
+          - generic [ref=e143] [cursor=pointer]:
+            - generic [ref=e144]: 
+            - generic [ref=e145]: Settings
+      - generic [ref=e146]:
+        - generic [ref=e147]:
+          - generic [ref=e148]: Theme
+          - generic [ref=e149]:
+            - generic [ref=e150] [cursor=pointer]:
+              - generic [ref=e151]: 
+              - generic [ref=e152]: Dark
+            - generic [ref=e153] [cursor=pointer]:
+              - generic [ref=e154]: 
+              - generic [ref=e155]: Light
+            - generic [ref=e156] [cursor=pointer]:
+              - generic [ref=e157]: 
+              - generic [ref=e158]: Auto
+        - generic [ref=e159]:
+          - generic [ref=e162]: 
+          - generic [ref=e163]:
+            - generic [ref=e164]: Sai Mohan
+            - generic [ref=e165]: student
+        - generic [ref=e166] [cursor=pointer]:
+          - generic [ref=e167]: 
+          - generic [ref=e168]: Logout
+    - generic [ref=e170]:
+      - generic [ref=e171]:
+        - generic [ref=e173]:
+          - generic [ref=e174]: Good evening, Sai
+          - generic [ref=e175]: IB PYP · Grade 3
+        - generic [ref=e176]:
+          - generic [ref=e177] [cursor=pointer]:
+            - generic [ref=e178]: 
+            - generic [ref=e180]: "2"
+          - generic [ref=e182] [cursor=pointer]: 
+          - generic [ref=e185] [cursor=pointer]: 
+      - generic [ref=e188]:
+        - generic [ref=e190]:
+          - img
+          - generic [ref=e193]:
+            - generic [ref=e194]:
+              - generic [ref=e195]: 
+              - generic [ref=e196]: Lvl 01
+            - generic [ref=e197]:
+              - img [ref=e198]
+              - generic [ref=e201]: 0 day streak
+          - generic [ref=e202]: Good evening,
+          - generic [ref=e203]: Sai
+          - generic [ref=e204]: 55 topics ready for your first sprint.
+          - generic [ref=e206]:
+            - generic [ref=e207]: Level 1 → 2
+            - generic [ref=e208]: 0 / 500 XP
+          - generic [ref=e211] [cursor=pointer]:
+            - generic [ref=e213]: 
+            - generic [ref=e214]: Resume Learning Path
+            - generic [ref=e215]: 
+        - generic [ref=e216]:
+          - generic [ref=e217]:
+            - generic [ref=e218]:
+              - generic [ref=e219]: Today's Goals
+              - generic [ref=e220]: Daily missions • earn XP
+            - generic [ref=e222] [cursor=pointer]: All progress
+          - generic [ref=e223]:
+            - generic [ref=e225] [cursor=pointer]:
+              - generic [ref=e226]:
+                - generic [ref=e228]: 
+                - generic [ref=e229]:
+                  - generic [ref=e230]: Study Time
+                  - generic [ref=e231]: Target 1h
+                - generic [ref=e233]: 0%
+              - generic [ref=e234]:
+                - generic [ref=e235]:
+                  - img [ref=e236]
+                  - generic [ref=e240]:
+                    - generic [ref=e241]: 0%
+                    - generic [ref=e242]: Go
+                - generic [ref=e243]:
+                  - generic [ref=e244]: 0m
+                  - generic [ref=e245]: completed today
+                  - generic [ref=e246]:
+                    - generic [ref=e247]: 
+                    - generic [ref=e248]: 1h left
+                - generic [ref=e249]:
+                  - generic [ref=e250]:
+                    - generic [ref=e252]: 
+                    - generic [ref=e253]: Early Bird
+                  - generic [ref=e254]:
+                    - generic [ref=e256]: 
+                    - generic [ref=e257]: Half Hour
+                  - generic [ref=e258]:
+                    - generic [ref=e260]: 
+                    - generic [ref=e261]: Study Hero
+            - generic [ref=e265] [cursor=pointer]:
+              - generic [ref=e266]:
+                - generic [ref=e268]: 
+                - generic [ref=e269]:
+                  - generic [ref=e270]: Topics
+                  - generic [ref=e271]: Target 5
+                - generic [ref=e273]: 0%
+              - generic [ref=e274]:
+                - generic [ref=e275]:
+                  - img [ref=e276]
+                  - generic [ref=e280]:
+                    - generic [ref=e281]: 0%
+                    - generic [ref=e282]: Go
+                - generic [ref=e283]:
+                  - generic [ref=e284]: "0"
+                  - generic [ref=e285]: completed today
+                  - generic [ref=e286]:
+                    - generic [ref=e287]: 
+                    - generic [ref=e288]: 5 left
+                - generic [ref=e289]:
+                  - generic [ref=e290]:
+                    - generic [ref=e292]: 
+                    - generic [ref=e293]: Explorer
+                  - generic [ref=e294]:
+                    - generic [ref=e296]: 
+                    - generic [ref=e297]: Deep Diver
+                  - generic [ref=e298]:
+                    - generic [ref=e300]: 
+                    - generic [ref=e301]: Scholar
+            - generic [ref=e305] [cursor=pointer]:
+              - generic [ref=e306]:
+                - generic [ref=e308]: 
+                - generic [ref=e309]:
+                  - generic [ref=e310]: XP Earned
+                  - generic [ref=e311]: Target 100
+                - generic [ref=e313]: 0%
+              - generic [ref=e314]:
+                - generic [ref=e315]:
+                  - img [ref=e316]
+                  - generic [ref=e320]:
+                    - generic [ref=e321]: 0%
+                    - generic [ref=e322]: Go
+                - generic [ref=e323]:
+                  - generic [ref=e324]: "0"
+                  - generic [ref=e325]: completed today
+                  - generic [ref=e326]:
+                    - generic [ref=e327]: 
+                    - generic [ref=e328]: 100 left
+                - generic [ref=e329]:
+                  - generic [ref=e330]:
+                    - generic [ref=e332]: 
+                    - generic [ref=e333]: XP Spark
+                  - generic [ref=e334]:
+                    - generic [ref=e336]: 
+                    - generic [ref=e337]: Leveling
+                  - generic [ref=e338]:
+                    - generic [ref=e340]: 
+                    - generic [ref=e341]: XP Master
+          - generic [ref=e344]:
+            - generic [ref=e345]:
+              - generic [ref=e346]:
+                - generic [ref=e347]: Performance
+                - generic [ref=e348]: Topic scores at a glance
+              - generic [ref=e350] [cursor=pointer]: View all
+            - generic [ref=e351]:
+              - generic [ref=e352]:
+                - generic [ref=e353]: 0%
+                - generic [ref=e354]: Average score
+              - generic [ref=e355]:
+                - generic [ref=e356]: 0/6
+                - generic [ref=e357]: Mastered
+              - generic [ref=e358]:
+                - generic [ref=e359]: 0%
+                - generic [ref=e360]: Consistency
+            - generic [ref=e361]:
+              - generic [ref=e363]: 
+              - generic [ref=e364]:
+                - generic [ref=e365]: Best score
+                - generic [ref=e366]: 0% Color Theory
+              - generic [ref=e368]:
+                - generic [ref=e369]: 0%
+                - generic [ref=e370]: weekly consistency
+              - generic [ref=e372] [cursor=pointer]: All topics
+            - generic [ref=e374]:
+              - generic [ref=e375]:
+                - generic [ref=e376]: 0%
+                - generic [ref=e379]: Color Theory
+              - generic [ref=e380]:
+                - generic [ref=e381]: 0%
+                - generic [ref=e384]: Elements of
+              - generic [ref=e385]:
+                - generic [ref=e386]: 0%
+                - generic [ref=e389]: Musical Instruments
+              - generic [ref=e390]:
+                - generic [ref=e391]: 0%
+                - generic [ref=e394]: Rhythm and
+              - generic [ref=e395]:
+                - generic [ref=e396]: 0%
+                - generic [ref=e399]: Adjectives and
+              - generic [ref=e400]:
+                - generic [ref=e401]: 0%
+                - generic [ref=e404]: Informational Writing
+          - generic [ref=e406]:
+            - generic [ref=e407]: Quick Actions
+            - generic [ref=e408]: Jump anywhere instantly
+          - generic [ref=e409]:
+            - generic [ref=e410] [cursor=pointer]:
+              - generic [ref=e412]: 
+              - generic [ref=e414]: 
+              - generic [ref=e415]: My Learning
+              - generic [ref=e416]: Chapters
+            - generic [ref=e417] [cursor=pointer]:
+              - generic [ref=e419]: 
+              - generic [ref=e421]: 
+              - generic [ref=e422]: AI Coach
+              - generic [ref=e423]: Ask anything
+            - generic [ref=e424] [cursor=pointer]:
+              - generic [ref=e426]: 
+              - generic [ref=e428]: 
+              - generic [ref=e429]: Assignments
+              - generic [ref=e430]: Pending
+            - generic [ref=e431] [cursor=pointer]:
+              - generic [ref=e433]: 
+              - generic [ref=e435]: 
+              - generic [ref=e436]: Challenges
+              - generic [ref=e437]: Compete
+            - generic [ref=e438] [cursor=pointer]:
+              - generic [ref=e440]: 
+              - generic [ref=e442]: 
+              - generic [ref=e443]: Schedule
+              - generic [ref=e444]: Timetable
+            - generic [ref=e445] [cursor=pointer]:
+              - generic [ref=e447]: 
+              - generic [ref=e449]: 
+              - generic [ref=e450]: Progress
+              - generic [ref=e451]: Analytics
+          - generic [ref=e453]:
+            - generic [ref=e454]: Continue Learning
+            - generic [ref=e455]: Pick up where you left off
+          - generic [ref=e458] [cursor=pointer]:
+            - generic [ref=e459]:
+              - generic [ref=e460]:
+                - generic [ref=e461]:
+                  - generic [ref=e462]: 
+                  - generic [ref=e463]: Arts · Grade 3
+                - generic [ref=e464]: Color Theory
+                - generic [ref=e465]: Visual Arts
+              - generic [ref=e466]:
+                - img [ref=e467]
+                - generic [ref=e471]:
+                  - generic [ref=e472]: 0%
+                  - generic [ref=e473]: done
+            - generic [ref=e474]:
+              - generic [ref=e477]: Learn
+              - generic [ref=e481]: Practice
+              - generic [ref=e485]: Master
+            - generic [ref=e486]:
+              - generic [ref=e487]: Start to build your foundation.
+              - generic [ref=e488]:
+                - generic [ref=e489]: Start
+                - generic [ref=e490]: 
+          - generic [ref=e493] [cursor=pointer]:
+            - generic [ref=e498]: 
+            - generic [ref=e500]:
+              - generic [ref=e501]: AIVORAH AI COACH
+              - generic [ref=e502]: Ask me anything
+              - generic [ref=e503]: Maths, Science, any topic — patient & always here.
+            - generic [ref=e504]:
+              - generic [ref=e505]: 
+              - generic [ref=e506]: Chat now
+          - generic [ref=e507]:
+            - generic [ref=e508]:
+              - generic [ref=e509]: Progress Snapshot
+              - generic [ref=e510]: Your learning metrics
+            - generic [ref=e512] [cursor=pointer]: Analytics
+          - generic [ref=e513]:
+            - generic [ref=e514] [cursor=pointer]:
+              - generic [ref=e516]: 
+              - generic [ref=e517]: 0m
+              - generic [ref=e518]: Study Time
+              - generic [ref=e519]: this week
+            - generic [ref=e522] [cursor=pointer]:
+              - generic [ref=e524]: 
+              - generic [ref=e525]: "0"
+              - generic [ref=e526]: Day Streak
+              - generic [ref=e527]: days in a row
+            - generic [ref=e530] [cursor=pointer]:
+              - generic [ref=e532]: 
+              - generic [ref=e533]: "0"
+              - generic [ref=e534]: Total XP
+              - generic [ref=e535]: points earned
+            - generic [ref=e538] [cursor=pointer]:
+              - generic [ref=e540]: 
+              - generic [ref=e541]: "0"
+              - generic [ref=e542]: Topics Done
+              - generic [ref=e543]: completed
+          - generic [ref=e546]:
+            - generic [ref=e547]:
+              - generic [ref=e548]: Learning Path
+              - generic [ref=e549]: 55 topics in your curriculum
+            - generic [ref=e551] [cursor=pointer]: See all 55
+          - generic [ref=e552]:
+            - generic [ref=e553] [cursor=pointer]:
+              - generic [ref=e556]: 
+              - generic [ref=e557]:
+                - generic [ref=e558]: Color Theory
+                - generic [ref=e559]: Arts · Grade 3
+              - generic [ref=e562]:
+                - generic [ref=e564]: Not Started
+                - generic [ref=e566]: Start
+            - generic [ref=e567] [cursor=pointer]:
+              - generic [ref=e570]: 
+              - generic [ref=e571]:
+                - generic [ref=e572]: Elements of Art
+                - generic [ref=e573]: Arts · Grade 3
+              - generic [ref=e576]:
+                - generic [ref=e578]: Not Started
+                - generic [ref=e580]: Start
+            - generic [ref=e581] [cursor=pointer]:
+              - generic [ref=e584]: 
+              - generic [ref=e585]:
+                - generic [ref=e586]: Musical Instruments
+                - generic [ref=e587]: Arts · Grade 3
+              - generic [ref=e590]:
+                - generic [ref=e592]: Not Started
+                - generic [ref=e594]: Start
+            - generic [ref=e595] [cursor=pointer]:
+              - generic [ref=e598]: 
+              - generic [ref=e599]:
+                - generic [ref=e600]: Rhythm and Beat
+                - generic [ref=e601]: Arts · Grade 3
+              - generic [ref=e604]:
+                - generic [ref=e606]: Not Started
+                - generic [ref=e608]: Start
+            - generic [ref=e609] [cursor=pointer]:
+              - generic [ref=e612]: 
+              - generic [ref=e613]:
+                - generic [ref=e614]: Adjectives and Describing Words
+                - generic [ref=e615]: English · Grade 3
+              - generic [ref=e618]:
+                - generic [ref=e620]: Not Started
+                - generic [ref=e622]: Start
+            - generic [ref=e623] [cursor=pointer]:
+              - generic [ref=e626]: 
+              - generic [ref=e627]:
+                - generic [ref=e628]: Informational Writing
+                - generic [ref=e629]: English · Grade 3
+              - generic [ref=e632]:
+                - generic [ref=e634]: Not Started
+                - generic [ref=e636]: Start
+          - generic [ref=e637]:
+            - generic [ref=e638]:
+              - generic [ref=e639]: Upcoming Deadlines
+              - generic [ref=e640]: Assignments & tasks
+            - generic [ref=e642] [cursor=pointer]: View all
+          - generic [ref=e644] [cursor=pointer]:
+            - generic [ref=e647]:
+              - generic [ref=e648]: Practice Maths — Due
+              - generic [ref=e649]: Mathematics · Grade 3
+            - generic [ref=e651]: Due Apr 26

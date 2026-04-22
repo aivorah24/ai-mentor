@@ -106,6 +106,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   const [autoPlay,     setAutoPlay]     = useState(false);
   const [readCount,    setReadCount]    = useState(0);
   const [donePages,    setDonePages]    = useState<Set<number>>(new Set());
+  const [playbackRate, setPlaybackRate] = useState(1);
 
   const audioRef   = useRef<any>(null);
   const ambientRef = useRef<any>(null);
@@ -130,6 +131,13 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   }, [storyId]);
 
   useEffect(() => { setReadCount(0); }, [currentPage]);
+
+  // Apply playback rate change to audio that's already playing
+  useEffect(() => {
+    if (audioRef.current) {
+      try { audioRef.current.playbackRate = playbackRate; } catch {}
+    }
+  }, [playbackRate]);
 
   useEffect(() => {
     if (autoPlay && story) {
@@ -196,17 +204,27 @@ export default function StoryReaderScreen({ route, navigation }: any) {
       if (Platform.OS === 'web') {
         const audio = new (window as any).Audio(`${SERVER_URL}${data.audioUrl}`);
         if (playGenRef.current !== gen) return;
+        audio.playbackRate = playbackRate;
         audioRef.current = audio;
         setIsLoading(false); setPlaying(true);
 
         const sentences = splitSentences(story.pages.find(p => p.pageNumber === pageNum)?.text ?? '');
+
+        // Build character-proportion boundaries so longer sentences get more time.
+        // Much more accurate than uniform distribution since TTS speed ∝ char count.
+        const charCounts = sentences.map(s => s.length);
+        const totalChars = charCounts.reduce((a, b) => a + b, 0) || 1;
+        let cum = 0;
+        const boundaries = charCounts.map(c => { cum += c; return cum / totalChars; });
 
         // Start story-specific ambient music
         ambientRef.current = createAmbientMusic(story.id);
 
         audio.ontimeupdate = () => {
           if (!audio.duration) return;
-          setReadCount(Math.floor((audio.currentTime / audio.duration) * sentences.length));
+          const ratio = audio.currentTime / audio.duration;
+          const idx   = boundaries.findIndex(b => ratio < b);
+          setReadCount(idx === -1 ? sentences.length - 1 : idx);
         };
         audio.onended = () => {
           setReadCount(sentences.length);
@@ -342,11 +360,27 @@ export default function StoryReaderScreen({ route, navigation }: any) {
             <View style={[styles.textCard, { backgroundColor: colors.cardDark }]}>
               <View style={[styles.cardAccentBar, { backgroundColor: pastelAccent }]} />
 
-              {/* Story text — sentences turn grey as narration progresses */}
+              {/* Story text:
+                  - Current sentence → accent color + bold + background glow (only when playing)
+                  - Past sentences   → grey (position preserved even when paused)
+                  - Future sentences → normal text */}
               <Text style={styles.storyText}>
-                {sentences.map((s, i) => (
-                  <Text key={i} style={{ color: i < readCount ? colors.textMuted : colors.textMain }}>{s}</Text>
-                ))}
+                {sentences.map((s, i) => {
+                  const isCurrent = (playing || isPaused) && i === readCount;
+                  const isPast    = i < readCount;
+                  return (
+                    <Text
+                      key={i}
+                      style={{
+                        color:           isCurrent ? pastelAccent : isPast ? colors.textMuted : colors.textMain,
+                        fontWeight:      isCurrent ? '700' : '400',
+                        backgroundColor: isCurrent ? pastelAccent + '22' : 'transparent',
+                      }}
+                    >
+                      {s}
+                    </Text>
+                  );
+                })}
               </Text>
 
               <View style={styles.listenRow}>
@@ -382,6 +416,23 @@ export default function StoryReaderScreen({ route, navigation }: any) {
                   <Feather name={autoPlay ? 'pause-circle' : 'play-circle'} size={11} color={autoPlay ? '#16a34a' : colors.textDim} />
                   <Text style={[styles.voiceChipText, { color: autoPlay ? '#16a34a' : colors.textDim }]}>Auto</Text>
                 </TouchableOpacity>
+
+                {/* Playback speed control */}
+                {([0.5, 1, 1.5, 2] as const).map(rate => (
+                  <TouchableOpacity
+                    key={rate}
+                    style={[styles.voiceChip, playbackRate === rate
+                      ? { backgroundColor: pastelAccent + '25', borderColor: pastelAccent }
+                      : { backgroundColor: 'transparent', borderColor: colors.borderColor }
+                    ]}
+                    onPress={() => setPlaybackRate(rate)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.voiceChipText, { color: playbackRate === rate ? pastelAccent : colors.textDim }]}>
+                      {rate}x
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
           </Animated.View>
