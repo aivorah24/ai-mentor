@@ -126,7 +126,7 @@ Respond ONLY with valid JSON — no markdown:
     const clean = raw.replace(/```json\n?/g, '').replace(/```/g, '').trim();
     return JSON.parse(clean);
   } catch {
-    return [{ headline: 'Amazing Discovery', detail: 'Scientists made a wonderful new discovery this week!' }];
+    return [{ headline: 'World News', detail: 'Check back soon for today\'s top stories!' }];
   }
 }
 

@@ -137,46 +137,58 @@ export default function ParentMyKidsScreen({ navigation }: any) {
 
   const parentEmail = user?.email || 'parent@demo.com';
 
-  // Demo enrichment — augments user.children with live stats for the demo
+  const DEMO_PARENT_EMAILS = new Set([
+    'suresh@test.ai', 'deepa@test.ai', 'fatima@test.ai', 'prakash@test.ai', 'parent@demo.com',
+  ]);
+  const isDemo = DEMO_PARENT_EMAILS.has(parentEmail.toLowerCase());
+
   const DEMO_STATS: Record<string, object> = {
-    'aanya@test.ai':  { xpPoints: 850,  currentStreak: 5, completedTopics: ['Number Sense', 'Addition', 'Shapes'],      studyTimeMinutes: 120, grade: 'Grade 3', school: 'Hyderabad International School' },
-    'ishaan@test.ai': { xpPoints: 1050, currentStreak: 3, completedTopics: ['Fractions', 'Multiplication', 'Time'],      studyTimeMinutes: 180, grade: 'Grade 4', school: 'Hyderabad International School' },
-    'rohan@test.ai':  { xpPoints: 1200, currentStreak: 2, completedTopics: ['Decimals', 'Area & Perimeter'],              studyTimeMinutes: 150, grade: 'Grade 5', school: 'Hyderabad International School' },
-    'diya@test.ai':   { xpPoints: 780,  currentStreak: 7, completedTopics: ['Patterns', 'Counting', 'Measurement'],       studyTimeMinutes: 100, grade: 'Grade 3', school: 'Hyderabad International School' },
+    'aanya@test.ai':  { xpPoints: 850,  currentStreak: 5, completedTopics: ['Number Sense', 'Addition', 'Shapes'],   studyTimeMinutes: 120, grade: 'Grade 3', school: 'Hyderabad International School' },
+    'ishaan@test.ai': { xpPoints: 1050, currentStreak: 3, completedTopics: ['Fractions', 'Multiplication', 'Time'],  studyTimeMinutes: 180, grade: 'Grade 4', school: 'Hyderabad International School' },
+    'rohan@test.ai':  { xpPoints: 1200, currentStreak: 2, completedTopics: ['Decimals', 'Area & Perimeter'],          studyTimeMinutes: 150, grade: 'Grade 5', school: 'Hyderabad International School' },
+    'diya@test.ai':   { xpPoints: 780,  currentStreak: 7, completedTopics: ['Patterns', 'Counting', 'Measurement'],  studyTimeMinutes: 100, grade: 'Grade 3', school: 'Hyderabad International School' },
   };
 
   const fetchChildren = useCallback(async () => {
     try {
       const res = await fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`);
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setChildren(data);
-      } else {
-        // No server data yet — derive from parent's onboarding children[] (email-based linking)
-        const derived = (user?.children ?? []).map((c, i) => ({
-          id: c.email || `child-${i}`,
-          name: c.name,
-          email: c.email,
-          grade: c.grade,
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setChildren(data);
+        } else if (isDemo) {
+          const derived = (user?.children ?? []).map((c: any, i: number) => ({
+            id: c.email || `child-${i}`, name: c.name, email: c.email, grade: c.grade,
+            ...(DEMO_STATS[c.email] ?? {}),
+          }));
+          setChildren(derived);
+        } else {
+          setChildren([]);
+        }
+      } else if (isDemo) {
+        const derived = (user?.children ?? []).map((c: any, i: number) => ({
+          id: c.email || `child-${i}`, name: c.name, email: c.email, grade: c.grade,
           ...(DEMO_STATS[c.email] ?? {}),
         }));
         setChildren(derived);
+      } else {
+        setChildren([]);
       }
     } catch {
-      // Network error — still show derived children
-      const derived = (user?.children ?? []).map((c, i) => ({
-        id: c.email || `child-${i}`,
-        name: c.name,
-        email: c.email,
-        grade: c.grade,
-        ...(DEMO_STATS[c.email] ?? {}),
-      }));
-      setChildren(derived);
+      if (isDemo) {
+        const derived = (user?.children ?? []).map((c: any, i: number) => ({
+          id: c.email || `child-${i}`, name: c.name, email: c.email, grade: c.grade,
+          ...(DEMO_STATS[c.email] ?? {}),
+        }));
+        setChildren(derived);
+      } else {
+        setChildren([]);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [parentEmail, user]);
+  }, [parentEmail, isDemo, user]);
 
   useEffect(() => { fetchChildren(); }, [fetchChildren]);
 

@@ -32,9 +32,43 @@ type Student = {
   photoUrl?: string;
 };
 
-// ── Demo student registry ──────────────────────────────────────────────────
-// In production this comes from Supabase: students matched by school+grade+curriculum.
-// During demo, we derive the same relationships from onboarding data (grade+curriculum).
+
+const TABS = ['All', 'Grade 3', 'Grade 4', 'Grade 5', 'Needs Attention'];
+
+function initials(name: string) {
+  return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+}
+
+function toTitleCase(str: string) {
+  if (!str) return str;
+  return str.replace(/\b\w/g, c => c.toUpperCase());
+}
+
+const StudentAvatar = memo(({ photoUrl, name, grad, styles }: {
+  photoUrl?: string; name: string; grad: [string, string]; styles: any;
+}) => {
+  const [imgErr, setImgErr] = useState(false);
+  if (photoUrl && !imgErr) {
+    return (
+      <Image
+        source={{ uri: photoUrl }}
+        style={styles.avatar}
+        onError={() => setImgErr(true)}
+      />
+    );
+  }
+  return (
+    <LinearGradient colors={grad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.avatar}>
+      <Text style={styles.avatarText}>{initials(name)}</Text>
+    </LinearGradient>
+  );
+});
+
+// ── Demo student registry (only for known demo/test accounts) ─────────────
+const DEMO_EMAILS = new Set([
+  'anjali@test.ai', 'priya@test.ai', 'vikram@test.ai', 'teacher@demo.com',
+]);
+
 const DEMO_STUDENTS: Student[] = [
   {
     id: 'aanya',    name: 'Aanya Kapoor',  email: 'aanya@test.ai',
@@ -70,44 +104,12 @@ const DEMO_STUDENTS: Student[] = [
   },
 ];
 
-// Derive which students belong to this teacher based on teaches[] matching grade+curriculum
 function deriveStudentsForTeacher(teaches: { grade: string; curriculum: string }[]): Student[] {
   if (!teaches || teaches.length === 0) return [];
   return DEMO_STUDENTS.filter(s =>
     teaches.some(t => t.grade === s.grade && t.curriculum === s.curriculum)
   );
 }
-
-const TABS = ['All', 'Grade 3', 'Grade 4', 'Grade 5', 'Needs Attention'];
-
-function initials(name: string) {
-  return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
-}
-
-function toTitleCase(str: string) {
-  if (!str) return str;
-  return str.replace(/\b\w/g, c => c.toUpperCase());
-}
-
-const StudentAvatar = memo(({ photoUrl, name, grad, styles }: {
-  photoUrl?: string; name: string; grad: [string, string]; styles: any;
-}) => {
-  const [imgErr, setImgErr] = useState(false);
-  if (photoUrl && !imgErr) {
-    return (
-      <Image
-        source={{ uri: photoUrl }}
-        style={styles.avatar}
-        onError={() => setImgErr(true)}
-      />
-    );
-  }
-  return (
-    <LinearGradient colors={grad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.avatar}>
-      <Text style={styles.avatarText}>{initials(name)}</Text>
-    </LinearGradient>
-  );
-});
 
 // Enchanting Forest palette — matches app theme
 const AVATAR_GRADIENTS: [string, string][] = [
@@ -144,29 +146,36 @@ export default function TeacherStudentsScreen({ navigation }: any) {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('All');
 
+  const isDemo = DEMO_EMAILS.has(user?.email?.toLowerCase() || '');
+
   const load = useCallback(async () => {
     try {
-      const teacherId = encodeURIComponent(user?.email || 'teacher@demo.com');
-      const res = await fetch(`${SERVER_URL}/student/by-teacher/${teacherId}`);
+      const email = user?.email || '';
+      if (!email) { setLoading(false); setRefreshing(false); return; }
+      const res = await fetch(`${SERVER_URL}/student/by-teacher/${encodeURIComponent(email)}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.length > 0) {
+        if (Array.isArray(data) && data.length > 0) {
           setStudents(data);
-        } else {
-          // Server has no data yet — derive from teacher's onboarding data (grade+curriculum match)
+        } else if (isDemo) {
+          // Demo teacher with no DB students yet — show demo roster
           setStudents(deriveStudentsForTeacher(user?.teaches ?? []));
+        } else {
+          setStudents([]);
         }
-      } else {
+      } else if (isDemo) {
         setStudents(deriveStudentsForTeacher(user?.teaches ?? []));
+      } else {
+        setStudents([]);
       }
     } catch {
-      // Network error — still show derived students
-      setStudents(deriveStudentsForTeacher(user?.teaches ?? []));
+      if (isDemo) setStudents(deriveStudentsForTeacher(user?.teaches ?? []));
+      else setStudents([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user]);
+  }, [user, isDemo]);
 
   useEffect(() => { load(); }, [load]);
 
