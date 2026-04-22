@@ -189,10 +189,22 @@
     "grade": "Grade 3",
     "curriculum": "IB PYP",
     "school": "HIS",
-    "location": "",
+    "location": "Hyderabad",
     "avatarStyle": "default",
     "learningStyle": "visual",
-    "updatedAt": "2026-04-17T11:33:20.313Z",
+    "updatedAt": "2026-04-19T07:19:03.964Z",
     "emailHash": "ff41265e7f145f092358fb18025b8d58a1371a177803127e358ebec0b2e3594c"
+  },
+  "afdc05911cd8241ed72b3c088a54bda6822ba50b872c69620b38a4a05941dab4": {
+    "emailHash": "afdc05911cd8241ed72b3c088a54bda6822ba50b872c69620b38a4a05941dab4",
+    "name": "Jarvis",
+    "role": "student",
+    "grade": "Grade 3",
+    "curriculum": "IB PYP",
+    "school": "HIS",
+    "location": "Hyderabd",
+    "avatarStyle": "default",
+    "learningStyle": "hands-on",
+    "updatedAt": "2026-04-19T07:32:29.029Z"
   }
 }

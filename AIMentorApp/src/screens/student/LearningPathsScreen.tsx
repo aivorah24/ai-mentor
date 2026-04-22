@@ -40,6 +40,9 @@ const SUBJECT_META: Record<string, SubjectMeta> = {
   Science:              { icon: 'zap',
     accentDark: '#4A9E70', bgFromDark: '#B0D8C0', bgToDark: '#C4E8D4',
     accentLight: '#4A9E70', bgFromLight: '#B0D8C0', bgToLight: '#C4E8D4' },
+  EVS:                  { icon: 'sun',
+    accentDark: '#8A9E4A', bgFromDark: '#D0D8A0', bgToDark: '#DEE8B8',
+    accentLight: '#8A9E4A', bgFromLight: '#D0D8A0', bgToLight: '#DEE8B8' },
   'Social Studies':     { icon: 'globe',
     accentDark: '#A89840', bgFromDark: '#E0D898', bgToDark: '#EEE8B4',
     accentLight: '#A89840', bgFromLight: '#E0D898', bgToLight: '#EEE8B4' },
@@ -117,8 +120,14 @@ const IB_PYP_TOPIC_BANK: CurriculumTopic[] = [
   { grade: 'Grade 3', subject: 'Social Studies', unit: 'Communities', topic: 'Maps and Directions' },
   { grade: 'Grade 3', subject: 'Social Studies', unit: 'Heritage', topic: 'Cultural Traditions' },
   { grade: 'Grade 3', subject: 'English', unit: 'Reading', topic: 'Story Elements' },
+  { grade: 'Grade 3', subject: 'English', unit: 'Reading', topic: 'Retelling and Sequencing' },
+  { grade: 'Grade 3', subject: 'English', unit: 'Reading', topic: 'Reading with Expression' },
   { grade: 'Grade 3', subject: 'English', unit: 'Writing', topic: 'Paragraphs & Punctuation' },
+  { grade: 'Grade 3', subject: 'English', unit: 'Writing', topic: 'Describing Characters' },
+  { grade: 'Grade 3', subject: 'English', unit: 'Writing', topic: 'Writing Instructions' },
   { grade: 'Grade 3', subject: 'English', unit: 'Grammar', topic: 'Nouns, Verbs & Adjectives' },
+  { grade: 'Grade 3', subject: 'English', unit: 'Grammar', topic: 'Compound Words' },
+  { grade: 'Grade 3', subject: 'English', unit: 'Grammar', topic: 'Prefixes and Suffixes' },
   { grade: 'Grade 3', subject: 'Arts', unit: 'Visual Arts', topic: 'Colour Theory & Mixing' },
   { grade: 'Grade 3', subject: 'Arts', unit: 'Music', topic: 'Rhythm and Beat' },
   { grade: 'Grade 3', subject: 'Physical Education', unit: 'Movement', topic: 'Team Sports Basics' },
@@ -131,7 +140,15 @@ const IB_PYP_TOPIC_BANK: CurriculumTopic[] = [
   { grade: 'Grade 4', subject: 'Science', unit: 'Living Things', topic: 'Food Chains and Ecosystems' },
   { grade: 'Grade 4', subject: 'Social Studies', unit: 'Global Connections', topic: 'Countries and Continents' },
   { grade: 'Grade 4', subject: 'English', unit: 'Reading', topic: 'Comprehension Strategies' },
+  { grade: 'Grade 4', subject: 'English', unit: 'Reading', topic: 'Reading Fluency & Inference' },
   { grade: 'Grade 4', subject: 'English', unit: 'Writing', topic: 'Narrative Writing' },
+  { grade: 'Grade 4', subject: 'English', unit: 'Writing', topic: 'Descriptive Writing' },
+  { grade: 'Grade 4', subject: 'English', unit: 'Writing', topic: 'Paragraphing & Organisation' },
+  { grade: 'Grade 4', subject: 'English', unit: 'Grammar', topic: 'Direct and Indirect Speech' },
+  { grade: 'Grade 4', subject: 'English', unit: 'Grammar', topic: 'Tenses — Past, Present & Future' },
+  { grade: 'Grade 4', subject: 'English', unit: 'Grammar', topic: 'Conjunctions and Connectives' },
+  { grade: 'Grade 4', subject: 'English', unit: 'Grammar', topic: 'Punctuation — Commas, Apostrophes & Speech Marks' },
+  { grade: 'Grade 4', subject: 'English', unit: 'Vocabulary', topic: 'Synonyms & Antonyms' },
   { grade: 'Grade 4', subject: 'Arts', unit: 'Visual Arts', topic: 'Perspective Drawing' },
   { grade: 'Grade 4', subject: 'ICT', unit: 'Digital Literacy', topic: 'Internet Safety' },
   { grade: 'Grade 5', subject: 'Mathematics', unit: 'Algebra', topic: 'Patterns and Variables' },
@@ -141,7 +158,13 @@ const IB_PYP_TOPIC_BANK: CurriculumTopic[] = [
   { grade: 'Grade 5', subject: 'Science', unit: 'Life Science', topic: 'Food Webs and Ecosystems' },
   { grade: 'Grade 5', subject: 'Social Studies', unit: 'History', topic: 'Ancient Civilisations' },
   { grade: 'Grade 5', subject: 'English', unit: 'Writing', topic: 'Persuasive Writing' },
+  { grade: 'Grade 5', subject: 'English', unit: 'Writing', topic: 'Formal vs Informal Writing' },
+  { grade: 'Grade 5', subject: 'English', unit: 'Writing', topic: 'Research and Note-taking' },
   { grade: 'Grade 5', subject: 'English', unit: 'Literature', topic: 'Poetry and Figurative Language' },
+  { grade: 'Grade 5', subject: 'English', unit: 'Literature', topic: 'Literary Devices' },
+  { grade: 'Grade 5', subject: 'English', unit: 'Grammar', topic: 'Direct and Indirect Speech' },
+  { grade: 'Grade 5', subject: 'English', unit: 'Grammar', topic: 'Active and Passive Voice' },
+  { grade: 'Grade 5', subject: 'English', unit: 'Vocabulary', topic: 'Idioms and Expressions' },
   { grade: 'Grade 5', subject: 'Arts', unit: 'Performing Arts', topic: 'Drama and Expression' },
   { grade: 'Grade 5', subject: 'ICT', unit: 'Coding', topic: 'Introduction to Scratch' },
 ];
@@ -160,7 +183,7 @@ const IB_PYP_SUBJECTS_BY_GRADE: Record<string, SubjectData[]> = {
   'Grade 4': [
     { subject: 'Mathematics',      topicCount: 12, topics: [] },
     { subject: 'Science',          topicCount: 8,  topics: [] },
-    { subject: 'English',          topicCount: 5,  topics: [] },
+    { subject: 'English',          topicCount: 10, topics: [] },
     { subject: 'Social Studies',   topicCount: 5,  topics: [] },
     { subject: 'Arts',             topicCount: 2,  topics: [] },
     { subject: 'Physical Education', topicCount: 2, topics: [] },
@@ -169,7 +192,7 @@ const IB_PYP_SUBJECTS_BY_GRADE: Record<string, SubjectData[]> = {
   'Grade 5': [
     { subject: 'Mathematics',      topicCount: 11, topics: [] },
     { subject: 'Science',          topicCount: 7,  topics: [] },
-    { subject: 'English',          topicCount: 5,  topics: [] },
+    { subject: 'English',          topicCount: 8,  topics: [] },
     { subject: 'Social Studies',   topicCount: 5,  topics: [] },
     { subject: 'Arts',             topicCount: 2,  topics: [] },
     { subject: 'Physical Education', topicCount: 2, topics: [] },
@@ -469,7 +492,7 @@ const SEARCH_STOPWORDS = new Set(['a', 'an', 'and', 'for', 'in', 'of', 'on', 'or
 const SUBJECT_SEARCH_KEYWORDS: Record<string, string[]> = {
   Mathematics: ['math', 'mathematics', 'number', 'numbers', 'fractions', 'geometry', 'algebra', 'shapes', 'calculation'],
   Science: ['science', 'plant', 'plants', 'animal', 'animals', 'weather', 'space', 'matter', 'gravity'],
-  English: ['english', 'grammar', 'reading', 'writing', 'story', 'stories', 'language', 'punctuation', 'adjective'],
+  English: ['english', 'grammar', 'reading', 'writing', 'story', 'stories', 'language', 'punctuation', 'adjective', 'speech', 'direct', 'indirect', 'tense', 'tenses', 'noun', 'verb', 'comprehension', 'narrative', 'descriptive', 'persuasive', 'poetry', 'vocabulary', 'synonym', 'antonym', 'conjunction', 'apostrophe', 'inference', 'figurative', 'idiom', 'active', 'passive', 'voice', 'literature'],
   'Social Studies': ['social', 'society', 'studies', 'history', 'geography', 'community', 'culture', 'map', 'maps'],
   Arts: ['art', 'arts', 'drawing', 'painting', 'music', 'rhythm', 'drama', 'creative', 'colour', 'color'],
   'Physical Education': ['pe', 'physical', 'sports', 'movement', 'fitness', 'exercise', 'game', 'games'],
@@ -635,14 +658,15 @@ export default function LearningPathsScreen({ navigation }: any) {
   const { stats } = useStudentData();
   const { user } = useAuth();
 
-  const curriculum = user?.curriculum ?? 'NCERT';
-  const grade = user?.grade ?? 'Grade 3';
-  const isNCERT = curriculum === 'NCERT' || curriculum === 'CBSE';
-  const isPYP   = curriculum === 'IB_PYP' || curriculum === 'IB PYP';
+  const curriculum = user?.curriculum ?? '';
+  const grade = user?.grade ?? '';
+  // Normalise IB PYP — stored value may have space or underscore
+  const isPYP  = /^ib.?pyp$/i.test(curriculum.trim());
+  const isCBSE = !isPYP && (curriculum === 'NCERT' || curriculum === 'CBSE');
 
   // Pre-seed static subjects for IB PYP so grid is never empty
   const [subjects, setSubjects] = useState<SubjectData[]>(isPYP ? getIBPYPStaticSubjects(grade) : []);
-  const [loading, setLoading] = useState(!isNCERT && !isPYP);
+  const [loading, setLoading] = useState(!isPYP);
   const [error, setError] = useState('');
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -652,12 +676,14 @@ export default function LearningPathsScreen({ navigation }: any) {
   const completedSet = useMemo(() => new Set(stats.completedTopics ?? []), [stats.completedTopics]);
 
   useEffect(() => {
-    if (isNCERT) return;
     let cancelled = false;
     if (!isPYP) { setLoading(true); }
     setError('');
 
-    fetch(`${SERVER_URL}/curriculum/subjects?grade=${encodeURIComponent(grade)}&curriculum=${encodeURIComponent(curriculum)}`)
+    // For CBSE, query Qdrant with curriculum=CBSE
+    const queryCurriculum = isCBSE ? 'CBSE' : curriculum;
+
+    fetch(`${SERVER_URL}/curriculum/subjects?grade=${encodeURIComponent(grade)}&curriculum=${encodeURIComponent(queryCurriculum)}`)
       .then((r) => r.json())
       .then((data: { subjects: SubjectData[] }) => {
         if (cancelled) return;
@@ -677,7 +703,7 @@ export default function LearningPathsScreen({ navigation }: any) {
     return () => {
       cancelled = true;
     };
-  }, [curriculum, grade, isNCERT]);
+  }, [curriculum, grade, isCBSE]);
 
   useEffect(() => {
     return () => {
@@ -714,7 +740,7 @@ export default function LearningPathsScreen({ navigation }: any) {
           }
 
           const hasLocalTopics = subjects.some((s) => s.topics.length > 0);
-          if (!hasLocalTopics && !isNCERT && remoteResults.length === 0) {
+          if (!hasLocalTopics && !isCBSE && remoteResults.length === 0) {
             const subjectsRes = await fetch(
               `${SERVER_URL}/curriculum/subjects?grade=${encodeURIComponent(grade)}&curriculum=${encodeURIComponent(curriculum)}`,
             );
@@ -761,7 +787,7 @@ export default function LearningPathsScreen({ navigation }: any) {
         }
       }, 360);
     },
-    [curriculum, grade, isNCERT, isPYP, subjects],
+    [curriculum, grade, isCBSE, isPYP, subjects],
   );
 
   const isSearching = searchText.trim().length > 0;
@@ -769,7 +795,6 @@ export default function LearningPathsScreen({ navigation }: any) {
   const metricWidth = (isMobile ? '48.7%' : '24%') as `${number}%`;
 
   const totals = useMemo(() => {
-    if (isNCERT) return { totalTopics: 0, doneTopics: completedSet.size, overallPct: 0 };
     const totalTopics = subjects.reduce((acc, s) => acc + s.topicCount, 0);
     const doneTopics = subjects.reduce(
       (acc, s) => acc + s.topics.reduce((sum, t) => sum + (completedSet.has(t.topic) ? 1 : 0), 0),
@@ -777,12 +802,10 @@ export default function LearningPathsScreen({ navigation }: any) {
     );
     const overallPct = totalTopics > 0 ? Math.round((doneTopics / totalTopics) * 100) : 0;
     return { totalTopics, doneTopics, overallPct };
-  }, [subjects, completedSet, isNCERT]);
+  }, [subjects, completedSet]);
 
   const heroName = user?.name?.split(' ')[0] ?? 'Student';
-  const heroSubtitle = isNCERT
-    ? `${curriculum} roadmap for ${grade}`
-    : `${subjects.length} subjects - ${totals.doneTopics}/${totals.totalTopics} topics completed`;
+  const heroSubtitle = `${subjects.length} subjects - ${totals.doneTopics}/${totals.totalTopics} topics completed`;
 
   const statCards = [
     { label: 'Topics Done', value: String(completedSet.size), icon: 'check-circle' as FeatherName, color: colors.accentGreen },
@@ -790,6 +813,28 @@ export default function LearningPathsScreen({ navigation }: any) {
     { label: 'Today XP', value: `+${stats.todayXP}`, icon: 'star' as FeatherName, color: colors.primary },
     { label: 'Level', value: `Lv ${stats.level}`, icon: 'award' as FeatherName, color: colors.accentBlue },
   ];
+
+  // Guard: if grade or curriculum is missing, the user's profile is incomplete.
+  // Never silently show wrong curriculum content — prompt them to complete setup.
+  if (!grade || !curriculum) {
+    return (
+      <ScreenLayout>
+        <View style={[styles.screen, styles.center]}>
+          <Feather name="alert-circle" size={38} color={colors.textDim} />
+          <Text style={[styles.dimText, { marginTop: 12, textAlign: 'center', maxWidth: 340 }]}>
+            Your profile is incomplete. Please update your grade and curriculum in Settings to see your learning paths.
+          </Text>
+          <TouchableOpacity
+            style={{ marginTop: 20, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.primary }}
+            onPress={() => navigation.navigate('Settings')}
+            activeOpacity={0.85}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Go to Settings</Text>
+          </TouchableOpacity>
+        </View>
+      </ScreenLayout>
+    );
+  }
 
   if (loading) {
     return (
@@ -817,8 +862,8 @@ export default function LearningPathsScreen({ navigation }: any) {
     <ScreenLayout>
       <View style={styles.screen}>
         <Header
-          title={isNCERT ? 'My Learning Path' : 'My Learning Journey'}
-          subtitle={`${curriculum} - ${grade}`}
+          title="My Learning Journey"
+          subtitle={`${isCBSE ? 'CBSE' : curriculum} - ${grade}`}
           onMenuPress={() => navigation.openDrawer()}
         />
 
@@ -953,9 +998,11 @@ export default function LearningPathsScreen({ navigation }: any) {
                 <TouchableOpacity
                   style={[styles.continueBanner, { borderColor: colors.primary + '45' }]}
                   onPress={() =>
-                    isNCERT
-                      ? navigation.navigate('NCERTChapters')
-                      : navigation.navigate('VideoLesson', { topic: stats.lastLesson, grade })
+                    navigation.navigate('SubjectTopics', {
+                      subject: 'Mathematics',
+                      curriculum: isCBSE ? 'CBSE' : curriculum,
+                      grade,
+                    })
                   }
                   activeOpacity={0.87}
                 >
@@ -972,50 +1019,28 @@ export default function LearningPathsScreen({ navigation }: any) {
 
               <View style={styles.sectionHead}>
                 <Text style={styles.sectionTitle}>Subjects</Text>
-                <Text style={styles.sectionSub}>{isNCERT ? 'Pick a subject to continue' : 'Choose what to study next'}</Text>
+                <Text style={styles.sectionSub}>Choose what to study next</Text>
               </View>
 
               <View style={styles.subjectGrid}>
-                {isNCERT
-                  ? NCERT_SUBJECTS.map((item) => (
-                      <NcertCard
-                        key={item.subject}
-                        item={item}
-                        grade={grade}
-                        curriculum={curriculum}
-                        width={cardWidth}
-                        colors={colors}
-                        onPress={() => {
-                          if (item.available) {
-                            navigation.navigate('NCERTChapters', { subject: item.subject });
-                            return;
-                          }
-                          Alert.alert(
-                            `${item.subject} - Coming Soon`,
-                            `${item.subject} lessons for ${grade} ${curriculum} are being prepared.`,
-                            [{ text: 'OK' }],
-                          );
-                        }}
-                      />
-                    ))
-                  : subjects.map((subject) => (
-                      <SubjectCard
-                        key={subject.subject}
-                        data={subject}
-                        completedSet={completedSet}
-                        width={cardWidth}
-                        onPress={() =>
-                          navigation.navigate('SubjectTopics', {
-                            subject: subject.subject,
-                            curriculum,
-                            grade,
-                          })
-                        }
-                      />
-                    ))}
+                {subjects.map((subject) => (
+                  <SubjectCard
+                    key={subject.subject}
+                    data={subject}
+                    completedSet={completedSet}
+                    width={cardWidth}
+                    onPress={() =>
+                      navigation.navigate('SubjectTopics', {
+                        subject: subject.subject,
+                        curriculum: isCBSE ? 'CBSE' : curriculum,
+                        grade,
+                      })
+                    }
+                  />
+                ))}
               </View>
 
-              {!isNCERT && subjects.length === 0 ? (
+              {subjects.length === 0 ? (
                 <View style={styles.emptyState}>
                   <Feather name="inbox" size={18} color={colors.textDim} />
                   <Text style={styles.dimText}>No subjects available for this profile yet.</Text>

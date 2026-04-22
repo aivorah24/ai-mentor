@@ -274,7 +274,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const onboardingComplete = profile.onboardingComplete === true || savedLocal.onboardingComplete === true;
       const newUser: User = {
         name, email, role: resolvedRole,
-        grade:              profile.grade              || (resolvedRole === 'student' ? 'Grade 3' : undefined),
+        grade:              profile.grade              || undefined,
         curriculum:         profile.curriculum         || undefined,
         school:             profile.school             || 'Hyderabad International School',
         location:           profile.location           || 'Hyderabad, India',
@@ -380,7 +380,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const onboardingComplete = profile.onboardingComplete === true || savedLocal.onboardingComplete === true;
         const newUser: User = {
           name, email, role,
-          grade:              profile.grade      || (role === 'student' ? 'Grade 3' : undefined),
+          grade:              profile.grade      || undefined,
           curriculum:         profile.curriculum || undefined,
           school:             profile.school     || undefined,
           location:           profile.location   || 'Hyderabad, India',
@@ -488,10 +488,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         children: [{ name: 'Rohan Patel', grade: 'Grade 5', curriculum: 'IB PYP', email: 'rohan@test.ai' }],
       },
 
-      // ── NCERT STUDENTS (kept for internal testing, not shown in demo) ─────────
+      // ── NCERT STUDENTS ──────────────────────────────────────────────────────────
       'arjun@test.ai': { ...base, name: 'Arjun Sharma', email: 'arjun@test.ai', role: 'student', grade: 'Grade 3', curriculum: 'NCERT' },
       'priya@test.ai': { ...base, name: 'Priya Nair',   email: 'priya@test.ai', role: 'student', grade: 'Grade 3', curriculum: 'NCERT' },
       'kavya@test.ai': { ...base, name: 'Kavya Reddy',  email: 'kavya@test.ai', role: 'student', grade: 'Grade 5', curriculum: 'NCERT' },
+
+      // ── CBSE STUDENTS ────────────────────────────────────────────────────────────
+      'tanvi@test.ai':  { ...base, name: 'Tanvi Gupta',  email: 'tanvi@test.ai',  role: 'student', grade: 'Grade 3', curriculum: 'CBSE' },
+      'meera@test.ai':  { ...base, name: 'Meera Joshi',  email: 'meera@test.ai',  role: 'student', grade: 'Grade 4', curriculum: 'CBSE' },
+      'vivaan@test.ai': { ...base, name: 'Vivaan Kumar', email: 'vivaan@test.ai', role: 'student', grade: 'Grade 5', curriculum: 'CBSE' },
+      'aarav@test.ai':  { ...base, name: 'Aarav Singh',  email: 'aarav@test.ai',  role: 'student', grade: 'Grade 6', curriculum: 'CBSE' },
     };
     const testUser = TEST_USERS[email];
     if (!testUser) return;

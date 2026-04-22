@@ -58,6 +58,11 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
 
   const fetchQuiz = useCallback(async () => {
     setPhase('loading');
+    // Reset all quiz state so retries always start fresh
+    setScore(0);
+    setCurrentQ(0);
+    setSelectedOpt(null);
+    setExplanation('');
     try {
       const res = await fetch(`${SERVER_URL}/ibpyp/quiz`, {
         method:  'POST',
@@ -68,8 +73,6 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
       if (!data.questions || data.questions.length === 0) throw new Error('No questions returned');
       setQuestions(data.questions);
       setAnswers(new Array(data.questions.length).fill(null));
-      setCurrentQ(0);
-      setSelectedOpt(null);
       setPhase('quiz');
     } catch (err) {
       Alert.alert('Error', 'Could not generate quiz. Please check your connection and try again.');
@@ -118,16 +121,17 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
   function nextQuestion() {
     const q = questions[currentQ];
     const isCorrect = selectedOpt === q.correct;
-    if (isCorrect) setScore(s => s + 1);
+    // Compute directly to avoid stale `score` closure on the last question
+    const newScore = score + (isCorrect ? 1 : 0);
 
     if (currentQ < questions.length - 1) {
+      setScore(newScore);
       setCurrentQ(q => q + 1);
       setSelectedOpt(null);
       setExplanation('');
       setPhase('quiz');
     } else {
-      // Final score including this question
-      const finalScore = score + (isCorrect ? 1 : 0);
+      const finalScore = newScore;
       const finalPct   = Math.round((finalScore / questions.length) * 100);
       setScore(finalScore);
 

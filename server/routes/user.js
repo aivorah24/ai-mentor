@@ -186,16 +186,38 @@ router.post('/sync', async (req, res) => {
 
 router.patch('/profile', async (req, res) => {
   try {
-    const { email, name, curriculum, grade, school, location,
+    const { email, name, role: bodyRole, curriculum, grade, school, location,
             dob, gender, teaches, children, phone,
             onboardingStep, complete } = req.body;
     if (!email) return res.status(400).json({ error: 'email required' });
 
+    // Resolve role: trust body first (sent by onboarding), fall back to DB lookup.
+    // This makes the student-completeness check reliable even if the DB lookup fails.
+    let currentRole = bodyRole || null;
+    if (!currentRole) {
+      try {
+        const { data: existing } = await supabase
+          .from('users').select('role').eq('email', email.toLowerCase().trim()).maybeSingle();
+        currentRole = existing?.role ?? null;
+      } catch (_) {}
+    }
+
+    // Also store role in Supabase if provided (ensures it's always set)
     const patch = {};
-    if (complete === true) patch.onboarding_complete = true;
     if (name)       patch.name       = name.trim();
-    if (curriculum) patch.curriculum = curriculum;
-    if (grade)      patch.grade      = grade;
+    if (bodyRole)   patch.role       = bodyRole;
+    if (curriculum) patch.curriculum = curriculum.trim();
+    if (grade)      patch.grade      = grade.trim();
+
+    // Only mark onboarding complete for students if grade + curriculum are present
+    if (complete === true) {
+      const resolvedGrade      = (grade      || '').trim();
+      const resolvedCurriculum = (curriculum || '').trim();
+      if (currentRole === 'student' && (!resolvedGrade || !resolvedCurriculum)) {
+        return res.status(400).json({ error: 'Students must provide grade and curriculum to complete onboarding.' });
+      }
+      patch.onboarding_complete = true;
+    }
     if (school)     patch.school     = school.trim();
     if (location)   patch.location   = location;
     // Store onboarding step for resume capability

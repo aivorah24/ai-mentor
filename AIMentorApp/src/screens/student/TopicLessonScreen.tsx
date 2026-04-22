@@ -1230,7 +1230,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
   // Load lesson — try server first, fall back to bundled data
   useEffect(() => {
     setLoading(true);
-    fetch(`${SERVER_URL}/ibpyp/lesson-content?topic=${encodeURIComponent(topic)}&grade=${encodeURIComponent(grade)}&subject=${encodeURIComponent(subject)}`)
+    fetch(`${SERVER_URL}/ibpyp/lesson-content?topic=${encodeURIComponent(topic)}&grade=${encodeURIComponent(grade)}&subject=${encodeURIComponent(subject)}&curriculum=${encodeURIComponent(curriculum)}`)
       .then(r => r.json())
       .then(data => {
         if (data.error || !data.scenes) throw new Error(data.error || 'no scenes');
@@ -1342,7 +1342,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
     <ScreenLayout>
       <Header
         title={`${topic} · ${grade}`}
-        subtitle={`${subject} · IB PYP`}
+        subtitle={`${subject} · ${curriculum.replace(/_/g, ' ')}`}
         onMenuPress={() => navigation.openDrawer()}
       />
 

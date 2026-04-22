@@ -1,0 +1,328 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - link "हिंदी" [ref=e4] [cursor=pointer]:
+      - /url: index.html?lang=hindi
+    - link "English" [ref=e5] [cursor=pointer]:
+      - /url: index.html
+    - text: "|"
+    - link "FAQ" [ref=e7] [cursor=pointer]:
+      - /url: FAQ.html
+  - generic [ref=e10]:
+    - generic [ref=e12]:
+      - list:
+        - listitem [ref=e13]:
+          - link "AI" [ref=e14] [cursor=pointer]:
+            - /url: ai.html
+        - listitem [ref=e15]:
+          - link "CBE Resources" [ref=e16] [cursor=pointer]:
+            - /url: cbe/index.html
+        - listitem [ref=e17]:
+          - link "CBSE Reading Mission" [ref=e18] [cursor=pointer]:
+            - /url: "#"
+            - text: CBSE Reading Mission
+            - img [ref=e19]
+        - listitem [ref=e20]:
+          - link "CENBOSEC" [ref=e21] [cursor=pointer]:
+            - /url: "#"
+            - text: CENBOSEC
+            - img [ref=e22]
+        - listitem [ref=e23]:
+          - link "Circulars" [ref=e24] [cursor=pointer]:
+            - /url: circulars.html
+            - text: Circulars
+            - img [ref=e25]
+        - listitem [ref=e26]:
+          - link "Curriculum" [ref=e27] [cursor=pointer]:
+            - /url: "#"
+            - text: Curriculum
+            - img [ref=e28]
+        - listitem [ref=e29]:
+          - link "CT & AI" [ref=e30] [cursor=pointer]:
+            - /url: "#"
+            - text: CT & AI
+            - img [ref=e31]
+        - listitem [ref=e32]:
+          - link "Disclosure" [ref=e33] [cursor=pointer]:
+            - /url: "#"
+            - text: Disclosure
+            - img [ref=e34]
+        - listitem [ref=e35]:
+          - link "DRR" [ref=e36] [cursor=pointer]:
+            - /url: "#"
+            - text: DRR
+            - img [ref=e37]
+        - listitem [ref=e38]:
+          - link "FLN Corner" [ref=e39] [cursor=pointer]:
+            - /url: fln/index.html
+        - listitem [ref=e40]:
+          - link "Handbooks" [ref=e41] [cursor=pointer]:
+            - /url: manual.html
+        - listitem [ref=e42]:
+          - link "Heritage Education" [ref=e43] [cursor=pointer]:
+            - /url: heritage/index.html
+        - listitem [ref=e44]:
+          - link "HoL" [ref=e45] [cursor=pointer]:
+            - /url: https://cbseit.in/cbse/web/hubs
+        - listitem [ref=e46]:
+          - link "HPC" [ref=e47] [cursor=pointer]:
+            - /url: hpc.html
+        - listitem [ref=e48]:
+          - link "Knowledge & Skill" [ref=e49] [cursor=pointer]:
+            - /url: https://cbseit.in/cbse/2022/Skill/Home/Home
+        - listitem [ref=e50]:
+          - link "Life Skills" [ref=e51] [cursor=pointer]:
+            - /url: lifeskills/index.html
+        - listitem [ref=e52]:
+          - link "Media Gallery" [ref=e53] [cursor=pointer]:
+            - /url: gallery.html
+        - listitem [ref=e54]:
+          - link "Publications" [ref=e55] [cursor=pointer]:
+            - /url: "#"
+            - text: Publications
+            - img [ref=e56]
+        - listitem [ref=e57]:
+          - link "Question Bank" [ref=e58] [cursor=pointer]:
+            - /url: "#"
+            - text: Question Bank
+            - img [ref=e59]
+        - listitem [ref=e60]:
+          - link "Results" [ref=e61] [cursor=pointer]:
+            - /url: results.html
+        - listitem [ref=e62]:
+          - link "SAFAL" [ref=e63] [cursor=pointer]:
+            - /url: https://cbseit.in/cbse/2021/SAFAL/
+        - listitem [ref=e64]:
+          - link "Sahodaya" [ref=e65] [cursor=pointer]:
+            - /url: https://cbseit.in/cbse/2025/Sahodaya/
+        - listitem [ref=e66]:
+          - link "Sample Question Paper" [ref=e67] [cursor=pointer]:
+            - /url: "#"
+            - text: Sample Question Paper
+            - img [ref=e68]
+        - listitem [ref=e69]:
+          - link "SIC" [ref=e70] [cursor=pointer]:
+            - /url: https://sic.mic.gov.in/
+        - listitem [ref=e71]:
+          - link "Skill Education" [ref=e72] [cursor=pointer]:
+            - /url: skill-education.html
+        - listitem [ref=e73]:
+          - link "Sports" [ref=e74] [cursor=pointer]:
+            - /url: https://cbseit.in/cbse/2024/sports/
+        - listitem [ref=e75]:
+          - link "SQAAF" [ref=e76] [cursor=pointer]:
+            - /url: https://saras.cbse.gov.in/sqaa
+        - listitem [ref=e77]:
+          - link "Training" [ref=e78] [cursor=pointer]:
+            - /url: https://cbseit.in/cbse/2022/ET/frmListing
+        - listitem [ref=e79]:
+          - link "Contact Us" [ref=e80] [cursor=pointer]:
+            - /url: contactus.html
+    - generic [ref=e82]:
+      - link "Scheme of Studies Secondary Curriculum" [ref=e83] [cursor=pointer]:
+        - /url: web_material/CurriculumMain27/SecPart1/Curriculum_SecP1_2026-27.pdf
+      - text: "|"
+      - link "Click here for Detailed Curriculum 2026-27" [ref=e84] [cursor=pointer]:
+        - /url: curriculum_2027.html
+    - link "Curriculum Framework for Computational Thinking (CT) and Artificial Intelligence (AI) for Classes III–VIII" [ref=e86] [cursor=pointer]:
+      - /url: web_material/CurriculumMain27/CTAI_Pri_2026-27.pdf
+    - generic [ref=e88]:
+      - generic [ref=e89]:
+        - button "Slide 1" [ref=e90] [cursor=pointer]
+        - button "Slide 2" [ref=e91] [cursor=pointer]
+        - button "Slide 3" [ref=e92] [cursor=pointer]
+      - img [ref=e95]
+      - button "Previous" [ref=e96] [cursor=pointer]:
+        - generic [ref=e98]: Previous
+      - button "Next" [ref=e99] [cursor=pointer]:
+        - generic [ref=e101]: Next
+    - generic [ref=e102]:
+      - generic [ref=e103]:
+        - generic [ref=e104]:
+          - generic [ref=e105]: Academic
+          - generic [ref=e106] [cursor=pointer]: Skill Education
+          - heading "Announcements" [level=3] [ref=e107]
+        - generic [ref=e109]:
+          - paragraph [ref=e110]:
+            - img [ref=e111]
+            - link "Observation of Jal Pakhwada 2026 - reg." [ref=e112] [cursor=pointer]:
+              - /url: web_material/Circulars/2026/22_Circular_2026.pdf
+          - paragraph [ref=e113]:
+            - img [ref=e114]
+            - link "CBSE Pre-Subroto Cup Football Tournament (2026) – reg." [ref=e115] [cursor=pointer]:
+              - /url: web_material/Circulars/2026/21_Circular_2026.pdf
+          - paragraph [ref=e116]:
+            - img [ref=e117]
+            - link "Celebration of 12th International Day of Yoga, 2026 (IDY-2026) - reg." [ref=e118] [cursor=pointer]:
+              - /url: web_material/Circulars/2026/20_Circular_2026.pdf
+          - paragraph [ref=e119]:
+            - img [ref=e120]
+            - link "Invitation for sending entries for May, 2026 edition of Sapnon ki Udaan-an e-Magazine published by the NCERT" [ref=e121] [cursor=pointer]:
+              - /url: web_material/Notifications/2026/51_Notification_2026.pdf
+          - paragraph [ref=e122]:
+            - img [ref=e123]
+            - link "CBSE Games (2026-27) – reg." [ref=e124] [cursor=pointer]:
+              - /url: web_material/Circulars/2026/19_Circular_2026_new.pdf
+          - paragraph [ref=e125]:
+            - img [ref=e126]
+            - link "Students' and Teachers' Resource books for course on Computational Thinking and Artificial Intelligence (CT&AI) for classes 3rd to 8th" [ref=e128] [cursor=pointer]:
+              - /url: web_material/Circulars/2026/18_Circular_2026.pdf
+          - paragraph [ref=e129]:
+            - img [ref=e130]
+            - link "Introduction of R3 in Class VI as per the CBSE Scheme of Studies 2026–27" [ref=e132] [cursor=pointer]:
+              - /url: web_material/Circulars/2026/17_Circular_2026.pdf
+          - paragraph [ref=e133]:
+            - img [ref=e134]
+            - link "Response to Queries on Languages at Class IX-X Session 2026-27" [ref=e135] [cursor=pointer]:
+              - /url: web_material/Notifications/2026/40_Notification_2026.pdf
+          - paragraph [ref=e136]:
+            - img [ref=e137]
+            - link "NCERT Webinar Series on New Textbooks for Grade IX (2026–27) – reg." [ref=e138] [cursor=pointer]:
+              - /url: web_material/Circulars/2026/16_Circular_2026.pdf
+          - paragraph [ref=e139]:
+            - img [ref=e140]
+            - link "Launch of CBSE Curriculum Framework for Computational Thinking (CT) and Artificial Intelligence (AI) for Classes III–VIII (Session 2026–27)-reg." [ref=e141] [cursor=pointer]:
+              - /url: web_material/Circulars/2026/15_Circular_2026.pdf
+            - text: "|"
+            - link "Curriculum" [ref=e142] [cursor=pointer]:
+              - /url: web_material/CurriculumMain27/CTAI_Pri_2026-27.pdf
+          - paragraph [ref=e143]:
+            - img [ref=e144]
+            - link "Release of CBSE Curriculum for the Academic Session 2026-27 for Classes IX-XII" [ref=e145] [cursor=pointer]:
+              - /url: web_material/Circulars/2026/14_Circular_2026.pdf
+          - paragraph [ref=e146]:
+            - img [ref=e147]
+            - link "Invitation for sending entries for April, 2026 edition of Sapnon ki Udaan-an e-Magazine published by the NCERT" [ref=e148] [cursor=pointer]:
+              - /url: web_material/Notifications/2026/35_Notification_2026.pdf
+        - generic [ref=e149]:
+          - heading "In Focus" [level=3] [ref=e150]
+          - generic [ref=e151]:
+            - paragraph [ref=e152]:
+              - text: »
+              - link "Scheme of Studies Secondary Curriculum" [ref=e153] [cursor=pointer]:
+                - /url: web_material/CurriculumMain27/SecPart1/Curriculum_SecP1_2026-27.pdf
+              - text: "|"
+              - link "Click here for Detailed Curriculum 2026-27" [ref=e154] [cursor=pointer]:
+                - /url: curriculum_2027.html
+            - paragraph [ref=e155]:
+              - text: »
+              - link "Curriculum Framework for Computational Thinking (CT) and Artificial Intelligence (AI) for Classes III–VIII" [ref=e156] [cursor=pointer]:
+                - /url: web_material/CurriculumMain27/CTAI_Pri_2026-27.pdf
+        - generic [ref=e157]:
+          - heading "Activity Corner" [level=3] [ref=e158]
+          - generic [ref=e159]:
+            - paragraph [ref=e160]:
+              - text: »
+              - link "Observation of Jal Pakhwada 2026 - reg." [ref=e161] [cursor=pointer]:
+                - /url: web_material/Circulars/2026/22_Circular_2026.pdf
+            - paragraph [ref=e162]:
+              - text: »
+              - link "NCERT Webinar Series on New Textbooks for Grade IX (2026–27) – reg." [ref=e163] [cursor=pointer]:
+                - /url: web_material/Circulars/2026/16_Circular_2026.pdf
+      - img [ref=e164]
+    - table [ref=e166]:
+      - rowgroup [ref=e167]:
+        - row [ref=e168]:
+          - cell "Quick Navigation CBSE Home NCERT Textbooks Training/Capacity Building Programmes Portal Media & Public Relations Tenders Komal Film School Health Manuals CCT Weekly Practice Vidya-Daan Sahodaya Conference Report Orientation Course on Non-Violent Communication Quick Links Library CBSE Results CBSE Affiliation CTET e-CBSE Portal Sahodaya Rajbhasha MyGov" [ref=e169]:
+            - generic [ref=e170]:
+              - img [ref=e171]
+              - heading "Quick Navigation" [level=3] [ref=e172]
+              - list [ref=e173]:
+                - listitem [ref=e174]:
+                  - link "CBSE Home" [ref=e175] [cursor=pointer]:
+                    - /url: http://www.cbse.nic.in/
+                - listitem [ref=e176]:
+                  - link "NCERT Textbooks" [ref=e177] [cursor=pointer]:
+                    - /url: https://ncert.nic.in/textbook.php
+                - listitem [ref=e178]:
+                  - link "Training/Capacity Building Programmes Portal" [ref=e179] [cursor=pointer]:
+                    - /url: http://cbseit.in/cbse/training/
+                - listitem [ref=e180]:
+                  - link "Media & Public Relations" [ref=e181] [cursor=pointer]:
+                    - /url: https://www.cbse.gov.in/cbsenew/cbse.html
+                - listitem [ref=e182]:
+                  - link "Tenders" [ref=e183] [cursor=pointer]:
+                    - /url: tenders.html
+                - listitem [ref=e184]:
+                  - link "Komal Film" [ref=e186] [cursor=pointer]:
+                    - /url: https://www.youtube.com/watch?v=VkY0xqtw6W8
+                - listitem [ref=e187]:
+                  - link "School Health Manuals" [ref=e188] [cursor=pointer]:
+                    - /url: healthmanual.html
+                - listitem [ref=e189]:
+                  - link "CCT Weekly Practice" [ref=e190] [cursor=pointer]:
+                    - /url: https://diksha.gov.in/get/dial/R5Z7P5
+                - listitem [ref=e191]:
+                  - link "Vidya-Daan" [ref=e192] [cursor=pointer]:
+                    - /url: diksha-vidyadaan.html
+                - listitem [ref=e193]:
+                  - link "Sahodaya Conference Report" [ref=e194] [cursor=pointer]:
+                    - /url: web_material/Circulars/2024/29_SahodayaReport.pdf
+                - listitem [ref=e195]:
+                  - link "Orientation Course on Non-Violent Communication" [ref=e196] [cursor=pointer]:
+                    - /url: NonViolence.html
+              - heading "Quick Links" [level=3] [ref=e197]
+              - list [ref=e198]:
+                - listitem [ref=e199]:
+                  - link "Library" [ref=e200] [cursor=pointer]:
+                    - /url: library/index.html
+                - listitem [ref=e201]:
+                  - link "CBSE Results" [ref=e202] [cursor=pointer]:
+                    - /url: http://cbseresults.nic.in/
+                - listitem [ref=e203]:
+                  - link "CBSE Affiliation" [ref=e204] [cursor=pointer]:
+                    - /url: http://cbseaff.nic.in/
+                - listitem [ref=e205]:
+                  - link "CTET" [ref=e206] [cursor=pointer]:
+                    - /url: http://ctet.nic.in/CMS/Public/Home.aspx
+                - listitem [ref=e207]:
+                  - link "e-CBSE Portal" [ref=e208] [cursor=pointer]:
+                    - /url: http://cbse.nic.in/ecbse/index.html
+                - listitem [ref=e209]:
+                  - link "Sahodaya" [ref=e210] [cursor=pointer]:
+                    - /url: https://cbseit.in/cbse/2025/Sahodaya/
+                - listitem [ref=e211]:
+                  - link "Rajbhasha" [ref=e212] [cursor=pointer]:
+                    - /url: http://www.rajbhasha.nic.in/
+                - listitem [ref=e213]:
+                  - link "MyGov" [ref=e214] [cursor=pointer]:
+                    - /url: http://www.mygov.in/
+          - cell [ref=e215]:
+            - generic [ref=e216]:
+              - heading "CBSE VISION" [level=2] [ref=e217]
+              - paragraph [ref=e219]: The CBSE envisions a robust, vibrant and holistic school education that will engender excellence in every sphere of human endeavour. The Board is committed to provide quality education to promote intellectual, social and cultural vivacity among its learners. It works towards evolving a learning process and environment, which empowers the future citizens to become global leaders in the emerging knowledge society. The Board advocates Continuous and Comprehensive Evaluation with an emphasis on holistic development of learners. The Board commits itself to providing a stress-free learning environment that will develop competent, confident and enterprising citizens who will promote harmony and peace.
+              - heading "About Academics Unit" [level=2] [ref=e220]
+              - text: The goal of the Academic, Training, Innovation and Research unit of Central Board of Secondary Education is to achieve academic excellence by conceptualising policies and their operational planning to ensure balanced academic activities in the schools affiliated to the Board. The Unit strives to provide Scheme of Studies, curriculum, academic guidelines, textual material, support material, enrichment activities and capacity building programmes. The unit functions according to the broader objectives set in the National Curriculum Framework-2005 and in consonance with various policies and acts passed by the Government of India from time to time.
+              - heading "Some major objectives of the Unit are:" [level=2] [ref=e221]
+              - list [ref=e224]:
+                - listitem [ref=e225]: To define appropriate approaches of academic activities to provide stress free, child centred and holistic education to all children without compromising on quality
+                - listitem [ref=e226]: To analyse and monitor the quality of academic activities by collecting the feedback from different stakeholders
+                - listitem [ref=e227]: To develop norms for implementation of various academic activities including quality issues; to control and coordinate the implementation of various academic and training programmes of the Board; to organize academic activities and to supervise other agencies involved in the process
+                - listitem [ref=e228]: To adapt and innovate methods to achieve academic excellence in conformity with psychological, pedagogical and social principles.
+                - listitem [ref=e229]: To encourage schools to document the progress of students in a teacher and student friendly way
+                - listitem [ref=e230]: To propose plans to achieve quality benchmarks in school education consistent with the National goals
+                - listitem [ref=e231]: To organize various capacity building and empowerment programmes to update the professional competency of teachers
+          - cell [ref=e232]:
+            - link [ref=e233] [cursor=pointer]:
+              - /url: web_material/Manuals/Progress_of_NEP.pdf
+              - img [ref=e234]
+            - generic [ref=e236]:
+              - link [ref=e238] [cursor=pointer]:
+                - /url: gallery.html
+                - img [ref=e239]
+              - link [ref=e241] [cursor=pointer]:
+                - /url: gallery.html
+                - img [ref=e242]
+              - link [ref=e244] [cursor=pointer]:
+                - /url: gallery.html
+                - img [ref=e245]
+              - link [ref=e247] [cursor=pointer]:
+                - /url: gallery.html
+                - img [ref=e248]
+              - link [ref=e250] [cursor=pointer]:
+                - /url: gallery.html
+                - img [ref=e251]
+    - paragraph [ref=e252]:
+      - link "Back to Top" [ref=e253] [cursor=pointer]:
+        - /url: "#top"
+        - text: Back to Top
+    - generic [ref=e255]: © 2026 CBSE Academic Unit

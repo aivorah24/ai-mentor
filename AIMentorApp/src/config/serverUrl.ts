@@ -4,6 +4,6 @@ import { Platform } from 'react-native';
 // In local development, point to the local Express server.
 declare const __DEV__: boolean;
 const SERVER_URL =
-  Platform.OS === 'web' && !__DEV__ ? '' : 'http://localhost:3001';
+  Platform.OS === 'web' && !__DEV__ ? '' : 'http://localhost:3006';
 
 export default SERVER_URL;

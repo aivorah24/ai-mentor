@@ -92,7 +92,7 @@ export default function VideoLessonScreen({ navigation, route }: any) {
     <ScreenLayout>
       <Header
         title={`${topic} · ${grade}`}
-        subtitle={`${subject} · IB PYP · Video Lesson`}
+        subtitle={`${subject} · ${curriculum.replace('_', ' ')} · Video Lesson`}
         onMenuPress={() => navigation.openDrawer()}
       />
 
@@ -155,7 +155,7 @@ export default function VideoLessonScreen({ navigation, route }: any) {
             {/* Topic info */}
             <Text style={[s.topicTitle, { color: titleColor }]}>{topic}</Text>
             <Text style={[s.topicMeta, { color: mutedColor }]}>
-              {grade} · IB PYP · {subject}
+              {grade} · {curriculum.replace('_', ' ')} · {subject}
             </Text>
             <Text style={[s.topicDesc, { color: colors.textMuted }]}>
               {VIDEO_MAP[topic]
@@ -229,7 +229,7 @@ export default function VideoLessonScreen({ navigation, route }: any) {
           topic={topic}
           subject={subject}
           grade={grade}
-          curriculum="IB_PYP"
+          curriculum={curriculum}
         />
       </View>
     </ScreenLayout>
