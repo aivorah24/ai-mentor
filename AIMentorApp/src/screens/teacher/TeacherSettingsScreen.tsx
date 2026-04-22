@@ -130,7 +130,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
             <View style={styles.divider} />
             <FieldRow label="Email Address" sub={user?.email || '—'} btnLabel="Change" onPress={() => openModal('email')} styles={styles} />
             <View style={styles.divider} />
-            <FieldRow label="School / Institution" sub={user?.school || 'Not set'} btnLabel="Update" onPress={() => navigation.navigate('TeacherProfile')} styles={styles} />
+            <FieldRow label="School / Institution" sub={user?.school || 'Not set'} btnLabel="Update" onPress={() => navigation.navigate('TeacherSettings' as any)} styles={styles} />
           </View>
 
           {/* ── Security ── */}
@@ -173,7 +173,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                 <Text style={styles.fieldLabel}>Curriculum</Text>
                 <Text style={styles.fieldSub}>{user?.curriculum || 'IB PYP'} · Grade {user?.grade?.replace('Grade ', '') || '3'}</Text>
               </View>
-              <TouchableOpacity style={styles.changeBtn} onPress={() => navigation.navigate('TeacherProfile')} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.changeBtn} onPress={() => navigation.navigate('TeacherSettings' as any)} activeOpacity={0.7}>
                 <Text style={styles.changeBtnText}>Update</Text>
               </TouchableOpacity>
             </View>

@@ -277,7 +277,7 @@ export default function TeacherProgressScreen({ navigation }: any) {
 
                         <TouchableOpacity
                           style={styles.messageBtn}
-                          onPress={() => navigation.navigate('TeacherAssignments' as any)}
+                          onPress={() => navigation.navigate('TeacherAssignments' as any, { preSelectStudent: s } as any)}
                           activeOpacity={0.8}
                         >
                           <Feather name="plus-circle" size={14} color={colors.primary} />

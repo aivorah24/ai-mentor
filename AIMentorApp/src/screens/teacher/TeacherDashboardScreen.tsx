@@ -202,7 +202,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
           subtitle={`Your Class · ${totalStudents} Student${totalStudents !== 1 ? 's' : ''}`}
           searchPlaceholder="Search students, assignments..."
           onMenuPress={() => navigation.openDrawer()}
-          onProfilePress={() => {}}
+          onProfilePress={() => navigation.navigate('TeacherSettings' as any)}
           notificationCount={needsAttentionStudents.length || undefined}
         />
 
