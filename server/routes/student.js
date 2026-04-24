@@ -397,4 +397,63 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
   }
 });
 
+// ── GET /student/:id/performance?email= ────────────────────
+// Returns per-topic quiz scores from analytics events for the student's dashboard.
+// Uses email (not UUID) to match analytics events since they're keyed by email.
+
+router.get('/:id/performance', async (req, res) => {
+  try {
+    const email = String(req.query.email || '').toLowerCase().trim();
+    if (!email) return res.json({ topics: {}, avgScore: null, topicCount: 0 });
+
+    const { readEvents } = require('../services/analytics');
+    const events = await readEvents();
+
+    const childEvents = events.filter(e =>
+      String(e.userEmail || '').toLowerCase() === email
+    );
+
+    const topicMap = {};
+    const allScores = [];
+
+    for (const e of childEvents) {
+      const topic = e.topic || '';
+      if (!topic) continue;
+
+      if (!topicMap[topic]) {
+        topicMap[topic] = { subject: e.subject || '', grade: e.grade || '', quizScores: [], sessions: 0, lastActivity: '' };
+      }
+      const t = topicMap[topic];
+
+      if ((e.eventType === 'ibpyp_quiz_result' || e.eventType === 'ncert_quiz_result') && typeof e.score === 'number') {
+        t.quizScores.push(e.score);
+        allScores.push(e.score);
+      }
+      if (e.eventType === 'ai_lesson_script' || e.eventType === 'lesson_started') {
+        t.sessions++;
+      }
+      if (e.timestamp && e.timestamp > t.lastActivity) t.lastActivity = e.timestamp;
+    }
+
+    const topics = {};
+    for (const [topic, t] of Object.entries(topicMap)) {
+      const avgScore = t.quizScores.length > 0
+        ? Math.round(t.quizScores.reduce((a, b) => a + b, 0) / t.quizScores.length)
+        : null;
+      topics[topic] = {
+        subject: t.subject, grade: t.grade,
+        avgScore, quizCount: t.quizScores.length, sessions: t.sessions, lastActivity: t.lastActivity,
+      };
+    }
+
+    const avgScore = allScores.length > 0
+      ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length)
+      : null;
+
+    res.json({ topics, avgScore, topicCount: Object.keys(topics).length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

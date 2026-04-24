@@ -247,6 +247,9 @@ export default function DashboardScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [upcomingDeadlines, setUpcomingDeadlines] = useState<{ id: string; title: string; date: string; note: string }[]>([]);
+  // Per-topic quiz scores from analytics events
+  const [perfData, setPerfData] = useState<{ topics: Record<string, { avgScore: number | null; quizCount: number; sessions: number }>; avgScore: number | null }>({ topics: {}, avgScore: null });
+  const [barSubjectFilter, setBarSubjectFilter] = useState<string>('All');
 
   const heroAnim  = useRef(new Animated.Value(0)).current;
   const bodyAnim  = useRef(new Animated.Value(0)).current;
@@ -346,17 +349,43 @@ export default function DashboardScreen({ navigation }: any) {
       .then(r => r.json()).then(d => { if (Array.isArray(d)) setUpcomingDeadlines(d); }).catch(() => {});
   }, [studentId]);
 
+  // Fetch real quiz scores — on mount AND every time screen comes back into focus (after quiz)
+  const fetchPerfData = useCallback(() => {
+    if (!studentId || !user?.email) return;
+    fetch(`${SERVER_URL}/student/${studentId}/performance?email=${encodeURIComponent(user.email)}`)
+      .then(r => r.json())
+      .then(d => { if (d.topics) setPerfData(d); })
+      .catch(() => {});
+  }, [studentId, user?.email]);
+
+  useEffect(() => { fetchPerfData(); }, [fetchPerfData]);
+
+  useEffect(() => {
+    const unsub = navigation.addListener('focus', fetchPerfData);
+    return unsub;
+  }, [navigation, fetchPerfData]);
+
   // ── Derived ──────────────────────────────────────────────
   const completedSet  = useMemo(() => new Set(stats.completedTopics ?? []), [stats.completedTopics]);
   const allLessons    = useMemo(() => {
     if (!curriculum) return [];
-    return curriculum.topics.map(t => ({
-      grade: t.grade, subject: t.subject, topic: t.topic, unit: t.unit,
-      color: SUBJECT_COLORS[t.subject] ?? BRAND.violet,
-      icon: SUBJECT_ICONS[t.subject] ?? 'book-open' as const,
-      progress: completedSet.has(t.topic) ? 100 : 0,
-    }));
-  }, [curriculum, completedSet]);
+    return curriculum.topics.map(t => {
+      const perf = perfData.topics[t.topic];
+      // Progress = actual quiz score always; completedSet only used for "Mastered" label (≥80%)
+      let progress = 0;
+      if (perf?.avgScore != null) progress = perf.avgScore;
+      else if (completedSet.has(t.topic)) progress = 100; // legacy: completed with no quiz record
+      else if (perf?.sessions && perf.sessions > 0) progress = 30;
+      return {
+        grade: t.grade, subject: t.subject, topic: t.topic, unit: t.unit,
+        color: SUBJECT_COLORS[t.subject] ?? BRAND.violet,
+        icon: SUBJECT_ICONS[t.subject] ?? 'book-open' as const,
+        progress,
+        quizScore: perf?.avgScore ?? null,
+        quizCount: perf?.quizCount ?? 0,
+      };
+    });
+  }, [curriculum, completedSet, perfData]);
 
   const featuredLesson = useMemo(() =>
     allLessons.find(l => l.progress > 0 && l.progress < 100) ?? allLessons[0],
@@ -379,47 +408,111 @@ export default function DashboardScreen({ navigation }: any) {
       })
     : upcomingDeadlines.slice(0, 4);
 
-  // Performance bar data (per chapter, grouped in sets of 6)
-  const barTopics = useMemo(() => {
+  // Performance bar data — topics the student has actually interacted with (has quiz or session)
+  const allBarTopics = useMemo(() => {
     if (!curriculum) return [];
-    return curriculum.topics.slice(0, 6).map((t) => ({
-      label: t.topic.split(' ').slice(0, 2).join(' '),
-      pct: completedSet.has(t.topic) ? 100 : 0,
-    }));
-  }, [curriculum, completedSet]);
-  const avgScore = useMemo(
-    () => (barTopics.length ? Math.round(barTopics.reduce((sum, t) => sum + t.pct, 0) / barTopics.length) : 0),
-    [barTopics],
-  );
-  const masteredTopics = useMemo(() => barTopics.filter(t => t.pct >= 80).length, [barTopics]);
-  const consistency = useMemo(
-    () => (barTopics.length ? Math.round((barTopics.filter(t => t.pct >= 60).length / barTopics.length) * 100) : 0),
-    [barTopics],
-  );
+    return curriculum.topics.map(t => {
+      const perf = perfData.topics[t.topic];
+      // Always use actual quiz score — completion status does NOT override performance
+      const pct     = perf?.avgScore ?? 0;
+      const hasData = pct > 0 || (perf?.sessions ?? 0) > 0;
+      const mastered = completedSet.has(t.topic) || pct >= 80;
+      return { label: t.topic.split(' ').slice(0, 2).join(' '), fullLabel: t.topic, subject: t.subject, pct, hasData, mastered };
+    }).sort((a, b) => (b.hasData ? 1 : 0) - (a.hasData ? 1 : 0));
+  }, [curriculum, completedSet, perfData]);
 
-  // Goals
-  const studyGoal  = 60; const studyDone  = Math.min(stats.todayStudyMinutes, studyGoal);
-  const topicsGoal = 5;  const topicsDone = Math.min(stats.topicsExplored, topicsGoal);
-  const xpGoal     = 100; const xpDone    = Math.min(stats.todayXP, xpGoal);
+  const barSubjects = useMemo(() => ['All', ...Array.from(new Set(allBarTopics.map(t => t.subject))).sort()], [allBarTopics]);
+
+  const barTopics = useMemo(() =>
+    barSubjectFilter === 'All' ? allBarTopics : allBarTopics.filter(t => t.subject === barSubjectFilter),
+  [allBarTopics, barSubjectFilter]);
+
+  const avgScore = useMemo(() => {
+    // Use real overall avg from analytics if available, else compute from bar
+    if (perfData.avgScore != null) return perfData.avgScore;
+    const scored = barTopics.filter(t => t.pct > 0);
+    return scored.length ? Math.round(scored.reduce((sum, t) => sum + t.pct, 0) / scored.length) : 0;
+  }, [barTopics, perfData.avgScore]);
+
+  // Use full curriculum as denominator for Mastered — not just the 6 shown in bar
+  // Mastered = scored ≥80% in quiz (performance-based, not completion-based)
+  const masteredTopics = useMemo(() =>
+    Object.values(perfData.topics).filter(p => (p.avgScore ?? 0) >= 80).length,
+  [perfData]);
+
+  const consistency = useMemo(() => {
+    const attempted = barTopics.filter(t => t.pct > 0);
+    if (!attempted.length) return 0;
+    return Math.round((attempted.filter(t => t.pct >= 60).length / attempted.length) * 100);
+  }, [barTopics]);
+
+  // Best topic — only topics with real quiz data
+  const bestTopic = useMemo(() => {
+    const withScores = barTopics.filter(t => t.pct > 0);
+    return withScores.length ? [...withScores].sort((a, b) => b.pct - a.pct)[0] : null;
+  }, [barTopics]);
+
+  // Dynamic insight message below bars
+  const perfInsight = useMemo(() => {
+    const attempted = barTopics.filter(t => t.pct > 0);
+    if (!attempted.length) return 'Start a quiz on any topic to see your scores here.';
+    const weak = [...attempted].sort((a, b) => a.pct - b.pct)[0];
+    const strong = [...attempted].sort((a, b) => b.pct - a.pct)[0];
+    if (avgScore >= 80) return `Outstanding! You're mastering ${strong.fullLabel ?? strong.label}. Keep it up!`;
+    if (avgScore >= 60) return `Good progress! Focus a bit more on ${weak.fullLabel ?? weak.label} to level up.`;
+    return `Keep practising! ${weak.fullLabel ?? weak.label} needs more attention — you can do it!`;
+  }, [barTopics, avgScore]);
+
+  // Goals — Study Time is daily; Topics and XP are lifetime totals
+  const studyGoal  = 60;  const studyDone  = Math.min(stats.todayStudyMinutes, studyGoal);
+  // Topics goal = total topics in student's curriculum for their grade (dynamic)
+  const topicsGoal = curriculum ? Math.max(curriculum.totalTopics, 1) : 1;
+  const topicsDone = Math.min(stats.topicsExplored, topicsGoal);
+  // Badge thresholds: 25%, 50%, 100% of curriculum — purely percentage-based
+  const t25 = Math.floor(topicsGoal * 0.25);
+  const t50 = Math.floor(topicsGoal * 0.50);
+  // Max XP per grade — accounts for quizzes + challenges + assignments
+  const XP_MAX_BY_GRADE: Record<string, number> = {
+    'Grade 3': 4000, 'Class 3': 4000,
+    'Grade 4': 4500, 'Class 4': 4500,
+    'Grade 5': 5000, 'Class 5': 5000,
+    'Grade 6': 6000, 'Class 6': 6000,
+  };
+  const xpGoal = XP_MAX_BY_GRADE[studentGrade] ?? 4000;
+  const xpDone = Math.min(stats.xpPoints, xpGoal);
+  const xp25   = Math.floor(xpGoal * 0.25);
+  const xp50   = Math.floor(xpGoal * 0.50);
 
   const GOALS = [
-    { label: 'Study Time', val: formatStudyTime(studyDone), target: '1h',           raw: studyDone,  goal: studyGoal,  pct: studyGoal > 0 ? studyDone / studyGoal : 0, color: BRAND.teal,   pastel: PASTEL.teal,   icon: 'clock'     as const,
+    { label: 'Study Time', val: formatStudyTime(studyDone), target: '1h',
+      sub: 'today', raw: studyDone, goal: studyGoal,
+      pct: studyGoal > 0 ? studyDone / studyGoal : 0,
+      color: BRAND.teal, pastel: PASTEL.teal, icon: 'clock' as const,
       badges: [
-        { icon: 'zap'      as const, label: 'Early Bird',  color: '#7AADA8', bg: '#C3DCD8', unlocked: stats.todayStudyMinutes >= 15 },
-        { icon: 'sun'      as const, label: 'Half Hour',   color: '#5A8A70', bg: '#D4E8E5', unlocked: stats.todayStudyMinutes >= 30 },
-        { icon: 'award'    as const, label: 'Study Hero',  color: '#9B7FD4', bg: '#E8DFFA', unlocked: stats.todayStudyMinutes >= 60 },
+        // Unlock when today's study time crosses the threshold
+        { icon: 'zap'   as const, label: 'Early Bird', color: '#7AADA8', bg: '#C3DCD8', unlocked: stats.todayStudyMinutes >= 15, tip: '15 min today' },
+        { icon: 'sun'   as const, label: 'Half Hour',  color: '#5A8A70', bg: '#D4E8E5', unlocked: stats.todayStudyMinutes >= 30, tip: '30 min today' },
+        { icon: 'award' as const, label: 'Study Hero', color: '#9B7FD4', bg: '#E8DFFA', unlocked: stats.todayStudyMinutes >= 60, tip: '60 min today' },
       ]},
-    { label: 'Topics',     val: String(topicsDone),         target: `${topicsGoal}`, raw: topicsDone, goal: topicsGoal, pct: topicsDone / topicsGoal,                    color: BRAND.rose,   pastel: PASTEL.pink,   icon: 'book-open' as const,
+    { label: 'Topics', val: `${stats.topicsExplored} / ${topicsGoal}`, target: `${topicsGoal} topics`,
+      sub: 'total', raw: topicsDone, goal: topicsGoal,
+      pct: topicsDone / topicsGoal,
+      color: BRAND.rose, pastel: PASTEL.pink, icon: 'book-open' as const,
       badges: [
-        { icon: 'compass'  as const, label: 'Explorer',    color: '#C47A68', bg: '#F5E0DA', unlocked: stats.topicsExplored >= 1 },
-        { icon: 'layers'   as const, label: 'Deep Diver',  color: '#5F8A86', bg: '#E4F0EE', unlocked: stats.topicsExplored >= 3 },
-        { icon: 'book'     as const, label: 'Scholar',     color: '#8A8358', bg: '#EDEAD4', unlocked: stats.topicsExplored >= 5 },
+        // 25% → Explorer, 50% → Deep Diver, 100% → Scholar (all topics done!)
+        { icon: 'compass' as const, label: 'Explorer',   color: '#C47A68', bg: '#F5E0DA', unlocked: stats.topicsExplored >= t25,       tip: `Complete ${t25} topics`       },
+        { icon: 'layers'  as const, label: 'Deep Diver', color: '#5F8A86', bg: '#E4F0EE', unlocked: stats.topicsExplored >= t50,       tip: `Complete ${t50} topics`       },
+        { icon: 'book'    as const, label: 'Scholar',    color: '#8A8358', bg: '#EDEAD4', unlocked: stats.topicsExplored >= topicsGoal, tip: `Complete all ${topicsGoal} topics` },
       ]},
-    { label: 'XP Earned',  val: String(xpDone),             target: `${xpGoal}`,    raw: xpDone,     goal: xpGoal,     pct: xpDone / xpGoal,                             color: BRAND.gold,   pastel: PASTEL.yellow, icon: 'star'      as const,
+    { label: 'XP Earned', val: stats.xpPoints.toLocaleString(), target: `${xpGoal.toLocaleString()} XP`,
+      sub: 'total', raw: xpDone, goal: xpGoal,
+      pct: xpDone / xpGoal,
+      color: BRAND.gold, pastel: PASTEL.yellow, icon: 'star' as const,
       badges: [
-        { icon: 'star'         as const, label: 'XP Spark',  color: '#8A8358', bg: '#EDEAD4', unlocked: stats.xpPoints >= 10 },
-        { icon: 'trending-up'  as const, label: 'Leveling',  color: '#9B7FD4', bg: '#E8DFFA', unlocked: stats.xpPoints >= 50 },
-        { icon: 'shield'       as const, label: 'XP Master', color: '#7AADA8', bg: '#C3DCD8', unlocked: stats.xpPoints >= 100 },
+        // 25% / 50% / 100% of grade max XP
+        { icon: 'star'        as const, label: 'XP Spark',  color: '#8A8358', bg: '#EDEAD4', unlocked: stats.xpPoints >= xp25,   tip: `Earn ${xp25.toLocaleString()} XP`    },
+        { icon: 'trending-up' as const, label: 'Leveling',  color: '#9B7FD4', bg: '#E8DFFA', unlocked: stats.xpPoints >= xp50,   tip: `Earn ${xp50.toLocaleString()} XP`    },
+        { icon: 'shield'      as const, label: 'XP Master', color: '#7AADA8', bg: '#C3DCD8', unlocked: stats.xpPoints >= xpGoal,  tip: `Earn all ${xpGoal.toLocaleString()} XP` },
       ]},
   ];
 
@@ -606,7 +699,7 @@ export default function DashboardScreen({ navigation }: any) {
                               </View>
                               <View style={styles.goalValueWrap}>
                                 <Text style={[styles.goalVal, { color: colors.textMain }]}>{g.val}</Text>
-                                <Text style={[styles.goalTarget, { color: colors.textDim }]}>completed today</Text>
+                                <Text style={[styles.goalTarget, { color: colors.textDim }]}>{(g as any).sub === 'total' ? 'total completed' : 'completed today'}</Text>
                                 <View style={[styles.goalMiniMeta, { backgroundColor: g.color + '25', borderColor: g.color + '50' }]}>
                                   <Feather name="target" size={10} color={g.color} />
                                   <Text style={[styles.goalMiniMetaTxt, { color: g.color }]}>{helper}</Text>
@@ -657,7 +750,7 @@ export default function DashboardScreen({ navigation }: any) {
                             {/* Value + helper — centered vertically */}
                             <View style={styles.goalValueWrap}>
                               <Text style={[styles.goalVal, { color: colors.textMain }]}>{g.val}</Text>
-                              <Text style={[styles.goalTarget, { color: colors.textDim }]}>completed today</Text>
+                              <Text style={[styles.goalTarget, { color: colors.textDim }]}>{(g as any).sub === 'total' ? 'total completed' : 'completed today'}</Text>
                               <View style={[styles.goalMiniMeta, { backgroundColor: g.color + '25', borderColor: g.color + '50' }]}>
                                 <Feather name="target" size={10} color={g.color} />
                                 <Text style={[styles.goalMiniMetaTxt, { color: g.color }]}>{helper}</Text>
@@ -725,7 +818,7 @@ export default function DashboardScreen({ navigation }: any) {
                       <Text style={[styles.perfInsightLabel, { color: colors.textMuted }]}>Average score</Text>
                     </View>
                     <View style={[styles.perfInsightPill, { backgroundColor: isDark ? BRAND.green + '38' : BRAND.green + '18', borderColor: isDark ? BRAND.green + '70' : BRAND.green + '40' }]}>
-                      <Text style={[styles.perfInsightValue, { color: BRAND.green }]}>{masteredTopics}/{barTopics.length}</Text>
+                      <Text style={[styles.perfInsightValue, { color: BRAND.green }]}>{masteredTopics}/{topicsGoal}</Text>
                       <Text style={[styles.perfInsightLabel, { color: colors.textMuted }]}>Mastered</Text>
                     </View>
                     <View style={[styles.perfInsightPill, { backgroundColor: isDark ? BRAND.orange + '38' : BRAND.orange + '18', borderColor: isDark ? BRAND.orange + '70' : BRAND.orange + '40' }]}>
@@ -741,7 +834,10 @@ export default function DashboardScreen({ navigation }: any) {
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.bestScoreLabel, { color: colors.textMuted }]}>Best score</Text>
                       <Text style={[styles.bestScoreVal, { color: colors.textMain }]}>
-                        {barTopics[0]?.pct ?? 0}% <Text style={[styles.bestScoreTopic, { color: colors.textMuted }]}>{barTopics[0]?.label}</Text>
+                        {bestTopic ? `${bestTopic.pct}%` : '—'}{' '}
+                        <Text style={[styles.bestScoreTopic, { color: colors.textMuted }]}>
+                          {bestTopic ? (bestTopic.fullLabel ?? bestTopic.label) : 'No quizzes yet'}
+                        </Text>
                       </Text>
                     </View>
                     <View style={styles.bestScoreSplit} />
@@ -754,36 +850,57 @@ export default function DashboardScreen({ navigation }: any) {
                     </TouchableOpacity>
                   </View>
 
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.barScroll} contentContainerStyle={{ gap: 16, paddingVertical: 4, paddingRight: 6 }}>
-                    {barTopics.map((t, i) => (
-                      <View key={i} style={styles.barCol}>
-                        {(() => {
-                          const barColors = [
-                            ['#5F8A86', '#93B0AC'],   // teal → slate
-                            ['#B8797E', '#EFD1D4'],   // rose → blush
-                            ['#8A8358', '#C5BD96'],   // gold → khaki
-                            ['#5A8A70', '#93B0AC'],   // forest → slate
-                            ['#9B7FD4', '#C3DCD8'],   // violet → mint
-                            ['#7AADA8', '#C3DCD8'],   // mint → sage
-                          ];
-                          const [c1, c2] = barColors[i % barColors.length];
-                          return (
-                            <>
-                              <Text style={[styles.barPct, { color: c1 }]}>{t.pct}%</Text>
-                              <View style={[styles.barTrack, { borderColor: c1 + '40' }]}>
-                                <LinearGradient
-                                  colors={[c1, c2]}
-                                  start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
-                                  style={[styles.barFill, { height: `${Math.max(t.pct, 4)}%` as any }]}
-                                />
-                              </View>
-                              <Text style={[styles.barLabel, { color: colors.textDim }]} numberOfLines={2}>{t.label}</Text>
-                            </>
-                          );
-                        })()}
-                      </View>
-                    ))}
+                  {/* Subject filter chips */}
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
+                    {barSubjects.map(subj => {
+                      const active = barSubjectFilter === subj;
+                      return (
+                        <TouchableOpacity
+                          key={subj}
+                          onPress={() => setBarSubjectFilter(subj)}
+                          style={[styles.barChip, { backgroundColor: active ? BRAND.indigo : (isDark ? BRAND.indigo + '20' : BRAND.indigo + '12'), borderColor: active ? BRAND.indigo : (isDark ? BRAND.indigo + '50' : BRAND.indigo + '30') }]}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={[styles.barChipTxt, { color: active ? '#fff' : BRAND.indigo }]}>{subj}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </ScrollView>
+
+                  {/* Bar chart — all topics, scrollable */}
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.barScroll} contentContainerStyle={{ gap: 16, paddingVertical: 4, paddingRight: 6 }}>
+                    {barTopics.map((t, i) => {
+                      const barColors = [
+                        ['#5F8A86', '#93B0AC'],
+                        ['#B8797E', '#EFD1D4'],
+                        ['#8A8358', '#C5BD96'],
+                        ['#5A8A70', '#93B0AC'],
+                        ['#9B7FD4', '#C3DCD8'],
+                        ['#7AADA8', '#C3DCD8'],
+                      ];
+                      const [c1, c2] = barColors[i % barColors.length];
+                      return (
+                        <View key={`${t.fullLabel}-${i}`} style={styles.barCol}>
+                          <Text style={[styles.barPct, { color: t.hasData ? c1 : colors.textDim }]}>{t.pct}%</Text>
+                          <View style={[styles.barTrack, { borderColor: c1 + '40' }]}>
+                            <LinearGradient
+                              colors={t.hasData ? [c1, c2] : [colors.borderColor, colors.borderColor]}
+                              start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+                              style={[styles.barFill, { height: `${Math.max(t.pct, 4)}%` as any }]}
+                            />
+                          </View>
+                          <Text style={[styles.barLabel, { color: colors.textDim }]} numberOfLines={2}>{t.label}</Text>
+                          <Text style={[styles.barSubject, { color: colors.textMuted }]} numberOfLines={1}>{t.subject}</Text>
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+
+                  {/* Dynamic insight based on real performance */}
+                  <View style={[styles.perfInsightText, { backgroundColor: isDark ? BRAND.indigo + '18' : BRAND.indigo + '0C', borderColor: isDark ? BRAND.indigo + '40' : BRAND.indigo + '25' }]}>
+                    <Feather name="zap" size={12} color={BRAND.indigo} />
+                    <Text style={[styles.perfInsightMsg, { color: colors.textMuted }]}>{perfInsight}</Text>
+                  </View>
                 </View>
 
                 {/* ── QUICK ACTIONS ───────────────────────────── */}
@@ -933,6 +1050,7 @@ export default function DashboardScreen({ navigation }: any) {
                     {filteredLessons.map((item, idx) => {
                       const stage = item.progress >= 100 ? 'Mastered' : item.progress > 0 ? 'In Progress' : 'Not Started';
                       const cta   = item.progress >= 100 ? 'Review' : item.progress > 0 ? 'Continue' : 'Start';
+                      const scoreLabel = (item as any).quizScore != null ? `${(item as any).quizScore}%` : null;
                       return (
                         <TouchableOpacity
                           key={`${item.grade}-${item.topic}`}
@@ -956,7 +1074,9 @@ export default function DashboardScreen({ navigation }: any) {
                               backgroundColor: item.progress >= 100 ? BRAND.green + '18' : item.progress > 0 ? BRAND.blue + '18' : subtleBg,
                               borderColor:     item.progress >= 100 ? BRAND.green + '45' : item.progress > 0 ? BRAND.blue + '45' : cardBorder,
                             }]}>
-                              <Text style={[styles.stagePillTxt, { color: item.progress >= 100 ? BRAND.green : item.progress > 0 ? BRAND.blue : colors.textDim }]}>{stage}</Text>
+                              <Text style={[styles.stagePillTxt, { color: item.progress >= 100 ? BRAND.green : item.progress > 0 ? BRAND.blue : colors.textDim }]}>
+                                {scoreLabel ? `${scoreLabel} · ${stage}` : stage}
+                              </Text>
                             </View>
                             <View style={[styles.lessonCta, { backgroundColor: item.color + '12', borderColor: item.color + '35' }]}>
                               <Text style={[styles.lessonCtaTxt, { color: item.color }]}>{cta}</Text>
@@ -1174,6 +1294,11 @@ const makeStyles = (c: AppColors, isMobile: boolean, isDark: boolean) => StyleSh
   bestScoreMetaLbl:{ fontSize: 9, marginTop: 1 },
   allLessonsBtn:   { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
   allLessonsTxt:   { fontSize: 11, fontWeight: '600' },
+  perfInsightText: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginTop: 4 },
+  perfInsightMsg:  { flex: 1, fontSize: 12, lineHeight: 18, fontWeight: '500' },
+  barChip:         { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
+  barChipTxt:      { fontSize: 11, fontWeight: '700' },
+  barSubject:      { fontSize: 9, fontWeight: '500', textAlign: 'center', marginTop: 2 },
 
   barScroll: { marginTop: 2 },
   barCol:    { alignItems: 'center', width: 52, gap: 6 },

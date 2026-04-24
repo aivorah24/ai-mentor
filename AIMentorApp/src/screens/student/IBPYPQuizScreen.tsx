@@ -13,6 +13,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useStudentData } from '../../context/StudentDataContext';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import { spacing, radius } from '../../theme';
@@ -43,6 +44,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
   const { topic, grade = 'Grade 3', subject = 'Mathematics' } = route?.params ?? {};
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
+  const { completeLesson, addXP } = useStudentData();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const accent = SUBJECT_COLOR[subject] || colors.primary;
@@ -135,7 +137,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
       const finalPct   = Math.round((finalScore / questions.length) * 100);
       setScore(finalScore);
 
-      // Track result
+      // Track result to analytics
       fetch(`${SERVER_URL}/ibpyp/track-result`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -148,6 +150,11 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
           correctAnswers: finalScore,
         }),
       }).catch(() => {});
+
+      // Mark topic complete only if mastered (≥80%) — otherwise just award XP for the attempt
+      if (finalPct >= 80) completeLesson(topic);
+      const xpEarned = finalPct >= 80 ? 100 : finalPct >= 60 ? 60 : 30;
+      addXP(xpEarned);
 
       setPhase('result');
     }
