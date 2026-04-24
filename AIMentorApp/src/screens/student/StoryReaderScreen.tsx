@@ -52,12 +52,44 @@ function splitWords(text: string): string[] {
   return text.match(/\S+\s*/g) || [text];
 }
 
-// Build character-proportion time boundaries for an array of tokens
+// Common short function words that TTS speaks faster than syllable count suggests
+const FUNCTION_WORDS = new Set([
+  'a','an','the','of','in','on','at','to','is','was','he','she','it','we',
+  'and','but','or','not','no','do','so','be','by','up','as','if','my','me',
+  'us','his','her','its','our','had','has','for','are','were','did','can',
+  'may','all','one','two','any','out','with','than','that','this','from',
+  'into','onto','upon','over','just','even','much','very','also','then',
+  'when','what','who','how','why','where','which','they','them','their',
+  'would','could','should','have','been','will','more','most','some','such',
+  'each','many','only','other','these','those','both','after','about',
+  'there','here','now','still','too','yet','ever','once','back','well',
+  'got','get','let','put','came','come','went','go','him','did','its',
+]);
+
+// Estimate spoken duration weight for a token (word + trailing spaces/punctuation).
+// Returns a float: 1.0 ≈ average content word, lower = shorter, higher = longer + pause.
+function wordWeight(token: string): number {
+  const clean = token.toLowerCase().replace(/[^a-z]/g, '');
+  // Count vowel groups as syllable estimate, with silent-e correction
+  const vowelGroups = clean.match(/[aeiou]+/g);
+  const raw = vowelGroups ? vowelGroups.length : 1;
+  const silentE = clean.length > 2 && clean.endsWith('e') && !/[aeiou]/.test(clean[clean.length - 2]) ? 1 : 0;
+  let syllables = Math.max(1, raw - silentE);
+  // Function words are spoken ~30% faster (but never below 0.4 units)
+  if (FUNCTION_WORDS.has(clean)) syllables = Math.max(0.4, syllables * 0.7);
+  // Punctuation pauses: sentence-end adds ~1.5 units, comma/dash adds ~0.5
+  if (/[.!?]/.test(token)) syllables += 1.5;
+  else if (/[,;:\u2014\u2013]/.test(token)) syllables += 0.5;
+  return syllables;
+}
+
+// Build time-proportion boundaries using the spoken-duration weight model.
+// Much more accurate than raw character count for TTS highlight sync.
 function buildBoundaries(tokens: string[]): number[] {
-  const counts = tokens.map(t => t.length);
-  const total  = counts.reduce((a, b) => a + b, 0) || 1;
+  const weights = tokens.map(t => wordWeight(t));
+  const total   = weights.reduce((a, b) => a + b, 0) || 1;
   let cum = 0;
-  return counts.map(c => { cum += c; return cum / total; });
+  return weights.map(w => { cum += w; return cum / total; });
 }
 
 // Page flip sound via Web Audio API
@@ -126,6 +158,8 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   const playGenRef = useRef(0);
   const fadeAnim   = useRef(new Animated.Value(1)).current;
   const slideAnim  = useRef(new Animated.Value(0)).current;
+  const rafRef     = useRef<number>(0);
+  const audioMeta  = useRef<{ words: string[]; timings: { startTime: number; endTime: number }[] | null; wordBounds: number[] | null; timingProvider: string } | null>(null);
 
   // Load completed pages from storage
   useEffect(() => {
@@ -160,6 +194,48 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, autoPlay]);
 
+  // ── rAF-based highlight loop (60 fps) — speed-aware word sync ──────────────
+  function cancelHighlightLoop() {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0; }
+  }
+
+  function startHighlightLoop(
+    audio: any,
+    words: string[],
+    timings: { startTime: number; endTime: number }[] | null,
+    wordBounds: number[] | null,
+    timingProvider: string = 'none',
+  ) {
+    cancelHighlightLoop();
+    let lastRendered = -1;
+    function tick() {
+      if (!audio || audio.paused || audio.ended) return;
+      let idx: number;
+      if (timings) {
+        // ElevenLabs & Whisper = exact timestamps from actual audio → no offset.
+        const t = audio.currentTime;
+        idx = 0;
+        for (let i = 0; i < timings.length; i++) {
+          const wordEnd = timings[i + 1]?.startTime ?? (audio.duration + 1);
+          if (t >= timings[i].startTime && t < wordEnd) { idx = i; break; }
+          if (t >= timings[i].startTime) idx = i;
+        }
+      } else {
+        // Pure proportion fallback (no silence data at all).
+        // Apply a small lag so highlight trails audio instead of jumping ahead.
+        if (!audio.duration) { rafRef.current = requestAnimationFrame(tick); return; }
+        const LAG = 0.18 / (audio.playbackRate || 1);
+        const t = Math.max(0, audio.currentTime - LAG);
+        const ratio = t / audio.duration;
+        const found = wordBounds!.findIndex(b => ratio < b);
+        idx = found === -1 ? words.length - 1 : found;
+      }
+      if (idx !== lastRendered) { lastRendered = idx; setWordIndex(idx); }
+      rafRef.current = requestAnimationFrame(tick);
+    }
+    rafRef.current = requestAnimationFrame(tick);
+  }
+
   function markPageDone(pageNum: number) {
     setDonePages(prev => {
       const next = new Set(prev).add(pageNum);
@@ -169,6 +245,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   }
 
   function pauseAudio() {
+    cancelHighlightLoop();
     if (audioRef.current) try { audioRef.current.pause(); } catch {}
     // Fade out ambient music
     if (ambientRef.current) {
@@ -178,6 +255,8 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   }
 
   function stopAudio() {
+    cancelHighlightLoop();
+    audioMeta.current = null;
     playGenRef.current++;
     if (audioRef.current) {
       try { audioRef.current.pause(); audioRef.current.currentTime = 0; } catch {}
@@ -191,6 +270,11 @@ export default function StoryReaderScreen({ route, navigation }: any) {
     if (!audioRef.current) return;
     try {
       audioRef.current.play();
+      // Restart highlight loop from current position
+      if (audioMeta.current) {
+        const { words, timings, wordBounds, timingProvider } = audioMeta.current;
+        startHighlightLoop(audioRef.current, words, timings, wordBounds, timingProvider);
+      }
       // Fade ambient back in
       if (ambientRef.current) {
         try { ambientRef.current.master.gain.linearRampToValueAtTime(0.06, ambientRef.current.ctx.currentTime + 1); } catch {}
@@ -221,28 +305,29 @@ export default function StoryReaderScreen({ route, navigation }: any) {
         audioRef.current = audio;
         setIsLoading(false); setPlaying(true);
 
-        const pageText = story.pages.find(p => p.pageNumber === pageNum)?.text ?? '';
-        const words     = splitWords(pageText);
-        const wordBounds = buildBoundaries(words);
+        const pageText      = story.pages.find(p => p.pageNumber === pageNum)?.text ?? '';
+        const words         = splitWords(pageText);
+        const timings: { startTime: number; endTime: number }[] | null = data.wordTimings || null;
+        const wordBounds    = timings ? null : buildBoundaries(words);
+        const timingProvider: string = data.timingProvider || 'none';
+
+        // Store metadata so resume can restart the loop
+        audioMeta.current = { words, timings, wordBounds, timingProvider };
 
         // Start story-specific ambient music
         ambientRef.current = createAmbientMusic(story.id);
 
-        audio.ontimeupdate = () => {
-          if (!audio.duration) return;
-          const ratio = audio.currentTime / audio.duration;
-          const idx   = wordBounds.findIndex(b => ratio < b);
-          setWordIndex(idx === -1 ? words.length - 1 : idx);
-        };
         audio.onended = () => {
+          cancelHighlightLoop();
           setWordIndex(words.length); // past all words → nothing highlighted
           setPlaying(false);
           markPageDone(pageNum);
           ambientRef.current?.stop(); ambientRef.current = null;
           if (autoPlay && story && currentPage < story.pages.length - 1) goToPage(currentPage + 1);
         };
-        audio.onerror = () => { setIsLoading(false); setPlaying(false); ambientRef.current?.stop(); ambientRef.current = null; };
+        audio.onerror = () => { cancelHighlightLoop(); setIsLoading(false); setPlaying(false); ambientRef.current?.stop(); ambientRef.current = null; };
         audio.play();
+        startHighlightLoop(audio, words, timings, wordBounds, timingProvider);
       } else { setIsLoading(false); }
     } catch { if (playGenRef.current === gen) { setIsLoading(false); setPlaying(false); } }
   }

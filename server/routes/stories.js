@@ -1,8 +1,9 @@
-const express = require('express');
-const router  = express.Router();
-const fs      = require('fs');
-const path    = require('path');
-const crypto  = require('crypto');
+const express    = require('express');
+const router     = express.Router();
+const fs         = require('fs');
+const path       = require('path');
+const crypto     = require('crypto');
+const { execFile } = require('child_process');
 
 const STORIES_PATH = path.join(__dirname, '../data/bhagavata_stories.json');
 const AUDIO_DIR    = path.join(__dirname, '../data/audio/stories');
@@ -65,13 +66,136 @@ async function generateViaTikTok(text, narrator) {
   return Buffer.concat(buffers);
 }
 
+// ── Groq Whisper word-timestamp generator ────────────────────────────────────
+// Sends cached MP3 to Groq Whisper with word-level timestamps.
+// Whisper actually listens to the audio → perfect alignment, same as Amazon Whispersync.
+async function generateTimingsViaWhisper(mp3Path, text) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) { console.log('[whisper] no GROQ_API_KEY'); return null; }
+
+  try {
+    // Use native FormData + Blob — avoids multipart boundary conflicts with Node fetch
+    const fileBuffer = fs.readFileSync(mp3Path);
+    const blob = new Blob([fileBuffer], { type: 'audio/mpeg' });
+
+    const form = new FormData();
+    form.append('file', blob, 'audio.mp3');
+    form.append('model', 'whisper-large-v3-turbo');
+    form.append('response_format', 'verbose_json');
+    form.append('timestamp_granularities[]', 'word');
+    form.append('language', 'en');
+
+    const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}` }, // no Content-Type — fetch sets it with boundary
+      body: form,
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.error('[whisper] Groq error', res.status, body.slice(0, 200));
+      return null;
+    }
+
+    const data = await res.json();
+    const whisperWords = data.words || [];
+    if (!whisperWords.length) { console.log('[whisper] no word timestamps in response'); return null; }
+
+    // Positional alignment: map text speech-words to Whisper words by position.
+    // Whisper returns words in audio order. Text words appear in the same order.
+    // Direct 1:1 positional mapping is far more robust than word-content matching
+    // because Whisper may mis-spell proper nouns (Mathura, Ambarisha) but the
+    // COUNT and ORDER of words is always preserved.
+    const textWords  = text.match(/\S+/g) || [];
+    const normalize  = w => w.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // Separate pure-punctuation tokens (em-dash etc.) — Whisper skips these
+    const speechIdxs = textWords.map((w, i) => ({ w, i })).filter(({ w }) => normalize(w));
+    const M = whisperWords.length;
+    const N = speechIdxs.length;
+
+    // Map each speech word to a Whisper word by proportional position
+    const timings = new Array(textWords.length).fill(null);
+    for (let si = 0; si < N; si++) {
+      const { i } = speechIdxs[si];
+      // Proportional index into Whisper words
+      const wi  = Math.min(Math.round((si / Math.max(N - 1, 1)) * (M - 1)), M - 1);
+      const ww  = whisperWords[wi];
+      timings[i] = {
+        word:      textWords[i],
+        startTime: parseFloat((ww.start ?? 0).toFixed(3)),
+        endTime:   parseFloat((ww.end   ?? (ww.start + 0.2)).toFixed(3)),
+      };
+    }
+
+    // Fill pure-punctuation gaps using surrounding timestamps
+    for (let i = 0; i < textWords.length; i++) {
+      if (timings[i]) continue;
+      const prev = i > 0 && timings[i - 1] ? timings[i - 1].endTime : 0;
+      timings[i] = { word: textWords[i], startTime: prev, endTime: prev };
+    }
+
+    // Ensure strictly non-decreasing (safety clamp)
+    for (let i = 1; i < timings.length; i++) {
+      if (timings[i].startTime < timings[i - 1].startTime) {
+        timings[i].startTime = timings[i - 1].startTime;
+        timings[i].endTime   = Math.max(timings[i].endTime, timings[i].startTime);
+      }
+    }
+
+    console.log(`[whisper] ${M} Whisper words → ${timings.length} timings (positional map, ${N} speech words)`);
+    console.log(`  sample: ${timings.slice(0, 6).map(t => `${t.word}@${t.startTime}s`).join(', ')}`);
+    return timings;
+  } catch (err) {
+    console.error('[whisper] failed:', err.message);
+    return null;
+  }
+}
+
+// Convert ElevenLabs character-level alignment → word-level timestamps
+// ElevenLabs returns characters[] which may include spaces; we walk both
+// the chars array and the words simultaneously to get exact per-word timing.
+function alignmentToWordTimings(text, alignment) {
+  if (!alignment || !alignment.characters) return null;
+  const chars  = alignment.characters;
+  const starts = alignment.character_start_times_seconds;
+  const ends   = alignment.character_end_times_seconds;
+  if (!chars.length || !starts.length) return null;
+
+  const wordTimings = [];
+  const words = text.match(/\S+/g) || [];
+  let ai = 0; // index into chars[]
+
+  for (const word of words) {
+    // Skip leading spaces in the chars array
+    while (ai < chars.length && chars[ai] === ' ') ai++;
+
+    const wordStartAi = ai;
+    // Advance through chars that belong to this word (non-space, up to word.length)
+    let lettersMatched = 0;
+    while (ai < chars.length && lettersMatched < word.length) {
+      if (chars[ai] !== ' ') lettersMatched++;
+      ai++;
+    }
+    const wordEndAi = Math.min(ai - 1, chars.length - 1);
+
+    const startTime = starts[wordStartAi] ?? 0;
+    const endTime   = ends[wordEndAi]     ?? startTime + 0.1;
+    wordTimings.push({ word, startTime, endTime });
+  }
+
+  console.log(`[TTS] Word timings sample: "${words.slice(0,4).join(' ')}" → ${wordTimings.slice(0,4).map(w=>`${w.word}@${w.startTime.toFixed(2)}s`).join(', ')}`);
+  return wordTimings;
+}
+
 async function generateViaElevenLabs(text, narrator) {
   if (!process.env.ELEVENLABS_API_KEY) throw new Error('No ElevenLabs API key');
   const voiceId  = narrator === 'grandfather' ? GRANDFATHER_VOICE_ID : GRANDMOTHER_VOICE_ID;
   const settings = EL_VOICE_SETTINGS[narrator] ?? EL_VOICE_SETTINGS.grandmother;
   const modelId  = process.env.ELEVENLABS_MODEL_ID || 'eleven_turbo_v2_5';
 
-  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+  // Use /with-timestamps to get exact word timings for highlight sync
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'xi-api-key': process.env.ELEVENLABS_API_KEY },
     body: JSON.stringify({ text, model_id: modelId, voice_settings: settings }),
@@ -80,19 +204,23 @@ async function generateViaElevenLabs(text, narrator) {
     const body = await res.text().catch(() => '');
     throw new Error(`ElevenLabs ${res.status}: ${body.slice(0, 200)}`);
   }
-  return Buffer.from(await res.arrayBuffer());
+  const json = await res.json();
+  const buffer = Buffer.from(json.audio_base64, 'base64');
+  const wordTimings = alignmentToWordTimings(text, json.alignment);
+  return { buffer, wordTimings };
 }
 
-// Try ElevenLabs first (Maria Moody when on paid plan), fall back to TikTok
+// Try ElevenLabs first (with timestamps), fall back to TikTok (no timestamps)
 async function generateAndCacheAudio(text, narrator) {
   if (process.env.ELEVENLABS_API_KEY) {
-    try { return { buffer: await generateViaElevenLabs(text, narrator), provider: 'elevenlabs' }; }
-    catch (err) {
-      // Fall through to TikTok on any ElevenLabs failure (401, 402, quota, unusual activity, etc.)
+    try {
+      const { buffer, wordTimings } = await generateViaElevenLabs(text, narrator);
+      return { buffer, wordTimings, provider: 'elevenlabs' };
+    } catch (err) {
       console.log(`  EL failed (${err.message.slice(0,80)}) → falling back to TikTok for ${narrator}`);
     }
   }
-  return { buffer: await generateViaTikTok(text, narrator), provider: 'tiktok' };
+  return { buffer: await generateViaTikTok(text, narrator), wordTimings: null, provider: 'tiktok' };
 }
 
 // ── GET /stories — list all stories ─────────────────────────────────────────
@@ -144,13 +272,27 @@ router.get('/:id/audio/:pageNumber', async (req, res) => {
   const page = story.pages.find(p => p.pageNumber === pageNum);
   if (!page) return res.status(404).json({ error: 'Page not found' });
 
-  const cacheKey  = storyCacheKey(story.id, pageNum, narrator);
-  const cacheFile = path.join(AUDIO_DIR, `${cacheKey}.mp3`);
-  const audioUrl  = `/data/audio/stories/${cacheKey}.mp3`;
+  const cacheKey      = storyCacheKey(story.id, pageNum, narrator);
+  const cacheFile     = path.join(AUDIO_DIR, `${cacheKey}.mp3`);
+  const timingsFile   = path.join(AUDIO_DIR, `${cacheKey}.timings.json`);
+  const audioUrl      = `/data/audio/stories/${cacheKey}.mp3`;
 
   // ── Serve from cache instantly ───────────────────────────────────────────
   if (fs.existsSync(cacheFile)) {
-    return res.json({ audioUrl, cached: true, narrator });
+    // If no timings file yet, use Groq Whisper to transcribe the actual audio
+    // and get exact word timestamps — same technique as Amazon Whispersync.
+    let timingProvider = 'elevenlabs';
+    if (!fs.existsSync(timingsFile)) {
+      timingProvider = 'whisper';
+      try {
+        const generated = await generateTimingsViaWhisper(cacheFile, page.text);
+        if (generated) fs.writeFileSync(timingsFile, JSON.stringify(generated));
+      } catch (e) { console.error('[whisper] error:', e.message); }
+    }
+    const wordTimings = fs.existsSync(timingsFile)
+      ? JSON.parse(fs.readFileSync(timingsFile, 'utf8'))
+      : null;
+    return res.json({ audioUrl, cached: true, narrator, wordTimings, timingProvider });
   }
 
   // ── Generate once, cache forever ─────────────────────────────────────────
@@ -159,10 +301,11 @@ router.get('/:id/audio/:pageNumber', async (req, res) => {
   }
 
   try {
-    const { buffer, provider } = await generateAndCacheAudio(page.text, narrator);
+    const { buffer, wordTimings, provider } = await generateAndCacheAudio(page.text, narrator);
     fs.writeFileSync(cacheFile, buffer);
-    console.log(`  Story TTS cached: ${(buffer.length / 1024).toFixed(0)}KB (${story.id}/p${pageNum}/${narrator}/${provider})`);
-    return res.json({ audioUrl, cached: false, narrator, provider });
+    if (wordTimings) fs.writeFileSync(timingsFile, JSON.stringify(wordTimings));
+    console.log(`  Story TTS cached: ${(buffer.length / 1024).toFixed(0)}KB (${story.id}/p${pageNum}/${narrator}/${provider}) timings=${!!wordTimings}`);
+    return res.json({ audioUrl, cached: false, narrator, provider, wordTimings, timingProvider: wordTimings ? 'elevenlabs' : 'none' });
   } catch (err) {
     console.error('Story TTS error:', err.message);
     return res.status(500).json({ error: 'Voice generation failed', detail: err.message });
