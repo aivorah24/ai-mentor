@@ -5,13 +5,14 @@
  * auto-reads each card via Web Speech API (instant, no network delay).
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   ActivityIndicator, Platform, ScrollView,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useStudentData } from '../../context/StudentDataContext';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import { spacing, radius } from '../../theme';
@@ -1027,43 +1028,7 @@ const BUNDLED_LESSONS: Record<string, any> = {
   },
 };
 
-// ── Web Speech API ────────────────────────────────────────────────────────────
-function speakText(text: string, onDone?: () => void) {
-  if (Platform.OS !== 'web') { onDone?.(); return; }
-  const synth = (window as any).speechSynthesis as SpeechSynthesis;
-  if (!synth) { onDone?.(); return; }
-  synth.cancel();
-
-  function doSpeak() {
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.rate   = 0.95;
-    utter.pitch  = 1.1;
-    utter.volume = 1.0;
-    const voices = synth.getVoices();
-    // Prefer neural/natural voices (much better quality on modern browsers)
-    const pick = (
-      voices.find(v => /aria/i.test(v.name)   && /en[-_]US/i.test(v.lang)) ||  // Microsoft Aria (neural)
-      voices.find(v => /jenny/i.test(v.name)  && /en/i.test(v.lang))        ||  // Microsoft Jenny
-      voices.find(v => /natasha/i.test(v.name)&& /en/i.test(v.lang))        ||  // Windows natural
-      voices.find(v => v.name === 'Google US English')                       ||
-      voices.find(v => /zira/i.test(v.name))                                 ||
-      voices.find(v => /en[-_]US/i.test(v.lang) && !v.localService)         ||  // cloud-backed voice
-      voices.find(v => /en[-_]US/i.test(v.lang))
-    );
-    if (pick) utter.voice = pick;
-    utter.onend   = () => onDone?.();
-    utter.onerror = () => onDone?.();
-    synth.speak(utter);
-  }
-
-  // Voices may not be loaded yet on first render — wait if needed
-  if (synth.getVoices().length > 0) {
-    doSpeak();
-  } else {
-    synth.addEventListener('voiceschanged', doSpeak, { once: true });
-  }
-}
-
+// ── TTS helpers (no-op on native — audio only runs on web) ───────────────────
 function stopSpeech() {
   if (Platform.OS !== 'web') return;
   try { (window as any).speechSynthesis?.cancel(); } catch {}
@@ -1219,13 +1184,71 @@ function buildGenericLesson(topic: string, grade: string, subject: string): Less
 export default function TopicLessonScreen({ navigation, route }: any) {
   const { topic = 'Lesson', grade = 'Grade 4', subject = 'Mathematics', curriculum = 'IB_PYP' } = route?.params ?? {};
   const { colors, isDark } = useTheme();
+  const { recordStudyTime } = useStudentData();
+  const studySessionStartRef = useRef<number>(Date.now());
+  const trackedStudyMinutesRef = useRef(0);
 
-  const [lesson, setLesson]     = useState<Lesson | null>(null);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState('');
-  const [cardIdx, setCardIdx]   = useState(0);
-  const [speaking, setSpeaking] = useState(false);
-  const [paused, setPaused]     = useState(false);
+  const [lesson, setLesson]         = useState<Lesson | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState('');
+  const [cardIdx, setCardIdx]       = useState(0);
+  const [speaking, setSpeaking]     = useState(false);
+  const [paused, setPaused]         = useState(false);
+  const [wordIndex, setWordIndex]   = useState(-1);
+  const [playbackRate, setPlaybackRate] = useState(1);
+
+  const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
+
+  const audioRef    = useRef<HTMLAudioElement | null>(null);
+  const rafRef      = useRef<number | null>(null);
+  const audioMetaRef = useRef<{
+    words: string[];
+    timings: Array<{ word: string; startTime: number; endTime: number }> | null;
+    timingProvider: string;
+  } | null>(null);
+
+  function cancelHighlightLoop() {
+    if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+  }
+
+  function startHighlightLoop(
+    audio: HTMLAudioElement,
+    words: string[],
+    timings: Array<{ word: string; startTime: number; endTime: number }> | null,
+  ) {
+    cancelHighlightLoop();
+    let lastRendered = -1;
+    function tick() {
+      if (!audio || audio.paused || audio.ended) return;
+      let idx = 0;
+      if (timings && timings.length > 0) {
+        const t = audio.currentTime;
+        for (let i = 0; i < timings.length; i++) {
+          const wordEnd = timings[i + 1]?.startTime ?? (audio.duration + 1);
+          if (t >= timings[i].startTime && t < wordEnd) { idx = i; break; }
+          if (t >= timings[i].startTime) idx = i;
+        }
+      } else {
+        const LAG = 0.18 / (audio.playbackRate || 1);
+        const ratio = Math.max(0, audio.currentTime - LAG) / (audio.duration || 1);
+        const found = words.findIndex((_, i) => ratio < (i + 1) / words.length);
+        idx = found === -1 ? words.length - 1 : found;
+      }
+      if (idx !== lastRendered) { lastRendered = idx; setWordIndex(idx); }
+      rafRef.current = requestAnimationFrame(tick);
+    }
+    rafRef.current = requestAnimationFrame(tick);
+  }
+
+  function stopAudio() {
+    cancelHighlightLoop();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+      audioRef.current = null;
+    }
+    setWordIndex(-1);
+  }
 
   // Load lesson — try server first, fall back to bundled data
   useEffect(() => {
@@ -1237,7 +1260,6 @@ export default function TopicLessonScreen({ navigation, route }: any) {
         setLesson(data);
       })
       .catch(() => {
-        // Fall back to bundled lesson content
         const bundled = findBundledLesson(grade, topic, subject);
         setLesson(bundled || buildGenericLesson(topic, grade, subject));
         setError('');
@@ -1245,60 +1267,139 @@ export default function TopicLessonScreen({ navigation, route }: any) {
       .finally(() => setLoading(false));
   }, [topic, grade, subject]);
 
-  // Auto-speak on card change (manual scene navigation only)
+  // Auto-play TTS on card change
   useEffect(() => {
     if (!lesson) return;
     const scene = lesson.scenes[cardIdx];
     if (!scene) return;
     setPaused(false);
+    setWordIndex(-1);
+    stopAudio();
+
+    if (Platform.OS !== 'web') return; // audio only on web
+
     setSpeaking(true);
+    const voiceWords = (scene.voice.match(/\S+/g) || []);
 
-    speakText(scene.voice, () => {
-      setSpeaking(false);
-      // Intentionally no auto-advance; learner controls Next/Previous.
-    });
+    fetch(`${SERVER_URL}/lesson/scene-audio?lessonId=${encodeURIComponent(lesson.id)}&sceneId=${encodeURIComponent(scene.id)}&text=${encodeURIComponent(scene.voice)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.audioUrl) throw new Error('no audioUrl');
+        const audio = new Audio(`${SERVER_URL}${data.audioUrl}`);
+        audioRef.current = audio;
+        audioMetaRef.current = { words: voiceWords, timings: data.timings || null, timingProvider: data.timingProvider || 'none' };
 
-    return () => { stopSpeech(); setSpeaking(false); };
+        const timings = data.timings || null;
+        // Start highlight loop once metadata is ready (duration known) and playing
+        audio.onloadedmetadata = () => {
+          // pre-warm: highlight word 0 immediately
+          setWordIndex(0);
+        };
+        audio.onplay  = () => { setSpeaking(true); startHighlightLoop(audio, voiceWords, timings); };
+        audio.onpause = () => { cancelHighlightLoop(); };
+        audio.onended = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
+        audio.onerror = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
+        audio.play().catch(() => { setSpeaking(false); });
+      })
+      .catch(() => {
+        // Fallback to Web Speech API if server unavailable
+        const synth = Platform.OS === 'web' ? (window as any).speechSynthesis as SpeechSynthesis : null;
+        if (!synth) { setSpeaking(false); return; }
+        synth.cancel();
+        const utter = new SpeechSynthesisUtterance(scene.voice);
+        utter.rate = 0.95; utter.pitch = 1.1; utter.volume = 1.0;
+        const voices = synth.getVoices();
+        const pick = voices.find(v => /aria/i.test(v.name) && /en/i.test(v.lang)) ||
+          voices.find(v => /jenny/i.test(v.name) && /en/i.test(v.lang)) ||
+          voices.find(v => /en[-_]US/i.test(v.lang));
+        if (pick) utter.voice = pick;
+        utter.onend   = () => setSpeaking(false);
+        utter.onerror = () => setSpeaking(false);
+        synth.speak(utter);
+      });
+
+    return () => { stopAudio(); stopSpeech(); setSpeaking(false); };
   }, [cardIdx, lesson]);
 
   // Cleanup on unmount
-  useEffect(() => () => stopSpeech(), []);
+  useEffect(() => () => { stopAudio(); stopSpeech(); }, []);
+
+  // Count whole minutes spent in this reading lesson and sync to student stats.
+  useEffect(() => {
+    function flushWholeMinutes() {
+      const elapsedWholeMinutes = Math.floor((Date.now() - studySessionStartRef.current) / 60000);
+      const delta = elapsedWholeMinutes - trackedStudyMinutesRef.current;
+      if (delta > 0) {
+        recordStudyTime(delta);
+        trackedStudyMinutesRef.current += delta;
+      }
+    }
+
+    const interval = setInterval(flushWholeMinutes, 15000);
+    return () => {
+      clearInterval(interval);
+      flushWholeMinutes();
+    };
+  }, []);
 
   function togglePause() {
     if (Platform.OS !== 'web') return;
+    const audio = audioRef.current;
+    if (audio) {
+      if (paused) { audio.play(); setPaused(false); }
+      else { audio.pause(); setPaused(true); }
+      return;
+    }
+    // Fallback: Web Speech
     const synth = (window as any).speechSynthesis as SpeechSynthesis;
     if (!synth) return;
-    if (paused) {
-      synth.resume();
-      setPaused(false);
-    } else {
-      synth.pause();
-      setPaused(true);
-    }
+    if (paused) { synth.resume(); setPaused(false); }
+    else { synth.pause(); setPaused(true); }
   }
 
   function goNext() {
     if (!lesson) return;
-    stopSpeech(); setSpeaking(false);
+    stopAudio(); stopSpeech(); setSpeaking(false);
     if (cardIdx < lesson.scenes.length - 1) {
       setCardIdx(i => i + 1);
     } else {
-      // Lesson complete — go to quiz
       navigation.navigate('IBPYPQuiz', { topic, grade, subject, curriculum });
     }
   }
 
   function goPrev() {
     if (cardIdx === 0) return;
-    stopSpeech(); setSpeaking(false);
+    stopAudio(); stopSpeech(); setSpeaking(false);
     setCardIdx(i => i - 1);
   }
 
   function replayCard() {
     if (!lesson) return;
-    stopSpeech();
+    stopAudio(); stopSpeech();
+    // Re-trigger the effect by poking a ref approach: just re-call the scene play
+    const scene = lesson.scenes[cardIdx];
+    if (!scene || Platform.OS !== 'web') return;
     setSpeaking(true);
-    speakText(lesson.scenes[cardIdx].voice, () => setSpeaking(false));
+    setWordIndex(-1);
+    const voiceWords = (scene.voice.match(/\S+/g) || []);
+    const meta = audioMetaRef.current;
+
+    fetch(`${SERVER_URL}/lesson/scene-audio?lessonId=${encodeURIComponent(lesson.id)}&sceneId=${encodeURIComponent(scene.id)}&text=${encodeURIComponent(scene.voice)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.audioUrl) throw new Error('no audioUrl');
+        const audio = new Audio(`${SERVER_URL}${data.audioUrl}`);
+        audioRef.current = audio;
+        const timings2 = data.timings || null;
+        audioMetaRef.current = { words: voiceWords, timings: timings2, timingProvider: data.timingProvider || 'none' };
+        audio.onloadedmetadata = () => { setWordIndex(0); };
+        audio.onplay  = () => { setSpeaking(true); startHighlightLoop(audio, voiceWords, timings2); };
+        audio.onpause = () => { cancelHighlightLoop(); };
+        audio.onended = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
+        audio.onerror = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
+        audio.play().catch(() => setSpeaking(false));
+      })
+      .catch(() => setSpeaking(false));
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -1350,7 +1451,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
 
         {/* ── Top progress bar ── */}
         <View style={s.topBar}>
-          <TouchableOpacity onPress={() => { stopSpeech(); navigation.goBack(); }} style={s.backRow}>
+          <TouchableOpacity onPress={() => { stopAudio(); stopSpeech(); navigation.goBack(); }} style={s.backRow}>
             <Feather name="arrow-left" size={14} color={colors.textMuted} />
             <Text style={[s.backText, { color: colors.textMuted }]}>Back</Text>
           </TouchableOpacity>
@@ -1397,8 +1498,18 @@ export default function TopicLessonScreen({ navigation, route }: any) {
             {/* Divider */}
             <View style={[s.divider, { backgroundColor: accent + '30' }]} />
 
-            {/* Main lesson text */}
-            <Text style={[s.lessonText, { color: isDark ? '#e2e8f0' : '#2d3748' }]}>{scene.voice}</Text>
+            {/* Main lesson text — word-by-word highlight during playback */}
+            <Text style={[s.lessonText, { color: isDark ? '#e2e8f0' : '#2d3748' }]}>
+              {(scene.voice.match(/\S+/g) || []).map((w, i) => {
+                const isHighlighted = wordIndex === i;
+                return (
+                  <Text
+                    key={i}
+                    style={isHighlighted ? [s.wordHighlight, { backgroundColor: accent + '40', color: accent }] : undefined}
+                  >{w}{' '}</Text>
+                );
+              })}
+            </Text>
 
             {/* Speaking indicator */}
             <View style={s.speakRow}>
@@ -1424,7 +1535,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
           {/* Dot indicators */}
           <View style={s.dotsRow}>
             {lesson.scenes.map((_, i) => (
-              <TouchableOpacity key={i} onPress={() => { stopSpeech(); setSpeaking(false); setCardIdx(i); }}>
+              <TouchableOpacity key={i} onPress={() => { stopAudio(); stopSpeech(); setSpeaking(false); setCardIdx(i); }}>
                 <View style={[s.dot, {
                   backgroundColor: i === cardIdx ? accent : (i < cardIdx ? accent + '60' : colors.borderColor),
                   width: i === cardIdx ? 20 : 8,
@@ -1501,7 +1612,8 @@ const s = StyleSheet.create({
 
   divider:      { height: 1.5, borderRadius: 1 },
 
-  lessonText:   { fontSize: 17, lineHeight: 28, fontWeight: '400' },
+  lessonText:     { fontSize: 17, lineHeight: 28, fontWeight: '400' },
+  wordHighlight:  { fontWeight: '700', borderRadius: 4 },
 
   speakRow:     { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   avatarDot:    { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },

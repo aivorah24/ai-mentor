@@ -771,6 +771,147 @@ Return ONLY valid JSON, no markdown:
   }
 });
 
+// ── Scene audio: TikTok TTS + Groq Whisper word timings ──────────────────────
+// GET /lesson/scene-audio?lessonId=...&sceneId=...&text=...
+// Same pipeline as /stories/:id/audio — cached MP3 + .timings.json sidecar.
+// Returns: { audioUrl, timings, timingProvider }
+
+const SCENE_AUDIO_DIR = path.join(__dirname, '../data/audio/lessons');
+try { fs.mkdirSync(SCENE_AUDIO_DIR, { recursive: true }); } catch (_) {}
+
+const TIKTOK_API_LESSON   = 'https://tiktok-tts.weilnet.workers.dev/api/generation';
+const TIKTOK_VOICE_LESSON = 'en_female_emotional'; // warm, teacher-like voice
+
+function splitSceneText(text, maxLen = 190) {
+  if (text.length <= maxLen) return [text];
+  const chunks = [];
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  let current = '';
+  for (const s of sentences) {
+    const joined = current ? `${current} ${s}` : s;
+    if (joined.length <= maxLen) { current = joined; }
+    else { if (current) chunks.push(current); current = s.length > maxLen ? s.slice(0, maxLen) : s; }
+  }
+  if (current) chunks.push(current);
+  return chunks.filter(c => c.trim().length > 0);
+}
+
+async function generateSceneViaTikTok(text) {
+  const chunks  = splitSceneText(text);
+  const buffers = [];
+  for (const chunk of chunks) {
+    const res  = await fetch(TIKTOK_API_LESSON, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: chunk, voice: TIKTOK_VOICE_LESSON }),
+    });
+    const data = await res.json();
+    if (!data.success || !data.data) throw new Error(`TikTok TTS failed: ${JSON.stringify(data)}`);
+    buffers.push(Buffer.from(data.data, 'base64'));
+  }
+  return Buffer.concat(buffers);
+}
+
+async function generateSceneTimingsViaWhisper(mp3Path, text) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const fileBuffer = fs.readFileSync(mp3Path);
+    const blob = new Blob([fileBuffer], { type: 'audio/mpeg' });
+    const form = new FormData();
+    form.append('file', blob, 'audio.mp3');
+    form.append('model', 'whisper-large-v3-turbo');
+    form.append('response_format', 'verbose_json');
+    form.append('timestamp_granularities[]', 'word');
+    form.append('language', 'en');
+
+    const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}` },
+      body: form,
+    });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const whisperWords = data.words || [];
+    if (!whisperWords.length) return null;
+
+    const textWords  = text.match(/\S+/g) || [];
+    const normalize  = w => w.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const speechIdxs = textWords.map((w, i) => ({ w, i })).filter(({ w }) => normalize(w));
+    const M = whisperWords.length;
+    const N = speechIdxs.length;
+
+    const timings = new Array(textWords.length).fill(null);
+    for (let si = 0; si < N; si++) {
+      const { i } = speechIdxs[si];
+      const wi = Math.min(Math.round((si / Math.max(N - 1, 1)) * (M - 1)), M - 1);
+      const ww = whisperWords[wi];
+      timings[i] = {
+        word:      textWords[i],
+        startTime: parseFloat((ww.start ?? 0).toFixed(3)),
+        endTime:   parseFloat((ww.end   ?? (ww.start + 0.2)).toFixed(3)),
+      };
+    }
+    for (let i = 0; i < textWords.length; i++) {
+      if (timings[i]) continue;
+      const prev = i > 0 && timings[i - 1] ? timings[i - 1].endTime : 0;
+      timings[i] = { word: textWords[i], startTime: prev, endTime: prev };
+    }
+    for (let i = 1; i < timings.length; i++) {
+      if (timings[i].startTime < timings[i - 1].startTime) {
+        timings[i].startTime = timings[i - 1].startTime;
+        timings[i].endTime   = Math.max(timings[i].endTime, timings[i].startTime);
+      }
+    }
+    return timings;
+  } catch { return null; }
+}
+
+router.get('/scene-audio', async (req, res) => {
+  const { lessonId, sceneId, text } = req.query;
+  if (!lessonId || !sceneId || !text) {
+    return res.status(400).json({ error: 'lessonId, sceneId and text required' });
+  }
+
+  const raw      = `lesson|${lessonId}|${sceneId}|${text}`;
+  const cacheKey = crypto.createHash('md5').update(raw).digest('hex');
+  const mp3Path  = path.join(SCENE_AUDIO_DIR, `${cacheKey}.mp3`);
+  const timPath  = path.join(SCENE_AUDIO_DIR, `${cacheKey}.timings.json`);
+  const audioUrl = `/data/audio/lessons/${cacheKey}.mp3`;
+
+  // Serve from cache if audio exists
+  if (fs.existsSync(mp3Path)) {
+    let timings      = null;
+    let timingProvider = 'none';
+    if (fs.existsSync(timPath)) {
+      try { timings = JSON.parse(fs.readFileSync(timPath, 'utf8')); timingProvider = 'whisper'; } catch {}
+    }
+    if (!timings) {
+      // Run Whisper now (first play after audio was cached without timings)
+      timings = await generateSceneTimingsViaWhisper(mp3Path, text);
+      if (timings) { fs.writeFileSync(timPath, JSON.stringify(timings)); timingProvider = 'whisper'; }
+    }
+    return res.json({ audioUrl, timings, timingProvider });
+  }
+
+  // Generate audio via TikTok TTS
+  try {
+    const buffer = await generateSceneViaTikTok(text);
+    fs.writeFileSync(mp3Path, buffer);
+
+    // Generate Whisper timings
+    const timings = await generateSceneTimingsViaWhisper(mp3Path, text);
+    let timingProvider = 'none';
+    if (timings) { fs.writeFileSync(timPath, JSON.stringify(timings)); timingProvider = 'whisper'; }
+
+    res.json({ audioUrl, timings, timingProvider });
+  } catch (err) {
+    console.error('[lesson/scene-audio]', err.message);
+    res.status(500).json({ error: 'TTS generation failed' });
+  }
+});
+
 module.exports = router;
 
 
