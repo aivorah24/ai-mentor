@@ -1,16 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { embed } = require('../services/embeddings');
-const { searchContent } = require('../services/qdrant');
 const { generateAnswer, generateAnswerStream } = require('../services/llm');
+const { retrieveCurriculumContext } = require('../services/rag');
+const { retrieveWebContext } = require('../services/webSearch');
 const { logEvent } = require('../services/analytics');
+const { normalizeCurriculum } = require('../utils/curriculum');
 
 // POST /ask
 // Body: { question, curriculum?, grade?, subject?, topic? }
 router.post('/', async (req, res) => {
   const startedAt = Date.now();
   try {
-    const { question, curriculum = 'IB_PYP', grade, subject, topic, userEmail, role } = req.body;
+    const { question, curriculum = 'IB_PYP', grade, subject, topic, history = [], userEmail, role } = req.body;
+    const normalizedCurriculum = normalizeCurriculum(curriculum);
 
     if (!question || question.trim().length === 0) {
       return res.status(400).json({ error: 'question is required' });
@@ -18,34 +20,50 @@ router.post('/', async (req, res) => {
 
     let context = '';
     let sources = [];
+    let ragMeta = { strategy: 'none', strictCandidates: 0, broadCandidates: 0, selected: 0 };
+    let webMeta = { enabled: false, query: '', count: 0 };
 
-    // 1. Try Qdrant RAG — fall back gracefully if unreachable
+    // 1. Retrieve RAG context from Qdrant
     try {
-      const vector = await embed(question);
-      const results = await searchContent({ vector, curriculum, grade, subject, limit: 5 });
-
-      if (results.length > 0) {
-        context = results
-          .map(r => {
-            const p = r.payload;
-            return `[${p.subject || ''} › ${p.unit || ''} › ${p.topic || ''}]\n${p.content}`;
-          })
-          .join('\n\n---\n\n');
-
-        sources = results.map(r => ({
-          subject: r.payload.subject,
-          unit: r.payload.unit,
-          topic: r.payload.topic,
-          score: Math.round(r.score * 100) / 100,
-        }));
-      }
+      const rag = await retrieveCurriculumContext({
+        question,
+        curriculum: normalizedCurriculum,
+        grade: grade || undefined,
+        subject: subject || undefined,
+        topic: topic || undefined,
+        history,
+        maxSources: 5,
+      });
+      context = rag.context;
+      sources = rag.sources;
+      ragMeta = rag.meta;
     } catch (qdrantErr) {
-      // Qdrant unreachable — continue with Groq-only (no RAG context)
-      console.warn('Qdrant unavailable, using Groq-only mode:', qdrantErr.message);
+      // Continue with no context if retrieval is unavailable
+      console.warn('Qdrant unavailable, using no-context mode:', qdrantErr.message);
     }
 
-    // 2. Generate answer via Groq — works with or without Qdrant context
-    const answer = await generateAnswer({ question, context, grade, subject, topic });
+    // 1b. Curriculum-aware web search fallback when RAG has no context
+    if (!context) {
+      try {
+        const web = await retrieveWebContext({
+          question,
+          curriculum: normalizedCurriculum,
+          grade: grade || undefined,
+          subject: subject || undefined,
+          topic: topic || undefined,
+        });
+        if (web.context) {
+          context = web.context;
+          sources = web.sources;
+        }
+        webMeta = web.meta;
+      } catch (webErr) {
+        console.warn('Web search fallback unavailable:', webErr.message);
+      }
+    }
+
+    // 2. Generate grounded answer
+    const answer = await generateAnswer({ question, context, grade, subject, topic, history });
 
     logEvent('ai_ask', {
       userEmail,
@@ -56,7 +74,19 @@ router.post('/', async (req, res) => {
       topic,
       subject,
       grade,
-      meta: { hasRagContext: Boolean(context), sourceCount: sources.length },
+      meta: {
+        hasRagContext: Boolean(context),
+        sourceCount: sources.length,
+        ragStrategy: ragMeta.strategy,
+        strictCandidates: ragMeta.strictCandidates,
+        broadCandidates: ragMeta.broadCandidates,
+        usedFollowUpExpansion: Boolean(ragMeta.usedFollowUpExpansion),
+        subjectUsed: ragMeta.subjectUsed || '',
+        subjectInferred: Boolean(ragMeta.subjectInferred),
+        hasWebContext: Boolean(webMeta.count),
+        webSourceCount: webMeta.count || 0,
+        webQuery: webMeta.query || '',
+      },
     }).catch(() => {});
 
     res.json({ answer, sources });
@@ -77,10 +107,11 @@ router.post('/', async (req, res) => {
   }
 });
 
-// POST /ask/stream — SSE streaming version (low-latency, token-by-token)
+// POST /ask/stream - SSE streaming version
 router.post('/stream', async (req, res) => {
   const startedAt = Date.now();
-  const { question, curriculum = 'IB_PYP', grade, subject, topic, userEmail, role } = req.body;
+  const { question, curriculum = 'IB_PYP', grade, subject, topic, history = [], userEmail, role } = req.body;
+  const normalizedCurriculum = normalizeCurriculum(curriculum);
 
   if (!question || question.trim().length === 0) {
     return res.status(400).json({ error: 'question is required' });
@@ -90,41 +121,64 @@ router.post('/stream', async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no'); // disable nginx buffering
+  res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders();
 
   try {
     let context = '';
     let sources = [];
+    let ragMeta = { strategy: 'none', strictCandidates: 0, broadCandidates: 0, selected: 0 };
+    let webMeta = { enabled: false, query: '', count: 0 };
 
-    // 1. Qdrant RAG (same as non-streaming)
+    // 1. Retrieve RAG context
     try {
-      const vector = await embed(question);
-      const results = await searchContent({ vector, curriculum, grade, subject, limit: 5 });
-      if (results.length > 0) {
-        context = results
-          .map(r => {
-            const p = r.payload;
-            return `[${p.subject || ''} › ${p.unit || ''} › ${p.topic || ''}]\n${p.content}`;
-          })
-          .join('\n\n---\n\n');
-        sources = results.map(r => ({
-          subject: r.payload.subject,
-          unit: r.payload.unit,
-          topic: r.payload.topic,
-          score: Math.round(r.score * 100) / 100,
-        }));
-      }
+      const rag = await retrieveCurriculumContext({
+        question,
+        curriculum: normalizedCurriculum,
+        grade: grade || undefined,
+        subject: subject || undefined,
+        topic: topic || undefined,
+        history,
+        maxSources: 5,
+      });
+      context = rag.context;
+      sources = rag.sources;
+      ragMeta = rag.meta;
     } catch (qdrantErr) {
-      console.warn('Qdrant unavailable, using Groq-only mode:', qdrantErr.message);
+      console.warn('Qdrant unavailable, using no-context mode:', qdrantErr.message);
     }
 
-    // Send sources first so frontend has them immediately
+    // 1b. Curriculum-aware web search fallback when RAG has no context
+    if (!context) {
+      try {
+        const web = await retrieveWebContext({
+          question,
+          curriculum: normalizedCurriculum,
+          grade: grade || undefined,
+          subject: subject || undefined,
+          topic: topic || undefined,
+        });
+        if (web.context) {
+          context = web.context;
+          sources = web.sources;
+        }
+        webMeta = web.meta;
+      } catch (webErr) {
+        console.warn('Web search fallback unavailable:', webErr.message);
+      }
+    }
+
+    // Send sources first
     res.write(`data: ${JSON.stringify({ type: 'sources', sources })}\n\n`);
 
-    // 2. Stream LLM tokens
-    const fullAnswer = await generateAnswerStream({
-      question, context, grade, subject, topic,
+    // 2. Stream answer tokens
+    await generateAnswerStream({
+      question,
+      context,
+      grade,
+      subject,
+      topic,
+      history,
       onToken: (token) => {
         res.write(`data: ${JSON.stringify({ type: 'token', token })}\n\n`);
       },
@@ -135,9 +189,28 @@ router.post('/stream', async (req, res) => {
     res.end();
 
     logEvent('ai_ask', {
-      userEmail, role, source: 'topic_ai_coach', status: 'success',
-      latencyMs: Date.now() - startedAt, topic, subject, grade,
-      meta: { hasRagContext: Boolean(context), sourceCount: sources.length, streamed: true },
+      userEmail,
+      role,
+      source: 'topic_ai_coach',
+      status: 'success',
+      latencyMs: Date.now() - startedAt,
+      topic,
+      subject,
+      grade,
+      meta: {
+        hasRagContext: Boolean(context),
+        sourceCount: sources.length,
+        streamed: true,
+        ragStrategy: ragMeta.strategy,
+        strictCandidates: ragMeta.strictCandidates,
+        broadCandidates: ragMeta.broadCandidates,
+        usedFollowUpExpansion: Boolean(ragMeta.usedFollowUpExpansion),
+        subjectUsed: ragMeta.subjectUsed || '',
+        subjectInferred: Boolean(ragMeta.subjectInferred),
+        hasWebContext: Boolean(webMeta.count),
+        webSourceCount: webMeta.count || 0,
+        webQuery: webMeta.query || '',
+      },
     }).catch(() => {});
   } catch (err) {
     console.error('Error in /ask/stream:', err.message);

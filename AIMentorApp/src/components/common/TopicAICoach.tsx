@@ -12,7 +12,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { askAIMentorStream } from '../../services/aiMentorApi';
+import { askAIMentorStream, type ChatHistoryTurn } from '../../services/aiMentorApi';
 import { spacing, radius } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
@@ -118,6 +118,16 @@ function startSpeechRecognition(
 interface Message {
   role: 'user' | 'ai';
   text: string;
+}
+
+function sanitizeDisplayedAIText(text: string): string {
+  return String(text || '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^\s*[-•]\s+/gm, '')
+    .replace(/`{1,3}/g, '')
+    .replace(/\r/g, '');
 }
 
 interface Props {
@@ -237,8 +247,15 @@ export default function TopicAICoach({
     const aiIdx = messages.length + 1; // +1 for the user message we just added
     setMessages(prev => [...prev, { role: 'ai', text: '' }]);
 
+    const history: ChatHistoryTurn[] = messages
+      .slice(-8)
+      .map((m) => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        text: m.text,
+      }));
+
     const result = await askAIMentorStream(
-      q, grade, subject, curriculum, topic, user?.email, user?.role,
+      q, grade, subject, curriculum, topic, user?.email, user?.role, history,
       (token) => {
         // Append each token to the last AI message
         setMessages(prev => {
@@ -339,7 +356,9 @@ export default function TopicAICoach({
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
           >
-            {messages.map((msg, i) => (
+            {messages.map((msg, i) => {
+              const shownText = msg.role === 'ai' ? sanitizeDisplayedAIText(msg.text) : msg.text;
+              return (
               <View key={i} style={{ alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '82%' }}>
                 <View
                   style={[
@@ -353,14 +372,14 @@ export default function TopicAICoach({
                     styles.bubbleText,
                     { color: msg.role === 'user' ? '#fff' : colors.textMain },
                   ]}>
-                    {msg.text}
+                    {shownText}
                   </Text>
                 </View>
                 {msg.role === 'ai' && (
                   <View style={styles.feedbackRow}>
                     <TouchableOpacity
                       style={[styles.feedbackBtn, speakingIdx === i && { borderColor: colors.primary, backgroundColor: colors.primary + '22' }]}
-                      onPress={() => handleSpeak(i, msg.text)}
+                      onPress={() => handleSpeak(i, shownText)}
                       activeOpacity={0.8}
                     >
                       <Feather name={speakingIdx === i ? 'volume-x' : 'volume-2'} size={12} color={speakingIdx === i ? colors.primary : colors.textDim} />
@@ -386,7 +405,7 @@ export default function TopicAICoach({
                   </View>
                 )}
               </View>
-            ))}
+            )})}
             {loading && messages[messages.length - 1]?.text === '' && (
               <View style={[styles.bubble, styles.bubbleAI, { backgroundColor: aiBubble, borderColor: colors.borderColor }]}>
                 <ActivityIndicator size="small" color={colors.primary} />
@@ -413,6 +432,16 @@ export default function TopicAICoach({
               value={input}
               onChangeText={setInput}
               onSubmitEditing={send}
+              onKeyPress={(e: any) => {
+                if (
+                  Platform.OS === 'web' &&
+                  e?.nativeEvent?.key === 'Enter' &&
+                  !e?.nativeEvent?.shiftKey
+                ) {
+                  e.preventDefault?.();
+                  send();
+                }
+              }}
               returnKeyType="send"
               multiline={false}
               editable={!loading}

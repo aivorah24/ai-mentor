@@ -5,6 +5,11 @@ export interface AskResponse {
   sources: { subject: string; unit: string; topic: string; score: number }[];
 }
 
+export interface ChatHistoryTurn {
+  role: 'user' | 'assistant' | 'ai';
+  text: string;
+}
+
 export async function askAIMentor(
   question: string,
   grade?: string,
@@ -13,12 +18,16 @@ export async function askAIMentor(
   topic?: string,
   userEmail?: string,
   role?: string,
+  history?: ChatHistoryTurn[],
 ): Promise<{ answer: string; sources: AskResponse['sources']; error?: string }> {
   try {
+    const payload: any = { question, curriculum, grade, subject, topic, userEmail, role };
+    if (history && history.length > 0) payload.history = history;
+
     const response = await fetch(`${SERVER_URL}/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question, curriculum, grade, subject, topic, userEmail, role }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
@@ -46,13 +55,25 @@ export async function askAIMentorStream(
   topic?: string,
   userEmail?: string,
   role?: string,
+  history?: ChatHistoryTurn[],
   onToken?: (token: string) => void,
 ): Promise<{ answer: string; sources: AskResponse['sources']; error?: string }> {
   try {
+    const payload: any = {
+      question,
+      curriculum: curriculum || 'IB_PYP',
+      grade,
+      subject,
+      topic,
+      userEmail,
+      role,
+    };
+    if (history && history.length > 0) payload.history = history;
+
     const response = await fetch(`${SERVER_URL}/ask/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question, curriculum: curriculum || 'IB_PYP', grade, subject, topic, userEmail, role }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);

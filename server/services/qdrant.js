@@ -32,12 +32,13 @@ async function initCollection() {
   }
 }
 
-async function searchContent({ vector, curriculum, grade, subject, limit = 5 }) {
+async function searchContent({ vector, curriculum, grade, subject, topic, limit = 5 }) {
   const must = [];
 
   if (curriculum) must.push({ key: 'curriculum', match: { value: curriculum } });
   if (grade) must.push({ key: 'grade', match: { value: grade } });
   if (subject) must.push({ key: 'subject', match: { value: subject } });
+  if (topic) must.push({ key: 'topic', match: { value: topic } });
 
   const results = await client.search(COLLECTION, {
     vector,

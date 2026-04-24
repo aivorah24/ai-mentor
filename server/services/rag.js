@@ -1,0 +1,194 @@
+const { embed } = require('./embeddings');
+const { searchContent } = require('./qdrant');
+
+const FOLLOW_UP_HINT_RE = /\b(more|another|examples?|same|that|this|again|please|explain more|real examples?)\b/i;
+
+function tokenize(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length >= 3);
+}
+
+function overlapRatio(aText, bText) {
+  const a = new Set(tokenize(aText));
+  const b = new Set(tokenize(bText));
+  if (a.size === 0 || b.size === 0) return 0;
+  let overlap = 0;
+  for (const token of a) {
+    if (b.has(token)) overlap += 1;
+  }
+  return overlap / a.size;
+}
+
+function normalizeRole(role) {
+  const r = String(role || '').toLowerCase();
+  if (r === 'assistant' || r === 'ai' || r === 'bot') return 'assistant';
+  if (r === 'user' || r === 'human' || r === 'student') return 'user';
+  return '';
+}
+
+function isLikelyFollowUp(question) {
+  const q = String(question || '').trim().toLowerCase();
+  if (!q) return false;
+  const words = q.split(/\s+/).filter(Boolean);
+  return words.length <= 7 && FOLLOW_UP_HINT_RE.test(q);
+}
+
+function getRecentUserQuestion(history) {
+  if (!Array.isArray(history) || history.length === 0) return '';
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const item = history[i] || {};
+    if (normalizeRole(item.role) === 'user' && String(item.text || '').trim()) {
+      return String(item.text).trim();
+    }
+  }
+  return '';
+}
+
+function buildRetrievalQuestion({ question, topic, history }) {
+  const q = String(question || '').trim();
+  if (!q || topic || !isLikelyFollowUp(q)) return q;
+
+  const previousUserQuestion = getRecentUserQuestion(history);
+  if (!previousUserQuestion) return q;
+  if (previousUserQuestion.toLowerCase() === q.toLowerCase()) return q;
+
+  return `${previousUserQuestion}\nFollow-up question: ${q}`;
+}
+
+function inferSubjectFromText({ question, topic, history = [] }) {
+  const text = `${question || ''} ${topic || ''} ${Array.isArray(history) ? history.map((h) => h?.text || '').join(' ') : ''}`.toLowerCase();
+  const mathSignals = [
+    'fraction', 'decimal', 'percent', 'addition', 'subtraction', 'multiply', 'division',
+    'equation', 'algebra', 'geometry', 'perimeter', 'area', 'volume', 'ratio', 'number',
+    'math', 'mathematics',
+  ];
+  if (mathSignals.some((k) => text.includes(k))) return 'Mathematics';
+
+  const scienceSignals = ['photosynthesis', 'plant', 'water cycle', 'ecosystem', 'science', 'force', 'motion'];
+  if (scienceSignals.some((k) => text.includes(k))) return 'Science';
+
+  return '';
+}
+
+function rankResults({ results, question, topic, minScore, minVectorScore = 0, max }) {
+  const topicText = String(topic || '').trim();
+
+  return results
+    .map((r) => {
+      const p = r.payload || {};
+      const haystack = `${p.topic || ''} ${p.unit || ''} ${p.content || ''}`;
+      const lexical = Math.max(
+        overlapRatio(question, haystack),
+        topicText ? overlapRatio(topicText, haystack) : 0
+      );
+      const vectorScore = Number(r.score || 0);
+      const blendedScore = (0.8 * vectorScore) + (0.2 * lexical);
+      return { ...r, blendedScore };
+    })
+    .filter((r) => (r.score || 0) >= minVectorScore && r.blendedScore >= minScore)
+    .sort((a, b) => b.blendedScore - a.blendedScore)
+    .slice(0, max);
+}
+
+function buildContext(results) {
+  if (!results.length) return '';
+  return results
+    .map((r) => {
+      const p = r.payload || {};
+      return `[${p.subject || ''} > ${p.unit || ''} > ${p.topic || ''}]\n${p.content || ''}`;
+    })
+    .join('\n\n---\n\n');
+}
+
+function buildSources(results) {
+  return results.map((r) => {
+    const p = r.payload || {};
+    return {
+      subject: p.subject,
+      unit: p.unit,
+      topic: p.topic,
+      score: Math.round((r.blendedScore || r.score || 0) * 100) / 100,
+    };
+  });
+}
+
+async function retrieveCurriculumContext({
+  question,
+  curriculum,
+  grade,
+  subject,
+  topic,
+  history = [],
+  maxSources = 5,
+}) {
+  const inferredSubject = subject || inferSubjectFromText({ question, topic, history });
+  const effectiveSubject = inferredSubject || undefined;
+  const retrievalQuestion = buildRetrievalQuestion({ question, topic, history });
+  const vector = await embed(retrievalQuestion);
+
+  const strictResults = await searchContent({
+    vector,
+    curriculum,
+    grade,
+    subject: effectiveSubject,
+    topic,
+    limit: 10,
+  });
+
+  let selected = rankResults({
+    results: strictResults,
+    question: retrievalQuestion,
+    topic,
+    minScore: 0.28,
+    minVectorScore: 0.18,
+    max: maxSources,
+  });
+  let strategy = 'strict_topic';
+  let broadResults = [];
+
+  if (selected.length === 0) {
+    broadResults = await searchContent({
+      vector,
+      curriculum,
+      grade,
+      subject: effectiveSubject,
+      limit: 12,
+    });
+
+    selected = rankResults({
+      results: broadResults,
+      question: retrievalQuestion,
+      topic,
+      minScore: 0.22,
+      minVectorScore: 0.12,
+      max: maxSources,
+    });
+    strategy = 'broad_subject';
+  }
+
+  return {
+    context: buildContext(selected),
+    sources: buildSources(selected),
+    meta: {
+      strategy,
+      strictCandidates: strictResults.length,
+      broadCandidates: broadResults.length,
+      selected: selected.length,
+      usedFollowUpExpansion: retrievalQuestion !== String(question || '').trim(),
+      subjectUsed: effectiveSubject || '',
+      subjectInferred: Boolean(!subject && effectiveSubject),
+    },
+  };
+}
+
+module.exports = {
+  retrieveCurriculumContext,
+  buildRetrievalQuestion,
+  isLikelyFollowUp,
+  inferSubjectFromText,
+  rankResults,
+  overlapRatio,
+};

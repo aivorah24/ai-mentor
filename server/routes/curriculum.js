@@ -2,6 +2,7 @@ const express  = require('express');
 const router   = express.Router();
 const { client, COLLECTION, searchContent } = require('../services/qdrant');
 const { embed } = require('../services/embeddings');
+const { normalizeCurriculum } = require('../utils/curriculum');
 
 // ── GET /curriculum?curriculum=IB_PYP ─────────────────────────────
 // Returns all unique topics grouped by grade → subject
@@ -10,8 +11,8 @@ const { embed } = require('../services/embeddings');
 router.get('/', async (req, res) => {
   try {
     const { grade } = req.query;
-    // Qdrant stores 'IB_PYP' (underscore) — normalise both directions
-    const curriculum = ((req.query.curriculum || 'IB_PYP') + '').replace(/ /g, '_');
+    // Qdrant stores 'IB_PYP' (underscore) — normalize both directions
+    const curriculum = normalizeCurriculum(req.query.curriculum, 'IB_PYP');
 
     const seen   = new Set();
     const topics = [];
@@ -83,8 +84,8 @@ router.get('/', async (req, res) => {
 router.get('/subjects', async (req, res) => {
   try {
     const { grade = 'Grade 3' } = req.query;
-    // Qdrant stores 'IB_PYP' (underscore) — normalise both directions
-    const curriculum = ((req.query.curriculum || 'IB_PYP') + '').replace(/ /g, '_');
+    // Qdrant stores 'IB_PYP' (underscore) — normalize both directions
+    const curriculum = normalizeCurriculum(req.query.curriculum, 'IB_PYP');
 
     const seen    = new Set();
     const topicMap = {};   // subject → Set<topic>
@@ -141,7 +142,7 @@ router.get('/subjects', async (req, res) => {
 router.get('/search', async (req, res) => {
   try {
     const { q, grade, subject, limit = '10' } = req.query;
-    const curriculum = ((req.query.curriculum || 'IB_PYP') + '').replace(/ /g, '_');
+    const curriculum = normalizeCurriculum(req.query.curriculum, 'IB_PYP');
     if (!q || !q.trim()) return res.status(400).json({ error: 'q (query) is required' });
 
     const vector  = await embed(q.trim());
