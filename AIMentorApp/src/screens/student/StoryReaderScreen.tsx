@@ -47,6 +47,19 @@ function splitSentences(text: string): string[] {
   return parts && parts.length > 1 ? parts : [text];
 }
 
+// Split text into words, preserving trailing spaces so joined text is identical
+function splitWords(text: string): string[] {
+  return text.match(/\S+\s*/g) || [text];
+}
+
+// Build character-proportion time boundaries for an array of tokens
+function buildBoundaries(tokens: string[]): number[] {
+  const counts = tokens.map(t => t.length);
+  const total  = counts.reduce((a, b) => a + b, 0) || 1;
+  let cum = 0;
+  return counts.map(c => { cum += c; return cum / total; });
+}
+
 // Page flip sound via Web Audio API
 function playPageFlip() {
   if (Platform.OS !== 'web') return;
@@ -104,7 +117,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   const [isLoading,    setIsLoading]    = useState(false);
   const [playing,      setPlaying]      = useState(false);
   const [autoPlay,     setAutoPlay]     = useState(false);
-  const [readCount,    setReadCount]    = useState(0);
+  const [wordIndex,    setWordIndex]    = useState(0);
   const [donePages,    setDonePages]    = useState<Set<number>>(new Set());
   const [playbackRate, setPlaybackRate] = useState(1);
 
@@ -130,7 +143,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storyId]);
 
-  useEffect(() => { setReadCount(0); }, [currentPage]);
+  useEffect(() => { setWordIndex(0); }, [currentPage]);
 
   // Apply playback rate change to audio that's already playing
   useEffect(() => {
@@ -208,14 +221,9 @@ export default function StoryReaderScreen({ route, navigation }: any) {
         audioRef.current = audio;
         setIsLoading(false); setPlaying(true);
 
-        const sentences = splitSentences(story.pages.find(p => p.pageNumber === pageNum)?.text ?? '');
-
-        // Build character-proportion boundaries so longer sentences get more time.
-        // Much more accurate than uniform distribution since TTS speed ∝ char count.
-        const charCounts = sentences.map(s => s.length);
-        const totalChars = charCounts.reduce((a, b) => a + b, 0) || 1;
-        let cum = 0;
-        const boundaries = charCounts.map(c => { cum += c; return cum / totalChars; });
+        const pageText = story.pages.find(p => p.pageNumber === pageNum)?.text ?? '';
+        const words     = splitWords(pageText);
+        const wordBounds = buildBoundaries(words);
 
         // Start story-specific ambient music
         ambientRef.current = createAmbientMusic(story.id);
@@ -223,11 +231,11 @@ export default function StoryReaderScreen({ route, navigation }: any) {
         audio.ontimeupdate = () => {
           if (!audio.duration) return;
           const ratio = audio.currentTime / audio.duration;
-          const idx   = boundaries.findIndex(b => ratio < b);
-          setReadCount(idx === -1 ? sentences.length - 1 : idx);
+          const idx   = wordBounds.findIndex(b => ratio < b);
+          setWordIndex(idx === -1 ? words.length - 1 : idx);
         };
         audio.onended = () => {
-          setReadCount(sentences.length);
+          setWordIndex(words.length); // past all words → nothing highlighted
           setPlaying(false);
           markPageDone(pageNum);
           ambientRef.current?.stop(); ambientRef.current = null;
@@ -273,7 +281,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   const progress    = (currentPage + 1) / story.pages.length;
   const pastelGrad  = getPastelGradient(story.coverColor);
   const pastelAccent= pastelGrad[0];
-  const sentences   = splitSentences(page.text);
+  const words       = splitWords(page.text);
   const isBusy      = isLoading || playing;
   const isPaused    = !playing && !isLoading && audioRef.current && audioRef.current.currentTime > 0;
   const totalDone   = donePages.size;
@@ -360,24 +368,24 @@ export default function StoryReaderScreen({ route, navigation }: any) {
             <View style={[styles.textCard, { backgroundColor: colors.cardDark }]}>
               <View style={[styles.cardAccentBar, { backgroundColor: pastelAccent }]} />
 
-              {/* Story text:
-                  - Current sentence → accent color + bold + background glow (only when playing)
-                  - Past sentences   → grey (position preserved even when paused)
-                  - Future sentences → normal text */}
+              {/* Story text — word-by-word highlight (like Raz-Kids)
+                  - Current word  → accent color + bold + soft glow
+                  - Past words    → grey (shows reading progress even when paused)
+                  - Future words  → normal white */}
               <Text style={styles.storyText}>
-                {sentences.map((s, i) => {
-                  const isCurrent = (playing || isPaused) && i === readCount;
-                  const isPast    = i < readCount;
+                {words.map((w, i) => {
+                  const isCurrent = (playing || isPaused) && i === wordIndex;
+                  const isPast    = i < wordIndex;
                   return (
                     <Text
                       key={i}
                       style={{
                         color:           isCurrent ? pastelAccent : isPast ? colors.textMuted : colors.textMain,
                         fontWeight:      isCurrent ? '700' : '400',
-                        backgroundColor: isCurrent ? pastelAccent + '22' : 'transparent',
+                        backgroundColor: isCurrent ? pastelAccent + '30' : 'transparent',
                       }}
                     >
-                      {s}
+                      {w}
                     </Text>
                   );
                 })}

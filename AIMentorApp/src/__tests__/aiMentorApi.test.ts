@@ -81,4 +81,26 @@ describe('askAIMentor()', () => {
     const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
     expect(body.curriculum).toBe('IB_PYP');
   });
+
+  it('includes recent chat history when provided', async () => {
+    mockFetch({ answer: 'Fractions are parts of a whole.', sources: [] });
+
+    await askAIMentor(
+      'Some real examples please',
+      'Grade 3',
+      'Mathematics',
+      'IB_PYP',
+      undefined,
+      'student@test.ai',
+      'student',
+      [
+        { role: 'user', text: 'Can you explain fractions?' },
+        { role: 'assistant', text: 'Fractions are parts of a whole.' },
+      ]
+    );
+
+    const body = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
+    expect(body.history).toHaveLength(2);
+    expect(body.history[0].text).toContain('fractions');
+  });
 });

@@ -19,7 +19,7 @@ import ScreenLayout from '../../components/common/ScreenLayout';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentData } from '../../context/StudentDataContext';
-import { askAIMentor } from '../../services/aiMentorApi';
+import { askAIMentor, type ChatHistoryTurn } from '../../services/aiMentorApi';
 
 interface Message {
   id: number;
@@ -27,6 +27,16 @@ interface Message {
   text: string;
   timestamp: string;
   isError?: boolean;
+}
+
+function sanitizeDisplayedAIText(text: string): string {
+  return String(text || '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^\s*[-•]\s+/gm, '')
+    .replace(/`{1,3}/g, '')
+    .replace(/\r/g, '');
 }
 
 const SUGGESTIONS = [
@@ -43,6 +53,8 @@ export default function AICoachScreen({ navigation }: any) {
   const { exploreTopic } = useStudentData();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const userGrade = user?.grade || 'Grade 3';
+  const userCurriculum = user?.curriculum || 'IB PYP';
 
   const firstName = user?.name?.split(' ')[0] || 'there';
 
@@ -50,7 +62,7 @@ export default function AICoachScreen({ navigation }: any) {
     {
       id: 1,
       role: 'ai',
-      text: `Hi ${firstName}! I'm your Aivorah AI Coach for IB PYP. I can help you with Math, Science, and Social Studies for Grade 3, 4, and 5. Ask me anything from your curriculum!`,
+      text: `Hi ${firstName}! I'm your Aivorah AI Coach for ${userCurriculum}. I can help you with ${userGrade} topics. Ask me anything from your curriculum!`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ];
@@ -182,7 +194,23 @@ export default function AICoachScreen({ navigation }: any) {
     setIsTyping(true);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
 
-    const { answer, error } = await askAIMentor(msgText, 'Grade 3', undefined, 'IB_PYP');
+    const history: ChatHistoryTurn[] = messages
+      .slice(-8)
+      .map((m) => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        text: m.text,
+      }));
+
+    const { answer, error } = await askAIMentor(
+      msgText,
+      userGrade,
+      undefined,
+      userCurriculum,
+      undefined,
+      user?.email,
+      user?.role,
+      history
+    );
     if (!error) exploreTopic(); // Track real topic exploration
 
     const aiMsg: Message = {
@@ -247,7 +275,9 @@ export default function AICoachScreen({ navigation }: any) {
           )}
 
           {/* Messages */}
-          {messages.map((msg) => (
+          {messages.map((msg) => {
+            const shownText = msg.role === 'ai' ? sanitizeDisplayedAIText(msg.text) : msg.text;
+            return (
             <View
               key={msg.id}
               style={[styles.messageRow, msg.role === 'user' ? styles.messageRowUser : styles.messageRowAI]}
@@ -263,13 +293,13 @@ export default function AICoachScreen({ navigation }: any) {
                 msg.isError && styles.bubbleError,
               ]}>
                 <Text style={[styles.bubbleText, msg.role === 'user' && styles.bubbleTextUser, msg.isError && styles.bubbleTextError]}>
-                  {msg.text}
+                  {shownText}
                 </Text>
                 <View style={styles.bubbleFooter}>
                   {msg.role === 'ai' && !msg.isError && Platform.OS === 'web' && (
                     <TouchableOpacity
                       style={[styles.speakBtn, speakingId === msg.id && styles.speakBtnActive]}
-                      onPress={() => speakMessage(msg.id, msg.text)}
+                      onPress={() => speakMessage(msg.id, shownText)}
                       activeOpacity={0.7}
                     >
                       <Feather
@@ -293,7 +323,7 @@ export default function AICoachScreen({ navigation }: any) {
                 </View>
               )}
             </View>
-          ))}
+          )})}
 
           {/* Typing indicator */}
           {isTyping && (
@@ -326,6 +356,17 @@ export default function AICoachScreen({ navigation }: any) {
               maxLength={500}
               returnKeyType="send"
               onSubmitEditing={() => sendMessage()}
+              onKeyPress={(e: any) => {
+                if (
+                  Platform.OS === 'web' &&
+                  e?.nativeEvent?.key === 'Enter' &&
+                  !e?.nativeEvent?.shiftKey
+                ) {
+                  e.preventDefault?.();
+                  sendMessage();
+                }
+              }}
+              blurOnSubmit={false}
               editable={!isTyping}
             />
           </View>
