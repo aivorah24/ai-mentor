@@ -367,7 +367,18 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
       const s = statsMap[link.student_id] ?? {};
       const user = link.users ?? {};
       const topicsCount = (s.completed_topics ?? []).length;
-      const totalTopics = 14; // NCERT Grade 3 chapters
+
+      // Dynamic total topics based on student's actual curriculum + grade
+      const curriculum = (user.curriculum ?? '').toLowerCase();
+      const grade = (user.grade ?? '').toLowerCase();
+      const TOPIC_COUNTS = {
+        'ncert':   { 'grade 3': 14, 'grade 4': 14, 'grade 5': 15, 'grade 6': 16 },
+        'ib pyp':  { 'grade 3': 20, 'grade 4': 22, 'grade 5': 24 },
+        'ib_pyp':  { 'grade 3': 20, 'grade 4': 22, 'grade 5': 24 },
+        'cbse':    { 'grade 3': 14, 'grade 4': 14, 'grade 5': 15, 'grade 6': 16 },
+      };
+      const currKey = Object.keys(TOPIC_COUNTS).find(k => curriculum.includes(k)) ?? 'ncert';
+      const totalTopics = TOPIC_COUNTS[currKey]?.[grade] ?? 14;
       const progressPct = Math.round((topicsCount / totalTopics) * 100);
 
       return {
@@ -378,6 +389,7 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
         school:         user.school,
         curriculum:     user.curriculum ?? null,
         subject:        link.subject,
+        totalTopics,
         xpPoints:       s.xp_points        ?? 0,
         level:          s.level            ?? 1,
         currentStreak:  s.current_streak   ?? 0,

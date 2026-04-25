@@ -135,7 +135,7 @@ function lastActiveLabel(dateStr?: string) {
   return `${days}d ago`;
 }
 
-export default function TeacherStudentsScreen({ navigation }: any) {
+export default function TeacherStudentsScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -144,7 +144,8 @@ export default function TeacherStudentsScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('All');
+  const initialTab = route?.params?.initialTab || 'All';
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   const isDemo = DEMO_EMAILS.has(user?.email?.toLowerCase() || '');
 
@@ -179,22 +180,38 @@ export default function TeacherStudentsScreen({ navigation }: any) {
 
   useEffect(() => { load(); }, [load]);
 
+  const todayISO = new Date().toISOString().split('T')[0];
+
   const filtered = students.filter(s => {
     const matchSearch = !search || s.name.toLowerCase().includes(search.toLowerCase());
+    const daysSinceActive = s.lastActive
+      ? Math.floor((Date.now() - new Date(s.lastActive).getTime()) / 86400000)
+      : 999;
     const matchTab =
       activeTab === 'All'             ? true :
       activeTab === 'Needs Attention' ? s.needsAttention :
+      activeTab === 'Active Today'    ? s.lastActive?.startsWith(todayISO) :
+      activeTab === 'Inactive'        ? daysSinceActive >= 3 :
+      activeTab === 'Streak Risk'     ? (s.currentStreak || 0) === 1 :
+      activeTab === 'Top Performers'  ? (s.progressPct || 0) >= 50 :
       s.grade === activeTab;
     return matchSearch && matchTab;
   });
 
   // Build grade tabs dynamically from actual student data
-  const gradeTabs = ['All', ...Array.from(new Set(students.map(s => s.grade))).sort(), 'Needs Attention'];
+  const gradeTabs = ['All', ...Array.from(new Set(students.map(s => s.grade))).sort(), 'Needs Attention', 'Active Today', 'Inactive', 'Streak Risk', 'Top Performers'];
 
   const stats = {
     total: students.length,
     onTrack: students.filter(s => !s.needsAttention).length,
     attention: students.filter(s => s.needsAttention).length,
+    activeToday: students.filter(s => s.lastActive?.startsWith(todayISO)).length,
+    inactive: students.filter(s => {
+      const days = s.lastActive ? Math.floor((Date.now() - new Date(s.lastActive).getTime()) / 86400000) : 999;
+      return days >= 3;
+    }).length,
+    streakRisk: students.filter(s => (s.currentStreak || 0) === 1).length,
+    topPerformers: students.filter(s => (s.progressPct || 0) >= 50).length,
     avgProgress: students.length
       ? Math.round(students.reduce((a, s) => a + s.progressPct, 0) / students.length)
       : 0,
@@ -259,6 +276,18 @@ export default function TeacherStudentsScreen({ navigation }: any) {
                 <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
                 {tab === 'Needs Attention' && stats.attention > 0 && (
                   <View style={styles.tabBadge}><Text style={styles.tabBadgeText}>{stats.attention}</Text></View>
+                )}
+                {tab === 'Active Today' && stats.activeToday > 0 && (
+                  <View style={[styles.tabBadge, { backgroundColor: '#5A8A70' }]}><Text style={styles.tabBadgeText}>{stats.activeToday}</Text></View>
+                )}
+                {tab === 'Inactive' && stats.inactive > 0 && (
+                  <View style={[styles.tabBadge, { backgroundColor: '#8A8358' }]}><Text style={styles.tabBadgeText}>{stats.inactive}</Text></View>
+                )}
+                {tab === 'Streak Risk' && stats.streakRisk > 0 && (
+                  <View style={[styles.tabBadge, { backgroundColor: '#C4836A' }]}><Text style={styles.tabBadgeText}>{stats.streakRisk}</Text></View>
+                )}
+                {tab === 'Top Performers' && stats.topPerformers > 0 && (
+                  <View style={[styles.tabBadge, { backgroundColor: '#5A8A70' }]}><Text style={styles.tabBadgeText}>{stats.topPerformers}</Text></View>
                 )}
               </TouchableOpacity>
             ))}
