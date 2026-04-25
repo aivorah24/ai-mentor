@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Linking } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useStudentData } from '../../context/StudentDataContext';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import TopicAICoach from '../../components/common/TopicAICoach';
@@ -76,6 +77,11 @@ const WHAT_YOU_LEARN: Record<string, string[]> = {
 export default function VideoLessonScreen({ navigation, route }: any) {
   const { topic = 'Lesson', grade = 'Grade 3', subject: routeSubject, curriculum = 'IB_PYP', description: routeDesc } = route?.params ?? {};
   const subject = routeSubject || inferSubjectFromTopic(topic);
+  const { recordStudyTime } = useStudentData();
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const studySessionStartRef = useRef<number | null>(null);
+  const trackedStudyMinutesRef = useRef(0);
+  const hasVideo = Boolean(VIDEO_MAP[topic]);
 
   function goBackToTopics() {
     navigation.navigate('SubjectTopics', { subject, curriculum, grade });
@@ -87,6 +93,60 @@ export default function VideoLessonScreen({ navigation, route }: any) {
   const borderCol  = isDark ? colors.borderColor : sa.color + '40';
   const titleColor = isDark ? colors.textMain  : '#1C2A28';
   const mutedColor = isDark ? colors.textMuted : sa.color + 'cc';
+
+  // Credit whole minutes only when the student is actively learning:
+  // - video topics: while the video is playing
+  // - non-video topics: while the lesson screen is open and readable
+  useEffect(() => {
+    let activeSession = false;
+
+    function flushWholeMinutes() {
+      if (studySessionStartRef.current == null) return;
+      const elapsedWholeMinutes = Math.floor((Date.now() - studySessionStartRef.current) / 60000);
+      const delta = elapsedWholeMinutes - trackedStudyMinutesRef.current;
+      if (delta > 0) {
+        recordStudyTime(delta);
+        trackedStudyMinutesRef.current += delta;
+      }
+    }
+
+    function startSession() {
+      if (activeSession) return;
+      activeSession = true;
+      studySessionStartRef.current = Date.now();
+      trackedStudyMinutesRef.current = 0;
+    }
+
+    function stopSession() {
+      flushWholeMinutes();
+      activeSession = false;
+      studySessionStartRef.current = null;
+      trackedStudyMinutesRef.current = 0;
+    }
+
+    let unsubFocus: (() => void) | undefined;
+    let unsubBlur: (() => void) | undefined;
+
+    if (hasVideo) {
+      if (videoPlaying) startSession();
+      unsubFocus = navigation.addListener('focus', () => {
+        if (videoPlaying) startSession();
+      });
+      unsubBlur = navigation.addListener('blur', stopSession);
+    } else {
+      unsubFocus = navigation.addListener('focus', startSession);
+      unsubBlur = navigation.addListener('blur', stopSession);
+      startSession();
+    }
+
+    const interval = setInterval(flushWholeMinutes, 15000);
+    return () => {
+      clearInterval(interval);
+      stopSession();
+      unsubFocus?.();
+      unsubBlur?.();
+    };
+  }, [hasVideo, navigation, recordStudyTime, videoPlaying]);
 
   return (
     <ScreenLayout>
@@ -125,6 +185,9 @@ export default function VideoLessonScreen({ navigation, route }: any) {
                     controls
                     style={{ width: '100%', height: '100%', borderRadius: 12, backgroundColor: '#000', outline: 'none' }}
                     controlsList="nodownload"
+                    onPlay={() => setVideoPlaying(true)}
+                    onPause={() => setVideoPlaying(false)}
+                    onEnded={() => setVideoPlaying(false)}
                   />
                 </View>
               ) : (
@@ -230,6 +293,7 @@ export default function VideoLessonScreen({ navigation, route }: any) {
           subject={subject}
           grade={grade}
           curriculum={curriculum}
+          onMessageSent={() => recordStudyTime(1)}
         />
       </View>
     </ScreenLayout>

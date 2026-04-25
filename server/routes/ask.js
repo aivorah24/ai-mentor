@@ -107,6 +107,80 @@ router.post('/', async (req, res) => {
   }
 });
 
+// POST /ask/teacher — Teacher AI assistant, no student guardrails, uses real class data
+// Supports: text questions, image attachments (base64), PDF text extraction
+router.post('/teacher', async (req, res) => {
+  try {
+    const { question, classSummary = '', teacherEmail = '', imageBase64, imageType, pdfText } = req.body;
+    if (!question?.trim() && !imageBase64 && !pdfText) return res.status(400).json({ error: 'question or attachment required' });
+
+    const Groq = require('groq-sdk');
+    const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+    const systemPrompt = `You are an expert AI teaching assistant helping a professional school teacher.
+You have full access to the teacher's class data below.
+Be direct, specific, and professional. No child-friendly guardrails.
+Use student names in your responses. Give data-driven, actionable insights.
+Format responses with clear bullet points and headers where appropriate.
+If asked about weak topics, analyse actual completed topic counts.
+If asked about struggling students, use the NEEDS ATTENTION flag and low progress %.
+If given an image of an assignment or worksheet, analyse it, grade it if possible, identify mistakes, and give teacher feedback.
+If given PDF text (assignment/worksheet), extract questions, grade answers, and provide per-student feedback.
+Never hallucinate — only use data provided.
+
+CLASS DATA:
+${classSummary || 'No class data provided.'}`;
+
+    let answer;
+
+    // Image attachment — use Groq vision model
+    if (imageBase64) {
+      const userContent = [
+        {
+          type: 'image_url',
+          image_url: { url: `data:${imageType || 'image/jpeg'};base64,${imageBase64}` },
+        },
+        {
+          type: 'text',
+          text: question || 'Analyse this assignment/document. Grade it, identify mistakes, and provide teacher feedback.',
+        },
+      ];
+      const completion = await client.chat.completions.create({
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent },
+        ],
+        temperature: 0.3,
+        max_tokens: 1000,
+      });
+      answer = completion.choices?.[0]?.message?.content || 'Could not analyse image.';
+
+    } else {
+      // Text question (possibly with PDF text appended)
+      const userContent = pdfText
+        ? `${question || 'Analyse this document:'}\n\n[PDF CONTENT]:\n${pdfText.slice(0, 6000)}`
+        : question;
+
+      const completion = await client.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent },
+        ],
+        temperature: 0.4,
+        max_tokens: 800,
+      });
+      answer = completion.choices?.[0]?.message?.content || 'Unable to generate response.';
+    }
+
+    res.json({ answer });
+  } catch (err) {
+    console.error('Teacher AI error:', err.message);
+    res.status(500).json({ error: 'AI error: ' + err.message });
+  }
+});
+
 // POST /ask/stream - SSE streaming version
 router.post('/stream', async (req, res) => {
   const startedAt = Date.now();

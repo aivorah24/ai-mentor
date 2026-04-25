@@ -39,6 +39,7 @@ export default function ParentProgressScreen({ navigation }: any) {
   const [weekly, setWeekly] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const child = children[selectedIdx];
 
   useEffect(() => {
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
@@ -47,7 +48,44 @@ export default function ParentProgressScreen({ navigation }: any) {
       .catch(() => {});
   }, [parentEmail]);
 
-  const child = children[selectedIdx];
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const refresh = () => {
+      if (!child) return;
+      fetchData();
+      fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
+        .then(r => r.json())
+        .then(data => { if (Array.isArray(data) && data.length > 0) setChildren(data); })
+        .catch(() => {});
+    };
+
+    const startPolling = () => {
+      if (interval) return;
+      interval = setInterval(refresh, 30000);
+    };
+
+    const unsubFocus = navigation.addListener('focus', () => {
+      refresh();
+      startPolling();
+    });
+    const unsubBlur = navigation.addListener('blur', stopPolling);
+
+    startPolling();
+
+    return () => {
+      stopPolling();
+      unsubFocus();
+      unsubBlur();
+    };
+  }, [child, navigation, parentEmail]);
 
   const fetchData = async () => {
     if (!child) return;

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentData } from '../../context/StudentDataContext';
 import { askAIMentor, type ChatHistoryTurn } from '../../services/aiMentorApi';
+import SERVER_URL from '../../config/serverUrl';
 
 interface Message {
   id: number;
@@ -39,14 +40,12 @@ function sanitizeDisplayedAIText(text: string): string {
     .replace(/\r/g, '');
 }
 
-const SUGGESTIONS = [
-  'What is photosynthesis?',
-  'How do fractions work?',
-  'Explain the water cycle',
-  'What are ecosystems?',
-  'How does force and motion work?',
-  'Tell me about ancient civilizations',
-];
+// Fallback suggestions per grade — only used if curriculum fetch fails
+const FALLBACK_SUGGESTIONS: Record<string, string[]> = {
+  'Grade 3': ['What is colour theory?', 'How do we add numbers?', 'What is internet safety?', 'What is rhythm and beat?', 'How do plants grow?'],
+  'Grade 4': ['What are fractions?', 'How does the water cycle work?', 'What is a food chain?', 'What are adjectives?', 'How does electricity work?'],
+  'Grade 5': ['What is photosynthesis?', 'How do decimals work?', 'What are ecosystems?', 'What is force and motion?', 'How does the human body work?'],
+};
 
 export default function AICoachScreen({ navigation }: any) {
   const { user } = useAuth();
@@ -72,9 +71,47 @@ export default function AICoachScreen({ navigation }: any) {
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<number | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>(FALLBACK_SUGGESTIONS[userGrade] ?? FALLBACK_SUGGESTIONS['Grade 3']);
   const scrollRef = useRef<ScrollView>(null);
   const recognitionRef = useRef<any>(null);
   const ttsAudioRef = useRef<any>(null);
+
+  // Fetch real curriculum topics and build suggestions from them
+  useEffect(() => {
+    const isIBPYP = !userCurriculum || userCurriculum.toLowerCase().includes('ib');
+    const endpoint = isIBPYP
+      ? `${SERVER_URL}/curriculum?curriculum=IB_PYP&grade=${encodeURIComponent(userGrade)}`
+      : `${SERVER_URL}/curriculum?curriculum=NCERT&grade=${encodeURIComponent(userGrade)}`;
+
+    fetch(endpoint)
+      .then(r => r.json())
+      .then(data => {
+        const topics: { topic: string; subject: string }[] = data.topics || [];
+        if (!topics.length) return;
+
+        // Pick one topic per subject — varied and representative
+        const bySubject: Record<string, string> = {};
+        for (const t of topics) {
+          if (!bySubject[t.subject]) bySubject[t.subject] = t.topic;
+        }
+
+        // Turn topics into natural questions
+        const QUESTION_TEMPLATES = [
+          (t: string) => `What is ${t}?`,
+          (t: string) => `Can you explain ${t}?`,
+          (t: string) => `How does ${t} work?`,
+          (t: string) => `Tell me about ${t}`,
+          (t: string) => `What do we learn in ${t}?`,
+        ];
+
+        const chips = Object.values(bySubject)
+          .slice(0, 6)
+          .map((topic, i) => QUESTION_TEMPLATES[i % QUESTION_TEMPLATES.length](topic));
+
+        setSuggestions(chips);
+      })
+      .catch(() => {}); // keep fallback on error
+  }, [userGrade, userCurriculum]);
 
   // ── Read aloud AI response (instant browser TTS — zero latency) ──────────
   const speakMessage = useCallback((msgId: number, text: string) => {
@@ -259,7 +296,7 @@ export default function AICoachScreen({ navigation }: any) {
             <View style={styles.suggestionsSection}>
               <Text style={styles.suggestionsLabel}>Try asking...</Text>
               <View style={styles.suggestionsRow}>
-                {SUGGESTIONS.map((s) => (
+                {suggestions.map((s) => (
                   <TouchableOpacity
                     key={s}
                     style={styles.suggestionChip}
@@ -292,9 +329,35 @@ export default function AICoachScreen({ navigation }: any) {
                 msg.role === 'user' ? styles.bubbleUser : styles.bubbleAI,
                 msg.isError && styles.bubbleError,
               ]}>
-                <Text style={[styles.bubbleText, msg.role === 'user' && styles.bubbleTextUser, msg.isError && styles.bubbleTextError]}>
-                  {shownText}
-                </Text>
+                {msg.role === 'ai' && !msg.isError ? (
+                  // Render AI text line-by-line with visual hierarchy
+                  <View style={{ gap: 6 }}>
+                    {shownText.split('\n').filter(l => l.trim()).map((line, li) => {
+                      const isStep    = /^step\s*\d+[:.]/i.test(line.trim());
+                      const isAnswer  = /^answer[:.]/i.test(line.trim());
+                      const isPractice = /^(try this|practice|here is a question|question)[:.]/i.test(line.trim());
+                      const isOption  = /^[A-D][).]/.test(line.trim());
+                      return (
+                        <Text
+                          key={li}
+                          style={[
+                            styles.bubbleText,
+                            isStep     && { fontWeight: '700', color: colors.primary, marginTop: li > 0 ? 4 : 0 },
+                            isAnswer   && { fontWeight: '700', color: '#4A9E70', marginTop: 4 },
+                            isPractice && { fontWeight: '600', color: colors.textMuted, fontStyle: 'italic', marginTop: 4 },
+                            isOption   && { marginLeft: 12, color: colors.textMain },
+                          ]}
+                        >
+                          {line}
+                        </Text>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <Text style={[styles.bubbleText, msg.role === 'user' && styles.bubbleTextUser, msg.isError && styles.bubbleTextError]}>
+                    {shownText}
+                  </Text>
+                )}
                 <View style={styles.bubbleFooter}>
                   {msg.role === 'ai' && !msg.isError && Platform.OS === 'web' && (
                     <TouchableOpacity
@@ -481,7 +544,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderBottomRightRadius: 4,
   },
   bubbleError: { borderColor: c.accentRed + '40', backgroundColor: c.accentRed + '08' },
-  bubbleText: { fontSize: 14, color: c.textMain, lineHeight: 22 },
+  bubbleText: { fontSize: 14, color: c.textMain, lineHeight: 24 },
   bubbleTextUser: { color: 'white' },
   bubbleTextError: { color: c.accentRed },
   bubbleFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, gap: 8 },

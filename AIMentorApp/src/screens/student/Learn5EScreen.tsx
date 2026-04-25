@@ -1633,6 +1633,8 @@ export default function Learn5EScreen({ route, navigation }: any) {
   const isScience = subject === 'Science';
   const { colors } = useTheme();
   const { completeLesson, recordStudyTime } = useStudentData();
+  const studySessionStartRef = useRef<number | null>(null);
+  const trackedStudyMinutesRef = useRef(0);
 
   const [phase, setPhase]         = useState<Phase>('select');
   const [character, setCharacter] = useState<CharacterKey>('zara');
@@ -1683,6 +1685,38 @@ export default function Learn5EScreen({ route, navigation }: any) {
       })
       .catch(() => setContentLoading(false));
   }, [topic, isScience]);
+
+  // Track real study time while the learner is actively in Learn/Practice phases.
+  useEffect(() => {
+    function flushWholeMinutes() {
+      if (studySessionStartRef.current == null) return;
+      const elapsedWholeMinutes = Math.floor((Date.now() - studySessionStartRef.current) / 60000);
+      const delta = elapsedWholeMinutes - trackedStudyMinutesRef.current;
+      if (delta > 0) {
+        recordStudyTime(delta);
+        trackedStudyMinutesRef.current += delta;
+      }
+    }
+
+    const isActiveStudyPhase = phase === 'learn' || phase === 'practice';
+    if (!isActiveStudyPhase) {
+      flushWholeMinutes();
+      studySessionStartRef.current = null;
+      trackedStudyMinutesRef.current = 0;
+      return;
+    }
+
+    if (studySessionStartRef.current == null) {
+      studySessionStartRef.current = Date.now();
+      trackedStudyMinutesRef.current = 0;
+    }
+
+    const interval = setInterval(flushWholeMinutes, 15000);
+    return () => {
+      clearInterval(interval);
+      flushWholeMinutes();
+    };
+  }, [phase]);
 
   const GRADE = 'Class 3';
 

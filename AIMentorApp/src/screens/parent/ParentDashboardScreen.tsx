@@ -205,6 +205,82 @@ export default function ParentDashboardScreen({ navigation }: any) {
       .finally(() => setChildrenLoading(false));
   }, [parentEmail]);
 
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const startPolling = () => {
+      if (interval) return;
+      interval = setInterval(() => {
+        if (selectedChild.id) {
+          fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
+            .then(r => r.json())
+            .then(data => {
+              if (Array.isArray(data) && data.length > 0) {
+                const mapped: ChildData[] = data.map(c => ({
+                  id: c.id,
+                  name: c.name,
+                  grade: c.grade,
+                  status: (c.currentStreak ?? 0) >= 3 ? 'on_track' : 'needs_attention',
+                  xpPoints: c.xpPoints ?? 0,
+                  completedTopics: c.completedTopics ?? [],
+                  currentStreak: c.currentStreak ?? 0,
+                  studyTimeMinutes: c.studyTimeMinutes ?? 0,
+                  assignmentsDone: c.assignmentsDone ?? 0,
+                }));
+                setChildren(mapped);
+                const nextSelected = mapped.find(ch => ch.id === selectedChild.id) ?? mapped[0];
+                if (nextSelected) setSelectedChild(nextSelected);
+              }
+            })
+            .catch(() => {});
+        }
+      }, 30000);
+    };
+
+    const unsubFocus = navigation.addListener('focus', () => {
+      if (selectedChild.id) {
+        fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
+          .then(r => r.json())
+          .then(data => {
+            if (Array.isArray(data) && data.length > 0) {
+              const mapped: ChildData[] = data.map(c => ({
+                id: c.id,
+                name: c.name,
+                grade: c.grade,
+                status: (c.currentStreak ?? 0) >= 3 ? 'on_track' : 'needs_attention',
+                xpPoints: c.xpPoints ?? 0,
+                completedTopics: c.completedTopics ?? [],
+                currentStreak: c.currentStreak ?? 0,
+                studyTimeMinutes: c.studyTimeMinutes ?? 0,
+                assignmentsDone: c.assignmentsDone ?? 0,
+              }));
+              setChildren(mapped);
+              const nextSelected = mapped.find(ch => ch.id === selectedChild.id) ?? mapped[0];
+              if (nextSelected) setSelectedChild(nextSelected);
+            }
+          })
+          .catch(() => {});
+      }
+      startPolling();
+    });
+    const unsubBlur = navigation.addListener('blur', stopPolling);
+
+    startPolling();
+
+    return () => {
+      stopPolling();
+      unsubFocus();
+      unsubBlur();
+    };
+  }, [navigation, parentEmail, selectedChild.id]);
+
   // Load assignments + weekly activity when selected child changes
   useEffect(() => {
     if (!selectedChild.id) return;

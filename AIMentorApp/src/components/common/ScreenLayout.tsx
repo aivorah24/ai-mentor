@@ -4,6 +4,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useResponsive } from '../../hooks/useResponsive';
 import Sidebar from './Sidebar';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import TeacherAIPanel from './TeacherAIPanel';
 import type { AppColors } from '../../theme';
 
 interface ScreenLayoutProps {
@@ -19,10 +21,11 @@ export default function ScreenLayout({ children }: ScreenLayoutProps) {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const { colors } = useTheme();
+  const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const isTeacher = user?.role === 'teacher';
 
   if (!showPermanentSidebar) {
-    // Mobile: no sidebar, drawer handles it
     return <View style={styles.mobileContainer}>{children}</View>;
   }
 
@@ -33,6 +36,7 @@ export default function ScreenLayout({ children }: ScreenLayoutProps) {
         onNavigate={(screen) => navigation.navigate(screen)}
       />
       <View style={styles.content}>{children}</View>
+      {isTeacher && <TeacherAIPanel />}
     </View>
   );
 }
