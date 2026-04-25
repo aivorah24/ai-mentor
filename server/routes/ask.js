@@ -108,11 +108,27 @@ router.post('/', async (req, res) => {
 });
 
 // POST /ask/teacher — Teacher AI assistant, no student guardrails, uses real class data
-// Supports: text questions, image attachments (base64), PDF text extraction
+// Supports: text questions, image attachments (base64), PDF text extraction (text + scanned)
 router.post('/teacher', async (req, res) => {
   try {
-    const { question, classSummary = '', teacherEmail = '', imageBase64, imageType, pdfText } = req.body;
-    if (!question?.trim() && !imageBase64 && !pdfText) return res.status(400).json({ error: 'question or attachment required' });
+    const { question, classSummary = '', teacherEmail = '', imageBase64, imageType, pdfText, pdfBase64, pdfName } = req.body;
+    if (!question?.trim() && !imageBase64 && !pdfText && !pdfBase64) return res.status(400).json({ error: 'question or attachment required' });
+
+    // Server-side PDF text extraction for scanned/image PDFs
+    let resolvedPdfText = pdfText || '';
+    if (pdfBase64 && !resolvedPdfText) {
+      try {
+        const pdfParse = require('pdf-parse');
+        const buffer = Buffer.from(pdfBase64, 'base64');
+        const data = await pdfParse(buffer);
+        resolvedPdfText = data.text?.trim() || '';
+        if (!resolvedPdfText) {
+          resolvedPdfText = `[This PDF (${pdfName || 'uploaded'}) appears to be a scanned/image-based document with no extractable text. Please upload the individual pages as images for analysis.]`;
+        }
+      } catch (pdfErr) {
+        resolvedPdfText = `[PDF parse error: ${pdfErr.message}. Try uploading pages as images instead.]`;
+      }
+    }
 
     const Groq = require('groq-sdk');
     const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -158,8 +174,8 @@ ${classSummary || 'No class data provided.'}`;
 
     } else {
       // Text question (possibly with PDF text appended)
-      const userContent = pdfText
-        ? `${question || 'Analyse this document:'}\n\n[PDF CONTENT]:\n${pdfText.slice(0, 6000)}`
+      const userContent = resolvedPdfText
+        ? `${question || 'Analyse this document:'}\n\n[PDF CONTENT]:\n${resolvedPdfText.slice(0, 6000)}`
         : question;
 
       const completion = await client.chat.completions.create({

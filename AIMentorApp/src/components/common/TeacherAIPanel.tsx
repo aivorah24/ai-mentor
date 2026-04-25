@@ -78,11 +78,28 @@ function useSpeechRecognition(onResult: (t: string) => void, onEnd: () => void) 
 }
 
 // ── PDF text extraction (browser) ─────────────────────────
+const PDFJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+async function loadPdfJs(): Promise<any> {
+  let pdfjsLib = (window as any).pdfjsLib;
+  if (pdfjsLib) return pdfjsLib;
+  await new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = PDFJS_CDN;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load PDF.js'));
+    document.head.appendChild(script);
+  });
+  pdfjsLib = (window as any).pdfjsLib;
+  if (pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+  return pdfjsLib;
+}
+
 async function extractPdfText(file: File): Promise<string> {
   try {
-    // Use PDF.js if available, otherwise return placeholder
-    const pdfjsLib = (window as any).pdfjsLib;
-    if (!pdfjsLib) return `[PDF: ${file.name} — content extraction requires PDF.js]`;
+    const pdfjsLib = await loadPdfJs();
+    if (!pdfjsLib) return `[PDF: ${file.name} — could not load PDF.js]`;
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     let text = '';
@@ -91,9 +108,9 @@ async function extractPdfText(file: File): Promise<string> {
       const content = await page.getTextContent();
       text += content.items.map((item: any) => item.str).join(' ') + '\n';
     }
-    return text.trim() || `[PDF: ${file.name} — no extractable text]`;
-  } catch {
-    return `[PDF: ${file.name} — could not extract text]`;
+    return text.trim() || `[PDF: ${file.name} — no extractable text found]`;
+  } catch (e: any) {
+    return `[PDF: ${file.name} — extraction error: ${e?.message || 'unknown'}]`;
   }
 }
 
@@ -151,13 +168,9 @@ export default function TeacherAIPanel() {
     else { setListening(true); startMic(); }
   };
 
-  const handleFileChange = async (e: any) => {
-    const file: File = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     const isImage = file.type.startsWith('image/');
     const isPdf = file.type === 'application/pdf';
-
     if (isImage) {
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -167,12 +180,43 @@ export default function TeacherAIPanel() {
       };
       reader.readAsDataURL(file);
     } else if (isPdf) {
-      const pdfText = await extractPdfText(file);
-      setAttachment({ type: 'pdf', name: file.name, pdfText });
+      // Read as base64 for server-side parsing (handles scanned PDFs too)
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const dataUrl = ev.target?.result as string;
+        const base64 = dataUrl.split(',')[1];
+        // Also try client-side text extraction (works for text-layer PDFs)
+        const pdfText = await extractPdfText(file);
+        setAttachment({ type: 'pdf', name: file.name, pdfText, base64, mimeType: 'application/pdf' });
+      };
+      reader.readAsDataURL(file);
     }
-    // Reset file input
+  };
+
+  const handleFileChange = async (e: any) => {
+    const file: File = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  // Clipboard paste support (Ctrl+V image paste)
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !open) return;
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) await processFile(file);
+          break;
+        }
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [open]);
 
   const send = useCallback(async (text: string, att?: Attachment | null) => {
     const hasContent = text.trim() || att;
@@ -199,6 +243,11 @@ export default function TeacherAIPanel() {
         body.imageType = att.mimeType;
       } else if (att?.type === 'pdf') {
         body.pdfText = att.pdfText;
+        // Send raw base64 so server can parse scanned PDFs server-side
+        if (att.base64) {
+          body.pdfBase64 = att.base64;
+          body.pdfName = att.name;
+        }
       }
 
       const res = await fetch(`${SERVER_URL}/ask/teacher`, {
