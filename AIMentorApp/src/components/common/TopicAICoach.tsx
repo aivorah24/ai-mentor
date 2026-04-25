@@ -135,6 +135,8 @@ interface Props {
   subject?: string;
   grade?: string;
   curriculum?: string;
+  onOpenChange?: (open: boolean) => void;
+  onMessageSent?: (message: string) => void;
 }
 
 export default function TopicAICoach({
@@ -142,6 +144,8 @@ export default function TopicAICoach({
   subject = 'Mathematics',
   grade = 'Grade 3',
   curriculum = 'IB_PYP',
+  onOpenChange,
+  onMessageSent,
 }: Props) {
   const { colors } = useTheme();
   const { user } = useAuth();
@@ -164,7 +168,8 @@ export default function TopicAICoach({
       tension: 60,
       friction: 12,
     }).start();
-  }, [open]);
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
 
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
@@ -237,6 +242,7 @@ export default function TopicAICoach({
   async function send() {
     const q = input.trim();
     if (!q || loading) return;
+    onMessageSent?.(q);
     Keyboard.dismiss();
     setInput('');
     const userMsg: Message = { role: 'user', text: q };

@@ -83,62 +83,143 @@ function DistributionChart({ students, colors }: { students: Student[]; colors: 
 
   return (
     <View style={{ gap: 10 }}>
-      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted, marginBottom: 4 }}>
-        Progress Distribution
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMain }}>Progress Distribution</Text>
+        <Text style={{ fontSize: 11, color: colors.textDim }}>{students.length} students</Text>
+      </View>
       {buckets.map((b, i) => (
         <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Text style={{ fontSize: 10, color: colors.textDim, width: 52, fontWeight: '600' }}>{b.label}</Text>
-          <View style={{ flex: 1, height: 18, backgroundColor: colors.borderColor, borderRadius: 4, overflow: 'hidden' }}>
+          <View style={{ width: 52, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: b.color }} />
+            <Text style={{ fontSize: 10, color: colors.textDim, fontWeight: '600' }}>{b.label}</Text>
+          </View>
+          <View style={{ flex: 1, height: 20, backgroundColor: b.color + '15', borderRadius: 6, overflow: 'hidden', borderWidth: 1, borderColor: b.color + '25' }}>
             <View style={{
-              height: '100%', borderRadius: 4,
+              height: '100%', borderRadius: 6,
               width: `${Math.round((b.count / maxCount) * 100)}%` as any,
-              backgroundColor: b.color,
+              backgroundColor: b.color + 'CC',
             }} />
           </View>
-          <Text style={{ fontSize: 11, color: b.color, fontWeight: '800', width: 24, textAlign: 'right' }}>
-            {b.count}
-          </Text>
+          <View style={{ backgroundColor: b.color + '20', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, minWidth: 28, alignItems: 'center' }}>
+            <Text style={{ fontSize: 11, color: b.color, fontWeight: '800' }}>{b.count}</Text>
+          </View>
         </View>
       ))}
     </View>
   );
 }
 
-// ── Topic coverage heatmap ────────────────────────────────
-function TopicCoverage({ students, colors }: { students: Student[]; colors: any }) {
-  if (students.length === 0) return null;
+// ── Topic coverage heatmap (self-contained filters) ──────
+const SUBJECT_COLORS: Record<string, string> = {
+  All: P.slate, Math: P.teal, Science: P.green, English: P.gold, Arts: P.peach, Other: P.rose,
+};
 
-  const topicMap: Record<string, number> = {};
+function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects, cleanName, subjectOf }: {
+  allStudents: Student[]; colors: any;
+  availableGrades: string[];
+  availableSubjects: string[];
+  cleanName: (t: string) => string;
+  subjectOf: (t: string) => string;
+}) {
+  const [gradeF, setGradeF] = useState('All');
+  const [subjectF, setSubjectF] = useState('All');
+  const [curriculumTopics, setCurriculumTopics] = useState<string[]>([]);
+
+  // Fetch real curriculum topics when grade filter changes
+  useEffect(() => {
+    const fetchTopics = async () => {
+      const grades = gradeF === 'All' ? availableGrades.filter(g => g !== 'All') : [gradeF];
+      const allTopics = new Set<string>();
+      for (const grade of grades) {
+        try {
+          // Determine curriculum from students in this grade
+          const gradeStudents = allStudents.filter(s => s.grade === grade);
+          const curriculum = gradeStudents[0]?.curriculum || 'IB PYP';
+          const res = await fetch(`${SERVER_URL}/curriculum?grade=${encodeURIComponent(grade)}&curriculum=${encodeURIComponent(curriculum)}`);
+          if (res.ok) {
+            const data = await res.json();
+            (data.topics || []).forEach((t: any) => { if (t.topic) allTopics.add(t.topic); });
+          }
+        } catch {}
+      }
+      setCurriculumTopics(Array.from(allTopics));
+    };
+    if (allStudents.length > 0) fetchTopics();
+  }, [gradeF, allStudents, availableGrades]);
+
+  if (allStudents.length === 0) return null;
+
+  const students = gradeF === 'All' ? allStudents : allStudents.filter(s => s.grade === gradeF);
+
+  // Build completion map from student data
+  const completionMap: Record<string, number> = {};
   students.forEach(s => (s.completedTopics || []).forEach(t => {
-    topicMap[t] = (topicMap[t] || 0) + 1;
+    completionMap[t] = (completionMap[t] || 0) + 1;
   }));
 
-  const topics = Object.entries(topicMap)
-    .sort((a, b) => a[1] - b[1]) // ascending — worst first
-    .slice(0, 8);
+  // Use curriculum topics as the full list, fall back to student-completed topics
+  const allTopicNames = curriculumTopics.length > 0
+    ? curriculumTopics.filter(t => subjectF === 'All' || subjectOf(t) === subjectF)
+    : Object.keys(completionMap).filter(t => subjectF === 'All' || subjectOf(t) === subjectF);
 
-  if (topics.length === 0) return (
-    <Text style={{ fontSize: 12, color: colors.textDim, fontStyle: 'italic' }}>
-      No topics completed yet across the class.
-    </Text>
-  );
+  // Sort: uncompleted first, then by count ascending
+  const sortedTopics = allTopicNames
+    .map(t => ({ name: t, count: completionMap[t] || 0 }))
+    .sort((a, b) => a.count - b.count)
+    .slice(0, 12);
 
   return (
-    <View style={{ gap: 8 }}>
-      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted, marginBottom: 4 }}>
-        Topic Completion Rate (lowest first)
-      </Text>
-      {topics.map(([topic, count], i) => {
-        const pct = Math.round((count / students.length) * 100);
-        const color = pct < 30 ? P.rose : pct < 60 ? P.gold : P.green;
+    <View style={{ gap: 10 }}>
+      {/* Header */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMain }}>Topic Completion Rate</Text>
+        <Text style={{ fontSize: 11, color: colors.textDim }}>lowest first</Text>
+      </View>
+
+      {/* Grade chips */}
+      <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Text style={{ fontSize: 11, color: colors.textDim, marginRight: 2 }}>Grade:</Text>
+        {availableGrades.map(g => (
+          <TouchableOpacity key={g} onPress={() => setGradeF(g)} activeOpacity={0.75}
+            style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, borderWidth: 1,
+              borderColor: gradeF === g ? P.slate : colors.borderColor,
+              backgroundColor: gradeF === g ? P.slate + '20' : 'transparent' }}>
+            <Text style={{ fontSize: 11, fontWeight: gradeF === g ? '700' : '500', color: gradeF === g ? P.slate : colors.textDim }}>{g}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Subject chips */}
+      <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Text style={{ fontSize: 11, color: colors.textDim, marginRight: 2 }}>Subject:</Text>
+        {availableSubjects.map(subj => {
+          const sc = SUBJECT_COLORS[subj] || P.teal;
+          return (
+            <TouchableOpacity key={subj} onPress={() => setSubjectF(subj)} activeOpacity={0.75}
+              style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, borderWidth: 1,
+                borderColor: subjectF === subj ? sc : colors.borderColor,
+                backgroundColor: subjectF === subj ? sc + '20' : 'transparent' }}>
+              <Text style={{ fontSize: 11, fontWeight: subjectF === subj ? '700' : '500', color: subjectF === subj ? sc : colors.textDim }}>{subj}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Bars */}
+      {sortedTopics.length === 0 ? (
+        <Text style={{ fontSize: 12, color: colors.textDim, fontStyle: 'italic', paddingVertical: 8 }}>
+          No topics found for this filter.
+        </Text>
+      ) : sortedTopics.map(({ name, count }, i) => {
+        const pct = students.length > 0 ? Math.round((count / students.length) * 100) : 0;
+        const color = pct === 0 ? P.rose : pct < 30 ? P.peach : pct < 60 ? P.gold : P.green;
         return (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Text style={{ fontSize: 10, color: colors.textDim, width: 100, fontWeight: '500' }} numberOfLines={1}>
-              {topic}
+            <Text style={{ fontSize: 10, color: colors.textDim, width: 120, fontWeight: '500' }} numberOfLines={1}>
+              {cleanName(name)}
             </Text>
-            <View style={{ flex: 1, height: 14, backgroundColor: colors.borderColor, borderRadius: 3, overflow: 'hidden' }}>
-              <View style={{ height: '100%', borderRadius: 3, width: `${pct}%` as any, backgroundColor: color }} />
+            <View style={{ flex: 1, height: 14, backgroundColor: color + '15', borderRadius: 3, overflow: 'hidden', borderWidth: 1, borderColor: color + '25' }}>
+              <View style={{ height: '100%', borderRadius: 3, width: `${pct}%` as any, backgroundColor: color + 'CC' }} />
             </View>
             <Text style={{ fontSize: 10, color, fontWeight: '700', width: 38, textAlign: 'right' }}>
               {count}/{students.length}
@@ -151,6 +232,7 @@ function TopicCoverage({ students, colors }: { students: Student[]; colors: any 
 }
 
 // ── Grade breakdown ───────────────────────────────────────
+const GRADE_PALETTE = [P.teal, P.slate, P.green, P.gold, P.peach, P.rose];
 function GradeBreakdown({ students, colors }: { students: Student[]; colors: any }) {
   const grades: Record<string, Student[]> = {};
   students.forEach(s => {
@@ -158,24 +240,30 @@ function GradeBreakdown({ students, colors }: { students: Student[]; colors: any
     if (!grades[g]) grades[g] = [];
     grades[g].push(s);
   });
+  const gradeList = Object.entries(grades).sort();
 
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-      {Object.entries(grades).sort().map(([grade, list]) => {
+      {gradeList.map(([grade, list], idx) => {
         const avg = Math.round(list.reduce((a, s) => a + (s.progressPct || 0), 0) / list.length);
         const atRisk = list.filter(s => s.needsAttention).length;
-        const color = avg < 30 ? P.rose : avg < 60 ? P.gold : P.green;
+        const color = GRADE_PALETTE[idx % GRADE_PALETTE.length];
         return (
           <View key={grade} style={{
-            flex: 1, minWidth: 120,
-            backgroundColor: color + '10', borderWidth: 1, borderColor: color + '30',
-            borderRadius: radius.lg, padding: spacing.md, gap: 6, alignItems: 'center',
+            flex: 1, minWidth: 130,
+            backgroundColor: color + '12', borderWidth: 1.5, borderColor: color + '50',
+            borderRadius: radius.xl, padding: spacing.lg, gap: 6, alignItems: 'center',
           }}>
-            <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textMuted }}>{grade}</Text>
-            <Text style={{ fontSize: 26, fontWeight: '900', color, letterSpacing: -1 }}>{avg}%</Text>
+            <View style={{ backgroundColor: color + '20', borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 3 }}>
+              <Text style={{ fontSize: 11, fontWeight: '800', color }}>{grade}</Text>
+            </View>
+            <Text style={{ fontSize: 30, fontWeight: '900', color, letterSpacing: -1 }}>{avg}%</Text>
             <Text style={{ fontSize: 10, color: colors.textDim }}>{list.length} students</Text>
+            <View style={{ width: '100%', height: 4, backgroundColor: color + '20', borderRadius: 2, overflow: 'hidden' }}>
+              <View style={{ height: '100%', width: `${avg}%` as any, backgroundColor: color, borderRadius: 2 }} />
+            </View>
             {atRisk > 0 && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.rose + '15', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
                 <Feather name="alert-circle" size={10} color={P.rose} />
                 <Text style={{ fontSize: 10, color: P.rose, fontWeight: '600' }}>{atRisk} at risk</Text>
               </View>
@@ -187,88 +275,177 @@ function GradeBreakdown({ students, colors }: { students: Student[]; colors: any
   );
 }
 
-// ── AI Analysis component ────────────────────────────────
+// ── Teacher AI Assistant ──────────────────────────────────
+type ChatMsg = { role: 'user' | 'ai'; text: string };
+const QUICK_PROMPTS = [
+  'Who needs urgent help this week?',
+  'Which topics should I revisit in class?',
+  'Give me a report card summary for all students',
+  'Which students are ready for advanced work?',
+];
+
 function AIAnalysis({ students, colors, styles }: { students: Student[]; colors: any; styles: any }) {
-  const [analysis, setAnalysis] = useState('');
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [fetched, setFetched] = useState(false);
 
-  const fetchAnalysis = async () => {
-    if (students.length === 0) return;
+  const classSummary = students.map(s =>
+    `${s.name} (${s.grade}, ${s.curriculum}): ${s.progressPct}% progress, ${(s.completedTopics || []).length} topics completed [${(s.completedTopics || []).join(', ') || 'none'}], ${s.currentStreak || 0}-day streak, ${s.assignmentsDone || 0} assignments done, last active: ${s.lastActive ? new Date(s.lastActive).toDateString() : 'never'}, ${s.needsAttention ? 'NEEDS ATTENTION' : 'on track'}`
+  ).join('\n');
+
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || loading) return;
+    const userMsg: ChatMsg = { role: 'user', text };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
     setLoading(true);
+
     try {
-      const summary = students.map(s =>
-        `${s.name} (${s.grade}): ${s.progressPct}% progress, ${(s.completedTopics || []).length} topics done, ${s.currentStreak || 0}-day streak, ${s.needsAttention ? 'needs attention' : 'on track'}`
-      ).join('\n');
+      const systemContext = `You are an expert AI teaching assistant helping a professional teacher. You have full access to class performance data. Be direct, specific, and professional — no child-friendly guardrails. Use student names. Give actionable, data-driven recommendations. You can analyse assignments, flag struggling students, suggest interventions, and generate report summaries.\n\nClass data:\n${classSummary}`;
+      const prompt = `${systemContext}\n\nTeacher's question: ${text}`;
 
-      const prompt = `You are an experienced school teacher analyzing student progress data. Here is the class data:\n\n${summary}\n\nProvide a concise analysis (4-5 bullet points) covering: which students are most at risk, which topics seem most challenging, patterns you notice, and 2 specific actionable recommendations for the teacher. Be direct and specific with student names.`;
-
-      const res = await fetch(`${SERVER_URL}/ask`, {
+      const res = await fetch(`${SERVER_URL}/ask/teacher`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: prompt, studentId: 'teacher-analysis', grade: 'teacher' }),
+        body: JSON.stringify({ question: text, classSummary }),
       });
       const data = await res.json();
-      setAnalysis(data.answer || 'Unable to generate analysis.');
+      setMessages(prev => [...prev, { role: 'ai', text: data.answer || 'Unable to generate response.' }]);
     } catch {
-      setAnalysis('Could not connect to AI. Please check your server connection.');
+      setMessages(prev => [...prev, { role: 'ai', text: 'Could not connect to AI server.' }]);
     } finally {
       setLoading(false);
-      setFetched(true);
     }
   };
 
   return (
-    <View style={[styles.card, { borderColor: P.teal + '40', backgroundColor: P.teal + '08' }]}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: spacing.md }}>
-        <View style={{ width: 32, height: 32, borderRadius: radius.sm, backgroundColor: P.teal + '25', alignItems: 'center', justifyContent: 'center' }}>
-          <Feather name="cpu" size={16} color={P.teal} />
+    <View style={[styles.card, { borderColor: P.slate + '50', backgroundColor: P.slate + '08', gap: spacing.md }]}>
+      {/* Header */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ width: 36, height: 36, borderRadius: radius.md, backgroundColor: P.slate + '25', alignItems: 'center', justifyContent: 'center' }}>
+          <Feather name="cpu" size={18} color={P.slate} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMain }}>AI Class Analysis</Text>
-          <Text style={{ fontSize: 11, color: colors.textDim }}>Powered by Groq</Text>
+          <Text style={{ fontSize: 14, fontWeight: '800', color: colors.textMain }}>Teacher AI Assistant</Text>
+          <Text style={{ fontSize: 11, color: colors.textDim }}>Powered by Groq · {students.length} students loaded</Text>
         </View>
-        {!fetched && (
-          <TouchableOpacity
-            style={{ backgroundColor: P.teal, paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.md }}
-            onPress={fetchAnalysis}
-            activeOpacity={0.8}
-          >
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#fff' }}>Analyse</Text>
-          </TouchableOpacity>
-        )}
-        {fetched && (
-          <TouchableOpacity onPress={fetchAnalysis} activeOpacity={0.8}>
-            <Feather name="refresh-cw" size={15} color={P.teal} />
-          </TouchableOpacity>
-        )}
       </View>
 
-      {loading && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 }}>
-          <ActivityIndicator size="small" color={P.teal} />
-          <Text style={{ fontSize: 12, color: colors.textDim }}>Analysing class data...</Text>
+      {/* Quick prompt chips */}
+      {messages.length === 0 && (
+        <View style={{ gap: 8 }}>
+          <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '600' }}>Quick actions:</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {QUICK_PROMPTS.map((q, i) => (
+              <TouchableOpacity key={i} onPress={() => sendMessage(q)} activeOpacity={0.75}
+                style={{ backgroundColor: P.slate + '18', borderWidth: 1, borderColor: P.slate + '40', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6 }}>
+                <Text style={{ fontSize: 11, color: P.slate, fontWeight: '600' }}>{q}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       )}
 
-      {!loading && fetched && analysis ? (
-        <View style={{ gap: 6 }}>
-          {analysis.split('\n').filter(l => l.trim()).map((line, i) => (
-            <View key={i} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: P.teal, marginTop: 6, flexShrink: 0 }} />
-              <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 19, flex: 1 }}>
-                {line.replace(/^[-•*]\s*/, '')}
-              </Text>
+      {/* Chat messages */}
+      {messages.length > 0 && (
+        <View style={{ gap: 10 }}>
+          {messages.map((msg, i) => (
+            <View key={i} style={{
+              alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+              maxWidth: '92%',
+              backgroundColor: msg.role === 'user' ? P.slate + '25' : colors.cardDark,
+              borderWidth: 1,
+              borderColor: msg.role === 'user' ? P.slate + '50' : colors.borderColor,
+              borderRadius: radius.lg, padding: spacing.md, gap: 6,
+            }}>
+              {msg.role === 'ai' && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: P.slate + '30', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="cpu" size={10} color={P.slate} />
+                  </View>
+                  <Text style={{ fontSize: 10, color: P.slate, fontWeight: '700', letterSpacing: 0.5 }}>AI ASSISTANT</Text>
+                </View>
+              )}
+              {msg.role === 'ai'
+                ? msg.text.split('\n').filter(l => l.trim()).map((line, li) => {
+                    const isBullet = /^[-•*\d+\.]\s/.test(line.trim());
+                    const isHeader = /^\*\*(.+)\*\*/.test(line.trim()) || /^#+\s/.test(line.trim());
+                    const cleanLine = line.replace(/^[-•*\d+\.]\s*/, '').replace(/\*\*/g, '').replace(/^#+\s/, '');
+                    if (isHeader) return (
+                      <Text key={li} style={{ fontSize: 12, fontWeight: '800', color: colors.textMain, marginTop: li > 0 ? 6 : 0 }}>{cleanLine}</Text>
+                    );
+                    if (isBullet) return (
+                      <View key={li} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+                        <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: P.slate, marginTop: 7, flexShrink: 0 }} />
+                        <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 20, flex: 1 }}>{cleanLine}</Text>
+                      </View>
+                    );
+                    return <Text key={li} style={{ fontSize: 12, color: colors.textMuted, lineHeight: 20 }}>{cleanLine}</Text>;
+                  })
+                : <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 19 }}>{msg.text}</Text>
+              }
             </View>
           ))}
+          {loading && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: spacing.sm }}>
+              <ActivityIndicator size="small" color={P.slate} />
+              <Text style={{ fontSize: 12, color: colors.textDim }}>Analysing...</Text>
+            </View>
+          )}
         </View>
-      ) : !loading && !fetched ? (
-        <Text style={{ fontSize: 12, color: colors.textDim, fontStyle: 'italic' }}>
-          Tap "Analyse" to get AI-powered insights about your class.
-        </Text>
-      ) : null}
+      )}
+
+      {/* Input box */}
+      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.borderColor, paddingTop: spacing.md }}>
+        <TextInput
+          style={{ flex: 1, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8, color: colors.textMain, fontSize: 13 }}
+          placeholder="Ask about your class, assignments, student performance..."
+          placeholderTextColor={colors.textDim}
+          value={input}
+          onChangeText={setInput}
+          onSubmitEditing={() => sendMessage(input)}
+          returnKeyType="send"
+        />
+        <TouchableOpacity
+          onPress={() => sendMessage(input)}
+          disabled={!input.trim() || loading}
+          activeOpacity={0.8}
+          style={{ backgroundColor: input.trim() ? P.slate : colors.borderColor, width: 38, height: 38, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' }}>
+          <Feather name="send" size={16} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {messages.length > 0 && (
+        <TouchableOpacity onPress={() => setMessages([])} activeOpacity={0.7} style={{ alignSelf: 'center' }}>
+          <Text style={{ fontSize: 11, color: colors.textDim }}>Clear conversation</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
+}
+
+// ── Subject keyword map ───────────────────────────────────
+const SUBJECT_KEYWORDS: Record<string, string[]> = {
+  Math:    ['math','addition','subtraction','multiplication','division','fraction','geometry','shape','number','algebra','place value','decimal','ch1_','ch2_','ch3_','ch4_','ch5_','ch6_','ch7_','ch8_','ch9_','ch10_','ch11_','ch12_','ch13_','ch14_'],
+  Science: ['science','nutrition','health','plant','animal','force','energy','water','weather','matter','body'],
+  English: ['english','adjective','noun','verb','sentence','grammar','reading','writing','phonics','vocabulary','comprehension','give and take','story'],
+  Arts:    ['art','music','rhythm','beat','dance','drama','paint','draw','craft'],
+};
+
+function topicSubject(topic: string): string {
+  const t = topic.toLowerCase();
+  for (const [subj, kws] of Object.entries(SUBJECT_KEYWORDS)) {
+    if (kws.some(kw => t.includes(kw))) return subj;
+  }
+  return 'Other';
+}
+
+function cleanTopicName(topic: string): string {
+  // Convert slugs like "ch2_shapes" → "Ch 2 – Shapes"
+  return topic
+    .replace(/^ch(\d+)_(.+)$/, (_, n, rest) => `Ch ${n} – ${rest.replace(/_/g, ' ')}`)
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, l => l.toUpperCase());
 }
 
 // ── Main Screen ───────────────────────────────────────────
@@ -302,19 +479,27 @@ export default function TeacherProgressScreen({ navigation }: any) {
     return () => { unsub1(); clearInterval(interval); };
   }, [load, navigation]);
 
+  // Grades the teacher actually has students in
+  const allGrades = useMemo(() => {
+    const gs = Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort();
+    return ['All', ...gs];
+  }, [students]);
+
+  // Subjects that actually appear in completed topics across teacher's students
+  const availableSubjects = useMemo(() => {
+    const subjSet = new Set<string>();
+    students.forEach(s => (s.completedTopics || []).forEach(t => subjSet.add(topicSubject(t))));
+    const order = ['Math', 'Science', 'English', 'Arts', 'Other'];
+    return ['All', ...order.filter(s => subjSet.has(s))];
+  }, [students]);
+
   const filtered = students.filter(s => {
     const matchSearch = !search || s.name.toLowerCase().includes(search.toLowerCase());
     const matchTab = activeTab === 'All' ? true : activeTab === 'At Risk' ? s.needsAttention : !s.needsAttention;
     return matchSearch && matchTab;
   }).sort((a, b) => (a.progressPct || 0) - (b.progressPct || 0));
 
-  const classAvg = students.length
-    ? Math.round(students.reduce((a, s) => a + (s.progressPct || 0), 0) / students.length)
-    : 0;
-  const totalXP = students.reduce((a, s) => a + (s.xpPoints || 0), 0);
   const atRisk = students.filter(s => s.needsAttention).length;
-  const onTrack = students.length - atRisk;
-  const activeToday = students.filter(s => s.lastActive?.startsWith(new Date().toISOString().split('T')[0])).length;
 
   return (
     <ScreenLayout>
@@ -331,32 +516,6 @@ export default function TeacherProgressScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={P.teal} />}
         >
-          {/* ── CLASS OVERVIEW ROW ── */}
-          <View style={styles.overviewRow}>
-            <View style={[styles.card, { flex: 1, alignItems: 'center', gap: 6 }]}>
-              <MiniDonut pct={classAvg} color={P.teal} size={72} />
-              <Text style={[styles.bigNum, { color: P.teal }]}>{classAvg}%</Text>
-              <Text style={styles.dimLabel}>Class Avg</Text>
-            </View>
-            <View style={[styles.card, { flex: 2, gap: spacing.md }]}>
-              <Text style={styles.cardTitle}>Class Snapshot</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }}>
-                {[
-                  { val: students.length, label: 'Total', color: c.textMain },
-                  { val: onTrack,         label: 'On Track', color: P.green },
-                  { val: atRisk,          label: 'At Risk',  color: P.rose },
-                  { val: activeToday,     label: 'Active Today', color: P.teal },
-                  { val: totalXP.toLocaleString(), label: 'Total XP', color: P.gold },
-                ].map(item => (
-                  <View key={item.label} style={{ minWidth: 60 }}>
-                    <Text style={[styles.snapVal, { color: item.color }]}>{item.val}</Text>
-                    <Text style={styles.snapLabel}>{item.label}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-
           {/* ── DISTRIBUTION CHART ── */}
           <View style={styles.card}>
             <DistributionChart students={students} colors={c} />
@@ -368,9 +527,9 @@ export default function TeacherProgressScreen({ navigation }: any) {
             <GradeBreakdown students={students} colors={c} />
           </View>
 
-          {/* ── TOPIC COVERAGE ── */}
+          {/* ── TOPIC COVERAGE (grade + subject filters live inside) ── */}
           <View style={styles.card}>
-            <TopicCoverage students={students} colors={c} />
+            <TopicCoverage allStudents={students} colors={c} availableGrades={allGrades} availableSubjects={availableSubjects} cleanName={cleanTopicName} subjectOf={topicSubject} />
           </View>
 
           {/* ── AI ANALYSIS ── */}

@@ -250,6 +250,7 @@ export default function DashboardScreen({ navigation }: any) {
   // Per-topic quiz scores from analytics events
   const [perfData, setPerfData] = useState<{ topics: Record<string, { avgScore: number | null; quizCount: number; sessions: number }>; avgScore: number | null }>({ topics: {}, avgScore: null });
   const [barSubjectFilter, setBarSubjectFilter] = useState<string>('All');
+  const [lessonSubjectFilter, setLessonSubjectFilter] = useState<string>('All');
 
   const heroAnim  = useRef(new Animated.Value(0)).current;
   const bodyAnim  = useRef(new Animated.Value(0)).current;
@@ -387,19 +388,38 @@ export default function DashboardScreen({ navigation }: any) {
     });
   }, [curriculum, completedSet, perfData]);
 
-  const featuredLesson = useMemo(() =>
-    allLessons.find(l => l.progress > 0 && l.progress < 100) ?? allLessons[0],
-  [allLessons]);
+  const featuredLesson = useMemo(() => {
+    // Pick the most recently attempted topic (by lastActivity from perfData)
+    const withActivity = allLessons
+      .filter(l => perfData.topics[l.topic]?.lastActivity)
+      .sort((a, b) => {
+        const ta = perfData.topics[a.topic]?.lastActivity ?? '';
+        const tb = perfData.topics[b.topic]?.lastActivity ?? '';
+        return tb.localeCompare(ta); // most recent first
+      });
+    return withActivity[0] ?? allLessons.find(l => l.progress > 0) ?? allLessons[0];
+  }, [allLessons, perfData]);
 
   const query = normalizeSearchText(searchQuery);
   const queryTerms = query ? query.split(' ') : [];
 
-  const filteredLessons = queryTerms.length > 0
-    ? allLessons.filter((l) => {
+  const lessonSubjects = useMemo(() =>
+    ['All', ...Array.from(new Set(allLessons.map(l => l.subject))).sort()],
+  [allLessons]);
+
+  const filteredLessons = useMemo(() => {
+    let list = allLessons;
+    if (queryTerms.length > 0) {
+      list = list.filter(l => {
         const haystack = normalizeSearchText(`${l.topic} ${l.subject} ${l.grade} ${l.unit}`);
         return queryTerms.every(term => haystack.includes(term));
-      })
-    : allLessons.slice(0, 6);
+      });
+    }
+    if (lessonSubjectFilter !== 'All') {
+      list = list.filter(l => l.subject === lessonSubjectFilter);
+    }
+    return list;
+  }, [allLessons, queryTerms, lessonSubjectFilter]);
 
   const filteredDeadlines = queryTerms.length > 0
     ? upcomingDeadlines.filter((u) => {
@@ -1020,25 +1040,25 @@ export default function DashboardScreen({ navigation }: any) {
                 </Animated.View>
 
                 {/* ── PROGRESS SNAPSHOT ───────────────────────── */}
-                <SectionHeader title="Progress Snapshot" sub="Your learning metrics" onPress={() => navigation.navigate('Progress')} linkLabel="Analytics" />
-                <View style={styles.statsGrid}>
-                  {STAT_TILES.map(s => (
-                    <TouchableOpacity key={s.label} style={[styles.statCard, { backgroundColor: isDark ? cardBg : s.pastel, borderColor: isDark ? s.color + '40' : 'transparent' }]} onPress={() => navigation.navigate('Progress')} activeOpacity={0.78}>
-                      <View style={[styles.statIconBox, { backgroundColor: isDark ? s.color + '20' : s.color + '22' }]}>
-                        <Feather name={s.icon} size={16} color={s.color} />
-                      </View>
-                      <Text style={[styles.statVal, { color: s.color }]}>{s.val}</Text>
-                      <Text style={[styles.statLabel, { color: colors.textMain }]}>{s.label}</Text>
-                      <Text style={[styles.statSub, { color: colors.textDim }]}>{s.sub}</Text>
-                      <View style={[styles.statBar, { backgroundColor: s.color + '15' }]}>
-                        <View style={[styles.statBarFill, { width: `${Math.max(s.pct * 100, 4)}%` as any, backgroundColor: s.color }]} />
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
                 {/* ── LEARNING PATH ───────────────────────────── */}
                 <SectionHeader title="Learning Path" sub={`${curriculum.totalTopics} topics in your curriculum`} onPress={() => navigation.navigate('LearningPaths')} linkLabel={`See all ${curriculum.totalTopics}`} />
+
+                {/* Subject filter chips */}
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
+                  {lessonSubjects.map(subj => {
+                    const active = lessonSubjectFilter === subj;
+                    return (
+                      <TouchableOpacity
+                        key={subj}
+                        onPress={() => setLessonSubjectFilter(subj)}
+                        style={[styles.barChip, { backgroundColor: active ? BRAND.violet : (isDark ? BRAND.violet + '20' : BRAND.violet + '12'), borderColor: active ? BRAND.violet : (isDark ? BRAND.violet + '50' : BRAND.violet + '30') }]}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={[styles.barChipTxt, { color: active ? '#fff' : BRAND.violet }]}>{subj}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
 
                 {filteredLessons.length === 0 ? (
                   <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
