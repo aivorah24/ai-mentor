@@ -2,19 +2,16 @@ const Groq = require('groq-sdk');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// Age-based guardrails by grade
+// Model routing: fast model for simple verdicts, powerful for explanations
+const MODEL_FAST  = 'llama-3.1-8b-instant';       // ~300-500ms TTFT
+const MODEL_POWER = 'llama-3.3-70b-versatile';     // best reasoning
+
 function getAgeGuardrails(grade) {
   const g = (grade || '').toLowerCase();
-  if (g.includes('3')) {
-    return `The student is in Grade 3 (age 8-9). RULES: Use very simple words (no big vocabulary). Short sentences only (max 10 words each). Give one idea at a time. Use fun comparisons from daily life (food, toys, animals). Never use technical jargon. Always end with an encouraging sentence.`;
-  }
-  if (g.includes('4')) {
-    return `The student is in Grade 4 (age 9-10). RULES: Use simple, clear language. Short sentences. Relate ideas to everyday things. Avoid complex terminology. Always be encouraging.`;
-  }
-  if (g.includes('5')) {
-    return `The student is in Grade 5 (age 10-11). RULES: Use clear language. Can handle slightly more detail but keep it concise. Relate to real-world examples. Always be positive and encouraging.`;
-  }
-  return `Use age-appropriate simple language. Be encouraging and positive.`;
+  if (g.includes('3')) return 'Grade 3 (age 8-9): very simple words, max 8-word sentences, one idea at a time, fun daily-life comparisons.';
+  if (g.includes('4')) return 'Grade 4 (age 9-10): simple clear language, short sentences, everyday examples.';
+  if (g.includes('5')) return 'Grade 5 (age 10-11): clear language, slightly more detail, real-world examples.';
+  return 'Age-appropriate simple language. Be encouraging.';
 }
 
 function buildNoContextFallback({ topic, grade }) {
@@ -25,34 +22,17 @@ function buildNoContextFallback({ topic, grade }) {
 function isMathMode({ question, subject, topic, history = [] }) {
   const s = `${subject || ''} ${topic || ''} ${question || ''}`.toLowerCase();
   const mathSignals = [
-    /\bmath\b/,
-    /\bmathematics\b/,
-    /\bfraction\b/,
-    /\bdecimal\b/,
-    /\bpercent\b/,
-    /\baddition\b/,
-    /\bsubtraction\b/,
-    /\bmultiplication\b/,
-    /\bdivision\b/,
-    /\bnumber\b/,
-    /\bequation\b/,
-    /\balgebra\b/,
-    /\bgeometry\b/,
-    /\bperimeter\b/,
-    /\barea\b/,
-    /\bvolume\b/,
-    /\bmean\b/,
-    /\bmedian\b/,
-    /\bratio\b/,
-    /\bsolve\b/,
+    /\bmath(s|ematics)?\b/, /\bfractions?\b/, /\bdecimals?\b/,
+    /\bpercents?\b/, /\baddition\b/, /\bsubtraction\b/, /\bmultiplications?\b/,
+    /\bdivision\b/, /\bnumbers?\b/, /\bequations?\b/, /\balgebra\b/,
+    /\bgeometry\b/, /\bperimeters?\b/, /\bareas?\b/, /\bvolumes?\b/,
+    /\bmean\b/, /\bmedian\b/, /\bratios?\b/, /\bsolves?\b/,
     /[0-9]\s*[\+\-\*\/x]\s*[0-9]/,
   ];
   if (mathSignals.some((re) => re.test(s))) return true;
-
-  return Array.isArray(history) && history.some((h) => {
-    const text = String(h?.text || '').toLowerCase();
-    return mathSignals.some((re) => re.test(text));
-  });
+  return Array.isArray(history) && history.some((h) =>
+    mathSignals.some((re) => re.test(String(h?.text || '').toLowerCase()))
+  );
 }
 
 function normalizeHistory(history) {
@@ -67,85 +47,107 @@ function normalizeHistory(history) {
       return null;
     })
     .filter(Boolean)
-    .slice(-8);
+    .slice(-6); // keep last 6 turns (was 8) — fewer tokens, same context quality
 }
 
 function buildPrompts({ question, context, grade, subject, topic, history = [] }) {
-  const gradeLabel = grade || 'primary school';
+  const gradeLabel   = grade || 'primary school';
   const subjectLabel = subject || 'this subject';
-  const topicScope = topic
-    ? `You are scoped ONLY to the topic: "${topic}". Only answer questions about "${topic}". If the student asks about something unrelated, gently redirect them back to "${topic}".`
-    : '';
-  const ageGuardrails = getAgeGuardrails(grade);
-  const hasContext = context && context.trim().length > 0;
+  const hasContext   = !!(context && context.trim().length > 0);
   const recentHistory = normalizeHistory(history);
-  const mathMode = isMathMode({ question, subject, topic, history: recentHistory });
+  const mathMode     = isMathMode({ question, subject, topic, history: recentHistory });
+
   const historyBlock = recentHistory.length
-    ? recentHistory
-      .map((m) => `${m.role === 'user' ? 'Student' : 'Coach'}: ${m.text}`)
-      .join('\n')
+    ? recentHistory.map((m) => `${m.role === 'user' ? 'Student' : 'Ms. Zara'}: ${m.text}`).join('\n')
     : '';
 
-  const noContextRules = topic
-    ? `Curriculum content is not available right now.
-- You may still help using simple, child-safe explanations ONLY about "${topic}".
-- Do not switch to a different concept.
-- If uncertain, say "Let's stay with ${topic} and solve it step by step."`
-    : `Curriculum content is not available right now.
-- Use safe, age-appropriate tutoring.
-- Keep to the student's latest concept from the conversation.`;
+  // Detect if student is answering a practice question Ms. Zara asked
+  const lastAIMsg = recentHistory.filter(h => h.role === 'assistant').slice(-1)[0]?.text || '';
+  const lastAskedPractice = /try this|how many|what is|can you (find|solve|tell)|your turn/i.test(lastAIMsg);
+  const isShortReply = question.trim().split(/\s+/).length <= 6;
+  const studentAnsweringPractice = lastAskedPractice && isShortReply;
 
-  const sourceRules = hasContext
-    ? `Use ONLY the reference content below as your factual source.
-- If the answer is missing from the reference content, say: "I don't know from this lesson yet."
-- Ask the student to check with their teacher or ask a question from this lesson.
-- Never invent facts, names, dates, formulas, or examples not in the reference content.`
-    : noContextRules;
+  const IB_SUBJECTS = 'Mathematics, Science, English, Arts, Social Studies, ICT, Physical Education';
 
-  const pedagogyRules = mathMode
-    ? `Math teaching format (mandatory):
-- Use child-friendly math language.
-- Give 1-line meaning first.
-- Then give exactly one worked example using clear steps:
-  Step 1:
-  Step 2:
-  Answer:
-- Then give one tiny practice question in the same concept.
-- Stay in the same math concept as the student's question/follow-up.
-- Do NOT switch to another concept unless student clearly asks for it.`
-    : `Follow conversation continuity rules:
-- If the student asks a short follow-up (for example "more examples"), continue the same concept from recent conversation.
-- Do not switch to a new concept unless the student clearly asks for a new topic.`;
+  // --- COMPACT SYSTEM PROMPT (fewer tokens = faster TTFT) ---
+  const scopeRule = topic
+    ? `Topic lock: only answer about "${topic}" in ${subjectLabel}. Off-topic? Say: "Great curiosity! Let's finish ${topic} first."`
+    : `Only help with IB PYP ${gradeLabel} subjects: ${IB_SUBJECTS}. Off-topic (movies, sports, celebrities, news)? Say: "I'm your school AI Coach — I help with ${gradeLabel} school subjects. What would you like to learn?"`;
 
-  const systemPrompt = `You are a friendly Aivorah AI Coach helping IB PYP ${gradeLabel} students learn ${subjectLabel}.
-${topicScope}
-${ageGuardrails}
-${sourceRules}
-${pedagogyRules}
-Keep your answers:
-- Clear and simple (age-appropriate for ${gradeLabel})
-- Encouraging and positive
-- Focused on understanding, not just facts
-- Concise
-- Plain text only (no markdown, no **, no bullet symbols, no headings)`;
+  const knowledgeRule = hasContext
+    ? `Curriculum content is provided below. Use ONLY it as your factual source. If the answer is not in it, say: "I don't have that in this lesson — ask your teacher!" Never invent facts.`
+    : `No curriculum content available. Only explain concepts you are 100% certain about for IB PYP ${gradeLabel}. Never guess or invent.`;
 
-  const contextBlock = hasContext ? `Curriculum Content:\n${context}\n\n` : '';
-  const userPrompt = `${contextBlock}${historyBlock ? `Recent Conversation:\n${historyBlock}\n\n` : ''}Student's Question: ${question}`;
+  let teachingRule = '';
+  if (mathMode) {
+    if (studentAnsweringPractice) {
+      teachingRule = `STUDENT ANSWERED YOUR PRACTICE QUESTION. Student's answer: "${question.trim()}"
 
-  return { hasContext, mathMode, systemPrompt, userPrompt };
+Step 1 — Look at the practice question you just asked in the conversation above.
+Step 2 — Compute the correct answer yourself (e.g. 2+1=3, so correct=3).
+Step 3 — If the question had A/B/C options: map the student's answer to the option value (e.g. student says "B" → check what B's value is; student says "2" → check if 2 is the correct VALUE, NOT just a number that appears in the question).
+Step 4 — Compare: does the student's answer equal the correct answer?
+  IMPORTANT — Accept mathematically equivalent answers as CORRECT:
+  - Fractions: 2/10 = 1/5 = correct. 4/8 = 1/2 = correct. Do NOT penalise unsimplified fractions.
+  - Numbers: "3.0" = "3" = correct. "1 + 2" = "3" = correct.
+  - MCQ: if student says "B" and B's value equals the correct answer → correct.
+  - If student says a value that matches ANY correct form of the answer → correct.
+Step 5 — If correct (including equivalent forms): start DIRECTLY with "That's correct!" then show the solution.
+         If wrong: start DIRECTLY with "Almost there!" then show the correct steps clearly.
+
+CRITICAL RULES:
+- Do NOT write "Let me check", "Let me verify", "Let me think", or any reasoning out loud.
+- Your very first word MUST be either "That's" (correct) or "Almost" (wrong). Nothing before it.
+- NEVER mark a mathematically equivalent answer as wrong.
+- After feedback, ask if they want another question or a new topic.`;
+    } else {
+      teachingRule = `Math teaching format:
+- One sentence plain-English meaning.
+- One worked example (Step 1 / Step 2 / Answer) using real objects (apples, toys, crayons).
+- End with ONE practice question for the student.
+- Stay on the same concept until understood. Never jump ahead.`;
+    }
+  } else {
+    teachingRule = studentAnsweringPractice
+      ? `Student answered your question. Evaluate first. Correct: praise warmly. Wrong: explain gently, give another chance. Do NOT move to a new topic.`
+      : `Explain with a simple analogy first, then the concept. Give one real-world example. End with a simple check-in question.`;
+  }
+
+  const systemPrompt = `You are Ms. Zara — warm, patient AI tutor for IB PYP ${gradeLabel} students on Aivorah.
+
+SCOPE: ${scopeRule}
+
+LANGUAGE: Very simple words. Max 8-word sentences. One idea at a time. Relate to toys, food, animals, games. No jargon. End with encouragement. Plain text only — no markdown, no bullet points, no asterisks.
+
+KNOWLEDGE: ${knowledgeRule}
+
+TEACHING: ${teachingRule}
+
+CONVERSATION: Read the chat history before replying. Never repeat the same example. If student says "more"/"again"/"example" — give a NEW example on the SAME concept. Max 6-8 lines total.`;
+
+  const contextBlock = hasContext ? `\nCurriculum Content for "${topic || subjectLabel}":\n${context}\n` : '';
+  const userPrompt   = `${contextBlock}${historyBlock ? `\nConversation so far:\n${historyBlock}\n` : ''}\nStudent: ${question}`;
+
+  // Route to fast model for simple answer-check, powerful model for explanations
+  // Always use 70b for practice evaluation — 8b gave wrong verdicts on correct answers
+  const model = MODEL_POWER;
+  // Cap tokens: answer-check needs very few tokens; explanations get more
+  const maxTokens = studentAnsweringPractice ? 220 : 380;
+
+  return { hasContext, mathMode, systemPrompt, userPrompt, model, maxTokens };
 }
 
 async function generateAnswer({ question, context, grade, subject, topic, history }) {
-  const { hasContext, systemPrompt, userPrompt } = buildPrompts({ question, context, grade, subject, topic, history });
+  const { systemPrompt, userPrompt, model, maxTokens } = buildPrompts({ question, context, grade, subject, topic, history });
 
   const response = await groq.chat.completions.create({
-    model: 'llama-3.1-8b-instant',
+    model,
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
+      { role: 'user',   content: userPrompt },
     ],
-    temperature: 0.3,
-    max_tokens: 512,
+    temperature: 0.2,
+    max_tokens: maxTokens,
   });
 
   return response.choices?.[0]?.message?.content || '';
@@ -156,16 +158,16 @@ async function generateAnswer({ question, context, grade, subject, topic, histor
  * Returns the full assembled text when done.
  */
 async function generateAnswerStream({ question, context, grade, subject, topic, history, onToken }) {
-  const { hasContext, systemPrompt, userPrompt } = buildPrompts({ question, context, grade, subject, topic, history });
+  const { systemPrompt, userPrompt, model, maxTokens } = buildPrompts({ question, context, grade, subject, topic, history });
 
   const stream = await groq.chat.completions.create({
-    model: 'llama-3.1-8b-instant',
+    model,
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
+      { role: 'user',   content: userPrompt },
     ],
-    temperature: 0.3,
-    max_tokens: 512,
+    temperature: 0.2,
+    max_tokens: maxTokens,
     stream: true,
   });
 
