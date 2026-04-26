@@ -39,6 +39,11 @@ interface Assignment {
   successCriteria?: string[];
   taskSteps?: TaskStep[];
   quizQuestions?: QuizQuestion[];
+  centralIdea?: string | null;
+  linesOfInquiry?: string[];
+  learnerProfile?: string | null;
+  atlSkill?: string | null;
+  keyConcept?: string | null;
 }
 
 interface QuizQuestion {
@@ -51,14 +56,25 @@ interface QuizQuestion {
   explanation?: string;
 }
 
-type StepType = 'brainstorm' | 'drawing' | 'structured_writing';
+type StepType =
+  | 'brainstorm' | 'drawing' | 'structured_writing' | 'problem_solving'
+  | 'tuning_in' | 'math_reflection' | 'prior_knowledge'
+  | 'text_connection' | 'reading_comprehension' | 'writing_reflection'
+  | 'language_culture' | 'language_practice' | 'communication'
+  | 'social_inquiry' | 'research_notes' | 'social_synthesis'
+  | 'artistic_exploration' | 'art_creation' | 'artistic_reflection'
+  | 'digital_awareness' | 'tech_skill_practice' | 'digital_citizenship'
+  | 'movement_exploration' | 'skill_practice' | 'physical_reflection';
 interface TaskStep {
   id: string;
   type: StepType;
   label: string;
   instructions: string;
+  provocation?: string;           // tuning_in: the real-world scenario
   sections?: string[];
   wordBank?: string[];
+  problems?: string[];            // problem_solving: maths problems
+  reflectionPrompts?: string[];   // math_reflection: 3 prompts
 }
 type StepAnswer = {
   stepId: string;
@@ -67,20 +83,119 @@ type StepAnswer = {
   drawingBase64: string | null;
   drawingMime: string;
   sections: { label: string; text: string }[];
+  problemAnswers?: string[];      // problem_solving
+  tunedInText?: string;           // tuning_in
+  reflectionAnswers?: string[];   // math_reflection
+  priorKnowledge?: { knows: string; predicts: string }; // prior_knowledge
 };
 
+// Aivorah Enchanting Forest pastel palette for step types
 const STEP_COLORS: Record<StepType, string> = {
-  brainstorm: '#f59e0b', drawing: '#8b5cf6', structured_writing: '#3b82f6',
+  // Core
+  brainstorm:           '#C5BD96',  // khaki gold
+  drawing:              '#D4A898',  // warm peach
+  structured_writing:   '#93B0AC',  // slate teal
+  problem_solving:      '#C3DCD8',  // sage mint
+  // Maths
+  tuning_in:            '#D8C4E8',  // soft lavender
+  math_reflection:      '#B8D4C8',  // forest mint
+  // Science
+  prior_knowledge:      '#EBD5B8',  // warm sand
+  // English
+  text_connection:      '#EAD4D8',  // dusty rose
+  reading_comprehension:'#D8C4E8',  // soft lavender
+  writing_reflection:   '#C5BD96',  // khaki gold
+  // Language Acquisition
+  language_culture:     '#D4C4A8',  // linen
+  language_practice:    '#B8CCD4',  // powder blue
+  communication:        '#C8D4A8',  // sage green
+  // Social Studies
+  social_inquiry:       '#D8C8A8',  // wheat
+  research_notes:       '#B8C8D8',  // sky blue
+  social_synthesis:     '#C4D0C4',  // silver sage
+  // Visual Arts
+  artistic_exploration: '#E8D4C4',  // blush
+  art_creation:         '#D4A898',  // warm peach (same as drawing)
+  artistic_reflection:  '#DCC8D4',  // mauve
+  // ICT
+  digital_awareness:    '#C4D4E0',  // mist blue
+  tech_skill_practice:  '#B8D8D0',  // aqua mint
+  digital_citizenship:  '#C0CCD8',  // steel blue
+  // PE
+  movement_exploration: '#C8D8B8',  // fern
+  skill_practice:       '#B8D4BC',  // pale green
+  physical_reflection:  '#D0D8C0',  // sage
+};
+const STEP_TEXT_COLORS: Record<StepType, string> = {
+  brainstorm:           '#8A7E4A',
+  drawing:              '#8C5A49',
+  structured_writing:   '#3D6B66',
+  problem_solving:      '#3D7A74',
+  tuning_in:            '#6B4A8A',
+  math_reflection:      '#2D6B54',
+  prior_knowledge:      '#8A6030',
+  text_connection:      '#8A4A54',
+  reading_comprehension:'#6B4A8A',
+  writing_reflection:   '#8A7E4A',
+  language_culture:     '#7A6040',
+  language_practice:    '#3A6070',
+  communication:        '#4A6A30',
+  social_inquiry:       '#7A6030',
+  research_notes:       '#3A5A7A',
+  social_synthesis:     '#4A6050',
+  artistic_exploration: '#8A5A40',
+  art_creation:         '#8C5A49',
+  artistic_reflection:  '#7A4A6A',
+  digital_awareness:    '#3A5A70',
+  tech_skill_practice:  '#2A6A60',
+  digital_citizenship:  '#3A5060',
+  movement_exploration: '#3A6040',
+  skill_practice:       '#2A6040',
+  physical_reflection:  '#4A6030',
 };
 const STEP_ICONS: Record<StepType, string> = {
-  brainstorm: 'cloud', drawing: 'edit-3', structured_writing: 'align-left',
+  brainstorm:           'cloud',
+  drawing:              'edit-3',
+  structured_writing:   'align-left',
+  problem_solving:      'hash',
+  tuning_in:            'zap',
+  math_reflection:      'rotate-ccw',
+  prior_knowledge:      'bookmark',
+  text_connection:      'book-open',
+  reading_comprehension:'search',
+  writing_reflection:   'feather',
+  language_culture:     'globe',
+  language_practice:    'message-circle',
+  communication:        'mic',
+  social_inquiry:       'compass',
+  research_notes:       'file-text',
+  social_synthesis:     'layers',
+  artistic_exploration: 'eye',
+  art_creation:         'edit-3',
+  artistic_reflection:  'aperture',
+  digital_awareness:    'monitor',
+  tech_skill_practice:  'cpu',
+  digital_citizenship:  'shield',
+  movement_exploration: 'activity',
+  skill_practice:       'trending-up',
+  physical_reflection:  'heart',
 };
 
+// Aivorah pastel subject colours
 const SUBJECT_ICON: Record<string, string> = {
   Mathematics: 'hash', Science: 'zap', English: 'book-open', 'Social Studies': 'globe',
+  'Language Acquisition': 'message-circle', 'Visual Arts': 'aperture',
+  ICT: 'monitor', 'Physical Education': 'activity',
 };
 const SUBJECT_COLOR: Record<string, string> = {
-  Mathematics: '#818CF8', Science: '#34D399', English: '#C084FC', 'Social Studies': '#FBBF24',
+  Mathematics:           '#93B0AC',  // slate teal
+  Science:               '#C3DCD8',  // sage mint
+  English:               '#EFD1D4',  // dusty rose
+  'Social Studies':      '#C5BD96',  // khaki gold
+  'Language Acquisition':'#D4A898',  // warm peach
+  'Visual Arts':         '#DCC8D4',  // mauve
+  ICT:                   '#C4D4E0',  // mist blue
+  'Physical Education':  '#C8D8B8',  // fern
 };
 
 function formatDueDate(iso: string) {
@@ -721,6 +836,88 @@ function WebDrawingCanvas({ onCapture, color }: { onCapture: (b64: string, mime:
   );
 }
 
+// ── Photo Upload Step ─────────────────────────────────────────────────────────
+function PhotoUploadStep({
+  stepColor, colors, drawingBase64, drawingMime, isArt, onCapture,
+}: {
+  stepColor: string;
+  colors: AppColors;
+  drawingBase64: string | null | undefined;
+  drawingMime: string | null | undefined;
+  isArt: boolean;
+  onCapture: (b64: string, mime: string) => void;
+}) {
+  const label = isArt ? 'Upload your artwork' : 'Upload your drawing / diagram';
+  const hint  = isArt
+    ? 'Draw or create your artwork on paper, then take a photo or choose an image.'
+    : 'Draw your diagram or sketch on paper, then take a photo or choose an image.';
+
+  async function pick() {
+    if (Platform.OS === 'web') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const dataUrl = ev.target?.result as string;
+          const b64 = dataUrl.split(',')[1];
+          onCapture(b64, file.type || 'image/jpeg');
+        };
+        reader.readAsDataURL(file);
+      };
+      input.click();
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') { Alert.alert('Permission needed', 'Allow access to your photos.'); return; }
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.7,
+        base64: true,
+      });
+      if (res.canceled || !res.assets?.[0]) return;
+      const asset = res.assets[0];
+      onCapture(asset.base64 ?? '', asset.mimeType ?? 'image/jpeg');
+    }
+  }
+
+  const previewUri = drawingBase64
+    ? `data:${drawingMime ?? 'image/jpeg'};base64,${drawingBase64}`
+    : null;
+
+  return (
+    <View style={{ gap: 12 }}>
+      <Text style={{ fontSize: 13, color: colors.textDim, lineHeight: 20 }}>{hint}</Text>
+      {previewUri ? (
+        <View style={{ gap: 8 }}>
+          <Image
+            source={{ uri: previewUri }}
+            style={{ width: '100%', height: 220, borderRadius: 12, resizeMode: 'contain', backgroundColor: colors.surface }}
+          />
+          <TouchableOpacity onPress={pick} activeOpacity={0.8}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+              paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: stepColor }}>
+            <Feather name="refresh-cw" size={15} color={stepColor} />
+            <Text style={{ fontSize: 13, fontWeight: '700', color: stepColor }}>Change photo</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity onPress={pick} activeOpacity={0.8}
+          style={{ height: 160, borderRadius: 14, borderWidth: 2, borderStyle: 'dashed',
+            borderColor: stepColor + '60', backgroundColor: stepColor + '08',
+            alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          <Feather name="upload" size={28} color={stepColor} />
+          <Text style={{ fontSize: 14, fontWeight: '700', color: stepColor }}>{label}</Text>
+          <Text style={{ fontSize: 12, color: colors.textDim }}>Tap to choose from your photos</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
 // ── Scaffolded Submission Modal ───────────────────────────────────────────────
 // Flow: Step 1 (brainstorm/drawing/writing/photo) → ... → Self-Assessment → Submit → Results
 
@@ -740,14 +937,21 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
       stepId: s.id, type: s.type, keywords: [],
       drawingBase64: null, drawingMime: 'image/png',
       sections: (s.sections?.length ? s.sections : ['Beginning','Middle','End']).map(l => ({ label: l, text: '' })),
+      problemAnswers: s.problems?.map(() => '') || [],
+      tunedInText: '',
+      reflectionAnswers: s.reflectionPrompts?.map(() => '') || ['', '', ''],
+      priorKnowledge: { knows: '', predicts: '' },
     }))
   );
-  const [currentStep,   setCurrentStep]   = useState(0);   // 0..steps.length = self-assess
+  // -1 = worksheet overview, 0..steps.length-1 = steps, steps.length = self-assess
+  const [currentStep,   setCurrentStep]   = useState(-1);
   const [selfChecked,   setSelfChecked]   = useState<Record<string, boolean>>({});
   const [keywordInput,  setKeywordInput]  = useState('');
   const [submitting,    setSubmitting]    = useState(false);
   const [result,        setResult]        = useState<GradeResult | null>(null);
+  const focusedSectionIdx = useRef<number>(0);
 
+  const isOverview     = currentStep === -1;
   const isSelfAssess   = currentStep === steps.length;
   const isLastDataStep = currentStep === steps.length - 1;
   const step           = steps[currentStep];
@@ -900,6 +1104,189 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
     </Modal>
   );
 
+  // ── Worksheet Overview (step -1) ── Full IB PYP standard, Aivorah pastel theme ──
+  const isIBPYP = assignment.curriculum?.toLowerCase().includes('ib') ?? false;
+  if (isOverview) return (
+    <Modal visible animationType="slide" transparent={false}>
+      <View style={[styles.overlay, { backgroundColor: colors.bgDark }]}>
+        {/* ── Full-screen top bar ── */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: Platform.OS === 'web' ? 20 : 50, paddingBottom: 14,
+          backgroundColor: color + '18', borderBottomWidth: 1, borderBottomColor: color + '30' }}>
+          <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: color + '25', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+            <Feather name={SUBJECT_ICON[assignment.subject] as any ?? 'file-text'} size={18} color={color} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textMain }} numberOfLines={1}>{assignment.title}</Text>
+            <Text style={{ fontSize: 12, color, fontWeight: '600' }}>{assignment.subject} · {assignment.grade ?? ''}{isIBPYP ? ' · IB PYP' : ''}</Text>
+          </View>
+          <TouchableOpacity onPress={onClose} activeOpacity={0.7}
+            style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: colors.cardDark, alignItems: 'center', justifyContent: 'center' }}>
+            <Feather name="x" size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 40 }}>
+
+          {/* ── IB PYP Central Idea ── */}
+          {assignment.note ? (
+            <View style={{ borderRadius: 14, backgroundColor: color + '14', borderWidth: 1.5, borderColor: color + '35', padding: 16 }}>
+              <Text style={{ fontSize: 10, fontWeight: '800', color, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+                {isIBPYP ? 'Central Idea' : 'Purpose'}
+              </Text>
+              <Text style={{ fontSize: 15, color: colors.textMain, lineHeight: 23, fontStyle: 'italic' }}>{assignment.note}</Text>
+            </View>
+          ) : null}
+
+          {/* ── IB PYP metadata row: Learner Profile · ATL · Key Concept ── */}
+          {isIBPYP && (assignment.learnerProfile || assignment.atlSkill || assignment.keyConcept) && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {assignment.learnerProfile ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5,
+                  paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
+                  backgroundColor: '#EFD1D412', borderWidth: 1, borderColor: '#EFD1D450' }}>
+                  <Feather name="user" size={11} color="#8C5A49" />
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#8C5A49' }}>Learner Profile </Text>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMain }}>{assignment.learnerProfile}</Text>
+                </View>
+              ) : null}
+              {assignment.atlSkill ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5,
+                  paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
+                  backgroundColor: '#C5BD9612', borderWidth: 1, borderColor: '#C5BD9650' }}>
+                  <Feather name="activity" size={11} color="#8A7E4A" />
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#8A7E4A' }}>ATL </Text>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMain }}>{assignment.atlSkill}</Text>
+                </View>
+              ) : null}
+              {assignment.keyConcept ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5,
+                  paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
+                  backgroundColor: '#93B0AC12', borderWidth: 1, borderColor: '#93B0AC50' }}>
+                  <Feather name="layers" size={11} color="#3D6B66" />
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#3D6B66' }}>Key Concept </Text>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMain }}>{assignment.keyConcept}</Text>
+                </View>
+              ) : null}
+            </View>
+          )}
+
+          {/* ── Lines of Inquiry ── */}
+          {isIBPYP && Array.isArray(assignment.linesOfInquiry) && assignment.linesOfInquiry.length > 0 && (
+            <View style={{ borderRadius: 12, backgroundColor: color + '08', borderWidth: 1, borderColor: color + '25', padding: 14 }}>
+              <Text style={{ fontSize: 10, fontWeight: '800', color, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Lines of Inquiry</Text>
+              {assignment.linesOfInquiry.map((loi, li) => (
+                <View key={li} style={{ flexDirection: 'row', gap: 8, marginBottom: li < assignment.linesOfInquiry!.length - 1 ? 6 : 0 }}>
+                  <Text style={{ fontSize: 13, color, marginTop: 2 }}>›</Text>
+                  <Text style={{ flex: 1, fontSize: 13, color: colors.textMuted, lineHeight: 19 }}>{loi}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* ── Tasks overview — worksheet-style ── */}
+          <View style={{ gap: 10 }}>
+            <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.9 }}>
+              Your Tasks ({steps.length} {steps.length === 1 ? 'Step' : 'Steps'})
+            </Text>
+            {steps.map((s, i) => {
+              const sc = STEP_COLORS[s.type] ?? color;
+              const stc = STEP_TEXT_COLORS[s.type] ?? color;
+              const si = STEP_ICONS[s.type] ?? 'check';
+              const STEP_LABELS: Partial<Record<StepType, string>> = {
+                brainstorm: 'Brainstorm', drawing: 'Drawing', structured_writing: 'Writing',
+                problem_solving: 'Practice Problems', tuning_in: 'Tuning In',
+                math_reflection: 'Math Reflection', prior_knowledge: 'Prior Knowledge',
+                text_connection: 'Text Connection', reading_comprehension: 'Reading',
+                writing_reflection: 'Writing Reflection', language_culture: 'Language & Culture',
+                language_practice: 'Language Practice', communication: 'Communication',
+                social_inquiry: 'Social Inquiry', research_notes: 'Research Notes',
+                social_synthesis: 'Social Synthesis', artistic_exploration: 'Art Exploration',
+                art_creation: 'Art Creation', artistic_reflection: 'Artist Statement',
+                digital_awareness: 'Digital Awareness', tech_skill_practice: 'Tech Practice',
+                digital_citizenship: 'Digital Citizenship', movement_exploration: 'Movement',
+                skill_practice: 'Skill Practice', physical_reflection: 'PE Reflection',
+              };
+              const typeLabel = STEP_LABELS[s.type] ?? s.type;
+              return (
+                <View key={i} style={{ borderRadius: 14, backgroundColor: sc + '12', borderWidth: 1.5, borderColor: sc + '35', overflow: 'hidden' }}>
+                  {/* Step colour strip */}
+                  <View style={{ height: 4, backgroundColor: sc }} />
+                  <View style={{ flexDirection: 'row', gap: 12, padding: 14 }}>
+                    <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: sc + '30', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '900', color: stc }}>{i + 1}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+                        <Feather name={si as any} size={11} color={stc} />
+                        <Text style={{ fontSize: 10, fontWeight: '800', color: stc, textTransform: 'uppercase', letterSpacing: 0.7 }}>{typeLabel}</Text>
+                      </View>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textMain, marginBottom: 4 }}>{s.label}</Text>
+                      <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 19 }}>{s.instructions}</Text>
+                      {/* Show problems preview for problem_solving */}
+                      {s.type === 'problem_solving' && s.problems && s.problems.length > 0 && (
+                        <View style={{ marginTop: 10, gap: 6 }}>
+                          {s.problems.map((p, pi) => (
+                            <View key={pi} style={{ flexDirection: 'row', gap: 8, padding: 10, borderRadius: 8, backgroundColor: sc + '15' }}>
+                              <Text style={{ fontSize: 12, fontWeight: '800', color: stc, minWidth: 18 }}>{pi + 1}.</Text>
+                              <Text style={{ flex: 1, fontSize: 13, color: colors.textMain, lineHeight: 19 }}>{p}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+
+          {/* ── Word Bank ── */}
+          {(() => {
+            const wb = steps.find(s => s.wordBank && s.wordBank.length > 0)?.wordBank || [];
+            return wb.length > 0 ? (
+              <View style={{ borderRadius: 14, backgroundColor: colors.cardDark, borderWidth: 1, borderColor: colors.borderColor, padding: 14 }}>
+                <Text style={{ fontSize: 10, fontWeight: '800', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.9, marginBottom: 10 }}>
+                  Word Bank — Use These in Your Writing
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
+                  {wb.map((w, wi) => (
+                    <View key={wi} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+                      backgroundColor: color + '18', borderWidth: 1, borderColor: color + '40' }}>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color }}>{w}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : null;
+          })()}
+
+            {/* Success Criteria */}
+            {criteria.length > 0 && (
+              <View style={{ padding: 12, borderRadius: 12, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor }}>
+                <Text style={{ fontSize: 10, fontWeight: '800', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>Success Criteria</Text>
+                {criteria.map((c, ci) => (
+                  <View key={ci} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+                    <View style={{ width: 20, height: 20, borderRadius: 4, borderWidth: 2, borderColor: colors.textDim, marginTop: 1, flexShrink: 0 }} />
+                    <Text style={{ flex: 1, fontSize: 13, color: colors.textMuted, lineHeight: 20 }}>{c}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Start button */}
+            <TouchableOpacity
+              style={[styles.submitBtn, { backgroundColor: color }]}
+              onPress={() => setCurrentStep(0)}
+              activeOpacity={0.85}
+            >
+              <Feather name="play" size={16} color="#fff" />
+              <Text style={styles.submitBtnText}>Start Assignment</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+    </Modal>
+  );
+
   // ── Self-Assessment ──
   if (isSelfAssess) return (
     <Modal visible animationType="slide" transparent onRequestClose={() => setCurrentStep(steps.length - 1)}>
@@ -985,6 +1372,13 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { gap: 16 }]}>
+            {/* Assignment purpose — shown once at the top of the first step */}
+            {currentStep === 0 && assignment.note ? (
+              <View style={{ padding: 12, borderRadius: 10, backgroundColor: color + '10', borderWidth: 1, borderColor: color + '30' }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>Purpose</Text>
+                <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 20 }}>{assignment.note}</Text>
+              </View>
+            ) : null}
             {/* Instructions */}
             {step.instructions ? (
               <View style={{ flexDirection: 'row', gap: 8, padding: 12, borderRadius: 10, backgroundColor: stepColor + '12', borderWidth: 1, borderColor: stepColor + '30' }}>
@@ -992,6 +1386,15 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
                 <Text style={{ flex: 1, fontSize: 13, color: colors.textMuted, lineHeight: 20 }}>{step.instructions}</Text>
               </View>
             ) : null}
+
+            {/* ── UI PATTERN ROUTING ─────────────────────────────────────────────
+                Hook types  : single text input (tuning in, text connection, social inquiry, etc.)
+                Section types: multiple labeled text areas (reading, research, skill practice, etc.)
+                Reflection  : numbered prompts with text areas (math/writing/arts/PE reflection)
+                Problems    : maths problem list with answer inputs
+                Drawing     : canvas / photo upload
+                Brainstorm  : keyword chips + input
+            ─────────────────────────────────────────────────────────────────── */}
 
             {/* ── BRAINSTORM ── */}
             {step.type === 'brainstorm' && (
@@ -1032,63 +1435,165 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
               </View>
             )}
 
-            {/* ── DRAWING ── */}
-            {step.type === 'drawing' && (
-              <View style={{ gap: 10 }}>
-                <Text style={[styles.sectionLabel, { color: stepColor }]}>
-                  {Platform.OS === 'web' ? 'Draw with your mouse or finger' : 'Take a photo of your drawing'}
-                </Text>
-                {Platform.OS === 'web' ? (
-                  <DrawingErrorBoundary>
-                    <WebDrawingCanvas color={stepColor} onCapture={(b64, mime) => patchAns({ drawingBase64: b64, drawingMime: mime })} />
-                  </DrawingErrorBoundary>
+            {/* ── DRAWING & ART CREATION — Photo upload only (canvas removed) ── */}
+            {(step.type === 'drawing' || step.type === 'art_creation') && (
+              <PhotoUploadStep
+                stepColor={stepColor}
+                colors={colors}
+                drawingBase64={ans.drawingBase64}
+                drawingMime={ans.drawingMime}
+                isArt={step.type === 'art_creation'}
+                onCapture={(b64, mime) => patchAns({ drawingBase64: b64, drawingMime: mime })}
+              />
+            )}
+
+            {/* ── PROBLEM SOLVING (Maths) ── */}
+            {step.type === 'problem_solving' && (
+              <View style={{ gap: 14 }}>
+                <Text style={[styles.sectionLabel, { color: stepColor }]}>Solve the Problems</Text>
+                {(step.problems || []).length === 0 ? (
+                  <Text style={{ fontSize: 14, color: colors.textMuted, fontStyle: 'italic' }}>No problems defined for this step.</Text>
                 ) : (
-                  <View style={{ gap: 10 }}>
-                    {ans.drawingBase64 ? (
-                      <View style={{ gap: 8 }}>
-                        <Image source={{ uri: `data:${ans.drawingMime};base64,${ans.drawingBase64}` }}
-                          style={{ width: '100%', height: 240, borderRadius: 12, backgroundColor: '#f0f0f0' }} resizeMode="contain" />
-                        <TouchableOpacity onPress={async () => {
-                          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-                          if (status !== 'granted') { Alert.alert('Permission needed'); return; }
-                          const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7, base64: true });
-                          if (!r.canceled && r.assets?.[0]) patchAns({ drawingBase64: r.assets[0].base64 ?? null, drawingMime: r.assets[0].mimeType ?? 'image/jpeg' });
-                        }} activeOpacity={0.8} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center' }}>
-                          <Feather name="camera" size={14} color={stepColor} />
-                          <Text style={{ fontSize: 13, color: stepColor, fontWeight: '600' }}>Change photo</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <TouchableOpacity onPress={async () => {
-                        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-                        if (status !== 'granted') { Alert.alert('Permission needed'); return; }
-                        const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7, base64: true });
-                        if (!r.canceled && r.assets?.[0]) patchAns({ drawingBase64: r.assets[0].base64 ?? null, drawingMime: r.assets[0].mimeType ?? 'image/jpeg' });
-                      }} activeOpacity={0.8}
-                        style={{ alignItems: 'center', justifyContent: 'center', gap: 12, padding: 36,
-                          borderWidth: 2, borderStyle: 'dashed', borderColor: stepColor + '60', borderRadius: 16, backgroundColor: stepColor + '08' }}>
-                        <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: stepColor + '20', alignItems: 'center', justifyContent: 'center' }}>
-                          <Feather name="camera" size={28} color={stepColor} />
+                  (step.problems || []).map((problem, pi) => (
+                    <View key={pi} style={{ gap: 8 }}>
+                      <View style={{ flexDirection: 'row', gap: 10, padding: 14, borderRadius: 12,
+                        backgroundColor: stepColor + '12', borderWidth: 1.5, borderColor: stepColor + '30' }}>
+                        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: stepColor,
+                          alignItems: 'center', justifyContent: 'center', marginTop: 1, flexShrink: 0 }}>
+                          <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>{pi + 1}</Text>
                         </View>
-                        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textMain }}>Upload Drawing Photo</Text>
-                        <Text style={{ fontSize: 12, color: colors.textDim }}>Draw on paper, then take a clear photo</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
+                        <Text style={{ flex: 1, fontSize: 15, color: colors.textMain, lineHeight: 23, fontWeight: '500' }}>{problem}</Text>
+                      </View>
+                      <TextInput
+                        style={{ borderWidth: 1.5, borderColor: stepColor + '50', borderRadius: 12,
+                          paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: colors.textMain,
+                          backgroundColor: colors.bgDark, minHeight: 60, textAlignVertical: 'top' }}
+                        placeholder={`Your answer to Problem ${pi + 1}...`}
+                        placeholderTextColor={colors.textDim}
+                        value={ans.problemAnswers?.[pi] ?? ''}
+                        onChangeText={t => patchAns({
+                          problemAnswers: (ans.problemAnswers || step.problems!.map(() => '')).map((a, j) => j === pi ? t : a)
+                        })}
+                        multiline
+                      />
+                    </View>
+                  ))
                 )}
               </View>
             )}
 
-            {/* ── STRUCTURED WRITING ── */}
-            {step.type === 'structured_writing' && (
+            {/* ── HOOK STEPS: All "Tuning In" style steps across subjects ──
+                Covers: tuning_in, text_connection, social_inquiry, language_culture,
+                        artistic_exploration, digital_awareness, movement_exploration       */}
+            {(['tuning_in','text_connection','social_inquiry','language_culture','artistic_exploration','digital_awareness','movement_exploration'] as StepType[]).includes(step.type) && (
+              <View style={{ gap: 14 }}>
+                {step.provocation ? (
+                  <View style={{ padding: 16, borderRadius: 14, backgroundColor: stepColor + '18',
+                    borderWidth: 1.5, borderColor: stepColor + '40', gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Feather name={STEP_ICONS[step.type] as any} size={14} color={stepColor} />
+                      <Text style={{ fontSize: 10, fontWeight: '800', color: stepColor, textTransform: 'uppercase', letterSpacing: 0.8 }}>Think About This</Text>
+                    </View>
+                    <Text style={{ fontSize: 15, color: colors.textMain, lineHeight: 23, fontWeight: '500', fontStyle: 'italic' }}>{step.provocation}</Text>
+                  </View>
+                ) : null}
+                <Text style={[styles.sectionLabel, { color: stepColor }]}>My Initial Thinking</Text>
+                <TextInput
+                  style={{ borderWidth: 1.5, borderColor: stepColor + '50', borderRadius: 12,
+                    padding: 14, fontSize: 15, color: colors.textMain, backgroundColor: colors.bgDark,
+                    minHeight: 110, textAlignVertical: 'top', lineHeight: 24 }}
+                  placeholder="Write your first thoughts here — there are no wrong answers!"
+                  placeholderTextColor={colors.textDim}
+                  value={ans.tunedInText ?? ''}
+                  onChangeText={t => patchAns({ tunedInText: t })}
+                  multiline
+                />
+                <Text style={{ fontSize: 11, color: colors.textDim, textAlign: 'center' }}>Share what you think — every idea matters!</Text>
+              </View>
+            )}
+
+            {/* ── PRIOR KNOWLEDGE (Science Step 1) — 2-section special hook ── */}
+            {step.type === 'prior_knowledge' && (
+              <View style={{ gap: 14 }}>
+                {[{ key: 'knows' as const, label: 'What I Already Know', icon: 'bookmark', placeholder: 'Write what you already know about this topic...' },
+                  { key: 'predicts' as const, label: 'What I Predict', icon: 'help-circle', placeholder: 'Write what you think will happen or what you will discover...' }].map(({ key, label, icon, placeholder }) => (
+                  <View key={key} style={{ gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Feather name={icon as any} size={13} color={stepColor} />
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: stepColor }}>{label}</Text>
+                    </View>
+                    <TextInput
+                      style={{ borderWidth: 1.5, borderColor: stepColor + '50', borderRadius: 12,
+                        padding: 14, fontSize: 15, color: colors.textMain, backgroundColor: colors.bgDark,
+                        minHeight: 90, textAlignVertical: 'top', lineHeight: 22 }}
+                      placeholder={placeholder}
+                      placeholderTextColor={colors.textDim}
+                      value={ans.priorKnowledge?.[key] ?? ''}
+                      onChangeText={t => patchAns({ priorKnowledge: { ...(ans.priorKnowledge || { knows: '', predicts: '' }), [key]: t } })}
+                      multiline
+                    />
+                  </View>
+                ))}
+                <Text style={{ fontSize: 11, color: colors.textDim, textAlign: 'center' }}>Share your ideas — there are no wrong answers here!</Text>
+              </View>
+            )}
+
+            {/* ── REFLECTION STEPS: All numbered-prompt reflection steps across subjects ──
+                Covers: math_reflection, writing_reflection, social_synthesis, communication,
+                        artistic_reflection, digital_citizenship, physical_reflection          */}
+            {(['math_reflection','writing_reflection','social_synthesis','communication','artistic_reflection','digital_citizenship','physical_reflection'] as StepType[]).includes(step.type) && (
+              <View style={{ gap: 14 }}>
+                <Text style={[styles.sectionLabel, { color: stepColor }]}>Reflect on Your Learning</Text>
+                {(step.reflectionPrompts?.length ? step.reflectionPrompts
+                  : step.sections?.length ? step.sections.map((s, i) => `Prompt ${i+1}: ${s}`)
+                  : ['What did you learn?', 'What was challenging?', 'How does this connect to the world?']
+                ).map((prompt, pi) => {
+                  const sectionLabel = step.sections?.[pi] ?? `Prompt ${pi + 1}`;
+                  return (
+                    <View key={pi} style={{ gap: 6 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: stepColor, alignItems: 'center', justifyContent: 'center' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{pi + 1}</Text>
+                        </View>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: stepColor }}>{sectionLabel}</Text>
+                      </View>
+                      <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 19, marginLeft: 28 }}>{prompt}</Text>
+                      <TextInput
+                        style={{ borderWidth: 1.5, borderColor: stepColor + '40', borderRadius: 12,
+                          padding: 14, fontSize: 15, color: colors.textMain, backgroundColor: colors.bgDark,
+                          minHeight: 80, textAlignVertical: 'top', lineHeight: 22 }}
+                        placeholder={`Write your response here...`}
+                        placeholderTextColor={colors.textDim}
+                        value={(ans.reflectionAnswers || [])[pi] ?? ''}
+                        onChangeText={t => {
+                          const current = ans.reflectionAnswers || ['', '', ''];
+                          patchAns({ reflectionAnswers: current.map((r, j) => j === pi ? t : r) });
+                        }}
+                        multiline
+                      />
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {/* ── SECTIONS STEPS: All multi-section writing steps across subjects ──
+                Covers: reading_comprehension, research_notes, language_practice,
+                        tech_skill_practice, skill_practice (+ existing structured_writing) */}
+            {(['structured_writing','reading_comprehension','research_notes','language_practice','tech_skill_practice','skill_practice'] as StepType[]).includes(step.type) && (
               <View style={{ gap: 12 }}>
-                {/* Word Bank */}
                 {(step.wordBank?.length ?? 0) > 0 && (
                   <View style={{ gap: 6 }}>
-                    <Text style={[styles.sectionLabel, { color: stepColor }]}>Word Bank — Tap to insert</Text>
+                    <Text style={[styles.sectionLabel, { color: stepColor }]}>Word Bank — tap to insert</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                       {step.wordBank!.map((word, wi) => (
                         <TouchableOpacity key={wi} activeOpacity={0.75}
+                          onPress={() => {
+                            const si = focusedSectionIdx.current;
+                            const cur = ans.sections[si]?.text ?? '';
+                            const appended = cur ? cur + ' ' + word : word;
+                            patchAns({ sections: ans.sections.map((s, j) => j === si ? { ...s, text: appended } : s) });
+                          }}
                           style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: stepColor + '15', borderWidth: 1, borderColor: stepColor + '40' }}>
                           <Text style={{ fontSize: 13, color: stepColor, fontWeight: '600' }}>{word}</Text>
                         </TouchableOpacity>
@@ -1096,7 +1601,6 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
                     </View>
                   </View>
                 )}
-                {/* Section text boxes */}
                 {ans.sections.map((sec, si) => (
                   <View key={si} style={{ gap: 6 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -1111,6 +1615,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
                       placeholder={`Write your ${sec.label.toLowerCase()} here...`}
                       placeholderTextColor={colors.textDim}
                       value={sec.text}
+                      onFocus={() => { focusedSectionIdx.current = si; }}
                       onChangeText={t => patchAns({ sections: ans.sections.map((s, j) => j === si ? { ...s, text: t } : s) })}
                       multiline
                     />
@@ -1118,6 +1623,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
                 ))}
               </View>
             )}
+
 
             {/* Navigation */}
             <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -1465,12 +1971,37 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
             {pageUrl ? (
               <WorksheetPageImage url={pageUrl} pageNum={step + 1} color={color} colors={colors} />
             ) : (
-              assignment.note ? (
-                <View style={[styles.noteBox, { backgroundColor: color + '12', borderColor: color + '30' }]}>
-                  <Feather name="info" size={14} color={color} />
-                  <Text style={[styles.noteText, { color: colors.textMuted }]}>{assignment.note}</Text>
-                </View>
-              ) : null
+              <View style={{ gap: 10 }}>
+                {assignment.note ? (
+                  <View style={[styles.noteBox, { backgroundColor: color + '12', borderColor: color + '30' }]}>
+                    <Feather name="info" size={14} color={color} />
+                    <Text style={[styles.noteText, { color: colors.textMuted }]}>{assignment.note}</Text>
+                  </View>
+                ) : null}
+                {/* Show extracted questions as a numbered list if no doc uploaded */}
+                {(assignment.questions?.length ?? 0) > 0 && (
+                  <View style={{ gap: 6 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color, textTransform: 'uppercase', letterSpacing: 0.8 }}>Questions to Answer</Text>
+                    {assignment.questions.map((q, qi) => (
+                      <View key={qi} style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: 10,
+                        backgroundColor: color + '08', borderWidth: 1, borderColor: color + '25' }}>
+                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color, alignItems: 'center', justifyContent: 'center' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{qi + 1}</Text>
+                        </View>
+                        <Text style={{ flex: 1, fontSize: 14, color: colors.textMain, lineHeight: 22 }}>{q}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                {/* Fallback: no doc, no questions */}
+                {(assignment.questions?.length ?? 0) === 0 && !assignment.note && (
+                  <View style={{ padding: 16, borderRadius: 12, backgroundColor: colors.borderColor + '40', alignItems: 'center', gap: 6 }}>
+                    <Feather name="file-text" size={28} color={colors.textDim} />
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textMain }}>Complete this assignment on paper</Text>
+                    <Text style={{ fontSize: 12, color: colors.textDim, textAlign: 'center' }}>Take a photo of your completed work and upload it below.</Text>
+                  </View>
+                )}
+              </View>
             )}
 
             {/* Upload answer for this page */}
@@ -1865,9 +2396,17 @@ export default function AssignmentsScreen({ navigation }: any) {
                       <Text style={styles.cardMeta}>
                         {item.subject}{item.chapter ? ` - ${item.chapter}` : ''}{item.grade ? ` - ${item.grade}` : ''}
                       </Text>
-                      {item.questions?.length > 0 && (
-                        <Text style={[styles.cardNote, { color: colors.textDim }]}>{item.questions.length} question{item.questions.length !== 1 ? 's' : ''}</Text>
-                      )}
+                      {/* Assignment type indicator */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                        <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, backgroundColor: color + '18', borderWidth: 1, borderColor: color + '30' }}>
+                          <Text style={{ fontSize: 10, fontWeight: '700', color }}>
+                            {item.type === 'quiz' ? 'Quiz' : (item.taskSteps?.length ?? 0) > 0 ? 'Scaffolded Worksheet' : (item.documentUrls?.length ?? 0) > 0 ? `Worksheet · ${item.documentUrls!.length} page${item.documentUrls!.length > 1 ? 's' : ''}` : 'Assignment'}
+                          </Text>
+                        </View>
+                        {item.curriculum && (
+                          <Text style={{ fontSize: 10, color: colors.textDim, fontWeight: '500' }}>{item.curriculum}</Text>
+                        )}
+                      </View>
                       {item.aiFeedback && item.status === 'completed' && (() => {
                         try { return <Text style={styles.feedbackPreview} numberOfLines={1}>{JSON.parse(item.aiFeedback!).text}</Text>; }
                         catch { return <Text style={styles.feedbackPreview} numberOfLines={1}>{item.aiFeedback}</Text>; }
@@ -1980,9 +2519,9 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 });
 
 const makeModalStyles = (c: AppColors) => StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: c.cardDark, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '94%', borderWidth: 1, borderBottomWidth: 0, borderColor: c.borderColor },
-  quizSheet: { maxHeight: '100%', height: '100%', borderTopLeftRadius: 0, borderTopRightRadius: 0, borderWidth: 0 },
+  overlay: { flex: 1, backgroundColor: c.bgDark },
+  sheet: { flex: 1, backgroundColor: c.bgDark },
+  quizSheet: { flex: 1, backgroundColor: c.bgDark },
   header: { flexDirection: 'row', alignItems: 'center', padding: spacing.xl, borderBottomWidth: 1, gap: spacing.md },
   subjectDot: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 16, fontWeight: '800', color: c.textMain },

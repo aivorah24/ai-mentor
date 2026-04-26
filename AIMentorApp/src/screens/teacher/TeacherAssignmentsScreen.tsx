@@ -35,31 +35,84 @@ type Assignment = {
 
 interface StudentItem { id: string; name: string; grade: string; curriculum?: string | null; }
 
-type StepType = 'brainstorm' | 'drawing' | 'structured_writing';
+type StepType =
+  | 'brainstorm' | 'drawing' | 'structured_writing' | 'problem_solving'
+  | 'tuning_in' | 'math_reflection' | 'prior_knowledge'
+  | 'text_connection' | 'reading_comprehension' | 'writing_reflection'
+  | 'language_culture' | 'language_practice' | 'communication'
+  | 'social_inquiry' | 'research_notes' | 'social_synthesis'
+  | 'artistic_exploration' | 'art_creation' | 'artistic_reflection'
+  | 'digital_awareness' | 'tech_skill_practice' | 'digital_citizenship'
+  | 'movement_exploration' | 'skill_practice' | 'physical_reflection';
+
 interface TaskStep {
   id: string;
   type: StepType;
   label: string;
   instructions: string;
-  sections: string[];   // for structured_writing
-  wordBank: string[];   // for structured_writing
+  sections: string[];
+  wordBank: string[];
+  problems?: string[];
+  reflectionPrompts?: string[];
+  provocation?: string;
 }
 
 const STEP_DEFAULTS: Record<StepType, Partial<TaskStep>> = {
-  brainstorm:         { label: 'Thinking Clouds',   instructions: 'Write keywords that come to mind about the topic.', sections: [], wordBank: [] },
-  drawing:            { label: 'Draw Your Answer',  instructions: 'Draw your answer in the space below using your finger or pen.', sections: [], wordBank: [] },
-  structured_writing: { label: 'Write a Paragraph', instructions: 'Write your answer with a clear beginning, middle, and end.', sections: ['Beginning', 'Middle', 'End'], wordBank: [] },
+  brainstorm:           { label: 'Thinking Clouds',         instructions: 'Write keywords that come to mind.', sections: [], wordBank: [] },
+  drawing:              { label: 'Draw Your Answer',         instructions: 'Draw and label your answer.', sections: [], wordBank: [] },
+  structured_writing:   { label: 'Write a Response',        instructions: 'Write with a clear beginning, middle, and end.', sections: ['Beginning', 'Middle', 'End'], wordBank: [] },
+  problem_solving:      { label: 'Practice Problems',        instructions: 'Solve each problem. Show your working.', sections: [], wordBank: [], problems: [] },
+  tuning_in:            { label: 'Tuning In',                instructions: 'Read the scenario and write your initial thinking.', sections: [], wordBank: [], provocation: '' },
+  math_reflection:      { label: 'Math Reflection',          instructions: 'Reflect using the three prompts below.', sections: ['My Strategy', 'What Was Tricky', 'Real Life Connection'], wordBank: [], reflectionPrompts: [] },
+  prior_knowledge:      { label: 'Prior Knowledge',          instructions: 'Write what you know and what you predict.', sections: ['What I Already Know', 'What I Predict'], wordBank: [] },
+  text_connection:      { label: 'Text Connection',          instructions: 'Read and write your personal connection to the text.', sections: [], wordBank: [], provocation: '' },
+  reading_comprehension:{ label: 'Reading Comprehension',    instructions: 'Answer the questions about the text.', sections: ['What Happened?', 'Reading Between the Lines', 'My Thinking'], wordBank: [] },
+  writing_reflection:   { label: 'Writing Reflection',       instructions: 'Reflect on your reading using the three prompts.', sections: ['Most Important Idea', 'Connection to Our Unit', 'My Question for the Author'], wordBank: [], reflectionPrompts: [] },
+  language_culture:     { label: 'Language & Culture',        instructions: 'Explore the language and cultural connection.', sections: [], wordBank: [], provocation: '' },
+  language_practice:    { label: 'Language Practice',         instructions: 'Practise vocabulary and write in the target language.', sections: ['Vocabulary Practice', 'My Sentences', 'Cultural Connection'], wordBank: [] },
+  communication:        { label: 'Communication',             instructions: 'Write a paragraph and reflect on your language learning.', sections: ['My Paragraph', 'Favourite Word or Phrase', 'Cultural Comparison'], wordBank: [], reflectionPrompts: [] },
+  social_inquiry:       { label: 'Social Inquiry',            instructions: 'Observe and wonder about the provocation.', sections: [], wordBank: [], provocation: '' },
+  research_notes:       { label: 'Research Notes',            instructions: 'Research and record notes in each section.', sections: ['Key Facts', 'People and Perspectives', 'Cause and Effect'], wordBank: [] },
+  social_synthesis:     { label: 'Social Synthesis',          instructions: 'Synthesise your learning using the three prompts.', sections: ['What I Learned and Why It Matters', 'Connection to Our World', 'Taking Action'], wordBank: [], reflectionPrompts: [] },
+  artistic_exploration: { label: 'Art Exploration',           instructions: 'Observe the artwork and write your response.', sections: [], wordBank: [], provocation: '' },
+  art_creation:         { label: 'Art Creation',              instructions: 'Create your artwork and upload a photo.', sections: [], wordBank: [] },
+  artistic_reflection:  { label: 'Artist Statement',          instructions: 'Reflect on your artwork using the three prompts.', sections: ['About My Artwork', 'What I Was Trying to Express', 'Challenges and Improvements'], wordBank: [], reflectionPrompts: [] },
+  digital_awareness:    { label: 'Digital Awareness',         instructions: 'Explore technology use and write your response.', sections: [], wordBank: [], provocation: '' },
+  tech_skill_practice:  { label: 'Tech Skill Practice',       instructions: 'Complete the digital task and describe your creation.', sections: ['Step-by-Step Task', 'My Digital Creation', 'How I Checked My Sources'], wordBank: [] },
+  digital_citizenship:  { label: 'Digital Citizenship',       instructions: 'Reflect on responsible technology use.', sections: ['What I Learned to Do', 'Being a Responsible Digital Citizen', 'Technology for Good'], wordBank: [], reflectionPrompts: [] },
+  movement_exploration: { label: 'Movement Exploration',      instructions: 'Write about the movement concept.', sections: [], wordBank: [], provocation: '' },
+  skill_practice:       { label: 'Skill Practice',            instructions: 'Describe and record your physical practice.', sections: ['Key Skill Steps', 'My Practice Record', 'Teamwork and Fairness'], wordBank: [] },
+  physical_reflection:  { label: 'PE Reflection',             instructions: 'Reflect on your physical learning and set goals.', sections: ['What I Did Well', 'My Next Step', 'Health and Wellbeing Connection'], wordBank: [], reflectionPrompts: [] },
 };
 const STEP_ICONS: Record<StepType, string> = {
-  brainstorm: 'cloud', drawing: 'edit-3', structured_writing: 'align-left',
+  brainstorm: 'cloud', drawing: 'edit-3', structured_writing: 'align-left', problem_solving: 'hash',
+  tuning_in: 'zap', math_reflection: 'rotate-ccw', prior_knowledge: 'bookmark',
+  text_connection: 'book-open', reading_comprehension: 'search', writing_reflection: 'feather',
+  language_culture: 'globe', language_practice: 'message-circle', communication: 'mic',
+  social_inquiry: 'compass', research_notes: 'file-text', social_synthesis: 'layers',
+  artistic_exploration: 'eye', art_creation: 'edit-3', artistic_reflection: 'aperture',
+  digital_awareness: 'monitor', tech_skill_practice: 'cpu', digital_citizenship: 'shield',
+  movement_exploration: 'activity', skill_practice: 'trending-up', physical_reflection: 'heart',
 };
 const STEP_COLORS: Record<StepType, string> = {
-  brainstorm: '#C5BD96', drawing: '#7AADA8', structured_writing: '#5A8A70',
+  brainstorm: '#C5BD96', drawing: '#D4A898', structured_writing: '#93B0AC', problem_solving: '#C3DCD8',
+  tuning_in: '#D8C4E8', math_reflection: '#B8D4C8', prior_knowledge: '#EBD5B8',
+  text_connection: '#EAD4D8', reading_comprehension: '#D8C4E8', writing_reflection: '#C5BD96',
+  language_culture: '#D4C4A8', language_practice: '#B8CCD4', communication: '#C8D4A8',
+  social_inquiry: '#D8C8A8', research_notes: '#B8C8D8', social_synthesis: '#C4D0C4',
+  artistic_exploration: '#E8D4C4', art_creation: '#D4A898', artistic_reflection: '#DCC8D4',
+  digital_awareness: '#C4D4E0', tech_skill_practice: '#B8D8D0', digital_citizenship: '#C0CCD8',
+  movement_exploration: '#C8D8B8', skill_practice: '#B8D4BC', physical_reflection: '#D0D8C0',
 };
 
 const TABS = ['All', 'Active', 'Completed'];
-const SUBJECTS = ['Mathematics', 'Science', 'English', 'Social Studies'];
-const GRADES = ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9'];
+const SUBJECTS = [
+  'Mathematics', 'Science', 'English', 'Social Studies', 'Language Acquisition',
+  'Visual Arts', 'ICT', 'Physical Education',
+];
+const ALL_GRADES = ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9'];
+const IB_GRADES  = ['Grade 3', 'Grade 4', 'Grade 5'];
+const LANGUAGES = ['Telugu', 'Hindi', 'Tamil', 'Kannada', 'French', 'Spanish', 'Mandarin', 'Arabic'];
 const TYPES = ['assignment', 'quiz'];
 // Enchanting Forest palette
 const SUBJECT_COLORS: Record<string, string> = {
@@ -67,6 +120,10 @@ const SUBJECT_COLORS: Record<string, string> = {
   Science:        '#5A8A70',
   English:        '#B8797E',
   'Social Studies': '#8A8358',
+  'Language Acquisition': '#7AADA8',
+  'Visual Arts':          '#9A7A8A',
+  'ICT':                  '#6A8AA0',
+  'Physical Education':   '#6A8A6A',
 };
 
 function daysUntil(dateStr: string) {
@@ -119,6 +176,20 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [formError, setFormError] = useState('');
   const [reportAssignment, setReportAssignment] = useState<Assignment | null>(null);
 
+  // IB PYP fields
+  const [selectedLanguage, setSelectedLanguage] = useState('Telugu');
+  const [unitOfInquiry, setUnitOfInquiry] = useState('');
+  const [ibPurpose, setIbPurpose] = useState('');
+  const [ibLearningOutcomes, setIbLearningOutcomes] = useState<string[]>(['']);
+  const [ibWordBank, setIbWordBank] = useState<string[]>([]);
+  const [ibStamps, setIbStamps] = useState<string[]>([]);
+  const [ibCentralIdea, setIbCentralIdea] = useState('');
+  const [ibLinesOfInquiry, setIbLinesOfInquiry] = useState<string[]>([]);
+  const [ibLearnerProfile, setIbLearnerProfile] = useState('');
+  const [ibAtlSkill, setIbAtlSkill] = useState('');
+  const [ibKeyConcept, setIbKeyConcept] = useState('');
+  const [generatingIB, setGeneratingIB] = useState(false);
+
   // Student picker
   const [students, setStudents] = useState<StudentItem[]>([]);
   const [assignTo, setAssignTo] = useState<'all' | 'specific'>('all');
@@ -126,6 +197,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [studentSearch, setStudentSearch] = useState('');
 
   const teacherEmail = user?.email || 'teacher@demo.com';
+  const isIBPYP = (curriculum || teacherCurriculum || '').toLowerCase().includes('ib');
+  const gradeOptions = isIBPYP ? IB_GRADES : ALL_GRADES;
+
+  // When curriculum changes, clamp grade to valid options
+  useEffect(() => {
+    if (isIBPYP && !IB_GRADES.includes(grade)) setGrade('Grade 3');
+  }, [isIBPYP]);
 
   const load = useCallback(async () => {
     try {
@@ -139,10 +217,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
   useEffect(() => { load(); }, [load]);
 
-  // Keep curriculum in sync if user profile loads after initial render
+  // Keep curriculum + grade in sync when user profile loads after initial render
   useEffect(() => {
     const c = user?.teaches?.[0]?.curriculum || user?.curriculum;
     if (c) setCurriculum(c);
+    const g = user?.teaches?.[0]?.grade;
+    if (g) setGrade(g);
   }, [user?.curriculum, user?.teaches]);
 
   useEffect(() => {
@@ -199,18 +279,35 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           chapter: chapter.trim(),
           dueDate,
           type,
-          note: note.trim(),
           studentId: assignTo === 'specific' ? (selectedStudent?.id ?? null) : null,
           createdById: teacherEmail,
           createdByRole: 'teacher',
           grade,
           curriculum,
           questions: questions.filter(q => q.trim()),
-          successCriteria: successCriteria.filter(c => c.trim()),
-          taskSteps: taskSteps.map(s => ({ ...s })),
+          // Merge IB learning outcomes into successCriteria if present, else use manual list
+          successCriteria: ibLearningOutcomes.filter(l => l.trim()).length > 0
+            ? ibLearningOutcomes.filter(l => l.trim())
+            : successCriteria.filter(c => c.trim()),
+          // Merge ibWordBank into the structured_writing step so students see the word bank
+          taskSteps: taskSteps.map(s => ({
+            ...s,
+            wordBank: s.type === 'structured_writing' && ibWordBank.length > 0
+              ? ibWordBank
+              : (s.wordBank || []),
+          })),
           quizQuestions: quizQuestions,
           documentUrl: docFiles[0]?.url || null,
           documentUrls: docFiles.map(f => f.url).filter(Boolean),
+          // Store ibPurpose in note field so students see the assignment purpose
+          note: ibPurpose.trim() || note.trim(),
+          unitOfInquiry: unitOfInquiry.trim() || null,
+          language: subject === 'Language Acquisition' ? selectedLanguage : null,
+          centralIdea: ibCentralIdea || null,
+          linesOfInquiry: ibLinesOfInquiry.filter(l => l.trim()),
+          learnerProfile: ibLearnerProfile || null,
+          atlSkill: ibAtlSkill || null,
+          keyConcept: ibKeyConcept || null,
         }),
       });
       if (res.ok) {
@@ -289,10 +386,15 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
   function resetForm() {
     setTitle(''); setChapter(''); setDueDate(''); setNote('');
-    setSubject('Mathematics'); setGrade('Grade 3'); setCurriculum(user?.curriculum || 'NCERT');
+    setSubject('Mathematics');
+    setGrade(user?.teaches?.[0]?.grade || 'Grade 3');
+    setCurriculum(user?.teaches?.[0]?.curriculum || user?.curriculum || 'NCERT');
     setType('assignment'); setQuestions(['']); setSuccessCriteria(['']); setTaskSteps([]); setQuizQuestions([]); setTeacherNotes(''); setDocFiles([]); setFormError('');
     setAssignTo('all'); setSelectedStudent(null); setStudentSearch('');
     setExtractingQuestions(false);
+    setSelectedLanguage('Telugu'); setUnitOfInquiry(''); setIbPurpose('');
+    setIbLearningOutcomes(['']); setIbWordBank([]); setIbStamps([]);
+    setIbCentralIdea(''); setIbLinesOfInquiry([]); setIbLearnerProfile(''); setIbAtlSkill(''); setIbKeyConcept('');
   }
 
   function addTaskStep(type: StepType) {
@@ -344,6 +446,81 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       setStepsError(`Failed: ${e.message || 'Cannot reach server on port 3006'}`);
     } finally {
       setGeneratingSteps(false);
+    }
+  }
+
+  async function generateIBAssignment() {
+    const topic = (title || chapter || '').trim();
+    if (!topic) { setFormError('Enter a title or topic first'); return; }
+    setGeneratingIB(true); setFormError('');
+    try {
+      const res = await fetch(`${SERVER_URL}/assignments/generate-ibpyp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic,
+          subject,
+          grade,
+          curriculum,
+          language: subject === 'Language Acquisition' ? selectedLanguage : undefined,
+          unitOfInquiry: unitOfInquiry.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setFormError(data.error || 'IB generation failed'); return; }
+      if (data.purpose) setIbPurpose(data.purpose);
+      if (data.centralIdea) setIbCentralIdea(data.centralIdea);
+      if (Array.isArray(data.linesOfInquiry) && data.linesOfInquiry.length > 0) setIbLinesOfInquiry(data.linesOfInquiry);
+      if (data.learnerProfile) setIbLearnerProfile(data.learnerProfile);
+      if (data.atlSkill) setIbAtlSkill(data.atlSkill);
+      if (data.keyConcept) setIbKeyConcept(data.keyConcept);
+      if (Array.isArray(data.learningOutcomes) && data.learningOutcomes.length > 0) {
+        setIbLearningOutcomes(data.learningOutcomes);
+      }
+      if (Array.isArray(data.taskSteps) && data.taskSteps.length > 0) {
+        const SUBJECT_STEP_MAP: Record<string, StepType[]> = {
+          'Mathematics':          ['tuning_in', 'problem_solving', 'math_reflection'],
+          'Science':              ['prior_knowledge', 'drawing', 'structured_writing'],
+          'English':              ['text_connection', 'reading_comprehension', 'writing_reflection'],
+          'Language Acquisition': ['language_culture', 'language_practice', 'communication'],
+          'Social Studies':       ['social_inquiry', 'research_notes', 'social_synthesis'],
+          'Visual Arts':          ['artistic_exploration', 'art_creation', 'artistic_reflection'],
+          'ICT':                  ['digital_awareness', 'tech_skill_practice', 'digital_citizenship'],
+          'Physical Education':   ['movement_exploration', 'skill_practice', 'physical_reflection'],
+        };
+        const stepMap: StepType[] = SUBJECT_STEP_MAP[subject] || ['brainstorm', 'drawing', 'structured_writing'];
+        setTaskSteps(data.taskSteps.slice(0, 3).map((s: any, idx: number) => {
+          const enforcedType: StepType = stepMap[idx] || s.type || 'brainstorm';
+          const defaults = STEP_DEFAULTS[enforcedType] || {};
+          const sections = Array.isArray(s.sections) && s.sections.length ? s.sections : (defaults.sections || []);
+          const HOOK_TYPES: StepType[] = ['tuning_in','text_connection','social_inquiry','language_culture','artistic_exploration','digital_awareness','movement_exploration'];
+          const REFLECTION_TYPES: StepType[] = ['math_reflection','writing_reflection','social_synthesis','communication','artistic_reflection','digital_citizenship','physical_reflection'];
+          return {
+            id: Date.now().toString() + Math.random(),
+            type: enforcedType,
+            label: s.label || (defaults.label as string) || '',
+            instructions: s.instructions || (defaults.instructions as string) || '',
+            provocation: HOOK_TYPES.includes(enforcedType) ? (s.provocation || '') : undefined,
+            sections,
+            wordBank: [],
+            problems: enforcedType === 'problem_solving' ? (Array.isArray(s.problems) ? s.problems : []) : [],
+            reflectionPrompts: REFLECTION_TYPES.includes(enforcedType) ? (Array.isArray(s.reflectionPrompts) ? s.reflectionPrompts : []) : [],
+          };
+        }));
+      }
+      if (Array.isArray(data.successCriteria) && data.successCriteria.length > 0) {
+        setSuccessCriteria(data.successCriteria);
+      }
+      if (Array.isArray(data.wordBank) && data.wordBank.length > 0) {
+        setIbWordBank(data.wordBank);
+      }
+      if (Array.isArray(data.stamps) && data.stamps.length > 0) {
+        setIbStamps(data.stamps);
+      }
+    } catch (e: any) {
+      setFormError(`IB generation failed: ${e.message}`);
+    } finally {
+      setGeneratingIB(false);
     }
   }
 
@@ -664,9 +841,28 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     ))}
                   </View>
 
-                  <Text style={styles.fieldLabel}>Grade</Text>
+                  {/* Language picker (only for Language Acquisition) */}
+                  {subject === 'Language Acquisition' && (
+                    <>
+                      <Text style={styles.fieldLabel}>Language</Text>
+                      <View style={styles.chipRow}>
+                        {LANGUAGES.map((lang) => (
+                          <TouchableOpacity
+                            key={lang}
+                            style={[styles.chip, selectedLanguage === lang && { backgroundColor: '#7AADA820', borderColor: '#7AADA8' }]}
+                            onPress={() => setSelectedLanguage(lang)}
+                            activeOpacity={0.75}
+                          >
+                            <Text style={[styles.chipText, selectedLanguage === lang && { color: '#7AADA8' }]}>{lang}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </>
+                  )}
+
+                  <Text style={styles.fieldLabel}>Grade {isIBPYP && <Text style={{ color: '#7AADA8', fontSize: 10, fontWeight: '600' }}> · IB PYP (3–5)</Text>}</Text>
                   <View style={styles.chipRow}>
-                    {GRADES.map((g) => (
+                    {gradeOptions.map((g) => (
                       <TouchableOpacity
                         key={g}
                         style={[styles.chip, grade === g && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
@@ -831,6 +1027,172 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </View>
                   )}
 
+                  {/* ── AI Assignment Generator (all curricula) ── */}
+                  {type === 'assignment' && <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#7AADA840', backgroundColor: '#7AADA808', gap: 10 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Feather name="cpu" size={16} color="#7AADA8" />
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#7AADA8' }}>
+                        {isIBPYP ? 'Generate IB PYP Assignment' : `Generate ${curriculum || 'AI'} Assignment`}
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 11, color: colors.textDim, lineHeight: 17 }}>
+                      AI will generate a {isIBPYP ? 'complete IB PYP-style' : `${curriculum || 'curriculum'}-aligned`} assignment with Purpose, Learning Outcomes, Task Steps, Success Criteria, Word Bank, and Stamps — tailored to <Text style={{ fontWeight: '700' }}>{grade} · {subject}</Text>.
+                    </Text>
+
+                    <Text style={[styles.fieldLabel, { marginBottom: 0 }]}>
+                      {isIBPYP ? 'Unit of Inquiry (optional)' : 'Theme / Unit (optional)'}
+                    </Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder={isIBPYP ? 'e.g. How We Organise Ourselves / Sharing the Planet' : 'e.g. Chapter 3: Fractions / Unit: Living World'}
+                      placeholderTextColor={colors.textDim}
+                      value={unitOfInquiry}
+                      onChangeText={setUnitOfInquiry}
+                    />
+
+                    <TouchableOpacity
+                      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+                        padding: 14, borderRadius: 12, backgroundColor: generatingIB ? colors.borderColor : '#7AADA8' }}
+                      onPress={generateIBAssignment}
+                      activeOpacity={0.85}
+                      disabled={generatingIB}
+                    >
+                      {generatingIB
+                        ? <ActivityIndicator size="small" color="#fff" />
+                        : <Feather name="cpu" size={16} color="#fff" />}
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#fff' }}>
+                        {generatingIB
+                          ? 'Generating Assignment...'
+                          : isIBPYP ? 'Generate Full IB PYP Assignment' : `Generate ${curriculum || 'AI'} Assignment`}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Generated IB fields preview */}
+                    {!!ibPurpose && (
+                      <View style={{ gap: 8, marginTop: 4 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Feather name="check-circle" size={14} color="#7AADA8" />
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#7AADA8' }}>
+                            {isIBPYP ? 'IB PYP Assignment Generated' : `${curriculum || 'AI'} Assignment Generated`}
+                          </Text>
+                        </View>
+
+                        <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#7AADA830' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#7AADA8', marginBottom: 4 }}>PURPOSE / CENTRAL IDEA</Text>
+                          <TextInput
+                            style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}
+                            value={ibCentralIdea || ibPurpose}
+                            onChangeText={v => { setIbCentralIdea(v); setIbPurpose(v); }}
+                            multiline
+                          />
+                        </View>
+
+                        {ibLinesOfInquiry.length > 0 && (
+                          <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#C3DCD830' }}>
+                            <Text style={{ fontSize: 11, fontWeight: '700', color: '#3D7A74', marginBottom: 6 }}>LINES OF INQUIRY</Text>
+                            {ibLinesOfInquiry.map((loi, i) => (
+                              <View key={i} style={{ flexDirection: 'row', gap: 6, marginBottom: 4 }}>
+                                <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#3D7A74', marginTop: 7, flexShrink: 0 }} />
+                                <Text style={{ flex: 1, fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{loi}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+
+                        {(ibLearnerProfile || ibAtlSkill || ibKeyConcept) && (
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                            {ibLearnerProfile ? (
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, backgroundColor: '#EFD1D418', borderWidth: 1, borderColor: '#EFD1D450' }}>
+                                <Text style={{ fontSize: 10, fontWeight: '800', color: '#8C5A49' }}>Learner Profile</Text>
+                                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMain }}>{ibLearnerProfile}</Text>
+                              </View>
+                            ) : null}
+                            {ibAtlSkill ? (
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, backgroundColor: '#C5BD9618', borderWidth: 1, borderColor: '#C5BD9650' }}>
+                                <Text style={{ fontSize: 10, fontWeight: '800', color: '#8A7E4A' }}>ATL Skill</Text>
+                                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMain }}>{ibAtlSkill}</Text>
+                              </View>
+                            ) : null}
+                            {ibKeyConcept ? (
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, backgroundColor: '#93B0AC18', borderWidth: 1, borderColor: '#93B0AC50' }}>
+                                <Text style={{ fontSize: 10, fontWeight: '800', color: '#3D6B66' }}>Key Concept</Text>
+                                <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMain }}>{ibKeyConcept}</Text>
+                              </View>
+                            ) : null}
+                          </View>
+                        )}
+
+                        {ibLearningOutcomes.filter(l => l.trim()).length > 0 && (
+                          <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#7AADA830' }}>
+                            <Text style={{ fontSize: 11, fontWeight: '700', color: '#7AADA8', marginBottom: 6 }}>LEARNING OUTCOMES</Text>
+                            {ibLearningOutcomes.map((lo, i) => (
+                              <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 4 }}>
+                                <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#7AADA8', marginTop: 7, flexShrink: 0 }} />
+                                <TextInput
+                                  style={{ flex: 1, fontSize: 12, color: colors.textMain, lineHeight: 18 }}
+                                  value={lo}
+                                  onChangeText={t => setIbLearningOutcomes(prev => prev.map((x, j) => j === i ? t : x))}
+                                  multiline
+                                />
+                                <TouchableOpacity onPress={() => setIbLearningOutcomes(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.7}>
+                                  <Feather name="x" size={12} color={colors.textDim} />
+                                </TouchableOpacity>
+                              </View>
+                            ))}
+                            <TouchableOpacity onPress={() => setIbLearningOutcomes(prev => [...prev, ''])} activeOpacity={0.75}
+                              style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                              <Feather name="plus-circle" size={12} color="#7AADA8" />
+                              <Text style={{ fontSize: 11, color: '#7AADA8', fontWeight: '600' }}>Add outcome</Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
+
+                        {ibWordBank.length > 0 && (
+                          <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#7AADA830' }}>
+                            <Text style={{ fontSize: 11, fontWeight: '700', color: '#7AADA8', marginBottom: 6 }}>WORD BANK</Text>
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                              {ibWordBank.map((w, i) => (
+                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: '#7AADA818', borderWidth: 1, borderColor: '#7AADA840' }}>
+                                  <Text style={{ fontSize: 12, color: '#7AADA8', fontWeight: '600' }}>{w}</Text>
+                                  <TouchableOpacity onPress={() => setIbWordBank(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.7}>
+                                    <Feather name="x" size={10} color="#7AADA8" />
+                                  </TouchableOpacity>
+                                </View>
+                              ))}
+                              <TextInput
+                                style={{ fontSize: 12, color: colors.textMain, minWidth: 80, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, borderColor: colors.borderColor, backgroundColor: colors.bgDark }}
+                                placeholder="Add word..."
+                                placeholderTextColor={colors.textDim}
+                                returnKeyType="done"
+                                onSubmitEditing={(e) => {
+                                  const w = e.nativeEvent.text.trim();
+                                  if (w) setIbWordBank(prev => [...prev, w]);
+                                }}
+                              />
+                            </View>
+                          </View>
+                        )}
+
+                        {ibStamps.length > 0 && (
+                          <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#7AADA830' }}>
+                            <Text style={{ fontSize: 11, fontWeight: '700', color: '#7AADA8', marginBottom: 6 }}>STAMPS / BADGES</Text>
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                              {ibStamps.map((s, i) => (
+                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: '#8A835818', borderWidth: 1, borderColor: '#8A835840' }}>
+                                  <Feather name="award" size={11} color="#8A8358" />
+                                  <Text style={{ fontSize: 12, color: '#8A8358', fontWeight: '600' }}>{s}</Text>
+                                  <TouchableOpacity onPress={() => setIbStamps(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.7}>
+                                    <Feather name="x" size={10} color="#8A8358" />
+                                  </TouchableOpacity>
+                                </View>
+                              ))}
+                            </View>
+                          </View>
+                        )}
+                      </View>
+                    )}
+                  </View>}
+
                   {/* ── Task Steps ── */}
                   <View style={{ marginTop: 4 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -843,7 +1205,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         disabled={generatingSteps}
                         activeOpacity={0.8}
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10,
-                          borderRadius: 20, backgroundColor: generatingSteps ? colors.borderColor : '#10b981',
+                          borderRadius: 20, backgroundColor: generatingSteps ? colors.borderColor : '#93B0AC',
                           opacity: generatingSteps ? 0.7 : 1 }}
                       >
                         {generatingSteps
@@ -861,9 +1223,36 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     )}
                   </View>
 
-                  {/* Step type picker */}
+                  {/* Step type picker — subject-appropriate options per IB PYP pedagogy */}
+                  {(() => {
+                    const SUBJECT_STEP_PICKER: Record<string, StepType[]> = {
+                      'Mathematics':          ['tuning_in', 'problem_solving', 'math_reflection'],
+                      'Science':              ['prior_knowledge', 'drawing', 'structured_writing'],
+                      'English':              ['text_connection', 'reading_comprehension', 'writing_reflection'],
+                      'Language Acquisition': ['language_culture', 'language_practice', 'communication'],
+                      'Social Studies':       ['social_inquiry', 'research_notes', 'social_synthesis'],
+                      'Visual Arts':          ['artistic_exploration', 'art_creation', 'artistic_reflection'],
+                      'ICT':                  ['digital_awareness', 'tech_skill_practice', 'digital_citizenship'],
+                      'Physical Education':   ['movement_exploration', 'skill_practice', 'physical_reflection'],
+                    };
+                    const pickerTypes: StepType[] = SUBJECT_STEP_PICKER[subject] || ['brainstorm', 'drawing', 'structured_writing'];
+                    const typeLabels: Record<StepType, string> = {
+                      brainstorm: 'Brainstorm', drawing: 'Drawing', structured_writing: 'Writing',
+                      problem_solving: 'Problems', tuning_in: 'Tuning In',
+                      math_reflection: 'Reflection', prior_knowledge: 'Prior Knowledge',
+                      text_connection: 'Text Connection', reading_comprehension: 'Reading',
+                      writing_reflection: 'Writing Reflection', language_culture: 'Lang & Culture',
+                      language_practice: 'Language Practice', communication: 'Communication',
+                      social_inquiry: 'Social Inquiry', research_notes: 'Research Notes',
+                      social_synthesis: 'Social Synthesis', artistic_exploration: 'Art Explore',
+                      art_creation: 'Art Creation', artistic_reflection: 'Artist Statement',
+                      digital_awareness: 'Digital Awareness', tech_skill_practice: 'Tech Practice',
+                      digital_citizenship: 'Digital Citizenship', movement_exploration: 'Movement',
+                      skill_practice: 'Skill Practice', physical_reflection: 'PE Reflection',
+                    };
+                    return (
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                    {(['brainstorm','drawing','structured_writing'] as StepType[]).map(type => (
+                    {pickerTypes.map(type => (
                       <TouchableOpacity
                         key={type}
                         onPress={() => addTaskStep(type)}
@@ -872,11 +1261,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       >
                         <Feather name={STEP_ICONS[type] as any} size={13} color={STEP_COLORS[type]} />
                         <Text style={{ fontSize: 12, color: STEP_COLORS[type], fontWeight: '600' }}>
-                          + {type === 'brainstorm' ? 'Brainstorm' : type === 'drawing' ? 'Drawing' : 'Writing'}
+                          + {typeLabels[type]}
                         </Text>
                       </TouchableOpacity>
                     ))}
                   </View>
+                    );
+                  })()}
 
                   {/* Existing steps */}
                   {taskSteps.map((step, idx) => (
@@ -888,7 +1279,20 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                           <Feather name={STEP_ICONS[step.type] as any} size={13} color={STEP_COLORS[step.type]} />
                           <Text style={{ fontSize: 12, fontWeight: '700', color: STEP_COLORS[step.type], textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                            {step.type === 'brainstorm' ? 'Brainstorm' : step.type === 'drawing' ? 'Drawing' : step.type === 'structured_writing' ? 'Structured Writing' : 'Photo Upload'}
+                            {({
+                              brainstorm: 'Brainstorm', drawing: 'Drawing', structured_writing: 'Structured Writing',
+                              problem_solving: 'Practice Problems', tuning_in: 'Tuning In',
+                              math_reflection: 'Math Reflection', prior_knowledge: 'Prior Knowledge',
+                              text_connection: 'Text Connection', reading_comprehension: 'Reading Comprehension',
+                              writing_reflection: 'Writing Reflection', language_culture: 'Language & Culture',
+                              language_practice: 'Language Practice', communication: 'Communication',
+                              social_inquiry: 'Social Inquiry', research_notes: 'Research Notes',
+                              social_synthesis: 'Social Synthesis', artistic_exploration: 'Art Exploration',
+                              art_creation: 'Art Creation', artistic_reflection: 'Artist Statement',
+                              digital_awareness: 'Digital Awareness', tech_skill_practice: 'Tech Practice',
+                              digital_citizenship: 'Digital Citizenship', movement_exploration: 'Movement',
+                              skill_practice: 'Skill Practice', physical_reflection: 'PE Reflection',
+                            } as Record<StepType, string>)[step.type] || step.type}
                           </Text>
                         </View>
                         <TouchableOpacity onPress={() => removeTaskStep(step.id)} activeOpacity={0.7}>
@@ -1170,6 +1574,42 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       <Text style={styles.broadcastNoteText}>This assignment will be sent to all your students.</Text>
                     </View>
                   )}
+
+                  {/* ── Student Experience Preview ── */}
+                  {type === 'assignment' && (() => {
+                    const hasSteps = taskSteps.length > 0;
+                    const hasDocs  = docFiles.length > 0;
+                    const mode = hasSteps ? 'scaffolded' : hasDocs ? 'worksheet' : 'paper';
+                    const modeColor = hasSteps ? '#5A8A70' : hasDocs ? '#5F8A86' : '#8A8358';
+                    const modeIcon  = hasSteps ? 'layers' : hasDocs ? 'file-text' : 'camera';
+                    const modeLabel = hasSteps
+                      ? 'Interactive Online Assignment'
+                      : hasDocs
+                      ? 'Worksheet + Photo Submission'
+                      : 'Paper + Photo Submission';
+                    const modeDesc = hasSteps
+                      ? `Student will complete ${taskSteps.length} interactive step${taskSteps.length > 1 ? 's' : ''} online: ${taskSteps.map(s => s.label || s.type).join(' → ')}. AI grades each step automatically.`
+                      : hasDocs
+                      ? `Student will see ${docFiles.length} worksheet page${docFiles.length > 1 ? 's' : ''}, complete on paper, then upload a photo. AI grades the photo.`
+                      : 'Student will read the instructions, complete on paper, then upload a photo. AI grades the photo.';
+                    return (
+                      <View style={{ padding: 14, borderRadius: 12, borderWidth: 1.5, borderColor: modeColor + '50', backgroundColor: modeColor + '10', gap: 8 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Feather name={modeIcon as any} size={16} color={modeColor} />
+                          <Text style={{ fontSize: 12, fontWeight: '800', color: modeColor }}>Student will see: {modeLabel}</Text>
+                        </View>
+                        <Text style={{ fontSize: 11, color: colors.textMuted, lineHeight: 17 }}>{modeDesc}</Text>
+                        {mode === 'paper' && (
+                          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+                            <Feather name="alert-circle" size={12} color={colors.accentYellow} style={{ marginTop: 1 }} />
+                            <Text style={{ flex: 1, fontSize: 11, color: colors.accentYellow, lineHeight: 16 }}>
+                              To make this interactive (brainstorm + draw + write online), use "Generate AI Assignment" above to create task steps.
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })()}
 
                   {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
 
