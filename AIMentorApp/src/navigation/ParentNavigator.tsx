@@ -18,6 +18,7 @@ import ParentControlsScreen from '../screens/parent/ParentControlsScreen';
 import ParentSettingsScreen from '../screens/parent/ParentSettingsScreen';
 import ParentHelpScreen from '../screens/parent/ParentHelpScreen';
 import ParentMessagesScreen from '../screens/parent/ParentMessagesScreen';
+import ParentDailyTasksScreen from '../screens/parent/ParentDailyTasksScreen';
 
 const Drawer = createDrawerNavigator<ParentDrawerParamList>();
 
@@ -55,6 +56,7 @@ export default function ParentNavigator() {
       <Drawer.Screen name="ParentSettings" component={ParentSettingsScreen} />
       <Drawer.Screen name="ParentHelp" component={ParentHelpScreen} />
       <Drawer.Screen name="ParentMessages" component={ParentMessagesScreen} />
+      <Drawer.Screen name="ParentDailyTasks" component={ParentDailyTasksScreen} />
     </Drawer.Navigator>
   );
 }

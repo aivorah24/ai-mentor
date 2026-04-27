@@ -40,6 +40,7 @@ const PARENT_NAV_ITEMS = [
   { label: 'Dashboard', icon: 'grid', screen: 'ParentDashboard', group: 'PARENT MENU' },
   { label: 'Profile', icon: 'user', screen: 'ParentProfile', group: 'PARENT MENU' },
   { label: 'My Kids', icon: 'users', screen: 'ParentMyKids', group: 'PARENT MENU' },
+  { label: 'Daily Tasks', icon: 'check-square', screen: 'ParentDailyTasks', group: 'PARENT MENU' },
   { label: 'Schedule', icon: 'calendar', screen: 'ParentSchedule', group: 'PARENT MENU' },
   { label: 'Learning', icon: 'book-open', screen: 'ParentLearning', group: 'PARENT MENU' },
   { label: 'Assignments', icon: 'check-square', screen: 'ParentAssignments', group: 'PARENT MENU' },

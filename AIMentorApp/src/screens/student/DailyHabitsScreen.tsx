@@ -31,6 +31,7 @@ interface Habit {
 
 interface TodayData {
   habits: Habit[];
+  parentTasks: (Habit & { fromParent: boolean })[];
   today: { completed: string[]; coinsEarned: number };
   streak: number;
   streakBonus: number;
@@ -97,8 +98,9 @@ export default function DailyHabitsScreen({ navigation }: any) {
     finally { setChecking(null); }
   }
 
-  const completedCount = data?.today.completed.length ?? 0;
-  const totalHabits    = data?.habits.length ?? 0;
+  const parentTasks    = data?.parentTasks ?? [];
+  const completedCount = data?.today?.completed?.length ?? 0;
+  const totalHabits    = parentTasks.length;
   const allDone        = totalHabits > 0 && completedCount === totalHabits;
   const progressPct    = totalHabits > 0 ? completedCount / totalHabits : 0;
 
@@ -173,88 +175,57 @@ export default function DailyHabitsScreen({ navigation }: any) {
                 )}
               </View>
 
-              {/* ── Habit grid — 2 columns ── */}
-              <Text style={[styles.sectionTitle, { color: colors.textDim }]}>TODAY'S HABITS</Text>
+              {/* ── Parent-assigned tasks (only source of habits) ── */}
+              <Text style={[styles.sectionTitle, { color: GOLD }]}>TODAY'S HABITS</Text>
 
-              {/* Premium banner */}
-              <View style={[styles.premiumBanner, { borderColor: AMBER + '50', backgroundColor: AMBER + '10' }]}>
-                <Feather name="lock" size={13} color={AMBER} />
-                <Text style={[styles.premiumText, { color: AMBER }]}>First 2 habits free · Upgrade to unlock all</Text>
-                <TouchableOpacity style={[styles.premiumBtn, { backgroundColor: AMBER }]}>
-                  <Text style={styles.premiumBtnText}>Upgrade</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.habitGrid}>
-                {data.habits.map((habit, index) => {
-                  const locked    = index >= FREE_UNLOCKED;
-                  const done      = !locked && data.today.completed.includes(habit.id);
-                  const isLoading = checking === habit.id;
-                  const popping   = coinPop?.id === habit.id;
-                  return (
-                    <TouchableOpacity
-                      key={habit.id}
-                      style={[styles.habitCard, {
-                        backgroundColor: locked ? colors.cardDark : done ? TEAL + '18' : colors.cardDark,
-                        borderColor: locked ? AMBER + '40' : done ? TEAL + '60' : colors.borderColor,
-                        opacity: locked ? 0.75 : 1,
-                      }]}
-                      onPress={() => locked ? undefined : toggleHabit(habit.id)}
-                      activeOpacity={locked ? 1 : 0.8}
-                      disabled={!!checking || locked}
-                    >
-                      {/* Icon */}
-                      <View style={[styles.habitIcon, {
-                        backgroundColor: locked ? AMBER + '18' : done ? TEAL + '28' : colors.borderColor,
-                      }]}>
-                        {isLoading
-                          ? <ActivityIndicator size="small" color={TEAL} />
-                          : <Feather
-                              name={locked ? 'lock' : safeIcon(habit.icon)}
-                              size={14}
-                              color={locked ? AMBER : done ? TEAL : colors.textDim}
-                            />
-                        }
-                      </View>
-
-                      {/* Label + coins */}
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.habitLabel, {
-                          color: locked ? colors.textDim : done ? colors.textMain : colors.textMuted,
-                          fontWeight: done ? '700' : '500',
-                        }]} numberOfLines={2}>{habit.label}</Text>
-                        <View style={styles.habitCoinsRow}>
-                          {locked
-                            ? <><Feather name="lock" size={9} color={AMBER} /><Text style={[styles.habitCoins, { color: AMBER }]}>Premium</Text></>
-                            : <><Feather name="star" size={9} color={GOLD} /><Text style={[styles.habitCoins, { color: GOLD }]}>+{habit.coins}</Text></>
-                          }
+              {parentTasks.length === 0 ? (
+                <View style={[styles.emptyBox, { backgroundColor: colors.cardDark, borderColor: colors.borderColor }]}>
+                  <Feather name="inbox" size={36} color={colors.textDim} />
+                  <Text style={[styles.emptyTitle, { color: colors.textMain }]}>No habits yet</Text>
+                  <Text style={[styles.emptySub, { color: colors.textMuted }]}>Ask your parent to assign daily habits for you.</Text>
+                </View>
+              ) : (
+                <View style={styles.habitGrid}>
+                  {parentTasks.map(task => {
+                    const done      = data?.today?.completed?.includes(task.id) ?? false;
+                    const isLoading = checking === task.id;
+                    const popping   = coinPop?.id === task.id;
+                    return (
+                      <TouchableOpacity
+                        key={task.id}
+                        style={[styles.habitCard, {
+                          backgroundColor: done ? GOLD + '18' : colors.cardDark,
+                          borderColor: done ? GOLD + '60' : GOLD + '30',
+                        }]}
+                        onPress={() => toggleHabit(task.id)}
+                        activeOpacity={0.8}
+                        disabled={!!checking}
+                      >
+                        <View style={[styles.habitIcon, { backgroundColor: done ? GOLD + '28' : GOLD + '12' }]}>
+                          {isLoading
+                            ? <ActivityIndicator size="small" color={GOLD} />
+                            : <Feather name={safeIcon(task.icon)} size={14} color={GOLD} />}
                         </View>
-                      </View>
-
-                      {/* Checkbox or lock */}
-                      {locked ? (
-                        <View style={[styles.checkbox, { backgroundColor: AMBER + '20', borderColor: AMBER + '50' }]}>
-                          <Feather name="lock" size={9} color={AMBER} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.habitLabel, { color: done ? colors.textMain : colors.textMuted, fontWeight: done ? '700' : '500' }]} numberOfLines={2}>{task.label}</Text>
+                          <View style={styles.habitCoinsRow}>
+                            <Feather name="star" size={9} color={GOLD} />
+                            <Text style={[styles.habitCoins, { color: GOLD }]}>+{task.coins}</Text>
+                          </View>
                         </View>
-                      ) : (
-                        <View style={[styles.checkbox, {
-                          backgroundColor: done ? TEAL : 'transparent',
-                          borderColor: done ? TEAL : colors.borderColor,
-                        }]}>
+                        <View style={[styles.checkbox, { backgroundColor: done ? GOLD : 'transparent', borderColor: done ? GOLD : GOLD + '50' }]}>
                           {done && <Feather name="check" size={11} color="#fff" />}
                         </View>
-                      )}
-
-                      {/* Coin pop */}
-                      {popping && (
-                        <View style={[styles.coinPop, { backgroundColor: GOLD }]}>
-                          <Text style={styles.coinPopText}>+{coinPop!.coins}</Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+                        {popping && (
+                          <View style={[styles.coinPop, { backgroundColor: GOLD }]}>
+                            <Text style={styles.coinPopText}>+{coinPop!.coins}</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
 
               {/* ── Journal ── */}
               {data.journalText ? (
@@ -367,4 +338,11 @@ const makeStyles = (c: any) => StyleSheet.create({
     padding: spacing.lg, borderRadius: radius.xl, borderWidth: 1,
   },
   motivationText: { flex: 1, fontSize: 13, lineHeight: 20 },
+
+  emptyBox: {
+    alignItems: 'center', paddingVertical: 48,
+    borderRadius: radius.xl, borderWidth: 1, gap: 10,
+  },
+  emptyTitle: { fontSize: 16, fontWeight: '700' },
+  emptySub: { fontSize: 13, textAlign: 'center', maxWidth: 260, lineHeight: 20 },
 });
