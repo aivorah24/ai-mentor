@@ -1,8 +1,9 @@
-const express = require('express');
-const router  = express.Router();
-const fs      = require('fs');
-const path    = require('path');
+const express  = require('express');
+const router   = express.Router();
+const fs       = require('fs');
+const path     = require('path');
 const { hashEmail } = require('../utils/encryption');
+const supabase = require('../services/supabase');
 
 const CONFIG_PATH   = path.join(__dirname, '../data/habits_config.json');
 const CHECKIN_PATH  = path.join(__dirname, '../data/habits_checkins.json');
@@ -82,7 +83,7 @@ router.post('/config', (req, res) => {
 });
 
 // ── GET /habits/today?userEmail= ──────────────────────────────────────────────
-router.get('/today', (req, res) => {
+router.get('/today', async (req, res) => {
   const { userEmail } = req.query;
   if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
 
@@ -94,16 +95,25 @@ router.get('/today', (req, res) => {
   const userCheckins = checkins[key] ?? checkins[userEmail] ?? {};
   const todayData = userCheckins[today] || { completed: [], coinsEarned: 0 };
   const streak    = computeStreak(userCheckins);
-
-  // Check for 100-day streak bonus
   const streakBonus = streak > 0 && streak % STREAK_BONUS_DAYS === 0 ? STREAK_BONUS_COINS : 0;
+  const totalCoins = Object.values(userCheckins).reduce((sum, d) => sum + (d.coinsEarned || 0), 0);
 
-  // Total coins ever earned
-  const totalCoins = Object.values(userCheckins)
-    .reduce((sum, d) => sum + (d.coinsEarned || 0), 0);
+  // Fetch parent-assigned tasks for this student
+  let parentTasks = [];
+  try {
+    const { data: userRow } = await supabase.from('users').select('id').eq('email', userEmail.toLowerCase().trim()).maybeSingle();
+    if (userRow?.id) {
+      const { data: tasks } = await supabase
+        .from('parent_daily_tasks')
+        .select('id, label, icon, coins')
+        .eq('child_id', userRow.id);
+      parentTasks = (tasks ?? []).map(t => ({ ...t, fromParent: true }));
+    }
+  } catch {}
 
   res.json({
     habits,
+    parentTasks,
     today: todayData,
     streak,
     streakBonus,
@@ -113,8 +123,8 @@ router.get('/today', (req, res) => {
   });
 });
 
-// ── POST /habits/checkin — child checks off a habit ───────────────────────────
-router.post('/checkin', (req, res) => {
+// ── POST /habits/checkin — child checks off a habit (or parent task) ─────────
+router.post('/checkin', async (req, res) => {
   const { userEmail, habitId } = req.body;
   if (!userEmail || !habitId) return res.status(400).json({ error: 'userEmail and habitId required' });
 
@@ -122,7 +132,15 @@ router.post('/checkin', (req, res) => {
   const checkins = readJson(CHECKIN_PATH);
   const key      = hashEmail(userEmail);
   const habits   = (config[key] ?? config[userEmail])?.habits || DEFAULT_HABITS;
-  const habit    = habits.find(h => h.id === habitId);
+  let habit      = habits.find(h => h.id === habitId);
+
+  // If not found in local config, check Supabase parent_daily_tasks
+  if (!habit) {
+    try {
+      const { data: pt } = await supabase.from('parent_daily_tasks').select('id, label, icon, coins').eq('id', habitId).maybeSingle();
+      if (pt) habit = pt;
+    } catch {}
+  }
   if (!habit) return res.status(404).json({ error: 'Habit not found' });
 
   const today = todayStr();
@@ -191,6 +209,48 @@ router.get('/history', (req, res) => {
   }
 
   res.json({ history, streak });
+});
+
+// ── GET /habits/parent-tasks?childId= ────────────────────────────────────────
+// List all tasks a parent has assigned to a child
+router.get('/parent-tasks', async (req, res) => {
+  try {
+    const { childId } = req.query;
+    if (!childId) return res.status(400).json({ error: 'childId required' });
+    const { data, error } = await supabase
+      .from('parent_daily_tasks')
+      .select('*')
+      .eq('child_id', childId)
+      .order('created_at', { ascending: false });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data ?? []);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── POST /habits/parent-tasks ─────────────────────────────────────────────────
+// Parent creates a daily task for a child
+// Body: { parentEmail, childId, label, icon, coins }
+router.post('/parent-tasks', async (req, res) => {
+  try {
+    const { parentEmail, childId, label, icon = 'check-circle', coins = 5 } = req.body;
+    if (!parentEmail || !childId || !label) return res.status(400).json({ error: 'parentEmail, childId and label required' });
+    const { data, error } = await supabase
+      .from('parent_daily_tasks')
+      .insert({ parent_email: parentEmail, child_id: childId, label: label.trim(), icon, coins })
+      .select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── DELETE /habits/parent-tasks/:taskId ───────────────────────────────────────
+router.delete('/parent-tasks/:taskId', async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const { error } = await supabase.from('parent_daily_tasks').delete().eq('id', taskId);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 module.exports = router;

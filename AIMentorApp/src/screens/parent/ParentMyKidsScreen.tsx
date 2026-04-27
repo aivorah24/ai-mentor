@@ -20,7 +20,7 @@ function formatStudyTime(minutes: number) {
   return `${h}h ${m}m`;
 }
 
-function ChildCard({ child, colors, styles, navigation, onRemove }: any) {
+function ChildCard({ child, colors, styles, navigation, onRemove, onManageTasks }: any) {
   const progressPct = Math.round(((child.completedTopics?.length ?? 0) / 14) * 100);
   const isOnTrack = (child.currentStreak ?? 0) >= 3 && progressPct >= 20;
   const badgeColor = isOnTrack ? colors.accentGreen : colors.accentYellow;
@@ -78,6 +78,15 @@ function ChildCard({ child, colors, styles, navigation, onRemove }: any) {
           <View style={[styles.progressFill, { width: `${progressPct}%` as any, backgroundColor: colors.primary }]} />
         </View>
       </View>
+
+      <TouchableOpacity
+        style={[styles.quickBtn, { backgroundColor: '#B8860B18', borderColor: '#B8860B40' }]}
+        onPress={() => onManageTasks(child)}
+        activeOpacity={0.7}
+      >
+        <Feather name="check-square" size={14} color="#B8860B" />
+        <Text style={[styles.quickBtnText, { color: '#B8860B' }]}>Daily Tasks</Text>
+      </TouchableOpacity>
 
       <View style={styles.quickNav}>
         {[
@@ -147,6 +156,16 @@ export default function ParentMyKidsScreen({ navigation }: any) {
   const [childEmail, setChildEmail] = useState('');
   const [linking,    setLinking]    = useState(false);
   const [linkError,  setLinkError]  = useState('');
+
+  // Daily tasks modal
+  const [taskModalChild,  setTaskModalChild]  = useState<any>(null);
+  const [showTaskModal,   setShowTaskModal]   = useState(false);
+  const [childTasks,      setChildTasks]      = useState<any[]>([]);
+  const [taskLabel,       setTaskLabel]       = useState('');
+  const [taskCoins,       setTaskCoins]       = useState('5');
+  const [taskIcon,        setTaskIcon]        = useState('check-circle');
+  const [savingTask,      setSavingTask]      = useState(false);
+  const [taskError,       setTaskError]       = useState('');
 
   function openModal(tab: 'create' | 'link' = 'create') {
     setModalTab(tab);
@@ -269,6 +288,46 @@ export default function ParentMyKidsScreen({ navigation }: any) {
     } catch { /* ignore */ }
   }
 
+  async function openTaskModal(child: any) {
+    setTaskModalChild(child);
+    setTaskLabel(''); setTaskCoins('5'); setTaskIcon('check-circle'); setTaskError('');
+    setShowTaskModal(true);
+    try {
+      const res = await fetch(`${SERVER_URL}/habits/parent-tasks?childId=${child.id}`);
+      if (res.ok) setChildTasks(await res.json());
+    } catch { setChildTasks([]); }
+  }
+
+  async function createTask() {
+    if (!taskLabel.trim()) { setTaskError('Task label is required.'); return; }
+    setSavingTask(true); setTaskError('');
+    try {
+      const res = await fetch(`${SERVER_URL}/habits/parent-tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parentEmail,
+          childId: taskModalChild?.id,
+          label: taskLabel.trim(),
+          icon: taskIcon,
+          coins: parseInt(taskCoins) || 5,
+        }),
+      });
+      if (!res.ok) { const d = await res.json(); setTaskError(d.error || 'Could not save task.'); return; }
+      const newTask = await res.json();
+      setChildTasks(prev => [newTask, ...prev]);
+      setTaskLabel(''); setTaskCoins('5');
+    } catch { setTaskError('Network error.'); }
+    finally { setSavingTask(false); }
+  }
+
+  async function deleteTask(taskId: string) {
+    try {
+      await fetch(`${SERVER_URL}/habits/parent-tasks/${taskId}`, { method: 'DELETE' });
+      setChildTasks(prev => prev.filter(t => t.id !== taskId));
+    } catch { /* ignore */ }
+  }
+
   return (
     <ScreenLayout>
       <View style={styles.screen}>
@@ -301,6 +360,7 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                   styles={styles}
                   navigation={navigation}
                   onRemove={confirmRemove}
+                  onManageTasks={openTaskModal}
                 />
               ))}
 
@@ -321,6 +381,109 @@ export default function ParentMyKidsScreen({ navigation }: any) {
           )}
         </ScrollView>
       </View>
+
+      {/* Daily Tasks Modal */}
+      <Modal visible={showTaskModal} transparent animationType="fade" onRequestClose={() => setShowTaskModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalBox, { maxHeight: '85%' }]}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Daily Tasks</Text>
+                <Text style={[styles.modalDesc, { marginBottom: 0 }]}>{taskModalChild?.name}'s tasks</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowTaskModal(false)}>
+                <Feather name="x" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Existing tasks */}
+            <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
+              {childTasks.length === 0 ? (
+                <Text style={[styles.modalDesc, { textAlign: 'center', paddingVertical: 16 }]}>No tasks assigned yet.</Text>
+              ) : childTasks.map(task => (
+                <View key={task.id} style={styles.taskRow}>
+                  <View style={styles.taskIconCircle}>
+                    <Feather name={(task.icon as any) || 'check-circle'} size={14} color="#B8860B" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.taskLabel}>{task.label}</Text>
+                    <Text style={styles.taskCoinsText}>{task.coins} coins</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => deleteTask(task.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Feather name="trash-2" size={15} color={colors.accentRed} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+
+            {/* Divider */}
+            <View style={{ height: 1, backgroundColor: colors.borderColor }} />
+
+            {/* Add new task */}
+            <Text style={[styles.modalTitle, { fontSize: 14 }]}>Add New Task</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Task description (e.g. Read for 20 mins)"
+              placeholderTextColor={colors.textMuted}
+              value={taskLabel}
+              onChangeText={t => { setTaskLabel(t); setTaskError(''); }}
+            />
+
+            {/* Icon picker */}
+            <View>
+              <Text style={[styles.modalDesc, { marginBottom: 8 }]}>Icon</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {(['check-circle','book-open','sun','moon','droplet','activity','shield','smile','star','coffee'] as const).map(ic => (
+                  <TouchableOpacity
+                    key={ic}
+                    onPress={() => setTaskIcon(ic)}
+                    style={[styles.iconChip, taskIcon === ic && { backgroundColor: '#B8860B20', borderColor: '#B8860B' }]}
+                    activeOpacity={0.7}
+                  >
+                    <Feather name={ic} size={16} color={taskIcon === ic ? '#B8860B' : colors.textMuted} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Coins */}
+            <View>
+              <Text style={[styles.modalDesc, { marginBottom: 8 }]}>Coins reward</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {['5','10','15','20'].map(c => (
+                  <TouchableOpacity
+                    key={c}
+                    onPress={() => setTaskCoins(c)}
+                    style={[styles.coinChip, taskCoins === c && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: taskCoins === c ? colors.primary : colors.textMuted }}>{c}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {taskError ? (
+              <View style={styles.errorRow}>
+                <Feather name="alert-circle" size={13} color={colors.accentRed} />
+                <Text style={[styles.errorText, { color: colors.accentRed }]}>{taskError}</Text>
+              </View>
+            ) : null}
+
+            <TouchableOpacity
+              style={[styles.linkBtn, { backgroundColor: '#B8860B' }, (!taskLabel.trim() || savingTask) && { opacity: 0.5 }]}
+              onPress={createTask}
+              disabled={!taskLabel.trim() || savingTask}
+              activeOpacity={0.8}
+            >
+              {savingTask
+                ? <ActivityIndicator color="white" size="small" />
+                : <><Feather name="plus" size={15} color="#fff" /><Text style={styles.linkBtnText}>Add Task</Text></>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Add Child Modal */}
       <Modal visible={showModal} transparent animationType="fade" onRequestClose={() => setShowModal(false)}>
@@ -564,4 +727,25 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   // Inline picker sections
   rowInputs: { flexDirection: 'row', gap: 10 },
   pickerWrap: { paddingVertical: 10 },
+
+  // Task modal
+  taskRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.borderColor,
+  },
+  taskIconCircle: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: '#B8860B15', alignItems: 'center', justifyContent: 'center',
+  },
+  taskLabel: { fontSize: 13, fontWeight: '600', color: c.textMain },
+  taskCoinsText: { fontSize: 11, color: c.textMuted, marginTop: 2 },
+  iconChip: {
+    width: 36, height: 36, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark,
+  },
+  coinChip: {
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8,
+    borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark,
+  },
 });
