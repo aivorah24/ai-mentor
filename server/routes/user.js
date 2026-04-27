@@ -128,22 +128,22 @@ router.post('/sync', async (req, res) => {
     if (curriculum) patch.curriculum = curriculum;
     if (location)   patch.location   = location;
 
-    // If only email is provided (fetchSupabaseProfile call), do a SELECT only — don't upsert
-    // Upserting with only email would fail the NOT NULL constraint on the name column
-    const isReadOnly = Object.keys(patch).length === 1; // only email
+    // If name is not provided, do a SELECT only — don't upsert
+    // Upserting without name would fail the NOT NULL constraint on the name column
+    const isReadOnly = !patch.name;
 
     let data, error;
     if (isReadOnly) {
       ({ data, error } = await supabase
         .from('users')
-        .select('id, name, email, role, grade, school, curriculum, location, onboarding_complete, photo_url')
+        .select('id, name, email, role, grade, school, curriculum, location, phone, onboarding_complete, photo_url')
         .eq('email', patch.email)
         .maybeSingle());
     } else {
       ({ data, error } = await supabase
         .from('users')
         .upsert(patch, { onConflict: 'email' })
-        .select('id, name, email, role, grade, school, curriculum, location, onboarding_complete, photo_url')
+        .select('id, name, email, role, grade, school, curriculum, location, phone, onboarding_complete, photo_url')
         .single());
     }
 
@@ -171,6 +171,7 @@ router.post('/sync', async (req, res) => {
       school:             data.school,
       curriculum:         data.curriculum,
       location:           data.location,
+      phone:              data.phone ?? null,
       onboardingComplete: data.onboarding_complete,
       photoUrl:           data.photo_url ?? null,
     });
@@ -220,6 +221,7 @@ router.patch('/profile', async (req, res) => {
     }
     if (school)     patch.school     = school.trim();
     if (location)   patch.location   = location;
+    if (phone)      patch.phone      = phone.trim();
     // Store onboarding step for resume capability
     if (onboardingStep != null) patch.onboarding_step = onboardingStep;
 
@@ -230,7 +232,7 @@ router.patch('/profile', async (req, res) => {
       .from('users')
       .update(patch)
       .eq('email', emailLc)
-      .select('id, name, email, role, grade, school, curriculum, location, onboarding_complete')
+      .select('id, name, email, role, grade, school, curriculum, location, phone, onboarding_complete')
       .single();
 
     if (error && error.code === 'PGRST116') {
@@ -238,7 +240,7 @@ router.patch('/profile', async (req, res) => {
       ({ data, error } = await supabase
         .from('users')
         .upsert({ email: emailLc, ...patch }, { onConflict: 'email' })
-        .select('id, name, email, role, grade, school, curriculum, location, onboarding_complete')
+        .select('id, name, email, role, grade, school, curriculum, location, phone, onboarding_complete')
         .single());
     }
 
@@ -252,18 +254,7 @@ router.patch('/profile', async (req, res) => {
     // Store parent children[] in preferences file
     if (children && Array.isArray(children)) {
       await setPreferences(email, { children, ...(phone ? { phone } : {}), updatedAt: new Date().toISOString() });
-
-      // Also upsert parent_children rows in Supabase
-      for (const child of children) {
-        if (!child.email) continue;
-        await supabase.from('parent_children').upsert({
-          parent_email: emailLc,
-          child_email:  child.email.toLowerCase().trim(),
-          child_name:   child.name || '',
-          child_grade:  child.grade || '',
-          child_curriculum: child.curriculum || '',
-        }, { onConflict: 'parent_email,child_email', ignoreDuplicates: false }).catch(() => {});
-      }
+      // parent_children linking (by child_id) is handled separately via POST /parent/:email/children/create-student
     }
 
     // Store extra fields (dob, gender, phone) in preferences — dob + phone are encrypted
@@ -337,6 +328,7 @@ router.patch('/profile', async (req, res) => {
       school:             data.school,
       curriculum:         data.curriculum,
       location:           data.location,
+      phone:              data.phone ?? null,
       onboardingComplete: data.onboarding_complete,
     });
   } catch (err) {

@@ -105,6 +105,13 @@ export default function OnboardingScreen() {
   const [childSchool, setChildSchool] = useState('');
   const [childCurriculum, setChildCurriculum] = useState('');
   const [childEmail, setChildEmail] = useState('');
+  const [childPassword, setChildPassword] = useState('');
+  const [childAge, setChildAge] = useState('');
+
+  function isChildUnder14() {
+    const age = parseInt(childAge);
+    return !isNaN(age) && age < 14;
+  }
 
   const progress = (step + 1) / steps.length;
 
@@ -221,6 +228,38 @@ export default function OnboardingScreen() {
           gender: gender || undefined,
         }),
       }).catch(() => {});
+
+      // ── Auto-create student account for under-14 children ────────────────
+      if (role === 'parent' && childName.trim() && isChildUnder14() && childEmail.trim() && childPassword) {
+        try {
+          const createRes = await fetch(`${SERVER_URL}/parent/${email}/children/create-student`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: childName.trim(),
+              email: childEmail.trim().toLowerCase(),
+              password: childPassword,
+              grade: childGrade,
+              curriculum: childCurriculum,
+              school: childSchool || school,
+            }),
+          });
+          if (!createRes.ok) {
+            const err = await createRes.json().catch(() => ({}));
+            // 409 = already exists — try to link instead
+            if (createRes.status === 409) {
+              await fetch(`${SERVER_URL}/parent/${email}/children`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ childEmail: childEmail.trim().toLowerCase() }),
+              }).catch(() => {});
+            }
+            // non-blocking: don't throw, let onboarding complete
+          }
+        } catch {
+          // non-blocking
+        }
+      }
 
       // Only mark onboarding complete locally after server confirmed the save
       updateUser({
@@ -412,6 +451,9 @@ export default function OnboardingScreen() {
           <Text style={styles.fieldLabel}>Child's Full Name</Text>
           <TextInput style={styles.input} value={childName} onChangeText={setChildName}
             placeholder="Enter your child's name" placeholderTextColor={colors.textDim} autoCapitalize="words" />
+          <Text style={styles.fieldLabel}>Child's Age</Text>
+          <TextInput style={styles.input} value={childAge} onChangeText={setChildAge}
+            placeholder="e.g. 9" placeholderTextColor={colors.textDim} keyboardType="numeric" maxLength={2} />
           <Text style={styles.fieldLabel}>Child's Grade</Text>
           <View style={styles.chipRow}>
             {GRADES.map(g => (
@@ -437,10 +479,21 @@ export default function OnboardingScreen() {
           <Text style={styles.fieldLabel}>Child's School</Text>
           <TextInput style={styles.input} value={childSchool} onChangeText={setChildSchool}
             placeholder="e.g. Hyderabad International School" placeholderTextColor={colors.textDim} />
-          <Text style={styles.fieldLabel}>Child's Email (optional — to link accounts)</Text>
+          <Text style={styles.fieldLabel}>Child's Email (optional)</Text>
           <TextInput style={styles.input} value={childEmail} onChangeText={setChildEmail}
             placeholder="child@email.com" placeholderTextColor={colors.textDim}
             keyboardType="email-address" autoCapitalize="none" />
+          {childEmail.trim().length > 0 && isChildUnder14() && (
+            <>
+              <Text style={styles.fieldLabel}>Set Child's Password</Text>
+              <TextInput style={styles.input} value={childPassword} onChangeText={setChildPassword}
+                placeholder="Create a login password for your child"
+                placeholderTextColor={colors.textDim} secureTextEntry />
+              <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18, marginTop: -8 }}>
+                Since your child is under 14, we'll create their Aivorah account automatically so they can log in right away.
+              </Text>
+            </>
+          )}
         </View>
       );
       if (step === 3) return renderAvatarStep();
