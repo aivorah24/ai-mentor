@@ -6,6 +6,7 @@ import Sidebar from './Sidebar';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import TeacherAIPanel from './TeacherAIPanel';
+import ParentAIPanel from './ParentAIPanel';
 import type { AppColors } from '../../theme';
 
 interface ScreenLayoutProps {
@@ -24,6 +25,7 @@ export default function ScreenLayout({ children }: ScreenLayoutProps) {
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const isTeacher = user?.role === 'teacher';
+  const isParent = user?.role === 'parent';
 
   if (!showPermanentSidebar) {
     return <View style={styles.mobileContainer}>{children}</View>;
@@ -37,6 +39,7 @@ export default function ScreenLayout({ children }: ScreenLayoutProps) {
       />
       <View style={styles.content}>{children}</View>
       {isTeacher && <TeacherAIPanel />}
+      {isParent && <ParentAIPanel />}
     </View>
   );
 }

@@ -58,6 +58,81 @@ router.get('/:parentEmail/children', async (req, res) => {
   }
 });
 
+// ── POST /parent/:parentEmail/children/create-student ────
+// Create a new student account on behalf of a parent (for under-14)
+// Body: { name, email, password, grade, curriculum, school? }
+
+router.post('/:parentEmail/children/create-student', async (req, res) => {
+  try {
+    const { parentEmail } = req.params;
+    const { name, email, password, grade, curriculum, school = '' } = req.body;
+
+    if (!name || !email || !password || !grade || !curriculum) {
+      return res.status(400).json({ error: 'name, email, password, grade and curriculum are required' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Check if email already registered
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', cleanEmail)
+      .single();
+
+    if (existing) {
+      return res.status(409).json({ error: 'An account with this email already exists. Use "Link Existing" instead.' });
+    }
+
+    // Create Supabase auth user (service key = admin, no email verification)
+    const { data: authData, error: authErr } = await supabase.auth.admin.createUser({
+      email: cleanEmail,
+      password,
+      email_confirm: true,   // bypass email verification — parent is creating on child's behalf
+    });
+
+    if (authErr || !authData?.user) {
+      return res.status(500).json({ error: authErr?.message || 'Could not create auth account' });
+    }
+
+    const userId = authData.user.id;
+
+    // Insert into users table
+    const { error: insertErr } = await supabase.from('users').insert({
+      id:         userId,
+      name:       name.trim(),
+      email:      cleanEmail,
+      role:       'student',
+      grade,
+      curriculum,
+      school:     school.trim(),
+      created_at: new Date().toISOString(),
+    });
+
+    if (insertErr) {
+      // Rollback auth user
+      await supabase.auth.admin.deleteUser(userId);
+      return res.status(500).json({ error: insertErr.message });
+    }
+
+    // Link to parent
+    const { error: linkErr } = await supabase
+      .from('parent_children')
+      .insert({ parent_email: parentEmail, child_id: userId });
+
+    if (linkErr && linkErr.code !== '23505') {
+      return res.status(500).json({ error: linkErr.message });
+    }
+
+    res.json({
+      success: true,
+      child: { id: userId, name: name.trim(), email: cleanEmail, grade, curriculum, school },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── POST /parent/:parentEmail/children ───────────────────
 // Link a student to a parent by child's email
 

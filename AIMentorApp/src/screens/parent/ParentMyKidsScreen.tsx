@@ -34,17 +34,17 @@ function ChildCard({ child, colors, styles, navigation, onRemove }: any) {
             {child.name[0].toUpperCase()}
           </Text>
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.childName}>{child.name}</Text>
-          <Text style={styles.childSub}>{child.grade}{child.school ? ` · ${child.school}` : ''}</Text>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={styles.childName} numberOfLines={1}>{child.name}</Text>
+          <Text style={styles.childSub} numberOfLines={1}>{child.grade}{child.school ? ` · ${child.school}` : ''}</Text>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <View style={[styles.badge, { backgroundColor: badgeColor + '18', borderColor: badgeColor + '33' }]}>
-            <Text style={[styles.badgeText, { color: badgeColor }]}>{badgeLabel}</Text>
-          </View>
+        <View style={{ flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
           <TouchableOpacity onPress={() => onRemove(child)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="x" size={16} color={colors.textDim} />
           </TouchableOpacity>
+          <View style={[styles.badge, { backgroundColor: badgeColor + '18', borderColor: badgeColor + '33' }]}>
+            <Text style={[styles.badgeText, { color: badgeColor }]}>{badgeLabel}</Text>
+          </View>
         </View>
       </View>
 
@@ -130,10 +130,31 @@ export default function ParentMyKidsScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
 
   // Add child modal
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal]   = useState(false);
+  const [modalTab, setModalTab]     = useState<'create' | 'link'>('create');
+
+  // Create new student
+  const [newName,       setNewName]       = useState('');
+  const [newEmail,      setNewEmail]      = useState('');
+  const [newPassword,   setNewPassword]   = useState('');
+  const [newGrade,      setNewGrade]      = useState('Grade 3');
+  const [newCurriculum, setNewCurriculum] = useState('IB PYP');
+  const [newSchool,     setNewSchool]     = useState('');
+  const [creating,      setCreating]      = useState(false);
+  const [createError,   setCreateError]   = useState('');
+
+  // Link existing
   const [childEmail, setChildEmail] = useState('');
-  const [linking, setLinking] = useState(false);
-  const [linkError, setLinkError] = useState('');
+  const [linking,    setLinking]    = useState(false);
+  const [linkError,  setLinkError]  = useState('');
+
+  function openModal(tab: 'create' | 'link' = 'create') {
+    setModalTab(tab);
+    setNewName(''); setNewEmail(''); setNewPassword(''); setNewGrade('Grade 3');
+    setNewCurriculum('IB PYP'); setNewSchool(''); setCreateError('');
+    setChildEmail(''); setLinkError('');
+    setShowModal(true);
+  }
 
   const parentEmail = user?.email || 'parent@demo.com';
 
@@ -192,30 +213,42 @@ export default function ParentMyKidsScreen({ navigation }: any) {
 
   useEffect(() => { fetchChildren(); }, [fetchChildren]);
 
-  async function addChild() {
-    if (!childEmail.trim()) return;
-    setLinking(true);
-    setLinkError('');
+  async function createStudent() {
+    if (!newName.trim() || !newEmail.trim() || !newPassword.trim()) {
+      setCreateError('Name, email and password are required.'); return;
+    }
+    if (newPassword.length < 6) {
+      setCreateError('Password must be at least 6 characters.'); return;
+    }
+    setCreating(true); setCreateError('');
     try {
-      const res = await fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childEmail: childEmail.trim() }),
-      });
+      const res = await fetch(
+        `${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children/create-student`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName.trim(), email: newEmail.trim(), password: newPassword, grade: newGrade, curriculum: newCurriculum, school: newSchool.trim() }) }
+      );
       const data = await res.json();
-      if (!res.ok) {
-        setLinkError(data.error || 'Could not link child.');
-        return;
-      }
-      setChildEmail('');
+      if (!res.ok) { setCreateError(data.error || 'Could not create account.'); return; }
       setShowModal(false);
       setLoading(true);
       fetchChildren();
-    } catch {
-      setLinkError('Network error. Please try again.');
-    } finally {
-      setLinking(false);
-    }
+    } catch { setCreateError('Network error. Please try again.'); }
+    finally { setCreating(false); }
+  }
+
+  async function addChild() {
+    if (!childEmail.trim()) return;
+    setLinking(true); setLinkError('');
+    try {
+      const res = await fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ childEmail: childEmail.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setLinkError(data.error || 'Could not link child.'); return; }
+      setChildEmail(''); setShowModal(false); setLoading(true); fetchChildren();
+    } catch { setLinkError('Network error. Please try again.'); }
+    finally { setLinking(false); }
   }
 
   function confirmRemove(child: any) {
@@ -279,10 +312,10 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                 </View>
               )}
 
-              <TouchableOpacity style={styles.addChildCard} activeOpacity={0.7} onPress={() => { setLinkError(''); setChildEmail(''); setShowModal(true); }}>
-                <Feather name="plus" size={28} color={colors.textDim} />
+              <TouchableOpacity style={styles.addChildCard} activeOpacity={0.7} onPress={() => openModal('create')}>
+                <Feather name="user-plus" size={28} color={colors.textDim} />
                 <Text style={styles.addChildTitle}>Add {children.length > 0 ? 'Another' : 'a'} Child</Text>
-                <Text style={styles.addChildSub}>Link your child's account to track their progress.</Text>
+                <Text style={styles.addChildSub}>Create a new account or link an existing one.</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -293,45 +326,141 @@ export default function ParentMyKidsScreen({ navigation }: any) {
       <Modal visible={showModal} transparent animationType="fade" onRequestClose={() => setShowModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
+            {/* Header */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Link Child Account</Text>
+              <Text style={styles.modalTitle}>Add Child Account</Text>
               <TouchableOpacity onPress={() => setShowModal(false)}>
                 <Feather name="x" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.modalDesc}>
-              Enter your child's registered email address. They must have a student account already.
-            </Text>
+            {/* Tab switcher */}
+            <View style={styles.tabRow}>
+              <TouchableOpacity
+                style={[styles.tab, modalTab === 'create' && styles.tabActive]}
+                onPress={() => { setModalTab('create'); setCreateError(''); }}
+                activeOpacity={0.8}>
+                <Feather name="user-plus" size={14} color={modalTab === 'create' ? colors.primary : colors.textMuted} />
+                <Text style={[styles.tabText, modalTab === 'create' && { color: colors.primary, fontWeight: '700' }]}>Create New</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tab, modalTab === 'link' && styles.tabActive]}
+                onPress={() => { setModalTab('link'); setLinkError(''); }}
+                activeOpacity={0.8}>
+                <Feather name="link" size={14} color={modalTab === 'link' ? colors.primary : colors.textMuted} />
+                <Text style={[styles.tabText, modalTab === 'link' && { color: colors.primary, fontWeight: '700' }]}>Link Existing</Text>
+              </TouchableOpacity>
+            </View>
 
-            <TextInput
-              style={[styles.input, linkError ? { borderColor: colors.accentRed } : {}]}
-              placeholder="child@example.com"
-              placeholderTextColor={colors.textMuted}
-              value={childEmail}
-              onChangeText={t => { setChildEmail(t); setLinkError(''); }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+            {/* ── CREATE NEW ── */}
+            {modalTab === 'create' && (
+              <View style={{ gap: 10 }}>
+                <Text style={styles.modalDesc}>
+                  Create a student account for your child. They can log in with these credentials on any device.
+                </Text>
 
-            {linkError ? (
-              <View style={styles.errorRow}>
-                <Feather name="alert-circle" size={13} color={colors.accentRed} />
-                <Text style={[styles.errorText, { color: colors.accentRed }]}>{linkError}</Text>
+                <TextInput style={styles.input} placeholder="Child's full name" placeholderTextColor={colors.textMuted}
+                  value={newName} onChangeText={t => { setNewName(t); setCreateError(''); }} autoCapitalize="words" />
+
+                <TextInput style={styles.input} placeholder="Email address" placeholderTextColor={colors.textMuted}
+                  value={newEmail} onChangeText={t => { setNewEmail(t); setCreateError(''); }}
+                  keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
+
+                <TextInput style={styles.input} placeholder="Password (min 6 characters)" placeholderTextColor={colors.textMuted}
+                  value={newPassword} onChangeText={t => { setNewPassword(t); setCreateError(''); }} secureTextEntry />
+
+                <View style={styles.rowInputs}>
+                  {/* Grade picker */}
+                  <View style={[styles.input, styles.pickerWrap, { flex: 1 }]}>
+                    <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 4 }}>Grade</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {['Grade 3','Grade 4','Grade 5'].map(g => (
+                        <TouchableOpacity key={g} onPress={() => setNewGrade(g)} activeOpacity={0.8}
+                          style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
+                            backgroundColor: newGrade === g ? colors.primary + '20' : colors.surface,
+                            borderWidth: 1, borderColor: newGrade === g ? colors.primary : colors.borderColor }}>
+                          <Text style={{ fontSize: 12, color: newGrade === g ? colors.primary : colors.textMuted, fontWeight: newGrade === g ? '700' : '400' }}>{g}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.rowInputs}>
+                  {/* Curriculum picker */}
+                  <View style={[styles.input, styles.pickerWrap, { flex: 1 }]}>
+                    <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 4 }}>Curriculum</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {['IB PYP','CBSE','NCERT'].map(c => (
+                        <TouchableOpacity key={c} onPress={() => setNewCurriculum(c)} activeOpacity={0.8}
+                          style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
+                            backgroundColor: newCurriculum === c ? colors.primary + '20' : colors.surface,
+                            borderWidth: 1, borderColor: newCurriculum === c ? colors.primary : colors.borderColor }}>
+                          <Text style={{ fontSize: 12, color: newCurriculum === c ? colors.primary : colors.textMuted, fontWeight: newCurriculum === c ? '700' : '400' }}>{c}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+
+                <TextInput style={styles.input} placeholder="School name (optional)" placeholderTextColor={colors.textMuted}
+                  value={newSchool} onChangeText={setNewSchool} autoCapitalize="words" />
+
+                {createError ? (
+                  <View style={styles.errorRow}>
+                    <Feather name="alert-circle" size={13} color={colors.accentRed} />
+                    <Text style={[styles.errorText, { color: colors.accentRed }]}>{createError}</Text>
+                  </View>
+                ) : null}
+
+                <TouchableOpacity
+                  style={[styles.linkBtn, (!newName.trim() || !newEmail.trim() || !newPassword.trim() || creating) && { opacity: 0.5 }]}
+                  onPress={createStudent}
+                  disabled={!newName.trim() || !newEmail.trim() || !newPassword.trim() || creating}
+                  activeOpacity={0.8}>
+                  {creating
+                    ? <ActivityIndicator color="white" size="small" />
+                    : <><Feather name="user-plus" size={15} color="#fff" /><Text style={styles.linkBtnText}>Create Student Account</Text></>}
+                </TouchableOpacity>
               </View>
-            ) : null}
+            )}
 
-            <TouchableOpacity
-              style={[styles.linkBtn, (!childEmail.trim() || linking) && { opacity: 0.5 }]}
-              onPress={addChild}
-              disabled={!childEmail.trim() || linking}
-              activeOpacity={0.8}
-            >
-              {linking
-                ? <ActivityIndicator color="white" size="small" />
-                : <Text style={styles.linkBtnText}>Link Child</Text>}
-            </TouchableOpacity>
+            {/* ── LINK EXISTING ── */}
+            {modalTab === 'link' && (
+              <View style={{ gap: 10 }}>
+                <Text style={styles.modalDesc}>
+                  If your child already has an Aivorah account, enter their registered email to link it.
+                </Text>
+
+                <TextInput
+                  style={[styles.input, linkError ? { borderColor: colors.accentRed } : {}]}
+                  placeholder="child@example.com"
+                  placeholderTextColor={colors.textMuted}
+                  value={childEmail}
+                  onChangeText={t => { setChildEmail(t); setLinkError(''); }}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+
+                {linkError ? (
+                  <View style={styles.errorRow}>
+                    <Feather name="alert-circle" size={13} color={colors.accentRed} />
+                    <Text style={[styles.errorText, { color: colors.accentRed }]}>{linkError}</Text>
+                  </View>
+                ) : null}
+
+                <TouchableOpacity
+                  style={[styles.linkBtn, (!childEmail.trim() || linking) && { opacity: 0.5 }]}
+                  onPress={addChild}
+                  disabled={!childEmail.trim() || linking}
+                  activeOpacity={0.8}>
+                  {linking
+                    ? <ActivityIndicator color="white" size="small" />
+                    : <><Feather name="link" size={15} color="#fff" /><Text style={styles.linkBtnText}>Link Account</Text></>}
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -347,20 +476,20 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   pageTitle: { fontSize: 22, fontWeight: '700', color: c.textMain, marginBottom: 6 },
   pageSubtitle: { fontSize: 13, color: c.textMuted },
 
-  cardsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg },
+  cardsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-start' },
 
   childCard: {
-    flex: 1, minWidth: 280,
+    flex: 1, minWidth: 280, maxWidth: 380,
     backgroundColor: c.cardDark, borderWidth: 1,
     borderColor: c.borderColor, borderRadius: radius.xl,
     padding: spacing.xl, gap: spacing.lg,
   },
-  childCardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  avatar: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  childCardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+  avatar: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   avatarText: { fontSize: 22, fontWeight: '700' },
-  childName: { fontSize: 18, fontWeight: '700', color: c.textMain },
-  childSub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-  badge: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+  childName: { fontSize: 16, fontWeight: '700', color: c.textMain, numberOfLines: 1 },
+  childSub: { fontSize: 11, color: c.textMuted, marginTop: 2, numberOfLines: 1 },
+  badge: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, flexShrink: 0 },
   badgeText: { fontSize: 11, fontWeight: '600' },
 
   statsRow: {
@@ -421,7 +550,18 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   errorText: { fontSize: 12, flex: 1 },
   linkBtn: {
     backgroundColor: c.primary, borderRadius: radius.md,
-    padding: spacing.md, alignItems: 'center',
+    paddingVertical: 13, paddingHorizontal: spacing.md,
+    alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8,
   },
   linkBtnText: { fontSize: 15, fontWeight: '700', color: 'white' },
+
+  // Tab switcher
+  tabRow: { flexDirection: 'row', backgroundColor: c.bgDark, borderRadius: radius.md, padding: 3, gap: 3 },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 9, borderRadius: radius.sm - 2 },
+  tabActive: { backgroundColor: c.cardDark },
+  tabText: { fontSize: 13, color: c.textMuted, fontWeight: '500' },
+
+  // Inline picker sections
+  rowInputs: { flexDirection: 'row', gap: 10 },
+  pickerWrap: { paddingVertical: 10 },
 });

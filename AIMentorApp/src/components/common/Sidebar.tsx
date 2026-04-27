@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Image,
+  Modal,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -76,6 +77,7 @@ const ROLE_DASH: Record<string, string> = { teacher: 'TeacherDashboard', parent:
 
 export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
   const { logout, user, switchRole } = useAuth();
+  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
   const isDualRole = (user?.roles?.length ?? 0) > 1;
   const role = user?.role;
   const NAV_ITEMS = role === 'teacher' ? TEACHER_NAV_ITEMS : role === 'parent' ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
@@ -89,12 +91,12 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
   return (
     <View style={styles.container}>
       {/* Logo */}
-      <View style={styles.logo}>
+      <TouchableOpacity style={styles.logo} activeOpacity={0.7} onPress={() => setShowHomeConfirm(true)}>
         <View style={styles.logoMark}>
           <Feather name="zap" size={18} color="white" />
         </View>
         <Text style={styles.logoText}>Aivorah</Text>
-      </View>
+      </TouchableOpacity>
 
       <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
         {groups.map((group) => {
@@ -218,6 +220,31 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
           <Text style={[styles.navItemText, { color: colors.accentRed }]}>Logout</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Branded Home Confirmation Modal */}
+      <Modal visible={showHomeConfirm} transparent animationType="fade" onRequestClose={() => setShowHomeConfirm(false)}>
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmCard}>
+            <View style={styles.confirmLogoRow}>
+              <View style={styles.logoMark}>
+                <Feather name="zap" size={18} color="white" />
+              </View>
+              <Text style={styles.confirmBrand}>Aivorah</Text>
+            </View>
+            <Text style={styles.confirmTitle}>Leave to Home?</Text>
+            <Text style={styles.confirmSub}>You'll be taken back to the Aivorah landing page and signed out.</Text>
+            <View style={styles.confirmBtns}>
+              <TouchableOpacity style={styles.confirmCancel} onPress={() => setShowHomeConfirm(false)} activeOpacity={0.8}>
+                <Text style={styles.confirmCancelText}>Stay</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.confirmGo} onPress={() => { setShowHomeConfirm(false); logout(); }} activeOpacity={0.8}>
+                <Feather name="home" size={14} color="#fff" />
+                <Text style={styles.confirmGoText}>Go to Home</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -402,4 +429,17 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   userAvatarImg: { width: 30, height: 30, borderRadius: 15 },
   userName: { fontSize: 13, fontWeight: '600', color: c.textMain },
   userRole: { fontSize: 11, color: c.textDim, textTransform: 'capitalize' },
+
+  // Home confirm modal
+  confirmOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  confirmCard: { backgroundColor: c.cardDark, borderRadius: 20, borderWidth: 1, borderColor: c.borderColor, padding: 28, width: '100%', maxWidth: 360, gap: 12 },
+  confirmLogoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 },
+  confirmBrand: { fontSize: 18, fontWeight: '800', color: c.textMain, letterSpacing: -0.3 },
+  confirmTitle: { fontSize: 20, fontWeight: '700', color: c.textMain },
+  confirmSub: { fontSize: 13, color: c.textMuted, lineHeight: 20 },
+  confirmBtns: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  confirmCancel: { flex: 1, borderWidth: 1, borderColor: c.borderColor, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
+  confirmCancelText: { fontSize: 14, fontWeight: '600', color: c.textMuted },
+  confirmGo: { flex: 1, backgroundColor: c.primary, borderRadius: 10, paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  confirmGoText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 });

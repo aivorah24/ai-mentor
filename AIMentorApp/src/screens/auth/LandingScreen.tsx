@@ -10,6 +10,7 @@ import {
   Linking,
   ActivityIndicator,
   Alert,
+  Modal,
   Animated,
   Easing,
   Dimensions,
@@ -552,20 +553,20 @@ const ROLES_DATA = [
       'Understand strengths and areas to improve',
       'Direct communication with teachers',
       'Weekly AI-generated learning summaries',
-      'No complexity — just clear, honest insights',
+      'No complexity. Just clear, honest insights.',
     ],
   },
 ];
 
 const FEATURES_DATA = [
   { icon: 'cpu', title: 'Aivorah 24/7', desc: 'An always-on intelligent assistant that explains concepts, solves problems step-by-step, and adapts to your learning style in real time.' },
-  { icon: 'zap', title: 'Adaptive Learning Paths', desc: 'The platform continuously adjusts difficulty and content based on your performance — so you\'re always learning at the right level.' },
+  { icon: 'zap', title: 'Adaptive Learning Paths', desc: 'The platform continuously adjusts difficulty and content based on your performance, so you\'re always learning at the right level.' },
   { icon: 'trending-up', title: 'Real-time Analytics', desc: 'Beautiful dashboards for students, teachers, and parents that turn raw data into clear, actionable learning insights.' },
   { icon: 'target', title: 'Gamified Challenges', desc: 'Earn XP, unlock achievements, and compete in challenges that make studying engaging and genuinely fun.' },
 ];
 
 const HOW_IT_WORKS = [
-  { step: '01', icon: 'user-plus', title: 'Create your account', desc: 'Sign up in seconds — choose your role as a student, teacher, or parent and get instant access.' },
+  { step: '01', icon: 'user-plus', title: 'Create your account', desc: 'Sign up in seconds. Choose your role as a student, teacher, or parent and get instant access.' },
   { step: '02', icon: 'sliders', title: 'Set up your profile', desc: 'Tell us your subjects, grade level, and goals. Our AI builds a personalized plan tailored just for you.' },
   { step: '03', icon: 'cpu', title: 'Start learning with AI', desc: 'Chat with your AI mentor, complete adaptive assignments, and track every milestone as you grow.' },
 ];
@@ -582,6 +583,41 @@ export default function LandingScreen() {
   const [showForgot,   setShowForgot]   = useState(false);
   const heroEnter = useRef(new Animated.Value(0)).current;
   const sectionsEnter = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<any>(null);
+  const sectionOffsets = useRef<Record<string, number>>({});
+
+  function scrollToSection(name: string) {
+    const offset = sectionOffsets.current[name];
+    if (offset !== undefined && scrollRef.current) {
+      scrollRef.current.scrollTo({ y: offset, animated: true });
+    }
+  }
+
+  const [legalModal, setLegalModal] = useState<{ title: string; body: string } | null>(null);
+
+  const LEGAL_CONTENT: Record<string, string> = {
+    'Privacy Policy': 'Aivorah collects only the information necessary to personalise your learning experience: name, email, grade, and curriculum. We never sell your data. All data is encrypted in transit and at rest. Parents can request deletion of their child\'s data at any time by emailing aivorah24@gmail.com.',
+    'Terms of Service': 'By using Aivorah, you agree to use the platform for educational purposes only. Aivorah is provided "as is" for the 2026 pilot. We reserve the right to update these terms. Continued use of the platform constitutes acceptance of any changes.',
+    'Cookie Policy': 'Aivorah uses essential cookies only to keep you logged in and remember your preferences. We do not use advertising or tracking cookies. You can clear cookies at any time through your browser settings.',
+  };
+
+  function handleFooterLink(item: string) {
+    const scrollTargets: Record<string, string> = {
+      'Features': 'Features',
+      'About Us': 'About',
+      'Contact':  'Contact',
+    };
+    if (scrollTargets[item]) {
+      scrollToSection(scrollTargets[item]);
+      return;
+    }
+    if (LEGAL_CONTENT[item]) {
+      setLegalModal({ title: item, body: LEGAL_CONTENT[item] });
+      return;
+    }
+    // Coming soon items
+    setLegalModal({ title: item, body: `${item} is coming soon. Stay tuned for updates from Aivorah!` });
+  }
 
   function switchToSignup() { setShowLogin(false); setTimeout(() => setShowSignup(true), 200); }
   function switchToLogin()  { setShowSignup(false); setShowForgot(false); setTimeout(() => setShowLogin(true), 200); }
@@ -660,7 +696,9 @@ export default function LandingScreen() {
           {IS_LARGE && (
             <View style={s.navLinks}>
               {['Features', 'About', 'Contact'].map(l => (
-                <Text key={l} style={s.navLink}>{l}</Text>
+                <TouchableOpacity key={l} onPress={() => scrollToSection(l)} activeOpacity={0.7}>
+                  <Text style={s.navLink}>{l}</Text>
+                </TouchableOpacity>
               ))}
             </View>
           )}
@@ -674,7 +712,7 @@ export default function LandingScreen() {
       </View>
 
       {/* ── SCROLLABLE PAGE ───────────────────────────── */}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.pageContent}>
+      <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={s.pageContent}>
 
         {/* ── HERO ──────────────────────────────────── */}
         <Animated.View
@@ -911,7 +949,7 @@ export default function LandingScreen() {
         </View>
 
         {/* ── FEATURES ──────────────────────────────── */}
-        <View style={s.section}>
+        <View style={s.section} onLayout={e => { sectionOffsets.current['Features'] = e.nativeEvent.layout.y; }}>
           <Text style={s.sectionTitle}>Powerful Features</Text>
           <Text style={s.sectionSub}>Everything you need to accelerate learning and improve outcomes — all in one place.</Text>
           <View style={[s.grid2, IS_LARGE && { flexDirection: 'row', flexWrap: 'wrap', gap: 20 }]}>
@@ -936,6 +974,54 @@ export default function LandingScreen() {
           </View>
         </View>
 
+        {/* ── ABOUT ─────────────────────────────────── */}
+        <View style={s.section} onLayout={e => { sectionOffsets.current['About'] = e.nativeEvent.layout.y; }}>
+          <Text style={s.sectionTitle}>About Aivorah</Text>
+          <Text style={s.sectionSub}>We believe every child deserves a patient, personalised tutor. Not just the privileged few.</Text>
+          <View style={[s.grid2, IS_LARGE && { flexDirection: 'row', gap: 24 }]}>
+            <View style={[s.howCard, { flex: 1 }]}>
+              <Feather name="target" size={22} color={CYAN} style={{ marginBottom: 12 }} />
+              <Text style={s.howTitle}>Our Mission</Text>
+              <Text style={s.howDesc}>Aivorah is an AI-powered adaptive learning platform designed to personalise education for every student. We believe every child deserves a patient, intelligent tutor. Our mission is to make quality education accessible to all.</Text>
+            </View>
+            <View style={[s.howCard, { flex: 1 }]}>
+              <Feather name="users" size={22} color={CYAN} style={{ marginBottom: 12 }} />
+              <Text style={s.howTitle}>Who We Serve</Text>
+              <Text style={s.howDesc}>We bridge students, teachers, and parents in one platform. Teachers get AI-powered insights. Parents track their child's progress. Students get a tireless, encouraging AI tutor available 24/7.</Text>
+            </View>
+            <View style={[s.howCard, { flex: 1 }]}>
+              <Feather name="heart" size={22} color={CYAN} style={{ marginBottom: 12 }} />
+              <Text style={s.howTitle}>Our Philosophy</Text>
+              <Text style={s.howDesc}>"Equality of IQ is a myth. But every kid can perform at their own 80%." We meet students where they are, build confidence, and guide them upward — never letting them quit feeling defeated.</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── CONTACT ───────────────────────────────── */}
+        <View style={s.section} onLayout={e => { sectionOffsets.current['Contact'] = e.nativeEvent.layout.y; }}>
+          <Text style={s.sectionTitle}>Get in Touch</Text>
+          <Text style={s.sectionSub}>Have questions? We'd love to hear from you.</Text>
+          <View style={[s.grid2, IS_LARGE && { flexDirection: 'row', gap: 24, justifyContent: 'center' }]}>
+            <View style={[s.howCard, { flex: 1, alignItems: 'center' }]}>
+              <Feather name="mail" size={24} color={CYAN} style={{ marginBottom: 12 }} />
+              <Text style={s.howTitle}>Email Us</Text>
+              <Text style={[s.howDesc, { textAlign: 'center' }]}>aivorah24@gmail.com</Text>
+            </View>
+            <View style={[s.howCard, { flex: 1, alignItems: 'center' }]}>
+              <Feather name="map-pin" size={24} color={CYAN} style={{ marginBottom: 12 }} />
+              <Text style={s.howTitle}>Location</Text>
+              <Text style={[s.howDesc, { textAlign: 'center' }]}>Hyderabad, India</Text>
+              <Text style={[s.howDesc, { textAlign: 'center', marginTop: 4 }]}>Pilot: IB PYP Grades 3–5</Text>
+            </View>
+            <View style={[s.howCard, { flex: 1, alignItems: 'center' }]}>
+              <Feather name="globe" size={24} color={CYAN} style={{ marginBottom: 12 }} />
+              <Text style={s.howTitle}>Website</Text>
+              <Text style={[s.howDesc, { textAlign: 'center' }]}>aivorah.ai</Text>
+              <Text style={[s.howDesc, { textAlign: 'center', marginTop: 4 }]}>Coming April 2026</Text>
+            </View>
+          </View>
+        </View>
+
         {/* ── FOOTER ────────────────────────────────── */}
         <View style={s.footer}>
           <View style={s.footerTop}>
@@ -957,7 +1043,9 @@ export default function LandingScreen() {
                   <View key={col.heading} style={{ minWidth: 120 }}>
                     <Text style={s.footerColHead}>{col.heading}</Text>
                     {col.items.map(item => (
-                      <Text key={item} style={s.footerColItem}>{item}</Text>
+                      <TouchableOpacity key={item} onPress={() => handleFooterLink(item)} activeOpacity={0.7}>
+                        <Text style={s.footerColItem}>{item}</Text>
+                      </TouchableOpacity>
                     ))}
                   </View>
                 ))}
@@ -972,6 +1060,22 @@ export default function LandingScreen() {
         </View>
 
       </ScrollView>
+
+      {/* ── LEGAL MODAL ──────────────────────────── */}
+      <Modal visible={!!legalModal} transparent animationType="fade" onRequestClose={() => setLegalModal(null)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <View style={{ backgroundColor: '#1a1a1a', borderRadius: 16, borderWidth: 1, borderColor: '#333', padding: 28, width: '100%', maxWidth: 480, gap: 16 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff' }}>{legalModal?.title}</Text>
+              <TouchableOpacity onPress={() => setLegalModal(null)}><Feather name="x" size={20} color="#888" /></TouchableOpacity>
+            </View>
+            <Text style={{ fontSize: 14, color: '#aaa', lineHeight: 22 }}>{legalModal?.body}</Text>
+            <TouchableOpacity onPress={() => setLegalModal(null)} style={{ backgroundColor: CYAN + '22', borderWidth: 1, borderColor: CYAN, borderRadius: 8, paddingVertical: 10, alignItems: 'center' }}>
+              <Text style={{ color: CYAN, fontWeight: '700' }}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* ── AUTH MODALS ───────────────────────────── */}
       <LoginModal
