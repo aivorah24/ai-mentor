@@ -144,6 +144,50 @@ export default function ScheduleScreen({ navigation }: any) {
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
+  // ── Browser notifications for scheduled events ─────────────
+  const notifiedRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    // Request permission once
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    function checkNotifications() {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const now = new Date();
+      const todayStr = dateISO(now);
+      const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+      events.forEach(ev => {
+        if (ev.date !== todayStr) return;
+        const notifKey = `${ev.id}_${ev.startTime}`;
+        if (notifiedRef.current.has(notifKey)) return;
+        if (ev.startTime === currentTime) {
+          notifiedRef.current.add(notifKey);
+          const n = new Notification(`Aivorah — ${ev.title}`, {
+            body: ev.note
+              ? `${ev.startTime}${ev.endTime ? ' – ' + ev.endTime : ''} · ${ev.note}`
+              : `Starting now at ${ev.startTime}`,
+            icon: '/favicon.ico',
+            badge: '/favicon.ico',
+            tag: notifKey,
+          });
+          n.onclick = () => { window.focus(); n.close(); };
+        }
+      });
+    }
+
+    checkNotifications(); // run immediately
+    const interval = setInterval(checkNotifications, 60000); // every minute
+    return () => clearInterval(interval);
+  }, [events]);
+
   function openModalForRange(startIdx: number, endIdx: number) {
     const start = Math.max(0, Math.min(TIMES.length - 1, Math.min(startIdx, endIdx)));
     const spanHours = Math.max(1, Math.min(3, Math.abs(endIdx - startIdx) + 1));
