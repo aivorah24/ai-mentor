@@ -1,243 +1,231 @@
 const express  = require('express');
 const router   = express.Router();
-const fs       = require('fs');
-const path     = require('path');
-const { hashEmail } = require('../utils/encryption');
 const supabase = require('../services/supabase');
-
-const CONFIG_PATH   = path.join(__dirname, '../data/habits_config.json');
-const CHECKIN_PATH  = path.join(__dirname, '../data/habits_checkins.json');
 
 const STREAK_BONUS_DAYS  = 100;
 const STREAK_BONUS_COINS = 20;
 
-function readJson(p)       { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return {}; } }
-function writeJson(p, d)   { fs.writeFileSync(p, JSON.stringify(d, null, 2)); }
-function todayStr()        { return new Date().toISOString().slice(0, 10); }
+function todayStr() { return new Date().toISOString().slice(0, 10); }
 
-// ── Default habits (used when parent hasn't configured yet) ───────────────────
-const DEFAULT_HABITS = [
-  { id: 'brush_teeth',  label: 'Brush teeth twice',        icon: 'smile',    coins: 5 },
-  { id: 'drink_water',  label: 'Drink 2 bottles of water', icon: 'droplet',  coins: 5 },
-  { id: 'eat_fruit',    label: 'Eat a fruit today',         icon: 'sun',      coins: 5 },
-  { id: 'no_junk',      label: 'No junk food today',        icon: 'shield',   coins: 10 },
-  { id: 'sleep_early',  label: 'Sleep by 9pm',              icon: 'moon',     coins: 10 },
-  { id: 'exercise',     label: 'Exercise or yoga',          icon: 'activity', coins: 10 },
-  { id: 'read_book',    label: 'Read for 20 minutes',       icon: 'book-open',coins: 5 },
-  { id: 'wake_early',   label: 'Wake up by 6:30am',         icon: 'sunrise',  coins: 5 },
-];
-
-// ── Compute streak for a user ─────────────────────────────────────────────────
-function computeStreak(checkins) {
-  const dates = Object.keys(checkins).sort().reverse();
-  if (!dates.length) return 0;
+// ── Compute streak from array of dated checkin rows ───────────────────────────
+function computeStreak(dateSet) {
+  // dateSet: Set of date strings where the user completed at least one habit
+  const sorted = [...dateSet].sort().reverse();
+  if (!sorted.length) return 0;
   let streak = 0;
   let cursor = new Date(todayStr());
-  for (const d of dates) {
-    const day = new Date(d);
+  for (const d of sorted) {
+    const day  = new Date(d);
     const diff = Math.round((cursor - day) / 86400000);
     if (diff > 1) break;
-    if (checkins[d]?.completed?.length > 0) { streak++; cursor = day; }
+    streak++; cursor = day;
   }
   return streak;
 }
 
-// ── Auto-generate journal text from today's check-ins ────────────────────────
-function generateJournal(completed, habits) {
-  if (!completed.length) return '';
-  const habitMap = Object.fromEntries(habits.map(h => [h.id, h.label]));
-  const items = completed.map(id => habitMap[id]).filter(Boolean);
-  if (!items.length) return '';
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  const lines = [
+// ── Auto-generate journal from today's checked habits ─────────────────────────
+function generateJournal(completedLabels) {
+  if (!completedLabels.length) return '';
+  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  return [
     `Today is ${dateStr}.`,
     `I am proud of myself for completing these habits:`,
-    ...items.map(i => `• ${i}`),
+    ...completedLabels.map(l => `• ${l}`),
     `Every small step counts. I am building a better version of myself, one day at a time!`,
-  ];
-  return lines.join('\n');
+  ].join('\n');
 }
-
-// ── GET /habits/config?userEmail= ─────────────────────────────────────────────
-router.get('/config', (req, res) => {
-  const { userEmail } = req.query;
-  if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
-  const config = readJson(CONFIG_PATH);
-  const key = hashEmail(userEmail);
-  const userConfig = config[key] ?? config[userEmail] ?? { habits: DEFAULT_HABITS, configuredBy: null };
-  res.json(userConfig);
-});
-
-// ── POST /habits/config — parent saves habit list ─────────────────────────────
-router.post('/config', (req, res) => {
-  const { studentEmail, parentEmail, habits } = req.body;
-  if (!studentEmail || !habits) return res.status(400).json({ error: 'studentEmail and habits required' });
-  const config = readJson(CONFIG_PATH);
-  const key = hashEmail(studentEmail);
-  // Migrate old plaintext key if present
-  if (config[studentEmail] && !config[key]) delete config[studentEmail];
-  config[key] = { habits, configuredBy: parentEmail || null, updatedAt: todayStr() };
-  writeJson(CONFIG_PATH, config);
-  res.json({ success: true });
-});
 
 // ── GET /habits/today?userEmail= ──────────────────────────────────────────────
 router.get('/today', async (req, res) => {
   const { userEmail } = req.query;
   if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
+  const email = userEmail.toLowerCase().trim();
+  const today = todayStr();
 
-  const config   = readJson(CONFIG_PATH);
-  const checkins = readJson(CHECKIN_PATH);
-  const key      = hashEmail(userEmail);
-  const habits   = (config[key] ?? config[userEmail])?.habits || DEFAULT_HABITS;
-  const today    = todayStr();
-  const userCheckins = checkins[key] ?? checkins[userEmail] ?? {};
-  const todayData = userCheckins[today] || { completed: [], coinsEarned: 0 };
-  const streak    = computeStreak(userCheckins);
-  const streakBonus = streak > 0 && streak % STREAK_BONUS_DAYS === 0 ? STREAK_BONUS_COINS : 0;
-  const totalCoins = Object.values(userCheckins).reduce((sum, d) => sum + (d.coinsEarned || 0), 0);
-
-  // Fetch parent-assigned tasks for this student
-  let parentTasks = [];
   try {
-    const { data: userRow } = await supabase.from('users').select('id').eq('email', userEmail.toLowerCase().trim()).maybeSingle();
-    if (userRow?.id) {
+    // 1. Get student's user row
+    const { data: userRow } = await supabase.from('users').select('id').eq('email', email).maybeSingle();
+    const studentId = userRow?.id;
+
+    // 2. Get parent-assigned tasks
+    let parentTasks = [];
+    if (studentId) {
       const { data: tasks } = await supabase
         .from('parent_daily_tasks')
         .select('id, label, icon, coins')
-        .eq('child_id', userRow.id);
+        .eq('child_id', studentId);
       parentTasks = (tasks ?? []).map(t => ({ ...t, fromParent: true }));
     }
-  } catch {}
 
-  res.json({
-    habits,
-    parentTasks,
-    today: todayData,
-    streak,
-    streakBonus,
-    totalCoins,
-    date: today,
-    journalText: todayData.journalText || '',
-  });
+    // 3. Get today's checkins from Supabase
+    const { data: checkinRows } = await supabase
+      .from('habits_checkins')
+      .select('habit_id, checked_at')
+      .eq('user_email', email)
+      .eq('date', today);
+
+    const completed = (checkinRows ?? []).map(r => r.habit_id);
+
+    // 4. Compute coins earned today
+    const allTaskMap = Object.fromEntries(parentTasks.map(t => [t.id, t.coins]));
+    const coinsEarned = completed.reduce((sum, id) => sum + (allTaskMap[id] ?? 0), 0);
+
+    // 5. Compute streak — get all distinct dates with checkins
+    const { data: allCheckins } = await supabase
+      .from('habits_checkins')
+      .select('date')
+      .eq('user_email', email);
+    const dateSet = new Set((allCheckins ?? []).map(r => r.date));
+    const streak = computeStreak(dateSet);
+    const streakBonus = streak > 0 && streak % STREAK_BONUS_DAYS === 0 ? STREAK_BONUS_COINS : 0;
+
+    // 6. Total coins across all days
+    const { data: allPrefs } = await supabase
+      .from('student_preferences')
+      .select('total_coins')
+      .eq('user_email', email)
+      .maybeSingle();
+    const totalCoins = allPrefs?.total_coins ?? 0;
+
+    // 7. Journal
+    const completedLabels = completed.map(id => parentTasks.find(t => t.id === id)?.label).filter(Boolean);
+    const journalText = generateJournal(completedLabels);
+
+    res.json({
+      habits: [],
+      parentTasks,
+      today: { completed, coinsEarned },
+      streak,
+      streakBonus,
+      totalCoins,
+      date: today,
+      journalText,
+    });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ── POST /habits/checkin — child checks off a habit (or parent task) ─────────
+// ── POST /habits/checkin ──────────────────────────────────────────────────────
 router.post('/checkin', async (req, res) => {
   const { userEmail, habitId } = req.body;
   if (!userEmail || !habitId) return res.status(400).json({ error: 'userEmail and habitId required' });
-
-  const config   = readJson(CONFIG_PATH);
-  const checkins = readJson(CHECKIN_PATH);
-  const key      = hashEmail(userEmail);
-  const habits   = (config[key] ?? config[userEmail])?.habits || DEFAULT_HABITS;
-  let habit      = habits.find(h => h.id === habitId);
-
-  // If not found in local config, check Supabase parent_daily_tasks
-  if (!habit) {
-    try {
-      const { data: pt } = await supabase.from('parent_daily_tasks').select('id, label, icon, coins').eq('id', habitId).maybeSingle();
-      if (pt) habit = pt;
-    } catch {}
-  }
-  if (!habit) return res.status(404).json({ error: 'Habit not found' });
-
+  const email = userEmail.toLowerCase().trim();
   const today = todayStr();
-  // Migrate old plaintext key if present
-  if (checkins[userEmail] && !checkins[key]) { checkins[key] = checkins[userEmail]; delete checkins[userEmail]; }
-  if (!checkins[key]) checkins[key] = {};
-  if (!checkins[key][today]) checkins[key][today] = { completed: [], coinsEarned: 0 };
 
-  const todayData = checkins[key][today];
+  try {
+    // Look up habit details (parent_daily_tasks)
+    const { data: pt } = await supabase.from('parent_daily_tasks').select('id, label, icon, coins').eq('id', habitId).maybeSingle();
+    if (!pt) return res.status(404).json({ error: 'Habit not found' });
 
-  // Toggle: if already checked, uncheck
-  const idx = todayData.completed.indexOf(habitId);
-  let coinsChange = 0;
-  if (idx >= 0) {
-    todayData.completed.splice(idx, 1);
-    todayData.coinsEarned = Math.max(0, todayData.coinsEarned - habit.coins);
-    coinsChange = -habit.coins;
-  } else {
-    todayData.completed.push(habitId);
-    todayData.coinsEarned += habit.coins;
-    coinsChange = habit.coins;
-  }
+    // Check if already checked today
+    const { data: existing } = await supabase
+      .from('habits_checkins')
+      .select('id')
+      .eq('user_email', email)
+      .eq('habit_id', habitId)
+      .eq('date', today)
+      .maybeSingle();
 
-  // Regenerate journal
-  todayData.journalText = generateJournal(todayData.completed, habits);
+    let checked = false;
+    let coinsChange = 0;
 
-  writeJson(CHECKIN_PATH, checkins);
+    if (existing) {
+      // Uncheck
+      await supabase.from('habits_checkins').delete().eq('id', existing.id);
+      coinsChange = -pt.coins;
+      checked = false;
+    } else {
+      // Check
+      await supabase.from('habits_checkins').insert({ user_email: email, habit_id: habitId, date: today });
+      coinsChange = pt.coins;
+      checked = true;
+    }
 
-  const streak = computeStreak(checkins[key]);
-  const streakBonus = streak > 0 && streak % STREAK_BONUS_DAYS === 0 ? STREAK_BONUS_COINS : 0;
-  const totalCoins = Object.values(checkins[key] || {})
-    .reduce((sum, d) => sum + (d.coinsEarned || 0), 0);
+    // Get updated completed list for today
+    const { data: todayRows } = await supabase
+      .from('habits_checkins')
+      .select('habit_id')
+      .eq('user_email', email)
+      .eq('date', today);
+    const completed = (todayRows ?? []).map(r => r.habit_id);
 
-  res.json({
-    completed: todayData.completed,
-    coinsEarned: todayData.coinsEarned,
-    coinsChange,
-    journalText: todayData.journalText,
-    streak,
-    streakBonus,
-    totalCoins,
-    checked: idx < 0,
-  });
+    // Get parent tasks for coins calculation
+    const { data: userRow } = await supabase.from('users').select('id').eq('email', email).maybeSingle();
+    let parentTasks = [];
+    if (userRow?.id) {
+      const { data: tasks } = await supabase.from('parent_daily_tasks').select('id, coins, label').eq('child_id', userRow.id);
+      parentTasks = tasks ?? [];
+    }
+    const allTaskMap = Object.fromEntries(parentTasks.map(t => [t.id, t.coins]));
+    const coinsEarned = completed.reduce((sum, id) => sum + (allTaskMap[id] ?? 0), 0);
+
+    // Update total_coins in student_preferences (upsert)
+    const { data: prefs } = await supabase.from('student_preferences').select('total_coins').eq('user_email', email).maybeSingle();
+    const newTotal = Math.max(0, (prefs?.total_coins ?? 0) + coinsChange);
+    await supabase.from('student_preferences').upsert({ user_email: email, total_coins: newTotal, updated_at: new Date().toISOString() }, { onConflict: 'user_email' });
+
+    // Compute streak
+    const { data: allDates } = await supabase.from('habits_checkins').select('date').eq('user_email', email);
+    const dateSet = new Set((allDates ?? []).map(r => r.date));
+    const streak = computeStreak(dateSet);
+    const streakBonus = streak > 0 && streak % STREAK_BONUS_DAYS === 0 ? STREAK_BONUS_COINS : 0;
+
+    // Journal
+    const completedLabels = completed.map(id => parentTasks.find(t => t.id === id)?.label).filter(Boolean);
+    const journalText = generateJournal(completedLabels);
+
+    res.json({ completed, coinsEarned, coinsChange, journalText, streak, streakBonus, totalCoins: newTotal, checked });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── GET /habits/history?userEmail=&days=7 ─────────────────────────────────────
-router.get('/history', (req, res) => {
+router.get('/history', async (req, res) => {
   const { userEmail, days = 7 } = req.query;
   if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
+  const email = userEmail.toLowerCase().trim();
 
-  const checkins = readJson(CHECKIN_PATH);
-  const key = hashEmail(userEmail);
-  const userCheckins = checkins[key] ?? checkins[userEmail] ?? {};
-  const streak = computeStreak(userCheckins);
+  try {
+    const { data: rows } = await supabase
+      .from('habits_checkins')
+      .select('date, habit_id')
+      .eq('user_email', email);
 
-  // Last N days
-  const history = [];
-  for (let i = 0; i < Number(days); i++) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const dateKey = d.toISOString().slice(0, 10);
-    history.push({
-      date: dateKey,
-      completed: userCheckins[dateKey]?.completed?.length || 0,
-      coinsEarned: userCheckins[dateKey]?.coinsEarned || 0,
-    });
-  }
+    // Group by date
+    const byDate = {};
+    for (const r of (rows ?? [])) {
+      if (!byDate[r.date]) byDate[r.date] = { count: 0, coins: 0 };
+      byDate[r.date].count++;
+    }
 
-  res.json({ history, streak });
+    const history = [];
+    for (let i = 0; i < Number(days); i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const dk = d.toISOString().slice(0, 10);
+      history.push({ date: dk, completed: byDate[dk]?.count || 0, coinsEarned: byDate[dk]?.coins || 0 });
+    }
+
+    const dateSet = new Set(Object.keys(byDate));
+    const streak = computeStreak(dateSet);
+    res.json({ history, streak });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── GET /habits/parent-tasks?childId= ────────────────────────────────────────
-// List all tasks a parent has assigned to a child
 router.get('/parent-tasks', async (req, res) => {
   try {
     const { childId } = req.query;
     if (!childId) return res.status(400).json({ error: 'childId required' });
-    const { data, error } = await supabase
-      .from('parent_daily_tasks')
-      .select('*')
-      .eq('child_id', childId)
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('parent_daily_tasks').select('*').eq('child_id', childId).order('created_at', { ascending: false });
     if (error) return res.status(500).json({ error: error.message });
     res.json(data ?? []);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── POST /habits/parent-tasks ─────────────────────────────────────────────────
-// Parent creates a daily task for a child
-// Body: { parentEmail, childId, label, icon, coins }
 router.post('/parent-tasks', async (req, res) => {
   try {
     const { parentEmail, childId, label, icon = 'check-circle', coins = 5 } = req.body;
     if (!parentEmail || !childId || !label) return res.status(400).json({ error: 'parentEmail, childId and label required' });
-    const { data, error } = await supabase
-      .from('parent_daily_tasks')
-      .insert({ parent_email: parentEmail, child_id: childId, label: label.trim(), icon, coins })
-      .select().single();
+    const { data, error } = await supabase.from('parent_daily_tasks').insert({ parent_email: parentEmail, child_id: childId, label: label.trim(), icon, coins }).select().single();
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -246,8 +234,7 @@ router.post('/parent-tasks', async (req, res) => {
 // ── DELETE /habits/parent-tasks/:taskId ───────────────────────────────────────
 router.delete('/parent-tasks/:taskId', async (req, res) => {
   try {
-    const { taskId } = req.params;
-    const { error } = await supabase.from('parent_daily_tasks').delete().eq('id', taskId);
+    const { error } = await supabase.from('parent_daily_tasks').delete().eq('id', req.params.taskId);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
