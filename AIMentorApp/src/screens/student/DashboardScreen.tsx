@@ -454,11 +454,11 @@ export default function DashboardScreen({ navigation }: any) {
     return scored.length ? Math.round(scored.reduce((sum, t) => sum + t.pct, 0) / scored.length) : 0;
   }, [barTopics, perfData.avgScore]);
 
-  // Use full curriculum as denominator for Mastered — not just the 6 shown in bar
-  // Mastered = scored ≥80% in quiz (performance-based, not completion-based)
-  const masteredTopics = useMemo(() =>
-    Object.values(perfData.topics).filter(p => (p.avgScore ?? 0) >= 80).length,
-  [perfData]);
+  // Mastered = max of topics explored (real count) or topics with ≥80% quiz score
+  const masteredTopics = useMemo(() => {
+    const highScoreCount = Object.values(perfData.topics).filter(p => (p.avgScore ?? 0) >= 80).length;
+    return Math.max(stats.topicsExplored ?? 0, highScoreCount);
+  }, [perfData, stats.topicsExplored]);
 
   const consistency = useMemo(() => {
     const attempted = barTopics.filter(t => t.pct > 0);
