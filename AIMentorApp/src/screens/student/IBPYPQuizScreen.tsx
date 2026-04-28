@@ -151,8 +151,8 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
         }),
       }).catch(() => {});
 
-      // Mark topic complete only if mastered (≥80%) — otherwise just award XP for the attempt
-      if (finalPct >= 80) completeLesson(topic);
+      // Mark topic as explored/completed regardless of score (mastered threshold handled separately)
+      completeLesson(topic);
       const xpEarned = finalPct >= 80 ? 100 : finalPct >= 60 ? 60 : 30;
       addXP(xpEarned);
 
