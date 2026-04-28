@@ -92,10 +92,13 @@ router.get('/', async (req, res) => {
   }
 
   // Fetch all assignments for this student (personal) OR class-wide (student_id is null)
+  const orFilter = userId
+    ? `student_id.eq.${userId},student_id.is.null`
+    : `student_id.is.null`;
   const { data: allData, error } = await supabase
     .from('assignments')
     .select('*')
-    .or(`student_id.eq.${userId},student_id.is.null`)
+    .or(orFilter)
     .order('due_date', { ascending: true });
 
   if (error) return res.status(500).json({ error: error.message });
