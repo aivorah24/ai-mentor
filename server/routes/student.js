@@ -419,11 +419,7 @@ router.get('/:id/performance', async (req, res) => {
     if (!email) return res.json({ topics: {}, avgScore: null, topicCount: 0 });
 
     const { readEvents } = require('../services/analytics');
-    const events = await readEvents();
-
-    const childEvents = events.filter(e =>
-      String(e.userEmail || '').toLowerCase() === email
-    );
+    const childEvents = await readEvents({ userEmail: email });
 
     const topicMap = {};
     const allScores = [];
