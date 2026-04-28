@@ -20,7 +20,19 @@ import { useStudentData } from '../../context/StudentDataContext';
 
 import SERVER_URL from '../../config/serverUrl';
 const DAYS_SHORT = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+// Hourly slots for the timetable grid
 const TIMES = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+// 15-minute intervals for the time picker (06:00 – 22:00)
+const TIME_PICKER_SLOTS: string[] = (() => {
+  const slots: string[] = [];
+  for (let h = 6; h <= 22; h++) {
+    for (const m of [0, 15, 30, 45]) {
+      if (h === 22 && m > 0) break;
+      slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    }
+  }
+  return slots;
+})();
 const CAL_DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 const DURATIONS = ['30 min', '45 min', '1 hr', '1.5 hrs', '2 hrs', '2.5 hrs', '3 hrs'];
 const SLOT_ROW_HEIGHT = 50;
@@ -115,7 +127,9 @@ export default function ScheduleScreen({ navigation }: any) {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [newTime, setNewTime] = useState('09:00');
+  const [newHour, setNewHour] = useState('09');
+  const [newMinute, setNewMinute] = useState('00');
+  const newTime = `${newHour}:${newMinute}`;
   const [newDuration, setNewDuration] = useState('1 hr');
   const [newType, setNewType] = useState('study');
   const [newNote, setNewNote] = useState('');
@@ -192,7 +206,8 @@ export default function ScheduleScreen({ navigation }: any) {
     const start = Math.max(0, Math.min(TIMES.length - 1, Math.min(startIdx, endIdx)));
     const spanHours = Math.max(1, Math.min(3, Math.abs(endIdx - startIdx) + 1));
     const durationLabel = spanHours === 1 ? '1 hr' : spanHours === 2 ? '2 hrs' : '3 hrs';
-    setNewTime(TIMES[start]);
+    setNewHour(TIMES[start].split(':')[0]);
+    setNewMinute('00');
     setNewDuration(durationLabel);
     setModalVisible(true);
   }
@@ -311,7 +326,13 @@ export default function ScheduleScreen({ navigation }: any) {
               ) : (
                 <View style={styles.timelineDragArea} {...panResponder.panHandlers}>
                   {TIMES.map((t, idx) => {
-                  const event = events.find((e) => e.startTime === t);
+                  // Match events that start within this hour slot (e.g. 10:00–10:59 for the "10:00" row)
+                  const [slotH] = t.split(':').map(Number);
+                  const nextH = slotH + 1;
+                  const event = events.find((e) => {
+                    const [evH] = e.startTime.split(':').map(Number);
+                    return evH === slotH;
+                  });
                   const isNow = t === todayISO.slice(0, 5) && selectedDate === todayISO;
                   const rangeStart = dragRange ? Math.min(dragRange.start, dragRange.end) : -1;
                   const rangeEnd = dragRange ? Math.max(dragRange.start, dragRange.end) : -1;
@@ -464,12 +485,19 @@ export default function ScheduleScreen({ navigation }: any) {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-              {/* Time selector */}
-              <Text style={styles.modalLabel}>Start time:</Text>
+              {/* Time selector — Hour then Minute */}
+              <Text style={styles.modalLabel}>Start time: <Text style={{ color: colors.primary, fontWeight: '800' }}>{newTime}</Text></Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {TIMES.map((t) => (
-                  <TouchableOpacity key={t} style={[styles.timeChip, newTime === t && styles.timeChipActive]} onPress={() => setNewTime(t)}>
-                    <Text style={[styles.timeChipText, newTime === t && { color: colors.primary }]}>{t}</Text>
+                {Array.from({ length: 17 }, (_, i) => String(i + 6).padStart(2, '0')).map(h => (
+                  <TouchableOpacity key={h} style={[styles.timeChip, newHour === h && styles.timeChipActive]} onPress={() => setNewHour(h)}>
+                    <Text style={[styles.timeChipText, newHour === h && { color: colors.primary }]}>{h}:00</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {['00', '15', '30', '45'].map(m => (
+                  <TouchableOpacity key={m} style={[styles.timeChip, newMinute === m && styles.timeChipActive]} onPress={() => setNewMinute(m)}>
+                    <Text style={[styles.timeChipText, newMinute === m && { color: colors.primary }]}>:{m}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
