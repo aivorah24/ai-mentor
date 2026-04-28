@@ -1,11 +1,9 @@
 const express    = require('express');
 const router     = express.Router();
 const multer     = require('multer');
-const fs         = require('fs');
-const path       = require('path');
 const cloudinary = require('cloudinary').v2;
 const supabase   = require('../services/supabase');
-const { encrypt, decrypt, hashEmail } = require('../utils/encryption');
+const { encrypt, decrypt } = require('../utils/encryption');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -15,66 +13,32 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const PREFS_FILE = path.join(__dirname, '../data/student_preferences.json');
-
-// ── Sensitive fields encrypted at rest in the JSON file ──────────────
-const ENCRYPTED_FIELDS = ['dob', 'phone'];
-
-function encryptRecord(record) {
-  const out = { ...record };
-  for (const field of ENCRYPTED_FIELDS) {
-    if (out[field]) out[field] = encrypt(out[field]);
-  }
-  return out;
+// ── Preferences stored in Supabase user_preferences table ────────────
+async function getPreferences(email) {
+  try {
+    const key = email.toLowerCase().trim();
+    const { data } = await supabase.from('user_preferences').select('data').eq('user_email', key).maybeSingle();
+    return data?.data ?? null;
+  } catch { return null; }
 }
 
-function decryptRecord(record) {
-  if (!record) return record;
-  const out = { ...record };
-  for (const field of ENCRYPTED_FIELDS) {
-    if (out[field]) out[field] = decrypt(out[field]);
-  }
-  return out;
+async function setPreferences(email, updates) {
+  try {
+    const key = email.toLowerCase().trim();
+    const { data: existing } = await supabase.from('user_preferences').select('data').eq('user_email', key).maybeSingle();
+    const merged = { ...(existing?.data ?? {}), ...updates };
+    await supabase.from('user_preferences').upsert({ user_email: key, data: merged, updated_at: new Date().toISOString() }, { onConflict: 'user_email' });
+  } catch (err) { console.error('[setPreferences]', err?.message); }
 }
 
 async function readPreferences() {
+  // Returns all rows as a flat object keyed by email (for CSV export)
   try {
-    const raw = await fs.promises.readFile(PREFS_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch (err) {
-    if (err.code === 'ENOENT') return {};
-    throw err;
-  }
-}
-
-async function writePreferences(data) {
-  await fs.promises.mkdir(path.dirname(PREFS_FILE), { recursive: true });
-  await fs.promises.writeFile(PREFS_FILE, JSON.stringify(data, null, 2), 'utf8');
-}
-
-/** Get a single user's preferences, decrypted. Looks up by email hash with fallback to plain email key (migration). */
-async function getPreferences(email) {
-  const all  = await readPreferences();
-  const key  = hashEmail(email);
-  const plain = email.toLowerCase().trim();
-  const rec  = all[key] ?? all[plain] ?? null;
-  return decryptRecord(rec);
-}
-
-/** Write a single user's preferences, using hashed key + encrypted sensitive fields. */
-async function setPreferences(email, updates) {
-  const all   = await readPreferences();
-  const key   = hashEmail(email);
-  const plain = email.toLowerCase().trim();
-
-  // Migrate from plain-email key if it exists
-  const existing = all[key] ?? all[plain] ?? { emailHash: key };
-  if (all[plain] && !all[key]) delete all[plain]; // remove old plaintext key
-
-  const merged = { ...decryptRecord(existing), ...updates, emailHash: key };
-  all[key] = encryptRecord(merged);
-  await writePreferences(all);
+    const { data } = await supabase.from('user_preferences').select('user_email, data');
+    const out = {};
+    for (const row of (data ?? [])) out[row.user_email] = row.data ?? {};
+    return out;
+  } catch { return {}; }
 }
 
 function csvCell(value) {
@@ -438,7 +402,7 @@ router.get('/preferences/export.csv', async (req, res) => {
     }
     const all = await readPreferences();
     const rows = Object.values(all)
-      .map((raw) => { const item = decryptRecord(raw); return ({
+      .map((raw) => { const item = raw; return ({
         email: item.email ?? item.emailHash ?? '',
         name: item.name ?? '',
         role: item.role ?? '',
@@ -501,9 +465,7 @@ router.post('/repair-teacher-student', async (req, res) => {
     const students = allUsers.filter(u => u.role === 'student' && u.curriculum);
 
     // Read teacher preferences to get their teaches[] (grade+curriculum combos)
-    const prefsPath = path.join(__dirname, '../data/student_preferences.json');
-    let prefs = {};
-    try { prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf8')); } catch (_) {}
+    const prefs = await readPreferences();
 
     // Build teacher → [{ grade, curriculum }] map
     // Fall back to teacher's own grade/curriculum if no teaches[] in prefs
