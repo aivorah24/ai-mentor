@@ -7,17 +7,34 @@ const { encrypt, decrypt } = require('../utils/encryption');
 const { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail } = require('../services/mailer');
 
 // Firebase Admin — used to generate password reset links server-side
+// Supports two init methods:
+//   1. FIREBASE_SERVICE_ACCOUNT env var (JSON string) — used on Cloud Run
+//   2. firebase-service-account.json file — used locally
 let firebaseAdmin = null;
 try {
   const admin = require('firebase-admin');
   if (!admin.apps.length) {
-    const svcPath = require('path').join(__dirname, '../firebase-service-account.json');
-    if (require('fs').existsSync(svcPath)) {
-      admin.initializeApp({ credential: admin.credential.cert(require(svcPath)) });
-      firebaseAdmin = admin;
-      console.log('[firebase-admin] initialised from service account');
+    let credential = null;
+
+    // Priority 1: env var (Cloud Run / production)
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      const svcJson = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      credential = admin.credential.cert(svcJson);
+      console.log('[firebase-admin] initialised from FIREBASE_SERVICE_ACCOUNT env var');
     } else {
-      console.warn('[firebase-admin] firebase-service-account.json not found — password reset will use Firebase default sender');
+      // Priority 2: local file
+      const svcPath = require('path').join(__dirname, '../firebase-service-account.json');
+      if (require('fs').existsSync(svcPath)) {
+        credential = admin.credential.cert(require(svcPath));
+        console.log('[firebase-admin] initialised from service account file');
+      }
+    }
+
+    if (credential) {
+      admin.initializeApp({ credential });
+      firebaseAdmin = admin;
+    } else {
+      console.warn('[firebase-admin] no service account found — password reset will use Firebase default sender');
     }
   } else {
     firebaseAdmin = admin;
