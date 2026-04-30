@@ -55,7 +55,7 @@ export default function AppNavigator() {
         swipeEnabled: !isLargeScreen,
         sceneContainerStyle: { backgroundColor: colors.bgDark },
         animationEnabled: false,
-      }}
+      } as any}
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
       <Drawer.Screen name="Profile" component={ProfileScreen} />

@@ -6,16 +6,19 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
-  StyleSheet, Animated, KeyboardAvoidingView, Platform,
+  StyleSheet, KeyboardAvoidingView, Platform, Modal,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import { AVATAR_STYLES } from '../../constants/avatarStyles';
 import SERVER_URL from '../../config/serverUrl';
+import firebaseApp from '../../config/firebase';
 
 // ── Constants ──────────────────────────────────────────────
 const CURRICULA = ['IB PYP', 'NCERT', 'CBSE', 'ICSE', 'Cambridge', 'State Board'];
@@ -31,6 +34,17 @@ const LEARNING_STYLES: { id: string; label: string; icon: string; desc: string }
 
 const TEAL = '#5F8A86';
 const FOREST = '#5A8A70';
+
+function generateStudentId(name: string) {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+    .slice(0, 4) || 'STU';
+  const suffix = Math.floor(100000 + Math.random() * 900000);
+  return `STU-${initials}-${suffix}`;
+}
 
 // ── Step definitions per role ──────────────────────────────
 function getSteps(role: string) {
@@ -105,12 +119,24 @@ export default function OnboardingScreen() {
   const [childSchool, setChildSchool] = useState('');
   const [childCurriculum, setChildCurriculum] = useState('');
   const [childEmail, setChildEmail] = useState('');
-  const [childPassword, setChildPassword] = useState('');
   const [childAge, setChildAge] = useState('');
+  const [childLinkEmail, setChildLinkEmail] = useState(''); // for age >= 14 link flow
+  const [childPassword, setChildPassword] = useState('');  // optional custom password for under-14
+  const [showChildPassword, setShowChildPassword] = useState(false);
+  const [showChildCreds, setShowChildCreds] = useState(false);
+  const [createdLoginId, setCreatedLoginId] = useState('');
+  const [createdPassword, setCreatedPassword] = useState('');
+  const [createdStudentId, setCreatedStudentId] = useState('');
+  const [createdVerificationRequired, setCreatedVerificationRequired] = useState(false);
+  const [pendingUserPatch, setPendingUserPatch] = useState<any | null>(null);
+  const [copiedField, setCopiedField] = useState('');
 
-  function isChildUnder14() {
-    const age = parseInt(childAge);
-    return !isNaN(age) && age < 14;
+  function copyToClipboard(text: string, field: string) {
+    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(''), 1500);
   }
 
   const progress = (step + 1) / steps.length;
@@ -139,12 +165,17 @@ export default function OnboardingScreen() {
     }
     if (role === 'parent') {
       if (step === 0) return fullName.trim().length >= 2;
-      if (step === 1) return childName.trim().length >= 2 && childGrade.length > 0;
-      if (step === 2) return true; // school optional
+      if (step === 1) return childName.trim().length >= 2 && childGrade.length > 0 && childCurriculum.length > 0;
+      if (step === 2) {
+        const ageNum = childAge ? parseInt(childAge, 10) : 0;
+        if (ageNum >= 14) return /^\S+@\S+\.\S+$/.test(childLinkEmail.trim());
+        if (childPassword.length > 0 && childPassword.length < 6) return false;
+        return true; // school/email optional for under-14
+      }
       if (step === 3) return true;
     }
     return true;
-  }, [step, role, fullName, dob, school, grade, curriculum, teachGrades, teachCurriculum, childName, childGrade]);
+  }, [step, role, fullName, dob, school, grade, curriculum, teachGrades, teachCurriculum, childName, childGrade, childCurriculum, childAge, childLinkEmail]);
 
   async function handleFinish() {
     setSaving(true);
@@ -180,13 +211,18 @@ export default function OnboardingScreen() {
           subjects: teachSubjects,
         }));
       } else if (role === 'parent') {
-        body.children = [{
-          name: childName.trim(),
-          grade: childGrade,
-          school: childSchool || school,
-          curriculum: childCurriculum,
-          email: childEmail.trim().toLowerCase() || undefined,
-        }];
+        const ageNum = childAge ? parseInt(childAge, 10) : 0;
+        if (ageNum < 14) {
+          // Under 14: we create the child account — pass info so server can store it
+          body.children = [{
+            name: childName.trim(),
+            grade: childGrade,
+            school: childSchool || school,
+            curriculum: childCurriculum,
+            email: childEmail.trim().toLowerCase() || undefined,
+          }];
+        }
+        // Age >= 14: child links their own account in the next step — no children in profile body
       }
 
       // Save profile to Supabase
@@ -229,40 +265,9 @@ export default function OnboardingScreen() {
         }),
       }).catch(() => {});
 
-      // ── Auto-create student account for under-14 children ────────────────
-      if (role === 'parent' && childName.trim() && isChildUnder14() && childEmail.trim() && childPassword) {
-        try {
-          const createRes = await fetch(`${SERVER_URL}/parent/${email}/children/create-student`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: childName.trim(),
-              email: childEmail.trim().toLowerCase(),
-              password: childPassword,
-              grade: childGrade,
-              curriculum: childCurriculum,
-              school: childSchool || school,
-            }),
-          });
-          if (!createRes.ok) {
-            const err = await createRes.json().catch(() => ({}));
-            // 409 = already exists — try to link instead
-            if (createRes.status === 409) {
-              await fetch(`${SERVER_URL}/parent/${email}/children`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ childEmail: childEmail.trim().toLowerCase() }),
-              }).catch(() => {});
-            }
-            // non-blocking: don't throw, let onboarding complete
-          }
-        } catch {
-          // non-blocking
-        }
-      }
-
-      // Only mark onboarding complete locally after server confirmed the save
-      updateUser({
+      // Build local completion patch; parent flow may defer applying this until
+      // credentials are acknowledged in the modal.
+      const localCompletionPatch: any = {
         name: fullName.trim(),
         school,
         location: city,
@@ -273,7 +278,143 @@ export default function OnboardingScreen() {
           curriculum: teachCurriculum,
           teaches: teachGrades.map(g => ({ grade: g, curriculum: teachCurriculum })),
         } : {}),
-      } as any);
+      };
+
+      // ── Parent child account handling (age-based) ─────────────────────────
+      if (role === 'parent' && childName.trim()) {
+        const ageNum = childAge ? parseInt(childAge, 10) : 0;
+
+        // ── Age >= 14: Link existing student account ──────────────────────
+        if (ageNum >= 14 && childLinkEmail.trim()) {
+          try {
+            const linkRes = await fetch(`${SERVER_URL}/parent/${encodeURIComponent(email)}/children`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ childEmail: childLinkEmail.trim().toLowerCase() }),
+            });
+            if (!linkRes.ok) {
+              const err = await linkRes.json().catch(() => ({}));
+              throw new Error(err?.error || 'Could not link child account. Make sure they have a registered Aivorah account.');
+            }
+            // Link successful — mark parent onboarding complete
+            const retRole = (user as any)?._returnRole;
+            if (retRole === 'teacher') {
+              await fetch(`${SERVER_URL}/user/add-role`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, role: 'parent' }),
+              }).catch(() => {});
+              updateUser({ ...localCompletionPatch, role: 'teacher', roles: ['teacher', 'parent'], _returnRole: undefined } as any);
+            } else {
+              updateUser(localCompletionPatch as any);
+            }
+            return;
+          } catch (err: any) {
+            throw new Error(err?.message || 'Could not link child account.');
+          }
+        }
+
+        // ── Age < 14: Auto-create student account ─────────────────────────
+        // Email and password are optional; backend will auto-generate when absent.
+        try {
+          const cleanChildName = childName.trim();
+          const candidateStudentId = generateStudentId(childName.trim());
+          const initRes = await fetch(`${SERVER_URL}/parent/children/init-auth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: cleanChildName,
+              studentId: candidateStudentId,
+              email: childEmail.trim().toLowerCase() || undefined,
+              age: childAge ? parseInt(childAge, 10) : undefined,
+              password: childPassword.trim() || undefined,
+            }),
+          });
+          const init = await initRes.json().catch(() => ({}));
+          if (!initRes.ok) throw new Error(init?.error || 'Could not prepare child account credentials.');
+          const finalEmail = String(init.email || '').toLowerCase();
+          const finalPassword = String(init.password || '');
+          const finalStudentId = init.studentId || candidateStudentId;
+          // verificationRequired is always false for parent-created accounts —
+          // account is immediately active. emailProvided tells us whether a real
+          // Gmail was supplied (we send verification for "Forgot Password" support).
+          const emailProvided = Boolean(init.emailProvided);
+
+          // Create child in Firebase Auth (same auth provider as login screen)
+          const secondaryName = `onboarding-child-${Date.now()}`;
+          const childApp = initializeApp((firebaseApp as any).options, secondaryName);
+          const childAuth = getAuth(childApp);
+          let firebaseUid = '';
+          try {
+            const childCred = await createUserWithEmailAndPassword(childAuth, finalEmail, finalPassword);
+            firebaseUid = childCred.user.uid;
+            await updateProfile(childCred.user, { displayName: `${cleanChildName}|student` }).catch(() => {});
+
+          } finally {
+            await signOut(childAuth).catch(() => {});
+            await deleteApp(childApp).catch(() => {});
+          }
+
+          const createRes = await fetch(`${SERVER_URL}/parent/${encodeURIComponent(email)}/children/link-created`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              firebaseUid,
+              name: cleanChildName,
+              studentId: finalStudentId,
+              email: finalEmail,
+              grade: childGrade,
+              curriculum: childCurriculum,
+              school: childSchool || school,
+              verificationRequired: emailProvided,
+              age: childAge ? parseInt(childAge, 10) : undefined,
+              initialPassword: finalPassword,
+            }),
+          });
+          if (!createRes.ok) {
+            const err = await createRes.json().catch(() => ({}));
+            throw new Error(err?.error || 'Could not create child account during onboarding.');
+          }
+          const created = await createRes.json().catch(() => null);
+          if (!created) throw new Error('Could not read child account response. Please try again.');
+          const child = created?.child;
+          // Always show credentials — fall back to computed values if server omits a field
+          setCreatedLoginId(child?.email || finalEmail);
+          setCreatedPassword(finalPassword);
+          setCreatedStudentId(child?.studentId || finalStudentId);
+          setCreatedVerificationRequired(emailProvided); // true = show Gmail verification note
+          setPendingUserPatch(localCompletionPatch);
+          setShowChildCreds(true);
+          return;
+        } catch (err: any) {
+          if (err?.code === 'auth/email-already-in-use') {
+            throw new Error('Child email already exists. Use another email or leave it blank for auto-generated login.');
+          }
+          throw new Error(err?.message || 'Could not create child account during onboarding.');
+        }
+      }
+
+      // ── Dual-role: teacher adding parent profile ──────────────────────────
+      // If _returnRole is set, this was a teacher going through parent onboarding.
+      // Add parent role to their account and restore teacher as active role.
+      const returnRole = (user as any)?._returnRole;
+      if (returnRole === 'teacher') {
+        await fetch(`${SERVER_URL}/user/add-role`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, role: 'parent' }),
+        }).catch(() => {});
+        updateUser({
+          ...localCompletionPatch,
+          role: 'teacher',
+          roles: ['teacher', 'parent'],
+          onboardingComplete: true,
+          _returnRole: undefined,
+        } as any);
+      } else {
+        // Only mark onboarding complete locally after server confirmed the save
+        updateUser(localCompletionPatch as any);
+      }
     } catch (err: any) {
       console.error('Onboarding save error:', err);
       setSaveError(err?.message || 'Could not save your profile. Please try again.');
@@ -287,6 +428,14 @@ export default function OnboardingScreen() {
       setStep(s => s + 1);
     } else {
       handleFinish();
+    }
+  }
+
+  function confirmChildCredsAndFinish() {
+    setShowChildCreds(false);
+    if (pendingUserPatch) {
+      updateUser(pendingUserPatch);
+      setPendingUserPatch(null);
     }
   }
 
@@ -446,56 +595,130 @@ export default function OnboardingScreen() {
             placeholder="e.g. Hyderabad" placeholderTextColor={colors.textDim} />
         </View>
       );
-      if (step === 1) return (
-        <View style={styles.stepContent}>
-          <Text style={styles.fieldLabel}>Child's Full Name</Text>
-          <TextInput style={styles.input} value={childName} onChangeText={setChildName}
-            placeholder="Enter your child's name" placeholderTextColor={colors.textDim} autoCapitalize="words" />
-          <Text style={styles.fieldLabel}>Child's Age</Text>
-          <TextInput style={styles.input} value={childAge} onChangeText={setChildAge}
-            placeholder="e.g. 9" placeholderTextColor={colors.textDim} keyboardType="numeric" maxLength={2} />
-          <Text style={styles.fieldLabel}>Child's Grade</Text>
-          <View style={styles.chipRow}>
-            {GRADES.map(g => (
-              <TouchableOpacity key={g} style={[styles.chip, childGrade === g && styles.chipActive]}
-                onPress={() => setChildGrade(g)} activeOpacity={0.8}>
-                <Text style={[styles.chipText, childGrade === g && styles.chipTextActive]}>{g}</Text>
-              </TouchableOpacity>
-            ))}
+      if (step === 1) {
+        const ageNum = childAge ? parseInt(childAge, 10) : 0;
+        return (
+          <View style={styles.stepContent}>
+            <Text style={styles.fieldLabel}>Child's Full Name</Text>
+            <TextInput style={styles.input} value={childName} onChangeText={setChildName}
+              placeholder="Enter your child's name" placeholderTextColor={colors.textDim} autoCapitalize="words" />
+            <Text style={styles.fieldLabel}>Child's Age</Text>
+            <TextInput style={styles.input} value={childAge} onChangeText={setChildAge}
+              placeholder="e.g. 9" placeholderTextColor={colors.textDim} keyboardType="numeric" maxLength={2} />
+
+            {/* Age-based flow hint */}
+            {childAge.length > 0 && (
+              <View style={{
+                backgroundColor: ageNum >= 14 ? TEAL + '18' : FOREST + '15',
+                borderRadius: 8, padding: 12, borderWidth: 1,
+                borderColor: ageNum >= 14 ? TEAL + '40' : FOREST + '40',
+              }}>
+                <Text style={{ fontSize: 13, color: ageNum >= 14 ? TEAL : FOREST, lineHeight: 18 }}>
+                  {ageNum >= 14
+                    ? 'Students 14 and older should have their own account. In the next step, enter their registered Aivorah email to link it.'
+                    : 'Aivorah will create a login ID and password for your child. You can optionally provide their email in the next step.'}
+                </Text>
+              </View>
+            )}
+
+            <Text style={styles.fieldLabel}>Child's Grade</Text>
+            <View style={styles.chipRow}>
+              {GRADES.map(g => (
+                <TouchableOpacity key={g} style={[styles.chip, childGrade === g && styles.chipActive]}
+                  onPress={() => setChildGrade(g)} activeOpacity={0.8}>
+                  <Text style={[styles.chipText, childGrade === g && styles.chipTextActive]}>{g}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.fieldLabel}>Child's Curriculum</Text>
+            <View style={styles.chipRow}>
+              {CURRICULA.map(c => (
+                <TouchableOpacity key={c} style={[styles.chip, childCurriculum === c && styles.chipActive]}
+                  onPress={() => setChildCurriculum(c)} activeOpacity={0.8}>
+                  <Text style={[styles.chipText, childCurriculum === c && styles.chipTextActive]}>{c}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-          <Text style={styles.fieldLabel}>Child's Curriculum</Text>
-          <View style={styles.chipRow}>
-            {CURRICULA.map(c => (
-              <TouchableOpacity key={c} style={[styles.chip, childCurriculum === c && styles.chipActive]}
-                onPress={() => setChildCurriculum(c)} activeOpacity={0.8}>
-                <Text style={[styles.chipText, childCurriculum === c && styles.chipTextActive]}>{c}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      );
-      if (step === 2) return (
-        <View style={styles.stepContent}>
-          <Text style={styles.fieldLabel}>Child's School</Text>
-          <TextInput style={styles.input} value={childSchool} onChangeText={setChildSchool}
-            placeholder="e.g. Hyderabad International School" placeholderTextColor={colors.textDim} />
-          <Text style={styles.fieldLabel}>Child's Email (optional)</Text>
-          <TextInput style={styles.input} value={childEmail} onChangeText={setChildEmail}
-            placeholder="child@email.com" placeholderTextColor={colors.textDim}
-            keyboardType="email-address" autoCapitalize="none" />
-          {childEmail.trim().length > 0 && isChildUnder14() && (
-            <>
-              <Text style={styles.fieldLabel}>Set Child's Password</Text>
-              <TextInput style={styles.input} value={childPassword} onChangeText={setChildPassword}
-                placeholder="Create a login password for your child"
-                placeholderTextColor={colors.textDim} secureTextEntry />
-              <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18, marginTop: -8 }}>
-                Since your child is under 14, we'll create their Aivorah account automatically so they can log in right away.
+        );
+      }
+      if (step === 2) {
+        const ageNum = childAge ? parseInt(childAge, 10) : 0;
+
+        // ── Age >= 14: Link existing student account ──
+        if (ageNum >= 14) return (
+          <View style={styles.stepContent}>
+            <View style={{ backgroundColor: TEAL + '12', borderRadius: 10, padding: 14, borderWidth: 1, borderColor: TEAL + '30', gap: 6 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: TEAL }}>Link {childName || 'your child'}'s Account</Text>
+              <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 18 }}>
+                Students 14+ have their own Aivorah account. Ask your child for their registered email, then enter it below to link it to your parent dashboard.
               </Text>
-            </>
-          )}
-        </View>
-      );
+            </View>
+            <Text style={styles.fieldLabel}>Child's Registered Email</Text>
+            <TextInput
+              style={styles.input}
+              value={childLinkEmail}
+              onChangeText={setChildLinkEmail}
+              placeholder="child@email.com"
+              placeholderTextColor={colors.textDim}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
+              If your child hasn't signed up yet, ask them to create a Student account first, then come back to complete this step.
+            </Text>
+          </View>
+        );
+
+        // ── Age < 14: Create account for child ──
+        return (
+          <View style={styles.stepContent}>
+            <Text style={styles.fieldLabel}>Child's School</Text>
+            <TextInput style={styles.input} value={childSchool} onChangeText={setChildSchool}
+              placeholder="e.g. Hyderabad International School" placeholderTextColor={colors.textDim} />
+
+            <Text style={styles.fieldLabel}>Child's Email (optional)</Text>
+            <TextInput style={styles.input} value={childEmail} onChangeText={setChildEmail}
+              placeholder="child@email.com" placeholderTextColor={colors.textDim}
+              keyboardType="email-address" autoCapitalize="none" />
+            <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18, marginTop: -8 }}>
+              Leave blank — Aivorah auto-generates a login ID. Real email requires verification before login.
+            </Text>
+
+            <Text style={styles.fieldLabel}>Password (optional)</Text>
+            <View style={{ position: 'relative' }}>
+              <TextInput
+                style={[styles.input, { paddingRight: 48 }]}
+                value={childPassword}
+                onChangeText={setChildPassword}
+                placeholder="Leave blank to auto-generate"
+                placeholderTextColor={colors.textDim}
+                secureTextEntry={!showChildPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="off"
+                importantForAutofill="no"
+              />
+              <TouchableOpacity
+                style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}
+                onPress={() => setShowChildPassword(v => !v)}
+                activeOpacity={0.7}
+              >
+                <Feather name={showChildPassword ? 'eye-off' : 'eye'} size={16} color={colors.textDim} />
+              </TouchableOpacity>
+            </View>
+            {childPassword.length > 0 && childPassword.length < 6 && (
+              <Text style={{ fontSize: 12, color: '#ef4444', marginTop: -8 }}>
+                Password must be at least 6 characters.
+              </Text>
+            )}
+            <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18, marginTop: -8 }}>
+              Set a password your child will remember, or leave blank to auto-generate one.
+            </Text>
+          </View>
+        );
+      }
       if (step === 3) return renderAvatarStep();
     }
 
@@ -576,6 +799,60 @@ export default function OnboardingScreen() {
             <Text style={{ color: '#ef4444', fontSize: 13, textAlign: 'center' }}>{saveError}</Text>
           </View>
         ) : null}
+
+        {/* Child account credentials modal */}
+        <Modal visible={showChildCreds} transparent animationType="fade" onRequestClose={confirmChildCredsAndFinish}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalBox}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: TEAL + '20', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="key" size={17} color={TEAL} />
+                </View>
+                <View>
+                  <Text style={styles.modalTitle}>Child Account Created</Text>
+                  <Text style={styles.modalText}>Share these login details with your child</Text>
+                </View>
+              </View>
+
+              <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 14, gap: 12, borderWidth: 1, borderColor: colors.borderColor }}>
+                <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center' }}>
+                  Save these — your child uses them to log in as a Student on any device.
+                </Text>
+
+                {[
+                  { label: 'Student ID', value: createdStudentId, field: 'studentId' },
+                  { label: 'Login ID (Email)', value: createdLoginId, field: 'loginId' },
+                  ...(createdPassword ? [{ label: 'Password', value: createdPassword, field: 'password' }] : []),
+                ].map(({ label, value, field }) => (
+                  <View key={field} style={{ gap: 4 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
+                    <TouchableOpacity
+                      style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.cardDark, borderWidth: 1, borderColor: copiedField === field ? TEAL : colors.borderColor, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, gap: 8 }}
+                      onPress={() => copyToClipboard(value, field)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={{ flex: 1, color: colors.textMain, fontSize: 13, fontFamily: 'monospace' }} selectable>{value}</Text>
+                      <Feather name={copiedField === field ? 'check' : 'copy'} size={14} color={copiedField === field ? TEAL : colors.textDim} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+
+                {createdVerificationRequired && (
+                  <View style={{ backgroundColor: '#5F8A8612', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: '#5F8A8630', gap: 4 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#5F8A86' }}>Your child can log in right away.</Text>
+                    <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
+                      A verification link was sent to <Text style={{ fontWeight: '700', color: colors.textMain }}>{createdLoginId}</Text>. You (the parent) can open that inbox and click the link — this enables "Forgot Password" if your child ever needs it.
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <TouchableOpacity style={styles.modalBtn} onPress={confirmChildCredsAndFinish} activeOpacity={0.85}>
+                <Text style={styles.modalBtnText}>Got it, I've saved these</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         {/* Navigation buttons */}
         <View style={styles.navRow}>
@@ -710,4 +987,33 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   },
   nextBtnDisabled: { opacity: 0.4 },
   nextBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+  },
+  modalBox: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: c.cardDark,
+    borderWidth: 1,
+    borderColor: c.borderColor,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
+    gap: spacing.md,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: c.textMain },
+  modalText: { fontSize: 14, color: c.textMuted, lineHeight: 20 },
+  modalBtn: {
+    marginTop: spacing.sm,
+    alignSelf: 'flex-end',
+    backgroundColor: TEAL,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  modalBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 });

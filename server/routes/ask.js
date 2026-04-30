@@ -197,6 +197,54 @@ ${classSummary || 'No class data provided.'}`;
   }
 });
 
+// POST /ask/parent — Parent AI assistant
+// Warm, jargon-free, focused on single child. No teacher-level data access.
+router.post('/parent', async (req, res) => {
+  try {
+    const { question, childSummary = '', childName = '', parentEmail = '' } = req.body;
+    if (!question?.trim()) return res.status(400).json({ error: 'question is required' });
+
+    const Groq = require('groq-sdk');
+    const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+    const systemPrompt = `You are a warm, supportive AI assistant helping a parent understand and support their child's learning journey on the Aivorah platform.
+
+Your role:
+- Explain their child's progress in simple, jargon-free language
+- Suggest specific, practical activities they can do at home (5–10 minutes max)
+- Help them understand what topics their child is working on
+- Decode report data into plain English
+- Help draft messages to the teacher if asked
+- Be encouraging and non-judgmental — never make the parent feel bad
+- Keep answers short, warm, and actionable
+
+Rules:
+- Only talk about the child whose data is provided
+- Never make up data — only use what's in CHILD DATA below
+- If data is missing, say so kindly and suggest what to look for
+- No technical jargon — speak like a friendly school counsellor
+
+CHILD DATA:
+${childSummary || 'No child data available yet.'}`;
+
+    const completion = await client.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: question },
+      ],
+      temperature: 0.5,
+      max_tokens: 600,
+    });
+
+    const answer = completion.choices?.[0]?.message?.content || 'Unable to generate response.';
+    res.json({ answer });
+  } catch (err) {
+    console.error('Parent AI error:', err.message);
+    res.status(500).json({ error: 'AI error: ' + err.message });
+  }
+});
+
 // POST /ask/stream - SSE streaming version
 router.post('/stream', async (req, res) => {
   const startedAt = Date.now();

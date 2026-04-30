@@ -41,7 +41,7 @@ export default function ParentNavigator() {
         swipeEnabled: !isLargeScreen,
         sceneContainerStyle: { backgroundColor: colors.bgDark },
         animationEnabled: false,
-      }}
+      } as any}
     >
       <Drawer.Screen name="ParentDashboard" component={ParentDashboardScreen} />
       <Drawer.Screen name="ParentProfile" component={ParentProfileScreen} />

@@ -7,15 +7,16 @@ import {
   Animated,
   Easing,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
-import { sendEmailVerification } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
+import SERVER_URL from '../../config/serverUrl';
 
 // ─── Envelope SVG illustration ───────────────────────────────────────────────
 function EnvelopeIllustration({ color, accent }: { color: string; accent: string }) {
@@ -47,6 +48,25 @@ export default function VerifyEmailScreen() {
   const [resendSuccess, setResendSuccess] = useState(false);
   const [checking, setChecking] = useState(false);
 
+  // Poll every 2s — the moment user clicks the email link (any browser/device),
+  // server marks them verified and this screen auto-advances to Onboarding.
+  useEffect(() => {
+    if (!user?.email) return;
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch(`${SERVER_URL}/user/check-verified?email=${encodeURIComponent(user.email)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.verified) {
+            clearInterval(poll);
+            updateUser({ emailVerified: true });
+          }
+        }
+      } catch {}
+    }, 2000);
+    return () => clearInterval(poll);
+  }, [user?.email]);
+
   // Pulsing animation
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -77,29 +97,47 @@ export default function VerifyEmailScreen() {
   }, [cooldown]);
 
   async function handleResend() {
-    if (cooldown > 0 || !auth.currentUser) return;
+    if (cooldown > 0 || !user?.email) return;
     try {
-      await sendEmailVerification(auth.currentUser);
+      const frontendOrigin = Platform.OS === 'web' && typeof window !== 'undefined'
+        ? window.location.origin
+        : 'http://localhost:8081';
+      await fetch(`${SERVER_URL}/user/send-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, name: user.name || 'there', frontendOrigin }),
+      });
       setCooldown(30);
       setResendSuccess(true);
       setTimeout(() => setResendSuccess(false), 4000);
     } catch (err: any) {
-      setVerifyError(err.message || 'Failed to resend. Try again.');
+      setVerifyError('Failed to resend. Please try again.');
     }
   }
 
   async function handleVerified() {
-    if (!auth.currentUser) return;
+    if (!user?.email) return;
     setChecking(true);
     setVerifyError('');
     try {
-      await auth.currentUser.reload();
-      if (auth.currentUser.emailVerified) {
-        updateUser({ emailVerified: true });
-        // Navigation handled by RootNavigator watching emailVerified
-      } else {
-        setVerifyError('Email not yet verified. Please check your inbox and click the link.');
+      // Check our Supabase-based verification (branded email flow)
+      const res = await fetch(`${SERVER_URL}/user/check-verified?email=${encodeURIComponent(user.email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.verified) {
+          updateUser({ emailVerified: true });
+          return;
+        }
       }
+      // Fallback: also check Firebase emailVerified (Google SSO users)
+      if (auth.currentUser) {
+        await auth.currentUser.reload();
+        if (auth.currentUser.emailVerified) {
+          updateUser({ emailVerified: true });
+          return;
+        }
+      }
+      setVerifyError('Email not yet verified. Please check your inbox and click the link.');
     } catch (err: any) {
       setVerifyError(err.message || 'Something went wrong.');
     } finally {

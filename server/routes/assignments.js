@@ -33,11 +33,13 @@ router.get('/new-count', async (req, res) => {
 
   const userId = await resolveUserId(studentId);
 
-  // Fetch student curriculum for filtering class-wide assignments
+  // Fetch student curriculum AND grade for filtering class-wide assignments
   let studentCurriculum = null;
+  let studentGrade = null;
   if (userId) {
-    const { data: uData } = await supabase.from('users').select('curriculum').eq('id', userId).single();
+    const { data: uData } = await supabase.from('users').select('curriculum, grade').eq('id', userId).single();
     studentCurriculum = uData?.curriculum || null;
+    studentGrade = uData?.grade || null;
   }
 
   const orClause = userId
@@ -56,8 +58,9 @@ router.get('/new-count', async (req, res) => {
 
   const filtered = (rawData || []).filter(a => {
     if (a.student_id !== null) return true;
-    if (!a.curriculum || !studentCurriculum) return true;
-    return a.curriculum === studentCurriculum;
+    if (a.curriculum && studentCurriculum && a.curriculum !== studentCurriculum) return false;
+    if (a.grade && studentGrade && a.grade !== studentGrade) return false;
+    return true;
   });
 
   res.json({ count: filtered.length });
@@ -84,11 +87,15 @@ router.get('/', async (req, res) => {
 
   const userId = await resolveUserId(studentId);
 
-  // Fetch student's curriculum so class-wide assignments are filtered correctly
+  // Fetch student's curriculum, grade, and join date for filtering
   let studentCurriculum = null;
+  let studentGrade = null;
+  let studentJoinedAt = null;
   if (userId) {
-    const { data: uData } = await supabase.from('users').select('curriculum').eq('id', userId).single();
+    const { data: uData } = await supabase.from('users').select('curriculum, grade, created_at').eq('id', userId).single();
     studentCurriculum = uData?.curriculum || null;
+    studentGrade = uData?.grade || null;
+    studentJoinedAt = uData?.created_at || null;
   }
 
   // Fetch all assignments for this student (personal) OR class-wide (student_id is null)
@@ -103,21 +110,100 @@ router.get('/', async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
 
-  // For class-wide assignments (student_id is null), only include if curriculum matches
-  // (or if the assignment has no curriculum set — legacy/catch-all)
+  // For class-wide assignments (student_id is null), filter by BOTH curriculum AND grade
   const filtered = (allData || []).filter(a => {
-    if (a.student_id !== null) return true; // personally assigned — always include
-    if (!a.curriculum || !studentCurriculum) return true; // no curriculum filter set — include
-    return a.curriculum === studentCurriculum; // must match student's curriculum
+    if (a.student_id !== null) return true;
+    if (a.curriculum && studentCurriculum && a.curriculum !== studentCurriculum) return false;
+    if (a.grade && studentGrade && a.grade !== studentGrade) return false;
+    return true;
   });
 
-  res.json(filtered.map(normalise));
+  // Fetch this student's submissions so each assignment shows their own score
+  let submissionsMap = {};
+  if (userId && filtered.length > 0) {
+    const assignmentIds = filtered.map(a => a.id);
+    const { data: subs } = await supabase
+      .from('assignment_submissions')
+      .select('assignment_id, status, score, ai_feedback, submission_text, completed_at')
+      .eq('student_id', userId)
+      .in('assignment_id', assignmentIds);
+    (subs || []).forEach(s => { submissionsMap[s.assignment_id] = s; });
+  }
+
+  const result = filtered.map(a => {
+    const norm = normaliseWithSubmission(a, submissionsMap[a.id]);
+    // For class-wide assignments: flag if student joined after due date (can't be overdue)
+    if (!a.student_id && studentJoinedAt && a.due_date) {
+      norm.joinedAfterDue = new Date(studentJoinedAt) > new Date(a.due_date);
+    } else {
+      norm.joinedAfterDue = false;
+    }
+    return norm;
+  });
+  res.json(result);
 });
 
 // â”€â”€ POST /assignments/generate-quiz â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Generate quiz questions from Qdrant textbook content + teacher notes.
 // Body: { subject, chapter, grade, curriculum, difficulty, count, teacherNotes }
 
+
+// ── POST /assignments/ai-generate ────────────────────────────────────────
+// Parent-facing: generate a full assignment from a plain-language prompt.
+// Body: { prompt, subject, grade, curriculum }
+// Returns: { title, chapter, questions, note, type }
+router.post('/ai-generate', async (req, res) => {
+  const { prompt = '', subject = 'Mathematics', grade = 'Grade 3', curriculum = 'IB PYP', count = 5, type: reqType = '' } = req.body;
+  if (!prompt.trim()) return res.status(400).json({ error: 'prompt required' });
+
+  const questionCount = Math.max(3, Math.min(10, Number(count) || 5));
+  const systemPrompt = `You are an expert ${curriculum} ${grade} ${subject} teacher.
+A parent has described what they want their child to practice. Generate a structured assignment.
+Return ONLY valid JSON — no markdown, no explanation — in this exact shape:
+{
+  "title": "short assignment title (max 10 words)",
+  "chapter": "topic or chapter name",
+  "type": "assignment" or "quiz",
+  "note": "2-3 sentence encouraging note to the child explaining what to do",
+  "questions": ["question 1", "question 2", ...]
+}
+Rules:
+- Keep language simple and age-appropriate for ${grade}
+- questions array: generate exactly ${questionCount} questions matching the difficulty of ${grade} ${subject}
+- type should be "${reqType || 'quiz'}" as requested; override only if clearly different
+- note should be warm, encouraging, and motivating for a young learner
+- Align content to ${curriculum} standards`;
+
+  try {
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Parent request: "${prompt.trim()}"` },
+      ],
+      temperature: 0.7,
+      max_tokens: 800,
+    });
+
+    const raw = completion.choices[0]?.message?.content?.trim() || '';
+    // strip markdown code fences if present
+    const jsonStr = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+    let result;
+    try { result = JSON.parse(jsonStr); }
+    catch { return res.status(500).json({ error: 'AI returned invalid JSON', raw }); }
+
+    res.json({
+      title:     result.title     || 'AI Generated Assignment',
+      chapter:   result.chapter   || '',
+      type:      result.type === 'quiz' ? 'quiz' : 'assignment',
+      note:      result.note      || '',
+      questions: Array.isArray(result.questions) ? result.questions : [],
+    });
+  } catch (e) {
+    console.error('[ai-generate] error:', e.message);
+    res.status(500).json({ error: 'Groq AI generation failed', detail: e.message });
+  }
+});
 
 // ── POST /assignments/generate-steps ─────────────────────────────────────
 // Use Groq AI to generate topic-specific task step labels + instructions
@@ -961,7 +1047,8 @@ router.post('/', async (req, res) => {
 
   if (!title || !dueDate) return res.status(400).json({ error: 'title and dueDate required' });
   const normalizedQuizQuestions = normalizeQuizQuestions(Array.isArray(quizQuestions) ? quizQuestions : []);
-  if (type === 'quiz' && normalizedQuizQuestions.length === 0) {
+  // Parents create plain-text question assignments — skip MCQ validation for parent-created items
+  if (type === 'quiz' && normalizedQuizQuestions.length === 0 && createdByRole !== 'parent') {
     return res.status(400).json({ error: 'Quiz must include valid MCQ questions (4 options each).' });
   }
 
@@ -1061,26 +1148,29 @@ router.post('/', async (req, res) => {
     }
   } catch (_) { /* non-blocking */ }
 
-  // Auto-add deadline to schedule.json so it appears in all calendars
+  // Auto-add deadline to schedule_events (Supabase) so it appears in student's calendar
   try {
-    const schedule = readSchedule();
-    const deadlineId = 'asgn_' + data.id.slice(0, 8);
-    if (!schedule.find(e => e.id === deadlineId)) {
-      schedule.push({
-        id:        deadlineId,
-        title:     `${title} â€” Due`,
-        date:      dueDate,
-        startTime: '23:59',
-        endTime:   '23:59',
-        type:      'deadline',
-        note:      `${subject}${chapter ? ' Â· ' + chapter : ''}${grade ? ' Â· ' + grade : ''}`,
-        studentId: 'all',
-        createdBy: 'teacher',
-        tag:       subject,
-        createdAt: new Date().toISOString(),
-        assignmentId: data.id,
+    // For personal assignments: use the student's UUID. For class-wide: use 'all'
+    const scheduleStudentId = userId || 'all';
+    // Check not already there
+    const { data: existing } = await supabase
+      .from('schedule_events')
+      .select('id')
+      .eq('assignment_id', data.id)
+      .maybeSingle();
+    if (!existing) {
+      await supabase.from('schedule_events').insert({
+        title:        `${title} — Due`,
+        event_date:   dueDate,
+        start_time:   '23:59',
+        end_time:     '23:59',
+        type:         'deadline',
+        note:         `${subject}${chapter ? ' · ' + chapter : ''}${grade ? ' · ' + grade : ''}`,
+        student_id:   scheduleStudentId,
+        created_by:   createdByRole || 'teacher',
+        tag:          subject || null,
+        assignment_id: data.id,
       });
-      writeSchedule(schedule);
     }
   } catch (_) {}
 
@@ -1090,6 +1180,68 @@ router.post('/', async (req, res) => {
 // â”€â”€ POST /assignments/:id/submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Student submits text answers OR a base64 image; Groq grades it.
 // Body: { studentId, answers: string[], imageBase64?: string, imageMime?: string }
+
+// ── GET /assignments/:id/submissions — teacher view of all student submissions ──
+router.get('/:id/submissions', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get the assignment itself (for questions)
+    const { data: assignment } = await supabase
+      .from('assignments')
+      .select('id, title, type, questions, quiz_questions, grade, curriculum, student_id')
+      .eq('id', id)
+      .single();
+
+    if (!assignment) return res.status(404).json({ error: 'Assignment not found' });
+
+    // Get all submissions for this assignment
+    const { data: subs, error } = await supabase
+      .from('assignment_submissions')
+      .select('student_id, status, score, ai_feedback, completed_at, submission_text')
+      .eq('assignment_id', id)
+      .order('completed_at', { ascending: false });
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    if (!subs || subs.length === 0) {
+      return res.json({ submissions: [], totalLinked: 0 });
+    }
+
+    // Enrich with student names
+    const studentIds = subs.map(s => s.student_id).filter(Boolean);
+    const { data: users } = await supabase
+      .from('users')
+      .select('id, name, grade')
+      .in('id', studentIds);
+
+    const userMap = {};
+    (users || []).forEach(u => { userMap[u.id] = u; });
+
+    // Count total linked students (for class-wide assignments)
+    let totalLinked = subs.length;
+    if (!assignment.student_id) {
+      const { count } = await supabase
+        .from('teacher_student')
+        .select('student_id', { count: 'exact', head: true });
+      totalLinked = count || subs.length;
+    }
+
+    const submissions = subs.map(s => ({
+      studentId:   s.student_id,
+      studentName: userMap[s.student_id]?.name || 'Unknown',
+      grade:       userMap[s.student_id]?.grade || null,
+      status:      s.status,
+      score:       s.score,
+      aiFeedback:  s.ai_feedback,
+      completedAt: s.completed_at,
+    }));
+
+    res.json({ submissions, totalLinked });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.post('/:id/submit', async (req, res) => {
   const { id } = req.params;
@@ -1143,6 +1295,45 @@ router.post('/:id/submit', async (req, res) => {
         ? storedQuizQuestions
         : (legacyQuizQuestions.length > 0 ? legacyQuizQuestions : requestQuizQuestions);
       const quizQuestions = normalizeQuizQuestions(sourceQuizQuestions);
+
+      // Parent-created assignments have plain-text questions[] but no MCQ quiz_questions[]
+      // Fall through to free-text grading path below
+      if (quizQuestions.length === 0 && assignment.created_by_role === 'parent' && questions.length > 0) {
+        const graded = await Promise.all(questions.map(async (q, i) => {
+          const studentAns = ((quizAnswers[i] || {}).answer || (answers[i] || '')).trim();
+          if (!studentAns) return { number: i+1, question: q, answered: false, score: 0, correct: false, comment: 'Not attempted.' };
+          try {
+            const comp = await groq.chat.completions.create({
+              model: 'llama-3.3-70b-versatile',
+              messages: [{ role: 'user', content: `You are an IB PYP ${assignment.grade || 'Grade 3'} ${assignment.subject || ''} teacher grading a student's answer.\nQuestion: "${q}"\nStudent answer: "${studentAns}"\nGrade fairly for a young learner. Respond ONLY as JSON: {"score":0-100,"correct":bool,"comment":"one warm encouraging sentence"}` }],
+              response_format: { type: 'json_object' },
+            });
+            const r = JSON.parse(comp.choices[0].message.content);
+            return { number: i+1, question: q, answered: true, score: Math.max(0, Math.min(100, Number(r.score)||0)), correct: !!r.correct, studentAnswer: studentAns, comment: r.comment || 'Good effort!' };
+          } catch {
+            return { number: i+1, question: q, answered: true, score: 50, correct: false, studentAnswer: studentAns, comment: 'Good effort!' };
+          }
+        }));
+        perQuestion = graded;
+        score = graded.length > 0 ? Math.round(graded.reduce((s, q) => s + q.score, 0) / graded.length) : 50;
+        try {
+          const summaryComp = await groq.chat.completions.create({
+            model: 'llama-3.1-8b-instant',
+            messages: [{ role: 'user', content: `IB PYP ${assignment.grade||'Grade 3'} student scored ${score}% on "${assignment.title}" (${assignment.subject}). Write 2 warm encouraging sentences for a young learner. JSON: {"text":"...","stamp":"Amazing Work! or Good Effort! or Keep Trying!","wellDone":"...","improve":"..."}` }],
+            response_format: { type: 'json_object' },
+          });
+          const sum = JSON.parse(summaryComp.choices[0].message.content);
+          feedback = JSON.stringify({ text: sum.text||'', stamp: sum.stamp||'Good Effort!', wellDone: sum.wellDone||'', improve: sum.improve||'', perQuestion: graded });
+        } catch { feedback = JSON.stringify({ text: 'Great effort!', stamp: score >= 80 ? 'Amazing Work!' : 'Good Effort!', perQuestion: graded }); }
+
+        const studentUid = await resolveUserId(studentId);
+        const { error: subErr } = await supabase.from('assignment_submissions').upsert({
+          assignment_id: id, student_id: studentUid,
+          status: 'completed', score, ai_feedback: feedback, completed_at: new Date().toISOString(),
+        }, { onConflict: 'assignment_id,student_id' });
+        if (subErr) return res.status(500).json({ error: subErr.message });
+        return res.json({ score, feedback, perQuestion: graded });
+      }
 
       if (quizQuestions.length === 0) {
         return res.status(400).json({ error: 'Quiz has no questions configured. Ask your teacher to regenerate the quiz.' });
@@ -1716,39 +1907,44 @@ Respond ONLY as JSON:
     feedback = 'Your submission was received! Your teacher will review it soon.';
   }
 
-  const { data: updated, error: updateErr } = await supabase
-    .from('assignments')
-    .update({
-      status:          'completed',
-      score,
-      ai_feedback:     feedback,
-      submission_text: perQuestion.length > 0 ? JSON.stringify({ perQuestion }) : null,
-      completed_at:    new Date().toISOString(),
-    })
-    .eq('id', id)
-    .select()
-    .single();
+  const studentUid = await resolveUserId(studentId);
+  const subText = perQuestion.length > 0 ? JSON.stringify({ perQuestion }) : null;
+  const { error: subErr } = await supabase.from('assignment_submissions').upsert({
+    assignment_id:   id,
+    student_id:      studentUid,
+    status:          'completed',
+    score,
+    ai_feedback:     feedback,
+    submission_text: subText,
+    completed_at:    new Date().toISOString(),
+  }, { onConflict: 'assignment_id,student_id' });
 
-  if (updateErr) return res.status(500).json({ error: updateErr.message });
+  if (subErr) return res.status(500).json({ error: subErr.message });
 
-  res.json({ ...normalise(updated), aiFeedback: feedback, perQuestion });
+  // Return the assignment row merged with this student's submission
+  const { data: asgn } = await supabase.from('assignments').select('*').eq('id', id).single();
+  res.json({ ...normaliseWithSubmission(asgn, { status: 'completed', score, ai_feedback: feedback, completed_at: new Date().toISOString() }), aiFeedback: feedback, perQuestion });
 });
 
 // â”€â”€ PUT /assignments/:id/complete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 router.put('/:id/complete', async (req, res) => {
   const { id } = req.params;
-  const { score = null } = req.body;
+  const { score = null, studentId } = req.body;
 
-  const { data, error } = await supabase
-    .from('assignments')
-    .update({ status: 'completed', score, completed_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
+  const studentUid = studentId ? await resolveUserId(studentId) : null;
+  if (studentUid) {
+    const { error: subErr } = await supabase.from('assignment_submissions').upsert({
+      assignment_id: id, student_id: studentUid,
+      status: 'completed', score, completed_at: new Date().toISOString(),
+    }, { onConflict: 'assignment_id,student_id' });
+    if (subErr) return res.status(500).json({ error: subErr.message });
+  }
 
+  const { data, error } = await supabase.from('assignments').select('*').eq('id', id).single();
   if (error) return res.status(500).json({ error: error.message });
-  res.json(normalise(data));
+  const sub = studentUid ? { status: 'completed', score, completed_at: new Date().toISOString() } : null;
+  res.json(normaliseWithSubmission(data, sub));
 });
 
 // â”€â”€ DELETE /assignments/:id â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -2002,6 +2198,18 @@ async function resolveUserId(id) {
   return null;
 }
 
+// normaliseWithSubmission merges per-student submission data onto assignment row
+function normaliseWithSubmission(a, sub) {
+  const base = normalise(a);
+  if (sub) {
+    base.status      = sub.status      || 'completed';
+    base.score       = sub.score       ?? null;
+    base.aiFeedback  = sub.ai_feedback || null;
+    base.completedAt = sub.completed_at || null;
+  }
+  return base;
+}
+
 function normalise(a) {
   return {
     id:          a.id,
@@ -2013,14 +2221,15 @@ function normalise(a) {
     note:        a.note,
     studentId:   a.student_id,
     createdBy:   a.created_by_role ?? 'teacher',
-    status:      a.status,
-    score:       a.score,
+    // Never show another student's score from the assignment row itself
+    status:      a.student_id !== null ? (a.status || 'pending') : 'pending',
+    score:       a.student_id !== null ? a.score : null,
     createdAt:   a.created_at,
-    completedAt: a.completed_at,
+    completedAt: a.student_id !== null ? a.completed_at : null,
     grade:       a.grade,
     curriculum:  a.curriculum,
     questions:   a.questions || [],
-    aiFeedback:       a.ai_feedback || null,
+    aiFeedback:       a.student_id !== null ? (a.ai_feedback || null) : null,
     documentUrl:      a.document_url || null,
     documentUrls:     a.document_urls || [],
     successCriteria:  a.success_criteria || [],

@@ -177,11 +177,21 @@ router.get('/child-report', async (req, res) => {
     }
 
     // Global stats
-    const totalMinutes = Object.values(topicMap).reduce((s, t) => s + t.minutesSpent, 0);
+    let totalMinutes = Object.values(topicMap).reduce((s, t) => s + t.minutesSpent, 0);
     const totalAIChats = Object.values(topicMap).reduce((s, t) => s + t.aiChats, 0);
     const avgScore = scores.length > 0
       ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
       : null;
+
+    // Enrich with real study_time_minutes from student_stats
+    try {
+      const supabase = require('../services/supabase');
+      const { data: userRow } = await supabase.from('users').select('id').eq('email', childEmail).maybeSingle();
+      if (userRow?.id) {
+        const { data: statsRow } = await supabase.from('student_stats').select('study_time_minutes').eq('student_id', userRow.id).maybeSingle();
+        if (statsRow?.study_time_minutes > 0) totalMinutes = statsRow.study_time_minutes;
+      }
+    } catch {}
 
     res.json({
       childEmail,

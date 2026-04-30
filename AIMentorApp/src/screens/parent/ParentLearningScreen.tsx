@@ -201,9 +201,12 @@ function SubjectCard({
   const meta    = subjectMeta(sub.subject);
   const accent  = meta.accentDark;
   const topics: any[] = sub.topics ?? [];
-  const done    = topics.filter((t: any) =>
-    completedSet.has(t.topic) || [...completedSet].some(c => c.includes(t.topic))
-  ).length;
+  const done    = topics.filter((t: any) => {
+    const name = typeof t === 'string' ? t : t.topic;
+    const inCompleted = completedSet.has(name) || [...completedSet].some(c => c.includes(name));
+    const inAnalytics = analyticsReport?.topics[name]?.hasActivity === true;
+    return inCompleted || inAnalytics;
+  }).length;
   const pct     = sub.topicCount > 0 ? Math.round((done / sub.topicCount) * 100) : 0;
 
   return (
@@ -241,8 +244,8 @@ function SubjectCard({
           <View style={[cardStyles.topicList, { backgroundColor: '#ffffffcc' }]}>
             {topics.map((t: any, i: number) => {
               const topicName = typeof t === 'string' ? t : t.topic;
-              const isDone    = completedSet.has(topicName) || [...completedSet].some(c => c.includes(topicName));
               const ta        = analyticsReport?.topics[topicName];
+              const isDone    = completedSet.has(topicName) || [...completedSet].some(c => c.includes(topicName)) || ta?.hasActivity === true;
               return (
                 <TopicRow
                   key={topicName || i}
@@ -305,6 +308,7 @@ export default function ParentLearningScreen({ navigation }: any) {
   const [subjects, setSubjects]               = useState<any[]>([]);
   const [chapters, setChapters]               = useState<any[]>([]);
   const [completedTopics, setCompletedTopics] = useState<string[]>([]);
+  const [topicsExplored, setTopicsExplored]   = useState(0);
   const [loading, setLoading]                 = useState(true);
   const [refreshing, setRefreshing]           = useState(false);
   const [analyticsReport, setAnalyticsReport] = useState<ChildReport | null>(null);
@@ -342,14 +346,17 @@ export default function ParentLearningScreen({ navigation }: any) {
       // Student stats
       const statsRes = await fetch(`${SERVER_URL}/student/${child.id}`)
         .then(r => r.json()).catch(() => ({}));
-      if (statsRes && !statsRes.error) setCompletedTopics(statsRes.completedTopics ?? []);
+      if (statsRes && !statsRes.error) {
+        setCompletedTopics(statsRes.completedTopics ?? []);
+        setTopicsExplored(statsRes.topicsExplored ?? 0);
+      }
 
       // Analytics report for this child
       if (child.email) {
-        fetch(`${SERVER_URL}/analytics/child-report?childEmail=${encodeURIComponent(child.email)}`)
-          .then(r => r.json())
-          .then(data => { if (data && !data.error) setAnalyticsReport(data); })
-          .catch(() => {});
+        try {
+          const reportRes = await fetch(`${SERVER_URL}/analytics/child-report?childEmail=${encodeURIComponent(child.email)}`).then(r => r.json());
+          if (reportRes && !reportRes.error) setAnalyticsReport(reportRes);
+        } catch {}
       }
 
       if (isIBPYP) {
@@ -368,28 +375,31 @@ export default function ParentLearningScreen({ navigation }: any) {
     finally { setLoading(false); setRefreshing(false); }
   }, [child, isIBPYP, childGrade, childCurriculum]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  // Reset analytics + expanded card when child switches
+  // Reset analytics + expanded card when child switches, then fetch fresh data
   useEffect(() => {
     setAnalyticsReport(null);
     setExpandedSubject(null);
+    setTopicsExplored(0);
   }, [selectedIdx]);
 
+  useEffect(() => { fetchData(); }, [fetchData]);
+
   const { totalItems, doneItems, overallPct, curriculumLabel } = useMemo(() => {
+    // Use topicsExplored (same source as student dashboard) for the done count
+    const exploredCount = topicsExplored > 0 ? topicsExplored : completedTopics.length;
     if (isIBPYP) {
       const total = subjects.reduce((s, sub) => s + (sub.topicCount ?? 0), 0);
-      const done  = completedTopics.length;
+      const done  = Math.min(exploredCount, total);
       return { totalItems: total, doneItems: done,
         overallPct: total > 0 ? Math.round((done / total) * 100) : 0,
         curriculumLabel: `IB PYP · ${subjects.length} Subjects` };
     }
     const total = chapters.length || 14;
-    const done  = completedTopics.length;
+    const done  = Math.min(exploredCount, total);
     return { totalItems: total, doneItems: done,
       overallPct: Math.round((done / total) * 100),
       curriculumLabel: `${childCurriculum || 'NCERT'} · Maths Mela` };
-  }, [isIBPYP, subjects, chapters, completedTopics, childCurriculum]);
+  }, [isIBPYP, subjects, chapters, completedTopics, childCurriculum, topicsExplored]);
 
   function isChapterDone(ch: any) {
     const id = ch.id || ch.file || '';

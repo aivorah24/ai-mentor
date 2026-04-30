@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Modal, Alert, ActivityIndicator,
+  TextInput, Modal, ActivityIndicator,
   KeyboardAvoidingView, Platform, Linking,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -58,6 +58,8 @@ export default function TeacherHelpScreen({ navigation }: any) {
   const [ticketSubject, setTicketSubject] = useState('');
   const [ticketMessage, setTicketMessage] = useState('');
   const [ticketLoading, setTicketLoading] = useState(false);
+  const [ticketError,   setTicketError]   = useState('');
+  const [feedback,      setFeedback]      = useState<{ title: string; message: string } | null>(null);
 
   const filteredFaqs = FAQS.filter(f =>
     search === '' ||
@@ -92,8 +94,9 @@ export default function TeacherHelpScreen({ navigation }: any) {
   async function handleSubmitTicket() {
     const subject = ticketSubject.trim();
     const message = ticketMessage.trim();
-    if (!subject) { Alert.alert('Required', 'Please enter a subject.'); return; }
-    if (!message) { Alert.alert('Required', 'Please describe your issue.'); return; }
+    if (!subject) { setTicketError('Please enter a subject.'); return; }
+    if (!message) { setTicketError('Please describe your issue.'); return; }
+    setTicketError('');
     setTicketLoading(true);
     try {
       const res = await fetch(`${SERVER_URL}/help/ticket`, {
@@ -106,9 +109,9 @@ export default function TeacherHelpScreen({ navigation }: any) {
       setTicketVisible(false);
       setTicketSubject('');
       setTicketMessage('');
-      Alert.alert('Ticket Submitted!', `We'll respond to ${user?.email || 'your email'} within 24 hours.`);
+      setFeedback({ title: 'Ticket Submitted!', message: `We'll respond to ${user?.email || 'your email'} within 24 hours.` });
     } catch (err: any) {
-      Alert.alert('Submission Failed', err?.message || 'Please try again.');
+      setTicketError(err?.message || 'Please try again.');
     } finally {
       setTicketLoading(false);
     }
@@ -298,6 +301,7 @@ export default function TeacherHelpScreen({ navigation }: any) {
                   placeholderTextColor={colors.textDim} multiline numberOfLines={4}
                 />
               </View>
+              {ticketError ? <Text style={{ color: '#B8797E', fontSize: 13, marginTop: 8 }}>{ticketError}</Text> : null}
               <View style={styles.modalBtns}>
                 <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setTicketVisible(false)}>
                   <Text style={styles.modalCancelText}>Cancel</Text>
@@ -306,6 +310,24 @@ export default function TeacherHelpScreen({ navigation }: any) {
                   {ticketLoading ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.modalSaveText}>Submit Ticket</Text>}
                 </TouchableOpacity>
               </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Feedback Modal */}
+        <Modal visible={!!feedback} transparent animationType="fade" onRequestClose={() => setFeedback(null)}>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalBox, { maxWidth: 360 }]}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>{feedback?.title}</Text>
+                <TouchableOpacity onPress={() => setFeedback(null)}>
+                  <Feather name="x" size={20} color="#888" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.ticketNote}>{feedback?.message}</Text>
+              <TouchableOpacity style={styles.modalSaveBtn} onPress={() => setFeedback(null)}>
+                <Text style={styles.modalSaveText}>OK</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </Modal>

@@ -6,6 +6,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Modal,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius } from '../../theme';
@@ -70,12 +72,14 @@ function ChildCard({
   child,
   isSelected,
   onPress,
+  onViewCreds,
   colors,
   styles,
 }: {
   child: ChildData;
   isSelected: boolean;
   onPress: () => void;
+  onViewCreds: (child: ChildData) => void;
   colors: AppColors;
   styles: any;
 }) {
@@ -89,6 +93,16 @@ function ChildCard({
       onPress={onPress}
       activeOpacity={0.8}
     >
+      {/* Key icon — tap to view login credentials */}
+      <TouchableOpacity
+        style={styles.childKeyBtn}
+        onPress={() => onViewCreds(child)}
+        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+        activeOpacity={0.7}
+      >
+        <Feather name="key" size={11} color={colors.textDim} />
+      </TouchableOpacity>
+
       <View style={[styles.childAvatar, { backgroundColor: isOnTrack ? colors.accentBlue + '20' : colors.accentYellow + '20' }]}>
         <Text style={[styles.childAvatarText, { color: isOnTrack ? colors.accentBlue : colors.accentYellow }]}>
           {child.name[0]}
@@ -164,7 +178,7 @@ function ActivityBar({
 
 // ── Main Screen ────────────────────────────────────────────
 
-export default function ParentDashboardScreen({ navigation }: any) {
+export default function ParentDashboardScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const { user } = useAuth();
   const { unreadCount, unreadAssignments } = useNotification();
@@ -177,6 +191,34 @@ export default function ParentDashboardScreen({ navigation }: any) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loadingAssignments, setLoadingAssignments] = useState(false);
   const [weeklyActivity, setWeeklyActivity] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+
+  // Login credentials modal
+  const [credsChild, setCredsChild] = useState<ChildData | null>(null);
+  const [creds, setCreds] = useState<any>(null);
+  const [loadingCreds, setLoadingCreds] = useState(false);
+  const [copiedField, setCopiedField] = useState('');
+
+  function copyToClipboard(text: string, field: string) {
+    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(''), 1500);
+  }
+
+  async function fetchCreds(child: ChildData) {
+    setCredsChild(child);
+    setCreds(null);
+    setLoadingCreds(true);
+    try {
+      const res = await fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children/${child.id}/credentials`);
+      setCreds(res.ok ? await res.json() : null);
+    } catch {
+      setCreds(null);
+    } finally {
+      setLoadingCreds(false);
+    }
+  }
 
   const parentEmail = user?.email || 'parent@demo.com';
 
@@ -198,12 +240,16 @@ export default function ParentDashboardScreen({ navigation }: any) {
             assignmentsDone: c.assignmentsDone ?? 0,
           }));
           setChildren(mapped);
-          setSelectedChild(mapped[0]);
+          
+          // Auto-select child from navigation params if provided
+          const targetChildId = route.params?.childId;
+          const found = targetChildId ? mapped.find(c => c.id === targetChildId) : null;
+          setSelectedChild(found || mapped[0]);
         }
       })
       .catch(() => {})
       .finally(() => setChildrenLoading(false));
-  }, [parentEmail]);
+  }, [parentEmail, route.params?.childId]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -382,6 +428,7 @@ export default function ParentDashboardScreen({ navigation }: any) {
                     child={ch}
                     isSelected={selectedChild.id === ch.id}
                     onPress={() => setSelectedChild(ch)}
+                    onViewCreds={fetchCreds}
                     colors={colors}
                     styles={styles}
                   />
@@ -465,7 +512,12 @@ export default function ParentDashboardScreen({ navigation }: any) {
                 const dueLabel = isDone ? 'Done' : formatDueDateShort(a.dueDate);
                 const isOverdue = !isDone && dueLabel === 'Overdue';
                 return (
-                  <View key={a.id} style={[styles.assignmentRow, idx < assignments.length - 1 && styles.assignmentDivider]}>
+                  <TouchableOpacity
+                    key={a.id}
+                    style={[styles.assignmentRow, idx < assignments.length - 1 && styles.assignmentDivider]}
+                    onPress={() => navigation.navigate('ParentAssignments')}
+                    activeOpacity={0.7}
+                  >
                     <View style={[styles.assignmentCheck, isDone && styles.assignmentCheckDone]}>
                       {isDone && <Feather name="check" size={12} color="white" />}
                     </View>
@@ -481,7 +533,7 @@ export default function ParentDashboardScreen({ navigation }: any) {
                     ]}>
                       {dueLabel}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </View>
@@ -535,6 +587,73 @@ export default function ParentDashboardScreen({ navigation }: any) {
 
         </ScrollView>
       </View>
+
+      {/* Login Credentials Modal */}
+      <Modal visible={!!credsChild} transparent animationType="fade" onRequestClose={() => { setCredsChild(null); setCreds(null); }}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#5F8A8620', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="key" size={16} color="#5F8A86" />
+                </View>
+                <View>
+                  <Text style={styles.modalTitle}>Login Info</Text>
+                  <Text style={styles.modalDesc}>{credsChild?.name}'s credentials</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => { setCredsChild(null); setCreds(null); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Feather name="x" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {loadingCreds ? (
+              <ActivityIndicator color="#5F8A86" style={{ paddingVertical: 24 }} />
+            ) : (
+              <View style={{ backgroundColor: colors.bgDark, borderRadius: 12, padding: 16, gap: 12, borderWidth: 1, borderColor: colors.borderColor }}>
+                <Text style={[styles.modalDesc, { textAlign: 'center' }]}>Your child uses these to log in as a Student.</Text>
+
+                {[
+                  creds?.studentId    ? { label: 'Student ID',       value: creds.studentId,    field: 'dstu'   } : null,
+                  creds?.loginId      ? { label: 'Login ID (Email)', value: creds.loginId,      field: 'dlogin' } : null,
+                  creds?.initialPassword ? { label: 'Password',     value: creds.initialPassword, field: 'dpass' } : null,
+                ].filter(Boolean).map(({ label, value, field }: any) => (
+                  <View key={field} style={{ gap: 4 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
+                    <TouchableOpacity
+                      style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: copiedField === field ? '#5F8A86' : colors.borderColor, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, gap: 8, backgroundColor: colors.cardDark }}
+                      onPress={() => copyToClipboard(value, field)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={{ flex: 1, color: colors.textMain, fontSize: 13, fontFamily: 'monospace' }} selectable>{value}</Text>
+                      <Feather name={copiedField === field ? 'check' : 'copy'} size={14} color={copiedField === field ? '#5F8A86' : colors.textMuted} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+
+                {!creds?.initialPassword && (
+                  <View style={{ backgroundColor: '#ef444415', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: '#ef444430' }}>
+                    <Text style={{ fontSize: 12, color: '#ef4444', textAlign: 'center', lineHeight: 18 }}>
+                      Password not saved for this account.{'\n'}
+                      {creds?.loginId?.includes('@aivorah.')
+                        ? 'Remove and re-add this child to generate fresh credentials.'
+                        : 'Your child can use "Forgot Password" on the login screen.'}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={{ backgroundColor: '#5F8A86', borderRadius: 10, paddingVertical: 13, alignItems: 'center', marginTop: 4 }}
+              onPress={() => { setCredsChild(null); setCreds(null); }}
+              activeOpacity={0.8}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScreenLayout>
   );
 }
@@ -570,7 +689,24 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     gap: 6,
     marginRight: spacing.md,
     minWidth: 120,
+    position: 'relative',
   },
+  childKeyBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: c.borderColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  modalBox: { width: '100%', maxWidth: 420, backgroundColor: c.cardDark, borderRadius: radius.xl, borderWidth: 1, borderColor: c.borderColor, padding: 24, gap: 12 },
+  modalTitle: { fontSize: 17, fontWeight: '700', color: c.textMain },
+  modalDesc: { fontSize: 13, color: c.textMuted, lineHeight: 20 },
   childCardActive: {
     borderColor: c.primary,
     backgroundColor: c.primaryGlow,

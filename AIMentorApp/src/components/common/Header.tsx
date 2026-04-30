@@ -34,6 +34,7 @@ interface HeaderProps {
   onSearchChange?: (text: string) => void;
   onNotificationPress?: () => void;
   onProfilePress?: () => void;
+  notificationCount?: number;
 }
 
 export default function Header({
@@ -125,10 +126,20 @@ export default function Header({
     }
   }
 
-  function handleSaveName() {
-    if (!nameInput.trim()) return;
-    updateUser({ name: nameInput.trim() });
+  async function handleSaveName() {
+    const newName = nameInput.trim();
+    if (!newName || !user?.email) return;
+    // Update local state immediately
+    updateUser({ name: newName });
     setEditingName(false);
+    // Persist to DB
+    try {
+      await fetch(`${SERVER_URL}/user/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, name: newName }),
+      });
+    } catch {}
   }
 
   function renderAvatarCircle(size: number) {

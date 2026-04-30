@@ -55,15 +55,19 @@ Respond ONLY with valid JSON — no markdown, no extra text:
   try {
     const clean = raw.replace(/```json\n?/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(clean);
-    // Handle edge case where 'fact' is itself a stringified JSON
-    if (typeof parsed.fact === 'string' && parsed.fact.trim().startsWith('{')) {
-      try {
-        const inner = JSON.parse(parsed.fact);
-        return { fact: inner.fact || parsed.fact, category: inner.category || category };
-      } catch { /* use as-is */ }
+    // Unwrap nested JSON if AI returned fact as a stringified object
+    let fact = parsed.fact || '';
+    while (typeof fact === 'string' && fact.trim().startsWith('{')) {
+      try { const inner = JSON.parse(fact); fact = inner.fact || fact; break; }
+      catch { break; }
     }
-    return parsed;
+    return { fact, category: parsed.category || category };
   } catch {
+    // raw might itself be a JSON string — try to extract fact
+    try {
+      const fallback = JSON.parse(raw);
+      return { fact: fallback.fact || raw, category: fallback.category || category };
+    } catch {}
     return { fact: raw, category };
   }
 }
@@ -206,15 +210,28 @@ router.get('/', async (req, res) => {
     const { grade = 'Grade 3', bust } = req.query;
     const key = cacheKey(grade);
 
+    // Sanitize helper — unwrap nested JSON in fact string
+    function sanitizeGK(gk) {
+      if (!gk) return gk;
+      let fact = gk.fact;
+      if (typeof fact === 'string' && fact.trim().startsWith('{')) {
+        try { const inner = JSON.parse(fact); fact = inner.fact || fact; } catch {}
+      }
+      return { ...gk, fact };
+    }
+
     if (cache[key] && !bust) {
-      return res.json({ ...cache[key], cached: true });
+      const entry = { ...cache[key], gk: sanitizeGK(cache[key].gk), cached: true };
+      return res.json(entry);
     }
 
     // Generate GK + Current Affairs in parallel
-    const [gk, currentAffairs] = await Promise.all([
+    const [gkRaw, currentAffairs] = await Promise.all([
       generateGKFact(grade),
       fetchCurrentAffairs(grade),
     ]);
+
+    const gk = sanitizeGK(gkRaw);
 
     const result = {
       grade,

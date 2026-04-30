@@ -4,6 +4,28 @@ const multer     = require('multer');
 const cloudinary = require('cloudinary').v2;
 const supabase   = require('../services/supabase');
 const { encrypt, decrypt } = require('../utils/encryption');
+const { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail } = require('../services/mailer');
+
+// Firebase Admin — used to generate password reset links server-side
+let firebaseAdmin = null;
+try {
+  const admin = require('firebase-admin');
+  if (!admin.apps.length) {
+    const svcPath = require('path').join(__dirname, '../firebase-service-account.json');
+    if (require('fs').existsSync(svcPath)) {
+      admin.initializeApp({ credential: admin.credential.cert(require(svcPath)) });
+      firebaseAdmin = admin;
+      console.log('[firebase-admin] initialised from service account');
+    } else {
+      console.warn('[firebase-admin] firebase-service-account.json not found — password reset will use Firebase default sender');
+    }
+  } else {
+    firebaseAdmin = admin;
+  }
+} catch (e) {
+  console.warn('[firebase-admin] not available:', e.message);
+}
+const crypto = require('crypto');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -126,11 +148,16 @@ router.post('/sync', async (req, res) => {
         .upsert({ student_id: data.id }, { onConflict: 'student_id', ignoreDuplicates: true });
     }
 
+    // Pull roles from user_preferences (stored there since users table has no roles column)
+    const prefs = await getPreferences(data.email);
+    const rolesFromPrefs = Array.isArray(prefs?.roles) ? prefs.roles : null;
+
     res.json({
       id:                 data.id,
       name:               data.name,
       email:              data.email,
       role:               data.role,
+      roles:              rolesFromPrefs || [data.role].filter(Boolean),
       grade:              data.grade,
       school:             data.school,
       curriculum:         data.curriculum,
@@ -230,53 +257,68 @@ router.patch('/profile', async (req, res) => {
       await setPreferences(email, updates);
     }
 
-    // ── Auto-link teacher ↔ students by curriculum ─────────────
-    // When onboarding completes (or curriculum/grade set), keep teacher_student in sync.
+    // ── Auto-link teacher ↔ students by curriculum + grade ────────────────
+    // Matches on both curriculum AND grade so a Grade-3 student is only linked
+    // to teachers whose teaches[] includes Grade 3, not every teacher in the curriculum.
     try {
       const userRole = data.role;
       const userCurriculum = data.curriculum;
+      const userGrade = data.grade;
       const userId = data.id;
 
-      if (userId && userCurriculum) {
+      if (userId && userCurriculum && userGrade) {
         if (userRole === 'student') {
-          // Find all teachers with matching curriculum and link this student to them
-          const { data: teachers } = await supabase
+          // Get all teachers in this curriculum
+          const { data: allTeachers } = await supabase
             .from('users')
-            .select('id')
+            .select('id, email')
             .eq('role', 'teacher')
             .eq('curriculum', userCurriculum);
 
-          if (teachers && teachers.length > 0) {
-            // Remove any existing wrong-curriculum links for this student
-            const teacherIds = teachers.map(t => t.id);
+          // Filter to teachers whose teaches[] includes this student's grade
+          const allPrefs = (allTeachers && allTeachers.length > 0) ? await readPreferences() : {};
+          const matchingTeachers = (allTeachers ?? []).filter(t => {
+            const tp = allPrefs[t.email] ?? {};
+            if (Array.isArray(tp.teaches) && tp.teaches.length > 0) {
+              return tp.teaches.some(tg => tg.curriculum === userCurriculum && tg.grade === userGrade);
+            }
+            return false;
+          });
+
+          if (matchingTeachers.length > 0) {
+            const ids = matchingTeachers.map(t => t.id);
             await supabase.from('teacher_student')
               .delete()
               .eq('student_id', userId)
-              .not('teacher_id', 'in', `(${teacherIds.join(',')})`);
-
-            // Upsert correct links
-            const rows = teachers.map(t => ({ teacher_id: t.id, student_id: userId, subject: userCurriculum }));
+              .not('teacher_id', 'in', `(${ids.join(',')})`);
+            const rows = ids.map(tid => ({ teacher_id: tid, student_id: userId, subject: userCurriculum }));
             await supabase.from('teacher_student').upsert(rows, { onConflict: 'teacher_id,student_id', ignoreDuplicates: true });
           }
 
         } else if (userRole === 'teacher') {
-          // Find all students with matching curriculum and link them to this teacher
-          const { data: students } = await supabase
-            .from('users')
-            .select('id')
-            .eq('role', 'student')
-            .eq('curriculum', userCurriculum);
+          // Use teaches[] from request body (set during onboarding), fall back to single grade
+          const teacherGrades = Array.isArray(teaches) && teaches.length > 0
+            ? teaches
+            : [{ grade: userGrade, curriculum: userCurriculum }];
 
-          if (students && students.length > 0) {
-            // Remove any existing wrong-curriculum students linked to this teacher
-            const studentIds = students.map(s => s.id);
+          // Find all students matching any of the teacher's grade+curriculum combos
+          const { data: allStudents } = await supabase
+            .from('users')
+            .select('id, grade, curriculum')
+            .eq('role', 'student');
+
+          const matchingStudents = (allStudents ?? []).filter(s =>
+            s.curriculum && s.grade &&
+            teacherGrades.some(tg => tg.curriculum === s.curriculum && tg.grade === s.grade)
+          );
+
+          if (matchingStudents.length > 0) {
+            const ids = matchingStudents.map(s => s.id);
             await supabase.from('teacher_student')
               .delete()
               .eq('teacher_id', userId)
-              .not('student_id', 'in', `(${studentIds.join(',')})`);
-
-            // Upsert correct links
-            const rows = students.map(s => ({ teacher_id: userId, student_id: s.id, subject: userCurriculum }));
+              .not('student_id', 'in', `(${ids.join(',')})`);
+            const rows = ids.map(sid => ({ teacher_id: userId, student_id: sid, subject: userCurriculum }));
             await supabase.from('teacher_student').upsert(rows, { onConflict: 'teacher_id,student_id', ignoreDuplicates: true });
           }
         }
@@ -507,6 +549,227 @@ router.post('/repair-teacher-student', async (req, res) => {
     }));
 
     res.json({ fixed: rows.length, summary });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /user/add-role ─────────────────────────────────────
+// Adds a second role to an existing user (e.g. teacher → teacher+parent)
+// Body: { email, role }  where role is the role to ADD
+router.patch('/add-role', async (req, res) => {
+  const { email, role } = req.body;
+  if (!email || !role) return res.status(400).json({ error: 'email and role required' });
+
+  const allowed = ['teacher', 'parent', 'student'];
+  if (!allowed.includes(role)) return res.status(400).json({ error: 'Invalid role' });
+
+  const emailLc = email.toLowerCase().trim();
+
+  // Fetch current user row to get primary role
+  const { data: user, error: fetchErr } = await supabase
+    .from('users').select('id, role').eq('email', emailLc).maybeSingle();
+  if (fetchErr || !user) return res.status(404).json({ error: 'User not found' });
+
+  // Build new roles array — always start from primary role in users table, merge with prefs
+  const existingPrefs = await getPreferences(emailLc);
+  const primaryRole = user.role; // ground truth from users table
+  const prefsRoles = Array.isArray(existingPrefs?.roles) ? existingPrefs.roles : [];
+  // Union: primary role + any prefs roles + the new role being added
+  const merged = Array.from(new Set([primaryRole, ...prefsRoles, role]));
+
+  await setPreferences(emailLc, { ...existingPrefs, roles: merged });
+
+  res.json({ ok: true, roles: merged });
+});
+
+// ── POST /user/welcome-email ─────────────────────────────────────────────────
+router.post('/welcome-email', async (req, res) => {
+  try {
+    const { email, name, role } = req.body;
+    if (!email || !name || !role) return res.status(400).json({ error: 'email, name, role required' });
+    await sendWelcomeEmail({ to: email, name, role });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /user/send-password-reset ───────────────────────────────────────────
+// Generates Firebase password reset link and sends it from aivorah24@gmail.com
+router.post('/send-password-reset', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'email required' });
+    const emailLc = email.trim().toLowerCase();
+
+    const { frontendOrigin } = req.body;
+    const appBase = frontendOrigin || 'http://localhost:8081';
+    let resetLink = null;
+
+    // 1. Try Firebase Admin SDK if service account is available
+    if (firebaseAdmin) {
+      try {
+        const actionCodeSettings = {
+          url: `${appBase}/reset-password`,
+          handleCodeInApp: false, // link opens in browser, not app
+        };
+        resetLink = await firebaseAdmin.auth().generatePasswordResetLink(emailLc, actionCodeSettings);
+      } catch (adminErr) {
+        if (adminErr.code === 'auth/user-not-found') return res.json({ ok: true });
+        console.warn('[send-password-reset] admin err:', adminErr.message);
+      }
+    }
+
+    // 2. Try Firebase REST API with returnOobLink (requires admin; may not work without service account)
+    if (!resetLink) {
+      const fbRes = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${process.env.FIREBASE_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requestType: 'PASSWORD_RESET', email: emailLc, returnOobLink: true }),
+        }
+      );
+      const fbData = await fbRes.json();
+      if (fbData.oobLink) {
+        resetLink = fbData.oobLink;
+      } else if (fbData.error?.message === 'EMAIL_NOT_FOUND') {
+        return res.json({ ok: true }); // don't expose user enumeration
+      } else {
+        // returnOobLink not available without admin — fall back to Firebase sending its own email
+        console.warn('[send-password-reset] returnOobLink not available, using Firebase default sender');
+        await fetch(
+          `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${process.env.FIREBASE_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestType: 'PASSWORD_RESET', email: emailLc }),
+          }
+        );
+        return res.json({ ok: true, note: 'firebase_fallback' });
+      }
+    }
+
+    // 3. Send branded email from aivorah24@gmail.com
+    await sendPasswordResetEmail({ to: emailLc, resetLink });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[send-password-reset]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /user/send-verification ─────────────────────────────────────────────
+// Generates a branded verification email from aivorah24@gmail.com (not Firebase spam)
+router.post('/send-verification', async (req, res) => {
+  try {
+    const { email, name, frontendOrigin } = req.body;
+    if (!email || !name) return res.status(400).json({ error: 'email and name required' });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+    // Store token in user_preferences.data
+    const { data: existing } = await supabase
+      .from('user_preferences')
+      .select('data')
+      .eq('user_email', email.toLowerCase())
+      .maybeSingle();
+
+    const currentData = existing?.data || {};
+    await supabase.from('user_preferences').upsert({
+      user_email: email.toLowerCase(),
+      data: { ...currentData, verifyToken: token, verifyTokenExpiry: expiry, accountStatus: 'pending_verification' },
+    }, { onConflict: 'user_email' });
+
+    const serverBase = `${req.protocol}://${req.get('host')}`;
+    const appBase = frontendOrigin || 'http://localhost:8081';
+    const redirect = encodeURIComponent(appBase + '/verify-success');
+    const encodedEmail = encodeURIComponent(email.toLowerCase());
+    // Include email in URL so verify endpoint can look up by PK (reliable, no JSONB scan needed)
+    const verifyUrl = `${serverBase}/user/verify/${token}?email=${encodedEmail}&redirect=${redirect}`;
+
+    await sendVerificationEmail({ to: email, name, verifyUrl });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /user/verify/:token ───────────────────────────────────────────────────
+// Called when user clicks the verification link in the email
+router.get('/verify/:token', async (req, res) => {
+  const { token } = req.params;
+  const email = (req.query.email || '').toLowerCase();
+  const appRedirect = req.query.redirect || 'http://localhost:8081/verify-success';
+
+  // Always redirect back to the app — pass ?verified=1 or ?error=1 so app can react
+  const successUrl = appRedirect.includes('?') ? `${appRedirect}&verified=1` : `${appRedirect}?verified=1`;
+  const errorUrl   = appRedirect.includes('?') ? `${appRedirect}&error=1`    : `${appRedirect}?error=1`;
+
+  try {
+    if (!email) {
+      console.warn('[verify] no email param');
+      return res.redirect(errorUrl);
+    }
+
+    // Look up by email (primary key) — no JSONB scanning
+    const { data: pref, error: fetchErr } = await supabase
+      .from('user_preferences')
+      .select('data')
+      .eq('user_email', email)
+      .maybeSingle();
+
+    console.log('[verify]', email, '| token match:', pref?.data?.verifyToken === token, '| fetchErr:', fetchErr?.message);
+
+    if (fetchErr || !pref || pref.data?.verifyToken !== token) {
+      return res.redirect(errorUrl);
+    }
+
+    const meta = pref.data || {};
+    if (meta.verifyTokenExpiry && Date.now() > meta.verifyTokenExpiry) {
+      return res.redirect(errorUrl);
+    }
+
+    // Mark verified — clear token, set active
+    await supabase.from('user_preferences').upsert({
+      user_email: email,
+      data: { ...meta, accountStatus: 'active', verifyToken: null, verifyTokenExpiry: null },
+    }, { onConflict: 'user_email' });
+
+    console.log('[verify] ✅ verified:', email);
+    res.redirect(successUrl);
+  } catch (err) {
+    console.error('[verify] unexpected error:', err);
+    res.redirect(errorUrl);
+  }
+});
+
+function errorPage(msg) {
+  return `<!DOCTYPE html><html><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#0f0f0f">
+    <div style="text-align:center;padding:40px">
+      <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+      <h2 style="color:#ef4444;font-size:20px;margin-bottom:8px">${msg}</h2>
+      <p style="color:#888;font-size:14px">Go back to the app and click "Resend Email" to get a new link.</p>
+    </div></body></html>`;
+}
+
+// ── GET /user/check-verified ──────────────────────────────────────────────────
+// Returns accountStatus for a given email — used by VerifyEmailScreen
+router.get('/check-verified', async (req, res) => {
+  try {
+    const email = (req.query.email || '').toLowerCase();
+    if (!email) return res.status(400).json({ error: 'email required' });
+
+    const { data: pref } = await supabase
+      .from('user_preferences')
+      .select('data')
+      .eq('user_email', email)
+      .maybeSingle();
+
+    const accountStatus = pref?.data?.accountStatus || null;
+    res.json({ verified: accountStatus === 'active', accountStatus });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

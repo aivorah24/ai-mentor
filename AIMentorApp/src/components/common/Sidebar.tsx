@@ -77,7 +77,7 @@ interface SidebarProps {
 const ROLE_DASH: Record<string, string> = { teacher: 'TeacherDashboard', parent: 'ParentDashboard', student: 'Dashboard' };
 
 export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
-  const { logout, user, switchRole } = useAuth();
+  const { logout, user, switchRole, updateUser } = useAuth();
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
   const isDualRole = (user?.roles?.length ?? 0) > 1;
   const role = user?.role;
@@ -191,6 +191,28 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
               })}
             </View>
           </View>
+        )}
+
+        {/* Add Parent Profile hint — shown to teachers who haven't set up parent profile yet */}
+        {user?.role === 'teacher' && !isDualRole && (
+          <TouchableOpacity
+            style={styles.addParentHint}
+            onPress={() => {
+              // Temporarily set role to parent so OnboardingScreen shows parent flow
+              updateUser({ role: 'parent', onboardingComplete: false, _returnRole: 'teacher' } as any);
+              onNavigate('Onboarding');
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={styles.addParentHintIcon}>
+              <Feather name="home" size={11} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.addParentHintTitle}>Also a parent?</Text>
+              <Text style={styles.addParentHintSub}>Add your parent profile</Text>
+            </View>
+            <Feather name="chevron-right" size={12} color={colors.textDim} />
+          </TouchableOpacity>
         )}
 
         {user && (
@@ -407,6 +429,37 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   rolePillTextActive: {
     color: c.primary,
+  },
+  addParentHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    padding: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: c.primary + '50',
+    backgroundColor: c.primaryGlow,
+  },
+  addParentHintIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: c.primary + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addParentHintTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: c.primary,
+  },
+  addParentHintSub: {
+    fontSize: 10,
+    color: c.textDim,
+    marginTop: 1,
   },
   userRow: {
     flexDirection: 'row',

@@ -41,6 +41,7 @@ interface Assignment {
   quizQuestions?: QuizQuestion[];
   centralIdea?: string | null;
   linesOfInquiry?: string[];
+  joinedAfterDue?: boolean;
   learnerProfile?: string | null;
   atlSkill?: string | null;
   keyConcept?: string | null;
@@ -302,6 +303,61 @@ type PageAnswer = { preview: string | null; base64: string | null; mime: string 
 type PerQ = { number: number; question: string; answered: boolean; score: number; studentAnswer: string | null; correct: boolean; comment: string };
 type GradeResult = { score: number | null; feedback: string; stamp: string; wellDone: string; improve: string; perQuestion: PerQ[] };
 
+// ── Shared: confirm-close overlay ────────────────────────────────────────────
+function ConfirmCloseOverlay({ visible, color, colors, onConfirm, onCancel }: {
+  visible: boolean; color: string; colors: AppColors;
+  onConfirm: () => void; onCancel: () => void;
+}) {
+  if (!visible) return null;
+  return (
+    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.75)', zIndex: 999, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+      <View style={{ backgroundColor: colors.cardDark, borderRadius: 20, padding: 28, borderWidth: 1, borderColor: colors.borderColor, width: '100%', maxWidth: 380, gap: 16, alignItems: 'center' }}>
+        <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: color + '20', alignItems: 'center', justifyContent: 'center' }}>
+          <Feather name="alert-triangle" size={26} color={color} />
+        </View>
+        <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textMain, textAlign: 'center' }}>Close Assignment?</Text>
+        <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 22 }}>
+          Your progress will not be saved.{'\n'}Are you sure you want to go back?
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+          <TouchableOpacity onPress={onCancel} activeOpacity={0.8}
+            style={{ flex: 1, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center' }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textMuted }}>Keep Going</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onConfirm} activeOpacity={0.8}
+            style={{ flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: color, alignItems: 'center' }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// ── Shared: themed modal top bar with back arrow ──────────────────────────────
+function ModalTopBar({ title, subtitle, color, colors, icon, onBack }: {
+  title: string; subtitle?: string; color: string; colors: AppColors;
+  icon: string; onBack: () => void;
+}) {
+  return (
+    <View style={{ backgroundColor: color + '14', borderBottomWidth: 1, borderBottomColor: color + '30' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12 }}>
+        <TouchableOpacity onPress={onBack} activeOpacity={0.75}
+          style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: color + '20', alignItems: 'center', justifyContent: 'center' }}>
+          <Feather name="arrow-left" size={18} color={color} />
+        </TouchableOpacity>
+        <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: color + '20', alignItems: 'center', justifyContent: 'center' }}>
+          <Feather name={icon as any} size={18} color={color} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textMain }} numberOfLines={1}>{title}</Text>
+          {subtitle ? <Text style={{ fontSize: 11, color, fontWeight: '600', marginTop: 1 }}>{subtitle}</Text> : null}
+        </View>
+      </View>
+    </View>
+  );
+}
+
 // ── Quiz Modal ────────────────────────────────────────────────────────────────
 
 function QuizModal({ assignment, colors, onClose, onSubmitted }: {
@@ -313,13 +369,14 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
   const color = SUBJECT_COLOR[assignment.subject] ?? '#6366f1';
   const questions = assignment.quizQuestions || [];
 
-  const [currentQ,   setCurrentQ]   = useState(0);
-  const [answers,    setAnswers]     = useState<Record<number, string>>({});
-  const [showHint,   setShowHint]    = useState(false);
-  const [submitting, setSubmitting]  = useState(false);
-  const [result,     setResult]      = useState<GradeResult | null>(null);
-  const [showReview, setShowReview]  = useState(false);
-  const [shortInput, setShortInput]  = useState('');
+  const [currentQ,    setCurrentQ]   = useState(0);
+  const [answers,     setAnswers]    = useState<Record<number, string>>({});
+  const [showHint,    setShowHint]   = useState(false);
+  const [submitting,  setSubmitting] = useState(false);
+  const [result,      setResult]     = useState<GradeResult | null>(null);
+  const [showReview,  setShowReview] = useState(false);
+  const [shortInput,  setShortInput] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const q         = questions[currentQ];
   const isLast    = currentQ === questions.length - 1;
@@ -526,19 +583,17 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
 
   // Question step
   return (
-    <Modal visible animationType="slide" transparent>
+    <Modal visible animationType="slide" transparent onRequestClose={() => setShowConfirm(true)}>
       <View style={styles.overlay}>
         <View style={[styles.sheet, styles.quizSheet]}>
-          {/* Header */}
-          <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-            <View style={[styles.subjectDot, { backgroundColor: color + '20' }]}>
-              <Feather name="help-circle" size={18} color={color} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.title} numberOfLines={1}>{assignment.title}</Text>
-              <Text style={[styles.meta, { color }]}>Question {currentQ + 1} of {questions.length}</Text>
-            </View>
-          </View>
+          <ModalTopBar
+            title={assignment.title}
+            subtitle={`Question ${currentQ + 1} of ${questions.length} · ${assignment.subject}`}
+            color={color} colors={colors} icon="help-circle"
+            onBack={() => setShowConfirm(true)}
+          />
+          <ConfirmCloseOverlay visible={showConfirm} color={color} colors={colors}
+            onConfirm={onClose} onCancel={() => setShowConfirm(false)} />
 
           {/* Progress dots */}
           <View style={{ flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 10, gap: 5 }}>
@@ -895,7 +950,7 @@ function PhotoUploadStep({
         <View style={{ gap: 8 }}>
           <Image
             source={{ uri: previewUri }}
-            style={{ width: '100%', height: 220, borderRadius: 12, resizeMode: 'contain', backgroundColor: colors.surface }}
+            style={{ width: '100%', height: 220, borderRadius: 12, resizeMode: 'contain', backgroundColor: colors.cardDark }}
           />
           <TouchableOpacity onPress={pick} activeOpacity={0.8}
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -949,6 +1004,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
   const [keywordInput,  setKeywordInput]  = useState('');
   const [submitting,    setSubmitting]    = useState(false);
   const [result,        setResult]        = useState<GradeResult | null>(null);
+  const [showConfirm,   setShowConfirm]   = useState(false);
   const focusedSectionIdx = useRef<number>(0);
 
   const isOverview     = currentStep === -1;
@@ -1107,23 +1163,17 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
   // ── Worksheet Overview (step -1) ── Full IB PYP standard, Aivorah pastel theme ──
   const isIBPYP = assignment.curriculum?.toLowerCase().includes('ib') ?? false;
   if (isOverview) return (
-    <Modal visible animationType="slide" transparent={false}>
+    <Modal visible animationType="slide" transparent={false} onRequestClose={() => setShowConfirm(true)}>
       <View style={[styles.overlay, { backgroundColor: colors.bgDark }]}>
-        {/* ── Full-screen top bar ── */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: Platform.OS === 'web' ? 20 : 50, paddingBottom: 14,
-          backgroundColor: color + '18', borderBottomWidth: 1, borderBottomColor: color + '30' }}>
-          <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: color + '25', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-            <Feather name={SUBJECT_ICON[assignment.subject] as any ?? 'file-text'} size={18} color={color} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textMain }} numberOfLines={1}>{assignment.title}</Text>
-            <Text style={{ fontSize: 12, color, fontWeight: '600' }}>{assignment.subject} · {assignment.grade ?? ''}{isIBPYP ? ' · IB PYP' : ''}</Text>
-          </View>
-          <TouchableOpacity onPress={onClose} activeOpacity={0.7}
-            style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: colors.cardDark, alignItems: 'center', justifyContent: 'center' }}>
-            <Feather name="x" size={18} color={colors.textMuted} />
-          </TouchableOpacity>
-        </View>
+        <ModalTopBar
+          title={assignment.title}
+          subtitle={`${assignment.subject} · ${assignment.grade ?? ''}${isIBPYP ? ' · IB PYP' : ''}`}
+          color={color} colors={colors}
+          icon={SUBJECT_ICON[assignment.subject] ?? 'file-text'}
+          onBack={() => setShowConfirm(true)}
+        />
+        <ConfirmCloseOverlay visible={showConfirm} color={color} colors={colors}
+          onConfirm={onClose} onCancel={() => setShowConfirm(false)} />
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 40 }}>
 
@@ -1347,19 +1397,18 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
   if (!step) return null;
   const stepColor = STEP_COLORS[step.type as StepType] ?? '#6366f1';
   return (
-    <Modal visible animationType="slide" transparent>
+    <Modal visible animationType="slide" transparent onRequestClose={() => setShowConfirm(true)}>
       <View style={styles.overlay}>
         <View style={styles.sheet}>
-          {/* Header */}
-          <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-            <View style={[styles.subjectDot, { backgroundColor: stepColor + '20' }]}>
-              <Feather name={STEP_ICONS[step.type] as any} size={18} color={stepColor} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.title} numberOfLines={1}>{step.label}</Text>
-              <Text style={[styles.meta, { color: stepColor }]}>Step {currentStep + 1} of {steps.length}</Text>
-            </View>
-          </View>
+          <ModalTopBar
+            title={step.label}
+            subtitle={`Step ${currentStep + 1} of ${steps.length} · ${assignment.subject}`}
+            color={stepColor} colors={colors}
+            icon={STEP_ICONS[step.type] ?? 'file-text'}
+            onBack={() => currentStep === 0 ? setShowConfirm(true) : setCurrentStep(i => i - 1)}
+          />
+          <ConfirmCloseOverlay visible={showConfirm} color={color} colors={colors}
+            onConfirm={onClose} onCancel={() => setShowConfirm(false)} />
 
           {/* Progress bar */}
           <View style={{ flexDirection: 'row', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4, gap: 4 }}>
@@ -1938,22 +1987,21 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
   // ── Page step (main flow) ──
   const pageUrl = pages[step] ?? null;
   const isLastStep = step === totalSteps - 1;
+  const [showConfirm, setShowConfirm] = useState(false);
 
   return (
-    <Modal visible animationType="slide" transparent>
+    <Modal visible animationType="slide" transparent onRequestClose={() => setShowConfirm(true)}>
       <View style={styles.overlay}>
         <View style={styles.sheet}>
-          {/* Header */}
-          <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-            <View style={[styles.subjectDot, { backgroundColor: color + '20' }]}>
-              <Feather name={(SUBJECT_ICON[assignment.subject] ?? 'book-open') as any} size={18} color={color} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.title} numberOfLines={1}>{assignment.title}</Text>
-              <Text style={[styles.meta, { color }]}>Page {step + 1} of {totalSteps}</Text>
-            </View>
-            {/* No close on page steps — must go through review */}
-          </View>
+          <ModalTopBar
+            title={assignment.title}
+            subtitle={`Page ${step + 1} of ${totalSteps} · ${assignment.subject}`}
+            color={color} colors={colors}
+            icon={SUBJECT_ICON[assignment.subject] ?? 'book-open'}
+            onBack={() => step === 0 ? setShowConfirm(true) : setStep(s => s - 1)}
+          />
+          <ConfirmCloseOverlay visible={showConfirm} color={color} colors={colors}
+            onConfirm={onClose} onCancel={() => setShowConfirm(false)} />
 
           {/* Progress bar */}
           <View style={{ flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 10, gap: 5 }}>
@@ -2117,7 +2165,8 @@ function WorksheetPageImage({ url, pageNum, color, colors }: { url: string; page
 
 // ── Main Screen ────────────────────────────────────────────────
 
-export default function AssignmentsScreen({ navigation }: any) {
+export default function AssignmentsScreen({ navigation, route }: any) {
+  const highlightId = route?.params?.highlightId;
   const [activeFilter, setActiveFilter] = useState('All');
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -2133,7 +2182,20 @@ export default function AssignmentsScreen({ navigation }: any) {
     if (!studentId) return;
     fetch(`${SERVER_URL}/assignments?studentId=${studentId}`)
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setAssignments(data); setLoading(false); })
+      .then(data => {
+        if (Array.isArray(data)) {
+          setAssignments(data);
+          // Auto-open the assignment tapped from Schedule
+          // Schedule stores assignmentId which matches assignment.id directly
+          if (highlightId) {
+            const target = data.find((a: Assignment) =>
+              a.id === highlightId || (a as any).scheduleId === highlightId
+            );
+            if (target) setActiveAssignment(target);
+          }
+        }
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }
 
@@ -2142,16 +2204,24 @@ export default function AssignmentsScreen({ navigation }: any) {
     clearUnreadAssignments(); // mark assignments as seen when screen opens
   }, [studentId]);
 
-  const sortByPendingFirst = (list: Assignment[]) =>
-    [...list].sort((a, b) => {
-      if (a.status === b.status) {
-        // Both pending: sort by due date ascending (soonest first)
-        if (a.status === 'pending') return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-        // Both completed: sort by most recent first
-        return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
-      }
-      return a.status === 'pending' ? -1 : 1; // pending always before completed
+  const sortByPendingFirst = (list: Assignment[]) => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const priority = (a: Assignment) => {
+      if (a.status === 'completed') return 3;
+      const due = new Date(a.dueDate); due.setHours(0, 0, 0, 0);
+      if (due < today && !a.joinedAfterDue) return 0;  // truly overdue — highest priority
+      if (due < today) return 2; // joined after due date — treat as normal pending
+      if (due.getTime() === today.getTime()) return 1; // due today
+      return 2; // future pending
+    };
+    return [...list].sort((a, b) => {
+      const pa = priority(a), pb = priority(b);
+      if (pa !== pb) return pa - pb;
+      // same priority bucket: sort by due date ascending (except completed: descending)
+      if (pa === 3) return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     });
+  };
 
   const filtered = useMemo(() => {
     if (activeFilter === 'All')       return sortByPendingFirst(assignments);
@@ -2165,6 +2235,7 @@ export default function AssignmentsScreen({ navigation }: any) {
   const completed = assignments.filter(a => a.status === 'completed').length;
   const overdue   = assignments.filter(a => {
     if (a.status !== 'pending') return false;
+    if (a.joinedAfterDue) return false; // joined after due date — not overdue
     const today = new Date(); today.setHours(0,0,0,0);
     return new Date(a.dueDate) < today;
   }).length;
@@ -2323,7 +2394,7 @@ export default function AssignmentsScreen({ navigation }: any) {
               { label: 'Completed', value: completed, color: colors.accentGreen,  icon: 'check-circle' as const },
               { label: 'Overdue',   value: overdue,   color: colors.accentRed,    icon: 'alert-circle' as const },
             ].map((s) => (
-              <View key={s.label} style={styles.statCard}>
+              <View key={s.label} style={[styles.statCard, { borderTopWidth: 2, borderTopColor: s.color }]}>
                 <View>
                   <Text style={styles.statLabel}>{s.label}</Text>
                   <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
@@ -2365,12 +2436,17 @@ export default function AssignmentsScreen({ navigation }: any) {
                 </Text>
                 <Text style={styles.sectionSub}>{filtered.length} item{filtered.length !== 1 ? 's' : ''}</Text>
               </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
               {filtered.map((item) => {
                 const icon  = SUBJECT_ICON[item.subject] ?? 'book-open';
                 const color = SUBJECT_COLOR[item.subject] ?? colors.primary;
-                const due   = item.status === 'completed'
+                const rawDue = item.status === 'completed'
                   ? { label: item.score != null ? `Score: ${item.score}%` : 'Completed', colorKey: 'textMuted' as const, isOverdue: false }
                   : formatDueDate(item.dueDate);
+                // If student joined after the due date, they can't be overdue on it
+                const due = (item.joinedAfterDue && rawDue.isOverdue)
+                  ? { label: 'Pending', colorKey: 'textMuted' as const, isOverdue: false }
+                  : rawDue;
                 const dueColor = colors[due.colorKey as keyof AppColors] as string;
                 const statusColor = item.status === 'completed'
                   ? colors.accentGreen
@@ -2387,57 +2463,73 @@ export default function AssignmentsScreen({ navigation }: any) {
                 };
 
                 return (
-                  <View key={item.id} style={[styles.card, item.status === 'completed' && styles.cardCompleted]}>
-                    <View style={[styles.subjectIcon, { backgroundColor: color + '16', borderColor: color + '38' }]}>
-                      <Feather name={icon as any} size={20} color={color} />
-                    </View>
-                    <View style={styles.cardBody}>
-                      <Text style={styles.cardTitle}>{item.title}</Text>
-                      <Text style={styles.cardMeta}>
-                        {item.subject}{item.chapter ? ` - ${item.chapter}` : ''}{item.grade ? ` - ${item.grade}` : ''}
-                      </Text>
-                      {/* Assignment type indicator */}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                        <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, backgroundColor: color + '18', borderWidth: 1, borderColor: color + '30' }}>
-                          <Text style={{ fontSize: 10, fontWeight: '700', color }}>
-                            {item.type === 'quiz' ? 'Quiz' : (item.taskSteps?.length ?? 0) > 0 ? 'Scaffolded Worksheet' : (item.documentUrls?.length ?? 0) > 0 ? `Worksheet · ${item.documentUrls!.length} page${item.documentUrls!.length > 1 ? 's' : ''}` : 'Assignment'}
-                          </Text>
-                        </View>
-                        {item.curriculum && (
-                          <Text style={{ fontSize: 10, color: colors.textDim, fontWeight: '500' }}>{item.curriculum}</Text>
-                        )}
+                  /* Outer wrapper provides the colored left accent bar */
+                  <View key={item.id} style={[styles.cardWrapper, { borderColor: color + '35', backgroundColor: color + '07' }]}>
+                    {/* Colored left bar */}
+                    <View style={[styles.cardAccent, { backgroundColor: color }]} />
+
+                    {/* Card content */}
+                    <View style={[styles.card, item.status === 'completed' && styles.cardCompleted]}>
+                      <View style={[styles.subjectIcon, { backgroundColor: color + '22', borderColor: color + '45' }]}>
+                        <Feather name={icon as any} size={20} color={color} />
                       </View>
-                      {item.aiFeedback && item.status === 'completed' && (() => {
-                        try { return <Text style={styles.feedbackPreview} numberOfLines={1}>{JSON.parse(item.aiFeedback!).text}</Text>; }
-                        catch { return <Text style={styles.feedbackPreview} numberOfLines={1}>{item.aiFeedback}</Text>; }
-                      })()}
-                      <View style={styles.cardBottom}>
-                        <View style={styles.dueRow}>
-                          {due.isOverdue && <Feather name="alert-triangle" size={12} color={dueColor} style={{ marginRight: 4 }} />}
-                          {!due.isOverdue && item.status === 'pending' && <Feather name="clock" size={12} color={dueColor} style={{ marginRight: 4 }} />}
-                          <Text style={[styles.dueText, { color: dueColor }]}>{due.label}</Text>
+                      <View style={styles.cardBody}>
+                        <Text style={styles.cardTitle}>{item.title}</Text>
+                        <Text style={styles.cardMeta}>
+                          {item.subject}{item.chapter ? ` · ${item.chapter}` : ''}{item.grade ? ` · ${item.grade}` : ''}
+                        </Text>
+                        {/* Type + curriculum row */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 5 }}>
+                          <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: color + '22', borderWidth: 1, borderColor: color + '40' }}>
+                            <Text style={{ fontSize: 10, fontWeight: '800', color, letterSpacing: 0.3 }}>
+                              {item.type === 'quiz' ? 'Quiz' : (item.taskSteps?.length ?? 0) > 0 ? 'Scaffolded' : (item.documentUrls?.length ?? 0) > 0 ? `Worksheet · ${item.documentUrls!.length}p` : 'Assignment'}
+                            </Text>
+                          </View>
+                          {item.createdBy === 'parent' && (
+                            <View style={{ paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, backgroundColor: colors.accentGreen + '15', borderWidth: 1, borderColor: colors.accentGreen + '35' }}>
+                              <Text style={{ fontSize: 10, fontWeight: '700', color: colors.accentGreen }}>By parent</Text>
+                            </View>
+                          )}
+                          {item.curriculum && (
+                            <Text style={{ fontSize: 10, color: colors.textDim, fontWeight: '500' }}>{item.curriculum}</Text>
+                          )}
                         </View>
-                        <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg, borderColor: statusStyle.border }]}>
-                          <Text style={[styles.statusText, { color: statusStyle.color }]}>{statusStyle.label}</Text>
+                        {item.aiFeedback && item.status === 'completed' && (() => {
+                          try { return <Text style={styles.feedbackPreview} numberOfLines={1}>{JSON.parse(item.aiFeedback!).text}</Text>; }
+                          catch { return <Text style={styles.feedbackPreview} numberOfLines={1}>{item.aiFeedback}</Text>; }
+                        })()}
+                        <View style={styles.cardBottom}>
+                          {/* Only show due label if it has real info (not plain "Pending") */}
+                          {due.label !== 'Pending' && (
+                            <View style={styles.dueRow}>
+                              {due.isOverdue && <Feather name="alert-triangle" size={12} color={dueColor} style={{ marginRight: 4 }} />}
+                              {!due.isOverdue && item.status === 'pending' && <Feather name="clock" size={12} color={dueColor} style={{ marginRight: 4 }} />}
+                              <Text style={[styles.dueText, { color: dueColor }]}>{due.label}</Text>
+                            </View>
+                          )}
+                          <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg, borderColor: statusStyle.border }]}>
+                            <Text style={[styles.statusText, { color: statusStyle.color }]}>{statusStyle.label}</Text>
+                          </View>
                         </View>
                       </View>
+                      {item.status === 'pending' && (
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: color, borderColor: color + '80', borderWidth: 1 }]}
+                          activeOpacity={0.7}
+                          onPress={() => openAssignment(item)}
+                          disabled={openingAssignmentId === item.id}
+                        >
+                          {openingAssignmentId === item.id
+                            ? <ActivityIndicator size="small" color="#fff" />
+                            : <Feather name="play" size={13} color="#fff" />}
+                          <Text style={[styles.actionBtnText, { color: '#fff' }]}>{openingAssignmentId === item.id ? 'Loading' : 'Start'}</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
-                    {item.status === 'pending' && (
-                      <TouchableOpacity
-                        style={[styles.actionBtn, { backgroundColor: color + '20', borderColor: color + '40', borderWidth: 1 }]}
-                        activeOpacity={0.7}
-                        onPress={() => openAssignment(item)}
-                        disabled={openingAssignmentId === item.id}
-                      >
-                        {openingAssignmentId === item.id
-                          ? <ActivityIndicator size="small" color={color} />
-                          : <Feather name="play" size={13} color={color} />}
-                        <Text style={[styles.actionBtnText, { color }]}>{openingAssignmentId === item.id ? 'Loading' : 'Start'}</Text>
-                      </TouchableOpacity>
-                    )}
                   </View>
                 );
               })}
+              </View>{/* end grid */}
             </>
           )}
         </ScrollView>
@@ -2477,7 +2569,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   statCard: {
     flex: 1, backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
     borderRadius: radius.lg, padding: spacing.lg, flexDirection: 'row',
-    justifyContent: 'space-between', alignItems: 'center',
+    justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden',
   },
   statLabel: { fontSize: 11, color: c.textMuted, fontWeight: '500', marginBottom: 4 },
   statValue: { fontSize: 28, fontWeight: '700', letterSpacing: -1 },
@@ -2490,12 +2582,20 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   sectionHeader: { marginBottom: spacing.lg },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: c.textMain },
   sectionSub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+  // Outer wrapper — provides subject-colored border + tinted bg + left accent
+  cardWrapper: {
+    width: '48.5%',
+    borderWidth: 1, borderRadius: radius.xl,
+    overflow: 'hidden', flexDirection: 'row',
+  },
+  cardAccent: { width: 4 },
+  // Inner card row
   card: {
-    backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
-    borderRadius: radius.xl, padding: spacing.xl, marginBottom: spacing.md,
+    flex: 1, backgroundColor: 'transparent',
+    padding: spacing.xl,
     flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md,
   },
-  cardCompleted: { borderColor: c.accentGreen + '2D' },
+  cardCompleted: { opacity: 0.88 },
   subjectIcon: {
     width: 48,
     height: 48,

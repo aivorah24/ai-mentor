@@ -57,3 +57,22 @@ server.js
 .vercel
 .mcp.json
 .claude/
+
+# Firebase service account — NEVER commit (contains private keys)
+server/firebase-service-account.json
+*-firebase-adminsdk-*.json
+
+# Playwright test artifacts
+playwright-report/
+test-results/
+.playwright-mcp/
+AIMentorApp/playwright-report/
+AIMentorApp/test-results/
+tests/
+playwright.config.ts
+
+# Temp / runtime data files
+server/tempassign_test.json
+"server/C\357\200\272tempassign_test.json"
+docs/
+AGENTS.md

@@ -17,9 +17,8 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgGrad, Stop, Rect } from 'react-native-svg';
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../../config/firebase';
 import { useAuth, UserRole } from '../../context/AuthContext';
+import SERVER_URL from '../../config/serverUrl';
 
 // ─────────────────────────────────────────────────────────
 // Constants
@@ -234,9 +233,10 @@ function LoginModal({ visible, onClose, onSwitchSignup, onSwitchForgot, signInEm
   async function submit() {
     setError('');
     const emailTrim = email.trim();
-    if (!emailTrim || !pass) { setError('Please fill in all fields.'); return; }
+    const passTrim = pass.trim();
+    if (!emailTrim || !passTrim) { setError('Please fill in all fields.'); return; }
     setLoading(true);
-    try { await signInEmail(emailTrim, pass, role); onClose(); }
+    try { await signInEmail(emailTrim, passTrim, role); onClose(); }
     catch (e: any) { 
       setError(e.message || 'Something went wrong. Please try again.'); 
     }
@@ -354,7 +354,7 @@ function SignupModal({ visible, onClose, onSwitchLogin, signUpEmail, signInGoogl
     setLoading(true);
     try {
       await signUpEmail(nameTrim, emailTrim, pass, role, showCurriculum ? curriculum : undefined);
-      setEmailSent(true); // show verification notice instead of closing
+      onClose(); // auth state change will route user to onboarding automatically
     } catch (e: any) {
       setError(e.message || 'Something went wrong. Please try again.');
     } finally {
@@ -479,7 +479,13 @@ function ForgotModal({ visible, onClose, onSwitchLogin }: {
     if (!email.trim()) return;
     setLoading(true);
     try {
-      await sendPasswordResetEmail(auth, email.trim());
+      const frontendOrigin = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : 'http://localhost:8081';
+      const res = await fetch(`${SERVER_URL}/user/send-password-reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), frontendOrigin }),
+      });
+      if (!res.ok) throw new Error('Failed');
       setSent(true);
     } catch (e) {
       Alert.alert('Error', 'Could not send reset email. Check the address and try again.');
