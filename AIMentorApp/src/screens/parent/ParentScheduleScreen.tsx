@@ -83,6 +83,10 @@ function typeColor(type: string, colors: any): string {
   return map[type] ?? colors.primary;
 }
 
+function toTitleCase(str: string) {
+  return String(str || '').replace(/\b\w/g, c => c.toUpperCase());
+}
+
 interface ScheduleEvent {
   id: string;
   title: string;
@@ -93,6 +97,7 @@ interface ScheduleEvent {
   note: string;
   studentId: string;
   createdBy: string;
+  assignmentId?: string | null;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -320,13 +325,22 @@ export default function ParentScheduleScreen({ navigation }: any) {
                       <Text style={[styles.timeLabel, isNow && { color: colors.accentBlue, fontWeight: '800' }]}>{t}</Text>
                       <View style={styles.timeSlot}>
                         {event ? (
-                          <View style={[styles.eventBlock, { borderLeftColor: typeColor(event.type, colors) }]}>
+                          <TouchableOpacity
+                            style={[styles.eventBlock, { borderLeftColor: typeColor(event.type, colors) }]}
+                            activeOpacity={0.82}
+                            onPress={() => {
+                              const t = event.type;
+                              if (t === 'assignment' || t === 'deadline') navigation.navigate('ParentAssignments' as any, { highlightId: event.assignmentId || event.id } as any);
+                              else if (t === 'challenge') navigation.navigate('ParentChallenges' as any, { highlightId: event.assignmentId || event.id } as any);
+                              else if (t === 'lesson' || t === 'study') navigation.navigate('ParentLearning' as any);
+                            }}
+                          >
                             <View style={styles.eventTopRow}>
-                              <Text style={styles.eventTitle}>{event.title}</Text>
+                              <Text style={styles.eventTitle}>{toTitleCase(event.title)}</Text>
                               <View style={styles.eventTags}>
                                 {event.type !== 'study' && (
                                   <View style={[styles.tag, { backgroundColor: typeColor(event.type, colors) + '20', borderColor: typeColor(event.type, colors) + '40' }]}>
-                                    <Text style={[styles.tagText, { color: typeColor(event.type, colors) }]}>{event.type}</Text>
+                                    <Text style={[styles.tagText, { color: typeColor(event.type, colors) }]}>{toTitleCase(event.type)}</Text>
                                   </View>
                                 )}
                                 {event.createdBy === 'teacher' && (
@@ -341,7 +355,7 @@ export default function ParentScheduleScreen({ navigation }: any) {
                             </View>
                             <Text style={styles.eventTime}>{event.startTime}{event.endTime ? ` – ${event.endTime}` : ''}</Text>
                             {event.note ? <Text style={styles.eventNote}>{event.note}</Text> : null}
-                          </View>
+                          </TouchableOpacity>
                         ) : (
                           <TouchableOpacity
                             style={[styles.emptySlot, isNow && { borderTopColor: colors.accentBlue, borderTopWidth: 2 }, inDragRange && styles.draggingSlot]}
@@ -463,7 +477,7 @@ export default function ParentScheduleScreen({ navigation }: any) {
                     style={[styles.timeChip, newType === t && { borderColor: typeColor(t, colors), backgroundColor: typeColor(t, colors) + '18' }]}
                     onPress={() => setNewType(t)}
                   >
-                    <Text style={[styles.timeChipText, newType === t && { color: typeColor(t, colors) }]}>{t}</Text>
+                    <Text style={[styles.timeChipText, newType === t && { color: typeColor(t, colors) }]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>

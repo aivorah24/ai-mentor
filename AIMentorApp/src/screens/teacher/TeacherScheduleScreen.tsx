@@ -116,7 +116,8 @@ export default function TeacherScheduleScreen({ navigation }: any) {
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${SERVER_URL}/schedule/teacher?date=${selectedDate}`);
+      const email = user?.email ? `&email=${encodeURIComponent(user.email)}` : '';
+      const res = await fetch(`${SERVER_URL}/schedule/teacher?date=${selectedDate}${email}`);
       if (res.ok) setEvents(await res.json());
     } catch {}
     setLoading(false);
@@ -290,10 +291,50 @@ export default function TeacherScheduleScreen({ navigation }: any) {
           {loading ? (
             <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
           ) : (
+            <>
+            {/* Deadline/assignment events pinned at top */}
+            {events.filter(e => e.type === 'deadline' || e.startTime === '23:59').length > 0 && (
+              <View style={{ marginBottom: 12, gap: 6 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.5, paddingHorizontal: 4 }}>Deadlines</Text>
+                {events.filter(e => e.type === 'deadline' || e.startTime === '23:59').map(event => {
+                  const isChallenge = event.type === 'challenge' || (event.title || '').toLowerCase().includes('challenge');
+                  const destinationScreen = isChallenge ? 'TeacherChallenges' : 'TeacherAssignments';
+                  return (
+                    <TouchableOpacity
+                      key={event.id}
+                      style={[styles.eventBlock, { borderLeftColor: typeColor(event.type, colors), marginHorizontal: 0 }]}
+                      onPress={() => navigation.navigate(destinationScreen)}
+                      activeOpacity={0.75}
+                    >
+                      <View style={styles.eventTopRow}>
+                        <Text style={styles.eventTitle}>{event.title}</Text>
+                        <View style={styles.eventTags}>
+                          <View style={[styles.tag, { backgroundColor: colors.accentRed + '20', borderColor: colors.accentRed + '40' }]}>
+                            <Text style={[styles.tagText, { color: colors.accentRed }]}>Due</Text>
+                          </View>
+                          {event.tag && (
+                            <View style={[styles.tag, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '35' }]}>
+                              <Text style={[styles.tagText, { color: colors.primary }]}>{event.tag}</Text>
+                            </View>
+                          )}
+                          <Feather name="chevron-right" size={12} color={colors.textDim} style={{ marginLeft: 4 }} />
+                          {!event.assignmentId && (
+                            <TouchableOpacity onPress={(e) => { e.stopPropagation?.(); removeEvent(event.id); }} style={styles.deleteBtn}>
+                              <Feather name="x" size={12} color={colors.textDim} />
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </View>
+                      {event.note ? <Text style={styles.eventNote}>{event.note}</Text> : null}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
             <View style={styles.timelineDragArea} {...panResponder.panHandlers}>
             {TIMES.map((t, idx) => {
               const [slotH] = t.split(':').map(Number);
-              const event = events.find(e => { const [evH] = e.startTime.split(':').map(Number); return evH === slotH; });
+              const event = events.find(e => e.type !== 'deadline' && e.startTime !== '23:59' && ((() => { const [evH] = e.startTime.split(':').map(Number); return evH === slotH; })()));
               const rangeStart = dragRange ? Math.min(dragRange.start, dragRange.end) : -1;
               const rangeEnd = dragRange ? Math.max(dragRange.start, dragRange.end) : -1;
               const inDragRange = idx >= rangeStart && idx <= rangeEnd;
@@ -302,7 +343,14 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                   <Text style={styles.timeLabel}>{t}</Text>
                   <View style={styles.timeSlot}>
                     {event ? (
-                      <View style={[styles.eventBlock, { borderLeftColor: typeColor(event.type, colors) }]}>
+                      <TouchableOpacity
+                        style={[styles.eventBlock, { borderLeftColor: typeColor(event.type, colors) }]}
+                        activeOpacity={0.75}
+                        onPress={() => {
+                          if (event.type === 'challenge') navigation.navigate('TeacherChallenges');
+                          else if (event.type === 'assignment' || event.type === 'deadline') navigation.navigate('TeacherAssignments');
+                        }}
+                      >
                         <View style={styles.eventTopRow}>
                           <Text style={styles.eventTitle}>{event.title}</Text>
                           <View style={styles.eventTags}>
@@ -323,7 +371,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                         </View>
                         <Text style={styles.eventTime}>{event.startTime}{event.endTime ? ` – ${event.endTime}` : ''}</Text>
                         {event.note ? <Text style={styles.eventNote}>{event.note}</Text> : null}
-                      </View>
+                      </TouchableOpacity>
                     ) : (
                       // Tappable empty slot — opens modal with this time pre-filled
                       <TouchableOpacity
@@ -339,6 +387,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
               );
             })}
             </View>
+            </>
           )}
         </ScrollView>
 
@@ -365,7 +414,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chipRowContent}>
                 {['lesson','study','challenge','deadline','assignment','break'].map(t => (
                   <TouchableOpacity key={t} style={[styles.timeChip, newType === t && { borderColor: typeColor(t, colors), backgroundColor: typeColor(t, colors) + '18' }]} onPress={() => setNewType(t)}>
-                    <Text style={[styles.timeChipText, newType === t && { color: typeColor(t, colors) }]}>{t}</Text>
+                    <Text style={[styles.timeChipText, newType === t && { color: typeColor(t, colors) }]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>

@@ -1,4 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app';
+// @ts-ignore
 import { initializeAuth, getAuth, getReactNativePersistence } from 'firebase/auth';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';

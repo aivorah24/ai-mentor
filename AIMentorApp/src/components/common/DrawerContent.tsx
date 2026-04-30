@@ -77,7 +77,7 @@ const ROLE_DASH: Record<string, string> = { teacher: 'TeacherDashboard', parent:
 export default function DrawerContent(props: any) {
   const { state, navigation } = props;
   const currentRoute = state.routes[state.index]?.name;
-  const { logout, user, switchRole } = useAuth();
+  const { logout, user, switchRole, updateUser } = useAuth();
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
   const isDualRole = (user?.roles?.length ?? 0) > 1;
   const { colors, themeMode, setThemeMode } = useTheme();
@@ -193,6 +193,27 @@ export default function DrawerContent(props: any) {
               })}
             </View>
           </View>
+        )}
+
+        {/* Add Parent Profile hint — shown to teachers without parent profile */}
+        {user?.role === 'teacher' && !isDualRole && (
+          <TouchableOpacity
+            style={styles.addParentHint}
+            onPress={() => {
+              updateUser({ role: 'parent', onboardingComplete: false, _returnRole: 'teacher' } as any);
+              navigation.navigate('Onboarding');
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={styles.addParentHintIcon}>
+              <Feather name="home" size={11} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.addParentHintTitle}>Also a parent?</Text>
+              <Text style={styles.addParentHintSub}>Add your parent profile</Text>
+            </View>
+            <Feather name="chevron-right" size={12} color={colors.textDim} />
+          </TouchableOpacity>
         )}
 
         {user && (
@@ -337,6 +358,37 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     color: '#fff',
     fontSize: 10,
     fontWeight: '700',
+  },
+  addParentHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    padding: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: c.primary + '50',
+    backgroundColor: c.primaryGlow,
+  },
+  addParentHintIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: c.primary + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addParentHintTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: c.primary,
+  },
+  addParentHintSub: {
+    fontSize: 10,
+    color: c.textDim,
+    marginTop: 1,
   },
   roleSwitcher: {
     marginBottom: spacing.md,

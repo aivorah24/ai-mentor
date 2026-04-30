@@ -7,7 +7,6 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   updateProfile,
-  sendEmailVerification,
   GoogleAuthProvider,
   signInWithPopup,
 } from 'firebase/auth';
@@ -35,8 +34,9 @@ export interface User {
   learningStyle?: string;
   interests?: string[];
   bio?: string;
+  accountStatus?: string;
   // Relationship metadata
-  children?: { name: string; grade: string; email: string }[];  // for parents
+  children?: { name: string; grade: string; email: string; curriculum?: string }[];  // for parents
   teaches?: { grade: string; curriculum: string }[];            // for teachers
 }
 
@@ -92,6 +92,7 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User>> {
         photoUrl:           data.photoUrl   || undefined,
         name:               data.name       || undefined,
         role:               data.role       || undefined,
+        roles:              Array.isArray(data.roles) ? data.roles : undefined,
       });
     }
   } catch {}
@@ -106,6 +107,10 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User>> {
           learningStyle: pref.learningStyle || undefined,
           interests: Array.isArray(pref.interests) ? pref.interests : undefined,
           bio: pref.bio || undefined,
+          accountStatus: pref.accountStatus || undefined,
+          teaches: Array.isArray(pref.teaches) && pref.teaches.length > 0 ? pref.teaches : undefined,
+          children: Array.isArray(pref.children) && pref.children.length > 0 ? pref.children : undefined,
+          roles: Array.isArray(pref.roles) && pref.roles.length > 0 ? pref.roles : undefined,
         });
       }
     }
@@ -116,6 +121,11 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User>> {
 
 let _pendingRole: UserRole = 'student';
 
+function isSystemGeneratedStudentEmail(email: string) {
+  return String(email || '').toLowerCase().trim().endsWith('@aivorah.student');
+}
+
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,39 +133,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // If email is not verified, don't set user — stay on LandingScreen.
-        // The SignupModal handles showing "check your email" after signUpWithEmail returns.
-        // (signUpWithEmail calls signOut immediately after sending verification email,
-        //  so this listener fires briefly with an unverified user — we must ignore it.)
-        if (!firebaseUser.emailVerified) {
-          setLoading(false);
-          return;
-        }
+        const email = firebaseUser.email || '';
 
-        const storedRole = (firebaseUser.displayName?.split('|')[1] as UserRole) || _pendingRole || 'student';
+        // Load saved local profile + fetch Supabase profile (needed to detect parent-activated accounts)
+        const [supaProfile, savedRaw] = await Promise.all([
+          fetchSupabaseProfile(email),
+          AsyncStorage.getItem(PROFILE_KEY).catch(() => null),
+        ]);
+        let savedLocal: Partial<User> = {};
+        try { if (savedRaw) savedLocal = JSON.parse(savedRaw); } catch {}
+
+        // Auto-generated @aivorah.student emails have no mailbox — bypass verification
+        // Parent-activated student accounts (accountStatus = 'active') also bypass verification
+        // All other roles (student, teacher, parent) must verify via Firebase email link
+        const allowAutoGen = isSystemGeneratedStudentEmail(email);
+        const allowParentActivated = supaProfile.accountStatus === 'active';
+        const storedRole = (firebaseUser.displayName?.split('|')[1] as UserRole) || (supaProfile.role as UserRole) || _pendingRole || 'student';
+        const emailVerified = firebaseUser.emailVerified || allowAutoGen || allowParentActivated;
         const baseUser: User = {
           name:          firebaseUser.displayName?.split('|')[0] || firebaseUser.displayName || 'User',
-          email:         firebaseUser.email || '',
+          email,
           role:          storedRole,
-          emailVerified: firebaseUser.emailVerified,
+          emailVerified,
         };
 
-        // Load saved local profile
-        let savedLocal: Partial<User> = {};
-        try {
-          const saved = await AsyncStorage.getItem(PROFILE_KEY);
-          if (saved) savedLocal = JSON.parse(saved);
-        } catch {}
-
-        // Fetch fresh profile from Supabase BEFORE rendering — prevents flash to OnboardingScreen
-        const supaProfile = await fetchSupabaseProfile(baseUser.email);
         const resolvedRole = (supaProfile.role as UserRole) || baseUser.role;
 
-        // Set user once with full merged profile
-        // onboardingComplete is "sticky true" — once locally confirmed, don't let
-        // a stale/missing Supabase value revert it and re-show onboarding
+        // allowParentActivated skips onboarding only for parent-created student accounts
+        // (their grade/curriculum was set by the parent). Self-registered parents/teachers
+        // who verified their email still need to go through onboarding.
+        const isParentCreatedStudent = allowParentActivated && resolvedRole === 'student';
         const onboardingComplete =
-          supaProfile.onboardingComplete === true || savedLocal.onboardingComplete === true;
+          allowAutoGen ||
+          isParentCreatedStudent ||
+          supaProfile.onboardingComplete === true ||
+          savedLocal.onboardingComplete === true;
         setUser({ ...baseUser, ...savedLocal, ...supaProfile, onboardingComplete, role: resolvedRole });
 
         // Persist locally
@@ -196,6 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         interests: updated.interests,
         bio: updated.bio,
         photoUrl: updated.photoUrl,
+        roles: updated.roles,
       })).catch(() => {});
       fetch(`${SERVER_URL}/user/preferences`, {
         method: 'PATCH',
@@ -253,33 +266,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
 
-      // Block login if email not verified
-      if (!cred.user.emailVerified) {
-        await signOut(auth);
-        throw new Error('Please verify your email before signing in. Check your inbox for the activation link.');
-      }
-
-      // Fetch full profile from Supabase + local cache in parallel
+      // Fetch full profile first — needed to detect parent-activated student accounts
       const [profile, savedRaw] = await Promise.all([
         fetchSupabaseProfile(email),
         AsyncStorage.getItem(PROFILE_KEY).catch(() => null),
       ]);
       const savedLocal: Partial<User> = savedRaw ? JSON.parse(savedRaw) : {};
 
-      // Prefer Supabase name (set during signup) over Firebase displayName, never fall back to email prefix
+      // Allow login without Firebase email verification for:
+      // 1. Auto-generated @aivorah.student emails (no real mailbox)
+      // 2. Parent-created student accounts (accountStatus = 'active' in Supabase)
+      // All other accounts (including teacher/parent) must verify via email link
+      const allowAutoGen = isSystemGeneratedStudentEmail(email);
+      const allowParentActivated = profile.accountStatus === 'active';
+      if (!cred.user.emailVerified && !allowAutoGen && !allowParentActivated) {
+        await signOut(auth);
+        throw new Error('Please verify your email before signing in. Check your inbox for the activation link.');
+      }
+
       const name = profile.name || cred.user.displayName?.split('|')[0] || cred.user.displayName || '';
-      // Supabase role is the source of truth (set during signup); only use login-form role for brand new accounts
       const resolvedRole: UserRole = (profile.role as UserRole) || role;
-      // onboardingComplete is sticky-true — once confirmed locally, never revert it
-      const onboardingComplete = profile.onboardingComplete === true || savedLocal.onboardingComplete === true;
+      const isParentCreatedStudent = allowParentActivated && resolvedRole === 'student';
+      const onboardingComplete =
+        allowAutoGen ||
+        isParentCreatedStudent ||
+        profile.onboardingComplete === true ||
+        savedLocal.onboardingComplete === true;
+
+      // Legacy: activate old pending_verification accounts on first verified login
+      if (cred.user.emailVerified && role === 'student' && profile.accountStatus === 'pending_verification') {
+        fetch(`${SERVER_URL}/parent/children/activate-verified`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, firebaseUid: cred.user.uid }),
+        }).then(r => r.ok ? r.json() : null).then(d => {
+          if (d?.success) {
+            profile.accountStatus = 'active';
+            profile.onboardingComplete = true;
+          }
+        }).catch(() => {});
+      }
+
       const newUser: User = {
         name, email, role: resolvedRole,
+        roles:              Array.isArray(profile.roles) ? profile.roles as UserRole[] : [resolvedRole],
         grade:              profile.grade              || undefined,
         curriculum:         profile.curriculum         || undefined,
         school:             profile.school             || 'Hyderabad International School',
         location:           profile.location           || 'Hyderabad, India',
-        onboardingComplete,
-        emailVerified:      cred.user.emailVerified,
+        onboardingComplete: profile.onboardingComplete === true || onboardingComplete,
+        emailVerified:      cred.user.emailVerified || allowAutoGen || allowParentActivated,
+        accountStatus:      profile.accountStatus,
       };
       setUser(newUser);
       AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(newUser)).catch(() => {});
@@ -327,19 +364,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: `${name}|${role}` });
-      await sendEmailVerification(cred.user);
 
-      // Sync to Supabase so the account exists
-      fetch(`${SERVER_URL}/user/sync`, {
+      // Sync to Supabase so the account exists before onAuthStateChanged fires
+      await fetch(`${SERVER_URL}/user/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, role, curriculum: curriculum || undefined }),
       }).catch(() => {});
 
-      // Sign out immediately — user must verify email before accessing the app
-      await signOut(auth);
-      setUser(null);
-      // Caller (SignupModal) will show the "check your email" screen
+      // Send branded verification email from aivorah24@gmail.com (not Firebase spam)
+      const frontendOrigin = Platform.OS === 'web' && typeof window !== 'undefined'
+        ? window.location.origin
+        : 'http://localhost:8081';
+      fetch(`${SERVER_URL}/user/send-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, frontendOrigin }),
+      }).catch(() => {});
+      // onAuthStateChanged will fire automatically and show VerifyEmailScreen
     } catch (error: any) {
       console.error('Firebase Signup Error:', error.code, error.message);
       let message = 'An unexpected error occurred during signup.';
@@ -377,9 +419,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           AsyncStorage.getItem(PROFILE_KEY).catch(() => null),
         ]);
         const savedLocal: Partial<User> = savedRaw ? JSON.parse(savedRaw) : {};
-        const onboardingComplete = profile.onboardingComplete === true || savedLocal.onboardingComplete === true;
+        const onboardingComplete =
+          profile.onboardingComplete === true ||
+          savedLocal.onboardingComplete === true;
         const newUser: User = {
           name, email, role,
+          roles:              Array.isArray(profile.roles) ? profile.roles as UserRole[] : [role],
           grade:              profile.grade      || undefined,
           curriculum:         profile.curriculum || undefined,
           school:             profile.school     || undefined,
@@ -452,8 +497,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...base, name: 'Ms. Anjali Kumar', email: 'anjali@test.ai',
         role: 'teacher', roles: ['teacher'],
         teaches: [
+          { grade: 'Grade 3', curriculum: 'IB PYP' },
           { grade: 'Grade 4', curriculum: 'IB PYP' },
-          { grade: 'Grade 5', curriculum: 'IB PYP' },
         ],
       },
 
@@ -503,11 +548,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!testUser) return;
     // Set test user immediately so UI doesn't wait on network
     setUser(testUser);
-    // Fetch live Supabase profile for photoUrl only — TEST_USERS fields always win
+    // Fetch live Supabase profile — merge photoUrl and dynamically-added roles (e.g. teacher who added parent profile)
     const profile = await fetchSupabaseProfile(email);
+    // Merge roles: if server has more roles than hardcoded (e.g. teacher added parent profile), use server version
+    const mergedRoles = (profile.roles && profile.roles.length > (testUser.roles?.length ?? 1))
+      ? profile.roles
+      : testUser.roles;
     setUser({
       ...testUser,
       photoUrl: profile.photoUrl ?? testUser.photoUrl,
+      roles: mergedRoles,
       // Always preserve test user's core identity fields
       role:       testUser.role,
       name:       testUser.name,

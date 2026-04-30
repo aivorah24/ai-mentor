@@ -59,7 +59,8 @@ interface Question {
   answer: string;
 }
 
-export default function ChallengesScreen({ navigation }: any) {
+export default function ChallengesScreen({ navigation, route }: any) {
+  const highlightId = route?.params?.highlightId;
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { stats, studentId } = useStudentData();
@@ -89,10 +90,33 @@ export default function ChallengesScreen({ navigation }: any) {
     if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
       const url = `${SERVER_URL}/challenges?grade=${encodeURIComponent(grade)}&curriculum=NCERT${studentId ? `&studentId=${studentId}` : ''}`;
-      const res = await fetch(url);
+      const [res, assignedRes] = await Promise.all([
+        fetch(url),
+        studentId ? fetch(`${SERVER_URL}/challenges/assigned?studentId=${studentId}`) : Promise.resolve(null),
+      ]);
       if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) setChallenges(data);
+        const data: Challenge[] = await res.json();
+        if (Array.isArray(data)) {
+          // Merge parent-assigned challenges from other grades that won't appear in grade-filtered list
+          let merged = [...data];
+          if (assignedRes?.ok) {
+            const assigned: Challenge[] = await assignedRes.json();
+            for (const a of assigned) {
+              if (!merged.find(c => c.id === a.id)) {
+                merged.push({ ...a, status: 'assigned' });
+              }
+            }
+          }
+          setChallenges(merged);
+          // Auto-open the challenge tapped from Schedule
+          // Schedule stores assignmentId (challenge_assignments.id) OR challenge.id
+          if (highlightId) {
+            const target = merged.find((c: Challenge) =>
+              c.id === highlightId || (c as any).assignmentId === highlightId
+            );
+            if (target) setActiveChallenge(target);
+          }
+        }
       }
     } catch {}
     setLoading(false);
@@ -206,7 +230,7 @@ export default function ChallengesScreen({ navigation }: any) {
   return (
     <ScreenLayout>
       <View style={styles.screen}>
-        <Header title="Challenges" subtitle={`${grade} · NCERT Mathematics`} onMenuPress={() => navigation.openDrawer()} />
+        <Header title="Challenges" subtitle={`${grade} · Mathematics`} onMenuPress={() => navigation.openDrawer()} />
 
         <ScrollView
           contentContainerStyle={styles.content}

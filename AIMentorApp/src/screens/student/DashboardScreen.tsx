@@ -248,7 +248,7 @@ export default function DashboardScreen({ navigation }: any) {
   const [error, setError] = useState('');
   const [upcomingDeadlines, setUpcomingDeadlines] = useState<{ id: string; title: string; date: string; note: string }[]>([]);
   // Per-topic quiz scores from analytics events
-  const [perfData, setPerfData] = useState<{ topics: Record<string, { avgScore: number | null; quizCount: number; sessions: number }>; avgScore: number | null }>({ topics: {}, avgScore: null });
+  const [perfData, setPerfData] = useState<{ topics: Record<string, { avgScore: number | null; quizCount: number; sessions: number; lastActivity?: string }>; avgScore: number | null }>({ topics: {}, avgScore: null });
   const [barSubjectFilter, setBarSubjectFilter] = useState<string>('All');
   const [lessonSubjectFilter, setLessonSubjectFilter] = useState<string>('All');
 
@@ -487,7 +487,7 @@ export default function DashboardScreen({ navigation }: any) {
   const studyGoal  = 60;  const studyDone  = Math.min(stats.todayStudyMinutes, studyGoal);
   // Topics goal = total topics in student's curriculum for their grade (dynamic)
   const topicsGoal = curriculum ? Math.max(curriculum.totalTopics, 1) : 1;
-  const topicsDone = Math.min(stats.topicsExplored, topicsGoal);
+  const topicsDone = Math.min(stats.topicsExplored ?? 0, topicsGoal);
   // Badge thresholds: 25%, 50%, 100% of curriculum — purely percentage-based
   const t25 = Math.floor(topicsGoal * 0.25);
   const t50 = Math.floor(topicsGoal * 0.50);

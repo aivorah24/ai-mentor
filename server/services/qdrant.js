@@ -6,6 +6,7 @@ const VECTOR_SIZE = 384; // all-MiniLM-L6-v2 (local, no API key)
 const client = new QdrantClient({
   url: process.env.QDRANT_URL,
   apiKey: process.env.QDRANT_API_KEY,
+  checkCompatibility: false,
 });
 
 async function initCollection() {

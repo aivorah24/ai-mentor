@@ -12,8 +12,21 @@ function readCloudinaryUrls() { try { return JSON.parse(fs.readFileSync(CLOUDINA
 
 function attachImageUrl(challenge) {
   const urlMap = readCloudinaryUrls();
+  // Try exact key first
   const key = `challenges/${challenge.id}.png`;
-  return { ...challenge, imageUrl: urlMap[key] || null };
+  if (urlMap[key]) return { ...challenge, imageUrl: urlMap[key] };
+
+  // Fallback: map to Grade 3 equivalent by chapter number
+  if (challenge.chapterId) {
+    const g3Key = `challenges/ncert_g3_ch${challenge.chapterId}.png`;
+    if (urlMap[g3Key]) return { ...challenge, imageUrl: urlMap[g3Key] };
+  }
+  // School/final challenges — use midterm image as fallback
+  if (challenge.type === 'school_challenge') {
+    const midKey = 'challenges/ncert_g3_midterm.png';
+    if (urlMap[midKey]) return { ...challenge, imageUrl: urlMap[midKey] };
+  }
+  return { ...challenge, imageUrl: null };
 }
 function uuidv4() { return 'ca_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
 
@@ -71,7 +84,7 @@ router.get('/assigned', async (req, res) => {
   const result = (assignments ?? []).map(a => {
     const ch = challenges.find(c => c.id === a.challenge_id);
     if (!ch) return null;
-    return { ...ch, assignmentId: a.id, status: a.status, score: a.score, xpAwarded: a.xp_awarded, dueDate: a.due_date, assignedByRole: a.assigned_by_role };
+    return { ...attachImageUrl(ch), assignmentId: a.id, status: a.status, score: a.score, xpAwarded: a.xp_awarded, dueDate: a.due_date, assignedByRole: a.assigned_by_role };
   }).filter(Boolean);
 
   res.json(result);

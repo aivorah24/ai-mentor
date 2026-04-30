@@ -22,7 +22,8 @@ import { useNotification } from '../../context/NotificationContext';
 import SERVER_URL from '../../config/serverUrl';
 
 const FILTERS = ['All', 'School', 'Parent', 'Done'];
-const SUBJECTS = ['Mathematics', 'Science', 'English', 'Social Studies'];
+// IB PYP official subject groups
+const IB_PYP_SUBJECTS = ['Mathematics', 'Science', 'English', 'Social Studies', 'Arts', 'Physical Education', 'ICT'];
 const TYPES = ['assignment', 'quiz'] as const;
 
 interface Assignment {
@@ -39,6 +40,12 @@ interface Assignment {
   note: string;
   createdBy: string;
   aiFeedback?: string | null;
+  questions?: string[];
+  taskSteps?: any[];
+  quizQuestions?: any[];
+  documentUrl?: string | null;
+  documentUrls?: string[];
+  successCriteria?: string[];
 }
 
 const SUBJECT_COLOR: Record<string, string> = {
@@ -84,6 +91,14 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
   const [questions, setQuestions] = useState<string[]>(['']);
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState('');
+  // AI generate state
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiGenerated, setAiGenerated] = useState(false);
+  const [quizCount, setQuizCount] = useState(5);
+  // Curriculum topics
+  const [curriculumTopics, setCurriculumTopics] = useState<{subject: string; topic: string; grade: string}[]>([]);
+  const [showTopicPicker, setShowTopicPicker] = useState(false);
 
   useEffect(() => {
     clearUnreadAssignments(); // mark as seen when parent opens this screen
@@ -108,6 +123,18 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
     }).catch(() => setLoading(false));
   }, [child?.id]);
 
+  // Load IB PYP curriculum topics for the child's grade
+  useEffect(() => {
+    if (!child?.grade) return;
+    fetch(`${SERVER_URL}/curriculum`)
+      .then(r => r.json())
+      .then(data => {
+        const topics = (data.topics || []).filter((t: any) => t.grade === child.grade);
+        setCurriculumTopics(topics);
+      })
+      .catch(() => {});
+  }, [child?.grade]);
+
   const filtered = useMemo(() => {
     if (activeFilter === 'All') return assignments;
     if (activeFilter === 'Done') return assignments.filter(a => a.status === 'completed');
@@ -131,6 +158,44 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
     setTitle(''); setChapter(''); setDueDate(''); setNote('');
     setSubject('Mathematics'); setType('assignment');
     setQuestions(['']); setFormError('');
+    setAiPrompt(''); setAiGenerated(false); setQuizCount(5); setShowTopicPicker(false);
+  }
+
+  async function generateWithAI() {
+    if (!aiPrompt.trim()) return;
+    if (!child) return;
+    setAiGenerating(true);
+    setFormError('');
+    try {
+      const res = await fetch(`${SERVER_URL}/assignments/ai-generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: aiPrompt.trim(),
+          subject,
+          grade: child.grade,
+          curriculum: child.curriculum || 'IB PYP',
+          count: quizCount,
+          type,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTitle(data.title || '');
+        setChapter(data.chapter || '');
+        setNote(data.note || '');
+        setType(data.type === 'quiz' ? 'quiz' : 'assignment');
+        setQuestions(data.questions?.length > 0 ? data.questions : ['']);
+        setAiGenerated(true);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setFormError(err.error || 'AI generation failed');
+      }
+    } catch {
+      setFormError('Network error — is the server running?');
+    } finally {
+      setAiGenerating(false);
+    }
   }
 
   async function createAssignment() {
@@ -300,6 +365,12 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
                       <Text style={[styles.assignmentDue, { color: due.isOverdue ? colors.accentRed : colors.textMuted }]}>
                         {due.label}
                       </Text>
+                      {/* Type badge */}
+                      <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: color + '18' }}>
+                        <Text style={{ fontSize: 10, fontWeight: '700', color }}>
+                          {a.type === 'quiz' ? 'Quiz' : (a.taskSteps?.length ?? 0) > 0 ? 'Scaffolded' : (a.documentUrls?.length ?? 0) > 0 ? 'Worksheet' : 'Assignment'}
+                        </Text>
+                      </View>
                       {a.createdBy === 'parent' && (
                         <>
                           <Feather name="user" size={11} color={colors.accentGreen} />
@@ -357,6 +428,7 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
 
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalContent} nestedScrollEnabled>
 
+                  {/* Title */}
                   <Text style={styles.fieldLabel}>Title *</Text>
                   <TextInput
                     style={[styles.input, formError && !title.trim() && { borderColor: colors.accentRed }]}
@@ -366,9 +438,10 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
                     onChangeText={t => { setTitle(t); if (t.trim()) setFormError(''); }}
                   />
 
+                  {/* Subject */}
                   <Text style={styles.fieldLabel}>Subject</Text>
                   <View style={styles.chipRow}>
-                    {SUBJECTS.map(s => (
+                    {IB_PYP_SUBJECTS.map(s => (
                       <TouchableOpacity
                         key={s}
                         style={[styles.chip, subject === s && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
@@ -380,6 +453,7 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
                     ))}
                   </View>
 
+                  {/* Chapter / Topic */}
                   <Text style={styles.fieldLabel}>Chapter / Topic</Text>
                   <TextInput
                     style={styles.input}
@@ -389,16 +463,65 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
                     onChangeText={setChapter}
                   />
 
-                  <Text style={styles.fieldLabel}>Due Date * (YYYY-MM-DD)</Text>
-                  <TextInput
-                    style={[styles.input, formError && !dueDate.trim() && { borderColor: colors.accentRed }]}
-                    placeholder="2026-04-15"
-                    placeholderTextColor={colors.textDim}
-                    value={dueDate}
-                    onChangeText={t => { setDueDate(t); if (t.trim()) setFormError(''); }}
-                    keyboardType="numeric"
-                  />
+                  {/* Topic quick-picker from IB PYP curriculum */}
+                  {curriculumTopics.filter(t => t.subject === subject).length > 0 && (
+                    <View>
+                      <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}
+                        onPress={() => setShowTopicPicker(p => !p)}
+                        activeOpacity={0.75}
+                      >
+                        <Feather name="list" size={13} color={colors.primary} />
+                        <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700' }}>
+                          {showTopicPicker ? 'Hide' : 'Pick from IB PYP topics'}
+                        </Text>
+                      </TouchableOpacity>
+                      {showTopicPicker && (
+                        <View style={styles.topicGrid}>
+                          {curriculumTopics
+                            .filter(t => t.subject === subject)
+                            .map((t, i) => (
+                              <TouchableOpacity
+                                key={i}
+                                style={[styles.topicChip, chapter === t.topic && { borderColor: colors.primary, backgroundColor: colors.primaryGlow }]}
+                                onPress={() => { setChapter(t.topic); setShowTopicPicker(false); }}
+                                activeOpacity={0.75}
+                              >
+                                <Text style={[styles.topicChipText, chapter === t.topic && { color: colors.primary }]} numberOfLines={2}>
+                                  {t.topic}
+                                </Text>
+                              </TouchableOpacity>
+                            ))
+                          }
+                        </View>
+                      )}
+                    </View>
+                  )}
 
+                  {/* Due Date */}
+                  <Text style={styles.fieldLabel}>Due Date *</Text>
+                  {Platform.OS === 'web' ? (
+                    <View style={[styles.input, { justifyContent: 'center' }]}>
+                      <input
+                        type="date"
+                        value={dueDate}
+                        onChange={(e: any) => setDueDate(e.target.value)}
+                        onClick={(e: any) => { try { e.target.showPicker?.(); } catch (_) {} }}
+                        style={{ border: 'none', outline: 'none', background: 'transparent', width: '100%', fontSize: 14, color: colors.textMain, fontFamily: 'inherit', cursor: 'pointer' }}
+                      />
+                    </View>
+                  ) : (
+                    <TextInput
+                      style={[styles.input, formError && !dueDate.trim() && { borderColor: colors.accentRed }]}
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor={colors.textDim}
+                      value={dueDate}
+                      onChangeText={t => { setDueDate(t); if (t.trim()) setFormError(''); }}
+                      keyboardType="numeric"
+                    />
+                  )}
+
+                  {/* Type */}
                   <Text style={styles.fieldLabel}>Type</Text>
                   <View style={styles.chipRow}>
                     {TYPES.map(t => (
@@ -414,36 +537,102 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
                     ))}
                   </View>
 
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Text style={styles.fieldLabel}>Questions (optional)</Text>
-                    {questions.length < 8 && (
-                      <TouchableOpacity onPress={() => setQuestions(prev => [...prev, ''])} activeOpacity={0.75} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Feather name="plus-circle" size={14} color={colors.primary} />
-                        <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>Add</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                  {questions.map((q, i) => (
-                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <TextInput
-                        style={[styles.input, { flex: 1 }]}
-                        placeholder={`Question ${i + 1}...`}
-                        placeholderTextColor={colors.textDim}
-                        value={q}
-                        onChangeText={t => setQuestions(prev => prev.map((x, j) => j === i ? t : x))}
-                      />
-                      {questions.length > 1 && (
-                        <TouchableOpacity onPress={() => setQuestions(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.75}>
-                          <Feather name="trash-2" size={16} color={colors.accentRed} />
-                        </TouchableOpacity>
+                  {/* ── AI Generate panel (inline, like teacher) ── */}
+                  <View style={styles.aiPanel}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <Feather name="cpu" size={16} color={colors.primary} />
+                      <Text style={styles.aiPanelTitle}>Generate with AI</Text>
+                      {aiGenerated && (
+                        <View style={{ marginLeft: 'auto' as any, backgroundColor: colors.accentGreen + '20', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 }}>
+                          <Text style={{ fontSize: 10, fontWeight: '700', color: colors.accentGreen }}>Generated</Text>
+                        </View>
                       )}
                     </View>
-                  ))}
+                    <Text style={styles.aiPanelSub}>
+                      Describe what {child?.name ?? 'your child'} needs to practice — AI will fill title, topic, and questions automatically.
+                    </Text>
 
-                  <Text style={styles.fieldLabel}>Note (optional)</Text>
+                    <TextInput
+                      style={[styles.input, styles.inputMulti, { marginTop: 10 }]}
+                      placeholder={`e.g. "Give 5 multiplication word problems for Grade 3" or "Food chain questions in IB PYP standard"`}
+                      placeholderTextColor={colors.textDim}
+                      value={aiPrompt}
+                      onChangeText={setAiPrompt}
+                      multiline
+                      numberOfLines={3}
+                    />
+
+                    {/* Question count (for quiz) */}
+                    {type === 'quiz' && (
+                      <View style={{ marginTop: 10 }}>
+                        <Text style={[styles.fieldLabel, { marginBottom: 6 }]}>Number of Questions</Text>
+                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                          {[3, 5, 8, 10].map(n => (
+                            <TouchableOpacity key={n} onPress={() => setQuizCount(n)} activeOpacity={0.75}
+                              style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
+                                borderColor: quizCount === n ? colors.primary : colors.borderColor,
+                                backgroundColor: quizCount === n ? colors.primaryGlow : 'transparent' }}>
+                              <Text style={{ fontSize: 13, fontWeight: '700', color: quizCount === n ? colors.primary : colors.textMuted }}>{n}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+
+                    <TouchableOpacity
+                      style={[styles.aiGenerateBtn, { backgroundColor: aiPrompt.trim() ? colors.primary : colors.borderColor }]}
+                      onPress={generateWithAI}
+                      activeOpacity={0.85}
+                      disabled={aiGenerating || !aiPrompt.trim()}
+                    >
+                      {aiGenerating ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                      ) : (
+                        <>
+                          <Feather name="zap" size={15} color="#fff" />
+                          <Text style={styles.submitBtnText}>Generate Assignment</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Questions preview (after AI generate or manual) */}
+                  {questions.filter(q => q.trim()).length > 0 && (
+                    <View style={{ gap: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text style={styles.fieldLabel}>Questions</Text>
+                        {questions.length < 10 && (
+                          <TouchableOpacity onPress={() => setQuestions(prev => [...prev, ''])} activeOpacity={0.75} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <Feather name="plus-circle" size={14} color={colors.primary} />
+                            <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>Add</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                      {questions.map((q, i) => (
+                        <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' }}>{i + 1}</Text>
+                          </View>
+                          <TextInput
+                            style={[styles.input, { flex: 1 }]}
+                            placeholder={`Question ${i + 1}...`}
+                            placeholderTextColor={colors.textDim}
+                            value={q}
+                            onChangeText={t => setQuestions(prev => prev.map((x, j) => j === i ? t : x))}
+                          />
+                          <TouchableOpacity onPress={() => setQuestions(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.75}>
+                            <Feather name="trash-2" size={16} color={colors.accentRed} />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Note */}
+                  <Text style={styles.fieldLabel}>Note to child (optional)</Text>
                   <TextInput
                     style={[styles.input, styles.inputMulti]}
-                    placeholder="Instructions or context for your child..."
+                    placeholder="Instructions or encouragement for your child..."
                     placeholderTextColor={colors.textDim}
                     value={note}
                     onChangeText={setNote}
@@ -454,7 +643,7 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
                   <View style={styles.infoNote}>
                     <Feather name="user" size={13} color={colors.accentGreen} />
                     <Text style={styles.infoNoteText}>
-                      This assignment will be visible to {child?.name ?? 'your child'} in their Assignments screen.
+                      This assignment will appear in {child?.name ?? 'your child'}'s Assignments screen.
                     </Text>
                   </View>
 
@@ -594,6 +783,27 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: c.primary, padding: 16, borderRadius: radius.md, marginTop: spacing.sm,
   },
   submitBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+
+  // Topic picker grid
+  topicGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  topicChip: {
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8,
+    borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark,
+    maxWidth: '48%',
+  },
+  topicChipText: { fontSize: 12, fontWeight: '500', color: c.textMuted },
+
+  // AI inline panel (teacher-style)
+  aiPanel: {
+    padding: 14, borderRadius: 14, borderWidth: 1.5,
+    borderColor: c.primary + '40', backgroundColor: c.primaryGlow, gap: 2,
+  },
+  aiPanelTitle: { fontSize: 14, fontWeight: '800', color: c.primary },
+  aiPanelSub: { fontSize: 11, color: c.textDim, lineHeight: 17 },
+  aiGenerateBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    padding: 14, borderRadius: 12, marginTop: 10,
+  },
 });
 
 const REPORT_SUBJECT_COLORS: Record<string, string> = {

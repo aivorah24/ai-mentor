@@ -160,6 +160,31 @@ const TOPICS = [
   { wiki: 'Algorithm',
     subject: 'ICT', unit: 'Computational Thinking', topic: 'Algorithms and Coding',
     desc: 'An algorithm is a step-by-step set of instructions to solve a problem or complete a task. Like a recipe: precise steps in a specific order. In coding, algorithms control what computers do. Students write pseudocode and use Scratch or Python to code simple programs.' },
+
+  // ── MISSING TOPICS (from Ila feedback) ──────────────────────
+  { wiki: '12-hour_clock',
+    subject: 'Mathematics', unit: 'Measurement', topic: 'Time: 12-hour and 24-hour Formats',
+    desc: 'Time can be written in 12-hour format (using AM and PM) or 24-hour format (no AM/PM, used on clocks and timetables). 12-hour: 3:00 PM = 24-hour: 15:00. Midnight = 00:00. Noon = 12:00. To convert: add 12 for PM hours after noon. Students read timetables, schedules, and digital clocks in both formats and convert between them.' },
+
+  { wiki: 'Direct_speech',
+    subject: 'English', unit: 'Grammar', topic: 'Direct and Indirect Speech',
+    desc: 'Direct speech shows the exact words spoken, placed in quotation marks: She said, "I am hungry." Indirect (reported) speech conveys the meaning without quoting: She said she was hungry. Changes in indirect speech: pronouns shift (I → she), tense shifts back (am → was), time words change (today → that day). Students practise converting between both forms in sentences and stories.' },
+
+  { wiki: 'Space_exploration',
+    subject: 'Social Studies', unit: 'Where We Are in Place and Time', topic: 'Space Exploration',
+    desc: 'Space exploration is the investigation of outer space using spacecraft, telescopes, and satellites. Key milestones: first satellite (Sputnik, 1957), first human in space (Yuri Gagarin, 1961), Moon landing (Apollo 11, 1969), Mars rovers (Curiosity, Perseverance). Space agencies include NASA, ESA, ISRO. Students explore how space exploration affects daily life — GPS, weather forecasts, and satellite TV.' },
+
+  { wiki: 'Mass_media',
+    subject: 'Social Studies', unit: 'How We Express Ourselves', topic: 'Media and Communication',
+    desc: 'Media refers to the channels through which information and ideas are communicated to large audiences. Types: print media (newspapers, books), broadcast media (TV, radio), digital media (internet, social media). Media shapes opinions, informs the public, and entertains. Students critically evaluate media messages, identify bias, and understand the difference between fact and opinion.' },
+
+  { wiki: 'Peace',
+    subject: 'Social Studies', unit: 'Sharing the Planet', topic: 'Peace and Conflict Resolution',
+    desc: 'Peace is a state of harmony without violence or conflict. Conflicts arise from differences in needs, values, or resources. Conflict resolution strategies: negotiation (talk it out), mediation (a third party helps), compromise (both sides give something). Global organisations like the United Nations work to maintain peace. Students learn empathy, active listening, and peaceful problem-solving skills.' },
+
+  { wiki: 'Economic_sector',
+    subject: 'Social Studies', unit: 'How We Organize Ourselves', topic: 'Economic Activities',
+    desc: 'Economic activities are the ways people produce, distribute, and consume goods and services. Primary sector: farming, fishing, mining (extracting natural resources). Secondary sector: manufacturing (making products). Tertiary sector: services (shops, schools, hospitals). Students explore how economic activities vary by region, how they are interconnected, and how they affect the environment and community.' },
 ];
 
 async function fetchWikipedia(title) {

@@ -5,7 +5,9 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "nodemon server/index.js"
+    "dev": "nodemon server/index.js",
+    "test:parent": "playwright test tests/parent.spec.ts --headed",
+    "test:report": "playwright show-report tests/report"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.79.0",
@@ -21,5 +23,8 @@
     "groq-sdk": "^0.5.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.10.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
   }
 }

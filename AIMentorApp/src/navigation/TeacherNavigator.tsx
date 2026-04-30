@@ -40,7 +40,7 @@ export default function TeacherNavigator() {
         swipeEnabled: !isLargeScreen,
         sceneContainerStyle: { backgroundColor: colors.bgDark },
         animationEnabled: false,
-      }}
+      } as any}
     >
       <Drawer.Screen name="TeacherDashboard" component={TeacherDashboardScreen} />
       <Drawer.Screen name="TeacherStudents" component={TeacherStudentsScreen} />

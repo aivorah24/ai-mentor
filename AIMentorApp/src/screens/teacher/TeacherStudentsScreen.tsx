@@ -1,10 +1,12 @@
-import React, { useMemo, useState, useEffect, useCallback, memo } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, memo, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, RefreshControl, Image,
+  TextInput, ActivityIndicator, RefreshControl, Image, Modal, Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signOut as firebaseSignOut, updateProfile } from 'firebase/auth';
 import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
@@ -12,6 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import SERVER_URL from '../../config/serverUrl';
+import firebaseApp from '../../config/firebase';
 
 type Student = {
   id: string;
@@ -136,7 +139,7 @@ function lastActiveLabel(dateStr?: string) {
 }
 
 export default function TeacherStudentsScreen({ navigation, route }: any) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -146,6 +149,42 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   const [search, setSearch] = useState('');
   const initialTab = route?.params?.initialTab || 'All';
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Add student modal
+  const [addModal,    setAddModal]    = useState(false);
+  const [addTab,      setAddTab]      = useState<'create' | 'link' | 'bulk'>('create');
+  // Create new student fields
+  const [newName,       setNewName]       = useState('');
+  const [newEmail,      setNewEmail]      = useState('');
+  const [newPassword,   setNewPassword]   = useState('');
+  const [newGrade,      setNewGrade]      = useState('Grade 3');
+  const [newCurriculum, setNewCurriculum] = useState('IB PYP');
+  const [creating,      setCreating]      = useState(false);
+  const [createError,   setCreateError]   = useState('');
+  // Link existing fields
+  const [linkEmail,      setLinkEmail]      = useState('');
+  const [linking,        setLinking]        = useState(false);
+  const [linkError,      setLinkError]      = useState('');
+  const [linkSearch,     setLinkSearch]     = useState('');
+  const [linkGradeFilter, setLinkGradeFilter] = useState<string>('All');
+  const [linkableStudents, setLinkableStudents] = useState<any[]>([]);
+  const [linkableLoading,  setLinkableLoading]  = useState(false);
+  const [selectedStudent,  setSelectedStudent]  = useState<any>(null);
+  // Remove student
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  // Credentials popup after creating
+  const [credsModal,    setCredsModal]    = useState(false);
+  const [credsEmail,    setCredsEmail]    = useState('');
+  const [credsPassword, setCredsPassword] = useState('');
+  const [credsName,     setCredsName]     = useState('');
+  // Bulk import fields
+  const [bulkGrade,        setBulkGrade]        = useState('Grade 3');
+  const [bulkCurriculum,   setBulkCurriculum]   = useState('IB PYP');
+  const [bulkImporting,    setBulkImporting]    = useState(false);
+  const [bulkResults,      setBulkResults]      = useState<any[] | null>(null);
+  const [bulkSummary,      setBulkSummary]      = useState<any | null>(null);
+  const [bulkError,        setBulkError]        = useState('');
+  const fileInputRef = useRef<any>(null);
 
   const isDemo = DEMO_EMAILS.has(user?.email?.toLowerCase() || '');
 
@@ -179,6 +218,174 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   }, [user, isDemo]);
 
   useEffect(() => { load(); }, [load]);
+
+  function openAddModal() {
+    setAddTab('create');
+    setNewName(''); setNewEmail(''); setNewPassword('');
+    setNewGrade(user?.grade || 'Grade 3');
+    setNewCurriculum(user?.curriculum || 'IB PYP');
+    setCreateError('');
+    setLinkEmail(''); setLinkError('');
+    setLinkSearch(''); setSelectedStudent(null);
+    setBulkResults(null); setBulkSummary(null); setBulkError('');
+    setBulkGrade(user?.grade || 'Grade 3');
+    setBulkCurriculum(user?.curriculum || 'IB PYP');
+    loadLinkableStudents();
+    setAddModal(true);
+  }
+
+  async function handleBulkImport(file: File) {
+    setBulkImporting(true); setBulkError(''); setBulkResults(null); setBulkSummary(null);
+    try {
+      const formData = new FormData();
+      formData.append('csv', file, file.name);
+      formData.append('defaultGrade', bulkGrade);
+      formData.append('defaultCurriculum', bulkCurriculum);
+
+      const res = await fetch(
+        `${SERVER_URL}/teacher/${encodeURIComponent(user?.email || '')}/students/bulk-import`,
+        { method: 'POST', body: formData }
+      );
+      const data = await res.json();
+      if (!res.ok) { setBulkError(data.error || 'Bulk import failed.'); return; }
+      setBulkResults(data.results || []);
+      setBulkSummary(data.summary || null);
+      load();
+    } catch (e: any) {
+      setBulkError(e.message || 'Network error. Please try again.');
+    } finally {
+      setBulkImporting(false);
+    }
+  }
+
+  function downloadTemplate() {
+    const csv = 'Name,Email,Grade,Curriculum,School\nAanya Kapoor,,Grade 3,IB PYP,My School\nRaj Sharma,raj@gmail.com,Grade 4,NCERT,\n';
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'aivorah_students_template.csv';
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  async function handleCreateStudent() {
+    if (!newName.trim()) { setCreateError('Name is required.'); return; }
+    setCreating(true); setCreateError('');
+    try {
+      // 1. Get credentials from server
+      const initRes = await fetch(`${SERVER_URL}/teacher/students/init-auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newName.trim(),
+          email: newEmail.trim() || undefined,
+          password: newPassword.trim() || undefined,
+        }),
+      });
+      const init = await initRes.json();
+      if (!initRes.ok) { setCreateError(init.error || 'Failed to generate credentials.'); return; }
+
+      const finalEmail    = init.email as string;
+      const finalPassword = init.password as string;
+
+      // 2. Create Firebase account via secondary app instance
+      const tempApp  = initializeApp(firebaseApp.options, `teacher-create-${Date.now()}`);
+      const tempAuth = getAuth(tempApp);
+      const cred     = await createUserWithEmailAndPassword(tempAuth, finalEmail, finalPassword);
+      await updateProfile(cred.user, { displayName: newName.trim() });
+      await firebaseSignOut(tempAuth);
+      await deleteApp(tempApp);
+
+      // 3. Save to Supabase + link to this teacher
+      const linkRes = await fetch(
+        `${SERVER_URL}/teacher/${encodeURIComponent(user?.email || '')}/students/link-created`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firebaseUid:     cred.user.uid,
+            name:            newName.trim(),
+            email:           finalEmail,
+            grade:           newGrade,
+            curriculum:      newCurriculum,
+            initialPassword: finalPassword,
+          }),
+        }
+      );
+      const linkData = await linkRes.json();
+      if (!linkRes.ok) { setCreateError(linkData.error || 'Failed to save student.'); return; }
+
+      // 4. Show credentials popup
+      setCredsEmail(finalEmail);
+      setCredsPassword(finalPassword);
+      setCredsName(newName.trim());
+      setAddModal(false);
+      setCredsModal(true);
+      load();
+    } catch (e: any) {
+      setCreateError(e.message || 'Something went wrong. Please try again.');
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  // Grades this teacher handles — from user.teaches (set during onboarding)
+  const teacherGrades: string[] = user?.teaches?.map((t: any) => t.grade).filter(Boolean) ?? [];
+  const allowedGrades = teacherGrades.length > 0 ? teacherGrades : ['Grade 3', 'Grade 4', 'Grade 5'];
+
+  async function loadLinkableStudents() {
+    setLinkableLoading(true);
+    try {
+      // Only send grades param when we actually know the teacher's grades (from auth context)
+      // If unknown, backend will resolve from user_preferences
+      const url = teacherGrades.length > 0
+        ? `${SERVER_URL}/student/available-to-link?teacherEmail=${encodeURIComponent(user?.email || '')}&grades=${teacherGrades.map(g => encodeURIComponent(g)).join(',')}`
+        : `${SERVER_URL}/student/available-to-link?teacherEmail=${encodeURIComponent(user?.email || '')}`;
+      const res = await fetch(url);
+      if (res.ok) { const data = await res.json(); setLinkableStudents(data); }
+    } catch {}
+    setLinkableLoading(false);
+  }
+
+  async function handleLinkStudent() {
+    const emailToLink = selectedStudent?.email || linkEmail.trim();
+    if (!emailToLink) { setLinkError('Please select or enter a student.'); return; }
+    setLinking(true); setLinkError('');
+    try {
+      const res = await fetch(
+        `${SERVER_URL}/teacher/${encodeURIComponent(user?.email || '')}/students/link-existing`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentEmail: emailToLink }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) { setLinkError(data.error || 'Could not link student.'); return; }
+      setAddModal(false);
+      setLinkEmail('');
+      load();
+    } catch (e: any) {
+      setLinkError(e.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLinking(false);
+    }
+  }
+
+  async function handleRemoveStudent(studentId: string) {
+    setRemovingId(studentId);
+    try {
+      const res = await fetch(
+        `${SERVER_URL}/teacher/${encodeURIComponent(user?.email || '')}/students/${studentId}`,
+        { method: 'DELETE' }
+      );
+      if (res.ok) {
+        setStudents(prev => prev.filter(s => s.id !== studentId));
+        // Refresh linkable list so the removed student appears immediately
+        loadLinkableStudents();
+      }
+    } catch {}
+    setRemovingId(null);
+  }
 
   const todayISO = new Date().toISOString().split('T')[0];
 
@@ -225,6 +432,11 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
           subtitle={`${stats.total} enrolled`}
           onMenuPress={() => navigation.openDrawer()}
         />
+        {/* Add Student button */}
+        <TouchableOpacity style={styles.addBtn} onPress={openAddModal} activeOpacity={0.8}>
+          <Feather name="user-plus" size={14} color={colors.primary} />
+          <Text style={styles.addBtnText}>Add Student</Text>
+        </TouchableOpacity>
 
         <ScrollView
           style={styles.scroll}
@@ -299,7 +511,15 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
           ) : filtered.length === 0 ? (
             <View style={styles.empty}>
               <Feather name="users" size={36} color={colors.textDim} />
-              <Text style={styles.emptyText}>No students found</Text>
+              <Text style={styles.emptyText}>
+                {students.length === 0 ? 'No students yet' : 'No students match'}
+              </Text>
+              {students.length === 0 && (
+                <TouchableOpacity style={styles.emptyAddBtn} onPress={openAddModal} activeOpacity={0.8}>
+                  <Feather name="user-plus" size={14} color="#fff" />
+                  <Text style={styles.emptyAddBtnText}>Add your first student</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
             filtered.map((s) => {
@@ -310,7 +530,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                   key={s.id}
                   style={styles.studentCard}
                   activeOpacity={0.85}
-                  onPress={() => navigation.navigate('TeacherProgress' as any)}
+                  onPress={() => navigation.navigate('TeacherProgress' as any, { studentId: s.id })}
                 >
                   {/* Top row */}
                   <View style={styles.cardTop}>
@@ -330,6 +550,16 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                         <Text style={[styles.badgeText, { color: '#5A8A70' }]}>On Track</Text>
                       </View>
                     )}
+                    <TouchableOpacity
+                      onPress={() => handleRemoveStudent(s.id)}
+                      disabled={removingId === s.id}
+                      style={{ padding: 4, marginLeft: 4 }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      {removingId === s.id
+                        ? <ActivityIndicator size="small" color={colors.accentRed} />
+                        : <Feather name="user-minus" size={15} color={colors.accentRed} />}
+                    </TouchableOpacity>
                   </View>
 
                   {/* Progress bar */}
@@ -370,6 +600,434 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
           )}
         </ScrollView>
       </View>
+
+      {/* ── Add Student Modal ── */}
+      <Modal visible={addModal} transparent animationType="fade" onRequestClose={() => setAddModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primaryGlow, alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="user-plus" size={16} color={colors.primary} />
+                </View>
+                <Text style={styles.modalTitle}>Add Student</Text>
+              </View>
+              <TouchableOpacity onPress={() => setAddModal(false)}>
+                <Feather name="x" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Tabs */}
+            <View style={styles.modalTabs}>
+              <TouchableOpacity
+                style={[styles.modalTab, addTab === 'create' && styles.modalTabActive]}
+                onPress={() => { setAddTab('create'); setCreateError(''); setLinkError(''); }}
+                activeOpacity={0.8}
+              >
+                <Feather name="user-plus" size={13} color={addTab === 'create' ? colors.primary : colors.textMuted} />
+                <Text style={[styles.modalTabText, addTab === 'create' && { color: colors.primary }]}>Create New</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalTab, addTab === 'link' && styles.modalTabActive]}
+                onPress={() => { setAddTab('link'); setCreateError(''); setLinkError(''); setSelectedStudent(null); setLinkSearch(''); setLinkGradeFilter('All'); loadLinkableStudents(); }}
+                activeOpacity={0.8}
+              >
+                <Feather name="link" size={13} color={addTab === 'link' ? colors.primary : colors.textMuted} />
+                <Text style={[styles.modalTabText, addTab === 'link' && { color: colors.primary }]}>Link Existing</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalTab, addTab === 'bulk' && styles.modalTabActive]}
+                onPress={() => { setAddTab('bulk'); setCreateError(''); setLinkError(''); setBulkResults(null); setBulkSummary(null); setBulkError(''); }}
+                activeOpacity={0.8}
+              >
+                <Feather name="upload" size={13} color={addTab === 'bulk' ? colors.primary : colors.textMuted} />
+                <Text style={[styles.modalTabText, addTab === 'bulk' && { color: colors.primary }]}>Bulk Import</Text>
+              </TouchableOpacity>
+            </View>
+
+            {addTab === 'create' && (
+              <View style={{ gap: 10 }}>
+                <Text style={styles.modalFieldLabel}>Full Name *</Text>
+                <View style={styles.modalInput}>
+                  <Feather name="user" size={14} color={colors.textDim} />
+                  <TextInput
+                    style={styles.modalTextInput}
+                    value={newName} onChangeText={setNewName}
+                    placeholder="e.g. Aanya Kapoor" placeholderTextColor={colors.textDim}
+                    autoCapitalize="words" autoFocus
+                  />
+                </View>
+
+                <Text style={styles.modalFieldLabel}>Email <Text style={{ fontWeight: '400', color: colors.textDim }}>(optional — auto-generated if blank)</Text></Text>
+                <View style={styles.modalInput}>
+                  <Feather name="mail" size={14} color={colors.textDim} />
+                  <TextInput
+                    style={styles.modalTextInput}
+                    value={newEmail} onChangeText={setNewEmail}
+                    placeholder="Leave blank to auto-generate" placeholderTextColor={colors.textDim}
+                    keyboardType="email-address" autoCapitalize="none"
+                  />
+                </View>
+
+                <Text style={styles.modalFieldLabel}>Password <Text style={{ fontWeight: '400', color: colors.textDim }}>(optional)</Text></Text>
+                <View style={styles.modalInput}>
+                  <Feather name="lock" size={14} color={colors.textDim} />
+                  <TextInput
+                    style={styles.modalTextInput}
+                    value={newPassword} onChangeText={setNewPassword}
+                    placeholder="Leave blank to auto-generate" placeholderTextColor={colors.textDim}
+                    secureTextEntry
+                  />
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.modalFieldLabel}>Grade</Text>
+                    {(['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'] as const).map(g => (
+                      <TouchableOpacity
+                        key={g} activeOpacity={0.8}
+                        onPress={() => setNewGrade(g)}
+                        style={[styles.modalOption, { borderColor: newGrade === g ? colors.primary : colors.borderColor, backgroundColor: newGrade === g ? colors.primaryGlow : 'transparent' }]}
+                      >
+                        <Text style={{ fontSize: 12, color: newGrade === g ? colors.primary : colors.textMuted, fontWeight: '600' }}>{g}</Text>
+                        {newGrade === g && <Feather name="check" size={12} color={colors.primary} />}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.modalFieldLabel}>Curriculum</Text>
+                    <View style={[styles.modalOption, { borderColor: colors.primary, backgroundColor: colors.primaryGlow, marginTop: 2 }]}>
+                      <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700', flex: 1 }}>{newCurriculum}</Text>
+                      <Feather name="lock" size={11} color={colors.primary} />
+                    </View>
+                    <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 5, lineHeight: 14 }}>
+                      Matches your curriculum. Contact admin to change.
+                    </Text>
+                  </View>
+                </View>
+
+                {createError ? <Text style={{ color: colors.accentRed, fontSize: 13 }}>{createError}</Text> : null}
+
+                <View style={styles.modalBtns}>
+                  <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setAddModal(false)}>
+                    <Text style={styles.modalCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.modalSaveBtn} onPress={handleCreateStudent} disabled={creating}>
+                    {creating
+                      ? <ActivityIndicator color="white" size="small" />
+                      : <Text style={styles.modalSaveText}>Create Account</Text>}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {addTab === 'link' && (
+              <View style={{ gap: 10 }}>
+                <Text style={styles.modalNote}>
+                  Select a student from your grade &amp; curriculum to add to your class.
+                </Text>
+
+                {/* Search bar */}
+                <View style={styles.modalInput}>
+                  <Feather name="search" size={14} color={colors.textDim} />
+                  <TextInput
+                    style={styles.modalTextInput}
+                    value={linkSearch} onChangeText={setLinkSearch}
+                    placeholder="Search by name or email…" placeholderTextColor={colors.textDim}
+                    autoCapitalize="none"
+                  />
+                  {linkSearch ? (
+                    <TouchableOpacity onPress={() => setLinkSearch('')}>
+                      <Feather name="x" size={14} color={colors.textDim} />
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+
+                {/* Grade filter pills — derived from actual data returned */}
+                {!linkableLoading && linkableStudents.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
+                    {['All', ...Array.from(new Set(linkableStudents.map(s => s.grade).filter(Boolean))).sort()].map(g => (
+                      <TouchableOpacity
+                        key={g}
+                        onPress={() => setLinkGradeFilter(g)}
+                        activeOpacity={0.8}
+                        style={{
+                          paddingHorizontal: 12, paddingVertical: 5,
+                          borderRadius: 999, borderWidth: 1,
+                          borderColor: linkGradeFilter === g ? colors.primary : colors.borderColor,
+                          backgroundColor: linkGradeFilter === g ? colors.primaryGlow : 'transparent',
+                        }}
+                      >
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: linkGradeFilter === g ? colors.primary : colors.textMuted }}>
+                          {g}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
+
+                {/* Student list */}
+                {linkableLoading ? (
+                  <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                    <Text style={{ color: colors.textDim, fontSize: 12, marginTop: 6 }}>Loading students…</Text>
+                  </View>
+                ) : linkableStudents.length === 0 ? (
+                  <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+                    <Feather name="users" size={24} color={colors.textDim} />
+                    <Text style={{ color: colors.textDim, fontSize: 13, marginTop: 6, textAlign: 'center' }}>
+                      No unlinked students found for your grade &amp; curriculum.
+                    </Text>
+                  </View>
+                ) : (
+                  <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+                    {linkableStudents
+                      .filter(s => {
+                        const q = linkSearch.toLowerCase();
+                        const matchSearch = !q || s.name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q);
+                        const matchGrade = linkGradeFilter === 'All' || s.grade === linkGradeFilter;
+                        return matchSearch && matchGrade;
+                      })
+                      .map(s => {
+                        const isSelected = selectedStudent?.id === s.id;
+                        return (
+                          <TouchableOpacity
+                            key={s.id}
+                            onPress={() => setSelectedStudent(isSelected ? null : s)}
+                            activeOpacity={0.8}
+                            style={{
+                              flexDirection: 'row', alignItems: 'center', gap: 10,
+                              paddingVertical: 9, paddingHorizontal: 10,
+                              borderRadius: 8, marginBottom: 4,
+                              backgroundColor: isSelected ? colors.primaryGlow : (isDark ? colors.cardDark : '#F5F5F5'),
+                              borderWidth: 1,
+                              borderColor: isSelected ? colors.primary : 'transparent',
+                            }}
+                          >
+                            <View style={{
+                              width: 32, height: 32, borderRadius: 16,
+                              backgroundColor: colors.primaryGlow,
+                              alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>
+                                {(s.name || '?').split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase()}
+                              </Text>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain }}>{s.name}</Text>
+                              <Text style={{ fontSize: 11, color: colors.textDim }}>{s.email}</Text>
+                            </View>
+                            {isSelected && <Feather name="check-circle" size={16} color={colors.primary} />}
+                          </TouchableOpacity>
+                        );
+                      })}
+                  </ScrollView>
+                )}
+
+                {selectedStudent && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 8, backgroundColor: colors.primaryGlow }}>
+                    <Feather name="user-check" size={13} color={colors.primary} />
+                    <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>
+                      Selected: {selectedStudent.name}
+                    </Text>
+                  </View>
+                )}
+
+                {linkError ? <Text style={{ color: colors.accentRed, fontSize: 13 }}>{linkError}</Text> : null}
+
+                <View style={styles.modalBtns}>
+                  <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setAddModal(false)}>
+                    <Text style={styles.modalCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalSaveBtn, !selectedStudent && { opacity: 0.5 }]}
+                    onPress={handleLinkStudent}
+                    disabled={linking || !selectedStudent}
+                  >
+                    {linking
+                      ? <ActivityIndicator color="white" size="small" />
+                      : <Text style={styles.modalSaveText}>Link Student</Text>}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {addTab === 'bulk' && (
+              <View style={{ gap: 12 }}>
+                {!bulkResults ? (
+                  <>
+                    <Text style={styles.modalNote}>
+                      Upload a CSV file with columns: <Text style={{ color: colors.textMain, fontWeight: '700' }}>Name</Text>, Email (optional), Grade, Curriculum, School.
+                    </Text>
+
+                    {/* Default Grade / Curriculum for rows without those columns */}
+                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.modalFieldLabel}>Default Grade</Text>
+                        {(['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'] as const).map(g => (
+                          <TouchableOpacity key={g} activeOpacity={0.8} onPress={() => setBulkGrade(g)}
+                            style={[styles.modalOption, { borderColor: bulkGrade === g ? colors.primary : colors.borderColor, backgroundColor: bulkGrade === g ? colors.primaryGlow : 'transparent' }]}>
+                            <Text style={{ fontSize: 12, color: bulkGrade === g ? colors.primary : colors.textMuted, fontWeight: '600' }}>{g}</Text>
+                            {bulkGrade === g && <Feather name="check" size={12} color={colors.primary} />}
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.modalFieldLabel}>Default Curriculum</Text>
+                        {(['IB PYP', 'NCERT', 'CBSE'] as const).map(c => (
+                          <TouchableOpacity key={c} activeOpacity={0.8} onPress={() => setBulkCurriculum(c)}
+                            style={[styles.modalOption, { borderColor: bulkCurriculum === c ? colors.primary : colors.borderColor, backgroundColor: bulkCurriculum === c ? colors.primaryGlow : 'transparent' }]}>
+                            <Text style={{ fontSize: 12, color: bulkCurriculum === c ? colors.primary : colors.textMuted, fontWeight: '600' }}>{c}</Text>
+                            {bulkCurriculum === c && <Feather name="check" size={12} color={colors.primary} />}
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+
+                    {bulkError ? (
+                      <Text style={{ color: colors.accentRed, fontSize: 13 }}>{bulkError}</Text>
+                    ) : null}
+
+                    {/* Hidden file input for web */}
+                    {Platform.OS === 'web' && (
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".csv,text/csv"
+                        style={{ display: 'none' }}
+                        onChange={(e: any) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleBulkImport(f);
+                          e.target.value = '';
+                        }}
+                      />
+                    )}
+
+                    <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                      <TouchableOpacity
+                        style={[styles.modalCancelBtn, { flex: 1 }]}
+                        onPress={downloadTemplate}
+                        activeOpacity={0.8}
+                      >
+                        <Feather name="download" size={14} color={colors.textMuted} />
+                        <Text style={styles.modalCancelText}>Download Template</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.modalSaveBtn, { flex: 1 }, bulkImporting && { opacity: 0.6 }]}
+                        onPress={() => {
+                          if (Platform.OS === 'web') fileInputRef.current?.click();
+                        }}
+                        disabled={bulkImporting}
+                        activeOpacity={0.8}
+                      >
+                        {bulkImporting
+                          ? <><ActivityIndicator color="white" size="small" /><Text style={styles.modalSaveText}>Importing...</Text></>
+                          : <><Feather name="upload" size={14} color="#fff" /><Text style={styles.modalSaveText}>Choose CSV File</Text></>}
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : (
+                  /* Results view */
+                  <>
+                    {bulkSummary && (
+                      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
+                        {[
+                          { label: 'Created', value: bulkSummary.created, color: colors.accentGreen },
+                          { label: 'Skipped', value: bulkSummary.skipped, color: colors.accentYellow },
+                          { label: 'Errors', value: bulkSummary.errors, color: colors.accentRed },
+                        ].map(s => (
+                          <View key={s.label} style={{ flex: 1, backgroundColor: s.color + '15', borderWidth: 1, borderColor: s.color + '30', borderRadius: 8, padding: 10, alignItems: 'center' }}>
+                            <Text style={{ fontSize: 20, fontWeight: '800', color: s.color }}>{s.value}</Text>
+                            <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>{s.label}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
+                      {bulkResults.map((r: any, idx: number) => (
+                        <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.borderColor }}>
+                          <Feather
+                            name={r.status === 'created' ? 'check-circle' : r.status === 'skipped' ? 'skip-forward' : 'x-circle'}
+                            size={14}
+                            color={r.status === 'created' ? colors.accentGreen : r.status === 'skipped' ? colors.accentYellow : colors.accentRed}
+                          />
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain }}>{r.name}</Text>
+                            <Text style={{ fontSize: 11, color: colors.textMuted }} numberOfLines={1}>{r.email}</Text>
+                            {r.error ? <Text style={{ fontSize: 11, color: colors.accentRed }}>{r.error}</Text> : null}
+                          </View>
+                          {r.status === 'created' && r.password ? (
+                            <Text style={{ fontSize: 11, color: colors.textDim, fontFamily: 'monospace' }}>{r.password}</Text>
+                          ) : null}
+                        </View>
+                      ))}
+                    </ScrollView>
+
+                    <Text style={[styles.modalNote, { marginTop: 4 }]}>
+                      Credentials have been emailed to you. Students can log in immediately.
+                    </Text>
+
+                    <View style={styles.modalBtns}>
+                      <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setBulkResults(null); setBulkSummary(null); setBulkError(''); }}>
+                        <Text style={styles.modalCancelText}>Import More</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.modalSaveBtn} onPress={() => setAddModal(false)}>
+                        <Text style={styles.modalSaveText}>Done</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Credentials Modal (shown after creating a new student) ── */}
+      <Modal visible={credsModal} transparent animationType="fade" onRequestClose={() => setCredsModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#5A8A7020', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="check-circle" size={16} color={colors.accentGreen} />
+                </View>
+                <Text style={styles.modalTitle}>Account Created</Text>
+              </View>
+              <TouchableOpacity onPress={() => setCredsModal(false)}>
+                <Feather name="x" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalNote}>{credsName} has been added to your class. Share these credentials with the student.</Text>
+
+            {[
+              { label: 'Login Email / ID', value: credsEmail },
+              { label: 'Password', value: credsPassword },
+            ].map(item => (
+              <View key={item.label} style={{ marginBottom: 10 }}>
+                <Text style={styles.modalFieldLabel}>{item.label}</Text>
+                <View style={[styles.modalInput, { backgroundColor: colors.bgDark }]}>
+                  <Text style={[styles.modalTextInput, { flex: 1, color: colors.textMain }]}>{item.value}</Text>
+                </View>
+              </View>
+            ))}
+
+            <View style={{ backgroundColor: colors.primaryGlow, borderRadius: 8, padding: 12, borderWidth: 1, borderColor: colors.primary + '30', marginTop: 4 }}>
+              <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
+                The student can log in immediately with these credentials. Save them now — the password cannot be retrieved later.
+              </Text>
+            </View>
+
+            <TouchableOpacity style={[styles.modalSaveBtn, { marginTop: 16 }]} onPress={() => setCredsModal(false)}>
+              <Text style={styles.modalSaveText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScreenLayout>
   );
 }
@@ -444,4 +1102,53 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   cardStats: { flexDirection: 'row', gap: spacing.lg },
   cardStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   cardStatVal: { fontSize: 11, color: c.textMuted, fontWeight: '600' },
+
+  // Add student button (below header)
+  addBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-end',
+    marginHorizontal: spacing.xl, marginBottom: 4,
+    paddingHorizontal: spacing.md, paddingVertical: 8,
+    borderRadius: radius.md, borderWidth: 1,
+    borderColor: c.primary + '40', backgroundColor: c.primaryGlow,
+  },
+  addBtnText: { fontSize: 13, fontWeight: '600', color: c.primary },
+
+  // Empty state add button
+  emptyAddBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12,
+    paddingHorizontal: spacing.xl, paddingVertical: 12,
+    borderRadius: radius.md, backgroundColor: c.primary,
+  },
+  emptyAddBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+
+  // Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
+  modalBox: { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.xl, width: '100%', maxWidth: 480 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
+  modalTitle: { fontSize: 17, fontWeight: '700', color: c.textMain },
+  modalNote: { fontSize: 13, color: c.textMuted, lineHeight: 20, marginBottom: spacing.md },
+  modalTabs: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
+  modalTab: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 10, borderRadius: radius.md, borderWidth: 1,
+    borderColor: c.borderColor, backgroundColor: 'transparent',
+  },
+  modalTabActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  modalTabText: { fontSize: 13, fontWeight: '600', color: c.textMuted },
+  modalFieldLabel: { fontSize: 12, fontWeight: '600', color: c.textMuted, marginBottom: 4 },
+  modalInput: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: radius.md, height: 46, paddingHorizontal: spacing.md,
+  },
+  modalTextInput: { flex: 1, fontSize: 14, color: c.textMain },
+  modalOption: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8, borderWidth: 1, marginTop: 4,
+  },
+  modalBtns: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },
+  modalCancelBtn: { flex: 1, height: 46, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center', justifyContent: 'center' },
+  modalCancelText: { fontSize: 14, fontWeight: '600', color: c.textMuted },
+  modalSaveBtn: { flex: 1, height: 46, borderRadius: radius.md, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+  modalSaveText: { fontSize: 14, fontWeight: '700', color: 'white' },
 });

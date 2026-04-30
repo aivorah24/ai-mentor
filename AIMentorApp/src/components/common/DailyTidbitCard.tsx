@@ -56,7 +56,7 @@ export default function DailyTidbitCard({ grade }: Props) {
   const [error, setError]     = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
-  const cacheKey = `daily_tidbit_v2_${grade}_${today}`;
+  const cacheKey = `daily_tidbit_v3_${grade}_${today}`;
 
   useEffect(() => {
     loadTidbit();
@@ -155,7 +155,15 @@ export default function DailyTidbitCard({ grade }: Props) {
               <Feather name={categoryIcon(data.gk.category) as any} size={11} color={teal} />
               <Text style={[s.categoryText, { color: teal }]}>{data.gk.category}</Text>
             </View>
-            <Text style={[s.factText, { color: titleColor }]}>{data.gk.fact}</Text>
+            <Text style={[s.factText, { color: titleColor }]}>
+              {(() => {
+                const f = data.gk.fact;
+                if (typeof f === 'string' && f.trim().startsWith('{')) {
+                  try { return JSON.parse(f).fact || f; } catch { return f; }
+                }
+                return f;
+              })()}
+            </Text>
           </View>
         ) : (
           <View style={s.content}>

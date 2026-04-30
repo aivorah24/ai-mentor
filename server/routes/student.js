@@ -121,6 +121,80 @@ router.get('/by-curriculum', async (req, res) => {
   }
 });
 
+// ── GET /student/available-to-link?teacherEmail=xxx ────────
+// Returns students NOT already linked to this teacher.
+// If teacher record has grade/curriculum, filters to matching students.
+
+router.get('/available-to-link', async (req, res) => {
+  try {
+    const teacherEmail = String(req.query.teacherEmail || '').toLowerCase().trim();
+    if (!teacherEmail) return res.status(400).json({ error: 'teacherEmail required' });
+
+    // Resolve teacher record (optional — used for grade/curriculum filtering)
+    const { data: teacher } = await supabase
+      .from('users')
+      .select('id, grade, curriculum')
+      .eq('email', teacherEmail)
+      .maybeSingle();
+
+    // Get already-linked student IDs (works even if teacher not in users table)
+    let linkedIds = [];
+    if (teacher?.id) {
+      const { data: linked } = await supabase
+        .from('teacher_student')
+        .select('student_id')
+        .eq('teacher_id', teacher.id);
+      linkedIds = (linked || []).map(l => l.student_id);
+    }
+
+    // Grades to filter by — priority: ?grades param → user_preferences teaches → teacher.grade → all pilot grades
+    const VALID_GRADES = ['Grade 3', 'Grade 4', 'Grade 5'];
+    let gradesToShow = VALID_GRADES;
+
+    // 1. Grades passed directly from frontend (from user.teaches in auth context)
+    const gradesParam = req.query.grades
+      ? String(req.query.grades).split(',').map(g => decodeURIComponent(g.trim())).filter(g => VALID_GRADES.includes(g))
+      : [];
+
+    if (gradesParam.length > 0) {
+      gradesToShow = gradesParam;
+    } else {
+      // 2. Look up teaches[] from user_preferences in Supabase
+      const { data: prefs } = await supabase
+        .from('user_preferences')
+        .select('data')
+        .eq('user_email', teacherEmail)
+        .maybeSingle();
+      const teaches = prefs?.data?.teaches;
+      if (Array.isArray(teaches) && teaches.length > 0) {
+        const fromPrefs = teaches.map(t => t.grade).filter(g => VALID_GRADES.includes(g));
+        if (fromPrefs.length > 0) gradesToShow = fromPrefs;
+      } else if (teacher?.grade && VALID_GRADES.includes(teacher.grade)) {
+        // 3. Single grade from users table
+        gradesToShow = [teacher.grade];
+      }
+    }
+
+    let query = supabase
+      .from('users')
+      .select('id, name, email, grade, curriculum, photo_url, role')
+      .neq('role', 'teacher')
+      .in('grade', gradesToShow);
+
+    if (teacher?.curriculum) query = query.eq('curriculum', teacher.curriculum);
+
+    const { data: candidates } = await query;
+
+    const available = (candidates || [])
+      .filter(s => !linkedIds.includes(s.id) && s.name && s.role !== 'teacher')
+      .map(s => ({ id: s.id, name: s.name, email: s.email, grade: s.grade, curriculum: s.curriculum, photoUrl: s.photo_url }));
+
+    res.json(available);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── GET /student/:id ────────────────────────────────────────
 
 router.get('/:id', async (req, res) => {
@@ -177,7 +251,8 @@ router.put('/:id', async (req, res) => {
     if (body.currentStreak       != null) patch.current_streak       = body.currentStreak;
     if (body.todayStudyMinutes   != null) patch.today_study_minutes  = body.todayStudyMinutes;
     if (body.todayXP             != null) patch.today_xp             = body.todayXP;
-    if (body.completedTopics     != null) patch.completed_topics     = body.completedTopics;
+    // NOTE: completed_topics is intentionally excluded here — it is managed
+    // exclusively by POST /complete-lesson to avoid race-condition overwrites.
     if (body.lastLesson          != null) patch.last_lesson          = body.lastLesson;
     if (body.lastActiveDate      != null) patch.last_active_date     = body.lastActiveDate;
     patch.updated_at = new Date().toISOString();

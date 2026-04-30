@@ -303,22 +303,14 @@ export default function ParentProfileScreen({ navigation }: any) {
                 <Text style={styles.changePassText}>Change Password</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.securityRow}>
+            <View style={[styles.securityRow, { opacity: 0.5 }]}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.secTitle}>Two-Factor Authentication</Text>
-                <Text style={styles.secSub}>
-                  {twoFAEnabled ? 'Enabled — your account is extra secure' : 'Secure your account with 2FA (coming soon)'}
-                </Text>
+                <Text style={styles.secSub}>Coming soon</Text>
               </View>
-              <Switch
-                value={twoFAEnabled}
-                onValueChange={v => {
-                  setTwoFAEnabled(v);
-                  if (v) Alert.alert('Coming Soon', '2FA via SMS will be available in the next update.');
-                }}
-                trackColor={{ false: colors.borderColor, true: colors.primary }}
-                thumbColor="#fff"
-              />
+              <View style={[styles.comingSoonBadge, { backgroundColor: '#F59E0B22' }]}>
+                <Text style={[styles.comingSoonText, { color: '#F59E0B' }]}>Soon</Text>
+              </View>
             </View>
           </View>
 
@@ -337,21 +329,25 @@ export default function ParentProfileScreen({ navigation }: any) {
               <View style={{ paddingVertical: 16, alignItems: 'center' }}>
                 <Text style={{ fontSize: 13, color: colors.textMuted }}>No children linked yet.</Text>
               </View>
-            ) : children.map(ch => {
-              const isOnTrack = (ch.currentStreak ?? 0) >= 3;
-              const statusLabel = isOnTrack ? 'Active' : 'Needs Attention';
-              const dotColor = isOnTrack ? colors.accentGreen : colors.accentYellow;
-              return (
-                <View key={ch.id} style={styles.childRow}>
-                  <View style={[styles.childDot, { backgroundColor: dotColor }]} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.childRowName}>{ch.name}</Text>
-                    <Text style={styles.childRowGrade}>{ch.grade} · {ch.xpPoints ?? 0} XP</Text>
-                  </View>
-                  <Text style={[styles.childStatus, { color: dotColor }]}>{statusLabel}</Text>
-                </View>
-              );
-            })}
+            ) : (
+              <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+                {children.map(ch => {
+                  const isOnTrack = (ch.currentStreak ?? 0) >= 3;
+                  const statusLabel = isOnTrack ? 'Active' : 'Needs Attention';
+                  const dotColor = isOnTrack ? colors.accentGreen : colors.accentYellow;
+                  return (
+                    <View key={ch.id} style={styles.childRow}>
+                      <View style={[styles.childDot, { backgroundColor: dotColor }]} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.childRowName}>{ch.name}</Text>
+                        <Text style={styles.childRowGrade}>{ch.grade} · {ch.xpPoints ?? 0} XP</Text>
+                      </View>
+                      <Text style={[styles.childStatus, { color: dotColor }]}>{statusLabel}</Text>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            )}
           </View>
 
         </ScrollView>
@@ -474,6 +470,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderColor: c.borderColor,
     borderRadius: radius.xl,
     padding: spacing.xl,
+    overflow: 'hidden',
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.xl },
   cardTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: c.textMain },
@@ -499,11 +496,13 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   changePassBtn: { backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 5 },
   changePassText: { fontSize: 11, fontWeight: '600', color: c.textMuted },
-  securityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.md },
+  securityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
+  comingSoonBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  comingSoonText: { fontSize: 11, fontWeight: '600' },
   secTitle: { fontSize: 14, fontWeight: '600', color: c.textMain },
   secSub: { fontSize: 11, color: c.textMuted, marginTop: 2 },
 
-  childRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, borderTopWidth: 1, borderTopColor: c.borderColor },
+  childRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, borderTopWidth: 1, borderTopColor: c.borderColor, flexShrink: 0 },
   childDot: { width: 8, height: 8, borderRadius: 4 },
   childRowName: { fontSize: 13, fontWeight: '600', color: c.textMain },
   childRowGrade: { fontSize: 11, color: c.textMuted },
