@@ -191,9 +191,13 @@ export default function OnboardingScreen() {
         if (!curriculum.trim()) throw new Error('Please select your curriculum before continuing.');
       }
 
+      // If teacher is adding a parent profile (_returnRole='teacher'), keep 'teacher'
+      // as the persisted role — 'parent' is only a temporary UI state for onboarding.
+      const persistRole = (user as any)?._returnRole === 'teacher' ? 'teacher' : role;
+
       const body: any = {
         email,
-        role,                        // send role so server can validate without an extra DB lookup
+        role: persistRole,           // send role so server can validate without an extra DB lookup
         name: fullName.trim(),
         school,
         location: city,
@@ -254,7 +258,7 @@ export default function OnboardingScreen() {
         body: JSON.stringify({
           email,
           name: fullName.trim(),
-          role,
+          role: persistRole,
           grade: role === 'student' ? grade.trim() : undefined,
           curriculum: role === 'student' ? curriculum.trim() : teachCurriculum || undefined,
           school,
@@ -305,11 +309,14 @@ export default function OnboardingScreen() {
                 body: JSON.stringify({ email, role: 'parent' }),
               }).catch(() => {});
               const linkPatch = { ...localCompletionPatch, role: 'teacher', roles: ['teacher', 'parent'], _returnRole: undefined };
-              Alert.alert(
-                'Parent Profile Added',
-                'Your parent details have been successfully saved. You can now switch between Teacher and Parent profiles from the sidebar.',
-                [{ text: 'OK', onPress: () => updateUser(linkPatch as any) }]
-              );
+              updateUser(linkPatch as any);
+              setTimeout(() => {
+                Alert.alert(
+                  'Parent Profile Added',
+                  'Your parent details have been successfully saved. You can now switch between Teacher and Parent profiles from the sidebar.',
+                  [{ text: 'OK' }]
+                );
+              }, 400);
             } else {
               updateUser(localCompletionPatch as any);
             }
@@ -434,11 +441,14 @@ export default function OnboardingScreen() {
           onboardingComplete: true,
           _returnRole: undefined,
         };
-        Alert.alert(
-          'Parent Profile Added',
-          'Your parent details have been successfully saved. You can now switch between Teacher and Parent profiles from the sidebar.',
-          [{ text: 'OK', onPress: () => updateUser(teacherPatch as any) }]
-        );
+        updateUser(teacherPatch as any);
+        setTimeout(() => {
+          Alert.alert(
+            'Parent Profile Added',
+            'Your parent details have been successfully saved. You can now switch between Teacher and Parent profiles from the sidebar.',
+            [{ text: 'OK' }]
+          );
+        }, 400);
       } else {
         // Only mark onboarding complete locally after server confirmed the save
         updateUser(localCompletionPatch as any);
@@ -465,12 +475,16 @@ export default function OnboardingScreen() {
       const patch = pendingUserPatch;
       setPendingUserPatch(null);
       if (patch.role === 'teacher') {
-        // Teacher finished parent onboarding — show success then return to teacher dashboard
-        Alert.alert(
-          'Parent Profile Added',
-          'Your parent details have been successfully saved. You can now switch between Teacher and Parent profiles from the sidebar.',
-          [{ text: 'OK', onPress: () => updateUser(patch) }]
-        );
+        // Navigate to teacher dashboard IMMEDIATELY — prevents double-click on "Get Started"
+        // from re-triggering handleFinish while the alert is still showing.
+        updateUser(patch as any);
+        setTimeout(() => {
+          Alert.alert(
+            'Parent Profile Added',
+            'Your parent details have been successfully saved. You can now switch between Teacher and Parent profiles from the sidebar.',
+            [{ text: 'OK' }]
+          );
+        }, 400);
       } else {
         updateUser(patch);
       }
