@@ -3,7 +3,7 @@
  * Multi-step onboarding for Student, Teacher, Parent
  * Collects role-specific data, saves to backend, marks onboardingComplete
  */
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
   StyleSheet, KeyboardAvoidingView, Platform, Modal, Alert,
@@ -12,7 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth, getPendingReturnRole, setPendingReturnRole } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
@@ -78,9 +78,8 @@ export default function OnboardingScreen() {
   const role = user?.role || 'student';
   const steps = getSteps(role);
 
-  // Capture _returnRole in a ref on first render — immune to onAuthStateChanged
-  // resetting user state mid-flow (race condition on live / slower networks).
-  const returnRoleRef = useRef<string | undefined>((user as any)?._returnRole);
+  // Read return role from module-level variable (completely outside React state,
+  // immune to onAuthStateChanged overwriting user state on live/slower networks).
 
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -185,8 +184,8 @@ export default function OnboardingScreen() {
   async function handleFinish() {
     setSaving(true);
     setSaveError('');
-    // Use returnRoleRef captured at mount — immune to onAuthStateChanged mid-flow resets.
-    const capturedReturnRole = returnRoleRef.current;
+    // Read from module-level variable — completely outside React state management.
+    const capturedReturnRole = getPendingReturnRole();
     try {
       const email = user?.email || '';
 
@@ -325,7 +324,8 @@ export default function OnboardingScreen() {
             // Link successful — mark parent onboarding complete
             if (capturedReturnRole === 'teacher') {
               // add-role already called at top of handleFinish
-              const linkPatch = { ...localCompletionPatch, role: 'teacher', roles: ['teacher', 'parent'], _returnRole: undefined };
+              setPendingReturnRole(undefined); // Clear module-level flag
+              const linkPatch = { ...localCompletionPatch, role: 'teacher', roles: ['teacher', 'parent'] };
               updateUser(linkPatch as any);
               setTimeout(() => {
                 Alert.alert(
@@ -416,12 +416,12 @@ export default function OnboardingScreen() {
           // ── Dual-role: teacher adding parent profile (new child path) ──
           if (capturedReturnRole === 'teacher') {
             // add-role already called at top of handleFinish
+            setPendingReturnRole(undefined); // Clear module-level flag
             setPendingUserPatch({
               ...localCompletionPatch,
               role: 'teacher',
               roles: ['teacher', 'parent'],
               onboardingComplete: true,
-              _returnRole: undefined,
             });
           } else {
             setPendingUserPatch(localCompletionPatch);
@@ -440,12 +440,12 @@ export default function OnboardingScreen() {
       // If _returnRole is set, this was a teacher going through parent onboarding.
       // add-role already called at top of handleFinish.
       if (capturedReturnRole === 'teacher') {
+        setPendingReturnRole(undefined); // Clear module-level flag
         const teacherPatch = {
           ...localCompletionPatch,
           role: 'teacher',
           roles: ['teacher', 'parent'],
           onboardingComplete: true,
-          _returnRole: undefined,
         };
         updateUser(teacherPatch as any);
         setTimeout(() => {

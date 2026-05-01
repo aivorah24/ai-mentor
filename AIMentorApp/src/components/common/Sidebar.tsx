@@ -12,7 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { spacing, radius, typography } from '../../theme';
 import type { AppColors } from '../../theme';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth, setPendingReturnRole } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeMode } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -198,8 +198,10 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
           <TouchableOpacity
             style={styles.addParentHint}
             onPress={() => {
+              // Store return role in module-level variable (immune to onAuthStateChanged resets)
+              setPendingReturnRole('teacher');
               // Temporarily set role to parent so OnboardingScreen shows parent flow
-              updateUser({ role: 'parent', onboardingComplete: false, _returnRole: 'teacher' } as any);
+              updateUser({ role: 'parent', onboardingComplete: false } as any);
               onNavigate('Onboarding');
             }}
             activeOpacity={0.8}

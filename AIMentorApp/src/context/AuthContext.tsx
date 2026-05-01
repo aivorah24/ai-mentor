@@ -121,6 +121,13 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User>> {
 
 let _pendingRole: UserRole = 'student';
 
+// Module-level variable to survive onAuthStateChanged state resets.
+// When a teacher clicks "Add Parent Profile", we store 'teacher' here
+// so OnboardingScreen can read it even after setUser() overwrites React state.
+let _pendingReturnRole: string | undefined;
+export function setPendingReturnRole(role: string | undefined) { _pendingReturnRole = role; }
+export function getPendingReturnRole() { return _pendingReturnRole; }
+
 function isSystemGeneratedStudentEmail(email: string) {
   return String(email || '').toLowerCase().trim().endsWith('@aivorah.student');
 }
