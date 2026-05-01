@@ -625,7 +625,7 @@ router.post('/send-password-reset', async (req, res) => {
     const emailLc = email.trim().toLowerCase();
 
     const { frontendOrigin } = req.body;
-    const appBase = frontendOrigin || 'http://localhost:8081';
+    const appBase = frontendOrigin || 'https://aivorah.ai';
     let resetLink = null;
 
     // 1. Try Firebase Admin SDK if service account is available
@@ -705,7 +705,7 @@ router.post('/send-verification', async (req, res) => {
     }, { onConflict: 'user_email' });
 
     const serverBase = `${req.protocol}://${req.get('host')}`;
-    const appBase = frontendOrigin || 'http://localhost:8081';
+    const appBase = frontendOrigin || 'https://aivorah.ai';
     const redirect = encodeURIComponent(appBase + '/verify-success');
     const encodedEmail = encodeURIComponent(email.toLowerCase());
     // Include email in URL so verify endpoint can look up by PK (reliable, no JSONB scan needed)
