@@ -3,7 +3,7 @@
  * Multi-step onboarding for Student, Teacher, Parent
  * Collects role-specific data, saves to backend, marks onboardingComplete
  */
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
   StyleSheet, KeyboardAvoidingView, Platform, Modal, Alert,
@@ -77,6 +77,11 @@ export default function OnboardingScreen() {
 
   const role = user?.role || 'student';
   const steps = getSteps(role);
+
+  // Capture _returnRole in a ref on first render — immune to onAuthStateChanged
+  // resetting user state mid-flow (race condition on live / slower networks).
+  const returnRoleRef = useRef<string | undefined>((user as any)?._returnRole);
+
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -180,10 +185,8 @@ export default function OnboardingScreen() {
   async function handleFinish() {
     setSaving(true);
     setSaveError('');
-    // Capture _returnRole NOW — before any async operations.
-    // On live (slower network), onAuthStateChanged can fire mid-flow and
-    // reset user state, wiping _returnRole before our checks run.
-    const capturedReturnRole = (user as any)?._returnRole as string | undefined;
+    // Use returnRoleRef captured at mount — immune to onAuthStateChanged mid-flow resets.
+    const capturedReturnRole = returnRoleRef.current;
     try {
       const email = user?.email || '';
 
