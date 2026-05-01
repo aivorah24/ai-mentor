@@ -723,7 +723,7 @@ router.post('/send-verification', async (req, res) => {
 router.get('/verify/:token', async (req, res) => {
   const { token } = req.params;
   const email = (req.query.email || '').toLowerCase();
-  const appRedirect = req.query.redirect || 'http://localhost:8081/verify-success';
+  const appRedirect = req.query.redirect || 'https://aivorah.ai/verify-success';
 
   // Always redirect back to the app — pass ?verified=1 or ?error=1 so app can react
   const successUrl = appRedirect.includes('?') ? `${appRedirect}&verified=1` : `${appRedirect}?verified=1`;
