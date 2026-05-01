@@ -19,7 +19,7 @@ import VerifyEmailScreen from './src/screens/auth/VerifyEmailScreen';
 import ResetPasswordScreen from './src/screens/auth/ResetPasswordScreen';
 import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
 import AdminPanelScreen from './src/screens/admin/AdminPanelScreen';
-import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { AuthProvider, useAuth, getPendingReturnRole } from './src/context/AuthContext';
 import { StudentDataProvider } from './src/context/StudentDataContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { NotificationProvider } from './src/context/NotificationContext';
@@ -173,8 +173,8 @@ function RootNavigator() {
   }
 
   console.log(`[Auth] Routing to ${user?.role} navigator`);
-  // Role-based navigator — if _returnRole is set, honour it (e.g. teacher finishing parent onboarding)
-  const activeRole = (user as any)?._returnRole || user?.role;
+  // Role-based navigator — if pendingReturnRole is set, honour it (teacher finishing parent onboarding)
+  const activeRole = getPendingReturnRole() || user?.role;
   if (activeRole === 'teacher') return <TeacherNavigator />;
   if (activeRole === 'parent')  return <ParentNavigator />;
 

@@ -12,7 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { spacing, radius, typography } from '../../theme';
 import type { AppColors } from '../../theme';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth, setPendingReturnRole } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeMode } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -200,7 +200,8 @@ export default function DrawerContent(props: any) {
           <TouchableOpacity
             style={styles.addParentHint}
             onPress={() => {
-              updateUser({ role: 'parent', onboardingComplete: false, _returnRole: 'teacher' } as any);
+              setPendingReturnRole('teacher');
+              updateUser({ role: 'parent', onboardingComplete: false } as any);
               navigation.navigate('Onboarding');
             }}
             activeOpacity={0.8}
