@@ -180,6 +180,10 @@ export default function OnboardingScreen() {
   async function handleFinish() {
     setSaving(true);
     setSaveError('');
+    // Capture _returnRole NOW — before any async operations.
+    // On live (slower network), onAuthStateChanged can fire mid-flow and
+    // reset user state, wiping _returnRole before our checks run.
+    const capturedReturnRole = (user as any)?._returnRole as string | undefined;
     try {
       const email = user?.email || '';
 
@@ -193,7 +197,7 @@ export default function OnboardingScreen() {
 
       // If teacher is adding a parent profile (_returnRole='teacher'), keep 'teacher'
       // as the persisted role — 'parent' is only a temporary UI state for onboarding.
-      const persistRole = (user as any)?._returnRole === 'teacher' ? 'teacher' : role;
+      const persistRole = capturedReturnRole === 'teacher' ? 'teacher' : role;
 
       const body: any = {
         email,
@@ -301,8 +305,7 @@ export default function OnboardingScreen() {
               throw new Error(err?.error || 'Could not link child account. Make sure they have a registered Aivorah account.');
             }
             // Link successful — mark parent onboarding complete
-            const retRole = (user as any)?._returnRole;
-            if (retRole === 'teacher') {
+            if (capturedReturnRole === 'teacher') {
               await fetch(`${SERVER_URL}/user/add-role`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -397,8 +400,7 @@ export default function OnboardingScreen() {
           setCreatedVerificationRequired(emailProvided); // true = show Gmail verification note
 
           // ── Dual-role: teacher adding parent profile (new child path) ──
-          const retRoleNew = (user as any)?._returnRole;
-          if (retRoleNew === 'teacher') {
+          if (capturedReturnRole === 'teacher') {
             await fetch(`${SERVER_URL}/user/add-role`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
@@ -427,8 +429,7 @@ export default function OnboardingScreen() {
       // ── Dual-role: teacher adding parent profile ──────────────────────────
       // If _returnRole is set, this was a teacher going through parent onboarding.
       // Add parent role to their account and restore teacher as active role.
-      const returnRole = (user as any)?._returnRole;
-      if (returnRole === 'teacher') {
+      if (capturedReturnRole === 'teacher') {
         await fetch(`${SERVER_URL}/user/add-role`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
