@@ -16,8 +16,12 @@ try {
   if (!admin.apps.length) {
     let credential = null;
 
-    // Priority 1: env var (Cloud Run / production)
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    // Priority 1: base64-encoded env var (Cloud Run / production — avoids CLI special-char issues)
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
+      const svcJson = JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_B64, 'base64').toString('utf8'));
+      credential = admin.credential.cert(svcJson);
+      console.log('[firebase-admin] initialised from FIREBASE_SERVICE_ACCOUNT_B64 env var');
+    } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       const svcJson = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
       credential = admin.credential.cert(svcJson);
       console.log('[firebase-admin] initialised from FIREBASE_SERVICE_ACCOUNT env var');
