@@ -202,6 +202,21 @@ export default function OnboardingScreen() {
       // as the persisted role — 'parent' is only a temporary UI state for onboarding.
       const persistRole = capturedReturnRole === 'teacher' ? 'teacher' : role;
 
+      // ── Dual-role: add parent role to server IMMEDIATELY ──────────────────
+      // Call add-role BEFORE any Firebase operations. Firebase child-account
+      // creation (createUserWithEmailAndPassword on secondary app) can trigger
+      // onAuthStateChanged on the primary app, which unmounts OnboardingScreen
+      // before the later add-role calls run. By calling it here, even if the
+      // screen unmounts mid-flow, the server already has roles:['teacher','parent']
+      // so onAuthStateChanged will restore the correct state including Switch Profile.
+      if (capturedReturnRole === 'teacher') {
+        await fetch(`${SERVER_URL}/user/add-role`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, role: 'parent' }),
+        }).catch(() => {});
+      }
+
       const body: any = {
         email,
         role: persistRole,           // send role so server can validate without an extra DB lookup
@@ -309,11 +324,7 @@ export default function OnboardingScreen() {
             }
             // Link successful — mark parent onboarding complete
             if (capturedReturnRole === 'teacher') {
-              await fetch(`${SERVER_URL}/user/add-role`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, role: 'parent' }),
-              }).catch(() => {});
+              // add-role already called at top of handleFinish
               const linkPatch = { ...localCompletionPatch, role: 'teacher', roles: ['teacher', 'parent'], _returnRole: undefined };
               updateUser(linkPatch as any);
               setTimeout(() => {
@@ -404,11 +415,7 @@ export default function OnboardingScreen() {
 
           // ── Dual-role: teacher adding parent profile (new child path) ──
           if (capturedReturnRole === 'teacher') {
-            await fetch(`${SERVER_URL}/user/add-role`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email, role: 'parent' }),
-            }).catch(() => {});
+            // add-role already called at top of handleFinish
             setPendingUserPatch({
               ...localCompletionPatch,
               role: 'teacher',
@@ -431,13 +438,8 @@ export default function OnboardingScreen() {
 
       // ── Dual-role: teacher adding parent profile ──────────────────────────
       // If _returnRole is set, this was a teacher going through parent onboarding.
-      // Add parent role to their account and restore teacher as active role.
+      // add-role already called at top of handleFinish.
       if (capturedReturnRole === 'teacher') {
-        await fetch(`${SERVER_URL}/user/add-role`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, role: 'parent' }),
-        }).catch(() => {});
         const teacherPatch = {
           ...localCompletionPatch,
           role: 'teacher',
