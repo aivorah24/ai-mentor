@@ -6,7 +6,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
-  StyleSheet, KeyboardAvoidingView, Platform, Modal,
+  StyleSheet, KeyboardAvoidingView, Platform, Modal, Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -304,7 +304,12 @@ export default function OnboardingScreen() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, role: 'parent' }),
               }).catch(() => {});
-              updateUser({ ...localCompletionPatch, role: 'teacher', roles: ['teacher', 'parent'], _returnRole: undefined } as any);
+              const linkPatch = { ...localCompletionPatch, role: 'teacher', roles: ['teacher', 'parent'], _returnRole: undefined };
+              Alert.alert(
+                'Parent Profile Added',
+                'Your parent details have been successfully saved. You can now switch between Teacher and Parent profiles from the sidebar.',
+                [{ text: 'OK', onPress: () => updateUser(linkPatch as any) }]
+              );
             } else {
               updateUser(localCompletionPatch as any);
             }
@@ -383,7 +388,25 @@ export default function OnboardingScreen() {
           setCreatedPassword(finalPassword);
           setCreatedStudentId(child?.studentId || finalStudentId);
           setCreatedVerificationRequired(emailProvided); // true = show Gmail verification note
-          setPendingUserPatch(localCompletionPatch);
+
+          // ── Dual-role: teacher adding parent profile (new child path) ──
+          const retRoleNew = (user as any)?._returnRole;
+          if (retRoleNew === 'teacher') {
+            await fetch(`${SERVER_URL}/user/add-role`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, role: 'parent' }),
+            }).catch(() => {});
+            setPendingUserPatch({
+              ...localCompletionPatch,
+              role: 'teacher',
+              roles: ['teacher', 'parent'],
+              onboardingComplete: true,
+              _returnRole: undefined,
+            });
+          } else {
+            setPendingUserPatch(localCompletionPatch);
+          }
           setShowChildCreds(true);
           return;
         } catch (err: any) {
@@ -404,13 +427,18 @@ export default function OnboardingScreen() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, role: 'parent' }),
         }).catch(() => {});
-        updateUser({
+        const teacherPatch = {
           ...localCompletionPatch,
           role: 'teacher',
           roles: ['teacher', 'parent'],
           onboardingComplete: true,
           _returnRole: undefined,
-        } as any);
+        };
+        Alert.alert(
+          'Parent Profile Added',
+          'Your parent details have been successfully saved. You can now switch between Teacher and Parent profiles from the sidebar.',
+          [{ text: 'OK', onPress: () => updateUser(teacherPatch as any) }]
+        );
       } else {
         // Only mark onboarding complete locally after server confirmed the save
         updateUser(localCompletionPatch as any);
@@ -434,8 +462,18 @@ export default function OnboardingScreen() {
   function confirmChildCredsAndFinish() {
     setShowChildCreds(false);
     if (pendingUserPatch) {
-      updateUser(pendingUserPatch);
+      const patch = pendingUserPatch;
       setPendingUserPatch(null);
+      if (patch.role === 'teacher') {
+        // Teacher finished parent onboarding — show success then return to teacher dashboard
+        Alert.alert(
+          'Parent Profile Added',
+          'Your parent details have been successfully saved. You can now switch between Teacher and Parent profiles from the sidebar.',
+          [{ text: 'OK', onPress: () => updateUser(patch) }]
+        );
+      } else {
+        updateUser(patch);
+      }
     }
   }
 
