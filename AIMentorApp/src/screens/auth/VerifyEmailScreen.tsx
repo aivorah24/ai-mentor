@@ -101,7 +101,7 @@ export default function VerifyEmailScreen() {
     try {
       const frontendOrigin = Platform.OS === 'web' && typeof window !== 'undefined'
         ? window.location.origin
-        : 'http://localhost:8081';
+        : 'https://aivorah.ai';
       await fetch(`${SERVER_URL}/user/send-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

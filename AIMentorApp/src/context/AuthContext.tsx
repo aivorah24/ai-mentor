@@ -375,7 +375,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Send branded verification email from aivorah24@gmail.com (not Firebase spam)
       const frontendOrigin = Platform.OS === 'web' && typeof window !== 'undefined'
         ? window.location.origin
-        : 'http://localhost:8081';
+        : 'https://aivorah.ai';
       fetch(`${SERVER_URL}/user/send-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

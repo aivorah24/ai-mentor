@@ -479,7 +479,7 @@ function ForgotModal({ visible, onClose, onSwitchLogin }: {
     if (!email.trim()) return;
     setLoading(true);
     try {
-      const frontendOrigin = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : 'http://localhost:8081';
+      const frontendOrigin = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : 'https://aivorah.ai';
       const res = await fetch(`${SERVER_URL}/user/send-password-reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
