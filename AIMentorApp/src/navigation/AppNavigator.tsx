@@ -49,7 +49,7 @@ export default function AppNavigator() {
         // On tablet/desktop: permanent sidebar via ScreenLayout, hide drawer
         drawerType: isLargeScreen ? 'permanent' : 'slide',
         drawerStyle: isLargeScreen
-          ? { width: 0, opacity: 0 } // Hidden — ScreenLayout renders sidebar
+          ? { width: 0, opacity: 0, pointerEvents: 'none' as const } // Hidden — ScreenLayout renders sidebar
           : { width: 260, backgroundColor: colors.sidebarDark },
         overlayColor: 'rgba(0,0,0,0.5)',
         swipeEnabled: !isLargeScreen,

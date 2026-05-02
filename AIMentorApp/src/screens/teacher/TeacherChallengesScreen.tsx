@@ -91,7 +91,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
   // Fetch challenges for selected grade
   const fetchChallenges = useCallback(() => {
     setLoading(true);
-    fetch(`${SERVER_URL}/challenges?grade=${encodeURIComponent(selectedGrade)}&curriculum=NCERT`)
+    fetch(`${SERVER_URL}/challenges?grade=${encodeURIComponent(selectedGrade)}&curriculum=IB%20PYP`)
       .then(r => r.ok ? r.json() : [])
       .then(data => { if (Array.isArray(data)) setChallenges(data); })
       .catch(() => {})

@@ -12,7 +12,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import SERVER_URL from '../../config/serverUrl';
 
-interface Child { id: string; name: string; grade: string; }
+interface Child { id: string; name: string; grade: string; curriculum?: string; }
 
 interface Challenge {
   id: string;
@@ -34,13 +34,6 @@ interface Challenge {
   status?: string;
 }
 
-const DIFF_COLOR = (d: string) =>
-  d === 'Easy' ? '#10b981' : d === 'Hard' ? '#ef4444' : '#f59e0b';
-
-const CAT_COLOR: Record<string, string> = {
-  'Chapter Quiz':     '#6366f1',
-  'School Challenge': '#f59e0b',
-};
 
 export default function ParentChallengesScreen({ navigation }: any) {
   const { colors } = useTheme();
@@ -88,7 +81,7 @@ export default function ParentChallengesScreen({ navigation }: any) {
   const fetchChallenges = useCallback(() => {
     if (!child?.grade) return;
     setLoadingCh(true);
-    fetch(`${SERVER_URL}/challenges?grade=${encodeURIComponent(child.grade)}&curriculum=NCERT&studentId=${child.id}`)
+    fetch(`${SERVER_URL}/challenges?grade=${encodeURIComponent(child.grade)}&curriculum=${encodeURIComponent(child.curriculum || 'IB PYP')}&studentId=${child.id}`)
       .then(r => r.ok ? r.json() : [])
       .then(data => { if (Array.isArray(data)) setChallenges(data); })
       .catch(() => {})
@@ -142,8 +135,9 @@ export default function ParentChallengesScreen({ navigation }: any) {
     }
   }
 
-  const chapterQuizzes   = challenges.filter(c => c.type === 'chapter_quiz');
   const schoolChallenges = challenges.filter(c => c.type === 'school_challenge');
+  const olympiadChallenges = challenges.filter(c => c.type === 'olympiad');
+  const advancedPractice = challenges.filter(c => c.type === 'advanced_practice');
 
   return (
     <ScreenLayout>
@@ -225,37 +219,60 @@ export default function ParentChallengesScreen({ navigation }: any) {
             <ActivityIndicator color={colors.primary} style={{ paddingVertical: 32 }} />
           ) : (
             <>
-              {chapterQuizzes.length > 0 && (
-                <>
-                  <View style={styles.sectionHeader}>
-                    <View style={[styles.sectionIcon, { backgroundColor: '#6366f120' }]}>
-                      <Feather name="book-open" size={15} color="#6366f1" />
-                    </View>
-                    <View>
-                      <Text style={styles.sectionLabel}>Chapter Quizzes</Text>
-                      <Text style={styles.sectionDesc}>Test {child.name}'s chapter knowledge</Text>
-                    </View>
-                  </View>
-                  {chapterQuizzes.map(ch => (
-                    <ChallengeCard key={ch.id} ch={ch} colors={colors} styles={styles} onAssign={() => openAssign(ch)} />
-                  ))}
-                </>
-              )}
-
               {schoolChallenges.length > 0 && (
                 <>
-                  <View style={[styles.sectionHeader, { marginTop: spacing.sm }]}>
-                    <View style={[styles.sectionIcon, { backgroundColor: '#f59e0b20' }]}>
-                      <Feather name="award" size={15} color="#f59e0b" />
+                  <View style={styles.sectionHeader}>
+                    <View style={[styles.sectionIcon, { backgroundColor: colors.primaryGlow }]}>
+                      <Feather name="award" size={15} color={colors.primary} />
                     </View>
                     <View>
                       <Text style={styles.sectionLabel}>School Challenges</Text>
-                      <Text style={styles.sectionDesc}>Multi-chapter competitive challenges</Text>
+                      <Text style={styles.sectionDesc}>School-wide competitive challenges for {child.name}</Text>
                     </View>
                   </View>
-                  {schoolChallenges.map(ch => (
-                    <ChallengeCard key={ch.id} ch={ch} colors={colors} styles={styles} onAssign={() => openAssign(ch)} />
-                  ))}
+                  <View style={styles.cardGrid}>
+                    {schoolChallenges.map(ch => (
+                      <ChallengeCard key={ch.id} ch={ch} colors={colors} styles={styles} onAssign={() => openAssign(ch)} />
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {olympiadChallenges.length > 0 && (
+                <>
+                  <View style={[styles.sectionHeader, { marginTop: spacing.sm }]}>
+                    <View style={[styles.sectionIcon, { backgroundColor: colors.accentYellow + '18' }]}>
+                      <Feather name="target" size={15} color={colors.accentYellow} />
+                    </View>
+                    <View>
+                      <Text style={styles.sectionLabel}>Olympiad-Style Questions</Text>
+                      <Text style={styles.sectionDesc}>Competitive exam prep — logical reasoning and beyond</Text>
+                    </View>
+                  </View>
+                  <View style={styles.cardGrid}>
+                    {olympiadChallenges.map(ch => (
+                      <ChallengeCard key={ch.id} ch={ch} colors={colors} styles={styles} onAssign={() => openAssign(ch)} />
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {advancedPractice.length > 0 && (
+                <>
+                  <View style={[styles.sectionHeader, { marginTop: spacing.sm }]}>
+                    <View style={[styles.sectionIcon, { backgroundColor: colors.accentOrange + '18' }]}>
+                      <Feather name="trending-up" size={15} color={colors.accentOrange} />
+                    </View>
+                    <View>
+                      <Text style={styles.sectionLabel}>Advanced Practice</Text>
+                      <Text style={styles.sectionDesc}>Push beyond normal assignments</Text>
+                    </View>
+                  </View>
+                  <View style={styles.cardGrid}>
+                    {advancedPractice.map(ch => (
+                      <ChallengeCard key={ch.id} ch={ch} colors={colors} styles={styles} onAssign={() => openAssign(ch)} />
+                    ))}
+                  </View>
                 </>
               )}
 
@@ -348,8 +365,8 @@ function ChallengeCard({ ch, colors, styles, onAssign }: {
   styles: ReturnType<typeof makeStyles>;
   onAssign: () => void;
 }) {
-  const diffColor = DIFF_COLOR(ch.difficulty);
-  const catColor  = CAT_COLOR[ch.category] ?? colors.primary;
+  const diffColor = ch.difficulty === 'Easy' ? colors.accentGreen
+    : ch.difficulty === 'Hard' ? colors.accentRed : colors.accentYellow;
   const isAssigned = ch.status === 'assigned' || ch.status === 'completed';
 
   return (
@@ -431,8 +448,12 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   emptyState: { alignItems: 'center', paddingVertical: 40, gap: 10 },
   emptyText:  { fontSize: 14, color: c.textDim, textAlign: 'center' },
 
-  // Challenge card
+  // Challenge card grid
+  cardGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md,
+  },
   card: {
+    width: '48.5%' as any,
     backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
     borderRadius: radius.xl, padding: spacing.lg, gap: spacing.sm,
   },
@@ -478,8 +499,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   errorBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#ef444420', borderRadius: radius.md,
-    padding: spacing.md, borderWidth: 1, borderColor: '#ef444440',
+    backgroundColor: c.accentRed + '20', borderRadius: radius.md,
+    padding: spacing.md, borderWidth: 1, borderColor: c.accentRed + '40',
   },
   errorText: { fontSize: 13, fontWeight: '600', flex: 1 },
 

@@ -89,7 +89,8 @@ export default function ChallengesScreen({ navigation, route }: any) {
   const fetchChallenges = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
-      const url = `${SERVER_URL}/challenges?grade=${encodeURIComponent(grade)}&curriculum=NCERT${studentId ? `&studentId=${studentId}` : ''}`;
+      const curriculum = user?.curriculum || 'IB PYP';
+      const url = `${SERVER_URL}/challenges?grade=${encodeURIComponent(grade)}&curriculum=${encodeURIComponent(curriculum)}${studentId ? `&studentId=${studentId}` : ''}`;
       const [res, assignedRes] = await Promise.all([
         fetch(url),
         studentId ? fetch(`${SERVER_URL}/challenges/assigned?studentId=${studentId}`) : Promise.resolve(null),
@@ -166,11 +167,18 @@ export default function ChallengesScreen({ navigation, route }: any) {
         }
       }
 
-      // Fetch quiz questions from NCERT content
+      // Fetch quiz questions
       const qRes = await fetch(`${SERVER_URL}/ncert/quiz`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: ch.topic, count: ch.questionCount }),
+        body: JSON.stringify({
+          topic: ch.topic,
+          count: ch.questionCount,
+          grade: ch.grade || grade,
+          subject: ch.subject || 'Mathematics',
+          difficulty: ch.difficulty || 'Easy',
+          challengeType: ch.type || '',
+        }),
       });
       if (qRes.ok) {
         const data = await qRes.json();
@@ -306,7 +314,8 @@ export default function ChallengesScreen({ navigation, route }: any) {
             {filtered.map(ch => {
               const diffColor = DIFF_COLORS[ch.difficulty] ?? colors.primary;
               const catColor  = CAT_COLORS[ch.category]   ?? colors.primary;
-              const imgUrl = ch.imageUrl ?? null;
+              const rawImg = ch.imageUrl ?? null;
+              const imgUrl = rawImg ? (rawImg.startsWith('http') ? rawImg : `${SERVER_URL}${rawImg}`) : null;
               return (
                 <View key={ch.id} style={styles.challengeCard}>
                   {/* Full-height image with title + badges overlaid */}
@@ -392,7 +401,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
               <View style={styles.quizHeader}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.quizTitle}>{activeChallenge?.title}</Text>
-                  <Text style={styles.quizSub}>{activeChallenge?.questionCount} questions · {activeChallenge?.timeLimitMinutes} min</Text>
+                  <Text style={styles.quizSub}>{questions.length || activeChallenge?.questionCount} questions · {activeChallenge?.timeLimitMinutes} min</Text>
                 </View>
                 {!quizResult && (
                   <TouchableOpacity onPress={closeQuiz} activeOpacity={0.7}>
@@ -601,7 +610,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   tabBadgeText: { fontSize: 10, fontWeight: '700' },
 
   grid:          { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
-  challengeCard:     { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, overflow: 'hidden', flexBasis: '47%', flexGrow: 1 },
+  challengeCard:     { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, overflow: 'hidden', flexBasis: '47%', flexGrow: 0 },
   cardImageWrap:     { position: 'relative', width: '100%', height: 160 },
   cardImage:         { width: '100%', height: 160 },
   cardScrim:         { position: 'absolute', bottom: 0, left: 0, right: 0, height: 90, backgroundColor: 'rgba(0,0,0,0.55)' },
