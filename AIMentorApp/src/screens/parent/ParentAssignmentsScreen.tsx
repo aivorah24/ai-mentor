@@ -48,13 +48,6 @@ interface Assignment {
   successCriteria?: string[];
 }
 
-const SUBJECT_COLOR: Record<string, string> = {
-  Mathematics: '#818CF8',
-  Science: '#34D399',
-  English: '#C084FC',
-  'Social Studies': '#FBBF24',
-};
-
 function formatDue(iso: string): { label: string; isOverdue: boolean } {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const due = new Date(iso); due.setHours(0, 0, 0, 0);
@@ -82,6 +75,7 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [reportAssignment, setReportAssignment] = useState<Assignment | null>(null);
+  const [detailAssignment, setDetailAssignment] = useState<Assignment | null>(null);
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('Mathematics');
   const [chapter, setChapter] = useState('');
@@ -338,8 +332,8 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
               )}
             </View>
           ) : (
-            filtered.map(a => {
-              const color = SUBJECT_COLOR[a.subject] ?? '#6366f1';
+            <View style={styles.assignmentGrid}>
+            {filtered.map(a => {
               const due = a.status === 'completed'
                 ? { label: a.score != null ? `Score: ${a.score}%` : 'Completed', isOverdue: false }
                 : formatDue(a.dueDate);
@@ -349,57 +343,39 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
                 : due.isOverdue ? colors.accentRed : colors.accentBlue;
 
               return (
-                <View key={a.id} style={styles.assignmentCard}>
-                  <View style={[styles.assignmentIcon, { backgroundColor: color + '18' }]}>
-                    <Feather name="book-open" size={18} color={color} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.assignmentTitleRow}>
-                      <Text style={styles.assignmentTitle} numberOfLines={1}>{a.title}</Text>
-                      <View style={[styles.statusPill, { backgroundColor: statusColor + '18', borderColor: statusColor + '33' }]}>
-                        <Text style={[styles.statusPillText, { color: statusColor }]}>{statusLabel}</Text>
-                      </View>
+                <TouchableOpacity key={a.id} style={styles.assignmentCard} activeOpacity={0.75} onPress={() => setDetailAssignment(a)}>
+                  <View style={styles.assignmentCardTop}>
+                    <View style={[styles.assignmentIcon, { backgroundColor: colors.primaryGlow }]}>
+                      <Feather name="book-open" size={18} color={colors.primary} />
                     </View>
-                    <View style={styles.assignmentMeta}>
-                      <Feather name="alert-circle" size={11} color={due.isOverdue ? colors.accentRed : colors.textDim} />
-                      <Text style={[styles.assignmentDue, { color: due.isOverdue ? colors.accentRed : colors.textMuted }]}>
-                        {due.label}
+                    <View style={[styles.statusPill, { backgroundColor: statusColor + '18', borderColor: statusColor + '33' }]}>
+                      <Text style={[styles.statusPillText, { color: statusColor }]}>{statusLabel}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.assignmentTitle} numberOfLines={2}>{a.title}</Text>
+                  <View style={styles.assignmentMeta}>
+                    <Feather name="alert-circle" size={11} color={due.isOverdue ? colors.accentRed : colors.textDim} />
+                    <Text style={[styles.assignmentDue, { color: due.isOverdue ? colors.accentRed : colors.textMuted }]}>
+                      {due.label}
+                    </Text>
+                  </View>
+                  <View style={styles.assignmentMeta}>
+                    <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: colors.primaryGlow }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.primary }}>
+                        {a.type === 'quiz' ? 'Quiz' : (a.taskSteps?.length ?? 0) > 0 ? 'Scaffolded' : (a.documentUrls?.length ?? 0) > 0 ? 'Worksheet' : 'Assignment'}
                       </Text>
-                      {/* Type badge */}
-                      <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: color + '18' }}>
-                        <Text style={{ fontSize: 10, fontWeight: '700', color }}>
-                          {a.type === 'quiz' ? 'Quiz' : (a.taskSteps?.length ?? 0) > 0 ? 'Scaffolded' : (a.documentUrls?.length ?? 0) > 0 ? 'Worksheet' : 'Assignment'}
-                        </Text>
-                      </View>
-                      {a.createdBy === 'parent' && (
-                        <>
-                          <Feather name="user" size={11} color={colors.accentGreen} />
-                          <Text style={[styles.assignmentTime, { color: colors.accentGreen }]}>By you</Text>
-                        </>
-                      )}
                     </View>
-                    {a.status === 'completed' && a.aiFeedback ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-                        <Text style={{ flex: 1, fontSize: 11, color: colors.accentGreen }} numberOfLines={1}>
-                          {(() => {
-                            try { return JSON.parse(a.aiFeedback || '{}').text || 'AI feedback available'; }
-                            catch { return a.aiFeedback || 'AI feedback available'; }
-                          })()}
-                        </Text>
-                        <TouchableOpacity
-                          style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: color + '50', backgroundColor: color + '12' }}
-                          onPress={() => setReportAssignment(a)}
-                          activeOpacity={0.75}
-                        >
-                          <Feather name="bar-chart-2" size={12} color={color} />
-                          <Text style={{ fontSize: 11, fontWeight: '700', color }}>Report</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ) : null}
+                    {a.createdBy === 'parent' && (
+                      <>
+                        <Feather name="user" size={11} color={colors.accentGreen} />
+                        <Text style={[styles.assignmentTime, { color: colors.accentGreen }]}>By you</Text>
+                      </>
+                    )}
                   </View>
-                </View>
+                </TouchableOpacity>
               );
-            })
+            })}
+            </View>
           )}
         </ScrollView>
 
@@ -408,6 +384,15 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
             assignment={reportAssignment}
             colors={colors}
             onClose={() => setReportAssignment(null)}
+          />
+        )}
+
+        {detailAssignment && (
+          <AssignmentDetailModal
+            assignment={detailAssignment}
+            colors={colors}
+            childName={child?.name ?? ''}
+            onClose={() => setDetailAssignment(null)}
           />
         )}
 
@@ -719,14 +704,19 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   sectionLabel: { fontSize: 11, fontWeight: '700', color: c.textDim, letterSpacing: 0.8, marginBottom: spacing.md, textTransform: 'uppercase' },
 
+  assignmentGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md,
+  },
   assignmentCard: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    width: '48.5%' as any,
     backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
-    borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.md,
+    borderRadius: radius.lg, padding: spacing.lg,
+  },
+  assignmentCardTop: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm,
   },
   assignmentIcon: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  assignmentTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: 6 },
-  assignmentTitle: { flex: 1, fontSize: 14, fontWeight: '600', color: c.textMain },
+  assignmentTitle: { fontSize: 14, fontWeight: '600', color: c.textMain, marginBottom: 6 },
   statusPill: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
   statusPillText: { fontSize: 10, fontWeight: '600' },
   assignmentMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
@@ -805,6 +795,304 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     padding: 14, borderRadius: 12, marginTop: 10,
   },
 });
+
+function AssignmentDetailModal({ assignment, colors, childName, onClose }: { assignment: Assignment; colors: AppColors; childName: string; onClose: () => void }) {
+  const a = assignment;
+  const isCompleted = a.status === 'completed';
+  const due = isCompleted
+    ? { label: a.score != null ? `Score: ${a.score}%` : 'Completed', isOverdue: false }
+    : formatDue(a.dueDate);
+
+  let feedback: any = {};
+  let perQuestion: any[] = [];
+  if (a.aiFeedback) {
+    try {
+      feedback = JSON.parse(a.aiFeedback);
+      perQuestion = Array.isArray(feedback.perQuestion) ? feedback.perQuestion : [];
+    } catch {
+      feedback = { text: a.aiFeedback };
+    }
+  }
+
+  const allQuestions: string[] = a.questions?.length ? a.questions : [];
+  const taskSteps: any[] = a.taskSteps?.length ? a.taskSteps : [];
+  const quizQuestions: any[] = a.quizQuestions?.length ? a.quizQuestions : [];
+  const hasContent = allQuestions.length > 0 || taskSteps.length > 0 || quizQuestions.length > 0;
+
+  return (
+    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: colors.cardDark, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '92%', borderWidth: 1, borderBottomWidth: 0, borderColor: colors.borderColor }}>
+          {/* Header */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: colors.borderColor, gap: 12 }}>
+            <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: colors.primaryGlow, alignItems: 'center', justifyContent: 'center' }}>
+              <Feather name="book-open" size={20} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textMain }} numberOfLines={2}>{a.title}</Text>
+              <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>
+                {a.subject}{a.chapter ? ` · ${a.chapter}` : ''} · {childName}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
+              <Feather name="x" size={22} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 48 }}>
+
+            {/* Status + Due info */}
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={{ flex: 1, padding: 16, borderRadius: 14, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center' }}>
+                <Feather name={isCompleted ? 'check-circle' : 'clock'} size={22} color={isCompleted ? colors.accentGreen : colors.accentYellow} />
+                <Text style={{ fontSize: 13, fontWeight: '700', color: isCompleted ? colors.accentGreen : colors.accentYellow, marginTop: 6 }}>
+                  {isCompleted ? 'Completed' : 'Pending'}
+                </Text>
+                <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>{due.label}</Text>
+              </View>
+              {isCompleted && a.score != null && (
+                <View style={{ flex: 1, padding: 16, borderRadius: 14, backgroundColor: colors.primaryGlow, borderWidth: 1, borderColor: colors.primary + '30', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 36, fontWeight: '900', color: colors.primary, letterSpacing: -1 }}>{a.score}%</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: colors.primary, marginTop: 2 }}>Score</Text>
+                </View>
+              )}
+              {isCompleted && feedback.stamp && (
+                <View style={{ flex: 1, padding: 16, borderRadius: 14, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="award" size={22} color={colors.primary} />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary, textAlign: 'center', marginTop: 6 }}>{feedback.stamp}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Note from parent/teacher */}
+            {a.note ? (
+              <View style={{ flexDirection: 'row', gap: 10, padding: 14, borderRadius: 12, backgroundColor: colors.primaryGlow, borderWidth: 1, borderColor: colors.primary + '30' }}>
+                <Feather name="message-circle" size={14} color={colors.primary} style={{ marginTop: 1 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Note</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMain, marginTop: 4, lineHeight: 20 }}>{a.note}</Text>
+                </View>
+              </View>
+            ) : null}
+
+            {/* Overall AI Feedback (completed only) */}
+            {isCompleted && feedback.text ? (
+              <View style={{ padding: 14, borderRadius: 12, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, gap: 6 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8 }}>AI Feedback</Text>
+                <Text style={{ fontSize: 14, color: colors.textMain, lineHeight: 22 }}>{feedback.text}</Text>
+              </View>
+            ) : null}
+
+            {/* Strengths & Improvement */}
+            {isCompleted && (feedback.wellDone || feedback.improve) ? (
+              <View style={{ gap: 10 }}>
+                {feedback.wellDone ? (
+                  <View style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.accentGreen + '40', backgroundColor: colors.accentGreen + '08' }}>
+                    <Feather name="check-circle" size={15} color={colors.accentGreen} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accentGreen, textTransform: 'uppercase' }}>Strength</Text>
+                      <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>{feedback.wellDone}</Text>
+                    </View>
+                  </View>
+                ) : null}
+                {feedback.improve ? (
+                  <View style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.accentYellow + '40', backgroundColor: colors.accentYellow + '08' }}>
+                    <Feather name="target" size={15} color={colors.accentYellow} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accentYellow, textTransform: 'uppercase' }}>Needs Improvement</Text>
+                      <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>{feedback.improve}</Text>
+                    </View>
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+
+            {/* Questions Section */}
+            {hasContent && (
+              <View style={{ gap: 10 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                  {isCompleted ? 'Questions & Answers' : 'Questions'}
+                </Text>
+
+                {/* Regular questions */}
+                {allQuestions.map((q, idx) => {
+                  const pq = perQuestion.find((p: any) => (p.number ?? p.index) === idx + 1) || perQuestion[idx];
+                  const qColor = !pq ? colors.textDim
+                    : !pq.answered ? colors.textDim
+                    : pq.correct ? colors.accentGreen
+                    : (pq.score ?? 0) >= 50 ? colors.accentYellow
+                    : colors.accentRed;
+                  const qIcon = !pq ? 'circle'
+                    : !pq.answered ? 'minus-circle'
+                    : pq.correct ? 'check-circle'
+                    : (pq.score ?? 0) >= 50 ? 'alert-circle'
+                    : 'x-circle';
+
+                  return (
+                    <View key={idx} style={{ padding: 14, borderRadius: 12, borderWidth: 1, borderColor: (isCompleted && pq) ? qColor + '40' : colors.borderColor, backgroundColor: (isCompleted && pq) ? qColor + '06' : colors.bgDark, gap: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+                        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: isCompleted && pq ? qColor + '20' : colors.primaryGlow, alignItems: 'center', justifyContent: 'center' }}>
+                          {isCompleted && pq ? (
+                            <Feather name={qIcon as any} size={14} color={qColor} />
+                          ) : (
+                            <Text style={{ fontSize: 11, fontWeight: '800', color: colors.primary }}>{idx + 1}</Text>
+                          )}
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMain, lineHeight: 20 }}>{q}</Text>
+                          {isCompleted && pq && (
+                            <View style={{ marginTop: 8, gap: 6 }}>
+                              {pq.studentAnswer && (
+                                <View style={{ flexDirection: 'row', gap: 6 }}>
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim }}>Answer:</Text>
+                                  <Text style={{ fontSize: 12, color: colors.textMain, flex: 1 }}>{pq.studentAnswer}</Text>
+                                </View>
+                              )}
+                              {pq.correctAnswer && !pq.correct && (
+                                <View style={{ flexDirection: 'row', gap: 6 }}>
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accentGreen }}>Correct:</Text>
+                                  <Text style={{ fontSize: 12, color: colors.accentGreen, flex: 1 }}>{pq.correctAnswer}</Text>
+                                </View>
+                              )}
+                              {pq.comment && (
+                                <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18, fontStyle: 'italic' }}>{pq.comment}</Text>
+                              )}
+                              {pq.explanation && (
+                                <View style={{ padding: 10, borderRadius: 8, backgroundColor: colors.primaryGlow, marginTop: 2 }}>
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, marginBottom: 2 }}>Explanation</Text>
+                                  <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{pq.explanation}</Text>
+                                </View>
+                              )}
+                            </View>
+                          )}
+                        </View>
+                        {isCompleted && pq && pq.score != null && (
+                          <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, backgroundColor: qColor + '20' }}>
+                            <Text style={{ fontSize: 12, fontWeight: '800', color: qColor }}>{pq.answered ? `${pq.score}%` : '--'}</Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+
+                {/* Quiz questions (MCQ) */}
+                {quizQuestions.map((qq: any, idx: number) => {
+                  const pq = perQuestion.find((p: any) => (p.number ?? p.index) === idx + 1) || perQuestion[idx];
+                  const qColor = !pq ? colors.textDim
+                    : pq.correct ? colors.accentGreen
+                    : colors.accentRed;
+
+                  return (
+                    <View key={`quiz-${idx}`} style={{ padding: 14, borderRadius: 12, borderWidth: 1, borderColor: (isCompleted && pq) ? qColor + '40' : colors.borderColor, backgroundColor: (isCompleted && pq) ? qColor + '06' : colors.bgDark, gap: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+                        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: isCompleted && pq ? qColor + '20' : colors.primaryGlow, alignItems: 'center', justifyContent: 'center' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: isCompleted && pq ? qColor : colors.primary }}>{idx + 1}</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMain, lineHeight: 20 }}>{qq.question}</Text>
+                          {Array.isArray(qq.options) && (
+                            <View style={{ marginTop: 8, gap: 4 }}>
+                              {qq.options.map((opt: string, oi: number) => {
+                                const isCorrectOpt = opt === qq.correctAnswer || opt === qq.answer;
+                                const isStudentOpt = isCompleted && pq && opt === pq.studentAnswer;
+                                return (
+                                  <View key={oi} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4, paddingHorizontal: 8, borderRadius: 8, backgroundColor: isStudentOpt ? (isCorrectOpt ? colors.accentGreen + '12' : colors.accentRed + '12') : isCompleted && isCorrectOpt ? colors.accentGreen + '08' : 'transparent' }}>
+                                    <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: isStudentOpt ? (isCorrectOpt ? colors.accentGreen : colors.accentRed) : colors.borderColor, alignItems: 'center', justifyContent: 'center', backgroundColor: isStudentOpt ? (isCorrectOpt ? colors.accentGreen : colors.accentRed) : 'transparent' }}>
+                                      {isStudentOpt && <Feather name={isCorrectOpt ? 'check' : 'x'} size={10} color="#fff" />}
+                                    </View>
+                                    <Text style={{ fontSize: 13, color: isStudentOpt ? (isCorrectOpt ? colors.accentGreen : colors.accentRed) : colors.textMain, fontWeight: isStudentOpt || (isCompleted && isCorrectOpt) ? '600' : '400' }}>{opt}</Text>
+                                    {isCompleted && isCorrectOpt && !isStudentOpt && (
+                                      <Feather name="check" size={12} color={colors.accentGreen} />
+                                    )}
+                                  </View>
+                                );
+                              })}
+                            </View>
+                          )}
+                          {isCompleted && pq?.comment && (
+                            <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18, fontStyle: 'italic', marginTop: 6 }}>{pq.comment}</Text>
+                          )}
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
+
+                {/* Scaffolded task steps */}
+                {taskSteps.map((step: any, idx: number) => (
+                  <View key={`step-${idx}`} style={{ padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.borderColor, backgroundColor: colors.bgDark, gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: colors.primaryGlow, alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ fontSize: 11, fontWeight: '800', color: colors.primary }}>{idx + 1}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textMain }}>{step.label || step.title || `Step ${idx + 1}`}</Text>
+                        {step.type && (
+                          <Text style={{ fontSize: 10, fontWeight: '600', color: colors.primary, textTransform: 'uppercase', marginTop: 2 }}>{step.type.replace(/_/g, ' ')}</Text>
+                        )}
+                      </View>
+                    </View>
+                    {(step.instructions || step.instruction) && (
+                      <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20, marginLeft: 36 }}>{step.instructions || step.instruction}</Text>
+                    )}
+                    {step.provocation && (
+                      <View style={{ marginLeft: 36, padding: 10, borderRadius: 8, backgroundColor: colors.primaryGlow, borderWidth: 1, borderColor: colors.primary + '30' }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, marginBottom: 2 }}>Provocation</Text>
+                        <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{step.provocation}</Text>
+                      </View>
+                    )}
+                    {Array.isArray(step.problems) && step.problems.length > 0 && (
+                      <View style={{ marginLeft: 36, gap: 6 }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase' }}>Problems</Text>
+                        {step.problems.map((p: string, pi: number) => (
+                          <View key={pi} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>{pi + 1}.</Text>
+                            <Text style={{ fontSize: 13, color: colors.textMain, flex: 1, lineHeight: 20 }}>{p}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                    {Array.isArray(step.sections) && step.sections.length > 0 && (
+                      <View style={{ marginLeft: 36, gap: 4 }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase' }}>Sections</Text>
+                        {step.sections.map((s: string, si: number) => (
+                          <View key={si} style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                            <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.primary }} />
+                            <Text style={{ fontSize: 12, color: colors.textMuted }}>{s}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                    {Array.isArray(step.reflectionPrompts) && step.reflectionPrompts.length > 0 && (
+                      <View style={{ marginLeft: 36, gap: 6 }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase' }}>Reflection Prompts</Text>
+                        {step.reflectionPrompts.map((r: string, ri: number) => (
+                          <Text key={ri} style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>{ri + 1}. {r}</Text>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* No content fallback */}
+            {!hasContent && (
+              <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+                <Feather name="file-text" size={32} color={colors.textDim} />
+                <Text style={{ fontSize: 14, color: colors.textDim, marginTop: 8 }}>
+                  {isCompleted ? 'No detailed questions recorded' : 'No questions added yet'}
+                </Text>
+              </View>
+            )}
+
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
 
 const REPORT_SUBJECT_COLORS: Record<string, string> = {
   Mathematics: '#818CF8',

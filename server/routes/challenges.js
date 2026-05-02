@@ -16,16 +16,12 @@ function attachImageUrl(challenge) {
   const key = `challenges/${challenge.id}.png`;
   if (urlMap[key]) return { ...challenge, imageUrl: urlMap[key] };
 
-  // Fallback: map to Grade 3 equivalent by chapter number
-  if (challenge.chapterId) {
-    const g3Key = `challenges/ncert_g3_ch${challenge.chapterId}.png`;
-    if (urlMap[g3Key]) return { ...challenge, imageUrl: urlMap[g3Key] };
+  // Check if local file exists
+  const localPath = path.join(__dirname, `../data/images/challenges/${challenge.id}.png`);
+  if (fs.existsSync(localPath)) {
+    return { ...challenge, imageUrl: `/data/images/challenges/${challenge.id}.png` };
   }
-  // School/final challenges — use midterm image as fallback
-  if (challenge.type === 'school_challenge') {
-    const midKey = 'challenges/ncert_g3_midterm.png';
-    if (urlMap[midKey]) return { ...challenge, imageUrl: urlMap[midKey] };
-  }
+
   return { ...challenge, imageUrl: null };
 }
 function uuidv4() { return 'ca_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }

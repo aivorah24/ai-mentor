@@ -35,7 +35,7 @@ export default function ParentNavigator() {
         headerShown: false,
         drawerType: isLargeScreen ? 'permanent' : 'slide',
         drawerStyle: isLargeScreen
-          ? { width: 0, opacity: 0 }
+          ? { width: 0, opacity: 0, pointerEvents: 'none' as const }
           : { width: 260, backgroundColor: colors.sidebarDark },
         overlayColor: 'rgba(0,0,0,0.5)',
         swipeEnabled: !isLargeScreen,

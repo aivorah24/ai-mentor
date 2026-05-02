@@ -347,49 +347,67 @@ Give a very simple, friendly explanation (2-3 sentences max) in plain language a
 });
 
 // ── POST /ncert/quiz ───────────────────────────────────────────────────────
-// Generates 5 MCQ questions for a chapter using Groq
+// Generates MCQ questions using Groq — supports all grades, subjects & difficulties
 router.post('/quiz', async (req, res) => {
   try {
-    const { topic, context = '' } = req.body;
+    const { topic, context = '', count = 5, grade = 'Grade 3', subject = 'Mathematics', difficulty = 'Easy', challengeType = '' } = req.body;
     if (!topic) return res.status(400).json({ error: 'topic is required' });
 
-    const prompt = `You are a Grade 3 MATHEMATICS teacher creating a quiz about: "${topic}".
+    const questionCount = Math.min(Math.max(parseInt(count) || 5, 3), 15);
+    const isMaths = subject === 'Mathematics';
+    const isOlympiad = challengeType === 'olympiad';
+    const isAdvanced = challengeType === 'advanced_practice';
+    const isMixed = subject === 'Mixed';
 
-STRICT RULES — violations will fail the quiz:
-1. NEVER ask about: spelling, letters in a word, alphabets, grammar, colors, animals (unless counting them)
-2. EVERY question must have a NUMBER as the answer (e.g., 5, 12, 100)
-3. All 4 answer options must be NUMBERS only (e.g., "A. 5", "B. 10", "C. 15", "D. 20")
-4. Test the mathematical concept of "${topic}" directly
+    // Subject-specific answer rules
+    const answerRules = isMaths
+      ? `- EVERY question must have a NUMBER as the answer
+- All 4 answer options must be NUMBERS only (e.g., "A. 5", "B. 10", "C. 15", "D. 20")`
+      : `- Answer options can be text or numbers as appropriate for the subject
+- All 4 options must be plausible and age-appropriate for ${grade}`;
 
-GOOD question examples for "Where to Look for Numbers":
-- "How many days are in a week?" (answer: 7)
-- "A clock shows 3 numbers on top half. How many on full clock?" (answer: 12)
-- "Bus number is 42. What is the tens digit?" (answer: 4)
+    // Difficulty instructions
+    let diffInstructions = '';
+    if (difficulty === 'Hard' || isOlympiad || isAdvanced) {
+      diffInstructions = isOlympiad
+        ? `DIFFICULTY: OLYMPIAD — questions must require deep reasoning, pattern recognition, logical deduction and creative problem solving. These should challenge the top students. Include tricky distractors.`
+        : isAdvanced
+        ? `DIFFICULTY: ADVANCED — questions must go beyond the textbook. Multi-step reasoning, cross-topic connections, real-world application. Push students to think critically.`
+        : `DIFFICULTY: HARD — questions should require careful thinking, not just recall. Include multi-step problems and tricky distractors.`;
+    } else if (difficulty === 'Medium') {
+      diffInstructions = `DIFFICULTY: MEDIUM — mix of straightforward and moderately challenging questions. Include some word problems.`;
+    } else {
+      diffInstructions = `DIFFICULTY: EASY — straightforward, confidence-building questions. Focus on basic understanding.`;
+    }
 
-BAD question examples (NEVER use — these are banned):
-- "How many letters are in the word...?" (BANNED — English)
-- "How many letters in 'Seventeen'?" (BANNED — English spelling)
-- "How many letters in the name...?" (BANNED — English)
-- "What color is...?" (BANNED — not math)
-- "Which animal...?" (BANNED — not math)
-- NEVER ask about letters, spelling, or words — even if they contain numbers
+    // Subject scope for mixed challenges
+    const subjectScope = isMixed
+      ? `This is a CROSS-SUBJECT challenge. Include questions from Mathematics, Science, English, Social Studies, and General Knowledge — mix them throughout. Each question should clearly be about one subject.`
+      : `Subject: ${subject}. All questions must be about ${subject} concepts appropriate for ${grade}.`;
 
-ONLY ask about REAL-WORLD NUMBER situations:
-- Counting objects (apples, coins, students)
-- Reading numbers (on clocks, buses, pages, prices)
-- Comparing quantities (more, less, bigger, smaller)
-- Simple arithmetic with real objects
+    const prompt = `You are an IB PYP ${grade} teacher creating a ${isOlympiad ? 'competitive olympiad-style' : isAdvanced ? 'advanced practice' : ''} quiz about: "${topic}".
 
-${context ? `Chapter content for reference:\n${context}\n` : ''}
+${diffInstructions}
 
-Create exactly 5 questions. Each answer option must be a NUMBER.
+${subjectScope}
 
-Return ONLY valid JSON:
+RULES:
+${answerRules}
+- Questions must be appropriate for ${grade} IB PYP students
+- Make questions progressively harder from Q1 to Q${questionCount}
+- Each question should test understanding, not just memory
+${isMaths ? '- NEVER ask about spelling, letters in words, grammar or colours' : ''}
+
+${context ? `Content for reference:\n${context}\n` : ''}
+
+CRITICAL: You MUST create EXACTLY ${questionCount} questions — not 5, not fewer. The array MUST have exactly ${questionCount} objects. If you return fewer than ${questionCount} questions, the response is invalid.
+
+Return ONLY valid JSON with exactly ${questionCount} questions:
 {
   "questions": [
     {
       "question": "...",
-      "options": ["A. 5", "B. 10", "C. 15", "D. 20"],
+      "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
       "correct": 0,
       "explanation": "..."
     }
@@ -398,11 +416,12 @@ Return ONLY valid JSON:
 
 correct = index 0-3 of the right answer.`;
 
+    const maxTokens = Math.max(1500, questionCount * 250);
     const response = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.4,
-      max_tokens: 1500,
+      max_tokens: maxTokens,
     });
 
     const content   = response.choices[0].message.content.trim();
@@ -410,7 +429,30 @@ correct = index 0-3 of the right answer.`;
     if (!jsonMatch) throw new Error('No JSON in response');
 
     const parsed = JSON.parse(jsonMatch[0]);
-    res.json({ topic, questions: parsed.questions ?? [] });
+    let questions = parsed.questions ?? [];
+
+    // If LLM returned fewer than requested, make a follow-up call for the rest
+    if (questions.length < questionCount) {
+      const remaining = questionCount - questions.length;
+      try {
+        const followUp = await groq.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: `Generate ${remaining} more unique MCQ questions about "${topic}" for ${grade} ${subject} students. Difficulty: ${difficulty}. Do NOT repeat these questions: ${questions.map(q => q.question).join(' | ')}.\n\nReturn ONLY valid JSON:\n{"questions":[{"question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"correct":0,"explanation":"..."}]}` }],
+          temperature: 0.5,
+          max_tokens: remaining * 250,
+        });
+        const followContent = followUp.choices[0].message.content.trim();
+        const followMatch = followContent.match(/\{[\s\S]*\}/);
+        if (followMatch) {
+          const followParsed = JSON.parse(followMatch[0]);
+          questions = questions.concat(followParsed.questions ?? []);
+        }
+      } catch (e) {
+        console.warn('Follow-up quiz generation failed, returning partial:', e.message);
+      }
+    }
+
+    res.json({ topic, questions: questions.slice(0, questionCount) });
   } catch (err) {
     console.error('Error in POST /ncert/quiz:', err.message);
     res.status(500).json({ error: 'Failed to generate quiz' });
