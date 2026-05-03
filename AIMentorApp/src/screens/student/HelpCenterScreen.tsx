@@ -405,30 +405,7 @@ export default function HelpCenterScreen({ navigation }: any) {
             </View>
           )}
 
-          {/* Browse Topics */}
-          <Text style={styles.sectionTitle}>Browse Topics</Text>
-          <View style={styles.topicsGrid}>
-            {filteredTopics.map((t) => (
-              <TouchableOpacity
-                key={t.label}
-                style={styles.topicCard}
-                onPress={() => handleTopicPress(t)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.topicIcon, { backgroundColor: t.color + '18' }]}>
-                  <Feather name={t.icon} size={22} color={t.color} />
-                </View>
-                <Text style={styles.topicLabel}>{t.label}</Text>
-                <Text style={styles.topicDesc}>{t.desc}</Text>
-                <Text style={styles.topicArticleCount}>{t.articles.length} articles</Text>
-              </TouchableOpacity>
-            ))}
-            {filteredTopics.length === 0 && (
-              <Text style={styles.emptyText}>No topics match "{search}"</Text>
-            )}
-          </View>
-
-          {/* Still need help? — moved above FAQ */}
+          {/* Still need help? — top section */}
           <Text style={styles.sectionTitle}>Still need help?</Text>
           <View style={styles.supportRow}>
             <TouchableOpacity
@@ -461,7 +438,30 @@ export default function HelpCenterScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
 
-          {/* FAQ — moved below support cards */}
+          {/* Browse Topics */}
+          <Text style={styles.sectionTitle}>Browse Topics</Text>
+          <View style={styles.topicsGrid}>
+            {filteredTopics.map((t) => (
+              <TouchableOpacity
+                key={t.label}
+                style={styles.topicCard}
+                onPress={() => handleTopicPress(t)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.topicIcon, { backgroundColor: t.color + '18' }]}>
+                  <Feather name={t.icon} size={22} color={t.color} />
+                </View>
+                <Text style={styles.topicLabel}>{t.label}</Text>
+                <Text style={styles.topicDesc}>{t.desc}</Text>
+                <Text style={styles.topicArticleCount}>{t.articles.length} articles</Text>
+              </TouchableOpacity>
+            ))}
+            {filteredTopics.length === 0 && (
+              <Text style={styles.emptyText}>No topics match "{search}"</Text>
+            )}
+          </View>
+
+          {/* FAQ */}
           <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
           {filteredFaqs.length === 0 && (
             <Text style={styles.emptyText}>No FAQs match "{search}"</Text>

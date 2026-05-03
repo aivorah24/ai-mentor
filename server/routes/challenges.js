@@ -86,6 +86,32 @@ router.get('/assigned', async (req, res) => {
   res.json(result);
 });
 
+// ── GET /challenges/new-count?studentId=xxx&since=ISO_DATE ──────
+router.get('/new-count', async (req, res) => {
+  const { studentId, since } = req.query;
+  if (!studentId) return res.status(400).json({ error: 'studentId required' });
+
+  // Resolve email → UUID if needed
+  let resolvedId = studentId;
+  if (studentId.includes('@')) {
+    const { data: userRow } = await supabase.from('users').select('id').eq('email', studentId.toLowerCase().trim()).maybeSingle();
+    if (!userRow?.id) return res.json({ count: 0 });
+    resolvedId = userRow.id;
+  }
+
+  let query = supabase
+    .from('challenge_assignments')
+    .select('id')
+    .eq('student_id', resolvedId)
+    .neq('status', 'completed');
+
+  if (since) query = query.gt('created_at', since);
+
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ count: (data || []).length });
+});
+
 // ── POST /challenges/assign ──────────────────────────────────────
 
 router.post('/assign', async (req, res) => {
@@ -119,6 +145,26 @@ router.post('/assign', async (req, res) => {
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
+
+  // Auto-add to schedule if dueDate provided
+  const challenge = challenges.find(c => c.id === challengeId);
+  if (dueDate && challenge) {
+    try {
+      await supabase.from('schedule_events').insert({
+        title:         `${challenge.title} — Due`,
+        event_date:    dueDate,
+        start_time:    '23:59',
+        end_time:      '23:59',
+        type:          'challenge',
+        note:          `${challenge.category} · ${challenge.subject}${challenge.grade ? ' · ' + challenge.grade : ''}`,
+        student_id:    studentId,
+        created_by:    assignedByRole,
+        tag:           challenge.subject || null,
+        assignment_id: data.id,
+      });
+    } catch (_) {}
+  }
+
   res.json({ ...data, assignmentId: data.id });
 });
 
@@ -127,6 +173,17 @@ router.post('/assign', async (req, res) => {
 router.post('/unassign', async (req, res) => {
   const { challengeId, studentId } = req.body;
   if (!challengeId || !studentId) return res.status(400).json({ error: 'challengeId and studentId required' });
+
+  // Remove schedule event linked to this challenge assignment
+  const { data: existing } = await supabase
+    .from('challenge_assignments')
+    .select('id')
+    .eq('challenge_id', challengeId)
+    .eq('student_id', studentId)
+    .single();
+  if (existing) {
+    await supabase.from('schedule_events').delete().eq('assignment_id', existing.id);
+  }
 
   await supabase
     .from('challenge_assignments')

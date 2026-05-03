@@ -55,9 +55,11 @@ export default function Header({
   const {
     unreadCount,
     unreadAssignments,
+    unreadChallenges,
     latestNotif,
                 clearUnread,
                 clearUnreadAssignments,
+                clearUnreadChallenges,
   } = useNotification();
   const { user, updateUser } = useAuth();
 
@@ -75,13 +77,14 @@ export default function Header({
   // Snapshot of notifications at the moment the bell was opened
   const [snapUnreadCount, setSnapUnreadCount] = useState(0);
   const [snapUnreadAssignments, setSnapUnreadAssignments] = useState(0);
+  const [snapUnreadChallenges, setSnapUnreadChallenges] = useState(0);
   const [snapLatestNotif, setSnapLatestNotif] = useState<any>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  // Bell count: real-time messages + real-time assignments. Fall back to dashboard's local count only if both are zero.
-  const count = unreadCount + unreadAssignments;
+  // Bell count: real-time messages + real-time assignments + challenges.
+  const count = unreadCount + unreadAssignments + unreadChallenges;
   const avatarStyle = (user as any)?.avatarStyle;
   const photoUrl = (user as any)?.photoUrl;
 
@@ -210,10 +213,12 @@ export default function Header({
                 // Snapshot current state BEFORE clearing so panel can display it
                 setSnapUnreadCount(unreadCount);
                 setSnapUnreadAssignments(unreadAssignments);
+                setSnapUnreadChallenges(unreadChallenges);
                 setSnapLatestNotif(latestNotif);
                 // Clear badges immediately
                 void clearUnread();
                 void clearUnreadAssignments();
+                void clearUnreadChallenges();
               }
               return next;
             });
@@ -242,7 +247,7 @@ export default function Header({
                 </View>
 
                 {/* Scrollable notification list using snapshot */}
-                {(snapUnreadAssignments > 0 || snapUnreadCount > 0) ? (
+                {(snapUnreadAssignments > 0 || snapUnreadChallenges > 0 || snapUnreadCount > 0) ? (
                   <View style={{ maxHeight: 320 }}>
                     <View
                       // @ts-ignore — web-only style
@@ -258,6 +263,22 @@ export default function Header({
                               {snapUnreadAssignments === 1
                                 ? 'You have a new assignment'
                                 : `You have ${snapUnreadAssignments} new assignments`}
+                            </Text>
+                            <Text style={styles.notifPreview} numberOfLines={1}>Tap to view</Text>
+                          </View>
+                          <Feather name="chevron-right" size={14} color={colors.textDim} />
+                        </TouchableOpacity>
+                      )}
+                      {snapUnreadChallenges > 0 && (
+                        <TouchableOpacity style={styles.notifItem} activeOpacity={0.7} onPress={() => { setBellVisible(false); navigation.navigate(screenNames.challenges, { tab: 'assigned' }); }}>
+                          <View style={styles.notifIconWrap}>
+                            <Feather name="award" size={14} color={colors.accentPurple} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.notifSender}>
+                              {snapUnreadChallenges === 1
+                                ? 'You have a new challenge'
+                                : `You have ${snapUnreadChallenges} new challenges`}
                             </Text>
                             <Text style={styles.notifPreview} numberOfLines={1}>Tap to view</Text>
                           </View>

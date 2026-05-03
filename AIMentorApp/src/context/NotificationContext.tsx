@@ -16,22 +16,26 @@ interface LatestNotif {
 interface NotificationState {
   unreadCount: number;
   unreadAssignments: number;
+  unreadChallenges: number;
   latestNotif: LatestNotif | null;
   toastVisible: boolean;
   dismissToast: () => void;
   clearUnread: () => Promise<void>;
   clearUnreadAssignments: () => Promise<void>;
+  clearUnreadChallenges: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationState>({
   unreadCount: 0,
   unreadAssignments: 0,
+  unreadChallenges: 0,
   latestNotif: null,
   toastVisible: false,
   dismissToast: () => {},
   clearUnread: async () => {},
   clearUnreadAssignments: async () => {},
+  clearUnreadChallenges: async () => {},
   refresh: async () => {},
 });
 
@@ -88,6 +92,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadAssignments, setUnreadAssignments] = useState(0);
+  const [unreadChallenges, setUnreadChallenges] = useState(0);
   const [latestNotif, setLatestNotif] = useState<LatestNotif | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
 
@@ -250,10 +255,36 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, [user?.email, (user as any)?.role]);
 
+  const pollChallenges = useCallback(async () => {
+    if (!user?.email) return;
+    const role = (user as any).role;
+    if (role === 'teacher') return;
+
+    const studentId = user.email;
+    const storageKey = `challengeSeenAt_v2_${user.email}`;
+
+    try {
+      const since = await AsyncStorage.getItem(storageKey);
+
+      const params: Record<string, string> = { studentId };
+      if (since) params.since = since;
+      const res = await fetch(`${SERVER_URL}/challenges/new-count?${new URLSearchParams(params)}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (typeof data.count === 'number' && Number.isFinite(data.count) && data.count >= 0) {
+        setUnreadChallenges(Math.floor(data.count));
+      }
+    } catch (err) {
+      console.error('[NotificationContext] challenges new-count polling failed:', err);
+    }
+  }, [user?.email, (user as any)?.role]);
+
   useEffect(() => {
     if (!user?.email) {
       setUnreadCount(0);
       setUnreadAssignments(0);
+      setUnreadChallenges(0);
       setLatestNotif(null);
       setToastVisible(false);
       prevCountRef.current = 0;
@@ -264,17 +295,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     void poll({ reason: 'initial', allowDuringMarkRead: true });
     void pollAssignments();
+    void pollChallenges();
 
     pollRef.current = setInterval(() => {
       void poll({ reason: 'interval' });
       void pollAssignments();
+      void pollChallenges();
     }, POLL_INTERVAL_MS);
 
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
-  }, [user?.email, poll, pollAssignments]);
+  }, [user?.email, poll, pollAssignments, pollChallenges]);
 
   const dismissToast = () => setToastVisible(false);
 
@@ -350,6 +383,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, [user?.email]);
 
+  const clearUnreadChallenges = useCallback(async () => {
+    if (!user?.email) return;
+    const storageKey = `challengeSeenAt_v2_${user.email}`;
+    try {
+      await AsyncStorage.setItem(storageKey, new Date().toISOString());
+      setUnreadChallenges(0);
+    } catch (err) {
+      console.error('[NotificationContext] Failed to clear unread challenge count:', err);
+    }
+  }, [user?.email]);
+
   const refresh = useCallback(async () => {
     if (!user?.email) return;
     await poll({ reason: 'manual-refresh', allowDuringMarkRead: true });
@@ -360,11 +404,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       value={{
         unreadCount,
         unreadAssignments,
+        unreadChallenges,
         latestNotif,
         toastVisible,
         dismissToast,
         clearUnread,
         clearUnreadAssignments,
+        clearUnreadChallenges,
         refresh,
       }}
     >

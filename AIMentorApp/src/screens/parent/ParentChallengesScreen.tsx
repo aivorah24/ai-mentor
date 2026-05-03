@@ -54,6 +54,7 @@ export default function ParentChallengesScreen({ navigation }: any) {
   const [assigning, setAssigning]             = useState(false);
   const [assignError, setAssignError]         = useState('');
   const [assignSuccess, setAssignSuccess]     = useState('');
+  const [assignDueDate, setAssignDueDate]     = useState('');
 
   // Fetch children
   useEffect(() => {
@@ -95,6 +96,9 @@ export default function ParentChallengesScreen({ navigation }: any) {
     setAssignChallenge(ch);
     setAssignError('');
     setAssignSuccess('');
+    // Default due date: 7 days from now
+    const d = new Date(); d.setDate(d.getDate() + 7);
+    setAssignDueDate(d.toISOString().split('T')[0]);
     setAssignModal(true);
   }
 
@@ -103,10 +107,18 @@ export default function ParentChallengesScreen({ navigation }: any) {
     setAssignChallenge(null);
     setAssignError('');
     setAssignSuccess('');
+    setAssignDueDate('');
+  }
+
+  // Due date helper
+  function getDueDateLabel(offset: number) {
+    const d = new Date(); d.setDate(d.getDate() + offset);
+    return d.toISOString().split('T')[0];
   }
 
   async function doAssign() {
     if (!assignChallenge || !child) return;
+    if (!assignDueDate) { setAssignError('Please select a due date'); return; }
     setAssigning(true);
     setAssignError('');
     try {
@@ -118,6 +130,7 @@ export default function ParentChallengesScreen({ navigation }: any) {
           studentId:      child.id,
           assignedById:   user?.email ?? '',
           assignedByRole: 'parent',
+          dueDate:        assignDueDate,
         }),
       });
       if (!res.ok) {
@@ -326,6 +339,40 @@ export default function ParentChallengesScreen({ navigation }: any) {
                   <Text style={styles.confirmMetaText}>{assignChallenge?.questionCount} questions</Text>
                   <View style={styles.dot} />
                   <Text style={styles.confirmMetaText}>{assignChallenge?.timeLimitMinutes} min</Text>
+                </View>
+
+                {/* Due date picker */}
+                <View style={{ marginTop: 14 }}>
+                  <Text style={[styles.confirmMetaText, { marginBottom: 8, fontWeight: '600', color: colors.textMain }]}>
+                    <Feather name="calendar" size={13} color={colors.primary} /> Due Date
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {[
+                      { label: 'Tomorrow', date: getDueDateLabel(1) },
+                      { label: '3 Days',   date: getDueDateLabel(3) },
+                      { label: '1 Week',   date: getDueDateLabel(7) },
+                      { label: '2 Weeks',  date: getDueDateLabel(14) },
+                    ].map(opt => (
+                      <TouchableOpacity
+                        key={opt.label}
+                        onPress={() => setAssignDueDate(opt.date)}
+                        style={{
+                          paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.md,
+                          borderWidth: 1,
+                          borderColor: assignDueDate === opt.date ? colors.primary : colors.borderColor,
+                          backgroundColor: assignDueDate === opt.date ? colors.primaryGlow : 'transparent',
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={{ fontSize: 12, color: assignDueDate === opt.date ? colors.primary : colors.textMuted }}>
+                          {opt.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 6 }}>
+                    Due: {assignDueDate || 'Not set'}
+                  </Text>
                 </View>
 
                 {assignError ? (

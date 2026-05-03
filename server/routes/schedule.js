@@ -38,12 +38,11 @@ router.get('/teacher', async (req, res) => {
   const { date, email } = req.query;
   if (!date) return res.status(400).json({ error: 'date required' });
   try {
-    // 1. Manual schedule events created by teacher
+    // 1. All schedule events on this date (teacher + parent created)
     const { data, error } = await supabase
       .from('schedule_events')
       .select('*')
-      .eq('event_date', date)
-      .eq('created_by', 'teacher');
+      .eq('event_date', date);
     if (error) throw error;
     const manualEvents = (data ?? []).map(mapRow);
 
@@ -81,7 +80,39 @@ router.get('/teacher', async (req, res) => {
         }));
     } catch (_) {}
 
-    res.json([...manualEvents, ...assignmentEvents]);
+    // 3. Challenge deadlines on this date
+    let challengeEvents = [];
+    try {
+      const { data: chalAssignments } = await supabase
+        .from('challenge_assignments')
+        .select('id,challenge_id,student_id,due_date,status')
+        .eq('due_date', date)
+        .neq('status', 'completed');
+
+      const challenges = readChallenges();
+      const existingIds = new Set([...manualEvents, ...assignmentEvents].filter(e => e.assignmentId).map(e => e.assignmentId));
+
+      challengeEvents = (chalAssignments || [])
+        .filter(a => !existingIds.has(a.id))
+        .map(a => {
+          const ch = challenges.find(c => c.id === a.challenge_id);
+          return {
+            id:           'chal_' + a.id,
+            title:        (ch?.title || 'Challenge') + ' — Due',
+            date:         a.due_date,
+            startTime:    '23:59',
+            endTime:      '23:59',
+            type:         'challenge',
+            note:         ch ? `${ch.category} · ${ch.subject}` : '',
+            studentId:    a.student_id,
+            createdBy:    'teacher',
+            tag:          ch?.subject || null,
+            assignmentId: a.id,
+          };
+        });
+    } catch (_) {}
+
+    res.json([...manualEvents, ...assignmentEvents, ...challengeEvents]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -133,6 +164,36 @@ async function getAssignmentDeadlines(userId, studentCurriculum, studentGrade, f
     }));
 }
 
+// ── Helper: fetch pending challenge deadlines as schedule events ──
+const CHALLENGES_PATH = path.join(__dirname, '../data/challenges.json');
+function readChallenges() { try { return JSON.parse(fs.readFileSync(CHALLENGES_PATH, 'utf8')); } catch { return []; } }
+
+async function getChallengeDeadlines(studentId, filterDate = null) {
+  if (!studentId) return [];
+  let query = supabase.from('challenge_assignments').select('id,challenge_id,student_id,due_date,status').eq('student_id', studentId).neq('status', 'completed');
+  if (filterDate) query = query.eq('due_date', filterDate);
+  const { data } = await query;
+  if (!data || data.length === 0) return [];
+
+  const challenges = readChallenges();
+  return data.filter(a => a.due_date).map(a => {
+    const ch = challenges.find(c => c.id === a.challenge_id);
+    return {
+      id:           'chal_' + a.id,
+      title:        (ch?.title || 'Challenge') + ' — Due',
+      date:         a.due_date,
+      startTime:    '23:59',
+      endTime:      '23:59',
+      type:         'challenge',
+      note:         ch ? `${ch.category} · ${ch.subject}` : '',
+      studentId:    a.student_id,
+      createdBy:    'teacher',
+      tag:          ch?.subject || null,
+      assignmentId: a.id,
+    };
+  });
+}
+
 // ── Helper: fetch student profile (curriculum + grade) ──────────
 async function getStudentProfile(studentId) {
   if (!studentId) return { userId: null, curriculum: null, grade: null };
@@ -159,11 +220,14 @@ router.get('/', async (req, res) => {
     ]);
     if (error) throw error;
 
-    const deadlines = await getAssignmentDeadlines(profile.userId, profile.curriculum, profile.grade, date);
+    const [deadlines, chalDeadlines] = await Promise.all([
+      getAssignmentDeadlines(profile.userId, profile.curriculum, profile.grade, date),
+      getChallengeDeadlines(profile.userId || studentId, date),
+    ]);
 
     // Merge, deduplicate by assignmentId
     const existingAssignmentIds = new Set((data ?? []).filter(e => e.assignment_id).map(e => e.assignment_id));
-    const newDeadlines = deadlines.filter(d => !existingAssignmentIds.has(d.assignmentId));
+    const newDeadlines = [...deadlines, ...chalDeadlines].filter(d => !existingAssignmentIds.has(d.assignmentId));
 
     res.json([...(data ?? []).map(mapRow), ...newDeadlines]);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -181,12 +245,15 @@ router.get('/month', async (req, res) => {
     ]);
     if (error) throw error;
 
-    const deadlines = await getAssignmentDeadlines(profile.userId, profile.curriculum, profile.grade);
-    const deadlineDates = deadlines
+    const [deadlines, chalDeadlines] = await Promise.all([
+      getAssignmentDeadlines(profile.userId, profile.curriculum, profile.grade),
+      getChallengeDeadlines(profile.userId || studentId),
+    ]);
+    const allDeadlineDates = [...deadlines, ...chalDeadlines]
       .filter(d => d.date && d.date.startsWith(prefix))
       .map(d => d.date);
 
-    const dates = [...new Set([...(data ?? []).map(e => e.event_date), ...deadlineDates])];
+    const dates = [...new Set([...(data ?? []).map(e => e.event_date), ...allDeadlineDates])];
     res.json({ dates });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -203,8 +270,11 @@ router.get('/upcoming', async (req, res) => {
     ]);
     if (error) throw error;
 
-    const deadlines = await getAssignmentDeadlines(profile.userId, profile.curriculum, profile.grade);
-    const futureDeadlines = deadlines.filter(d => d.date >= today);
+    const [deadlines, chalDeadlines] = await Promise.all([
+      getAssignmentDeadlines(profile.userId, profile.curriculum, profile.grade),
+      getChallengeDeadlines(profile.userId || studentId),
+    ]);
+    const futureDeadlines = [...deadlines, ...chalDeadlines].filter(d => d.date >= today);
 
     // Merge, deduplicate by assignmentId, sort by date, take top 5
     const existingAssignmentIds = new Set((data ?? []).filter(e => e.assignment_id).map(e => e.assignment_id));
