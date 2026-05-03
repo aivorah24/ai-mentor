@@ -84,10 +84,11 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
   const NAV_ITEMS = role === 'teacher' ? TEACHER_NAV_ITEMS : role === 'parent' ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
   const groups = role === 'teacher' ? ['MENU', 'MANAGE', 'SYSTEM'] : role === 'parent' ? ['MENU', 'CHILDREN', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
   const { colors, themeMode, setThemeMode } = useTheme();
-  const { unreadCount, unreadAssignments } = useNotification();
+  const { unreadCount, unreadAssignments, unreadChallenges } = useNotification();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const MESSAGE_SCREENS     = ['TeacherMessages', 'ParentMessages'];
   const ASSIGNMENT_SCREENS  = ['Assignments', 'ParentAssignments'];
+  const CHALLENGE_SCREENS   = ['Challenges', 'ParentChallenges'];
 
   return (
     <View style={styles.container}>
@@ -136,6 +137,11 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
                     {(item as any).premium && (
                       <View style={styles.premiumBadge}>
                         <Text style={styles.premiumBadgeText}>PRO</Text>
+                      </View>
+                    )}
+                    {CHALLENGE_SCREENS.includes(item.screen) && unreadChallenges > 0 && (
+                      <View style={styles.navBadge}>
+                        <Text style={styles.navBadgeText}>{unreadChallenges > 9 ? '9+' : unreadChallenges}</Text>
                       </View>
                     )}
                   </TouchableOpacity>

@@ -87,9 +87,10 @@ export default function DrawerContent(props: any) {
   const isParent = user?.role === 'parent';
   const NAV_ITEMS = isTeacher ? TEACHER_NAV_ITEMS : isParent ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
   const groups = isTeacher ? ['MENU', 'TEACHING DEVELOPMENT', 'SYSTEM'] : isParent ? ['PARENT MENU', 'CONTROLS', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
-  const { unreadCount, unreadAssignments } = useNotification();
+  const { unreadCount, unreadAssignments, unreadChallenges } = useNotification();
   const MESSAGE_SCREENS    = ['TeacherMessages', 'ParentMessages'];
   const ASSIGNMENT_SCREENS = ['Assignments', 'ParentAssignments'];
+  const CHALLENGE_SCREENS  = ['Challenges', 'ParentChallenges'];
 
   return (
     <View style={styles.container}>
@@ -138,6 +139,11 @@ export default function DrawerContent(props: any) {
                     {ASSIGNMENT_SCREENS.includes(item.screen) && unreadAssignments > 0 && (
                       <View style={styles.navBadge}>
                         <Text style={styles.navBadgeText}>{unreadAssignments > 9 ? '9+' : unreadAssignments}</Text>
+                      </View>
+                    )}
+                    {CHALLENGE_SCREENS.includes(item.screen) && unreadChallenges > 0 && (
+                      <View style={styles.navBadge}>
+                        <Text style={styles.navBadgeText}>{unreadChallenges > 9 ? '9+' : unreadChallenges}</Text>
                       </View>
                     )}
                   </TouchableOpacity>

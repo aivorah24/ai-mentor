@@ -78,6 +78,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
   const [assigning, setAssigning]         = useState(false);
   const [assignError, setAssignError]     = useState('');
   const [assignSuccess, setAssignSuccess] = useState('');
+  const [assignDueDate, setAssignDueDate] = useState('');
 
   // Fetch students linked to this teacher
   useEffect(() => {
@@ -120,6 +121,8 @@ export default function TeacherChallengesScreen({ navigation }: any) {
     setStudentSearch('');
     setAssignError('');
     setAssignSuccess('');
+    const d = new Date(); d.setDate(d.getDate() + 7);
+    setAssignDueDate(d.toISOString().split('T')[0]);
     setAssignModal(true);
   }
 
@@ -130,6 +133,12 @@ export default function TeacherChallengesScreen({ navigation }: any) {
     setStudentSearch('');
     setAssignError('');
     setAssignSuccess('');
+    setAssignDueDate('');
+  }
+
+  function getDueDateLabel(offset: number) {
+    const d = new Date(); d.setDate(d.getDate() + offset);
+    return d.toISOString().split('T')[0];
   }
 
   async function doAssign() {
@@ -137,6 +146,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
       setAssignError('Please select a student.');
       return;
     }
+    if (!assignDueDate) { setAssignError('Please select a due date.'); return; }
     setAssigning(true);
     setAssignError('');
     try {
@@ -148,6 +158,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
           studentId:      selectedStudent.id,
           assignedById:   user?.email ?? '',
           assignedByRole: 'teacher',
+          dueDate:        assignDueDate,
         }),
       });
       if (!res.ok) {
@@ -387,6 +398,40 @@ export default function TeacherChallengesScreen({ navigation }: any) {
                     </ScrollView>
                   </>
                 )}
+
+                {/* Due date picker */}
+                <View style={{ marginTop: 14 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain, marginBottom: 8 }}>
+                    <Feather name="calendar" size={13} color={colors.primary} /> Due Date
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {[
+                      { label: 'Tomorrow', date: getDueDateLabel(1) },
+                      { label: '3 Days',   date: getDueDateLabel(3) },
+                      { label: '1 Week',   date: getDueDateLabel(7) },
+                      { label: '2 Weeks',  date: getDueDateLabel(14) },
+                    ].map(opt => (
+                      <TouchableOpacity
+                        key={opt.label}
+                        onPress={() => setAssignDueDate(opt.date)}
+                        style={{
+                          paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.md,
+                          borderWidth: 1,
+                          borderColor: assignDueDate === opt.date ? colors.primary : colors.borderColor,
+                          backgroundColor: assignDueDate === opt.date ? colors.primaryGlow : 'transparent',
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={{ fontSize: 12, color: assignDueDate === opt.date ? colors.primary : colors.textMuted }}>
+                          {opt.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 6 }}>
+                    Due: {assignDueDate || 'Not set'}
+                  </Text>
+                </View>
 
                 <TouchableOpacity
                   style={[styles.assignBtn, (!selectedStudent || assigning) && styles.assignBtnDisabled]}

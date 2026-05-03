@@ -151,30 +151,7 @@ export default function ParentHelpScreen({ navigation }: any) {
             )}
           </View>
 
-          {/* FAQs */}
-          <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
-          {filteredFaqs.length === 0 && <Text style={styles.emptyText}>No FAQs match "{search}"</Text>}
-          {filteredFaqs.map((faq, i) => (
-            <TouchableOpacity
-              key={i}
-              style={[styles.faqItem, openFaq === i && styles.faqItemOpen]}
-              onPress={() => setOpenFaq(openFaq === i ? null : i)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.faqHeader}>
-                <View style={styles.faqQWrap}>
-                  <View style={styles.faqNum}>
-                    <Text style={styles.faqNumText}>{String(i + 1).padStart(2, '0')}</Text>
-                  </View>
-                  <Text style={styles.faqQ}>{faq.q}</Text>
-                </View>
-                <Feather name={openFaq === i ? 'chevron-up' : 'chevron-down'} size={16} color={openFaq === i ? colors.primary : colors.textMuted} />
-              </View>
-              {openFaq === i && <Text style={styles.faqA}>{faq.a}</Text>}
-            </TouchableOpacity>
-          ))}
-
-          {/* Still need help? */}
+          {/* Still need help? — top */}
           <Text style={styles.sectionTitle}>Still need help?</Text>
           <View style={styles.supportRow}>
             <TouchableOpacity style={[styles.supportCard, styles.supportCardPrimary]} onPress={() => setChatVisible(true)} activeOpacity={0.7}>
@@ -198,6 +175,29 @@ export default function ParentHelpScreen({ navigation }: any) {
               </View>
             </TouchableOpacity>
           </View>
+
+          {/* FAQs */}
+          <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+          {filteredFaqs.length === 0 && <Text style={styles.emptyText}>No FAQs match "{search}"</Text>}
+          {filteredFaqs.map((faq, i) => (
+            <TouchableOpacity
+              key={i}
+              style={[styles.faqItem, openFaq === i && styles.faqItemOpen]}
+              onPress={() => setOpenFaq(openFaq === i ? null : i)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.faqHeader}>
+                <View style={styles.faqQWrap}>
+                  <View style={styles.faqNum}>
+                    <Text style={styles.faqNumText}>{String(i + 1).padStart(2, '0')}</Text>
+                  </View>
+                  <Text style={styles.faqQ}>{faq.q}</Text>
+                </View>
+                <Feather name={openFaq === i ? 'chevron-up' : 'chevron-down'} size={16} color={openFaq === i ? colors.primary : colors.textMuted} />
+              </View>
+              {openFaq === i && <Text style={styles.faqA}>{faq.a}</Text>}
+            </TouchableOpacity>
+          ))}
 
           <View style={styles.versionRow}>
             <Text style={styles.versionText}>Aivorah v1.0.0 · NuShift</Text>

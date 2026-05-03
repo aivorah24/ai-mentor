@@ -61,14 +61,20 @@ interface Question {
 
 export default function ChallengesScreen({ navigation, route }: any) {
   const highlightId = route?.params?.highlightId;
+  const initialTab = route?.params?.tab;
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { stats, studentId } = useStudentData();
   const { user } = useAuth();
 
-  const [activeTab, setActiveTab] = useState('Available');
+  const [activeTab, setActiveTab] = useState(initialTab === 'assigned' ? 'Assigned' : 'Available');
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Switch to Assigned tab when navigated with tab param
+  useEffect(() => {
+    if (initialTab === 'assigned') setActiveTab('Assigned');
+  }, [initialTab]);
   const [refreshing, setRefreshing] = useState(false);
 
   // Quiz modal state

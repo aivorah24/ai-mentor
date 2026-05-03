@@ -306,6 +306,41 @@ export default function ParentScheduleScreen({ navigation }: any) {
             {/* Timeline */}
             <View style={styles.timelineCol}>
               <Text style={styles.dragHint}>Drag on empty timeline slots to quick-book a time range.</Text>
+
+              {/* Pinned deadline / challenge events (startTime 23:59 — outside normal timeline) */}
+              {(() => {
+                const pinnedEvents = events.filter(e => {
+                  const h = parseInt(e.startTime?.split(':')[0] || '0', 10);
+                  return h < 8 || h > 17;
+                });
+                if (pinnedEvents.length === 0) return null;
+                return (
+                  <View style={{ marginBottom: 10 }}>
+                    {pinnedEvents.map(ev => (
+                      <TouchableOpacity
+                        key={ev.id}
+                        style={[styles.eventBlock, { borderLeftColor: typeColor(ev.type, colors), marginBottom: 6 }]}
+                        activeOpacity={0.82}
+                        onPress={() => {
+                          if (ev.type === 'assignment' || ev.type === 'deadline') navigation.navigate('ParentAssignments' as any, { highlightId: ev.assignmentId || ev.id } as any);
+                          else if (ev.type === 'challenge') navigation.navigate('ParentChallenges' as any, { highlightId: ev.assignmentId || ev.id } as any);
+                        }}
+                      >
+                        <View style={styles.eventTopRow}>
+                          <Text style={styles.eventTitle}>{toTitleCase(ev.title)}</Text>
+                          <View style={styles.eventTags}>
+                            <View style={[styles.tag, { backgroundColor: typeColor(ev.type, colors) + '20', borderColor: typeColor(ev.type, colors) + '40' }]}>
+                              <Text style={[styles.tagText, { color: typeColor(ev.type, colors) }]}>{toTitleCase(ev.type)}</Text>
+                            </View>
+                          </View>
+                        </View>
+                        {ev.note ? <Text style={styles.eventNote}>{ev.note}</Text> : null}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                );
+              })()}
+
               {loading ? (
                 <View style={{ alignItems: 'center', paddingVertical: 32 }}>
                   <ActivityIndicator size="small" color={colors.primary} />

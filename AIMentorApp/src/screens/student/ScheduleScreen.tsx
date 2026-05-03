@@ -329,12 +329,47 @@ export default function ScheduleScreen({ navigation }: any) {
                   <Text style={styles.emptyText}>Loading schedule…</Text>
                 </View>
               ) : (
+                <>
+                {/* Pinned deadline/challenge events */}
+                {events.filter(e => e.type === 'deadline' || e.type === 'challenge' || e.startTime === '23:59').length > 0 && (
+                  <View style={{ marginBottom: 12, gap: 6 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.5, paddingHorizontal: 4 }}>Deadlines</Text>
+                    {events.filter(e => e.type === 'deadline' || e.type === 'challenge' || e.startTime === '23:59').map(ev => {
+                      const isChallenge = ev.type === 'challenge' || (ev.title || '').toLowerCase().includes('challenge');
+                      return (
+                        <TouchableOpacity
+                          key={ev.id}
+                          style={[styles.eventBlock, { borderLeftColor: typeColor(ev.type, colors), marginHorizontal: 0 }]}
+                          onPress={() => navigation.navigate(isChallenge ? 'Challenges' as any : 'Assignments' as any)}
+                          activeOpacity={0.75}
+                        >
+                          <View style={styles.eventTopRow}>
+                            <Text style={styles.eventTitle}>{toTitleCase(ev.title)}</Text>
+                            <View style={styles.eventTags}>
+                              <View style={[styles.tag, { backgroundColor: colors.accentRed + '20', borderColor: colors.accentRed + '40' }]}>
+                                <Text style={[styles.tagText, { color: colors.accentRed }]}>Due</Text>
+                              </View>
+                              {ev.tag && (
+                                <View style={[styles.tag, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '35' }]}>
+                                  <Text style={[styles.tagText, { color: colors.primary }]}>{ev.tag}</Text>
+                                </View>
+                              )}
+                              <Feather name="chevron-right" size={12} color={colors.textDim} style={{ marginLeft: 4 }} />
+                            </View>
+                          </View>
+                          {ev.note ? <Text style={styles.eventNote}>{ev.note}</Text> : null}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
                 <View style={styles.timelineDragArea} {...panResponder.panHandlers}>
                   {TIMES.map((t, idx) => {
                   // Match events that start within this hour slot (e.g. 10:00–10:59 for the "10:00" row)
                   const [slotH] = t.split(':').map(Number);
                   const nextH = slotH + 1;
                   const event = events.find((e) => {
+                    if (e.type === 'deadline' || e.type === 'challenge' || e.startTime === '23:59') return false;
                     const [evH] = e.startTime.split(':').map(Number);
                     return evH === slotH;
                   });
@@ -392,6 +427,7 @@ export default function ScheduleScreen({ navigation }: any) {
                   );
                   })}
                 </View>
+                </>
               )}
               <TouchableOpacity style={styles.addEventBtn} onPress={() => setModalVisible(true)} activeOpacity={0.8}>
                 <Feather name="plus" size={16} color={colors.primary} />
