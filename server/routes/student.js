@@ -473,7 +473,9 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
         progressPct,
         assignmentsDone: s.assignments_done ?? 0,
         lastActive:     s.last_active_date,
-        needsAttention: progressPct < 30 || (s.current_streak ?? 0) < 2,
+        needsAttention: (s.last_active_date || (s.xp_points ?? 0) > 0)
+          ? (progressPct < 30 || (s.current_streak ?? 0) < 2)
+          : false,
         photoUrl:       user.photo_url ?? null,
       };
     });
