@@ -35,6 +35,7 @@ export interface User {
   interests?: string[];
   bio?: string;
   accountStatus?: string;
+  isPro?: boolean;            // premium subscription — controlled by admin in DB
   // Relationship metadata
   children?: { name: string; grade: string; email: string; curriculum?: string }[];  // for parents
   teaches?: { grade: string; curriculum: string }[];            // for teachers
@@ -93,6 +94,7 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User>> {
         name:               data.name       || undefined,
         role:               data.role       || undefined,
         roles:              Array.isArray(data.roles) ? data.roles : undefined,
+        isPro:              data.isPro === true,
       });
     }
   } catch {}

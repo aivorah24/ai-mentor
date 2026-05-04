@@ -25,10 +25,10 @@ const STUDENT_NAV_ITEMS = [
   { label: 'AI Coach', icon: 'message-circle', screen: 'AICoach', group: 'MENU' },
   { label: 'Schedule', icon: 'calendar', screen: 'Schedule', group: 'MENU' },
   { label: 'The World & You', icon: 'globe', screen: 'WorldAndYou', group: 'MENU' },
-  { label: 'Bedtime Stories', icon: 'book', screen: 'BhagavathaStories', group: 'MENU' },
-  { label: 'Daily Habits', icon: 'sun', screen: 'DailyHabits', group: 'MENU' },
-  { label: 'Assignments', icon: 'check-square', screen: 'Assignments', group: 'FOCUS' },
-  { label: 'Challenges', icon: 'target', screen: 'Challenges', group: 'FOCUS' },
+  { label: 'Bedtime Stories', icon: 'book', screen: 'BhagavathaStories', group: 'MENU', premium: true },
+  { label: 'Daily Habits', icon: 'sun', screen: 'DailyHabits', group: 'MENU', premium: true },
+  { label: 'Assignments', icon: 'check-square', screen: 'Assignments', group: 'FOCUS', premium: false },
+  { label: 'Challenges', icon: 'target', screen: 'Challenges', group: 'FOCUS', premium: true },
   { label: 'Leaderboard', icon: 'award', screen: 'Leaderboard', group: 'FOCUS' },
   { label: 'Progress', icon: 'bar-chart-2', screen: 'Progress', group: 'FOCUS' },
   { label: 'Rewards', icon: 'gift', screen: 'Rewards', group: 'FOCUS' },
@@ -144,6 +144,17 @@ export default function DrawerContent(props: any) {
                     {CHALLENGE_SCREENS.includes(item.screen) && unreadChallenges > 0 && (
                       <View style={styles.navBadge}>
                         <Text style={styles.navBadgeText}>{unreadChallenges > 9 ? '9+' : unreadChallenges}</Text>
+                      </View>
+                    )}
+                    {(item as any).premium && (
+                      <View style={styles.premiumIndicator}>
+                        {!(user as any)?.isPro && (
+                          <Feather name="lock" size={9} color="#C5A56A" style={{ marginRight: 3 }} />
+                        )}
+                        {(user as any)?.isPro && (
+                          <Feather name="star" size={9} color="#C5A56A" style={{ marginRight: 3 }} />
+                        )}
+                        <Text style={styles.premiumIndicatorText}>PRO</Text>
                       </View>
                     )}
                   </TouchableOpacity>
@@ -365,6 +376,16 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     color: '#fff',
     fontSize: 10,
     fontWeight: '700',
+  },
+  premiumIndicator: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8,
+    backgroundColor: '#C5A56A18', borderWidth: 1, borderColor: '#C5A56A40',
+    marginLeft: 'auto',
+  },
+  premiumIndicatorText: {
+    fontSize: 8, fontWeight: '800', color: '#C5A56A',
+    letterSpacing: 0.6,
   },
   addParentHint: {
     flexDirection: 'row',

@@ -5,6 +5,59 @@ const { retrieveCurriculumContext } = require('../services/rag');
 const { retrieveWebContext } = require('../services/webSearch');
 const { logEvent } = require('../services/analytics');
 const { normalizeCurriculum } = require('../utils/curriculum');
+const supabase = require('../services/supabase');
+
+// ── Free-tier daily message limit ──────────────────────────────────
+const FREE_DAILY_LIMIT = 10;
+
+async function getIsPro(email) {
+  if (!email) return false;
+  try {
+    const { data } = await supabase
+      .from('user_preferences')
+      .select('data')
+      .eq('user_email', email.toLowerCase().trim())
+      .maybeSingle();
+    return data?.data?.isPro === true;
+  } catch { return false; }
+}
+
+async function getDailyUsage(email) {
+  if (!email) return { count: 0 };
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const key = email.toLowerCase().trim();
+  try {
+    const { data } = await supabase
+      .from('user_preferences')
+      .select('data')
+      .eq('user_email', key)
+      .maybeSingle();
+    const usage = data?.data?.aiUsage || {};
+    if (usage.date === today) return { count: usage.count || 0 };
+    return { count: 0 }; // new day, reset
+  } catch { return { count: 0 }; }
+}
+
+async function incrementDailyUsage(email) {
+  if (!email) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const key = email.toLowerCase().trim();
+  try {
+    const { data: existing } = await supabase
+      .from('user_preferences')
+      .select('data')
+      .eq('user_email', key)
+      .maybeSingle();
+    const currentData = existing?.data || {};
+    const usage = currentData.aiUsage || {};
+    const newCount = (usage.date === today) ? (usage.count || 0) + 1 : 1;
+    await supabase.from('user_preferences').upsert({
+      user_email: key,
+      data: { ...currentData, aiUsage: { date: today, count: newCount } },
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_email' });
+  } catch (err) { console.error('[incrementDailyUsage]', err?.message); }
+}
 
 // POST /ask
 // Body: { question, curriculum?, grade?, subject?, topic? }
@@ -16,6 +69,21 @@ router.post('/', async (req, res) => {
 
     if (!question || question.trim().length === 0) {
       return res.status(400).json({ error: 'question is required' });
+    }
+
+    // ── Free-tier usage gate ────────────────────────────────────────
+    const emailLc = (userEmail || '').toLowerCase().trim();
+    const isPro = await getIsPro(emailLc);
+    if (!isPro && emailLc) {
+      const { count } = await getDailyUsage(emailLc);
+      if (count >= FREE_DAILY_LIMIT) {
+        return res.status(429).json({
+          error: `You've used all ${FREE_DAILY_LIMIT} free messages for today. Upgrade to Pro for unlimited AI Coach access.`,
+          limitReached: true,
+          dailyLimit: FREE_DAILY_LIMIT,
+          used: count,
+        });
+      }
     }
 
     let context = '';
@@ -88,6 +156,9 @@ router.post('/', async (req, res) => {
         webQuery: webMeta.query || '',
       },
     }).catch(() => {});
+
+    // Track usage for free-tier limit
+    if (!isPro && emailLc) incrementDailyUsage(emailLc).catch(() => {});
 
     res.json({ answer, sources });
   } catch (err) {
@@ -255,6 +326,21 @@ router.post('/stream', async (req, res) => {
     return res.status(400).json({ error: 'question is required' });
   }
 
+  // ── Free-tier usage gate (stream) ─────────────────────────────
+  const streamEmailLc = (userEmail || '').toLowerCase().trim();
+  const streamIsPro = await getIsPro(streamEmailLc);
+  if (!streamIsPro && streamEmailLc) {
+    const { count } = await getDailyUsage(streamEmailLc);
+    if (count >= FREE_DAILY_LIMIT) {
+      return res.status(429).json({
+        error: `You've used all ${FREE_DAILY_LIMIT} free messages for today. Upgrade to Pro for unlimited AI Coach access.`,
+        limitReached: true,
+        dailyLimit: FREE_DAILY_LIMIT,
+        used: count,
+      });
+    }
+  }
+
   // SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -326,6 +412,9 @@ router.post('/stream', async (req, res) => {
     res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     res.end();
 
+    // Track usage for free-tier limit
+    if (!streamIsPro && streamEmailLc) incrementDailyUsage(streamEmailLc).catch(() => {});
+
     logEvent('ai_ask', {
       userEmail,
       role,
@@ -354,6 +443,29 @@ router.post('/stream', async (req, res) => {
     console.error('Error in /ask/stream:', err.message);
     res.write(`data: ${JSON.stringify({ type: 'error', error: 'Something went wrong. Please try again.' })}\n\n`);
     res.end();
+  }
+});
+
+// GET /ask/usage?email=...
+// Returns daily usage stats for the AI Coach (used by frontend to show remaining messages)
+router.get('/usage', async (req, res) => {
+  try {
+    const email = (req.query.email || '').toLowerCase().trim();
+    if (!email) return res.status(400).json({ error: 'email required' });
+
+    const isPro = await getIsPro(email);
+    if (isPro) return res.json({ isPro: true, unlimited: true, dailyLimit: null, used: 0, remaining: null });
+
+    const { count } = await getDailyUsage(email);
+    res.json({
+      isPro: false,
+      unlimited: false,
+      dailyLimit: FREE_DAILY_LIMIT,
+      used: count,
+      remaining: Math.max(0, FREE_DAILY_LIMIT - count),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

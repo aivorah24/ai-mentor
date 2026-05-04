@@ -19,7 +19,7 @@ export async function askAIMentor(
   userEmail?: string,
   role?: string,
   history?: ChatHistoryTurn[],
-): Promise<{ answer: string; sources: AskResponse['sources']; error?: string }> {
+): Promise<{ answer: string; sources: AskResponse['sources']; error?: string; limitReached?: boolean }> {
   try {
     const payload: any = { question, curriculum, grade, subject, topic, userEmail, role };
     if (history && history.length > 0) payload.history = history;
@@ -29,6 +29,12 @@ export async function askAIMentor(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+
+    // Handle free-tier limit reached
+    if (response.status === 429) {
+      const data = await response.json();
+      return { answer: '', sources: [], error: data.error, limitReached: true };
+    }
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
 

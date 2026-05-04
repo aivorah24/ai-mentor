@@ -54,6 +54,24 @@ export default function AICoachScreen({ navigation }: any) {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const userGrade = user?.grade || 'Grade 3';
   const userCurriculum = user?.curriculum || 'IB PYP';
+  const isPro = user?.isPro === true;
+
+  // ── Free-tier usage tracking ──────────────────────────────────
+  const [dailyUsage, setDailyUsage] = useState<{ used: number; remaining: number; dailyLimit: number } | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
+
+  useEffect(() => {
+    if (isPro || !user?.email) return;
+    fetch(`${SERVER_URL}/ask/usage?email=${encodeURIComponent(user.email)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.unlimited) {
+          setDailyUsage({ used: data.used, remaining: data.remaining, dailyLimit: data.dailyLimit });
+          if (data.remaining <= 0) setLimitReached(true);
+        }
+      })
+      .catch(() => {});
+  }, [user?.email, isPro]);
 
   const firstName = user?.name?.split(' ')[0] || 'there';
 
@@ -221,7 +239,7 @@ export default function AICoachScreen({ navigation }: any) {
 
   async function sendMessage(text?: string) {
     const msgText = (text ?? input).trim();
-    if (!msgText || isTyping) return;
+    if (!msgText || isTyping || limitReached) return;
 
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const userMsg: Message = { id: Date.now(), role: 'user', text: msgText, timestamp: now };
@@ -238,7 +256,7 @@ export default function AICoachScreen({ navigation }: any) {
         text: m.text,
       }));
 
-    const { answer, error } = await askAIMentor(
+    const { answer, error, limitReached: hitLimit } = await askAIMentor(
       msgText,
       userGrade,
       undefined,
@@ -248,7 +266,17 @@ export default function AICoachScreen({ navigation }: any) {
       user?.role,
       history
     );
-    if (!error) exploreTopic(); // Track real topic exploration
+    if (!error) {
+      exploreTopic(); // Track real topic exploration
+      // Update local usage counter
+      if (!isPro && dailyUsage) {
+        const newUsed = dailyUsage.used + 1;
+        const newRemaining = Math.max(0, dailyUsage.dailyLimit - newUsed);
+        setDailyUsage({ ...dailyUsage, used: newUsed, remaining: newRemaining });
+        if (newRemaining <= 0) setLimitReached(true);
+      }
+    }
+    if (hitLimit) setLimitReached(true);
 
     const aiMsg: Message = {
       id: Date.now() + 1,
@@ -279,6 +307,21 @@ export default function AICoachScreen({ navigation }: any) {
         onMenuPress={() => navigation.openDrawer()}
         onProfilePress={() => navigation.navigate('Profile')}
       />
+      {/* Free-tier usage bar */}
+      {!isPro && dailyUsage && (
+        <View style={styles.usageBar}>
+          <Feather name="zap" size={12} color={limitReached ? '#C5A56A' : colors.primary} />
+          <Text style={[styles.usageText, { color: limitReached ? '#C5A56A' : colors.textMuted }]}>
+            {limitReached
+              ? 'Daily limit reached'
+              : `${dailyUsage.remaining} of ${dailyUsage.dailyLimit} free messages left today`}
+          </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Subscription')}>
+            <Text style={styles.usageUpgrade}>Upgrade</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -399,6 +442,95 @@ export default function AICoachScreen({ navigation }: any) {
               </View>
             </View>
           )}
+
+          {/* ── Claude-style upgrade card — appears inline in chat ── */}
+          {limitReached && !isPro && (
+            <View style={styles.upgradeCard}>
+              {/* Glow icon */}
+              <View style={styles.upgradeIconWrap}>
+                <Feather name="zap" size={24} color="#C5A56A" />
+              </View>
+
+              <Text style={[styles.upgradeTitle, { color: colors.textMain }]}>
+                You've reached your daily limit
+              </Text>
+              <Text style={[styles.upgradeSub, { color: colors.textMuted }]}>
+                You've used all {dailyUsage?.dailyLimit || 10} free messages for today.{'\n'}
+                Upgrade your plan for more AI Coach interactions.
+              </Text>
+
+              {/* Plan options */}
+              <View style={styles.upgradePlans}>
+                {/* Pro */}
+                <TouchableOpacity
+                  style={styles.upgradePlanCard}
+                  onPress={() => navigation.navigate('Subscription')}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.upgradePlanHeader}>
+                    <Text style={[styles.upgradePlanName, { color: '#C5A56A' }]}>Pro</Text>
+                    <View style={styles.upgradePlanBadge}>
+                      <Text style={styles.upgradePlanBadgeText}>POPULAR</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.upgradePlanPrice, { color: colors.textMain }]}>
+                    {'\u20B9'}499<Text style={[styles.upgradePlanPeriod, { color: colors.textDim }]}>/mo</Text>
+                  </Text>
+                  <View style={styles.upgradePlanFeatures}>
+                    <View style={styles.upgradePlanFeatureRow}>
+                      <Feather name="check" size={12} color="#C5A56A" />
+                      <Text style={[styles.upgradePlanFeatureText, { color: colors.textMuted }]}>Unlimited AI Coach messages</Text>
+                    </View>
+                    <View style={styles.upgradePlanFeatureRow}>
+                      <Feather name="check" size={12} color="#C5A56A" />
+                      <Text style={[styles.upgradePlanFeatureText, { color: colors.textMuted }]}>All Bedtime Stories</Text>
+                    </View>
+                    <View style={styles.upgradePlanFeatureRow}>
+                      <Feather name="check" size={12} color="#C5A56A" />
+                      <Text style={[styles.upgradePlanFeatureText, { color: colors.textMuted }]}>Challenges & Daily Habits</Text>
+                    </View>
+                  </View>
+                  <View style={styles.upgradePlanCta}>
+                    <Text style={styles.upgradePlanCtaText}>Upgrade to Pro</Text>
+                  </View>
+                </TouchableOpacity>
+
+                {/* Max */}
+                <TouchableOpacity
+                  style={[styles.upgradePlanCard, { borderColor: '#EFD1D4' + '30' }]}
+                  onPress={() => navigation.navigate('Subscription')}
+                  activeOpacity={0.85}
+                >
+                  <Text style={[styles.upgradePlanName, { color: '#EFD1D4' }]}>Max</Text>
+                  <Text style={[styles.upgradePlanPrice, { color: colors.textMain }]}>
+                    {'\u20B9'}999<Text style={[styles.upgradePlanPeriod, { color: colors.textDim }]}>/mo</Text>
+                  </Text>
+                  <View style={styles.upgradePlanFeatures}>
+                    <View style={styles.upgradePlanFeatureRow}>
+                      <Feather name="check" size={12} color="#EFD1D4" />
+                      <Text style={[styles.upgradePlanFeatureText, { color: colors.textMuted }]}>Everything in Pro</Text>
+                    </View>
+                    <View style={styles.upgradePlanFeatureRow}>
+                      <Feather name="check" size={12} color="#EFD1D4" />
+                      <Text style={[styles.upgradePlanFeatureText, { color: colors.textMuted }]}>Up to 3 child profiles</Text>
+                    </View>
+                    <View style={styles.upgradePlanFeatureRow}>
+                      <Feather name="check" size={12} color="#EFD1D4" />
+                      <Text style={[styles.upgradePlanFeatureText, { color: colors.textMuted }]}>Priority responses</Text>
+                    </View>
+                  </View>
+                  <View style={[styles.upgradePlanCta, { backgroundColor: '#EFD1D4' }]}>
+                    <Text style={styles.upgradePlanCtaText}>Upgrade to Max</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={[styles.upgradeFooter, { color: colors.textDim }]}>
+                Your free messages reset daily at midnight
+              </Text>
+            </View>
+          )}
+
         </ScrollView>
 
         {/* Input */}
@@ -430,7 +562,7 @@ export default function AICoachScreen({ navigation }: any) {
                 }
               }}
               blurOnSubmit={false}
-              editable={!isTyping}
+              editable={!isTyping && !limitReached}
             />
           </View>
           {/* Mic button — voice input */}
@@ -451,7 +583,7 @@ export default function AICoachScreen({ navigation }: any) {
           <TouchableOpacity
             style={[styles.sendBtn, (!input.trim() || isTyping) && styles.sendBtnDisabled]}
             onPress={() => sendMessage()}
-            disabled={!input.trim() || isTyping}
+            disabled={!input.trim() || isTyping || limitReached}
             activeOpacity={0.8}
           >
             <Feather name={isTyping ? 'loader' : 'send'} size={18} color="white" />
@@ -625,4 +757,65 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     justifyContent: 'center',
   },
   sendBtnDisabled: { opacity: 0.4 },
+
+  // ── Free-tier usage bar ─────────────────────────────────────
+  usageBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: spacing.xl, paddingVertical: 8,
+    borderBottomWidth: 1, borderBottomColor: c.borderColor,
+    backgroundColor: c.cardDark,
+  },
+  usageText: { flex: 1, fontSize: 11, fontWeight: '600' },
+  usageUpgrade: { fontSize: 11, fontWeight: '800', color: '#C5A56A' },
+
+  // ── Claude-style upgrade card (inline in chat) ──────────────
+  upgradeCard: {
+    alignItems: 'center', gap: 14,
+    marginTop: spacing.xl, marginBottom: spacing.lg,
+    paddingVertical: spacing.xxxl, paddingHorizontal: spacing.xl,
+    borderRadius: radius.xl, borderWidth: 1,
+    borderColor: '#C5A56A30',
+    backgroundColor: c.cardDark,
+  },
+  upgradeIconWrap: {
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: '#C5A56A18',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: '#C5A56A30',
+  },
+  upgradeTitle: { fontSize: 18, fontWeight: '800', textAlign: 'center' },
+  upgradeSub: { fontSize: 13, lineHeight: 20, textAlign: 'center', maxWidth: 340 },
+
+  upgradePlans: {
+    flexDirection: 'row', gap: spacing.md,
+    width: '100%', marginTop: 4,
+  },
+  upgradePlanCard: {
+    flex: 1, padding: spacing.lg, gap: 10,
+    borderRadius: radius.lg, borderWidth: 1,
+    borderColor: '#C5A56A30',
+    backgroundColor: c.bgDark,
+  },
+  upgradePlanHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+  },
+  upgradePlanName: { fontSize: 16, fontWeight: '800' },
+  upgradePlanBadge: {
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
+    backgroundColor: '#C5A56A',
+  },
+  upgradePlanBadgeText: { fontSize: 8, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
+  upgradePlanPrice: { fontSize: 22, fontWeight: '800' },
+  upgradePlanPeriod: { fontSize: 12, fontWeight: '500' },
+  upgradePlanFeatures: { gap: 6 },
+  upgradePlanFeatureRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  upgradePlanFeatureText: { fontSize: 11, fontWeight: '500' },
+  upgradePlanCta: {
+    alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 10, borderRadius: 10,
+    backgroundColor: '#C5A56A', marginTop: 4,
+  },
+  upgradePlanCtaText: { fontSize: 12, fontWeight: '800', color: '#fff' },
+
+  upgradeFooter: { fontSize: 11, textAlign: 'center', marginTop: 2 },
 });

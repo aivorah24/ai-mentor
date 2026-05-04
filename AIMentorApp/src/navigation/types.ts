@@ -26,6 +26,7 @@ export type DrawerParamList = {
   BhagavathaStories: undefined;
   StoryReader: { storyId: string; storyTitle: string };
   DailyHabits: undefined;
+  Subscription: undefined;
 };
 
 export type ParentDrawerParamList = {
