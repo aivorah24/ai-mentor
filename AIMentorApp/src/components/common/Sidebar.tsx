@@ -50,18 +50,21 @@ const TEACHER_NAV_ITEMS = [
 ];
 
 const PARENT_NAV_ITEMS = [
-  { label: 'Dashboard', icon: 'grid', screen: 'ParentDashboard', group: 'MENU' },
-  { label: 'Profile', icon: 'user', screen: 'ParentProfile', group: 'MENU' },
-  { label: 'My Kids', icon: 'users', screen: 'ParentMyKids', group: 'MENU' },
-  { label: 'Daily Tasks', icon: 'check-square', screen: 'ParentDailyTasks', group: 'MENU' },
-  { label: 'Schedule', icon: 'calendar', screen: 'ParentSchedule', group: 'MENU' },
-  { label: 'Learning', icon: 'book-open', screen: 'ParentLearning', group: 'CHILDREN' },
-  { label: 'Assignments', icon: 'check-square', screen: 'ParentAssignments', group: 'CHILDREN' },
-  { label: 'Progress', icon: 'bar-chart-2', screen: 'ParentProgress', group: 'CHILDREN' },
-  { label: 'Challenges', icon: 'target', screen: 'ParentChallenges', group: 'CHILDREN' },
-  { label: 'Messages', icon: 'message-square', screen: 'ParentMessages', group: 'CHILDREN' },
-  { label: 'Help', icon: 'help-circle', screen: 'ParentHelp', group: 'SYSTEM' },
-  { label: 'Settings', icon: 'settings', screen: 'ParentSettings', group: 'SYSTEM' },
+  { label: 'Dashboard',         icon: 'grid',           screen: 'ParentDashboard',    group: 'MENU',     premium: false },
+  { label: 'Profile',           icon: 'user',           screen: 'ParentProfile',      group: 'MENU',     premium: false },
+  { label: 'My Kids',           icon: 'users',          screen: 'ParentMyKids',       group: 'MENU',     premium: false },
+  { label: 'Daily Tasks',       icon: 'check-square',   screen: 'ParentDailyTasks',   group: 'MENU',     premium: false },
+  { label: 'Schedule',          icon: 'calendar',       screen: 'ParentSchedule',     group: 'MENU',     premium: false },
+  { label: 'Learning',          icon: 'book-open',      screen: 'ParentLearning',     group: 'CHILDREN', premium: false },
+  { label: 'Assignments',       icon: 'check-square',   screen: 'ParentAssignments',  group: 'CHILDREN', premium: false },
+  { label: 'Progress',          icon: 'bar-chart-2',    screen: 'ParentProgress',     group: 'CHILDREN', premium: false },
+  { label: 'AI Progress Reports', icon: 'file-text',    screen: 'ParentAIReports',    group: 'CHILDREN', premium: true  },
+  { label: 'Challenges',        icon: 'target',         screen: 'ParentChallenges',   group: 'CHILDREN', premium: false },
+  { label: 'Messages',          icon: 'message-square', screen: 'ParentMessages',     group: 'CHILDREN', premium: false },
+  { label: 'Parental Controls', icon: 'shield',         screen: 'ParentControls',     group: 'CHILDREN', premium: true  },
+  { label: 'Plans & Billing',   icon: 'credit-card',    screen: 'ParentSubscription', group: 'SYSTEM',   premium: false },
+  { label: 'Help',              icon: 'help-circle',    screen: 'ParentHelp',         group: 'SYSTEM',   premium: false },
+  { label: 'Settings',          icon: 'settings',       screen: 'ParentSettings',     group: 'SYSTEM',   premium: false },
 ];
 
 const THEME_OPTIONS: { id: ThemeMode; icon: string; label: string }[] = [
