@@ -6,6 +6,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import { spacing, radius } from '../../theme';
@@ -54,6 +55,8 @@ function safeIcon(name: string): string { return ICON_MAP[name] ?? 'book-open'; 
 
 export default function BhagavathaStoriesScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { user } = useAuth();
+  const isPro = user?.isPro === true;
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [stories, setStories] = useState<StoryMeta[]>([]);
@@ -84,7 +87,7 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
     return ids;
   }, [grouped]);
 
-  function isLocked(storyId: string) { return !freeIds.has(storyId); }
+  function isLocked(storyId: string) { return isPro ? false : !freeIds.has(storyId); }
 
   return (
     <ScreenLayout>
@@ -116,15 +119,27 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
           </LinearGradient>
 
           {/* Premium notice */}
-          <View style={[styles.premiumBar, { backgroundColor: AMBER + '12', borderColor: AMBER + '40' }]}>
-            <Feather name="lock" size={13} color={AMBER} />
-            <Text style={[styles.premiumBarText, { color: AMBER }]}>
-              1 free story per collection · Upgrade to Premium to unlock all
-            </Text>
-            <TouchableOpacity style={[styles.upgradeBtn, { backgroundColor: AMBER }]}>
-              <Text style={styles.upgradeBtnText}>Upgrade</Text>
-            </TouchableOpacity>
-          </View>
+          {isPro ? (
+            <View style={[styles.premiumBar, { backgroundColor: FOREST + '12', borderColor: FOREST + '40' }]}>
+              <Feather name="unlock" size={13} color={FOREST} />
+              <Text style={[styles.premiumBarText, { color: FOREST }]}>
+                Premium · All stories unlocked
+              </Text>
+            </View>
+          ) : (
+            <View style={[styles.premiumBar, { backgroundColor: AMBER + '12', borderColor: AMBER + '40' }]}>
+              <Feather name="lock" size={13} color={AMBER} />
+              <Text style={[styles.premiumBarText, { color: AMBER }]}>
+                1 free story per collection · Upgrade to Premium to unlock all
+              </Text>
+              <TouchableOpacity
+                style={[styles.upgradeBtn, { backgroundColor: AMBER }]}
+                onPress={() => navigation.navigate('Subscription')}
+              >
+                <Text style={styles.upgradeBtnText}>Upgrade</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {loading && (
             <View style={styles.center}>

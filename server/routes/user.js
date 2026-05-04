@@ -169,7 +169,7 @@ router.post('/sync', async (req, res) => {
         .upsert({ student_id: data.id }, { onConflict: 'student_id', ignoreDuplicates: true });
     }
 
-    // Pull roles from user_preferences (stored there since users table has no roles column)
+    // Pull roles + isPro from user_preferences (stored there since users table has no roles/isPro column)
     const prefs = await getPreferences(data.email);
     const rolesFromPrefs = Array.isArray(prefs?.roles) ? prefs.roles : null;
 
@@ -186,6 +186,7 @@ router.post('/sync', async (req, res) => {
       phone:              data.phone ?? null,
       onboardingComplete: data.onboarding_complete,
       photoUrl:           data.photo_url ?? null,
+      isPro:              prefs?.isPro === true,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -791,6 +792,29 @@ router.get('/check-verified', async (req, res) => {
 
     const accountStatus = pref?.data?.accountStatus || null;
     res.json({ verified: accountStatus === 'active', accountStatus });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /user/set-pro ──────────────────────────────────────────────────────
+// Admin-only: toggle isPro flag for a user (controls premium feature access)
+// Body: { email, isPro: true/false, adminEmail }
+router.patch('/set-pro', async (req, res) => {
+  try {
+    const { email, isPro, adminEmail } = req.body;
+    if (!email) return res.status(400).json({ error: 'email required' });
+    if (typeof isPro !== 'boolean') return res.status(400).json({ error: 'isPro must be true or false' });
+
+    // Verify admin access
+    if (!hasAdminExportAccess({ query: { email: adminEmail }, headers: req.headers })) {
+      return res.status(403).json({ error: 'Unauthorized — admin access required' });
+    }
+
+    const emailLc = email.toLowerCase().trim();
+    await setPreferences(emailLc, { isPro });
+
+    res.json({ ok: true, email: emailLc, isPro });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

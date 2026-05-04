@@ -206,5 +206,76 @@
     "avatarStyle": "default",
     "learningStyle": "hands-on",
     "updatedAt": "2026-04-19T07:32:29.029Z"
+  },
+  "c1c11eec1e4e2d84854b7355f473420018d2f14ca3de83445413ff5f50ae5646": {
+    "emailHash": "c1c11eec1e4e2d84854b7355f473420018d2f14ca3de83445413ff5f50ae5646",
+    "children": [
+      {
+        "name": "Aliya",
+        "grade": "Grade 3",
+        "school": "HIS",
+        "curriculum": "IB PYP",
+        "email": "arjun.student@aivorah.ai"
+      }
+    ],
+    "updatedAt": "2026-04-27T17:25:32.516Z",
+    "name": "Sai",
+    "role": "parent",
+    "school": "Hyderabad International School",
+    "location": "Salem",
+    "avatarStyle": "default",
+    "phone": "FD7lBAdi9uRw8g==:F1xWgPacD2m+FQp0:jluL4S/97oQakCg2TZGLZA=="
+  },
+  "f660ab912ec121d1b1e928a0bb4bc61b15f5ad44d5efdc4e1c92a25e99b8e44a": {
+    "emailHash": "f660ab912ec121d1b1e928a0bb4bc61b15f5ad44d5efdc4e1c92a25e99b8e44a",
+    "children": [
+      {
+        "name": "Arjun",
+        "grade": "Grade 3",
+        "curriculum": "IB PYP",
+        "school": "HIS",
+        "email": "arjun@test.com"
+      }
+    ],
+    "updatedAt": "2026-04-27T15:35:18.406Z"
+  },
+  "b6db32282c132abf3adae3f0ef6da06324007304c13771da8d061148c4c06eb3": {
+    "emailHash": "b6db32282c132abf3adae3f0ef6da06324007304c13771da8d061148c4c06eb3",
+    "children": [
+      {
+        "name": "Arjun",
+        "grade": "Grade 3",
+        "curriculum": "IB PYP",
+        "school": "HIS",
+        "email": "arjun99@aivorah.ai"
+      }
+    ],
+    "updatedAt": "2026-04-27T15:35:53.102Z"
+  },
+  "74706f32579843db029a7218d5fc108668ea2269ec5f71860a461af8c159b3c2": {
+    "emailHash": "74706f32579843db029a7218d5fc108668ea2269ec5f71860a461af8c159b3c2",
+    "name": "Ishaan Mehta",
+    "role": "student",
+    "grade": "Grade 4",
+    "curriculum": "IB PYP",
+    "school": "Hyderabad International School",
+    "location": "Hyderabad, India",
+    "avatarStyle": "gamer",
+    "interests": [
+      "english"
+    ],
+    "updatedAt": "2026-04-27T17:56:10.838Z"
+  },
+  "50370b8ac97f44715bf35ff176398d1ae6febb6e8513369d23049525167488d1": {
+    "emailHash": "50370b8ac97f44715bf35ff176398d1ae6febb6e8513369d23049525167488d1",
+    "learningStyle": "visual",
+    "bio": "I love maths",
+    "updatedAt": "2026-04-28T05:36:12.593Z"
+  },
+  "4cb3670081eda2780ae12110f693c71397e2f35b365b6231b3ac3d3e1d38b7d9": {
+    "emailHash": "4cb3670081eda2780ae12110f693c71397e2f35b365b6231b3ac3d3e1d38b7d9",
+    "learningStyle": "visual",
+    "bio": "Test bio",
+    "updatedAt": "2026-04-28T05:38:06.854Z"
   }
 }

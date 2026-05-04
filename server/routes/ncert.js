@@ -398,6 +398,14 @@ ${answerRules}
 - Each question should test understanding, not just memory
 ${isMaths ? '- NEVER ask about spelling, letters in words, grammar or colours' : ''}
 
+ACCURACY (CRITICAL):
+- Double-check every answer before finalising. The "correct" index MUST point to the genuinely correct option.
+- Do NOT include questions where the answer is debatable or ambiguous.
+- For maths: verify every calculation step-by-step before setting the correct answer.
+- For science/social studies: only use well-established facts, never obscure trivia.
+- The explanation must clearly justify WHY the correct answer is right and the others are wrong.
+- If you are not 100% sure of a fact, skip that question and generate a different one.
+
 ${context ? `Content for reference:\n${context}\n` : ''}
 
 CRITICAL: You MUST create EXACTLY ${questionCount} questions — not 5, not fewer. The array MUST have exactly ${questionCount} objects. If you return fewer than ${questionCount} questions, the response is invalid.

@@ -151,6 +151,20 @@ export default function ProfileScreen({ navigation }: any) {
                   <Text style={[styles.tagText, { color: colors.textDim }]}>{user.location}</Text>
                 </View>
               )}
+              {/* Plan badge */}
+              <TouchableOpacity
+                style={[styles.tag, (user as any)?.isPro
+                  ? { backgroundColor: '#C5A56A22', borderColor: '#C5A56A55' }
+                  : { backgroundColor: isDark ? 'rgba(147,176,172,0.18)' : 'rgba(147,176,172,0.22)', borderColor: isDark ? 'rgba(147,176,172,0.35)' : 'rgba(95,138,134,0.4)' }
+                ]}
+                onPress={() => navigation.navigate('Subscription')}
+                activeOpacity={0.7}
+              >
+                <Feather name={(user as any)?.isPro ? 'sun' : 'feather'} size={10} color={(user as any)?.isPro ? '#C5A56A' : colors.primary} />
+                <Text style={[styles.tagText, { color: (user as any)?.isPro ? '#C5A56A' : colors.primary }]}>
+                  {(user as any)?.isPro ? 'Pro Plan' : 'Free Plan'}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 

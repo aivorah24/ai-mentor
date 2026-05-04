@@ -42,6 +42,7 @@ const worldRoute       = require('./routes/world');
 const helpRoute        = require('./routes/help');
 const storiesRoute     = require('./routes/stories');
 const habitsRoute      = require('./routes/habits');
+const paymentRoute     = require('./routes/payment');
 
 // Heavy routes — lazy-loaded on first request to avoid startup crashes
 // (ingest uses pdf-parse/@napi-rs/canvas; ask/curriculum use @xenova/transformers)
@@ -86,6 +87,7 @@ app.use('/world',        worldRoute);
 app.use('/help',         helpRoute);
 app.use('/stories',      storiesRoute);
 app.use('/habits',       habitsRoute);
+app.use('/payment',      paymentRoute);
 
 
 app.get('/health', async (req, res) => {

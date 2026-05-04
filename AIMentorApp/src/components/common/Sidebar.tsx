@@ -32,6 +32,7 @@ const STUDENT_NAV_ITEMS = [
   { label: 'Leaderboard',      icon: 'award',        screen: 'Leaderboard',        group: 'FOCUS',   premium: false },
   { label: 'Progress',         icon: 'bar-chart-2',  screen: 'Progress',           group: 'FOCUS',   premium: false },
   { label: 'Rewards',          icon: 'gift',         screen: 'Rewards',            group: 'FOCUS',   premium: false },
+  { label: 'Plans & Billing',  icon: 'credit-card',  screen: 'Subscription',       group: 'SYSTEM',  premium: false },
   { label: 'Help Center',      icon: 'help-circle',  screen: 'HelpCenter',         group: 'SYSTEM',  premium: false },
   { label: 'Settings',         icon: 'settings',     screen: 'Settings',           group: 'SYSTEM',  premium: false },
 ];
@@ -135,8 +136,14 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
                       </View>
                     )}
                     {(item as any).premium && (
-                      <View style={styles.premiumBadge}>
-                        <Text style={styles.premiumBadgeText}>PRO</Text>
+                      <View style={styles.premiumIndicator}>
+                        {!(user as any)?.isPro && (
+                          <Feather name="lock" size={9} color="#C5A56A" style={{ marginRight: 3 }} />
+                        )}
+                        {(user as any)?.isPro && (
+                          <Feather name="star" size={9} color="#C5A56A" style={{ marginRight: 3 }} />
+                        )}
+                        <Text style={styles.premiumIndicatorText}>PRO</Text>
                       </View>
                     )}
                     {CHALLENGE_SCREENS.includes(item.screen) && unreadChallenges > 0 && (
@@ -242,7 +249,24 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.userName} numberOfLines={1}>{user.name}</Text>
-              <Text style={styles.userRole}>{user.role}</Text>
+              <View style={styles.userMetaRow}>
+                <Text style={styles.userRole}>{user.role}</Text>
+                <View style={[
+                  styles.planBadge,
+                  (user as any).isPro
+                    ? styles.planBadgePro
+                    : styles.planBadgeFree,
+                ]}>
+                  <Text style={[
+                    styles.planBadgeText,
+                    (user as any).isPro
+                      ? styles.planBadgeTextPro
+                      : styles.planBadgeTextFree,
+                  ]}>
+                    {(user as any).isPro ? 'PRO' : 'FREE'}
+                  </Text>
+                </View>
+              </View>
             </View>
           </View>
         )}
@@ -355,6 +379,26 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: '#C5A56A22', borderWidth: 1, borderColor: '#C5A56A55',
   },
   premiumBadgeText: { fontSize: 9, fontWeight: '800', color: '#C5A56A', letterSpacing: 0.4 },
+  lockBadge: {
+    width: 22, height: 22, borderRadius: 11,
+    backgroundColor: '#C5A56A15',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  premiumIndicator: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8,
+    backgroundColor: '#C5A56A18', borderWidth: 1, borderColor: '#C5A56A40',
+    marginLeft: 'auto',
+  },
+  premiumIndicatorText: {
+    fontSize: 8, fontWeight: '800', color: '#C5A56A',
+    letterSpacing: 0.6,
+  },
+  freeBadge: {
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6,
+    backgroundColor: '#93B0AC18', borderWidth: 1, borderColor: '#93B0AC40',
+  },
+  freeBadgeText: { fontSize: 9, fontWeight: '800', color: '#93B0AC', letterSpacing: 0.4 },
   footer: {
     borderTopWidth: 1,
     borderTopColor: c.borderColor,
@@ -491,6 +535,19 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   userAvatarImg: { width: 30, height: 30, borderRadius: 15 },
   userName: { fontSize: 13, fontWeight: '600', color: c.textMain },
   userRole: { fontSize: 11, color: c.textDim, textTransform: 'capitalize' },
+  userMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 1 },
+  planBadge: {
+    paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, borderWidth: 1,
+  },
+  planBadgeFree: {
+    backgroundColor: '#93B0AC18', borderColor: '#93B0AC40',
+  },
+  planBadgePro: {
+    backgroundColor: '#C5A56A22', borderColor: '#C5A56A55',
+  },
+  planBadgeText: { fontSize: 8, fontWeight: '800', letterSpacing: 0.5 },
+  planBadgeTextFree: { color: '#93B0AC' },
+  planBadgeTextPro: { color: '#C5A56A' },
 
   // Home confirm modal
   confirmOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 24 },

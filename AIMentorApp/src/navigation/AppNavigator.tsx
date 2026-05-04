@@ -32,6 +32,7 @@ import TopicLessonScreen from '../screens/student/TopicLessonScreen';
 import BhagavathaStoriesScreen from '../screens/student/BhagavathaStoriesScreen';
 import StoryReaderScreen from '../screens/student/StoryReaderScreen';
 import DailyHabitsScreen from '../screens/student/DailyHabitsScreen';
+import SubscriptionScreen from '../screens/student/SubscriptionScreen';
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
@@ -84,6 +85,7 @@ export default function AppNavigator() {
       <Drawer.Screen name="BhagavathaStories" component={BhagavathaStoriesScreen} />
       <Drawer.Screen name="StoryReader" component={StoryReaderScreen} />
       <Drawer.Screen name="DailyHabits" component={DailyHabitsScreen} />
+      <Drawer.Screen name="Subscription" component={SubscriptionScreen} />
     </Drawer.Navigator>
   );
 }
