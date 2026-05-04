@@ -4,11 +4,16 @@ const crypto   = require('crypto');
 const Razorpay = require('razorpay');
 const supabase = require('../services/supabase');
 
-// ── Razorpay instance ───────────────────────────────────────────
-const razorpay = new Razorpay({
-  key_id:     process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+// ── Razorpay instance (graceful if env vars missing) ────────────
+let razorpay;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  razorpay = new Razorpay({
+    key_id:     process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+} else {
+  console.warn('RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET not set — payment routes will return 503');
+}
 
 // ── Plan config ─────────────────────────────────────────────────
 const PLANS = {
@@ -58,6 +63,7 @@ async function setPreferences(email, updates) {
 // Body: { planId: 'pro' | 'pro_annual' | 'max', email, name }
 router.post('/create-order', async (req, res) => {
   try {
+    if (!razorpay) return res.status(503).json({ error: 'Payment service not configured' });
     const { planId, email, name } = req.body;
     if (!email) return res.status(400).json({ error: 'email required' });
 
