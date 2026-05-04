@@ -346,12 +346,30 @@ Give a very simple, friendly explanation (2-3 sentences max) in plain language a
   }
 });
 
+// ── Pre-generated challenge questions (curated & verified) ────────────────
+let CURATED_QUESTIONS = {};
+try {
+  CURATED_QUESTIONS = require('../data/challenge_questions.json');
+  console.log(`Loaded curated questions for ${Object.keys(CURATED_QUESTIONS).length} challenges`);
+} catch (e) {
+  console.warn('No curated challenge questions found, will use AI generation for all');
+}
+
 // ── POST /ncert/quiz ───────────────────────────────────────────────────────
-// Generates MCQ questions using Groq — supports all grades, subjects & difficulties
+// Serves pre-curated questions if available, otherwise generates via Groq
 router.post('/quiz', async (req, res) => {
   try {
-    const { topic, context = '', count = 5, grade = 'Grade 3', subject = 'Mathematics', difficulty = 'Easy', challengeType = '' } = req.body;
+    const { topic, context = '', count = 5, grade = 'Grade 3', subject = 'Mathematics', difficulty = 'Easy', challengeType = '', challengeId = '' } = req.body;
     if (!topic) return res.status(400).json({ error: 'topic is required' });
+
+    // ── Serve curated questions if available for this challenge ──
+    if (challengeId && CURATED_QUESTIONS[challengeId]) {
+      const curated = CURATED_QUESTIONS[challengeId].questions;
+      // Shuffle questions so each attempt feels different
+      const shuffled = [...curated].sort(() => Math.random() - 0.5);
+      console.log(`Serving ${shuffled.length} curated questions for challenge ${challengeId}`);
+      return res.json({ topic, questions: shuffled });
+    }
 
     const questionCount = Math.min(Math.max(parseInt(count) || 5, 3), 15);
     const isMaths = subject === 'Mathematics';

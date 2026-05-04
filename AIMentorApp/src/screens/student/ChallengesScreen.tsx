@@ -184,6 +184,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
           subject: ch.subject || 'Mathematics',
           difficulty: ch.difficulty || 'Easy',
           challengeType: ch.type || '',
+          challengeId: ch.id || '',
         }),
       });
       if (qRes.ok) {

@@ -1,0 +1,172 @@
+{
+  "pyp_g4_school_1": {
+    "topic": "Term 1 Review",
+    "questions": [
+      { "question": "What is 456 + 378?", "options": ["A. 824", "B. 834", "C. 814", "D. 844"], "correct": 1, "explanation": "456 + 378 = 834. Add ones: 6+8=14, carry 1. Tens: 5+7+1=13, carry 1. Hundreds: 4+3+1=8." },
+      { "question": "Which of these is a prime number?", "options": ["A. 9", "B. 15", "C. 11", "D. 21"], "correct": 2, "explanation": "11 is a prime number because it can only be divided by 1 and itself. 9=3×3, 15=3×5, 21=3×7." },
+      { "question": "What is the value of the digit 7 in the number 3,725?", "options": ["A. 7", "B. 70", "C. 700", "D. 7000"], "correct": 2, "explanation": "In 3,725, the digit 7 is in the hundreds place, so its value is 700." },
+      { "question": "Which state of matter has a fixed shape and fixed volume?", "options": ["A. Gas", "B. Liquid", "C. Plasma", "D. Solid"], "correct": 3, "explanation": "Solids have a fixed shape and fixed volume because their particles are tightly packed together." },
+      { "question": "What is 8 × 7?", "options": ["A. 54", "B. 56", "C. 48", "D. 63"], "correct": 1, "explanation": "8 × 7 = 56. You can think of it as 8 × 7 = (8 × 5) + (8 × 2) = 40 + 16 = 56." },
+      { "question": "Which is the largest ocean on Earth?", "options": ["A. Atlantic Ocean", "B. Indian Ocean", "C. Pacific Ocean", "D. Arctic Ocean"], "correct": 2, "explanation": "The Pacific Ocean is the largest ocean, covering about one-third of Earth's surface." },
+      { "question": "What type of sentence asks a question?", "options": ["A. Declarative", "B. Exclamatory", "C. Imperative", "D. Interrogative"], "correct": 3, "explanation": "An interrogative sentence asks a question and ends with a question mark (?)." },
+      { "question": "What is 1,000 − 367?", "options": ["A. 633", "B. 643", "C. 733", "D. 637"], "correct": 0, "explanation": "1,000 − 367 = 633. Borrow from thousands: 10−7=3, 9−6=3, 9−3=6." },
+      { "question": "Which part of a plant makes food using sunlight?", "options": ["A. Root", "B. Stem", "C. Leaf", "D. Flower"], "correct": 2, "explanation": "Leaves make food through photosynthesis, using sunlight, water, and carbon dioxide." },
+      { "question": "What fraction is equivalent to 2/4?", "options": ["A. 3/4", "B. 1/2", "C. 1/3", "D. 2/3"], "correct": 1, "explanation": "2/4 = 1/2. When you divide both the numerator and denominator of 2/4 by 2, you get 1/2." }
+    ]
+  },
+
+  "pyp_g4_school_2": {
+    "topic": "Full Year Review",
+    "questions": [
+      { "question": "What is 3/5 + 1/5?", "options": ["A. 4/10", "B. 4/5", "C. 3/10", "D. 2/5"], "correct": 1, "explanation": "When denominators are the same, add the numerators: 3/5 + 1/5 = 4/5." },
+      { "question": "How many millilitres are in 2 litres?", "options": ["A. 200", "B. 20", "C. 2000", "D. 20000"], "correct": 2, "explanation": "1 litre = 1,000 millilitres, so 2 litres = 2,000 millilitres." },
+      { "question": "Which force pulls objects towards the centre of the Earth?", "options": ["A. Friction", "B. Magnetism", "C. Gravity", "D. Tension"], "correct": 2, "explanation": "Gravity is the force that pulls all objects towards the centre of the Earth." },
+      { "question": "What is 72 ÷ 9?", "options": ["A. 7", "B. 9", "C. 6", "D. 8"], "correct": 3, "explanation": "72 ÷ 9 = 8 because 9 × 8 = 72." },
+      { "question": "Which continent is India located in?", "options": ["A. Europe", "B. Africa", "C. Asia", "D. Australia"], "correct": 2, "explanation": "India is located in Asia, which is the largest continent in the world." },
+      { "question": "What is the perimeter of a rectangle with length 8 cm and width 5 cm?", "options": ["A. 13 cm", "B. 40 cm", "C. 26 cm", "D. 21 cm"], "correct": 2, "explanation": "Perimeter = 2 × (length + width) = 2 × (8 + 5) = 2 × 13 = 26 cm." },
+      { "question": "What is the past tense of 'run'?", "options": ["A. Runned", "B. Running", "C. Ran", "D. Runs"], "correct": 2, "explanation": "'Run' is an irregular verb. Its past tense is 'ran', not 'runned'." },
+      { "question": "Which organ pumps blood throughout the body?", "options": ["A. Brain", "B. Lungs", "C. Liver", "D. Heart"], "correct": 3, "explanation": "The heart is a muscular organ that pumps blood throughout the body via the circulatory system." },
+      { "question": "What is 15 × 12?", "options": ["A. 170", "B. 180", "C. 160", "D. 190"], "correct": 1, "explanation": "15 × 12 = 180. You can calculate: 15 × 10 = 150, 15 × 2 = 30, then 150 + 30 = 180." },
+      { "question": "Which instrument is used to measure temperature?", "options": ["A. Ruler", "B. Balance", "C. Thermometer", "D. Measuring cylinder"], "correct": 2, "explanation": "A thermometer is used to measure temperature, usually in degrees Celsius (°C) or Fahrenheit (°F)." },
+      { "question": "What is the area of a square with side 6 cm?", "options": ["A. 12 cm²", "B. 24 cm²", "C. 36 cm²", "D. 30 cm²"], "correct": 2, "explanation": "Area of a square = side × side = 6 × 6 = 36 cm²." },
+      { "question": "Which planet is known as the Red Planet?", "options": ["A. Venus", "B. Jupiter", "C. Mars", "D. Saturn"], "correct": 2, "explanation": "Mars is called the Red Planet because its surface contains iron oxide (rust), giving it a reddish appearance." },
+      { "question": "What is 5,280 rounded to the nearest hundred?", "options": ["A. 5,200", "B. 5,300", "C. 5,000", "D. 5,280"], "correct": 1, "explanation": "Look at the tens digit (8). Since 8 ≥ 5, round up: 5,280 rounds to 5,300." },
+      { "question": "What is a synonym for 'happy'?", "options": ["A. Sad", "B. Angry", "C. Joyful", "D. Tired"], "correct": 2, "explanation": "A synonym is a word with a similar meaning. 'Joyful' means full of joy, which is similar to 'happy'." },
+      { "question": "How many sides does a hexagon have?", "options": ["A. 5", "B. 7", "C. 8", "D. 6"], "correct": 3, "explanation": "A hexagon has 6 sides. The prefix 'hexa-' means six." }
+    ]
+  },
+
+  "pyp_g4_school_3": {
+    "topic": "Inquiry Skills",
+    "questions": [
+      { "question": "What is the first step in the scientific method?", "options": ["A. Conduct an experiment", "B. Ask a question", "C. Draw a conclusion", "D. Make a hypothesis"], "correct": 1, "explanation": "The scientific method starts with asking a question about something you observe or want to understand." },
+      { "question": "What is a hypothesis?", "options": ["A. A proven fact", "B. An educated guess that can be tested", "C. The final answer", "D. A type of experiment"], "correct": 1, "explanation": "A hypothesis is an educated guess or prediction that can be tested through an experiment." },
+      { "question": "In an experiment, what do we call the thing we change on purpose?", "options": ["A. Result", "B. Conclusion", "C. Variable we change (independent)", "D. Variable we measure (dependent)"], "correct": 2, "explanation": "The independent variable is the one thing we change on purpose in an experiment to see what effect it has." },
+      { "question": "Why is it important to repeat an experiment?", "options": ["A. To waste time", "B. To get different answers each time", "C. To make sure results are reliable", "D. Because the teacher said so"], "correct": 2, "explanation": "Repeating experiments helps ensure results are reliable and not just due to chance or error." },
+      { "question": "Which of these is an observation, not an opinion?", "options": ["A. The flower is beautiful", "B. The flower is red and has 5 petals", "C. The flower smells nice", "D. The flower is the best one"], "correct": 1, "explanation": "An observation uses facts you can see and measure. 'Red' and '5 petals' are measurable facts, while 'beautiful' and 'best' are opinions." },
+      { "question": "A bar graph is best used to:", "options": ["A. Show how something changes over time", "B. Compare amounts of different things", "C. Show parts of a whole", "D. Show the location of places"], "correct": 1, "explanation": "Bar graphs are great for comparing different categories or amounts side by side." },
+      { "question": "What makes a good research question?", "options": ["A. It can be answered with yes or no", "B. It is too broad to answer", "C. It is specific and can be investigated", "D. It already has a known answer"], "correct": 2, "explanation": "A good research question is specific enough to investigate and doesn't already have an obvious answer." },
+      { "question": "What is the purpose of a conclusion in an experiment?", "options": ["A. To start a new experiment", "B. To list the materials used", "C. To summarise what you learned from the results", "D. To write the hypothesis again"], "correct": 2, "explanation": "A conclusion summarises what you learned from the experiment and whether your hypothesis was supported or not." }
+    ]
+  },
+
+  "pyp_g4_school_4": {
+    "topic": "General Knowledge",
+    "questions": [
+      { "question": "How many days are there in a leap year?", "options": ["A. 364", "B. 365", "C. 366", "D. 367"], "correct": 2, "explanation": "A leap year has 366 days because February has 29 days instead of the usual 28." },
+      { "question": "What is 25% of 200?", "options": ["A. 25", "B. 75", "C. 50", "D. 100"], "correct": 2, "explanation": "25% means 25 out of 100. 25% of 200 = (25/100) × 200 = 50." },
+      { "question": "Which gas do humans breathe out?", "options": ["A. Oxygen", "B. Nitrogen", "C. Carbon dioxide", "D. Hydrogen"], "correct": 2, "explanation": "Humans breathe in oxygen and breathe out carbon dioxide as a waste product of respiration." },
+      { "question": "What is the capital of Japan?", "options": ["A. Beijing", "B. Seoul", "C. Bangkok", "D. Tokyo"], "correct": 3, "explanation": "Tokyo is the capital city of Japan and one of the most populated cities in the world." },
+      { "question": "Which shape has exactly 4 equal sides and 4 right angles?", "options": ["A. Rectangle", "B. Rhombus", "C. Square", "D. Parallelogram"], "correct": 2, "explanation": "A square has 4 equal sides AND 4 right angles (90°). A rhombus has 4 equal sides but not necessarily right angles." },
+      { "question": "What is the main function of the roots of a plant?", "options": ["A. To make food", "B. To absorb water and nutrients", "C. To attract insects", "D. To produce seeds"], "correct": 1, "explanation": "Roots absorb water and nutrients from the soil and also anchor the plant in the ground." },
+      { "question": "Which word is an adverb in this sentence: 'She ran quickly to school'?", "options": ["A. She", "B. Ran", "C. Quickly", "D. School"], "correct": 2, "explanation": "An adverb describes how an action is done. 'Quickly' tells us how she ran." },
+      { "question": "How many vertices does a triangular prism have?", "options": ["A. 4", "B. 5", "C. 6", "D. 8"], "correct": 2, "explanation": "A triangular prism has 6 vertices — 3 on each triangular face." },
+      { "question": "What is the boiling point of water in degrees Celsius?", "options": ["A. 50°C", "B. 75°C", "C. 100°C", "D. 200°C"], "correct": 2, "explanation": "Water boils at 100°C (212°F) at standard atmospheric pressure." },
+      { "question": "If a train leaves at 9:45 AM and the journey takes 2 hours 30 minutes, what time does it arrive?", "options": ["A. 11:45 AM", "B. 12:15 PM", "C. 12:00 PM", "D. 11:30 AM"], "correct": 1, "explanation": "9:45 AM + 2 hours = 11:45 AM + 30 minutes = 12:15 PM." }
+    ]
+  },
+
+  "pyp_g4_olympiad_1": {
+    "topic": "Olympiad Maths",
+    "questions": [
+      { "question": "What is the next number in the pattern: 2, 6, 18, 54, ...?", "options": ["A. 108", "B. 162", "C. 72", "D. 216"], "correct": 1, "explanation": "Each number is multiplied by 3: 2×3=6, 6×3=18, 18×3=54, 54×3=162." },
+      { "question": "A rectangle has a perimeter of 30 cm. If its length is 9 cm, what is its width?", "options": ["A. 7 cm", "B. 6 cm", "C. 5 cm", "D. 21 cm"], "correct": 1, "explanation": "Perimeter = 2×(length+width). 30 = 2×(9+width). 15 = 9+width. Width = 6 cm." },
+      { "question": "If 3 pencils cost ₹15, how much do 7 pencils cost?", "options": ["A. ₹30", "B. ₹35", "C. ₹25", "D. ₹45"], "correct": 1, "explanation": "One pencil costs ₹15 ÷ 3 = ₹5. So 7 pencils cost 7 × ₹5 = ₹35." },
+      { "question": "What is the sum of all angles in a triangle?", "options": ["A. 90°", "B. 180°", "C. 270°", "D. 360°"], "correct": 1, "explanation": "The sum of all three interior angles of any triangle is always 180°." },
+      { "question": "A number when divided by 6 gives a quotient of 8 and remainder of 3. What is the number?", "options": ["A. 48", "B. 51", "C. 45", "D. 54"], "correct": 1, "explanation": "Number = (divisor × quotient) + remainder = (6 × 8) + 3 = 48 + 3 = 51." },
+      { "question": "How many factors does the number 24 have?", "options": ["A. 6", "B. 8", "C. 4", "D. 10"], "correct": 1, "explanation": "Factors of 24: 1, 2, 3, 4, 6, 8, 12, 24. That's 8 factors." },
+      { "question": "If you fold a square piece of paper in half 3 times and then unfold it, how many equal sections will you see?", "options": ["A. 6", "B. 3", "C. 8", "D. 4"], "correct": 2, "explanation": "Each fold doubles the sections: 1 fold = 2, 2 folds = 4, 3 folds = 8 sections." },
+      { "question": "Amy has 3 times as many stickers as Ben. Together they have 48 stickers. How many does Amy have?", "options": ["A. 12", "B. 24", "C. 36", "D. 16"], "correct": 2, "explanation": "Let Ben = x, Amy = 3x. x + 3x = 48. 4x = 48. x = 12. Amy = 3 × 12 = 36." }
+    ]
+  },
+
+  "pyp_g4_olympiad_2": {
+    "topic": "Olympiad Science",
+    "questions": [
+      { "question": "Which type of rock is formed when molten lava cools and hardens?", "options": ["A. Sedimentary", "B. Metamorphic", "C. Igneous", "D. Fossil"], "correct": 2, "explanation": "Igneous rocks form when magma or lava cools and solidifies. 'Igneous' comes from the Latin word for fire." },
+      { "question": "What is the process by which plants make their own food called?", "options": ["A. Respiration", "B. Digestion", "C. Photosynthesis", "D. Germination"], "correct": 2, "explanation": "Photosynthesis is the process where plants use sunlight, water, and carbon dioxide to make glucose (food) and release oxygen." },
+      { "question": "Which planet in our solar system has the most moons?", "options": ["A. Jupiter", "B. Saturn", "C. Uranus", "D. Neptune"], "correct": 1, "explanation": "Saturn has the most confirmed moons (over 140), more than any other planet in our solar system." },
+      { "question": "Sound travels fastest through which medium?", "options": ["A. Air", "B. Water", "C. Steel", "D. Vacuum"], "correct": 2, "explanation": "Sound travels fastest through solids like steel because the particles are closest together, allowing vibrations to pass quickly." },
+      { "question": "What is the smallest unit of life?", "options": ["A. Organ", "B. Tissue", "C. Cell", "D. Atom"], "correct": 2, "explanation": "The cell is the smallest unit of life. All living organisms are made up of one or more cells." },
+      { "question": "Which part of the human body is responsible for filtering blood?", "options": ["A. Heart", "B. Lungs", "C. Kidneys", "D. Stomach"], "correct": 2, "explanation": "The kidneys filter waste products from the blood and produce urine to remove them from the body." },
+      { "question": "What causes day and night on Earth?", "options": ["A. Earth revolving around the Sun", "B. Earth rotating on its axis", "C. The Moon blocking the Sun", "D. The Sun moving around the Earth"], "correct": 1, "explanation": "Day and night are caused by Earth rotating (spinning) on its axis once every 24 hours. The side facing the Sun has day, the other side has night." },
+      { "question": "Which of these is a renewable source of energy?", "options": ["A. Coal", "B. Natural gas", "C. Solar energy", "D. Petroleum"], "correct": 2, "explanation": "Solar energy is renewable because it comes from the Sun, which will continue to shine for billions of years. Coal, gas, and petroleum are non-renewable fossil fuels." }
+    ]
+  },
+
+  "pyp_g4_olympiad_3": {
+    "topic": "Logical Reasoning",
+    "questions": [
+      { "question": "If all Bloops are Razzles and all Razzles are Lazzles, then all Bloops are definitely:", "options": ["A. Razzles only", "B. Lazzles only", "C. Both Razzles and Lazzles", "D. None of the above"], "correct": 2, "explanation": "If all Bloops are Razzles, and all Razzles are Lazzles, then all Bloops must be both Razzles and Lazzles (transitive property)." },
+      { "question": "What comes next: 1, 4, 9, 16, 25, ...?", "options": ["A. 30", "B. 36", "C. 35", "D. 49"], "correct": 1, "explanation": "These are perfect squares: 1², 2², 3², 4², 5², so next is 6² = 36." },
+      { "question": "Monday is to Tuesday as Friday is to:", "options": ["A. Thursday", "B. Wednesday", "C. Saturday", "D. Sunday"], "correct": 2, "explanation": "Monday is followed by Tuesday. Similarly, Friday is followed by Saturday." },
+      { "question": "If APPLE is coded as 1-16-16-12-5, what is the code for CAT?", "options": ["A. 3-1-20", "B. 3-2-20", "C. 4-1-20", "D. 3-1-19"], "correct": 0, "explanation": "Each letter is replaced by its position in the alphabet: C=3, A=1, T=20. So CAT = 3-1-20." },
+      { "question": "A clock shows 3:15. What is the angle between the hour and minute hands?", "options": ["A. 0°", "B. 7.5°", "C. 15°", "D. 90°"], "correct": 1, "explanation": "At 3:15, the minute hand is at 3 (90°). The hour hand has moved 7.5° past 3 (it moves 0.5° per minute). So the angle is 7.5°." },
+      { "question": "In a row of children, Riya is 7th from the left and 13th from the right. How many children are in the row?", "options": ["A. 18", "B. 19", "C. 20", "D. 21"], "correct": 1, "explanation": "Total = position from left + position from right − 1 = 7 + 13 − 1 = 19 children." },
+      { "question": "Which number does not belong: 2, 5, 10, 17, 26, 35?", "options": ["A. 10", "B. 26", "C. 35", "D. 17"], "correct": 2, "explanation": "The pattern is: 1²+1=2, 2²+1=5, 3²+1=10, 4²+1=17, 5²+1=26, 6²+1=37. So 35 doesn't belong — it should be 37." },
+      { "question": "If you rearrange the letters 'ETRWA', you get the name of a:", "options": ["A. Country", "B. Animal", "C. Something you drink", "D. Colour"], "correct": 2, "explanation": "Rearranging ETRWA gives WATER, which is something you drink." }
+    ]
+  },
+
+  "pyp_g4_olympiad_4": {
+    "topic": "Olympiad English",
+    "questions": [
+      { "question": "Which word is a conjunction in the sentence: 'I wanted to play but it was raining'?", "options": ["A. Wanted", "B. Play", "C. But", "D. Raining"], "correct": 2, "explanation": "A conjunction connects two parts of a sentence. 'But' connects 'I wanted to play' and 'it was raining'." },
+      { "question": "What is the plural of 'child'?", "options": ["A. Childs", "B. Childes", "C. Children", "D. Childrens"], "correct": 2, "explanation": "'Child' is an irregular noun. Its plural form is 'children', not 'childs'." },
+      { "question": "Which sentence uses the correct form of 'their/there/they're'?", "options": ["A. Their going to the park", "B. They're going to the park", "C. There going to the park", "D. There're going to the park"], "correct": 1, "explanation": "'They're' is short for 'they are'. 'Their' shows possession. 'There' refers to a place." },
+      { "question": "What does the prefix 'un-' mean in the word 'unhappy'?", "options": ["A. Very", "B. Again", "C. Not", "D. Before"], "correct": 2, "explanation": "The prefix 'un-' means 'not'. So 'unhappy' means 'not happy'." },
+      { "question": "Which figure of speech is used in 'The wind howled through the trees'?", "options": ["A. Simile", "B. Personification", "C. Alliteration", "D. Metaphor"], "correct": 1, "explanation": "Personification gives human qualities to non-human things. Wind cannot actually 'howl' — that's a human/animal action." },
+      { "question": "What is the antonym of 'ancient'?", "options": ["A. Old", "B. Modern", "C. Historic", "D. Classic"], "correct": 1, "explanation": "An antonym is a word with the opposite meaning. 'Modern' means new or current, which is the opposite of 'ancient' (very old)." },
+      { "question": "In the sentence 'The clever fox jumped over the lazy dog', which word is an adjective describing the dog?", "options": ["A. Clever", "B. Jumped", "C. Over", "D. Lazy"], "correct": 3, "explanation": "'Lazy' is the adjective that describes the dog. 'Clever' describes the fox." },
+      { "question": "Which word is spelled correctly?", "options": ["A. Neccessary", "B. Necessary", "C. Necesary", "D. Neccesary"], "correct": 1, "explanation": "The correct spelling is 'necessary' — one 'c' and two 's' letters." }
+    ]
+  },
+
+  "pyp_g4_advanced_1": {
+    "topic": "Advanced Word Problems",
+    "questions": [
+      { "question": "A shop sells notebooks for ₹45 each. If Priya has ₹500, how many notebooks can she buy and how much money will be left?", "options": ["A. 11 notebooks, ₹5 left", "B. 10 notebooks, ₹50 left", "C. 11 notebooks, ₹0 left", "D. 12 notebooks, ₹0 left"], "correct": 0, "explanation": "500 ÷ 45 = 11 remainder 5. She can buy 11 notebooks (11 × 45 = 495) with ₹5 left over." },
+      { "question": "A rectangular garden is 12 m long and 8 m wide. If fencing costs ₹25 per metre, what is the total cost of fencing?", "options": ["A. ₹500", "B. ₹800", "C. ₹1,000", "D. ₹2,400"], "correct": 2, "explanation": "Perimeter = 2 × (12 + 8) = 40 m. Cost = 40 × ₹25 = ₹1,000." },
+      { "question": "A train travels at 60 km per hour. How far will it travel in 2 hours and 30 minutes?", "options": ["A. 120 km", "B. 150 km", "C. 130 km", "D. 180 km"], "correct": 1, "explanation": "2 hours 30 minutes = 2.5 hours. Distance = speed × time = 60 × 2.5 = 150 km." },
+      { "question": "Ravi scored 78, 85, 92 and 65 marks in four tests. What is his average score?", "options": ["A. 78", "B. 82", "C. 80", "D. 85"], "correct": 2, "explanation": "Average = (78 + 85 + 92 + 65) ÷ 4 = 320 ÷ 4 = 80." },
+      { "question": "A water tank holds 500 litres. If 35 litres are used every day, after how many days will the tank have less than 100 litres?", "options": ["A. 10 days", "B. 12 days", "C. 14 days", "D. 11 days"], "correct": 1, "explanation": "We need to use more than 400L (500−100). After 11 days: 11×35=385L used, 115L left (still above 100). After 12 days: 12×35=420L used, 80L left (below 100). So after 12 days." },
+      { "question": "A pizza is cut into 8 equal slices. Meera ate 3 slices and her brother ate 2 slices. What fraction of the pizza is left?", "options": ["A. 5/8", "B. 3/8", "C. 1/2", "D. 1/4"], "correct": 1, "explanation": "Total eaten = 3 + 2 = 5 slices. Left = 8 − 5 = 3 slices. Fraction left = 3/8." }
+    ]
+  },
+
+  "pyp_g4_advanced_2": {
+    "topic": "Advanced Science",
+    "questions": [
+      { "question": "Which part of the digestive system absorbs most of the nutrients from food?", "options": ["A. Stomach", "B. Large intestine", "C. Small intestine", "D. Oesophagus"], "correct": 2, "explanation": "The small intestine is where most nutrient absorption happens. Its inner walls have tiny finger-like projections called villi that increase surface area for absorption." },
+      { "question": "What is the function of white blood cells?", "options": ["A. Carry oxygen", "B. Fight infections and diseases", "C. Help blood clot", "D. Carry nutrients"], "correct": 1, "explanation": "White blood cells are part of the immune system. They fight bacteria, viruses, and other infections that enter the body." },
+      { "question": "In a food chain: Grass → Grasshopper → Frog → Snake → Eagle. What is the frog called?", "options": ["A. Producer", "B. Primary consumer", "C. Secondary consumer", "D. Tertiary consumer"], "correct": 2, "explanation": "Grass is the producer, grasshopper is the primary consumer (eats plants), frog is the secondary consumer (eats the primary consumer)." },
+      { "question": "What happens to water when it reaches 0°C?", "options": ["A. It boils", "B. It evaporates", "C. It freezes", "D. Nothing changes"], "correct": 2, "explanation": "Water freezes at 0°C, changing from liquid to solid (ice). This is called the freezing point of water." },
+      { "question": "Which layer of the Earth do we live on?", "options": ["A. Mantle", "B. Outer core", "C. Inner core", "D. Crust"], "correct": 3, "explanation": "We live on the Earth's crust, which is the thin outermost layer. It includes continents and ocean floors." },
+      { "question": "How does a compass work?", "options": ["A. It uses GPS satellites", "B. Its magnetic needle aligns with Earth's magnetic field", "C. It uses batteries", "D. It reads the position of the Sun"], "correct": 1, "explanation": "A compass has a magnetised needle that freely rotates to align with Earth's magnetic field, pointing towards magnetic north." }
+    ]
+  },
+
+  "pyp_g4_advanced_3": {
+    "topic": "Advanced Social Studies",
+    "questions": [
+      { "question": "What is the name of the imaginary line that divides the Earth into Northern and Southern hemispheres?", "options": ["A. Prime Meridian", "B. Tropic of Cancer", "C. Equator", "D. International Date Line"], "correct": 2, "explanation": "The Equator is an imaginary line at 0° latitude that divides the Earth into the Northern and Southern hemispheres." },
+      { "question": "Which type of government is led by a king or queen?", "options": ["A. Democracy", "B. Republic", "C. Monarchy", "D. Dictatorship"], "correct": 2, "explanation": "A monarchy is a form of government where a king or queen is the head of state. The position is usually inherited." },
+      { "question": "What are the three main types of resources?", "options": ["A. Gold, silver, and bronze", "B. Natural, human, and capital", "C. Water, air, and soil", "D. Plants, animals, and minerals"], "correct": 1, "explanation": "Resources are classified as natural (from nature), human (people's skills and labour), and capital (tools, machines, money used to produce goods)." },
+      { "question": "Which right means that every child should be able to go to school?", "options": ["A. Right to play", "B. Right to education", "C. Right to food", "D. Right to shelter"], "correct": 1, "explanation": "The Right to Education means every child has the right to free and quality education, as stated in the UN Convention on the Rights of the Child." },
+      { "question": "What is the main purpose of a map legend (key)?", "options": ["A. To show the title of the map", "B. To explain the symbols used on the map", "C. To show the scale of the map", "D. To indicate north direction"], "correct": 1, "explanation": "A map legend (or key) explains what the symbols, colours, and patterns on the map represent." },
+      { "question": "Why do people in different parts of the world experience different seasons at the same time?", "options": ["A. Because of the Earth's distance from the Sun", "B. Because of the Earth's tilted axis", "C. Because of the Moon's position", "D. Because of wind patterns"], "correct": 1, "explanation": "Earth's axis is tilted at 23.5°. As Earth orbits the Sun, different hemispheres tilt towards or away from the Sun, causing opposite seasons." }
+    ]
+  },
+
+  "pyp_g4_advanced_4": {
+    "topic": "Advanced Language",
+    "questions": [
+      { "question": "Which sentence is written in the passive voice?", "options": ["A. The dog chased the cat", "B. The cat was chased by the dog", "C. The dog is chasing the cat", "D. The dog will chase the cat"], "correct": 1, "explanation": "In passive voice, the subject receives the action. 'The cat was chased by the dog' — the cat (subject) receives the action of being chased." },
+      { "question": "What type of poem has exactly 3 lines with a 5-7-5 syllable pattern?", "options": ["A. Limerick", "B. Sonnet", "C. Haiku", "D. Free verse"], "correct": 2, "explanation": "A Haiku is a Japanese poem with 3 lines: 5 syllables, 7 syllables, and 5 syllables." },
+      { "question": "In the sentence 'Although it was raining, we went to the park', what is 'Although it was raining'?", "options": ["A. Main clause", "B. Subordinate clause", "C. Phrase", "D. Simple sentence"], "correct": 1, "explanation": "It is a subordinate (dependent) clause — it cannot stand alone as a complete sentence and begins with 'Although'." },
+      { "question": "What does the idiom 'break the ice' mean?", "options": ["A. To actually break something frozen", "B. To start a conversation in an awkward situation", "C. To be very cold", "D. To make someone angry"], "correct": 1, "explanation": "'Break the ice' means to do or say something to reduce tension or awkwardness, especially when meeting someone new." },
+      { "question": "Which is a compound sentence?", "options": ["A. The big brown dog ran fast", "B. I went to the shop and bought some milk", "C. Running through the park quickly", "D. Because it was hot outside"], "correct": 1, "explanation": "A compound sentence has two independent clauses joined by a conjunction. 'I went to the shop' AND 'bought some milk' are joined by 'and'." },
+      { "question": "What is the correct way to write a book title in a sentence?", "options": ["A. I read harry potter last week", "B. I read 'harry potter' last week", "C. I read Harry Potter last week", "D. I read \"Harry Potter\" last week"], "correct": 2, "explanation": "Book titles should be capitalised (each important word starts with a capital letter). In handwriting they are underlined; in typing they are often italicised." }
+    ]
+  }
+}
