@@ -6,7 +6,27 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  pool: true,           // reuse connections
+  maxConnections: 3,
+  maxMessages: 10,
+  rateDelta: 2000,      // min 2s between emails
+  rateLimit: 5,         // max 5 emails per rateDelta
 });
+
+// Retry helper — Gmail SMTP can be flaky, retry up to 3 times
+async function sendWithRetry(mailOptions, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`[mailer] Sent to ${mailOptions.to} (attempt ${attempt}), messageId: ${info.messageId}`);
+      return info;
+    } catch (err) {
+      console.warn(`[mailer] Attempt ${attempt}/${retries} failed for ${mailOptions.to}: ${err.message}`);
+      if (attempt < retries) await new Promise(r => setTimeout(r, 2000 * attempt));
+      else throw err;
+    }
+  }
+}
 
 async function sendCredentialsEmail({ to, childName, loginId, password, studentId }) {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to) return;
@@ -18,7 +38,7 @@ async function sendCredentialsEmail({ to, childName, loginId, password, studentI
       ? `<tr><td style="padding:8px 0;color:#888;font-size:13px">Password</td><td style="padding:8px 0;font-family:monospace;font-size:14px;color:#1a1a1a">${password}</td></tr>`
       : '';
 
-    await transporter.sendMail({
+    await sendWithRetry({
       from: `"Aivorah" <${process.env.EMAIL_USER}>`,
       to,
       subject: `${childName}'s Aivorah Login Details`,
@@ -63,7 +83,7 @@ async function sendCredentialsEmail({ to, childName, loginId, password, studentI
 async function sendVerificationEmail({ to, name, verifyUrl }) {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to) return;
   try {
-    await transporter.sendMail({
+    await sendWithRetry({
       from: `"Aivorah" <${process.env.EMAIL_USER}>`,
       to,
       subject: 'Verify your Aivorah account',
@@ -107,7 +127,7 @@ async function sendWelcomeEmail({ to, name, role }) {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to) return;
   const roleLabel = role === 'teacher' ? 'Teacher' : role === 'parent' ? 'Parent' : 'Student';
   try {
-    await transporter.sendMail({
+    await sendWithRetry({
       from: `"Aivorah" <${process.env.EMAIL_USER}>`,
       to,
       subject: `Welcome to Aivorah, ${name}!`,
@@ -149,7 +169,7 @@ async function sendWelcomeEmail({ to, name, role }) {
 async function sendPasswordResetEmail({ to, resetLink }) {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to || !resetLink) return;
   try {
-    await transporter.sendMail({
+    await sendWithRetry({
       from: `"Aivorah" <${process.env.EMAIL_USER}>`,
       to,
       subject: 'Reset your Aivorah password',

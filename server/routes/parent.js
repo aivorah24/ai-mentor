@@ -222,8 +222,8 @@ router.post('/:parentEmail/children/link-created', async (req, res) => {
     const passwordToStore = initialPassword || undefined;
     await setStudentMeta(cleanEmail, resolvedStudentId, cleanParentEmail, firebaseUid, accountStatus, age, passwordToStore);
 
-    // Email credentials to parent (fire-and-forget)
-    sendCredentialsEmail({
+    // Email credentials to parent
+    await sendCredentialsEmail({
       to: cleanParentEmail,
       childName: cleanName,
       loginId: cleanEmail,

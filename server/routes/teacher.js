@@ -129,8 +129,8 @@ router.post('/:teacherEmail/students/link-created', async (req, res) => {
       { onConflict: 'user_email' }
     );
 
-    // Email credentials to teacher (fire-and-forget)
-    sendCredentialsEmail({
+    // Email credentials to teacher
+    await sendCredentialsEmail({
       to: cleanTeacherEmail,
       childName: toTitleCase(String(name).trim()),
       loginId: cleanEmail,
