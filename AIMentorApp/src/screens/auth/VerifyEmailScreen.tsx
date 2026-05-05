@@ -120,7 +120,9 @@ export default function VerifyEmailScreen() {
     setChecking(true);
     setVerifyError('');
     try {
-      // Check our Supabase-based verification (branded email flow)
+      // Only check our Supabase-based verification (accountStatus = 'active')
+      // Do NOT fallback to Firebase emailVerified — Google SSO users are always
+      // verified by Firebase but must still click the Aivorah activation link
       const res = await fetch(`${SERVER_URL}/user/check-verified?email=${encodeURIComponent(user.email)}`);
       if (res.ok) {
         const data = await res.json();
@@ -129,15 +131,7 @@ export default function VerifyEmailScreen() {
           return;
         }
       }
-      // Fallback: also check Firebase emailVerified (Google SSO users)
-      if (auth.currentUser) {
-        await auth.currentUser.reload();
-        if (auth.currentUser.emailVerified) {
-          updateUser({ emailVerified: true });
-          return;
-        }
-      }
-      setVerifyError('Email not yet verified. Please check your inbox and click the link.');
+      setVerifyError('Email not yet verified. Please check your inbox and click the activation link.');
     } catch (err: any) {
       setVerifyError(err.message || 'Something went wrong.');
     } finally {

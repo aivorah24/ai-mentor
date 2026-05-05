@@ -18,6 +18,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgGrad, Stop, Rect } from 'react-native-svg';
 import { useAuth, UserRole } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import SERVER_URL from '../../config/serverUrl';
 
 // ─────────────────────────────────────────────────────────
@@ -217,10 +218,13 @@ function FormInput({ label, value, onChange, placeholder, secureTextEntry, keybo
 // ─────────────────────────────────────────────────────────
 // LOGIN MODAL
 // ─────────────────────────────────────────────────────────
-function LoginModal({ visible, onClose, onSwitchSignup, onSwitchForgot, signInEmail, signInGoogle }: {
+function LoginModal({ visible, onClose, onSwitchSignup, onSwitchForgot, signInEmail, signInGoogle, addParentRoleSSO, externalError, onClearExternalError }: {
   visible: boolean; onClose: () => void; onSwitchSignup: () => void; onSwitchForgot: () => void;
   signInEmail: (email: string, pass: string, role: UserRole) => Promise<void>;
   signInGoogle: (role: UserRole) => Promise<void>;
+  addParentRoleSSO: (email: string) => Promise<void>;
+  externalError?: string | null;
+  onClearExternalError?: () => void;
 }) {
   const [role, setRole] = useState<UserRole>('student');
   const [email, setEmail] = useState('');
@@ -229,6 +233,12 @@ function LoginModal({ visible, onClose, onSwitchSignup, onSwitchForgot, signInEm
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Show external error (e.g. role mismatch from Google SSO) and re-open modal
+  useEffect(() => {
+    // Don't show internal signals as error text — LandingScreen handles these via Alert
+    if (externalError && !externalError.startsWith('TEACHER_ADD_PARENT:')) setError(externalError);
+  }, [externalError]);
 
   async function submit() {
     setError('');
@@ -247,8 +257,29 @@ function LoginModal({ visible, onClose, onSwitchSignup, onSwitchForgot, signInEm
     setError('');
     setGoogleLoading(true);
     try { await signInGoogle(role); onClose(); }
-    catch (e: any) { 
-      setError(e.message || 'An error occurred during Google signin.'); 
+    catch (e: any) {
+      if (e.message?.startsWith('TEACHER_ADD_PARENT:')) {
+        const teacherEmail = e.message.replace('TEACHER_ADD_PARENT:', '');
+        setGoogleLoading(false);
+        Alert.alert(
+          'Teacher Account Found',
+          'This email is already registered as a Teacher. Would you like to add a Parent profile so you can switch between both?',
+          [
+            { text: 'No', style: 'cancel' },
+            {
+              text: 'Yes, Add Parent Profile',
+              onPress: async () => {
+                setGoogleLoading(true);
+                try { await addParentRoleSSO(teacherEmail); onClose(); }
+                catch { setError('Could not add Parent profile. Please try again.'); }
+                finally { setGoogleLoading(false); }
+              },
+            },
+          ]
+        );
+        return;
+      }
+      setError(e.message || 'An error occurred during Google signin.');
     }
     finally { setGoogleLoading(false); }
   }
@@ -297,10 +328,12 @@ function LoginModal({ visible, onClose, onSwitchSignup, onSwitchForgot, signInEm
 // ─────────────────────────────────────────────────────────
 const CURRICULA = ['NCERT', 'IB PYP', 'CBSE', 'Cambridge'];
 
-function SignupModal({ visible, onClose, onSwitchLogin, signUpEmail, signInGoogle }: {
+function SignupModal({ visible, onClose, onSwitchLogin, signUpEmail, signInGoogle, addParentRole, addParentRoleSSO }: {
   visible: boolean; onClose: () => void; onSwitchLogin: () => void;
   signUpEmail: (name: string, email: string, pass: string, role: UserRole, curriculum?: string) => Promise<void>;
   signInGoogle: (role: UserRole) => Promise<void>;
+  addParentRole: (email: string, password: string) => Promise<void>;
+  addParentRoleSSO: (email: string) => Promise<void>;
 }) {
   const [role, setRole]             = useState<UserRole>('student');
   const [curriculum, setCurriculum] = useState('NCERT');
@@ -354,8 +387,34 @@ function SignupModal({ visible, onClose, onSwitchLogin, signUpEmail, signInGoogl
     setLoading(true);
     try {
       await signUpEmail(nameTrim, emailTrim, pass, role, showCurriculum ? curriculum : undefined);
-      onClose(); // auth state change will route user to onboarding automatically
+      onClose();
     } catch (e: any) {
+      // Teacher trying to sign up as Parent → offer to add Parent profile
+      if (e.message?.startsWith('TEACHER_ADD_PARENT:')) {
+        setLoading(false);
+        Alert.alert(
+          'Teacher Account Found',
+          'This email is already registered as a Teacher. Would you like to add a Parent profile so you can switch between both?',
+          [
+            { text: 'No', style: 'cancel' },
+            {
+              text: 'Yes, Add Parent Profile',
+              onPress: async () => {
+                setLoading(true);
+                try {
+                  await addParentRole(emailTrim, pass);
+                  onClose();
+                } catch {
+                  setError('Could not add Parent profile. Please check your password and try again.');
+                } finally {
+                  setLoading(false);
+                }
+              },
+            },
+          ]
+        );
+        return;
+      }
       setError(e.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -367,6 +426,33 @@ function SignupModal({ visible, onClose, onSwitchLogin, signUpEmail, signInGoogl
     setGoogleLoading(true);
     try { await signInGoogle(role); onClose(); }
     catch (e: any) {
+      // Teacher signing in as Parent via Google SSO → offer to club profiles
+      if (e.message?.startsWith('TEACHER_ADD_PARENT:')) {
+        const teacherEmail = e.message.replace('TEACHER_ADD_PARENT:', '');
+        setGoogleLoading(false);
+        Alert.alert(
+          'Teacher Account Found',
+          'This email is already registered as a Teacher. Would you like to add a Parent profile so you can switch between both?',
+          [
+            { text: 'No', style: 'cancel' },
+            {
+              text: 'Yes, Add Parent Profile',
+              onPress: async () => {
+                setGoogleLoading(true);
+                try {
+                  await addParentRoleSSO(teacherEmail);
+                  onClose();
+                } catch {
+                  setError('Could not add Parent profile. Please try again.');
+                } finally {
+                  setGoogleLoading(false);
+                }
+              },
+            },
+          ]
+        );
+        return;
+      }
       setError(e.message || 'An error occurred during Google signin.');
     } finally { setGoogleLoading(false); }
   }
@@ -581,12 +667,30 @@ const HOW_IT_WORKS = [
 // MAIN SCREEN
 // ─────────────────────────────────────────────────────────
 export default function LandingScreen() {
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle, demoLogin, testLogin } = useAuth();
+  const { colors: c } = useTheme();
+  const { signInWithEmail, signUpWithEmail, signInWithGoogle, demoLogin, testLogin, addParentRoleToTeacher, addParentRoleToTeacherSSO, authError, clearAuthError, logout } = useAuth();
   const [showTestAccounts, setShowTestAccounts] = useState(false);
   const [testCurriculum, setTestCurriculum] = useState<'IB PYP' | 'NCERT' | 'CBSE'>('IB PYP');
   const [showLogin,    setShowLogin]    = useState(false);
   const [showSignup,   setShowSignup]   = useState(false);
   const [showForgot,   setShowForgot]   = useState(false);
+  const [teacherAddParentEmail, setTeacherAddParentEmail] = useState<string | null>(null);
+  const [addingParentRole, setAddingParentRole] = useState(false);
+
+  // Re-open login modal when authError is set (e.g. Google SSO role mismatch)
+  useEffect(() => {
+    if (!authError) return;
+    // Teacher trying to add Parent via Google SSO → show custom confirmation modal
+    if (authError.startsWith('TEACHER_ADD_PARENT:')) {
+      const teacherEmail = authError.replace('TEACHER_ADD_PARENT:', '');
+      clearAuthError();
+      setShowLogin(false);
+      setShowSignup(false);
+      setTeacherAddParentEmail(teacherEmail);
+      return;
+    }
+    setShowLogin(true);
+  }, [authError]);
   const heroEnter = useRef(new Animated.Value(0)).current;
   const sectionsEnter = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<any>(null);
@@ -1086,11 +1190,14 @@ export default function LandingScreen() {
       {/* ── AUTH MODALS ───────────────────────────── */}
       <LoginModal
         visible={showLogin}
-        onClose={() => setShowLogin(false)}
+        onClose={() => { setShowLogin(false); clearAuthError(); }}
         onSwitchSignup={switchToSignup}
         onSwitchForgot={switchToForgot}
         signInEmail={signInWithEmail}
         signInGoogle={signInWithGoogle}
+        addParentRoleSSO={addParentRoleToTeacherSSO}
+        externalError={authError}
+        onClearExternalError={clearAuthError}
       />
       <SignupModal
         visible={showSignup}
@@ -1098,12 +1205,65 @@ export default function LandingScreen() {
         onSwitchLogin={switchToLogin}
         signUpEmail={signUpWithEmail}
         signInGoogle={signInWithGoogle}
+        addParentRole={addParentRoleToTeacher}
+        addParentRoleSSO={addParentRoleToTeacherSSO}
       />
       <ForgotModal
         visible={showForgot}
         onClose={() => setShowForgot(false)}
         onSwitchLogin={switchToLogin}
       />
+
+      {/* ── TEACHER → PARENT CLUB MODAL ──────────────────── */}
+      <Modal visible={!!teacherAddParentEmail} transparent animationType="fade" onRequestClose={() => { setTeacherAddParentEmail(null); logout(); }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <View style={{ backgroundColor: c.cardDark, borderRadius: 20, borderWidth: 1, borderColor: c.borderColor, padding: 32, width: '100%', maxWidth: 420, alignItems: 'center', gap: 16 }}>
+            {/* Icon */}
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: c.primary + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.primary + '40' }}>
+              <Feather name="users" size={26} color={c.primary} />
+            </View>
+            {/* Title */}
+            <Text style={{ fontSize: 22, fontWeight: '800', color: c.textMain, textAlign: 'center', letterSpacing: -0.3 }}>
+              Teacher Account Found
+            </Text>
+            {/* Body */}
+            <Text style={{ fontSize: 14, color: c.textMuted, textAlign: 'center', lineHeight: 22 }}>
+              This email is already registered as a{' '}
+              <Text style={{ color: c.primary, fontWeight: '700' }}>Teacher</Text>.
+              {'\n\n'}
+              Would you like to add a{' '}
+              <Text style={{ color: c.accentGreen, fontWeight: '700' }}>Parent</Text>
+              {' '}profile? Both profiles will be linked and you can switch between them anytime.
+            </Text>
+            {/* Yes button */}
+            <TouchableOpacity
+              style={{ backgroundColor: c.primary, borderRadius: 12, paddingVertical: 15, width: '100%', alignItems: 'center', opacity: addingParentRole ? 0.6 : 1, marginTop: 4 }}
+              disabled={addingParentRole}
+              activeOpacity={0.85}
+              onPress={async () => {
+                if (!teacherAddParentEmail) return;
+                setAddingParentRole(true);
+                try {
+                  await addParentRoleToTeacherSSO(teacherAddParentEmail);
+                  setTeacherAddParentEmail(null);
+                } catch {
+                  setTeacherAddParentEmail(null);
+                } finally {
+                  setAddingParentRole(false);
+                }
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
+                {addingParentRole ? 'Setting up...' : 'Yes, Add Parent Profile'}
+              </Text>
+            </TouchableOpacity>
+            {/* No button */}
+            <TouchableOpacity style={{ paddingVertical: 8 }} onPress={() => { setTeacherAddParentEmail(null); logout(); }}>
+              <Text style={{ color: c.textDim, fontSize: 13 }}>No, sign out</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
