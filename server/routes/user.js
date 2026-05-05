@@ -576,6 +576,16 @@ router.post('/repair-teacher-student', async (req, res) => {
   }
 });
 
+// ── GET /user/role?email= ─────────────────────────────────────
+// Returns the registered role for an email (used on signup to show helpful error)
+router.get('/role', async (req, res) => {
+  const email = (req.query.email || '').toLowerCase().trim();
+  if (!email) return res.status(400).json({ error: 'email required' });
+  const { data, error } = await supabase.from('users').select('role').eq('email', email).maybeSingle();
+  if (error || !data) return res.status(404).json({ error: 'User not found' });
+  res.json({ role: data.role });
+});
+
 // ── PATCH /user/add-role ─────────────────────────────────────
 // Adds a second role to an existing user (e.g. teacher → teacher+parent)
 // Body: { email, role }  where role is the role to ADD

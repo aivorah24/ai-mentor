@@ -45,6 +45,8 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
+  authError: string | null;
+  clearAuthError: () => void;
   login: (user: User) => void;
   logout: () => void;
   updateUser: (fields: Partial<User>) => void;
@@ -54,13 +56,17 @@ interface AuthContextType {
   signInWithGoogle: (role: UserRole) => Promise<void>;
   demoLogin: (role?: UserRole) => void;
   testLogin: (email: string) => void;
-  switchRole: (newRole: UserRole) => void;  // switch between teacher/parent profiles
+  switchRole: (newRole: UserRole) => void;
+  addParentRoleToTeacher: (email: string, password: string) => Promise<void>;
+  addParentRoleToTeacherSSO: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
   loading: true,
+  authError: null,
+  clearAuthError: () => {},
   login: () => {},
   logout: () => {},
   updateUser: () => {},
@@ -71,6 +77,8 @@ const AuthContext = createContext<AuthContextType>({
   demoLogin: () => {},
   testLogin: () => {},
   switchRole: () => {},
+  addParentRoleToTeacher: async () => {},
+  addParentRoleToTeacherSSO: async () => {},
 });
 
 // Fetch full profile from Supabase (includes curriculum, grade, location, onboardingComplete)
@@ -122,6 +130,11 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User>> {
 }
 
 let _pendingRole: UserRole = 'student';
+let _pendingRoleSet = false; // true only when role was explicitly chosen this session (not the default)
+let _isAddingRole = false; // true when an existing user is adding a second role (teacher↔parent only)
+
+// AsyncStorage key — persists across multiple onAuthStateChanged fires (module flag gets cleared too early)
+const PENDING_VERIFY_KEY = 'aivorah_pending_verify_email';
 
 // Module-level variable to survive onAuthStateChanged state resets.
 // When a teacher clicks "Add Parent Profile", we store 'teacher' here
@@ -138,6 +151,8 @@ function isSystemGeneratedStudentEmail(email: string) {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+  function clearAuthError() { setAuthError(null); }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -158,7 +173,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const allowAutoGen = isSystemGeneratedStudentEmail(email);
         const allowParentActivated = supaProfile.accountStatus === 'active';
         const storedRole = (firebaseUser.displayName?.split('|')[1] as UserRole) || (supaProfile.role as UserRole) || _pendingRole || 'student';
-        const emailVerified = firebaseUser.emailVerified || allowAutoGen || allowParentActivated;
+
+        // Block first-time Google SSO users until they click the Aivorah verification link.
+        // Google users always have firebaseUser.emailVerified = true, so we can't rely on that.
+        // Instead: if the user signed in via Google AND onboarding isn't complete (new user),
+        // require accountStatus === 'active' (set by server when they click the email link).
+        // AsyncStorage flag is kept as a secondary signal but we no longer race-depend on it.
+        const isGoogleProvider = firebaseUser.providerData.some(p => p.providerId === 'google.com');
+        const isExistingUser = supaProfile.onboardingComplete === true;
+        const pendingVerifyEmail = await AsyncStorage.getItem(PENDING_VERIFY_KEY).catch(() => null);
+        let requiresVerification: boolean;
+        if (isGoogleProvider && !isExistingUser && !allowAutoGen) {
+          // New Google SSO user (teacher/parent/student) — must verify via Aivorah link
+          requiresVerification = supaProfile.accountStatus !== 'active';
+        } else {
+          // Email/password users or returning verified users — use accountStatus or AsyncStorage flag
+          requiresVerification = (pendingVerifyEmail === email) || supaProfile.accountStatus === 'pending_verification';
+        }
+        // Clear the AsyncStorage flag once the user is actually verified (accountStatus = active)
+        if (pendingVerifyEmail === email && allowParentActivated) {
+          await AsyncStorage.removeItem(PENDING_VERIFY_KEY).catch(() => {});
+        }
+        const emailVerified = !requiresVerification && (firebaseUser.emailVerified || allowAutoGen || allowParentActivated);
         const baseUser: User = {
           name:          firebaseUser.displayName?.split('|')[0] || firebaseUser.displayName || 'User',
           email,
@@ -168,16 +204,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const resolvedRole = (supaProfile.role as UserRole) || baseUser.role;
 
-        // allowParentActivated skips onboarding only for parent-created student accounts
-        // (their grade/curriculum was set by the parent). Self-registered parents/teachers
-        // who verified their email still need to go through onboarding.
-        const isParentCreatedStudent = allowParentActivated && resolvedRole === 'student';
-        const onboardingComplete =
+        // Role validation — only run when the user explicitly chose a role this session.
+        // After a page reload _pendingRole resets to 'student' (default) — skip validation then
+        // to avoid signing out a returning teacher/parent who navigated back to the app.
+        if (_pendingRoleSet && _pendingRole && supaProfile.role) {
+          const registeredRoles: UserRole[] = Array.isArray(supaProfile.roles) && supaProfile.roles.length > 0
+            ? supaProfile.roles as UserRole[]
+            : [supaProfile.role as UserRole];
+          if (!registeredRoles.includes(_pendingRole)) {
+            // Teacher trying to add Parent role → keep session alive, show club-profile alert
+            if (supaProfile.role === 'teacher' && _pendingRole === 'parent') {
+              setAuthError(`TEACHER_ADD_PARENT:${email}`);
+              _pendingRoleSet = false;
+              setLoading(false);
+              return; // Don't set user, don't sign out
+            }
+            const registeredLabel = supaProfile.role === 'teacher' ? 'Teacher'
+              : supaProfile.role === 'parent' ? 'Parent'
+              : 'Student';
+            setAuthError(`This account is registered as a ${registeredLabel}. Please select the correct role and try again.`);
+            signOut(auth).catch(() => {});
+            _pendingRoleSet = false;
+            setLoading(false);
+            return; // Don't set user
+          }
+        }
+        _pendingRoleSet = false; // clear after validation so page reloads don't re-trigger it
+
+        // Only skip onboarding for parent-created student accounts (auto-generated @aivorah.student emails)
+        // Regular users who verified via Aivorah email still need onboarding regardless of accountStatus
+        const isParentCreatedStudent = allowAutoGen && resolvedRole === 'student';
+
+        // When a teacher is adding a parent profile, force parent onboarding
+        const isAddingNewRole = _isAddingRole;
+        if (_isAddingRole) _isAddingRole = false;
+
+        const onboardingComplete = isAddingNewRole ? false : (
           allowAutoGen ||
           isParentCreatedStudent ||
           supaProfile.onboardingComplete === true ||
-          savedLocal.onboardingComplete === true;
-        setUser({ ...baseUser, ...savedLocal, ...supaProfile, onboardingComplete, role: resolvedRole });
+          savedLocal.onboardingComplete === true
+        );
+        const activeRole = isAddingNewRole ? _pendingRole : resolvedRole;
+        setUser({ ...baseUser, ...savedLocal, ...supaProfile, onboardingComplete, role: activeRole });
 
         // Persist locally
         AsyncStorage.setItem(PROFILE_KEY, JSON.stringify({ ...savedLocal, ...supaProfile })).catch(() => {});
@@ -271,7 +340,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithEmail(email: string, password: string, role: UserRole) {
-    _pendingRole = role;
+    _pendingRole = role; _pendingRoleSet = true;
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
 
@@ -295,7 +364,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const name = profile.name || cred.user.displayName?.split('|')[0] || cred.user.displayName || '';
       const resolvedRole: UserRole = (profile.role as UserRole) || role;
-      const isParentCreatedStudent = allowParentActivated && resolvedRole === 'student';
+
+      // Validate that the selected role matches the registered role(s)
+      // Allow teacher+parent dual-role users to login with either role
+      const registeredRoles: UserRole[] = Array.isArray(profile.roles) && profile.roles.length > 0
+        ? profile.roles as UserRole[]
+        : [resolvedRole];
+      if (!registeredRoles.includes(role)) {
+        // Sign out silently in background — don't await so modal stays open to show error
+        signOut(auth).catch(() => {});
+        const registeredLabel = resolvedRole === 'teacher' ? 'Teacher'
+          : resolvedRole === 'parent' ? 'Parent'
+          : 'Student';
+        throw new Error(`This account is registered as a ${registeredLabel}. Please select the correct role and try again.`);
+      }
+
+      const isParentCreatedStudent = allowAutoGen && resolvedRole === 'student';
       const onboardingComplete =
         allowAutoGen ||
         isParentCreatedStudent ||
@@ -369,7 +453,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signUpWithEmail(name: string, email: string, password: string, role: UserRole, curriculum?: string) {
-    _pendingRole = role;
+    _pendingRole = role; _pendingRoleSet = true;
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: `${name}|${role}` });
@@ -385,19 +469,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const frontendOrigin = Platform.OS === 'web' && typeof window !== 'undefined'
         ? window.location.origin
         : 'https://aivorah.ai';
-      fetch(`${SERVER_URL}/user/send-verification`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name, frontendOrigin }),
-      }).catch(() => {});
+      const safeName = name?.trim() || email.split('@')[0]; // fallback if name is empty
+      try {
+        const verifyRes = await fetch(`${SERVER_URL}/user/send-verification`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, name: safeName, frontendOrigin }),
+        });
+        if (!verifyRes.ok) {
+          const errData = await verifyRes.json().catch(() => ({}));
+          console.error('[signup] send-verification failed:', errData.error || verifyRes.status);
+        }
+      } catch (verifyErr: any) {
+        console.error('[signup] send-verification network error:', verifyErr.message);
+      }
       // onAuthStateChanged will fire automatically and show VerifyEmailScreen
     } catch (error: any) {
       console.error('Firebase Signup Error:', error.code, error.message);
       let message = 'An unexpected error occurred during signup.';
       switch (error.code) {
-        case 'auth/email-already-in-use':
-          message = 'This email address is already in use.';
+        case 'auth/email-already-in-use': {
+          // Fetch existing role to determine how to handle
+          let existingRole = '';
+          try {
+            const res = await fetch(`${SERVER_URL}/user/role?email=${encodeURIComponent(email)}`);
+            if (res.ok) existingRole = (await res.json()).role || '';
+          } catch {}
+
+          // Only Teacher → Parent dual-role is supported
+          // Throw a special tagged error so LandingScreen can show a confirmation dialog
+          if (existingRole === 'teacher' && role === 'parent') {
+            throw new Error(`TEACHER_ADD_PARENT:${email}`);
+          }
+
+          // All other combinations — show clear error
+          const roleLabel = existingRole === 'teacher' ? 'Teacher'
+            : existingRole === 'parent' ? 'Parent'
+            : existingRole === 'student' ? 'Student'
+            : '';
+          message = roleLabel
+            ? `This email is already registered as a ${roleLabel}. Please login using your existing account, or sign up with a different email.`
+            : 'This email is already registered. Please login using your existing account, or sign up with a different email.';
           break;
+        }
         case 'auth/invalid-email':
           message = 'The email address is badly formatted.';
           break;
@@ -416,7 +530,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithGoogle(role: UserRole) {
-    _pendingRole = role;
+    _pendingRole = role; _pendingRoleSet = true;
     if (Platform.OS === 'web') {
       try {
         const provider = new GoogleAuthProvider();
@@ -428,6 +542,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           AsyncStorage.getItem(PROFILE_KEY).catch(() => null),
         ]);
         const savedLocal: Partial<User> = savedRaw ? JSON.parse(savedRaw) : {};
+
+        // Validate selected role matches registered role(s) for existing accounts
+        const existingRole = profile.role as UserRole | undefined;
+        if (existingRole) {
+          const registeredRoles: UserRole[] = Array.isArray(profile.roles) && profile.roles.length > 0
+            ? profile.roles as UserRole[]
+            : [existingRole];
+          if (!registeredRoles.includes(role)) {
+            // Teacher signing in as Parent via Google SSO → offer to club profiles
+            // Do NOT sign out — keep the Google session alive so addParentRoleToTeacherSSO works
+            if (existingRole === 'teacher' && role === 'parent') {
+              throw new Error(`TEACHER_ADD_PARENT:${email}`);
+            }
+            // All other mismatches — sign out and show error
+            signOut(auth).catch(() => {});
+            const registeredLabel = existingRole === 'teacher' ? 'Teacher'
+              : existingRole === 'parent' ? 'Parent'
+              : 'Student';
+            throw new Error(`This account is registered as a ${registeredLabel}. Please select the correct role and try again.`);
+          }
+        }
+
         const onboardingComplete =
           profile.onboardingComplete === true ||
           savedLocal.onboardingComplete === true;
@@ -439,14 +575,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           school:             profile.school     || undefined,
           location:           profile.location   || 'Hyderabad, India',
           onboardingComplete,
-          emailVerified:      cred.user.emailVerified,
+          // First-time Google SSO users must verify via Aivorah email before entering
+          emailVerified: existingRole ? cred.user.emailVerified : false,
         };
-        setUser(newUser);
-        fetch(`${SERVER_URL}/user/sync`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, role }),
-        }).catch(() => {});
+
+        // Send Aivorah activation email if not yet verified (covers new users + returning unverified)
+        const isAlreadyVerified = profile.accountStatus === 'active';
+        if (!isAlreadyVerified) {
+          // Persist to AsyncStorage — survives multiple onAuthStateChanged fires
+          await AsyncStorage.setItem(PENDING_VERIFY_KEY, email).catch(() => {});
+
+          // Sync user to Supabase first so user_preferences row exists for token storage
+          await fetch(`${SERVER_URL}/user/sync`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, role }),
+          }).catch(() => {});
+
+          // Now send the verification email
+          const frontendOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://aivorah.ai';
+          try {
+            const vRes = await fetch(`${SERVER_URL}/user/send-verification`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, name, frontendOrigin }),
+            });
+            if (!vRes.ok) {
+              const d = await vRes.json().catch(() => ({}));
+              console.error('[google-sso] send-verification failed:', d.error || vRes.status);
+            }
+          } catch (err: any) {
+            console.error('[google-sso] send-verification network error:', err.message);
+          }
+        } else {
+          fetch(`${SERVER_URL}/user/sync`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, role }),
+          }).catch(() => {});
+        }
       } catch (error: any) {
+        // Re-throw our custom errors (role mismatch etc.) directly — don't replace message
+        if (!error.code) throw error;
         console.error('Google Signin Error:', error.code, error.message);
         let message = 'An error occurred during Google signin.';
         if (error.code === 'auth/popup-closed-by-user') {
@@ -459,6 +627,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       demoLogin(role);
     }
+  }
+
+  // Called when a Teacher confirms they want to add a Parent profile (dual-role)
+  // Signs in with existing credentials, adds parent role, triggers parent onboarding
+  async function addParentRoleToTeacher(email: string, password: string) {
+    await signInWithEmailAndPassword(auth, email, password);
+    await fetch(`${SERVER_URL}/user/add-role`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, role: 'parent' }),
+    });
+    _pendingRole = 'parent'; _pendingRoleSet = true;
+    _isAddingRole = true;
+    // onAuthStateChanged will fire and route to parent onboarding
+  }
+
+  // Google SSO variant — user is already signed in, no password needed
+  async function addParentRoleToTeacherSSO(email: string) {
+    await fetch(`${SERVER_URL}/user/add-role`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, role: 'parent' }),
+    });
+    _pendingRole = 'parent'; _pendingRoleSet = true;
+    _isAddingRole = true;
+    _pendingReturnRole = 'teacher';
+
+    // user state is null at this point (onAuthStateChanged returned early without setUser)
+    // Build user from scratch using Firebase current user + Supabase profile
+    const firebaseUser = auth.currentUser;
+    const profile = await fetchSupabaseProfile(email);
+    const name = firebaseUser?.displayName || profile.name || email.split('@')[0];
+
+    setUser({
+      name,
+      email,
+      role: 'parent',
+      roles: ['teacher', 'parent'],
+      activeRole: 'parent',
+      onboardingComplete: false,
+      emailVerified: true,
+      accountStatus: profile.accountStatus,
+      school: profile.school,
+      location: profile.location,
+      curriculum: profile.curriculum,
+    });
   }
 
   // Switch between teacher/parent profiles (dual-role users only)
@@ -595,9 +809,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, isAuthenticated: !!user, loading,
+      authError, clearAuthError,
       login, logout, updateUser, saveProfile,
       signInWithEmail, signUpWithEmail, signInWithGoogle,
-      demoLogin, testLogin, switchRole,
+      demoLogin, testLogin, switchRole, addParentRoleToTeacher, addParentRoleToTeacherSSO,
     }}>
       {children}
     </AuthContext.Provider>

@@ -28,19 +28,20 @@ import { auth } from './src/config/firebase';
 
 function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
   const { colors: c } = useTheme();
+  const { updateUser } = useAuth();
   const [status, setStatus] = useState<'checking' | 'success' | 'error'>('checking');
 
   useEffect(() => {
     async function handle() {
       if (Platform.OS !== 'web' || typeof window === 'undefined') {
-        navigateToApp();
+        updateUser({ emailVerified: true });
+        onComplete();
         return;
       }
       const params = new URLSearchParams(window.location.search);
 
       if (params.get('verified') === '1') {
         setStatus('success');
-        setTimeout(navigateToApp, 2500);
         return;
       }
 
@@ -56,7 +57,6 @@ function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
         try {
           await applyActionCode(auth, oobCode);
           setStatus('success');
-          setTimeout(navigateToApp, 2500);
         } catch {
           setStatus('error');
         }
@@ -64,12 +64,11 @@ function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
       }
 
       setStatus('success');
-      setTimeout(navigateToApp, 2500);
     }
     handle();
   }, []);
 
-  function navigateToApp() {
+  function goToApp() {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.location.replace('/');
     } else {
@@ -93,17 +92,26 @@ function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
             ? 'Please wait...'
             : isError
               ? 'This link may have already been used or expired. Go back to the app and click "Resend Email" to get a new one.'
-              : 'Your account is active. Taking you to the app...'}
+              : 'Your email has been verified successfully. Tap Continue to set up your account.'}
         </Text>
-        <TouchableOpacity
-          style={[styles.verifySuccessButton, { backgroundColor: isError ? c.primary : c.accentGreen }]}
-          onPress={navigateToApp}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.verifySuccessButtonText}>
-            {isError ? 'Back to App' : 'Continue'}
-          </Text>
-        </TouchableOpacity>
+        {status === 'success' && (
+          <TouchableOpacity
+            style={[styles.verifySuccessButton, { backgroundColor: c.primary }]}
+            onPress={goToApp}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.verifySuccessButtonText}>Continue</Text>
+          </TouchableOpacity>
+        )}
+        {isError && (
+          <TouchableOpacity
+            style={[styles.verifySuccessButton, { backgroundColor: c.primary }]}
+            onPress={goToApp}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.verifySuccessButtonText}>Back to App</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
