@@ -37,7 +37,10 @@ function sanitizeDisplayedAIText(text: string): string {
     .replace(/^#{1,6}\s+/gm, '')
     .replace(/^\s*[-•]\s+/gm, '')
     .replace(/`{1,3}/g, '')
-    .replace(/\r/g, '');
+    .replace(/\r/g, '')
+    .replace(/\s+(Step\s*\d+[\s:→–])/g, '\n$1')
+    .replace(/\s+(Answer\s*:)/gi, '\n$1')
+    .replace(/\s+(Try this\s*:|Now,?\s*can you|Here'?s? a practice)/gi, '\n$1');
 }
 
 // Fallback suggestions per grade — only used if curriculum fetch fails
@@ -131,6 +134,35 @@ export default function AICoachScreen({ navigation }: any) {
       .catch(() => {}); // keep fallback on error
   }, [userGrade, userCurriculum]);
 
+  // ── Preprocess text for TTS to avoid mis-readings ────────────────────────
+  function preprocessForTTS(raw: string): string {
+    const ORDINALS: Record<string, string> = {
+      '1': 'one', '2': 'two', '3': 'three', '4': 'four', '5': 'five',
+      '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine', '10': 'ten',
+      '11': 'eleven', '12': 'twelve', '100': 'one hundred',
+    };
+    const DENOM: Record<string, string> = {
+      '2': 'half', '3': 'thirds', '4': 'fourths', '5': 'fifths',
+      '6': 'sixths', '7': 'sevenths', '8': 'eighths', '9': 'ninths',
+      '10': 'tenths', '11': 'elevenths', '12': 'twelfths',
+      '100': 'hundredths', '1000': 'thousandths',
+    };
+    return raw
+      // fractions like 3/10 → "3 tenths", 1/2 → "1 half"
+      .replace(/\b(\d+)\/(\d+)\b/g, (_m, num, den) => {
+        const n = ORDINALS[num] || num;
+        const d = DENOM[den] || `over ${den}`;
+        return `${n} ${d}`;
+      })
+      // decimals like 0.3 → "0 point 3", 5.25 → "5 point 25"
+      .replace(/\b(\d+)\.(\d+)\b/g, (_m, int, frac) => `${int} point ${frac}`)
+      // math ops: + → "plus", - → "minus", = → "equals", × → "times", ÷ → "divided by"
+      .replace(/\s*\+\s*/g, ' plus ')
+      .replace(/\s*=\s*/g, ' equals ')
+      .replace(/\s*×\s*/g, ' times ')
+      .replace(/\s*÷\s*/g, ' divided by ');
+  }
+
   // ── Read aloud AI response (instant browser TTS — zero latency) ──────────
   const speakMessage = useCallback((msgId: number, text: string) => {
     if (Platform.OS !== 'web') return;
@@ -147,7 +179,7 @@ export default function AICoachScreen({ navigation }: any) {
     if (!(window as any).speechSynthesis) { setSpeakingId(null); return; }
 
     const synth = (window as any).speechSynthesis;
-    const utterance = new (window as any).SpeechSynthesisUtterance(text);
+    const utterance = new (window as any).SpeechSynthesisUtterance(preprocessForTTS(text));
     utterance.lang = 'en-IN';
     utterance.rate = 0.88;
     utterance.pitch = 1.1;

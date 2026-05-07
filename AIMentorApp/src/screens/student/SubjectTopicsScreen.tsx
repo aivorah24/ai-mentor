@@ -156,6 +156,7 @@ const IB_PYP_STATIC_TOPICS: Record<string, Record<string, TopicItem[]>> = {
   },
   'Grade 4': {
     'Mathematics': [
+      { topic: 'Indian Place Value Chart',    unit: 'Number',             description: 'Ones, tens, hundreds, thousands, ten-thousands, lakhs, ten-lakhs, crores — the Indian number system.' },
       { topic: 'Large Numbers up to 100,000', unit: 'Number',           description: 'Reading, writing, comparing, and ordering 5-digit numbers.' },
       { topic: 'Long Multiplication',       unit: 'Number',             description: 'Multiplying 2 and 3-digit numbers using the column method.' },
       { topic: 'Long Division',             unit: 'Number',             description: 'Dividing larger numbers with and without remainders.' },
@@ -208,6 +209,10 @@ const IB_PYP_STATIC_TOPICS: Record<string, Record<string, TopicItem[]>> = {
     'Arts': [
       { topic: 'Perspective and Depth in Art', unit: 'Visual Arts', description: 'Creating 3D illusions on paper — foreground, middleground, background.' },
       { topic: 'Melody and Harmony',        unit: 'Music',           description: 'Creating and layering musical lines. Chords and musical keys.' },
+      { topic: 'Rhythm',                    unit: 'Music',           description: 'The pattern of beats in music — tempo, pulse, and rhythmic patterns.' },
+      { topic: 'Tempo and Dynamics',        unit: 'Music',           description: 'How fast or slow music is played (tempo) and how loud or soft (dynamics — forte, piano, crescendo).' },
+      { topic: 'Timbre',                    unit: 'Music',           description: 'The unique tone colour of an instrument or voice — why a guitar sounds different from a flute.' },
+      { topic: 'Families of the Orchestra', unit: 'Music',           description: 'The four instrument families — Strings, Brass, Woodwind, and Percussion — and the instruments in each.' },
     ],
     'Physical Education': [
       { topic: 'Aerobic Fitness',           unit: 'Health and Wellness', description: 'Cardio exercises, heart rate, and building stamina.' },

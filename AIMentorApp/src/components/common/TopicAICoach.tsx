@@ -16,13 +16,30 @@ import { askAIMentorStream, type ChatHistoryTurn } from '../../services/aiMentor
 import { spacing, radius } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
+// ── TTS text preprocessor — prevents mis-readings of fractions, decimals ──────
+function preprocessForTTS(raw: string): string {
+  const DENOM: Record<string, string> = {
+    '2': 'half', '3': 'thirds', '4': 'fourths', '5': 'fifths',
+    '6': 'sixths', '7': 'sevenths', '8': 'eighths', '9': 'ninths',
+    '10': 'tenths', '11': 'elevenths', '12': 'twelfths',
+    '100': 'hundredths', '1000': 'thousandths',
+  };
+  return raw
+    .replace(/\b(\d+)\/(\d+)\b/g, (_m, num, den) => `${num} ${DENOM[den] || 'over ' + den}`)
+    .replace(/\b(\d+)\.(\d+)\b/g, (_m, int, frac) => `${int} point ${frac}`)
+    .replace(/\s*\+\s*/g, ' plus ')
+    .replace(/\s*=\s*/g, ' equals ')
+    .replace(/\s*×\s*/g, ' times ')
+    .replace(/\s*÷\s*/g, ' divided by ');
+}
+
 // ── Web Speech API helpers ──────────────────────────────────────────────────
 function speakText(text: string): Promise<void> {
   return new Promise((resolve) => {
     if (Platform.OS !== 'web' || !(window as any).speechSynthesis) { resolve(); return; }
     const synth = (window as any).speechSynthesis as SpeechSynthesis;
     synth.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
+    const utter = new SpeechSynthesisUtterance(preprocessForTTS(text));
     utter.rate = 1.05; utter.pitch = 1.3; utter.volume = 1.0;
     const voices = synth.getVoices();
     const pick = voices.find(v => /zira/i.test(v.name))
@@ -127,7 +144,11 @@ function sanitizeDisplayedAIText(text: string): string {
     .replace(/^#{1,6}\s+/gm, '')
     .replace(/^\s*[-•]\s+/gm, '')
     .replace(/`{1,3}/g, '')
-    .replace(/\r/g, '');
+    .replace(/\r/g, '')
+    // Insert newline before Step N: / Answer: / Try this: so they render as separate lines
+    .replace(/\s+(Step\s*\d+[\s:→–])/g, '\n$1')
+    .replace(/\s+(Answer\s*:)/gi, '\n$1')
+    .replace(/\s+(Try this\s*:|Now,?\s*can you|Here'?s? a practice)/gi, '\n$1');
 }
 
 interface Props {
@@ -278,9 +299,12 @@ export default function TopicAICoach({
 
     // If there was an error, replace with error message
     if (result.error) {
+      const errText = (result as any).limitReached
+        ? result.error
+        : 'Sorry, I had trouble connecting. Please try again!';
       setMessages(prev => {
         const updated = [...prev];
-        updated[updated.length - 1] = { role: 'ai', text: 'Sorry, I had trouble connecting. Please try again!' };
+        updated[updated.length - 1] = { role: 'ai', text: errText };
         return updated;
       });
     }
@@ -365,7 +389,7 @@ export default function TopicAICoach({
             {messages.map((msg, i) => {
               const shownText = msg.role === 'ai' ? sanitizeDisplayedAIText(msg.text) : msg.text;
               return (
-              <View key={i} style={{ alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '82%' }}>
+              <View key={i} style={{ alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '88%' }}>
                 <View
                   style={[
                     styles.bubble,
@@ -374,12 +398,31 @@ export default function TopicAICoach({
                       : [styles.bubbleAI,   { backgroundColor: aiBubble, borderColor: colors.borderColor }],
                   ]}
                 >
-                  <Text style={[
-                    styles.bubbleText,
-                    { color: msg.role === 'user' ? '#fff' : colors.textMain },
-                  ]}>
-                    {shownText}
-                  </Text>
+                  {msg.role === 'ai' ? (
+                    <View style={{ gap: 5 }}>
+                      {shownText.split('\n').filter(l => l.trim()).map((line, li) => {
+                        const isStep     = /^step\s*\d+[:.→]/i.test(line.trim());
+                        const isAnswer   = /^answer[:.]/i.test(line.trim());
+                        const isPractice = /^(try this|practice|question)[:.]/i.test(line.trim());
+                        return (
+                          <Text
+                            key={li}
+                            style={[
+                              styles.bubbleText,
+                              { color: colors.textMain },
+                              isStep     && { fontWeight: '700', color: colors.primary, marginTop: li > 0 ? 3 : 0 },
+                              isAnswer   && { fontWeight: '700', color: '#4A9E70', marginTop: 3 },
+                              isPractice && { fontWeight: '600', color: colors.textMuted, fontStyle: 'italic', marginTop: 3 },
+                            ]}
+                          >
+                            {line}
+                          </Text>
+                        );
+                      })}
+                    </View>
+                  ) : (
+                    <Text style={[styles.bubbleText, { color: '#fff' }]}>{shownText}</Text>
+                  )}
                 </View>
                 {msg.role === 'ai' && (
                   <View style={styles.feedbackRow}>
@@ -475,7 +518,7 @@ export default function TopicAICoach({
   );
 }
 
-const PANEL_HEIGHT = 420;
+const PANEL_HEIGHT = 520;
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -539,14 +582,15 @@ const styles = StyleSheet.create({
   msgList:    { flex: 1 },
   msgContent: { padding: spacing.md, gap: spacing.sm },
   bubble: {
-    maxWidth: '82%',
+    maxWidth: '88%',
+    minWidth: 80,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.md,
   },
   bubbleUser: { alignSelf: 'flex-end', borderBottomRightRadius: 4 },
   bubbleAI:   { alignSelf: 'flex-start', borderBottomLeftRadius: 4, borderWidth: 1 },
-  bubbleText: { fontSize: 13, lineHeight: 19 },
+  bubbleText: { fontSize: 13, lineHeight: 19, flexShrink: 1 },
   feedbackRow: {
     flexDirection: 'row',
     gap: 6,
@@ -572,16 +616,16 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    height: 40,
+    height: 44,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
-    fontSize: 13,
+    fontSize: 14,
     borderWidth: 1,
   },
   micBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
