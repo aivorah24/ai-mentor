@@ -160,6 +160,8 @@ const IB_PYP_STATIC_TOPICS: Record<string, Record<string, TopicItem[]>> = {
       { topic: 'Long Multiplication',       unit: 'Number',             description: 'Multiplying 2 and 3-digit numbers using the column method.' },
       { topic: 'Long Division',             unit: 'Number',             description: 'Dividing larger numbers with and without remainders.' },
       { topic: 'Decimals',                  unit: 'Number',             description: 'Tenths and hundredths — reading, writing, comparing decimal numbers.' },
+      { topic: 'Decimal Operations',        unit: 'Number',             description: 'Adding, subtracting, and multiplying decimals — including multiplying a decimal by a whole number.' },
+      { topic: 'Currency Conversion',       unit: 'Number',             description: 'Converting between Indian Rupees and foreign currencies (GBP, USD, SGD, CAD) using multiplication and division.' },
       { topic: 'Equivalent Fractions',      unit: 'Number',             description: 'Finding fractions equal in value. Simplifying and comparing fractions.' },
       { topic: 'Negative Numbers',          unit: 'Number',             description: 'Numbers below zero — temperature, number lines, and ordering.' },
       { topic: 'Angles',                    unit: 'Shape and Space',    description: 'Right, acute, and obtuse angles. Measuring angles with a protractor.' },
@@ -188,6 +190,7 @@ const IB_PYP_STATIC_TOPICS: Record<string, Record<string, TopicItem[]>> = {
       { topic: 'History of Migration',      unit: 'Where We Are in Place and Time', description: 'Why people have moved across history — trade routes, conquests, famines, and the search for better lives.' },
       { topic: 'Historical Timeline',       unit: 'Where We Are in Place and Time', description: 'Reading and creating timelines — placing events in chronological order to understand how history progressed.' },
       { topic: 'Economic Activities',       unit: 'How We Organize Ourselves',      description: 'Barter system, trade, currency, and how economies function.' },
+      { topic: 'Barter System',             unit: 'How We Organize Ourselves',      description: 'The earliest form of trade — exchanging goods without money, its history, problems, and evolution into modern currency.' },
     ],
     'English': [
       { topic: 'Figurative Language',       unit: 'Reading',   description: 'Similes, metaphors, personification — how writers make language vivid.' },
@@ -195,6 +198,12 @@ const IB_PYP_STATIC_TOPICS: Record<string, Record<string, TopicItem[]>> = {
       { topic: 'Persuasive Writing',        unit: 'Writing',   description: 'Arguments, opinions, and convincing language techniques.' },
       { topic: 'Paragraph Structure',       unit: 'Writing',   description: 'Topic sentence, supporting details, concluding sentence.' },
       { topic: 'Adverbs and Conjunctions',  unit: 'Grammar',   description: 'Words that modify verbs; joining clauses with because, although, while.' },
+    ],
+    'Economics & Trade': [
+      { topic: 'Barter System',         unit: 'How We Organize Ourselves', description: 'The earliest form of trade — exchanging goods without money, its history, problems, and evolution into modern currency.' },
+      { topic: 'Currency Conversion',   unit: 'How We Organize Ourselves', description: 'Converting between Indian Rupees and world currencies — GBP, USD, SGD, CAD. Which currency does France use?' },
+      { topic: 'Types of Money',        unit: 'How We Organize Ourselves', description: 'From shells and salt to coins and paper money — how currency evolved across history.' },
+      { topic: 'Trade Routes',          unit: 'How We Organize Ourselves', description: 'How the Portuguese came to India for spices — ancient and modern trade routes that connected the world.' },
     ],
     'Arts': [
       { topic: 'Perspective and Depth in Art', unit: 'Visual Arts', description: 'Creating 3D illusions on paper — foreground, middleground, background.' },

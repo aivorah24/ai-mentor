@@ -58,6 +58,9 @@ const SUBJECT_META: Record<string, SubjectMeta> = {
   ICT:                  { icon: 'monitor',
     accentDark: '#3A9896', bgFromDark: '#A8D8D8', bgToDark: '#BCE8E8',
     accentLight: '#3A9896', bgFromLight: '#A8D8D8', bgToLight: '#BCE8E8' },
+  'Economics & Trade':  { icon: 'dollar-sign',
+    accentDark: '#7A6E3A', bgFromDark: '#D8CC88', bgToDark: '#E8DCA0',
+    accentLight: '#7A6E3A', bgFromLight: '#D8CC88', bgToLight: '#E8DCA0' },
 };
 
 function subjectMeta(subject: string): SubjectMeta {
