@@ -465,6 +465,7 @@ export default function SubjectTopicsScreen({ navigation, route }: any) {
         <Header
           title={subject}
           subtitle={`${curriculum} · ${grade} · ${topics.length} Topics`}
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
         />
         {/* Back to Learning Paths */}

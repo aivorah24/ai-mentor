@@ -62,6 +62,7 @@ export default function WorldAndYouScreen({ navigation }: any) {
         <Header
           title="The World & You"
           subtitle="Learn something new every day"
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
         />
 

@@ -609,6 +609,7 @@ export default function WordWizardScreen({ route, navigation }: any) {
         <Header
           title="Word Wizard"
           subtitle={`Chapter ${chapterId}: ${topic}`}
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
         />
 

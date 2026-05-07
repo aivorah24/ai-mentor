@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -27,10 +27,11 @@ import {
   deleteUser,
 } from 'firebase/auth';
 import { auth } from '../../config/firebase';
+import SERVER_URL from '../../config/serverUrl';
 
-type ModalType = 'name' | 'email' | 'password' | 'recovery' | 'delete' | null;
+type ModalType = 'name' | 'email' | 'password' | 'recovery' | 'delete' | 'grade' | 'location' | null;
 
-export default function SettingsScreen({ navigation }: any) {
+export default function SettingsScreen({ navigation, route }: any) {
   const { user, updateUser, logout } = useAuth();
   const { stats } = useStudentData();
   const { colors, themeMode, setThemeMode } = useTheme();
@@ -42,9 +43,54 @@ export default function SettingsScreen({ navigation }: any) {
   const [weeklyReport, setWeeklyReport] = useState(false);
   const [assignmentAlerts, setAssignmentAlerts] = useState(true);
   const [challengeUpdates, setChallengeUpdates] = useState(true);
+  const notifLoaded = useRef(false);
+  const scrollRef = useRef<any>(null);
+  const notifRef = useRef<any>(null);
+  const notifY = useRef<number>(0);
+  const securityY = useRef<number>(0);
 
-  // Appearance
-  const [language, setLanguage] = useState('English');
+  // Scroll to a specific section if navigated with a section param
+  useEffect(() => {
+    const section = route?.params?.section;
+    if (!section) return;
+    const yMap: Record<string, React.MutableRefObject<number>> = {
+      notifications: notifY,
+      security: securityY,
+    };
+    const target = yMap[section];
+    if (target) {
+      setTimeout(() => {
+        scrollRef.current?.scrollTo?.({ y: target.current, animated: true });
+      }, 350);
+    }
+  }, [route?.params?.section]);
+
+  // Load saved preferences from server on mount
+  useEffect(() => {
+    if (!user?.email) return;
+    fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(user.email)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(prefs => {
+        if (!prefs) return;
+        if (prefs.pushNotifications !== undefined) setPushNotifications(prefs.pushNotifications);
+        if (prefs.aiSuggestions !== undefined) setAiSuggestions(prefs.aiSuggestions);
+        if (prefs.weeklyReport !== undefined) setWeeklyReport(prefs.weeklyReport);
+        if (prefs.assignmentAlerts !== undefined) setAssignmentAlerts(prefs.assignmentAlerts);
+        if (prefs.challengeUpdates !== undefined) setChallengeUpdates(prefs.challengeUpdates);
+        if (prefs.recoveryEmail) setRecoverySaved(prefs.recoveryEmail);
+        notifLoaded.current = true;
+      }).catch(() => { notifLoaded.current = true; });
+  }, [user?.email]);
+
+  // Save notification preference to server whenever it changes (after initial load)
+  function saveNotifPref(key: string, value: boolean) {
+    if (!user?.email || !notifLoaded.current) return;
+    fetch(`${SERVER_URL}/user/preferences`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email, [key]: value }),
+    }).catch(() => {});
+  }
 
   // Modal state
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -52,10 +98,12 @@ export default function SettingsScreen({ navigation }: any) {
 
   // Name modal
   const [newName, setNewName] = useState(user?.name || '');
+  const [nameError, setNameError] = useState('');
 
   // Email modal
   const [newEmail, setNewEmail] = useState('');
   const [emailPassword, setEmailPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   // Password modal
   const [currentPassword, setCurrentPassword] = useState('');
@@ -63,9 +111,15 @@ export default function SettingsScreen({ navigation }: any) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   // Recovery email modal
   const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryError, setRecoveryError] = useState('');
+  const [recoverySaved, setRecoverySaved] = useState('');
+  const [recoveryStep, setRecoveryStep] = useState<'email' | 'otp'>('email');
+  const [recoveryOtp, setRecoveryOtp] = useState('');
+  const [recoverySending, setRecoverySending] = useState(false);
 
   function openModal(type: ModalType) {
     setNewName(user?.name || '');
@@ -75,6 +129,14 @@ export default function SettingsScreen({ navigation }: any) {
     setNewPassword('');
     setConfirmPassword('');
     setRecoveryEmail('');
+    setRecoveryError('');
+    setRecoveryStep('email');
+    setRecoveryOtp('');
+    setNameError('');
+    setEmailError('');
+    setPasswordError('');
+    setSelectedGrade(user?.grade || '');
+    setNewLocation(user?.location || '');
     setActiveModal(type);
   }
 
@@ -84,15 +146,15 @@ export default function SettingsScreen({ navigation }: any) {
   }
 
   async function handleSaveName() {
-    if (!newName.trim()) { Alert.alert('Required', 'Please enter a name.'); return; }
+    if (!newName.trim()) { setNameError('Please enter a name.'); return; }
     updateUser({ name: newName.trim() });
     closeModal();
-    Alert.alert('Updated', 'Your display name has been updated.');
   }
 
   async function handleChangeEmail() {
-    if (!newEmail.trim()) { Alert.alert('Required', 'Please enter a new email.'); return; }
-    if (!emailPassword) { Alert.alert('Required', 'Please enter your current password.'); return; }
+    setEmailError('');
+    if (!newEmail.trim()) { setEmailError('Please enter a new email.'); return; }
+    if (!emailPassword) { setEmailError('Please enter your current password.'); return; }
     setModalLoading(true);
     try {
       const firebaseUser = auth.currentUser;
@@ -101,25 +163,26 @@ export default function SettingsScreen({ navigation }: any) {
         await reauthenticateWithCredential(firebaseUser, cred);
         await updateEmail(firebaseUser, newEmail.trim());
         updateUser({ email: newEmail.trim() });
-        closeModal();
-        Alert.alert('Email Updated', 'Your email address has been changed.');
       } else {
-        // Demo mode — just update locally
         updateUser({ email: newEmail.trim() });
-        closeModal();
-        Alert.alert('Email Updated', 'Your email address has been changed.');
       }
+      closeModal();
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to update email.');
+      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        setEmailError('Incorrect password. Please try again.');
+      } else {
+        setEmailError(e.message || 'Failed to update email.');
+      }
     } finally {
       setModalLoading(false);
     }
   }
 
   async function handleChangePassword() {
-    if (!currentPassword) { Alert.alert('Required', 'Enter your current password.'); return; }
-    if (newPassword.length < 6) { Alert.alert('Too Short', 'New password must be at least 6 characters.'); return; }
-    if (newPassword !== confirmPassword) { Alert.alert('Mismatch', 'Passwords do not match.'); return; }
+    setPasswordError('');
+    if (!currentPassword) { setPasswordError('Enter your current password.'); return; }
+    if (newPassword.length < 6) { setPasswordError('New password must be at least 6 characters.'); return; }
+    if (newPassword !== confirmPassword) { setPasswordError('Passwords do not match.'); return; }
     setModalLoading(true);
     try {
       const firebaseUser = auth.currentUser;
@@ -127,57 +190,156 @@ export default function SettingsScreen({ navigation }: any) {
         const cred = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
         await reauthenticateWithCredential(firebaseUser, cred);
         await updatePassword(firebaseUser, newPassword);
-        closeModal();
-        Alert.alert('Password Changed', 'Your password has been updated successfully.');
-      } else {
-        closeModal();
-        Alert.alert('Password Changed', 'Your password has been updated successfully.');
+        if (user?.mustChangePassword) {
+          fetch(`${SERVER_URL}/user/clear-must-change-password`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: firebaseUser.email }),
+          }).catch(() => {});
+          updateUser({ mustChangePassword: false });
+        }
       }
+      closeModal();
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to change password.');
+      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        setPasswordError('Current password is incorrect.');
+      } else {
+        setPasswordError(e.message || 'Failed to change password.');
+      }
     } finally {
       setModalLoading(false);
     }
   }
 
-  function handleSaveRecovery() {
-    if (!recoveryEmail.trim()) { Alert.alert('Required', 'Please enter a recovery email.'); return; }
-    closeModal();
-    Alert.alert('Saved', `Recovery email set to ${recoveryEmail.trim()}`);
+  async function handleSendRecoveryCode() {
+    setRecoveryError('');
+    if (!recoveryEmail.trim()) { setRecoveryError('Please enter a recovery email.'); return; }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recoveryEmail.trim())) { setRecoveryError('Please enter a valid email address.'); return; }
+    setRecoverySending(true);
+    try {
+      const res = await fetch(`${SERVER_URL}/user/recovery-email/send-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user?.email, recoveryEmail: recoveryEmail.trim() }),
+      });
+      if (!res.ok) { const d = await res.json(); setRecoveryError(d.error || 'Failed to send code.'); return; }
+      setRecoveryStep('otp');
+    } catch {
+      setRecoveryError('Network error. Please try again.');
+    } finally {
+      setRecoverySending(false);
+    }
+  }
+
+  async function handleVerifyRecoveryOtp() {
+    setRecoveryError('');
+    if (!recoveryOtp.trim()) { setRecoveryError('Please enter the verification code.'); return; }
+    setModalLoading(true);
+    try {
+      const res = await fetch(`${SERVER_URL}/user/recovery-email`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user?.email, otp: recoveryOtp.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setRecoveryError(data.error || 'Verification failed.'); return; }
+      closeModal();
+      setRecoverySaved(data.recoveryEmail || recoveryEmail.trim());
+    } catch {
+      setRecoveryError('Network error. Please try again.');
+    } finally {
+      setModalLoading(false);
+    }
   }
 
   function handleSignOut() {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign Out', style: 'destructive', onPress: () => logout() },
-      ]
-    );
+    setSignOutModalVisible(true);
   }
 
-  async function handleDeleteAccount() {
-    Alert.alert(
-      'Delete Account',
-      'This action is permanent and cannot be undone. All your data will be lost.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const firebaseUser = auth.currentUser;
-              if (firebaseUser) await deleteUser(firebaseUser);
-              logout();
-            } catch {
-              Alert.alert('Error', 'Could not delete account. Please sign in again and retry.');
-            }
-          },
-        },
-      ]
-    );
+  // Grade modal
+  const GRADES = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
+  const [selectedGrade, setSelectedGrade] = useState(user?.grade || '');
+  const [gradeLoading, setGradeLoading] = useState(false);
+
+  async function handleSaveGrade() {
+    if (!selectedGrade) return;
+    setGradeLoading(true);
+    try {
+      await fetch(`${SERVER_URL}/user/preferences`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user?.email, grade: selectedGrade }),
+      });
+      updateUser({ grade: selectedGrade });
+      closeModal();
+    } catch {
+      // silently fail — updateUser already updated locally
+      updateUser({ grade: selectedGrade });
+      closeModal();
+    } finally {
+      setGradeLoading(false);
+    }
+  }
+
+  // Location modal
+  const [newLocation, setNewLocation] = useState('');
+  const [locationLoading, setLocationLoading] = useState(false);
+
+  async function handleSaveLocation() {
+    const loc = newLocation.trim();
+    setLocationLoading(true);
+    try {
+      await fetch(`${SERVER_URL}/user/preferences`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user?.email, location: loc }),
+      });
+      updateUser({ location: loc });
+      closeModal();
+    } catch {
+      updateUser({ location: loc });
+      closeModal();
+    } finally {
+      setLocationLoading(false);
+    }
+  }
+
+  const [signOutModalVisible, setSignOutModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  async function confirmDeleteAccount() {
+    setDeleteError('');
+    if (!deletePassword) { setDeleteError('Please enter your password to confirm.'); return; }
+    setDeleteLoading(true);
+    try {
+      const firebaseUser = auth.currentUser;
+      if (firebaseUser && firebaseUser.email) {
+        // Re-authenticate first
+        const cred = EmailAuthProvider.credential(firebaseUser.email, deletePassword);
+        await reauthenticateWithCredential(firebaseUser, cred);
+        // Delete from Supabase DB
+        await fetch(`${SERVER_URL}/user/delete-account`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: firebaseUser.email }),
+        });
+        // Delete from Firebase
+        await deleteUser(firebaseUser);
+      }
+      logout();
+    } catch (e: any) {
+      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        setDeleteError('Incorrect password. Please try again.');
+      } else {
+        setDeleteError('Could not delete account. Please try again.');
+      }
+    } finally {
+      setDeleteLoading(false);
+    }
   }
 
   const levelLabel = formatLevel(stats.level);
@@ -192,6 +354,7 @@ export default function SettingsScreen({ navigation }: any) {
           onMenuPress={() => navigation.openDrawer()}
         />
         <ScrollView
+          ref={scrollRef}
           style={styles.scroll}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
@@ -235,7 +398,7 @@ export default function SettingsScreen({ navigation }: any) {
               label="Grade / Year"
               sub={user?.grade || 'Not set'}
               btnLabel="Update"
-              onPress={() => navigation.navigate('Profile')}
+              onPress={() => openModal('grade')}
               styles={styles}
             />
             <View style={styles.divider} />
@@ -243,12 +406,13 @@ export default function SettingsScreen({ navigation }: any) {
               label="Location"
               sub={user?.location || 'Not set'}
               btnLabel="Update"
-              onPress={() => navigation.navigate('Profile')}
+              onPress={() => openModal('location')}
               styles={styles}
             />
           </View>
 
           {/* ── Security ── */}
+          <View onLayout={e => { securityY.current = e.nativeEvent.layout.y; }}>
           <SectionHeader icon="shield" label="Security" color={colors.accentGreen} styles={styles} />
           <View style={styles.card}>
             <FieldRow
@@ -261,8 +425,8 @@ export default function SettingsScreen({ navigation }: any) {
             <View style={styles.divider} />
             <FieldRow
               label="Recovery Email"
-              sub="Backup email for account recovery"
-              btnLabel="Set"
+              sub={recoverySaved || 'Backup email for account recovery'}
+              btnLabel={recoverySaved ? 'Update' : 'Set'}
               onPress={() => openModal('recovery')}
               styles={styles}
             />
@@ -277,16 +441,18 @@ export default function SettingsScreen({ navigation }: any) {
               </View>
             </View>
           </View>
+          </View>
 
           {/* ── Notifications ── */}
+          <View ref={notifRef} onLayout={e => { notifY.current = e.nativeEvent.layout.y; }}>
           <SectionHeader icon="bell" label="Notifications" color={colors.accentYellow} styles={styles} />
           <View style={styles.card}>
             {[
-              { label: 'Push Notifications', sub: 'Reminders, updates and alerts', val: pushNotifications, set: setPushNotifications },
-              { label: 'AI Suggestions', sub: 'Smart learning tips from AI', val: aiSuggestions, set: setAiSuggestions },
-              { label: 'Weekly Report', sub: 'Progress summary every week', val: weeklyReport, set: setWeeklyReport },
-              { label: 'Assignment Alerts', sub: 'Due date reminders', val: assignmentAlerts, set: setAssignmentAlerts },
-              { label: 'Challenge Updates', sub: 'New challenges and leaderboard changes', val: challengeUpdates, set: setChallengeUpdates },
+              { label: 'Assignment Alerts', sub: 'Due date reminders', val: assignmentAlerts, key: 'assignmentAlerts', set: setAssignmentAlerts, live: false },
+              { label: 'Challenge Updates', sub: 'New challenges and leaderboard changes', val: challengeUpdates, key: 'challengeUpdates', set: setChallengeUpdates, live: false },
+              { label: 'Weekly Report', sub: 'Progress summary every week', val: weeklyReport, key: 'weeklyReport', set: setWeeklyReport, live: false },
+              { label: 'AI Suggestions', sub: 'Personalised learning tips from AI', val: aiSuggestions, key: 'aiSuggestions', set: setAiSuggestions, live: false },
+              { label: 'Push Notifications', sub: 'Real-time alerts on your device', val: pushNotifications, key: 'pushNotifications', set: setPushNotifications, live: false },
             ].map((item, i) => (
               <View key={item.label}>
                 {i > 0 && <View style={styles.divider} />}
@@ -295,18 +461,23 @@ export default function SettingsScreen({ navigation }: any) {
                     <Text style={styles.fieldLabel}>{item.label}</Text>
                     <Text style={styles.fieldSub}>{item.sub}</Text>
                   </View>
-                  <Switch
-                    value={item.val}
-                    onValueChange={(v) => {
-                      item.set(v);
-                      // Show feedback
-                    }}
-                    trackColor={{ false: colors.borderColor, true: colors.primary }}
-                    thumbColor="white"
-                  />
+                  {item.live ? (
+                    <Switch
+                      value={item.val}
+                      onValueChange={(v) => { item.set(v); saveNotifPref(item.key, v); }}
+                      trackColor={{ false: colors.borderColor, true: colors.primary }}
+                      thumbColor="white"
+                    />
+                  ) : (
+                    <View style={styles.comingSoonBadge}>
+                      <Text style={styles.comingSoonText}>Soon</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             ))}
+          </View>
+
           </View>
 
           {/* ── Appearance ── */}
@@ -330,73 +501,18 @@ export default function SettingsScreen({ navigation }: any) {
                 </TouchableOpacity>
               ))}
             </View>
-            <View style={styles.divider} />
-            <View style={styles.fieldRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>Language</Text>
-                <Text style={styles.fieldSub}>{language}</Text>
-              </View>
-              <View style={styles.langRow}>
-                {['English', 'Spanish', 'French'].map((l) => (
-                  <TouchableOpacity
-                    key={l}
-                    style={[styles.langChip, language === l && styles.langChipActive]}
-                    onPress={() => setLanguage(l)}
-                  >
-                    <Text style={[styles.langText, language === l && { color: colors.primary }]}>{l}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
           </View>
 
-          {/* ── Learning Preferences ── */}
-          <SectionHeader icon="book-open" label="Learning Preferences" color={colors.accentBlue} styles={styles} />
-          <View style={styles.card}>
-            <View style={styles.fieldRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>Daily Study Goal</Text>
-                <Text style={styles.fieldSub}>Target minutes per day</Text>
-              </View>
-              <View style={styles.goalRow}>
-                {[30, 60, 90, 120].map((m) => (
-                  <TouchableOpacity key={m} style={styles.goalChip}>
-                    <Text style={styles.goalText}>{m}m</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.fieldRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>Difficulty Level</Text>
-                <Text style={styles.fieldSub}>Preferred challenge difficulty</Text>
-              </View>
-              <View style={styles.comingSoonBadge}>
-                <Text style={styles.comingSoonText}>Soon</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* ── Danger Zone ── */}
+          {/* ── Account Actions ── */}
           <SectionHeader icon="alert-triangle" label="Account Actions" color={colors.accentRed} styles={styles} />
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.dangerRow} onPress={handleSignOut} activeOpacity={0.7}>
+          <View style={[styles.card, { flexDirection: 'row', gap: 12 }]}>
+            <TouchableOpacity style={styles.actionBtn} onPress={handleSignOut} activeOpacity={0.8}>
               <Feather name="log-out" size={16} color={colors.accentRed} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.fieldLabel, { color: colors.accentRed }]}>Sign Out</Text>
-                <Text style={styles.fieldSub}>You will be returned to the login screen</Text>
-              </View>
-              <Feather name="chevron-right" size={16} color={colors.accentRed} />
+              <Text style={[styles.actionBtnText, { color: colors.accentRed }]}>Sign Out</Text>
             </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity style={styles.dangerRow} onPress={handleDeleteAccount} activeOpacity={0.7}>
+            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.accentRed + '14', borderColor: colors.accentRed + '40' }]} onPress={() => { setDeletePassword(''); setDeleteError(''); setDeleteModalVisible(true); }} activeOpacity={0.8}>
               <Feather name="trash-2" size={16} color={colors.accentRed} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.fieldLabel, { color: colors.accentRed }]}>Delete Account</Text>
-                <Text style={styles.fieldSub}>Permanently remove all your data</Text>
-              </View>
-              <Feather name="chevron-right" size={16} color={colors.accentRed} />
+              <Text style={[styles.actionBtnText, { color: colors.accentRed }]}>Delete Account</Text>
             </TouchableOpacity>
           </View>
 
@@ -412,13 +528,14 @@ export default function SettingsScreen({ navigation }: any) {
           <TextInput
             style={styles.modalTextInput}
             value={newName}
-            onChangeText={setNewName}
+            onChangeText={(v) => { setNewName(v); setNameError(''); }}
             placeholder="Your name"
             placeholderTextColor={colors.textDim}
             autoCapitalize="words"
             autoFocus
           />
         </View>
+        {!!nameError && <Text style={{ fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{nameError}</Text>}
         <ModalButtons onCancel={closeModal} onSave={handleSaveName} loading={modalLoading} styles={styles} />
       </AppModal>
 
@@ -450,6 +567,7 @@ export default function SettingsScreen({ navigation }: any) {
             secureTextEntry
           />
         </View>
+        {!!emailError && <Text style={{ fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{emailError}</Text>}
         <ModalButtons onCancel={closeModal} onSave={handleChangeEmail} loading={modalLoading} saveLabel="Update Email" styles={styles} />
       </AppModal>
 
@@ -498,30 +616,199 @@ export default function SettingsScreen({ navigation }: any) {
             secureTextEntry
           />
         </View>
+        {!!passwordError && <Text style={{ fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{passwordError}</Text>}
         <ModalButtons onCancel={closeModal} onSave={handleChangePassword} loading={modalLoading} saveLabel="Change Password" styles={styles} />
       </AppModal>
 
       {/* ── Recovery Email Modal ── */}
       <AppModal visible={activeModal === 'recovery'} title="Set Recovery Email" onClose={closeModal} styles={styles} colors={colors}>
-        <Text style={styles.modalNote}>
-          This email will be used to recover your account if you lose access.
-        </Text>
-        <Text style={styles.modalFieldLabel}>Recovery Email</Text>
+        {recoveryStep === 'email' ? (
+          <>
+            <Text style={styles.modalNote}>
+              We'll send a 6-digit code to verify this email before saving it.
+            </Text>
+            <Text style={styles.modalFieldLabel}>Recovery Email</Text>
+            <View style={styles.modalInput}>
+              <Feather name="mail" size={15} color={colors.textDim} />
+              <TextInput
+                style={styles.modalTextInput}
+                value={recoveryEmail}
+                onChangeText={(v) => { setRecoveryEmail(v); setRecoveryError(''); }}
+                placeholder="backup@example.com"
+                placeholderTextColor={colors.textDim}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoFocus
+              />
+            </View>
+            {!!recoveryError && <Text style={{ fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{recoveryError}</Text>}
+            <ModalButtons onCancel={closeModal} onSave={handleSendRecoveryCode} loading={recoverySending} saveLabel="Send Code" styles={styles} />
+          </>
+        ) : (
+          <>
+            <Text style={styles.modalNote}>
+              Enter the 6-digit code sent to <Text style={{ color: colors.textMain, fontWeight: '700' }}>{recoveryEmail}</Text>. It expires in 10 minutes.
+            </Text>
+            <Text style={styles.modalFieldLabel}>Verification Code</Text>
+            <View style={styles.modalInput}>
+              <Feather name="shield" size={15} color={colors.textDim} />
+              <TextInput
+                style={[styles.modalTextInput, { letterSpacing: 6, fontSize: 20, fontWeight: '700' }]}
+                value={recoveryOtp}
+                onChangeText={(v) => { setRecoveryOtp(v.replace(/\D/g, '').slice(0, 6)); setRecoveryError(''); }}
+                placeholder="000000"
+                placeholderTextColor={colors.textDim}
+                keyboardType="number-pad"
+                maxLength={6}
+                autoFocus
+              />
+            </View>
+            {!!recoveryError && <Text style={{ fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{recoveryError}</Text>}
+            <TouchableOpacity onPress={() => { setRecoveryStep('email'); setRecoveryOtp(''); setRecoveryError(''); }} style={{ marginTop: 8 }}>
+              <Text style={{ fontSize: 12, color: colors.primary }}>← Change email or resend code</Text>
+            </TouchableOpacity>
+            <ModalButtons onCancel={closeModal} onSave={handleVerifyRecoveryOtp} loading={modalLoading} saveLabel="Verify & Save" styles={styles} />
+          </>
+        )}
+      </AppModal>
+
+      {/* ── Sign Out Modal ── */}
+      <Modal visible={signOutModalVisible} transparent animationType="fade" onRequestClose={() => setSignOutModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accentRed + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <Feather name="log-out" size={24} color={colors.accentRed} />
+              </View>
+              <Text style={[styles.modalTitle, { textAlign: 'center' }]}>Sign Out?</Text>
+              <Text style={[styles.modalNote, { textAlign: 'center', marginBottom: 0 }]}>
+                You will be returned to the login screen. Your progress is saved.
+              </Text>
+            </View>
+            <View style={[styles.modalBtns, { marginTop: 20 }]}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setSignOutModalVisible(false)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalSaveBtn, { backgroundColor: colors.accentRed }]} onPress={() => { setSignOutModalVisible(false); logout(); }}>
+                <Text style={styles.modalSaveText}>Sign Out</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Delete Account Modal ── */}
+      <Modal visible={deleteModalVisible} transparent animationType="fade" onRequestClose={() => setDeleteModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accentRed + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <Feather name="trash-2" size={24} color={colors.accentRed} />
+              </View>
+              <Text style={[styles.modalTitle, { textAlign: 'center' }]}>Delete Account?</Text>
+              <Text style={[styles.modalNote, { textAlign: 'center', marginBottom: 0 }]}>
+                This is permanent and cannot be undone. All your progress, XP, and data will be lost.
+              </Text>
+            </View>
+            <Text style={styles.modalFieldLabel}>Enter your password to confirm</Text>
+            <View style={styles.modalInput}>
+              <Feather name="lock" size={15} color={colors.textDim} />
+              <TextInput
+                style={[styles.modalTextInput, { flex: 1 }]}
+                value={deletePassword}
+                onChangeText={(v) => { setDeletePassword(v); setDeleteError(''); }}
+                placeholder="Your password"
+                placeholderTextColor={colors.textDim}
+                secureTextEntry
+                autoFocus
+              />
+            </View>
+            {!!deleteError && (
+              <Text style={{ fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{deleteError}</Text>
+            )}
+            <View style={[styles.modalBtns, { marginTop: 20 }]}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setDeleteModalVisible(false)} disabled={deleteLoading}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalSaveBtn, { backgroundColor: colors.accentRed }, deleteLoading && { opacity: 0.7 }]}
+                onPress={confirmDeleteAccount}
+                disabled={deleteLoading}
+              >
+                {deleteLoading
+                  ? <ActivityIndicator color="white" size="small" />
+                  : <Text style={styles.modalSaveText}>Delete</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      {/* ── Grade Modal ── */}
+      <AppModal visible={activeModal === 'grade'} title="Update Grade / Year" onClose={closeModal} styles={styles} colors={colors}>
+        <Text style={[styles.modalNote, { marginBottom: 12 }]}>Select your current grade. The dashboard will update automatically.</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+          {GRADES.map(g => {
+            const active = selectedGrade === g;
+            return (
+              <TouchableOpacity
+                key={g}
+                onPress={() => setSelectedGrade(g)}
+                style={{
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  borderRadius: 20,
+                  borderWidth: 1.5,
+                  borderColor: active ? colors.primary : colors.borderColor,
+                  backgroundColor: active ? colors.primary + '20' : 'transparent',
+                }}
+              >
+                <Text style={{ color: active ? colors.primary : colors.textMuted, fontWeight: active ? '700' : '400', fontSize: 13 }}>{g}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <View style={styles.modalBtns}>
+          <TouchableOpacity style={styles.modalCancelBtn} onPress={closeModal}>
+            <Text style={styles.modalCancelText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modalSaveBtn, (!selectedGrade || gradeLoading) && { opacity: 0.6 }]}
+            onPress={handleSaveGrade}
+            disabled={!selectedGrade || gradeLoading}
+          >
+            {gradeLoading ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.modalSaveText}>Save</Text>}
+          </TouchableOpacity>
+        </View>
+      </AppModal>
+
+      {/* ── Location Modal ── */}
+      <AppModal visible={activeModal === 'location'} title="Update Location" onClose={closeModal} styles={styles} colors={colors}>
+        <Text style={styles.modalFieldLabel}>City or region</Text>
         <View style={styles.modalInput}>
-          <Feather name="mail" size={15} color={colors.textDim} />
+          <Feather name="map-pin" size={15} color={colors.textDim} />
           <TextInput
-            style={styles.modalTextInput}
-            value={recoveryEmail}
-            onChangeText={setRecoveryEmail}
-            placeholder="backup@example.com"
+            style={[styles.modalTextInput, { flex: 1 }]}
+            value={newLocation}
+            onChangeText={setNewLocation}
+            placeholder="e.g. Hyderabad"
             placeholderTextColor={colors.textDim}
-            keyboardType="email-address"
-            autoCapitalize="none"
             autoFocus
           />
         </View>
-        <ModalButtons onCancel={closeModal} onSave={handleSaveRecovery} loading={modalLoading} saveLabel="Save" styles={styles} />
+        <View style={[styles.modalBtns, { marginTop: 20 }]}>
+          <TouchableOpacity style={styles.modalCancelBtn} onPress={closeModal}>
+            <Text style={styles.modalCancelText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modalSaveBtn, locationLoading && { opacity: 0.6 }]}
+            onPress={handleSaveLocation}
+            disabled={locationLoading}
+          >
+            {locationLoading ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.modalSaveText}>Save</Text>}
+          </TouchableOpacity>
+        </View>
       </AppModal>
+
     </ScreenLayout>
   );
 }
@@ -691,6 +978,13 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   comingSoonText: { fontSize: 11, color: c.primary, fontWeight: '600' },
 
   dangerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 2 },
+  actionBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    paddingVertical: 13, borderRadius: radius.md,
+    borderWidth: 1, borderColor: c.accentRed + '30',
+    backgroundColor: c.accentRed + '0A',
+  },
+  actionBtnText: { fontSize: 14, fontWeight: '700' },
 
   versionText: { textAlign: 'center', fontSize: 12, color: c.textDim, marginTop: spacing.xl },
 

@@ -166,13 +166,18 @@ async function sendWelcomeEmail({ to, name, role }) {
   }
 }
 
-async function sendPasswordResetEmail({ to, resetLink }) {
+async function sendPasswordResetEmail({ to, resetLink, childName }) {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to || !resetLink) return;
+  const isChildReset = !!childName;
+  const subject = isChildReset ? `Reset ${childName}'s Aivorah password` : 'Reset your Aivorah password';
+  const bodyText = isChildReset
+    ? `You requested a password reset for your child <strong>${childName}</strong>'s Aivorah account. Click the button below to set a new password.`
+    : `We received a request to reset the password for your Aivorah account (<strong>${to}</strong>). Click the button below to set a new password.`;
   try {
     await sendWithRetry({
       from: `"Aivorah" <${process.env.EMAIL_USER}>`,
       to,
-      subject: 'Reset your Aivorah password',
+      subject,
       html: `
         <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#fff">
           <div style="background:#7C3AED;border-radius:12px;padding:24px 24px 16px;margin-bottom:24px">
@@ -181,10 +186,7 @@ async function sendPasswordResetEmail({ to, resetLink }) {
           </div>
 
           <p style="font-size:15px;color:#333;margin-bottom:4px">Hello,</p>
-          <p style="font-size:14px;color:#555;line-height:1.6">
-            We received a request to reset the password for your Aivorah account (<strong>${to}</strong>).
-            Click the button below to set a new password.
-          </p>
+          <p style="font-size:14px;color:#555;line-height:1.6">${bodyText}</p>
 
           <div style="text-align:center;margin:32px 0">
             <a href="${resetLink}" style="background:#7C3AED;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700;display:inline-block">
@@ -193,7 +195,7 @@ async function sendPasswordResetEmail({ to, resetLink }) {
           </div>
 
           <p style="font-size:13px;color:#666;line-height:1.6">
-            This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email — your password will not change.
+            This link will expire in 1 hour. If you didn't request this, you can safely ignore this email.
           </p>
 
           <p style="font-size:12px;color:#aaa;margin-top:32px;border-top:1px solid #eee;padding-top:16px">
@@ -207,4 +209,81 @@ async function sendPasswordResetEmail({ to, resetLink }) {
   }
 }
 
-module.exports = { sendCredentialsEmail, sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail };
+async function sendRecoveryOtpEmail({ to, otp }) {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to || !otp) return;
+  try {
+    await sendWithRetry({
+      from: `"Aivorah" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: 'Your Aivorah verification code',
+      html: `
+        <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#fff">
+          <div style="background:#7C3AED;border-radius:12px;padding:24px 24px 16px;margin-bottom:24px">
+            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700">Aivorah</h1>
+            <p style="margin:8px 0 0;color:#e9d5ff;font-size:14px">Recovery Email Verification</p>
+          </div>
+          <p style="font-size:15px;color:#333;margin-bottom:4px">Hello,</p>
+          <p style="font-size:14px;color:#555;line-height:1.6">
+            Use the code below to verify this email as your Aivorah account recovery email.
+            This code expires in <strong>10 minutes</strong>.
+          </p>
+          <div style="text-align:center;margin:32px 0">
+            <div style="display:inline-block;background:#f5f3ff;border:2px solid #7C3AED;border-radius:16px;padding:20px 48px">
+              <span style="font-size:36px;font-weight:800;color:#7C3AED;letter-spacing:10px">${otp}</span>
+            </div>
+          </div>
+          <p style="font-size:13px;color:#666;line-height:1.6">
+            If you didn't request this, you can safely ignore this email.
+          </p>
+          <p style="font-size:12px;color:#aaa;margin-top:32px;border-top:1px solid #eee;padding-top:16px">
+            Aivorah · Hyderabad, India
+          </p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.warn('[mailer] sendRecoveryOtpEmail failed:', err.message);
+  }
+}
+
+async function sendRecoveryEmailConfirmation({ to, accountEmail, accountName }) {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to) return;
+  try {
+    await sendWithRetry({
+      from: `"Aivorah" <${process.env.EMAIL_USER}>`,
+      to,
+      subject: 'Recovery email set for your Aivorah account',
+      html: `
+        <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#fff">
+          <div style="background:#7C3AED;border-radius:12px;padding:24px 24px 16px;margin-bottom:24px">
+            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700">Aivorah</h1>
+            <p style="margin:8px 0 0;color:#e9d5ff;font-size:14px">Recovery Email Confirmation</p>
+          </div>
+
+          <p style="font-size:15px;color:#333;margin-bottom:4px">Hello,</p>
+          <p style="font-size:14px;color:#555;line-height:1.6">
+            This email address (<strong>${to}</strong>) has been set as the <strong>recovery email</strong>
+            for the Aivorah account belonging to <strong>${accountName || accountEmail}</strong>
+            (${accountEmail}).
+          </p>
+
+          <div style="background:#f5f3ff;border-left:4px solid #7C3AED;border-radius:8px;padding:16px;margin:24px 0">
+            <p style="margin:0;font-size:13px;color:#555;line-height:1.6">
+              If you ever lose access to that account, use this email address to recover it.
+              If you did not authorise this, please contact us immediately at
+              <a href="mailto:aivorah24@gmail.com" style="color:#7C3AED">aivorah24@gmail.com</a>.
+            </p>
+          </div>
+
+          <p style="font-size:12px;color:#aaa;margin-top:32px;border-top:1px solid #eee;padding-top:16px">
+            Aivorah · Hyderabad, India
+          </p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.warn('[mailer] sendRecoveryEmailConfirmation failed:', err.message);
+  }
+}
+
+module.exports = { sendCredentialsEmail, sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendRecoveryEmailConfirmation, sendRecoveryOtpEmail };

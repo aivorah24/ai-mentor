@@ -426,27 +426,33 @@ export default function ChallengesScreen({ navigation, route }: any) {
                 /* Result screen */
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.resultBox}>
                   {/* Score circle */}
-                  <View style={[styles.resultCircle, { borderColor: quizResult.score >= 70 ? colors.accentGreen : colors.accentYellow }]}>
-                    <Text style={[styles.resultScore, { color: quizResult.score >= 70 ? colors.accentGreen : colors.accentYellow }]}>{quizResult.score}%</Text>
-                    <Text style={styles.resultLabel}>Score</Text>
-                  </View>
+                  {(() => {
+                    const s = quizResult.score;
+                    const circleColor = s === 100 ? '#4ade80' : s >= 70 ? colors.accentGreen : colors.accentYellow;
+                    return (
+                      <View style={[styles.resultCircle, { borderColor: circleColor }]}>
+                        <Text style={[styles.resultScore, { color: circleColor }]}>{s}%</Text>
+                        <Text style={styles.resultLabel}>Score</Text>
+                      </View>
+                    );
+                  })()}
                   <Text style={styles.resultTitle}>
-                    {quizResult.score >= 80 ? 'Outstanding!' : quizResult.score >= 60 ? 'Well done!' : 'Good effort!'}
+                    {quizResult.score === 100 ? 'Perfect Score!' : quizResult.score >= 80 ? 'Outstanding!' : quizResult.score >= 60 ? 'Well done!' : 'Good effort!'}
                   </Text>
 
                   {/* Score-based ranking band — shown immediately */}
                   {(() => {
                     const s = quizResult.score;
                     let band: { label: string; emoji: string; bg: string; border: string; labelColor: string; sub: string } | null = null;
-                    if (s >= 80)      band = { label: 'Top 1%',  emoji: '🥇', bg: '#fbbf24', border: '#f59e0b', labelColor: '#78350f', sub: 'Exceptional! You are among the best!' };
-                    else if (s >= 60) band = { label: 'Top 5%',  emoji: '🥈', bg: '#c084fc', border: '#a855f7', labelColor: '#fff',    sub: 'Outstanding result! Keep it up!' };
-                    else if (s >= 40) band = { label: 'Top 10%', emoji: '🥉', bg: '#34d399', border: '#059669', labelColor: '#022c22', sub: 'Great performance! Well done!' };
-                    else if (s >= 20) band = { label: 'Top 25%', emoji: '⭐', bg: '#60a5fa', border: '#2563eb', labelColor: '#fff',    sub: 'Good effort! Keep practising!' };
+                    if (s === 100)    band = { label: 'Perfect!',  emoji: '🌟', bg: '#bbf7d0', border: '#4ade80', labelColor: '#14532d', sub: 'Incredible! A flawless perfect score!' };
+                    else if (s >= 80) band = { label: 'Top 1%',   emoji: '🥇', bg: '#bbf7d0', border: '#4ade80', labelColor: '#14532d', sub: 'Exceptional! You are among the best!' };
+                    else if (s >= 60) band = { label: 'Top 5%',   emoji: '🥈', bg: '#d8b4fe', border: '#a855f7', labelColor: '#3b0764', sub: 'Outstanding result! Keep it up!' };
+                    else if (s >= 40) band = { label: 'Top 10%',  emoji: '🥉', bg: '#a7f3d0', border: '#059669', labelColor: '#022c22', sub: 'Great performance! Well done!' };
+                    else if (s >= 20) band = { label: 'Top 25%',  emoji: '⭐', bg: '#bfdbfe', border: '#2563eb', labelColor: '#1e3a5f', sub: 'Good effort! Keep practising!' };
                     if (!band) return null;
                     return (
                       <View style={[styles.scoreBandBanner, { backgroundColor: band.bg, borderColor: band.border }]}>
-                        <View style={styles.rankBadgeShine} />
-                        <Text style={{ fontSize: 36 }}>{band.emoji}</Text>
+                        <Text style={{ fontSize: 24 }}>{band.emoji}</Text>
                         <View>
                           <Text style={[styles.scoreBandLabel, { color: band.labelColor }]}>{band.label} Performer</Text>
                           <Text style={[styles.scoreBandSub, { color: band.labelColor, opacity: 0.75 }]}>{band.sub}</Text>
@@ -672,7 +678,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   submitQuizBtnText: { fontSize: 15, fontWeight: '700', color: 'white' },
   answerAllHint:{ fontSize: 12, color: c.textDim, textAlign: 'center', marginTop: spacing.sm },
   // Result
-  resultBox:    { alignItems: 'center', padding: spacing.xxl, gap: spacing.lg, paddingBottom: 40 },
+  resultBox:    { alignItems: 'center', padding: spacing.xxl, gap: spacing.lg, paddingBottom: 40, maxWidth: 600, alignSelf: 'center', width: '100%' },
   resultCircle: { width: 120, height: 120, borderRadius: 60, borderWidth: 6, alignItems: 'center', justifyContent: 'center' },
   resultScore:  { fontSize: 32, fontWeight: '900' },
   resultLabel:  { fontSize: 12, color: c.textDim, fontWeight: '600' },
@@ -690,14 +696,14 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   liveBadge2:   { flexDirection: 'row', alignItems: 'center', gap: 4 },
   liveDot2:     { width: 6, height: 6, borderRadius: 3 },
   liveText2:    { fontSize: 10, fontWeight: '800', letterSpacing: 1 },
-  scoreBandBanner: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, borderWidth: 2, borderRadius: radius.xl, paddingHorizontal: spacing.xl, paddingVertical: 16, marginBottom: spacing.sm, alignSelf: 'stretch', overflow: 'hidden', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 },
-  scoreBandLabel:  { fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
-  scoreBandSub:    { fontSize: 12, fontWeight: '600', marginTop: 2 },
-  rankBandBanner: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1.5, borderRadius: radius.lg, paddingHorizontal: spacing.lg, paddingVertical: 14, marginBottom: 4 },
-  rankBandLabel:  { fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
-  rankBandSub:    { fontSize: 12, marginTop: 2 },
-  myRankBanner: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 10 },
-  myRankText:   { fontSize: 14, fontWeight: '800', flex: 1 },
+  scoreBandBanner: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1.5, borderRadius: radius.lg, paddingHorizontal: spacing.lg, paddingVertical: 10, marginBottom: spacing.sm, alignSelf: 'center', overflow: 'hidden' },
+  scoreBandLabel:  { fontSize: 15, fontWeight: '900', letterSpacing: -0.3 },
+  scoreBandSub:    { fontSize: 11, fontWeight: '600', marginTop: 1 },
+  rankBandBanner: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1.5, borderRadius: radius.lg, paddingHorizontal: spacing.lg, paddingVertical: 10, marginBottom: 4, alignSelf: 'center' },
+  rankBandLabel:  { fontSize: 15, fontWeight: '900', letterSpacing: -0.3 },
+  rankBandSub:    { fontSize: 11, marginTop: 2 },
+  myRankBanner: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 8, alignSelf: 'center' },
+  myRankText:   { fontSize: 13, fontWeight: '800' },
   lbRow:        { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radius.md, padding: spacing.sm },
   lbMedal:      { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   lbRankNum:    { fontSize: 12, fontWeight: '700' },

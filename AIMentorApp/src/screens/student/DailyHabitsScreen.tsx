@@ -110,6 +110,7 @@ export default function DailyHabitsScreen({ navigation }: any) {
         <Header
           title="Daily Habits"
           subtitle="Build your best self, one day at a time"
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
           showSearch={false}
         />

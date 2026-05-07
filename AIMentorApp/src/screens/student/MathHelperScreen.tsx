@@ -170,6 +170,7 @@ export default function MathHelperScreen({ route, navigation }: any) {
         <Header
           title="Math Helper"
           subtitle={`${curriculum} · ${grade} · ${topic}`}
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
         />
 

@@ -32,6 +32,7 @@ const STUDENT_NAV_ITEMS = [
   { label: 'Leaderboard', icon: 'award', screen: 'Leaderboard', group: 'FOCUS' },
   { label: 'Progress', icon: 'bar-chart-2', screen: 'Progress', group: 'FOCUS' },
   { label: 'Rewards', icon: 'gift', screen: 'Rewards', group: 'FOCUS' },
+  { label: 'Messages', icon: 'message-square', screen: 'Messages', group: 'FOCUS' },
   { label: 'Help Center', icon: 'help-circle', screen: 'HelpCenter', group: 'SYSTEM' },
   { label: 'Settings', icon: 'settings', screen: 'Settings', group: 'SYSTEM' },
 ];
@@ -88,7 +89,7 @@ export default function DrawerContent(props: any) {
   const NAV_ITEMS = isTeacher ? TEACHER_NAV_ITEMS : isParent ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
   const groups = isTeacher ? ['MENU', 'TEACHING DEVELOPMENT', 'SYSTEM'] : isParent ? ['PARENT MENU', 'CONTROLS', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
   const { unreadCount, unreadAssignments, unreadChallenges } = useNotification();
-  const MESSAGE_SCREENS    = ['TeacherMessages', 'ParentMessages'];
+  const MESSAGE_SCREENS    = ['TeacherMessages', 'ParentMessages', 'Messages'];
   const ASSIGNMENT_SCREENS = ['Assignments', 'ParentAssignments'];
   const CHALLENGE_SCREENS  = ['Challenges', 'ParentChallenges'];
 

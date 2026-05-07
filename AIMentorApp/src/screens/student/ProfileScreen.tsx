@@ -42,7 +42,8 @@ const CARTOON_OPTIONS = ['Naruto', 'Doraemon', 'Shinchan', 'Spider-Man', 'Iron M
 
 // ────────────────────────────────────────────────────────────────────────────
 export default function ProfileScreen({ navigation }: any) {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
+  const [signOutVisible, setSignOutVisible] = useState(false);
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
@@ -61,6 +62,8 @@ export default function ProfileScreen({ navigation }: any) {
   const [editGrade,      setEditGrade]      = useState(user?.grade || '');
   const [editLocation,   setEditLocation]   = useState(user?.location || '');
   const [editBio,        setEditBio]        = useState((user as any)?.bio || '');
+  const [saveProfileLoading, setSaveProfileLoading] = useState(false);
+  const [saveProfileError,   setSaveProfileError]   = useState('');
 
   const currentAvatar = AVATARS.find(a => a.id === selAvatar) || AVATARS[0];
 
@@ -76,10 +79,32 @@ export default function ProfileScreen({ navigation }: any) {
     updateUser({ avatarStyle: id, photoUrl: undefined } as any);
   }
 
-  function handleSaveProfile() {
-    if (!editName.trim()) { Alert.alert('Required', 'Please enter your name.'); return; }
-    updateUser({ name: editName.trim(), grade: editGrade.trim() || undefined, location: editLocation.trim() || undefined, bio: editBio.trim() || undefined } as any);
-    setEditVisible(false);
+  async function handleSaveProfile() {
+    setSaveProfileError('');
+    if (!editName.trim()) { setSaveProfileError('Please enter your name.'); return; }
+    setSaveProfileLoading(true);
+    try {
+      const body: Record<string, any> = { email: user?.email, name: editName.trim() };
+      if (editGrade.trim())    body.grade    = editGrade.trim();
+      if (editLocation.trim()) body.location = editLocation.trim();
+      if (editBio.trim())      body.bio      = editBio.trim();
+      await fetch(`${SERVER_URL}/user/preferences`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      updateUser({
+        name: editName.trim(),
+        grade: editGrade.trim() || user?.grade,
+        location: editLocation.trim() || user?.location,
+        bio: editBio.trim() || (user as any)?.bio,
+      } as any);
+      setEditVisible(false);
+    } catch {
+      setSaveProfileError('Could not save. Please try again.');
+    } finally {
+      setSaveProfileLoading(false);
+    }
   }
 
   function handleCartoonSelect(c: string) {
@@ -137,18 +162,18 @@ export default function ProfileScreen({ navigation }: any) {
 
             {/* Tags */}
             <View style={styles.heroTags}>
-              <View style={[styles.tag, { backgroundColor: isDark ? 'rgba(147,176,172,0.18)' : 'rgba(147,176,172,0.22)', borderColor: isDark ? 'rgba(147,176,172,0.35)' : 'rgba(95,138,134,0.4)' }]}>
+              <View style={[styles.tag, { backgroundColor: colors.primary + '22', borderColor: colors.primary + '55' }]}>
                 <Feather name="book-open" size={10} color={colors.primary} />
                 <Text style={[styles.tagText, { color: colors.primary }]}>{user?.grade || 'Grade 3'}</Text>
               </View>
-              <View style={[styles.tag, { backgroundColor: isDark ? 'rgba(195,220,216,0.15)' : 'rgba(195,220,216,0.35)', borderColor: isDark ? 'rgba(195,220,216,0.3)' : 'rgba(147,176,172,0.5)' }]}>
+              <View style={[styles.tag, { backgroundColor: colors.accentBlue + '22', borderColor: colors.accentBlue + '55' }]}>
                 <Feather name="globe" size={10} color={colors.accentBlue} />
-                <Text style={[styles.tagText, { color: colors.accentBlue }]}>IB PYP</Text>
+                <Text style={[styles.tagText, { color: colors.accentBlue }]}>{user?.curriculum || 'IB PYP'}</Text>
               </View>
               {user?.location && (
-                <View style={[styles.tag, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', borderColor: colors.borderColor }]}>
-                  <Feather name="map-pin" size={10} color={colors.textDim} />
-                  <Text style={[styles.tagText, { color: colors.textDim }]}>{user.location}</Text>
+                <View style={[styles.tag, { backgroundColor: colors.accentGreen + '22', borderColor: colors.accentGreen + '55' }]}>
+                  <Feather name="map-pin" size={10} color={colors.accentGreen} />
+                  <Text style={[styles.tagText, { color: colors.accentGreen }]}>{user.location}</Text>
                 </View>
               )}
               {/* Plan badge */}
@@ -259,10 +284,10 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.card}>
             <SectionHead icon="settings" iconBg={isDark ? 'rgba(168,181,179,0.12)' : 'rgba(168,181,179,0.2)'} iconColor={colors.textMuted} title="Account" />
             {([
-              { icon: 'bell',         label: 'Notifications',      sub: 'Alerts and reminders',       cb: () => {},                               danger: false },
-              { icon: 'shield',       label: 'Privacy',            sub: 'Password, data settings',    cb: () => {},                               danger: false },
+              { icon: 'bell',         label: 'Notifications',      sub: 'Alerts and reminders',       cb: () => navigation?.navigate?.('Settings', { section: 'notifications' }), danger: false },
+              { icon: 'shield',       label: 'Privacy',            sub: 'Password, data settings',    cb: () => navigation?.navigate?.('Settings', { section: 'security' }), danger: false },
               { icon: 'help-circle',  label: 'Help Center',        sub: 'FAQs and support',           cb: () => navigation?.navigate?.('HelpCenter'), danger: false },
-              { icon: 'log-out',      label: 'Sign Out',           sub: 'Sign out of your account',   cb: () => {},                               danger: true  },
+              { icon: 'log-out',      label: 'Sign Out',           sub: 'Sign out of your account',   cb: () => setSignOutVisible(true),          danger: true  },
             ] as const).map((row, i, arr) => (
               <TouchableOpacity key={row.label} style={[styles.accountRow, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.borderColor }]} onPress={row.cb} activeOpacity={0.7}>
                 <View style={[styles.accountIcon, row.danger && { backgroundColor: 'rgba(239,68,68,0.1)' }]}>
@@ -303,9 +328,40 @@ export default function ProfileScreen({ navigation }: any) {
                 </View>
               ))}
 
+              {!!saveProfileError && (
+                <Text style={{ color: '#ef4444', fontSize: 13, marginBottom: 10 }}>{saveProfileError}</Text>
+              )}
               <View style={styles.modalBtns}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditVisible(false)}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.saveBtn}   onPress={handleSaveProfile}><Text style={styles.saveText}>Save Changes</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditVisible(false)} disabled={saveProfileLoading}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
+                <TouchableOpacity style={[styles.saveBtn, saveProfileLoading && { opacity: 0.6 }]} onPress={handleSaveProfile} disabled={saveProfileLoading}>
+                  {saveProfileLoading
+                    ? <ActivityIndicator color="#fff" size="small" />
+                    : <Text style={styles.saveText}>Save Changes</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* ── Sign Out Modal ── */}
+        <Modal visible={signOutVisible} transparent animationType="fade" onRequestClose={() => setSignOutVisible(false)}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+            <View style={{ backgroundColor: colors.cardDark, borderRadius: 16, padding: 28, width: '100%', maxWidth: 360, borderWidth: 1, borderColor: colors.borderColor }}>
+              <Text style={{ fontSize: 17, fontWeight: '700', color: colors.textMain, marginBottom: 8 }}>Sign Out</Text>
+              <Text style={{ fontSize: 14, color: colors.textMuted, marginBottom: 24 }}>Are you sure you want to sign out of your account?</Text>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <TouchableOpacity
+                  onPress={() => setSignOutVisible(false)}
+                  style={{ flex: 1, padding: 13, borderRadius: 10, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center' }}
+                >
+                  <Text style={{ color: colors.textMuted, fontWeight: '600' }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => { setSignOutVisible(false); logout(); }}
+                  style={{ flex: 1, padding: 13, borderRadius: 10, backgroundColor: colors.accentRed, alignItems: 'center' }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '700' }}>Sign Out</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>

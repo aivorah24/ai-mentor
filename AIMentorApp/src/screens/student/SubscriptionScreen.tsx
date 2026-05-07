@@ -222,6 +222,7 @@ export default function SubscriptionScreen({ navigation }: any) {
         <Header
           title="Plans"
           subtitle=""
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
           showSearch={false}
         />

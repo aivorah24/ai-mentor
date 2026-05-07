@@ -95,6 +95,7 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
         <Header
           title="Bedtime Stories"
           subtitle="Bhagavatam · Ramayana · Bhagavad Gita"
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
           showSearch={false}
         />

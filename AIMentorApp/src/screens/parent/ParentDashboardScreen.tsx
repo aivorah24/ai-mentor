@@ -25,7 +25,7 @@ interface ChildData {
   id: string;
   name: string;
   grade: string;
-  status: 'on_track' | 'needs_attention';
+  status: 'on_track' | 'needs_attention' | 'getting_started';
   xpPoints: number;
   completedTopics: string[];
   currentStreak: number;
@@ -83,9 +83,10 @@ function ChildCard({
   colors: AppColors;
   styles: any;
 }) {
+  const isNew = child.status === 'getting_started';
   const isOnTrack = child.status === 'on_track';
-  const badgeColor = isOnTrack ? colors.accentGreen : colors.accentYellow;
-  const badgeLabel = isOnTrack ? 'On Track' : 'Needs Attention';
+  const badgeColor = isNew ? colors.accentBlue : isOnTrack ? colors.accentGreen : colors.accentYellow;
+  const badgeLabel = isNew ? 'Getting Started' : isOnTrack ? 'On Track' : 'Needs Attention';
 
   return (
     <TouchableOpacity
@@ -103,8 +104,8 @@ function ChildCard({
         <Feather name="key" size={11} color={colors.textDim} />
       </TouchableOpacity>
 
-      <View style={[styles.childAvatar, { backgroundColor: isOnTrack ? colors.accentBlue + '20' : colors.accentYellow + '20' }]}>
-        <Text style={[styles.childAvatarText, { color: isOnTrack ? colors.accentBlue : colors.accentYellow }]}>
+      <View style={[styles.childAvatar, { backgroundColor: badgeColor + '20' }]}>
+        <Text style={[styles.childAvatarText, { color: badgeColor }]}>
           {child.name[0]}
         </Text>
       </View>
@@ -232,7 +233,7 @@ export default function ParentDashboardScreen({ navigation, route }: any) {
             id: c.id,
             name: c.name,
             grade: c.grade,
-            status: (c.currentStreak ?? 0) >= 3 ? 'on_track' : 'needs_attention',
+            status: (() => { const hasActivity = (c.xpPoints ?? 0) > 0 || (c.studyTimeMinutes ?? 0) > 0 || (c.completedTopics?.length ?? 0) > 0; if (!hasActivity) return 'getting_started'; return (c.currentStreak ?? 0) >= 1 ? 'on_track' : 'needs_attention'; })(),
             xpPoints: c.xpPoints ?? 0,
             completedTopics: c.completedTopics ?? [],
             currentStreak: c.currentStreak ?? 0,
@@ -273,7 +274,7 @@ export default function ParentDashboardScreen({ navigation, route }: any) {
                   id: c.id,
                   name: c.name,
                   grade: c.grade,
-                  status: (c.currentStreak ?? 0) >= 3 ? 'on_track' : 'needs_attention',
+                  status: (() => { const hasActivity = (c.xpPoints ?? 0) > 0 || (c.studyTimeMinutes ?? 0) > 0 || (c.completedTopics?.length ?? 0) > 0; if (!hasActivity) return 'getting_started'; return (c.currentStreak ?? 0) >= 1 ? 'on_track' : 'needs_attention'; })(),
                   xpPoints: c.xpPoints ?? 0,
                   completedTopics: c.completedTopics ?? [],
                   currentStreak: c.currentStreak ?? 0,
@@ -300,7 +301,7 @@ export default function ParentDashboardScreen({ navigation, route }: any) {
                 id: c.id,
                 name: c.name,
                 grade: c.grade,
-                status: (c.currentStreak ?? 0) >= 3 ? 'on_track' : 'needs_attention',
+                status: (() => { const hasActivity = (c.xpPoints ?? 0) > 0 || (c.studyTimeMinutes ?? 0) > 0 || (c.completedTopics?.length ?? 0) > 0; if (!hasActivity) return 'getting_started'; return (c.currentStreak ?? 0) >= 1 ? 'on_track' : 'needs_attention'; })(),
                 xpPoints: c.xpPoints ?? 0,
                 completedTopics: c.completedTopics ?? [],
                 currentStreak: c.currentStreak ?? 0,

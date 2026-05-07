@@ -36,6 +36,7 @@ export default function ProjectDetailsScreen({ navigation }: any) {
         <Header
           title="Project Details"
           subtitle="Aivorah · Dev Work Log"
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
         />
 

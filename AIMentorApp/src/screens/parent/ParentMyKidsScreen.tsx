@@ -36,9 +36,11 @@ function generateStudentId(name: string) {
 
 function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onManageTasks, onViewCreds }: any) {
   const progressPct = Math.round(((child.completedTopics?.length ?? 0) / 14) * 100);
-  const isOnTrack = (child.currentStreak ?? 0) >= 3 && progressPct >= 20;
-  const badgeColor = isOnTrack ? colors.accentGreen : colors.accentYellow;
-  const badgeLabel = isOnTrack ? 'On Track' : 'Needs Attention';
+  const isNewStudent = (child.xpPoints ?? 0) === 0 && (child.studyTime ?? 0) === 0 && progressPct === 0;
+  const hasActivity = (child.xpPoints ?? 0) > 0 || (child.studyTime ?? 0) > 0 || progressPct > 0;
+  const isOnTrack = hasActivity && (child.currentStreak ?? 0) >= 1;
+  const badgeColor = !hasActivity ? colors.accentBlue : isOnTrack ? colors.accentGreen : colors.accentYellow;
+  const badgeLabel = !hasActivity ? 'Getting Started' : isOnTrack ? 'On Track' : 'Needs Attention';
 
   return (
     <TouchableOpacity
@@ -47,8 +49,8 @@ function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onMana
       onPress={() => navigation.navigate('ParentDashboard', { childId: child.id })}
     >
       <View style={styles.childCardHeader}>
-        <View style={[styles.avatar, { backgroundColor: isOnTrack ? colors.accentBlue + '20' : colors.accentYellow + '20' }]}>
-          <Text style={[styles.avatarText, { color: isOnTrack ? colors.accentBlue : colors.accentYellow }]}>
+        <View style={[styles.avatar, { backgroundColor: badgeColor + '20' }]}>
+          <Text style={[styles.avatarText, { color: badgeColor }]}>
             {child.name[0].toUpperCase()}
           </Text>
         </View>
@@ -209,6 +211,8 @@ export default function ParentMyKidsScreen({ navigation }: any) {
   const [copiedField, setCopiedField] = useState('');
   const [resendingCreds, setResendingCreds] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [resetPasswordSuccess, setResetPasswordSuccess] = useState(false);
   const [showCredsPassword, setShowCredsPassword] = useState(false);
   const [showViewPassword, setShowViewPassword] = useState(false);
 
@@ -272,6 +276,25 @@ export default function ParentMyKidsScreen({ navigation }: any) {
       }
     } catch { /* ignore */ }
     finally { setResendingCreds(false); }
+  }
+
+  async function resetChildPassword(child: any) {
+    setResettingPassword(true);
+    setResetPasswordSuccess(false);
+    try {
+      const frontendOrigin = Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : 'https://aivorah.ai';
+      const res = await fetch(
+        `${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children/${child.id}/reset-password`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ frontendOrigin }) }
+      );
+      if (res.ok) {
+        setResetPasswordSuccess(true);
+        setTimeout(() => setResetPasswordSuccess(false), 5000);
+      } else {
+        Alert.alert('Error', 'Could not send reset email. Please try again.');
+      }
+    } catch { Alert.alert('Error', 'Network error. Please try again.'); }
+    finally { setResettingPassword(false); }
   }
 
   function openModal(tab: 'create' | 'link' = 'create') {
@@ -395,7 +418,12 @@ export default function ParentMyKidsScreen({ navigation }: any) {
           }) }
       );
       const data = await res.json();
-      if (!res.ok) { setCreateError(data.error || 'Could not create account.'); return; }
+      if (!res.ok) {
+        setCreateError(res.status === 409
+          ? (data.error || 'A child with this name and grade is already linked to your account.')
+          : (data.error || 'Could not create account.'));
+        return;
+      }
       setShowModal(false);
       fetchChildren();
       // Always show login credentials once, right after account creation.
@@ -1006,7 +1034,7 @@ export default function ParentMyKidsScreen({ navigation }: any) {
         </View>
       </Modal>
       {/* ── View Login Info Modal ── */}
-      <Modal visible={!!viewCredsChild} transparent animationType="fade" onRequestClose={() => { setViewCredsChild(null); setViewCreds(null); }}>
+      <Modal visible={!!viewCredsChild} transparent animationType="fade" onRequestClose={() => { setViewCredsChild(null); setViewCreds(null); setResetPasswordSuccess(false); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <View style={styles.modalHeader}>
@@ -1019,7 +1047,7 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                   <Text style={styles.modalDesc}>{viewCredsChild?.name}'s credentials</Text>
                 </View>
               </View>
-              <TouchableOpacity onPress={() => { setViewCredsChild(null); setViewCreds(null); }}>
+              <TouchableOpacity onPress={() => { setViewCredsChild(null); setViewCreds(null); setResetPasswordSuccess(false); }}>
                 <Feather name="x" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
@@ -1070,8 +1098,21 @@ export default function ParentMyKidsScreen({ navigation }: any) {
             )}
 
             <TouchableOpacity
+              style={[styles.linkBtn, { backgroundColor: resetPasswordSuccess ? colors.accentGreen : colors.accentRed + 'CC' }, resettingPassword && { opacity: 0.6 }]}
+              onPress={() => resetChildPassword(viewCredsChild)}
+              disabled={resettingPassword || resetPasswordSuccess}
+              activeOpacity={0.8}
+            >
+              {resettingPassword
+                ? <ActivityIndicator color="white" size="small" />
+                : resetPasswordSuccess
+                  ? <><Feather name="check" size={15} color="#fff" /><Text style={styles.linkBtnText}>Reset Link Sent to Your Email!</Text></>
+                  : <><Feather name="lock" size={15} color="#fff" /><Text style={styles.linkBtnText}>Reset Child's Password</Text></>}
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={[styles.linkBtn, { backgroundColor: '#5F8A86' }]}
-              onPress={() => { setViewCredsChild(null); setViewCreds(null); }}
+              onPress={() => { setViewCredsChild(null); setViewCreds(null); setResetPasswordSuccess(false); }}
               activeOpacity={0.8}
             >
               <Text style={styles.linkBtnText}>Close</Text>

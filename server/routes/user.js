@@ -4,7 +4,7 @@ const multer     = require('multer');
 const cloudinary = require('cloudinary').v2;
 const supabase   = require('../services/supabase');
 const { encrypt, decrypt } = require('../utils/encryption');
-const { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail } = require('../services/mailer');
+const { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendRecoveryEmailConfirmation } = require('../services/mailer');
 
 // Firebase Admin — used to generate password reset links server-side
 // Supports two init methods:
@@ -184,9 +184,16 @@ router.post('/sync', async (req, res) => {
       curriculum:         data.curriculum,
       location:           data.location,
       phone:              data.phone ?? null,
-      onboardingComplete: data.onboarding_complete,
+      // Trust the DB column directly. NULL means not complete (new/migrated accounts).
+      onboardingComplete: data.onboarding_complete === true,
       photoUrl:           data.photo_url ?? null,
       isPro:              prefs?.isPro === true,
+      // For auto-generated @aivorah.student accounts: default to true (must change) unless
+      // explicitly cleared (false) after the student has changed their password.
+      // For all other accounts: only true if explicitly set.
+      mustChangePassword: (data.email || '').endsWith('@aivorah.student')
+        ? prefs?.mustChangePassword !== false
+        : prefs?.mustChangePassword === true,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -411,6 +418,11 @@ router.patch('/preferences', async (req, res) => {
       interests,
       bio,
       photoUrl,
+      pushNotifications,
+      aiSuggestions,
+      weeklyReport,
+      assignmentAlerts,
+      challengeUpdates,
     } = req.body ?? {};
 
     if (!email) return res.status(400).json({ error: 'email required' });
@@ -435,10 +447,24 @@ router.patch('/preferences', async (req, res) => {
             .filter(Boolean);
     }
 
+    if (pushNotifications != null) patch.pushNotifications = Boolean(pushNotifications);
+    if (aiSuggestions != null) patch.aiSuggestions = Boolean(aiSuggestions);
+    if (weeklyReport != null) patch.weeklyReport = Boolean(weeklyReport);
+    if (assignmentAlerts != null) patch.assignmentAlerts = Boolean(assignmentAlerts);
+    if (challengeUpdates != null) patch.challengeUpdates = Boolean(challengeUpdates);
+
     patch.updatedAt = new Date().toISOString();
     await setPreferences(email, patch);
-    const saved = await getPreferences(email);
 
+    // Also persist grade / location to the users table so they survive re-login
+    const usersPatch = {};
+    if (grade != null) usersPatch.grade = String(grade);
+    if (location != null) usersPatch.location = String(location);
+    if (Object.keys(usersPatch).length > 0) {
+      await supabase.from('users').update(usersPatch).eq('email', email.toLowerCase().trim());
+    }
+
+    const saved = await getPreferences(email);
     res.json({ ok: true, preference: saved });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -584,6 +610,83 @@ router.get('/role', async (req, res) => {
   const { data, error } = await supabase.from('users').select('role').eq('email', email).maybeSingle();
   if (error || !data) return res.status(404).json({ error: 'User not found' });
   res.json({ role: data.role });
+});
+
+// In-memory OTP store: key = accountEmail, value = { otp, recoveryEmail, expiresAt }
+const recoveryOtpStore = new Map();
+
+// ── POST /user/recovery-email/send-code ──────────────────────
+// Generates a 6-digit OTP and emails it to the recovery address
+router.post('/recovery-email/send-code', async (req, res) => {
+  try {
+    const { email, recoveryEmail } = req.body;
+    if (!email || !recoveryEmail) return res.status(400).json({ error: 'email and recoveryEmail required' });
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+    recoveryOtpStore.set(email.trim().toLowerCase(), { otp, recoveryEmail: recoveryEmail.trim().toLowerCase(), expiresAt });
+
+    // Send OTP to the recovery email
+    const { sendRecoveryOtpEmail } = require('../services/mailer');
+    await sendRecoveryOtpEmail({ to: recoveryEmail.trim().toLowerCase(), otp });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[recovery-email/send-code]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /user/recovery-email ───────────────────────────────
+// Verifies OTP then saves recovery email + sends confirmation
+router.patch('/recovery-email', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ error: 'email and otp required' });
+
+    const emailLc = email.trim().toLowerCase();
+    const stored = recoveryOtpStore.get(emailLc);
+    if (!stored) return res.status(400).json({ error: 'No pending verification. Please request a new code.' });
+    if (Date.now() > stored.expiresAt) {
+      recoveryOtpStore.delete(emailLc);
+      return res.status(400).json({ error: 'Code expired. Please request a new one.' });
+    }
+    if (stored.otp !== String(otp).trim()) {
+      return res.status(400).json({ error: 'Incorrect code. Please try again.' });
+    }
+
+    // OTP valid — save recovery email
+    recoveryOtpStore.delete(emailLc);
+    const recoveryEmail = stored.recoveryEmail;
+    await setPreferences(emailLc, { recoveryEmail });
+
+    // Fetch name for confirmation email
+    const { data } = await supabase.from('users').select('name').eq('email', emailLc).maybeSingle();
+
+    // Send confirmation to the recovery email
+    sendRecoveryEmailConfirmation({
+      to: recoveryEmail,
+      accountEmail: emailLc,
+      accountName: data?.name || '',
+    }).catch(() => {});
+
+    res.json({ ok: true, recoveryEmail });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /user/clear-must-change-password ───────────────────
+// Called after a student changes their auto-generated password for the first time
+router.patch('/clear-must-change-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'email required' });
+    await setPreferences(email, { mustChangePassword: false });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── PATCH /user/add-role ─────────────────────────────────────
@@ -826,6 +929,30 @@ router.patch('/set-pro', async (req, res) => {
 
     res.json({ ok: true, email: emailLc, isPro });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── DELETE /user/delete-account ──────────────────────────────
+// Permanently deletes all user data from Supabase (Firebase deletion is done client-side)
+router.delete('/delete-account', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'email required' });
+    const emailLc = email.trim().toLowerCase();
+
+    // Delete from all tables in order (child links first, then main records)
+    await supabase.from('parent_children').delete().eq('parent_email', emailLc);
+    await supabase.from('parent_children').delete().eq('child_email', emailLc);
+    await supabase.from('student_stats').delete().eq('student_id',
+      (await supabase.from('users').select('id').eq('email', emailLc).maybeSingle())?.data?.id || ''
+    );
+    await supabase.from('user_preferences').delete().eq('user_email', emailLc);
+    await supabase.from('users').delete().eq('email', emailLc);
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[delete-account]', err.message);
     res.status(500).json({ error: err.message });
   }
 });

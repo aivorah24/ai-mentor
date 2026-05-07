@@ -2,7 +2,7 @@ const express  = require('express');
 const router   = express.Router();
 const supabase = require('../services/supabase');
 const { randomUUID, randomInt, randomBytes } = require('crypto');
-const { sendCredentialsEmail, sendVerificationEmail } = require('../services/mailer');
+const { sendCredentialsEmail, sendVerificationEmail, sendPasswordResetEmail } = require('../services/mailer');
 
 function toTitleCase(str) {
   return String(str || '').replace(/\b\w/g, c => c.toUpperCase());
@@ -106,7 +106,7 @@ async function setStudentMeta(email, studentId, parentEmail, firebaseUid, status
     updatedAt: new Date().toISOString(),
     ...(age !== undefined ? { age: Number(age) } : {}),
     // Only store initial password for auto-generated accounts (not real emails)
-    ...(initialPassword ? { initialPassword, passwordSavedAt: new Date().toISOString() } : {}),
+    ...(initialPassword ? { initialPassword, passwordSavedAt: new Date().toISOString(), mustChangePassword: true } : {}),
   };
 
   await supabase.from('user_preferences').upsert(
@@ -188,6 +188,27 @@ router.post('/:parentEmail/children/link-created', async (req, res) => {
     const resolvedStudentId = String(studentId || '').trim() || `STU-${Date.now()}`;
     const resolvedUserId = randomUUID();
     const accountStatus = verificationRequired ? 'pending_verification' : 'active';
+
+    // ── Duplicate child check ─────────────────────────────────────────────────
+    // Prevent creating the same child (same name + grade) more than once under this parent
+    const { data: existingChildren } = await supabase
+      .from('parent_children')
+      .select('child_id, users!parent_children_child_id_fkey(name, grade)')
+      .eq('parent_email', cleanParentEmail);
+    if (existingChildren?.length) {
+      const duplicate = existingChildren.find(row => {
+        const child = row.users;
+        return child &&
+          String(child.name || '').toLowerCase().trim() === cleanName.toLowerCase() &&
+          String(child.grade || '').toLowerCase().trim() === String(grade || '').toLowerCase().trim();
+      });
+      if (duplicate) {
+        return res.status(409).json({
+          error: `A child named "${cleanName}" in ${grade} is already linked to your account. If this is a different child, use a slightly different name to distinguish them.`,
+          code: 'DUPLICATE_CHILD',
+        });
+      }
+    }
 
     const { data: existingByEmail } = await supabase
       .from('users')
@@ -539,6 +560,60 @@ router.get('/:parentEmail/children/:childId/credentials', async (req, res) => {
       passwordSavedAt: meta.passwordSavedAt || null,
     });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /parent/:parentEmail/children/:childId/reset-password ──
+// Generates a Firebase password reset link for the child and emails it to the parent
+router.post('/:parentEmail/children/:childId/reset-password', async (req, res) => {
+  try {
+    const { parentEmail, childId } = req.params;
+    const { frontendOrigin } = req.body;
+    const appBase = frontendOrigin || 'https://aivorah.ai';
+
+    // Verify this child belongs to this parent
+    const { data: link } = await supabase
+      .from('parent_children')
+      .select('child_id')
+      .eq('parent_email', parentEmail.toLowerCase())
+      .eq('child_id', childId)
+      .maybeSingle();
+    if (!link) return res.status(403).json({ error: 'Not authorised.' });
+
+    const { data: child } = await supabase
+      .from('users')
+      .select('email, name')
+      .eq('id', childId)
+      .maybeSingle();
+    if (!child) return res.status(404).json({ error: 'Child not found.' });
+
+    // Generate Firebase password reset link using API key (no admin SDK needed)
+    const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
+    let resetLink = null;
+
+    if (FIREBASE_API_KEY) {
+      const fbRes = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${FIREBASE_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requestType: 'PASSWORD_RESET', email: child.email, returnOobLink: true }),
+        }
+      );
+      const fbData = await fbRes.json();
+      if (fbData.oobLink) resetLink = fbData.oobLink;
+    }
+
+    if (!resetLink) {
+      return res.status(500).json({ error: 'Could not generate reset link. Please try again.' });
+    }
+
+    // Send reset link to parent's email (child has no real mailbox)
+    await sendPasswordResetEmail({ to: parentEmail.toLowerCase(), resetLink, childName: child.name });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[reset-child-password]', err.message);
     res.status(500).json({ error: err.message });
   }
 });

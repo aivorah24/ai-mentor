@@ -120,6 +120,7 @@ export default function ParentHelpScreen({ navigation }: any) {
         <Header
           title="Help Center"
           subtitle={`We're here to support you, ${firstName}.`}
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
         />
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
