@@ -180,11 +180,14 @@ const IB_PYP_STATIC_TOPICS: Record<string, Record<string, TopicItem[]>> = {
       { topic: 'Renewable and Non-Renewable Energy', unit: 'Sharing the Planet', description: 'Solar, wind, water vs. coal and oil — sustainable choices.' },
     ],
     'Social Studies': [
-      { topic: 'Ancient Civilizations',     unit: 'Where We Are in Place and Time', description: 'Egypt, Greece, Rome — how early civilizations shaped our world.' },
+      { topic: 'Identity and Self-Awareness', unit: 'Who We Are',                    description: 'Who we are — exploring personal identity, cultural heritage, emotions, and self-awareness.' },
+      { topic: 'Human Body Systems',        unit: 'Who We Are',                     description: 'Digestive, circulatory, and respiratory systems — connecting to identity and self-awareness.' },
       { topic: 'Government and Democracy',  unit: 'How We Organize Ourselves',      description: 'How governments work, voting, laws, and citizen rights.' },
       { topic: 'Trade and Economics',       unit: 'How We Organize Ourselves',      description: 'Import, export, supply and demand in local and global trade.' },
       { topic: 'Migration and Movement',    unit: 'Where We Are in Place and Time', description: 'Why people move — push and pull factors, refugees, immigration.' },
-      { topic: 'Climate Zones and Geography', unit: 'Where We Are in Place and Time', description: 'Tropical, temperate, polar zones — how climate shapes life.' },
+      { topic: 'History of Migration',      unit: 'Where We Are in Place and Time', description: 'Why people have moved across history — trade routes, conquests, famines, and the search for better lives.' },
+      { topic: 'Historical Timeline',       unit: 'Where We Are in Place and Time', description: 'Reading and creating timelines — placing events in chronological order to understand how history progressed.' },
+      { topic: 'Economic Activities',       unit: 'How We Organize Ourselves',      description: 'Barter system, trade, currency, and how economies function.' },
     ],
     'English': [
       { topic: 'Figurative Language',       unit: 'Reading',   description: 'Similes, metaphors, personification — how writers make language vivid.' },
@@ -230,6 +233,8 @@ const IB_PYP_STATIC_TOPICS: Record<string, Record<string, TopicItem[]>> = {
       { topic: 'Nervous System and Senses', unit: 'Who We Are',          description: 'Brain, spinal cord, nerves — how your body receives information.' },
     ],
     'Social Studies': [
+      { topic: 'Ancient Civilizations',     unit: 'Where We Are in Place and Time', description: 'Egypt, Greece, Rome — how early civilizations shaped our world.' },
+      { topic: 'Climate Zones and Geography', unit: 'Where We Are in Place and Time', description: 'Tropical, temperate, polar zones — how climate shapes life.' },
       { topic: 'Human Rights',              unit: 'Who We Are',                    description: 'Universal Declaration, children\'s rights, and responsibilities.' },
       { topic: 'Globalisation',             unit: 'How We Organize Ourselves',     description: 'How countries are connected through trade, technology, and culture.' },
       { topic: 'Sustainability',            unit: 'Sharing the Planet',            description: 'Balancing human needs with protecting the environment for the future.' },
@@ -312,8 +317,8 @@ function TopicCard({
         {t.topic}
       </Text>
 
-      {/* Unit */}
-      {!!t.unit && (
+      {/* Unit / TD theme — only shown for Social Studies (IB PYP transdisciplinary themes) */}
+      {!!t.unit && subject === 'Social Studies' && (
         <Text style={[tc.unit, { color: unitColor }]} numberOfLines={1}>
           {t.unit}
         </Text>

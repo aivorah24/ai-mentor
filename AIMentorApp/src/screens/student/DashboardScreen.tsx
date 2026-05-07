@@ -648,7 +648,7 @@ export default function DashboardScreen({ navigation }: any) {
                   <Text style={styles.heroName}>{firstName}</Text>
                   <Text style={styles.heroSub}>
                     {stats.topicsExplored > 0
-                      ? `${stats.topicsExplored} of ${curriculum.totalTopics} topics explored. Keep it up!`
+                      ? `${Math.min(stats.topicsExplored, curriculum.totalTopics)} of ${curriculum.totalTopics} topics explored. Keep it up!`
                       : `${curriculum.totalTopics} topics ready for your first sprint.`}
                   </Text>
 
