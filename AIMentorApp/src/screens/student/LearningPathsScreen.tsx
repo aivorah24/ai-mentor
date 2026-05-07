@@ -800,15 +800,16 @@ export default function LearningPathsScreen({ navigation }: any) {
       (acc, s) => acc + s.topics.reduce((sum, t) => sum + (completedSet.has(t.topic) ? 1 : 0), 0),
       0,
     );
-    const overallPct = totalTopics > 0 ? Math.round((doneTopics / totalTopics) * 100) : 0;
-    return { totalTopics, doneTopics, overallPct };
+    const cappedDone = Math.min(doneTopics, totalTopics);
+    const overallPct = totalTopics > 0 ? Math.round((cappedDone / totalTopics) * 100) : 0;
+    return { totalTopics, doneTopics: cappedDone, overallPct };
   }, [subjects, completedSet]);
 
   const heroName = user?.name?.split(' ')[0] ?? 'Student';
   const heroSubtitle = `${subjects.length} subjects - ${totals.doneTopics}/${totals.totalTopics} topics completed`;
 
   const statCards = [
-    { label: 'Topics Done', value: String(completedSet.size), icon: 'check-circle' as FeatherName, color: colors.accentGreen },
+    { label: 'Topics Done', value: String(Math.min(completedSet.size, totals.totalTopics)), icon: 'check-circle' as FeatherName, color: colors.accentGreen },
     { label: 'Streak', value: `${stats.currentStreak}d`, icon: 'zap' as FeatherName, color: colors.accentYellow },
     { label: 'Today XP', value: `+${stats.todayXP}`, icon: 'star' as FeatherName, color: colors.primary },
     { label: 'Level', value: `Lv ${stats.level}`, icon: 'award' as FeatherName, color: colors.accentBlue },
@@ -994,28 +995,91 @@ export default function LearningPathsScreen({ navigation }: any) {
                 ))}
               </View>
 
-              {stats.lastLesson ? (
-                <TouchableOpacity
-                  style={[styles.continueBanner, { borderColor: colors.primary + '45' }]}
-                  onPress={() =>
-                    navigation.navigate('SubjectTopics', {
-                      subject: 'Mathematics',
-                      curriculum: isCBSE ? 'CBSE' : curriculum,
-                      grade,
-                    })
-                  }
-                  activeOpacity={0.87}
-                >
-                  <View style={[styles.continueDot, { backgroundColor: colors.primary }]} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.continueLabel}>Continue learning</Text>
-                    <Text style={[styles.continueTopic, { color: colors.textMain }]} numberOfLines={1}>
-                      {stats.lastLesson}
-                    </Text>
-                  </View>
-                  <Feather name="arrow-right" size={17} color={colors.primary} />
-                </TouchableOpacity>
-              ) : null}
+              {(() => {
+                if (totals.overallPct === 100) {
+                  return (
+                    <View style={[styles.continueBanner, { borderColor: '#10b98145' }]}>
+                      <View style={[styles.continueDot, { backgroundColor: '#10b981' }]} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.continueLabel, { color: '#10b981' }]}>All topics completed!</Text>
+                        <Text style={[styles.continueTopic, { color: colors.textMuted }]} numberOfLines={1}>
+                          Amazing work — you've explored everything.
+                        </Text>
+                      </View>
+                      <Feather name="check-circle" size={17} color="#10b981" />
+                    </View>
+                  );
+                }
+
+                // All topics with their subject for lookup
+                const allTopics = subjects.flatMap(s => s.topics.map(t => ({ ...t, subject: s.subject })));
+
+                // Case 1: User was mid-topic (lastLesson exists and not yet completed)
+                // → Route them directly to the quiz to finish what they started
+                const midTopic = stats.lastLesson
+                  ? allTopics.find(t => t.topic === stats.lastLesson && !completedSet.has(t.topic))
+                  : null;
+                const midSubject = midTopic
+                  ? subjects.find(s => s.topics.some(t => t.topic === midTopic.topic))
+                  : null;
+
+                if (midTopic && midSubject) {
+                  return (
+                    <TouchableOpacity
+                      style={[styles.continueBanner, { borderColor: colors.accentYellow + '60' }]}
+                      onPress={() =>
+                        navigation.navigate('IBPYPQuiz', {
+                          topic: midTopic.topic,
+                          subject: midSubject.subject,
+                          grade,
+                          curriculum: isCBSE ? 'CBSE' : curriculum,
+                        })
+                      }
+                      activeOpacity={0.87}
+                    >
+                      <View style={[styles.continueDot, { backgroundColor: colors.accentYellow }]} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.continueLabel, { color: colors.accentYellow }]}>Complete your quiz</Text>
+                        <Text style={[styles.continueTopic, { color: colors.textMain }]} numberOfLines={1}>
+                          {midTopic.topic}
+                        </Text>
+                      </View>
+                      <Feather name="arrow-right" size={17} color={colors.accentYellow} />
+                    </TouchableOpacity>
+                  );
+                }
+
+                // Case 2: Last topic is done — find the next incomplete topic
+                const nextTopic = allTopics.find(t => !completedSet.has(t.topic));
+                const nextSubject = nextTopic
+                  ? subjects.find(s => s.topics.some(t => t.topic === nextTopic.topic))
+                  : null;
+
+                if (!nextTopic || !nextSubject) return null;
+
+                return (
+                  <TouchableOpacity
+                    style={[styles.continueBanner, { borderColor: colors.primary + '45' }]}
+                    onPress={() =>
+                      navigation.navigate('SubjectTopics', {
+                        subject: nextSubject.subject,
+                        curriculum: isCBSE ? 'CBSE' : curriculum,
+                        grade,
+                      })
+                    }
+                    activeOpacity={0.87}
+                  >
+                    <View style={[styles.continueDot, { backgroundColor: colors.primary }]} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.continueLabel}>Up next</Text>
+                      <Text style={[styles.continueTopic, { color: colors.textMain }]} numberOfLines={1}>
+                        {nextTopic.topic}
+                      </Text>
+                    </View>
+                    <Feather name="arrow-right" size={17} color={colors.primary} />
+                  </TouchableOpacity>
+                );
+              })()}
 
               <View style={styles.sectionHead}>
                 <Text style={styles.sectionTitle}>Subjects</Text>

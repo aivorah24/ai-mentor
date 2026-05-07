@@ -85,6 +85,15 @@ const TOPICS = [
     desc: 'The nervous system controls all body functions. Brain (control centre), spinal cord (message pathway), nerves (signal carriers). Five senses: sight (eyes), hearing (ears), smell (nose), taste (tongue), touch (skin). Reflex actions happen automatically without conscious thought.' },
 
   // ── SOCIAL STUDIES ──────────────────────────────────────────
+  // Ancient Civilizations and Climate Zones moved here from Grade 4 (confirmed by Ela, 05-05-2026)
+  { wiki: 'Ancient_Egypt',
+    subject: 'Social Studies', unit: 'Where We Are in Place and Time', topic: 'Ancient Civilizations',
+    desc: 'Ancient civilizations were early complex societies with organised governments, writing, and cities. Ancient Egypt (Nile River) built pyramids and developed hieroglyphics. Mesopotamia (Tigris-Euphrates) invented the wheel and cuneiform writing. The Indus Valley and Ancient China also flourished with remarkable innovations.' },
+
+  { wiki: 'Climate',
+    subject: 'Social Studies', unit: 'Where We Are in Place and Time', topic: 'Climate Zones and Geography',
+    desc: 'Climate is the average weather pattern over 30+ years in a region. Tropical (hot, wet year-round), arid (very dry), temperate (four seasons), polar (freezing). Climate affects clothing, food, shelter, and lifestyle. Students map world climate zones and understand how geography shapes human settlement.' },
+
   { wiki: 'Human_rights',
     subject: 'Social Studies', unit: 'Who We Are', topic: 'Human Rights',
     desc: 'Human rights are basic rights and freedoms every person has regardless of nationality, sex, or religion. The UN Universal Declaration of Human Rights (1948) lists 30 rights: right to life, education, free speech, fair trial, freedom from slavery. Students explore rights and responsibilities.' },

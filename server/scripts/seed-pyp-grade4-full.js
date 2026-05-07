@@ -93,9 +93,7 @@ const TOPICS = [
     desc: 'Renewable energy comes from sources that replenish naturally: solar (sun), wind (turbines), hydro (water flow), geothermal (Earth\'s heat). Non-renewable: coal, oil, gas — formed over millions of years. Renewables reduce pollution and combat climate change.' },
 
   // ── SOCIAL STUDIES ──────────────────────────────────────────
-  { wiki: 'Ancient_Egypt',
-    subject: 'Social Studies', unit: 'Where We Are in Place and Time', topic: 'Ancient Civilizations',
-    desc: 'Ancient civilizations were early complex societies with organised governments, writing, and cities. Ancient Egypt (Nile River) built pyramids and developed hieroglyphics. Mesopotamia (Tigris-Euphrates) invented the wheel and cuneiform writing. China built the Great Wall.' },
+  // Note: Ancient Civilizations and Climate Zones moved to Grade 5 (confirmed by Ela, 05-05-2026)
 
   { wiki: 'Government',
     subject: 'Social Studies', unit: 'How We Organize Ourselves', topic: 'Government and Democracy',
@@ -109,9 +107,9 @@ const TOPICS = [
     subject: 'Social Studies', unit: 'Where We Are in Place and Time', topic: 'Migration and Movement',
     desc: 'Migration is the movement of people from one place to another. Push factors cause people to leave: war, poverty, drought. Pull factors attract people: safety, jobs, education. Immigration: moving into a new country. Emigration: leaving a country.' },
 
-  { wiki: 'Climate',
-    subject: 'Social Studies', unit: 'Where We Are in Place and Time', topic: 'Climate Zones and Geography',
-    desc: 'Climate is the average weather pattern over 30+ years in a region. Tropical (hot, wet year-round), arid (very dry), temperate (four seasons), polar (freezing). Climate affects clothing, food, shelter, and lifestyle. Students map world climate zones.' },
+  { wiki: 'Barter',
+    subject: 'Social Studies', unit: 'How We Organize Ourselves', topic: 'Economic Activities',
+    desc: 'Economic activities include producing, trading, and consuming goods and services. The barter system was the earliest form of trade — exchanging goods without money. Currency evolved from shells and coins to paper money. Trade routes like the Silk Road connected ancient civilizations.' },
 
   // ── ENGLISH ─────────────────────────────────────────────────
   { wiki: 'Figurative_language',
