@@ -98,6 +98,7 @@ export default function VideoPlayerScreen({ navigation, route }: any) {
         <Header
           title={topic}
           subtitle={`${grade} · IB PYP · Video Library`}
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
         />
         <View style={styles.content}>

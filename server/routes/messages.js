@@ -122,6 +122,102 @@ router.get('/unread-count', async (req, res) => {
   }
 });
 
+// ── GET /messages/notifications-summary?userEmail=&studentId=&since= ──────────
+// Single endpoint that returns messages + assignments + challenges counts in one round-trip.
+// Replaces the three separate polling calls.
+router.get('/notifications-summary', async (req, res) => {
+  try {
+    const userEmail  = (req.query.userEmail  || '').trim().toLowerCase();
+    const studentId  = (req.query.studentId  || '').trim();
+    const since      = req.query.since || null;
+
+    if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
+
+    // 1. Unread messages count + latest
+    const msgCountQ = supabase
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_email', userEmail)
+      .is('read_at', null);
+
+    // 2. Latest unread message (only fetched if count > 0, done after)
+    // 3. Assignments new-count (resolve user + parallel count queries)
+    let userId = null;
+    if (studentId) {
+      if (studentId.includes('@')) {
+        const { data: uRow } = await supabase.from('users').select('id, curriculum, grade').eq('email', studentId.toLowerCase().trim()).maybeSingle();
+        if (uRow) { userId = uRow.id; }
+      } else {
+        userId = studentId;
+      }
+    } else if (userEmail) {
+      const { data: uRow } = await supabase.from('users').select('id, curriculum, grade').eq('email', userEmail).maybeSingle();
+      if (uRow) { userId = uRow.id; }
+    }
+
+    let studentCurriculum = null;
+    let studentGrade = null;
+    if (userId) {
+      const { data: uData } = await supabase.from('users').select('curriculum, grade').eq('id', userId).maybeSingle();
+      studentCurriculum = uData?.curriculum || null;
+      studentGrade = uData?.grade || null;
+    }
+
+    // Parallel: messages count + assignments personal + assignments class-wide + challenges
+    const personalAssignQ = userId
+      ? supabase.from('assignments').select('id', { count: 'exact', head: true }).eq('student_id', userId)
+      : null;
+    let classAssignQ = supabase.from('assignments').select('id', { count: 'exact', head: true }).is('student_id', null);
+    if (studentCurriculum) classAssignQ = classAssignQ.eq('curriculum', studentCurriculum);
+    if (studentGrade)      classAssignQ = classAssignQ.eq('grade', studentGrade);
+    if (since) {
+      if (personalAssignQ) personalAssignQ.gt('created_at', since);
+      classAssignQ = classAssignQ.gt('created_at', since);
+    }
+
+    let challengeQ = supabase.from('challenge_assignments').select('id', { count: 'exact', head: true }).neq('status', 'completed');
+    if (userId) challengeQ = challengeQ.eq('student_id', userId);
+    if (since)  challengeQ = challengeQ.gt('created_at', since);
+
+    const [msgCountRes, personalAssignRes, classAssignRes, challengeRes] = await Promise.all([
+      msgCountQ,
+      personalAssignQ || Promise.resolve({ count: 0 }),
+      classAssignQ,
+      challengeQ,
+    ]);
+
+    const msgCount = Number.isFinite(msgCountRes.count) ? Number(msgCountRes.count) : 0;
+    const assignCount = (personalAssignRes.count || 0) + (classAssignRes.count || 0);
+    const challengeCount = Number.isFinite(challengeRes.count) ? Number(challengeRes.count) : 0;
+
+    // Fetch latest unread message only if needed
+    let latest = null;
+    if (msgCount > 0) {
+      const { data } = await supabase
+        .from('messages')
+        .select('id, sender_name, sender_email, content, created_at')
+        .eq('recipient_email', userEmail)
+        .is('read_at', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        latest = {
+          id: data.id,
+          senderName: data.sender_name || data.sender_email || 'Someone',
+          senderEmail: data.sender_email || '',
+          preview: toMessagePreview(data.content),
+          createdAt: data.created_at,
+        };
+      }
+    }
+
+    res.json({ messages: msgCount, assignments: assignCount, challenges: challengeCount, latest });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /messages/mark-read
 // Marks all unread notifications for the user as read.
 router.post('/mark-read', async (req, res) => {
@@ -538,6 +634,31 @@ router.post('/', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ── POST /messages/test-notification ────────────────────────────────────────
+// DEV ONLY — injects a fake unread message so you can test the bell sound/toast.
+// Body: { recipientEmail }
+router.post('/test-notification', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') return res.status(403).json({ error: 'Not available in production' });
+  const recipientEmail = (req.body?.recipientEmail || '').trim().toLowerCase();
+  if (!recipientEmail) return res.status(400).json({ error: 'recipientEmail required' });
+
+  // Lookup recipient name
+  const { data: rUser } = await supabase.from('users').select('name').eq('email', recipientEmail).maybeSingle();
+
+  const { data, error } = await supabase.from('messages').insert({
+    sender_name:     'Aivorah Test',
+    sender_email:    'test@aivorah.com',
+    sender_role:     'teacher',
+    recipient_email: recipientEmail,
+    recipient_name:  rUser?.name || 'Student',
+    content:         'This is a test notification — sound and badge should appear!',
+    read_at:         null,
+  }).select().single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true, message: data });
 });
 
 module.exports = router;

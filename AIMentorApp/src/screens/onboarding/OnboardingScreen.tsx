@@ -3,10 +3,10 @@
  * Multi-step onboarding for Student, Teacher, Parent
  * Collects role-specific data, saves to backend, marks onboardingComplete
  */
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
-  StyleSheet, KeyboardAvoidingView, Platform, Modal, Alert,
+  StyleSheet, KeyboardAvoidingView, Platform, Modal, Alert, BackHandler,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -71,7 +71,7 @@ function getSteps(role: string) {
 }
 
 export default function OnboardingScreen() {
-  const { user, updateUser, saveProfile } = useAuth();
+  const { user, updateUser, saveProfile, logout } = useAuth();
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
@@ -84,6 +84,7 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [exitConfirm, setExitConfirm] = useState(false);
 
   // ── Shared fields ─────────────────────────────────
   const [fullName, setFullName] = useState(user?.name || '');
@@ -402,6 +403,9 @@ export default function OnboardingScreen() {
           });
           if (!createRes.ok) {
             const err = await createRes.json().catch(() => ({}));
+            if (createRes.status === 409) {
+              throw new Error(err?.error || `A child with this name and grade already exists on your account.`);
+            }
             throw new Error(err?.error || 'Could not create child account during onboarding.');
           }
           const created = await createRes.json().catch(() => null);
@@ -497,8 +501,35 @@ export default function OnboardingScreen() {
     }
   }
 
+  function showExitConfirm() {
+    if (Platform.OS === 'web') {
+      setExitConfirm(true);
+    } else {
+      Alert.alert('Exit Onboarding', 'Would you like to sign out and return to the login screen?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign Out', style: 'destructive', onPress: () => logout() },
+      ]);
+    }
+  }
+
+  useEffect(() => {
+    // Handle Android hardware back button
+    const backAction = () => {
+      if (step > 0) { setStep(s => s - 1); return true; }
+      showExitConfirm();
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    return () => backHandler.remove();
+  }, [step, logout]);
+
+
   function handleBack() {
-    if (step > 0) setStep(s => s - 1);
+    if (step > 0) {
+      setStep(s => s - 1);
+    } else {
+      showExitConfirm();
+    }
   }
 
   // ── Render step content ───────────────────────────
@@ -814,15 +845,36 @@ export default function OnboardingScreen() {
   return (
     <View style={styles.screen}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        {/* Exit confirmation modal */}
+        <Modal visible={exitConfirm} transparent animationType="fade" onRequestClose={() => setExitConfirm(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalBox}>
+              <Text style={styles.modalTitle}>Exit Onboarding?</Text>
+              <Text style={styles.modalText}>You'll be signed out and returned to the login screen. Your progress will not be saved.</Text>
+              <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+                <TouchableOpacity onPress={() => setExitConfirm(false)} style={{ paddingHorizontal: 16, paddingVertical: 10 }}>
+                  <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 14 }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => { setExitConfirm(false); logout(); }} style={{ backgroundColor: '#ef4444', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10 }}>
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Sign Out</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
+          <TouchableOpacity style={styles.headerLeft} onPress={showExitConfirm} activeOpacity={0.7}>
             <View style={styles.logoMark}>
               <Feather name="zap" size={16} color="#fff" />
             </View>
             <Text style={styles.logoText}>Aivorah</Text>
-          </View>
-          <Text style={styles.stepCounter}>Step {step + 1} of {steps.length}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={showExitConfirm} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: '#ef444418', borderWidth: 1, borderColor: '#ef444440' }} activeOpacity={0.7}>
+            <Feather name="log-out" size={13} color="#ef4444" />
+            <Text style={{ fontSize: 13, color: '#ef4444', fontWeight: '700' }}>Exit</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Progress bar */}
@@ -919,7 +971,12 @@ export default function OnboardingScreen() {
               <Feather name="arrow-left" size={16} color={colors.textMuted} />
               <Text style={[styles.backBtnText, { color: colors.textMuted }]}>Back</Text>
             </TouchableOpacity>
-          ) : <View />}
+          ) : (
+            <TouchableOpacity style={[styles.backBtn, { backgroundColor: '#ef444418', borderRadius: 20, borderWidth: 1, borderColor: '#ef444440', paddingHorizontal: 12, paddingVertical: 7 }]} onPress={showExitConfirm} activeOpacity={0.8}>
+              <Feather name="arrow-left" size={15} color="#ef4444" />
+              <Text style={[styles.backBtnText, { color: '#ef4444', fontWeight: '700' }]}>Sign Out</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[styles.nextBtn, !canProceed() && styles.nextBtnDisabled]}

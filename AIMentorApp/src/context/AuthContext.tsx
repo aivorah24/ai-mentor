@@ -15,6 +15,14 @@ import SERVER_URL from '../config/serverUrl';
 
 const PROFILE_KEY = 'ai_mentor_user_profile';
 
+function normalizeEmail(email: string | undefined | null) {
+  return String(email || '').toLowerCase().trim();
+}
+
+function isCachedProfileForEmail(profile: Partial<User>, email: string) {
+  return normalizeEmail(profile.email) === normalizeEmail(email);
+}
+
 export type UserRole = 'student' | 'teacher' | 'parent';
 
 export interface User {
@@ -36,6 +44,7 @@ export interface User {
   bio?: string;
   accountStatus?: string;
   isPro?: boolean;            // premium subscription — controlled by admin in DB
+  mustChangePassword?: boolean; // true for auto-generated student accounts until they set their own password
   // Relationship metadata
   children?: { name: string; grade: string; email: string; curriculum?: string }[];  // for parents
   teaches?: { grade: string; curriculum: string }[];            // for teachers
@@ -103,6 +112,7 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User>> {
         role:               data.role       || undefined,
         roles:              Array.isArray(data.roles) ? data.roles : undefined,
         isPro:              data.isPro === true,
+        mustChangePassword: data.mustChangePassword === true,
       });
     }
   } catch {}
@@ -152,20 +162,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  // True once Firebase has confirmed the auth state (user or null)
+  const firebaseConfirmed = React.useRef(false);
   function clearAuthError() { setAuthError(null); }
+
+  // On web: immediately restore cached profile so the correct screen shows
+  // on page refresh without waiting for Firebase to read IndexedDB.
+  // Firebase will still confirm in the background and override if the session expired.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    AsyncStorage.getItem(PROFILE_KEY).then(raw => {
+      if (!raw || firebaseConfirmed.current) return;
+      try {
+        const cached = JSON.parse(raw);
+        if (cached?.email && cached?.role) {
+          setUser(cached);
+          setLoading(false);
+        }
+      } catch {}
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      firebaseConfirmed.current = true;
       if (firebaseUser) {
         const email = firebaseUser.email || '';
 
         // Load saved local profile + fetch Supabase profile (needed to detect parent-activated accounts)
-        const [supaProfile, savedRaw] = await Promise.all([
-          fetchSupabaseProfile(email),
-          AsyncStorage.getItem(PROFILE_KEY).catch(() => null),
-        ]);
+        let supaProfile: Partial<User> = {};
+        let savedRaw: string | null = null;
+        try {
+          [supaProfile, savedRaw] = await Promise.all([
+            fetchSupabaseProfile(email),
+            AsyncStorage.getItem(PROFILE_KEY).catch(() => null),
+          ]);
+        } catch {
+          // Network error — fall back to cached profile so refresh doesn't kick user out
+          const cached = await AsyncStorage.getItem(PROFILE_KEY).catch(() => null);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (parsed?.email === email) {
+                setUser(parsed);
+                setLoading(false);
+                return;
+              }
+            } catch {}
+          }
+          setLoading(false);
+          return;
+        }
         let savedLocal: Partial<User> = {};
-        try { if (savedRaw) savedLocal = JSON.parse(savedRaw); } catch {}
+        try {
+          if (savedRaw) {
+            const parsed = JSON.parse(savedRaw);
+            savedLocal = isCachedProfileForEmail(parsed, email) ? parsed : {};
+          }
+        } catch {}
 
         // Auto-generated @aivorah.student emails have no mailbox — bypass verification
         // Parent-activated student accounts (accountStatus = 'active') also bypass verification
@@ -243,13 +297,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           allowAutoGen ||
           isParentCreatedStudent ||
           supaProfile.onboardingComplete === true ||
-          savedLocal.onboardingComplete === true
+          // Only trust local cache if DB didn't explicitly say false (prevents stale cache bypassing onboarding after account deletion)
+          (supaProfile.onboardingComplete !== false && savedLocal.onboardingComplete === true)
         );
         const activeRole = isAddingNewRole ? _pendingRole : resolvedRole;
-        setUser({ ...baseUser, ...savedLocal, ...supaProfile, onboardingComplete, role: activeRole });
+        const resolvedUser = { ...baseUser, ...savedLocal, ...supaProfile, email, onboardingComplete, role: activeRole };
+        setUser(resolvedUser);
 
         // Persist locally
-        AsyncStorage.setItem(PROFILE_KEY, JSON.stringify({ ...savedLocal, ...supaProfile })).catch(() => {});
+        AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(resolvedUser)).catch(() => {});
         fetch(`${SERVER_URL}/analytics/track`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -262,6 +318,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }),
         }).catch(() => {});
       } else {
+        // Firebase confirmed no authenticated user (session expired or never logged in).
+        // Clear any optimistically-loaded cached profile.
+        AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
         setUser(null);
       }
       setLoading(false);
@@ -279,14 +338,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const updated = { ...prev, ...fields };
       AsyncStorage.setItem(PROFILE_KEY, JSON.stringify({
         name: updated.name, grade: updated.grade, curriculum: updated.curriculum,
+        email: updated.email,
+        role: updated.role,
+        activeRole: updated.activeRole,
         school: updated.school, location: updated.location,
         onboardingComplete: updated.onboardingComplete,
+        emailVerified: updated.emailVerified,
+        accountStatus: updated.accountStatus,
         avatarStyle: updated.avatarStyle,
         learningStyle: updated.learningStyle,
         interests: updated.interests,
         bio: updated.bio,
         photoUrl: updated.photoUrl,
         roles: updated.roles,
+        mustChangePassword: updated.mustChangePassword,
       })).catch(() => {});
       fetch(`${SERVER_URL}/user/preferences`, {
         method: 'PATCH',
@@ -335,7 +400,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     await signOut(auth);
-    await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
     setUser(null);
   }
 
@@ -349,7 +413,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetchSupabaseProfile(email),
         AsyncStorage.getItem(PROFILE_KEY).catch(() => null),
       ]);
-      const savedLocal: Partial<User> = savedRaw ? JSON.parse(savedRaw) : {};
+      let savedLocal: Partial<User> = {};
+      try {
+        if (savedRaw) {
+          const parsed = JSON.parse(savedRaw);
+          savedLocal = isCachedProfileForEmail(parsed, email) ? parsed : {};
+        }
+      } catch {}
 
       // Allow login without Firebase email verification for:
       // 1. Auto-generated @aivorah.student emails (no real mailbox)
@@ -384,7 +454,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         allowAutoGen ||
         isParentCreatedStudent ||
         profile.onboardingComplete === true ||
-        savedLocal.onboardingComplete === true;
+        (profile.onboardingComplete !== false && savedLocal.onboardingComplete === true);
 
       // Legacy: activate old pending_verification accounts on first verified login
       if (cred.user.emailVerified && role === 'student' && profile.accountStatus === 'pending_verification') {
@@ -410,6 +480,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         onboardingComplete: profile.onboardingComplete === true || onboardingComplete,
         emailVerified:      cred.user.emailVerified || allowAutoGen || allowParentActivated,
         accountStatus:      profile.accountStatus,
+        mustChangePassword: profile.mustChangePassword === true,
       };
       setUser(newUser);
       AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(newUser)).catch(() => {});
@@ -541,7 +612,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           fetchSupabaseProfile(email),
           AsyncStorage.getItem(PROFILE_KEY).catch(() => null),
         ]);
-        const savedLocal: Partial<User> = savedRaw ? JSON.parse(savedRaw) : {};
+        let savedLocal: Partial<User> = {};
+        try {
+          if (savedRaw) {
+            const parsed = JSON.parse(savedRaw);
+            savedLocal = isCachedProfileForEmail(parsed, email) ? parsed : {};
+          }
+        } catch {}
 
         // Validate selected role matches registered role(s) for existing accounts
         const existingRole = profile.role as UserRole | undefined;

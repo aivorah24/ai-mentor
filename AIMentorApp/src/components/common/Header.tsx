@@ -31,6 +31,8 @@ interface HeaderProps {
   subtitle?: string;
   searchPlaceholder?: string;
   showSearch?: boolean;
+  showBack?: boolean;
+  onBack?: () => void;
   onMenuPress?: () => void;
   onSearchChange?: (text: string) => void;
   onNotificationPress?: () => void;
@@ -43,6 +45,8 @@ export default function Header({
   subtitle,
   searchPlaceholder = 'Search...',
   showSearch = false,
+  showBack = false,
+  onBack,
   onMenuPress,
   onSearchChange,
   onNotificationPress,
@@ -50,8 +54,23 @@ export default function Header({
 }: HeaderProps) {
   const { isMobile } = useResponsive();
   const { colors } = useTheme();
+  const { user, updateUser, logout } = useAuth();
   const navigation = useNavigation<any>();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  function handleBack() {
+    if (onBack) {
+      onBack();
+    } else if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      // Fallback: if no history, go to the default dashboard based on role
+      const role = user?.role || 'student';
+      const home = role === 'teacher' ? 'TeacherDashboard' : role === 'parent' ? 'ParentDashboard' : 'Dashboard';
+      navigation.navigate(home);
+    }
+  }
+
   const {
     unreadCount,
     unreadAssignments,
@@ -61,25 +80,19 @@ export default function Header({
                 clearUnreadAssignments,
                 clearUnreadChallenges,
   } = useNotification();
-  const { user, updateUser } = useAuth();
 
   // Resolve screen names based on user role
   const role = user?.role ?? 'student';
   const screenNames = useMemo(() => ({
     assignments: role === 'teacher' ? 'TeacherAssignments' : role === 'parent' ? 'ParentAssignments' : 'Assignments',
-    messages:    role === 'teacher' ? 'TeacherMessages'    : role === 'parent' ? 'ParentMessages'    : 'Dashboard',
+    messages:    role === 'teacher' ? 'TeacherMessages'    : role === 'parent' ? 'ParentMessages'    : 'Messages',
     challenges:  role === 'teacher' ? 'TeacherChallenges'  : role === 'parent' ? 'ParentChallenges'  : 'Challenges',
   }), [role]);
 
   const [bellVisible, setBellVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
 
-  // Snapshot of notifications at the moment the bell was opened
-  const [snapUnreadCount, setSnapUnreadCount] = useState(0);
-  const [snapUnreadAssignments, setSnapUnreadAssignments] = useState(0);
-  const [snapUnreadChallenges, setSnapUnreadChallenges] = useState(0);
-  const [snapLatestNotif, setSnapLatestNotif] = useState<any>(null);
-  const [editingName, setEditingName] = useState(false);
+const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
@@ -178,7 +191,11 @@ export default function Header({
   return (
     <View style={styles.container}>
       <View style={styles.left}>
-        {isMobile && (
+        {showBack ? (
+          <TouchableOpacity style={styles.menuBtn} onPress={handleBack}>
+            <Feather name="arrow-left" size={20} color={colors.textMuted} />
+          </TouchableOpacity>
+        ) : isMobile && (
           <TouchableOpacity style={styles.menuBtn} onPress={onMenuPress}>
             <Feather name="menu" size={20} color={colors.textMuted} />
           </TouchableOpacity>
@@ -207,21 +224,7 @@ export default function Header({
         <TouchableOpacity
           style={styles.iconBtn}
           onPress={() => {
-            setBellVisible(prev => {
-              const next = !prev;
-              if (next) {
-                // Snapshot current state BEFORE clearing so panel can display it
-                setSnapUnreadCount(unreadCount);
-                setSnapUnreadAssignments(unreadAssignments);
-                setSnapUnreadChallenges(unreadChallenges);
-                setSnapLatestNotif(latestNotif);
-                // Clear badges immediately
-                void clearUnread();
-                void clearUnreadAssignments();
-                void clearUnreadChallenges();
-              }
-              return next;
-            });
+            setBellVisible(prev => !prev);
             onNotificationPress?.();
           }}
           activeOpacity={0.7}
@@ -234,7 +237,7 @@ export default function Header({
           )}
         </TouchableOpacity>
 
-        {/* Bell dropdown */}
+        {/* Bell dropdown — shows live counts, marks read only when item is tapped */}
         <Modal visible={bellVisible} transparent animationType="none" onRequestClose={() => setBellVisible(false)}>
           <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setBellVisible(false)}>
             <TouchableOpacity activeOpacity={1} onPress={() => {}}>
@@ -246,78 +249,105 @@ export default function Header({
                   </TouchableOpacity>
                 </View>
 
-                {/* Scrollable notification list using snapshot */}
-                {(snapUnreadAssignments > 0 || snapUnreadChallenges > 0 || snapUnreadCount > 0) ? (
+                {(unreadAssignments > 0 || unreadChallenges > 0 || unreadCount > 0) ? (
                   <View style={{ maxHeight: 320 }}>
-                    <View
-                      // @ts-ignore — web-only style
-                      style={{ overflowY: 'auto', maxHeight: 320 } as any}
-                    >
-                      {snapUnreadAssignments > 0 && (
-                        <TouchableOpacity style={styles.notifItem} activeOpacity={0.7} onPress={() => { setBellVisible(false); navigation.navigate(screenNames.assignments); }}>
+                    <View style={{ overflowY: 'auto', maxHeight: 320 } as any}>
+                      {/* Messages */}
+                      {unreadCount > 0 && (
+                        <TouchableOpacity
+                          style={styles.notifItem}
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            setBellVisible(false);
+                            void clearUnread();
+                            navigation.navigate(screenNames.messages);
+                          }}
+                        >
                           <View style={styles.notifIconWrap}>
-                            <Feather name="check-square" size={14} color={colors.primary} />
+                            <Feather name="message-square" size={14} color={colors.primary} />
                           </View>
                           <View style={{ flex: 1 }}>
-                            <Text style={styles.notifSender}>
-                              {snapUnreadAssignments === 1
-                                ? 'You have a new assignment'
-                                : `You have ${snapUnreadAssignments} new assignments`}
-                            </Text>
-                            <Text style={styles.notifPreview} numberOfLines={1}>Tap to view</Text>
+                            {latestNotif ? (
+                              <>
+                                <Text style={styles.notifSender}>
+                                  Message from <Text style={{ color: colors.primary }}>{latestNotif.senderName}</Text>
+                                </Text>
+                                <Text style={styles.notifPreview} numberOfLines={2}>{latestNotif.preview}</Text>
+                                <Text style={styles.notifTime}>{new Date(latestNotif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                              </>
+                            ) : (
+                              <>
+                                <Text style={styles.notifSender}>
+                                  {unreadCount === 1 ? '1 unread message' : `${unreadCount} unread messages`}
+                                </Text>
+                                <Text style={styles.notifPreview} numberOfLines={1}>Tap to open messages</Text>
+                              </>
+                            )}
                           </View>
                           <Feather name="chevron-right" size={14} color={colors.textDim} />
                         </TouchableOpacity>
                       )}
-                      {snapUnreadChallenges > 0 && (
-                        <TouchableOpacity style={styles.notifItem} activeOpacity={0.7} onPress={() => { setBellVisible(false); navigation.navigate(screenNames.challenges, { tab: 'assigned' }); }}>
+                      {/* Assignments */}
+                      {unreadAssignments > 0 && (
+                        <TouchableOpacity
+                          style={styles.notifItem}
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            setBellVisible(false);
+                            void clearUnreadAssignments();
+                            navigation.navigate(screenNames.assignments);
+                          }}
+                        >
+                          <View style={styles.notifIconWrap}>
+                            <Feather name="check-square" size={14} color={colors.accentBlue} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.notifSender}>
+                              {unreadAssignments === 1 ? 'New assignment' : `${unreadAssignments} new assignments`}
+                            </Text>
+                            <Text style={styles.notifPreview} numberOfLines={1}>Tap to view assignments</Text>
+                          </View>
+                          <Feather name="chevron-right" size={14} color={colors.textDim} />
+                        </TouchableOpacity>
+                      )}
+                      {/* Challenges */}
+                      {unreadChallenges > 0 && (
+                        <TouchableOpacity
+                          style={styles.notifItem}
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            setBellVisible(false);
+                            void clearUnreadChallenges();
+                            navigation.navigate(screenNames.challenges, { tab: 'assigned' });
+                          }}
+                        >
                           <View style={styles.notifIconWrap}>
                             <Feather name="award" size={14} color={colors.accentPurple} />
                           </View>
                           <View style={{ flex: 1 }}>
                             <Text style={styles.notifSender}>
-                              {snapUnreadChallenges === 1
-                                ? 'You have a new challenge'
-                                : `You have ${snapUnreadChallenges} new challenges`}
+                              {unreadChallenges === 1 ? 'New challenge' : `${unreadChallenges} new challenges`}
                             </Text>
-                            <Text style={styles.notifPreview} numberOfLines={1}>Tap to view</Text>
+                            <Text style={styles.notifPreview} numberOfLines={1}>Tap to view challenges</Text>
                           </View>
                           <Feather name="chevron-right" size={14} color={colors.textDim} />
                         </TouchableOpacity>
                       )}
-                      {snapLatestNotif && snapUnreadCount > 0 ? (
-                        <TouchableOpacity style={styles.notifItem} activeOpacity={0.7} onPress={() => { setBellVisible(false); navigation.navigate(screenNames.messages); }}>
-                          <View style={styles.notifIconWrap}>
-                            <Feather name="message-square" size={14} color={colors.primary} />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Text style={styles.notifSender}>
-                              New message from <Text style={{ color: colors.primary }}>{snapLatestNotif.senderName}</Text>
-                            </Text>
-                            <Text style={styles.notifPreview} numberOfLines={2}>{snapLatestNotif.preview}</Text>
-                            <Text style={styles.notifTime}>{new Date(snapLatestNotif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-                          </View>
-                          <Feather name="chevron-right" size={14} color={colors.textDim} />
-                        </TouchableOpacity>
-                      ) : snapUnreadCount > 0 ? (
-                        <TouchableOpacity style={styles.notifItem} activeOpacity={0.7} onPress={() => { setBellVisible(false); navigation.navigate(screenNames.messages); }}>
-                          <View style={styles.notifIconWrap}>
-                            <Feather name="message-square" size={14} color={colors.primary} />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Text style={styles.notifSender}>
-                              {snapUnreadCount === 1 ? 'You have 1 unread message' : `You have ${snapUnreadCount} unread messages`}
-                            </Text>
-                            <Text style={styles.notifPreview} numberOfLines={1}>Tap to view</Text>
-                          </View>
-                          <Feather name="chevron-right" size={14} color={colors.textDim} />
-                        </TouchableOpacity>
-                      ) : null}
                     </View>
-                    <View style={[styles.notifFooter, { borderTopWidth: 1, borderTopColor: colors.borderColor }]}>
+                    {/* Mark all read footer */}
+                    <TouchableOpacity
+                      style={[styles.notifFooter, { borderTopWidth: 1, borderTopColor: colors.borderColor }]}
+                      onPress={() => {
+                        setBellVisible(false);
+                        void clearUnread();
+                        void clearUnreadAssignments();
+                        void clearUnreadChallenges();
+                      }}
+                      activeOpacity={0.7}
+                    >
                       <Feather name="check-circle" size={12} color={colors.textDim} />
-                      <Text style={styles.notifFooterText}>All caught up — marked as read</Text>
-                    </View>
+                      <Text style={styles.notifFooterText}>Mark all as read</Text>
+                    </TouchableOpacity>
                   </View>
                 ) : (
                   <View style={styles.noNotifState}>
@@ -439,6 +469,16 @@ export default function Header({
                     </TouchableOpacity>
                   )}
                 </View>
+
+                {/* Logout */}
+                <TouchableOpacity
+                  style={styles.logoutBtn}
+                  onPress={() => { setProfileVisible(false); logout(); }}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="log-out" size={16} color={colors.accentRed} />
+                  <Text style={[styles.logoutBtnText, { color: colors.accentRed }]}>Log Out</Text>
+                </TouchableOpacity>
               </View>
             </TouchableOpacity>
           </TouchableOpacity>
@@ -574,4 +614,14 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     width: 32, height: 32, borderRadius: radius.sm,
     backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
   },
+  logoutBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    marginTop: 16,
+    paddingVertical: 13,
+    borderRadius: 10,
+    backgroundColor: c.accentRed + '14',
+    borderWidth: 1,
+    borderColor: c.accentRed + '30',
+  },
+  logoutBtnText: { fontSize: 14, fontWeight: '700' },
 });

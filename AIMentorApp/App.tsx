@@ -18,13 +18,16 @@ import LandingScreen from './src/screens/auth/LandingScreen';
 import VerifyEmailScreen from './src/screens/auth/VerifyEmailScreen';
 import ResetPasswordScreen from './src/screens/auth/ResetPasswordScreen';
 import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
+import SetPasswordScreen from './src/screens/onboarding/SetPasswordScreen';
 import AdminPanelScreen from './src/screens/admin/AdminPanelScreen';
 import { AuthProvider, useAuth, getPendingReturnRole } from './src/context/AuthContext';
 import { StudentDataProvider } from './src/context/StudentDataContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { NotificationProvider } from './src/context/NotificationContext';
+import NotificationBanner from './src/components/common/NotificationBanner';
 import { colors } from './src/theme';
 import { auth } from './src/config/firebase';
+import { useNavigation } from '@react-navigation/native';
 
 function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
   const { colors: c } = useTheme();
@@ -72,6 +75,7 @@ function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.location.replace('/');
     } else {
+      updateUser({ emailVerified: true });
       onComplete();
     }
   }
@@ -114,6 +118,15 @@ function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
         )}
       </View>
     </View>
+  );
+}
+
+function NotificationBannerWrapper() {
+  const navigation = useNavigation<any>();
+  return (
+    <NotificationBanner
+      onNavigate={(screen, params) => navigation.navigate(screen, params)}
+    />
   );
 }
 
@@ -180,6 +193,11 @@ function RootNavigator() {
     return <OnboardingScreen />;
   }
 
+  // First-time password setup — auto-generated student accounts must set their own password
+  if (user?.mustChangePassword) {
+    return <SetPasswordScreen />;
+  }
+
   console.log(`[Auth] Routing to ${user?.role} navigator`);
   // Role-based navigator — if pendingReturnRole is set, honour it (teacher finishing parent onboarding)
   const activeRole = getPendingReturnRole() || user?.role;
@@ -197,9 +215,77 @@ function ThemedRoot() {
       <AuthProvider>
         <StudentDataProvider>
           <NotificationProvider>
-            <NavigationContainer documentTitle={{ formatter: () => 'Aivorah' }}>
+            <NavigationContainer
+              documentTitle={{ formatter: () => 'Aivorah' }}
+              linking={{
+                prefixes: [],
+                config: {
+                  screens: {
+                    // Student screens
+                    Dashboard: 'dashboard',
+                    Profile: 'profile',
+                    LearningPaths: 'learning-paths',
+                    AICoach: 'ai-coach',
+                    Schedule: 'schedule',
+                    Assignments: 'assignments',
+                    Challenges: 'challenges',
+                    Leaderboard: 'leaderboard',
+                    Progress: 'progress',
+                    Rewards: 'rewards',
+                    HelpCenter: 'help',
+                    Settings: 'settings',
+                    VideoLesson: 'video-lesson',
+                    VideoPlayer: 'video-player',
+                    NCERTChapters: 'ncert-chapters',
+                    SubjectTopics: 'subject-topics',
+                    Learn5E: 'learn',
+                    MathHelper: 'math-helper',
+                    AIStoryteller: 'ai-storyteller',
+                    DrawingBuddy: 'drawing-buddy',
+                    WordWizard: 'word-wizard',
+                    IBPYPQuiz: 'quiz',
+                    WorldAndYou: 'world-and-you',
+                    TopicLesson: 'topic-lesson',
+                    BhagavathaStories: 'stories',
+                    StoryReader: 'story-reader',
+                    DailyHabits: 'daily-habits',
+                    Subscription: 'subscription',
+                    // Teacher screens
+                    TeacherDashboard: 'teacher/dashboard',
+                    TeacherStudents: 'teacher/students',
+                    TeacherAssignments: 'teacher/assignments',
+                    TeacherChallenges: 'teacher/challenges',
+                    TeacherSchedule: 'teacher/schedule',
+                    TeacherProgress: 'teacher/progress',
+                    TeacherLearningPaths: 'teacher/learning-paths',
+                    TeacherAchievements: 'teacher/achievements',
+                    TeacherVideoLibrary: 'teacher/videos',
+                    TeacherHelp: 'teacher/help',
+                    TeacherSettings: 'teacher/settings',
+                    TeacherMessages: 'teacher/messages',
+                    ProjectDetails: 'teacher/project-details',
+                    // Parent screens
+                    ParentDashboard: 'parent/dashboard',
+                    ParentProfile: 'parent/profile',
+                    ParentMyKids: 'parent/my-kids',
+                    ParentSchedule: 'parent/schedule',
+                    ParentLearning: 'parent/learning',
+                    ParentAssignments: 'parent/assignments',
+                    ParentChallenges: 'parent/challenges',
+                    ParentLeaderboard: 'parent/leaderboard',
+                    ParentProgress: 'parent/progress',
+                    ParentControls: 'parent/controls',
+                    ParentSettings: 'parent/settings',
+                    ParentHelp: 'parent/help',
+                    ParentMessages: 'parent/messages',
+                    ParentDailyTasks: 'parent/daily-tasks',
+                  },
+                },
+              }}
+            >
               <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={c.bgDark} />
               <RootNavigator />
+              <NotificationBannerWrapper />
             </NavigationContainer>
           </NotificationProvider>
         </StudentDataProvider>

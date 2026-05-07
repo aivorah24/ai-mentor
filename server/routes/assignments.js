@@ -31,39 +31,44 @@ router.get('/new-count', async (req, res) => {
   const { studentId, since } = req.query;
   if (!studentId) return res.status(400).json({ error: 'studentId required' });
 
-  const userId = await resolveUserId(studentId);
+  try {
+    const userId = await resolveUserId(studentId);
 
-  // Fetch student curriculum AND grade for filtering class-wide assignments
-  let studentCurriculum = null;
-  let studentGrade = null;
-  if (userId) {
-    const { data: uData } = await supabase.from('users').select('curriculum, grade').eq('id', userId).single();
-    studentCurriculum = uData?.curriculum || null;
-    studentGrade = uData?.grade || null;
+    // Fetch student curriculum AND grade in parallel with nothing else
+    let studentCurriculum = null;
+    let studentGrade = null;
+    if (userId) {
+      const { data: uData } = await supabase
+        .from('users')
+        .select('curriculum, grade')
+        .eq('id', userId)
+        .maybeSingle();
+      studentCurriculum = uData?.curriculum || null;
+      studentGrade = uData?.grade || null;
+    }
+
+    // Build targeted queries for personal + class-wide separately to avoid full table scan
+    const personal = userId
+      ? supabase.from('assignments').select('id', { count: 'exact', head: true }).eq('student_id', userId)
+      : null;
+    let classWide = supabase.from('assignments').select('id', { count: 'exact', head: true }).is('student_id', null);
+    if (studentCurriculum) classWide = classWide.eq('curriculum', studentCurriculum);
+    if (studentGrade)      classWide = classWide.eq('grade', studentGrade);
+    if (since) {
+      if (personal) personal.gt('created_at', since);
+      classWide = classWide.gt('created_at', since);
+    }
+
+    const [personalResult, classWideResult] = await Promise.all([
+      personal ? personal : Promise.resolve({ count: 0 }),
+      classWide,
+    ]);
+
+    const count = (personalResult.count || 0) + (classWideResult.count || 0);
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  const orClause = userId
-    ? `student_id.eq.${userId},student_id.is.null`
-    : `student_id.is.null`;
-
-  let query = supabase
-    .from('assignments')
-    .select('*')
-    .or(orClause);
-
-  if (since) query = query.gt('created_at', since);
-
-  const { data: rawData, error } = await query;
-  if (error) return res.status(500).json({ error: error.message });
-
-  const filtered = (rawData || []).filter(a => {
-    if (a.student_id !== null) return true;
-    if (a.curriculum && studentCurriculum && a.curriculum !== studentCurriculum) return false;
-    if (a.grade && studentGrade && a.grade !== studentGrade) return false;
-    return true;
-  });
-
-  res.json({ count: filtered.length });
 });
 
 router.get('/', async (req, res) => {

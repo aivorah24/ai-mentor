@@ -33,6 +33,7 @@ import BhagavathaStoriesScreen from '../screens/student/BhagavathaStoriesScreen'
 import StoryReaderScreen from '../screens/student/StoryReaderScreen';
 import DailyHabitsScreen from '../screens/student/DailyHabitsScreen';
 import SubscriptionScreen from '../screens/student/SubscriptionScreen';
+import MessagesScreen from '../screens/shared/MessagesScreen';
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
@@ -44,6 +45,7 @@ export default function AppNavigator() {
   return (
     <Drawer.Navigator
       initialRouteName="Dashboard"
+      backBehavior="history"
       drawerContent={(props) => <DrawerContent {...props} />}
       screenOptions={{
         headerShown: false,
@@ -86,6 +88,7 @@ export default function AppNavigator() {
       <Drawer.Screen name="StoryReader" component={StoryReaderScreen} />
       <Drawer.Screen name="DailyHabits" component={DailyHabitsScreen} />
       <Drawer.Screen name="Subscription" component={SubscriptionScreen} />
+      <Drawer.Screen name="Messages" component={MessagesScreen} />
     </Drawer.Navigator>
   );
 }

@@ -29,6 +29,7 @@ export default function TeacherNavigator() {
   return (
     <Drawer.Navigator
       initialRouteName="TeacherDashboard"
+      backBehavior="history"
       drawerContent={(props) => <DrawerContent {...props} />}
       screenOptions={{
         headerShown: false,

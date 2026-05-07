@@ -7,6 +7,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, ActivityIndicator, Image, Animated,
+  BackHandler, Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Platform } from 'react-native';
@@ -1564,18 +1565,20 @@ function CompletePhase({ topic, score, colors, onBack }: {
   const pct   = Math.round((score / 5) * 100);
   const xp    = score * 20 + 10; // bonus 10 XP for completing
   const coins = Math.max(1, score);
+  const perfect = pct === 100;
   const great = pct >= 80;
+  const celebColor = perfect ? '#4ade80' : great ? '#10b981' : '#f59e0b';
 
   return (
     <ScrollView contentContainerStyle={{ padding: 28, gap: 20, paddingBottom: 48, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
 
       {/* Celebration */}
       <View style={{ alignItems: 'center', gap: 12, paddingVertical: 16 }}>
-        <View style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: (great ? '#10b981' : '#f59e0b') + '20', alignItems: 'center', justifyContent: 'center' }}>
-          <Feather name={great ? 'award' : 'star'} size={52} color={great ? '#10b981' : '#f59e0b'} />
+        <View style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: celebColor + '20', alignItems: 'center', justifyContent: 'center' }}>
+          <Feather name={perfect ? 'star' : great ? 'award' : 'star'} size={52} color={celebColor} />
         </View>
         <Text style={{ color: colors.textMain, fontSize: 26, fontWeight: '900', textAlign: 'center' }}>
-          {great ? 'Chapter Complete!' : 'Lesson Done!'}
+          {perfect ? 'Perfect Score!' : great ? 'Chapter Complete!' : 'Lesson Done!'}
         </Text>
         <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center' }}>{topic}</Text>
       </View>
@@ -1643,6 +1646,24 @@ export default function Learn5EScreen({ route, navigation }: any) {
   const [imageChunks, setImageChunks]       = useState<ImageChunk[]>([]);
   const [finalScore, setFinalScore]         = useState(0);
   const [lessonQuiz, setLessonQuiz]         = useState<QuizQ[]>([]);
+
+  // Warn user before leaving mid-lesson on Android
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    if (phase === 'select' || phase === 'complete') return;
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      Alert.alert(
+        'Leave Lesson?',
+        'Your lesson progress will be lost. Are you sure you want to go back?',
+        [
+          { text: 'Stay', style: 'cancel' },
+          { text: 'Leave', style: 'destructive', onPress: () => navigation.goBack() },
+        ]
+      );
+      return true;
+    });
+    return () => handler.remove();
+  }, [phase]);
 
   // Stop audio when screen loses focus (drawer nav keeps screens mounted)
   useEffect(() => {

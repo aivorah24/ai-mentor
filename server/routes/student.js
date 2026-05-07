@@ -473,9 +473,15 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
         progressPct,
         assignmentsDone: s.assignments_done ?? 0,
         lastActive:     s.last_active_date,
-        needsAttention: (s.last_active_date || (s.xp_points ?? 0) > 0)
-          ? (progressPct < 30 || (s.current_streak ?? 0) < 2)
-          : false,
+        needsAttention: (() => {
+          const studyTime = s.study_time_minutes ?? 0;
+          const xp = s.xp_points ?? 0;
+          const chapters = (s.completed_topics ?? []).length;
+          // Brand new student — no study time, no XP, no chapters done → not yet active, don't flag
+          if (studyTime === 0 && xp === 0 && chapters === 0) return false;
+          // Active student — flag if low progress or streak broken
+          return progressPct < 30 || (s.current_streak ?? 0) < 2;
+        })(),
         photoUrl:       user.photo_url ?? null,
       };
     });

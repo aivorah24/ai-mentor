@@ -8,7 +8,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Alert,
+  StyleSheet, ActivityIndicator, Alert, BackHandler, Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -57,6 +57,24 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
   const [explanation, setExplanation]       = useState('');
   const [loadingExplain, setLoadingExplain] = useState(false);
   const [score, setScore]                   = useState(0);
+
+  // Warn user before leaving mid-quiz
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    if (phase !== 'quiz' && phase !== 'explanation') return;
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      Alert.alert(
+        'Leave Quiz?',
+        'Your progress will be lost. Are you sure you want to go back?',
+        [
+          { text: 'Stay', style: 'cancel' },
+          { text: 'Leave', style: 'destructive', onPress: () => navigation.goBack() },
+        ]
+      );
+      return true;
+    });
+    return () => handler.remove();
+  }, [phase]);
 
   const fetchQuiz = useCallback(async () => {
     setPhase('loading');
@@ -178,7 +196,8 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
   if (phase === 'result') {
     const pct      = Math.round((score / questions.length) * 100);
     const isGood   = pct >= 70;
-    const emoji    = pct === 100 ? '🏆' : pct >= 80 ? '🌟' : pct >= 60 ? '👍' : '💪';
+    const scoreColor = pct === 100 ? '#4ade80' : isGood ? '#4A9E70' : accent;
+    const emoji    = pct === 100 ? '🌟' : pct >= 80 ? '🏆' : pct >= 60 ? '👍' : '💪';
     const message  = pct === 100
       ? 'Perfect score! Outstanding work!'
       : pct >= 80 ? 'Excellent! You really understand this topic!'
@@ -188,10 +207,10 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
     return (
       <ScreenLayout>
         <View style={styles.screen}>
-          <Header title="Quiz Results" onMenuPress={() => navigation.goBack()} />
+          <Header title="Quiz Results" showBack={true} onBack={() => navigation.goBack()} onMenuPress={() => navigation.openDrawer()} />
           <ScrollView contentContainerStyle={[styles.content, { alignItems: 'center', paddingTop: 40 }]}>
             <Text style={{ fontSize: 64 }}>{emoji}</Text>
-            <Text style={[styles.resultScore, { color: isGood ? '#4A9E70' : accent }]}>{pct}%</Text>
+            <Text style={[styles.resultScore, { color: scoreColor }]}>{pct}%</Text>
             <Text style={[styles.resultLabel, { color: colors.textMain }]}>
               {score} / {questions.length} correct
             </Text>
@@ -232,7 +251,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
         <Header
           title={`${subject} Practice`}
           subtitle={topic}
-          onMenuPress={() => navigation.goBack()}
+          showBack={true} onBack={() => navigation.goBack()} onMenuPress={() => navigation.openDrawer()}
         />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Progress */}

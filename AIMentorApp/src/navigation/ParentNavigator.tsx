@@ -30,6 +30,7 @@ export default function ParentNavigator() {
   return (
     <Drawer.Navigator
       initialRouteName="ParentDashboard"
+      backBehavior="history"
       drawerContent={(props) => <DrawerContent {...props} />}
       screenOptions={{
         headerShown: false,

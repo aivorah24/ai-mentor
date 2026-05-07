@@ -103,7 +103,8 @@ export default function AIStorytellerScreen({ route, navigation }: any) {
       <View style={[s.screen, { backgroundColor: colors.bgDark }]}>
         <Header
           title="AI Storyteller"
-          subtitle={`Chapter ${chapterId}: ${topic}`}
+          subtitle={`Create a story about ${topic}`}
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
         />
 

@@ -349,9 +349,10 @@ export default function HelpCenterScreen({ navigation }: any) {
           title="Help Center"
           subtitle={`We're here to support you, ${firstName}.`}
           searchPlaceholder="Search anything..."
+          showBack={true}
+          onBack={() => navigation.navigate('Profile')}
           onMenuPress={() => navigation.openDrawer()}
-        />
-        <ScrollView
+        />        <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
@@ -388,22 +389,6 @@ export default function HelpCenterScreen({ navigation }: any) {
             )}
           </View>
 
-          {/* Quick Links */}
-          {search === '' && (
-            <View style={styles.quickLinksRow}>
-              {[
-                { label: 'Getting Started', icon: 'compass' as const, color: colors.accentPurple },
-                { label: 'My Account', icon: 'user' as const, color: colors.accentBlue },
-                { label: 'Billing', icon: 'credit-card' as const, color: colors.accentGreen },
-              ].map((q) => (
-                <TouchableOpacity key={q.label} style={styles.quickLink} activeOpacity={0.7}
-                  onPress={() => setSearch(q.label)}>
-                  <Feather name={q.icon} size={14} color={q.color} />
-                  <Text style={styles.quickLinkText}>{q.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
 
           {/* Still need help? — top section */}
           <Text style={styles.sectionTitle}>Still need help?</Text>

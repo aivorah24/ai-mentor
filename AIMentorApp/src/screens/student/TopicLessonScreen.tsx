@@ -1407,7 +1407,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
   if (loading) {
     return (
       <ScreenLayout>
-        <Header title={topic} subtitle={`${subject} · ${grade}`} onMenuPress={() => navigation.openDrawer()} />
+        <Header title={topic} subtitle={`${subject} · ${grade}`} showBack={true} onMenuPress={() => navigation.openDrawer()} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 }}>
           <ActivityIndicator size="large" color="#38bdf8" />
           <Text style={{ color: colors.textMuted, fontSize: 14 }}>Loading lesson…</Text>
@@ -1419,7 +1419,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
   if (error || !lesson) {
     return (
       <ScreenLayout>
-        <Header title={topic} subtitle={`${subject} · ${grade}`} onMenuPress={() => navigation.openDrawer()} />
+        <Header title={topic} subtitle={`${subject} · ${grade}`} showBack={true} onMenuPress={() => navigation.openDrawer()} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, padding: 32 }}>
           <Feather name="alert-circle" size={36} color="#ef4444" />
           <Text style={{ color: '#ef4444', textAlign: 'center' }}>{error || 'Lesson not found'}</Text>
@@ -1444,6 +1444,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
       <Header
         title={`${topic} · ${grade}`}
         subtitle={`${subject} · ${curriculum.replace(/_/g, ' ')}`}
+        showBack={true}
         onMenuPress={() => navigation.openDrawer()}
       />
 

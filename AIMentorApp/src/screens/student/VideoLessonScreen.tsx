@@ -153,6 +153,7 @@ export default function VideoLessonScreen({ navigation, route }: any) {
       <Header
         title={`${topic} · ${grade}`}
         subtitle={`${subject} · ${curriculum.replace('_', ' ')} · Video Lesson`}
+        showBack={true}
         onMenuPress={() => navigation.openDrawer()}
       />
 

@@ -32,6 +32,7 @@ const STUDENT_NAV_ITEMS = [
   { label: 'Leaderboard',      icon: 'award',        screen: 'Leaderboard',        group: 'FOCUS',   premium: false },
   { label: 'Progress',         icon: 'bar-chart-2',  screen: 'Progress',           group: 'FOCUS',   premium: false },
   { label: 'Rewards',          icon: 'gift',         screen: 'Rewards',            group: 'FOCUS',   premium: false },
+  { label: 'Messages',         icon: 'message-square', screen: 'Messages',         group: 'FOCUS',   premium: false },
   { label: 'Plans & Billing',  icon: 'credit-card',  screen: 'Subscription',       group: 'SYSTEM',  premium: false },
   { label: 'Help Center',      icon: 'help-circle',  screen: 'HelpCenter',         group: 'SYSTEM',  premium: false },
   { label: 'Settings',         icon: 'settings',     screen: 'Settings',           group: 'SYSTEM',  premium: false },
@@ -90,7 +91,7 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
   const { colors, themeMode, setThemeMode } = useTheme();
   const { unreadCount, unreadAssignments, unreadChallenges } = useNotification();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const MESSAGE_SCREENS     = ['TeacherMessages', 'ParentMessages'];
+  const MESSAGE_SCREENS     = ['TeacherMessages', 'ParentMessages', 'Messages'];
   const ASSIGNMENT_SCREENS  = ['Assignments', 'ParentAssignments'];
   const CHALLENGE_SCREENS   = ['Challenges', 'ParentChallenges'];
 

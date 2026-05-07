@@ -579,6 +579,7 @@ export default function DrawingBuddyScreen({ route, navigation }: any) {
         <Header
           title="Drawing Buddy"
           subtitle={`${curriculum} · ${grade} · ${topic}`}
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
         />
 

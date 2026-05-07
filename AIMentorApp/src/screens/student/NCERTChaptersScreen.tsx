@@ -267,7 +267,7 @@ export default function NCERTChaptersScreen({ navigation, route }: any) {
     return (
       <ScreenLayout>
         <View style={[s.screen, { backgroundColor: colors.bgDark }]}>
-          <Header title={subject} subtitle="Loading chapters..." onMenuPress={() => navigation.openDrawer()} />
+          <Header title={subject} subtitle="Loading chapters..." showBack={true} onMenuPress={() => navigation.openDrawer()} />
           <View style={s.center}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={[s.dimText, { color: colors.textMuted, marginTop: 12 }]}>Loading chapters...</Text>
@@ -281,7 +281,7 @@ export default function NCERTChaptersScreen({ navigation, route }: any) {
     return (
       <ScreenLayout>
         <View style={[s.screen, { backgroundColor: colors.bgDark }]}>
-          <Header title={subject} subtitle="Could not load chapters" onMenuPress={() => navigation.openDrawer()} />
+          <Header title={subject} subtitle="Could not load chapters" showBack={true} onMenuPress={() => navigation.openDrawer()} />
           <View style={s.center}>
             <Feather name="wifi-off" size={36} color={colors.textMuted} />
             <Text style={[s.dimText, { color: colors.textMuted, marginTop: 12 }]}>{error}</Text>
@@ -299,6 +299,7 @@ export default function NCERTChaptersScreen({ navigation, route }: any) {
           subtitle={isScience
             ? `${selectedCurriculum} · ${selectedGrade} · Our Wondrous World`
             : `${selectedCurriculum} · ${selectedGrade} · Maths Mela`}
+          showBack={true}
           onMenuPress={() => navigation.openDrawer()}
         />
 

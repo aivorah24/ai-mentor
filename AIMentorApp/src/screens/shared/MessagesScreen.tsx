@@ -433,17 +433,19 @@ export default function MessagesScreen(_props: any) {
 
         {/* ── Left panel: conversation list ── */}
         <View style={styles.sidebar}>
-          {/* Header row with New Message button */}
+          {/* Header row — New button hidden for students */}
           <View style={styles.sidebarHeader}>
             <Text style={styles.sidebarTitle}>Conversations</Text>
-            <TouchableOpacity
-              style={styles.newBtn}
-              onPress={() => { setShowContacts(true); loadContacts(); }}
-              activeOpacity={0.7}
-            >
-              <Feather name="edit" size={14} color={colors.primary} />
-              <Text style={styles.newBtnText}>New</Text>
-            </TouchableOpacity>
+            {userRole !== 'student' && (
+              <TouchableOpacity
+                style={styles.newBtn}
+                onPress={() => { setShowContacts(true); loadContacts(); }}
+                activeOpacity={0.7}
+              >
+                <Feather name="edit" size={14} color={colors.primary} />
+                <Text style={styles.newBtnText}>New</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {loadingConvos ? (
@@ -452,9 +454,14 @@ export default function MessagesScreen(_props: any) {
             <View style={styles.emptyState}>
               <Feather name="message-square" size={32} color={colors.textDim} />
               <Text style={styles.emptyText}>No messages yet</Text>
-              <Text style={styles.emptySubText}>
-                Tap <Text style={{ color: colors.primary }}>New</Text> to start a conversation
-              </Text>
+              {userRole !== 'student' && (
+                <Text style={styles.emptySubText}>
+                  Tap <Text style={{ color: colors.primary }}>New</Text> to start a conversation
+                </Text>
+              )}
+              {userRole === 'student' && (
+                <Text style={styles.emptySubText}>Messages from your teacher or parent will appear here.</Text>
+              )}
             </View>
           ) : (
             <FlatList
@@ -472,9 +479,11 @@ export default function MessagesScreen(_props: any) {
             <View style={styles.noConvoState}>
               <Feather name="message-circle" size={48} color={colors.textDim} />
               <Text style={styles.noConvoText}>Select a conversation</Text>
-              <Text style={styles.noConvoSub}>
-                or tap <Text style={{ color: colors.primary }}>New</Text> to message a {userRole === 'teacher' ? 'parent' : 'teacher'}
-              </Text>
+              {userRole !== 'student' && (
+                <Text style={styles.noConvoSub}>
+                  or tap <Text style={{ color: colors.primary }}>New</Text> to message a {userRole === 'teacher' ? 'parent' : 'teacher'}
+                </Text>
+              )}
             </View>
           ) : (
             <KeyboardAvoidingView
@@ -518,7 +527,7 @@ export default function MessagesScreen(_props: any) {
               )}
 
               {/* Attachment preview */}
-              {attachment && (
+              {attachment && userRole !== 'student' && (
                 <View style={styles.attachPreviewRow}>
                   <Feather name={fileIcon(attachment.type) as any} size={16} color={colors.primary} />
                   <Text style={styles.attachPreviewName} numberOfLines={1}>{attachment.name}</Text>
@@ -529,43 +538,48 @@ export default function MessagesScreen(_props: any) {
                 </View>
               )}
 
-              {/* Input */}
-              <View style={styles.inputRow}>
-                {/* Attachment button */}
-                {Platform.OS === 'web' && (
+              {/* Input — hidden for students (read-only) */}
+              {userRole === 'student' ? (
+                <View style={{ padding: 12, alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.borderColor }}>
+                  <Text style={{ fontSize: 12, color: colors.textDim }}>Messages from your teacher or parent appear here.</Text>
+                </View>
+              ) : (
+                <View style={styles.inputRow}>
+                  {Platform.OS === 'web' && (
+                    <TouchableOpacity
+                      style={styles.attachBtn}
+                      onPress={pickFile}
+                      disabled={uploading || sending}
+                      activeOpacity={0.7}
+                    >
+                      {uploading
+                        ? <ActivityIndicator size="small" color={colors.primary} />
+                        : <Feather name="paperclip" size={18} color={colors.primary} />
+                      }
+                    </TouchableOpacity>
+                  )}
+                  <TextInput
+                    style={styles.input}
+                    value={inputText}
+                    onChangeText={setInputText}
+                    placeholder={`Message ${activeConvo.otherName}...`}
+                    placeholderTextColor={colors.textDim}
+                    multiline
+                    maxLength={1000}
+                  />
                   <TouchableOpacity
-                    style={styles.attachBtn}
-                    onPress={pickFile}
-                    disabled={uploading || sending}
+                    style={[styles.sendBtn, (!inputText.trim() && !attachment || sending) && styles.sendBtnDisabled]}
+                    onPress={sendMessage}
+                    disabled={(!inputText.trim() && !attachment) || sending}
                     activeOpacity={0.7}
                   >
-                    {uploading
-                      ? <ActivityIndicator size="small" color={colors.primary} />
-                      : <Feather name="paperclip" size={18} color={colors.primary} />
+                    {sending
+                      ? <ActivityIndicator size="small" color="white" />
+                      : <Feather name="send" size={16} color="white" />
                     }
                   </TouchableOpacity>
-                )}
-                <TextInput
-                  style={styles.input}
-                  value={inputText}
-                  onChangeText={setInputText}
-                  placeholder={`Message ${activeConvo.otherName}...`}
-                  placeholderTextColor={colors.textDim}
-                  multiline
-                  maxLength={1000}
-                />
-                <TouchableOpacity
-                  style={[styles.sendBtn, (!inputText.trim() && !attachment || sending) && styles.sendBtnDisabled]}
-                  onPress={sendMessage}
-                  disabled={(!inputText.trim() && !attachment) || sending}
-                  activeOpacity={0.7}
-                >
-                  {sending
-                    ? <ActivityIndicator size="small" color="white" />
-                    : <Feather name="send" size={16} color="white" />
-                  }
-                </TouchableOpacity>
-              </View>
+                </View>
+              )}
             </KeyboardAvoidingView>
           )}
         </View>
