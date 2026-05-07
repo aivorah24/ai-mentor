@@ -63,7 +63,7 @@ export async function askAIMentorStream(
   role?: string,
   history?: ChatHistoryTurn[],
   onToken?: (token: string) => void,
-): Promise<{ answer: string; sources: AskResponse['sources']; error?: string }> {
+): Promise<{ answer: string; sources: AskResponse['sources']; error?: string; limitReached?: boolean }> {
   try {
     const payload: any = {
       question,
@@ -82,7 +82,13 @@ export async function askAIMentorStream(
       body: JSON.stringify(payload),
     });
 
-    if (!response.ok) throw new Error(`Server error: ${response.status}`);
+    if (!response.ok) {
+      try {
+        const errBody = await response.json();
+        if (errBody.limitReached) return { answer: '', sources: [], error: errBody.error, limitReached: true };
+      } catch {}
+      throw new Error(`Server error: ${response.status}`);
+    }
 
     const reader = response.body?.getReader();
     if (!reader) throw new Error('Streaming not supported');

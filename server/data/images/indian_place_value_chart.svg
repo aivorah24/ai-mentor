@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 210" width="660" height="210" font-family="Arial, sans-serif">
+  <!-- Background -->
+  <rect width="660" height="210" rx="12" fill="#1a1a2e"/>
+
+  <!-- Title -->
+  <text x="330" y="26" text-anchor="middle" fill="#f0c27f" font-size="15" font-weight="bold">Indian Place Value Chart</text>
+
+  <!-- Period label bars -->
+  <rect x="10"  y="36" width="110" height="22" rx="4" fill="#7c3aed" opacity="0.9"/>
+  <text x="65"  y="51" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CRORES</text>
+
+  <rect x="128" y="36" width="150" height="22" rx="4" fill="#0f766e" opacity="0.9"/>
+  <text x="203" y="51" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">LAKHS PERIOD</text>
+
+  <rect x="286" y="36" width="150" height="22" rx="4" fill="#b45309" opacity="0.9"/>
+  <text x="361" y="51" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">THOUSANDS PERIOD</text>
+
+  <rect x="444" y="36" width="206" height="22" rx="4" fill="#1d4ed8" opacity="0.9"/>
+  <text x="547" y="51" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">ONES PERIOD</text>
+
+  <!-- Column headers row -->
+  <!-- Crores -->
+  <rect x="10"  y="66" width="110" height="34" rx="4" fill="#6d28d9"/>
+  <text x="65"  y="79" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Crores</text>
+  <text x="65"  y="93" text-anchor="middle" fill="#ddd6fe" font-size="10">C</text>
+
+  <!-- Lakhs -->
+  <rect x="128" y="66" width="68" height="34" rx="4" fill="#0f766e"/>
+  <text x="162" y="79" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Ten Lakhs</text>
+  <text x="162" y="93" text-anchor="middle" fill="#99f6e4" font-size="10">TL</text>
+
+  <rect x="204" y="66" width="68" height="34" rx="4" fill="#0d9488"/>
+  <text x="238" y="79" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Lakhs</text>
+  <text x="238" y="93" text-anchor="middle" fill="#99f6e4" font-size="10">L</text>
+
+  <!-- Thousands -->
+  <rect x="286" y="66" width="68" height="34" rx="4" fill="#b45309"/>
+  <text x="320" y="79" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Ten Thous.</text>
+  <text x="320" y="93" text-anchor="middle" fill="#fde68a" font-size="10">TTh</text>
+
+  <rect x="362" y="66" width="68" height="34" rx="4" fill="#d97706"/>
+  <text x="396" y="79" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Thousands</text>
+  <text x="396" y="93" text-anchor="middle" fill="#fde68a" font-size="10">Th</text>
+
+  <!-- Ones -->
+  <rect x="444" y="66" width="62" height="34" rx="4" fill="#1d4ed8"/>
+  <text x="475" y="79" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Hundreds</text>
+  <text x="475" y="93" text-anchor="middle" fill="#bfdbfe" font-size="10">H</text>
+
+  <rect x="514" y="66" width="62" height="34" rx="4" fill="#2563eb"/>
+  <text x="545" y="79" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Tens</text>
+  <text x="545" y="93" text-anchor="middle" fill="#bfdbfe" font-size="10">T</text>
+
+  <rect x="584" y="66" width="66" height="34" rx="4" fill="#3b82f6"/>
+  <text x="617" y="79" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Ones</text>
+  <text x="617" y="93" text-anchor="middle" fill="#bfdbfe" font-size="10">O</text>
+
+  <!-- Example label -->
+  <text x="330" y="122" text-anchor="middle" fill="#94a3b8" font-size="11">Example: 5,23,45,678</text>
+
+  <!-- Digit boxes — 8 digits: 5 2 3 4 5 6 7 8 -->
+  <rect x="10"  y="130" width="110" height="42" rx="4" fill="#1e1b4b" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="65"  y="158" text-anchor="middle" fill="#ddd6fe" font-size="24" font-weight="bold">5</text>
+
+  <rect x="128" y="130" width="68" height="42" rx="4" fill="#042f2e" stroke="#0f766e" stroke-width="1.5"/>
+  <text x="162" y="158" text-anchor="middle" fill="#99f6e4" font-size="24" font-weight="bold">2</text>
+
+  <rect x="204" y="130" width="68" height="42" rx="4" fill="#042f2e" stroke="#0d9488" stroke-width="1.5"/>
+  <text x="238" y="158" text-anchor="middle" fill="#99f6e4" font-size="24" font-weight="bold">3</text>
+
+  <rect x="286" y="130" width="68" height="42" rx="4" fill="#1c1917" stroke="#b45309" stroke-width="1.5"/>
+  <text x="320" y="158" text-anchor="middle" fill="#fde68a" font-size="24" font-weight="bold">4</text>
+
+  <rect x="362" y="130" width="68" height="42" rx="4" fill="#1c1917" stroke="#d97706" stroke-width="1.5"/>
+  <text x="396" y="158" text-anchor="middle" fill="#fde68a" font-size="24" font-weight="bold">5</text>
+
+  <rect x="444" y="130" width="62" height="42" rx="4" fill="#1e3a5f" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="475" y="158" text-anchor="middle" fill="#bfdbfe" font-size="24" font-weight="bold">6</text>
+
+  <rect x="514" y="130" width="62" height="42" rx="4" fill="#1e3a5f" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="545" y="158" text-anchor="middle" fill="#bfdbfe" font-size="24" font-weight="bold">7</text>
+
+  <rect x="584" y="130" width="66" height="42" rx="4" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="617" y="158" text-anchor="middle" fill="#bfdbfe" font-size="24" font-weight="bold">8</text>
+
+  <!-- Bottom note -->
+  <text x="330" y="196" text-anchor="middle" fill="#64748b" font-size="10">1 Lakh = 1,00,000 · 1 Crore = 1,00,00,000 · Groups: 3 digits, then pairs of 2</text>
+</svg>

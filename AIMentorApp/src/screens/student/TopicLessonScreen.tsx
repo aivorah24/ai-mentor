@@ -8,7 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Platform, ScrollView,
+  ActivityIndicator, Platform, ScrollView, Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -72,6 +72,32 @@ const BUNDLED_LESSONS: Record<string, any> = {
       { id: '04', scene_number: 4, type: 'example', words: ['STADIUM', 'FANS', 'COUNT'], subtext: 'Step-by-step place value', accent: '#a78bfa', voice: "A stadium report says 582,469 fans visited this season. Step 1: identify each digit place: 5 hundred thousands, 8 ten thousands, 2 thousands, 4 hundreds, 6 tens, 9 ones. Step 2: write expanded form: 500,000 + 80,000 + 2,000 + 400 + 60 + 9. Step 3: add to verify: 582,469. Correct! This is how analysts read attendance numbers." },
       { id: '05', scene_number: 5, type: 'example', words: ['CITY', 'MAP', 'DATA'], subtext: 'Compare two populations', accent: '#a78bfa', voice: "City A has 364,250 people and City B has 359,980 people. Step 1: compare hundred-thousands: both have 3. Step 2: compare ten-thousands: 6 is greater than 5. So 364,250 is greater than 359,980. Step 3: find difference: 364,250 - 359,980 = 4,270. City A has 4,270 more people. That is practical data comparison." },
       { id: '06', scene_number: 6, type: 'summary', words: ['BIG', 'NUMBERS', 'MASTERED'], subtext: 'You can handle large values', accent: '#a78bfa', voice: "Excellent work! You learned to read, write, expand, and compare six-digit numbers. Remember to use place value from left to right and check using expanded form. These skills help in maps, statistics, sports, and money reports. Keep practicing with newspaper numbers, and soon you will handle even bigger numbers quickly and accurately like a real mathematician." },
+    ],
+  },
+  'Grade 4|Indian Place Value Chart': {
+    id: 'pyp_g4_mathematics_indian_place_value_chart',
+    title: 'Indian Place Value Chart',
+    grade: 'Grade 4', subject: 'Mathematics', curriculum: 'IB PYP',
+    accent: '#a78bfa',
+    scenes: [
+      { id: '01', scene_number: 1, type: 'intro', words: ['LAKHS', 'CRORES', 'INDIA'], subtext: 'The Indian Number System', accent: '#a78bfa',
+        imageUrl: '/data/images/indian_place_value_chart.svg',
+        imageCaption: 'Indian Place Value Chart — Ones, Thousands, Lakhs, Crores',
+        voice: "Welcome, mathematicians! Today we are going to learn the Indian Place Value system — the way India writes and reads large numbers. India has its own unique way of grouping digits, different from the international system. Instead of millions and billions, we use Lakhs and Crores. By the end of this lesson, you will read and write any large number in the Indian system confidently!" },
+      { id: '02', scene_number: 2, type: 'concept', words: ['ONES', 'THOUSANDS', 'LAKHS'], subtext: 'How Indian grouping works', accent: '#a78bfa',
+        imageUrl: '/data/images/indian_place_value_chart.svg',
+        imageCaption: 'Indian grouping: first 3 digits, then pairs of 2',
+        voice: "In the Indian system, digits are grouped from the right. The first group from the right has 3 digits — Ones, Tens, and Hundreds. After that, every group has just 2 digits. The second group is Thousands and Ten Thousands. The third group is Lakhs and Ten Lakhs. The fourth group is Crores and Ten Crores. This is why Indian numbers use commas differently — for example: 5 crore 23 lakh 45 thousand 6 hundred 78 is written as 5,23,45,678." },
+      { id: '03', scene_number: 3, type: 'concept', words: ['CRORE', 'LAKH', 'THOUSAND'], subtext: 'Place values and their worth', accent: '#a78bfa',
+        voice: "Let us learn the value of each place. Ones = 1. Tens = 10. Hundreds = 100. Thousands = 1,000. Ten Thousands = 10,000. Lakhs = 1,00,000 — that is one hundred thousand. Ten Lakhs = 10,00,000. Crores = 1,00,00,000 — that is ten million! Ten Crores = 10,00,00,000. Interesting fact: One lakh rupees is used every day in conversations in India. When a cricketer scores a century in front of one lakh fans, the stadium is completely full!" },
+      { id: '04', scene_number: 4, type: 'example', words: ['READ', 'WRITE', 'EXPAND'], subtext: 'Reading a number the Indian way', accent: '#a78bfa',
+        voice: "Let us read the number 3,45,67,890. Step 1: from the right, mark groups — 890 is the ones group, 67 is thousands, 45 is lakhs, 3 is crores. Step 2: read each group with its period name — 3 crore, 45 lakh, 67 thousand, 8 hundred and 90. Step 3: say it all together — Three crore forty-five lakh sixty-seven thousand eight hundred and ninety. Now try expanding it: 3,00,00,000 plus 45,00,000 plus 67,000 plus 890." },
+      { id: '05', scene_number: 5, type: 'concept', words: ['INDIAN', 'VS', 'INTERNATIONAL'], subtext: 'Indian vs International system', accent: '#a78bfa',
+        voice: "How does the Indian system compare to the international system? In the international system, 10 lakh is called one million. One crore is called ten million. Ten crore is one hundred million. So when you read international news saying a company earned 50 million dollars, that is 5 crore dollars in Indian terms! Understanding both systems helps you read news, understand cricket statistics, government budgets, and global business reports." },
+      { id: '06', scene_number: 6, type: 'summary', words: ['LAKH', 'CRORE', 'CHART'], subtext: 'Place value expert!', accent: '#a78bfa',
+        imageUrl: '/data/images/indian_place_value_chart.svg',
+        imageCaption: 'Remember: 1 Lakh = 1,00,000 and 1 Crore = 1,00,00,000',
+        voice: "Excellent! You have mastered the Indian Place Value Chart. Remember: digits group in 3 from the right for the ones period, then in pairs of 2 for thousands, lakhs, and crores. One lakh has 6 digits. One crore has 8 digits. Use commas to mark each group. This system is used on Indian currency notes, bank statements, population data, and cricket scoreboards. You are now ready to read and write any number in the Indian system!" },
     ],
   },
   'Grade 4|Place Value and Comparison': {
@@ -1026,6 +1052,108 @@ const BUNDLED_LESSONS: Record<string, any> = {
       { id: "06", scene_number: 6, type: "summary", words: ["RECAP", "PRACTICE", "CONFIDENCE"], subtext: "Recap and practice", accent: "#34d399", voice: "Excellent effort today on Mixed Word Problems. You practiced core ideas, solved step-by-step calculations, and checked answers carefully. Keep applying these skills in shopping, sports, travel, cooking, and projects. With regular short practice, your speed and confidence will keep improving. Clear methods make challenging mathematics easier and more reliable. This careful method keeps your maths accurate and clear in every step." },
     ],
   },
+  'Grade 4|Families of the Orchestra': {
+    id: 'pyp_g4_arts_families_of_the_orchestra',
+    title: 'Families of the Orchestra',
+    grade: 'Grade 4', subject: 'Arts', curriculum: 'IB PYP',
+    accent: '#C87848',
+    scenes: [
+      { id: '01', scene_number: 1, type: 'intro', words: ['ORCHESTRA', 'FOUR', 'FAMILIES'], subtext: 'Meet the Orchestra!', accent: '#C87848',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Diagram_Modern_symphony_orchestra-en.svg/500px-Diagram_Modern_symphony_orchestra-en.svg.png',
+        imageCaption: 'Seating layout of a symphony orchestra',
+        voice: "Welcome, musicians! Today we are going to explore the orchestra — one of the most amazing musical inventions in history. A symphony orchestra has about 80 to 100 musicians playing together. Their instruments are grouped into four families: Strings, Woodwind, Brass, and Percussion. Each family makes sound in a completely different way. Let us discover them one by one!" },
+      { id: '02', scene_number: 2, type: 'concept', words: ['STRINGS', 'BOW', 'VIBRATE'], subtext: 'String Family', accent: '#C87848',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/Violin_VL100.png',
+        imageCaption: 'Violin — the most common string instrument in the orchestra',
+        voice: "The String family is the largest section of the orchestra. Strings make sound when the strings vibrate — either by drawing a bow across them or plucking them. From smallest and highest pitched to largest and lowest: violin, viola, cello, double bass, and harp. In Indian classical music, the sitar, sarod, and veena are also string instruments. Fun fact: the violin has four strings and is played tucked under the chin!" },
+      { id: '03', scene_number: 3, type: 'concept', words: ['WOODWIND', 'BREATH', 'REED'], subtext: 'Woodwind Family', accent: '#C87848',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Western_concert_flute.jpg',
+        imageCaption: 'The flute — a woodwind instrument with no reed',
+        voice: "The Woodwind family makes sound when air is blown across or through the instrument. Some use a thin piece of wood called a reed that vibrates. Members: flute (blow across a hole — no reed!), clarinet (single reed), oboe (double reed — two reeds that vibrate together), bassoon (double reed, very low sound), piccolo (tiny flute, very high sound), and saxophone (single reed, invented in 1840 by Adolphe Sax). Despite the name, modern woodwinds can be made of metal!" },
+      { id: '04', scene_number: 4, type: 'concept', words: ['BRASS', 'BUZZ', 'MOUTHPIECE'], subtext: 'Brass Family', accent: '#C87848',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Yamaha_Trumpet_YTR-8335LA_crop.jpg/250px-Yamaha_Trumpet_YTR-8335LA_crop.jpg',
+        imageCaption: 'The trumpet — bright and powerful brass instrument',
+        voice: "The Brass family makes sound when the player buzzes their lips into a cup-shaped mouthpiece. The buzzing lips set the air inside the metal tube vibrating. Members: trumpet (bright, fanfare sound), French horn (mellow, warm tone), trombone (uses a slide to change pitch), and tuba (the largest and lowest-pitched brass instrument). Brass instruments can be very loud — that is why they sit at the back of the orchestra!" },
+      { id: '05', scene_number: 5, type: 'concept', words: ['PERCUSSION', 'HIT', 'SHAKE'], subtext: 'Percussion Family', accent: '#C87848',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Drum_kit_parts.png/330px-Drum_kit_parts.png',
+        imageCaption: 'A drum kit — part of the percussion family',
+        voice: "The Percussion family includes any instrument played by hitting, shaking, or scraping. It is divided into pitched (makes specific notes) and unpitched (just rhythm). Pitched percussion: xylophone, glockenspiel, marimba, timpani drums. Unpitched percussion: bass drum, snare drum, cymbals, triangle, tambourine, maracas. Fun fact: the piano is technically a percussion instrument because tiny felt hammers strike the strings inside! The percussionist often plays many instruments in one concert." },
+      { id: '06', scene_number: 6, type: 'summary', words: ['FOUR', 'FAMILIES', 'TOGETHER'], subtext: 'The Orchestra Complete!', accent: '#C87848',
+        voice: "Brilliant! You now know all four families of the orchestra. Strings vibrate by bowing or plucking. Woodwinds use air and sometimes reeds. Brass use buzzing lips. Percussion use hitting or shaking. Together these four families create the rich, powerful sound of a symphony orchestra. Next time you hear an orchestra, try to pick out which family each instrument belongs to. You are now a true music explorer!" },
+    ],
+  },
+  'Grade 4|Rhythm': {
+    id: 'pyp_g4_arts_rhythm',
+    title: 'Rhythm',
+    grade: 'Grade 4', subject: 'Arts', curriculum: 'IB PYP',
+    accent: '#C87848',
+    scenes: [
+      { id: '01', scene_number: 1, type: 'intro', words: ['RHYTHM', 'BEAT', 'PULSE'], subtext: "Music's heartbeat", accent: '#C87848',
+        voice: "Hello, music explorers! Today we are learning about rhythm — the heartbeat of music. Every piece of music has a beat, a steady pulse you can tap your foot to. Rhythm is how long or short sounds are arranged over that steady beat. Think about clapping a pattern — clap, clap, CLAP — that is rhythm! Without rhythm, music would have no shape or movement." },
+      { id: '02', scene_number: 2, type: 'concept', words: ['NOTE', 'VALUES', 'BEATS'], subtext: 'How long are notes?', accent: '#C87848',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/62/Music_notation.svg',
+        imageCaption: 'Note values — whole, half, quarter and eighth notes',
+        voice: "In written music, notes tell us how long to hold a sound. A whole note lasts 4 beats — the longest common note. A half note lasts 2 beats. A quarter note lasts 1 beat — the most common. An eighth note lasts half a beat. A rest means silence for that duration. You can think of it like fractions: two half notes equal one whole note, and four quarter notes equal one whole note." },
+      { id: '03', scene_number: 3, type: 'concept', words: ['PULSE', 'PATTERN', 'SYNCOPATION'], subtext: 'Pulse vs Pattern', accent: '#C87848',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/62/Music_notation.svg',
+        imageCaption: '4/4 time signature — 4 beats per bar, quarter note gets one beat',
+        voice: "The pulse is the steady, unchanging beat you feel in all music. Rhythm patterns sit on top of the pulse and can be complex or simple. Syncopation is a special technique where the rhythm deliberately falls between the expected beats — jazz music uses this a lot! In Indian classical music, complex rhythmic cycles called tala are counted using hand gestures. Counting aloud: one and two and three and four and — helps you feel both the beat and the off-beats." },
+      { id: '04', scene_number: 4, type: 'fun_fact', words: ['TABLA', 'METRONOME', 'HEARTBEAT'], subtext: 'Rhythm around the world', accent: '#C87848',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Prop._Tabla.jpg/250px-Prop._Tabla.jpg',
+        imageCaption: 'Tabla — India\'s famous rhythm instrument',
+        voice: "Rhythm is universal! Every culture in the world has rhythmic music. The tabla is India's most famous rhythm instrument — a pair of hand drums that can create incredibly complex rhythmic patterns. A metronome is a device that ticks at a steady speed, helping musicians keep perfect rhythm while practising. The human heartbeat is also a rhythm — beating about 60 to 100 times per minute. When music tempo matches your heart rate, it can change how you feel!" },
+      { id: '05', scene_number: 5, type: 'example', words: ['CLAP', 'AND', 'COUNT'], subtext: "Let's practise!", accent: '#C87848',
+        voice: "Let us practise rhythm! Try clapping this pattern: CLAP — pause — CLAP CLAP — pause — CLAP. Can you feel how the pattern repeats? Now try counting: one, two and, three, four. The 'and' falls between beats two and three. This is an off-beat. Musicians call the main beats the downbeat and the off-beats the upbeat. All rhythmic patterns are built from combinations of these beats and rests." },
+      { id: '06', scene_number: 6, type: 'summary', words: ['BEAT', 'NOTE', 'PATTERN'], subtext: 'Rhythm master!', accent: '#C87848',
+        voice: "Excellent! You have learned that rhythm is the pattern of long and short sounds in music. The pulse is the steady beat underneath. Note values — whole, half, quarter, eighth — tell us how long sounds last. Rests are silence. And rhythm patterns can be simple or complex, from a steady march to syncopated jazz. Keep tapping rhythms on your desk and you will develop a natural sense of beat!" },
+    ],
+  },
+  'Grade 4|Tempo and Dynamics': {
+    id: 'pyp_g4_arts_tempo_and_dynamics',
+    title: 'Tempo and Dynamics',
+    grade: 'Grade 4', subject: 'Arts', curriculum: 'IB PYP',
+    accent: '#C87848',
+    scenes: [
+      { id: '01', scene_number: 1, type: 'intro', words: ['TEMPO', 'DYNAMICS', 'MOOD'], subtext: 'Speed and volume in music', accent: '#C87848',
+        voice: "Welcome! Today we explore two powerful tools musicians use to express emotion — Tempo and Dynamics. Tempo controls how fast or slow music moves. Dynamics controls how loud or soft it sounds. Together, they shape the mood of every piece of music. The same melody played fast and loud feels completely different from slow and soft. Let us discover the Italian terms musicians use worldwide!" },
+      { id: '02', scene_number: 2, type: 'concept', words: ['TEMPO', 'LARGO', 'ALLEGRO'], subtext: 'Tempo markings', accent: '#C87848',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/62/Music_notation.svg',
+        imageCaption: 'Music notation — tempo markings tell musicians how fast to play',
+        voice: "Tempo is measured in BPM — beats per minute. Italian words mark the tempo on sheet music. From slowest to fastest: Largo means very slow and broad. Adagio means slow and stately. Andante means at a walking pace — steady and calm. Moderato means moderate speed. Allegro means fast and lively. Presto means very fast! Why Italian? Italy was the centre of classical music in the 1600s and 1700s, so Italian terms became the world standard." },
+      { id: '03', scene_number: 3, type: 'concept', words: ['FORTE', 'PIANO', 'CRESCENDO'], subtext: 'Dynamic markings', accent: '#C87848',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/62/Music_notation.svg',
+        imageCaption: 'Music notation showing dynamic markings — how loud or soft to play',
+        voice: "Dynamic markings tell us how loud or soft to play. From softest to loudest: pp means pianissimo — very soft. p means piano — soft. mp means mezzo-piano — medium soft. mf means mezzo-forte — medium loud. f means forte — loud. ff means fortissimo — very loud! Special markings: crescendo, shown as a growing arrow, means gradually getting louder. Decrescendo or diminuendo, shown as a shrinking arrow, means gradually getting softer. Fun fact: the piano was named pianoforte — Italian for soft-loud — because it could do both!" },
+      { id: '04', scene_number: 4, type: 'example', words: ['MOOD', 'FAST', 'LOUD'], subtext: 'Tempo + Dynamics = Feeling', accent: '#C87848',
+        voice: "Let us see how tempo and dynamics work together to create mood. Beethoven's Fifth Symphony opens with a famous short-short-short-LONG pattern played forte and allegro — loud and fast — creating drama and tension. A lullaby is typically andante or adagio with piano dynamics — slow and soft — creating calm and sleep. A march is allegro and forte — fast and loud — creating energy and power. A hymn is adagio and mezzo-forte — slow and medium loud — creating reverence." },
+      { id: '05', scene_number: 5, type: 'fun_fact', words: ['PIANOFORTE', 'ITALY', 'BPM'], subtext: 'Musical fun facts', accent: '#C87848',
+        voice: "Fun facts about tempo and dynamics! The world's fastest piece of music is Flight of the Bumblebee by Rimsky-Korsakov — played at Presto, over 200 beats per minute! The quietest dynamic marking in orchestral music is ppp — triple piano — barely a whisper. Conductors use baton speed and height to signal tempo and dynamics to musicians. When a DJ gradually makes music louder and faster on a dance floor, they are using crescendo and accelerando — musical techniques used for centuries!" },
+      { id: '06', scene_number: 6, type: 'summary', words: ['TEMPO', 'DYNAMICS', 'MASTER'], subtext: 'Music expression expert!', accent: '#C87848',
+        voice: "Wonderful! You now understand two of music's most powerful tools. Tempo tells us speed: Largo is slowest, then Adagio, Andante, Moderato, Allegro, and Presto is fastest. Dynamics tells us volume: pp is softest, then p, mp, mf, f, and ff is loudest. Crescendo gets louder, decrescendo gets softer. Together they give music its emotional power. Listen to any song today and try naming its tempo and dynamics — you are now thinking like a musician!" },
+    ],
+  },
+  'Grade 4|Timbre': {
+    id: 'pyp_g4_arts_timbre',
+    title: 'Timbre',
+    grade: 'Grade 4', subject: 'Arts', curriculum: 'IB PYP',
+    accent: '#C87848',
+    scenes: [
+      { id: '01', scene_number: 1, type: 'intro', words: ['TIMBRE', 'TONE', 'COLOUR'], subtext: "Music's unique fingerprint", accent: '#C87848',
+        voice: "Hello, music detectives! Today we are exploring timbre — pronounced tam-ber. Timbre is the unique quality of a sound that makes one instrument different from another, even when they play the same note at the same volume. It is sometimes called tone colour. Close your eyes — if a flute and a trumpet both play the note A, you can still tell them apart instantly. That is timbre at work!" },
+      { id: '02', scene_number: 2, type: 'concept', words: ['MATERIAL', 'SHAPE', 'METHOD'], subtext: 'What creates timbre?', accent: '#C87848',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Historical_instruments.jpg/250px-Historical_instruments.jpg',
+        imageCaption: 'Each instrument has a unique tone colour (timbre) based on its material and shape',
+        voice: "Timbre is created by three things: the material the instrument is made from, the shape and size of the instrument, and how sound is produced. A violin has a warm singing tone because the wooden body amplifies string vibrations. A trumpet has a bright brassy sound because air vibrates through a long metal tube with a flared bell. A drum has a resonant boom because hitting a stretched membrane creates complex vibrations. Even the human voice has unique timbre — that is why you recognise your friend's voice on the phone." },
+      { id: '03', scene_number: 3, type: 'concept', words: ['BRIGHT', 'WARM', 'MELLOW'], subtext: 'Describing timbre', accent: '#C87848',
+        voice: "We use descriptive words to talk about timbre: bright, warm, harsh, mellow, rich, thin, buzzy, reedy, breathy, or dark. A flute has a bright, airy timbre. A cello has a warm, rich timbre. An oboe has a reedy, nasal timbre. A tuba has a dark, round timbre. When you say a voice sounds warm, or a guitar sounds bright, you are actually describing timbre! Musicians choose instruments for specific timbres to create the exact mood they want." },
+      { id: '04', scene_number: 4, type: 'concept', words: ['SOPRANO', 'TENOR', 'BASS'], subtext: 'Vocal timbre', accent: '#C87848',
+        voice: "The human voice also has timbre categories. Soprano is the highest female voice — bright and clear. Alto or contralto is the lower female voice — warm and rich. Tenor is the higher male voice — bright and ringing. Baritone is the medium male voice. Bass is the lowest male voice — deep and resonant. Choirs use all these voice types together to create a full, harmonious sound. In Carnatic and Hindustani music, the tone quality of the voice is called swara and is considered extremely important." },
+      { id: '05', scene_number: 5, type: 'fun_fact', words: ['OVERTONES', 'UNIQUE', 'WAVES'], subtext: 'The science of timbre', accent: '#C87848',
+        voice: "Here is the science behind timbre! Every instrument produces not just one sound wave but many — the main note plus extra vibrations called overtones or harmonics. The unique combination of these overtones creates each instrument's timbre. That is why two instruments playing the same note sound different — they have different overtone patterns! Computer music uses this science to digitally recreate instrument sounds. And your voiceprint — the unique pattern of your voice's timbre — is so unique it can be used to identify you, just like a fingerprint." },
+      { id: '06', scene_number: 6, type: 'summary', words: ['TIMBRE', 'COLOUR', 'SOUND'], subtext: 'Timbre expert!', accent: '#C87848',
+        voice: "Amazing work! You have mastered timbre — the tone colour of sound. Timbre is what makes a violin sound different from a trumpet even on the same note. It is shaped by the instrument's material, shape, and how it produces sound. We describe timbre with words like bright, warm, mellow, and rich. Voices also have timbre: soprano, alto, tenor, and bass. Now when you hear music, you can listen not just to the notes but to the timbre — the unique colour of each sound. That is true musical listening!" },
+    ],
+  },
 };
 
 // ── TTS helpers (no-op on native — audio only runs on web) ───────────────────
@@ -1060,6 +1188,8 @@ interface LessonScene {
   subtext: string;
   voice: string;
   accent?: string;
+  imageUrl?: string;
+  imageCaption?: string;
 }
 
 interface Lesson {
@@ -1222,17 +1352,26 @@ export default function TopicLessonScreen({ navigation, route }: any) {
       if (!audio || audio.paused || audio.ended) return;
       let idx = 0;
       if (timings && timings.length > 0) {
-        const t = audio.currentTime;
+        // Small look-ahead: Whisper timestamps tend to lag ~80ms behind actual speech
+        const AHEAD = 0.08 / (audio.playbackRate || 1);
+        const t = audio.currentTime + AHEAD;
         for (let i = 0; i < timings.length; i++) {
           const wordEnd = timings[i + 1]?.startTime ?? (audio.duration + 1);
           if (t >= timings[i].startTime && t < wordEnd) { idx = i; break; }
           if (t >= timings[i].startTime) idx = i;
         }
       } else {
-        const LAG = 0.18 / (audio.playbackRate || 1);
+        // Weight each word by its character length for a more natural highlight pace
+        const totalChars = words.reduce((s, w) => s + Math.max(w.length, 1), 0);
+        const LAG = 0.15 / (audio.playbackRate || 1);
         const ratio = Math.max(0, audio.currentTime - LAG) / (audio.duration || 1);
-        const found = words.findIndex((_, i) => ratio < (i + 1) / words.length);
-        idx = found === -1 ? words.length - 1 : found;
+        const targetChars = ratio * totalChars;
+        let cumChars = 0;
+        idx = words.length - 1;
+        for (let i = 0; i < words.length; i++) {
+          cumChars += Math.max(words[i].length, 1);
+          if (cumChars >= targetChars) { idx = i; break; }
+        }
       }
       if (idx !== lastRendered) { lastRendered = idx; setWordIndex(idx); }
       rafRef.current = requestAnimationFrame(tick);
@@ -1253,18 +1392,27 @@ export default function TopicLessonScreen({ navigation, route }: any) {
   // Load lesson — try server first, fall back to bundled data
   useEffect(() => {
     setLoading(true);
-    fetch(`${SERVER_URL}/ibpyp/lesson-content?topic=${encodeURIComponent(topic)}&grade=${encodeURIComponent(grade)}&subject=${encodeURIComponent(subject)}&curriculum=${encodeURIComponent(curriculum)}`)
+    // If a bundled lesson exists (has hand-crafted content + images), use it immediately
+    const bundled = findBundledLesson(grade, topic, subject);
+    if (bundled) {
+      setLesson(bundled);
+      setLoading(false);
+      return;
+    }
+    const ctrl = new AbortController();
+    fetch(`${SERVER_URL}/ibpyp/lesson-content?topic=${encodeURIComponent(topic)}&grade=${encodeURIComponent(grade)}&subject=${encodeURIComponent(subject)}&curriculum=${encodeURIComponent(curriculum)}`, { signal: ctrl.signal })
       .then(r => r.json())
       .then(data => {
         if (data.error || !data.scenes) throw new Error(data.error || 'no scenes');
         setLesson(data);
       })
-      .catch(() => {
-        const bundled = findBundledLesson(grade, topic, subject);
-        setLesson(bundled || buildGenericLesson(topic, grade, subject));
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        setLesson(buildGenericLesson(topic, grade, subject));
         setError('');
       })
       .finally(() => setLoading(false));
+    return () => ctrl.abort();
   }, [topic, grade, subject]);
 
   // Auto-play TTS on card change
@@ -1280,8 +1428,9 @@ export default function TopicLessonScreen({ navigation, route }: any) {
 
     setSpeaking(true);
     const voiceWords = (scene.voice.match(/\S+/g) || []);
+    const audioCtrl = new AbortController();
 
-    fetch(`${SERVER_URL}/lesson/scene-audio?lessonId=${encodeURIComponent(lesson.id)}&sceneId=${encodeURIComponent(scene.id)}&text=${encodeURIComponent(scene.voice)}`)
+    fetch(`${SERVER_URL}/lesson/scene-audio?lessonId=${encodeURIComponent(lesson.id)}&sceneId=${encodeURIComponent(scene.id)}&text=${encodeURIComponent(scene.voice)}`, { signal: audioCtrl.signal })
       .then(r => r.json())
       .then(data => {
         if (!data.audioUrl) throw new Error('no audioUrl');
@@ -1301,7 +1450,8 @@ export default function TopicLessonScreen({ navigation, route }: any) {
         audio.onerror = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
         audio.play().catch(() => { setSpeaking(false); });
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
         // Fallback to Web Speech API if server unavailable
         const synth = Platform.OS === 'web' ? (window as any).speechSynthesis as SpeechSynthesis : null;
         if (!synth) { setSpeaking(false); return; }
@@ -1318,7 +1468,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
         synth.speak(utter);
       });
 
-    return () => { stopAudio(); stopSpeech(); setSpeaking(false); };
+    return () => { audioCtrl.abort(); stopAudio(); stopSpeech(); setSpeaking(false); };
   }, [cardIdx, lesson]);
 
   // Cleanup on unmount
@@ -1499,6 +1649,20 @@ export default function TopicLessonScreen({ navigation, route }: any) {
             {/* Divider */}
             <View style={[s.divider, { backgroundColor: accent + '30' }]} />
 
+            {/* Diagram / image — shown when scene has an imageUrl */}
+            {scene.imageUrl ? (
+              <View style={s.diagramWrap}>
+                <Image
+                  source={{ uri: scene.imageUrl.startsWith('http') ? scene.imageUrl : `${SERVER_URL}${scene.imageUrl}` }}
+                  style={s.diagramImg}
+                  resizeMode="contain"
+                />
+                {!!scene.imageCaption && (
+                  <Text style={[s.diagramCaption, { color: colors.textMuted }]}>{scene.imageCaption}</Text>
+                )}
+              </View>
+            ) : null}
+
             {/* Main lesson text — word-by-word highlight during playback */}
             <Text style={[s.lessonText, { color: isDark ? '#e2e8f0' : '#2d3748' }]}>
               {(scene.voice.match(/\S+/g) || []).map((w, i) => {
@@ -1612,6 +1776,10 @@ const s = StyleSheet.create({
   wordChipText: { fontSize: 13, fontWeight: '800', letterSpacing: 0.5 },
 
   divider:      { height: 1.5, borderRadius: 1 },
+
+  diagramWrap:    { marginTop: 14, marginBottom: 4, alignItems: 'center', width: '100%' },
+  diagramImg:     { width: '100%', height: 220, borderRadius: 10 },
+  diagramCaption: { fontSize: 12, textAlign: 'center', marginTop: 6, fontStyle: 'italic' },
 
   lessonText:     { fontSize: 17, lineHeight: 28, fontWeight: '400' },
   wordHighlight:  { fontWeight: '700', borderRadius: 4 },

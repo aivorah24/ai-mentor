@@ -836,32 +836,89 @@ async function generateSceneTimingsViaWhisper(mp3Path, text) {
     const whisperWords = data.words || [];
     if (!whisperWords.length) return null;
 
-    const textWords  = text.match(/\S+/g) || [];
-    const normalize  = w => w.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const speechIdxs = textWords.map((w, i) => ({ w, i })).filter(({ w }) => normalize(w));
-    const M = whisperWords.length;
-    const N = speechIdxs.length;
+    const textWords = text.match(/\S+/g) || [];
+    const norm      = w => w.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    const timings = new Array(textWords.length).fill(null);
-    for (let si = 0; si < N; si++) {
-      const { i } = speechIdxs[si];
-      const wi = Math.min(Math.round((si / Math.max(N - 1, 1)) * (M - 1)), M - 1);
-      const ww = whisperWords[wi];
-      timings[i] = {
-        word:      textWords[i],
-        startTime: parseFloat((ww.start ?? 0).toFixed(3)),
-        endTime:   parseFloat((ww.end   ?? (ww.start + 0.2)).toFixed(3)),
-      };
+    // Map digits/numbers to their spoken word equivalents (TTS says "three" for "3")
+    const NUM_WORDS = {
+      '0':'zero','1':'one','2':'two','3':'three','4':'four','5':'five',
+      '6':'six','7':'seven','8':'eight','9':'nine','10':'ten',
+      '11':'eleven','12':'twelve','13':'thirteen','14':'fourteen','15':'fifteen',
+      '16':'sixteen','17':'seventeen','18':'eighteen','19':'nineteen','20':'twenty',
+      '30':'thirty','40':'forty','50':'fifty','60':'sixty','70':'seventy',
+      '80':'eighty','90':'ninety','100':'hundred','1000':'thousand',
+    };
+    const normSpoken = w => {
+      const n = norm(w);
+      return NUM_WORDS[n] || n;
+    };
+
+    // Build a flat list of Whisper word objects with normalised text
+    const ww = whisperWords.map(w => ({
+      ...w,
+      n: norm(w.word || ''),
+      start: parseFloat((w.start ?? 0).toFixed(3)),
+      end:   parseFloat((w.end   ?? ((w.start ?? 0) + 0.25)).toFixed(3)),
+    })).filter(w => w.n.length > 0);
+
+    // Greedy left-to-right alignment: for each text word find the best-matching
+    // Whisper word starting from the last matched position.
+    const timings  = [];
+    let   wPtr     = 0;   // current search start in ww[]
+
+    for (let ti = 0; ti < textWords.length; ti++) {
+      const tn = norm(textWords[ti]);
+
+      if (!tn) {
+        // punctuation-only token — inherit previous timing
+        const prev = timings[ti - 1];
+        timings.push({ word: textWords[ti], startTime: prev?.endTime ?? 0, endTime: prev?.endTime ?? 0 });
+        continue;
+      }
+
+      // 1) Try exact match within a window of the next 6 Whisper words
+      //    Also try spoken-form of numbers (e.g. "3" → "three")
+      const tnSpoken = normSpoken(textWords[ti]);
+      let bestIdx = -1;
+      const window = Math.min(wPtr + 6, ww.length);
+      for (let wi = wPtr; wi < window; wi++) {
+        if (ww[wi].n === tn || ww[wi].n === tnSpoken) { bestIdx = wi; break; }
+      }
+
+      // 2) Partial / prefix match in the same window
+      if (bestIdx === -1) {
+        for (let wi = wPtr; wi < window; wi++) {
+          if (ww[wi].n.startsWith(tn) || tn.startsWith(ww[wi].n) ||
+              ww[wi].n.startsWith(tnSpoken) || tnSpoken.startsWith(ww[wi].n)) {
+            bestIdx = wi; break;
+          }
+        }
+      }
+
+      // 3) Fallback — proportional position (keeps monotone order)
+      if (bestIdx === -1) {
+        bestIdx = Math.min(
+          Math.round((ti / Math.max(textWords.length - 1, 1)) * (ww.length - 1)),
+          ww.length - 1,
+        );
+        bestIdx = Math.max(bestIdx, wPtr);
+      }
+
+      timings.push({
+        word:      textWords[ti],
+        startTime: ww[bestIdx].start,
+        endTime:   ww[bestIdx].end,
+      });
+
+      wPtr = bestIdx + 1;
+      if (wPtr >= ww.length) wPtr = ww.length - 1;
     }
-    for (let i = 0; i < textWords.length; i++) {
-      if (timings[i]) continue;
-      const prev = i > 0 && timings[i - 1] ? timings[i - 1].endTime : 0;
-      timings[i] = { word: textWords[i], startTime: prev, endTime: prev };
-    }
+
+    // Ensure strict monotone ordering
     for (let i = 1; i < timings.length; i++) {
       if (timings[i].startTime < timings[i - 1].startTime) {
         timings[i].startTime = timings[i - 1].startTime;
-        timings[i].endTime   = Math.max(timings[i].endTime, timings[i].startTime);
+        timings[i].endTime   = Math.max(timings[i].endTime, timings[i].startTime + 0.05);
       }
     }
     return timings;

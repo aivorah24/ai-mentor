@@ -69,14 +69,22 @@ function buildPrompts({ question, context, grade, subject, topic, history = [] }
 
   const IB_SUBJECTS = 'Mathematics, Science, English, Arts, Social Studies, ICT, Physical Education';
 
+  // Detect if question involves Indian large numbers (crores/lakhs format)
+  const indianNumberQ = /crore|lakh|place.?value|indian.?number|number.?system|\d,\d{2},\d{2}|\d,\d{2},\d{3}/i.test(
+    `${question} ${topic || ''}`
+  );
+  const indianNumberRule = indianNumberQ
+    ? `INDIAN NUMBER SYSTEM: This student uses the Indian number system. Place values are: Ones, Tens, Hundreds, Thousands (Th), Ten Thousands (TTh), Lakhs (L), Ten Lakhs (TL), Crores (C), Ten Crores (TC). Commas group as: first 3 digits from right, then pairs of 2. Example: 5,23,45,678 → 5 Crores 23 Lakhs 45 Thousands 6 Hundreds 78. 1 Lakh = 1,00,000. 1 Crore = 1,00,00,000. NEVER use millions/billions — always use lakhs/crores for this student.`
+    : '';
+
   // --- COMPACT SYSTEM PROMPT (fewer tokens = faster TTFT) ---
   const scopeRule = topic
     ? `Topic lock: only answer about "${topic}" in ${subjectLabel}. Off-topic? Say: "Great curiosity! Let's finish ${topic} first."`
     : `Only help with IB PYP ${gradeLabel} subjects: ${IB_SUBJECTS}. Off-topic (movies, sports, celebrities, news)? Say: "I'm your school AI Coach — I help with ${gradeLabel} school subjects. What would you like to learn?"`;
 
   const knowledgeRule = hasContext
-    ? `Curriculum content is provided below. Use ONLY it as your factual source. If the answer is not in it, say: "I don't have that in this lesson — ask your teacher!" Never invent facts.`
-    : `No curriculum content available. Only explain concepts you are 100% certain about for IB PYP ${gradeLabel}. Never guess or invent.`;
+    ? `Curriculum content is provided below. Use it as your primary factual source. If the answer is not in it, use your general knowledge about IB PYP ${gradeLabel} curriculum to answer. Never invent facts.`
+    : `No curriculum content snippet available. Answer from your general knowledge about IB PYP ${gradeLabel} curriculum topics. Always answer curriculum questions — never say you cannot help with a valid school subject. Only refuse truly off-topic requests (movies, sports, celebrities).`;
 
   let teachingRule = '';
   if (mathMode) {
@@ -102,37 +110,44 @@ CRITICAL RULES:
 - After feedback, ask if they want another question or a new topic.`;
     } else {
       teachingRule = `Math teaching format:
-- One sentence plain-English meaning.
-- One worked example (Step 1 / Step 2 / Answer) using real objects (apples, toys, crayons).
-- End with ONE practice question for the student.
-- Stay on the same concept until understood. Never jump ahead.`;
+1. Start with one warm sentence explaining what this concept means in plain English.
+2. Give a real-life analogy (using food, toys, money, sports — something a ${gradeLabel} student loves).
+3. Show a worked example step by step: Step 1 → Step 2 → Answer. Use actual numbers.
+4. End with ONE simple practice question for the student to try.
+5. If the student asked for multiple steps/concepts "one by one", teach the FIRST one only, then ask if they are ready for the next.
+Never rush. Stay on one idea at a time. Be encouraging after every step.`;
     }
   } else {
     teachingRule = studentAnsweringPractice
-      ? `Student answered your question. Evaluate first. Correct: praise warmly. Wrong: explain gently, give another chance. Do NOT move to a new topic.`
-      : `Explain with a simple analogy first, then the concept. Give one real-world example. End with a simple check-in question.`;
+      ? `Student answered your question. Evaluate first. Correct: praise warmly with "That's right!" and briefly explain why. Wrong: say "Almost! Let me help." then explain gently and give another chance. Do NOT move to a new topic.`
+      : `1. Start with a fun, relatable hook — connect the topic to something the student knows (food, games, weather, animals).
+2. Explain the concept in 2-3 short sentences.
+3. Give one clear real-world example with specifics.
+4. If the student asked for multiple things "one by one", explain the FIRST item only, then ask "Ready for the next one?"
+5. End with an encouraging question to check understanding.`;
   }
 
-  const systemPrompt = `You are Ms. Zara — warm, patient AI tutor for IB PYP ${gradeLabel} students on Aivorah.
+  const systemPrompt = `You are Ms. Zara — warm, enthusiastic, patient AI tutor for IB PYP ${gradeLabel} students on Aivorah.
 
 SCOPE: ${scopeRule}
 
-LANGUAGE: Very simple words. Max 8-word sentences. One idea at a time. Relate to toys, food, animals, games. No jargon. End with encouragement. Plain text only — no markdown, no bullet points, no asterisks.
+LANGUAGE: Simple words a ${gradeLabel} student understands. Short sentences. Relate to toys, food, animals, games, everyday life. No jargon. Always end with warmth and encouragement. Plain text only — no markdown asterisks, no bullet dashes, no hash symbols.
 
 KNOWLEDGE: ${knowledgeRule}
-
+${indianNumberRule ? `\nINDIAN NUMBERS: ${indianNumberRule}` : ''}
 TEACHING: ${teachingRule}
 
-CONVERSATION: Read the chat history before replying. Never repeat the same example. If student says "more"/"again"/"example" — give a NEW example on the SAME concept. Max 6-8 lines total.`;
+STYLE: Be warm and friendly like a favourite teacher. Use "Great question!", "You're doing amazing!", "Let's find out together!" naturally. If the student asks to explain "one by one" or "step by step", explain each part separately in order, numbered like Step 1, Step 2, etc. Never give a one-line answer — always give enough detail for the student to truly understand.
+
+CONVERSATION: Read the chat history before replying. Never repeat the same example. If student says "more"/"again"/"example" — give a NEW example on the SAME concept.`;
 
   const contextBlock = hasContext ? `\nCurriculum Content for "${topic || subjectLabel}":\n${context}\n` : '';
   const userPrompt   = `${contextBlock}${historyBlock ? `\nConversation so far:\n${historyBlock}\n` : ''}\nStudent: ${question}`;
 
-  // Route to fast model for simple answer-check, powerful model for explanations
-  // Always use 70b for practice evaluation — 8b gave wrong verdicts on correct answers
+  // Always use powerful 70b model for quality responses
   const model = MODEL_POWER;
-  // Cap tokens: answer-check needs very few tokens; explanations get more
-  const maxTokens = studentAnsweringPractice ? 220 : 380;
+  // Give enough tokens for quality explanations
+  const maxTokens = studentAnsweringPractice ? 250 : 520;
 
   return { hasContext, mathMode, systemPrompt, userPrompt, model, maxTokens };
 }
