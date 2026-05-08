@@ -147,11 +147,12 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
       }
       const pairs = Array.from(topicMap.entries()).map(([topic, subject]) => ({ topic, subject }));
       setCurriculumTopics(pairs);
-      // Unique subjects from curriculum
+      // Unique subjects from curriculum — only what exists in data
       const subjSet = new Set(pairs.map(p => p.subject).filter(Boolean));
-      const order = ['Math', 'Mathematics', 'Science', 'English', 'Arts', 'Other'];
+      const order = ['Math', 'Mathematics', 'Science', 'English', 'Arts', 'Social Studies', 'Other'];
       const sorted = [...order.filter(s => subjSet.has(s)), ...[...subjSet].filter(s => !order.includes(s))];
       setAvailCurrSubjects(sorted);
+      setSubjectF('All'); // reset subject when grade changes
     };
     if (allStudents.length > 0) fetchTopics();
   }, [gradeF, allStudents, availableGrades]);
@@ -166,14 +167,15 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
     completionMap[t] = (completionMap[t] || 0) + 1;
   }));
 
-  // Filter by subject using real subject from curriculum
-  const displaySubjects = availCurrSubjects.length > 0 ? availCurrSubjects : availableSubjects.filter(s => s !== 'All');
+  // Only show subjects that actually exist in the fetched curriculum
+  const displaySubjects = availCurrSubjects; // empty until fetch completes — no fallback to hardcoded list
   const filteredCurrTopics = curriculumTopics.filter(p =>
     subjectF === 'All' || p.subject === subjectF || p.subject?.toLowerCase() === subjectF.toLowerCase()
   );
-  const baseTopics = filteredCurrTopics.length > 0
+  // If curriculum loaded but subject filter returns nothing, fall back to all curriculum topics
+  const baseTopics = curriculumTopics.length > 0
     ? filteredCurrTopics.map(p => p.topic)
-    : Object.keys(completionMap).filter(t => subjectF === 'All' || subjectOf(t) === subjectF);
+    : Object.keys(completionMap);
   const allTopicNames = baseTopics;
 
   // Sort: uncompleted first, then by count ascending
