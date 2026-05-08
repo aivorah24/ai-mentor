@@ -148,7 +148,9 @@ function sanitizeDisplayedAIText(text: string): string {
     // Insert newline before Step N: / Answer: / Try this: so they render as separate lines
     .replace(/\s+(Step\s*\d+[\s:→–])/g, '\n$1')
     .replace(/\s+(Answer\s*:)/gi, '\n$1')
-    .replace(/\s+(Try this\s*:|Now,?\s*can you|Here'?s? a practice)/gi, '\n$1');
+    .replace(/\s+(Try this\s*:|Now,?\s*can you|Here'?s? a practice)/gi, '\n$1')
+    .replace(/\bkeyboards and mice\b/gi, 'keyboards and a mouse')
+    .replace(/\bmice\b/gi, 'mouse');
 }
 
 interface Props {

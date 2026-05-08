@@ -40,7 +40,10 @@ function sanitizeDisplayedAIText(text: string): string {
     .replace(/\r/g, '')
     .replace(/\s+(Step\s*\d+[\s:→–])/g, '\n$1')
     .replace(/\s+(Answer\s*:)/gi, '\n$1')
-    .replace(/\s+(Try this\s*:|Now,?\s*can you|Here'?s? a practice)/gi, '\n$1');
+    .replace(/\s+(Try this\s*:|Now,?\s*can you|Here'?s? a practice)/gi, '\n$1')
+    // Prevent confusing animal words for tech terms
+    .replace(/\bkeyboards and mice\b/gi, 'keyboards and a mouse')
+    .replace(/\bmice\b(?=.*computer|\b)/gi, 'mouse');
 }
 
 // Fallback suggestions per grade — only used if curriculum fetch fails

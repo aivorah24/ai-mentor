@@ -20,15 +20,15 @@ const VOICE_CONFIG: Record<VoiceOption, { label: string; icon: string; color: st
   grandfather: { label: 'Grandfather', icon: 'anchor', color: '#0891b2' },
 };
 
-// Story-specific ambient music: base freq + harmonics for each story theme
-const STORY_AMBIENT: Record<string, { freq: number; tempo: number }> = {
-  prahlada:            { freq: 174, tempo: 0.4 }, // devotional, intense
-  hanuman:             { freq: 285, tempo: 0.6 }, // brave, energetic
-  ramayana_rama_sita:  { freq: 396, tempo: 0.3 }, // peaceful, lyrical
-  bhagavad_gita_arjuna:{ freq: 528, tempo: 0.3 }, // wisdom, calm
-  dhruva:              { freq: 432, tempo: 0.35 }, // determination
-  ambarisha:           { freq: 417, tempo: 0.3 }, // devotion
-  bharat:              { freq: 396, tempo: 0.3 }, // gentle
+// Story-specific ambient music profiles
+const STORY_AMBIENT: Record<string, { root: number; style: 'tanpura' | 'flute' | 'tabla' | 'veena' }> = {
+  prahlada:             { root: 220,  style: 'tanpura' }, // devotional drone
+  hanuman:              { root: 196,  style: 'tabla'   }, // energetic rhythm
+  ramayana_rama_sita:   { root: 264,  style: 'flute'   }, // peaceful bansuri
+  bhagavad_gita_arjuna: { root: 220,  style: 'veena'   }, // wisdom, meditative
+  dhruva:               { root: 247,  style: 'tanpura' }, // determination drone
+  ambarisha:            { root: 220,  style: 'veena'   }, // devotion, calm
+  bharat:               { root: 264,  style: 'flute'   }, // gentle, lyrical
 };
 
 function getPastelGradient(c: string): [string, string] {
@@ -92,48 +92,228 @@ function buildBoundaries(tokens: string[]): number[] {
   return weights.map(w => { cum += w; return cum / total; });
 }
 
-// Page flip sound via Web Audio API
+// Page flip sound — single shared context to prevent stacking
+let _flipCtx: any = null;
 function playPageFlip() {
   if (Platform.OS !== 'web') return;
   try {
-    const ctx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
-    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.12, ctx.sampleRate);
+    if (!_flipCtx || _flipCtx.state === 'closed') {
+      _flipCtx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
+    }
+    const ctx = _flipCtx;
+    if (ctx.state === 'suspended') ctx.resume();
+    // Paper rustle: lowpass-filtered noise burst — soft, not buzzy
+    const duration = 0.14; // seconds
+    const buf = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.03));
+    for (let i = 0; i < d.length; i++) {
+      // Two-phase envelope: quick attack then slow fade (paper swish)
+      const t = i / ctx.sampleRate;
+      const env = t < 0.02
+        ? t / 0.02                                   // 20ms attack
+        : Math.exp(-(t - 0.02) / 0.055);            // ~55ms decay
+      d[i] = (Math.random() * 2 - 1) * env;
+    }
     const src = ctx.createBufferSource(); src.buffer = buf;
+    // Lowpass at 900 Hz removes high-frequency buzz → warm paper sound
+    const lpf = ctx.createBiquadFilter();
+    lpf.type = 'lowpass'; lpf.frequency.value = 900; lpf.Q.value = 0.5;
     const g = ctx.createGain(); g.gain.value = 0.18;
-    src.connect(g); g.connect(ctx.destination); src.start();
-    setTimeout(() => ctx.close(), 500);
+    src.connect(lpf); lpf.connect(g); g.connect(ctx.destination);
+    src.start();
   } catch {}
 }
 
-// Ambient music via Web Audio API (story-specific)
+// Indian ambient music via Web Audio API — story-specific instrument styles
 function createAmbientMusic(storyId: string) {
   if (Platform.OS !== 'web') return null;
   try {
-    const config = STORY_AMBIENT[storyId] ?? { freq: 396, tempo: 0.3 };
+    const profile = STORY_AMBIENT[storyId] ?? { root: 220, style: 'tanpura' };
     const ctx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
-    const master = ctx.createGain(); master.gain.value = 0;
+    // Resume in case browser auto-suspended the context
+    if (ctx.state === 'suspended') ctx.resume();
+    const master = ctx.createGain();
+    master.gain.value = 0;
     master.connect(ctx.destination);
 
-    // Harmonic drone: root + 5th + octave
-    [1, 1.5, 2, 3].forEach((ratio, i) => {
+    // Reverb convolver for warmth
+    function makeReverb(duration: number, decay: number) {
+      const len = ctx.sampleRate * duration;
+      const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let ch = 0; ch < 2; ch++) {
+        const d = buf.getChannelData(ch);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+      }
+      const conv = ctx.createConvolver();
+      conv.buffer = buf;
+      return conv;
+    }
+    const reverb = makeReverb(2.5, 3);
+    reverb.connect(master);
+
+    const root = profile.root; // e.g. 220 Hz = A3
+    const nodes: any[] = [];
+
+    if (profile.style === 'tanpura') {
+      // Tanpura: 4 strings — Pa, Sa (low), Sa (high), Ma plucked in slow cycle
+      const strings = [root * 0.75, root, root * 2, root * 4/3];
+      strings.forEach((freq, si) => {
+        function pluck() {
+          try {
+            const osc = ctx.createOscillator();
+            const env = ctx.createGain();
+            const filt = ctx.createBiquadFilter();
+            filt.type = 'bandpass'; filt.frequency.value = freq; filt.Q.value = 12;
+            osc.type = 'sawtooth'; osc.frequency.value = freq;
+            osc.connect(filt); filt.connect(env); env.connect(reverb); env.connect(master);
+            env.gain.setValueAtTime(0, ctx.currentTime);
+            env.gain.linearRampToValueAtTime(0.055, ctx.currentTime + 0.04);
+            env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3.5);
+            osc.start(); osc.stop(ctx.currentTime + 3.6);
+            const tid = setTimeout(pluck, (si * 1800 + 7200));
+            nodes.push(tid);
+          } catch {}
+        }
+        const initDelay = si * 1800;
+        const t = setTimeout(pluck, initDelay);
+        nodes.push(t);
+      });
+
+    } else if (profile.style === 'flute') {
+      // Bansuri flute: breathy sine + noise, melodic Sa-Re-Ga phrases
+      const scale = [root, root*9/8, root*5/4, root*4/3, root*3/2, root*5/3, root*15/8, root*2];
+      const phrases = [[0,2,4,2,0], [4,5,4,2,0], [0,4,7,4,0], [2,4,5,4,2]];
+      let phraseIdx = 0;
+      function playPhrase() {
+        try {
+          const phrase = phrases[phraseIdx % phrases.length];
+          phraseIdx++;
+          phrase.forEach((deg, ni) => {
+            const freq = scale[deg % scale.length];
+            const t0 = ctx.currentTime + ni * 0.9;
+            // Breath noise
+            const noiseLen = ctx.sampleRate * 0.7;
+            const nbuf = ctx.createBuffer(1, noiseLen, ctx.sampleRate);
+            const nd = nbuf.getChannelData(0);
+            for (let i = 0; i < noiseLen; i++) nd[i] = (Math.random() * 2 - 1) * 0.015;
+            const nsrc = ctx.createBufferSource(); nsrc.buffer = nbuf;
+            const nbpf = ctx.createBiquadFilter(); nbpf.type = 'bandpass'; nbpf.frequency.value = freq * 1.1; nbpf.Q.value = 8;
+            const nenv = ctx.createGain(); nenv.gain.value = 0;
+            nsrc.connect(nbpf); nbpf.connect(nenv); nenv.connect(master);
+            nenv.gain.setValueAtTime(0, t0); nenv.gain.linearRampToValueAtTime(0.04, t0 + 0.08); nenv.gain.linearRampToValueAtTime(0, t0 + 0.65);
+            nsrc.start(t0); nsrc.stop(t0 + 0.7);
+            // Tone
+            const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = freq;
+            const vib = ctx.createOscillator(); vib.type = 'sine'; vib.frequency.value = 5.5;
+            const vibG = ctx.createGain(); vibG.gain.value = freq * 0.012;
+            vib.connect(vibG); vibG.connect(osc.frequency);
+            const env = ctx.createGain(); env.gain.value = 0;
+            osc.connect(env); env.connect(reverb); env.connect(master);
+            env.gain.setValueAtTime(0, t0); env.gain.linearRampToValueAtTime(0.06, t0 + 0.12); env.gain.setValueAtTime(0.055, t0 + 0.5); env.gain.linearRampToValueAtTime(0, t0 + 0.75);
+            osc.start(t0); vib.start(t0); osc.stop(t0 + 0.8); vib.stop(t0 + 0.8);
+          });
+          const nextIn = phrase.length * 900 + 1800;
+          const t = setTimeout(playPhrase, nextIn);
+          nodes.push(t);
+        } catch {}
+      }
+      playPhrase();
+
+    } else if (profile.style === 'tabla') {
+      // Tabla: bol pattern — dha dhin dhin dha (16-beat teentaal feel, slow)
+      const bpm = 52;
+      const beat = 60000 / bpm;
+      const pattern = [1,0,0.6,0,1,0,0.6,0.4,1,0,0.6,0,1,0,0.6,0];
+      let step = 0;
+      function tick() {
+        try {
+          const vel = pattern[step % pattern.length];
+          if (vel > 0) {
+            const freq = step % 4 === 0 ? root * 0.5 : root * 0.67;
+            const osc = ctx.createOscillator();
+            const env = ctx.createGain();
+            const filt = ctx.createBiquadFilter(); filt.type = 'bandpass'; filt.frequency.value = freq * 2; filt.Q.value = 6;
+            osc.type = 'sine'; osc.frequency.setValueAtTime(freq * 3, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(freq, ctx.currentTime + 0.06);
+            osc.connect(filt); filt.connect(env); env.connect(reverb); env.connect(master);
+            env.gain.setValueAtTime(vel * 0.07, ctx.currentTime);
+            env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+            osc.start(); osc.stop(ctx.currentTime + 0.28);
+          }
+          step++;
+          const t = setTimeout(tick, beat / 2);
+          nodes.push(t);
+        } catch {}
+      }
+      tick();
+
+    } else if (profile.style === 'veena') {
+      // Veena: plucked string — arpeggiated Sa-Ma-Pa-Sa chord, slow and meditative
+      const chord = [root, root*5/4, root*3/2, root*2];
+      function arpeggio() {
+        try {
+          chord.forEach((freq, fi) => {
+            const t0 = ctx.currentTime + fi * 0.22;
+            const osc = ctx.createOscillator();
+            const env = ctx.createGain();
+            const filt = ctx.createBiquadFilter(); filt.type = 'peaking'; filt.frequency.value = freq; filt.gain.value = 6; filt.Q.value = 2;
+            // Pluck: triangle wave (warmer than sawtooth)
+            osc.type = 'triangle'; osc.frequency.value = freq;
+            // Add slight 2nd harmonic
+            const osc2 = ctx.createOscillator(); osc2.type = 'sine'; osc2.frequency.value = freq * 2;
+            const g2 = ctx.createGain(); g2.gain.value = 0.18;
+            osc2.connect(g2); g2.connect(env);
+            osc.connect(filt); filt.connect(env); env.connect(reverb); env.connect(master);
+            env.gain.setValueAtTime(0, t0);
+            env.gain.linearRampToValueAtTime(0.06, t0 + 0.02);
+            env.gain.exponentialRampToValueAtTime(0.001, t0 + 4.0);
+            osc.start(t0); osc2.start(t0); osc.stop(t0 + 4.1); osc2.stop(t0 + 4.1);
+          });
+          const t = setTimeout(arpeggio, 6000);
+          nodes.push(t);
+        } catch {}
+      }
+      arpeggio();
+    }
+
+    // Sa drone (root + octave) — very soft undertone for all styles
+    [root, root * 2].forEach((freq, i) => {
       const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = config.freq * ratio;
-      g.gain.value = [0.4, 0.25, 0.15, 0.08][i];
-      osc.connect(g); g.connect(master);
+      const g = ctx.createGain(); g.gain.value = [0.018, 0.009][i];
+      const filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 600;
+      osc.type = 'sine'; osc.frequency.value = freq;
+      osc.connect(filt); filt.connect(g); g.connect(master);
       osc.start();
+      nodes.push(osc);
     });
 
-    // Fade in
-    master.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 2);
+    // Fade in gently — keep gain low so it doesn't compete with narration
+    master.gain.setValueAtTime(0, ctx.currentTime);
+    master.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 3);
 
-    return { ctx, master, stop() {
-      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
-      setTimeout(() => { try { ctx.close(); } catch {} }, 2000);
-    }};
+    return {
+      ctx,
+      master,
+      pause() {
+        try {
+          master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+          master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+        } catch {}
+      },
+      resume() {
+        try {
+          master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+          master.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 1);
+        } catch {}
+      },
+      stop() {
+        try {
+          master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+          master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
+          nodes.forEach(n => { try { if (typeof n === 'number') clearTimeout(n); else n.stop?.(); } catch {} });
+          setTimeout(() => { try { ctx.close(); } catch {} }, 1600);
+        } catch {}
+      }
+    };
   } catch { return null; }
 }
 
@@ -248,9 +428,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
     cancelHighlightLoop();
     if (audioRef.current) try { audioRef.current.pause(); } catch {}
     // Fade out ambient music
-    if (ambientRef.current) {
-      try { ambientRef.current.master.gain.linearRampToValueAtTime(0, ambientRef.current.ctx.currentTime + 0.5); } catch {}
-    }
+    try { ambientRef.current?.pause(); } catch {}
     setPlaying(false);
   }
 
@@ -276,9 +454,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
         startHighlightLoop(audioRef.current, words, timings, wordBounds, timingProvider);
       }
       // Fade ambient back in
-      if (ambientRef.current) {
-        try { ambientRef.current.master.gain.linearRampToValueAtTime(0.06, ambientRef.current.ctx.currentTime + 1); } catch {}
-      }
+      try { ambientRef.current?.resume(); } catch {}
       setPlaying(true);
     } catch {}
   }
@@ -347,7 +523,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
 
   function goToPage(idx: number) {
     if (!story) return;
-    stopAudio(); playPageFlip();
+    stopAudio();
     animateTurn(() => setCurrentPage(idx));
   }
 
@@ -376,7 +552,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
       <View style={styles.screen}>
 
         <LinearGradient colors={pastelGrad} start={{x:0,y:0}} end={{x:1,y:0}} style={styles.topBar}>
-          <TouchableOpacity onPress={() => { stopAudio(); navigation.goBack(); }} style={styles.backBtn} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => { stopAudio(); if (navigation.canGoBack()) { navigation.goBack(); } else { navigation.navigate('BhagavathaStories'); } }} style={styles.backBtn} activeOpacity={0.7}>
             <Feather name="arrow-left" size={16} color="#fff" />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
