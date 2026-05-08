@@ -645,7 +645,7 @@ const ROLES_DATA = [
       'Understand strengths and areas to improve',
       'Assign extra practice from home',
       'See upcoming deadlines and schedule',
-      'No complexity. Just clear, honest insights.',
+      'Ask AI anytime for insights on your child\'s progress',
     ],
   },
 ];
