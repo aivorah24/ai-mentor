@@ -122,19 +122,43 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
   subjectOf: (t: string) => string;
 }) {
   const [gradeF, setGradeF] = useState('All');
-  const [subjectF, setSubjectF] = useState('All');
+  const [subjectF, setSubjectF] = useState('Math');
+  const [curriculumTopics, setCurriculumTopics] = useState<string[]>([]);
+
+  // Fetch curriculum topics for the selected grade
+  useEffect(() => {
+    const fetchTopics = async () => {
+      const grades = gradeF === 'All' ? availableGrades.filter(g => g !== 'All') : [gradeF];
+      const allTopics = new Set<string>();
+      for (const grade of grades) {
+        try {
+          const gradeStudents = allStudents.filter(s => s.grade === grade);
+          const curriculum = gradeStudents[0]?.curriculum || 'IB PYP';
+          const res = await fetch(`${SERVER_URL}/curriculum?grade=${encodeURIComponent(grade)}&curriculum=${encodeURIComponent(curriculum)}`);
+          if (res.ok) {
+            const data = await res.json();
+            (data.topics || []).forEach((t: any) => { if (t.topic) allTopics.add(t.topic); });
+          }
+        } catch {}
+      }
+      setCurriculumTopics(Array.from(allTopics));
+    };
+    if (allStudents.length > 0) fetchTopics();
+  }, [gradeF, allStudents, availableGrades]);
 
   if (allStudents.length === 0) return null;
 
   const students = gradeF === 'All' ? allStudents : allStudents.filter(s => s.grade === gradeF);
 
-  // Only show topics students have actually worked on
+  // Build completion map from student data
   const completionMap: Record<string, number> = {};
   students.forEach(s => (s.completedTopics || []).forEach(t => {
     completionMap[t] = (completionMap[t] || 0) + 1;
   }));
 
-  const allTopicNames = Object.keys(completionMap).filter(t => subjectF === 'All' || subjectOf(t) === subjectF);
+  // Use curriculum topics as base; fall back to completed topics if curriculum unavailable
+  const baseTopics = curriculumTopics.length > 0 ? curriculumTopics : Object.keys(completionMap);
+  const allTopicNames = baseTopics.filter(t => subjectF === 'All' || subjectOf(t) === subjectF);
 
   // Sort: uncompleted first, then by count ascending
   const sortedTopics = allTopicNames
@@ -461,10 +485,8 @@ export default function TeacherProgressScreen({ navigation }: any) {
 
   // Subjects that actually appear in completed topics across teacher's students
   const availableSubjects = useMemo(() => {
-    const subjSet = new Set<string>();
-    students.forEach(s => (s.completedTopics || []).forEach(t => subjSet.add(topicSubject(t))));
-    const order = ['Math', 'Science', 'English', 'Arts', 'Other'];
-    return ['All', ...order.filter(s => subjSet.has(s))];
+    // Always show full subject list — teacher can filter to relevant subjects
+    return ['All', 'Math', 'Science', 'English', 'Arts', 'Other'];
   }, [students]);
 
   const filtered = students.filter(s => {
