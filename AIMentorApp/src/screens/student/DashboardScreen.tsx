@@ -98,7 +98,7 @@ const SUBJECT_ICONS: Record<string, React.ComponentProps<typeof Feather>['name']
 };
 
 const QUICK_NAV = [
-  { label: 'My Learning',  icon: 'book'         as const, color: BRAND.teal,   pastel: PASTEL.teal,   screen: 'NCERTChapters', desc: 'Chapters' },
+  { label: 'My Learning',  icon: 'book'         as const, color: BRAND.teal,   pastel: PASTEL.teal,   screen: 'LearningPaths', desc: 'My Paths' },
   { label: 'AI Coach',     icon: 'cpu'           as const, color: BRAND.rose,   pastel: PASTEL.pink,   screen: 'AICoach',       desc: 'Ask anything' },
   { label: 'Assignments',  icon: 'check-square'  as const, color: BRAND.gold,   pastel: PASTEL.yellow, screen: 'Assignments',   desc: 'Pending' },
   { label: 'Challenges',   icon: 'target'        as const, color: BRAND.blush,  pastel: PASTEL.red,    screen: 'Challenges',    desc: 'Compete' },

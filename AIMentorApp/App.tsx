@@ -164,6 +164,10 @@ function RootNavigator() {
 
   if (!isAuthenticated) {
     console.log('[Auth] Not authenticated, showing LandingScreen');
+    // Reset URL to root so browser doesn't show /leaderboard, /dashboard etc.
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.pathname !== '/') {
+      window.history.replaceState(null, '', '/');
+    }
     return <LandingScreen />;
   }
 
