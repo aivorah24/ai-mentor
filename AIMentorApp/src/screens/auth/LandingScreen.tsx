@@ -619,22 +619,22 @@ const ROLES_DATA = [
     icon: 'book-open', title: 'For Students', role: 'student' as UserRole,
     color: CYAN, tagline: 'Learn at your own pace, guided by AI',
     benefits: [
-      'Personalized AI tutor available 24/7',
-      'Adaptive study plans that fit your schedule',
-      'Gamified XP system to keep you motivated',
-      'Instant feedback on every assignment',
-      'Track your progress with visual analytics',
+      'AI Coach that explains concepts with patience',
+      'Assignments with instant AI feedback',
+      'Bedtime stories for a fun learning routine',
+      'Earn XP, badges and climb the leaderboard',
+      'Visual progress tracking across all subjects',
     ],
   },
   {
     icon: 'monitor', title: 'For Teachers', role: 'teacher' as UserRole,
     color: PURPLE, tagline: 'Save time, teach smarter',
     benefits: [
-      'AI-assisted lesson planning & grading',
+      'Assign and auto-grade student work with AI',
       'Spot struggling students before they fall behind',
       'Real-time class performance dashboards',
-      'Automate repetitive administrative tasks',
-      'Schedule sessions with one click',
+      'Schedule sessions and deadlines in one click',
+      'Topic completion rate across your class',
     ],
   },
   {
@@ -643,8 +643,8 @@ const ROLES_DATA = [
     benefits: [
       'Live progress reports and milestone alerts',
       'Understand strengths and areas to improve',
-      'Direct communication with teachers',
-      'Weekly AI-generated learning summaries',
+      'Assign extra practice from home',
+      'See upcoming deadlines and schedule',
       'No complexity. Just clear, honest insights.',
     ],
   },
@@ -1126,8 +1126,8 @@ export default function LandingScreen() {
             <View style={[s.howCard, { flex: 1, alignItems: 'center' }]}>
               <Feather name="globe" size={24} color={CYAN} style={{ marginBottom: 12 }} />
               <Text style={s.howTitle}>Website</Text>
-              <Text style={[s.howDesc, { textAlign: 'center' }]}>aivorah.ai</Text>
-              <Text style={[s.howDesc, { textAlign: 'center', marginTop: 4 }]}>Coming April 2026</Text>
+              <Text style={[s.howDesc, { textAlign: 'center' }]}>aivorah.com</Text>
+              <Text style={[s.howDesc, { textAlign: 'center', marginTop: 4 }]}>Coming Soon</Text>
             </View>
           </View>
         </View>
