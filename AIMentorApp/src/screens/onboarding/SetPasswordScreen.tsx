@@ -185,10 +185,16 @@ export default function SetPasswordScreen() {
                 </TouchableOpacity>
               </View>
               {confirmPassword.length > 0 && newPassword !== confirmPassword && (
-                <Text style={{ fontSize: 11, color: colors.accentRed, marginTop: 4 }}>Passwords do not match</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                  <Feather name="x-circle" size={13} color={colors.accentRed} />
+                  <Text style={{ fontSize: 11, color: colors.accentRed }}>Passwords do not match</Text>
+                </View>
               )}
               {confirmPassword.length > 0 && newPassword === confirmPassword && (
-                <Text style={{ fontSize: 11, color: colors.accentGreen, marginTop: 4 }}>Passwords match</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                  <Feather name="check-circle" size={13} color={colors.accentGreen} />
+                  <Text style={{ fontSize: 11, color: colors.accentGreen }}>Passwords match</Text>
+                </View>
               )}
             </View>
 
