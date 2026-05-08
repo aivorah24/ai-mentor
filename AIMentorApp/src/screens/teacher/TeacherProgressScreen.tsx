@@ -123,44 +123,18 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
 }) {
   const [gradeF, setGradeF] = useState('All');
   const [subjectF, setSubjectF] = useState('All');
-  const [curriculumTopics, setCurriculumTopics] = useState<string[]>([]);
-
-  // Fetch real curriculum topics when grade filter changes
-  useEffect(() => {
-    const fetchTopics = async () => {
-      const grades = gradeF === 'All' ? availableGrades.filter(g => g !== 'All') : [gradeF];
-      const allTopics = new Set<string>();
-      for (const grade of grades) {
-        try {
-          // Determine curriculum from students in this grade
-          const gradeStudents = allStudents.filter(s => s.grade === grade);
-          const curriculum = gradeStudents[0]?.curriculum || 'IB PYP';
-          const res = await fetch(`${SERVER_URL}/curriculum?grade=${encodeURIComponent(grade)}&curriculum=${encodeURIComponent(curriculum)}`);
-          if (res.ok) {
-            const data = await res.json();
-            (data.topics || []).forEach((t: any) => { if (t.topic) allTopics.add(t.topic); });
-          }
-        } catch {}
-      }
-      setCurriculumTopics(Array.from(allTopics));
-    };
-    if (allStudents.length > 0) fetchTopics();
-  }, [gradeF, allStudents, availableGrades]);
 
   if (allStudents.length === 0) return null;
 
   const students = gradeF === 'All' ? allStudents : allStudents.filter(s => s.grade === gradeF);
 
-  // Build completion map from student data
+  // Only show topics students have actually worked on
   const completionMap: Record<string, number> = {};
   students.forEach(s => (s.completedTopics || []).forEach(t => {
     completionMap[t] = (completionMap[t] || 0) + 1;
   }));
 
-  // Use curriculum topics as the full list, fall back to student-completed topics
-  const allTopicNames = curriculumTopics.length > 0
-    ? curriculumTopics.filter(t => subjectF === 'All' || subjectOf(t) === subjectF)
-    : Object.keys(completionMap).filter(t => subjectF === 'All' || subjectOf(t) === subjectF);
+  const allTopicNames = Object.keys(completionMap).filter(t => subjectF === 'All' || subjectOf(t) === subjectF);
 
   // Sort: uncompleted first, then by count ascending
   const sortedTopics = allTopicNames
@@ -176,20 +150,7 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
         <Text style={{ fontSize: 11, color: colors.textDim }}>lowest first</Text>
       </View>
 
-      {/* Grade chips */}
-      <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-        <Text style={{ fontSize: 11, color: colors.textDim, marginRight: 2 }}>Grade:</Text>
-        {availableGrades.map(g => (
-          <TouchableOpacity key={g} onPress={() => setGradeF(g)} activeOpacity={0.75}
-            style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, borderWidth: 1,
-              borderColor: gradeF === g ? P.slate : colors.borderColor,
-              backgroundColor: gradeF === g ? P.slate + '20' : 'transparent' }}>
-            <Text style={{ fontSize: 11, fontWeight: gradeF === g ? '700' : '500', color: gradeF === g ? P.slate : colors.textDim }}>{g}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Subject chips */}
+      {/* Subject chips — on top */}
       <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
         <Text style={{ fontSize: 11, color: colors.textDim, marginRight: 2 }}>Subject:</Text>
         {availableSubjects.map(subj => {
@@ -203,6 +164,19 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
             </TouchableOpacity>
           );
         })}
+      </View>
+
+      {/* Grade chips */}
+      <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Text style={{ fontSize: 11, color: colors.textDim, marginRight: 2 }}>Grade:</Text>
+        {availableGrades.map(g => (
+          <TouchableOpacity key={g} onPress={() => setGradeF(g)} activeOpacity={0.75}
+            style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, borderWidth: 1,
+              borderColor: gradeF === g ? P.slate : colors.borderColor,
+              backgroundColor: gradeF === g ? P.slate + '20' : 'transparent' }}>
+            <Text style={{ fontSize: 11, fontWeight: gradeF === g ? '700' : '500', color: gradeF === g ? P.slate : colors.textDim }}>{g}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {/* Bars */}
