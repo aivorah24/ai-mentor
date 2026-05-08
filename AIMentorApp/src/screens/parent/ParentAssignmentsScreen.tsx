@@ -52,7 +52,7 @@ function formatDue(iso: string): { label: string; isOverdue: boolean } {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const due = new Date(iso); due.setHours(0, 0, 0, 0);
   const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
-  if (diff < 0) return { label: `Overdue (${Math.abs(diff)} day${Math.abs(diff) > 1 ? 's' : ''})`, isOverdue: true };
+  if (diff < 0) return { label: 'Pending', isOverdue: false };
   if (diff === 0) return { label: 'Due today', isOverdue: false };
   if (diff === 1) return { label: 'Due tomorrow', isOverdue: false };
   return { label: `Due ${due.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`, isOverdue: false };
@@ -283,7 +283,6 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
               <View style={styles.glanceStat}>
                 <Text style={styles.glanceStatLabel}>Upcoming</Text>
                 <Text style={styles.glanceStatValue}>{pending}</Text>
-                <Text style={[styles.glanceStatNote, { color: colors.accentYellow }]}>{overdue > 0 ? `${overdue} overdue` : 'On track'}</Text>
               </View>
               <View style={styles.glanceDivider} />
               <View style={styles.glanceStat}>
@@ -337,10 +336,8 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
               const due = a.status === 'completed'
                 ? { label: a.score != null ? `Score: ${a.score}%` : 'Completed', isOverdue: false }
                 : formatDue(a.dueDate);
-              const statusLabel = a.status === 'completed' ? 'Completed'
-                : due.isOverdue ? 'Needs Attention' : 'Upcoming';
-              const statusColor = a.status === 'completed' ? colors.accentGreen
-                : due.isOverdue ? colors.accentRed : colors.accentBlue;
+              const statusLabel = a.status === 'completed' ? 'Completed' : 'Upcoming';
+              const statusColor = a.status === 'completed' ? colors.accentGreen : colors.accentBlue;
 
               return (
                 <TouchableOpacity key={a.id} style={styles.assignmentCard} activeOpacity={0.75} onPress={() => setDetailAssignment(a)}>
@@ -354,8 +351,8 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
                   </View>
                   <Text style={styles.assignmentTitle} numberOfLines={2}>{a.title}</Text>
                   <View style={styles.assignmentMeta}>
-                    <Feather name="alert-circle" size={11} color={due.isOverdue ? colors.accentRed : colors.textDim} />
-                    <Text style={[styles.assignmentDue, { color: due.isOverdue ? colors.accentRed : colors.textMuted }]}>
+                    <Feather name="clock" size={11} color={colors.textDim} />
+                    <Text style={[styles.assignmentDue, { color: colors.textMuted }]}>
                       {due.label}
                     </Text>
                   </View>

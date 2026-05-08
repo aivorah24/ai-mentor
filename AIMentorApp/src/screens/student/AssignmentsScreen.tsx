@@ -203,7 +203,7 @@ function formatDueDate(iso: string) {
   const today = new Date(); today.setHours(0,0,0,0);
   const due = new Date(iso); due.setHours(0,0,0,0);
   const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
-  if (diff < 0) return { label: `Overdue by ${Math.abs(diff)}d`, colorKey: 'accentRed' as const, isOverdue: true };
+  if (diff < 0) return { label: 'Ready to submit', colorKey: 'accentBlue' as const, isOverdue: false };
   if (diff === 0) return { label: 'Due today', colorKey: 'accentYellow' as const, isOverdue: false };
   if (diff === 1) return { label: 'Due tomorrow', colorKey: 'accentYellow' as const, isOverdue: false };
   return { label: `Due ${due.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`, colorKey: 'textMuted' as const, isOverdue: false };
@@ -2392,7 +2392,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
             {[
               { label: 'Pending',   value: pending,   color: colors.accentYellow, icon: 'clock' as const },
               { label: 'Completed', value: completed, color: colors.accentGreen,  icon: 'check-circle' as const },
-              { label: 'Overdue',   value: overdue,   color: colors.accentRed,    icon: 'alert-circle' as const },
+              { label: 'Ready',     value: overdue,   color: colors.accentBlue,   icon: 'zap' as const },
             ].map((s) => (
               <View key={s.label} style={[styles.statCard, { borderTopWidth: 2, borderTopColor: s.color }]}>
                 <View>
@@ -2450,16 +2450,14 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                 const dueColor = colors[due.colorKey as keyof AppColors] as string;
                 const statusColor = item.status === 'completed'
                   ? colors.accentGreen
-                  : due.isOverdue
-                  ? colors.accentRed
-                  : colors.accentYellow;
+                  : colors.accentBlue;
                 const statusStyle = {
                   bg: statusColor + '16',
                   color: statusColor,
                   border: statusColor + '38',
                   label: item.status === 'completed'
                     ? (item.score != null ? `${item.score}%` : 'Done')
-                    : due.isOverdue ? 'Overdue' : 'Pending',
+                    : 'Let\'s go!',
                 };
 
                 return (
@@ -2502,8 +2500,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                           {/* Only show due label if it has real info (not plain "Pending") */}
                           {due.label !== 'Pending' && (
                             <View style={styles.dueRow}>
-                              {due.isOverdue && <Feather name="alert-triangle" size={12} color={dueColor} style={{ marginRight: 4 }} />}
-                              {!due.isOverdue && item.status === 'pending' && <Feather name="clock" size={12} color={dueColor} style={{ marginRight: 4 }} />}
+                              {item.status === 'pending' && <Feather name="clock" size={12} color={dueColor} style={{ marginRight: 4 }} />}
                               <Text style={[styles.dueText, { color: dueColor }]}>{due.label}</Text>
                             </View>
                           )}

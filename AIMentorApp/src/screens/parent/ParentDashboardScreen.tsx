@@ -60,7 +60,7 @@ function formatDueDateShort(iso: string): string {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const due = new Date(iso); due.setHours(0, 0, 0, 0);
   const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
-  if (diff < 0) return 'Overdue';
+  if (diff < 0) return 'Pending';
   if (diff === 0) return 'Today';
   if (diff === 1) return 'Tomorrow';
   return due.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
@@ -85,8 +85,8 @@ function ChildCard({
 }) {
   const isNew = child.status === 'getting_started';
   const isOnTrack = child.status === 'on_track';
-  const badgeColor = isNew ? colors.accentBlue : isOnTrack ? colors.accentGreen : colors.accentYellow;
-  const badgeLabel = isNew ? 'Getting Started' : isOnTrack ? 'On Track' : 'Needs Attention';
+  const badgeColor = isNew ? colors.accentBlue : isOnTrack ? colors.accentGreen : colors.accentBlue;
+  const badgeLabel = isNew ? 'Getting Started' : isOnTrack ? 'On Track' : 'Keep Going';
 
   return (
     <TouchableOpacity
@@ -511,7 +511,7 @@ export default function ParentDashboardScreen({ navigation, route }: any) {
               {assignments.map((a, idx) => {
                 const isDone = a.status === 'completed';
                 const dueLabel = isDone ? 'Done' : formatDueDateShort(a.dueDate);
-                const isOverdue = !isDone && dueLabel === 'Overdue';
+                const isOverdue = false; // never show red overdue to parents
                 return (
                   <TouchableOpacity
                     key={a.id}
@@ -540,31 +540,32 @@ export default function ParentDashboardScreen({ navigation, route }: any) {
             </View>
           )}
 
-          {/* Alerts & Points row */}
+          {/* Highlights & Points row */}
           <View style={styles.bottomRow}>
-            {/* Alerts */}
+            {/* Highlights — positive reinforcement only */}
             <View style={styles.alertsCard}>
-              <Text style={styles.cardTitle}>Alerts</Text>
-              {overdueCount > 0 ? (
-                <View style={[styles.alertItem, { backgroundColor: colors.accentRed + '10', borderColor: colors.accentRed + '30' }]}>
-                  <Feather name="alert-triangle" size={14} color={colors.accentRed} />
-                  <Text style={[styles.alertText, { color: colors.accentRed }]}>
-                    {overdueCount} overdue assignment{overdueCount > 1 ? 's' : ''}
+              <Text style={styles.cardTitle}>Highlights</Text>
+              {child.currentStreak >= 3 ? (
+                <View style={[styles.alertItem, { backgroundColor: colors.accentGreen + '10', borderColor: colors.accentGreen + '30' }]}>
+                  <Feather name="zap" size={14} color={colors.accentGreen} />
+                  <Text style={[styles.alertText, { color: colors.accentGreen }]}>
+                    {child.currentStreak}-day streak! Keep it up!
                   </Text>
                 </View>
-              ) : null}
-              {child.currentStreak < 3 ? (
-                <View style={[styles.alertItem, { backgroundColor: colors.accentYellow + '10', borderColor: colors.accentYellow + '30' }]}>
-                  <Feather name="alert-circle" size={14} color={colors.accentYellow} />
-                  <Text style={[styles.alertText, { color: colors.accentYellow }]}>
-                    Low streak — encourage {child.name}!
+              ) : (
+                <View style={[styles.alertItem, { backgroundColor: colors.accentBlue + '10', borderColor: colors.accentBlue + '30' }]}>
+                  <Feather name="star" size={14} color={colors.accentBlue} />
+                  <Text style={[styles.alertText, { color: colors.accentBlue }]}>
+                    Every day counts — let's learn today!
                   </Text>
                 </View>
-              ) : null}
-              {overdueCount === 0 && child.currentStreak >= 3 ? (
+              )}
+              {child.assignmentsDone > 0 ? (
                 <View style={[styles.alertItem, { backgroundColor: colors.accentGreen + '10', borderColor: colors.accentGreen + '30' }]}>
                   <Feather name="check-circle" size={14} color={colors.accentGreen} />
-                  <Text style={[styles.alertText, { color: colors.accentGreen }]}>All on track!</Text>
+                  <Text style={[styles.alertText, { color: colors.accentGreen }]}>
+                    {child.assignmentsDone} assignment{child.assignmentsDone > 1 ? 's' : ''} completed!
+                  </Text>
                 </View>
               ) : null}
             </View>
