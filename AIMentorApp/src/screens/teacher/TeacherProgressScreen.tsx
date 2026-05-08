@@ -122,14 +122,16 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
   subjectOf: (t: string) => string;
 }) {
   const [gradeF, setGradeF] = useState('All');
-  const [subjectF, setSubjectF] = useState('Math');
-  const [curriculumTopics, setCurriculumTopics] = useState<string[]>([]);
+  const [subjectF, setSubjectF] = useState('All');
+  // { topic, subject } pairs from curriculum API
+  const [curriculumTopics, setCurriculumTopics] = useState<{topic: string; subject: string}[]>([]);
+  const [availCurrSubjects, setAvailCurrSubjects] = useState<string[]>([]);
 
   // Fetch curriculum topics for the selected grade
   useEffect(() => {
     const fetchTopics = async () => {
       const grades = gradeF === 'All' ? availableGrades.filter(g => g !== 'All') : [gradeF];
-      const allTopics = new Set<string>();
+      const topicMap = new Map<string, string>(); // topic -> subject
       for (const grade of grades) {
         try {
           const gradeStudents = allStudents.filter(s => s.grade === grade);
@@ -137,11 +139,19 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
           const res = await fetch(`${SERVER_URL}/curriculum?grade=${encodeURIComponent(grade)}&curriculum=${encodeURIComponent(curriculum)}`);
           if (res.ok) {
             const data = await res.json();
-            (data.topics || []).forEach((t: any) => { if (t.topic) allTopics.add(t.topic); });
+            (data.topics || []).forEach((t: any) => {
+              if (t.topic) topicMap.set(t.topic, t.subject || subjectOf(t.topic));
+            });
           }
         } catch {}
       }
-      setCurriculumTopics(Array.from(allTopics));
+      const pairs = Array.from(topicMap.entries()).map(([topic, subject]) => ({ topic, subject }));
+      setCurriculumTopics(pairs);
+      // Unique subjects from curriculum
+      const subjSet = new Set(pairs.map(p => p.subject).filter(Boolean));
+      const order = ['Math', 'Mathematics', 'Science', 'English', 'Arts', 'Other'];
+      const sorted = [...order.filter(s => subjSet.has(s)), ...[...subjSet].filter(s => !order.includes(s))];
+      setAvailCurrSubjects(sorted);
     };
     if (allStudents.length > 0) fetchTopics();
   }, [gradeF, allStudents, availableGrades]);
@@ -156,9 +166,15 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
     completionMap[t] = (completionMap[t] || 0) + 1;
   }));
 
-  // Use curriculum topics as base; fall back to completed topics if curriculum unavailable
-  const baseTopics = curriculumTopics.length > 0 ? curriculumTopics : Object.keys(completionMap);
-  const allTopicNames = baseTopics.filter(t => subjectF === 'All' || subjectOf(t) === subjectF);
+  // Filter by subject using real subject from curriculum
+  const displaySubjects = availCurrSubjects.length > 0 ? availCurrSubjects : availableSubjects.filter(s => s !== 'All');
+  const filteredCurrTopics = curriculumTopics.filter(p =>
+    subjectF === 'All' || p.subject === subjectF || p.subject?.toLowerCase() === subjectF.toLowerCase()
+  );
+  const baseTopics = filteredCurrTopics.length > 0
+    ? filteredCurrTopics.map(p => p.topic)
+    : Object.keys(completionMap).filter(t => subjectF === 'All' || subjectOf(t) === subjectF);
+  const allTopicNames = baseTopics;
 
   // Sort: uncompleted first, then by count ascending
   const sortedTopics = allTopicNames
@@ -177,7 +193,7 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
       {/* Subject chips — on top */}
       <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
         <Text style={{ fontSize: 11, color: colors.textDim, marginRight: 2 }}>Subject:</Text>
-        {availableSubjects.map(subj => {
+        {['All', ...displaySubjects].map(subj => {
           const sc = SUBJECT_COLORS[subj] || P.teal;
           return (
             <TouchableOpacity key={subj} onPress={() => setSubjectF(subj)} activeOpacity={0.75}
