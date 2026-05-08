@@ -1001,12 +1001,34 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                     </Text>
                                   )}
 
-                                  {sub.aiFeedback ? (
-                                    <View style={{ backgroundColor: sc + '0E', borderRadius: 8, padding: 10, borderLeftWidth: 3, borderLeftColor: sc + '60' }}>
-                                      <Text style={{ fontSize: 10, color: sc, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>AI Feedback</Text>
-                                      <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 17 }}>{sub.aiFeedback}</Text>
-                                    </View>
-                                  ) : null}
+                                  {sub.aiFeedback ? (() => {
+                                    let fbText = sub.aiFeedback;
+                                    let wellDone = ''; let improve = '';
+                                    try {
+                                      const p = JSON.parse(sub.aiFeedback);
+                                      fbText = p.text || sub.aiFeedback;
+                                      wellDone = p.wellDone || '';
+                                      improve = p.improve || '';
+                                    } catch {}
+                                    return (
+                                      <View style={{ backgroundColor: sc + '0E', borderRadius: 8, padding: 10, borderLeftWidth: 3, borderLeftColor: sc + '60', gap: 6 }}>
+                                        <Text style={{ fontSize: 10, color: sc, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 }}>AI Feedback</Text>
+                                        <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{fbText}</Text>
+                                        {wellDone ? (
+                                          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+                                            <Text style={{ fontSize: 11, color: colors.accentGreen, fontWeight: '700' }}>Well done:</Text>
+                                            <Text style={{ fontSize: 11, color: colors.textMuted, flex: 1, lineHeight: 16 }}>{wellDone}</Text>
+                                          </View>
+                                        ) : null}
+                                        {improve ? (
+                                          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+                                            <Text style={{ fontSize: 11, color: colors.accentYellow, fontWeight: '700' }}>Improve:</Text>
+                                            <Text style={{ fontSize: 11, color: colors.textMuted, flex: 1, lineHeight: 16 }}>{improve}</Text>
+                                          </View>
+                                        ) : null}
+                                      </View>
+                                    );
+                                  })() : null}
                                 </View>
                               );
                             })}
