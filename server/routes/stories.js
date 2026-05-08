@@ -17,8 +17,8 @@ const TIKTOK_VOICE = {
 
 // ElevenLabs (paid plan required for library voices) — upgrade path
 // Maria Moody — Grandmotherly Storykeeper: wGcFBfKz5yUQqhqr0mVy
-const GRANDMOTHER_VOICE_ID = process.env.EL_VOICE_GRANDMOTHER || 'wGcFBfKz5yUQqhqr0mVy';
-const GRANDFATHER_VOICE_ID = process.env.EL_VOICE_GRANDFATHER || 'JBFqnCBsd6RMkjVDRZzb';
+const GRANDMOTHER_VOICE_ID = process.env.EL_VOICE_GRANDMOTHER || 'XrExE9yKIg1WjnnlVkGX'; // Matilda — premade, free plan
+const GRANDFATHER_VOICE_ID = process.env.EL_VOICE_GRANDFATHER || 'JBFqnCBsd6RMkjVDRZzb'; // George  — premade, free plan
 const EL_VOICE_SETTINGS = {
   grandmother: { stability: 0.72, similarity_boost: 0.78, style: 0.50, use_speaker_boost: false },
   grandfather: { stability: 0.65, similarity_boost: 0.78, style: 0.50, use_speaker_boost: true  },
