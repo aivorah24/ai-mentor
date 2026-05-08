@@ -46,6 +46,19 @@ router.get('/teacher', async (req, res) => {
     if (error) throw error;
     const manualEvents = (data ?? []).map(mapRow);
 
+    // Resolve student names for non-'all' events
+    const studentIds = [...new Set(manualEvents.filter(e => e.studentId && e.studentId !== 'all').map(e => e.studentId))];
+    const studentNameMap: Record<string, string> = {};
+    if (studentIds.length > 0) {
+      const { data: userRows } = await supabase.from('users').select('id,name').in('id', studentIds);
+      (userRows || []).forEach((u: any) => { studentNameMap[u.id] = u.name; });
+    }
+    manualEvents.forEach(e => {
+      if (e.studentId && e.studentId !== 'all') {
+        (e as any).studentName = studentNameMap[e.studentId] || null;
+      }
+    });
+
     // 2. Assignment deadlines on this date (created by this teacher)
     let assignmentEvents = [];
     try {

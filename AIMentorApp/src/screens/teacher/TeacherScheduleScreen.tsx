@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Modal, TextInput, ActivityIndicator, PanResponder,
+  Modal, TextInput, ActivityIndicator, PanResponder, Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius } from '../../theme';
@@ -361,7 +361,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                               <Text style={[styles.tagText, { color: colors.accentGreen }]}>
                                 {event.studentId === 'all'
                                   ? 'All students'
-                                  : (students.find(s => s.id === event.studentId)?.name ?? event.studentId.slice(0, 8) + '…')}
+                                  : ((event as any).studentName ?? students.find(s => s.id === event.studentId)?.name ?? 'Student')}
                               </Text>
                             </View>
                             <TouchableOpacity onPress={() => removeEvent(event.id)} style={styles.deleteBtn}>
@@ -395,6 +395,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
         <Modal visible={modalVisible} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modal}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 16 }}>
               <Text style={styles.modalTitle}>Create Event — {selectedDate}</Text>
               <TextInput
                 style={[styles.modalInput, saveError && !newTitle.trim() && { borderColor: colors.accentRed }]}
@@ -525,6 +526,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                   <Text style={styles.modalConfirmText}>{saving ? 'Saving…' : 'Create Event'}</Text>
                 </TouchableOpacity>
               </View>
+              </ScrollView>
             </View>
           </View>
         </Modal>
@@ -609,7 +611,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   eventTime:       { fontSize: 11, color: c.textMuted },
   eventNote:       { fontSize: 11, color: c.textMuted, marginTop: 3 },
   modalOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center' },
-  modal:           { width: '85%', maxHeight: '88%', backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.xxl, gap: spacing.lg },
+  modal:           { width: '85%', maxHeight: '88%', backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.xxl },
   modalTitle:      { fontSize: 17, fontWeight: '700', color: c.textMain },
   modalInput:      { backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, padding: spacing.md, color: c.textMain, fontSize: 14 },
   modalLabel:      { fontSize: 12, color: c.textMuted, fontWeight: '600' },

@@ -47,6 +47,7 @@ export default function VerifyEmailScreen() {
   const [verifyError, setVerifyError] = useState('');
   const [resendSuccess, setResendSuccess] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [verifiedSuccess, setVerifiedSuccess] = useState(false);
 
   // Poll every 2s — the moment user clicks the email link (any browser/device),
   // server marks them verified and this screen auto-advances to Onboarding.
@@ -127,7 +128,8 @@ export default function VerifyEmailScreen() {
       if (res.ok) {
         const data = await res.json();
         if (data.verified) {
-          updateUser({ emailVerified: true });
+          setVerifiedSuccess(true);
+          setTimeout(() => updateUser({ emailVerified: true }), 1200);
           return;
         }
       }
@@ -176,6 +178,12 @@ export default function VerifyEmailScreen() {
           <View style={styles.successBox}>
             <Feather name="check-circle" size={14} color={colors.accentGreen} style={{ marginRight: 6 }} />
             <Text style={styles.successText}>Verification email sent!</Text>
+          </View>
+        )}
+        {verifiedSuccess && (
+          <View style={styles.successBox}>
+            <Feather name="check-circle" size={14} color={colors.accentGreen} style={{ marginRight: 6 }} />
+            <Text style={styles.successText}>Email verified! Taking you in...</Text>
           </View>
         )}
 
