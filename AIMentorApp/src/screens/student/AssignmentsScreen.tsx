@@ -301,7 +301,7 @@ function WorksheetViewer({ assignment, color, colors }: { assignment: Assignment
 
 type PageAnswer = { preview: string | null; base64: string | null; mime: string };
 type PerQ = { number: number; question: string; answered: boolean; score: number; studentAnswer: string | null; correct: boolean; comment: string };
-type GradeResult = { score: number | null; feedback: string; stamp: string; wellDone: string; improve: string; perQuestion: PerQ[] };
+type GradeResult = { score: number | null; feedback: string; stamp: string; wellDone: string; improve: string; perQuestion: PerQ[]; teacherFeedback?: string };
 
 // ── Shared: confirm-close overlay ────────────────────────────────────────────
 function ConfirmCloseOverlay({ visible, color, colors, onConfirm, onCancel }: {
@@ -406,14 +406,15 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
       const data = await res.json();
       if (res.ok) {
         let feedbackText = data.aiFeedback || '';
-        let stamp = ''; let wellDone = ''; let improve = ''; let pq: PerQ[] = [];
+        let stamp = ''; let wellDone = ''; let improve = ''; let pq: PerQ[] = []; let tFb = '';
         try {
           const parsed = JSON.parse(feedbackText);
           feedbackText = parsed.text || feedbackText;
           stamp = parsed.stamp || ''; wellDone = parsed.wellDone || ''; improve = parsed.improve || '';
           pq = Array.isArray(parsed.perQuestion) ? parsed.perQuestion : [];
+          tFb = parsed.teacherFeedback || '';
         } catch { pq = data.perQuestion || []; }
-        setResult({ score: data.score, feedback: feedbackText, stamp, wellDone, improve, perQuestion: pq });
+        setResult({ score: data.score, feedback: feedbackText, stamp, wellDone, improve, perQuestion: pq, teacherFeedback: tFb });
         onSubmitted(data);
       } else { Alert.alert('Error', data.error || 'Submission failed'); }
     } catch { Alert.alert('Network error. Please try again.'); }
@@ -522,6 +523,15 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                   })}
                 </View>
               )}
+              {result.teacherFeedback ? (
+                <View style={{ borderRadius: 12, padding: 14, backgroundColor: colors.accentCyan + '0E', borderWidth: 1, borderColor: colors.accentCyan + '30', gap: 6 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Feather name="user" size={13} color={colors.accentCyan} />
+                    <Text style={{ fontSize: 12, color: colors.accentCyan, fontWeight: '700' }}>Teacher Feedback</Text>
+                  </View>
+                  <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{result.teacherFeedback}</Text>
+                </View>
+              ) : null}
               <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color }]} onPress={onClose} activeOpacity={0.85}>
                 <Feather name="check" size={16} color="#fff" />
                 <Text style={styles.submitBtnText}>Done</Text>
@@ -1036,14 +1046,15 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
       const data = await res.json();
       if (res.ok) {
         let feedbackText = data.aiFeedback || '';
-        let stamp = ''; let wellDone = ''; let improve = ''; let pq: PerQ[] = [];
+        let stamp = ''; let wellDone = ''; let improve = ''; let pq: PerQ[] = []; let tFb = '';
         try {
           const parsed = JSON.parse(feedbackText);
           feedbackText = parsed.text || feedbackText;
           stamp = parsed.stamp || ''; wellDone = parsed.wellDone || ''; improve = parsed.improve || '';
           pq = Array.isArray(parsed.perQuestion) ? parsed.perQuestion : [];
+          tFb = parsed.teacherFeedback || '';
         } catch { pq = data.perQuestion || []; }
-        setResult({ score: data.score, feedback: feedbackText, stamp, wellDone, improve, perQuestion: pq });
+        setResult({ score: data.score, feedback: feedbackText, stamp, wellDone, improve, perQuestion: pq, teacherFeedback: tFb });
         onSubmitted(data);
       } else {
         Alert.alert('Error', data.error || 'Submission failed');
@@ -1149,6 +1160,15 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
                   })}
                 </View>
               )}
+              {result.teacherFeedback ? (
+                <View style={{ borderRadius: 12, padding: 14, backgroundColor: colors.accentCyan + '0E', borderWidth: 1, borderColor: colors.accentCyan + '30', gap: 6 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Feather name="user" size={13} color={colors.accentCyan} />
+                    <Text style={{ fontSize: 12, color: colors.accentCyan, fontWeight: '700' }}>Teacher Feedback</Text>
+                  </View>
+                  <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{result.teacherFeedback}</Text>
+                </View>
+              ) : null}
               <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color }]} onPress={onClose} activeOpacity={0.85}>
                 <Feather name="check" size={16} color="#fff" />
                 <Text style={styles.submitBtnText}>Done</Text>
@@ -1773,7 +1793,7 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
       const data = await res.json();
       if (res.ok) {
         let feedbackText = data.aiFeedback || '';
-        let stamp = ''; let wellDone = ''; let improve = ''; let pq: PerQ[] = [];
+        let stamp = ''; let wellDone = ''; let improve = ''; let pq: PerQ[] = []; let tFb = '';
         try {
           const parsed = JSON.parse(feedbackText);
           feedbackText = parsed.text     || feedbackText;
@@ -1781,8 +1801,9 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
           wellDone     = parsed.wellDone || '';
           improve      = parsed.improve  || '';
           pq           = Array.isArray(parsed.perQuestion) ? parsed.perQuestion : (data.perQuestion || []);
+          tFb          = parsed.teacherFeedback || '';
         } catch { pq = data.perQuestion || []; }
-        setResult({ score: data.score, feedback: feedbackText, stamp, wellDone, improve, perQuestion: pq });
+        setResult({ score: data.score, feedback: feedbackText, stamp, wellDone, improve, perQuestion: pq, teacherFeedback: tFb });
         onSubmitted(data);
       } else {
         Alert.alert('Error', data.error || 'Submission failed');
@@ -1903,6 +1924,15 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
                     })}
                   </View>
                 )}
+                {result.teacherFeedback ? (
+                  <View style={{ borderRadius: 12, padding: 14, backgroundColor: colors.accentCyan + '0E', borderWidth: 1, borderColor: colors.accentCyan + '30', gap: 6 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Feather name="user" size={13} color={colors.accentCyan} />
+                      <Text style={{ fontSize: 12, color: colors.accentCyan, fontWeight: '700' }}>Teacher Feedback</Text>
+                    </View>
+                    <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{result.teacherFeedback}</Text>
+                  </View>
+                ) : null}
                 <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color }]} onPress={onClose} activeOpacity={0.85}>
                   <Feather name="check" size={16} color="#fff" />
                   <Text style={styles.submitBtnText}>Done</Text>
@@ -2036,7 +2066,7 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
                         <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color, alignItems: 'center', justifyContent: 'center' }}>
                           <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{qi + 1}</Text>
                         </View>
-                        <Text style={{ flex: 1, fontSize: 14, color: colors.textMain, lineHeight: 22 }}>{q}</Text>
+                        <Text style={{ flex: 1, fontSize: 14, color: colors.textMain, lineHeight: 22 }}>{typeof q === 'object' ? q.question : q}</Text>
                       </View>
                     ))}
                   </View>
