@@ -1289,14 +1289,28 @@ router.post('/', async (req, res) => {
       created_by_id:    creatorId,
       created_by_role:  createdByRole,
       grade, curriculum,
-      questions:        Array.isArray(questions) ? questions : [],
+      // Store questions as structured objects with expected answers + teacher comments
+      // Format: [{ question: "...", expectedAnswer: "...", comment: "..." }] or plain strings
+      questions:        (() => {
+        const qs = Array.isArray(questions) ? questions : [];
+        const answers = typeof questionAnswers === 'object' ? questionAnswers : {};
+        const comments = Array.isArray(teacherComments) ? teacherComments : [];
+        // If we have answers/comments, enrich questions as objects
+        if (Object.keys(answers).length > 0 || comments.length > 0) {
+          return qs.map(q => {
+            const qText = typeof q === 'string' ? q : (q.question || q);
+            const expected = answers[qText] || '';
+            const commentObj = comments.find(c => c.question === qText);
+            return { question: qText, expectedAnswer: expected, comment: commentObj?.comment || '' };
+          });
+        }
+        return qs;
+      })(),
       document_url:     documentUrl || null,
       document_urls:    Array.isArray(documentUrls) && documentUrls.length > 0 ? documentUrls : (documentUrl ? [documentUrl] : []),
       success_criteria: Array.isArray(successCriteria) ? successCriteria : [],
       task_steps:       Array.isArray(taskSteps) ? taskSteps : [],
       quiz_questions:   normalizedQuizQuestions,
-      question_answers: typeof questionAnswers === 'object' ? questionAnswers : {},
-      teacher_comments: Array.isArray(teacherComments) ? teacherComments : [],
       central_idea:     centralIdea || null,
       lines_of_inquiry: Array.isArray(linesOfInquiry) ? linesOfInquiry : [],
       learner_profile:  learnerProfile || null,
@@ -1453,17 +1467,67 @@ router.get('/:id/submissions', async (req, res) => {
       totalLinked = count || subs.length;
     }
 
-    const submissions = subs.map(s => ({
-      studentId:   s.student_id,
-      studentName: userMap[s.student_id]?.name || 'Unknown',
-      grade:       userMap[s.student_id]?.grade || null,
-      status:      s.status,
-      score:       s.score,
-      aiFeedback:  s.ai_feedback,
-      completedAt: s.completed_at,
-    }));
+    const submissions = subs.map(s => {
+      // Parse submission_text for per-question data
+      let perQuestion = [];
+      let studentAnswers = [];
+      try {
+        const parsed = JSON.parse(s.submission_text || '{}');
+        perQuestion = parsed.perQuestion || [];
+        studentAnswers = parsed.answers || [];
+      } catch {}
+      return {
+        studentId:      s.student_id,
+        studentName:    userMap[s.student_id]?.name || 'Unknown',
+        grade:          userMap[s.student_id]?.grade || null,
+        status:         s.status,
+        score:          s.score,
+        aiFeedback:     s.ai_feedback,
+        completedAt:    s.completed_at,
+        perQuestion,
+        studentAnswers,
+      };
+    });
 
-    res.json({ submissions, totalLinked });
+    res.json({ submissions, totalLinked, questions: assignment.questions || [] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PUT /assignments/:id/teacher-feedback ─────────────────────────────────
+// Teacher sends feedback on a student's submission. Visible to student + parent.
+router.put('/:id/teacher-feedback', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { studentId, feedback } = req.body;
+    if (!studentId || !feedback) return res.status(400).json({ error: 'studentId and feedback required' });
+
+    const userId = await resolveUserId(studentId);
+    if (!userId) return res.status(400).json({ error: 'Student not found' });
+
+    // Get current submission
+    const { data: sub } = await supabase
+      .from('assignment_submissions')
+      .select('ai_feedback')
+      .eq('assignment_id', id)
+      .eq('student_id', userId)
+      .single();
+
+    // Merge teacher feedback into ai_feedback JSON
+    let feedbackObj = {};
+    try { feedbackObj = JSON.parse(sub?.ai_feedback || '{}'); } catch { feedbackObj = { text: sub?.ai_feedback || '' }; }
+    feedbackObj.teacherFeedback = feedback;
+    feedbackObj.teacherFeedbackAt = new Date().toISOString();
+
+    const { error } = await supabase
+      .from('assignment_submissions')
+      .update({ ai_feedback: JSON.stringify(feedbackObj) })
+      .eq('assignment_id', id)
+      .eq('student_id', userId);
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, feedback: feedbackObj });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1526,18 +1590,23 @@ router.post('/:id/submit', async (req, res) => {
       // Fall through to free-text grading path below
       if (quizQuestions.length === 0 && assignment.created_by_role === 'parent' && questions.length > 0) {
         const graded = await Promise.all(questions.map(async (q, i) => {
+          const qText = typeof q === 'object' ? q.question : q;
+          const expectedAns = typeof q === 'object' ? (q.expectedAnswer || '') : '';
           const studentAns = ((quizAnswers[i] || {}).answer || (answers[i] || '')).trim();
-          if (!studentAns) return { number: i+1, question: q, answered: false, score: 0, correct: false, comment: 'Not attempted.' };
+          if (!studentAns) return { number: i+1, question: qText, answered: false, score: 0, correct: false, comment: 'Not attempted.' };
           try {
+            const expectedBlock = expectedAns
+              ? `\nExpected answer (from teacher): "${expectedAns}"\nGrade the student's answer STRICTLY against this expected answer. Match = correct, mismatch = incorrect.`
+              : `\nNo expected answer provided by teacher. Use your knowledge of ${assignment.subject || 'the subject'} to determine if the answer is correct. Be fair and accurate — do NOT hallucinate or guess answers.`;
             const comp = await groq.chat.completions.create({
               model: 'llama-3.3-70b-versatile',
-              messages: [{ role: 'user', content: `You are an IB PYP ${assignment.grade || 'Grade 3'} ${assignment.subject || ''} teacher grading a student's answer.\nQuestion: "${q}"\nStudent answer: "${studentAns}"\nGrade fairly for a young learner. Respond ONLY as JSON: {"score":0-100,"correct":bool,"comment":"one warm encouraging sentence"}` }],
+              messages: [{ role: 'user', content: `You are an IB PYP ${assignment.grade || 'Grade 3'} ${assignment.subject || ''} teacher grading a student's answer.\nQuestion: "${qText}"${expectedBlock}\nStudent answer: "${studentAns}"\nGrade fairly for a young learner. Respond ONLY as JSON: {"score":0-100,"correct":bool,"comment":"one warm encouraging sentence"}` }],
               response_format: { type: 'json_object' },
             });
             const r = JSON.parse(comp.choices[0].message.content);
-            return { number: i+1, question: q, answered: true, score: Math.max(0, Math.min(100, Number(r.score)||0)), correct: !!r.correct, studentAnswer: studentAns, comment: r.comment || 'Good effort!' };
+            return { number: i+1, question: qText, answered: true, score: Math.max(0, Math.min(100, Number(r.score)||0)), correct: !!r.correct, studentAnswer: studentAns, comment: r.comment || 'Good effort!' };
           } catch {
-            return { number: i+1, question: q, answered: true, score: 50, correct: false, studentAnswer: studentAns, comment: 'Good effort!' };
+            return { number: i+1, question: qText, answered: true, score: 50, correct: false, studentAnswer: studentAns, comment: 'Good effort!' };
           }
         }));
         perQuestion = graded;
@@ -1939,10 +2008,29 @@ Respond ONLY as JSON: {"text":"...","wellDone":"specific strength","improve":"sp
       });
 
     } else if (Array.isArray(questionImages) && questionImages.length > 0) {
-      // â”€â”€ NEW FLOW: one image per PAGE (not per extracted question) â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      // Student uploads one photo per worksheet page â†’ grade per page.
-      // Iterating over questionImages (pages submitted), NOT over questions[].
-      // This prevents the "18 questions extracted but 4 pages answered = 10% bug".
+      // Worksheet image grading flow
+      var textbookContext = "";
+      try {
+        var _embed = require("../services/embeddings").embed;
+        var _searchContent = require("../services/qdrant").searchContent;
+        var ragQuery = [assignment.subject, assignment.chapter, assignment.title, assignment.grade, assignment.curriculum].filter(Boolean).join(" ");
+        var ragVector = await _embed(ragQuery);
+        var ragResults = await _searchContent({
+          vector: ragVector,
+          curriculum: assignment.curriculum || undefined,
+          grade: assignment.grade || undefined,
+          subject: assignment.subject || undefined,
+          limit: 8,
+        });
+        if (ragResults.length > 0) {
+          textbookContext = ragResults.map(function(r) {
+            var p = r.payload || {};
+            return "[" + (p.subject || "") + " > " + (p.unit || "") + " > " + (p.topic || "") + "]\n" + (p.content || p.text || "");
+          }).join("\n---\n");
+        }
+      } catch (ragErr) {
+        console.warn("Worksheet grading RAG warning:", ragErr.message);
+      }
       const gradingPromises = questionImages.map(async (img, i) => {
         if (!img || !img.imageBase64) {
           return {
@@ -1960,13 +2048,34 @@ Respond ONLY as JSON: {"text":"...","wellDone":"specific strength","improve":"sp
           ? `\nSUCCESS CRITERIA (provided by teacher â€” grade specifically against each of these):\n${successCriteria.map((c, n) => `${n + 1}. ${c}`).join('\n')}\n`
           : `\nSUCCESS CRITERIA: Look carefully at the worksheet images â€” if there is a "Success Criteria", "Checklist", "Learning Outcome", or "Rubric" section visible anywhere in the worksheet pages, use those criteria to grade the student's answer. If no criteria are visible, use your best judgement based on the task type and subject.\n`;
 
+        // Build expected answers block from teacher-provided answers
+        const questionsArr = Array.isArray(assignment.questions) ? assignment.questions : [];
+        const expectedAnswersBlock = (() => {
+          const enriched = questionsArr.filter(q => typeof q === 'object' && q.expectedAnswer);
+          if (enriched.length === 0) {
+            // No expected answers — AI must grade using worksheet + subject knowledge
+            const questionsList = questionsArr.map((q, n) => {
+              const qText = typeof q === 'object' ? q.question : q;
+              return qText ? `Q${n + 1}. ${qText}` : null;
+            }).filter(Boolean);
+            if (questionsList.length === 0) return '';
+            return `\nQUESTIONS EXTRACTED FROM WORKSHEET:\n${questionsList.join('\n')}\n\nNo expected answers were provided by the teacher. Grade the student's work using the worksheet images and your knowledge of ${assignment.subject || 'the subject'} for ${assignment.grade || 'Grade 3'}. Be accurate — only mark answers as correct if they are genuinely correct. Do NOT guess or hallucinate answers.\n`;
+          }
+          return `\nEXPECTED ANSWERS (provided by the teacher — use these as the GROUND TRUTH for grading, do NOT hallucinate or guess different answers):\n${enriched.map((q, n) => `Q${n + 1}. ${q.question}\n   Expected Answer: ${q.expectedAnswer}${q.comment ? '\n   Teacher Note: ' + q.comment : ''}`).join('\n')}\n\nIMPORTANT: When the teacher has provided expected answers above, grade the student's work STRICTLY against those answers. A student answer that matches the expected answer = correct. A student answer that contradicts it = incorrect. Do NOT override the teacher's expected answer with your own judgement.\n`;
+        })();
+
+        // Include textbook content as reference for accurate grading
+        const textbookBlock = textbookContext
+          ? `\nTEXTBOOK REFERENCE (from ${assignment.curriculum || 'curriculum'} ${assignment.grade || ''} ${assignment.subject || ''} textbook — use this as authoritative source for correct answers):\n${textbookContext}\n`
+          : '';
+
         const prompt = `You are a teacher grading a student's assignment.
 
 Assignment: ${assignment.title}
 Subject: ${assignment.subject}${assignment.chapter ? '\nChapter: ' + assignment.chapter : ''}${assignment.grade ? '\nGrade: ' + assignment.grade : ''}
 ${assignment.curriculum ? 'Curriculum: ' + assignment.curriculum : ''}
-${criteriaBlock}
-The first ${worksheetUrls.length} image(s) show the ORIGINAL WORKSHEET â€” study ALL of them carefully to understand the full task, including any cloud prompts, drawing tasks, paragraph writing sections, word banks, success criteria checklists, and visual elements.
+${criteriaBlock}${expectedAnswersBlock}${textbookBlock}
+The first ${worksheetUrls.length} image(s) show the ORIGINAL WORKSHEET — study ALL of them carefully to understand the full task, including any cloud prompts, drawing tasks, paragraph writing sections, word banks, success criteria checklists, and visual elements.
 
 The LAST image is the STUDENT'S HANDWRITTEN ANSWER for Page ${i + 1} of ${questionImages.length}.
 
@@ -2081,8 +2190,12 @@ Respond ONLY as JSON: {"text": "...", "wellDone": "...", "improve": "..."}`;
     } else if (imageBase64) {
       // â”€â”€ LEGACY FLOW: single image, all questions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const questionList = questions.length > 0
-        ? questions.map((q, i) => `Q${i+1}: ${q}`).join('\n')
-        : 'No specific questions â€” assess overall work.';
+        ? questions.map((q, i) => {
+            const qText = typeof q === 'object' ? q.question : q;
+            const expected = typeof q === 'object' && q.expectedAnswer ? ` [Expected: ${q.expectedAnswer}]` : '';
+            return `Q${i+1}: ${qText}${expected}`;
+          }).join('\n')
+        : 'No specific questions — assess overall work.';
 
       const prompt = `You are a teacher grading a student's handwritten assignment.
 Assignment: ${assignment.title}, Subject: ${assignment.subject}

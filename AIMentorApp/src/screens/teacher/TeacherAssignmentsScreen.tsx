@@ -235,6 +235,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [detailTab, setDetailTab] = useState<'overview' | 'students' | 'questions'>('overview');
   const [detailSubmissions, setDetailSubmissions] = useState<any[]>([]);
   const [detailTotalLinked, setDetailTotalLinked] = useState(0);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [expandedStudent, setExpandedStudent] = useState<string | null>(null);
+  const [teacherFeedback, setTeacherFeedback] = useState('');
+  const [sendingFeedback, setSendingFeedback] = useState(false);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
   // IB PYP fields
@@ -294,7 +298,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   }, [user?.curriculum, user?.teaches]);
 
   useEffect(() => {
-    if (!detailAssignment) { setDetailSubmissions([]); setDetailTotalLinked(0); setDetailTab('overview'); return; }
+    if (!detailAssignment) { setDetailSubmissions([]); setDetailTotalLinked(0); setDetailTab('overview'); setExpandedStudent(null); setTeacherFeedback(''); return; }
     setLoadingSubmissions(true);
     fetch(`${SERVER_URL}/assignments/${detailAssignment.id}/submissions`)
       .then(r => r.ok ? r.json() : { submissions: [], totalLinked: 0 })
@@ -347,7 +351,36 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     if (type === 'quiz' && quizQuestions.length === 0) { setFormError('Generate quiz questions first before assigning this quiz.'); return; }
     setFormError('');
     setCreating(true);
+    console.log('[createAssignment] Publishing...', { title, subject, grade, curriculum, type, dueDate, docFiles: docFiles.length, questions: questions.length, quizQuestions: quizQuestions.length });
     try {
+      // Upload cropped question images to Cloudinary before creating assignment
+      const uploadedExtracted = await (async () => {
+        if (extractedQuestions.length === 0) return [];
+        const results = [];
+        for (const eq of extractedQuestions) {
+          let imageUrl = '';
+          if (eq.croppedImage && eq.croppedImage.startsWith('data:')) {
+            try {
+              const base64Data = eq.croppedImage.split(',')[1] || '';
+              const uploadRes = await fetch(`${SERVER_URL}/assignments/upload-doc`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileBase64: base64Data, fileName: `crop_q${results.length + 1}.png`, mimeType: 'image/png' }),
+              });
+              const uploadData = await uploadRes.json();
+              if (uploadData.url) imageUrl = uploadData.url;
+            } catch (e) { console.warn('[createAssignment] crop upload failed:', e); }
+          }
+          results.push({
+            question: eq.question,
+            expectedAnswer: eq.answer || '',
+            comment: eq.comment || '',
+            croppedImage: imageUrl,
+          });
+        }
+        return results;
+      })();
+
       const res = await fetch(`${SERVER_URL}/assignments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -362,7 +395,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           createdByRole: 'teacher',
           grade,
           curriculum,
-          questions: questions.filter(q => q.trim()),
+          // Merge plain questions + extracted questions from worksheet as structured objects
+          questions: (() => {
+            const plain = questions.filter(q => q.trim());
+            if (uploadedExtracted.length > 0) return uploadedExtracted;
+            return plain;
+          })(),
           // Include expected answers from extracted questions for AI validation
           questionAnswers: extractedQuestions.filter(q => q.answer.trim()).reduce((acc, q) => {
             acc[q.question] = q.answer;
@@ -394,14 +432,18 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           keyConcept: ibKeyConcept || null,
         }),
       });
+      const responseText = await res.text();
+      console.log('[createAssignment] Response:', res.status, responseText.substring(0, 500));
       if (res.ok) {
-        const created = await res.json();
+        const created = JSON.parse(responseText);
         setAssignments(prev => [created, ...prev]);
         setShowModal(false);
+        setShowPreview(false);
         resetForm();
       } else {
-        const err = await res.json();
-        setFormError(err.error || 'Failed to create');
+        let errMsg = 'Failed to create';
+        try { errMsg = JSON.parse(responseText).error || errMsg; } catch {}
+        setFormError(errMsg);
       }
     } catch {
       setFormError('Network error. Check server connection.');
@@ -844,6 +886,31 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     } catch {/* ignore */}
   }
 
+  async function sendFeedback(assignmentId: string, studentId: string) {
+    if (!teacherFeedback.trim()) return;
+    setSendingFeedback(true);
+    try {
+      const res = await fetch(`${SERVER_URL}/assignments/${assignmentId}/teacher-feedback`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, feedback: teacherFeedback.trim() }),
+      });
+      if (res.ok) {
+        // Update the local submission with teacher feedback
+        setDetailSubmissions(prev => prev.map(s => {
+          if (s.studentId !== studentId) return s;
+          let fbObj: any = {};
+          try { fbObj = JSON.parse(s.aiFeedback || '{}'); } catch { fbObj = { text: s.aiFeedback || '' }; }
+          fbObj.teacherFeedback = teacherFeedback.trim();
+          fbObj.teacherFeedbackAt = new Date().toISOString();
+          return { ...s, aiFeedback: JSON.stringify(fbObj) };
+        }));
+        setTeacherFeedback('');
+      }
+    } catch {/* ignore */}
+    setSendingFeedback(false);
+  }
+
   return (
     <ScreenLayout>
       <View style={styles.screen}>
@@ -1078,6 +1145,79 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           </View>
                         ) : null}
 
+                        {/* Worksheet pages */}
+                        {(a.documentUrls?.length ?? 0) > 0 && (
+                          <View style={{ gap: 8 }}>
+                            <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Worksheet Pages ({a.documentUrls!.length})</Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                              <View style={{ flexDirection: 'row', gap: 10 }}>
+                                {a.documentUrls!.map((url: string, idx: number) => (
+                                  <TouchableOpacity key={idx} activeOpacity={0.8} onPress={() => setFullscreenImage(url)}>
+                                    <View style={{ width: 140, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: sc + '40' }}>
+                                      <Image source={{ uri: url }} style={{ width: 140, height: 190 }} resizeMode="contain" />
+                                      <View style={{ paddingVertical: 3, backgroundColor: sc + '15', alignItems: 'center' }}>
+                                        <Text style={{ fontSize: 10, fontWeight: '700', color: sc }}>Page {idx + 1}</Text>
+                                      </View>
+                                    </View>
+                                  </TouchableOpacity>
+                                ))}
+                              </View>
+                            </ScrollView>
+                          </View>
+                        )}
+
+                        {/* Questions summary in overview */}
+                        {allQs.length > 0 && (
+                          <View style={{ gap: 8 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Questions ({allQs.length})</Text>
+                              <TouchableOpacity onPress={() => setDetailTab('questions')} activeOpacity={0.7}>
+                                <Text style={{ fontSize: 11, color: sc, fontWeight: '600' }}>View all</Text>
+                              </TouchableOpacity>
+                            </View>
+                            {allQs.slice(0, 5).map((q: any, i: number) => {
+                              const qText = typeof q === 'string' ? q : (q.question || q.label || '');
+                              const expectedAns = typeof q === 'object' && q.expectedAnswer ? q.expectedAnswer : null;
+                              return (
+                                <View key={i} style={{ backgroundColor: colors.cardDark, borderRadius: radius.md, padding: 12, borderWidth: 1, borderColor: colors.borderColor, gap: 4 }}>
+                                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: sc + '20', alignItems: 'center', justifyContent: 'center' }}>
+                                      <Text style={{ fontSize: 10, fontWeight: '800', color: sc }}>{i + 1}</Text>
+                                    </View>
+                                    <Text style={{ fontSize: 12, color: colors.textMain, flex: 1, lineHeight: 18 }}>{qText}</Text>
+                                  </View>
+                                  {expectedAns ? (
+                                    <View style={{ flexDirection: 'row', gap: 6, marginLeft: 30, alignItems: 'flex-start' }}>
+                                      <Feather name="check-circle" size={11} color={colors.accentGreen} style={{ marginTop: 2 }} />
+                                      <Text style={{ fontSize: 11, color: colors.accentGreen, flex: 1 }}>Expected: {expectedAns}</Text>
+                                    </View>
+                                  ) : null}
+                                </View>
+                              );
+                            })}
+                            {allQs.length > 5 && (
+                              <TouchableOpacity onPress={() => setDetailTab('questions')} activeOpacity={0.7} style={{ alignSelf: 'center', paddingVertical: 4 }}>
+                                <Text style={{ fontSize: 12, color: sc, fontWeight: '600' }}>+{allQs.length - 5} more questions</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        )}
+
+                        {/* Success criteria */}
+                        {(a.successCriteria?.length ?? 0) > 0 && (
+                          <View style={{ gap: 6 }}>
+                            <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Success Criteria</Text>
+                            {a.successCriteria!.map((c: string, ci: number) => (
+                              <View key={ci} style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+                                <View style={{ width: 16, height: 16, borderRadius: 3, borderWidth: 1.5, borderColor: sc + '60', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+                                  <Feather name="check" size={9} color={sc} />
+                                </View>
+                                <Text style={{ fontSize: 12, color: colors.textMuted, flex: 1, lineHeight: 17 }}>{c}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+
                         {/* Action buttons */}
                         <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
                           {a.status !== 'completed' && (
@@ -1130,65 +1270,151 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           <View style={{ gap: 10 }}>
                             {detailSubmissions.map((sub: any, i: number) => {
                               const done = sub.status === 'completed';
+                              const isExpanded = expandedStudent === sub.studentId;
+                              const pq: any[] = sub.perQuestion || [];
+                              let fbObj: any = {};
+                              try { fbObj = JSON.parse(sub.aiFeedback || '{}'); } catch { fbObj = { text: sub.aiFeedback || '' }; }
+                              const existingTeacherFb = fbObj.teacherFeedback || '';
                               return (
-                                <View key={sub.studentId || i} style={{ backgroundColor: colors.cardDark, borderRadius: radius.md, padding: 14, borderWidth: 1, borderColor: done ? sc + '40' : colors.borderColor, gap: 8 }}>
-                                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                                      <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: sc + '25', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Text style={{ fontSize: 13, fontWeight: '800', color: sc }}>{(sub.studentName || '?')[0].toUpperCase()}</Text>
+                                <View key={sub.studentId || i} style={{ backgroundColor: colors.cardDark, borderRadius: radius.md, borderWidth: 1, borderColor: isExpanded ? sc + '60' : (done ? sc + '40' : colors.borderColor), overflow: 'hidden' }}>
+                                  {/* Student header — tappable */}
+                                  <TouchableOpacity activeOpacity={0.7} onPress={() => { setExpandedStudent(isExpanded ? null : sub.studentId); setTeacherFeedback(existingTeacherFb); }} style={{ padding: 14, gap: 8 }}>
+                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                                        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: sc + '25', alignItems: 'center', justifyContent: 'center' }}>
+                                          <Text style={{ fontSize: 13, fontWeight: '800', color: sc }}>{(sub.studentName || '?')[0].toUpperCase()}</Text>
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textMain }}>{sub.studentName || 'Unknown'}</Text>
+                                          {sub.grade ? <Text style={{ fontSize: 11, color: colors.textDim }}>{sub.grade}</Text> : null}
+                                        </View>
                                       </View>
-                                      <View style={{ flex: 1 }}>
-                                        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textMain }}>{sub.studentName || 'Unknown'}</Text>
-                                        {sub.grade ? <Text style={{ fontSize: 11, color: colors.textDim }}>{sub.grade}</Text> : null}
+                                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                                        <View style={{ alignItems: 'flex-end', gap: 3 }}>
+                                          {sub.score != null && (
+                                            <View style={{ backgroundColor: sc + '20', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                                              <Text style={{ fontSize: 13, fontWeight: '800', color: sc }}>{sub.score}%</Text>
+                                            </View>
+                                          )}
+                                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                            <Feather name={done ? 'check-circle' : 'clock'} size={11} color={done ? colors.accentGreen : colors.accentYellow} />
+                                            <Text style={{ fontSize: 11, color: done ? colors.accentGreen : colors.accentYellow, fontWeight: '600' }}>{done ? 'Completed' : 'Pending'}</Text>
+                                          </View>
+                                        </View>
+                                        <Feather name={isExpanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textDim} />
                                       </View>
                                     </View>
-                                    <View style={{ alignItems: 'flex-end', gap: 3 }}>
-                                      {sub.score != null && (
-                                        <View style={{ backgroundColor: sc + '20', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
-                                          <Text style={{ fontSize: 13, fontWeight: '800', color: sc }}>{sub.score}%</Text>
+                                    {sub.completedAt && (
+                                      <Text style={{ fontSize: 11, color: colors.textDim, marginLeft: 40 }}>Submitted {formatDate(sub.completedAt)}</Text>
+                                    )}
+                                  </TouchableOpacity>
+
+                                  {/* Expanded: per-question answers + feedback */}
+                                  {isExpanded && (
+                                    <View style={{ borderTopWidth: 1, borderTopColor: colors.borderColor, padding: 14, gap: 12 }}>
+                                      {/* Per-question breakdown */}
+                                      {pq.length > 0 ? (
+                                        <View style={{ gap: 10 }}>
+                                          <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Question-by-Question</Text>
+                                          {pq.map((q: any, qi: number) => {
+                                            const qScore = q.score ?? 0;
+                                            const scoreColor = qScore >= 70 ? colors.accentGreen : qScore >= 40 ? colors.accentYellow : colors.accentRed;
+                                            return (
+                                              <View key={qi} style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 12, gap: 6, borderLeftWidth: 3, borderLeftColor: scoreColor }}>
+                                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                  <Text style={{ fontSize: 12, color: colors.textMain, fontWeight: '700', flex: 1 }}>Q{q.number || qi + 1}. {q.question || q.stepLabel || ''}</Text>
+                                                  <View style={{ backgroundColor: scoreColor + '20', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, marginLeft: 8 }}>
+                                                    <Text style={{ fontSize: 11, fontWeight: '800', color: scoreColor }}>{qScore}%</Text>
+                                                  </View>
+                                                </View>
+                                                {q.studentAnswer ? (
+                                                  <View style={{ gap: 2 }}>
+                                                    <Text style={{ fontSize: 10, color: colors.textDim, fontWeight: '600' }}>Student's Answer:</Text>
+                                                    <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18, backgroundColor: colors.cardDark, borderRadius: 6, padding: 8 }}>{q.studentAnswer}</Text>
+                                                  </View>
+                                                ) : null}
+                                                {q.comment ? (
+                                                  <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+                                                    <Feather name="message-circle" size={11} color={colors.accentCyan} style={{ marginTop: 2 }} />
+                                                    <Text style={{ fontSize: 11, color: colors.accentCyan, flex: 1, lineHeight: 16 }}>{q.comment}</Text>
+                                                  </View>
+                                                ) : null}
+                                              </View>
+                                            );
+                                          })}
+                                        </View>
+                                      ) : done ? (
+                                        <View style={{ alignItems: 'center', paddingVertical: 12, gap: 4 }}>
+                                          <Feather name="file-text" size={20} color={colors.textDim} />
+                                          <Text style={{ fontSize: 12, color: colors.textDim }}>Submission recorded (no per-question data)</Text>
+                                        </View>
+                                      ) : null}
+
+                                      {/* AI Feedback summary */}
+                                      {(fbObj.text || fbObj.wellDone || fbObj.improve) ? (
+                                        <View style={{ backgroundColor: sc + '0E', borderRadius: 8, padding: 10, borderLeftWidth: 3, borderLeftColor: sc + '60', gap: 6 }}>
+                                          <Text style={{ fontSize: 10, color: sc, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 }}>AI Feedback</Text>
+                                          {fbObj.text ? <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{fbObj.text}</Text> : null}
+                                          {fbObj.wellDone ? (
+                                            <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+                                              <Feather name="thumbs-up" size={11} color={colors.accentGreen} style={{ marginTop: 2 }} />
+                                              <Text style={{ fontSize: 11, color: colors.textMuted, flex: 1, lineHeight: 16 }}>{fbObj.wellDone}</Text>
+                                            </View>
+                                          ) : null}
+                                          {fbObj.improve ? (
+                                            <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+                                              <Feather name="trending-up" size={11} color={colors.accentYellow} style={{ marginTop: 2 }} />
+                                              <Text style={{ fontSize: 11, color: colors.textMuted, flex: 1, lineHeight: 16 }}>{fbObj.improve}</Text>
+                                            </View>
+                                          ) : null}
+                                        </View>
+                                      ) : null}
+
+                                      {/* Existing teacher feedback */}
+                                      {existingTeacherFb && !sendingFeedback ? (
+                                        <View style={{ backgroundColor: colors.accentCyan + '0E', borderRadius: 8, padding: 10, borderLeftWidth: 3, borderLeftColor: colors.accentCyan + '60', gap: 4 }}>
+                                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                            <Feather name="user" size={11} color={colors.accentCyan} />
+                                            <Text style={{ fontSize: 10, color: colors.accentCyan, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 }}>Teacher Feedback</Text>
+                                          </View>
+                                          <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{existingTeacherFb}</Text>
+                                          {fbObj.teacherFeedbackAt ? <Text style={{ fontSize: 10, color: colors.textDim }}>Sent {formatDate(fbObj.teacherFeedbackAt)}</Text> : null}
+                                        </View>
+                                      ) : null}
+
+                                      {/* Teacher feedback input */}
+                                      {done && (
+                                        <View style={{ gap: 8 }}>
+                                          <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                            {existingTeacherFb ? 'Update Feedback' : 'Send Feedback to Student & Parent'}
+                                          </Text>
+                                          <TextInput
+                                            style={[styles.input, { minHeight: 70, textAlignVertical: 'top' }]}
+                                            placeholder="Write feedback for this student... (visible to student & parent)"
+                                            placeholderTextColor={colors.textDim}
+                                            value={teacherFeedback}
+                                            onChangeText={setTeacherFeedback}
+                                            multiline
+                                          />
+                                          <TouchableOpacity
+                                            style={[styles.modalSaveBtn, { backgroundColor: sc, opacity: teacherFeedback.trim() ? 1 : 0.5 }]}
+                                            onPress={() => sendFeedback(a.id, sub.studentId)}
+                                            disabled={!teacherFeedback.trim() || sendingFeedback}
+                                            activeOpacity={0.8}
+                                          >
+                                            {sendingFeedback ? (
+                                              <ActivityIndicator size="small" color="#fff" />
+                                            ) : (
+                                              <>
+                                                <Feather name="send" size={14} color="#fff" />
+                                                <Text style={styles.modalSaveBtnText}>{existingTeacherFb ? 'Update Feedback' : 'Send Feedback'}</Text>
+                                              </>
+                                            )}
+                                          </TouchableOpacity>
                                         </View>
                                       )}
-                                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                        <Feather name={done ? 'check-circle' : 'clock'} size={11} color={done ? colors.accentGreen : colors.accentYellow} />
-                                        <Text style={{ fontSize: 11, color: done ? colors.accentGreen : colors.accentYellow, fontWeight: '600' }}>{done ? 'Completed' : 'Pending'}</Text>
-                                      </View>
                                     </View>
-                                  </View>
-
-                                  {sub.completedAt && (
-                                    <Text style={{ fontSize: 11, color: colors.textDim }}>
-                                      <Feather name="calendar" size={10} /> Submitted {formatDate(sub.completedAt)}
-                                    </Text>
                                   )}
-
-                                  {sub.aiFeedback ? (() => {
-                                    let fbText = sub.aiFeedback;
-                                    let wellDone = ''; let improve = '';
-                                    try {
-                                      const p = JSON.parse(sub.aiFeedback);
-                                      fbText = p.text || sub.aiFeedback;
-                                      wellDone = p.wellDone || '';
-                                      improve = p.improve || '';
-                                    } catch {}
-                                    return (
-                                      <View style={{ backgroundColor: sc + '0E', borderRadius: 8, padding: 10, borderLeftWidth: 3, borderLeftColor: sc + '60', gap: 6 }}>
-                                        <Text style={{ fontSize: 10, color: sc, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 }}>AI Feedback</Text>
-                                        <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{fbText}</Text>
-                                        {wellDone ? (
-                                          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
-                                            <Text style={{ fontSize: 11, color: colors.accentGreen, fontWeight: '700' }}>Well done:</Text>
-                                            <Text style={{ fontSize: 11, color: colors.textMuted, flex: 1, lineHeight: 16 }}>{wellDone}</Text>
-                                          </View>
-                                        ) : null}
-                                        {improve ? (
-                                          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
-                                            <Text style={{ fontSize: 11, color: colors.accentYellow, fontWeight: '700' }}>Improve:</Text>
-                                            <Text style={{ fontSize: 11, color: colors.textMuted, flex: 1, lineHeight: 16 }}>{improve}</Text>
-                                          </View>
-                                        ) : null}
-                                      </View>
-                                    );
-                                  })() : null}
                                 </View>
                               );
                             })}
@@ -1200,12 +1426,30 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     {/* ── QUESTIONS TAB ── */}
                     {detailTab === 'questions' && (
                       <>
-                        {allQs.length === 0 ? (
+                        {/* Worksheet page images at top of Questions tab — tap for fullscreen */}
+                        {(a.documentUrls?.length ?? 0) > 0 && (
+                          <View style={{ gap: 8, marginBottom: 16 }}>
+                            <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Worksheet Pages</Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }}>
+                              {a.documentUrls!.map((url: string, idx: number) => (
+                                <TouchableOpacity key={idx} activeOpacity={0.8} onPress={() => setFullscreenImage(url)}>
+                                  <View style={{ width: 160, marginHorizontal: 4, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: sc + '40' }}>
+                                    <Image source={{ uri: url }} style={{ width: 160, height: 210 }} resizeMode="contain" />
+                                    <View style={{ paddingVertical: 3, backgroundColor: sc + '15', alignItems: 'center' }}>
+                                      <Text style={{ fontSize: 10, fontWeight: '700', color: sc }}>Page {idx + 1}</Text>
+                                    </View>
+                                  </View>
+                                </TouchableOpacity>
+                              ))}
+                            </ScrollView>
+                          </View>
+                        )}
+                        {allQs.length === 0 && (a.documentUrls?.length ?? 0) === 0 ? (
                           <View style={{ alignItems: 'center', paddingVertical: 32, gap: 8 }}>
                             <Feather name="help-circle" size={32} color={colors.textDim} />
                             <Text style={{ fontSize: 14, color: colors.textMuted }}>No questions added.</Text>
                           </View>
-                        ) : (a as any).quizQuestions?.length > 0 ? (
+                        ) : allQs.length === 0 ? null : (a as any).quizQuestions?.length > 0 ? (
                           /* MCQ quiz questions */
                           <View style={{ gap: 14 }}>
                             {(a as any).quizQuestions.map((q: any, i: number) => (
@@ -1263,14 +1507,45 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                             ))}
                           </View>
                         ) : (
-                          /* Plain text questions */
+                          /* Plain text / structured questions with images */
                           <View style={{ gap: 10 }}>
-                            {a.questions!.map((q: any, i: number) => (
-                              <View key={i} style={{ backgroundColor: colors.cardDark, borderRadius: radius.md, padding: 14, borderWidth: 1, borderColor: colors.borderColor, flexDirection: 'row', gap: 8 }}>
-                                <Text style={{ fontSize: 12, color: sc, fontWeight: '800', minWidth: 24 }}>{i + 1}.</Text>
-                                <Text style={{ fontSize: 13, color: colors.textMain, flex: 1, lineHeight: 18 }}>{typeof q === 'string' ? q : q.question}</Text>
-                              </View>
-                            ))}
+                            {allQs.map((q: any, i: number) => {
+                              const qText = typeof q === 'string' ? q : (q.question || q.label || '');
+                              const expectedAns = typeof q === 'object' && q.expectedAnswer ? q.expectedAnswer : null;
+                              const qImage = typeof q === 'object' && q.croppedImage ? q.croppedImage : null;
+                              const qComment = typeof q === 'object' && q.comment ? q.comment : null;
+                              return (
+                                <View key={i} style={{ backgroundColor: colors.cardDark, borderRadius: radius.md, padding: 14, borderWidth: 1, borderColor: colors.borderColor, gap: 8 }}>
+                                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                                    <Text style={{ fontSize: 12, color: sc, fontWeight: '800', minWidth: 24 }}>Q{i + 1}.</Text>
+                                    <Text style={{ fontSize: 13, color: colors.textMain, flex: 1, lineHeight: 18, fontWeight: '600' }}>{qText}</Text>
+                                  </View>
+                                  {qImage ? (
+                                    <TouchableOpacity activeOpacity={0.8} onPress={() => setFullscreenImage(qImage)} style={{ marginLeft: 32 }}>
+                                      <View style={{ borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: colors.accentCyan + '40' }}>
+                                        <Image source={{ uri: qImage }} style={{ width: '100%', height: 160, backgroundColor: '#fff' }} resizeMode="contain" />
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, justifyContent: 'center', paddingVertical: 3, backgroundColor: colors.bgDark }}>
+                                          <Feather name="image" size={9} color={colors.accentCyan} />
+                                          <Text style={{ fontSize: 9, color: colors.accentCyan }}>Reference Image — tap to enlarge</Text>
+                                        </View>
+                                      </View>
+                                    </TouchableOpacity>
+                                  ) : null}
+                                  {expectedAns ? (
+                                    <View style={{ flexDirection: 'row', gap: 6, marginLeft: 32, alignItems: 'center' }}>
+                                      <Feather name="check-circle" size={12} color={colors.accentGreen} />
+                                      <Text style={{ fontSize: 12, color: colors.accentGreen, flex: 1 }}>Expected: {expectedAns}</Text>
+                                    </View>
+                                  ) : null}
+                                  {qComment ? (
+                                    <View style={{ flexDirection: 'row', gap: 6, marginLeft: 32, alignItems: 'center' }}>
+                                      <Feather name="message-circle" size={12} color={colors.accentYellow} />
+                                      <Text style={{ fontSize: 12, color: colors.accentYellow, fontStyle: 'italic', flex: 1 }}>{qComment}</Text>
+                                    </View>
+                                  ) : null}
+                                </View>
+                              );
+                            })}
                           </View>
                         )}
                       </>
@@ -1282,6 +1557,25 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
             </Modal>
           );
         })()}
+
+        {/* Fullscreen Image Viewer */}
+        {fullscreenImage && (
+          <Modal visible transparent animationType="fade" onRequestClose={() => setFullscreenImage(null)}>
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' }}>
+              <TouchableOpacity
+                onPress={() => setFullscreenImage(null)}
+                style={{ position: 'absolute', top: 40, right: 20, zIndex: 10, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Feather name="x" size={22} color="#fff" />
+              </TouchableOpacity>
+              <Image
+                source={{ uri: fullscreenImage }}
+                style={{ width: '92%', height: '80%' }}
+                resizeMode="contain"
+              />
+            </View>
+          </Modal>
+        )}
 
         {/* AI Report Modal */}
         {reportAssignment && (
@@ -2836,7 +3130,14 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               </ScrollView>
 
               {/* Bottom action bar */}
-              <View style={{ flexDirection: 'row', gap: 10, padding: 18, borderTopWidth: 1, borderTopColor: colors.borderColor }}>
+              <View style={{ gap: 8, padding: 18, borderTopWidth: 1, borderTopColor: colors.borderColor }}>
+                {formError ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 10, borderRadius: 8, backgroundColor: colors.accentRed + '15', borderWidth: 1, borderColor: colors.accentRed + '30' }}>
+                    <Feather name="alert-circle" size={14} color={colors.accentRed} />
+                    <Text style={{ flex: 1, fontSize: 12, color: colors.accentRed, fontWeight: '600' }}>{formError}</Text>
+                  </View>
+                ) : null}
+                <View style={{ flexDirection: 'row', gap: 10 }}>
                 <TouchableOpacity
                   style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
                     padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.borderColor }}
@@ -2861,6 +3162,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </>
                   )}
                 </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
@@ -2951,7 +3253,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   noteText: { fontSize: 12, color: c.textDim, fontStyle: 'italic', lineHeight: 18 },
 
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end', alignItems: 'center' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
   modalBox: {
     backgroundColor: c.cardDark, borderRadius: radius.lg,
     marginHorizontal: spacing.lg, marginBottom: spacing.lg,
