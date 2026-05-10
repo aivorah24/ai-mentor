@@ -825,7 +825,7 @@ export default function OnboardingScreen() {
               onPress={() => setAvatarStyle(av.id)} activeOpacity={0.8}>
               <LinearGradient colors={av.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 style={styles.avatarCircle}>
-                <Feather name={av.icon as any} size={22} color="#fff" />
+                <Feather name={av.icon as any} size={28} color="#fff" />
               </LinearGradient>
               <Text style={[styles.avatarLabel, avatarStyle === av.id && { color: TEAL }]}>{av.label}</Text>
               {avatarStyle === av.id && (
@@ -1071,19 +1071,21 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   // Avatar grid
   avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   avatarCard: {
-    width: 100, alignItems: 'center', gap: 8,
-    padding: spacing.md, borderRadius: radius.lg,
+    flexBasis: '30%', flexGrow: 1,
+    alignItems: 'center', gap: 10,
+    paddingVertical: spacing.lg, paddingHorizontal: spacing.sm,
+    borderRadius: radius.lg,
     borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.cardDark,
   },
-  avatarCardActive: { borderColor: TEAL, backgroundColor: TEAL + '10' },
+  avatarCardActive: { borderColor: TEAL, backgroundColor: TEAL + '15' },
   avatarCircle: {
-    width: 52, height: 52, borderRadius: 26,
+    width: 72, height: 72, borderRadius: 36,
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarLabel: { fontSize: 12, fontWeight: '600', color: c.textMuted },
+  avatarLabel: { fontSize: 13, fontWeight: '600', color: c.textMuted, textAlign: 'center' },
   avatarCheck: {
-    position: 'absolute', top: 6, right: 6,
-    width: 18, height: 18, borderRadius: 9,
+    position: 'absolute', top: 8, right: 8,
+    width: 20, height: 20, borderRadius: 10,
     backgroundColor: TEAL, alignItems: 'center', justifyContent: 'center',
   },
 

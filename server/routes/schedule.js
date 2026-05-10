@@ -330,6 +330,20 @@ router.post('/', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ── PATCH /schedule/:id ──────────────────────────────────────
+router.patch('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { startTime, endTime } = req.body;
+  try {
+    const updates = {};
+    if (startTime !== undefined) updates.start_time = startTime;
+    if (endTime !== undefined) updates.end_time = endTime;
+    const { data, error } = await supabase.from('schedule_events').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ── DELETE /schedule/:id ─────────────────────────────────────
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;

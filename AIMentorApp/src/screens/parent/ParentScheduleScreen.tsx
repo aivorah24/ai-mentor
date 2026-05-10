@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
-  PanResponder,
+  useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius } from '../../theme';
@@ -21,12 +21,7 @@ import SERVER_URL from '../../config/serverUrl';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const DAYS_SHORT = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-const TIMES = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
-const TIME_PICKER_SLOTS: string[] = (() => {
-  const s: string[] = [];
-  for (let h = 6; h <= 22; h++) for (const m of [0,15,30,45]) { if (h===22&&m>0) break; s.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`); }
-  return s;
-})();
+const TIMES = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
 const CAL_DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 const DURATIONS = ['30 min', '45 min', '1 hr', '1.5 hrs', '2 hrs', '2.5 hrs', '3 hrs'];
 const DURATION_MINS: Record<string, number> = {
@@ -34,7 +29,24 @@ const DURATION_MINS: Record<string, number> = {
   '1.5 hrs': 90, '2 hrs': 120, '2.5 hrs': 150, '3 hrs': 180,
 };
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const SLOT_ROW_HEIGHT = 50;
+const HOUR_HEIGHT = 56;
+const DAY_COL_WIDTH = 140;
+const TIME_LABEL_WIDTH = 52;
+const TIMELINE_START_HOUR = Number(TIMES[0].split(':')[0]);
+
+function calcEventTop(startTime: string): number {
+  const [h, m] = startTime.split(':').map(Number);
+  return (h - TIMELINE_START_HOUR) * HOUR_HEIGHT + (m / 60) * HOUR_HEIGHT;
+}
+
+function calcEventHeight(startTime: string, endTime?: string): number {
+  if (!endTime) return HOUR_HEIGHT;
+  const [sh, sm] = startTime.split(':').map(Number);
+  const [eh, em] = endTime.split(':').map(Number);
+  const durationMins = (eh * 60 + em) - (sh * 60 + sm);
+  if (durationMins <= 0) return HOUR_HEIGHT;
+  return Math.max((durationMins / 60) * HOUR_HEIGHT, 28);
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function calcEndTime(startTime: string, duration: string): string {
@@ -116,19 +128,19 @@ export default function ParentScheduleScreen({ navigation }: any) {
   const todayISO = useMemo(() => dateISO(today), [today]);
   const [weekBase, setWeekBase] = useState(today);
   const week = useMemo(() => buildWeek(weekBase), [weekBase]);
-  const [selectedDate, setSelectedDate] = useState(todayISO);
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth() + 1);
   const calWeeks = useMemo(() => buildMonthCalendar(calYear, calMonth), [calYear, calMonth]);
 
-  // Events
-  const [events, setEvents] = useState<ScheduleEvent[]>([]);
+  // Events stored per day
+  const [eventsMap, setEventsMap] = useState<Record<string, ScheduleEvent[]>>({});
   const [deadlines, setDeadlines] = useState<ScheduleEvent[]>([]);
   const [eventDates, setEventDates] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   // Add event modal
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalDate, setModalDate] = useState(todayISO);
   const [newTitle, setNewTitle] = useState('');
   const [newNote, setNewNote] = useState('');
   const [newHour, setNewHour] = useState('09');
@@ -137,8 +149,6 @@ export default function ParentScheduleScreen({ navigation }: any) {
   const [newDuration, setNewDuration] = useState('1 hr');
   const [newType, setNewType] = useState('assignment');
   const [saving, setSaving] = useState(false);
-  const [dragRange, setDragRange] = useState<{ start: number; end: number } | null>(null);
-  const dragRangeRef = useRef<{ start: number; end: number } | null>(null);
 
   // Load children
   useEffect(() => {
@@ -154,12 +164,25 @@ export default function ParentScheduleScreen({ navigation }: any) {
     if (!child) return;
     setLoading(true);
     try {
-      const [evRes, dlRes, monthRes] = await Promise.all([
-        fetch(`${SERVER_URL}/schedule?studentId=${child.id}&date=${selectedDate}`),
+      const weekDates = week.map(d => d.iso);
+      const dayFetches = weekDates.map(d =>
+        fetch(`${SERVER_URL}/schedule?studentId=${child.id}&date=${d}`)
+          .then(r => r.ok ? r.json() : [])
+          .then((evs: ScheduleEvent[]) => ({ date: d, events: evs }))
+          .catch(() => ({ date: d, events: [] }))
+      );
+      const [dlRes, monthRes, ...dayResults] = await Promise.all([
         fetch(`${SERVER_URL}/schedule/upcoming?studentId=${child.id}`),
         fetch(`${SERVER_URL}/schedule/month?studentId=${child.id}&year=${calYear}&month=${calMonth}`),
+        ...dayFetches,
       ]);
-      if (evRes.ok) setEvents(await evRes.json());
+
+      const map: Record<string, ScheduleEvent[]> = {};
+      for (const { date, events } of dayResults as { date: string; events: ScheduleEvent[] }[]) {
+        map[date] = events;
+      }
+      setEventsMap(map);
+
       if (dlRes.ok) setDeadlines(await dlRes.json());
       if (monthRes.ok) {
         const m = await monthRes.json();
@@ -167,48 +190,16 @@ export default function ParentScheduleScreen({ navigation }: any) {
       }
     } catch {}
     setLoading(false);
-  }, [child, selectedDate, calYear, calMonth]);
+  }, [child, week, calYear, calMonth]);
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
-  const openModalForRange = useCallback((startIdx: number, endIdx: number) => {
-    const start = Math.max(0, Math.min(TIMES.length - 1, Math.min(startIdx, endIdx)));
-    const spanHours = Math.max(1, Math.min(3, Math.abs(endIdx - startIdx) + 1));
-    const durationLabel = spanHours === 1 ? '1 hr' : spanHours === 2 ? '2 hrs' : '3 hrs';
-    setNewHour(TIMES[start].split(':')[0]); setNewMinute('00');
-    setNewDuration(durationLabel);
+  function openSlotModal(dayISO: string, timeLabel: string) {
+    setModalDate(dayISO);
+    setNewHour(timeLabel.split(':')[0]);
+    setNewMinute('00');
     setModalVisible(true);
-  }, []);
-
-  const panResponder = useMemo(() => PanResponder.create({
-    onStartShouldSetPanResponder: () => false,
-    onMoveShouldSetPanResponder: (_evt, gestureState) => Math.abs(gestureState.dy) > 6,
-    onMoveShouldSetPanResponderCapture: (_evt, gestureState) => Math.abs(gestureState.dy) > 6,
-    onPanResponderGrant: (evt) => {
-      const idx = Math.max(0, Math.min(TIMES.length - 1, Math.floor((evt.nativeEvent.locationY || 0) / SLOT_ROW_HEIGHT)));
-      const next = { start: idx, end: idx };
-      dragRangeRef.current = next;
-      setDragRange(next);
-    },
-    onPanResponderMove: (evt) => {
-      const curr = dragRangeRef.current;
-      if (!curr) return;
-      const idx = Math.max(0, Math.min(TIMES.length - 1, Math.floor((evt.nativeEvent.locationY || 0) / SLOT_ROW_HEIGHT)));
-      const next = { start: curr.start, end: idx };
-      dragRangeRef.current = next;
-      setDragRange(next);
-    },
-    onPanResponderRelease: () => {
-      const curr = dragRangeRef.current;
-      if (curr) openModalForRange(curr.start, curr.end);
-      dragRangeRef.current = null;
-      setDragRange(null);
-    },
-    onPanResponderTerminate: () => {
-      dragRangeRef.current = null;
-      setDragRange(null);
-    },
-  }), [openModalForRange]);
+  }
 
   async function addEvent() {
     if (!newTitle.trim() || !child) return;
@@ -219,7 +210,7 @@ export default function ParentScheduleScreen({ navigation }: any) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title:     newTitle,
-          date:      selectedDate,
+          date:      modalDate,
           startTime: newTime,
           endTime:   calcEndTime(newTime, newDuration),
           type:      newType,
@@ -230,22 +221,33 @@ export default function ParentScheduleScreen({ navigation }: any) {
       });
       if (res.ok) {
         const ev = await res.json();
-        setEvents(prev => [...prev, ev]);
-        setEventDates(prev => new Set([...prev, selectedDate]));
+        setEventsMap(prev => ({
+          ...prev,
+          [modalDate]: [...(prev[modalDate] ?? []), ev],
+        }));
+        setEventDates(prev => new Set([...prev, modalDate]));
       }
     } catch {}
     setNewTitle(''); setNewNote(''); setSaving(false); setModalVisible(false);
   }
 
-  async function removeEvent(id: string) {
+  async function removeEvent(id: string, dateStr: string) {
     try {
       await fetch(`${SERVER_URL}/schedule/${id}`, { method: 'DELETE' });
-      setEvents(prev => prev.filter(e => e.id !== id));
+      setEventsMap(prev => ({
+        ...prev,
+        [dateStr]: (prev[dateStr] ?? []).filter(e => e.id !== id),
+      }));
     } catch {}
   }
 
   function prevWeek() { const d = new Date(weekBase); d.setDate(d.getDate() - 7); setWeekBase(d); }
   function nextWeek() { const d = new Date(weekBase); d.setDate(d.getDate() + 7); setWeekBase(d); }
+
+  const { width: screenWidth } = useWindowDimensions();
+  const colWidth = Math.max(DAY_COL_WIDTH, Math.floor((screenWidth - TIME_LABEL_WIDTH) / 7));
+  const gridHeight = TIMES.length * HOUR_HEIGHT;
+  const totalGridWidth = TIME_LABEL_WIDTH + colWidth * 7;
 
   return (
     <ScreenLayout>
@@ -276,143 +278,126 @@ export default function ParentScheduleScreen({ navigation }: any) {
             </ScrollView>
           )}
 
-          {/* ── Day Strip ── */}
-          <View style={styles.daySelectorCard}>
+          {/* ── Week navigation bar ── */}
+          <View style={styles.weekNavBar}>
             <TouchableOpacity style={styles.navArrow} onPress={prevWeek}>
               <Feather name="chevron-left" size={18} color={colors.textMuted} />
             </TouchableOpacity>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
-              {week.map((d) => (
-                <TouchableOpacity
-                  key={d.iso}
-                  style={[styles.dayItem, d.iso === selectedDate && styles.dayItemActive]}
-                  onPress={() => setSelectedDate(d.iso)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.dayLabel, d.iso === selectedDate && styles.dayLabelActive]}>{d.day}</Text>
-                  <Text style={[styles.dateNum, d.iso === selectedDate && styles.dateNumActive]}>{d.date}</Text>
-                  {eventDates.has(d.iso) && <View style={[styles.dayDot, d.iso === selectedDate && { backgroundColor: 'white' }]} />}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <TouchableOpacity style={styles.todayBtn} onPress={() => setWeekBase(today)}>
+              <Text style={styles.todayBtnText}>Today</Text>
+            </TouchableOpacity>
+            <Text style={styles.weekLabel}>
+              {week[0].day} {week[0].date} — {week[6].day} {week[6].date}
+            </Text>
             <TouchableOpacity style={styles.navArrow} onPress={nextWeek}>
               <Feather name="chevron-right" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
-          {/* ── Main Layout: Timeline + Sidebar ── */}
           <View style={styles.mainLayout}>
-
-            {/* Timeline */}
-            <View style={styles.timelineCol}>
-              <Text style={styles.dragHint}>Drag on empty timeline slots to quick-book a time range.</Text>
-
-              {/* Pinned deadline / challenge events (startTime 23:59 — outside normal timeline) */}
-              {(() => {
-                const pinnedEvents = events.filter(e => {
-                  const h = parseInt(e.startTime?.split(':')[0] || '0', 10);
-                  return h < 8 || h > 17;
-                });
-                if (pinnedEvents.length === 0) return null;
-                return (
-                  <View style={{ marginBottom: 10 }}>
-                    {pinnedEvents.map(ev => (
-                      <TouchableOpacity
-                        key={ev.id}
-                        style={[styles.eventBlock, { borderLeftColor: typeColor(ev.type, colors), marginBottom: 6 }]}
-                        activeOpacity={0.82}
-                        onPress={() => {
-                          if (ev.type === 'assignment' || ev.type === 'deadline') navigation.navigate('ParentAssignments' as any, { highlightId: ev.assignmentId || ev.id } as any);
-                          else if (ev.type === 'challenge') navigation.navigate('ParentChallenges' as any, { highlightId: ev.assignmentId || ev.id } as any);
-                        }}
-                      >
-                        <View style={styles.eventTopRow}>
-                          <Text style={styles.eventTitle}>{toTitleCase(ev.title)}</Text>
-                          <View style={styles.eventTags}>
-                            <View style={[styles.tag, { backgroundColor: typeColor(ev.type, colors) + '20', borderColor: typeColor(ev.type, colors) + '40' }]}>
-                              <Text style={[styles.tagText, { color: typeColor(ev.type, colors) }]}>{toTitleCase(ev.type)}</Text>
-                            </View>
+            {/* ── Left: Week Calendar Grid ── */}
+            <View style={styles.calendarContainer}>
+              {/* Scrollable: header + time grid together so columns stay aligned */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={{ width: totalGridWidth }}>
+                  {/* Day header row — inside scroll */}
+                  <View style={styles.dayHeaderRow}>
+                    <View style={{ width: TIME_LABEL_WIDTH }} />
+                    {week.map((d) => {
+                      const isToday = d.iso === todayISO;
+                      const hasDot  = eventDates.has(d.iso);
+                      return (
+                        <View key={d.iso} style={[styles.dayHeader, { width: colWidth }]}>
+                          <Text style={[styles.dayHeaderLabel, isToday && styles.dayHeaderLabelToday]}>{d.day}</Text>
+                          <View style={[styles.dayHeaderCircle, isToday && styles.dayHeaderCircleToday]}>
+                            <Text style={[styles.dayHeaderDate, isToday && styles.dayHeaderDateToday]}>{d.date}</Text>
                           </View>
+                          {hasDot && <View style={[styles.dayDot, isToday && { backgroundColor: colors.primary }]} />}
                         </View>
-                        {ev.note ? <Text style={styles.eventNote}>{ev.note}</Text> : null}
-                      </TouchableOpacity>
-                    ))}
+                      );
+                    })}
                   </View>
-                );
-              })()}
-
-              {loading ? (
-                <View style={{ alignItems: 'center', paddingVertical: 32 }}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                  <Text style={styles.emptyText}>Loading schedule…</Text>
-                </View>
-              ) : (
-                <View style={styles.timelineDragArea} {...panResponder.panHandlers}>
-                {TIMES.map((t, idx) => {
-                  const [slotH] = t.split(':').map(Number);
-                  const event = events.find((e) => { const [evH] = e.startTime.split(':').map(Number); return evH === slotH; });
-                  const isNow = t === todayISO.slice(0, 5) && selectedDate === todayISO;
-                  const rangeStart = dragRange ? Math.min(dragRange.start, dragRange.end) : -1;
-                  const rangeEnd = dragRange ? Math.max(dragRange.start, dragRange.end) : -1;
-                  const inDragRange = idx >= rangeStart && idx <= rangeEnd;
-                  return (
-                    <View key={t} style={styles.timeRow}>
-                      <Text style={[styles.timeLabel, isNow && { color: colors.accentBlue, fontWeight: '800' }]}>{t}</Text>
-                      <View style={styles.timeSlot}>
-                        {event ? (
-                          <TouchableOpacity
-                            style={[styles.eventBlock, { borderLeftColor: typeColor(event.type, colors) }]}
-                            activeOpacity={0.82}
-                            onPress={() => {
-                              const t = event.type;
-                              if (t === 'assignment' || t === 'deadline') navigation.navigate('ParentAssignments' as any, { highlightId: event.assignmentId || event.id } as any);
-                              else if (t === 'challenge') navigation.navigate('ParentChallenges' as any, { highlightId: event.assignmentId || event.id } as any);
-                              else if (t === 'lesson' || t === 'study') navigation.navigate('ParentLearning' as any);
-                            }}
-                          >
-                            <View style={styles.eventTopRow}>
-                              <Text style={styles.eventTitle}>{toTitleCase(event.title)}</Text>
-                              <View style={styles.eventTags}>
-                                {event.type !== 'study' && (
-                                  <View style={[styles.tag, { backgroundColor: typeColor(event.type, colors) + '20', borderColor: typeColor(event.type, colors) + '40' }]}>
-                                    <Text style={[styles.tagText, { color: typeColor(event.type, colors) }]}>{toTitleCase(event.type)}</Text>
-                                  </View>
-                                )}
-                                {event.createdBy === 'teacher' && (
-                                  <View style={[styles.tag, { backgroundColor: colors.accentPurple + '20', borderColor: colors.accentPurple + '40' }]}>
-                                    <Text style={[styles.tagText, { color: colors.accentPurple }]}>Teacher</Text>
-                                  </View>
-                                )}
-                                <TouchableOpacity onPress={() => removeEvent(event.id)} style={styles.deleteBtn}>
-                                  <Feather name="x" size={12} color={colors.textDim} />
-                                </TouchableOpacity>
-                              </View>
-                            </View>
-                            <Text style={styles.eventTime}>{event.startTime}{event.endTime ? ` – ${event.endTime}` : ''}</Text>
-                            {event.note ? <Text style={styles.eventNote}>{event.note}</Text> : null}
-                          </TouchableOpacity>
-                        ) : (
-                          <TouchableOpacity
-                            style={[styles.emptySlot, isNow && { borderTopColor: colors.accentBlue, borderTopWidth: 2 }, inDragRange && styles.draggingSlot]}
-                            onPress={() => openModalForRange(idx, idx)}
-                            activeOpacity={0.4}
-                          >
-                            <Feather name="plus" size={12} color={colors.textDim} style={{ opacity: 0.4 }} />
-                          </TouchableOpacity>
-                        )}
-                      </View>
+                  {loading ? (
+                    <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                      <ActivityIndicator size="small" color={colors.primary} />
+                      <Text style={styles.emptyText}>Loading schedule…</Text>
                     </View>
-                  );
-                })}
+                  ) : (
+                    <View style={{ flexDirection: 'row' }}>
+                      {/* Time label column */}
+                      <View style={{ width: TIME_LABEL_WIDTH }}>
+                        {TIMES.map((t) => (
+                          <View key={t} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 4 }}>
+                            <Text style={styles.timeLabel}>{t}</Text>
+                          </View>
+                        ))}
+                      </View>
+
+                      {/* Day columns */}
+                      {week.map((d) => {
+                        const dayEvents = (eventsMap[d.iso] ?? []).filter(
+                          e => e.type !== 'deadline' && e.startTime !== '23:59'
+                        );
+                        return (
+                          <View key={d.iso} style={[styles.dayCol, { width: colWidth, height: gridHeight }]}>
+                            {/* Hour grid lines — tappable */}
+                            {TIMES.map((t, idx) => (
+                              <TouchableOpacity
+                                key={t}
+                                style={[styles.hourCell, { top: idx * HOUR_HEIGHT }]}
+                                onPress={() => openSlotModal(d.iso, t)}
+                                activeOpacity={0.3}
+                              />
+                            ))}
+                            {/* Absolutely positioned events */}
+                            {dayEvents.map(event => {
+                              const top    = calcEventTop(event.startTime);
+                              const height = calcEventHeight(event.startTime, event.endTime);
+                              const color  = typeColor(event.type, colors);
+                              return (
+                                <TouchableOpacity
+                                  key={event.id}
+                                  style={[styles.eventBlock, {
+                                    top, height,
+                                    backgroundColor: color + '20',
+                                    borderLeftColor: color,
+                                  }]}
+                                  activeOpacity={0.82}
+                                  onPress={() => {
+                                    const t = event.type;
+                                    if (t === 'assignment' || t === 'deadline') navigation.navigate('ParentAssignments' as any, { highlightId: event.assignmentId || event.id } as any);
+                                    else if (t === 'challenge') navigation.navigate('ParentChallenges' as any, { highlightId: event.assignmentId || event.id } as any);
+                                    else if (t === 'lesson' || t === 'study') navigation.navigate('ParentLearning' as any);
+                                  }}
+                                >
+                                  <Text style={styles.eventTitle} numberOfLines={1}>{toTitleCase(event.title)}</Text>
+                                  <Text style={styles.eventTime}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</Text>
+                                  <TouchableOpacity
+                                    style={styles.deleteBtn}
+                                    onPress={() => removeEvent(event.id, d.iso)}
+                                    hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+                                  >
+                                    <Feather name="x" size={10} color={colors.textDim} />
+                                  </TouchableOpacity>
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
                 </View>
-              )}
-              <TouchableOpacity style={styles.addEventBtn} onPress={() => setModalVisible(true)} activeOpacity={0.8}>
+              </ScrollView>
+
+              {/* Add event button */}
+              <TouchableOpacity style={styles.addEventBtn} onPress={() => { setModalDate(todayISO); setModalVisible(true); }} activeOpacity={0.8}>
                 <Feather name="plus" size={16} color={colors.primary} />
                 <Text style={styles.addEventText}>Add Event for {child?.name ?? 'Child'}</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Sidebar */}
+            {/* ── Right Sidebar ── */}
             <View style={styles.sideCol}>
               {/* Mini Calendar */}
               <View style={styles.sideCard}>
@@ -434,22 +419,20 @@ export default function ParentScheduleScreen({ navigation }: any) {
                   <View key={wi} style={styles.calWeek}>
                     {week2.map((date, di) => {
                       if (date === null) return <View key={di} style={styles.calDate} />;
-                      const iso = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
-                      const isToday = iso === todayISO;
-                      const isSelected = iso === selectedDate;
-                      const hasDot = eventDates.has(iso);
+                      const iso        = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
+                      const isToday    = iso === todayISO;
+                      const isWeekDay  = week.some(d => d.iso === iso);
+                      const hasDot     = eventDates.has(iso);
                       return (
-                        <TouchableOpacity
+                        <View
                           key={di}
-                          style={[styles.calDate, isSelected && styles.calDateToday]}
-                          onPress={() => setSelectedDate(iso)}
-                          activeOpacity={0.7}
+                          style={[styles.calDate, isToday && styles.calDateToday, isWeekDay && !isToday && styles.calDateWeekHighlight]}
                         >
-                          <Text style={[styles.calDateText, isToday && { color: colors.accentBlue, fontWeight: '700' }, isSelected && styles.calDateTextToday]}>
+                          <Text style={[styles.calDateText, isToday && styles.calDateTextToday, isWeekDay && !isToday && { color: colors.primary }]}>
                             {date}
                           </Text>
-                          {hasDot && <View style={[styles.calDot, { backgroundColor: isSelected ? 'white' : colors.primary }]} />}
-                        </TouchableOpacity>
+                          {hasDot && <View style={[styles.calDot, { backgroundColor: isToday ? 'white' : colors.primary }]} />}
+                        </View>
                       );
                     })}
                   </View>
@@ -463,7 +446,7 @@ export default function ParentScheduleScreen({ navigation }: any) {
                   <Text style={styles.emptyText}>No upcoming deadlines for {child?.name ?? 'this child'}.</Text>
                 ) : (
                   deadlines.map((d) => {
-                    const urgent = d.date === todayISO;
+                    const urgent   = d.date === todayISO;
                     const dueColor = urgent || d.date < todayISO ? colors.accentRed : colors.accentYellow;
                     const dueLabel = urgent ? 'Due Today' : d.date;
                     return (
@@ -488,7 +471,7 @@ export default function ParentScheduleScreen({ navigation }: any) {
         <Modal visible={modalVisible} transparent animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modal}>
-              <Text style={styles.modalTitle}>Add Event — {selectedDate}</Text>
+              <Text style={styles.modalTitle}>Add Event — {modalDate}</Text>
               {child && <Text style={styles.modalSubtitle}>For {child.name} ({child.grade})</Text>}
               <TextInput
                 style={styles.modalInput}
@@ -524,13 +507,15 @@ export default function ParentScheduleScreen({ navigation }: any) {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {['00', '15', '30', '45'].map(m => (
-                  <TouchableOpacity key={m} style={[styles.timeChip, newMinute === m && styles.timeChipActive]} onPress={() => setNewMinute(m)}>
-                    <Text style={[styles.timeChipText, newMinute === m && { color: colors.primary }]}>:{m}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              {newHour !== '' && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {['00', '15', '30', '45'].map(m => (
+                    <TouchableOpacity key={m} style={[styles.timeChip, newMinute === m && styles.timeChipActive]} onPress={() => setNewMinute(m)}>
+                      <Text style={[styles.timeChipText, newMinute === m && { color: colors.primary }]}>{newHour}:{m}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
               <Text style={styles.modalLabel}>Duration:</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {DURATIONS.map((d) => (
@@ -557,76 +542,60 @@ export default function ParentScheduleScreen({ navigation }: any) {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const makeStyles = (c: AppColors) => StyleSheet.create({
-  screen: { flex: 1, backgroundColor: c.bgDark },
-  scroll: { flex: 1 },
+  screen:  { flex: 1, backgroundColor: c.bgDark },
+  scroll:  { flex: 1 },
   content: { padding: spacing.xl, paddingBottom: 40 },
 
   // Child selector
-  childRow: { flexDirection: 'row', marginBottom: spacing.lg },
-  childTab: {
-    alignItems: 'center', marginRight: spacing.md,
-    paddingVertical: spacing.sm, paddingHorizontal: spacing.lg,
-    borderRadius: radius.lg, borderWidth: 1, borderColor: 'transparent',
-  },
-  childTabActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
-  childTabName: { fontSize: 14, fontWeight: '700' },
-  childTabGrade: { fontSize: 10, color: c.textDim, marginTop: 2 },
+  childRow:        { flexDirection: 'row', marginBottom: spacing.lg },
+  childTab:        { alignItems: 'center', marginRight: spacing.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.lg, borderRadius: radius.lg, borderWidth: 1, borderColor: 'transparent' },
+  childTabActive:  { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  childTabName:    { fontSize: 14, fontWeight: '700' },
+  childTabGrade:   { fontSize: 10, color: c.textDim, marginTop: 2 },
 
-  // Day strip
-  daySelectorCard: {
-    flexDirection: 'row', alignItems: 'center',
+  // Week nav
+  weekNavBar: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
     backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
-    borderRadius: radius.xl, padding: spacing.lg, marginBottom: spacing.xl,
+    borderRadius: radius.xl, padding: spacing.md, marginBottom: spacing.xl,
   },
-  navArrow: { padding: spacing.sm },
-  dayItem: {
-    alignItems: 'center', paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm, borderRadius: radius.lg, marginHorizontal: 2, gap: 4,
-  },
-  dayItemActive: { backgroundColor: c.accentBlue },
-  dayLabel: { fontSize: 10, fontWeight: '700', color: c.textMuted, letterSpacing: 0.5 },
-  dayLabelActive: { color: 'white' },
-  dateNum: { fontSize: 18, fontWeight: '700', color: c.textMuted },
-  dateNumActive: { color: 'white' },
-  dayDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: c.primary },
+  navArrow:     { padding: spacing.sm },
+  todayBtn:     { paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.sm, borderWidth: 1, borderColor: c.borderColor },
+  todayBtnText: { fontSize: 12, fontWeight: '600', color: c.textMuted },
+  weekLabel:    { flex: 1, fontSize: 13, fontWeight: '700', color: c.textMain, textAlign: 'center' },
 
   // Layout
-  mainLayout: { flexDirection: 'row', gap: spacing.xl },
-  timelineCol: { flex: 1.5 },
-  sideCol: { flex: 1, gap: spacing.lg },
+  mainLayout:        { flexDirection: 'row', gap: spacing.xl },
+  calendarContainer: { flex: 1.5 },
+  sideCol:           { flex: 1, gap: spacing.lg },
 
-  // Timeline
-  timelineDragArea: { width: '100%' },
-  dragHint: { fontSize: 11, color: c.textDim, marginBottom: spacing.sm, marginLeft: spacing.sm },
-  timeRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 2 },
-  timeLabel: { width: 44, fontSize: 11, color: c.textDim, paddingTop: spacing.md, fontWeight: '600' },
-  timeSlot: { flex: 1, minHeight: 48 },
-  emptySlot: {
-    height: 48,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.03)',
-    marginLeft: spacing.sm,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    paddingRight: spacing.md,
-  },
-  draggingSlot: {
-    borderTopColor: c.primary + '85',
-    backgroundColor: c.primaryGlow,
-  },
+  // Day header
+  dayHeaderRow:         { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: c.borderColor, marginBottom: 0 },
+  dayHeader:            { alignItems: 'center', paddingVertical: spacing.sm, gap: 2 },
+  dayHeaderLabel:       { fontSize: 10, fontWeight: '700', color: c.textDim, letterSpacing: 0.5 },
+  dayHeaderLabelToday:  { color: c.accentBlue },
+  dayHeaderCircle:      { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  dayHeaderCircleToday: { backgroundColor: c.accentBlue },
+  dayHeaderDate:        { fontSize: 14, fontWeight: '700', color: c.textMuted },
+  dayHeaderDateToday:   { color: 'white' },
+  dayDot:               { width: 4, height: 4, borderRadius: 2, backgroundColor: c.textDim },
+
+  // Grid
+  dayCol:   { position: 'relative', borderLeftWidth: 1, borderLeftColor: c.borderColor + '50' },
+  hourCell: { position: 'absolute', left: 0, right: 0, height: HOUR_HEIGHT, borderTopWidth: 1, borderTopColor: c.borderColor + '40' },
+  timeLabel: { fontSize: 10, color: c.textDim, fontWeight: '600', textAlign: 'right', paddingRight: 6 },
+
+  // Events
   eventBlock: {
-    backgroundColor: c.cardDark, borderLeftWidth: 3,
-    borderTopRightRadius: radius.sm, borderBottomRightRadius: radius.sm,
-    padding: spacing.md, marginLeft: spacing.sm, marginBottom: 2,
+    position: 'absolute', left: 2, right: 2,
+    borderLeftWidth: 3, borderRadius: 4,
+    paddingHorizontal: 5, paddingVertical: 3,
+    overflow: 'hidden',
   },
-  eventTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
-  eventTitle: { fontSize: 13, fontWeight: '600', color: c.textMain, flex: 1 },
-  eventTags: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  tag: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 },
-  tagText: { fontSize: 10, fontWeight: '600' },
-  deleteBtn: { padding: 2 },
-  eventTime: { fontSize: 11, color: c.textMuted },
-  eventNote: { fontSize: 11, color: c.textMuted, marginTop: 3 },
+  eventTitle: { fontSize: 11, fontWeight: '600', color: '#ffffff' },
+  eventTime:  { fontSize: 10, color: 'rgba(255,255,255,0.8)' },
+  deleteBtn:  { position: 'absolute', top: 3, right: 3 },
+
   addEventBtn: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     marginTop: spacing.lg, paddingVertical: 12, paddingHorizontal: spacing.lg,
@@ -635,28 +604,26 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderStyle: 'dashed', justifyContent: 'center',
   },
   addEventText: { fontSize: 13, fontWeight: '600', color: c.primary },
-  emptyText: { fontSize: 12, color: c.textMuted, marginTop: 8 },
+  emptyText:    { fontSize: 12, color: c.textMuted, marginTop: 8 },
 
   // Sidebar
-  sideCard: {
-    backgroundColor: c.cardDark, borderWidth: 1,
-    borderColor: c.borderColor, borderRadius: radius.lg, padding: spacing.lg,
-  },
-  calHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
-  calMonth: { fontSize: 13, fontWeight: '700', color: c.textMain },
+  sideCard:      { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.lg, padding: spacing.lg },
+  calHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
+  calMonth:      { fontSize: 13, fontWeight: '700', color: c.textMain },
   calDayHeaders: { flexDirection: 'row', marginBottom: spacing.sm },
-  calDayHeader: { flex: 1, fontSize: 10, color: c.textDim, textAlign: 'center', fontWeight: '600' },
-  calWeek: { flexDirection: 'row', marginBottom: 4 },
-  calDate: { flex: 1, alignItems: 'center', paddingVertical: 4, borderRadius: 6, gap: 2 },
-  calDateToday: { backgroundColor: c.accentBlue },
-  calDateText: { fontSize: 12, color: c.textMuted, fontWeight: '500' },
-  calDateTextToday: { color: 'white', fontWeight: '700' },
-  calDot: { width: 4, height: 4, borderRadius: 2 },
-  sideTitle: { fontSize: 14, fontWeight: '700', color: c.textMain, marginBottom: spacing.lg },
-  deadlineItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
-  deadlineIcon: { width: 32, height: 32, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+  calDayHeader:  { flex: 1, fontSize: 10, color: c.textDim, textAlign: 'center', fontWeight: '600' },
+  calWeek:       { flexDirection: 'row', marginBottom: 4 },
+  calDate:       { flex: 1, alignItems: 'center', paddingVertical: 4, borderRadius: 6, gap: 2 },
+  calDateToday:         { backgroundColor: c.accentBlue },
+  calDateWeekHighlight: { backgroundColor: c.primaryGlow },
+  calDateText:          { fontSize: 12, color: c.textMuted, fontWeight: '500' },
+  calDateTextToday:     { color: 'white', fontWeight: '700' },
+  calDot:        { width: 4, height: 4, borderRadius: 2 },
+  sideTitle:     { fontSize: 14, fontWeight: '700', color: c.textMain, marginBottom: spacing.lg },
+  deadlineItem:  { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
+  deadlineIcon:  { width: 32, height: 32, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
   deadlineTitle: { fontSize: 12, fontWeight: '600', color: c.textMain },
-  deadlineDue: { fontSize: 11 },
+  deadlineDue:   { fontSize: 11 },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center' },
@@ -665,20 +632,16 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderColor: c.borderColor, borderRadius: radius.xl,
     padding: spacing.xxl, gap: spacing.lg,
   },
-  modalTitle: { fontSize: 17, fontWeight: '700', color: c.textMain },
-  modalSubtitle: { fontSize: 12, color: c.textMuted, marginTop: -spacing.sm },
-  modalInput: {
-    backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1,
-    borderColor: c.borderColor, borderRadius: radius.md,
-    padding: spacing.md, color: c.textMain, fontSize: 14,
-  },
-  modalLabel: { fontSize: 12, color: c.textMuted, fontWeight: '600' },
-  timeChip: { paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radius.sm, borderWidth: 1, borderColor: c.borderColor, marginRight: 6 },
-  timeChipActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
-  timeChipText: { fontSize: 12, color: c.textMuted },
-  modalBtns: { flexDirection: 'row', gap: spacing.md },
-  modalCancel: { flex: 1, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center' },
-  modalCancelText: { fontSize: 13, fontWeight: '600', color: c.textMuted },
-  modalConfirm: { flex: 1, paddingVertical: 12, borderRadius: radius.md, backgroundColor: c.primary, alignItems: 'center' },
+  modalTitle:       { fontSize: 17, fontWeight: '700', color: c.textMain },
+  modalSubtitle:    { fontSize: 12, color: c.textMuted, marginTop: -spacing.sm },
+  modalInput:       { backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, padding: spacing.md, color: c.textMain, fontSize: 14 },
+  modalLabel:       { fontSize: 12, color: c.textMuted, fontWeight: '600' },
+  timeChip:         { paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radius.sm, borderWidth: 1, borderColor: c.borderColor, marginRight: 6 },
+  timeChipActive:   { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  timeChipText:     { fontSize: 12, color: c.textMuted },
+  modalBtns:        { flexDirection: 'row', gap: spacing.md },
+  modalCancel:      { flex: 1, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center' },
+  modalCancelText:  { fontSize: 13, fontWeight: '600', color: c.textMuted },
+  modalConfirm:     { flex: 1, paddingVertical: 12, borderRadius: radius.md, backgroundColor: c.primary, alignItems: 'center' },
   modalConfirmText: { fontSize: 13, fontWeight: '700', color: 'white' },
 });

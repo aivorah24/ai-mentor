@@ -953,66 +953,284 @@ Respond ONLY as valid JSON:
   }
 });
 
-// â”€â”€ POST /assignments/extract-questions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Upload a PDF or image and extract questions from it using Groq.
-// Body: { fileBase64: string, mimeType: string }
+// ── POST /assignments/extract-questions ───────────────────────────
+// Extract ALL content from worksheet images or PDF.
+// Body: { fileBase64, mimeType } for single file
+//   OR  { files: [{ base64, mimeType }] } for multiple files
 
 router.post('/extract-questions', async (req, res) => {
-  const { fileBase64, mimeType = 'image/jpeg' } = req.body;
-  if (!fileBase64) return res.status(400).json({ error: 'fileBase64 required' });
+  const { fileBase64, mimeType, files } = req.body;
+
+  // Build array of files to process
+  let fileList = [];
+  if (Array.isArray(files) && files.length > 0) {
+    fileList = files.map(f => ({ base64: f.base64, mime: f.mimeType || 'image/jpeg' }));
+  } else if (fileBase64) {
+    fileList = [{ base64: fileBase64, mime: mimeType || 'image/jpeg' }];
+  }
+  if (fileList.length === 0) return res.status(400).json({ error: 'No files provided' });
+
+  const extractPrompt = `You are analyzing a page from a school worksheet. Extract ALL educational content visible on this page.
+Return ONLY a valid JSON object with these fields:
+{
+  “title”: “worksheet title, MHLE number, or activity name”,
+  “chapter”: “chapter, unit, topic, or activity name (e.g. 'MHLE 22', 'My Farm Story', 'Addition and Subtraction')”,
+  “subject”: “subject (e.g. Language, Mathematics, Science)”,
+  “grade”: “grade or PYP level if visible”,
+  “purpose”: “the purpose or objective stated on the worksheet”,
+  “learningOutcomes”: [“learning outcomes exactly as written”],
+  “taskDescription”: “full task/activity instructions including ALL task descriptions on this page”,
+  “questions”: [
+    {
+      “text”: “the full question or task text”,
+      “needsImage”: false,
+      “imageYStart”: 0,
+      “imageYEnd”: 100
+    }
+  ],
+  “wordBank”: [“words from any Word Bank section”],
+  “successCriteria”: [“items from any Success Criteria or self-assessment checklist”],
+  “stamps”: [“names of any stamps, badges, or rewards shown”],
+  “feedbackSection”: “any feedback/feedforward/reflection instructions”
+}
+
+QUESTION FORMAT RULES:
+- Each question must be an object with “text”, “needsImage”, “imageYStart”, and “imageYEnd”.
+- “needsImage”: set to true ONLY if the question requires a visual (diagram, shape, table, math calculation layout, picture, choice board) to answer. Pure text/word problems do NOT need images.
+- “imageYStart” and “imageYEnd”: approximate vertical position (0-100 percentage) of the relevant visual content on this page. 0 = very top, 100 = very bottom. For example, if a diagram is in the middle of the page, use imageYStart: 40, imageYEnd: 70.
+- Examples of questions that NEED images: “Find the area of the irregular shape”, “Calculate the missing digits” (with a visual grid), “Use the code table to decode”.
+- Examples that do NOT need images: “A market sells 476 apples...”, “Amit jogged four times around the park...”.
+- IMPORTANT: Group related calculations as ONE task. If there are 9 addition/subtraction problems under one “Task 1”, that is ONE question like “Task 1: Solve each problem and use the code to discover the secret message [9 calculations]”, NOT 9 separate questions. Each distinct Task heading = one question.
+
+GENERAL RULES:
+- Extract EVERY task on this page. Each task is a separate question.
+- Word problems should be extracted in full.
+- Include enrichment tasks and reflection questions.
+- LOOK for large/bold text at the top — that is usually the TITLE.
+- “chapter” = the topic/MHLE number/unit. Put in BOTH “title” AND “chapter”.
+- “learningOutcomes” are goals at the top. “successCriteria” are self-check items.
+- Do NOT invent questions. Only extract what is actually written on the page.
+- If a page has no questions, set “questions” to empty array.
+- Read EVERY piece of text carefully.`;
 
   try {
-    let questions = [];
+    // Merge results from all pages
+    const merged = {
+      title: '', chapter: '', subject: '', grade: '', purpose: '',
+      learningOutcomes: [], taskDescription: '',
+      questions: [], wordBank: [], successCriteria: [], stamps: [], feedbackSection: '',
+      hasVisualContent: false, visualDescriptions: [],
+    };
+
+    for (const file of fileList) {
+      let extracted = {};
+
+      if (file.mime === 'application/pdf') {
+        const pdfParse = require('pdf-parse');
+        const buffer = Buffer.from(file.base64, 'base64');
+        const pdfData = await pdfParse(buffer);
+        const text = pdfData.text?.trim();
+        if (!text) continue;
+
+        const completion = await groq.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: `${extractPrompt}\n\nAssignment text:\n${text.slice(0, 4000)}` }],
+          response_format: { type: 'json_object' },
+        });
+        extracted = JSON.parse(completion.choices[0].message.content);
+      } else {
+        const completion = await groq.chat.completions.create({
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          temperature: 0,
+          max_tokens: 2000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: extractPrompt },
+              { type: 'image_url', image_url: { url: `data:${file.mime};base64,${file.base64}` } },
+            ],
+          }],
+        });
+        let raw = completion.choices[0].message.content.replace(/```json|```/g, '').trim();
+        console.log('[extract] Raw AI response:', raw.slice(0, 500));
+        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+        if (jsonMatch) raw = jsonMatch[0];
+        try { extracted = JSON.parse(raw); } catch {
+          raw = raw.replace(/,\s*([}\]])/g, '$1');
+          try { extracted = JSON.parse(raw); } catch { continue; }
+        }
+      }
+
+      console.log('[extract] Page result:', JSON.stringify({ chapter: extracted.chapter, title: extracted.title, successCriteria: extracted.successCriteria, learningOutcomes: extracted.learningOutcomes }));
+      // Merge: first non-empty scalar wins, arrays get concatenated
+      if (extracted.title && !merged.title) merged.title = extracted.title;
+      if (extracted.chapter && !merged.chapter) merged.chapter = extracted.chapter;
+      if (extracted.subject && !merged.subject) merged.subject = extracted.subject;
+      if (extracted.grade && !merged.grade) merged.grade = extracted.grade;
+      if (extracted.purpose && !merged.purpose) merged.purpose = extracted.purpose;
+      if (extracted.taskDescription && !merged.taskDescription) merged.taskDescription = extracted.taskDescription;
+      if (extracted.feedbackSection && !merged.feedbackSection) merged.feedbackSection = extracted.feedbackSection;
+      if (Array.isArray(extracted.learningOutcomes)) merged.learningOutcomes.push(...extracted.learningOutcomes);
+      if (Array.isArray(extracted.questions)) {
+        const pageIdx = fileList.indexOf(file);
+        extracted.questions.forEach(q => {
+          if (typeof q === 'string') {
+            merged.questions.push({ text: q, pageIndex: pageIdx, needsImage: false, imageYStart: 0, imageYEnd: 100 });
+          } else {
+            merged.questions.push({
+              text: q.text || q,
+              pageIndex: pageIdx,
+              needsImage: !!q.needsImage,
+              imageYStart: q.imageYStart ?? 0,
+              imageYEnd: q.imageYEnd ?? 100,
+            });
+          }
+        });
+      }
+      if (Array.isArray(extracted.wordBank)) merged.wordBank.push(...extracted.wordBank);
+      if (Array.isArray(extracted.successCriteria)) merged.successCriteria.push(...extracted.successCriteria);
+      if (Array.isArray(extracted.stamps)) merged.stamps.push(...extracted.stamps);
+      if (extracted.hasVisualContent) merged.hasVisualContent = true;
+      if (extracted.visualDescription) merged.visualDescriptions.push(extracted.visualDescription);
+    }
+
+    // Deduplicate arrays
+    // Deduplicate questions by text, keep pageIndex
+    const seenQ = new Set();
+    merged.questions = merged.questions.filter(q => {
+      if (seenQ.has(q.text)) return false;
+      seenQ.add(q.text);
+      return true;
+    }).slice(0, 15);
+    merged.wordBank = [...new Set(merged.wordBank)];
+    merged.successCriteria = [...new Set(merged.successCriteria)];
+    merged.stamps = [...new Set(merged.stamps)];
+    merged.learningOutcomes = [...new Set(merged.learningOutcomes)];
+
+    // If title/chapter still empty after all pages, try a second pass on the first image
+    // asking specifically for the title
+    if (!merged.title && fileList.length > 0 && fileList[0].mime !== 'application/pdf') {
+      try {
+        const titleCompletion = await groq.chat.completions.create({
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          temperature: 0,
+          max_tokens: 200,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: 'What is the title or heading of this worksheet? Look for large, bold, or decorative text at the top of the page. Reply with ONLY the title text, nothing else. If you cannot find a title, reply with "NONE".' },
+              { type: 'image_url', image_url: { url: `data:${fileList[0].mime};base64,${fileList[0].base64}` } },
+            ],
+          }],
+        });
+        const titleRaw = titleCompletion.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
+        console.log('[extract] Title fallback result:', titleRaw);
+        if (titleRaw && titleRaw !== 'NONE' && titleRaw.length < 100) {
+          merged.title = titleRaw;
+          if (!merged.chapter) merged.chapter = titleRaw;
+        }
+      } catch (e2) { console.log('[extract] Title fallback failed:', e2.message); }
+    }
+
+    // Note: Auto-crop removed. Teachers manually select reference images via drag-to-crop UI.
+
+    console.log('[extract] Final merged:', JSON.stringify({ title: merged.title, chapter: merged.chapter, successCriteria: merged.successCriteria.length, wordBank: merged.wordBank.length }));
+    res.json(merged);
+  } catch (e) {
+    console.error('extract-questions error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── POST /assignments/pdf-to-quiz ────────────────────────────────────────────
+// Parse PDF/image content and auto-generate interactive MCQ quiz questions.
+// Body: { fileBase64, mimeType, subject?, grade?, difficulty?, count? }
+router.post('/pdf-to-quiz', async (req, res) => {
+  const {
+    fileBase64, mimeType = 'application/pdf',
+    subject = '', grade = '', difficulty = 'medium', count = 5,
+  } = req.body;
+  if (!fileBase64) return res.status(400).json({ error: 'fileBase64 required' });
+
+  const requestedCount = normalizeQuizCount(count, 5);
+
+  try {
+    // Step 1: extract text content from the uploaded file
+    let contentText = '';
 
     if (mimeType === 'application/pdf') {
-      // Extract text from PDF then use LLM to pull out questions
       const pdfParse = require('pdf-parse');
       const buffer = Buffer.from(fileBase64, 'base64');
       const pdfData = await pdfParse(buffer);
-      const text = pdfData.text?.trim();
-      if (!text) return res.json({ questions: [] });
-
-      const completion = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{
-          role: 'user',
-          content: `Extract all questions from this assignment or worksheet text.
-Return ONLY a JSON object in this format: {"questions": ["Q1 text", "Q2 text", ...]}
-Extract up to 10 questions. Write each question exactly as it appears.
-
-Assignment text:
-${text.slice(0, 4000)}`,
-        }],
-        response_format: { type: 'json_object' },
-      });
-      const result = JSON.parse(completion.choices[0].message.content);
-      questions = Array.isArray(result.questions) ? result.questions : [];
-
+      contentText = pdfData.text?.trim() || '';
     } else {
-      // Use Groq Vision for image files
-      const completion = await groq.chat.completions.create({
+      // For images, use Groq Vision to extract all text
+      const visionCompletion = await groq.chat.completions.create({
         model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         messages: [{
           role: 'user',
           content: [
-            {
-              type: 'text',
-              text: `Look at this assignment or worksheet image and extract all the questions.
-Return ONLY a JSON object: {"questions": ["Q1 text", "Q2 text", ...]}
-Extract up to 10 questions. Write each question exactly as shown in the image.`,
-            },
+            { type: 'text', text: 'Extract ALL text content from this image. Include all questions, instructions, paragraphs, and any visible text. Return the raw text only, no formatting.' },
             { type: 'image_url', image_url: { url: `data:${mimeType};base64,${fileBase64}` } },
           ],
         }],
       });
-      const raw = completion.choices[0].message.content.replace(/```json|```/g, '').trim();
-      const result = JSON.parse(raw);
-      questions = Array.isArray(result.questions) ? result.questions : [];
+      contentText = visionCompletion.choices[0].message.content?.trim() || '';
     }
 
-    res.json({ questions: questions.slice(0, 10) });
+    if (!contentText) return res.json({ questions: [], extracted: '' });
+
+    // Step 2: generate MCQ quiz questions from the extracted content
+    const difficultyGuide = {
+      easy:   'Simple, recall-based. Single-step. Vocabulary and basic facts.',
+      medium: 'Understanding-based. Requires applying the concept, not just recall.',
+      hard:   'Application and analysis. Multi-step thinking, real-world scenarios.',
+    }[difficulty] || 'moderate difficulty';
+
+    const prompt = `You are creating an interactive quiz from uploaded worksheet/PDF content.
+${subject ? `Subject: ${subject}` : ''}
+${grade ? `Grade: ${grade}` : ''}
+
+UPLOADED CONTENT:
+${contentText.slice(0, 6000)}
+
+INSTRUCTIONS:
+- If the content contains existing questions/exercises, convert them into MCQ format
+- If the content is informational (no questions), generate quiz questions BASED ON the content
+- Generate exactly ${requestedCount} MCQ questions
+- Difficulty: ${difficultyGuide}
+- Age-appropriate language${grade ? ` for ${grade} students` : ''}
+- Every question MUST be type “mcq” with exactly 4 options
+- Only ONE correct option per question
+- Include a hint and explanation for each
+
+Respond ONLY as valid JSON:
+{
+  “questions”: [
+    {
+      “id”: “q1”,
+      “question”: “question text here”,
+      “type”: “mcq”,
+      “options”: [“option1”, “option2”, “option3”, “option4”],
+      “correct”: “option1”,
+      “hint”: “Think about...”,
+      “explanation”: “The correct answer is A because...”
+    }
+  ]
+}`;
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+    });
+
+    const result = JSON.parse(completion.choices[0].message.content);
+    const generated = normalizeQuizQuestions(Array.isArray(result.questions) ? result.questions : [], requestedCount);
+
+    res.json({ questions: generated, extractedText: contentText.slice(0, 500) });
   } catch (e) {
-    console.error('extract-questions error:', e.message);
+    console.error('pdf-to-quiz error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -1048,6 +1266,7 @@ router.post('/', async (req, res) => {
     grade = null, curriculum = null, questions = [], documentUrl = null, documentUrls = [],
     successCriteria = [], taskSteps = [], quizQuestions = [],
     centralIdea = null, linesOfInquiry = [], learnerProfile = null, atlSkill = null, keyConcept = null,
+    questionAnswers = {}, teacherComments = [],
   } = req.body;
 
   if (!title || !dueDate) return res.status(400).json({ error: 'title and dueDate required' });
@@ -1076,6 +1295,8 @@ router.post('/', async (req, res) => {
       success_criteria: Array.isArray(successCriteria) ? successCriteria : [],
       task_steps:       Array.isArray(taskSteps) ? taskSteps : [],
       quiz_questions:   normalizedQuizQuestions,
+      question_answers: typeof questionAnswers === 'object' ? questionAnswers : {},
+      teacher_comments: Array.isArray(teacherComments) ? teacherComments : [],
       central_idea:     centralIdea || null,
       lines_of_inquiry: Array.isArray(linesOfInquiry) ? linesOfInquiry : [],
       learner_profile:  learnerProfile || null,
