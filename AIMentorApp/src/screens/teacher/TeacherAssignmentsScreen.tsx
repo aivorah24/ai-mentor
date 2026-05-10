@@ -12,6 +12,47 @@ import { useAuth } from '../../context/AuthContext';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import SERVER_URL from '../../config/serverUrl';
+// @ts-ignore — pdfjs-dist v3 CommonJS import
+const pdfjsLib = Platform.OS === 'web' ? require('pdfjs-dist/build/pdf') : null;
+// @ts-ignore
+const pdfjsWorker = Platform.OS === 'web' ? require('pdfjs-dist/build/pdf.worker.entry') : null;
+if (pdfjsLib && typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+  (window as any).__pdfjsLib = pdfjsLib;
+}
+
+/** Convert a PDF file (base64) into per-page JPEG images using browser canvas */
+async function pdfToImages(pdfBase64: string): Promise<{ base64: string; mime: string; name: string }[]> {
+  if (Platform.OS !== 'web') return [];
+  try {
+    console.log('[pdfToImages] Starting, pdfjs version:', pdfjsLib.version);
+    const raw = atob(pdfBase64);
+    const data = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) data[i] = raw.charCodeAt(i);
+
+    const doc = await pdfjsLib.getDocument({ data, disableWorker: true }).promise;
+    console.log('[pdfToImages] PDF parsed, pages:', doc.numPages);
+
+    const pages: { base64: string; mime: string; name: string }[] = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const viewport = page.getViewport({ scale: 1.5 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { console.error('[pdfToImages] No canvas context for page', i); continue; }
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      const jpegUrl = canvas.toDataURL('image/jpeg', 0.85);
+      pages.push({ base64: jpegUrl.split(',')[1], mime: 'image/jpeg', name: `page-${i}.jpg` });
+      console.log('[pdfToImages] Rendered page', i, '/', doc.numPages);
+    }
+    return pages;
+  } catch (err: any) {
+    console.error('[pdfToImages] FAILED:', err?.message || err, err?.stack);
+    return [];
+  }
+}
 
 type Assignment = {
   id: string;
@@ -178,6 +219,17 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [extractingQuestions, setExtractingQuestions] = useState(false);
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState('');
+  // Extracted questions from PDF/image — editable by teacher before publishing
+  const [extractedQuestions, setExtractedQuestions] = useState<{ question: string; answer: string; comment: string }[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  // Crop modal state: which question index is being assigned an image
+  const [cropModalIdx, setCropModalIdx] = useState<number | null>(null);
+  const [cropSelection, setCropSelection] = useState<{ startX: number; startY: number; endX: number; endY: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [cropPageIdx, setCropPageIdx] = useState(0);
+  const [generatingFromExtracted, setGeneratingFromExtracted] = useState(false);
+  // Creation mode: 'choose' (initial), 'ai' (IB PYP AI), 'upload' (PDF/Image worksheet)
+  const [createMode, setCreateMode] = useState<'choose' | 'ai' | 'upload'>('choose');
   const [reportAssignment, setReportAssignment] = useState<Assignment | null>(null);
   const [detailAssignment, setDetailAssignment] = useState<Assignment | null>(null);
   const [detailTab, setDetailTab] = useState<'overview' | 'students' | 'questions'>('overview');
@@ -311,6 +363,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           grade,
           curriculum,
           questions: questions.filter(q => q.trim()),
+          // Include expected answers from extracted questions for AI validation
+          questionAnswers: extractedQuestions.filter(q => q.answer.trim()).reduce((acc, q) => {
+            acc[q.question] = q.answer;
+            return acc;
+          }, {} as Record<string, string>),
+          teacherComments: extractedQuestions.filter(q => q.comment.trim()).map(q => ({ question: q.question, comment: q.comment })),
           // Merge IB learning outcomes into successCriteria if present, else use manual list
           successCriteria: ibLearningOutcomes.filter(l => l.trim()).length > 0
             ? ibLearningOutcomes.filter(l => l.trim())
@@ -357,55 +415,121 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*,application/pdf';
-    input.multiple = false;
+    input.multiple = true;
     input.onchange = async (e: any) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+      const files: File[] = Array.from(e.target.files || []);
+      if (files.length === 0) return;
       setUploadingDoc(true);
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        const result = ev.target?.result as string;
-        const base64 = result.split(',')[1];
+
+      // Read all files as base64
+      const readFile = (f: File): Promise<{ name: string; base64: string; mime: string }> =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const result = ev.target?.result as string;
+            resolve({ name: f.name, base64: result.split(',')[1], mime: f.type });
+          };
+          reader.readAsDataURL(f);
+        });
+
+      let fileDataArr = await Promise.all(files.map(readFile));
+
+      // Convert PDFs to per-page images for vision-based extraction
+      console.log('[upload] Files before PDF conversion:', fileDataArr.map(f => `${f.name} (${f.mime})`));
+      const expanded: typeof fileDataArr = [];
+      for (const fd of fileDataArr) {
+        if (fd.mime === 'application/pdf') {
+          console.log('[upload] Converting PDF to images:', fd.name);
+          const pageImages = await pdfToImages(fd.base64);
+          console.log('[upload] PDF converted to', pageImages.length, 'images');
+          if (pageImages.length > 0) {
+            expanded.push(...pageImages);
+          } else {
+            console.log('[upload] PDF conversion failed, sending as PDF');
+            expanded.push(fd); // Fallback: send PDF as-is
+          }
+        } else {
+          expanded.push(fd);
+        }
+      }
+      fileDataArr = expanded;
+      console.log('[upload] Files after PDF conversion:', fileDataArr.map(f => `${f.name} (${f.mime})`));
+
+      // Upload all files (now all images)
+      const uploadedFiles: { name: string; base64: string; mime: string; url?: string }[] = [];
+      for (const fd of fileDataArr) {
         try {
           const res = await fetch(`${SERVER_URL}/assignments/upload-doc`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fileBase64: base64, fileName: file.name, mimeType: file.type }),
+            body: JSON.stringify({ fileBase64: fd.base64, fileName: fd.name, mimeType: fd.mime }),
           });
           const data = await res.json();
           if (res.ok) {
-            const newFile = { name: file.name, base64, mime: file.type, url: data.url };
-            setDocFiles(prev => [...prev, newFile]);
-            setUploadingDoc(false);
-            // Extract questions from every uploaded image and merge
-            if (file.type.startsWith('image/')) {
-              setExtractingQuestions(true);
-              try {
-                const eRes = await fetch(`${SERVER_URL}/assignments/extract-questions`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ fileBase64: base64, mimeType: file.type }),
-                });
-                const eData = await eRes.json();
-                if (eRes.ok && Array.isArray(eData.questions) && eData.questions.length > 0) {
-                  setQuestions(prev => {
-                    const existing = prev.filter(q => q.trim());
-                    const merged = [...existing, ...eData.questions];
-                    // deduplicate
-                    return Array.from(new Set(merged));
-                  });
-                }
-              } catch {/* silent */}
-              finally { setExtractingQuestions(false); }
-            }
-            return;
-          } else {
-            setFormError(data.error || 'Upload failed');
+            uploadedFiles.push({ name: fd.name, base64: fd.base64, mime: fd.mime, url: data.url });
           }
-        } catch { setFormError('Upload failed. Check connection.'); }
-        finally { setUploadingDoc(false); }
-      };
-      reader.readAsDataURL(file);
+        } catch {/* skip failed uploads */}
+      }
+
+      if (uploadedFiles.length > 0) {
+        setDocFiles(prev => [...prev, ...uploadedFiles]);
+      }
+      setUploadingDoc(false);
+
+      // Extract content from all uploaded files (all are images now)
+      if (uploadedFiles.length > 0) {
+        setExtractingQuestions(true);
+        try {
+          const allBase64 = uploadedFiles.map(f => ({ base64: f.base64, mimeType: f.mime }));
+          const eRes = await fetch(`${SERVER_URL}/assignments/extract-questions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(
+              allBase64.length === 1
+                ? { fileBase64: allBase64[0].base64, mimeType: allBase64[0].mimeType }
+                : { files: allBase64 }
+            ),
+          });
+          const eData = await eRes.json();
+          if (eRes.ok) {
+            if (eData.title && !title.trim()) setTitle(eData.title);
+            // Use chapter if available, otherwise fall back to title as chapter/topic
+            const chapterVal = eData.chapter || eData.title || '';
+            if (chapterVal) setChapter(prev => prev || chapterVal);
+            if (eData.subject) {
+              const matchSubj = SUBJECTS.find(s => s.toLowerCase().includes(eData.subject.toLowerCase()) || eData.subject.toLowerCase().includes(s.toLowerCase()));
+              if (matchSubj) setSubject(matchSubj);
+            }
+            if (eData.purpose) setNote(prev => prev || eData.purpose);
+            // Learning outcomes go into note alongside purpose
+            if (Array.isArray(eData.learningOutcomes) && eData.learningOutcomes.length > 0) {
+              const loText = eData.learningOutcomes.filter((o: string) => o.trim()).map((o: string) => `• ${o}`).join('\n');
+              setNote(prev => prev ? `${prev}\n\nLearning Outcomes:\n${loText}` : `Learning Outcomes:\n${loText}`);
+            }
+            // Only actual success criteria checklist items
+            if (Array.isArray(eData.successCriteria) && eData.successCriteria.length > 0) {
+              setSuccessCriteria(eData.successCriteria.filter((c: string) => c.trim()));
+            }
+            if (eData.taskDescription) setTeacherNotes(prev => prev || eData.taskDescription);
+            if (Array.isArray(eData.wordBank) && eData.wordBank.length > 0) {
+              setIbWordBank(prev => [...new Set([...prev, ...eData.wordBank])]);
+            }
+            if (Array.isArray(eData.stamps) && eData.stamps.length > 0) {
+              setIbStamps(prev => [...new Set([...prev, ...eData.stamps])]);
+            }
+            if (Array.isArray(eData.questions) && eData.questions.length > 0) {
+              const mappedQuestions = eData.questions.map((q: any) => {
+                const qText = typeof q === 'string' ? q : q.text || q;
+                const needsImg = typeof q === 'object' ? !!q.needsImage : false;
+                const pageIdx = typeof q === 'object' ? q.pageIndex : undefined;
+                return { question: qText, answer: '', comment: '', pageIndex: pageIdx, needsImage: needsImg, croppedImage: '' };
+              });
+              setExtractedQuestions(prev => [...prev, ...mappedQuestions]);
+            }
+          }
+        } catch {/* silent */}
+        finally { setExtractingQuestions(false); }
+      }
     };
     input.click();
   }
@@ -417,10 +541,46 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     setCurriculum(user?.teaches?.[0]?.curriculum || user?.curriculum || 'NCERT');
     setType('assignment'); setQuestions(['']); setSuccessCriteria(['']); setTaskSteps([]); setQuizQuestions([]); setTeacherNotes(''); setDocFiles([]); setFormError('');
     setAssignTo('all'); setSelectedStudent(null); setStudentSearch('');
-    setExtractingQuestions(false);
+    setExtractingQuestions(false); setExtractedQuestions([]); setShowPreview(false); setCreateMode('choose');
     setSelectedLanguage('Telugu'); setUnitOfInquiry(''); setIbPurpose('');
     setIbLearningOutcomes(['']); setIbWordBank([]); setIbStamps([]);
     setIbCentralIdea(''); setIbLinesOfInquiry([]); setIbLearnerProfile(''); setIbAtlSkill(''); setIbKeyConcept('');
+  }
+
+  // Generate MCQ quiz from extracted worksheet questions
+  async function generateQuizFromExtracted() {
+    const qs = extractedQuestions.filter(q => q.question.trim());
+    if (qs.length === 0) return;
+    setGeneratingFromExtracted(true);
+    try {
+      const prompt = qs.map((q, i) => `${i + 1}. ${q.question}${q.answer ? ` (Answer: ${q.answer})` : ''}`).join('\n');
+      const res = await fetch(`${SERVER_URL}/assignments/pdf-to-quiz`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileBase64: '', mimeType: 'text/plain',
+          subject, grade,
+          difficulty: quizDifficulty || 'medium',
+          count: qs.length,
+        }),
+      });
+      // We'll use a direct LLM call via the existing generate-quiz with the questions as teacherNotes
+      const res2 = await fetch(`${SERVER_URL}/assignments/generate-quiz`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject, chapter: chapter.trim(), grade, curriculum,
+          difficulty: quizDifficulty, count: qs.length,
+          teacherNotes: `Convert these worksheet questions into MCQ format. Use these exact questions:\n${prompt}`,
+        }),
+      });
+      const data = await res2.json();
+      if (res2.ok && Array.isArray(data.questions) && data.questions.length > 0) {
+        setQuizQuestions(data.questions);
+        setType('quiz');
+      }
+    } catch {}
+    finally { setGeneratingFromExtracted(false); }
   }
 
   function addTaskStep(type: StepType) {
@@ -1135,17 +1295,144 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         {/* Create Assignment Modal */}
         <Modal visible={showModal} animationType="slide" transparent onRequestClose={() => { setShowModal(false); resetForm(); }}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalSheet}>
+            <View style={[styles.modalOverlay, createMode === 'choose' && { justifyContent: 'center' }]}>
+              <View style={[styles.modalSheet, createMode === 'choose' && { maxHeight: undefined, borderRadius: 20 }]}>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Create Assignment</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                    {createMode !== 'choose' && (
+                      <TouchableOpacity onPress={() => setCreateMode('choose')} activeOpacity={0.75}>
+                        <Feather name="arrow-left" size={20} color={colors.textMuted} />
+                      </TouchableOpacity>
+                    )}
+                    <Text style={styles.modalTitle}>
+                      {createMode === 'choose' ? 'Create Assignment' : createMode === 'ai' ? 'AI Assignment' : 'Upload Worksheet'}
+                    </Text>
+                  </View>
                   <TouchableOpacity onPress={() => { setShowModal(false); resetForm(); }} activeOpacity={0.75}>
                     <Feather name="x" size={20} color={colors.textMuted} />
                   </TouchableOpacity>
                 </View>
 
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalContent}>
-                  <Text style={styles.fieldLabel}>Title *</Text>
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.modalContent, createMode === 'choose' && { flex: 1, justifyContent: 'center' }]}>
+
+                  {/* ── MODE SELECTOR ── */}
+                  {createMode === 'choose' && (
+                    <View style={{ gap: 16 }}>
+                      <Text style={{ fontSize: 13, color: colors.textDim, lineHeight: 18 }}>
+                        Choose how you want to create this assignment:
+                      </Text>
+
+                      {/* Option 1: AI Assignment */}
+                      <TouchableOpacity
+                        style={{ padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: '#7AADA840', backgroundColor: '#7AADA808', gap: 8 }}
+                        onPress={() => { setCreateMode('ai'); setType('assignment'); }}
+                        activeOpacity={0.8}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#7AADA820', alignItems: 'center', justifyContent: 'center' }}>
+                            <Feather name="cpu" size={20} color="#7AADA8" />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 15, fontWeight: '800', color: '#7AADA8' }}>
+                              {isIBPYP ? 'Generate IB PYP Assignment' : 'Generate AI Assignment'}
+                            </Text>
+                            <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
+                              AI creates Purpose, Learning Outcomes, Task Steps, Word Bank, and Stamps
+                            </Text>
+                          </View>
+                          <Feather name="chevron-right" size={18} color="#7AADA8" />
+                        </View>
+                      </TouchableOpacity>
+
+                      {/* Option 2: Upload Worksheet */}
+                      <TouchableOpacity
+                        style={{ padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary + '40', backgroundColor: colors.primaryGlow, gap: 8 }}
+                        onPress={() => { setCreateMode('upload'); }}
+                        activeOpacity={0.8}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center' }}>
+                            <Feather name="upload" size={20} color={colors.primary} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 15, fontWeight: '800', color: colors.primary }}>Upload Worksheet (PDF / Image)</Text>
+                            <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
+                              Extract questions from worksheet, use as-is or convert to interactive quiz
+                            </Text>
+                          </View>
+                          <Feather name="chevron-right" size={18} color={colors.primary} />
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {/* ── UPLOAD WORKSHEET (shown FIRST in upload mode) ── */}
+                  {createMode === 'upload' && (<>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={styles.fieldLabel}>Upload Worksheet</Text>
+                    {docFiles.length > 0 && <Text style={{ fontSize: 11, color: colors.textDim }}>{docFiles.length} file{docFiles.length > 1 ? 's' : ''}</Text>}
+                  </View>
+
+                  {/* Uploaded page thumbnails */}
+                  {docFiles.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+                      <View style={{ flexDirection: 'row', gap: 10 }}>
+                        {docFiles.map((f, idx) => (
+                          <View key={idx} style={{ width: 140, borderRadius: 10, overflow: 'hidden', position: 'relative', borderWidth: 1.5, borderColor: colors.primary + '60' }}>
+                            {f.mime.startsWith('image/') ? (
+                              <Image source={{ uri: `data:${f.mime};base64,${f.base64}` }} style={{ width: 140, height: 190 }} resizeMode="contain" />
+                            ) : (
+                              <View style={{ width: 140, height: 190, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primaryGlow }}>
+                                <Feather name="file-text" size={28} color={colors.primary} />
+                              </View>
+                            )}
+                            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingVertical: 3, backgroundColor: 'rgba(0,0,0,0.55)' }}>
+                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'center' }}>Page {idx + 1}</Text>
+                            </View>
+                            <TouchableOpacity
+                              style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' }}
+                              onPress={() => { setDocFiles(prev => prev.filter((_, i) => i !== idx)); if (idx === 0) setQuestions(['']); }}
+                              activeOpacity={0.8}
+                            >
+                              <Feather name="x" size={12} color="#fff" />
+                            </TouchableOpacity>
+                          </View>
+                        ))}
+                      </View>
+                    </ScrollView>
+                  )}
+
+                  {/* Add / upload button */}
+                  <TouchableOpacity
+                    style={[styles.uploadDocBtn, { borderColor: colors.borderColor }]}
+                    onPress={pickDoc}
+                    activeOpacity={0.8}
+                    disabled={uploadingDoc || extractingQuestions}
+                  >
+                    {uploadingDoc ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : extractingQuestions ? (
+                      <ActivityIndicator size="small" color={colors.accentYellow} />
+                    ) : (
+                      <Feather name="plus-circle" size={18} color={colors.primary} />
+                    )}
+                    <Text style={[styles.uploadDocText, { color: colors.primary }]}>
+                      {uploadingDoc ? 'Uploading...' : extractingQuestions ? 'Extracting questions...' : docFiles.length === 0 ? 'Upload worksheet (image or PDF)' : 'Add another page'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Auto-filled indicator */}
+                  {docFiles.length > 0 && !extractingQuestions && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, backgroundColor: colors.accentGreen + '10', borderWidth: 1, borderColor: colors.accentGreen + '30' }}>
+                      <Feather name="cpu" size={12} color={colors.accentGreen} />
+                      <Text style={{ fontSize: 11, color: colors.accentGreen, fontWeight: '600' }}>Details auto-filled from worksheet — review and edit below</Text>
+                    </View>
+                  )}
+                  </>)}
+
+                  {/* ── COMMON FIELDS (shown in both modes) ── */}
+                  {createMode !== 'choose' && (<>
+                  <Text style={styles.fieldLabel}>Title *{createMode === 'upload' && docFiles.length > 0 && title.trim() ? <Text style={{ fontSize: 10, color: colors.accentGreen, fontWeight: '600' }}> · auto-filled</Text> : null}</Text>
                   <TextInput
                     style={styles.input}
                     placeholder="e.g. Chapter 5 Worksheet"
@@ -1154,7 +1441,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     onChangeText={setTitle}
                   />
 
-                  <Text style={styles.fieldLabel}>Subject</Text>
+                  <Text style={styles.fieldLabel}>Subject{createMode === 'upload' && docFiles.length > 0 ? <Text style={{ fontSize: 10, color: colors.accentGreen, fontWeight: '600' }}> · auto-filled</Text> : null}</Text>
                   <View style={styles.chipRow}>
                     {SUBJECTS.map((s) => (
                       <TouchableOpacity
@@ -1208,7 +1495,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </View>
                   </View>
 
-                  <Text style={styles.fieldLabel}>Chapter / Topic</Text>
+                  <Text style={styles.fieldLabel}>Chapter / Topic{createMode === 'upload' && docFiles.length > 0 && chapter.trim() ? <Text style={{ fontSize: 10, color: colors.accentGreen, fontWeight: '600' }}> · auto-filled</Text> : null}</Text>
                   <TextInput
                     style={styles.input}
                     placeholder="e.g. Fractions and Decimals"
@@ -1239,123 +1526,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     />
                   )}
 
-                  <Text style={styles.fieldLabel}>Type</Text>
-                  <View style={styles.chipRow}>
-                    {TYPES.map((t) => (
-                      <TouchableOpacity
-                        key={t}
-                        style={[styles.chip, type === t && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
-                        onPress={() => setType(t as any)}
-                        activeOpacity={0.75}
-                      >
-                        <Feather name={t === 'quiz' ? 'help-circle' : 'file-text'} size={13} color={type === t ? colors.primary : colors.textMuted} />
-                        <Text style={[styles.chipText, type === t && { color: colors.primary }]}>{t}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                  {/* Output Format + Quiz Generator moved to after extracted questions */}
 
-                  {/* ── AI Quiz Generator (only when type = quiz) ── */}
-                  {type === 'quiz' && (
-                    <View style={{ gap: 10, padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary + '40', backgroundColor: colors.primaryGlow }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <Feather name="zap" size={16} color={colors.primary} />
-                        <Text style={{ fontSize: 14, fontWeight: '800', color: colors.primary }}>Generate Quiz with AI</Text>
-                        <Text style={{ fontSize: 11, color: colors.textDim }}>from textbook content</Text>
-                      </View>
-
-                      {/* Difficulty */}
-                      <View>
-                        <Text style={[styles.fieldLabel, { marginBottom: 6 }]}>Difficulty</Text>
-                        <View style={{ flexDirection: 'row', gap: 8 }}>
-                          {(['easy','medium','hard'] as const).map(d => (
-                            <TouchableOpacity key={d} onPress={() => setQuizDifficulty(d)} activeOpacity={0.75}
-                              style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
-                                borderColor: quizDifficulty === d ? colors.primary : colors.borderColor,
-                                backgroundColor: quizDifficulty === d ? colors.primaryGlow : 'transparent' }}>
-                              <Text style={{ fontSize: 12, fontWeight: '700', color: quizDifficulty === d ? colors.primary : colors.textMuted, textTransform: 'capitalize' }}>{d}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
-
-                      {/* Question count */}
-                      <View>
-                        <Text style={[styles.fieldLabel, { marginBottom: 6 }]}>Number of Questions</Text>
-                        <View style={{ flexDirection: 'row', gap: 8 }}>
-                          {[3, 5, 8, 10].map(n => (
-                            <TouchableOpacity key={n} onPress={() => setQuizCount(n)} activeOpacity={0.75}
-                              style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
-                                borderColor: quizCount === n ? colors.primary : colors.borderColor,
-                                backgroundColor: quizCount === n ? colors.primaryGlow : 'transparent' }}>
-                              <Text style={{ fontSize: 13, fontWeight: '700', color: quizCount === n ? colors.primary : colors.textMuted }}>{n}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
-
-                      {/* Teacher notes */}
-                      <Text style={styles.fieldLabel}>Additional Instructions for AI (optional)</Text>
-                      <TextInput
-                        style={[styles.input, styles.inputMulti]}
-                        placeholder="e.g. Focus on word problems, include a question about fractions, avoid division..."
-                        placeholderTextColor={colors.textDim}
-                        value={teacherNotes}
-                        onChangeText={setTeacherNotes}
-                        multiline numberOfLines={2}
-                      />
-
-                      {/* Generate button */}
-                      <TouchableOpacity
-                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-                          padding: 14, borderRadius: 12, backgroundColor: generatingQuiz ? colors.borderColor : colors.primary }}
-                        onPress={generateQuiz}
-                        activeOpacity={0.85}
-                        disabled={generatingQuiz}
-                      >
-                        {generatingQuiz
-                          ? <ActivityIndicator size="small" color="#fff" />
-                          : <Feather name="zap" size={16} color="#fff" />}
-                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#fff' }}>
-                          {generatingQuiz ? 'Generating from textbook...' : `Generate ${quizCount} Questions`}
-                        </Text>
-                      </TouchableOpacity>
-
-                      {/* Generated questions preview */}
-                      {quizQuestions.length > 0 && (
-                        <View style={{ gap: 8, marginTop: 4 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <Feather name="check-circle" size={14} color={colors.accentGreen} />
-                            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.accentGreen }}>{quizQuestions.length} questions generated from textbook</Text>
-                          </View>
-                          {quizQuestions.map((q, i) => (
-                            <View key={q.id || i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-                              padding: 10, borderRadius: 10, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor }}>
-                              <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: q.type === 'mcq' ? colors.primary : colors.accentYellow, alignItems: 'center', justifyContent: 'center' }}>
-                                <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' }}>{i+1}</Text>
-                              </View>
-                              <View style={{ flex: 1 }}>
-                                <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{q.question}</Text>
-                                <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 2 }}>
-                                  {q.type === 'mcq' ? `MCQ · ${q.options?.length || 4} options` : 'Short answer'}
-                                </Text>
-                              </View>
-                              <TouchableOpacity onPress={() => setQuizQuestions(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.7}>
-                                <Feather name="trash-2" size={14} color={colors.accentRed} />
-                              </TouchableOpacity>
-                            </View>
-                          ))}
-                          <TouchableOpacity onPress={generateQuiz} activeOpacity={0.75}
-                            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', paddingVertical: 4 }}>
-                            <Feather name="refresh-cw" size={12} color={colors.textDim} />
-                            <Text style={{ fontSize: 12, color: colors.textDim }}>Regenerate</Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </View>
-                  )}
-
-                  {/* ── AI Assignment Generator (all curricula) ── */}
-                  {type === 'assignment' && <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#7AADA840', backgroundColor: '#7AADA808', gap: 10 }}>
+                  {/* ── AI Assignment Generator (only in AI mode) ── */}
+                  {createMode === 'ai' && <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#7AADA840', backgroundColor: '#7AADA808', gap: 10 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <Feather name="cpu" size={16} color="#7AADA8" />
                       <Text style={{ fontSize: 14, fontWeight: '800', color: '#7AADA8' }}>
@@ -1520,8 +1694,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     )}
                   </View>}
 
-                  {/* ── Task Steps ── */}
-                  <View style={{ marginTop: 4 }}>
+                  {/* ── Task Steps (AI mode only) ── */}
+                  {createMode === 'ai' && <View style={{ marginTop: 4 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.fieldLabel}>Task Steps</Text>
@@ -1548,10 +1722,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         <Text style={{ fontSize: 12, color: '#ef4444' }}>{stepsError}</Text>
                       </View>
                     )}
-                  </View>
+                  </View>}
 
                   {/* Step type picker — subject-appropriate options per IB PYP pedagogy */}
-                  {(() => {
+                  {createMode === 'ai' && (() => {
                     const SUBJECT_STEP_PICKER: Record<string, StepType[]> = {
                       'Mathematics':          ['tuning_in', 'problem_solving', 'math_reflection'],
                       'Science':              ['prior_knowledge', 'drawing', 'structured_writing'],
@@ -1597,7 +1771,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   })()}
 
                   {/* Existing steps */}
-                  {taskSteps.map((step, idx) => (
+                  {createMode === 'ai' && taskSteps.map((step, idx) => (
                     <View key={step.id} style={{ borderWidth: 1, borderColor: STEP_COLORS[step.type] + '40', borderRadius: 12, padding: 12, gap: 8, backgroundColor: STEP_COLORS[step.type] + '06' }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: STEP_COLORS[step.type], alignItems: 'center', justifyContent: 'center' }}>
@@ -1694,6 +1868,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </View>
                   ))}
 
+                  {/* Questions for Students — only in AI mode */}
+                  {createMode === 'ai' && (<>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text style={styles.fieldLabel}>Questions for Students</Text>
                     {questions.length < 10 && (
@@ -1724,12 +1900,400 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </View>
                   ))}
 
-                  {/* ── Success Criteria ── */}
+                  </>)}
+
+                  {createMode === 'upload' && (<>
+                  {/* ── Extracted Content Summary ── */}
+                  {(teacherNotes.trim() || note.trim() || ibWordBank.length > 0 || ibStamps.length > 0 || successCriteria.some(c => c.trim())) && docFiles.length > 0 && (
+                    <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: colors.accentGreen + '40', backgroundColor: colors.accentGreen + '08', gap: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Feather name="check-circle" size={16} color={colors.accentGreen} />
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accentGreen }}>Content Extracted</Text>
+                      </View>
+                      {note.trim() ? (
+                        <View style={{ gap: 2 }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted }}>PURPOSE / LEARNING OUTCOMES</Text>
+                          <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{note}</Text>
+                        </View>
+                      ) : null}
+                      {teacherNotes.trim() ? (
+                        <View style={{ gap: 2 }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted }}>TASK DESCRIPTION</Text>
+                          <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{teacherNotes}</Text>
+                        </View>
+                      ) : null}
+                      {ibWordBank.length > 0 ? (
+                        <View style={{ gap: 4 }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#7AADA8' }}>WORD BANK</Text>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                            {ibWordBank.map((w, i) => (
+                              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: '#7AADA818', borderWidth: 1, borderColor: '#7AADA840' }}>
+                                <Text style={{ fontSize: 12, color: '#7AADA8', fontWeight: '600' }}>{w}</Text>
+                                <TouchableOpacity onPress={() => setIbWordBank(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.7}>
+                                  <Feather name="x" size={10} color="#7AADA8" />
+                                </TouchableOpacity>
+                              </View>
+                            ))}
+                            <TextInput
+                              style={{ fontSize: 12, color: colors.textMain, minWidth: 80, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, borderColor: colors.borderColor, backgroundColor: colors.bgDark }}
+                              placeholder="Add word..."
+                              placeholderTextColor={colors.textDim}
+                              returnKeyType="done"
+                              onSubmitEditing={(e) => {
+                                const w = e.nativeEvent.text.trim();
+                                if (w) setIbWordBank(prev => [...prev, w]);
+                              }}
+                            />
+                          </View>
+                        </View>
+                      ) : null}
+                      {ibStamps.length > 0 ? (
+                        <View style={{ gap: 4 }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#8A8358' }}>STAMPS / BADGES</Text>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                            {ibStamps.map((s, i) => (
+                              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: '#8A835818', borderWidth: 1, borderColor: '#8A835840' }}>
+                                <Text style={{ fontSize: 12, color: '#8A8358', fontWeight: '600' }}>{s}</Text>
+                                <TouchableOpacity onPress={() => setIbStamps(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.7}>
+                                  <Feather name="x" size={10} color="#8A8358" />
+                                </TouchableOpacity>
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                      ) : null}
+                      <Text style={{ fontSize: 10, color: colors.textDim, fontStyle: 'italic' }}>
+                        Auto-extracted from worksheet. You can edit or remove items.
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* ── Extracted Questions from PDF/Image ── */}
+                  {extractedQuestions.length > 0 && (
+                    <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: colors.accentCyan + '40', backgroundColor: colors.accentCyan + '08', gap: 10 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Feather name="file-text" size={16} color={colors.accentCyan} />
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accentCyan }}>
+                          {extractedQuestions.length} Question{extractedQuestions.length > 1 ? 's' : ''} Extracted
+                        </Text>
+                      </View>
+                      <Text style={{ fontSize: 11, color: colors.textDim, lineHeight: 16 }}>
+                        Edit questions below, set expected answers for AI validation, and add comments for students.
+                      </Text>
+
+                      {extractedQuestions.map((eq, idx) => (
+                        <View key={idx} style={{ gap: 6, padding: 10, borderRadius: 10, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: colors.accentCyan, alignItems: 'center', justifyContent: 'center' }}>
+                              <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff' }}>Q{idx + 1}</Text>
+                            </View>
+                            <Text style={{ flex: 1, fontSize: 11, fontWeight: '700', color: colors.textDim }}>Question {idx + 1}</Text>
+                            <TouchableOpacity onPress={() => setExtractedQuestions(prev => prev.filter((_, i) => i !== idx))}>
+                              <Feather name="trash-2" size={14} color={colors.accentRed} />
+                            </TouchableOpacity>
+                          </View>
+                          <TextInput
+                            style={[styles.input, { fontSize: 12 }]}
+                            value={eq.question}
+                            onChangeText={(t) => setExtractedQuestions(prev => prev.map((q, i) => i === idx ? { ...q, question: t } : q))}
+                            multiline
+                            placeholder="Question text..."
+                            placeholderTextColor={colors.textDim}
+                          />
+                          {/* Reference image: show if already selected, otherwise show Add button */}
+                          {eq.croppedImage ? (
+                            <View style={{ borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: colors.accentCyan + '40' }}>
+                              <Image
+                                source={{ uri: eq.croppedImage }}
+                                style={{ width: '100%', height: 180, backgroundColor: '#fff' }}
+                                resizeMode="contain"
+                              />
+                              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 4, backgroundColor: colors.bgDark }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                  <Feather name="image" size={9} color={colors.accentCyan} />
+                                  <Text style={{ fontSize: 9, color: colors.accentCyan }}>Reference Image</Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', gap: 8 }}>
+                                  <TouchableOpacity onPress={() => { setCropModalIdx(idx); setCropPageIdx((eq as any).pageIndex || 0); setCropSelection(null); }}>
+                                    <Text style={{ fontSize: 9, color: colors.accentYellow }}>Replace</Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity onPress={() => setExtractedQuestions(prev => prev.map((q, i) => i === idx ? { ...q, croppedImage: '' } : q))}>
+                                    <Text style={{ fontSize: 9, color: colors.error }}>Remove</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                            </View>
+                          ) : docFiles.length > 0 ? (
+                            <TouchableOpacity
+                              onPress={() => { setCropModalIdx(idx); setCropPageIdx((eq as any).pageIndex || 0); setCropSelection(null); }}
+                              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.accentCyan + '60', backgroundColor: colors.accentCyan + '08' }}
+                            >
+                              <Feather name="crop" size={14} color={colors.accentCyan} />
+                              <View>
+                                <Text style={{ fontSize: 12, color: colors.accentCyan, fontWeight: '600' }}>Add Reference Image</Text>
+                                <Text style={{ fontSize: 9, color: colors.textDim, marginTop: 1 }}>Select the relevant diagram from your worksheet</Text>
+                              </View>
+                            </TouchableOpacity>
+                          ) : null}
+                          <TextInput
+                            style={[styles.input, { fontSize: 12, borderColor: colors.accentGreen + '50' }]}
+                            value={eq.answer}
+                            onChangeText={(t) => setExtractedQuestions(prev => prev.map((q, i) => i === idx ? { ...q, answer: t } : q))}
+                            placeholder="Expected answer (for AI validation)..."
+                            placeholderTextColor={colors.textDim}
+                          />
+                          <TextInput
+                            style={[styles.input, { fontSize: 11, borderColor: colors.accentYellow + '40' }]}
+                            value={eq.comment}
+                            onChangeText={(t) => setExtractedQuestions(prev => prev.map((q, i) => i === idx ? { ...q, comment: t } : q))}
+                            placeholder="Teacher comment for students (optional)..."
+                            placeholderTextColor={colors.textDim}
+                          />
+                        </View>
+                      ))}
+
+                    </View>
+                  )}
+
+                  {/* ── Output Format — Worksheet or Quiz ── */}
+                  <View style={{ gap: 10 }}>
+                    <Text style={styles.fieldLabel}>Output Format</Text>
+                    <Text style={{ fontSize: 11, color: colors.textDim, lineHeight: 16, marginTop: -4 }}>
+                      Choose how students will interact with this content
+                    </Text>
+                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                      {/* Worksheet option */}
+                      <TouchableOpacity
+                        style={{ flex: 1, padding: 14, borderRadius: 12, borderWidth: 1.5,
+                          borderColor: type === 'assignment' ? colors.accentCyan : colors.borderColor,
+                          backgroundColor: type === 'assignment' ? colors.accentCyan + '10' : 'transparent', gap: 6 }}
+                        onPress={() => {
+                          setType('assignment');
+                          if (extractedQuestions.length > 0) {
+                            setQuestions(extractedQuestions.map(q => q.question).filter(Boolean));
+                            setNote(prev => {
+                              const comments = extractedQuestions.filter(q => q.comment.trim()).map((q, i) => `Q${i+1}: ${q.comment}`).join('\n');
+                              return comments ? (prev ? prev + '\n\n' + comments : comments) : prev;
+                            });
+                          }
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: type === 'assignment' ? colors.accentCyan + '20' : colors.borderColor + '60', alignItems: 'center', justifyContent: 'center' }}>
+                            <Feather name="file-text" size={16} color={type === 'assignment' ? colors.accentCyan : colors.textDim} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '800', color: type === 'assignment' ? colors.accentCyan : colors.textMuted }}>Worksheet</Text>
+                            <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 1 }}>Open-ended with AI grading</Text>
+                          </View>
+                          {type === 'assignment' && <Feather name="check-circle" size={16} color={colors.accentCyan} />}
+                        </View>
+                      </TouchableOpacity>
+
+                      {/* Quiz option */}
+                      <TouchableOpacity
+                        style={{ flex: 1, padding: 14, borderRadius: 12, borderWidth: 1.5,
+                          borderColor: type === 'quiz' ? colors.primary : colors.borderColor,
+                          backgroundColor: type === 'quiz' ? colors.primaryGlow : 'transparent', gap: 6 }}
+                        onPress={() => setType('quiz')}
+                        activeOpacity={0.8}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: type === 'quiz' ? colors.primary + '20' : colors.borderColor + '60', alignItems: 'center', justifyContent: 'center' }}>
+                            <Feather name="help-circle" size={16} color={type === 'quiz' ? colors.primary : colors.textDim} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '800', color: type === 'quiz' ? colors.primary : colors.textMuted }}>Interactive Quiz</Text>
+                            <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 1 }}>MCQ with auto-scoring</Text>
+                          </View>
+                          {type === 'quiz' && <Feather name="check-circle" size={16} color={colors.primary} />}
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* ── Quiz Generator (shown when quiz format selected) ── */}
+                  {type === 'quiz' && (
+                    <View style={{ gap: 10, padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary + '40', backgroundColor: colors.primaryGlow }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Feather name="zap" size={16} color={colors.primary} />
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: colors.primary }}>Generate Quiz with AI</Text>
+                      </View>
+                      <Text style={{ fontSize: 11, color: colors.textDim, lineHeight: 16 }}>
+                        {extractedQuestions.length > 0
+                          ? 'Convert extracted questions to interactive MCQ format, or generate new ones from textbook content.'
+                          : 'Generate MCQ questions from textbook content for this topic.'}
+                      </Text>
+
+                      {/* Difficulty */}
+                      <View>
+                        <Text style={[styles.fieldLabel, { marginBottom: 6 }]}>Difficulty</Text>
+                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                          {(['easy','medium','hard'] as const).map(d => (
+                            <TouchableOpacity key={d} onPress={() => setQuizDifficulty(d)} activeOpacity={0.75}
+                              style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
+                                borderColor: quizDifficulty === d ? colors.primary : colors.borderColor,
+                                backgroundColor: quizDifficulty === d ? colors.primaryGlow : 'transparent' }}>
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: quizDifficulty === d ? colors.primary : colors.textMuted, textTransform: 'capitalize' }}>{d}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* Question count */}
+                      <View>
+                        <Text style={[styles.fieldLabel, { marginBottom: 6 }]}>Number of Questions</Text>
+                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                          {[3, 5, 8, 10].map(n => (
+                            <TouchableOpacity key={n} onPress={() => setQuizCount(n)} activeOpacity={0.75}
+                              style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
+                                borderColor: quizCount === n ? colors.primary : colors.borderColor,
+                                backgroundColor: quizCount === n ? colors.primaryGlow : 'transparent' }}>
+                              <Text style={{ fontSize: 13, fontWeight: '700', color: quizCount === n ? colors.primary : colors.textMuted }}>{n}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* Teacher notes */}
+                      <Text style={styles.fieldLabel}>Additional Instructions for AI (optional)</Text>
+                      <TextInput
+                        style={[styles.input, styles.inputMulti]}
+                        placeholder="e.g. Focus on word problems, include a question about fractions, avoid division..."
+                        placeholderTextColor={colors.textDim}
+                        value={teacherNotes}
+                        onChangeText={setTeacherNotes}
+                        multiline numberOfLines={2}
+                      />
+
+                      {/* Generate buttons */}
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        {extractedQuestions.length > 0 && (
+                          <TouchableOpacity
+                            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+                              padding: 12, borderRadius: 10, borderWidth: 1.5, borderColor: colors.primary,
+                              backgroundColor: generatingFromExtracted ? colors.borderColor : 'transparent' }}
+                            onPress={generateQuizFromExtracted}
+                            activeOpacity={0.85}
+                            disabled={generatingFromExtracted}
+                          >
+                            {generatingFromExtracted
+                              ? <ActivityIndicator size="small" color={colors.primary} />
+                              : <Feather name="repeat" size={14} color={colors.primary} />}
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>
+                              {generatingFromExtracted ? 'Converting...' : 'From Extracted'}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                        <TouchableOpacity
+                          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+                            padding: 12, borderRadius: 10,
+                            backgroundColor: generatingQuiz ? colors.borderColor : colors.primary }}
+                          onPress={generateQuiz}
+                          activeOpacity={0.85}
+                          disabled={generatingQuiz}
+                        >
+                          {generatingQuiz
+                            ? <ActivityIndicator size="small" color="#fff" />
+                            : <Feather name="zap" size={14} color="#fff" />}
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#fff' }}>
+                            {generatingQuiz ? 'Generating...' : 'From Textbook'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* ── Editable Quiz Questions Preview ── */}
+                      {quizQuestions.length > 0 && (
+                        <View style={{ gap: 8, marginTop: 4 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Feather name="check-circle" size={14} color={colors.accentGreen} />
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.accentGreen }}>{quizQuestions.length} questions — edit below</Text>
+                            </View>
+                            <TouchableOpacity onPress={generateQuiz} activeOpacity={0.75}
+                              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                              <Feather name="refresh-cw" size={11} color={colors.textDim} />
+                              <Text style={{ fontSize: 11, color: colors.textDim }}>Regenerate</Text>
+                            </TouchableOpacity>
+                          </View>
+                          {quizQuestions.map((q, i) => (
+                            <View key={q.id || i} style={{ padding: 10, borderRadius: 10, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, gap: 6 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                                <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: 6 }}>
+                                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{i + 1}</Text>
+                                </View>
+                                <TextInput
+                                  style={[styles.input, { flex: 1, fontSize: 12, marginBottom: 0 }]}
+                                  value={q.question}
+                                  onChangeText={(t) => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, question: t } : qq))}
+                                  multiline
+                                  placeholder="Question text..."
+                                  placeholderTextColor={colors.textDim}
+                                />
+                                <TouchableOpacity onPress={() => setQuizQuestions(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.7} style={{ marginTop: 8 }}>
+                                  <Feather name="trash-2" size={14} color={colors.accentRed} />
+                                </TouchableOpacity>
+                              </View>
+                              {/* Editable options with correct answer toggle */}
+                              {q.options?.map((opt: string, oi: number) => (
+                                <View key={oi} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 32 }}>
+                                  <TouchableOpacity
+                                    onPress={() => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, correct: opt } : qq))}
+                                    style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5,
+                                      borderColor: opt === q.correct ? colors.accentGreen : colors.borderColor,
+                                      backgroundColor: opt === q.correct ? colors.accentGreen + '20' : 'transparent',
+                                      alignItems: 'center', justifyContent: 'center' }}
+                                  >
+                                    <Text style={{ fontSize: 10, fontWeight: '700', color: opt === q.correct ? colors.accentGreen : colors.textDim }}>
+                                      {String.fromCharCode(65 + oi)}
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TextInput
+                                    style={[styles.input, { flex: 1, fontSize: 11, paddingVertical: 5, marginBottom: 0 }]}
+                                    value={opt}
+                                    onChangeText={(t) => setQuizQuestions(prev => prev.map((qq, j) => {
+                                      if (j !== i) return qq;
+                                      const newOpts = [...(qq.options || [])];
+                                      const wasCorrect = newOpts[oi] === qq.correct;
+                                      newOpts[oi] = t;
+                                      return { ...qq, options: newOpts, correct: wasCorrect ? t : qq.correct };
+                                    }))}
+                                    placeholder={`Option ${String.fromCharCode(65 + oi)}...`}
+                                    placeholderTextColor={colors.textDim}
+                                  />
+                                  {opt === q.correct && <Feather name="check-circle" size={14} color={colors.accentGreen} />}
+                                </View>
+                              ))}
+                              {/* Editable hint */}
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 32 }}>
+                                <Feather name="info" size={11} color={colors.accentYellow} />
+                                <TextInput
+                                  style={[styles.input, { flex: 1, fontSize: 10, paddingVertical: 4, marginBottom: 0, borderColor: colors.accentYellow + '30' }]}
+                                  value={q.hint || ''}
+                                  onChangeText={(t) => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, hint: t } : qq))}
+                                  placeholder="Hint for students (optional)..."
+                                  placeholderTextColor={colors.textDim}
+                                />
+                              </View>
+                            </View>
+                          ))}
+                          <Text style={{ fontSize: 10, color: colors.textDim, textAlign: 'center', lineHeight: 15 }}>
+                            Tap A/B/C/D to set correct answer. Edit question text, options, and hints inline.
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  )}
+
+                  </>)}
+
+                  {/* ── Success Criteria (both modes, at bottom) ── */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.fieldLabel}>Success Criteria</Text>
                       <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
-                        If visible in the worksheet, AI will auto-detect. Add here if not on worksheet.
+                        {createMode === 'upload' ? 'Auto-extracted from worksheet. Edit or add more.' : 'If visible in the worksheet, AI will auto-detect. Add here if not on worksheet.'}
                       </Text>
                     </View>
                     {successCriteria.length < 10 && (
@@ -1762,57 +2326,6 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       )}
                     </View>
                   ))}
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Text style={styles.fieldLabel}>Assignment Pages / Documents</Text>
-                    {docFiles.length > 0 && <Text style={{ fontSize: 11, color: colors.textDim }}>{docFiles.length} file{docFiles.length > 1 ? 's' : ''}</Text>}
-                  </View>
-
-                  {/* Uploaded image thumbnails */}
-                  {docFiles.length > 0 && (
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                      {docFiles.map((f, idx) => (
-                        <View key={idx} style={{ width: 80, height: 80, borderRadius: 8, overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: colors.primary }}>
-                          {f.mime.startsWith('image/') ? (
-                            <Image source={{ uri: `data:${f.mime};base64,${f.base64}` }} style={{ width: 80, height: 80 }} resizeMode="cover" />
-                          ) : (
-                            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primaryGlow }}>
-                              <Feather name="file-text" size={24} color={colors.primary} />
-                            </View>
-                          )}
-                          <View style={{ position: 'absolute', top: 2, left: 4 }}>
-                            <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff', textShadowColor: '#000', textShadowRadius: 4 }}>P{idx + 1}</Text>
-                          </View>
-                          <TouchableOpacity
-                            style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, borderRadius: 9, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' }}
-                            onPress={() => { setDocFiles(prev => prev.filter((_, i) => i !== idx)); if (idx === 0) setQuestions(['']); }}
-                            activeOpacity={0.8}
-                          >
-                            <Feather name="x" size={10} color="#fff" />
-                          </TouchableOpacity>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-
-                  {/* Add more button */}
-                  <TouchableOpacity
-                    style={[styles.uploadDocBtn, { borderColor: colors.borderColor }]}
-                    onPress={pickDoc}
-                    activeOpacity={0.8}
-                    disabled={uploadingDoc || extractingQuestions}
-                  >
-                    {uploadingDoc ? (
-                      <ActivityIndicator size="small" color={colors.primary} />
-                    ) : extractingQuestions ? (
-                      <ActivityIndicator size="small" color={colors.accentYellow} />
-                    ) : (
-                      <Feather name="plus-circle" size={18} color={colors.primary} />
-                    )}
-                    <Text style={[styles.uploadDocText, { color: colors.primary }]}>
-                      {uploadingDoc ? 'Uploading...' : extractingQuestions ? 'Extracting questions...' : docFiles.length === 0 ? 'Upload worksheet (image or PDF)' : 'Add another page'}
-                    </Text>
-                  </TouchableOpacity>
 
                   <Text style={styles.fieldLabel}>Note (optional)</Text>
                   <TextInput
@@ -1941,20 +2454,416 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                   {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
 
-                  <TouchableOpacity style={styles.submitBtn} onPress={createAssignment} activeOpacity={0.85} disabled={creating}>
-                    {creating ? (
-                      <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                      <>
-                        <Feather name="send" size={15} color="#fff" />
-                        <Text style={styles.submitBtnText}>Create Assignment</Text>
-                      </>
-                    )}
+                  {/* Preview button */}
+                  <TouchableOpacity
+                    style={[styles.submitBtn, { backgroundColor: colors.accentCyan }]}
+                    onPress={() => {
+                      if (!title.trim()) { setFormError('Title is required'); return; }
+                      if (!dueDate.trim()) { setFormError('Due date is required'); return; }
+                      if (type === 'quiz' && quizQuestions.length === 0) { setFormError('Generate quiz questions first.'); return; }
+                      setFormError('');
+                      setShowPreview(true);
+                    }}
+                    activeOpacity={0.85}
+                  >
+                    <Feather name="eye" size={15} color="#fff" />
+                    <Text style={styles.submitBtnText}>Preview Before Publishing</Text>
                   </TouchableOpacity>
+                  {/* Close common fields wrapper */}
+                  </>)}
                 </ScrollView>
               </View>
             </View>
           </KeyboardAvoidingView>
+        </Modal>
+
+        {/* ── CROP MODAL: Teacher selects area from worksheet page ── */}
+        <Modal visible={cropModalIdx !== null} animationType="fade" transparent onRequestClose={() => setCropModalIdx(null)}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ backgroundColor: colors.cardDark, borderRadius: 16, width: '95%', maxWidth: 700, maxHeight: '92%', borderWidth: 1, borderColor: colors.borderColor, overflow: 'hidden' }}>
+              {/* Header */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: colors.borderColor }}>
+                <View>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>Select Reference Image</Text>
+                  <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 2 }}>Drag on the worksheet to select the area for this question</Text>
+                </View>
+                <TouchableOpacity onPress={() => setCropModalIdx(null)}>
+                  <Feather name="x" size={20} color={colors.textDim} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Page selector */}
+              {docFiles.length > 1 && (
+                <View style={{ flexDirection: 'row', paddingHorizontal: 14, paddingVertical: 6, gap: 6 }}>
+                  {docFiles.map((_, pi) => (
+                    <TouchableOpacity
+                      key={pi}
+                      onPress={() => { setCropPageIdx(pi); setCropSelection(null); }}
+                      style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 6, backgroundColor: cropPageIdx === pi ? colors.primary : colors.bgDark, borderWidth: 1, borderColor: cropPageIdx === pi ? colors.primary : colors.borderColor }}
+                    >
+                      <Text style={{ fontSize: 11, color: cropPageIdx === pi ? '#fff' : colors.textDim }}>Page {pi + 1}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Worksheet page image with drag-to-select */}
+              <ScrollView style={{ flex: 1, padding: 10 }}>
+                {docFiles[cropPageIdx] && Platform.OS === 'web' ? (
+                  <View
+                    style={{ position: 'relative', alignSelf: 'center', cursor: 'crosshair' } as any}
+                    {...(Platform.OS === 'web' ? {
+                      onMouseDown: (e: any) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        setCropSelection({ startX: x, startY: y, endX: x, endY: y });
+                        setIsDragging(true);
+                      },
+                      onMouseMove: (e: any) => {
+                        if (!isDragging || !cropSelection) return;
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+                        const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+                        setCropSelection(prev => prev ? { ...prev, endX: x, endY: y } : null);
+                      },
+                      onMouseUp: () => setIsDragging(false),
+                      onMouseLeave: () => setIsDragging(false),
+                    } : {})}
+                  >
+                    <Image
+                      source={{ uri: `data:${docFiles[cropPageIdx].mime};base64,${docFiles[cropPageIdx].base64}` }}
+                      style={{ width: 600, height: 850, resizeMode: 'contain', backgroundColor: '#fff', borderRadius: 4 } as any}
+                    />
+                    {/* Selection overlay */}
+                    {cropSelection && (
+                      <View
+                        style={{
+                          position: 'absolute',
+                          left: Math.min(cropSelection.startX, cropSelection.endX),
+                          top: Math.min(cropSelection.startY, cropSelection.endY),
+                          width: Math.abs(cropSelection.endX - cropSelection.startX),
+                          height: Math.abs(cropSelection.endY - cropSelection.startY),
+                          borderWidth: 2,
+                          borderColor: '#00bcd4',
+                          borderStyle: 'dashed',
+                          backgroundColor: 'rgba(0,188,212,0.15)',
+                        }}
+                      />
+                    )}
+                  </View>
+                ) : (
+                  <Text style={{ color: colors.textDim, textAlign: 'center', padding: 40 }}>No worksheet pages available</Text>
+                )}
+              </ScrollView>
+
+              {/* Action buttons */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 14, borderTopWidth: 1, borderTopColor: colors.borderColor }}>
+                <TouchableOpacity onPress={() => setCropModalIdx(null)} style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, backgroundColor: colors.bgDark }}>
+                  <Text style={{ fontSize: 12, color: colors.textDim }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (cropModalIdx === null || !cropSelection || !docFiles[cropPageIdx]) return;
+                    const sel = cropSelection;
+                    const minX = Math.min(sel.startX, sel.endX);
+                    const minY = Math.min(sel.startY, sel.endY);
+                    const selW = Math.abs(sel.endX - sel.startX);
+                    const selH = Math.abs(sel.endY - sel.startY);
+                    if (selW < 10 || selH < 10) return; // too small
+
+                    // Crop using canvas
+                    if (Platform.OS === 'web') {
+                      const img = new window.Image();
+                      img.src = `data:${docFiles[cropPageIdx].mime};base64,${docFiles[cropPageIdx].base64}`;
+                      img.onload = () => {
+                        // Scale selection coordinates to actual image dimensions
+                        // The displayed image is 600x850 (contain), find actual scale
+                        const dispW = 600, dispH = 850;
+                        const scaleX = img.width / Math.min(dispW, img.width * (dispH / img.height));
+                        const scaleY = img.height / Math.min(dispH, img.height * (dispW / img.width));
+                        const imgAspect = img.width / img.height;
+                        const dispAspect = dispW / dispH;
+                        let actualW: number, actualH: number, offsetX = 0, offsetY = 0;
+                        if (imgAspect > dispAspect) {
+                          actualW = dispW;
+                          actualH = dispW / imgAspect;
+                          offsetY = (dispH - actualH) / 2;
+                        } else {
+                          actualH = dispH;
+                          actualW = dispH * imgAspect;
+                          offsetX = (dispW - actualW) / 2;
+                        }
+                        const sx = ((minX - offsetX) / actualW) * img.width;
+                        const sy = ((minY - offsetY) / actualH) * img.height;
+                        const sw = (selW / actualW) * img.width;
+                        const sh = (selH / actualH) * img.height;
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.max(1, Math.round(sw));
+                        canvas.height = Math.max(1, Math.round(sh));
+                        const ctx = canvas.getContext('2d')!;
+                        ctx.drawImage(img, Math.max(0, sx), Math.max(0, sy), sw, sh, 0, 0, canvas.width, canvas.height);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+                        setExtractedQuestions(prev => prev.map((q, i) =>
+                          i === cropModalIdx ? { ...q, croppedImage: dataUrl } : q
+                        ));
+                        setCropModalIdx(null);
+                        setCropSelection(null);
+                      };
+                    }
+                  }}
+                  disabled={!cropSelection || Math.abs((cropSelection?.endX || 0) - (cropSelection?.startX || 0)) < 10}
+                  style={{ paddingVertical: 8, paddingHorizontal: 20, borderRadius: 8, backgroundColor: cropSelection && Math.abs(cropSelection.endX - cropSelection.startX) >= 10 ? colors.primary : colors.bgDark }}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#fff' }}>Crop & Attach</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* ── PREVIEW MODAL (separate screen) ── */}
+        <Modal visible={showPreview} animationType="slide" transparent onRequestClose={() => setShowPreview(false)}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ backgroundColor: colors.cardDark, borderRadius: 20, width: '100%', maxWidth: 640, maxHeight: '92%', borderWidth: 1, borderColor: colors.borderColor, overflow: 'hidden' }}>
+              {/* Preview Header */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 18, borderBottomWidth: 1, borderBottomColor: colors.borderColor }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Feather name="eye" size={18} color={colors.accentGreen} />
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.accentGreen }}>Preview</Text>
+                </View>
+                <TouchableOpacity onPress={() => setShowPreview(false)} activeOpacity={0.75}>
+                  <Feather name="x" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 18, gap: 14, paddingBottom: 30 }}>
+                {/* Basic info card */}
+                <View style={{ padding: 14, borderRadius: 14, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, gap: 8 }}>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textMain }}>{title}</Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted }}>
+                    {subject} · {grade} · {curriculum} · Due: {dueDate}
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: type === 'quiz' ? colors.primary + '20' : colors.accentYellow + '20' }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: type === 'quiz' ? colors.primary : colors.accentYellow }}>
+                        {type === 'quiz' ? 'QUIZ' : 'ASSIGNMENT'}
+                      </Text>
+                    </View>
+                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: colors.borderColor }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>
+                        {assignTo === 'all' ? 'All Students' : selectedStudent?.name || 'Specific Student'}
+                      </Text>
+                    </View>
+                  </View>
+                  {chapter.trim() ? (
+                    <Text style={{ fontSize: 12, color: colors.textDim }}>Chapter: {chapter}</Text>
+                  ) : null}
+                </View>
+
+                {note.trim() ? (
+                  <View style={{ padding: 12, borderRadius: 12, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor }}>
+                    <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '600', marginBottom: 4 }}>Note for students:</Text>
+                    <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{note}</Text>
+                  </View>
+                ) : null}
+
+                {/* Quiz questions preview — editable */}
+                {type === 'quiz' && quizQuestions.length > 0 && (
+                  <View style={{ gap: 10 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accentGreen }}>
+                      Quiz Questions ({quizQuestions.length})
+                    </Text>
+                    {quizQuestions.map((q, i) => (
+                      <View key={q.id || i} style={{ padding: 12, borderRadius: 12, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, gap: 8 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                          <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{i + 1}</Text>
+                          </View>
+                          <TextInput
+                            style={[styles.input, { flex: 1, fontSize: 13, marginBottom: 0 }]}
+                            value={q.question}
+                            onChangeText={(t) => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, question: t } : qq))}
+                            multiline
+                          />
+                          <TouchableOpacity onPress={() => setQuizQuestions(prev => prev.filter((_, j) => j !== i))}>
+                            <Feather name="trash-2" size={14} color={colors.accentRed} />
+                          </TouchableOpacity>
+                        </View>
+                        {q.options?.map((opt: string, oi: number) => (
+                          <View key={oi} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 32 }}>
+                            <TouchableOpacity
+                              onPress={() => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, correct: opt } : qq))}
+                              style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5,
+                                borderColor: opt === q.correct ? colors.accentGreen : colors.borderColor,
+                                backgroundColor: opt === q.correct ? colors.accentGreen + '20' : 'transparent',
+                                alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <Text style={{ fontSize: 10, fontWeight: '700', color: opt === q.correct ? colors.accentGreen : colors.textDim }}>
+                                {String.fromCharCode(65 + oi)}
+                              </Text>
+                            </TouchableOpacity>
+                            <TextInput
+                              style={[styles.input, { flex: 1, fontSize: 12, paddingVertical: 5, marginBottom: 0 }]}
+                              value={opt}
+                              onChangeText={(t) => setQuizQuestions(prev => prev.map((qq, j) => {
+                                if (j !== i) return qq;
+                                const newOpts = [...(qq.options || [])];
+                                const wasCorrect = newOpts[oi] === qq.correct;
+                                newOpts[oi] = t;
+                                return { ...qq, options: newOpts, correct: wasCorrect ? t : qq.correct };
+                              }))}
+                            />
+                            {opt === q.correct && <Feather name="check-circle" size={14} color={colors.accentGreen} />}
+                          </View>
+                        ))}
+                        {q.hint && (
+                          <View style={{ flexDirection: 'row', gap: 4, paddingLeft: 32 }}>
+                            <Feather name="info" size={10} color={colors.accentYellow} style={{ marginTop: 2 }} />
+                            <Text style={{ fontSize: 10, color: colors.accentYellow, flex: 1 }}>Hint: {q.hint}</Text>
+                          </View>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Task steps preview (AI assignment) */}
+                {type === 'assignment' && taskSteps.length > 0 && (
+                  <View style={{ gap: 10 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#7AADA8' }}>
+                      Task Steps ({taskSteps.length})
+                    </Text>
+                    {taskSteps.map((step, idx) => (
+                      <View key={step.id} style={{ padding: 12, borderRadius: 12, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: STEP_COLORS[step.type] + '40', gap: 4 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: STEP_COLORS[step.type] + '30', alignItems: 'center', justifyContent: 'center' }}>
+                            <Feather name={STEP_ICONS[step.type] as any} size={12} color={STEP_COLORS[step.type]} />
+                          </View>
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMain }}>{step.label}</Text>
+                        </View>
+                        <Text style={{ fontSize: 11, color: colors.textDim, paddingLeft: 32 }}>{step.instructions}</Text>
+                        {step.sections.length > 0 && (
+                          <View style={{ paddingLeft: 32, gap: 2, marginTop: 2 }}>
+                            {step.sections.map((s, si) => (
+                              <Text key={si} style={{ fontSize: 10, color: colors.textMuted }}>- {s}</Text>
+                            ))}
+                          </View>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Worksheet questions preview */}
+                {type === 'assignment' && taskSteps.length === 0 && questions.filter(q => q.trim()).length > 0 && (
+                  <View style={{ gap: 8 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: colors.textMuted }}>
+                      Questions ({questions.filter(q => q.trim()).length})
+                    </Text>
+                    {questions.filter(q => q.trim()).map((q, i) => (
+                      <View key={i} style={{ flexDirection: 'row', gap: 8, padding: 10, borderRadius: 10, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim }}>{i + 1}.</Text>
+                        <Text style={{ fontSize: 13, color: colors.textMain, flex: 1, lineHeight: 20 }}>{q}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Extracted questions with answers */}
+                {extractedQuestions.length > 0 && (
+                  <View style={{ gap: 8 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accentCyan }}>
+                      Extracted Questions ({extractedQuestions.length})
+                    </Text>
+                    {extractedQuestions.map((eq, idx) => (
+                      <View key={idx} style={{ padding: 10, borderRadius: 10, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, gap: 6 }}>
+                        <Text style={{ fontSize: 13, color: colors.textMain, fontWeight: '600' }}>Q{idx + 1}. {eq.question}</Text>
+                        {eq.croppedImage ? (
+                          <View style={{ borderRadius: 6, overflow: 'hidden', borderWidth: 1, borderColor: colors.accentCyan + '40' }}>
+                            <Image
+                              source={{ uri: eq.croppedImage }}
+                              style={{ width: '100%', height: 160, backgroundColor: '#fff' }}
+                              resizeMode="contain"
+                            />
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, justifyContent: 'center', paddingVertical: 3, backgroundColor: colors.bgDark }}>
+                              <Feather name="image" size={9} color={colors.accentCyan} />
+                              <Text style={{ fontSize: 9, color: colors.accentCyan }}>Reference Image</Text>
+                            </View>
+                          </View>
+                        ) : null}
+                        {eq.answer.trim() ? (
+                          <Text style={{ fontSize: 11, color: colors.accentGreen }}>Answer: {eq.answer}</Text>
+                        ) : null}
+                        {eq.comment.trim() ? (
+                          <Text style={{ fontSize: 11, color: colors.accentYellow, fontStyle: 'italic' }}>Comment: {eq.comment}</Text>
+                        ) : null}
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {docFiles.length > 0 && (
+                  <View style={{ gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Feather name="image" size={14} color={colors.primary} />
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primary }}>
+                        Worksheet Pages ({docFiles.length})
+                      </Text>
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }}>
+                      <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 4 }}>
+                        {docFiles.map((f, idx) => (
+                          <View key={idx} style={{ width: 160, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: colors.borderColor }}>
+                            {f.mime.startsWith('image/') ? (
+                              <Image source={{ uri: `data:${f.mime};base64,${f.base64}` }} style={{ width: 160, height: 220 }} resizeMode="contain" />
+                            ) : (
+                              <View style={{ width: 160, height: 220, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bgDark }}>
+                                <Feather name="file-text" size={32} color={colors.primary} />
+                              </View>
+                            )}
+                            <View style={{ padding: 6, backgroundColor: colors.bgDark }}>
+                              <Text style={{ fontSize: 10, color: colors.textDim, textAlign: 'center' }}>Page {idx + 1}</Text>
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    </ScrollView>
+                  </View>
+                )}
+              </ScrollView>
+
+              {/* Bottom action bar */}
+              <View style={{ flexDirection: 'row', gap: 10, padding: 18, borderTopWidth: 1, borderTopColor: colors.borderColor }}>
+                <TouchableOpacity
+                  style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.borderColor }}
+                  onPress={() => setShowPreview(false)}
+                  activeOpacity={0.75}
+                >
+                  <Feather name="edit-2" size={14} color={colors.textMuted} />
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMuted }}>Back to Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.submitBtn, { flex: 2 }]}
+                  onPress={createAssignment}
+                  activeOpacity={0.85}
+                  disabled={creating}
+                >
+                  {creating ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <>
+                      <Feather name="send" size={15} color="#fff" />
+                      <Text style={styles.submitBtnText}>Publish Assignment</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
         </Modal>
       </View>
     </ScreenLayout>

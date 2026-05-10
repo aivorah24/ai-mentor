@@ -210,20 +210,6 @@
     "createdAt": "2026-04-03T05:04:50.697Z"
   },
   {
-    "id": "asgn_0d3be723",
-    "title": "Maths Chapter 3 - Addition — Due",
-    "date": "2026-04-15",
-    "startTime": "23:59",
-    "endTime": "23:59",
-    "type": "deadline",
-    "note": "Mathematics · Give and Take · Grade 4",
-    "studentId": "all",
-    "createdBy": "teacher",
-    "tag": "Mathematics",
-    "createdAt": "2026-04-12T09:41:20.120Z",
-    "assignmentId": "0d3be723-0cb7-4556-8b86-77861beeb068"
-  },
-  {
     "id": "asgn_1b94975e",
     "title": "2D shapes — Due",
     "date": "2026-04-16",
