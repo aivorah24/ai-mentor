@@ -1755,6 +1755,7 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
   );
   const [step, setStep]           = useState(0);
   const [showReview, setShowReview] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult]       = useState<GradeResult | null>(null);
 
@@ -2060,7 +2061,6 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
   // ── Page step (main flow) ──
   const pageUrl = pages[step] ?? null;
   const isLastStep = step === totalSteps - 1;
-  const [showConfirm, setShowConfirm] = useState(false);
 
   // Question-based mode: show all questions with text inputs
   if (hasQuestions) {
@@ -2078,31 +2078,34 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
             <ConfirmCloseOverlay visible={showConfirm} color={color} colors={colors}
               onConfirm={onClose} onCancel={() => setShowConfirm(false)} />
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { gap: 16 }]}>
-              {/* Worksheet pages for reference — horizontal scroll */}
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { gap: 16, maxWidth: 720, alignSelf: 'center', width: '100%' }]}>
+              {/* Worksheet pages for reference — horizontal scroll with fixed-size thumbnails */}
               {pages.length > 0 && (
                 <View style={{ gap: 8 }}>
-                  <Text style={{ fontSize: 10, fontWeight: '700', color, textTransform: 'uppercase', letterSpacing: 0.8 }}>Worksheet Reference</Text>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color, textTransform: 'uppercase', letterSpacing: 0.8 }}>Worksheet Reference (tap to zoom)</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <View style={{ flexDirection: 'row', gap: 10 }}>
                       {pages.map((url, idx) => (
-                        <WorksheetPageImage key={idx} url={url} pageNum={idx + 1} color={color} colors={colors} />
+                        <WorksheetRefThumb key={idx} url={url} pageNum={idx + 1} color={color} colors={colors} />
                       ))}
                     </View>
                   </ScrollView>
                 </View>
               )}
 
-              {/* Note / instructions */}
+              {/* Purpose / instructions */}
               {assignment.note ? (
-                <View style={[styles.noteBox, { backgroundColor: color + '12', borderColor: color + '30' }]}>
-                  <Feather name="info" size={14} color={color} />
-                  <Text style={[styles.noteText, { color: colors.textMuted }]}>{assignment.note}</Text>
+                <View style={{ backgroundColor: color + '10', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: color + '25', gap: 6 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Feather name="target" size={12} color={color} />
+                    <Text style={{ fontSize: 10, fontWeight: '700', color, textTransform: 'uppercase', letterSpacing: 0.8 }}>Purpose</Text>
+                  </View>
+                  <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{assignment.note}</Text>
                 </View>
               ) : null}
 
               {/* Questions with answer inputs */}
-              <View style={{ gap: 14 }}>
+              <View style={{ gap: 14, maxWidth: 680, alignSelf: 'center', width: '100%' }}>
                 <Text style={{ fontSize: 10, fontWeight: '700', color, textTransform: 'uppercase', letterSpacing: 0.8 }}>Answer Each Question</Text>
                 {questions.map((q: any, qi: number) => {
                   const qText = typeof q === 'string' ? q : (q.question || '');
@@ -2118,7 +2121,7 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
                           <Text style={{ flex: 1, fontSize: 14, color: colors.textMain, lineHeight: 22, fontWeight: '600' }}>{qText}</Text>
                         </View>
                         {qImage ? (
-                          <View style={{ borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: color + '30', marginLeft: 36 }}>
+                          <View style={{ borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: color + '30', marginLeft: 36, maxWidth: 320 }}>
                             <Image source={{ uri: qImage }} style={{ width: '100%', height: 140, backgroundColor: '#fff' }} resizeMode="contain" />
                           </View>
                         ) : null}
@@ -2367,6 +2370,36 @@ function WorksheetPageImage({ url, pageNum, color, colors }: { url: string; page
   );
 }
 
+// ── Worksheet reference thumbnail (fixed size, for horizontal scroll) ─────────
+function WorksheetRefThumb({ url, pageNum, color, colors }: { url: string; pageNum: number; color: string; colors: AppColors }) {
+  const [zoomed, setZoomed] = useState(false);
+  return (
+    <View>
+      <TouchableOpacity onPress={() => setZoomed(true)} activeOpacity={0.85}>
+        <View style={{ width: 200, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: color + '40', backgroundColor: '#f5f5f5' }}>
+          <Image source={{ uri: url }} style={{ width: 200, height: 360 }} resizeMode="cover" resizeMethod="resize" />
+          <View style={{ paddingVertical: 4, backgroundColor: color + '15', alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 4 }}>
+            <Feather name="zoom-in" size={10} color={color} />
+            <Text style={{ fontSize: 10, fontWeight: '700', color }}>Page {pageNum}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+      {zoomed && (
+        <Modal visible animationType="fade" transparent onRequestClose={() => setZoomed(false)}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.97)' }}>
+            <TouchableOpacity
+              style={{ position: 'absolute', top: 48, right: 20, zIndex: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: 10 }}
+              onPress={() => setZoomed(false)} activeOpacity={0.8}>
+              <Feather name="x" size={22} color="#fff" />
+            </TouchableOpacity>
+            <Image source={{ uri: url }} style={{ flex: 1 }} resizeMode="contain" />
+          </View>
+        </Modal>
+      )}
+    </View>
+  );
+}
+
 // ── Main Screen ────────────────────────────────────────────────
 
 export default function AssignmentsScreen({ navigation, route }: any) {
@@ -2381,6 +2414,8 @@ export default function AssignmentsScreen({ navigation, route }: any) {
   const [loading, setLoading] = useState(true);
   const [activeAssignment, setActiveAssignment] = useState<Assignment | null>(null);
   const [openingAssignmentId, setOpeningAssignmentId] = useState<string | null>(null);
+  const [viewingResult, setViewingResult] = useState<Assignment | null>(null);
+  const [expandedExplain, setExpandedExplain] = useState<Record<number, { loading: boolean; steps?: string[]; correctAnswer?: string; tip?: string }>>({});
 
   function load() {
     if (!studentId) return;
@@ -2666,7 +2701,10 @@ export default function AssignmentsScreen({ navigation, route }: any) {
 
                 return (
                   /* Outer wrapper provides the colored left accent bar */
-                  <View key={item.id} style={[styles.cardWrapper, { borderColor: color + '35', backgroundColor: color + '07' }]}>
+                  <TouchableOpacity key={item.id} style={[styles.cardWrapper, { borderColor: color + '35', backgroundColor: color + '07' }]}
+                    activeOpacity={item.status === 'completed' ? 0.7 : 1}
+                    onPress={item.status === 'completed' ? () => setViewingResult(item) : undefined}
+                  >
                     {/* Colored left bar */}
                     <View style={[styles.cardAccent, { backgroundColor: color }]} />
 
@@ -2727,7 +2765,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                         </TouchableOpacity>
                       )}
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
               </View>{/* end grid */}
@@ -2757,6 +2795,185 @@ export default function AssignmentsScreen({ navigation, route }: any) {
             onSubmitted={(updated) => { handleSubmitted(updated); setActiveAssignment(null); }}
           />
         ) : null}
+
+        {/* ── Completed Result Detail Modal ── */}
+        {viewingResult && (() => {
+          const a = viewingResult;
+          const sc = SUBJECT_COLOR[a.subject] ?? colors.primary;
+          let feedbackText = ''; let stamp = ''; let wellDone = ''; let improve = ''; let pq: any[] = []; let teacherFb = '';
+          try {
+            const parsed = JSON.parse(a.aiFeedback || '{}');
+            feedbackText = parsed.text || '';
+            stamp = parsed.stamp || '';
+            wellDone = parsed.wellDone || '';
+            improve = parsed.improve || '';
+            pq = Array.isArray(parsed.perQuestion) ? parsed.perQuestion : [];
+            teacherFb = parsed.teacherFeedback || '';
+          } catch { feedbackText = a.aiFeedback || ''; }
+          const stampData = getStamp(a.score);
+          return (
+            <Modal visible animationType="slide" transparent onRequestClose={() => setViewingResult(null)}>
+              <View style={{ flex: 1, backgroundColor: colors.bgDark }}>
+                {/* Header */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: colors.borderColor, gap: 12 }}>
+                  <View style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: sc + '20', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name={(SUBJECT_ICON[a.subject] ?? 'book-open') as any} size={18} color={sc} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textMain }}>{a.title}</Text>
+                    <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{a.subject}{a.chapter ? ` · ${a.chapter}` : ''}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => { setViewingResult(null); setExpandedExplain({}); }} activeOpacity={0.7}>
+                    <Feather name="x" size={22} color={colors.textMuted} />
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, gap: 16, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
+                  {/* Score badge */}
+                  <View style={{ alignItems: 'center', padding: 28, borderRadius: 20, backgroundColor: sc + '10', borderWidth: 1, borderColor: sc + '25' }}>
+                    <Text style={{ fontSize: 56, fontWeight: '900', color: sc, letterSpacing: -2 }}>{a.score ?? 0}%</Text>
+                    {stampData && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                        <Feather name={stampData.icon as any} size={18} color={stampData.color} />
+                        <Text style={{ fontSize: 15, fontWeight: '700', color: sc }}>{stampData.label}</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* AI Feedback summary */}
+                  {feedbackText ? (
+                    <View style={{ backgroundColor: colors.cardDark, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colors.borderColor, gap: 6 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8 }}>AI Feedback</Text>
+                      <Text style={{ fontSize: 14, color: colors.textMain, lineHeight: 22 }}>{feedbackText}</Text>
+                    </View>
+                  ) : null}
+
+                  {/* Well done / improve */}
+                  {(wellDone || improve) ? (
+                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                      {wellDone ? (
+                        <View style={{ flex: 1, backgroundColor: colors.accentGreen + '10', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.accentGreen + '25', gap: 4 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                            <Feather name="star" size={12} color={colors.accentGreen} />
+                            <Text style={{ fontSize: 10, fontWeight: '700', color: colors.accentGreen, textTransform: 'uppercase' }}>Well Done</Text>
+                          </View>
+                          <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{wellDone}</Text>
+                        </View>
+                      ) : null}
+                      {improve ? (
+                        <View style={{ flex: 1, backgroundColor: colors.accentYellow + '10', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.accentYellow + '25', gap: 4 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                            <Feather name="trending-up" size={12} color={colors.accentYellow} />
+                            <Text style={{ fontSize: 10, fontWeight: '700', color: colors.accentYellow, textTransform: 'uppercase' }}>Next Step</Text>
+                          </View>
+                          <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{improve}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  ) : null}
+
+                  {/* Per-question breakdown */}
+                  {pq.length > 0 && (
+                    <View style={{ gap: 10 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8 }}>Question Breakdown ({pq.length})</Text>
+                      {pq.map((q: any, i: number) => {
+                        const isCorrect = q.correct;
+                        const qColor = !q.answered ? colors.textDim : isCorrect ? colors.accentGreen : q.score >= 50 ? colors.accentYellow : colors.accentRed;
+                        return (
+                          <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: qColor + '30', backgroundColor: qColor + '06' }}>
+                            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: qColor, alignItems: 'center', justifyContent: 'center' }}>
+                              <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>{q.number ?? i + 1}</Text>
+                            </View>
+                            <View style={{ flex: 1, gap: 4 }}>
+                              {q.question ? <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain, lineHeight: 20 }} numberOfLines={3}>{q.question}</Text> : null}
+                              {q.studentAnswer ? (
+                                <Text style={{ fontSize: 12, color: colors.textDim, lineHeight: 18 }}>
+                                  <Text style={{ fontWeight: '700' }}>Your answer: </Text>{q.studentAnswer}
+                                </Text>
+                              ) : !q.answered ? (
+                                <Text style={{ fontSize: 12, color: colors.textDim, fontStyle: 'italic' }}>Not attempted</Text>
+                              ) : null}
+                              {q.comment ? <Text style={{ fontSize: 12, color: qColor, lineHeight: 18, fontWeight: '500' }}>{q.comment}</Text> : null}
+                              {/* Learn to score 100% — only for questions < 100% */}
+                              {q.answered && q.score < 100 && (() => {
+                                const exp = expandedExplain[i];
+                                const fetchExplanation = async () => {
+                                  if (exp?.steps) { setExpandedExplain(prev => { const n = { ...prev }; delete n[i]; return n; }); return; }
+                                  setExpandedExplain(prev => ({ ...prev, [i]: { loading: true } }));
+                                  try {
+                                    const r = await fetch(`${SERVER_URL}/assignments/${a.id}/explain-question`, {
+                                      method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ question: q.question, studentAnswer: q.studentAnswer, correctAnswer: q.correctAnswer, score: q.score, subject: a.subject, grade: a.grade }),
+                                    });
+                                    const data = await r.json();
+                                    setExpandedExplain(prev => ({ ...prev, [i]: { loading: false, steps: data.steps || [], correctAnswer: data.correctAnswer || '', tip: data.tip || '' } }));
+                                  } catch { setExpandedExplain(prev => ({ ...prev, [i]: { loading: false, steps: ['Sorry, could not load explanation. Please try again.'], correctAnswer: '', tip: '' } })); }
+                                };
+                                return (
+                                  <View style={{ marginTop: 6, gap: 8 }}>
+                                    <TouchableOpacity onPress={fetchExplanation} activeOpacity={0.7}
+                                      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 10, backgroundColor: sc + '15', borderWidth: 1, borderColor: sc + '30' }}>
+                                      {exp?.loading ? <ActivityIndicator size="small" color={sc} /> : <Feather name={exp?.steps ? 'chevron-up' : 'zap'} size={13} color={sc} />}
+                                      <Text style={{ fontSize: 11, fontWeight: '700', color: sc }}>{exp?.steps ? 'Hide' : 'Learn to score 100%'}</Text>
+                                    </TouchableOpacity>
+                                    {exp?.steps && (
+                                      <View style={{ backgroundColor: sc + '08', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: sc + '20', gap: 8 }}>
+                                        {exp.steps.map((step: string, si: number) => (
+                                          <View key={si} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+                                            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: sc + '25', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+                                              <Text style={{ fontSize: 10, fontWeight: '800', color: sc }}>{si + 1}</Text>
+                                            </View>
+                                            <Text style={{ flex: 1, fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{step.replace(/^Step \d+:\s*/i, '')}</Text>
+                                          </View>
+                                        ))}
+                                        {exp.correctAnswer ? (
+                                          <View style={{ backgroundColor: colors.accentGreen + '12', borderRadius: 8, padding: 10, borderWidth: 1, borderColor: colors.accentGreen + '25', marginTop: 2 }}>
+                                            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accentGreen }}>Correct Answer:</Text>
+                                            <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18, marginTop: 2 }}>{exp.correctAnswer}</Text>
+                                          </View>
+                                        ) : null}
+                                        {exp.tip ? (
+                                          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start', marginTop: 2 }}>
+                                            <Feather name="heart" size={12} color={sc} style={{ marginTop: 2 }} />
+                                            <Text style={{ flex: 1, fontSize: 11, color: sc, fontWeight: '600', lineHeight: 16, fontStyle: 'italic' }}>{exp.tip}</Text>
+                                          </View>
+                                        ) : null}
+                                      </View>
+                                    )}
+                                  </View>
+                                );
+                              })()}
+                            </View>
+                            <View style={{ backgroundColor: qColor + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, alignSelf: 'flex-start' }}>
+                              <Text style={{ fontSize: 13, fontWeight: '800', color: qColor }}>{q.answered ? `${q.score}%` : '--'}</Text>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {/* Teacher feedback */}
+                  {teacherFb ? (
+                    <View style={{ borderRadius: 12, padding: 14, backgroundColor: colors.accentCyan + '0E', borderWidth: 1, borderColor: colors.accentCyan + '30', gap: 6 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Feather name="user" size={13} color={colors.accentCyan} />
+                        <Text style={{ fontSize: 12, color: colors.accentCyan, fontWeight: '700' }}>Teacher Feedback</Text>
+                      </View>
+                      <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{teacherFb}</Text>
+                    </View>
+                  ) : null}
+
+                  {/* Close button */}
+                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: 14, backgroundColor: sc }} onPress={() => { setViewingResult(null); setExpandedExplain({}); }} activeOpacity={0.85}>
+                    <Feather name="check" size={16} color="#fff" />
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>Done</Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            </Modal>
+          );
+        })()}
       </View>
     </ScreenLayout>
   );
