@@ -456,9 +456,10 @@ export default function DashboardScreen({ navigation }: any) {
 
   // Mastered = max of topics explored (real count) or topics with ≥80% quiz score
   const masteredTopics = useMemo(() => {
+    const topicsCap = curriculum ? Math.max(curriculum.totalTopics, 1) : 1;
     const highScoreCount = Object.values(perfData.topics).filter(p => (p.avgScore ?? 0) >= 80).length;
-    return Math.max(stats.topicsExplored ?? 0, highScoreCount);
-  }, [perfData, stats.topicsExplored]);
+    return Math.min(Math.max(stats.topicsExplored ?? 0, highScoreCount), topicsCap);
+  }, [perfData, stats.topicsExplored, curriculum]);
 
   const consistency = useMemo(() => {
     const attempted = barTopics.filter(t => t.pct > 0);
@@ -514,7 +515,7 @@ export default function DashboardScreen({ navigation }: any) {
         { icon: 'sun'   as const, label: 'Half Hour',  color: '#5A8A70', bg: '#D4E8E5', unlocked: stats.todayStudyMinutes >= 30, tip: '30 min today' },
         { icon: 'award' as const, label: 'Study Hero', color: '#9B7FD4', bg: '#E8DFFA', unlocked: stats.todayStudyMinutes >= 60, tip: '60 min today' },
       ]},
-    { label: 'Topics', val: `${stats.topicsExplored} / ${topicsGoal}`, target: `${topicsGoal} topics`,
+    { label: 'Topics', val: `${Math.min(stats.topicsExplored, topicsGoal)} / ${topicsGoal}`, target: `${topicsGoal} topics`,
       sub: 'total', raw: topicsDone, goal: topicsGoal,
       pct: topicsDone / topicsGoal,
       color: BRAND.rose, pastel: PASTEL.pink, icon: 'book-open' as const,
