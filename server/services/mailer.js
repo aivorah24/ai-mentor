@@ -1,35 +1,89 @@
+const { Resend } = require('resend');
 const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  pool: true,           // reuse connections
-  maxConnections: 3,
-  maxMessages: 10,
-  rateDelta: 2000,      // min 2s between emails
-  rateLimit: 5,         // max 5 emails per rateDelta
-});
+// ── Primary: Resend (noreply@aivorah.ai) ────────────────────────────────────
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const FROM_EMAIL = 'Aivorah <noreply@aivorah.ai>';
 
-// Retry helper — Gmail SMTP can be flaky, retry up to 3 times
-async function sendWithRetry(mailOptions, retries = 3) {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const info = await transporter.sendMail(mailOptions);
-      console.log(`[mailer] Sent to ${mailOptions.to} (attempt ${attempt}), messageId: ${info.messageId}`);
-      return info;
-    } catch (err) {
-      console.warn(`[mailer] Attempt ${attempt}/${retries} failed for ${mailOptions.to}: ${err.message}`);
-      if (attempt < retries) await new Promise(r => setTimeout(r, 2000 * attempt));
-      else throw err;
-    }
-  }
+// ── Fallback: Gmail SMTP (only if Resend not configured) ────────────────────
+const gmailTransporter = (!resend && process.env.EMAIL_USER && process.env.EMAIL_PASS)
+  ? nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+      pool: true, maxConnections: 3, maxMessages: 10, rateDelta: 2000, rateLimit: 5,
+    })
+  : null;
+
+// Strip HTML to plain text
+function htmlToPlainText(html) {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/tr>/gi, '\n')
+    .replace(/<\/td>/gi, ' ')
+    .replace(/<a[^>]*href="([^"]*)"[^>]*>[^<]*<\/a>/gi, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
+// ── Send email (Resend primary, Gmail fallback) ─────────────────────────────
+async function sendEmail({ to, subject, html }, retries = 3) {
+  const text = htmlToPlainText(html);
+
+  // Try Resend first
+  if (resend) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const { data, error } = await resend.emails.send({
+          from: FROM_EMAIL,
+          to,
+          subject,
+          html,
+          text,
+        });
+        if (error) throw new Error(error.message);
+        console.log(`[mailer:resend] Sent to ${to} (attempt ${attempt}), id: ${data?.id}`);
+        return data;
+      } catch (err) {
+        console.warn(`[mailer:resend] Attempt ${attempt}/${retries} failed for ${to}: ${err.message}`);
+        if (attempt < retries) await new Promise(r => setTimeout(r, 2000 * attempt));
+        else throw err;
+      }
+    }
+  }
+
+  // Fallback to Gmail SMTP
+  if (gmailTransporter) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const info = await gmailTransporter.sendMail({
+          from: `"Aivorah" <${process.env.EMAIL_USER}>`,
+          to, subject, html, text,
+          replyTo: `"Aivorah" <${process.env.EMAIL_USER}>`,
+        });
+        console.log(`[mailer:gmail] Sent to ${to} (attempt ${attempt}), messageId: ${info.messageId}`);
+        return info;
+      } catch (err) {
+        console.warn(`[mailer:gmail] Attempt ${attempt}/${retries} failed for ${to}: ${err.message}`);
+        if (attempt < retries) await new Promise(r => setTimeout(r, 2000 * attempt));
+        else throw err;
+      }
+    }
+  }
+
+  console.warn(`[mailer] No email provider configured — skipping email to ${to}`);
+}
+
+// ── Email functions (templates unchanged) ───────────────────────────────────
+
 async function sendCredentialsEmail({ to, childName, loginId, password, studentId }) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to) return;
+  if (!to) return;
   try {
     const studentIdRow = studentId
       ? `<tr><td style="padding:8px 0;color:#888;font-size:13px">Student ID</td><td style="padding:8px 0;font-family:monospace;font-size:14px;color:#1a1a1a">${studentId}</td></tr>`
@@ -38,8 +92,7 @@ async function sendCredentialsEmail({ to, childName, loginId, password, studentI
       ? `<tr><td style="padding:8px 0;color:#888;font-size:13px">Password</td><td style="padding:8px 0;font-family:monospace;font-size:14px;color:#1a1a1a">${password}</td></tr>`
       : '';
 
-    await sendWithRetry({
-      from: `"Aivorah" <${process.env.EMAIL_USER}>`,
+    await sendEmail({
       to,
       subject: `${childName}'s Aivorah Login Details`,
       html: `
@@ -81,10 +134,9 @@ async function sendCredentialsEmail({ to, childName, loginId, password, studentI
 }
 
 async function sendVerificationEmail({ to, name, verifyUrl }) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to) return;
+  if (!to) return;
   try {
-    await sendWithRetry({
-      from: `"Aivorah" <${process.env.EMAIL_USER}>`,
+    await sendEmail({
       to,
       subject: 'Verify your Aivorah account',
       html: `
@@ -124,11 +176,10 @@ async function sendVerificationEmail({ to, name, verifyUrl }) {
 }
 
 async function sendWelcomeEmail({ to, name, role }) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to) return;
+  if (!to) return;
   const roleLabel = role === 'teacher' ? 'Teacher' : role === 'parent' ? 'Parent' : 'Student';
   try {
-    await sendWithRetry({
-      from: `"Aivorah" <${process.env.EMAIL_USER}>`,
+    await sendEmail({
       to,
       subject: `Welcome to Aivorah, ${name}!`,
       html: `
@@ -167,15 +218,14 @@ async function sendWelcomeEmail({ to, name, role }) {
 }
 
 async function sendPasswordResetEmail({ to, resetLink, childName }) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to || !resetLink) return;
+  if (!to || !resetLink) return;
   const isChildReset = !!childName;
   const subject = isChildReset ? `Reset ${childName}'s Aivorah password` : 'Reset your Aivorah password';
   const bodyText = isChildReset
     ? `You requested a password reset for your child <strong>${childName}</strong>'s Aivorah account. Click the button below to set a new password.`
     : `We received a request to reset the password for your Aivorah account (<strong>${to}</strong>). Click the button below to set a new password.`;
   try {
-    await sendWithRetry({
-      from: `"Aivorah" <${process.env.EMAIL_USER}>`,
+    await sendEmail({
       to,
       subject,
       html: `
@@ -210,10 +260,9 @@ async function sendPasswordResetEmail({ to, resetLink, childName }) {
 }
 
 async function sendRecoveryOtpEmail({ to, otp }) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to || !otp) return;
+  if (!to || !otp) return;
   try {
-    await sendWithRetry({
-      from: `"Aivorah" <${process.env.EMAIL_USER}>`,
+    await sendEmail({
       to,
       subject: 'Your Aivorah verification code',
       html: `
@@ -247,10 +296,9 @@ async function sendRecoveryOtpEmail({ to, otp }) {
 }
 
 async function sendRecoveryEmailConfirmation({ to, accountEmail, accountName }) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !to) return;
+  if (!to) return;
   try {
-    await sendWithRetry({
-      from: `"Aivorah" <${process.env.EMAIL_USER}>`,
+    await sendEmail({
       to,
       subject: 'Recovery email set for your Aivorah account',
       html: `

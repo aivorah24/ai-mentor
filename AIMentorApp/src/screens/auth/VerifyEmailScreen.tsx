@@ -167,6 +167,18 @@ export default function VerifyEmailScreen() {
           Open the email and click the link to verify your account, then come back here.
         </Text>
 
+        {/* Spam folder warning */}
+        <View style={styles.spamWarning}>
+          <Feather name="alert-triangle" size={15} color={colors.accentYellow} style={{ marginRight: 8, marginTop: 1 }} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.spamTitle}>Can't find the email?</Text>
+            <Text style={styles.spamText}>
+              Check your <Text style={{ fontWeight: '700' }}>Spam</Text> or <Text style={{ fontWeight: '700' }}>Junk</Text> folder.
+              Gmail and Outlook sometimes filter verification emails. If you find it there, mark it as "Not Spam" to receive future emails.
+            </Text>
+          </View>
+        </View>
+
         {/* Error or success */}
         {verifyError !== '' && (
           <View style={styles.errorBox}>
@@ -289,7 +301,29 @@ const makeStyles = (c: AppColors) =>
       color: c.textMuted,
       textAlign: 'center',
       lineHeight: 20,
+      marginBottom: spacing.md,
+    },
+    spamWarning: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      backgroundColor: '#fef3c7' + '18',
+      borderRadius: radius.md,
+      padding: spacing.md,
       marginBottom: spacing.xl,
+      borderWidth: 1,
+      borderColor: '#f59e0b' + '30',
+      width: '100%',
+    },
+    spamTitle: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: '#f59e0b',
+      marginBottom: 3,
+    },
+    spamText: {
+      fontSize: 12,
+      color: c.textMuted,
+      lineHeight: 18,
     },
     errorBox: {
       flexDirection: 'row',
