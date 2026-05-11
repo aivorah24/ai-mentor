@@ -1137,10 +1137,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           ))}
                         </View>
 
-                        {/* Description / note */}
+                        {/* Purpose / note */}
                         {a.note ? (
-                          <View style={{ backgroundColor: colors.cardDark, borderRadius: radius.md, padding: 14, borderWidth: 1, borderColor: colors.borderColor }}>
-                            <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Description</Text>
+                          <View style={{ backgroundColor: sc + '10', borderRadius: radius.md, padding: 14, borderWidth: 1, borderColor: sc + '25', gap: 6 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Feather name="target" size={12} color={sc} />
+                              <Text style={{ fontSize: 10, fontWeight: '700', color: sc, textTransform: 'uppercase', letterSpacing: 0.8 }}>Purpose</Text>
+                            </View>
                             <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{a.note}</Text>
                           </View>
                         ) : null}

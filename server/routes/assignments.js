@@ -2007,6 +2007,52 @@ Respond ONLY as JSON: {"text":"...","wellDone":"specific strength","improve":"sp
         perQuestion,
       });
 
+    } else if (Array.isArray(answers) && answers.length > 0 && questions.length > 0 && answers.some(a => typeof a === 'string' && a.trim())) {
+      // ── TEXT ANSWERS per question (worksheet question-based mode) ──
+      const graded = await Promise.all(questions.map(async (q, i) => {
+        const qText = typeof q === 'object' ? q.question : q;
+        const expectedAns = typeof q === 'object' ? (q.expectedAnswer || '') : '';
+        const studentAns = (answers[i] || '').trim();
+        if (!studentAns) return { number: i+1, question: qText, answered: false, score: 0, correct: false, comment: 'Not attempted.' };
+        try {
+          const expectedBlock = expectedAns
+            ? `\nExpected answer (from teacher): "${expectedAns}"\nGrade the student's answer STRICTLY against this expected answer. Match = correct, mismatch = incorrect.`
+            : `\nNo expected answer provided by teacher. Use your knowledge of ${assignment.subject || 'the subject'} to determine if the answer is correct. Be fair and accurate.`;
+          const comp = await groq.chat.completions.create({
+            model: 'llama-3.3-70b-versatile',
+            messages: [{ role: 'user', content: `You are an IB PYP ${assignment.grade || 'Grade 3'} ${assignment.subject || ''} teacher grading a student's answer.\nQuestion: "${qText}"${expectedBlock}\nStudent answer: "${studentAns}"\nGrade fairly for a young learner. Respond ONLY as JSON: {"score":0-100,"correct":true/false,"comment":"one warm encouraging sentence"}` }],
+            response_format: { type: 'json_object' },
+          });
+          const r = JSON.parse(comp.choices[0].message.content);
+          return { number: i+1, question: qText, answered: true, score: Math.max(0, Math.min(100, Number(r.score)||0)), correct: !!r.correct, studentAnswer: studentAns, comment: r.comment || 'Good effort!' };
+        } catch (e) {
+          console.error(`Text answer grading error Q${i+1}:`, e.message);
+          return { number: i+1, question: qText, answered: true, score: 50, correct: false, studentAnswer: studentAns, comment: 'Good effort!' };
+        }
+      }));
+      perQuestion = graded;
+      const answeredGraded = graded.filter(q => q.answered);
+      score = answeredGraded.length > 0 ? Math.round(answeredGraded.reduce((s, q) => s + q.score, 0) / graded.length) : 0;
+      try {
+        const summaryComp = await groq.chat.completions.create({
+          model: 'llama-3.1-8b-instant',
+          messages: [{ role: 'user', content: `IB PYP ${assignment.grade||'Grade 3'} student scored ${score}% on "${assignment.title}" (${assignment.subject}). ${answeredGraded.length}/${graded.length} questions answered. Write 2 warm encouraging sentences for a young learner. JSON: {"text":"...","stamp":"Amazing Work! or Good Effort! or Keep Trying!","wellDone":"...","improve":"..."}` }],
+          response_format: { type: 'json_object' },
+        });
+        const sum = JSON.parse(summaryComp.choices[0].message.content);
+        feedback = JSON.stringify({ text: sum.text||'', stamp: sum.stamp||'Good Effort!', wellDone: sum.wellDone||'', improve: sum.improve||'', perQuestion: graded });
+      } catch { feedback = JSON.stringify({ text: 'Great effort!', stamp: score >= 80 ? 'Amazing Work!' : score >= 60 ? 'Good Effort!' : 'Keep Trying!', perQuestion: graded }); }
+
+      // Save submission
+      const studentUid = await resolveUserId(studentId);
+      const submissionText = JSON.stringify(answers.map((a, i) => ({ question: typeof questions[i] === 'object' ? questions[i].question : questions[i], answer: a })));
+      await supabase.from('assignment_submissions').upsert({
+        assignment_id: id, student_id: studentUid,
+        status: 'completed', score, ai_feedback: feedback, completed_at: new Date().toISOString(),
+        submission_text: submissionText,
+      }, { onConflict: 'assignment_id,student_id' });
+      return res.json({ score, aiFeedback: feedback, perQuestion: graded });
+
     } else if (Array.isArray(questionImages) && questionImages.length > 0) {
       // Worksheet image grading flow
       var textbookContext = "";
@@ -2581,6 +2627,41 @@ function normalise(a) {
     keyConcept:       a.key_concept || null,
   };
 }
+
+// ── POST /assignments/:id/explain-question ──
+// AI teaches the student step-by-step how to get 100% on a question they got wrong
+router.post('/:id/explain-question', async (req, res) => {
+  const { question, studentAnswer, correctAnswer, score, subject, grade } = req.body;
+  if (!question) return res.status(400).json({ error: 'question is required' });
+  try {
+    const comp = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: `You are Aivorah, a warm, patient, encouraging IB PYP ${grade || 'Grade 3'} ${subject || 'Mathematics'} tutor.
+
+A student scored ${score ?? 0}% on this question and needs help understanding how to get 100%.
+
+Question: "${question}"
+${studentAnswer ? `Student's answer: "${studentAnswer}"` : 'Student did not attempt this question.'}
+${correctAnswer ? `Correct answer: "${correctAnswer}"` : ''}
+
+Teach the student step-by-step how to solve this correctly. Rules:
+- Use very simple language for an 8-year-old
+- Break it into 3-5 numbered steps
+- Each step should be one short sentence
+- Use a real-world example if helpful
+- Be encouraging and warm
+- End with the correct answer clearly stated
+
+Respond ONLY as JSON: {"steps":["Step 1: ...","Step 2: ...","Step 3: ..."],"correctAnswer":"the full correct answer","tip":"one encouraging tip"}` }],
+      response_format: { type: 'json_object' },
+    });
+    const result = JSON.parse(comp.choices[0].message.content);
+    res.json(result);
+  } catch (e) {
+    console.error('Explain question error:', e.message);
+    res.status(500).json({ error: 'Could not generate explanation' });
+  }
+});
 
 module.exports = router;
 
