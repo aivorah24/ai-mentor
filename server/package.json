@@ -38,7 +38,8 @@
     "pdf2pic": "^3.2.0",
     "pdfjs-dist": "^5.7.284",
     "puppeteer": "^24.40.0",
-    "razorpay": "^2.9.6"
+    "razorpay": "^2.9.6",
+    "resend": "^6.12.3"
   },
   "devDependencies": {
     "jest": "^30.3.0",
