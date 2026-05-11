@@ -1735,19 +1735,33 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
     ? assignment.documentUrls!
     : assignment.documentUrl ? [assignment.documentUrl] : [];
 
-  const totalSteps = pages.length || 1; // at least 1 step even if no pages
+  // Extracted questions from teacher
+  const questions: any[] = assignment.questions || [];
+  const hasQuestions = questions.length > 0;
 
-  // answers[i] = student's photo answer for page i
+  const totalSteps = hasQuestions ? 1 : (pages.length || 1); // questions mode = single step
+
+  // answers[i] = student's photo answer for page i (legacy page-by-page mode)
   const [answers, setAnswers] = useState<PageAnswer[]>(() =>
-    Array.from({ length: totalSteps }, () => ({ preview: null, base64: null, mime: 'image/jpeg' }))
+    Array.from({ length: pages.length || 1 }, () => ({ preview: null, base64: null, mime: 'image/jpeg' }))
   );
-  const [step, setStep]           = useState(0); // 0..totalSteps-1 = page steps
+  // textAnswers[i] = typed text answer per question
+  const [textAnswers, setTextAnswers] = useState<string[]>(() =>
+    Array.from({ length: questions.length }, () => '')
+  );
+  // questionPhotos[i] = optional photo per question
+  const [questionPhotos, setQuestionPhotos] = useState<PageAnswer[]>(() =>
+    Array.from({ length: questions.length }, () => ({ preview: null, base64: null, mime: 'image/jpeg' }))
+  );
+  const [step, setStep]           = useState(0);
   const [showReview, setShowReview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult]       = useState<GradeResult | null>(null);
 
   const currentAnswer = answers[step] ?? { preview: null, base64: null, mime: 'image/jpeg' };
-  const answeredCount = answers.filter(a => a.base64).length;
+  const answeredCount = hasQuestions
+    ? textAnswers.filter(a => a.trim()).length + questionPhotos.filter(a => a.base64).length
+    : answers.filter(a => a.base64).length;
   const stamp = result ? getStamp(result.score) : null;
 
   function setAns(stepIndex: number, a: Partial<PageAnswer>) {
@@ -1784,11 +1798,15 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
     setShowReview(false);
     setSubmitting(true);
     try {
-      const questionImages = answers.map(a => ({ imageBase64: a.base64 || null, imageMime: a.mime }));
+      // Build submission payload based on mode
+      const questionImages = hasQuestions
+        ? questionPhotos.map(a => ({ imageBase64: a.base64 || null, imageMime: a.mime }))
+        : answers.map(a => ({ imageBase64: a.base64 || null, imageMime: a.mime }));
+      const textAns = hasQuestions ? textAnswers : [];
       const res = await fetch(`${SERVER_URL}/assignments/${assignment.id}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId, answers: [], questionImages }),
+        body: JSON.stringify({ studentId, answers: textAns, questionImages }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -1947,6 +1965,10 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
 
   // ── Review screen ──
   if (showReview) {
+    const qAnsweredCount = hasQuestions
+      ? questions.filter((_, i) => textAnswers[i]?.trim() || questionPhotos[i]?.base64).length
+      : answers.filter(a => a.base64).length;
+    const qTotal = hasQuestions ? questions.length : totalSteps;
     return (
       <Modal visible animationType="slide" transparent onRequestClose={() => setShowReview(false)}>
         <View style={styles.overlay}>
@@ -1957,7 +1979,7 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.title}>Review Answers</Text>
-                <Text style={styles.meta}>{answeredCount} of {totalSteps} pages answered</Text>
+                <Text style={styles.meta}>{qAnsweredCount} of {qTotal} {hasQuestions ? 'questions' : 'pages'} answered</Text>
               </View>
               <TouchableOpacity onPress={() => setShowReview(false)} activeOpacity={0.7}>
                 <Feather name="x" size={22} color={colors.textMuted} />
@@ -1965,18 +1987,39 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
             </View>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
               <Text style={{ fontSize: 13, color: colors.textDim, marginBottom: 12 }}>
-                Tap any page to go back and change your answer.
+                {hasQuestions ? 'Review your answers before submitting.' : 'Tap any page to go back and change your answer.'}
               </Text>
-              {answers.map((ans, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={[styles.qReviewRow, {
-                    borderColor: ans.base64 ? color + '40' : colors.accentRed + '40',
-                    backgroundColor: ans.base64 ? color + '06' : colors.accentRed + '06',
-                  }]}
+              {hasQuestions ? questions.map((q: any, i: number) => {
+                const qText = typeof q === 'string' ? q : (q.question || '');
+                const hasAnswer = textAnswers[i]?.trim() || questionPhotos[i]?.base64;
+                return (
+                  <TouchableOpacity key={i}
+                    style={[styles.qReviewRow, { borderColor: hasAnswer ? color + '40' : colors.accentRed + '40', backgroundColor: hasAnswer ? color + '06' : colors.accentRed + '06' }]}
+                    onPress={() => { setShowReview(false); }}
+                    activeOpacity={0.8}>
+                    <View style={[styles.taskNum, { backgroundColor: hasAnswer ? color : colors.accentRed }]}>
+                      <Text style={[styles.taskNumText, { color: '#fff' }]}>{i + 1}</Text>
+                    </View>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMain }} numberOfLines={2}>{qText}</Text>
+                      {textAnswers[i]?.trim() ? (
+                        <Text style={{ fontSize: 11, color: colors.accentGreen, fontWeight: '600' }} numberOfLines={1}>Answer: {textAnswers[i]}</Text>
+                      ) : questionPhotos[i]?.base64 ? (
+                        <Text style={{ fontSize: 11, color: colors.accentGreen, fontWeight: '600' }}>Photo uploaded</Text>
+                      ) : (
+                        <Text style={{ fontSize: 11, color: colors.accentRed, fontWeight: '600' }}>Not answered</Text>
+                      )}
+                    </View>
+                    {questionPhotos[i]?.preview ? (
+                      <Image source={{ uri: questionPhotos[i].preview! }} style={{ width: 44, height: 44, borderRadius: 6 }} resizeMode="cover" />
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              }) : answers.map((ans, i) => (
+                <TouchableOpacity key={i}
+                  style={[styles.qReviewRow, { borderColor: ans.base64 ? color + '40' : colors.accentRed + '40', backgroundColor: ans.base64 ? color + '06' : colors.accentRed + '06' }]}
                   onPress={() => { setStep(i); setShowReview(false); }}
-                  activeOpacity={0.8}
-                >
+                  activeOpacity={0.8}>
                   <View style={[styles.taskNum, { backgroundColor: ans.base64 ? color : colors.accentRed }]}>
                     <Text style={[styles.taskNumText, { color: '#fff' }]}>{i + 1}</Text>
                   </View>
@@ -1995,11 +2038,11 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
                   )}
                 </TouchableOpacity>
               ))}
-              {answeredCount < totalSteps && (
+              {qAnsweredCount === 0 && (
                 <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', padding: 12, borderRadius: 10, backgroundColor: colors.accentYellow + '12', borderWidth: 1, borderColor: colors.accentYellow + '30', marginBottom: 4 }}>
                   <Feather name="alert-triangle" size={14} color={colors.accentYellow} />
                   <Text style={{ flex: 1, fontSize: 12, color: colors.accentYellow, fontWeight: '600' }}>
-                    {totalSteps - answeredCount} page{totalSteps - answeredCount > 1 ? 's' : ''} not answered. You can still submit.
+                    No answers provided yet. Please go back and answer at least one question.
                   </Text>
                 </View>
               )}
@@ -2019,6 +2062,153 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
   const isLastStep = step === totalSteps - 1;
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // Question-based mode: show all questions with text inputs
+  if (hasQuestions) {
+    return (
+      <Modal visible animationType="slide" transparent onRequestClose={() => setShowConfirm(true)}>
+        <View style={styles.overlay}>
+          <View style={styles.sheet}>
+            <ModalTopBar
+              title={assignment.title}
+              subtitle={`${questions.length} Questions · ${assignment.subject}`}
+              color={color} colors={colors}
+              icon={SUBJECT_ICON[assignment.subject] ?? 'book-open'}
+              onBack={() => setShowConfirm(true)}
+            />
+            <ConfirmCloseOverlay visible={showConfirm} color={color} colors={colors}
+              onConfirm={onClose} onCancel={() => setShowConfirm(false)} />
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { gap: 16 }]}>
+              {/* Worksheet pages for reference — horizontal scroll */}
+              {pages.length > 0 && (
+                <View style={{ gap: 8 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color, textTransform: 'uppercase', letterSpacing: 0.8 }}>Worksheet Reference</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                      {pages.map((url, idx) => (
+                        <WorksheetPageImage key={idx} url={url} pageNum={idx + 1} color={color} colors={colors} />
+                      ))}
+                    </View>
+                  </ScrollView>
+                </View>
+              )}
+
+              {/* Note / instructions */}
+              {assignment.note ? (
+                <View style={[styles.noteBox, { backgroundColor: color + '12', borderColor: color + '30' }]}>
+                  <Feather name="info" size={14} color={color} />
+                  <Text style={[styles.noteText, { color: colors.textMuted }]}>{assignment.note}</Text>
+                </View>
+              ) : null}
+
+              {/* Questions with answer inputs */}
+              <View style={{ gap: 14 }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color, textTransform: 'uppercase', letterSpacing: 0.8 }}>Answer Each Question</Text>
+                {questions.map((q: any, qi: number) => {
+                  const qText = typeof q === 'string' ? q : (q.question || '');
+                  const qImage = typeof q === 'object' && q.croppedImage ? q.croppedImage : null;
+                  return (
+                    <View key={qi} style={{ borderRadius: 12, borderWidth: 1, borderColor: textAnswers[qi]?.trim() ? color + '40' : colors.borderColor, backgroundColor: colors.cardDark || colors.bgDark, overflow: 'hidden' }}>
+                      {/* Question */}
+                      <View style={{ padding: 14, gap: 8, backgroundColor: color + '08' }}>
+                        <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+                          <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: color, alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>{qi + 1}</Text>
+                          </View>
+                          <Text style={{ flex: 1, fontSize: 14, color: colors.textMain, lineHeight: 22, fontWeight: '600' }}>{qText}</Text>
+                        </View>
+                        {qImage ? (
+                          <View style={{ borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: color + '30', marginLeft: 36 }}>
+                            <Image source={{ uri: qImage }} style={{ width: '100%', height: 140, backgroundColor: '#fff' }} resizeMode="contain" />
+                          </View>
+                        ) : null}
+                      </View>
+
+                      {/* Answer input */}
+                      <View style={{ padding: 14, gap: 8 }}>
+                        <TextInput
+                          style={{
+                            borderWidth: 1, borderColor: colors.borderColor, borderRadius: 10,
+                            padding: 12, minHeight: 60, fontSize: 14, color: colors.textMain,
+                            backgroundColor: colors.bgDark, textAlignVertical: 'top',
+                          }}
+                          placeholder="Type your answer here..."
+                          placeholderTextColor={colors.textDim}
+                          value={textAnswers[qi] || ''}
+                          onChangeText={(t) => setTextAnswers(prev => prev.map((v, i) => i === qi ? t : v))}
+                          multiline
+                        />
+                        {/* Optional photo upload */}
+                        {questionPhotos[qi]?.preview ? (
+                          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                            <Image source={{ uri: questionPhotos[qi].preview! }} style={{ width: 60, height: 60, borderRadius: 8 }} resizeMode="cover" />
+                            <TouchableOpacity onPress={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file'; input.accept = 'image/*';
+                              input.onchange = (e: any) => {
+                                const file = e.target.files?.[0]; if (!file) return;
+                                const reader = new FileReader();
+                                reader.onload = (ev) => {
+                                  const dataUrl = ev.target?.result as string;
+                                  setQuestionPhotos(prev => prev.map((v, i) => i === qi ? { preview: dataUrl, base64: dataUrl.split(',')[1], mime: file.type } : v));
+                                };
+                                reader.readAsDataURL(file);
+                              };
+                              input.click();
+                            }} activeOpacity={0.7}>
+                              <Text style={{ fontSize: 11, color, fontWeight: '600' }}>Replace</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setQuestionPhotos(prev => prev.map((v, i) => i === qi ? { preview: null, base64: null, mime: 'image/jpeg' } : v))} activeOpacity={0.7}>
+                              <Text style={{ fontSize: 11, color: colors.accentRed, fontWeight: '600' }}>Remove</Text>
+                            </TouchableOpacity>
+                          </View>
+                        ) : (
+                          <TouchableOpacity
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, backgroundColor: color + '10', borderWidth: 1, borderColor: color + '30' }}
+                            onPress={() => {
+                              if (Platform.OS === 'web') {
+                                const input = document.createElement('input');
+                                input.type = 'file'; input.accept = 'image/*';
+                                input.onchange = (e: any) => {
+                                  const file = e.target.files?.[0]; if (!file) return;
+                                  const reader = new FileReader();
+                                  reader.onload = (ev) => {
+                                    const dataUrl = ev.target?.result as string;
+                                    setQuestionPhotos(prev => prev.map((v, i) => i === qi ? { preview: dataUrl, base64: dataUrl.split(',')[1], mime: file.type } : v));
+                                  };
+                                  reader.readAsDataURL(file);
+                                };
+                                input.click();
+                              }
+                            }}
+                            activeOpacity={0.8}>
+                            <Feather name="camera" size={13} color={color} />
+                            <Text style={{ fontSize: 11, color, fontWeight: '600' }}>Upload photo answer</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+
+              {/* Submit button */}
+              <TouchableOpacity
+                style={[styles.submitBtn, { backgroundColor: color }]}
+                onPress={() => setShowReview(true)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.submitBtnText}>Review & Submit</Text>
+                <Feather name="check-square" size={16} color="#fff" />
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+
+  // ── Legacy page-by-page mode (no extracted questions) ──
   return (
     <Modal visible animationType="slide" transparent onRequestClose={() => setShowConfirm(true)}>
       <View style={styles.overlay}>
@@ -2056,22 +2246,6 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
                     <Text style={[styles.noteText, { color: colors.textMuted }]}>{assignment.note}</Text>
                   </View>
                 ) : null}
-                {/* Show extracted questions as a numbered list if no doc uploaded */}
-                {(assignment.questions?.length ?? 0) > 0 && (
-                  <View style={{ gap: 6 }}>
-                    <Text style={{ fontSize: 10, fontWeight: '700', color, textTransform: 'uppercase', letterSpacing: 0.8 }}>Questions to Answer</Text>
-                    {assignment.questions.map((q, qi) => (
-                      <View key={qi} style={{ flexDirection: 'row', gap: 10, padding: 12, borderRadius: 10,
-                        backgroundColor: color + '08', borderWidth: 1, borderColor: color + '25' }}>
-                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: color, alignItems: 'center', justifyContent: 'center' }}>
-                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{qi + 1}</Text>
-                        </View>
-                        <Text style={{ flex: 1, fontSize: 14, color: colors.textMain, lineHeight: 22 }}>{typeof q === 'object' ? q.question : q}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-                {/* Fallback: no doc, no questions */}
                 {(assignment.questions?.length ?? 0) === 0 && !assignment.note && (
                   <View style={{ padding: 16, borderRadius: 12, backgroundColor: colors.borderColor + '40', alignItems: 'center', gap: 6 }}>
                     <Feather name="file-text" size={28} color={colors.textDim} />
