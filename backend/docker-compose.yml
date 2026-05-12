@@ -1,0 +1,31 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - qdrant
+      - redis
+    volumes:
+      - ./knowledge_base.db:/app/knowledge_base.db
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.6
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  qdrant_data:
+

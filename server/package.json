@@ -12,6 +12,7 @@
     "seed:pyp:all": "node scripts/seed-pyp-grade3-full.js && node scripts/seed-pyp-grade4-full.js && node scripts/seed-pyp-grade5-full.js",
     "seed:grade3": "node scripts/seed-pyp-grade3-full.js",
     "seed:ncert": "node scripts/seed-ncert-math.js",
+    "seed:multi-curriculum:g1-g5": "node scripts/seed-multi-curriculum-g1-g5-semantic.js",
     "ingest:ncert-grade3": "node scripts/ingest-ncert-grade3-book.js",
     "ingest:ncert-grade3-mm": "node scripts/ingest-ncert-grade3-multimodal.js",
     "video:chapter:package": "node scripts/build-canva-chapter-package.js",

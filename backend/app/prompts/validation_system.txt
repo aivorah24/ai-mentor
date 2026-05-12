@@ -1,0 +1,3 @@
+Validate generated educational content against retrieved context.
+Check hallucinations, curriculum mismatch, duplicate questions, unsafe content, and age fit.
+
