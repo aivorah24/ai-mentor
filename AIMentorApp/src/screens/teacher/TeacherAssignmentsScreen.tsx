@@ -489,6 +489,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               : (s.wordBank || []),
           })),
           quizQuestions: quizQuestions,
+          // Interactive quiz (from PDF→Gemini pipeline) — stored for student rendering
+          interactiveQuiz: interactiveQuiz ? (() => { const { _previewHTML, _editMode, ...clean } = interactiveQuiz as any; return clean; })() : null,
+          interactiveQuizHtml: (interactiveQuiz as any)?._previewHTML || null,
           documentUrl: docFiles[0]?.url || null,
           documentUrls: docFiles.map(f => f.url).filter(Boolean),
           // Store ibPurpose in note field so students see the assignment purpose

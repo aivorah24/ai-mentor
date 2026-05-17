@@ -1267,6 +1267,7 @@ router.post('/', async (req, res) => {
     successCriteria = [], taskSteps = [], quizQuestions = [],
     centralIdea = null, linesOfInquiry = [], learnerProfile = null, atlSkill = null, keyConcept = null,
     questionAnswers = {}, teacherComments = [],
+    interactiveQuiz = null, interactiveQuizHtml = null,
   } = req.body;
 
   if (!title || !dueDate) return res.status(400).json({ error: 'title and dueDate required' });
@@ -1316,6 +1317,8 @@ router.post('/', async (req, res) => {
       learner_profile:  learnerProfile || null,
       atl_skill:        atlSkill || null,
       key_concept:      keyConcept || null,
+      interactive_quiz: interactiveQuiz || null,
+      interactive_quiz_html: interactiveQuizHtml || null,
     })
     .select()
     .single();
@@ -2625,6 +2628,7 @@ function normalise(a) {
     learnerProfile:   a.learner_profile || null,
     atlSkill:         a.atl_skill || null,
     keyConcept:       a.key_concept || null,
+    interactiveQuizHtml: a.interactive_quiz_html || null,
   };
 }
 

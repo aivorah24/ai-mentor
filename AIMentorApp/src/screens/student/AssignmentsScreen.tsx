@@ -45,6 +45,7 @@ interface Assignment {
   learnerProfile?: string | null;
   atlSkill?: string | null;
   keyConcept?: string | null;
+  interactiveQuizHtml?: string | null;
 }
 
 interface QuizQuestion {
@@ -2773,7 +2774,64 @@ export default function AssignmentsScreen({ navigation, route }: any) {
           )}
         </ScrollView>
 
-        {activeAssignment && (activeAssignment.quizQuestions?.length ?? 0) > 0 ? (
+        {/* ── Interactive Quiz Modal (iframe-based, from PDF→Gemini pipeline) ── */}
+        {activeAssignment && activeAssignment.interactiveQuizHtml && activeAssignment.status !== 'completed' && Platform.OS === 'web' ? (() => {
+          const html = activeAssignment.interactiveQuizHtml;
+          return (
+            <Modal visible animationType="slide" transparent onRequestClose={() => setActiveAssignment(null)}>
+              <View style={{ flex: 1, backgroundColor: colors.background }}>
+                {/* Header bar */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                  <TouchableOpacity onPress={() => setActiveAssignment(null)} style={{ marginRight: 12 }}>
+                    <Feather name="arrow-left" size={22} color={colors.text} />
+                  </TouchableOpacity>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{activeAssignment.title}</Text>
+                    <Text style={{ color: colors.subText, fontSize: 12, marginTop: 2 }}>Interactive Quiz</Text>
+                  </View>
+                </View>
+                {/* Quiz iframe */}
+                <View
+                  style={{ flex: 1 } as any}
+                  ref={(el: any) => {
+                    if (el && !(el as any)._done) {
+                      (el as any)._done = true;
+                      const blob = new Blob([html], { type: 'text/html' });
+                      const url = URL.createObjectURL(blob);
+                      const f = document.createElement('iframe');
+                      f.src = url;
+                      f.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+                      f.title = 'Interactive Quiz';
+                      f.onload = () => URL.revokeObjectURL(url);
+                      el.appendChild(f);
+
+                      // Listen for score from quiz iframe
+                      const onMsg = (e: MessageEvent) => {
+                        if (e.data?.type === 'quiz-score' && e.data.completed) {
+                          const pct = e.data.pct || Math.round((e.data.correct / e.data.total) * 100);
+                          // Submit score to server
+                          fetch(`${SERVER_URL}/assignments/${activeAssignment.id}/complete`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ score: pct, studentId: studentId }),
+                          })
+                            .then(r => r.json())
+                            .then(updated => {
+                              handleSubmitted(updated);
+                              window.removeEventListener('message', onMsg);
+                              setActiveAssignment(null);
+                            })
+                            .catch(() => {});
+                        }
+                      };
+                      window.addEventListener('message', onMsg);
+                    }
+                  }}
+                />
+              </View>
+            </Modal>
+          );
+        })() : activeAssignment && (activeAssignment.quizQuestions?.length ?? 0) > 0 ? (
           <QuizModal
             assignment={activeAssignment}
             colors={colors}
