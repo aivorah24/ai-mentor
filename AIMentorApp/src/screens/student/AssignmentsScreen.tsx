@@ -2805,15 +2805,21 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                       f.onload = () => URL.revokeObjectURL(url);
                       el.appendChild(f);
 
-                      // Listen for score from quiz iframe
+                      // Listen for score + per-question answers from quiz iframe
                       const onMsg = (e: MessageEvent) => {
                         if (e.data?.type === 'quiz-score' && e.data.completed) {
                           const pct = e.data.pct || Math.round((e.data.correct / e.data.total) * 100);
-                          // Submit score to server
+                          // Submit score + detailed answers to server
                           fetch(`${SERVER_URL}/assignments/${activeAssignment.id}/complete`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ score: pct, studentId: studentId }),
+                            body: JSON.stringify({
+                              score: pct,
+                              studentId: studentId,
+                              answers: e.data.answers || [],
+                              correct: e.data.correct,
+                              total: e.data.total,
+                            }),
                           })
                             .then(r => r.json())
                             .then(updated => {
