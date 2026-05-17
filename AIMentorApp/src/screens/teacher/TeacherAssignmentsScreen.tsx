@@ -54,6 +54,71 @@ async function pdfToImages(pdfBase64: string): Promise<{ base64: string; mime: s
   }
 }
 
+/** Generate a standalone interactive HTML quiz for browser preview — Aivorah Enchanted Forest dark theme */
+function generateQuizHTMLPreview(quiz: any): string {
+  const totalQ = quiz.tasks?.reduce((s: number, t: any) => s + (t.questions?.length || 0), 0) || 0;
+  const fmt = (t: string) => (t || '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  const tierColors: Record<string, { bg: string; border: string; label: string }> = {
+    'MUST DO': { bg: 'rgba(147,176,172,0.08)', border: '#93B0AC', label: '#93B0AC' },
+    'COULD DO': { bg: 'rgba(197,189,150,0.08)', border: '#C5BD96', label: '#C5BD96' },
+    'ENRICHMENT': { bg: 'rgba(239,209,212,0.08)', border: '#EFD1D4', label: '#EFD1D4' },
+  };
+  const skipUnits = ['comparison', 'symbol', 'n/a', 'none', 'fraction', 'text', 'yes/no', 'explanation'];
+  const answersMap: Record<string, any> = {};
+  let qHTML = '', qIdx = 0;
+  for (const task of (quiz.tasks || [])) {
+    const c = tierColors[task.tier] || tierColors['MUST DO'];
+    qHTML += `<div style="border-left:5px solid ${c.border};background:${c.bg};border-radius:12px;padding:20px 24px;margin:28px 0">
+      <span style="display:inline-block;background:${c.border}20;color:${c.label};font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px">${task.tier}</span>
+      <h2 style="font-size:18px;color:#F0EEEC;margin:6px 0 18px;font-weight:700">${fmt(task.title || '')}</h2>`;
+    if (task.diagramHTML) {
+      qHTML += `<div style="margin:0 0 20px;padding:16px;background:#252525;border-radius:10px;border:1px solid rgba(195,220,216,0.12);text-align:center">${task.diagramHTML}</div>`;
+    }
+    for (const q of (task.questions || [])) {
+      qIdx++;
+      const qId = `q${qIdx}`;
+      const isFraction = typeof q.answer === 'string' && /^\d+\/\d+$/.test(q.answer);
+      const isNum = !isFraction && (q.type === 'numeric' || typeof q.answer === 'number');
+      answersMap[qId] = { answer: q.answer, isNum, range: q.acceptRange || null };
+      const qLabel = q.id && /^[a-z0-9]/i.test(q.id) && q.id.length <= 3 ? `${q.id})` : `Q${qIdx}.`;
+      const displayUnit = q.unit && !skipUnits.includes((q.unit || '').toLowerCase()) ? q.unit : '';
+      const imgTag = q.imageUrl ? `<div style="margin-bottom:14px"><img src="${q.imageUrl.startsWith('http') ? q.imageUrl : SERVER_URL + q.imageUrl}" alt="${q.diagramDescription || 'Worksheet diagram'}" style="max-width:100%;border-radius:8px;border:1px solid rgba(195,220,216,0.12)"></div>` : '';
+      qHTML += `<div style="background:#1C1C1C;padding:20px 24px;border-radius:10px;margin:14px 0;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:1px solid rgba(195,220,216,0.12)">
+        <p style="font-size:15px;color:#F0EEEC;margin-bottom:14px;line-height:1.6"><strong style="color:#C3DCD8">${qLabel}</strong> ${fmt(q.question)}</p>
+        ${imgTag}
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+          <strong style="font-size:14px;color:#A8B5B3">Answer =</strong>
+          <input type="text" id="${qId}-i" placeholder="?" style="width:130px;padding:10px 12px;border:2px solid rgba(195,220,216,0.25);border-radius:8px;font-size:16px;text-align:center;background:#252525;color:#F0EEEC">
+          ${displayUnit ? `<span style="color:#A8B5B3;font-size:14px">${displayUnit}</span>` : ''}
+          <button onclick="check('${qId}')" style="background:#93B0AC;color:#0F0F0F;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px">Check</button>
+          <button onclick="hint('${qId}')" style="background:#C5BD96;color:#0F0F0F;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">Hint</button>
+        </div>
+        <div id="${qId}-h" style="display:none;margin-top:12px;padding:14px 16px;background:rgba(197,189,150,0.1);border-radius:8px;border-left:4px solid #C5BD96;color:#C5BD96;font-size:14px">${fmt(q.hint || '')}</div>
+        <div id="${qId}-r" style="margin-top:8px;min-height:6px"></div>
+        <div id="${qId}-s" style="display:none;margin-top:12px;padding:16px 18px;background:rgba(147,176,172,0.1);border-radius:8px;border-left:4px solid #93B0AC;color:#93B0AC;font-size:14px;line-height:1.7"><strong>Solution:</strong><br>${fmt((q.solution || '').replace(/Step (\d)/g, '<br>Step $1').replace(/Answer:/g, '<br><strong>Answer:</strong>'))}</div>
+        <button id="${qId}-sb" onclick="sol('${qId}')" style="display:none;margin-top:10px;background:#93B0AC;color:#0F0F0F;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px">Show Answer</button>
+      </div>`;
+    }
+    qHTML += `</div>`;
+  }
+  let conceptsHTML = '';
+  if (quiz.concepts?.length) {
+    const cColors = ['#93B0AC', '#C5BD96', '#D4A898', '#C3DCD8'];
+    conceptsHTML = `<div style="display:flex;gap:16px;margin:24px 0;flex-wrap:wrap">` +
+      quiz.concepts.map((cc: any, i: number) => `<div style="flex:1;min-width:220px;padding:20px;border-radius:12px;background:${cColors[i % cColors.length]}18;border:1px solid ${cColors[i % cColors.length]}40;color:#F0EEEC"><h3 style="font-size:18px;font-weight:800;margin-bottom:6px;color:${cColors[i % cColors.length]}">${cc.term}</h3><p style="font-size:13px;color:#A8B5B3;line-height:1.5">${cc.definition}</p>${cc.unit ? `<p style="margin-top:8px;font-size:12px;color:#5A6B69">Measured in<br><strong style="color:#C3DCD8">${cc.unit}</strong></p>` : ''}</div>`).join('') + `</div>`;
+  }
+  const answersJSON = JSON.stringify(answersMap).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${quiz.title || 'Quiz'} - Aivorah</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0F0F0F;color:#F0EEEC;line-height:1.6}.hdr{background:linear-gradient(135deg,#1C1C1C 0%,#252525 100%);color:#F0EEEC;padding:28px 40px;position:relative;border-bottom:1px solid rgba(195,220,216,0.12)}.hdr-sub{font-size:13px;color:#5A6B69;margin-bottom:4px}.hdr h1{font-size:26px;font-weight:800;letter-spacing:-0.5px;color:#C3DCD8}.hdr-meta{font-size:13px;color:#5A6B69;margin-top:4px}.ctr{max-width:960px;margin:0 auto;padding:0 24px 60px}.sc{position:fixed;top:20px;right:24px;width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#93B0AC,#7AADA8);color:#0F0F0F;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(147,176,172,0.3);z-index:100}.sc-n{font-size:22px;font-weight:800;line-height:1}.sc-l{font-size:9px;text-transform:uppercase;letter-spacing:1px;opacity:0.7;margin-top:2px}.pw{padding:20px 0 4px}.pw-t{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#5A6B69;margin-bottom:8px}.pb{background:#252525;border-radius:6px;height:12px;overflow:hidden;border:1px solid rgba(195,220,216,0.08)}.pf{background:linear-gradient(90deg,#93B0AC,#C3DCD8);height:100%;border-radius:6px;transition:width .6s ease}.pp{text-align:right;font-size:12px;color:#93B0AC;font-weight:600;margin-top:4px}input:focus{outline:none;border-color:#93B0AC!important;box-shadow:0 0 0 3px rgba(147,176,172,0.2)}button:hover{opacity:0.85;transform:translateY(-1px)}@media(max-width:640px){.hdr{padding:20px}.hdr h1{font-size:20px}.ctr{padding:0 14px 40px}.sc{width:60px;height:60px;top:14px;right:14px}.sc-n{font-size:18px}}</style></head>
+<body><div class="hdr"><div class="hdr-sub">${quiz.school || 'Aivorah'} &middot; ${quiz.grade || ''}</div><h1>${fmt(quiz.title || 'Interactive Quiz')}</h1><div class="hdr-meta">Subject: ${quiz.subject || 'Mathematics'} &nbsp;|&nbsp; Powered by Aivorah</div></div>
+<div class="sc"><span class="sc-n" id="sn">0/${totalQ}</span><span class="sc-l">Score</span></div><div class="ctr"><div class="pw"><div class="pw-t">Quiz Progress</div><div class="pb"><div class="pf" id="pf" style="width:0%"></div></div><div class="pp" id="pp">0% complete</div></div>${conceptsHTML}${qHTML}</div>
+<script>let sc=0;const tot=${totalQ};const dn=new Set();const ans=${answersJSON};
+function up(){document.getElementById('sn').textContent=sc+'/'+tot;const p=Math.round(dn.size/tot*100);document.getElementById('pf').style.width=p+'%';document.getElementById('pp').textContent=p+'% complete'}
+function check(id){const a=ans[id];if(!a)return;const inp=document.getElementById(id+'-i');const val=inp.value.trim();if(!val){inp.style.borderColor='#C5BD96';return}const r=document.getElementById(id+'-r');let ok=false;if(a.isNum){const v=parseFloat(val);if(isNaN(v)){inp.style.borderColor='#C5BD96';return}ok=a.range?(v>=a.range[0]&&v<=a.range[1]):Math.abs(v-a.answer)<0.01}else{ok=val.replace(/\\s+/g,'').toLowerCase()===String(a.answer).replace(/\\s+/g,'').toLowerCase()}if(ok){r.innerHTML='<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';inp.style.borderColor='#93B0AC';inp.style.background='rgba(147,176,172,0.1)';if(!dn.has(id)){sc++;dn.add(id)}document.getElementById(id+'-s').style.display='block'}else{r.innerHTML='<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';inp.style.borderColor='#EFD1D4';document.getElementById(id+'-sb').style.display='inline-block'}up()}
+function hint(id){const e=document.getElementById(id+'-h');e.style.display=e.style.display==='none'?'block':'none'}
+function sol(id){const e=document.getElementById(id+'-s');e.style.display=e.style.display==='none'?'block':'none'}</script></body></html>`;
+}
+
 type Assignment = {
   id: string;
   title: string;
@@ -215,6 +280,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [quizCount, setQuizCount] = useState(5);
   const [teacherNotes, setTeacherNotes] = useState('');
   const [docFiles, setDocFiles] = useState<{ name: string; base64: string; mime: string; url?: string }[]>([]);
+  const originalPdfRef = React.useRef<{ name: string; base64: string; mime: string } | null>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [extractingQuestions, setExtractingQuestions] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -228,6 +294,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [isDragging, setIsDragging] = useState(false);
   const [cropPageIdx, setCropPageIdx] = useState(0);
   const [generatingFromExtracted, setGeneratingFromExtracted] = useState(false);
+  // Interactive quiz generation (Claude Vision primary, Mistral fallback)
+  const [interactiveQuiz, setInteractiveQuiz] = useState<any>(null);
+  const [generatingInteractiveQuiz, setGeneratingInteractiveQuiz] = useState(false);
+  const [showInteractivePreview, setShowInteractivePreview] = useState(false);
   // Creation mode: 'choose' (initial), 'ai' (IB PYP AI), 'upload' (PDF/Image worksheet)
   const [createMode, setCreateMode] = useState<'choose' | 'ai' | 'upload'>('choose');
   const [reportAssignment, setReportAssignment] = useState<Assignment | null>(null);
@@ -481,6 +551,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       const expanded: typeof fileDataArr = [];
       for (const fd of fileDataArr) {
         if (fd.mime === 'application/pdf') {
+          // Save original PDF for interactive quiz generation (which needs full PDF, not single-page images)
+          originalPdfRef.current = { name: fd.name, base64: fd.base64, mime: fd.mime };
           console.log('[upload] Converting PDF to images:', fd.name);
           const pageImages = await pdfToImages(fd.base64);
           console.log('[upload] PDF converted to', pageImages.length, 'images');
@@ -542,12 +614,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               const matchSubj = SUBJECTS.find(s => s.toLowerCase().includes(eData.subject.toLowerCase()) || eData.subject.toLowerCase().includes(s.toLowerCase()));
               if (matchSubj) setSubject(matchSubj);
             }
-            if (eData.purpose) setNote(prev => prev || eData.purpose);
-            // Learning outcomes go into note alongside purpose
-            if (Array.isArray(eData.learningOutcomes) && eData.learningOutcomes.length > 0) {
-              const loText = eData.learningOutcomes.filter((o: string) => o.trim()).map((o: string) => `• ${o}`).join('\n');
-              setNote(prev => prev ? `${prev}\n\nLearning Outcomes:\n${loText}` : `Learning Outcomes:\n${loText}`);
-            }
+            // Purpose and learning outcomes no longer auto-fill Note — teacher writes their own notes
+            // if (eData.purpose) setNote(prev => prev || eData.purpose);
+            // if (eData.learningOutcomes) ... removed to avoid duplication
             // Only actual success criteria checklist items
             if (Array.isArray(eData.successCriteria) && eData.successCriteria.length > 0) {
               setSuccessCriteria(eData.successCriteria.filter((c: string) => c.trim()));
@@ -581,12 +650,62 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     setSubject('Mathematics');
     setGrade(user?.teaches?.[0]?.grade || 'Grade 3');
     setCurriculum(user?.teaches?.[0]?.curriculum || user?.curriculum || 'NCERT');
-    setType('assignment'); setQuestions(['']); setSuccessCriteria(['']); setTaskSteps([]); setQuizQuestions([]); setTeacherNotes(''); setDocFiles([]); setFormError('');
+    setType('assignment'); setQuestions(['']); setSuccessCriteria(['']); setTaskSteps([]); setQuizQuestions([]); setTeacherNotes(''); setDocFiles([]); setFormError(''); originalPdfRef.current = null;
     setAssignTo('all'); setSelectedStudent(null); setStudentSearch('');
     setExtractingQuestions(false); setExtractedQuestions([]); setShowPreview(false); setCreateMode('choose');
+    setInteractiveQuiz(null); setGeneratingInteractiveQuiz(false); setShowInteractivePreview(false);
     setSelectedLanguage('Telugu'); setUnitOfInquiry(''); setIbPurpose('');
     setIbLearningOutcomes(['']); setIbWordBank([]); setIbStamps([]);
     setIbCentralIdea(''); setIbLinesOfInquiry([]); setIbLearnerProfile(''); setIbAtlSkill(''); setIbKeyConcept('');
+  }
+
+  // Generate interactive quiz via Mistral (PDF/image → structured quiz with answers, hints, solutions)
+  async function generateInteractiveQuiz() {
+    if (docFiles.length === 0) return;
+    setGeneratingInteractiveQuiz(true);
+    setInteractiveQuiz(null);
+    try {
+      // Prefer original PDF (sends ALL pages to Gemini Vision) over single-page images
+      const pdfFile = docFiles.find(f => f.mime === 'application/pdf') || originalPdfRef.current;
+      const file = pdfFile || docFiles[0];
+      const isImage = !pdfFile && file.mime.startsWith('image/');
+      const endpoint = isImage ? '/quiz/generate-image' : '/quiz/generate';
+      console.log('[quiz-gen] Using', endpoint, 'with', file.mime, 'name:', file.name, 'pages in docFiles:', docFiles.length);
+
+      // Use FormData for file upload
+      const formData = new FormData();
+      const byteChars = atob(file.base64);
+      const byteArray = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([byteArray], { type: file.mime });
+      const fieldName = isImage ? 'image' : 'pdf';
+      formData.append(fieldName, blob, file.name || (isImage ? 'worksheet.jpg' : 'worksheet.pdf'));
+      formData.append('grade', grade || 'PYP 4');
+      formData.append('subject', subject || 'Mathematics');
+      formData.append('school', '');
+
+      const res = await fetch(`${SERVER_URL}${endpoint}`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.quiz) {
+        // Auto-fetch the server-rendered HTML preview
+        const quizData = { ...data.quiz, _editMode: false };
+        try {
+          const previewRes = await fetch(`${SERVER_URL}/quiz/render-preview`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quiz: data.quiz }) });
+          if (previewRes.ok) quizData._previewHTML = await previewRes.text();
+        } catch {}
+        setInteractiveQuiz(quizData);
+        setShowInteractivePreview(true);
+      } else {
+        Alert.alert('Error', data.error || 'Failed to generate interactive quiz');
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to generate interactive quiz');
+    } finally {
+      setGeneratingInteractiveQuiz(false);
+    }
   }
 
   // Generate MCQ quiz from extracted worksheet questions
@@ -1580,6 +1699,168 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           </Modal>
         )}
 
+        {/* Interactive Quiz Preview Modal — unified server-rendered HTML + edit mode */}
+        {showInteractivePreview && interactiveQuiz && (
+          <Modal visible transparent={false} animationType="slide" onRequestClose={() => setShowInteractivePreview(false)}>
+            <View style={{ flex: 1, backgroundColor: '#0f1117', position: 'relative' } as any}>
+              {/* Top bar with tabs */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, paddingHorizontal: 16, backgroundColor: '#161b22', borderBottomWidth: 1, borderBottomColor: '#30363d' }}>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TouchableOpacity
+                    style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: !(interactiveQuiz as any)._editMode ? '#93B0AC' : '#1c2129' }}
+                    onPress={async () => {
+                      const updated = { ...interactiveQuiz, _editMode: false };
+                      // Fetch server-rendered HTML for preview (strip internal props)
+                      const { _previewHTML: _p, _editMode: _e, ...cleanQ } = interactiveQuiz as any;
+                      try {
+                        const res = await fetch(`${SERVER_URL}/quiz/render-preview`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ quiz: cleanQ }),
+                        });
+                        (updated as any)._previewHTML = await res.text();
+                      } catch {}
+                      setInteractiveQuiz(updated);
+                    }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: !(interactiveQuiz as any)._editMode ? '#0f1117' : '#8b949e' }}>Preview</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: (interactiveQuiz as any)._editMode ? '#C5BD96' : '#1c2129' }}
+                    onPress={() => setInteractiveQuiz({ ...interactiveQuiz, _editMode: true })}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: (interactiveQuiz as any)._editMode ? '#0f1117' : '#8b949e' }}>Edit Answers</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                  <TouchableOpacity
+                    style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: '#2e7d32', flexDirection: 'row', gap: 6, alignItems: 'center' }}
+                    onPress={() => { setShowInteractivePreview(false); Alert.alert('Saved', 'Interactive quiz is ready for publishing.'); }}
+                  >
+                    <Feather name="check-circle" size={14} color="#fff" />
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>Approve & Save</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: '#1a237e', flexDirection: 'row', gap: 6, alignItems: 'center' }}
+                    onPress={async () => {
+                      // If we already have the server-rendered HTML, open it directly
+                      if ((interactiveQuiz as any)._previewHTML) {
+                        const blob = new Blob([(interactiveQuiz as any)._previewHTML], { type: 'text/html' });
+                        window.open(URL.createObjectURL(blob), '_blank');
+                        return;
+                      }
+                      // Otherwise fetch from server (strip internal props)
+                      const { _previewHTML, _editMode, ...cleanQuiz } = interactiveQuiz as any;
+                      try {
+                        const res = await fetch(`${SERVER_URL}/quiz/render-preview`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quiz: cleanQuiz }) });
+                        const html = await res.text();
+                        const blob = new Blob([html], { type: 'text/html' });
+                        window.open(URL.createObjectURL(blob), '_blank');
+                      } catch {
+                        const htmlContent = generateQuizHTMLPreview(cleanQuiz);
+                        window.open(URL.createObjectURL(new Blob([htmlContent], { type: 'text/html' })), '_blank');
+                      }
+                    }}
+                  >
+                    <Feather name="external-link" size={14} color="#fff" />
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>Open in Tab</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setShowInteractivePreview(false)} activeOpacity={0.75}>
+                    <Feather name="x" size={22} color="#8b949e" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Preview Mode — server-rendered HTML embedded */}
+              {!(interactiveQuiz as any)._editMode && (interactiveQuiz as any)._previewHTML && Platform.OS === 'web' && (
+                <div
+                  ref={(el: any) => {
+                    if (el && !(el as any)._done) {
+                      (el as any)._done = true;
+                      const html = (interactiveQuiz as any)._previewHTML;
+                      const blob = new Blob([html], { type: 'text/html' });
+                      const url = URL.createObjectURL(blob);
+                      const f = document.createElement('iframe');
+                      f.src = url;
+                      f.style.cssText = 'width:100%;border:none;background:#0f1117;display:block;height:100%;';
+                      f.title = 'Quiz Preview';
+                      f.onload = () => {
+                        try {
+                          const h = f.contentDocument?.documentElement?.scrollHeight;
+                          if (h && h > 100) f.style.height = h + 'px';
+                        } catch {}
+                        URL.revokeObjectURL(url);
+                      };
+                      el.appendChild(f);
+                    }
+                  }}
+                  style={{ position: 'fixed', top: 56, left: 0, right: 0, bottom: 0, overflow: 'auto', background: '#0f1117', zIndex: 9999 } as any}
+                />
+              )}
+              {!(interactiveQuiz as any)._editMode && !(interactiveQuiz as any)._previewHTML && (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                  <ActivityIndicator size="large" color="#93B0AC" />
+                  <Text style={{ color: '#8b949e', marginTop: 12, fontSize: 14 }}>Loading preview...</Text>
+                  <TouchableOpacity
+                    style={{ marginTop: 16, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, backgroundColor: '#93B0AC' }}
+                    onPress={async () => {
+                      try {
+                        const res = await fetch(`${SERVER_URL}/quiz/render-preview`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quiz: interactiveQuiz }) });
+                        const html = await res.text();
+                        setInteractiveQuiz({ ...interactiveQuiz, _previewHTML: html, _editMode: false });
+                      } catch {}
+                    }}
+                  >
+                    <Text style={{ color: '#0f1117', fontWeight: '700', fontSize: 13 }}>Load Preview</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Edit Mode — editable answer/hint/solution fields */}
+              {(interactiveQuiz as any)._editMode && (
+                <ScrollView style={{ flex: 1, padding: 16 }}>
+                  {interactiveQuiz.tasks?.map((task: any, ti: number) => {
+                    const tierColor = task.tier === 'MUST DO' ? '#4caf50' : task.tier === 'COULD DO' ? '#ff9800' : '#e91e63';
+                    const tierBg = task.tier === 'MUST DO' ? '#f0faf0' : task.tier === 'COULD DO' ? '#fffaf0' : '#fef0f5';
+                    return (
+                      <View key={ti} style={{ marginBottom: 20, borderLeftWidth: 5, borderLeftColor: tierColor, borderRadius: 12, backgroundColor: tierBg, padding: 18 }}>
+                        <View style={{ backgroundColor: tierColor + '18', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 3, borderRadius: 4, marginBottom: 6 }}>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: tierColor, textTransform: 'uppercase', letterSpacing: 1.5 }}>{task.tier}</Text>
+                        </View>
+                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#222', marginBottom: 4 }}>{(task.title || '').replace(/\*\*/g, '')}</Text>
+                        {task.questions?.map((q: any, qi: number) => (
+                          <View key={qi} style={{ backgroundColor: '#fff', padding: 16, borderRadius: 10, marginTop: 12, borderWidth: 1, borderColor: '#e8eaed' }}>
+                            <Text style={{ fontSize: 14, fontWeight: '600', color: '#222', marginBottom: 10, lineHeight: 22 }}>{q.id ? `${q.id})` : `Q${qi+1}.`} {(q.question || '').replace(/\*\*(.+?)\*\*/g, '$1')}</Text>
+                            {q.imageUrl && (
+                              <View style={{ marginBottom: 12, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: '#e0e0e0', backgroundColor: '#fafafa', padding: 8 }}>
+                                <Image source={{ uri: q.imageUrl.startsWith('http') ? q.imageUrl : `${SERVER_URL}${q.imageUrl}` }} style={{ width: '100%', height: 160, resizeMode: 'contain' }} />
+                              </View>
+                            )}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10, backgroundColor: '#f0faf0', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#4caf5030' }}>
+                              <Text style={{ fontSize: 13, fontWeight: '700', color: '#2e7d32' }}>Answer:</Text>
+                              <TextInput style={{ flex: 1, borderWidth: 1.5, borderColor: '#4caf5050', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 14, color: '#1a1a2e', backgroundColor: '#fff', fontWeight: '600' }} value={String(q.answer ?? '')} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].answer = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Answer" placeholderTextColor="#999" />
+                              {q.unit && <Text style={{ fontSize: 13, color: '#555', fontWeight: '500' }}>{q.unit}</Text>}
+                            </View>
+                            <View style={{ marginBottom: 10, backgroundColor: '#fff8e1', padding: 10, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: '#ffc107' }}>
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: '#f57f17', marginBottom: 4 }}>Hint:</Text>
+                              <TextInput style={{ borderWidth: 1, borderColor: '#ffc10730', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#5d4037', backgroundColor: '#fff' }} value={q.hint || ''} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].hint = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Hint" placeholderTextColor="#999" multiline />
+                            </View>
+                            <View style={{ backgroundColor: '#e8f5e9', padding: 10, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: '#4caf50' }}>
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: '#1b5e20', marginBottom: 4 }}>Solution:</Text>
+                              <TextInput style={{ borderWidth: 1, borderColor: '#4caf5030', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#1b5e20', backgroundColor: '#fff' }} value={q.solution || ''} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].solution = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Solution" placeholderTextColor="#999" multiline numberOfLines={3} />
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    );
+                  })}
+                  <View style={{ height: 40 }} />
+                </ScrollView>
+              )}
+            </View>
+          </Modal>
+        )}
+
         {/* AI Report Modal */}
         {reportAssignment && (
           <AIReportModal
@@ -1725,6 +2006,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       <Text style={{ fontSize: 11, color: colors.accentGreen, fontWeight: '600' }}>Details auto-filled from worksheet — review and edit below</Text>
                     </View>
                   )}
+
+                  {/* Generate Interactive Quiz button moved to Output Format section below */}
                   </>)}
 
                   {/* ── COMMON FIELDS (shown in both modes) ── */}
@@ -2201,7 +2484,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                   {createMode === 'upload' && (<>
                   {/* ── Extracted Content Summary ── */}
-                  {(teacherNotes.trim() || note.trim() || ibWordBank.length > 0 || ibStamps.length > 0 || successCriteria.some(c => c.trim())) && docFiles.length > 0 && (
+                  {/* Content Extracted section hidden — backup feature */}
+                  {false && (teacherNotes.trim() || note.trim() || ibWordBank.length > 0 || ibStamps.length > 0 || successCriteria.some(c => c.trim())) && docFiles.length > 0 && (
                     <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: colors.accentGreen + '40', backgroundColor: colors.accentGreen + '08', gap: 8 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <Feather name="check-circle" size={16} color={colors.accentGreen} />
@@ -2265,8 +2549,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </View>
                   )}
 
-                  {/* ── Extracted Questions from PDF/Image ── */}
-                  {extractedQuestions.length > 0 && (
+                  {/* ── Extracted Questions from PDF/Image (hidden — backup feature) ── */}
+                  {false && extractedQuestions.length > 0 && (
                     <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: colors.accentCyan + '40', backgroundColor: colors.accentCyan + '08', gap: 10 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <Feather name="file-text" size={16} color={colors.accentCyan} />
@@ -2352,232 +2636,76 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </View>
                   )}
 
-                  {/* ── Output Format — Worksheet or Quiz ── */}
-                  <View style={{ gap: 10 }}>
-                    <Text style={styles.fieldLabel}>Output Format</Text>
-                    <Text style={{ fontSize: 11, color: colors.textDim, lineHeight: 16, marginTop: -4 }}>
-                      Choose how students will interact with this content
-                    </Text>
-                    <View style={{ flexDirection: 'row', gap: 10 }}>
-                      {/* Worksheet option */}
+                  {/* ── Generate Interactive Quiz (replaces Output Format) ── */}
+                  {createMode === 'upload' && docFiles.length > 0 && !extractingQuestions && (
+                    <View style={{ gap: 12 }}>
                       <TouchableOpacity
-                        style={{ flex: 1, padding: 14, borderRadius: 12, borderWidth: 1.5,
-                          borderColor: type === 'assignment' ? colors.accentCyan : colors.borderColor,
-                          backgroundColor: type === 'assignment' ? colors.accentCyan + '10' : 'transparent', gap: 6 }}
-                        onPress={() => {
-                          setType('assignment');
-                          if (extractedQuestions.length > 0) {
-                            setQuestions(extractedQuestions.map(q => q.question).filter(Boolean));
-                            setNote(prev => {
-                              const comments = extractedQuestions.filter(q => q.comment.trim()).map((q, i) => `Q${i+1}: ${q.comment}`).join('\n');
-                              return comments ? (prev ? prev + '\n\n' + comments : comments) : prev;
-                            });
-                          }
-                        }}
+                        style={{ padding: 16, borderRadius: 14, borderWidth: 1.5,
+                          borderColor: interactiveQuiz ? colors.accentGreen + '60' : colors.primary + '60',
+                          backgroundColor: interactiveQuiz ? colors.accentGreen + '10' : colors.primaryGlow,
+                          flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                        onPress={generateInteractiveQuiz}
                         activeOpacity={0.8}
+                        disabled={generatingInteractiveQuiz}
                       >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: type === 'assignment' ? colors.accentCyan + '20' : colors.borderColor + '60', alignItems: 'center', justifyContent: 'center' }}>
-                            <Feather name="file-text" size={16} color={type === 'assignment' ? colors.accentCyan : colors.textDim} />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '800', color: type === 'assignment' ? colors.accentCyan : colors.textMuted }}>Worksheet</Text>
-                            <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 1 }}>Open-ended with AI grading</Text>
-                          </View>
-                          {type === 'assignment' && <Feather name="check-circle" size={16} color={colors.accentCyan} />}
-                        </View>
-                      </TouchableOpacity>
-
-                      {/* Quiz option */}
-                      <TouchableOpacity
-                        style={{ flex: 1, padding: 14, borderRadius: 12, borderWidth: 1.5,
-                          borderColor: type === 'quiz' ? colors.primary : colors.borderColor,
-                          backgroundColor: type === 'quiz' ? colors.primaryGlow : 'transparent', gap: 6 }}
-                        onPress={() => setType('quiz')}
-                        activeOpacity={0.8}
-                      >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: type === 'quiz' ? colors.primary + '20' : colors.borderColor + '60', alignItems: 'center', justifyContent: 'center' }}>
-                            <Feather name="help-circle" size={16} color={type === 'quiz' ? colors.primary : colors.textDim} />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '800', color: type === 'quiz' ? colors.primary : colors.textMuted }}>Interactive Quiz</Text>
-                            <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 1 }}>MCQ with auto-scoring</Text>
-                          </View>
-                          {type === 'quiz' && <Feather name="check-circle" size={16} color={colors.primary} />}
-                        </View>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
-                  {/* ── Quiz Generator (shown when quiz format selected) ── */}
-                  {type === 'quiz' && (
-                    <View style={{ gap: 10, padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary + '40', backgroundColor: colors.primaryGlow }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <Feather name="zap" size={16} color={colors.primary} />
-                        <Text style={{ fontSize: 14, fontWeight: '800', color: colors.primary }}>Generate Quiz with AI</Text>
-                      </View>
-                      <Text style={{ fontSize: 11, color: colors.textDim, lineHeight: 16 }}>
-                        {extractedQuestions.length > 0
-                          ? 'Convert extracted questions to interactive MCQ format, or generate new ones from textbook content.'
-                          : 'Generate MCQ questions from textbook content for this topic.'}
-                      </Text>
-
-                      {/* Difficulty */}
-                      <View>
-                        <Text style={[styles.fieldLabel, { marginBottom: 6 }]}>Difficulty</Text>
-                        <View style={{ flexDirection: 'row', gap: 8 }}>
-                          {(['easy','medium','hard'] as const).map(d => (
-                            <TouchableOpacity key={d} onPress={() => setQuizDifficulty(d)} activeOpacity={0.75}
-                              style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
-                                borderColor: quizDifficulty === d ? colors.primary : colors.borderColor,
-                                backgroundColor: quizDifficulty === d ? colors.primaryGlow : 'transparent' }}>
-                              <Text style={{ fontSize: 12, fontWeight: '700', color: quizDifficulty === d ? colors.primary : colors.textMuted, textTransform: 'capitalize' }}>{d}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
-
-                      {/* Question count */}
-                      <View>
-                        <Text style={[styles.fieldLabel, { marginBottom: 6 }]}>Number of Questions</Text>
-                        <View style={{ flexDirection: 'row', gap: 8 }}>
-                          {[3, 5, 8, 10].map(n => (
-                            <TouchableOpacity key={n} onPress={() => setQuizCount(n)} activeOpacity={0.75}
-                              style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
-                                borderColor: quizCount === n ? colors.primary : colors.borderColor,
-                                backgroundColor: quizCount === n ? colors.primaryGlow : 'transparent' }}>
-                              <Text style={{ fontSize: 13, fontWeight: '700', color: quizCount === n ? colors.primary : colors.textMuted }}>{n}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
-
-                      {/* Teacher notes */}
-                      <Text style={styles.fieldLabel}>Additional Instructions for AI (optional)</Text>
-                      <TextInput
-                        style={[styles.input, styles.inputMulti]}
-                        placeholder="e.g. Focus on word problems, include a question about fractions, avoid division..."
-                        placeholderTextColor={colors.textDim}
-                        value={teacherNotes}
-                        onChangeText={setTeacherNotes}
-                        multiline numberOfLines={2}
-                      />
-
-                      {/* Generate buttons */}
-                      <View style={{ flexDirection: 'row', gap: 8 }}>
-                        {extractedQuestions.length > 0 && (
-                          <TouchableOpacity
-                            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-                              padding: 12, borderRadius: 10, borderWidth: 1.5, borderColor: colors.primary,
-                              backgroundColor: generatingFromExtracted ? colors.borderColor : 'transparent' }}
-                            onPress={generateQuizFromExtracted}
-                            activeOpacity={0.85}
-                            disabled={generatingFromExtracted}
-                          >
-                            {generatingFromExtracted
-                              ? <ActivityIndicator size="small" color={colors.primary} />
-                              : <Feather name="repeat" size={14} color={colors.primary} />}
-                            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>
-                              {generatingFromExtracted ? 'Converting...' : 'From Extracted'}
-                            </Text>
-                          </TouchableOpacity>
+                        {generatingInteractiveQuiz ? (
+                          <ActivityIndicator size="small" color={colors.primary} />
+                        ) : interactiveQuiz ? (
+                          <Feather name="check-circle" size={22} color={colors.accentGreen} />
+                        ) : (
+                          <Feather name="play-circle" size={22} color={colors.primary} />
                         )}
-                        <TouchableOpacity
-                          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-                            padding: 12, borderRadius: 10,
-                            backgroundColor: generatingQuiz ? colors.borderColor : colors.primary }}
-                          onPress={generateQuiz}
-                          activeOpacity={0.85}
-                          disabled={generatingQuiz}
-                        >
-                          {generatingQuiz
-                            ? <ActivityIndicator size="small" color="#fff" />
-                            : <Feather name="zap" size={14} color="#fff" />}
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#fff' }}>
-                            {generatingQuiz ? 'Generating...' : 'From Textbook'}
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 15, fontWeight: '800', color: interactiveQuiz ? colors.accentGreen : colors.primary }}>
+                            {generatingInteractiveQuiz ? 'Generating Interactive Quiz...' : interactiveQuiz ? 'Interactive Quiz Ready' : 'Generate Interactive Quiz'}
                           </Text>
-                        </TouchableOpacity>
-                      </View>
+                          <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
+                            {generatingInteractiveQuiz ? 'AI is analyzing your worksheet...' : interactiveQuiz ? `${interactiveQuiz.tasks?.reduce((s: number, t: any) => s + (t.questions?.length || 0), 0) || 0} questions generated — tap to preview` : 'AI creates quiz with answers, hints & solutions from your worksheet'}
+                          </Text>
+                        </View>
+                        {!generatingInteractiveQuiz && (
+                          <Feather name={interactiveQuiz ? 'external-link' : 'chevron-right'} size={18} color={interactiveQuiz ? colors.accentGreen : colors.primary} />
+                        )}
+                      </TouchableOpacity>
 
-                      {/* ── Editable Quiz Questions Preview ── */}
-                      {quizQuestions.length > 0 && (
-                        <View style={{ gap: 8, marginTop: 4 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <Feather name="check-circle" size={14} color={colors.accentGreen} />
-                              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.accentGreen }}>{quizQuestions.length} questions — edit below</Text>
-                            </View>
-                            <TouchableOpacity onPress={generateQuiz} activeOpacity={0.75}
-                              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                              <Feather name="refresh-cw" size={11} color={colors.textDim} />
-                              <Text style={{ fontSize: 11, color: colors.textDim }}>Regenerate</Text>
-                            </TouchableOpacity>
-                          </View>
-                          {quizQuestions.map((q, i) => (
-                            <View key={q.id || i} style={{ padding: 10, borderRadius: 10, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, gap: 6 }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                                <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: 6 }}>
-                                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{i + 1}</Text>
-                                </View>
-                                <TextInput
-                                  style={[styles.input, { flex: 1, fontSize: 12, marginBottom: 0 }]}
-                                  value={q.question}
-                                  onChangeText={(t) => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, question: t } : qq))}
-                                  multiline
-                                  placeholder="Question text..."
-                                  placeholderTextColor={colors.textDim}
-                                />
-                                <TouchableOpacity onPress={() => setQuizQuestions(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.7} style={{ marginTop: 8 }}>
-                                  <Feather name="trash-2" size={14} color={colors.accentRed} />
-                                </TouchableOpacity>
-                              </View>
-                              {/* Editable options with correct answer toggle */}
-                              {q.options?.map((opt: string, oi: number) => (
-                                <View key={oi} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 32 }}>
-                                  <TouchableOpacity
-                                    onPress={() => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, correct: opt } : qq))}
-                                    style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5,
-                                      borderColor: opt === q.correct ? colors.accentGreen : colors.borderColor,
-                                      backgroundColor: opt === q.correct ? colors.accentGreen + '20' : 'transparent',
-                                      alignItems: 'center', justifyContent: 'center' }}
-                                  >
-                                    <Text style={{ fontSize: 10, fontWeight: '700', color: opt === q.correct ? colors.accentGreen : colors.textDim }}>
-                                      {String.fromCharCode(65 + oi)}
-                                    </Text>
-                                  </TouchableOpacity>
-                                  <TextInput
-                                    style={[styles.input, { flex: 1, fontSize: 11, paddingVertical: 5, marginBottom: 0 }]}
-                                    value={opt}
-                                    onChangeText={(t) => setQuizQuestions(prev => prev.map((qq, j) => {
-                                      if (j !== i) return qq;
-                                      const newOpts = [...(qq.options || [])];
-                                      const wasCorrect = newOpts[oi] === qq.correct;
-                                      newOpts[oi] = t;
-                                      return { ...qq, options: newOpts, correct: wasCorrect ? t : qq.correct };
-                                    }))}
-                                    placeholder={`Option ${String.fromCharCode(65 + oi)}...`}
-                                    placeholderTextColor={colors.textDim}
-                                  />
-                                  {opt === q.correct && <Feather name="check-circle" size={14} color={colors.accentGreen} />}
-                                </View>
-                              ))}
-                              {/* Editable hint */}
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 32 }}>
-                                <Feather name="info" size={11} color={colors.accentYellow} />
-                                <TextInput
-                                  style={[styles.input, { flex: 1, fontSize: 10, paddingVertical: 4, marginBottom: 0, borderColor: colors.accentYellow + '30' }]}
-                                  value={q.hint || ''}
-                                  onChangeText={(t) => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, hint: t } : qq))}
-                                  placeholder="Hint for students (optional)..."
-                                  placeholderTextColor={colors.textDim}
-                                />
-                              </View>
-                            </View>
-                          ))}
-                          <Text style={{ fontSize: 10, color: colors.textDim, textAlign: 'center', lineHeight: 15 }}>
-                            Tap A/B/C/D to set correct answer. Edit question text, options, and hints inline.
-                          </Text>
+                      {/* Preview button when quiz is ready */}
+                      {interactiveQuiz && !generatingInteractiveQuiz && (
+                        <View style={{ gap: 10 }}>
+                          {/* Teacher Preview — in-app editable answers/hints/solutions */}
+                          <TouchableOpacity
+                            style={{ padding: 14, borderRadius: 12, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                            onPress={() => setShowInteractivePreview(true)}
+                            activeOpacity={0.8}
+                          >
+                            <Feather name="edit-3" size={16} color="#0F0F0F" />
+                            <Text style={{ fontSize: 14, fontWeight: '700', color: '#0F0F0F' }}>Teacher Preview — Edit & Review</Text>
+                          </TouchableOpacity>
+                          {/* Student Preview — full interactive HTML quiz */}
+                          <TouchableOpacity
+                            style={{ padding: 14, borderRadius: 12, backgroundColor: '#1a237e', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                            onPress={async () => {
+                              try {
+                                const res = await fetch(`${SERVER_URL}/quiz/render-preview`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ quiz: interactiveQuiz }),
+                                });
+                                const html = await res.text();
+                                const blob = new Blob([html], { type: 'text/html' });
+                                const url = URL.createObjectURL(blob);
+                                window.open(url, '_blank');
+                              } catch {
+                                const htmlContent = generateQuizHTMLPreview(interactiveQuiz);
+                                const blob = new Blob([htmlContent], { type: 'text/html' });
+                                const url = URL.createObjectURL(blob);
+                                window.open(url, '_blank');
+                              }
+                            }}
+                            activeOpacity={0.8}
+                          >
+                            <Feather name="eye" size={16} color="#fff" />
+                            <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>Student Preview — Interactive Quiz</Text>
+                          </TouchableOpacity>
                         </View>
                       )}
                     </View>
@@ -3069,8 +3197,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   </View>
                 )}
 
-                {/* Extracted questions with answers */}
-                {extractedQuestions.length > 0 && (
+                {/* Extracted questions with answers (hidden — backup feature) */}
+                {false && extractedQuestions.length > 0 && (
                   <View style={{ gap: 8 }}>
                     <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accentCyan }}>
                       Extracted Questions ({extractedQuestions.length})
