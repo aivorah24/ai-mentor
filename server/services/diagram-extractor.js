@@ -805,92 +805,183 @@ function matchDiagramsToQuestions(extractionResult, quiz) {
     }
   }
 
-  // Step 4: Match figures to questions per page
-  // Strategy: For two-column tasks, match by x-position (left figures → left questions).
-  // For single-column tasks, match by closest y-position.
-  // Filter out likely headers/logos (very top of page AND aspect ratio > 4:1).
+  // Step 4: Match figures to questions per page.
+  // PRIMARY: Use LLM-provided diagramPosition (e.g. "top-left", "bottom-center") to match.
+  // FALLBACK: Use spatial heuristics (y-proximity + x-split for two-column).
+
+  // Helper: parse LLM diagramPosition into normalized rank targets (0..1)
+  // Uses relative ranking so it works regardless of page pixel dimensions.
+  function positionToRankTarget(pos) {
+    if (!pos) return null;
+    const p = pos.toLowerCase().replace(/[_\s]+/g, '-');
+    let yRank = 0.5, xRank = 0.5; // default: center
+    if (p.includes('top'))    yRank = 0.15;
+    if (p.includes('middle')) yRank = 0.5;
+    if (p.includes('bottom')) yRank = 0.85;
+    if (p.includes('left'))   xRank = 0.15;
+    if (p.includes('center')) xRank = 0.5;
+    if (p.includes('right'))  xRank = 0.85;
+    return { xRank, yRank };
+  }
+
+  // Helper: LLM-guided matching using rank-based scoring.
+  // Ranks figures by y and x independently, then matches each question's
+  // diagramPosition to the figure whose rank is closest. This is robust
+  // regardless of page dimensions or figure pixel positions.
+  function matchByLLMPosition(contentFigures, allImgQuestions) {
+    const unmatched = contentFigures.filter(f => !f._matched);
+    if (unmatched.length === 0 || allImgQuestions.length === 0) return;
+
+    // Sort figures by y and x to compute ranks (0 = top/left, 1 = bottom/right)
+    const byY = [...unmatched].sort((a, b) => (a.bbox.y + a.bbox.h / 2) - (b.bbox.y + b.bbox.h / 2));
+    const byX = [...unmatched].sort((a, b) => (a.bbox.x + a.bbox.w / 2) - (b.bbox.x + b.bbox.w / 2));
+    const n = unmatched.length;
+
+    // Check if there's meaningful spread in each dimension.
+    // If all figures are at similar x (e.g. single-column), collapse x-rank to 0.5
+    // to avoid noise from arbitrary sort order.
+    const xValues = unmatched.map(f => f.bbox.x + f.bbox.w / 2);
+    const yValues = unmatched.map(f => f.bbox.y + f.bbox.h / 2);
+    const xSpread = Math.max(...xValues) - Math.min(...xValues);
+    const ySpread = Math.max(...yValues) - Math.min(...yValues);
+    const totalSpread = xSpread + ySpread;
+    const xMeaningful = totalSpread > 0 && xSpread / totalSpread > 0.15;
+    const yMeaningful = totalSpread > 0 && ySpread / totalSpread > 0.15;
+
+    const figRanks = new Map();
+    for (let i = 0; i < n; i++) {
+      const yIdx = byY.indexOf(unmatched[i]);
+      const xIdx = byX.indexOf(unmatched[i]);
+      figRanks.set(unmatched[i], {
+        yRank: yMeaningful && n > 1 ? yIdx / (n - 1) : 0.5,
+        xRank: xMeaningful && n > 1 ? xIdx / (n - 1) : 0.5,
+      });
+    }
+
+    // Greedy matching: for each question (sorted by y-rank target), find best figure
+    const qWithTargets = allImgQuestions
+      .map(q => ({ q, target: positionToRankTarget(q.diagramPosition) }))
+      .filter(qt => qt.target);
+    // Sort by y-rank target (top-first) for greedy stability
+    qWithTargets.sort((a, b) => a.target.yRank - b.target.yRank);
+
+    for (const { q, target } of qWithTargets) {
+      let bestFig = null, bestScore = Infinity;
+      for (const fig of unmatched) {
+        if (fig._matched) continue;
+        const rank = figRanks.get(fig);
+        // Weighted distance in rank space (y matters more than x for vertical layouts)
+        const score = Math.sqrt(1.5 * (rank.yRank - target.yRank) ** 2 + (rank.xRank - target.xRank) ** 2);
+        if (score < bestScore) { bestScore = score; bestFig = fig; }
+      }
+      if (bestFig) {
+        q.imageUrl = bestFig.imageUrl;
+        q.diagramBbox = bestFig.bbox;
+        bestFig._matched = true;
+        const rank = figRanks.get(bestFig);
+        console.log(`[diagram] LLM match: "${q.diagramPosition}" → yRank=${rank.yRank.toFixed(2)} xRank=${rank.xRank.toFixed(2)} → ${bestFig.imageUrl?.split('/').pop()} Q(${q.id})`);
+      }
+    }
+  }
+
   for (const pg of Object.keys(tasksByPage)) {
     const tasks = tasksByPage[pg];
     const figures = figuresByPage[pg] || [];
     if (figures.length === 0 || tasks.length === 0) continue;
 
-    // Filter out likely headers/logos: top 8% of page AND very wide (aspect > 3:1)
+    // Filter out likely headers/logos/decorative banners:
+    // - Top 12% of page AND wide (aspect > 2.5:1) — catches decorative banners
+    // - OR very top (top 5%) AND small area (< 3% of page area) — tiny logos
     const pageHeight = Math.max(...figures.map(f => f.bbox.y + f.bbox.h), 2000);
-    const headerThreshold = pageHeight * 0.08;
+    const pageWidth = Math.max(...figures.map(f => f.bbox.x + f.bbox.w), 1000);
+    const pageArea = pageHeight * pageWidth;
+    const headerThreshold = pageHeight * 0.12;
     const contentFigures = figures.filter(f => {
       const aspect = f.bbox.w / Math.max(f.bbox.h, 1);
-      const isHeader = f.bbox.y < headerThreshold && aspect > 3;
-      if (isHeader) console.log(`[diagram] Skipping likely header: y=${f.bbox.y} w=${f.bbox.w} h=${f.bbox.h}`);
-      return !isHeader;
+      const area = f.bbox.w * f.bbox.h;
+      const isWideBanner = f.bbox.y < headerThreshold && aspect > 2.5;
+      const isTinyLogo = f.bbox.y < pageHeight * 0.05 && area < pageArea * 0.03;
+      if (isWideBanner || isTinyLogo) {
+        console.log(`[diagram] Skipping likely header/banner: y=${f.bbox.y} w=${f.bbox.w} h=${f.bbox.h} aspect=${aspect.toFixed(1)}`);
+        return false;
+      }
+      return true;
     });
 
-    // Count total questions needing images
-    const totalImgQ = tasks.reduce((s, t) => s + t.imgQuestions.length, 0);
+    // Check if any question has LLM-provided diagramPosition
+    const hasLLMPositions = tasks.some(({ imgQuestions }) =>
+      imgQuestions.some(q => q.diagramPosition)
+    );
 
-    for (const { task, imgQuestions } of tasks) {
-      const layout = task.layout || {};
-      const istwocol = layout.type === 'two-column' && layout.columnGroups?.length >= 2;
+    if (hasLLMPositions) {
+      // ── LLM-GUIDED MATCHING: Use diagramPosition with rank-based scoring ──
+      console.log(`[diagram] Using LLM diagramPosition for page ${pg} (${contentFigures.length} figures)`);
+      const allImgQs = tasks.flatMap(({ imgQuestions }) => imgQuestions);
+      matchByLLMPosition(contentFigures, allImgQs);
+    } else {
+      // ── SPATIAL HEURISTIC MATCHING (fallback when LLM doesn't provide positions) ──
+      for (const { task, imgQuestions } of tasks) {
+        const layout = task.layout || {};
+        const istwocol = layout.type === 'two-column' && layout.columnGroups?.length >= 2;
 
-      if (istwocol && imgQuestions.length >= 2) {
-        // TWO-COLUMN: Match by x-position — left figures to left-column Q, right to right-column Q
-        const colGroups = layout.columnGroups;
-        const leftQIds = new Set(colGroups[0].questionIds || []);
-        const leftQs = imgQuestions.filter(q => leftQIds.has(q.id));
-        const rightQs = imgQuestions.filter(q => !leftQIds.has(q.id));
+        if (istwocol && imgQuestions.length >= 2) {
+          const colGroups = layout.columnGroups;
+          const leftQIds = new Set(colGroups[0].questionIds || []);
+          const leftQs = imgQuestions.filter(q => leftQIds.has(q.id));
+          const rightQs = imgQuestions.filter(q => !leftQIds.has(q.id));
 
-        // Find unmatched figures on this page, sort by x
-        const available = contentFigures.filter(f => !f._matched);
-        if (available.length < 2) {
-          // Not enough figures — assign what we have
-          if (available.length === 1 && imgQuestions.length > 0) {
-            imgQuestions[0].imageUrl = available[0].imageUrl;
-            imgQuestions[0].diagramBbox = available[0].bbox;
-            available[0]._matched = true;
+          const available = contentFigures.filter(f => !f._matched);
+          if (available.length < 2) {
+            if (available.length === 1 && imgQuestions.length > 0) {
+              imgQuestions[0].imageUrl = available[0].imageUrl;
+              imgQuestions[0].diagramBbox = available[0].bbox;
+              available[0]._matched = true;
+            }
+            continue;
           }
-          continue;
-        }
 
-        // Sort available by x-position
-        const byX = [...available].sort((a, b) => a.bbox.x - b.bbox.x);
-        // Left half = figures with x < midpoint, right half = rest
-        const midX = byX[0].bbox.x + (byX[byX.length - 1].bbox.x - byX[0].bbox.x) / 2;
-        const leftFigs = byX.filter(f => f.bbox.x + f.bbox.w / 2 <= midX);
-        const rightFigs = byX.filter(f => f.bbox.x + f.bbox.w / 2 > midX);
-
-        // Assign left figures to left questions
-        for (let i = 0; i < leftQs.length && i < leftFigs.length; i++) {
-          leftQs[i].imageUrl = leftFigs[i].imageUrl;
-          leftQs[i].diagramBbox = leftFigs[i].bbox;
-          leftFigs[i]._matched = true;
-          console.log(`[diagram] 2-col LEFT: ${leftFigs[i].imageUrl?.split('/').pop()} → Q(${leftQs[i].id}) x=${leftFigs[i].bbox.x}`);
-        }
-        // Assign right figures to right questions
-        for (let i = 0; i < rightQs.length && i < rightFigs.length; i++) {
-          rightQs[i].imageUrl = rightFigs[i].imageUrl;
-          rightQs[i].diagramBbox = rightFigs[i].bbox;
-          rightFigs[i]._matched = true;
-          console.log(`[diagram] 2-col RIGHT: ${rightFigs[i].imageUrl?.split('/').pop()} → Q(${rightQs[i].id}) x=${rightFigs[i].bbox.x}`);
-        }
-      } else {
-        // SINGLE-COLUMN: Match closest unmatched figure by y-position
-        const available = contentFigures.filter(f => !f._matched);
-        if (available.length === 0) continue;
-
-        if (imgQuestions.length === 1) {
-          // Single question — find closest figure
-          const fig = available[0]; // closest by y (already sorted)
-          imgQuestions[0].imageUrl = fig.imageUrl;
-          imgQuestions[0].diagramBbox = fig.bbox;
-          fig._matched = true;
-          console.log(`[diagram] Single match: ${fig.imageUrl?.split('/').pop()} → ${task.title?.substring(0, 30)} Q(${imgQuestions[0].id})`);
-        } else {
-          // Multiple questions, single column — assign sequentially by y
+          // Only take as many figures as this task needs, picking topmost by y.
+          // Prevents consuming figures that belong to later tasks on the same page.
+          const needed = imgQuestions.length;
           const byY = [...available].sort((a, b) => a.bbox.y - b.bbox.y);
-          for (let i = 0; i < imgQuestions.length && i < byY.length; i++) {
-            imgQuestions[i].imageUrl = byY[i].imageUrl;
-            imgQuestions[i].diagramBbox = byY[i].bbox;
-            byY[i]._matched = true;
-            console.log(`[diagram] Seq match: ${byY[i].imageUrl?.split('/').pop()} → Q(${imgQuestions[i].id})`);
+          const taskFigures = byY.slice(0, needed);
+          console.log(`[diagram] 2-col heuristic: ${available.length} figs available, taking top ${needed} by y for "${task.title?.substring(0, 40)}"`);
+
+          const byX = [...taskFigures].sort((a, b) => a.bbox.x - b.bbox.x);
+          const midX = byX[0].bbox.x + (byX[byX.length - 1].bbox.x - byX[0].bbox.x) / 2;
+          const leftFigs = byX.filter(f => f.bbox.x + f.bbox.w / 2 <= midX);
+          const rightFigs = byX.filter(f => f.bbox.x + f.bbox.w / 2 > midX);
+
+          for (let i = 0; i < leftQs.length && i < leftFigs.length; i++) {
+            leftQs[i].imageUrl = leftFigs[i].imageUrl;
+            leftQs[i].diagramBbox = leftFigs[i].bbox;
+            leftFigs[i]._matched = true;
+            console.log(`[diagram] 2-col LEFT: ${leftFigs[i].imageUrl?.split('/').pop()} → Q(${leftQs[i].id}) x=${leftFigs[i].bbox.x}`);
+          }
+          for (let i = 0; i < rightQs.length && i < rightFigs.length; i++) {
+            rightQs[i].imageUrl = rightFigs[i].imageUrl;
+            rightQs[i].diagramBbox = rightFigs[i].bbox;
+            rightFigs[i]._matched = true;
+            console.log(`[diagram] 2-col RIGHT: ${rightFigs[i].imageUrl?.split('/').pop()} → Q(${rightQs[i].id}) x=${rightFigs[i].bbox.x}`);
+          }
+        } else {
+          const available = contentFigures.filter(f => !f._matched);
+          if (available.length === 0) continue;
+
+          if (imgQuestions.length === 1) {
+            const fig = available[0];
+            imgQuestions[0].imageUrl = fig.imageUrl;
+            imgQuestions[0].diagramBbox = fig.bbox;
+            fig._matched = true;
+            console.log(`[diagram] Single match: ${fig.imageUrl?.split('/').pop()} → ${task.title?.substring(0, 30)} Q(${imgQuestions[0].id})`);
+          } else {
+            const byY = [...available].sort((a, b) => a.bbox.y - b.bbox.y);
+            for (let i = 0; i < imgQuestions.length && i < byY.length; i++) {
+              imgQuestions[i].imageUrl = byY[i].imageUrl;
+              imgQuestions[i].diagramBbox = byY[i].bbox;
+              byY[i]._matched = true;
+              console.log(`[diagram] Seq match: ${byY[i].imageUrl?.split('/').pop()} → Q(${imgQuestions[i].id})`);
+            }
           }
         }
       }
