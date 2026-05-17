@@ -14,7 +14,8 @@
  *   → filter large rectangular regions → crop diagrams → save
  */
 
-const sharp = require('sharp');
+let sharp;
+try { sharp = require('sharp'); } catch (e) { console.warn('[diagram-extractor] sharp not available:', e.message); }
 const path  = require('path');
 const fs    = require('fs');
 const { v4: uuidv4 } = require('uuid');
