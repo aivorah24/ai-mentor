@@ -412,6 +412,10 @@ RULES:
 6. Every question MUST have a "solution" field with a clear step-by-step explanation. NEVER write "Not provided" — work through the problem and explain how to get the answer.
 7. Every question MUST have a "hint" field — a short clue that guides the student without giving the full answer. NEVER leave hint empty or omit it.
 8. For questions that have a diagram/shape/image in the worksheet, set "hasImage": true. For text-only word problems, set "hasImage": false.
+   When "hasImage": true, also include:
+   - "diagramDescription": a short description of the diagram (e.g. "regular octagon inside a square", "L-shaped polygon with sides 5m, 6m, 8m, 3m", "irregular closed shape on a grid")
+   - "diagramPosition": approximate position on the page: "top-left", "top-right", "top-center", "middle-left", "middle-right", "middle-center", "bottom-left", "bottom-right", "bottom-center"
+   These fields are used by the server to match cropped images to the correct questions.
 9. Do NOT generate SVG, HTML diagrams, or diagramHTML. The server handles all image rendering separately.
 10. For questions that reference a graph/chart/image: READ the visual data from the image to compute the answer. For example, if a bar graph shows football=16, tennis=8 and the Y-axis goes 0,2,4,6... then the scale is 2.
 
