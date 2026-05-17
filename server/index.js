@@ -47,8 +47,17 @@ const habitsRoute      = require('./routes/habits');
 
 // Heavy routes — lazy-loaded on first request to avoid startup crashes
 // (ingest uses pdf-parse/@napi-rs/canvas; ask/curriculum use @xenova/transformers)
-function lazyRoute(path) {
-  return (req, res, next) => require(path)(req, res, next);
+function lazyRoute(modPath) {
+  let cached;
+  return (req, res, next) => {
+    try {
+      if (!cached) cached = require(modPath);
+      cached(req, res, next);
+    } catch (err) {
+      console.error(`[lazyRoute] Failed to load ${modPath}:`, err.message);
+      res.status(500).json({ error: `Route module failed to load: ${err.message}` });
+    }
+  };
 }
 
 const path = require('path');
@@ -89,6 +98,7 @@ app.use('/help',         helpRoute);
 app.use('/stories',      storiesRoute);
 app.use('/habits',       habitsRoute);
 app.use('/payment',      lazyRoute('./routes/payment'));
+app.use('/quiz',         lazyRoute('./routes/quiz'));
 
 
 app.get('/health', async (req, res) => {
