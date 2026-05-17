@@ -37,6 +37,11 @@ yarn-error.log*
 .cache/
 .vercel/
 
+# ML model files (downloaded during Docker build)
+server/python/models/
+server/python/__pycache__/
+server/python/test_output/
+
 # Large media / temp
 server/data/images/concepts/
 server/data/images/ncert/

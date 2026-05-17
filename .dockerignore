@@ -33,6 +33,9 @@ AIMentorApp/coverage
 # Dev/temp files
 *.bat
 figma-plugin
+server/python/__pycache__
+server/python/test_*
+server/python/test_output
 project details
 tmp_issue_body.md
 canva_*.html
