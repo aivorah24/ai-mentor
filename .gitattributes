@@ -25,3 +25,4 @@
 *.webm  binary
 *.pdf   binary
 *.zip   binary
+start.sh eol=lf

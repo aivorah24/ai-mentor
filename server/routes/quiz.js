@@ -36,7 +36,7 @@ async function callLayoutService(fileBuffer, quizId, { filename = 'file.pdf', mi
 
     const url = `${LAYOUT_SERVICE_URL}/crop?quiz_id=${quizId}&types=${types}&conf=${conf}&padding=${padding}`;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+    const timeout = setTimeout(() => controller.abort(), 120000); // 120s timeout (model cold-load can take 30-60s)
     const res = await fetch(url, { method: 'POST', body: form, signal: controller.signal });
     clearTimeout(timeout);
 
@@ -1714,20 +1714,43 @@ function embedQuizImages(quiz) {
     }
   }
 
+  // Build page image lookup for fallback
+  const pageImageMap = {};
+  for (const p of (quiz.fullPageImages || [])) {
+    if (p.imageUrl) {
+      p.imageUrl = toDataUri(p.imageUrl);
+      pageImageMap[p.pageNum] = p.imageUrl;
+    }
+  }
+
   // Embed question images + remove SVG diagrams (use only original worksheet images)
   for (const task of (quiz.tasks || [])) {
     if (task.pageImageUrl) task.pageImageUrl = toDataUri(task.pageImageUrl);
+    const taskPage = task.sourcePage || 1;
+    let taskNeedsPageFallback = false;
+
     for (const q of (task.questions || [])) {
-      if (q.imageUrl) q.imageUrl = toDataUri(q.imageUrl);
+      if (q.imageUrl) {
+        q.imageUrl = toDataUri(q.imageUrl);
+      } else if (q.hasImage) {
+        // Question references a figure but no individual crop exists — flag for page fallback
+        taskNeedsPageFallback = true;
+      }
       // Remove auto-generated SVG — only use original worksheet images
       delete q.diagramHTML;
       delete q.shapeData;
     }
+
+    // Fallback: if any question needs an image but doesn't have one, attach the full page image
+    if (taskNeedsPageFallback && !task.pageImageUrl) {
+      const pageImg = pageImageMap[taskPage] || pageImageMap[1];
+      if (pageImg) {
+        task.pageImageUrl = pageImg;
+        console.log(`[quiz] Page fallback: Task "${(task.title || '').slice(0, 40)}" → full page ${taskPage} image`);
+      }
+    }
   }
-  // Embed full page images
-  for (const p of (quiz.fullPageImages || [])) {
-    if (p.imageUrl) p.imageUrl = toDataUri(p.imageUrl);
-  }
+
   if (quiz.worksheetImageUrl) quiz.worksheetImageUrl = toDataUri(quiz.worksheetImageUrl);
 }
 
@@ -2005,6 +2028,12 @@ function renderQuizHTML(quiz) {
     <div class="task-block" style="border-left:5px solid ${s.border}; background:${s.bg}; border-radius:12px; padding:20px 24px; margin:28px 0;">
       <span class="tier-badge" style="display:inline-block;background:${s.labelBg};color:${s.label};font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">${task.tier}</span>
       <h2 style="font-size:18px;color:${s.label};margin:6px 0 18px;font-weight:700;">${taskTitle}</h2>`;
+
+    // ── PAGE IMAGE FALLBACK: show worksheet page when individual crops are missing ──
+    const anyQuestionNeedsImage = questions.some(q => q.hasImage && !q.imageUrl);
+    if (anyQuestionNeedsImage && task.pageImageUrl) {
+      tasksHTML += `<div style="text-align:center;margin:0 0 16px;"><img src="${embedImage(task.pageImageUrl)}" alt="Worksheet reference" style="max-width:100%;max-height:500px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div>`;
+    }
 
     // ── TWO-COLUMN TABLE LAYOUT (matches worksheet) ──
     if (layout.type === 'two-column' && layout.columnGroups && layout.columnGroups.length >= 2) {
