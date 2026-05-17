@@ -889,22 +889,52 @@ function matchDiagramsToQuestions(extractionResult, quiz) {
     const figures = figuresByPage[pg] || [];
     if (figures.length === 0 || tasks.length === 0) continue;
 
-    // Filter out likely headers/logos/decorative banners:
-    // - Top 12% of page AND wide (aspect > 2.5:1) — catches decorative banners
-    // - OR very top (top 5%) AND small area (< 3% of page area) — tiny logos
+    // Filter out likely headers/logos/decorative banners.
     const pageHeight = Math.max(...figures.map(f => f.bbox.y + f.bbox.h), 2000);
     const pageWidth = Math.max(...figures.map(f => f.bbox.x + f.bbox.w), 1000);
     const pageArea = pageHeight * pageWidth;
-    const headerThreshold = pageHeight * 0.12;
+
+    // Count total questions needing images on this page to determine expected figure count
+    const totalImgQ = tasks.reduce((s, t) => s + t.imgQuestions.length, 0);
+
+    // Sort figures by y to detect outliers (decorative banners separated from content cluster)
+    const sortedByY = [...figures].sort((a, b) => a.bbox.y - b.bbox.y);
+
     const contentFigures = figures.filter(f => {
       const aspect = f.bbox.w / Math.max(f.bbox.h, 1);
       const area = f.bbox.w * f.bbox.h;
-      const isWideBanner = f.bbox.y < headerThreshold && aspect > 2.5;
-      const isTinyLogo = f.bbox.y < pageHeight * 0.05 && area < pageArea * 0.03;
-      if (isWideBanner || isTinyLogo) {
-        console.log(`[diagram] Skipping likely header/banner: y=${f.bbox.y} w=${f.bbox.w} h=${f.bbox.h} aspect=${aspect.toFixed(1)}`);
+      const cy = f.bbox.y + f.bbox.h / 2;
+
+      // Rule 1: Top 12% of page AND wide (aspect > 2.0) — classic header banners
+      const headerThreshold = pageHeight * 0.12;
+      if (f.bbox.y < headerThreshold && aspect > 2.0) {
+        console.log(`[diagram] Skipping header banner: y=${f.bbox.y} aspect=${aspect.toFixed(1)}`);
         return false;
       }
+
+      // Rule 2: Tiny logos at top 5%
+      if (f.bbox.y < pageHeight * 0.05 && area < pageArea * 0.03) {
+        console.log(`[diagram] Skipping tiny logo: y=${f.bbox.y} area=${area}`);
+        return false;
+      }
+
+      // Rule 3: Wide figure (aspect > 2.0) that is isolated above the main content cluster.
+      // If there are more figures than questions need, and this wide figure sits alone
+      // above the cluster of real diagrams, it's likely decorative.
+      if (aspect > 2.0 && figures.length > totalImgQ) {
+        const yIdx = sortedByY.indexOf(f);
+        if (yIdx === 0 && sortedByY.length > 1) {
+          // This is the topmost figure — check gap to the next figure
+          const nextFig = sortedByY[1];
+          const gap = nextFig.bbox.y - (f.bbox.y + f.bbox.h);
+          const gapRatio = gap / pageHeight;
+          if (gapRatio > 0.08) {
+            console.log(`[diagram] Skipping isolated wide figure: y=${f.bbox.y} aspect=${aspect.toFixed(1)} gap=${gap}px (${(gapRatio*100).toFixed(0)}% of page)`);
+            return false;
+          }
+        }
+      }
+
       return true;
     });
 
