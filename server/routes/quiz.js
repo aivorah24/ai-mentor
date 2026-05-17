@@ -2254,14 +2254,31 @@ function renderQuizHTML(quiz) {
     const tot = ${totalQ};
     const done = new Set();
     const answers = ${JSON.stringify(answersMap)};
+    const studentAnswers = {}; // { qId: { answer, correct, timeSpent } }
+    const questionStartTimes = {}; // { qId: timestamp }
+
+    // Track when each question becomes visible / gets focus
+    document.addEventListener('focusin', function(e) {
+      const inp = e.target.closest('input');
+      if (inp && inp.id && inp.id.endsWith('-input')) {
+        const qId = inp.id.replace('-input', '');
+        if (!questionStartTimes[qId]) questionStartTimes[qId] = Date.now();
+      }
+    });
 
     function up() {
       document.getElementById('score-num').textContent = sc + '/' + tot;
       const pct = Math.round((done.size / tot) * 100);
       document.getElementById('pf').style.width = pct + '%';
       document.getElementById('pp').textContent = pct + '% complete';
-      // Report score to parent window (for student assignment iframe)
-      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot }, '*'); } catch(e) {}
+      // Build per-question answer list
+      const answersArr = Object.entries(studentAnswers).map(([qId, data]) => ({
+        qId, answer: data.answer, correct: data.correct,
+        timeSpent: data.timeSpent || 0,
+        question: data.question || ''
+      }));
+      // Report score + answers to parent window (for student assignment iframe)
+      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot, answers: answersArr }, '*'); } catch(e) {}
     }
 
     function checkAnswer(id) {
@@ -2279,6 +2296,11 @@ function renderQuizHTML(quiz) {
       } else {
         ok = val.replace(/\\s+/g,'').toLowerCase() === String(a.answer).replace(/\\s+/g,'').toLowerCase();
       }
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      const qEl = document.getElementById(id + '-card');
+      const qText = qEl ? qEl.querySelector('.q-label, strong')?.textContent || '' : '';
+      studentAnswers[id] = { answer: val, correct: ok, timeSpent: elapsed, question: qText };
       if (ok) {
         r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
         inp.style.borderColor = '#93B0AC';
@@ -2299,7 +2321,11 @@ function renderQuizHTML(quiz) {
       const sel = document.querySelector('input[name="' + id + '"]:checked');
       if (!sel) return;
       const r = document.getElementById(id + '-result');
-      if (sel.value === a.correctLetter) {
+      const ok = sel.value === a.correctLetter;
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: sel.value, correct: ok, timeSpent: elapsed, question: '' };
+      if (ok) {
         r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
         if (!done.has(id)) { sc++; done.add(id); }
         document.getElementById(id + '-solution').style.display = 'block';

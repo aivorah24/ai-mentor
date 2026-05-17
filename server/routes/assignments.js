@@ -2318,13 +2318,23 @@ Respond ONLY as JSON:
 
 router.put('/:id/complete', async (req, res) => {
   const { id } = req.params;
-  const { score = null, studentId } = req.body;
+  const { score = null, studentId, answers, correct, total } = req.body;
 
   const studentUid = studentId ? await resolveUserId(studentId) : null;
   if (studentUid) {
+    // Build submission_text with per-question answer details
+    const submissionText = answers && answers.length > 0 ? JSON.stringify({
+      perQuestion: answers.map(a => ({
+        qId: a.qId, answer: a.answer, correct: a.correct,
+        timeSpent: a.timeSpent || 0, question: a.question || '',
+      })),
+      summary: { correct: correct || 0, total: total || 0, score },
+    }) : null;
+
     const { error: subErr } = await supabase.from('assignment_submissions').upsert({
       assignment_id: id, student_id: studentUid,
       status: 'completed', score, completed_at: new Date().toISOString(),
+      ...(submissionText ? { submission_text: submissionText } : {}),
     }, { onConflict: 'assignment_id,student_id' });
     if (subErr) return res.status(500).json({ error: subErr.message });
   }
