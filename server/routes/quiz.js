@@ -545,6 +545,7 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
 
     let result;
     let usedEngine = 'gemini'; // tracks which LLM actually produced the result
+    let usedVision = true; // tracks if the LLM actually SAW the worksheet image
     let diagramExtraction = null;
 
     // ══════════════════════════════════════════════════════════════════════
@@ -675,6 +676,7 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
       // FALLBACK 3: OCR text + LLM (last resort — text only, may miss layout)
       if (!result && ocrText && ocrText.fullText.length >= 20) {
         console.log('[quiz] Vision fallbacks exhausted — using OCR text (layout may be incomplete)...');
+        usedVision = false; // text-only LLM cannot reliably provide diagramPosition
         const text = ocrText.fullText.substring(0, 12000);
         const prompt = buildQuizVisionPrompt({ grade, subject, school })
           + `\n\nHere is the OCR-extracted text from the worksheet:\n---\n${text}\n---\nGenerate quiz JSON from this text. Mark questions that likely have a diagram in the worksheet with "hasImage": true.`;
@@ -692,6 +694,7 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
       // LAST RESORT: pdf-parse text (when OCR also failed)
       if (!result) {
         console.log('[quiz] Last resort: pdf-parse text...');
+        usedVision = false;
         try {
           const parsed = await pdfParse(req.file.buffer);
           const text = (parsed.text || '').substring(0, 12000);
@@ -770,6 +773,14 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
       }
     } else {
       console.log(`[quiz] VALIDATION OK: ${(quiz.tasks||[]).length} tasks, tiers: ${validation.detectedTiers.join(',')}`);
+    }
+
+    // ── Strip unreliable diagramPosition when LLM was text-only (couldn't see the image) ──
+    if (!usedVision) {
+      console.log('[quiz] Text-only engine — stripping diagramPosition (unreliable without vision)');
+      for (const t of (quiz.tasks || [])) {
+        for (const q of (t.questions || [])) { delete q.diagramPosition; }
+      }
     }
 
     // ── Match figure-cropped diagrams to questions ──
@@ -852,6 +863,7 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
     const mime = req.file.mimetype || 'image/png';
     const quizId = uuidv4().slice(0, 8);
     let usedEngine = 'gemini';
+    let usedVision = true;
 
     // Save uploaded worksheet image for display in quiz
     const wsImgName = `${quizId}_worksheet.jpg`;
@@ -933,6 +945,7 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
       if (genAI) {
         try {
           console.log('[quiz] Using Gemini text-only for OCR text structuring...');
+          usedVision = false; // text-only cannot reliably provide diagramPosition
           const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
           const r = await model.generateContent([{ text: prompt }]);
           result = r.response.text();
@@ -944,6 +957,7 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
 
       // FALLBACK: Gemini Vision (if text-only failed, try with image)
       if (!result && genAI) {
+        usedVision = true; // vision engine can provide accurate diagramPosition
         try {
           console.log('[quiz] Falling back to Gemini Vision...');
           const parts = geminiImageParts([{ buffer: req.file.buffer, mime }]);
@@ -970,6 +984,7 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
       if (!result && groq) {
         try {
           console.log('[quiz] Falling back to Groq (llama-3.3-70b)...');
+          usedVision = false; // text-only
           result = await callGroq(prompt);
           if (result) usedEngine = 'groq';
           console.log(`[quiz] Groq text returned ${result.length} chars`);
@@ -1019,6 +1034,14 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
       quiz = JSON.parse(cleaned);
     } catch {
       return res.status(500).json({ error: 'AI returned invalid JSON', raw: result });
+    }
+
+    // ── Strip unreliable diagramPosition when LLM was text-only ──
+    if (!usedVision) {
+      console.log('[quiz] Text-only engine — stripping diagramPosition (unreliable without vision)');
+      for (const t of (quiz.tasks || [])) {
+        for (const q of (t.questions || [])) { delete q.diagramPosition; }
+      }
     }
 
     // ── Match OpenCV-cropped diagrams to questions ──
