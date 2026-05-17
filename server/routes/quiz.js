@@ -2198,6 +2198,8 @@ function renderQuizHTML(quiz) {
       const pct = Math.round((done.size / tot) * 100);
       document.getElementById('pf').style.width = pct + '%';
       document.getElementById('pp').textContent = pct + '% complete';
+      // Report score to parent window (for student assignment iframe)
+      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot }, '*'); } catch(e) {}
     }
 
     function checkAnswer(id) {
