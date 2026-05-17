@@ -1938,13 +1938,7 @@ function renderQuizHTML(quiz) {
       html += `<div class="q-card" id="${qId}-card">
         <p class="q-text"><strong>${qLabel}</strong> ${fmtQuestion(q.question)}</p>`;
 
-      if (q.imageUrl) {
-        html += `<div class="q-image" style="margin:0 0 14px;text-align:center"><img src="${embedImage(q.imageUrl)}" alt="${q.diagramDescription || 'Worksheet diagram'}" style="max-width:320px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div>`;
-      }
-      if (q.diagramHTML && !q.imageUrl) {
-        let qDiagram = q.diagramHTML.replace(/<text[^>]*>\s*img-\d+\s*<\/text>/gi, '');
-        html += `<div class="task-diagram" style="margin:0 0 14px;padding:16px;background:#fafafa;border-radius:10px;border:1px solid #e0e0e0;text-align:center">${qDiagram}</div>`;
-      }
+      // Individual question images removed — full page image shown at top of task block
 
       if (isActivity) {
         html += `
@@ -2005,6 +1999,11 @@ function renderQuizHTML(quiz) {
       <span class="tier-badge" style="display:inline-block;background:${s.labelBg};color:${s.label};font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">${task.tier}</span>
       <h2 style="font-size:18px;color:${s.label};margin:6px 0 18px;font-weight:700;">${taskTitle}</h2>`;
 
+    // ── Show full worksheet page image at top of task (reliable — no cropping/matching issues) ──
+    if (task.pageImageUrl) {
+      tasksHTML += `<div style="margin:0 0 18px;text-align:center;"><img src="${embedImage(task.pageImageUrl)}" alt="Worksheet page" style="max-width:100%;border-radius:10px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:4px;"></div>`;
+    }
+
     // ── TWO-COLUMN TABLE LAYOUT (matches worksheet) ──
     if (layout.type === 'two-column' && layout.columnGroups && layout.columnGroups.length >= 2) {
       const colGroups = layout.columnGroups;
@@ -2020,31 +2019,6 @@ function renderQuizHTML(quiz) {
       // Register all questions
       const leftQIds = leftQuestions.map(q => registerQuestion(q));
       const rightQIds = rightQuestions.map(q => registerQuestion(q));
-
-      tasksHTML += `<table class="ws-table" style="width:100%;border-collapse:collapse;border:1px solid rgba(195,220,216,0.2);border-radius:8px;overflow:hidden;">`;
-
-      // Diagram row (only if actual images or diagramHTML exist — skip empty placeholders)
-      const hasAnyDiagramContent = [leftQuestions, rightQuestions].some((colQ, col) =>
-        colGroups[col]?.hasDiagram && ((colQ[0] && colQ[0].imageUrl) || task.diagramHTML)
-      );
-      if (hasAnyDiagramContent) {
-        tasksHTML += `<tr>`;
-        for (let col = 0; col < 2; col++) {
-          const colQ = col === 0 ? leftQuestions : rightQuestions;
-          const hasDiag = colGroups[col].hasDiagram;
-          tasksHTML += `<td style="width:50%;padding:12px;text-align:center;vertical-align:middle;border:1px solid rgba(195,220,216,0.15);background:rgba(28,28,28,0.6);">`;
-          if (hasDiag) {
-            const firstQ = colQ[0];
-            if (firstQ && firstQ.imageUrl) {
-              tasksHTML += `<img src="${embedImage(firstQ.imageUrl)}" alt="Diagram" style="max-width:240px;max-height:160px;border-radius:6px;background:#fff;padding:6px;">`;
-            } else if (task.diagramHTML) {
-              tasksHTML += task.diagramHTML;
-            }
-          }
-          tasksHTML += `</td>`;
-        }
-        tasksHTML += `</tr>`;
-      }
 
       // Question rows
       for (let r = 0; r < maxRows; r++) {
@@ -2068,12 +2042,6 @@ function renderQuizHTML(quiz) {
 
     } else {
       // ── SINGLE-COLUMN / CARD LAYOUT (default) ──
-      // Task-level diagram
-      if (task.diagramHTML && !questions.some(q => q.imageUrl)) {
-        let diagram = task.diagramHTML.replace(/<text[^>]*>\s*img-\d+\s*<\/text>/gi, '');
-        tasksHTML += `<div class="task-diagram" style="margin:0 0 20px;padding:16px;background:#fff;border-radius:10px;border:1px solid #e0e0e0;text-align:center">${diagram}</div>`;
-      }
-
       for (const q of questions) {
         const qId = registerQuestion(q);
         tasksHTML += renderQuestionCell(q, qId, false);
