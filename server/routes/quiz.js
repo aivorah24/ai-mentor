@@ -813,8 +813,8 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
     // ── Post-process: auto-detect MCQ questions the LLM missed ──
     autoDetectMCQ(quiz);
 
-    // ── SVG diagrams from shapeData (fallback only if no cropped image) ──
-    buildQuizDiagrams(quiz);
+    // ── Embed all images as base64 data URIs (so quiz works on Cloud Run / any server) ──
+    embedQuizImages(quiz);
 
     // Add metadata
     quiz.engine = usedEngine;
@@ -1017,14 +1017,14 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
     // ── Post-process: auto-detect MCQ questions the LLM missed ──
     autoDetectMCQ(quiz);
 
-    // ── SVG diagrams from shapeData (fallback only if no cropped image) ──
-    buildQuizDiagrams(quiz);
-
     // Attach full worksheet image as fallback for tasks without OpenCV crops
     quiz.worksheetImageUrl = worksheetImageUrl;
     for (const task of (quiz.tasks || [])) {
       if (!task.pageImageUrl) task.pageImageUrl = worksheetImageUrl;
     }
+
+    // ── Embed all images as base64 data URIs (so quiz works on Cloud Run / any server) ──
+    embedQuizImages(quiz);
 
     quiz.engine = usedEngine;
     quiz.sourceFile = req.file.originalname;
@@ -1258,7 +1258,6 @@ router.post('/render-preview', express.json({ limit: '5mb' }), (req, res) => {
     const quiz = req.body.quiz || req.body;
     if (!quiz || !quiz.tasks) return res.status(400).json({ error: 'No quiz data provided' });
     autoDetectMCQ(quiz);
-    buildQuizDiagrams(quiz);
     const html = renderQuizHTML(quiz);
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
@@ -1692,6 +1691,39 @@ function buildQuizDiagrams(quiz) {
 function fmt(text) {
   if (!text) return '';
   return String(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
+
+// ── Embed all quiz images as base64 data URIs (works on ephemeral filesystems like Cloud Run) ──
+function embedQuizImages(quiz) {
+  const serverRoot = path.resolve(__dirname, '..');
+  function toDataUri(relUrl) {
+    if (!relUrl || relUrl.startsWith('data:')) return relUrl;
+    const filePath = path.join(serverRoot, relUrl);
+    try {
+      const buf = fs.readFileSync(filePath);
+      const ext = path.extname(filePath).slice(1).toLowerCase();
+      const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext || 'png'}`;
+      return `data:${mime};base64,${buf.toString('base64')}`;
+    } catch {
+      return relUrl;
+    }
+  }
+
+  // Embed question images + remove SVG diagrams (use only original worksheet images)
+  for (const task of (quiz.tasks || [])) {
+    if (task.pageImageUrl) task.pageImageUrl = toDataUri(task.pageImageUrl);
+    for (const q of (task.questions || [])) {
+      if (q.imageUrl) q.imageUrl = toDataUri(q.imageUrl);
+      // Remove auto-generated SVG — only use original worksheet images
+      delete q.diagramHTML;
+      delete q.shapeData;
+    }
+  }
+  // Embed full page images
+  for (const p of (quiz.fullPageImages || [])) {
+    if (p.imageUrl) p.imageUrl = toDataUri(p.imageUrl);
+  }
+  if (quiz.worksheetImageUrl) quiz.worksheetImageUrl = toDataUri(quiz.worksheetImageUrl);
 }
 
 // ── HTML renderer — Aivorah Enchanted Forest dark theme ────────────────────
