@@ -481,6 +481,11 @@ IMPORTANT: Each task MUST include "sourcePage": <page_number> (1-indexed) indica
 
 Tiers: "MUST DO", "COULD DO", "ENRICHMENT"
 
+NOTES & SUCCESS CRITERIA:
+- If the worksheet includes a "Note to Parents", "Teacher's Note", instructions, or learning objectives at the top/bottom, extract them into a top-level "notes" field (string).
+- If the worksheet includes "Success Criteria", "Learning Goals", "I can..." statements, or rubric, extract them into a top-level "successCriteria" array of strings.
+- Example: "notes": "Dear Parents, please help your child with these activities...", "successCriteria": ["I can convert between units of measurement", "I can solve word problems involving fractions"]
+
 Return ONLY valid JSON, no markdown fences, no extra text.`;
 }
 
@@ -2233,6 +2238,14 @@ function renderQuizHTML(quiz) {
     </div>
 
     ${conceptsHTML}
+    ${quiz.notes ? `<div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:6px;font-weight:700;">&#128221; Note</h3>
+      <p style="font-size:14px;color:#A8B5B3;line-height:1.5;">${fmt(quiz.notes)}</p>
+    </div>` : ''}
+    ${quiz.successCriteria?.length ? `<div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:8px;font-weight:700;">&#127919; Success Criteria</h3>
+      <ul style="margin:0;padding-left:20px;">${quiz.successCriteria.map(c => `<li style="font-size:14px;color:#A8B5B3;margin:4px 0;">${fmt(c)}</li>`).join('')}</ul>
+    </div>` : ''}
     ${tasksHTML}
   </div>
 
