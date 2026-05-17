@@ -74,7 +74,7 @@ async function pdfToImages(pdfBuffer, scale = 2.0) {
   }).promise;
 
   const pages = [];
-  const maxPages = Math.min(pdfDoc.numPages, 20); // Cap at 20 pages for worksheets
+  const maxPages = Math.min(pdfDoc.numPages, 6); // Cap at 6 pages — worksheets rarely exceed this; prevents OOM on Cloud Run
 
   for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
     try {

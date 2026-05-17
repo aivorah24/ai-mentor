@@ -529,6 +529,11 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
     const { grade, subject, school } = req.body;
     const quizId = uuidv4().slice(0, 8);
 
+    // Guard: reject PDFs > 4MB to prevent OOM on Cloud Run (2GB)
+    if (req.file.buffer.length > 4 * 1024 * 1024) {
+      return res.status(400).json({ error: 'PDF too large (max 4MB). Please upload a smaller worksheet.' });
+    }
+
     let result;
     let usedEngine = 'gemini'; // tracks which LLM actually produced the result
     let diagramExtraction = null;
