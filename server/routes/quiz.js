@@ -465,8 +465,15 @@ NOTE on layout:
 QUESTION TYPES:
 - "numeric" — number answer (integer or decimal)
 - "text" — text answers, fractions like "14/25", comparisons like "<", mixed like "1 km 800 m"
+- "long" — open-ended written response (sentences/paragraphs). Use textarea, NO "Answer =" label.
 - "mcq" — multiple choice (include "options" array with {label, correct} objects)
 - "activity" — drawing, colouring, pasting, constructing tasks (NO typed answer — student does it on paper)
+
+PASSAGE & EXAMPLE EXTRACTION (CRITICAL):
+- If a task has a reading passage, story, or paragraph that students must read before answering, include it as "passage" on the task object. Preserve the FULL text exactly.
+- If a question has an example (e.g. "→ Example: The buyer went to the market"), include it as "example" on the question object.
+- For fill-in-the-table tasks (e.g. "Incorrect Word / Correct Word"), represent each row as a separate question with type "text".
+- NEVER truncate or omit passage text. Students cannot answer without it.
 
 CRITICAL ACCURACY RULES:
 1. Use "activity" type for questions that say "draw", "sketch", "construct", "colour", "paste", etc.
@@ -1887,8 +1894,9 @@ function renderQuizHTML(quiz) {
     return conceptIcons['default'];
   }
 
-  // Smart label based on question context
+  // Smart label based on question context — returns null for long/open-ended questions
   function smartLabel(q, unit) {
+    if (q.type === 'long') return null;
     const qLower = (q.question || '').toLowerCase();
     const uLower = (unit || '').toLowerCase();
     if (qLower.includes('side') || qLower.includes('side length')) return 'Side =';
@@ -1898,6 +1906,8 @@ function renderQuizHTML(quiz) {
     if (uLower === 'tiles' || qLower.includes('tiles')) return 'Number of tiles =';
     if (qLower.includes('how many') || qLower.includes('number of')) return 'Answer =';
     if (uLower.includes('km') && uLower.includes('m')) return 'Distance =';
+    // Open-ended / language questions — no label
+    if (/\b(write|describe|explain|identify|correct|find the error|use.*word|sentence|passage|paragraph)\b/i.test(qLower)) return null;
     return 'Answer =';
   }
 
@@ -1998,6 +2008,11 @@ function renderQuizHTML(quiz) {
       html += `<div class="q-card" id="${qId}-card">
         <p class="q-text"><strong>${qLabel}</strong> ${fmtQuestion(q.question)}</p>`;
 
+      // Show example if present
+      if (q.example) {
+        html += `<div style="margin:8px 0 12px;padding:10px 14px;background:rgba(195,220,216,0.07);border-left:3px solid rgba(195,220,216,0.4);border-radius:0 8px 8px 0;font-size:13px;color:#A8B5B3;font-style:italic;">${fmt(q.example)}</div>`;
+      }
+
       if (q.imageUrl) {
         html += `<div class="q-image" style="margin:0 0 14px;text-align:center"><img src="${embedImage(q.imageUrl)}" alt="${q.diagramDescription || 'Worksheet diagram'}" style="max-width:320px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div>`;
       }
@@ -2025,7 +2040,18 @@ function renderQuizHTML(quiz) {
       } else {
         const labelText = smartLabel(q, displayUnit);
         const placeholder = smartPlaceholder(q, displayUnit);
-        html += `
+        const isLong = q.type === 'long' || labelText === null;
+        if (isLong) {
+          html += `
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="${qId}-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('${qId}')">Check</button>
+            ${q.hint ? `<button class="btn-hint" onclick="toggleHint('${qId}')">Hint</button>` : ''}
+          </div>
+        </div>`;
+        } else {
+          html += `
         <div class="q-input-row">
           <span class="q-label">${labelText}</span>
           <input type="text" id="${qId}-input" class="q-input" placeholder="${placeholder}">
@@ -2033,6 +2059,7 @@ function renderQuizHTML(quiz) {
           <button class="btn-check" onclick="checkAnswer('${qId}')">Check</button>
           ${q.hint ? `<button class="btn-hint" onclick="toggleHint('${qId}')">Hint</button>` : ''}
         </div>`;
+        }
       }
 
       const solutionText = (q.solution || '').replace(/Step (\d)/g, '<br>Step $1').replace(/Answer:/g, '<br><strong>Answer:</strong>').replace(/(\d+(?:\.\d+)?)\s*(m²|cm²|km|m|cm|mm|tiles)/g, '<strong>$1 $2</strong>');
@@ -2059,7 +2086,8 @@ function renderQuizHTML(quiz) {
     tasksHTML += `
     <div class="task-block" style="border-left:5px solid ${s.border}; background:${s.bg}; border-radius:12px; padding:20px 24px; margin:28px 0;">
       <span class="tier-badge" style="display:inline-block;background:${s.labelBg};color:${s.label};font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">${task.tier}</span>
-      <h2 style="font-size:18px;color:${s.label};margin:6px 0 18px;font-weight:700;">${taskTitle}</h2>`;
+      <h2 style="font-size:18px;color:${s.label};margin:6px 0 18px;font-weight:700;">${taskTitle}</h2>
+      ${task.passage ? `<div style="margin:0 0 20px;padding:16px 20px;background:rgba(255,255,255,0.04);border:1px solid rgba(195,220,216,0.2);border-radius:10px;font-size:14px;color:#D8E8E6;line-height:1.8;">${fmt(task.passage)}</div>` : ''}`;
 
     // ── PAGE IMAGE FALLBACK: show worksheet page when individual crops are missing ──
     const anyQuestionNeedsImage = questions.some(q => q.hasImage && !q.imageUrl);
