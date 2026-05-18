@@ -9,6 +9,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
@@ -42,7 +43,12 @@ export default function LeaderboardScreen({ navigation }: any) {
     }
   }, []);
 
-  useEffect(() => { fetchLeaderboard(); }, []);
+  // Refresh leaderboard every time the screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchLeaderboard();
+    }, [fetchLeaderboard])
+  );
 
   const myRank = leaderboard.find(s => s.id === studentId)?.rank ?? null;
 

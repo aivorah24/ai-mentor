@@ -1,0 +1,205 @@
+{
+  "title": "PYP 4 Mathematics - Area and Perimeter",
+  "subject": "Mathematics",
+  "grade": "PYP 4",
+  "school": "The Shri Ram Academy",
+  "concepts": [
+    {
+      "term": "Area",
+      "definition": "Area tells us how much space the inside of a shape covers. It is measured in square units (like square centimetres or square meters).",
+      "unit": "square units"
+    },
+    {
+      "term": "Perimeter",
+      "definition": "Perimeter tells us the distance all the way around the outside of a shape. It is measured in units (like centimetres or meters).",
+      "unit": "units"
+    }
+  ],
+  "tasks": [
+    {
+      "tier": "MUST DO",
+      "title": "Task 1: Answer the following.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "two-column",
+        "columns": 2,
+        "columnGroups": [
+          {
+            "hasDiagram": true,
+            "questionIds": [
+              "a"
+            ]
+          },
+          {
+            "hasDiagram": true,
+            "questionIds": [
+              "b"
+            ]
+          }
+        ]
+      },
+      "questions": [
+        {
+          "id": "a",
+          "type": "numeric",
+          "question": "Find the side of this regular polygon if its perimeter is **40 cm**.",
+          "unit": "cm",
+          "answer": 10,
+          "hint": "A regular polygon has all sides equal. Divide the perimeter by the number of sides.",
+          "solution": "The polygon is a square (4 sides). Side = Perimeter \u00c3\u00b7 4 = 40 \u00c3\u00b7 4 = 10 cm.",
+          "hasImage": true,
+          "imageUrl": "/data/images/quiz/c27eb073_p1_fig2.png",
+          "diagramBbox": {
+            "x": 195,
+            "y": 1095,
+            "w": 460,
+            "h": 372
+          }
+        },
+        {
+          "id": "b",
+          "type": "numeric",
+          "question": "Find the area of the following irregular shape.",
+          "unit": "square units",
+          "answer": null,
+          "hint": "Count the number of full and half squares inside the shape.",
+          "solution": "Count the squares in the diagram to find the area.",
+          "hasImage": true,
+          "imageUrl": "/data/images/quiz/c27eb073_p1_fig1.png",
+          "diagramBbox": {
+            "x": 918,
+            "y": 1077,
+            "w": 479,
+            "h": 404
+          }
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/c27eb073_page1.png"
+    },
+    {
+      "tier": "MUST DO",
+      "title": "Task 2: Find the perimeter of the L shaped polygon.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "a",
+          "type": "numeric",
+          "question": "Find the perimeter of the L-shaped polygon with the following dimensions: 8 m (top), 5 m (left), 3 m (notch).",
+          "unit": "m",
+          "answer": 26,
+          "hint": "Add all the outer sides of the L-shape.",
+          "solution": "Perimeter = 8 + 5 + 3 + (8 - 3) + 5 = 8 + 5 + 3 + 5 + 5 = 26 m.",
+          "hasImage": true,
+          "imageUrl": "/data/images/quiz/c27eb073_p1_fig3.png",
+          "diagramBbox": {
+            "x": 906,
+            "y": 1806,
+            "w": 479,
+            "h": 242
+          }
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/c27eb073_page1.png"
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task 3: Application of area and perimeter in real situations.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "1",
+          "type": "numeric",
+          "question": "A square playground has sides that are **65 m** long. What is the area of the playground?",
+          "unit": "m\u00c2\u00b2",
+          "answer": 4225,
+          "hint": "Area of a square = side \u00c3\u2014 side.",
+          "solution": "Area = 65 \u00c3\u2014 65 = 4225 m\u00c2\u00b2.",
+          "hasImage": true,
+          "shapeData": {
+            "type": "rectangle",
+            "width": "65 m",
+            "height": "65 m"
+          },
+          "diagramHTML": "<svg viewBox=\"0 0 250 180\" style=\"max-width:220px;width:100%\">\n        <rect x=\"35\" y=\"35\" width=\"180\" height=\"110\" fill=\"#e3f2fd\" stroke=\"#1565c0\" stroke-width=\"2.5\" rx=\"2\"/>\n        <text x=\"125\" y=\"27\" font-size=\"14\" text-anchor=\"middle\" fill=\"#1565c0\" font-weight=\"bold\">65 m</text>\n        <text x=\"229\" y=\"95\" font-size=\"14\" text-anchor=\"start\" fill=\"#1565c0\" font-weight=\"bold\">65 m</text>\n      </svg>"
+        },
+        {
+          "id": "2",
+          "type": "text",
+          "question": "Amit jogged four times around the park. If the perimeter of the park is **450 m**, how far did he jog? Give your answer in km and m.",
+          "unit": "km and m",
+          "answer": "1 km 800 m",
+          "hint": "Total distance = perimeter \u00c3\u2014 number of rounds. Convert meters to km and m.",
+          "solution": "Total distance = 450 \u00c3\u2014 4 = 1800 m = 1 km 800 m.",
+          "hasImage": false
+        },
+        {
+          "id": "3",
+          "type": "numeric",
+          "question": "The length and breadth of a rectangular park is **200 m** and **250 m** respectively. If a person takes 5 rounds around the park, how much did he walk?",
+          "unit": "m",
+          "answer": 4500,
+          "hint": "Perimeter of a rectangle = 2 \u00c3\u2014 (length + breadth). Total distance = perimeter \u00c3\u2014 rounds.",
+          "solution": "Perimeter = 2 \u00c3\u2014 (200 + 250) = 900 m. Total distance = 900 \u00c3\u2014 5 = 4500 m.",
+          "hasImage": true,
+          "shapeData": {
+            "type": "rectangle",
+            "width": "200 m",
+            "height": "250 m"
+          },
+          "diagramHTML": "<svg viewBox=\"0 0 250 180\" style=\"max-width:220px;width:100%\">\n        <rect x=\"35\" y=\"35\" width=\"180\" height=\"110\" fill=\"#e3f2fd\" stroke=\"#1565c0\" stroke-width=\"2.5\" rx=\"2\"/>\n        <text x=\"125\" y=\"27\" font-size=\"14\" text-anchor=\"middle\" fill=\"#1565c0\" font-weight=\"bold\">200 m</text>\n        <text x=\"229\" y=\"95\" font-size=\"14\" text-anchor=\"start\" fill=\"#1565c0\" font-weight=\"bold\">250 m</text>\n      </svg>"
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/c27eb073_page1.png"
+    },
+    {
+      "tier": "ENRICHMENT",
+      "title": "Enrichment Task:",
+      "sourcePage": 1,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "a",
+          "type": "numeric",
+          "question": "A rectangular room has a length of **120 m** and a breadth of **80 m**. The floor is to be completely covered with square tiles of side **40 cm**. Find the number of tiles required to cover the floor.",
+          "unit": "tiles",
+          "answer": 60000,
+          "hint": "Convert all measurements to the same unit (meters to cm or cm to meters). Area of room \u00c3\u00b7 Area of one tile.",
+          "solution": "Area of room = 120 \u00c3\u2014 80 = 9600 m\u00c2\u00b2 = 9600 \u00c3\u2014 10000 cm\u00c2\u00b2 = 96,000,000 cm\u00c2\u00b2. Area of one tile = 40 \u00c3\u2014 40 = 1600 cm\u00c2\u00b2. Number of tiles = 96,000,000 \u00c3\u00b7 1600 = 60,000 tiles.",
+          "hasImage": true,
+          "shapeData": {
+            "type": "rectangle",
+            "width": "120 m",
+            "height": "80 m"
+          },
+          "diagramHTML": "<svg viewBox=\"0 0 250 180\" style=\"max-width:220px;width:100%\">\n        <rect x=\"35\" y=\"35\" width=\"180\" height=\"110\" fill=\"#e3f2fd\" stroke=\"#1565c0\" stroke-width=\"2.5\" rx=\"2\"/>\n        <text x=\"125\" y=\"27\" font-size=\"14\" text-anchor=\"middle\" fill=\"#1565c0\" font-weight=\"bold\">120 m</text>\n        <text x=\"229\" y=\"95\" font-size=\"14\" text-anchor=\"start\" fill=\"#1565c0\" font-weight=\"bold\">80 m</text>\n      </svg>"
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/c27eb073_page1.png"
+    }
+  ],
+  "fullPageImages": [
+    {
+      "pageNum": 1,
+      "imageUrl": "/data/images/quiz/c27eb073_page1.png"
+    },
+    {
+      "pageNum": 2,
+      "imageUrl": "/data/images/quiz/c27eb073_page2.png"
+    }
+  ],
+  "engine": "gemini",
+  "sourceFile": "Toddle-8d6af58a-a488-46a7-93fb-f0a5ec0611cc-PYP4 -MHLE-32.pdf",
+  "generatedAt": "2026-05-16T06:07:25.542Z",
+  "status": "draft"
+}

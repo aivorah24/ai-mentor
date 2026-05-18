@@ -1,0 +1,119 @@
+{
+  "title": "Finding Area and Perimeter - PYP 4 Mathematics Worksheet",
+  "subject": "Mathematics",
+  "grade": "PYP 4",
+  "school": "The Shri Ram Academy",
+  "concepts": [
+    {
+      "term": "Area",
+      "definition": "The amount of space inside a two-dimensional shape, measured in square units.",
+      "unit": "square centimetres (cm²) or square metres (m²)"
+    },
+    {
+      "term": "Perimeter",
+      "definition": "The total distance around the outside of a two-dimensional shape, measured in linear units.",
+      "unit": "centimetres (cm) or metres (m)"
+    }
+  ],
+  "tasks": [
+    {
+      "tier": "MUST DO",
+      "title": "Task 1: Answer the following.",
+      "diagramHTML": "<svg viewBox='0 0 400 200' style='max-width:400px;width:100%'><rect x='50' y='50' width='100' height='100' fill='none' stroke='#333' stroke-width='2'/><text x='100' y='170' font-size='16' text-anchor='middle' fill='#333'>Regular Hexagon</text><text x='100' y='30' font-size='14' text-anchor='middle' fill='#333'>Perimeter = 40 cm</text><text x='100' y='200' font-size='14' text-anchor='middle' fill='#333'>Side = ?</text></svg>",
+      "questions": [
+        {
+          "id": "a",
+          "type": "numeric",
+          "question": "Find the side of this regular polygon if its perimeter is 40 cm.",
+          "unit": "cm",
+          "answer": 6.67,
+          "hint": "A regular polygon has equal sides. Divide the perimeter by the number of sides.",
+          "solution": "Number of sides in a regular hexagon = 6. Side length = Perimeter ÷ Number of sides = 40 cm ÷ 6 ≈ 6.67 cm"
+        },
+        {
+          "id": "b",
+          "type": "numeric",
+          "question": "Find the area of the following irregular shape.",
+          "unit": "cm²",
+          "answer": 36,
+          "hint": "Divide the shape into rectangles and squares, calculate each area, then add them.",
+          "solution": "The irregular shape can be divided into a 4 cm × 4 cm square and a 4 cm × 5 cm rectangle. Area of square = 4 × 4 = 16 cm². Area of rectangle = 4 × 5 = 20 cm². Total area = 16 + 20 = 36 cm².",
+          "diagramHTML": "<svg viewBox='0 0 300 200' style='max-width:300px;width:100%'><rect x='50' y='50' width='80' height='80' fill='none' stroke='#333' stroke-width='2'/><rect x='130' y='50' width='80' height='100' fill='none' stroke='#333' stroke-width='2'/><text x='90' y='150' font-size='14' text-anchor='middle' fill='#333'>4 cm</text><text x='170' y='160' font-size='14' text-anchor='middle' fill='#333'>4 cm</text><text x='210' y='100' font-size='14' text-anchor='middle' fill='#333'>5 cm</text><text x='150' y='30' font-size='14' text-anchor='middle' fill='#333'>Irregular Shape</text></svg>"
+        }
+      ]
+    },
+    {
+      "tier": "MUST DO",
+      "title": "Task 2: Find the perimeter of the L-shaped polygon",
+      "diagramHTML": "<div style='display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap'><svg viewBox='0 0 300 260' style='max-width:260px;width:100%'><polygon points='40,20 140,20 140,140 260,140 260,210 40,210' fill='#e3f2fd' stroke='#1565c0' stroke-width='2.5'/><line x1='40' y1='210' x2='260' y2='210' stroke='#c62828' stroke-width='2' stroke-dasharray='6,4'/><line x1='40' y1='20' x2='40' y2='210' stroke='#c62828' stroke-width='2' stroke-dasharray='6,4'/><text x='90' y='14' font-size='13' text-anchor='middle' fill='#1565c0' font-weight='bold'>5 m</text><text x='148' y='82' font-size='13' text-anchor='start' fill='#1565c0' font-weight='bold'>6 m</text><text x='200' y='134' font-size='13' text-anchor='middle' fill='#1565c0' font-weight='bold'>8 m</text><text x='268' y='178' font-size='13' text-anchor='start' fill='#1565c0' font-weight='bold'>3 m</text><text x='150' y='228' font-size='13' text-anchor='middle' fill='#c62828' font-weight='bold'>13 m</text><text x='26' y='118' font-size='13' text-anchor='end' fill='#c62828' font-weight='bold'>9 m</text><text x='60' y='245' font-size='11' fill='#c62828' font-style='italic'>Red dashed sides = calculate these!</text></svg><div style='background:#fff8e1;border:1px solid #ffc107;border-radius:10px;padding:14px 18px;max-width:280px;font-size:13px;line-height:1.7'><div style='font-weight:700;color:#e65100;margin-bottom:6px'>How to find missing sides:</div><div><i>Missing bottom</i> = top + inner horizontal<br>= 5 + 8 = <b>13 m</b></div><div style='margin-top:6px'><i>Missing left</i> = inner vertical + right side<br>= 6 + 3 = <b>9 m</b></div><div style='margin-top:8px;color:#555'><i>Perimeter</i> = sum of all 6 sides</div></div></div>",
+      "questions": [
+        {
+          "id": "a",
+          "type": "numeric",
+          "question": "Find the perimeter of the L-shaped polygon.",
+          "unit": "m",
+          "answer": 44,
+          "hint": "First find the missing sides. Missing bottom = top + inner horizontal = 5 + 8 = 13 m. Missing left = inner vertical + right = 6 + 3 = 9 m. Then add all 6 sides.",
+          "solution": "Missing bottom = 5 + 8 = 13 m. Missing left side = 6 + 3 = 9 m. Perimeter = 5 + 6 + 8 + 3 + 13 + 9 = 44 m"
+        }
+      ]
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task 3: Application of area and perimeter in real situations.",
+      "questions": [
+        {
+          "id": "a",
+          "type": "numeric",
+          "question": "A square playground has sides that are 65 m long. What is the area of the playground?",
+          "unit": "m²",
+          "answer": 4225,
+          "hint": "Area of a square = side × side.",
+          "solution": "Area = 65 m × 65 m = 4225 m²"
+        },
+        {
+          "id": "b",
+          "type": "numeric",
+          "question": "Amit jogged four times around the park. If the perimeter of the park is 450 m, how far did he jog? Give your answer in km and m.",
+          "unit": "km and m",
+          "answer": "1 km 800 m",
+          "hint": "First find the total distance in metres, then convert to kilometres and metres.",
+          "solution": "Total distance = 4 × 450 m = 1800 m. 1800 m = 1 km 800 m (since 1 km = 1000 m)"
+        },
+        {
+          "id": "c",
+          "type": "numeric",
+          "question": "The length and breadth of a rectangular park is 200 m and 250 m respectively. If a person takes 5 rounds around the park, how much did he walk?",
+          "unit": "km",
+          "answer": 2.25,
+          "hint": "First find the perimeter of the rectangle, then multiply by the number of rounds, then convert to kilometres.",
+          "solution": "Perimeter = 2 × (200 m + 250 m) = 900 m. Total distance = 5 × 900 m = 4500 m. 4500 m = 4.5 km"
+        }
+      ]
+    },
+    {
+      "tier": "ENRICHMENT",
+      "title": "Enrichment Task:",
+      "questions": [
+        {
+          "id": "a",
+          "type": "numeric",
+          "question": "A rectangular room has a length of 120 m and a breadth of 80 m. The floor is to be completely covered with square tiles of side 40 cm. Find the number of tiles required to cover the floor.",
+          "unit": "tiles",
+          "answer": 60000,
+          "hint": "First convert all measurements to the same unit (metres to centimetres). Then find the area of the room and the area of one tile. Divide the room area by the tile area.",
+          "solution": "Room length = 120 m = 12000 cm. Room breadth = 80 m = 8000 cm. Area of room = 12000 cm × 8000 cm = 96,000,000 cm². Area of one tile = 40 cm × 40 cm = 1600 cm². Number of tiles = 96,000,000 ÷ 1600 = 60,000 tiles"
+        }
+      ]
+    }
+  ],
+  "images": {
+    "img-0.jpeg": "/data/images/quiz/7d6f34d4_img-0.jpeg",
+    "img-1.jpeg": "/data/images/quiz/7d6f34d4_img-1.jpeg",
+    "img-2.jpeg": "/data/images/quiz/7d6f34d4_img-2.jpeg",
+    "img-3.jpeg": "/data/images/quiz/7d6f34d4_img-3.jpeg"
+  },
+  "sourceFile": "MHLE-32 (Area & Perimeter).pdf",
+  "generatedAt": "2026-05-14T10:25:31.778Z",
+  "status": "draft"
+}

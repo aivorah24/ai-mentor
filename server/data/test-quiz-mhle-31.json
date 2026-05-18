@@ -1,0 +1,278 @@
+{
+  "title": "MHLE - 31: Measurement Application Worksheet",
+  "subject": "Mathematics",
+  "grade": "PYP 4",
+  "school": "The Shri Ram Academy",
+  "concepts": [
+    {
+      "term": "Perimeter",
+      "definition": "The total distance around the boundary of a two-dimensional shape.",
+      "unit": "cm, m"
+    },
+    {
+      "term": "Area",
+      "definition": "The amount of space inside the boundary of a two-dimensional shape.",
+      "unit": "cm², m²"
+    },
+    {
+      "term": "Angle",
+      "definition": "The figure formed by two rays, called the sides of the angle, sharing a common endpoint, called the vertex.",
+      "unit": "degrees"
+    },
+    {
+      "term": "Acute Angle",
+      "definition": "An angle less than 90 degrees.",
+      "unit": "degrees"
+    },
+    {
+      "term": "Right Angle",
+      "definition": "An angle exactly equal to 90 degrees.",
+      "unit": "degrees"
+    },
+    {
+      "term": "Obtuse Angle",
+      "definition": "An angle greater than 90 degrees but less than 180 degrees.",
+      "unit": "degrees"
+    }
+  ],
+  "tasks": [
+    {
+      "tier": "MUST DO",
+      "title": "Task 1: Find the area and perimeter of the given shapes in each grid.",
+      "diagramHTML": "<svg viewBox='0 0 620 170' style='max-width:620px;width:100%'><rect x='20' y='20' width='140' height='80' fill='#e3f2fd' stroke='#1565c0' stroke-width='2.5' rx='2'/><text x='90' y='12' font-size='14' text-anchor='middle' fill='#1565c0' font-weight='bold'>10 cm</text><text x='168' y='65' font-size='14' fill='#1565c0' font-weight='bold'>5 cm</text><text x='90' y='118' font-size='13' text-anchor='middle' fill='#555'>Shape 1</text><rect x='220' y='10' width='160' height='100' fill='#e3f2fd' stroke='#1565c0' stroke-width='2.5' rx='2'/><text x='300' y='4' font-size='14' text-anchor='middle' fill='#1565c0' font-weight='bold'>15 cm</text><text x='388' y='65' font-size='14' fill='#1565c0' font-weight='bold'>8 cm</text><text x='300' y='128' font-size='13' text-anchor='middle' fill='#555'>Shape 2</text><rect x='440' y='20' width='100' height='100' fill='#e3f2fd' stroke='#1565c0' stroke-width='2.5' rx='2'/><text x='490' y='12' font-size='14' text-anchor='middle' fill='#1565c0' font-weight='bold'>8 cm</text><text x='548' y='75' font-size='14' fill='#1565c0' font-weight='bold'>8 cm</text><text x='490' y='138' font-size='13' text-anchor='middle' fill='#555'>Shape 3</text><text x='20' y='160' font-size='14' font-weight='bold' fill='#1565c0'>img-0</text><text x='220' y='160' font-size='14' font-weight='bold' fill='#1565c0'>img-1</text><text x='440' y='160' font-size='14' font-weight='bold' fill='#1565c0'>img-2</text></svg>",
+      "questions": [
+        {
+          "id": "a",
+          "type": "numeric",
+          "question": "Find the perimeter of the first shape.",
+          "unit": "cm",
+          "answer": 30,
+          "hint": "Perimeter of rectangle = 2 × (length + width)",
+          "solution": "Perimeter = 2 × (10 cm + 5 cm) = 2 × 15 cm = 30 cm"
+        },
+        {
+          "id": "b",
+          "type": "numeric",
+          "question": "Find the area of the first shape.",
+          "unit": "cm²",
+          "answer": 50,
+          "hint": "Area of rectangle = length × width",
+          "solution": "Area = 10 cm × 5 cm = 50 cm²"
+        },
+        {
+          "id": "c",
+          "type": "numeric",
+          "question": "Find the perimeter of the second shape.",
+          "unit": "cm",
+          "answer": 46,
+          "hint": "Perimeter of rectangle = 2 × (length + width)",
+          "solution": "Perimeter = 2 × (15 cm + 8 cm) = 2 × 23 cm = 46 cm"
+        },
+        {
+          "id": "d",
+          "type": "numeric",
+          "question": "Find the area of the second shape.",
+          "unit": "cm²",
+          "answer": 120,
+          "hint": "Area of rectangle = length × width",
+          "solution": "Area = 15 cm × 8 cm = 120 cm²"
+        },
+        {
+          "id": "e",
+          "type": "numeric",
+          "question": "Find the perimeter of the third shape.",
+          "unit": "cm",
+          "answer": 32,
+          "hint": "Perimeter of square = 4 × side",
+          "solution": "Perimeter = 4 × 8 cm = 32 cm"
+        },
+        {
+          "id": "f",
+          "type": "numeric",
+          "question": "Find the area of the third shape.",
+          "unit": "cm²",
+          "answer": 64,
+          "hint": "Area of square = side × side",
+          "solution": "Area = 8 cm × 8 cm = 64 cm²"
+        }
+      ]
+    },
+    {
+      "tier": "MUST DO",
+      "title": "Task 2: Measure the given angles using protractor and name the type of angle (acute/right/obtuse angled).",
+      "diagramHTML": "<div style='text-align:center'><div style='font-size:13px;color:#888;margin-bottom:8px'>Refer to the worksheet image below to measure the angle with a protractor.</div><text x='100' y='190' font-size='14' font-weight='bold' fill='#1565c0'>img-3</text></div>",
+      "questions": [
+        {
+          "id": "a",
+          "type": "text",
+          "question": "Measure the angle shown and name its type.",
+          "unit": "degrees",
+          "answer": "45°, acute",
+          "hint": "Use a protractor to measure the angle between the two lines.",
+          "solution": "The angle measures 45 degrees, which is less than 90 degrees, so it is an acute angle."
+        }
+      ]
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task 3: Match the length and width to the area and perimeter of each shape. The first one has been done for you.",
+      "diagramHTML": "<svg viewBox='0 0 520 140' style='max-width:520px;width:100%'><rect x='20' y='15' width='140' height='90' fill='#e3f2fd' stroke='#1565c0' stroke-width='2.5' rx='3'/><text x='90' y='45' font-size='15' text-anchor='middle' fill='#1565c0' font-weight='bold'>Shape A</text><text x='90' y='68' font-size='13' text-anchor='middle' fill='#333'>L = 12 cm</text><text x='90' y='88' font-size='13' text-anchor='middle' fill='#333'>W = 8 cm</text><rect x='190' y='15' width='140' height='90' fill='#e3f2fd' stroke='#1565c0' stroke-width='2.5' rx='3'/><text x='260' y='45' font-size='15' text-anchor='middle' fill='#1565c0' font-weight='bold'>Shape B</text><text x='260' y='68' font-size='13' text-anchor='middle' fill='#333'>L = 10 cm</text><text x='260' y='88' font-size='13' text-anchor='middle' fill='#333'>W = 5 cm</text><rect x='360' y='15' width='140' height='90' fill='#e3f2fd' stroke='#1565c0' stroke-width='2.5' rx='3'/><text x='430' y='45' font-size='15' text-anchor='middle' fill='#1565c0' font-weight='bold'>Shape C</text><text x='430' y='68' font-size='13' text-anchor='middle' fill='#333'>L = 9 cm</text><text x='430' y='88' font-size='13' text-anchor='middle' fill='#333'>W = 6 cm</text><text x='20' y='130' font-size='14' font-weight='bold' fill='#1565c0'>img-4</text></svg>",
+      "questions": [
+        {
+          "id": "a",
+          "type": "mcq",
+          "question": "Match Shape A (L=12 cm, W=8 cm) to its area and perimeter.",
+          "options": [
+            {
+              "label": "A. Area = 96 cm², Perimeter = 40 cm",
+              "correct": true
+            },
+            {
+              "label": "B. Area = 40 cm², Perimeter = 96 cm",
+              "correct": false
+            },
+            {
+              "label": "C. Area = 20 cm², Perimeter = 34 cm",
+              "correct": false
+            }
+          ],
+          "answer": "A. Area = 96 cm², Perimeter = 40 cm",
+          "hint": "Area = length × width, Perimeter = 2 × (length + width)",
+          "solution": "Area = 12 cm × 8 cm = 96 cm², Perimeter = 2 × (12 cm + 8 cm) = 40 cm"
+        },
+        {
+          "id": "b",
+          "type": "mcq",
+          "question": "Match Shape B (L=10 cm, W=5 cm) to its area and perimeter.",
+          "options": [
+            {
+              "label": "A. Area = 50 cm², Perimeter = 30 cm",
+              "correct": true
+            },
+            {
+              "label": "B. Area = 30 cm², Perimeter = 50 cm",
+              "correct": false
+            },
+            {
+              "label": "C. Area = 15 cm², Perimeter = 20 cm",
+              "correct": false
+            }
+          ],
+          "answer": "A. Area = 50 cm², Perimeter = 30 cm",
+          "hint": "Area = length × width, Perimeter = 2 × (length + width)",
+          "solution": "Area = 10 cm × 5 cm = 50 cm², Perimeter = 2 × (10 cm + 5 cm) = 30 cm"
+        },
+        {
+          "id": "c",
+          "type": "mcq",
+          "question": "Match Shape C (L=9 cm, W=6 cm) to its area and perimeter.",
+          "options": [
+            {
+              "label": "A. Area = 54 cm², Perimeter = 30 cm",
+              "correct": true
+            },
+            {
+              "label": "B. Area = 30 cm², Perimeter = 54 cm",
+              "correct": false
+            },
+            {
+              "label": "C. Area = 15 cm², Perimeter = 21 cm",
+              "correct": false
+            }
+          ],
+          "answer": "A. Area = 54 cm², Perimeter = 30 cm",
+          "hint": "Area = length × width, Perimeter = 2 × (length + width)",
+          "solution": "Area = 9 cm × 6 cm = 54 cm², Perimeter = 2 × (9 cm + 6 cm) = 30 cm"
+        }
+      ]
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task 4: Find the area and perimeter of the given squares with the following dimensions.",
+      "diagramHTML": "<svg viewBox='0 0 460 140' style='max-width:460px;width:100%'><rect x='20' y='15' width='100' height='100' fill='#e3f2fd' stroke='#1565c0' stroke-width='2.5' rx='2'/><text x='70' y='8' font-size='14' text-anchor='middle' fill='#1565c0' font-weight='bold'>5 cm</text><text x='70' y='132' font-size='13' text-anchor='middle' fill='#555'>Square A</text><rect x='170' y='15' width='100' height='100' fill='#e3f2fd' stroke='#1565c0' stroke-width='2.5' rx='2'/><text x='220' y='8' font-size='14' text-anchor='middle' fill='#1565c0' font-weight='bold'>7 cm</text><text x='220' y='132' font-size='13' text-anchor='middle' fill='#555'>Square B</text><rect x='320' y='15' width='100' height='100' fill='#e3f2fd' stroke='#1565c0' stroke-width='2.5' rx='2'/><text x='370' y='8' font-size='14' text-anchor='middle' fill='#1565c0' font-weight='bold'>10 cm</text><text x='370' y='132' font-size='13' text-anchor='middle' fill='#555'>Square C</text><text x='20' y='140' font-size='14' font-weight='bold' fill='#1565c0'>img-5</text></svg>",
+      "questions": [
+        {
+          "id": "a",
+          "type": "numeric",
+          "question": "Find the perimeter of Square A.",
+          "unit": "cm",
+          "answer": 20,
+          "hint": "Perimeter of square = 4 × side",
+          "solution": "Perimeter = 4 × 5 cm = 20 cm"
+        },
+        {
+          "id": "b",
+          "type": "numeric",
+          "question": "Find the area of Square A.",
+          "unit": "cm²",
+          "answer": 25,
+          "hint": "Area of square = side × side",
+          "solution": "Area = 5 cm × 5 cm = 25 cm²"
+        },
+        {
+          "id": "c",
+          "type": "numeric",
+          "question": "Find the perimeter of Square B.",
+          "unit": "cm",
+          "answer": 28,
+          "hint": "Perimeter of square = 4 × side",
+          "solution": "Perimeter = 4 × 7 cm = 28 cm"
+        },
+        {
+          "id": "d",
+          "type": "numeric",
+          "question": "Find the area of Square B.",
+          "unit": "cm²",
+          "answer": 49,
+          "hint": "Area of square = side × side",
+          "solution": "Area = 7 cm × 7 cm = 49 cm²"
+        },
+        {
+          "id": "e",
+          "type": "numeric",
+          "question": "Find the perimeter of Square C.",
+          "unit": "cm",
+          "answer": 40,
+          "hint": "Perimeter of square = 4 × side",
+          "solution": "Perimeter = 4 × 10 cm = 40 cm"
+        },
+        {
+          "id": "f",
+          "type": "numeric",
+          "question": "Find the area of Square C.",
+          "unit": "cm²",
+          "answer": 100,
+          "hint": "Area of square = side × side",
+          "solution": "Area = 10 cm × 10 cm = 100 cm²"
+        }
+      ]
+    },
+    {
+      "tier": "ENRICHMENT",
+      "title": "Enrichment Task: Relationship of area and perimeter.",
+      "diagramHTML": "",
+      "questions": [
+        {
+          "id": "a",
+          "type": "activity",
+          "question": "Draw a square with the same area and perimeter. Label the sides.",
+          "unit": "activity",
+          "answer": "A square with side length 4 cm has both area and perimeter equal to 16.",
+          "hint": "Let side = s. Area = s², Perimeter = 4s. Set s² = 4s and solve for s.",
+          "solution": "s² = 4s → s = 4 (since s ≠ 0). So, a square with side 4 cm has area = 16 cm² and perimeter = 16 cm."
+        }
+      ]
+    }
+  ],
+  "images": {
+    "img-0.jpeg": "/data/images/quiz/2f55e8b2_img-0.jpeg",
+    "img-1.jpeg": "/data/images/quiz/2f55e8b2_img-1.jpeg",
+    "img-2.jpeg": "/data/images/quiz/2f55e8b2_img-2.jpeg",
+    "img-3.jpeg": "/data/images/quiz/2f55e8b2_img-3.jpeg",
+    "img-4.jpeg": "/data/images/quiz/2f55e8b2_img-4.jpeg",
+    "img-5.jpeg": "/data/images/quiz/2f55e8b2_img-5.jpeg"
+  },
+  "sourceFile": "MHLE-31.pdf",
+  "generatedAt": "2026-05-14T10:25:53.146Z",
+  "status": "draft"
+}

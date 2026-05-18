@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ML Pipeline Preview — PYP4 MHLE-29</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f1117;
+      color: #e1e4e8;
+      padding: 32px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #58a6ff, #bc8cff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      color: #8b949e;
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    /* Stats bar */
+    .stats {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 16px 24px;
+      min-width: 140px;
+    }
+    .stat-card .label {
+      font-size: 12px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .stat-card .value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #58a6ff;
+    }
+    .stat-card .value.green { color: #3fb950; }
+    .stat-card .value.purple { color: #bc8cff; }
+    .stat-card .value.orange { color: #f0883e; }
+
+    /* Page section */
+    .page-section {
+      margin-bottom: 48px;
+    }
+    .page-header {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #30363d;
+    }
+    .page-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* Full page preview */
+    .full-page-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 12px 16px;
+      background: #1c2129;
+      border-bottom: 1px solid #30363d;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-header .tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .tag-page { background: #1f3a5f; color: #58a6ff; }
+    .tag-table { background: #2a1f3f; color: #bc8cff; }
+    .tag-figure { background: #1f3f2a; color: #3fb950; }
+    .card-body {
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #fff;
+    }
+    .card-body img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Crops grid */
+    .crops-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .crop-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .crop-card:hover {
+      border-color: #58a6ff;
+    }
+    .crop-meta {
+      padding: 8px 16px;
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: #8b949e;
+      background: #1c2129;
+      border-top: 1px solid #30363d;
+    }
+    .crop-meta span { display: flex; align-items: center; gap: 4px; }
+    .conf-bar {
+      width: 60px;
+      height: 6px;
+      background: #30363d;
+      border-radius: 3px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .conf-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    .conf-high { background: #3fb950; }
+    .conf-med { background: #f0883e; }
+    .conf-low { background: #f85149; }
+
+    /* Bounding box overlay */
+    .page-with-boxes {
+      position: relative;
+      display: inline-block;
+    }
+    .page-with-boxes img { display: block; max-width: 100%; height: auto; }
+    .bbox-overlay {
+      position: absolute;
+      border: 2px solid #bc8cff;
+      background: rgba(188, 140, 255, 0.08);
+      pointer-events: none;
+      transition: background 0.2s;
+    }
+    .bbox-label {
+      position: absolute;
+      top: -20px;
+      left: 0;
+      background: #bc8cff;
+      color: #0f1117;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .page-layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>ML Pipeline Preview</h1>
+  <p class="subtitle">
+    DocLayout-YOLO extraction — <strong>Revised PYP4 MHLE-29</strong> (The Shri Ram Academy)
+  </p>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="label">Pages</div>
+      <div class="value">2</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Tables Found</div>
+      <div class="value purple">4</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Figures Found</div>
+      <div class="value orange">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Avg Confidence</div>
+      <div class="value green">90.2%</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Processing</div>
+      <div class="value">9.4s</div>
+    </div>
+  </div>
+
+  <!-- Page 1 -->
+  <div class="page-section">
+    <div class="page-header">Page 1 — Task 1 (Measurement) &amp; Task 2 (Fractions)</div>
+    <div class="page-layout">
+      <!-- Full page with bounding boxes -->
+      <div class="full-page-card">
+        <div class="card-header">
+          Full Page
+          <span class="tag tag-page">1654 × 2339</span>
+        </div>
+        <div class="card-body">
+          <div class="page-with-boxes" id="page1-container">
+            <img src="test_pyp4_preview_page1.png" alt="Page 1" id="page1-img" onload="drawBoxes('page1')" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Crops -->
+      <div class="crops-grid">
+        <div class="crop-card">
+          <div class="card-header">
+            Crop 1 — Task 1: Unit Conversion Table
+            <span class="tag tag-table">table</span>
+          </div>
+          <div class="card-body">
+            <img src="test_pyp4_preview_p1_tbl0.png" alt="Table crop 0 page 1" />
+          </div>
+          <div class="crop-meta">
+            <span>Confidence: <strong>73.7%</strong>
+              <span class="conf-bar"><span class="conf-fill conf-med" style="width:73.7%"></span></span>
+            </span>
+            <span>Size: 1480 × 757</span>
+            <span>BBox: (95,714)→(1555,1451)</span>
+          </div>
+        </div>
+
+        <div class="crop-card">
+          <div class="card-header">
+            Crop 2 — Task 2: Reduce Fractions
+            <span class="tag tag-table">table</span>
+          </div>
+          <div class="card-body">
+            <img src="test_pyp4_preview_p1_tbl1.png" alt="Table crop 1 page 1" />
+          </div>
+          <div class="crop-meta">
+            <span>Confidence: <strong>93.3%</strong>
+              <span class="conf-bar"><span class="conf-fill conf-high" style="width:93.3%"></span></span>
+            </span>
+            <span>Size: 1151 × 495</span>
+            <span>BBox: (170,1551)→(1301,2026)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page 2 -->
+  <div class="page-section">
+    <div class="page-header">Page 2 — Task 3 (Measurement Word Problems) &amp; Task 4 (Compare Fractions)</div>
+    <div class="page-layout">
+      <!-- Full page with bounding boxes -->
+      <div class="full-page-card">
+        <div class="card-header">
+          Full Page
+          <span class="tag tag-page">1654 × 2339</span>
+        </div>
+        <div class="card-body">
+          <div class="page-with-boxes" id="page2-container">
+            <img src="test_pyp4_preview_page2.png" alt="Page 2" id="page2-img" onload="drawBoxes('page2')" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Crops -->
+      <div class="crops-grid">
+        <div class="crop-card">
+          <div class="card-header">
+            Crop 3 — Task 3: Solve Measurements
+            <span class="tag tag-table">table</span>
+          </div>
+          <div class="card-body">
+            <img src="test_pyp4_preview_p2_tbl0.png" alt="Table crop 0 page 2" />
+          </div>
+          <div class="crop-meta">
+            <span>Confidence: <strong>97.2%</strong>
+              <span class="conf-bar"><span class="conf-fill conf-high" style="width:97.2%"></span></span>
+            </span>
+            <span>Size: 1476 × 303</span>
+            <span>BBox: (98,264)→(1554,547)</span>
+          </div>
+        </div>
+
+        <div class="crop-card">
+          <div class="card-header">
+            Crop 4 — Task 4: Compare Fractions
+            <span class="tag tag-table">table</span>
+          </div>
+          <div class="card-body">
+            <img src="test_pyp4_preview_p2_tbl1.png" alt="Table crop 1 page 2" />
+          </div>
+          <div class="crop-meta">
+            <span>Confidence: <strong>96.6%</strong>
+              <span class="conf-bar"><span class="conf-fill conf-high" style="width:96.6%"></span></span>
+            </span>
+            <span>Size: 1474 × 413</span>
+            <span>BBox: (103,651)→(1557,1044)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Bounding box data from ML detection
+    const boxes = {
+      page1: {
+        origW: 1654, origH: 2339,
+        regions: [
+          { x1: 95, y1: 714, x2: 1555, y2: 1451, type: 'table', conf: 0.737, label: 'tbl0' },
+          { x1: 170, y1: 1551, x2: 1301, y2: 2026, type: 'table', conf: 0.933, label: 'tbl1' },
+        ]
+      },
+      page2: {
+        origW: 1654, origH: 2339,
+        regions: [
+          { x1: 98, y1: 264, x2: 1554, y2: 547, type: 'table', conf: 0.972, label: 'tbl0' },
+          { x1: 103, y1: 651, x2: 1557, y2: 1044, type: 'table', conf: 0.966, label: 'tbl1' },
+        ]
+      }
+    };
+
+    function drawBoxes(pageId) {
+      const container = document.getElementById(pageId + '-container');
+      const img = document.getElementById(pageId + '-img');
+      const data = boxes[pageId];
+
+      const displayW = img.clientWidth;
+      const displayH = img.clientHeight;
+      const scaleX = displayW / data.origW;
+      const scaleY = displayH / data.origH;
+
+      data.regions.forEach((r, i) => {
+        const div = document.createElement('div');
+        div.className = 'bbox-overlay';
+        div.style.left = (r.x1 * scaleX) + 'px';
+        div.style.top = (r.y1 * scaleY) + 'px';
+        div.style.width = ((r.x2 - r.x1) * scaleX) + 'px';
+        div.style.height = ((r.y2 - r.y1) * scaleY) + 'px';
+
+        const label = document.createElement('div');
+        label.className = 'bbox-label';
+        label.textContent = `${r.type} #${i} — ${(r.conf * 100).toFixed(1)}%`;
+        div.appendChild(label);
+
+        container.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>

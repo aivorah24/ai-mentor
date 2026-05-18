@@ -310,6 +310,17 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [detailTotalLinked, setDetailTotalLinked] = useState(0);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [studentPreviewHtml, setStudentPreviewHtml] = useState<string | null>(null);
+  const [showReuseQuizModal, setShowReuseQuizModal] = useState(false);
+  const [savedQuizzes, setSavedQuizzes] = useState<any[]>([]);
+  const [loadingSavedQuizzes, setLoadingSavedQuizzes] = useState(false);
+  // Quiz Library tab state
+  const [librarySubject, setLibrarySubject] = useState('');
+  const [libraryGrade, setLibraryGrade] = useState('');
+  const [libraryQuizzes, setLibraryQuizzes] = useState<any[]>([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [libraryLoaded, setLibraryLoaded] = useState(false);
+  const [libraryPreviewQuiz, setLibraryPreviewQuiz] = useState<any>(null);
+  const [libraryPreviewLoading, setLibraryPreviewLoading] = useState(false);
   const [expandedStudent, setExpandedStudent] = useState<string | null>(null);
   const [teacherFeedback, setTeacherFeedback] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
@@ -362,6 +373,26 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   }, [teacherEmail]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Fetch Quiz Library quizzes when tab is active or filters change
+  const fetchLibraryQuizzes = useCallback(async () => {
+    setLibraryLoading(true);
+    setLibraryLoaded(false);
+    try {
+      const params = new URLSearchParams();
+      if (librarySubject) params.set('subject', librarySubject);
+      if (libraryGrade) params.set('grade', libraryGrade);
+      const res = await fetch(`${SERVER_URL}/quiz/list?${params.toString()}`);
+      const d = await res.json();
+      setLibraryQuizzes(d.quizzes || []);
+    } catch { setLibraryQuizzes([]); }
+    setLibraryLoading(false);
+    setLibraryLoaded(true);
+  }, [librarySubject, libraryGrade]);
+
+  useEffect(() => {
+    if (activeTab === 'Quiz Library') fetchLibraryQuizzes();
+  }, [activeTab, fetchLibraryQuizzes]);
 
   // Browser back button closes modals instead of navigating away
   useEffect(() => {
@@ -680,7 +711,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     setType('assignment'); setQuestions(['']); setSuccessCriteria(['']); setTaskSteps([]); setQuizQuestions([]); setTeacherNotes(''); setDocFiles([]); setFormError(''); originalPdfRef.current = null;
     setAssignTo('all'); setSelectedStudent(null); setStudentSearch('');
     setExtractingQuestions(false); setExtractedQuestions([]); setShowPreview(false); setCreateMode('choose');
-    setInteractiveQuiz(null); setGeneratingInteractiveQuiz(false); setShowInteractivePreview(false); setUploadStep(1);
+    setInteractiveQuiz(null); setGeneratingInteractiveQuiz(false); setShowInteractivePreview(false); setUploadStep(1); setShowReuseQuizModal(false); setSavedQuizzes([]);
     setSelectedLanguage('Telugu'); setUnitOfInquiry(''); setIbPurpose('');
     setIbLearningOutcomes(['']); setIbWordBank([]); setIbStamps([]);
     setIbCentralIdea(''); setIbLinesOfInquiry([]); setIbLearnerProfile(''); setIbAtlSkill(''); setIbKeyConcept('');
@@ -1087,6 +1118,24 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
             ))}
           </View>
 
+          {/* Quiz Library Hook Banner */}
+          {activeTab !== 'Quiz Library' && (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setActiveTab('Quiz Library')}
+              style={{ marginBottom: 12, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary + '50', backgroundColor: colors.primaryGlow, flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}
+            >
+              <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: colors.primary + '25', alignItems: 'center', justifyContent: 'center' }}>
+                <Feather name="zap" size={18} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMain }}>Save time. Reuse a saved quiz!</Text>
+                <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>Tap to explore Quiz Library and assign in seconds.</Text>
+              </View>
+              <Feather name="chevron-right" size={16} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+
           {/* Create button + Tabs row */}
           <View style={styles.actionsRow}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
@@ -1101,14 +1150,131 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+            <TouchableOpacity
+              style={[styles.createBtn, activeTab === 'Quiz Library' ? { backgroundColor: colors.primary } : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary }]}
+              onPress={() => setActiveTab(activeTab === 'Quiz Library' ? 'All' : 'Quiz Library')}
+              activeOpacity={0.85}
+            >
+              <Feather name="book-open" size={15} color={activeTab === 'Quiz Library' ? '#0F0F0F' : colors.primary} />
+              <Text style={[styles.createBtnText, { color: activeTab === 'Quiz Library' ? '#0F0F0F' : colors.primary }]}>Library</Text>
+            </TouchableOpacity>
             <TouchableOpacity style={styles.createBtn} onPress={() => setShowModal(true)} activeOpacity={0.85}>
               <Feather name="plus" size={15} color="#fff" />
               <Text style={styles.createBtnText}>New</Text>
             </TouchableOpacity>
           </View>
 
+          {/* ── QUIZ LIBRARY TAB ── */}
+          {activeTab === 'Quiz Library' && (
+            <View style={{ flex: 1 }}>
+              {/* Subject + Grade filters */}
+              <View style={{ paddingHorizontal: 16, paddingTop: 14, gap: 10 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+                  {['', ...SUBJECTS].map((s) => (
+                    <TouchableOpacity
+                      key={s || 'all'}
+                      style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1.5, borderColor: librarySubject === s ? colors.primary : colors.borderColor, backgroundColor: librarySubject === s ? colors.primary + '20' : 'transparent' }}
+                      onPress={() => setLibrarySubject(s)}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: librarySubject === s ? colors.primary : colors.textDim }}>{s || 'All Subjects'}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+                  {['', ...ALL_GRADES].map((g) => (
+                    <TouchableOpacity
+                      key={g || 'all'}
+                      style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1.5, borderColor: libraryGrade === g ? colors.primary : colors.borderColor, backgroundColor: libraryGrade === g ? colors.primary + '20' : 'transparent' }}
+                      onPress={() => setLibraryGrade(g)}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: libraryGrade === g ? colors.primary : colors.textDim }}>{g || 'All Grades'}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Results */}
+              <View style={{ marginTop: 10, paddingHorizontal: 16, flex: 1 }}>
+                {libraryLoading ? (
+                  <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
+                ) : libraryLoaded && libraryQuizzes.length === 0 ? (
+                  <View style={styles.empty}>
+                    <Feather name="inbox" size={36} color={colors.textDim} />
+                    <Text style={styles.emptyTitle}>No quizzes found</Text>
+                    <Text style={styles.emptyText}>No saved quizzes match these filters.</Text>
+                    <TouchableOpacity
+                      style={[styles.createBtn, { marginTop: 16, paddingHorizontal: 20 }]}
+                      onPress={() => { setActiveTab('All'); setShowModal(true); }}
+                      activeOpacity={0.85}
+                    >
+                      <Feather name="plus" size={15} color="#fff" />
+                      <Text style={styles.createBtnText}>Create New Quiz</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  libraryQuizzes.map((q) => {
+                    const subjectColor = SUBJECT_COLORS[q.subject] || colors.primary;
+                    const questionCount = q.quiz_data?.tasks?.reduce((s: number, t: any) => s + (t.questions?.length || 0), 0) || 0;
+                    return (
+                      <TouchableOpacity key={q.id} style={[styles.card, { marginBottom: 12 }]} activeOpacity={0.85} onPress={async () => {
+                          setLibraryPreviewQuiz(q);
+                          setLibraryPreviewLoading(true);
+                          try {
+                            const r = await fetch(`${SERVER_URL}/quiz/${q.id}`);
+                            const d = await r.json();
+                            if (d.quiz) setLibraryPreviewQuiz({ ...q, quiz_data: d.quiz.quiz_data, ...d.quiz });
+                          } catch {}
+                          setLibraryPreviewLoading(false);
+                        }}>
+                        <View style={[styles.cardAccent, { backgroundColor: subjectColor }]} />
+                        <View style={styles.cardBody}>
+                          <View style={styles.cardTop}>
+                            <View style={{ flex: 1 }}>
+                              <View style={styles.cardMeta}>
+                                <View style={[styles.typePill, { backgroundColor: subjectColor + '20', borderColor: subjectColor + '50' }]}>
+                                  <Text style={[styles.typeText, { color: subjectColor }]}>quiz</Text>
+                                </View>
+                                {q.subject ? <Text style={styles.subjectLabel}>{q.subject}</Text> : null}
+                                {q.grade ? <Text style={styles.subjectLabel}>{q.grade}</Text> : null}
+                              </View>
+                              <Text style={styles.cardTitle}>{q.title}</Text>
+                              <Text style={[styles.cardChapter, { marginTop: 2 }]}>
+                                {questionCount > 0 ? `${questionCount} questions` : 'Interactive quiz'}{q.created_at ? ` · ${q.created_at.slice(0, 10)}` : ''}
+                              </Text>
+                            </View>
+                            <TouchableOpacity
+                              style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, backgroundColor: subjectColor, alignItems: 'center', justifyContent: 'center' }}
+                              activeOpacity={0.8}
+                              onPress={() => {
+                                // Pre-load quiz and open modal at Step 3
+                                setInteractiveQuiz(q.quiz_data);
+                                setSubject(q.subject || 'Mathematics');
+                                setGrade(q.grade || defaultGrade);
+                                setCurriculum(q.curriculum || teacherCurriculum);
+                                setChapter(q.chapter || '');
+                                setTitle(q.title || '');
+                                setCreateMode('upload');
+                                setUploadStep(3);
+                                setShowModal(true);
+                                uploadScrollRef.current?.scrollTo({ y: 0, animated: false });
+                              }}
+                            >
+                              <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>Assign</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })
+                )}
+              </View>
+            </View>
+          )}
+
           {/* Assignment List */}
-          {loading ? (
+          {activeTab !== 'Quiz Library' && (loading ? (
             <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
           ) : filtered.length === 0 ? (
             <View style={styles.empty}>
@@ -1192,8 +1358,86 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                 </TouchableOpacity>
               );
             })
-          )}
+          ))}
         </ScrollView>
+
+        {/* Quiz Library Preview Modal */}
+        {libraryPreviewQuiz && (() => {
+          const q = libraryPreviewQuiz;
+          const subjectColor = SUBJECT_COLORS[q.subject] || colors.primary;
+          const tasks: any[] = q.quiz_data?.tasks || [];
+          const allQuestions: any[] = tasks.flatMap((t: any) => t.questions || []);
+          return (
+            <Modal visible animationType="slide" transparent onRequestClose={() => setLibraryPreviewQuiz(null)}>
+              <View style={styles.modalOverlay}>
+                <View style={[styles.modalSheet, { flex: 1, maxHeight: '95%', borderRadius: 20 }]}>
+                  {/* Header */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', padding: 18, borderBottomWidth: 1, borderBottomColor: colors.borderColor, gap: 12 }}>
+                    <TouchableOpacity onPress={() => setLibraryPreviewQuiz(null)} activeOpacity={0.75}>
+                      <Feather name="x" size={20} color={colors.textDim} />
+                    </TouchableOpacity>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textMain }}>{q.title}</Text>
+                      <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{q.subject} · {q.grade}{allQuestions.length > 0 ? ` · ${allQuestions.length} questions` : ''}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10, backgroundColor: subjectColor }}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        setLibraryPreviewQuiz(null);
+                        setInteractiveQuiz(q.quiz_data);
+                        setSubject(q.subject || 'Mathematics');
+                        setGrade(q.grade || defaultGrade);
+                        setCurriculum(q.curriculum || teacherCurriculum);
+                        setChapter(q.chapter || '');
+                        setTitle(q.title || '');
+                        setCreateMode('upload');
+                        setUploadStep(3);
+                        setShowModal(true);
+                        uploadScrollRef.current?.scrollTo({ y: 0, animated: false });
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>Assign</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {/* Questions list */}
+                  <ScrollView contentContainerStyle={{ padding: 18, gap: 14 }} showsVerticalScrollIndicator={false}>
+                    {libraryPreviewLoading ? (
+                      <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
+                    ) : allQuestions.length === 0 ? (
+                      <Text style={{ color: colors.textDim, textAlign: 'center', marginTop: 32 }}>No questions found in this quiz.</Text>
+                    ) : allQuestions.map((ques: any, idx: number) => (
+                      <View key={idx} style={{ borderRadius: 12, borderWidth: 1, borderColor: colors.borderColor, padding: 14, gap: 8, backgroundColor: colors.cardHover }}>
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMain }}>Q{idx + 1}. {(ques.question || ques.text || ques.q || '').replace(/\*\*(.*?)\*\*/g, '$1')}</Text>
+                        {/* MCQ options */}
+                        {ques.options && ques.options.map((opt: string, oi: number) => (
+                          <View key={oi} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: opt === ques.answer ? colors.accentGreen : colors.borderColor, backgroundColor: opt === ques.answer ? colors.accentGreen + '20' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                              {opt === ques.answer && <Feather name="check" size={11} color={colors.accentGreen} />}
+                            </View>
+                            <Text style={{ fontSize: 12, color: opt === ques.answer ? colors.accentGreen : colors.textMuted, fontWeight: opt === ques.answer ? '700' : '400' }}>{opt}</Text>
+                          </View>
+                        ))}
+                        {/* Answer (non-MCQ) */}
+                        {!ques.options && (ques.answer || ques.correctAnswer) && (
+                          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                            <Feather name="check-circle" size={13} color={colors.accentGreen} />
+                            <Text style={{ fontSize: 12, color: colors.accentGreen, fontWeight: '700' }}>Answer: {ques.answer || ques.correctAnswer}</Text>
+                          </View>
+                        )}
+                        {/* Hint */}
+                        {ques.hint && (
+                          <Text style={{ fontSize: 11, color: colors.accentYellow, fontStyle: 'italic' }}>Hint: {ques.hint}</Text>
+                        )}
+                      </View>
+                    ))}
+                    <View style={{ height: 40 }} />
+                  </ScrollView>
+                </View>
+              </View>
+            </Modal>
+          );
+        })()}
 
         {/* Assignment Detail Modal */}
         {detailAssignment && (() => {
@@ -1754,6 +1998,56 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           </Modal>
         )}
 
+        {/* Reuse Quiz Modal */}
+        <Modal visible={showReuseQuizModal} transparent animationType="slide" onRequestClose={() => setShowReuseQuizModal(false)}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+            <View style={{ backgroundColor: colors.bgCard, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '80%' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: colors.borderColor }}>
+                <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text }}>Saved Quizzes</Text>
+                <TouchableOpacity onPress={() => setShowReuseQuizModal(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.bgDark, alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="x" size={16} color={colors.textDim} />
+                </TouchableOpacity>
+              </View>
+              {loadingSavedQuizzes ? (
+                <View style={{ padding: 40, alignItems: 'center' }}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={{ color: colors.textDim, marginTop: 12, fontSize: 13 }}>Loading saved quizzes...</Text>
+                </View>
+              ) : savedQuizzes.length === 0 ? (
+                <View style={{ padding: 40, alignItems: 'center' }}>
+                  <Feather name="inbox" size={32} color={colors.textDim} />
+                  <Text style={{ color: colors.textDim, marginTop: 12, fontSize: 14, textAlign: 'center' }}>No saved quizzes yet{subject ? ` for ${subject}` : ''}.</Text>
+                  <Text style={{ color: colors.textDim, marginTop: 4, fontSize: 12, textAlign: 'center' }}>Generate and publish a quiz — it will appear here for reuse.</Text>
+                </View>
+              ) : (
+                <ScrollView style={{ padding: 16 }} contentContainerStyle={{ gap: 10, paddingBottom: 24 }}>
+                  {savedQuizzes.map((q: any) => (
+                    <TouchableOpacity
+                      key={q.id}
+                      style={{ padding: 16, borderRadius: 12, borderWidth: 1.5, borderColor: colors.borderColor, backgroundColor: colors.bgDark, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                      onPress={async () => {
+                        const quizData = q.quiz_data || q;
+                        const previewRes = await fetch(`${SERVER_URL}/quiz/render-preview`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quiz: quizData }) });
+                        const previewHtml = await previewRes.text();
+                        setInteractiveQuiz({ ...quizData, _previewHTML: previewHtml });
+                        setShowReuseQuizModal(false);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Feather name="file-text" size={20} color={colors.primary} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }} numberOfLines={1}>{q.title || 'Untitled Quiz'}</Text>
+                        <Text style={{ fontSize: 12, color: colors.textDim, marginTop: 2 }}>{[q.subject, q.grade].filter(Boolean).join(' · ')}{q.created_at ? ` · ${new Date(q.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}</Text>
+                      </View>
+                      <Feather name="chevron-right" size={16} color={colors.primary} />
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          </View>
+        </Modal>
+
         {/* Interactive Quiz Preview Modal — unified server-rendered HTML + edit mode */}
         {showInteractivePreview && interactiveQuiz && (
           <Modal visible transparent={false} animationType="slide" onRequestClose={() => setShowInteractivePreview(false)}>
@@ -2024,7 +2318,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       {/* Option 2: Upload Worksheet */}
                       <TouchableOpacity
                         style={{ padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary + '40', backgroundColor: colors.primaryGlow, gap: 8 }}
-                        onPress={() => { setCreateMode('upload'); setUploadStep(1); }}
+                        onPress={() => { setCreateMode('upload'); setUploadStep(1); uploadScrollRef.current?.scrollTo({ y: 0, animated: false }); }}
                         activeOpacity={0.8}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -2747,6 +3041,29 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   {/* ── Generate Interactive Quiz (Step 2 of upload wizard) ── */}
                   {createMode === 'upload' && uploadStep === 2 && docFiles.length > 0 && !extractingQuestions && (
                     <View style={{ gap: 12 }}>
+                      {/* Reuse saved quiz */}
+                      {!interactiveQuiz && !generatingInteractiveQuiz && (
+                        <TouchableOpacity
+                          style={{ padding: 14, borderRadius: 12, borderWidth: 1.5, borderColor: colors.textDim + '40', backgroundColor: 'transparent', flexDirection: 'row', alignItems: 'center', gap: 10 }}
+                          onPress={async () => {
+                            setLoadingSavedQuizzes(true);
+                            setShowReuseQuizModal(true);
+                            try {
+                              const params = new URLSearchParams();
+                              if (subject) params.set('subject', subject);
+                              if (grade) params.set('grade', grade);
+                              const res = await fetch(`${SERVER_URL}/quiz/list?${params.toString()}`);
+                              const d = await res.json();
+                              setSavedQuizzes(d.quizzes || []);
+                            } catch { setSavedQuizzes([]); }
+                            setLoadingSavedQuizzes(false);
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Feather name="copy" size={18} color={colors.textDim} />
+                          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textDim }}>Reuse a saved quiz</Text>
+                        </TouchableOpacity>
+                      )}
                       <TouchableOpacity
                         style={{ padding: 16, borderRadius: 14, borderWidth: 1.5,
                           borderColor: interactiveQuiz ? colors.accentGreen + '60' : colors.primary + '60',

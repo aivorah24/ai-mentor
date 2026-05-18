@@ -1,0 +1,215 @@
+{
+  "title": "Perimeter and Area Worksheet",
+  "subject": "Mathematics",
+  "grade": "PYP 4",
+  "school": "THE SHRI RAM ACADEMY",
+  "concepts": [
+    {
+      "term": "Area",
+      "definition": "The amount of space inside a shape. It is measured in square units (like square centimetres or square meters).",
+      "unit": "square units"
+    },
+    {
+      "term": "Perimeter",
+      "definition": "The total distance around the outside edge of a shape. It is measured in linear units (like centimetres or meters).",
+      "unit": "linear units"
+    }
+  ],
+  "tasks": [
+    {
+      "tier": "MUST DO",
+      "title": "Task 1: Answer the following.",
+      "sourcePage": 1,
+      "questions": [
+        {
+          "id": "1a",
+          "type": "numeric",
+          "question": "Find the side of this regular polygon if its perimeter is **40 cm**.",
+          "unit": "cm",
+          "answer": 5,
+          "solution": "A regular octagon has 8 equal sides. The perimeter is the sum of all side lengths. So, side length = Perimeter / Number of sides = 40 cm / 8 = 5 cm.",
+          "hasImage": true,
+          "shapeData": {
+            "type": "polygon",
+            "sides": 8,
+            "name": "Octagon",
+            "perimeter": "40 cm"
+          },
+          "imageCrop": {
+            "xStartPct": 0,
+            "xEndPct": 50,
+            "yStartPct": 44.5,
+            "yEndPct": 70
+          },
+          "diagramHTML": "<svg viewBox=\"0 0 240 240\" style=\"max-width:200px;width:100%\">\n        <polygon points=\"120,30 184,56 210,120 184,184 120,210 56,184 30,120 56,56\" fill=\"#e3f2fd\" stroke=\"#1565c0\" stroke-width=\"3\"/>\n        <text x=\"120\" y=\"118\" font-size=\"15\" text-anchor=\"middle\" fill=\"#1565c0\" font-weight=\"bold\">Octagon</text>\n        \n      </svg>",
+          "imageUrl": "/data/images/quiz/3992a7c1_p1_1a.png"
+        },
+        {
+          "id": "1b",
+          "type": "numeric",
+          "question": "Find the area of the following irregular shape.",
+          "unit": "square units",
+          "answer": 30,
+          "acceptRange": [
+            28,
+            32
+          ],
+          "solution": "To find the area of an irregular shape on a grid, count the full squares inside the shape (approx. 27). Then, combine the partial squares to estimate additional full squares (approx. 3). Total estimated area = 27 + 3 = 30 square units.",
+          "hasImage": true,
+          "shapeData": {
+            "type": "grid",
+            "gridSize": 10,
+            "shapeDescription": "Irregular rounded blob shape, approximately 7 units wide and 8 units high, centered on a grid."
+          },
+          "imageCrop": {
+            "xStartPct": 50,
+            "xEndPct": 100,
+            "yStartPct": 44.5,
+            "yEndPct": 70
+          },
+          "diagramHTML": "<svg viewBox=\"0 0 200 200\" style=\"max-width:220px;width:100%\">\n        <rect width=\"200\" height=\"200\" fill=\"white\" stroke=\"#999\" stroke-width=\"1\"/>\n        <line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"200\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"0\" y1=\"0\" x2=\"200\" y2=\"0\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"20\" y1=\"0\" x2=\"20\" y2=\"200\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"0\" y1=\"20\" x2=\"200\" y2=\"20\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"40\" y1=\"0\" x2=\"40\" y2=\"200\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"0\" y1=\"40\" x2=\"200\" y2=\"40\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"200\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"0\" y1=\"60\" x2=\"200\" y2=\"60\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"80\" y1=\"0\" x2=\"80\" y2=\"200\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"0\" y1=\"80\" x2=\"200\" y2=\"80\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"100\" y1=\"0\" x2=\"100\" y2=\"200\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"0\" y1=\"100\" x2=\"200\" y2=\"100\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"120\" y1=\"0\" x2=\"120\" y2=\"200\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"0\" y1=\"120\" x2=\"200\" y2=\"120\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"140\" y1=\"0\" x2=\"140\" y2=\"200\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"0\" y1=\"140\" x2=\"200\" y2=\"140\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"160\" y1=\"0\" x2=\"160\" y2=\"200\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"0\" y1=\"160\" x2=\"200\" y2=\"160\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"180\" y1=\"0\" x2=\"180\" y2=\"200\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"0\" y1=\"180\" x2=\"200\" y2=\"180\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"200\" y1=\"0\" x2=\"200\" y2=\"200\" stroke=\"#ccc\" stroke-width=\"0.5\"/><line x1=\"0\" y1=\"200\" x2=\"200\" y2=\"200\" stroke=\"#ccc\" stroke-width=\"0.5\"/>\n        <path d=\"M 30,90 C 20,40 70,10 110.00000000000001,20 C 160,30 180,70 170,110.00000000000001 C 160,160 120,180 80,170 C 30,150 20,120 30,90 Z\" fill=\"rgba(30,136,229,0.12)\" stroke=\"#1565c0\" stroke-width=\"2.5\"/>\n      </svg>",
+          "imageUrl": "/data/images/quiz/3992a7c1_p1_1b.png"
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/3992a7c1_page1.png"
+    },
+    {
+      "tier": "MUST DO",
+      "title": "Task 2: Find the perimeter of the L shaped polygon.",
+      "sourcePage": 1,
+      "questions": [
+        {
+          "id": "1",
+          "type": "numeric",
+          "question": "Find the perimeter of the L shaped polygon.",
+          "unit": "m",
+          "answer": 34,
+          "solution": "For an L-shaped polygon, the perimeter is the sum of all its outer sides. We are given four segments: top (**5m**), vertical step down (**6m**), bottom (**8m**), and right vertical (**3m**).\n1.  The inner horizontal segment (step-left) = Total bottom width (8m) - Top width (5m) = 8m - 5m = 3m.\n2.  The total height of the L-shape is the sum of the vertical segments on its right side = Vertical step down (6m) + Right vertical (3m) = 9m.\n3.  The outer left vertical segment is equal to the total height of the L-shape = 9m.\n4.  The inner vertical segment (step-up) = Total height of left side (9m) - Vertical step down (6m) = 3m.\nPerimeter = Sum of all 6 segments = 5m (top) + 6m (vertical step-down) + 3m (inner horizontal) + 3m (inner vertical) + 8m (bottom) + 9m (outer left vertical) = 5 + 6 + 3 + 3 + 8 + 9 = 34m.\nAlternatively, for an L-shape, Perimeter = 2 \u00c3\u2014 (Maximum Width + Maximum Height).\nMaximum Width = 8m. Maximum Height = 6m + 3m = 9m.\nPerimeter = 2 \u00c3\u2014 (8m + 9m) = 2 \u00c3\u2014 17m = 34m.",
+          "hasImage": true,
+          "shapeData": {
+            "type": "lshape",
+            "segments": [
+              {
+                "side": "top",
+                "label": "5m",
+                "given": true
+              },
+              {
+                "side": "step-down",
+                "label": "6m",
+                "given": true
+              },
+              {
+                "side": "bottom",
+                "label": "8m",
+                "given": true
+              },
+              {
+                "side": "right",
+                "label": "3m",
+                "given": true
+              },
+              {
+                "side": "step-left",
+                "label": "3m",
+                "given": false
+              },
+              {
+                "side": "step-up",
+                "label": "3m",
+                "given": false
+              }
+            ]
+          },
+          "imageCrop": {
+            "xStartPct": 30,
+            "xEndPct": 70,
+            "yStartPct": 75,
+            "yEndPct": 95
+          },
+          "diagramHTML": "<svg viewBox=\"0 0 320 280\" style=\"max-width:280px;width:100%\">\n        <polygon points=\"40,40 151.11111111111111,40 151.11111111111111,173.33333333333331 217.77777777777777,173.33333333333331 217.77777777777777,239.99999999999997 40,239.99999999999997\" fill=\"#e3f2fd\" stroke=\"#1565c0\" stroke-width=\"2.5\"/>\n        <line x1=\"151.11111111111111\" y1=\"173.33333333333331\" x2=\"217.77777777777777\" y2=\"173.33333333333331\" stroke=\"#c62828\" stroke-width=\"2\" stroke-dasharray=\"6 3\"/><line x1=\"217.77777777777777\" y1=\"173.33333333333331\" x2=\"217.77777777777777\" y2=\"239.99999999999997\" stroke=\"#c62828\" stroke-width=\"2\" stroke-dasharray=\"6 3\"/>\n        <text x=\"95.55555555555556\" y=\"32\" fill=\"#1565c0\" font-weight=\"bold\" font-size=\"14\" text-anchor=\"middle\">5m</text>\n        <text x=\"165.11111111111111\" y=\"111.66666666666666\" fill=\"#1565c0\" font-weight=\"bold\" font-size=\"14\" text-anchor=\"start\">6m</text>\n        <text x=\"128.88888888888889\" y=\"260\" fill=\"#1565c0\" font-weight=\"bold\" font-size=\"14\" text-anchor=\"middle\">8m</text>\n        <text x=\"231.77777777777777\" y=\"211.66666666666663\" fill=\"#1565c0\" font-weight=\"bold\" font-size=\"14\" text-anchor=\"start\">3m</text>\n        <text x=\"184.44444444444446\" y=\"165.33333333333331\" fill=\"#c62828\" font-weight=\"bold\" font-size=\"14\" text-anchor=\"middle\">3m</text>\n        <text x=\"231.77777777777777\" y=\"178.33333333333331\" fill=\"#c62828\" font-weight=\"bold\" font-size=\"14\" text-anchor=\"start\">3m</text>\n      </svg>",
+          "imageUrl": "/data/images/quiz/3992a7c1_p1_1.png"
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/3992a7c1_page1.png"
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task 3: Application of area and perimeter in real situations.",
+      "sourcePage": 2,
+      "questions": [
+        {
+          "id": "1",
+          "type": "numeric",
+          "question": "A square playground has sides that are **65 m** long. What is the area of the playground?",
+          "unit": "m\u00c2\u00b2",
+          "answer": 4225,
+          "solution": "Area of a square = side \u00c3\u2014 side. Area = 65 m \u00c3\u2014 65 m = 4225 m\u00c2\u00b2.",
+          "hasImage": true,
+          "shapeData": {
+            "type": "rectangle",
+            "width": "65 m",
+            "height": "65 m"
+          },
+          "diagramHTML": "<svg viewBox=\"0 0 250 180\" style=\"max-width:220px;width:100%\">\n        <rect x=\"35\" y=\"35\" width=\"180\" height=\"110\" fill=\"#e3f2fd\" stroke=\"#1565c0\" stroke-width=\"2.5\" rx=\"2\"/>\n        <text x=\"125\" y=\"27\" font-size=\"14\" text-anchor=\"middle\" fill=\"#1565c0\" font-weight=\"bold\">65 m</text>\n        <text x=\"229\" y=\"95\" font-size=\"14\" text-anchor=\"start\" fill=\"#1565c0\" font-weight=\"bold\">65 m</text>\n      </svg>"
+        },
+        {
+          "id": "2",
+          "type": "text",
+          "question": "Amit jogged four times around the park. If the perimeter of the park is **450 m**, how far did he jog? Give your answer in km and m.",
+          "unit": "km and m",
+          "answer": "1 km 800 m",
+          "solution": "Total distance jogged = Perimeter \u00c3\u2014 number of rounds = 450 m \u00c3\u2014 4 = 1800 m. Since 1000 m = 1 km, 1800 m can be written as 1 km 800 m.",
+          "hasImage": false
+        },
+        {
+          "id": "3",
+          "type": "numeric",
+          "question": "The length and breadth of a rectangular park is **200 m** and **250 m** respectively. If a person takes **5 rounds** around the park, how much did he walk?",
+          "unit": "m",
+          "answer": 4500,
+          "solution": "Perimeter of rectangular park = 2 \u00c3\u2014 (length + breadth) = 2 \u00c3\u2014 (200 m + 250 m) = 2 \u00c3\u2014 450 m = 900 m. Total distance walked = Perimeter \u00c3\u2014 number of rounds = 900 m \u00c3\u2014 5 = 4500 m.",
+          "hasImage": true,
+          "shapeData": {
+            "type": "rectangle",
+            "width": "200 m",
+            "height": "250 m"
+          },
+          "diagramHTML": "<svg viewBox=\"0 0 250 180\" style=\"max-width:220px;width:100%\">\n        <rect x=\"35\" y=\"35\" width=\"180\" height=\"110\" fill=\"#e3f2fd\" stroke=\"#1565c0\" stroke-width=\"2.5\" rx=\"2\"/>\n        <text x=\"125\" y=\"27\" font-size=\"14\" text-anchor=\"middle\" fill=\"#1565c0\" font-weight=\"bold\">200 m</text>\n        <text x=\"229\" y=\"95\" font-size=\"14\" text-anchor=\"start\" fill=\"#1565c0\" font-weight=\"bold\">250 m</text>\n      </svg>"
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/3992a7c1_page2.png"
+    },
+    {
+      "tier": "ENRICHMENT",
+      "title": "Enrichment Task:",
+      "sourcePage": 2,
+      "questions": [
+        {
+          "id": "1",
+          "type": "numeric",
+          "question": "A rectangular room has a length of **120 m** and a breadth of **80 m**. The floor is to be completely covered with square tiles of side **40 cm**. Find the number of tiles required to cover the floor.",
+          "unit": "tiles",
+          "answer": 60000,
+          "solution": "1. Convert room dimensions to cm: Length = 120 m = 120 \u00c3\u2014 100 = 12000 cm. Breadth = 80 m = 80 \u00c3\u2014 100 = 8000 cm.\n2. Calculate area of the room: Area_room = Length \u00c3\u2014 Breadth = 12000 cm \u00c3\u2014 8000 cm = 96,000,000 cm\u00c2\u00b2.\n3. Calculate area of one tile: Area_tile = side \u00c3\u2014 side = 40 cm \u00c3\u2014 40 cm = 1600 cm\u00c2\u00b2.\n4. Number of tiles = Area_room / Area_tile = 96,000,000 cm\u00c2\u00b2 / 1600 cm\u00c2\u00b2 = 60,000 tiles.",
+          "hasImage": true,
+          "shapeData": {
+            "type": "rectangle",
+            "width": "120 m",
+            "height": "80 m"
+          },
+          "diagramHTML": "<svg viewBox=\"0 0 250 180\" style=\"max-width:220px;width:100%\">\n        <rect x=\"35\" y=\"35\" width=\"180\" height=\"110\" fill=\"#e3f2fd\" stroke=\"#1565c0\" stroke-width=\"2.5\" rx=\"2\"/>\n        <text x=\"125\" y=\"27\" font-size=\"14\" text-anchor=\"middle\" fill=\"#1565c0\" font-weight=\"bold\">120 m</text>\n        <text x=\"229\" y=\"95\" font-size=\"14\" text-anchor=\"start\" fill=\"#1565c0\" font-weight=\"bold\">80 m</text>\n      </svg>"
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/3992a7c1_page2.png"
+    }
+  ],
+  "pageImages": {
+    "1": "/data/images/quiz/3992a7c1_page1.png",
+    "2": "/data/images/quiz/3992a7c1_page2.png"
+  },
+  "engine": "gemini",
+  "sourceFile": "Toddle-8d6af58a-a488-46a7-93fb-f0a5ec0611cc-PYP4 -MHLE-32.pdf",
+  "generatedAt": "2026-05-15T09:58:25.565Z",
+  "status": "draft"
+}
