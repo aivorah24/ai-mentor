@@ -1038,6 +1038,19 @@ GENERAL RULES:
           response_format: { type: 'json_object' },
         });
         extracted = JSON.parse(completion.choices[0].message.content);
+      } else if (file.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        const mammoth = require('mammoth');
+        const buffer = Buffer.from(file.base64, 'base64');
+        const result = await mammoth.extractRawText({ buffer });
+        const text = result.value?.trim();
+        if (!text) continue;
+
+        const completion = await groq.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: `${extractPrompt}\n\nAssignment text:\n${text.slice(0, 4000)}` }],
+          response_format: { type: 'json_object' },
+        });
+        extracted = JSON.parse(completion.choices[0].message.content);
       } else {
         const completion = await groq.chat.completions.create({
           model: 'meta-llama/llama-4-scout-17b-16e-instruct',

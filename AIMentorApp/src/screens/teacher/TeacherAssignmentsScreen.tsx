@@ -300,12 +300,16 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [showInteractivePreview, setShowInteractivePreview] = useState(false);
   // Creation mode: 'choose' (initial), 'ai' (IB PYP AI), 'upload' (PDF/Image worksheet)
   const [createMode, setCreateMode] = useState<'choose' | 'ai' | 'upload'>('choose');
+  // Upload wizard step: 1=Upload & Classify, 2=Generate & Review, 3=Assign & Publish
+  const [uploadStep, setUploadStep] = useState<1 | 2 | 3>(1);
+  const uploadScrollRef = React.useRef<ScrollView>(null);
   const [reportAssignment, setReportAssignment] = useState<Assignment | null>(null);
   const [detailAssignment, setDetailAssignment] = useState<Assignment | null>(null);
   const [detailTab, setDetailTab] = useState<'overview' | 'students' | 'questions'>('overview');
   const [detailSubmissions, setDetailSubmissions] = useState<any[]>([]);
   const [detailTotalLinked, setDetailTotalLinked] = useState(0);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [studentPreviewHtml, setStudentPreviewHtml] = useState<string | null>(null);
   const [expandedStudent, setExpandedStudent] = useState<string | null>(null);
   const [teacherFeedback, setTeacherFeedback] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
@@ -358,6 +362,21 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   }, [teacherEmail]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Browser back button closes modals instead of navigating away
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const isOpen = showInteractivePreview || !!studentPreviewHtml;
+    if (isOpen) {
+      window.history.pushState({ modal: true }, '');
+      const onPop = () => {
+        if (showInteractivePreview) setShowInteractivePreview(false);
+        if (studentPreviewHtml) setStudentPreviewHtml(null);
+      };
+      window.addEventListener('popstate', onPop);
+      return () => window.removeEventListener('popstate', onPop);
+    }
+  }, [showInteractivePreview, studentPreviewHtml]);
 
   // Keep curriculum + grade in sync when user profile loads after initial render
   useEffect(() => {
@@ -529,7 +548,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     if (typeof document === 'undefined') return;
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*,application/pdf';
+    input.accept = 'image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     input.multiple = true;
     input.onchange = async (e: any) => {
       const files: File[] = Array.from(e.target.files || []);
@@ -617,6 +636,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               const matchSubj = SUBJECTS.find(s => s.toLowerCase().includes(eData.subject.toLowerCase()) || eData.subject.toLowerCase().includes(s.toLowerCase()));
               if (matchSubj) setSubject(matchSubj);
             }
+            if (eData.grade) {
+              const gradeStr = String(eData.grade).replace(/[^0-9]/g, '');
+              const matchGrade = gradeOptions.find(g => g.includes(gradeStr));
+              if (matchGrade) setGrade(matchGrade);
+            }
             // Purpose and learning outcomes no longer auto-fill Note — teacher writes their own notes
             // if (eData.purpose) setNote(prev => prev || eData.purpose);
             // if (eData.learningOutcomes) ... removed to avoid duplication
@@ -656,7 +680,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     setType('assignment'); setQuestions(['']); setSuccessCriteria(['']); setTaskSteps([]); setQuizQuestions([]); setTeacherNotes(''); setDocFiles([]); setFormError(''); originalPdfRef.current = null;
     setAssignTo('all'); setSelectedStudent(null); setStudentSearch('');
     setExtractingQuestions(false); setExtractedQuestions([]); setShowPreview(false); setCreateMode('choose');
-    setInteractiveQuiz(null); setGeneratingInteractiveQuiz(false); setShowInteractivePreview(false);
+    setInteractiveQuiz(null); setGeneratingInteractiveQuiz(false); setShowInteractivePreview(false); setUploadStep(1);
     setSelectedLanguage('Telugu'); setUnitOfInquiry(''); setIbPurpose('');
     setIbLearningOutcomes(['']); setIbWordBank([]); setIbStamps([]);
     setIbCentralIdea(''); setIbLinesOfInquiry([]); setIbLearnerProfile(''); setIbAtlSkill(''); setIbKeyConcept('');
@@ -1702,6 +1726,34 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           </Modal>
         )}
 
+        {/* Student Preview Overlay — inline iframe */}
+        {studentPreviewHtml && (
+          <Modal visible transparent animationType="slide" onRequestClose={() => setStudentPreviewHtml(null)}>
+            <View style={{ flex: 1, backgroundColor: colors.bgDark }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.borderColor, backgroundColor: colors.bgCard }}>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: '#fff' }}>Student Preview</Text>
+                <TouchableOpacity
+                  onPress={() => setStudentPreviewHtml(null)}
+                  style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}
+                  activeOpacity={0.8}
+                >
+                  <Feather name="x" size={18} color="#fff" />
+                </TouchableOpacity>
+              </View>
+              {Platform.OS === 'web' ? (
+                <iframe
+                  srcDoc={studentPreviewHtml}
+                  style={{ flex: 1, border: 'none', width: '100%', height: '100%' } as any}
+                />
+              ) : (
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: colors.textDim }}>Preview available on web only</Text>
+                </View>
+              )}
+            </View>
+          </Modal>
+        )}
+
         {/* Interactive Quiz Preview Modal — unified server-rendered HTML + edit mode */}
         {showInteractivePreview && interactiveQuiz && (
           <Modal visible transparent={false} animationType="slide" onRequestClose={() => setShowInteractivePreview(false)}>
@@ -1881,12 +1933,24 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                 <View style={styles.modalHeader}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
                     {createMode !== 'choose' && (
-                      <TouchableOpacity onPress={() => setCreateMode('choose')} activeOpacity={0.75}>
+                      <TouchableOpacity onPress={() => {
+                        if (createMode === 'upload' && uploadStep > 1) {
+                          setUploadStep((uploadStep - 1) as 1 | 2 | 3);
+                          setFormError('');
+                          uploadScrollRef.current?.scrollTo({ y: 0, animated: true });
+                        } else {
+                          setCreateMode('choose');
+                        }
+                      }} activeOpacity={0.75}>
                         <Feather name="arrow-left" size={20} color={colors.textMuted} />
                       </TouchableOpacity>
                     )}
                     <Text style={styles.modalTitle}>
-                      {createMode === 'choose' ? 'Create Assignment' : createMode === 'ai' ? 'AI Assignment' : 'Upload Worksheet'}
+                      {createMode === 'choose' ? 'Create Assignment'
+                        : createMode === 'ai' ? 'AI Assignment'
+                        : uploadStep === 1 ? 'Upload & Classify'
+                        : uploadStep === 2 ? 'Generate Quiz'
+                        : 'Assign & Publish'}
                     </Text>
                   </View>
                   <TouchableOpacity onPress={() => { setShowModal(false); resetForm(); }} activeOpacity={0.75}>
@@ -1894,7 +1958,39 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   </TouchableOpacity>
                 </View>
 
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.modalContent, createMode === 'choose' && { flex: 1, justifyContent: 'center' }]}>
+                {/* ── UPLOAD WIZARD STEPPER ── */}
+                {createMode === 'upload' && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.borderColor }}>
+                    {([
+                      { num: 1 as const, label: 'Upload' },
+                      { num: 2 as const, label: 'Generate' },
+                      { num: 3 as const, label: 'Publish' },
+                    ]).map((s, i) => (
+                      <React.Fragment key={s.num}>
+                        {i > 0 && (
+                          <View style={{ flex: 1, height: 2, marginHorizontal: 8, backgroundColor: uploadStep >= s.num ? colors.primary : colors.borderColor, borderRadius: 1 }} />
+                        )}
+                        <View style={{ alignItems: 'center' }}>
+                          <View style={{
+                            width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
+                            backgroundColor: uploadStep >= s.num ? colors.primary : colors.bgDark,
+                            borderWidth: uploadStep >= s.num ? 0 : 1.5,
+                            borderColor: colors.borderColor,
+                          }}>
+                            {uploadStep > s.num ? (
+                              <Feather name="check" size={14} color="#fff" />
+                            ) : (
+                              <Text style={{ fontSize: 13, fontWeight: '800', color: uploadStep >= s.num ? '#fff' : colors.textDim }}>{s.num}</Text>
+                            )}
+                          </View>
+                          <Text style={{ fontSize: 10, fontWeight: '600', marginTop: 4, color: uploadStep === s.num ? colors.primary : colors.textDim }}>{s.label}</Text>
+                        </View>
+                      </React.Fragment>
+                    ))}
+                  </View>
+                )}
+
+                <ScrollView ref={uploadScrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={[styles.modalContent, createMode === 'choose' && { flex: 1, justifyContent: 'center' }]}>
 
                   {/* ── MODE SELECTOR ── */}
                   {createMode === 'choose' && (
@@ -1928,7 +2024,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       {/* Option 2: Upload Worksheet */}
                       <TouchableOpacity
                         style={{ padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary + '40', backgroundColor: colors.primaryGlow, gap: 8 }}
-                        onPress={() => { setCreateMode('upload'); }}
+                        onPress={() => { setCreateMode('upload'); setUploadStep(1); }}
                         activeOpacity={0.8}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -1947,8 +2043,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </View>
                   )}
 
-                  {/* ── UPLOAD WORKSHEET (shown FIRST in upload mode) ── */}
-                  {createMode === 'upload' && (<>
+                  {/* ── UPLOAD WORKSHEET (Step 1 of upload wizard) ── */}
+                  {createMode === 'upload' && uploadStep === 1 && (<>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text style={styles.fieldLabel}>Upload Worksheet</Text>
                     {docFiles.length > 0 && <Text style={{ fontSize: 11, color: colors.textDim }}>{docFiles.length} file{docFiles.length > 1 ? 's' : ''}</Text>}
@@ -1960,6 +2056,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       <View style={{ flexDirection: 'row', gap: 10 }}>
                         {docFiles.map((f, idx) => (
                           <View key={idx} style={{ width: 140, borderRadius: 10, overflow: 'hidden', position: 'relative', borderWidth: 1.5, borderColor: colors.primary + '60' }}>
+                            <TouchableOpacity activeOpacity={0.8} onPress={() => f.mime.startsWith('image/') && setFullscreenImage(`data:${f.mime};base64,${f.base64}`)}>
                             {f.mime.startsWith('image/') ? (
                               <Image source={{ uri: `data:${f.mime};base64,${f.base64}` }} style={{ width: 140, height: 190 }} resizeMode="contain" />
                             ) : (
@@ -1970,6 +2067,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                             <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingVertical: 3, backgroundColor: 'rgba(0,0,0,0.55)' }}>
                               <Text style={{ fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'center' }}>Page {idx + 1}</Text>
                             </View>
+                            </TouchableOpacity>
                             <TouchableOpacity
                               style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' }}
                               onPress={() => { setDocFiles(prev => prev.filter((_, i) => i !== idx)); if (idx === 0) setQuestions(['']); }}
@@ -1998,7 +2096,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       <Feather name="plus-circle" size={18} color={colors.primary} />
                     )}
                     <Text style={[styles.uploadDocText, { color: colors.primary }]}>
-                      {uploadingDoc ? 'Uploading...' : extractingQuestions ? 'Extracting questions...' : docFiles.length === 0 ? 'Upload worksheet (image or PDF)' : 'Add another page'}
+                      {uploadingDoc ? 'Uploading...' : extractingQuestions ? 'Analyzing worksheet...' : docFiles.length === 0 ? 'Upload worksheet (image, PDF or DOCX)' : 'Add another page'}
                     </Text>
                   </TouchableOpacity>
 
@@ -2015,6 +2113,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                   {/* ── COMMON FIELDS (shown in both modes) ── */}
                   {createMode !== 'choose' && (<>
+                  {(createMode === 'ai' || uploadStep === 3) && (<>
                   <Text style={styles.fieldLabel}>Title *{createMode === 'upload' && docFiles.length > 0 && title.trim() ? <Text style={{ fontSize: 10, color: colors.accentGreen, fontWeight: '600' }}> · auto-filled</Text> : null}</Text>
                   <TextInput
                     style={styles.input}
@@ -2023,7 +2122,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     value={title}
                     onChangeText={setTitle}
                   />
+                  </>)}
 
+                  {(createMode === 'ai' || uploadStep === 1) && (<>
                   <Text style={styles.fieldLabel}>Subject{createMode === 'upload' && docFiles.length > 0 ? <Text style={{ fontSize: 10, color: colors.accentGreen, fontWeight: '600' }}> · auto-filled</Text> : null}</Text>
                   <View style={styles.chipRow}>
                     {SUBJECTS.map((s) => (
@@ -2086,7 +2187,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     value={chapter}
                     onChangeText={setChapter}
                   />
+                  </>)}
 
+                  {(createMode === 'ai' || uploadStep === 3) && (<>
                   <Text style={styles.fieldLabel}>Due Date *</Text>
                   {Platform.OS === 'web' ? (
                     <View style={[styles.input, { justifyContent: 'center' }]}>
@@ -2108,6 +2211,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       keyboardType="numeric"
                     />
                   )}
+
+                  </>)}
 
                   {/* Output Format + Quiz Generator moved to after extracted questions */}
 
@@ -2639,8 +2744,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </View>
                   )}
 
-                  {/* ── Generate Interactive Quiz (replaces Output Format) ── */}
-                  {createMode === 'upload' && docFiles.length > 0 && !extractingQuestions && (
+                  {/* ── Generate Interactive Quiz (Step 2 of upload wizard) ── */}
+                  {createMode === 'upload' && uploadStep === 2 && docFiles.length > 0 && !extractingQuestions && (
                     <View style={{ gap: 12 }}>
                       <TouchableOpacity
                         style={{ padding: 16, borderRadius: 14, borderWidth: 1.5,
@@ -2663,7 +2768,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                             {generatingInteractiveQuiz ? 'Generating Interactive Quiz...' : interactiveQuiz ? 'Interactive Quiz Ready' : 'Generate Interactive Quiz'}
                           </Text>
                           <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
-                            {generatingInteractiveQuiz ? 'AI is analyzing your worksheet...' : interactiveQuiz ? `${interactiveQuiz.tasks?.reduce((s: number, t: any) => s + (t.questions?.length || 0), 0) || 0} questions generated — tap to preview` : 'AI creates quiz with answers, hints & solutions from your worksheet'}
+                            {generatingInteractiveQuiz ? 'AI is analyzing your worksheet...' : interactiveQuiz ? `${interactiveQuiz.tasks?.reduce((s: number, t: any) => s + (t.questions?.length || 0), 0) || 0} questions generated` : 'AI creates quiz with answers, hints & solutions from your worksheet'}
                           </Text>
                         </View>
                         {!generatingInteractiveQuiz && (
@@ -2674,18 +2779,18 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       {/* Preview button when quiz is ready */}
                       {interactiveQuiz && !generatingInteractiveQuiz && (
                         <View style={{ gap: 10 }}>
-                          {/* Teacher Preview — in-app editable answers/hints/solutions */}
+                          {/* Teacher Preview - in-app editable answers/hints/solutions */}
                           <TouchableOpacity
                             style={{ padding: 14, borderRadius: 12, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                             onPress={() => setShowInteractivePreview(true)}
                             activeOpacity={0.8}
                           >
                             <Feather name="edit-3" size={16} color="#0F0F0F" />
-                            <Text style={{ fontSize: 14, fontWeight: '700', color: '#0F0F0F' }}>Teacher Preview — Edit & Review</Text>
+                            <Text style={{ fontSize: 14, fontWeight: '700', color: '#0F0F0F' }}>Edit & Review Quiz</Text>
                           </TouchableOpacity>
-                          {/* Student Preview — full interactive HTML quiz */}
+                          {/* Student Preview - full interactive HTML quiz */}
                           <TouchableOpacity
-                            style={{ padding: 14, borderRadius: 12, backgroundColor: '#1a237e', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                            style={{ padding: 14, borderRadius: 12, backgroundColor: colors.primaryGlow, borderWidth: 1.5, borderColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                             onPress={async () => {
                               try {
                                 const res = await fetch(`${SERVER_URL}/quiz/render-preview`, {
@@ -2694,34 +2799,32 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                   body: JSON.stringify({ quiz: interactiveQuiz }),
                                 });
                                 const html = await res.text();
-                                const blob = new Blob([html], { type: 'text/html' });
-                                const url = URL.createObjectURL(blob);
-                                window.open(url, '_blank');
+                                setStudentPreviewHtml(html);
                               } catch {
                                 const htmlContent = generateQuizHTMLPreview(interactiveQuiz);
-                                const blob = new Blob([htmlContent], { type: 'text/html' });
-                                const url = URL.createObjectURL(blob);
-                                window.open(url, '_blank');
+                                setStudentPreviewHtml(htmlContent);
                               }
                             }}
                             activeOpacity={0.8}
                           >
-                            <Feather name="eye" size={16} color="#fff" />
-                            <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>Student Preview — Interactive Quiz</Text>
+                            <Feather name="eye" size={16} color={colors.primary} />
+                            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.primary }}>Student Preview</Text>
                           </TouchableOpacity>
                         </View>
                       )}
                     </View>
                   )}
 
+
                   </>)}
 
-                  {/* ── Success Criteria (both modes, at bottom) ── */}
+                  {/* ── Success Criteria (both modes — Step 3 for upload) ── */}
+                  {createMode === 'ai' && (<>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.fieldLabel}>Success Criteria</Text>
                       <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
-                        {createMode === 'upload' ? 'Auto-extracted from worksheet. Edit or add more.' : 'If visible in the worksheet, AI will auto-detect. Add here if not on worksheet.'}
+                        If visible in the worksheet, AI will auto-detect. Add here if not on worksheet.
                       </Text>
                     </View>
                     {successCriteria.length < 10 && (
@@ -2765,7 +2868,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     multiline
                     numberOfLines={3}
                   />
+                  </>)}
 
+                  {(createMode === 'ai' || (createMode === 'upload' && uploadStep === 3)) && (<>
                   {/* Assign to */}
                   <Text style={styles.fieldLabel}>Assign to</Text>
                   <View style={styles.chipRow}>
@@ -2844,8 +2949,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </View>
                   )}
 
-                  {/* ── Student Experience Preview ── */}
-                  {type === 'assignment' && (() => {
+                  {/* Close Step 3 guard for upload mode */}
+                  </>)}
+
+                  {/* ── Student Experience Preview (AI mode only) ── */}
+                  {createMode === 'ai' && type === 'assignment' && (() => {
                     const hasSteps = taskSteps.length > 0;
                     const hasDocs  = docFiles.length > 0;
                     const mode = hasSteps ? 'scaffolded' : hasDocs ? 'worksheet' : 'paper';
@@ -2882,7 +2990,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                   {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
 
-                  {/* Preview button */}
+                  {/* Preview button (AI mode only — upload mode uses footer) */}
+                  {createMode === 'ai' && (
                   <TouchableOpacity
                     style={[styles.submitBtn, { backgroundColor: colors.accentCyan }]}
                     onPress={() => {
@@ -2897,9 +3006,68 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     <Feather name="eye" size={15} color="#fff" />
                     <Text style={styles.submitBtnText}>Preview Before Publishing</Text>
                   </TouchableOpacity>
+                  )}
                   {/* Close common fields wrapper */}
                   </>)}
                 </ScrollView>
+
+                {/* ── UPLOAD WIZARD FOOTER (fixed at bottom) ── */}
+                {createMode === 'upload' && (
+                  <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 18, paddingVertical: 14, borderTopWidth: 1, borderTopColor: colors.borderColor }}>
+                    {uploadStep > 1 && (
+                      <TouchableOpacity
+                        style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 14, borderRadius: 12, borderWidth: 1.5, borderColor: colors.borderColor }}
+                        onPress={() => {
+                          setUploadStep((uploadStep - 1) as 1 | 2 | 3);
+                          setFormError('');
+                          uploadScrollRef.current?.scrollTo({ y: 0, animated: true });
+                        }}
+                        activeOpacity={0.75}
+                      >
+                        <Feather name="arrow-left" size={14} color={colors.textMuted} />
+                        <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted }}>Back</Text>
+                      </TouchableOpacity>
+                    )}
+                    {uploadStep < 3 ? (
+                      <TouchableOpacity
+                        style={[styles.submitBtn, { flex: 2, marginTop: 0, opacity: (uploadStep === 1 && (docFiles.length === 0 || uploadingDoc || extractingQuestions)) || (uploadStep === 2 && !interactiveQuiz) ? 0.5 : 1 }]}
+                        onPress={() => {
+                          if (uploadStep === 1 && docFiles.length === 0) { setFormError('Upload at least one worksheet page'); return; }
+                          if (uploadStep === 1 && (uploadingDoc || extractingQuestions)) return;
+                          if (uploadStep === 2 && !interactiveQuiz) return;
+                          setFormError('');
+                          setUploadStep((uploadStep + 1) as 1 | 2 | 3);
+                          uploadScrollRef.current?.scrollTo({ y: 0, animated: true });
+                        }}
+                        activeOpacity={0.85}
+                      >
+                        <Text style={styles.submitBtnText}>Next</Text>
+                        <Feather name="arrow-right" size={16} color="#fff" />
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        style={[styles.submitBtn, { flex: 2, marginTop: 0, backgroundColor: creating ? colors.borderColor : colors.accentGreen }]}
+                        onPress={() => {
+                          if (!title.trim()) { setFormError('Title is required'); return; }
+                          if (!dueDate.trim()) { setFormError('Due date is required'); return; }
+                          setFormError('');
+                          createAssignment();
+                        }}
+                        activeOpacity={0.85}
+                        disabled={creating}
+                      >
+                        {creating ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <Feather name="send" size={15} color="#fff" />
+                        )}
+                        <Text style={styles.submitBtnText}>
+                          {creating ? 'Publishing...' : 'Publish Assignment'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
               </View>
             </View>
           </KeyboardAvoidingView>
