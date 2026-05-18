@@ -73,6 +73,17 @@ app.use('/data/audio', express.static(path.join(__dirname, 'data/audio')));
 // Serve message attachments
 app.use('/data/uploads', express.static(path.join(__dirname, 'data/uploads')));
 
+// Redirect browser direct-navigation to SPA paths back to index.html
+// This prevents API routes from returning errors when user refreshes /assignments, /teacher/assignments, etc.
+const SPA_PATHS = ['/assignments', '/teacher', '/student', '/parent', '/profile', '/schedule', '/progress', '/challenges', '/leaderboard', '/settings', '/help', '/dashboard', '/messages', '/rewards'];
+app.use((req, res, next) => {
+  const accept = req.headers.accept || '';
+  if (req.method === 'GET' && accept.includes('text/html') && SPA_PATHS.some(p => req.path === p || req.path.startsWith(p + '/'))) {
+    return res.sendFile(path.join(__dirname, '../AIMentorApp/dist2/index.html'));
+  }
+  next();
+});
+
 app.use('/ask',        lazyRoute('./routes/ask'));
 app.use('/ingest',     lazyRoute('./routes/ingest'));
 app.use('/curriculum', lazyRoute('./routes/curriculum'));
