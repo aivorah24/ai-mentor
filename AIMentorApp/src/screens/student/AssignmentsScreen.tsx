@@ -2778,7 +2778,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
         {activeAssignment && activeAssignment.interactiveQuizHtml && activeAssignment.status !== 'completed' && Platform.OS === 'web' ? (() => {
           const html = activeAssignment.interactiveQuizHtml;
           return (
-            <Modal visible animationType="slide" transparent onRequestClose={() => setActiveAssignment(null)}>
+            <Modal visible animationType="slide" transparent={false} onRequestClose={() => setActiveAssignment(null)}>
               <View style={{ flex: 1, backgroundColor: colors.background }}>
                 {/* Header bar */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
