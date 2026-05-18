@@ -1,0 +1,219 @@
+{
+  "title": "PYP4 Mathematics - Data Handling (Bar Graph and Venn Diagram)",
+  "subject": "Mathematics",
+  "grade": "PYP 4",
+  "school": "The Shri Ram Academy",
+  "concepts": [
+    {
+      "term": "Bar Graph",
+      "definition": "A graph that uses bars to show and compare data. The height of each bar represents a number.",
+      "unit": "Data Handling"
+    },
+    {
+      "term": "Venn Diagram",
+      "definition": "A diagram that uses circles to show how sets of data are related. Overlapping areas show common items.",
+      "unit": "Data Handling"
+    },
+    {
+      "term": "Scale",
+      "definition": "The numbers on the axis of a graph that show how much each unit represents.",
+      "unit": "Data Handling"
+    },
+    {
+      "term": "Tally Marks",
+      "definition": "A quick way to record data using marks. Every fifth mark is a diagonal line across the previous four.",
+      "unit": "Data Handling"
+    },
+    {
+      "term": "Frequency",
+      "definition": "The number of times a particular item appears in a set of data.",
+      "unit": "Data Handling"
+    }
+  ],
+  "tasks": [
+    {
+      "tier": "MUST DO",
+      "title": "Task 1: This bar graph shows the favourite sport of grade 4 learners. Use the data represented in the bar graph to answer the questions.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "1",
+          "type": "text",
+          "question": "The scale on Y-axis is ____.",
+          "unit": "",
+          "answer": "2",
+          "hint": "Look at the numbers on the Y-axis and the interval between them.",
+          "solution": "The Y-axis numbers increase by 2 each time (0, 2, 4, 6, ...), so the scale is 2.",
+          "hasImage": true,
+          "imageUrl": "/data/images/quiz/066cc7f4_p1_fig0.png",
+          "diagramBbox": {
+            "x": 935,
+            "y": 741,
+            "w": 642,
+            "h": 579
+          }
+        },
+        {
+          "id": "2",
+          "type": "text",
+          "question": "The sum of votes for football and tennis is equal to the sum of votes for ____ and ____ sports.",
+          "unit": "",
+          "answer": "hockey, rugby",
+          "hint": "Find the votes for football and tennis, add them, then find two other sports with the same total.",
+          "solution": "Football = 12 votes, Tennis = 4 votes. Sum = 12 + 4 = 16. Hockey = 8 votes, Rugby = 8 votes. Sum = 8 + 8 = 16.",
+          "hasImage": true,
+          "imageUrl": "/data/images/quiz/066cc7f4_p1_fig1.png",
+          "diagramBbox": {
+            "x": 513,
+            "y": 1649,
+            "w": 681,
+            "h": 404
+          }
+        },
+        {
+          "id": "3",
+          "type": "text",
+          "question": "Imagine the number of votes for rugby doubles. Using the given scale, what will be its new height? Will it reach closer to the football bar or the hockey bar? Justify your answer.",
+          "unit": "",
+          "answer": "New height: 8 units. It will be closer to the hockey bar (8 units) than the football bar (12 units).",
+          "hint": "Rugby currently has 4 votes. Doubling means 4 \u00c3\u2014 2 = 8 votes. Compare this to football (12) and hockey (8).",
+          "solution": "Rugby votes = 4. Doubled = 4 \u00c3\u2014 2 = 8. Hockey = 8, Football = 12. 8 is equal to hockey and 4 units less than football.",
+          "hasImage": true
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/066cc7f4_page1.png"
+    },
+    {
+      "tier": "MUST DO",
+      "title": "Task 2: Imagine you are planning a healthy meal and need to choose between adding almonds or spinach to your plate. Both foods are packed with important nutrients as: Almond: Contains Protein, Healthy Fats, Vitamin E, Magnesium, and Fibre. Spinach: Contains iron, vitamin K, vitamin A, calcium, and fibre. Using the information, complete the following Venn diagram to compare the nutrients in Almonds and Spinach.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "1",
+          "type": "activity",
+          "question": "Complete the Venn diagram to show which nutrients are unique to almonds, unique to spinach, and common to both.",
+          "unit": "",
+          "answer": "Almonds only: Protein, Healthy Fats, Vitamin E, Magnesium. Spinach only: Iron, Vitamin K, Vitamin A, Calcium. Both: Fibre.",
+          "hint": "Place nutrients found only in almonds in the left circle, only in spinach in the right circle, and shared nutrients in the overlapping area.",
+          "solution": "Almonds: Protein, Healthy Fats, Vitamin E, Magnesium. Spinach: Iron, Vitamin K, Vitamin A, Calcium. Both have Fibre.",
+          "hasImage": true
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/066cc7f4_page1.png"
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task: Organizing and representing Data.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "1",
+          "type": "activity",
+          "question": "Thando did a survey at her school. She asked her friends in class about their favourite chips flavour and recorded their answers: Chutney, Cheese, Chutney, Salt and Vinegar, Cheese, Spring Onion, Chutney, Chilli, Spring Onion, Cheese, Spring Onion, Salt and Vinegar, Chilli, Cheese, Spring Onion, Spring Onion, Chilli, Salt and Vinegar, Cheese, Spring Onion. Organize the data in a table with tally marks and frequency.",
+          "unit": "",
+          "answer": {
+            "table": [
+              {
+                "Favourite flavour of chips": "Cheese",
+                "Tally marks": "||||",
+                "Frequency": 5
+              },
+              {
+                "Favourite flavour of chips": "Chutney",
+                "Tally marks": "|||",
+                "Frequency": 3
+              },
+              {
+                "Favourite flavour of chips": "Salt and Vinegar",
+                "Tally marks": "|||",
+                "Frequency": 3
+              },
+              {
+                "Favourite flavour of chips": "Spring Onion",
+                "Tally marks": "|||| |",
+                "Frequency": 6
+              },
+              {
+                "Favourite flavour of chips": "Chilli",
+                "Tally marks": "|||",
+                "Frequency": 3
+              }
+            ]
+          },
+          "hint": "Count how many times each flavour appears. Use tally marks to record groups of 5.",
+          "solution": "Cheese: 5, Chutney: 3, Salt and Vinegar: 3, Spring Onion: 6, Chilli: 3. Tally marks: Cheese = ||||, Chutney = |||, Salt and Vinegar = |||, Spring Onion = |||| |, Chilli = |||.",
+          "hasImage": false
+        },
+        {
+          "id": "2",
+          "type": "activity",
+          "question": "Draw a bar graph in your graph book to represent the data from the table.",
+          "unit": "",
+          "answer": "Bar graph with flavours on X-axis and frequency on Y-axis. Heights: Cheese = 5, Chutney = 3, Salt and Vinegar = 3, Spring Onion = 6, Chilli = 3.",
+          "hint": "Label the X-axis with chip flavours and the Y-axis with frequency. Use the scale to draw bars for each flavour.",
+          "solution": "Create a bar graph with the frequencies from the table. Ensure the scale is consistent (e.g., 1 unit = 1 vote).",
+          "hasImage": false
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/066cc7f4_page1.png"
+    },
+    {
+      "tier": "ENRICHMENT",
+      "title": "Enrichment Task: Choose any two times tables. Write the first 15 multiples of each. Then, use a Venn diagram to sort them: put the multiples of the first number in the left circle, the multiples of the second number in the right circle, and the common multiples in the middle.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "1",
+          "type": "activity",
+          "question": "Choose any two times tables (e.g., 3 and 4). Write the first 15 multiples of each number.",
+          "unit": "",
+          "answer": "Example: Multiples of 3: 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45. Multiples of 4: 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60.",
+          "hint": "Multiples are found by multiplying the number by 1, 2, 3, etc. For example, 3 \u00c3\u2014 1 = 3, 3 \u00c3\u2014 2 = 6, etc.",
+          "solution": "List the first 15 multiples for each chosen number. For 3: 3, 6, 9, ..., 45. For 4: 4, 8, 12, ..., 60.",
+          "hasImage": false
+        },
+        {
+          "id": "2",
+          "type": "activity",
+          "question": "Complete the Venn diagram to show the multiples of the two numbers. Place the multiples of the first number in the left circle, the multiples of the second number in the right circle, and the common multiples in the overlapping area.",
+          "unit": "",
+          "answer": "Example: Common multiples of 3 and 4: 12, 24, 36. Multiples of 3 only: 3, 6, 9, 15, 18, 21, 27, 30, 33, 39, 42, 45. Multiples of 4 only: 4, 8, 16, 20, 28, 32, 40, 44, 48, 52, 56, 60.",
+          "hint": "Common multiples are numbers that appear in both lists. Place these in the overlapping area.",
+          "solution": "Identify numbers that appear in both lists (e.g., 12, 24, 36 for 3 and 4). Place these in the middle. Others go in their respective circles.",
+          "hasImage": true
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/066cc7f4_page1.png"
+    }
+  ],
+  "fullPageImages": [
+    {
+      "pageNum": 1,
+      "imageUrl": "/data/images/quiz/066cc7f4_page1.png"
+    },
+    {
+      "pageNum": 2,
+      "imageUrl": "/data/images/quiz/066cc7f4_page2.png"
+    }
+  ],
+  "engine": "gemini",
+  "sourceFile": "Toddle-1da50398-6c5e-4957-a81b-0f042c95930f-PYP4 MHLE-12.pdf",
+  "generatedAt": "2026-05-16T06:11:47.343Z",
+  "status": "draft"
+}

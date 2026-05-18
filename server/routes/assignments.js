@@ -1338,6 +1338,61 @@ router.post('/', async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
 
+  // Auto-save interactive quiz to Qdrant for reuse by other teachers
+  if (interactiveQuiz && (interactiveQuiz.tasks || interactiveQuiz.questions)) {
+    (async () => {
+      try {
+        const { client: qdrantClient } = require('../services/qdrant');
+        const { embed } = require('../services/embeddings');
+        const { v4: uuidv4 } = require('uuid');
+        const QUIZ_COLLECTION = 'school_quizzes';
+
+        // Ensure collection exists
+        const { collections } = await qdrantClient.getCollections();
+        if (!collections.some(c => c.name === QUIZ_COLLECTION)) {
+          await qdrantClient.createCollection(QUIZ_COLLECTION, { vectors: { size: 384, distance: 'Cosine' } });
+          for (const f of ['subject', 'grade', 'curriculum', 'school_id', 'status']) {
+            await qdrantClient.createPayloadIndex(QUIZ_COLLECTION, { field_name: f, field_schema: 'keyword' });
+          }
+        }
+
+        const tasks = interactiveQuiz.tasks || interactiveQuiz.questions || [];
+        const searchText = [
+          title || '',
+          subject || '',
+          grade || '',
+          ...(tasks).flatMap(t => (t.questions || []).map(q => q.question || '')),
+        ].join(' ').substring(0, 1000);
+
+        const vector = await embed(searchText);
+        const quizId = uuidv4();
+        await qdrantClient.upsert(QUIZ_COLLECTION, {
+          points: [{
+            id: quizId,
+            vector,
+            payload: {
+              title: title || '',
+              subject: subject || '',
+              grade: grade || '',
+              curriculum: curriculum || '',
+              school_id: '',
+              teacher_id: creatorId || '',
+              source_file: interactiveQuiz?.sourceFile || '',
+              status: 'published',
+              created_at: new Date().toISOString(),
+              assignment_id: data.id,
+              quiz_data: (() => { const { _previewHTML, _editMode, ...clean } = interactiveQuiz; return clean; })(),
+            },
+          }],
+          wait: true,
+        });
+        console.log(`[assignments] Quiz auto-saved to Qdrant: ${quizId} (${title})`);
+      } catch (e) {
+        console.warn('[assignments] Quiz Qdrant save failed (non-fatal):', e.message);
+      }
+    })();
+  }
+
   // Auto-send message notification to student(s) + parent(s) when assignment is created
   try {
     const teacherRes = creatorId

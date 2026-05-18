@@ -89,7 +89,7 @@ router.get('/leaderboard', async (req, res) => {
         score:   s.xp_points ?? 0,
         level:   s.level ?? 1,
         streak:  s.current_streak ?? 0,
-        topics:  (s.completed_topics ?? []).length,
+        topics:  [...new Set(s.completed_topics ?? [])].length,
       };
     });
 
@@ -441,20 +441,21 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
     const students = links.map(link => {
       const s = statsMap[link.student_id] ?? {};
       const user = link.users ?? {};
-      const topicsCount = (s.completed_topics ?? []).length;
+      const topicsCount = [...new Set(s.completed_topics ?? [])].length;
 
       // Dynamic total topics based on student's actual curriculum + grade
       const curriculum = (user.curriculum ?? '').toLowerCase();
       const grade = (user.grade ?? '').toLowerCase();
+      // Real topic counts from Qdrant curriculum data (all subjects combined)
       const TOPIC_COUNTS = {
-        'ncert':   { 'grade 3': 14, 'grade 4': 14, 'grade 5': 15, 'grade 6': 16 },
-        'ib pyp':  { 'grade 3': 20, 'grade 4': 22, 'grade 5': 24 },
-        'ib_pyp':  { 'grade 3': 20, 'grade 4': 22, 'grade 5': 24 },
-        'cbse':    { 'grade 3': 14, 'grade 4': 14, 'grade 5': 15, 'grade 6': 16 },
+        'ncert':   { 'grade 3': 37, 'grade 4': 37, 'grade 5': 37, 'grade 6': 37 },
+        'ib pyp':  { 'grade 3': 55, 'grade 4': 54, 'grade 5': 36 },
+        'ib_pyp':  { 'grade 3': 55, 'grade 4': 54, 'grade 5': 36 },
+        'cbse':    { 'grade 3': 37, 'grade 4': 37, 'grade 5': 37, 'grade 6': 37 },
       };
       const currKey = Object.keys(TOPIC_COUNTS).find(k => curriculum.includes(k)) ?? 'ncert';
       const totalTopics = TOPIC_COUNTS[currKey]?.[grade] ?? 14;
-      const progressPct = Math.round((topicsCount / totalTopics) * 100);
+      const progressPct = Math.min(100, Math.round((topicsCount / totalTopics) * 100));
 
       return {
         id:             link.student_id,
@@ -487,6 +488,104 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
     });
 
     res.json(students);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /student/by-teacher/:teacherId/insights ─────────────
+// Returns aggregated assignment + challenge data for all students of a teacher.
+// Used by TeacherDashboardScreen to populate Assignment & Challenge insight tiles.
+
+router.get('/by-teacher/:teacherId/insights', async (req, res) => {
+  try {
+    const rawId = req.params.teacherId;
+    const teacherId = await resolveTeacherId(rawId);
+
+    const { data: links } = await supabase
+      .from('teacher_student')
+      .select('student_id')
+      .eq('teacher_id', teacherId ?? rawId);
+
+    const studentIds = (links || []).map(l => l.student_id);
+    if (studentIds.length === 0) return res.json({ assignments: [], challenges: [] });
+
+    // Fetch all assignment submissions for these students
+    const { data: subs } = await supabase
+      .from('assignment_submissions')
+      .select('student_id, assignment_id, score, status, completed_at')
+      .in('student_id', studentIds);
+
+    // Fetch all challenge assignments for these students
+    const { data: challengeAssigns } = await supabase
+      .from('challenge_assignments')
+      .select('student_id, challenge_id, status, score, xp_awarded, created_at')
+      .in('student_id', studentIds);
+
+    // Get student names
+    const { data: users } = await supabase
+      .from('users')
+      .select('id, name')
+      .in('id', studentIds);
+    const nameMap = {};
+    (users || []).forEach(u => { nameMap[u.id] = u.name; });
+
+    // Aggregate assignment stats per student
+    const assignMap = {};
+    (subs || []).forEach(s => {
+      if (!assignMap[s.student_id]) assignMap[s.student_id] = { submitted: 0, totalScore: 0, scored: 0 };
+      assignMap[s.student_id].submitted++;
+      if (typeof s.score === 'number') {
+        assignMap[s.student_id].totalScore += s.score;
+        assignMap[s.student_id].scored++;
+      }
+    });
+
+    const assignmentStats = studentIds.map(id => ({
+      id,
+      name: nameMap[id] || 'Unknown',
+      submitted: assignMap[id]?.submitted || 0,
+      avgScore: assignMap[id]?.scored > 0 ? Math.round(assignMap[id].totalScore / assignMap[id].scored) : null,
+    }));
+
+    // Aggregate challenge stats per student
+    const challMap = {};
+    (challengeAssigns || []).forEach(c => {
+      if (!challMap[c.student_id]) challMap[c.student_id] = { assigned: 0, completed: 0, totalScore: 0, scored: 0 };
+      challMap[c.student_id].assigned++;
+      if (c.status === 'completed') challMap[c.student_id].completed++;
+      if (typeof c.score === 'number') {
+        challMap[c.student_id].totalScore += c.score;
+        challMap[c.student_id].scored++;
+      }
+    });
+
+    const challengeStats = studentIds.map(id => ({
+      id,
+      name: nameMap[id] || 'Unknown',
+      assigned: challMap[id]?.assigned || 0,
+      completed: challMap[id]?.completed || 0,
+      avgScore: challMap[id]?.scored > 0 ? Math.round(challMap[id].totalScore / challMap[id].scored) : null,
+    }));
+
+    // Totals
+    const totalSubmissions = (subs || []).length;
+    const allScores = (subs || []).filter(s => typeof s.score === 'number').map(s => s.score);
+    const classAvgScore = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : null;
+
+    const totalChallengesAssigned = (challengeAssigns || []).length;
+    const totalChallengesCompleted = (challengeAssigns || []).filter(c => c.status === 'completed').length;
+
+    res.json({
+      assignments: assignmentStats,
+      challenges: challengeStats,
+      totals: {
+        totalSubmissions,
+        classAvgScore,
+        totalChallengesAssigned,
+        totalChallengesCompleted,
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

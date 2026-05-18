@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THE SHRI RAM Programme - Mathematics MHLE-12 - Aivorah</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
+
+    /* ── Header — Aivorah Enchanted Forest ── */
+    .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 28px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); }
+    .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 4px; }
+    .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; }
+    .header-meta { font-size: 13px; color: #5A6B69; margin-top: 4px; }
+
+    /* ── Score Badge ── */
+    .score { position: fixed; top: 20px; right: 24px; width: 76px; height: 76px; border-radius: 50%;
+             background: linear-gradient(135deg, #93B0AC, #7AADA8); color: #0F0F0F;
+             display: flex; flex-direction: column; align-items: center; justify-content: center;
+             box-shadow: 0 4px 20px rgba(147,176,172,0.3); z-index: 100; }
+    .score-num { font-size: 22px; font-weight: 800; line-height: 1; }
+    .score-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 2px; }
+
+    /* ── Progress ── */
+    .progress-wrap { padding: 20px 0 4px; }
+    .progress-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5A6B69; margin-bottom: 8px; }
+    .progress-bar { background: #252525; border-radius: 6px; height: 12px; overflow: hidden; border: 1px solid rgba(195,220,216,0.08); }
+    .progress-fill { background: linear-gradient(90deg, #93B0AC, #C3DCD8); height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+    .progress-pct { text-align: right; font-size: 12px; color: #93B0AC; font-weight: 600; margin-top: 4px; }
+
+    /* ── Container ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px 60px; }
+
+    /* ── Concepts ── */
+    .concepts-row { display: flex; gap: 16px; margin: 24px 0; flex-wrap: wrap; }
+    .concept-card { flex: 1; min-width: 220px; padding: 20px; border-radius: 12px; color: #F0EEEC; }
+    .concept-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #A8B5B3; line-height: 1.5; }
+    .concept-unit { margin-top: 8px; font-size: 12px; color: #5A6B69; }
+    .concept-icon { font-size: 20px; margin-bottom: 6px; }
+
+    /* ── Question cards ── */
+    .q-card { background: #1C1C1C; padding: 20px 24px; border-radius: 10px; margin: 14px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid rgba(195,220,216,0.12); }
+    .q-text { font-size: 15px; color: #F0EEEC; margin-bottom: 14px; line-height: 1.6; }
+    .q-text strong { color: #C3DCD8; }
+
+    /* ── Input row ── */
+    .q-input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .q-label { font-weight: 700; font-size: 14px; color: #A8B5B3; }
+    .q-input { width: 130px; padding: 10px 12px; border: 2px solid rgba(195,220,216,0.25); border-radius: 8px;
+               font-size: 16px; text-align: center; transition: border-color 0.2s; background: #252525; color: #F0EEEC; }
+    .q-input:focus { border-color: #93B0AC; outline: none; box-shadow: 0 0 0 3px rgba(147,176,172,0.2); }
+    .q-unit { font-size: 14px; color: #A8B5B3; font-weight: 500; }
+
+    /* ── MCQ ── */
+    .mcq-opt { display: block; margin: 8px 0; padding: 10px 14px; border-radius: 8px;
+               border: 1.5px solid rgba(195,220,216,0.15); cursor: pointer; font-size: 14px; color: #F0EEEC; transition: all 0.2s; }
+    .mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .mcq-opt input { margin-right: 8px; }
+
+    /* ── Buttons ── */
+    .btn-check { background: #93B0AC; color: #0F0F0F; border: none; padding: 10px 24px; border-radius: 8px;
+                 font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+    .btn-check:hover { background: #7AADA8; transform: translateY(-1px); }
+    .btn-hint { background: #C5BD96; color: #0F0F0F; border: none; padding: 10px 20px; border-radius: 8px;
+                font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .btn-hint:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-show { background: #93B0AC; color: #0F0F0F; border: none; padding: 8px 18px; border-radius: 6px;
+                font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 10px; }
+    .btn-show:hover { background: #7AADA8; }
+
+    /* ── Feedback boxes ── */
+    .hint-box { margin-top: 12px; padding: 14px 16px; background: rgba(197,189,150,0.1); border-radius: 8px;
+                border-left: 4px solid #C5BD96; color: #C5BD96; font-size: 14px; line-height: 1.5; }
+    .result-box { margin-top: 8px; font-size: 14px; min-height: 6px; }
+    .solution-box { margin-top: 12px; padding: 16px 18px; background: rgba(147,176,172,0.1); border-radius: 8px;
+                    border-left: 4px solid #93B0AC; color: #93B0AC; font-size: 14px; line-height: 1.7; }
+
+    /* ── Activity boxes ── */
+    .activity-box { background: linear-gradient(135deg, rgba(147,176,172,0.08), rgba(197,189,150,0.08)) !important;
+                    border-color: rgba(147,176,172,0.25) !important; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .header { padding: 20px; }
+      .header h1 { font-size: 20px; }
+      .container { padding: 0 14px 40px; }
+      .q-card { padding: 16px; }
+      .score { width: 60px; height: 60px; top: 14px; right: 14px; }
+      .score-num { font-size: 18px; }
+      .concepts-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-sub">THE SHRI RAM &middot; Grade 4</div>
+    <h1>THE SHRI RAM Programme - Mathematics MHLE-12</h1>
+    <div class="header-meta">Subject: Mathematics &nbsp;|&nbsp; Powered by Aivorah</div>
+  </div>
+
+  <div class="score" id="score-badge">
+    <span class="score-num" id="score-num">0/6</span>
+    <span class="score-label">Score</span>
+  </div>
+
+  <div class="container">
+    <div class="progress-wrap">
+      <div class="progress-title">Quiz Progress</div>
+      <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+      <div class="progress-pct" id="pp">0% complete</div>
+    </div>
+
+    
+    
+    
+    
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">undefined</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 1 &middot; Bar Graph - Favourite Sport of Grade 4 Learners</h2><div class="q-card" id="q1-card">
+        <p class="q-text"><strong>1a)</strong> The scale on Y-axis is</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q1-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q1')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q1')">Hint</button>
+        </div>
+        <div id="q1-hint" class="hint-box" style="display:none">Look at the numbers on the vertical axis</div>
+        <div id="q1-result" class="result-box"></div>
+        <div id="q1-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The Y-axis goes 0, 2, 4, 6, 8 so the scale is 2.
+          
+        </div>
+        <button id="q1-show" class="btn-show" style="display:none" onclick="toggleSolution('q1')">Show Answer</button>
+      </div><div class="q-card" id="q2-card">
+        <p class="q-text"><strong>1b)</strong> The sum of votes for football and tennis is equal to the sum of votes for _____ and _____ sports.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q2-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q2')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q2')">Hint</button>
+        </div>
+        <div id="q2-hint" class="hint-box" style="display:none">Add up the votes for football and tennis, then find two other sports with the same total</div>
+        <div id="q2-result" class="result-box"></div>
+        <div id="q2-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The answer is: hockey and rugby
+          
+        </div>
+        <button id="q2-show" class="btn-show" style="display:none" onclick="toggleSolution('q2')">Show Answer</button>
+      </div><div class="q-card" id="q3-card">
+        <p class="q-text"><strong>1c)</strong> Imagine the number of votes for rugby <strong>doubles</strong>. What will be its new height?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q3-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q3')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q3')">Hint</button>
+        </div>
+        <div id="q3-hint" class="hint-box" style="display:none">Double the current rugby votes and compare</div>
+        <div id="q3-result" class="result-box"></div>
+        <div id="q3-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The answer is: 16 votes, closer to football bar
+          
+        </div>
+        <button id="q3-show" class="btn-show" style="display:none" onclick="toggleSolution('q3')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">undefined</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 2 &middot; Venn Diagram</h2><div class="q-card" id="q4-card">
+        <p class="q-text"><strong>2a)</strong> How many students like only cricket?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q4-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q4')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q4')">Hint</button>
+        </div>
+        <div id="q4-hint" class="hint-box" style="display:none">Look at the cricket-only section</div>
+        <div id="q4-result" class="result-box"></div>
+        <div id="q4-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The answer is: 5
+          
+        </div>
+        <button id="q4-show" class="btn-show" style="display:none" onclick="toggleSolution('q4')">Show Answer</button>
+      </div><div class="q-card" id="q5-card">
+        <p class="q-text"><strong>2b)</strong> How many students like both cricket and football?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q5-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q5')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q5')">Hint</button>
+        </div>
+        <div id="q5-hint" class="hint-box" style="display:none">Look at the overlapping section</div>
+        <div id="q5-result" class="result-box"></div>
+        <div id="q5-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The answer is: 3
+          
+        </div>
+        <button id="q5-show" class="btn-show" style="display:none" onclick="toggleSolution('q5')">Show Answer</button>
+      </div><div class="q-card" id="q6-card">
+        <p class="q-text"><strong>2c)</strong> How many students were surveyed in total?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q6-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q6')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q6')">Hint</button>
+        </div>
+        <div id="q6-hint" class="hint-box" style="display:none">Add all numbers in the diagram</div>
+        <div id="q6-result" class="result-box"></div>
+        <div id="q6-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The answer is: 15
+          
+        </div>
+        <button id="q6-show" class="btn-show" style="display:none" onclick="toggleSolution('q6')">Show Answer</button>
+      </div></div>
+  </div>
+
+  <script>
+    let sc = 0;
+    const tot = 6;
+    const done = new Set();
+    const answers = {"q1":{"answer":"2","isNum":true,"range":null},"q2":{"answer":"hockey and rugby","isNum":false,"range":null},"q3":{"answer":"16 votes, closer to football bar","isNum":false,"range":null},"q4":{"answer":"5","isNum":true,"range":null},"q5":{"answer":"3","isNum":true,"range":null},"q6":{"answer":"15","isNum":true,"range":null}};
+    const studentAnswers = {}; // { qId: { answer, correct, timeSpent } }
+    const questionStartTimes = {}; // { qId: timestamp }
+
+    // Track when each question becomes visible / gets focus
+    document.addEventListener('focusin', function(e) {
+      const inp = e.target.closest('input');
+      if (inp && inp.id && inp.id.endsWith('-input')) {
+        const qId = inp.id.replace('-input', '');
+        if (!questionStartTimes[qId]) questionStartTimes[qId] = Date.now();
+      }
+    });
+
+    function up() {
+      document.getElementById('score-num').textContent = sc + '/' + tot;
+      const pct = Math.round((done.size / tot) * 100);
+      document.getElementById('pf').style.width = pct + '%';
+      document.getElementById('pp').textContent = pct + '% complete';
+      // Build per-question answer list
+      const answersArr = Object.entries(studentAnswers).map(([qId, data]) => ({
+        qId, answer: data.answer, correct: data.correct,
+        timeSpent: data.timeSpent || 0,
+        question: data.question || ''
+      }));
+      // Report score + answers to parent window (for student assignment iframe)
+      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot, answers: answersArr }, '*'); } catch(e) {}
+    }
+
+    function checkAnswer(id) {
+      const a = answers[id];
+      if (!a) return;
+      const inp = document.getElementById(id + '-input');
+      const val = inp.value.trim();
+      if (!val) { inp.style.borderColor = '#C5BD96'; return; }
+      const r = document.getElementById(id + '-result');
+      let ok = false;
+      if (a.isNum) {
+        const v = parseFloat(val);
+        if (isNaN(v)) { inp.style.borderColor = '#C5BD96'; return; }
+        ok = a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01;
+      } else {
+        ok = val.replace(/\s+/g,'').toLowerCase() === String(a.answer).replace(/\s+/g,'').toLowerCase();
+      }
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      const qEl = document.getElementById(id + '-card');
+      const qText = qEl ? qEl.querySelector('.q-label, strong')?.textContent || '' : '';
+      studentAnswers[id] = { answer: val, correct: ok, timeSpent: elapsed, question: qText };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        inp.style.borderColor = '#93B0AC';
+        inp.style.background = 'rgba(147,176,172,0.1)';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        inp.style.borderColor = '#EFD1D4';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkMCQ(id) {
+      const a = answers[id];
+      if (!a) return;
+      const sel = document.querySelector('input[name="' + id + '"]:checked');
+      if (!sel) return;
+      const r = document.getElementById(id + '-result');
+      const ok = sel.value === a.correctLetter;
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: sel.value, correct: ok, timeSpent: elapsed, question: '' };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function toggleHint(id) {
+      const el = document.getElementById(id + '-hint');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleSolution(id) {
+      const el = document.getElementById(id + '-solution');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>

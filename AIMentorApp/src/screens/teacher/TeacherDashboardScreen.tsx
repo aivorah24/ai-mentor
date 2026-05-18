@@ -93,6 +93,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [insights, setInsights] = useState<any>({ assignments: [], challenges: [], totals: {} });
 
   const firstName = user?.name?.split(' ')[0] || 'Teacher';
   const ringTrack = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
@@ -100,9 +101,13 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   const fetchStudents = async () => {
     try {
       const teacherEmail = user?.email || 'teacher@demo.com';
-      const res = await fetch(`${SERVER_URL}/student/by-teacher/${encodeURIComponent(teacherEmail)}`);
-      const data = await res.json();
+      const [studRes, insRes] = await Promise.all([
+        fetch(`${SERVER_URL}/student/by-teacher/${encodeURIComponent(teacherEmail)}`),
+        fetch(`${SERVER_URL}/student/by-teacher/${encodeURIComponent(teacherEmail)}/insights`),
+      ]);
+      const data = await studRes.json();
       if (Array.isArray(data)) setStudents(data);
+      try { const ins = await insRes.json(); setInsights(ins); } catch {}
     } catch {
       // keep previous data
     } finally {
@@ -122,11 +127,17 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   const avgProgress = totalStudents > 0
     ? Math.round(students.reduce((sum, s) => sum + (s.progressPct || 0), 0) / totalStudents)
     : 0;
-  // Students above 50% based on their own curriculum's total topics (real data)
-  const aboveHalfCount = students.filter(s => (s.progressPct || 0) >= 50).length;
-  const aboveHalfPct = totalStudents > 0 ? Math.round((aboveHalfCount / totalStudents) * 100) : 0;
   const avgStudyMins = totalStudents > 0
     ? Math.round(students.reduce((sum, s) => sum + (s.studyTime || 0), 0) / totalStudents)
+    : 0;
+
+  // Assignment & Challenge completion rates (from insights endpoint)
+  const ins = insights || { assignments: [], challenges: [], totals: {} };
+  const assignSubmitPct = totalStudents > 0
+    ? Math.round((ins.assignments.filter((s: any) => s.submitted > 0).length / totalStudents) * 100)
+    : 0;
+  const challCompletePct = totalStudents > 0
+    ? Math.round((ins.challenges.filter((s: any) => s.completed > 0).length / totalStudents) * 100)
     : 0;
 
   // ── Dynamic curriculum label from real student data ────
@@ -157,92 +168,174 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   students.forEach(s => (s.completedTopics || []).forEach((t: string) => { topicCounts[t] = (topicCounts[t] || 0) + 1; }));
   const hardestTopic = Object.entries(topicCounts).sort((a, b) => a[1] - b[1])[0];
 
-  // Peak learning time: hour with most lastActive students (using lastActive date hour as proxy)
-  const hourCounts: Record<number, number> = {};
-  students.forEach(s => {
-    if (s.lastActive) {
-      const h = new Date(s.lastActive).getHours();
-      hourCounts[h] = (hourCounts[h] || 0) + 1;
-    }
-  });
-  const peakHour = Object.entries(hourCounts).sort((a, b) => Number(b[1]) - Number(a[1]))[0];
-  const peakLabel = peakHour
-    ? (() => {
-        const h = Number(peakHour[0]);
-        const fmt = (n: number) => `${n % 12 || 12}${n < 12 ? 'am' : 'pm'}`;
-        return `${fmt(h)}–${fmt(h + 1)}`;
-      })()
-    : null;
+  // Avg study time per student (for insight tile)
+  const totalStudyMins = students.reduce((sum, s) => sum + (s.studyTime || 0), 0);
 
-  // 6 graphical insight tiles — Aivorah pastel palette
-  const aiInsightTiles: { icon: any; color: string; stat: string; label: string; title: string; body: string; screen: string; params?: Record<string, any> }[] = [
+  // ── Insight tile type ─────────────────────────────────────
+  type InsightTile = { icon: any; color: string; stat: string; label: string; title: string; body: string; screen: string; params?: Record<string, any> };
+
+  // Assignment insights from server data
+  const totals = insights?.totals || {};
+  const assignStats = insights?.assignments || [];
+  const challStats = insights?.challenges || [];
+
+  const studentsWithSubmissions = assignStats.filter((s: any) => s.submitted > 0).length;
+  const studentsWithNoSubmissions = totalStudents - studentsWithSubmissions;
+  const classAvgScore = totals.classAvgScore;
+  const topAssignStudent = [...assignStats].sort((a: any, b: any) => (b.avgScore || 0) - (a.avgScore || 0))[0];
+
+  const studentsWithChallenges = challStats.filter((s: any) => s.assigned > 0).length;
+  const studentsCompletedChallenge = challStats.filter((s: any) => s.completed > 0).length;
+  const topChallStudent = [...challStats].sort((a: any, b: any) => (b.avgScore || 0) - (a.avgScore || 0))[0];
+
+  // ── Enchanting Forest palette for insight tiles ─────────
+  const T = {
+    teal:   colors.primary,     // #93B0AC dark / #5F8A86 light
+    rose:   '#B8797E',          // darkened dusty rose
+    gold:   '#8A8358',          // darkened khaki gold
+    coral:  '#C47A68',          // warm coral
+    forest: '#5A8A70',          // deep forest green
+    mint:   colors.primaryHover,// #7AADA8 / #4A706D
+    blush:  '#C49098',          // mid-rose
+    slate:  '#93B0AC',          // direct palette sage
+  };
+
+  // ── SECTION 1: Learning Path Insights ───────────────────
+  const learningPathTiles: InsightTile[] = [
     {
-      icon: 'book-open',
-      color: '#B8797E',
+      icon: 'book-open', color: T.rose,
       stat: hardestTopic ? `${totalStudents - hardestTopic[1]}` : `${allNeedsAttention.length}`,
       label: 'Struggling',
       title: hardestTopic ? `Stuck on "${hardestTopic[0]}"` : 'Need Support',
       body: hardestTopic
-        ? `${totalStudents - hardestTopic[1]} student${totalStudents - hardestTopic[1] !== 1 ? 's' : ''} haven't completed this topic. Consider a focused group review session.`
-        : `${allNeedsAttention.length} student${allNeedsAttention.length !== 1 ? 's' : ''} have low progress. Schedule focused review sessions.`,
+        ? `${totalStudents - hardestTopic[1]} haven't completed this topic yet.`
+        : `${allNeedsAttention.length} student${allNeedsAttention.length !== 1 ? 's' : ''} need focused review.`,
       screen: 'TeacherStudents', params: { initialTab: 'Needs Attention' },
     },
     {
-      icon: 'award',
-      color: '#5A8A70',
+      icon: 'award', color: T.forest,
       stat: topStudent ? `${topStudent.progressPct}%` : '—',
       label: 'Top Score',
-      title: topStudent ? `${topStudent.name?.split(' ')[0]} is Leading` : 'No Data Yet',
+      title: topStudent ? `${topStudent.name?.split(' ')[0]} Leads` : 'No Data Yet',
       body: topStudent
-        ? `${topStudent.name?.split(' ')[0]} leads the class at ${topStudent.progressPct}% with ${topStudent.completedTopics?.length || 0} topics done. Give them an advanced challenge!`
-        : 'Students have not started yet. Assign the first topic to get going.',
+        ? `${topStudent.completedTopics?.length || 0} topics done. Give them a challenge!`
+        : 'Assign the first topic to get going.',
       screen: 'TeacherStudents', params: { initialTab: 'Top Performers' },
     },
     {
-      icon: 'moon',
-      color: '#8A8358',
+      icon: 'moon', color: T.gold,
       stat: `${inactiveStudents.length}`,
       label: 'Inactive 3d+',
-      title: inactiveStudents.length > 0 ? 'Students Going Quiet' : 'Everyone Active',
+      title: inactiveStudents.length > 0 ? 'Going Quiet' : 'All Active',
       body: inactiveStudents.length > 0
-        ? `${inactiveStudents.slice(0, 2).map(s => s.name?.split(' ')[0]).join(', ')}${inactiveStudents.length > 2 ? ` +${inactiveStudents.length - 2} more` : ''} haven't logged in for 3+ days. A quick nudge could bring them back.`
-        : 'All students have been active recently. Great engagement this week!',
+        ? `${inactiveStudents.slice(0, 2).map(s => s.name?.split(' ')[0]).join(', ')}${inactiveStudents.length > 2 ? ` +${inactiveStudents.length - 2}` : ''} — nudge them back.`
+        : 'Great engagement this week!',
       screen: 'TeacherStudents', params: { initialTab: 'Inactive' },
     },
     {
-      icon: 'zap',
-      color: '#C4836A',
+      icon: 'zap', color: T.coral,
       stat: `${streakAtRisk.length}`,
       label: 'Streak Risk',
-      title: streakAtRisk.length > 0 ? 'Streaks at Risk Today' : 'Streaks Safe',
+      title: streakAtRisk.length > 0 ? 'At Risk Today' : 'Streaks Safe',
       body: streakAtRisk.length > 0
-        ? `${streakAtRisk.slice(0, 2).map(s => s.name?.split(' ')[0]).join(', ')} ${streakAtRisk.length > 1 ? 'are' : 'is'} on a 1-day streak. Encourage them to practice today before it resets.`
-        : 'No student is at risk of losing their streak today. Keep the momentum going!',
+        ? `${streakAtRisk.slice(0, 2).map(s => s.name?.split(' ')[0]).join(', ')} on 1-day streak.`
+        : 'No streaks at risk today.',
       screen: 'TeacherStudents', params: { initialTab: 'Streak Risk' },
     },
     {
-      icon: 'clipboard',
-      color: '#7AADA8',
-      stat: `${pendingAssignments}`,
+      icon: 'clock', color: T.teal,
+      stat: formatStudyTime(totalStudyMins),
+      label: 'Study Time',
+      title: totalStudyMins > 0 ? `${formatStudyTime(avgStudyMins)} avg per student` : 'No Study Yet',
+      body: totalStudyMins > 0
+        ? `${formatStudyTime(totalStudyMins)} total across ${totalStudents} student${totalStudents !== 1 ? 's' : ''}.`
+        : 'Study time appears once students start learning.',
+      screen: 'TeacherProgress',
+    },
+  ];
+
+  // ── SECTION 2: Assignment Insights ──────────────────────
+  const assignmentTiles: InsightTile[] = [
+    {
+      icon: 'clipboard', color: T.mint,
+      stat: `${studentsWithNoSubmissions}`,
       label: 'Pending',
-      title: pendingAssignments > 0 ? 'Assignments Not Started' : 'All Submitted',
-      body: pendingAssignments > 0
-        ? `${pendingAssignments} student${pendingAssignments !== 1 ? 's' : ''} haven't submitted any assignments yet. Send a reminder or reduce difficulty to get them started.`
-        : 'All students have submitted at least one assignment. Consider assigning the next chapter.',
+      title: studentsWithNoSubmissions > 0 ? 'Not Started' : 'All Submitted',
+      body: studentsWithNoSubmissions > 0
+        ? `${studentsWithNoSubmissions} student${studentsWithNoSubmissions !== 1 ? 's' : ''} haven't submitted yet.`
+        : 'Everyone has submitted. Assign next chapter.',
       screen: 'TeacherAssignments',
     },
     {
-      icon: 'clock',
-      color: '#5F8A86',
-      stat: peakLabel || '—',
-      label: 'Peak Time',
-      title: peakLabel ? `Most Active at ${peakLabel}` : 'No Activity Yet',
-      body: peakLabel
-        ? `Your class is most active around ${peakLabel}. Schedule assignments or reminders just before this window for best engagement.`
-        : 'Activity data will appear once students start logging in regularly.',
-      screen: 'TeacherSchedule',
+      icon: 'bar-chart-2', color: T.slate,
+      stat: classAvgScore != null ? `${classAvgScore}%` : '—',
+      label: 'Avg Score',
+      title: classAvgScore != null ? `Class Avg: ${classAvgScore}%` : 'No Scores Yet',
+      body: classAvgScore != null
+        ? classAvgScore >= 70
+          ? `Strong performance — raise the difficulty.`
+          : `Review common mistakes or assign practice.`
+        : 'Scores appear once students submit.',
+      screen: 'TeacherAssignments',
+    },
+    {
+      icon: 'check-circle', color: T.forest,
+      stat: `${studentsWithSubmissions}/${totalStudents}`,
+      label: 'Submitted',
+      title: studentsWithSubmissions > 0
+        ? `${studentsWithSubmissions} Submitted`
+        : 'No Submissions',
+      body: studentsWithSubmissions > 0
+        ? topAssignStudent?.avgScore != null
+          ? `${topAssignStudent.name?.split(' ')[0]} leads at ${topAssignStudent.avgScore}%.`
+          : `${totals.totalSubmissions || 0} total submissions.`
+        : 'Create your first assignment to start.',
+      screen: 'TeacherAssignments',
     },
   ];
+
+  // ── SECTION 3: Challenge Insights ───────────────────────
+  const challengeTiles: InsightTile[] = [
+    {
+      icon: 'target', color: T.blush,
+      stat: `${studentsWithChallenges}/${totalStudents}`,
+      label: 'Attempted',
+      title: studentsWithChallenges > 0
+        ? `${studentsWithChallenges} Participating`
+        : 'No Challenges Yet',
+      body: studentsWithChallenges > 0
+        ? `${totals.totalChallengesAssigned || 0} total challenges assigned.`
+        : 'Assign challenges to test their skills.',
+      screen: 'TeacherStudents',
+    },
+    {
+      icon: 'flag', color: T.gold,
+      stat: `${studentsCompletedChallenge}`,
+      label: 'Completed',
+      title: studentsCompletedChallenge > 0
+        ? `${studentsCompletedChallenge} Finished`
+        : 'None Completed',
+      body: studentsCompletedChallenge > 0
+        ? `${totals.totalChallengesCompleted || 0} challenges done.`
+        : 'Encourage students to attempt challenges.',
+      screen: 'TeacherStudents',
+    },
+    {
+      icon: 'trending-up', color: T.teal,
+      stat: topChallStudent?.avgScore != null ? `${topChallStudent.avgScore}%` : '—',
+      label: 'Top Scorer',
+      title: topChallStudent?.avgScore != null
+        ? `${topChallStudent.name?.split(' ')[0]} Leads`
+        : 'No Scores Yet',
+      body: topChallStudent?.avgScore != null
+        ? `${topChallStudent.completed || 0} completed — give advanced challenges!`
+        : 'Scores appear after completion.',
+      screen: 'TeacherStudents',
+    },
+  ];
+
+  // Combined flat array for modal index lookup (Learning Path 0-4, Assignments 5-7, Challenges 8-10)
+  const aiInsightTiles: InsightTile[] = [...learningPathTiles, ...assignmentTiles, ...challengeTiles];
 
   // ── Recent activity: students sorted by last active ────
   const recentStudents = [...students]
@@ -273,6 +366,19 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   const aiActionBody = allNeedsAttention.length > 0
     ? `${needsAttentionStudents[0]?.name?.split(' ')[0] || 'A student'} and others have low progress or streak. Schedule a review session or send an encouraging message.`
     : `Average study time is ${formatStudyTime(avgStudyMins)} per student. Assign chapter quizzes to boost engagement.`;
+
+  // ── Insight filter tab ──────────────────────────────────
+  const [insightFilter, setInsightFilter] = useState<'learning' | 'assignments' | 'challenges'>('learning');
+
+  const filteredTiles =
+    insightFilter === 'learning' ? learningPathTiles
+    : insightFilter === 'assignments' ? assignmentTiles
+    : challengeTiles;
+
+  const filterOffset =
+    insightFilter === 'learning' ? 0
+    : insightFilter === 'assignments' ? learningPathTiles.length
+    : learningPathTiles.length + assignmentTiles.length;
 
   // ── Insight detail modal ───────────────────────────────
   const [insightModal, setInsightModal] = useState<null | { tileIndex: number }>(null);
@@ -522,8 +628,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
         );
       }
 
-      case 4: { // Pending Assignments
-        const pending = students.filter(s => (s.assignmentsDone || 0) === 0);
+      case 4: { // Study Time — per-student breakdown
+        const ranked = [...students].sort((a, b) => (b.studyTime || 0) - (a.studyTime || 0));
+        const maxMins = Math.max(...ranked.map(s => s.studyTime || 0), 1);
         return (
           <>
             <View style={styles.modalHeader}>
@@ -531,8 +638,8 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                 <Feather name={tile.icon} size={16} color={tile.color} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.modalStat, { color: tile.color }]}>{pending.length} Students</Text>
-                <Text style={styles.modalHeading}>No Assignments Submitted Yet</Text>
+                <Text style={[styles.modalStat, { color: tile.color }]}>{formatStudyTime(totalStudyMins)}</Text>
+                <Text style={styles.modalHeading}>Total Study Time Across Class</Text>
               </View>
               <TouchableOpacity onPress={() => setInsightModal(null)} style={styles.modalClose}>
                 <Feather name="x" size={20} color={colors.textDim} />
@@ -540,24 +647,24 @@ export default function TeacherDashboardScreen({ navigation }: any) {
             </View>
             <View style={styles.tableHeader}>
               <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Submitted</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Study Time</Text>
+              <Text style={[styles.tableCol, { flex: 2 }]}>Time</Text>
               <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Progress</Text>
             </View>
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
-              {pending.map((s, i) => (
+              {ranked.map((s, i) => (
                 <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
                   <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
                     <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
-                      <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name)}</Text>
+                      <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name || '?')}</Text>
                     </View>
-                    <View>
-                      <Text style={styles.tableStudentName}>{s.name.split(' ')[0]}</Text>
-                      <Text style={styles.tableStudentGrade}>{s.grade}</Text>
+                    <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
+                  </View>
+                  <View style={[styles.tableCell, { flex: 2, gap: 3 }]}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMain }}>{formatStudyTime(s.studyTime || 0)}</Text>
+                    <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>
+                      <View style={[styles.progressFill, { width: `${Math.round(((s.studyTime || 0) / maxMins) * 100)}%` as any, backgroundColor: tile.color }]} />
                     </View>
                   </View>
-                  <Text style={[styles.tableCell, { flex: 1, color: '#B8797E', fontSize: 12, fontWeight: '700' }]}>0</Text>
-                  <Text style={[styles.tableCell, { flex: 1, color: colors.textMuted, fontSize: 12 }]}>{formatStudyTime(s.studyTime || 0)}</Text>
                   <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
                     <View style={[styles.pctPill, { backgroundColor: tile.color + '18', borderColor: tile.color + '40' }]}>
                       <Text style={[styles.pctPillText, { color: tile.color }]}>{s.progressPct || 0}%</Text>
@@ -570,12 +677,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
         );
       }
 
-      case 5: { // Peak Time — activity distribution
-        const hourBuckets = Array.from({ length: 24 }, (_, h) => ({
-          hour: h,
-          count: students.filter(s => s.lastActive && new Date(s.lastActive).getHours() === h).length,
-        })).filter(b => b.count > 0).sort((a, b) => b.count - a.count);
-        const maxCount = Math.max(...hourBuckets.map(b => b.count), 1);
+      // ── Assignment Insight Modals (indices 5-7) ─────────
+      case 5: { // Pending — students with no submissions
+        const noSubs = (assignStats as any[]).filter((s: any) => s.submitted === 0);
         return (
           <>
             <View style={styles.modalHeader}>
@@ -583,26 +687,294 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                 <Feather name={tile.icon} size={16} color={tile.color} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.modalStat, { color: tile.color }]}>{peakLabel || '—'}</Text>
-                <Text style={styles.modalHeading}>Class Activity by Time of Day</Text>
+                <Text style={[styles.modalStat, { color: tile.color }]}>{noSubs.length} Students</Text>
+                <Text style={styles.modalHeading}>No Assignments Submitted Yet</Text>
               </View>
               <TouchableOpacity onPress={() => setInsightModal(null)} style={styles.modalClose}>
                 <Feather name="x" size={20} color={colors.textDim} />
               </TouchableOpacity>
             </View>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Submitted</Text>
+            </View>
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
-              <Text style={[styles.tableCol, { marginBottom: spacing.md, marginTop: spacing.sm }]}>
-                Students active per hour window (based on last login time)
-              </Text>
-              {hourBuckets.map((b, i) => (
-                <View key={i} style={[styles.peakRow, i < hourBuckets.length - 1 && styles.modalRowBorder]}>
-                  <Text style={styles.peakHour}>{fmt12(b.hour)}–{fmt12(b.hour + 1)}</Text>
-                  <View style={styles.peakBarWrap}>
-                    <View style={[styles.peakBarFill, { width: `${Math.round((b.count / maxCount) * 100)}%` as any, backgroundColor: tile.color }]} />
+              {noSubs.length === 0 ? (
+                <View style={styles.modalEmpty}>
+                  <Feather name="check-circle" size={28} color="#5A8A70" />
+                  <Text style={styles.modalEmptyText}>Everyone has submitted at least one assignment!</Text>
+                </View>
+              ) : noSubs.map((s: any, i: number) => (
+                <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
+                  <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                    <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
+                      <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name || '?')}</Text>
+                    </View>
+                    <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
                   </View>
-                  <Text style={[styles.peakCount, { color: tile.color }]}>{b.count} student{b.count !== 1 ? 's' : ''}</Text>
+                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'right', color: '#B8797E', fontSize: 12, fontWeight: '700' }]}>0</Text>
                 </View>
               ))}
+            </ScrollView>
+          </>
+        );
+      }
+
+      case 6: { // Avg Score — all students ranked by assignment avg score
+        const ranked = [...(assignStats as any[])].filter((s: any) => s.avgScore != null).sort((a: any, b: any) => b.avgScore - a.avgScore);
+        return (
+          <>
+            <View style={styles.modalHeader}>
+              <View style={[styles.tileIconWrap, { backgroundColor: tile.color + '25' }]}>
+                <Feather name={tile.icon} size={16} color={tile.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.modalStat, { color: tile.color }]}>{classAvgScore != null ? `${classAvgScore}%` : '—'}</Text>
+                <Text style={styles.modalHeading}>Assignment Scores by Student</Text>
+              </View>
+              <TouchableOpacity onPress={() => setInsightModal(null)} style={styles.modalClose}>
+                <Feather name="x" size={20} color={colors.textDim} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableCol, { width: 32 }]}>#</Text>
+              <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
+              <Text style={[styles.tableCol, { flex: 1 }]}>Submitted</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Avg Score</Text>
+            </View>
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              {ranked.length === 0 ? (
+                <View style={styles.modalEmpty}>
+                  <Feather name="bar-chart-2" size={28} color={colors.textDim} />
+                  <Text style={styles.modalEmptyText}>No assignment scores yet</Text>
+                </View>
+              ) : ranked.map((s: any, i: number) => {
+                const scoreColor = s.avgScore >= 70 ? '#5A8A70' : s.avgScore >= 40 ? '#8A8358' : '#B8797E';
+                return (
+                  <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
+                    <Text style={[styles.tableCell, { width: 32, fontWeight: '800', color: i < 3 ? tile.color : colors.textDim, fontSize: 14 }]}>{i + 1}</Text>
+                    <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                      <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
+                        <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name || '?')}</Text>
+                      </View>
+                      <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
+                    </View>
+                    <Text style={[styles.tableCell, { flex: 1, color: colors.textMuted, fontSize: 12 }]}>{s.submitted}</Text>
+                    <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
+                      <View style={[styles.pctPill, { backgroundColor: scoreColor + '18', borderColor: scoreColor + '40' }]}>
+                        <Text style={[styles.pctPillText, { color: scoreColor }]}>{s.avgScore}%</Text>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </>
+        );
+      }
+
+      case 7: { // Submitted — all students with submission counts
+        const ranked = [...(assignStats as any[])].sort((a: any, b: any) => b.submitted - a.submitted);
+        return (
+          <>
+            <View style={styles.modalHeader}>
+              <View style={[styles.tileIconWrap, { backgroundColor: tile.color + '25' }]}>
+                <Feather name={tile.icon} size={16} color={tile.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.modalStat, { color: tile.color }]}>{studentsWithSubmissions} Students</Text>
+                <Text style={styles.modalHeading}>Assignment Submissions Overview</Text>
+              </View>
+              <TouchableOpacity onPress={() => setInsightModal(null)} style={styles.modalClose}>
+                <Feather name="x" size={20} color={colors.textDim} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
+              <Text style={[styles.tableCol, { flex: 1 }]}>Submitted</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Avg Score</Text>
+            </View>
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              {ranked.map((s: any, i: number) => (
+                <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
+                  <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                    <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
+                      <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name || '?')}</Text>
+                    </View>
+                    <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
+                  </View>
+                  <Text style={[styles.tableCell, { flex: 1, color: s.submitted > 0 ? '#5A8A70' : '#B8797E', fontSize: 12, fontWeight: '700' }]}>{s.submitted}</Text>
+                  <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
+                    {s.avgScore != null ? (
+                      <View style={[styles.pctPill, { backgroundColor: tile.color + '18', borderColor: tile.color + '40' }]}>
+                        <Text style={[styles.pctPillText, { color: tile.color }]}>{s.avgScore}%</Text>
+                      </View>
+                    ) : (
+                      <Text style={{ fontSize: 12, color: colors.textDim }}>—</Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </>
+        );
+      }
+
+      // ── Challenge Insight Modals (indices 8-10) ─────────
+      case 8: { // Attempted — students with challenges
+        const withCh = (challStats as any[]).filter((s: any) => s.assigned > 0);
+        return (
+          <>
+            <View style={styles.modalHeader}>
+              <View style={[styles.tileIconWrap, { backgroundColor: tile.color + '25' }]}>
+                <Feather name={tile.icon} size={16} color={tile.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.modalStat, { color: tile.color }]}>{withCh.length} Students</Text>
+                <Text style={styles.modalHeading}>Students with Challenges Assigned</Text>
+              </View>
+              <TouchableOpacity onPress={() => setInsightModal(null)} style={styles.modalClose}>
+                <Feather name="x" size={20} color={colors.textDim} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
+              <Text style={[styles.tableCol, { flex: 1 }]}>Assigned</Text>
+              <Text style={[styles.tableCol, { flex: 1 }]}>Done</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Avg Score</Text>
+            </View>
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              {withCh.length === 0 ? (
+                <View style={styles.modalEmpty}>
+                  <Feather name="target" size={28} color={colors.textDim} />
+                  <Text style={styles.modalEmptyText}>No challenges assigned yet</Text>
+                </View>
+              ) : withCh.map((s: any, i: number) => (
+                <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
+                  <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                    <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
+                      <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name || '?')}</Text>
+                    </View>
+                    <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
+                  </View>
+                  <Text style={[styles.tableCell, { flex: 1, color: colors.textMuted, fontSize: 12 }]}>{s.assigned}</Text>
+                  <Text style={[styles.tableCell, { flex: 1, color: s.completed > 0 ? '#5A8A70' : '#B8797E', fontSize: 12, fontWeight: '700' }]}>{s.completed}</Text>
+                  <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
+                    {s.avgScore != null ? (
+                      <View style={[styles.pctPill, { backgroundColor: tile.color + '18', borderColor: tile.color + '40' }]}>
+                        <Text style={[styles.pctPillText, { color: tile.color }]}>{s.avgScore}%</Text>
+                      </View>
+                    ) : (
+                      <Text style={{ fontSize: 12, color: colors.textDim }}>—</Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </>
+        );
+      }
+
+      case 9: { // Completed — students who finished challenges
+        const done = (challStats as any[]).filter((s: any) => s.completed > 0).sort((a: any, b: any) => b.completed - a.completed);
+        return (
+          <>
+            <View style={styles.modalHeader}>
+              <View style={[styles.tileIconWrap, { backgroundColor: tile.color + '25' }]}>
+                <Feather name={tile.icon} size={16} color={tile.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.modalStat, { color: tile.color }]}>{done.length} Students</Text>
+                <Text style={styles.modalHeading}>Challenges Completed</Text>
+              </View>
+              <TouchableOpacity onPress={() => setInsightModal(null)} style={styles.modalClose}>
+                <Feather name="x" size={20} color={colors.textDim} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
+              <Text style={[styles.tableCol, { flex: 1 }]}>Completed</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Avg Score</Text>
+            </View>
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              {done.length === 0 ? (
+                <View style={styles.modalEmpty}>
+                  <Feather name="flag" size={28} color={colors.textDim} />
+                  <Text style={styles.modalEmptyText}>No challenges completed yet</Text>
+                </View>
+              ) : done.map((s: any, i: number) => (
+                <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
+                  <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                    <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
+                      <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name || '?')}</Text>
+                    </View>
+                    <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
+                  </View>
+                  <Text style={[styles.tableCell, { flex: 1, color: '#5A8A70', fontSize: 12, fontWeight: '700' }]}>{s.completed}</Text>
+                  <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
+                    {s.avgScore != null ? (
+                      <View style={[styles.pctPill, { backgroundColor: tile.color + '18', borderColor: tile.color + '40' }]}>
+                        <Text style={[styles.pctPillText, { color: tile.color }]}>{s.avgScore}%</Text>
+                      </View>
+                    ) : (
+                      <Text style={{ fontSize: 12, color: colors.textDim }}>—</Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </>
+        );
+      }
+
+      case 10: { // Top Scorer — challenge leaderboard
+        const ranked = [...(challStats as any[])].filter((s: any) => s.avgScore != null).sort((a: any, b: any) => b.avgScore - a.avgScore);
+        return (
+          <>
+            <View style={styles.modalHeader}>
+              <View style={[styles.tileIconWrap, { backgroundColor: tile.color + '25' }]}>
+                <Feather name={tile.icon} size={16} color={tile.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.modalStat, { color: tile.color }]}>Challenge Leaderboard</Text>
+                <Text style={styles.modalHeading}>Students Ranked by Challenge Score</Text>
+              </View>
+              <TouchableOpacity onPress={() => setInsightModal(null)} style={styles.modalClose}>
+                <Feather name="x" size={20} color={colors.textDim} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableCol, { width: 32 }]}>#</Text>
+              <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
+              <Text style={[styles.tableCol, { flex: 1 }]}>Done</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Avg Score</Text>
+            </View>
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              {ranked.length === 0 ? (
+                <View style={styles.modalEmpty}>
+                  <Feather name="trending-up" size={28} color={colors.textDim} />
+                  <Text style={styles.modalEmptyText}>No challenge scores yet</Text>
+                </View>
+              ) : ranked.map((s: any, i: number) => {
+                const medal = i === 0 ? '#C5BD96' : i === 1 ? '#7AADA8' : i === 2 ? '#C4836A' : colors.textDim;
+                return (
+                  <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
+                    <Text style={[styles.tableCell, { width: 32, fontWeight: '800', color: medal, fontSize: 14 }]}>{i + 1}</Text>
+                    <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                      <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
+                        <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name || '?')}</Text>
+                      </View>
+                      <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
+                    </View>
+                    <Text style={[styles.tableCell, { flex: 1, color: colors.textMuted, fontSize: 12 }]}>{s.completed || 0}</Text>
+                    <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
+                      <View style={[styles.pctPill, { backgroundColor: tile.color + '18', borderColor: tile.color + '40' }]}>
+                        <Text style={[styles.pctPillText, { color: tile.color }]}>{s.avgScore}%</Text>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
             </ScrollView>
           </>
         );
@@ -686,62 +1058,151 @@ export default function TeacherDashboardScreen({ navigation }: any) {
               </View>
             </TouchableOpacity>
 
-            {/* Class Progress */}
+            {/* Class Progress — Learning Path + Assignments + Challenges */}
             <View style={[styles.card, styles.flex1]}>
               <View style={styles.cardHeader}>
                 <Feather name="activity" size={15} color={colors.accentCyan} />
                 <Text style={styles.cardTitle}>Class Progress</Text>
               </View>
-              <Text style={styles.cardSub}>Average Completion</Text>
+
+              {/* Donut + study time */}
               <View style={styles.donutRow}>
                 <View style={styles.donutWrap}>
-                  <DonutChart progress={avgProgress / 100} size={88} color={colors.primary} trackColor={ringTrack} />
+                  <DonutChart progress={avgProgress / 100} size={72} color={colors.primary} trackColor={ringTrack} />
                   <View style={styles.donutCenter}>
                     <Text style={[styles.donutPct, { color: colors.primary }]}>{avgProgress}%</Text>
                   </View>
                 </View>
                 <View style={styles.donutStats}>
-                  <View style={styles.donutStat}>
-                    <Text style={styles.donutStatVal}>{formatStudyTime(avgStudyMins)}</Text>
-                    <Text style={styles.donutStatLabel}>Avg. Study Time</Text>
+                  <Text style={styles.donutStatVal}>{formatStudyTime(avgStudyMins)}</Text>
+                  <Text style={styles.donutStatLabel}>Avg. Study Time</Text>
+                </View>
+              </View>
+
+              {/* 3 progress bars */}
+              <View style={styles.progressBars}>
+                {/* Learning Path */}
+                <View style={styles.progressItem}>
+                  <View style={styles.progressLabelRow}>
+                    <Feather name="map" size={11} color={colors.primary} />
+                    <Text style={styles.progressLabel}>Learning Path</Text>
+                    <Text style={[styles.progressPct, { color: colors.primary }]}>{avgProgress}%</Text>
                   </View>
-                  <View style={[styles.donutStat, { marginTop: spacing.md }]}>
-                    <Text style={styles.donutStatVal}>{aboveHalfPct}%</Text>
-                    <View style={[styles.challengeBar, { backgroundColor: colors.borderColor }]}>
-                      <View style={[styles.challengeFill, { width: `${aboveHalfPct}%`, backgroundColor: colors.accentPurple }]} />
-                    </View>
-                    <Text style={styles.donutStatLabel}>Above 50% completion</Text>
+                  <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>
+                    <View style={[styles.progressFill, { width: `${avgProgress}%` as any, backgroundColor: colors.primary }]} />
+                  </View>
+                </View>
+
+                {/* Assignments */}
+                <View style={styles.progressItem}>
+                  <View style={styles.progressLabelRow}>
+                    <Feather name="edit-3" size={11} color="#8A8358" />
+                    <Text style={styles.progressLabel}>Assignments</Text>
+                    <Text style={[styles.progressPct, { color: '#8A8358' }]}>{assignSubmitPct}%</Text>
+                  </View>
+                  <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>
+                    <View style={[styles.progressFill, { width: `${assignSubmitPct}%` as any, backgroundColor: '#8A8358' }]} />
+                  </View>
+                </View>
+
+                {/* Challenges */}
+                <View style={styles.progressItem}>
+                  <View style={styles.progressLabelRow}>
+                    <Feather name="target" size={11} color="#C49098" />
+                    <Text style={styles.progressLabel}>Challenges</Text>
+                    <Text style={[styles.progressPct, { color: '#C49098' }]}>{challCompletePct}%</Text>
+                  </View>
+                  <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>
+                    <View style={[styles.progressFill, { width: `${challCompletePct}%` as any, backgroundColor: '#C49098' }]} />
                   </View>
                 </View>
               </View>
             </View>
           </View>
 
-          {/* ── AI Teaching Insights (full width, 2-col grid) ── */}
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Feather name="zap" size={15} color={colors.accentYellow} />
-              <Text style={styles.cardTitle}>AI Teaching Insights</Text>
+          {/* ── AI Teaching Insights — 3 columns ────────────── */}
+          <View style={styles.insightsCard}>
+            <View style={styles.insightsHeader}>
+              <View style={styles.insightsHeaderLeft}>
+                <View style={styles.insightsIconWrap}>
+                  <Feather name="cpu" size={14} color={colors.primary} />
+                </View>
+                <Text style={styles.insightsTitle}>AI Teaching Insights</Text>
+              </View>
             </View>
-            <View style={styles.tileGrid}>
-              {aiInsightTiles.map((tile, i) => (
-                <TouchableOpacity key={i} activeOpacity={0.8}
-                  style={[styles.tile, { borderColor: tile.color + '40', backgroundColor: tile.color + '0C' }]}
-                  onPress={() => setInsightModal({ tileIndex: i })}>
-                  <View style={styles.tileTop}>
-                    <View style={[styles.tileIconWrap, { backgroundColor: tile.color + '25' }]}>
-                      <Feather name={tile.icon} size={15} color={tile.color} />
+
+            <View style={styles.insightCols}>
+              {/* Column 1: Learning Path */}
+              <View style={styles.insightCol}>
+                <View style={styles.colHeader}>
+                  <Feather name="map" size={11} color={colors.primary} />
+                  <Text style={[styles.colHeaderText, { color: colors.primary }]}>Learning Path</Text>
+                </View>
+                {learningPathTiles.map((tile, i) => (
+                  <TouchableOpacity key={`lp-${i}`} activeOpacity={0.7}
+                    style={[styles.colRow, i < learningPathTiles.length - 1 && styles.colRowBorder]}
+                    onPress={() => setInsightModal({ tileIndex: i })}>
+                    <View style={[styles.colRowIcon, { backgroundColor: tile.color + '15' }]}>
+                      <Feather name={tile.icon} size={11} color={tile.color} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.tileStat, { color: tile.color }]}>{tile.stat}</Text>
-                      <Text style={styles.tileLabel}>{tile.label}</Text>
+                      <Text style={styles.colRowTitle} numberOfLines={1}>{tile.title}</Text>
+                      <Text style={styles.colRowSub} numberOfLines={1}>{tile.body}</Text>
                     </View>
-                    <Feather name="chevron-right" size={13} color={tile.color + '80'} />
-                  </View>
-                  <Text style={styles.tileTitle}>{tile.title}</Text>
-                  <Text style={styles.tileBody}>{tile.body}</Text>
-                </TouchableOpacity>
-              ))}
+                    <Text style={[styles.colRowStat, { color: tile.color }]}>{tile.stat}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Column 2: Assignments */}
+              <View style={[styles.insightCol, styles.insightColBorder]}>
+                <View style={styles.colHeader}>
+                  <Feather name="edit-3" size={11} color="#8A8358" />
+                  <Text style={[styles.colHeaderText, { color: '#8A8358' }]}>Assignments</Text>
+                </View>
+                {assignmentTiles.map((tile, i) => {
+                  const idx = learningPathTiles.length + i;
+                  return (
+                    <TouchableOpacity key={`as-${i}`} activeOpacity={0.7}
+                      style={[styles.colRow, i < assignmentTiles.length - 1 && styles.colRowBorder]}
+                      onPress={() => setInsightModal({ tileIndex: idx })}>
+                      <View style={[styles.colRowIcon, { backgroundColor: tile.color + '15' }]}>
+                        <Feather name={tile.icon} size={11} color={tile.color} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.colRowTitle} numberOfLines={1}>{tile.title}</Text>
+                        <Text style={styles.colRowSub} numberOfLines={1}>{tile.body}</Text>
+                      </View>
+                      <Text style={[styles.colRowStat, { color: tile.color }]}>{tile.stat}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Column 3: Challenges */}
+              <View style={[styles.insightCol, styles.insightColBorder]}>
+                <View style={styles.colHeader}>
+                  <Feather name="target" size={11} color="#C49098" />
+                  <Text style={[styles.colHeaderText, { color: '#C49098' }]}>Challenges</Text>
+                </View>
+                {challengeTiles.map((tile, i) => {
+                  const idx = learningPathTiles.length + assignmentTiles.length + i;
+                  return (
+                    <TouchableOpacity key={`ch-${i}`} activeOpacity={0.7}
+                      style={[styles.colRow, i < challengeTiles.length - 1 && styles.colRowBorder]}
+                      onPress={() => setInsightModal({ tileIndex: idx })}>
+                      <View style={[styles.colRowIcon, { backgroundColor: tile.color + '15' }]}>
+                        <Feather name={tile.icon} size={11} color={tile.color} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.colRowTitle} numberOfLines={1}>{tile.title}</Text>
+                        <Text style={styles.colRowSub} numberOfLines={1}>{tile.body}</Text>
+                      </View>
+                      <Text style={[styles.colRowStat, { color: tile.color }]}>{tile.stat}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
           </View>
 
@@ -781,7 +1242,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
       </View>
 
       {/* ── Insight Detail Modal ───────────────────────── */}
-      <Modal visible={!!insightModal} transparent animationType="slide" onRequestClose={() => setInsightModal(null)}>
+      <Modal visible={!!insightModal} transparent animationType="fade" onRequestClose={() => setInsightModal(null)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             {insightModal && renderInsightModalContent(insightModal.tileIndex)}
@@ -846,16 +1307,22 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   overviewVal: { fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
   overviewKey: { fontSize: 10, color: c.textDim, textAlign: 'center', marginTop: 2 },
 
-  donutRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
+  donutRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
   donutWrap: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
   donutCenter: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  donutPct: { fontSize: 17, fontWeight: '800', letterSpacing: -0.5 },
+  donutPct: { fontSize: 14, fontWeight: '800', letterSpacing: -0.5 },
   donutStats: { flex: 1 },
-  donutStat: {},
-  donutStatVal: { fontSize: 16, fontWeight: '800', color: c.textMain },
-  donutStatLabel: { fontSize: 10, color: c.textDim, marginTop: 2 },
-  challengeBar: { height: 5, borderRadius: 3, overflow: 'hidden', marginTop: 4, marginBottom: 2 },
-  challengeFill: { height: '100%', borderRadius: 3 },
+  donutStatVal: { fontSize: 15, fontWeight: '800', color: c.textMain },
+  donutStatLabel: { fontSize: 10, color: c.textDim, marginTop: 1 },
+
+  // 3 progress bars (Learning Path, Assignments, Challenges)
+  progressBars: { gap: spacing.sm },
+  progressItem: { gap: 3 },
+  progressLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  progressLabel: { flex: 1, fontSize: 10, fontWeight: '600', color: c.textMuted },
+  progressPct: { fontSize: 11, fontWeight: '800' },
+  progressTrack: { height: 5, borderRadius: 3, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 3 },
 
   insightRow: { flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.md, alignItems: 'flex-start' },
   insightBorder: { borderBottomWidth: 1, borderBottomColor: c.borderColor },
@@ -863,18 +1330,92 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   insightTitle: { fontSize: 12, fontWeight: '700', color: c.textMain, marginBottom: 3 },
   insightBody: { fontSize: 11, color: c.textMuted, lineHeight: 16 },
 
-  tileGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.sm },
-  tile: {
-    flexBasis: '48%', flexGrow: 1, flexShrink: 1,
-    borderWidth: 1, borderRadius: radius.lg,
-    padding: spacing.md, gap: spacing.sm,
+  // AI Teaching Insights — Aivorah Enchanting Forest card
+  insightsCard: {
+    backgroundColor: c.cardDark,
+    borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: radius.xl, overflow: 'hidden',
   },
-  tileTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  tileIconWrap: { width: 32, height: 32, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  tileStat: { fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
-  tileLabel: { fontSize: 9, color: c.textDim, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 1 },
-  tileTitle: { fontSize: 12, fontWeight: '700', color: c.textMain },
-  tileBody: { fontSize: 11, color: c.textMuted, lineHeight: 15 },
+  insightsHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.xs,
+  },
+  insightsHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  insightsIconWrap: {
+    width: 26, height: 26, borderRadius: 8,
+    backgroundColor: c.primaryGlow,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  insightsTitle: { fontSize: 13, fontWeight: '700', color: c.textMain, letterSpacing: -0.2 },
+
+  // Filter tabs — pill style, Enchanting Forest
+  filterRow: {
+    flexDirection: 'row', gap: 6,
+    paddingHorizontal: spacing.md, paddingBottom: spacing.sm,
+  },
+  filterTab: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 16, borderWidth: 1,
+    borderColor: c.borderColor,
+    backgroundColor: 'transparent',
+  },
+  filterTabActive: {
+    backgroundColor: c.primaryGlow,
+    borderColor: c.primary + '40',
+  },
+  filterTabText: { fontSize: 11, fontWeight: '600', color: c.textDim },
+  filterTabTextActive: { color: c.primary, fontWeight: '700' },
+
+  // Summary strip — compact horizontal stats
+  summaryStrip: {
+    flexDirection: 'row', alignItems: 'center',
+    marginHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    backgroundColor: c.primaryGlow,
+    borderWidth: 1, borderColor: c.primary + '12',
+    marginBottom: spacing.sm,
+  },
+  summaryItem: { flex: 1, alignItems: 'center' },
+  summaryVal: { fontSize: 14, fontWeight: '800', color: c.textMain, letterSpacing: -0.3 },
+  summaryLabel: { fontSize: 8, fontWeight: '600', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 1 },
+  summaryDivider: { width: 1, height: 22, backgroundColor: c.borderColor },
+
+  // 3-column insight layout
+  insightCols: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.sm,
+    paddingBottom: spacing.sm,
+  },
+  insightCol: { flex: 1, paddingHorizontal: spacing.xs },
+  insightColBorder: { borderLeftWidth: 1, borderLeftColor: c.borderColor },
+  colHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingBottom: 6, marginBottom: 2,
+    borderBottomWidth: 1, borderBottomColor: c.borderColor,
+  },
+  colHeaderText: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
+  colRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 6,
+  },
+  colRowBorder: { borderBottomWidth: 1, borderBottomColor: c.borderColor + '50' },
+  colRowIcon: {
+    width: 24, height: 24, borderRadius: 7,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  colRowTitle: { fontSize: 12, fontWeight: '700', color: c.textMain },
+  colRowSub: { fontSize: 10, color: c.textDim, marginTop: 1 },
+  colRowStat: { fontSize: 13, fontWeight: '900', letterSpacing: -0.3, flexShrink: 0 },
+
+  // Keep tileGrid for modal use (legacy)
+  tileGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm,
+    paddingHorizontal: spacing.md, paddingBottom: spacing.md,
+  },
+  // Tile styles (used in modals)
+  tileIconWrap: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
 
   sectionTitle: { fontSize: 15, fontWeight: '700', color: c.textMain },
 
@@ -897,59 +1438,61 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   scoreText: { fontSize: 11, fontWeight: '700' },
   actTime: { fontSize: 11, color: c.textDim },
 
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.55)' },
+  // Modal — centered, Enchanting Forest themed
+  modalOverlay: {
+    flex: 1, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.55)', padding: spacing.lg,
+  },
   modalSheet: {
-    backgroundColor: c.cardDark, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl,
-    borderWidth: 1, borderColor: c.borderColor, maxHeight: '82%', paddingBottom: 32,
+    backgroundColor: c.cardDark, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: c.borderColor,
+    maxHeight: '70%', width: '100%', maxWidth: 520,
+    overflow: 'hidden',
   },
   modalHeader: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    padding: spacing.xl, borderBottomWidth: 1, borderBottomColor: c.borderColor,
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
+    backgroundColor: c.primaryGlow,
+    borderBottomWidth: 1, borderBottomColor: c.borderColor,
   },
-  modalStat: { fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
-  modalHeading: { fontSize: 12, fontWeight: '600', color: c.textMuted, marginTop: 2 },
-  modalClose: { padding: 6 },
-  modalScroll: { paddingHorizontal: spacing.xl },
-  modalEmpty: { alignItems: 'center', gap: 10, paddingVertical: 40 },
-  modalEmptyText: { fontSize: 13, color: c.textDim, textAlign: 'center' },
-  modalAvatar: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  modalAvatarText: { fontSize: 13, fontWeight: '800' },
+  modalStat: { fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
+  modalHeading: { fontSize: 11, fontWeight: '600', color: c.textMuted, marginTop: 1 },
+  modalClose: {
+    padding: 4, borderRadius: 8,
+    backgroundColor: c.borderColor + '40',
+  },
+  modalScroll: { paddingHorizontal: spacing.md },
+  modalEmpty: { alignItems: 'center', gap: 8, paddingVertical: 28 },
+  modalEmptyText: { fontSize: 12, color: c.textDim, textAlign: 'center' },
+  modalAvatar: {
+    width: 30, height: 30, borderRadius: 15,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  modalAvatarText: { fontSize: 10, fontWeight: '800' },
   modalRowBorder: { borderBottomWidth: 1, borderBottomColor: c.borderColor },
 
-  // Table layout
+  // Table layout — compact
   tableHeader: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: spacing.xl, paddingVertical: spacing.sm,
-    backgroundColor: c.bgDark, borderBottomWidth: 1, borderBottomColor: c.borderColor,
+    paddingHorizontal: spacing.md, paddingVertical: 6,
+    backgroundColor: c.bgDark,
+    borderBottomWidth: 1, borderBottomColor: c.borderColor,
   },
-  tableCol: { fontSize: 10, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.5 },
-  tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md, paddingHorizontal: spacing.xl },
-  tableRowAlt: { backgroundColor: c.bgDark + '60' },
+  tableCol: { fontSize: 9, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.4 },
+  tableRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: spacing.sm, paddingHorizontal: spacing.md,
+  },
+  tableRowAlt: { backgroundColor: c.primaryGlow + '30' },
   tableCell: {},
-  tableStudentName: { fontSize: 13, fontWeight: '700', color: c.textMain },
-  tableStudentGrade: { fontSize: 10, color: c.textDim, marginTop: 1 },
+  tableStudentName: { fontSize: 12, fontWeight: '700', color: c.textMain },
+  tableStudentGrade: { fontSize: 9, color: c.textDim, marginTop: 1 },
   tableChip: {
-    fontSize: 10, fontWeight: '700', paddingHorizontal: 7, paddingVertical: 3,
-    borderRadius: 6, borderWidth: 1, alignSelf: 'flex-start',
+    fontSize: 9, fontWeight: '700', paddingHorizontal: 6, paddingVertical: 2,
+    borderRadius: 5, borderWidth: 1, alignSelf: 'flex-start',
   },
   pctPill: {
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1,
+    paddingHorizontal: 7, paddingVertical: 2, borderRadius: 7, borderWidth: 1,
   },
-  pctPillText: { fontSize: 11, fontWeight: '800' },
-
-  // Peak time bars
-  peakRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
-  peakHour: { fontSize: 12, fontWeight: '600', color: c.textMuted, width: 80 },
-  peakBarWrap: { flex: 1, height: 8, backgroundColor: c.borderColor, borderRadius: 4, overflow: 'hidden' },
-  peakBarFill: { height: '100%', borderRadius: 4 },
-  peakCount: { fontSize: 12, fontWeight: '700', width: 72, textAlign: 'right' },
-
-  // Legacy (kept for safety)
-  modalRow: { paddingVertical: spacing.lg, flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },
-  modalRowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  modalName: { fontSize: 14, fontWeight: '700', color: c.textMain },
-  modalPct: { fontSize: 13, fontWeight: '800' },
-  modalSub: { fontSize: 12, color: c.textMuted, lineHeight: 16 },
-  modalBarBg: { height: 5, backgroundColor: c.borderColor, borderRadius: 3, overflow: 'hidden' },
-  modalBarFill: { height: '100%', borderRadius: 3 },
+  pctPillText: { fontSize: 10, fontWeight: '800' },
 });

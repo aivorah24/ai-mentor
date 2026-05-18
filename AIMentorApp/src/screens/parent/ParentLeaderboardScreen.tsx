@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
@@ -51,7 +52,12 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
     setRefreshing(false);
   }, []);
 
-  useEffect(() => { fetchLeaderboard(); }, [fetchLeaderboard]);
+  // Refresh leaderboard every time the screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchLeaderboard();
+    }, [fetchLeaderboard])
+  );
 
   // Fetch children to know which rows to highlight
   useEffect(() => {

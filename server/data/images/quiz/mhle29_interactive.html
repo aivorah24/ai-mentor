@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MHLE-29 — PYP 4 Mathematics</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; color: #222; line-height: 1.5; padding: 30px; max-width: 900px; margin: 0 auto; }
+
+    /* Header */
+    .ws-header { text-align: center; margin-bottom: 8px; }
+    .ws-header img { height: 60px; }
+    .ws-header-row { display: flex; justify-content: space-between; align-items: baseline; margin: 10px 0 4px; }
+    .ws-header-row .left { font-weight: 700; font-size: 14px; }
+    .ws-header-row .center { font-weight: 700; font-size: 16px; }
+    .ws-header-row .right { font-weight: 700; font-size: 14px; }
+    .ws-subject { font-size: 14px; margin-bottom: 4px; }
+
+    /* Purpose box */
+    .purpose-box { border: 1px solid #222; padding: 12px 16px; margin: 10px 0 16px; font-size: 14px; }
+    .purpose-box strong { font-size: 14px; }
+    .purpose-box ul { margin: 6px 0 0 20px; }
+    .purpose-box ul li { margin: 3px 0; }
+
+    /* Section headers */
+    .section-title { font-weight: 700; font-size: 15px; margin: 20px 0 4px; }
+    .task-title { font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+
+    /* Conversion table (Task 1) */
+    .conv-table { width: 100%; border-collapse: collapse; border: 1px solid #222; margin-bottom: 20px; }
+    .conv-table td { border: 1px solid #222; padding: 0; vertical-align: top; }
+    .conv-table .diagram-cell { padding: 10px; text-align: center; }
+    .conv-table .diagram-cell img { max-width: 260px; height: auto; }
+    .conv-table .q-cell { padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; min-height: 38px; }
+    .conv-table .q-cell .q-left { font-size: 14px; }
+    .conv-table .q-cell input { width: 80px; border: none; border-bottom: 1.5px solid #888; font-size: 14px; text-align: center; outline: none; padding: 2px 4px; background: transparent; }
+    .conv-table .q-cell input:focus { border-bottom-color: #2196f3; }
+    .conv-table .q-cell .q-unit { font-size: 14px; font-style: italic; margin-left: 6px; }
+    .conv-table .q-cell .check-icon { cursor: pointer; font-size: 16px; margin-left: 6px; opacity: 0.5; }
+    .conv-table .q-cell .check-icon:hover { opacity: 1; }
+
+    /* Task 2 — Fractions table */
+    .frac-table { width: 100%; border-collapse: collapse; border: 1px solid #222; margin-bottom: 20px; }
+    .frac-table td { border: 1px solid #222; padding: 10px 14px; vertical-align: middle; font-size: 14px; }
+    .frac { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.1; }
+    .frac .num { border-bottom: 1.5px solid #222; padding: 0 4px 2px; }
+    .frac .den { padding: 2px 4px 0; }
+    .frac-eq { display: inline-flex; align-items: center; gap: 8px; }
+    .frac-eq input { width: 40px; border: none; border-bottom: 1.5px solid #888; text-align: center; font-size: 14px; outline: none; background: transparent; }
+    .frac-eq input:focus { border-bottom-color: #2196f3; }
+    .example-box { background: #fffde7; padding: 10px 14px; font-size: 13px; line-height: 1.6; }
+
+    /* Task 3 — Solve */
+    .solve-table { width: 100%; border-collapse: collapse; border: 1px solid #222; margin-bottom: 20px; }
+    .solve-table td { border: 1px solid #222; padding: 12px 16px; vertical-align: top; font-size: 14px; width: 50%; }
+    .solve-table textarea { width: 100%; min-height: 60px; border: 1px solid #ccc; border-radius: 4px; padding: 6px; font-size: 13px; resize: vertical; margin-top: 8px; font-family: inherit; }
+
+    /* Task 4 — Compare fractions */
+    .compare-table { width: 100%; border-collapse: collapse; border: 1px solid #222; margin-bottom: 20px; }
+    .compare-table td { border: 1px solid #222; padding: 10px 14px; vertical-align: middle; font-size: 14px; }
+    .compare-row { display: inline-flex; align-items: center; gap: 8px; }
+    .compare-row select { width: 45px; border: 1.5px solid #888; border-radius: 4px; font-size: 16px; text-align: center; padding: 2px; background: #fff; }
+
+    /* Task 5 & Enrichment */
+    .word-problem { margin: 10px 0 20px; font-size: 14px; line-height: 1.6; }
+    .word-problem textarea { width: 100%; min-height: 80px; border: 1px solid #ccc; border-radius: 4px; padding: 8px; font-size: 13px; resize: vertical; margin-top: 8px; font-family: inherit; }
+    .enrichment-box { border: 1px solid #222; padding: 14px 16px; margin: 10px 0 20px; font-size: 14px; line-height: 1.6; }
+    .enrichment-box textarea { width: 100%; min-height: 100px; border: 1px solid #ccc; border-radius: 4px; padding: 8px; font-size: 13px; resize: vertical; margin-top: 8px; font-family: inherit; }
+
+    /* Feedback */
+    .feedback-box { border: 1px solid #222; padding: 14px 16px; margin: 30px 0; min-height: 80px; }
+    .feedback-box strong { font-size: 14px; }
+
+    /* Footer */
+    .footer { font-size: 12px; color: #666; margin-top: 20px; display: flex; justify-content: space-between; }
+
+    /* Result feedback */
+    .q-result { font-size: 12px; margin-top: 2px; min-height: 16px; }
+    .correct { color: #2e7d32; font-weight: 600; }
+    .wrong { color: #c62828; font-weight: 600; }
+
+    /* Score bar */
+    .score-bar { position: fixed; top: 0; left: 0; right: 0; background: #1a237e; color: #fff; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .score-bar .score-num { font-weight: 800; font-size: 18px; }
+    body { padding-top: 50px; }
+
+    @media print { .score-bar { display: none; } body { padding-top: 0; } }
+  </style>
+</head>
+<body>
+
+<div class="score-bar">
+  <span>MHLE-29 Interactive Worksheet</span>
+  <span>Score: <span class="score-num" id="scoreDisplay">0</span> / <span id="totalDisplay">26</span></span>
+</div>
+
+<!-- ═══ HEADER ═══ -->
+<div class="ws-header">
+  <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
+    <span style="font-weight:700;font-size:15px;">THE SHRI RAM<br>ACADEMY</span>
+    <span style="font-size:13px;color:#0277bd;">Primary Years<br>Programme</span>
+  </div>
+</div>
+
+<div class="ws-header-row">
+  <span class="left">Name of Learner: _______________</span>
+  <span class="center">PYP 4</span>
+  <span class="right">Time Period: 13 March - 18 March</span>
+</div>
+<div class="ws-subject"><strong>Subject Focus:</strong> Mathematics <span style="float:right;font-weight:700;">MHLE - 29</span></div>
+
+<!-- Purpose box -->
+<div class="purpose-box">
+  <strong>Purpose:</strong> To apply the conceptual understanding of fractions and measurement in real contexts.<br>
+  <strong>Learning Outcome:</strong> Learners
+  <ul>
+    <li>select and use appropriate standard metric units for estimating, describing, comparing, and measuring weight and capacity.</li>
+    <li>reduce fractions to their simplest form.</li>
+  </ul>
+</div>
+
+<!-- ═══ MUST DO — TASK 1 ═══ -->
+<div class="section-title">Must Do</div>
+<div class="task-title">Task 1: Convert the following units of measurement.</div>
+
+<table class="conv-table">
+  <!-- Diagram row -->
+  <tr>
+    <td class="diagram-cell" style="width:50%;">
+      <img src="/data/images/quiz/mhle29_p1_crop4.png" alt="kg ↔ g ↔ mg conversion diagram">
+    </td>
+    <td class="diagram-cell" style="width:50%;">
+      <img src="/data/images/quiz/mhle29_p1_crop5.png" alt="kL ↔ L ↔ mL conversion diagram">
+    </td>
+  </tr>
+  <!-- a) row -->
+  <tr>
+    <td>
+      <div class="q-cell">
+        <span class="q-left">a) 4 kg =</span>
+        <span><input type="text" id="t1a" placeholder="?" data-answer="4000"> <span class="q-unit">gm</span>
+        <span class="check-icon" onclick="check('t1a')">&#10003;</span></span>
+      </div>
+      <div class="q-result" id="t1a-r"></div>
+    </td>
+    <td>
+      <div class="q-cell">
+        <span class="q-left">a) 5 <i>l</i> =</span>
+        <span><input type="text" id="t1f" placeholder="?" data-answer="5000"> <span class="q-unit"><i>ml</i></span>
+        <span class="check-icon" onclick="check('t1f')">&#10003;</span></span>
+      </div>
+      <div class="q-result" id="t1f-r"></div>
+    </td>
+  </tr>
+  <!-- b) row -->
+  <tr>
+    <td>
+      <div class="q-cell">
+        <span class="q-left">b) 12000 mg =</span>
+        <span><input type="text" id="t1b" placeholder="?" data-answer="12"> <span class="q-unit">gm</span>
+        <span class="check-icon" onclick="check('t1b')">&#10003;</span></span>
+      </div>
+      <div class="q-result" id="t1b-r"></div>
+    </td>
+    <td>
+      <div class="q-cell">
+        <span class="q-left">b) 1000 <i>ml</i> =</span>
+        <span><input type="text" id="t1g" placeholder="?" data-answer="1"> <span class="q-unit"><i>l</i></span>
+        <span class="check-icon" onclick="check('t1g')">&#10003;</span></span>
+      </div>
+      <div class="q-result" id="t1g-r"></div>
+    </td>
+  </tr>
+  <!-- c) row -->
+  <tr>
+    <td>
+      <div class="q-cell">
+        <span class="q-left">c) 10000 gm =</span>
+        <span><input type="text" id="t1c" placeholder="?" data-answer="10"> <span class="q-unit">kg</span>
+        <span class="check-icon" onclick="check('t1c')">&#10003;</span></span>
+      </div>
+      <div class="q-result" id="t1c-r"></div>
+    </td>
+    <td>
+      <div class="q-cell">
+        <span class="q-left">c) 13 <i>l</i> =</span>
+        <span><input type="text" id="t1h" placeholder="?" data-answer="13000"> <span class="q-unit"><i>ml</i></span>
+        <span class="check-icon" onclick="check('t1h')">&#10003;</span></span>
+      </div>
+      <div class="q-result" id="t1h-r"></div>
+    </td>
+  </tr>
+  <!-- d) row -->
+  <tr>
+    <td>
+      <div class="q-cell">
+        <span class="q-left">d) 3 kg =</span>
+        <span><input type="text" id="t1d" placeholder="?" data-answer="3000"> <span class="q-unit">mg</span>
+        <span class="check-icon" onclick="check('t1d')">&#10003;</span></span>
+      </div>
+      <div class="q-result" id="t1d-r"></div>
+    </td>
+    <td>
+      <div class="q-cell">
+        <span class="q-left">d) 15000 <i>ml</i> =</span>
+        <span><input type="text" id="t1i" placeholder="?" data-answer="15"> <span class="q-unit"><i>l</i></span>
+        <span class="check-icon" onclick="check('t1i')">&#10003;</span></span>
+      </div>
+      <div class="q-result" id="t1i-r"></div>
+    </td>
+  </tr>
+  <!-- e) row -->
+  <tr>
+    <td>
+      <div class="q-cell">
+        <span class="q-left">e) 10 gm =</span>
+        <span><input type="text" id="t1e" placeholder="?" data-answer="10000"> <span class="q-unit">mg</span>
+        <span class="check-icon" onclick="check('t1e')">&#10003;</span></span>
+      </div>
+      <div class="q-result" id="t1e-r"></div>
+    </td>
+    <td>
+      <div class="q-cell">
+        <span class="q-left">e) 2000 <i>l</i> =</span>
+        <span><input type="text" id="t1j" placeholder="?" data-answer="2"> <span class="q-unit"><i>kl</i></span>
+        <span class="check-icon" onclick="check('t1j')">&#10003;</span></span>
+      </div>
+      <div class="q-result" id="t1j-r"></div>
+    </td>
+  </tr>
+</table>
+
+<!-- ═══ TASK 2 — Reduce fractions ═══ -->
+<div class="task-title">Task 2: Reduce the fractions to their lowest terms.</div>
+
+<table class="frac-table">
+  <tr>
+    <td>
+      <div class="frac-eq">1) <span class="frac"><span class="num">28</span><span class="den">50</span></span> = <span class="frac"><span class="num"><input type="text" id="t2_1n" data-answer="14" style="width:30px;"></span><span class="den"><input type="text" id="t2_1d" data-answer="25" style="width:30px;"></span></span>
+      <span class="check-icon" onclick="checkFrac('t2_1')">&#10003;</span></div>
+      <div class="q-result" id="t2_1-r"></div>
+    </td>
+    <td>
+      <div class="frac-eq">5) <span class="frac"><span class="num">32</span><span class="den">48</span></span> = <span class="frac"><span class="num"><input type="text" id="t2_5n" data-answer="2" style="width:30px;"></span><span class="den"><input type="text" id="t2_5d" data-answer="3" style="width:30px;"></span></span>
+      <span class="check-icon" onclick="checkFrac('t2_5')">&#10003;</span></div>
+      <div class="q-result" id="t2_5-r"></div>
+    </td>
+    <td rowspan="4" class="example-box">
+      <strong>Example:</strong><br>
+      To reduce 18/21 we divide both the numerator and denominator by their common factor.<br><br>
+      <div class="frac-eq" style="justify-content:center;">
+        <span class="frac"><span class="num">18 &divide; 3</span><span class="den">21 &divide; 3</span></span> = <span class="frac"><span class="num">6</span><span class="den">7</span></span>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="frac-eq">2) <span class="frac"><span class="num">8</span><span class="den">24</span></span> = <span class="frac"><span class="num"><input type="text" id="t2_2n" data-answer="1" style="width:30px;"></span><span class="den"><input type="text" id="t2_2d" data-answer="3" style="width:30px;"></span></span>
+      <span class="check-icon" onclick="checkFrac('t2_2')">&#10003;</span></div>
+      <div class="q-result" id="t2_2-r"></div>
+    </td>
+    <td>
+      <div class="frac-eq">6) <span class="frac"><span class="num">36</span><span class="den">54</span></span> = <span class="frac"><span class="num"><input type="text" id="t2_6n" data-answer="2" style="width:30px;"></span><span class="den"><input type="text" id="t2_6d" data-answer="3" style="width:30px;"></span></span>
+      <span class="check-icon" onclick="checkFrac('t2_6')">&#10003;</span></div>
+      <div class="q-result" id="t2_6-r"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="frac-eq">3) <span class="frac"><span class="num">30</span><span class="den">54</span></span> = <span class="frac"><span class="num"><input type="text" id="t2_3n" data-answer="5" style="width:30px;"></span><span class="den"><input type="text" id="t2_3d" data-answer="9" style="width:30px;"></span></span>
+      <span class="check-icon" onclick="checkFrac('t2_3')">&#10003;</span></div>
+      <div class="q-result" id="t2_3-r"></div>
+    </td>
+    <td>
+      <div class="frac-eq">7) <span class="frac"><span class="num">14</span><span class="den">56</span></span> = <span class="frac"><span class="num"><input type="text" id="t2_7n" data-answer="1" style="width:30px;"></span><span class="den"><input type="text" id="t2_7d" data-answer="4" style="width:30px;"></span></span>
+      <span class="check-icon" onclick="checkFrac('t2_7')">&#10003;</span></div>
+      <div class="q-result" id="t2_7-r"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="frac-eq">4) <span class="frac"><span class="num">18</span><span class="den">42</span></span> = <span class="frac"><span class="num"><input type="text" id="t2_4n" data-answer="3" style="width:30px;"></span><span class="den"><input type="text" id="t2_4d" data-answer="7" style="width:30px;"></span></span>
+      <span class="check-icon" onclick="checkFrac('t2_4')">&#10003;</span></div>
+      <div class="q-result" id="t2_4-r"></div>
+    </td>
+    <td>
+      <div class="frac-eq">8) <span class="frac"><span class="num">18</span><span class="den">28</span></span> = <span class="frac"><span class="num"><input type="text" id="t2_8n" data-answer="9" style="width:30px;"></span><span class="den"><input type="text" id="t2_8d" data-answer="14" style="width:30px;"></span></span>
+      <span class="check-icon" onclick="checkFrac('t2_8')">&#10003;</span></div>
+      <div class="q-result" id="t2_8-r"></div>
+    </td>
+  </tr>
+</table>
+
+<!-- ═══ COULD DO — TASK 3 ═══ -->
+<div class="section-title">Could do:</div>
+<div class="task-title">Task 3: Solve the following.</div>
+
+<table class="solve-table">
+  <tr>
+    <td>
+      a) 40 <i>l</i> 300 <i>ml</i> + 12 <i>l</i> 985 <i>ml</i>
+      <textarea id="t3a" placeholder="Show your working here..."></textarea>
+      <div style="margin-top:6px;">
+        <span style="font-size:13px;">Answer: </span>
+        <input type="text" id="t3a-ans" data-answer="53 l 285 ml" placeholder="? l ? ml" style="border:none;border-bottom:1.5px solid #888;font-size:14px;width:120px;outline:none;">
+        <span class="check-icon" onclick="checkText('t3a-ans')">&#10003;</span>
+      </div>
+      <div class="q-result" id="t3a-ans-r"></div>
+    </td>
+    <td>
+      b) 2 <i>l</i> 200 <i>ml</i> &minus; 1 <i>l</i> 300 <i>ml</i>
+      <textarea id="t3b" placeholder="Show your working here..."></textarea>
+      <div style="margin-top:6px;">
+        <span style="font-size:13px;">Answer: </span>
+        <input type="text" id="t3b-ans" data-answer="900 ml" placeholder="? ml" style="border:none;border-bottom:1.5px solid #888;font-size:14px;width:120px;outline:none;">
+        <span class="check-icon" onclick="checkText('t3b-ans')">&#10003;</span>
+      </div>
+      <div class="q-result" id="t3b-ans-r"></div>
+    </td>
+  </tr>
+</table>
+
+<!-- ═══ TASK 4 — Compare fractions ═══ -->
+<div class="task-title">Task 4: Compare fractions with &lt; or &gt; or = in the box.</div>
+
+<table class="compare-table">
+  <tr>
+    <td>
+      <div class="compare-row">1a. <span class="frac"><span class="num">7</span><span class="den">11</span></span>
+      <select id="t4_1a" data-answer=">"><option value="">?</option><option value="<">&lt;</option><option value=">">&gt;</option><option value="=">=</option></select>
+      <span class="frac"><span class="num">6</span><span class="den">11</span></span>
+      <span class="check-icon" onclick="checkSelect('t4_1a')">&#10003;</span></div>
+      <div class="q-result" id="t4_1a-r"></div>
+    </td>
+    <td>
+      <div class="compare-row">1b. <span class="frac"><span class="num">1</span><span class="den">2</span></span>
+      <select id="t4_1b" data-answer="<"><option value="">?</option><option value="<">&lt;</option><option value=">">&gt;</option><option value="=">=</option></select>
+      <span class="frac"><span class="num">9</span><span class="den">9</span></span>
+      <span class="check-icon" onclick="checkSelect('t4_1b')">&#10003;</span></div>
+      <div class="q-result" id="t4_1b-r"></div>
+    </td>
+    <td>
+      <div class="compare-row">1c. <span class="frac"><span class="num">11</span><span class="den">6</span></span>
+      <select id="t4_1c" data-answer=">"><option value="">?</option><option value="<">&lt;</option><option value=">">&gt;</option><option value="=">=</option></select>
+      <span class="frac"><span class="num">1</span><span class="den">2</span></span>
+      <span class="check-icon" onclick="checkSelect('t4_1c')">&#10003;</span></div>
+      <div class="q-result" id="t4_1c-r"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="compare-row">2a. <span class="frac"><span class="num">1</span><span class="den">2</span></span>
+      <select id="t4_2a" data-answer="<"><option value="">?</option><option value="<">&lt;</option><option value=">">&gt;</option><option value="=">=</option></select>
+      <span class="frac"><span class="num">11</span><span class="den">2</span></span>
+      <span class="check-icon" onclick="checkSelect('t4_2a')">&#10003;</span></div>
+      <div class="q-result" id="t4_2a-r"></div>
+    </td>
+    <td>
+      <div class="compare-row">2b. <span class="frac"><span class="num">8</span><span class="den">2</span></span>
+      <select id="t4_2b" data-answer=">"><option value="">?</option><option value="<">&lt;</option><option value=">">&gt;</option><option value="=">=</option></select>
+      <span class="frac"><span class="num">8</span><span class="den">1</span></span>
+      <span class="check-icon" onclick="checkSelect('t4_2b')">&#10003;</span></div>
+      <div class="q-result" id="t4_2b-r"></div>
+    </td>
+    <td>
+      <div class="compare-row">2c. <span class="frac"><span class="num">8</span><span class="den">8</span></span>
+      <select id="t4_2c" data-answer=">"><option value="">?</option><option value="<">&lt;</option><option value=">">&gt;</option><option value="=">=</option></select>
+      <span class="frac"><span class="num">8</span><span class="den">12</span></span>
+      <span class="check-icon" onclick="checkSelect('t4_2c')">&#10003;</span></div>
+      <div class="q-result" id="t4_2c-r"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="compare-row">3a. <span class="frac"><span class="num">1</span><span class="den">10</span></span>
+      <select id="t4_3a" data-answer="<"><option value="">?</option><option value="<">&lt;</option><option value=">">&gt;</option><option value="=">=</option></select>
+      <span class="frac"><span class="num">8</span><span class="den">8</span></span>
+      <span class="check-icon" onclick="checkSelect('t4_3a')">&#10003;</span></div>
+      <div class="q-result" id="t4_3a-r"></div>
+    </td>
+    <td>
+      <div class="compare-row">3b. <span class="frac"><span class="num">1</span><span class="den">7</span></span>
+      <select id="t4_3b" data-answer="<"><option value="">?</option><option value="<">&lt;</option><option value=">">&gt;</option><option value="=">=</option></select>
+      <span class="frac"><span class="num">12</span><span class="den">7</span></span>
+      <span class="check-icon" onclick="checkSelect('t4_3b')">&#10003;</span></div>
+      <div class="q-result" id="t4_3b-r"></div>
+    </td>
+    <td>
+      <div class="compare-row">3c. <span class="frac"><span class="num">7</span><span class="den">7</span></span>
+      <select id="t4_3c" data-answer=">"><option value="">?</option><option value="<">&lt;</option><option value=">">&gt;</option><option value="=">=</option></select>
+      <span class="frac"><span class="num">12</span><span class="den">6</span></span>
+      <span class="check-icon" onclick="checkSelect('t4_3c')">&#10003;</span></div>
+      <div class="q-result" id="t4_3c-r"></div>
+    </td>
+  </tr>
+</table>
+
+<!-- ═══ TASK 5 — Word problem ═══ -->
+<div class="task-title">Task 5: Application of measurement in real situations.</div>
+<div class="word-problem">
+  A can of 14 <i>l</i> of oil was purchased for an event. After the event, 6 <i>l</i> 325 <i>ml</i> of oil was left in the can. How much oil was used for the event?
+  <textarea id="t5" placeholder="Show your working and answer here..."></textarea>
+  <div style="margin-top:6px;">
+    <span style="font-size:13px;">Answer: </span>
+    <input type="text" id="t5-ans" data-answer="7 l 675 ml" placeholder="? l ? ml" style="border:none;border-bottom:1.5px solid #888;font-size:14px;width:120px;outline:none;">
+    <span class="check-icon" onclick="checkText('t5-ans')">&#10003;</span>
+  </div>
+  <div class="q-result" id="t5-ans-r"></div>
+</div>
+
+<!-- ═══ ENRICHMENT ═══ -->
+<div class="enrichment-box">
+  <strong>Enrichment Task:</strong> A bottle of juice holds 900 <i>ml</i> of juice, can three such bottles be poured into a jar of 2900 <i>l</i>. Explain your answer with proper reasoning and show your thinking in the workspace provided.
+  <textarea id="enrich" placeholder="Show your reasoning and working here..."></textarea>
+  <div style="margin-top:6px;">
+    <span style="font-size:13px;">Answer (Yes/No + reasoning): </span>
+    <input type="text" id="enrich-ans" data-answer="Yes" placeholder="Yes / No" style="border:none;border-bottom:1.5px solid #888;font-size:14px;width:80px;outline:none;">
+    <span class="check-icon" onclick="checkText('enrich-ans')">&#10003;</span>
+  </div>
+  <div class="q-result" id="enrich-ans-r"></div>
+</div>
+
+<!-- Feedback -->
+<div class="feedback-box">
+  <strong>Feedback to Feedforward:</strong>
+  <textarea style="width:100%;min-height:50px;border:none;outline:none;font-size:13px;margin-top:6px;resize:vertical;" placeholder="Teacher feedback..."></textarea>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span>Credits: Team PYP 4</span>
+  <span>Resources: Oxford Mathematics, homeschoolmath.net</span>
+</div>
+
+<script>
+  let score = 0;
+  const done = new Set();
+
+  function mark(id, ok) {
+    const el = document.getElementById(id + '-r');
+    if (ok) {
+      el.innerHTML = '<span class="correct">&#10004; Correct!</span>';
+      if (!done.has(id)) { score++; done.add(id); updateScore(); }
+    } else {
+      el.innerHTML = '<span class="wrong">&#10008; Try again</span>';
+    }
+  }
+
+  function updateScore() {
+    document.getElementById('scoreDisplay').textContent = score;
+  }
+
+  function check(id) {
+    const inp = document.getElementById(id);
+    const answer = inp.dataset.answer;
+    const val = inp.value.trim();
+    if (!val) return;
+    mark(id, parseFloat(val) === parseFloat(answer));
+  }
+
+  function checkFrac(prefix) {
+    const nInp = document.getElementById(prefix + 'n');
+    const dInp = document.getElementById(prefix + 'd');
+    const nVal = parseInt(nInp.value.trim());
+    const dVal = parseInt(dInp.value.trim());
+    const nAns = parseInt(nInp.dataset.answer);
+    const dAns = parseInt(dInp.dataset.answer);
+    if (isNaN(nVal) || isNaN(dVal)) return;
+    // Accept equivalent fractions
+    const ok = (nVal * dAns === dVal * nAns) && nVal > 0 && dVal > 0;
+    mark(prefix, ok);
+  }
+
+  function checkSelect(id) {
+    const sel = document.getElementById(id);
+    const val = sel.value;
+    if (!val) return;
+    mark(id, val === sel.dataset.answer);
+  }
+
+  function checkText(id) {
+    const inp = document.getElementById(id);
+    const answer = inp.dataset.answer.toLowerCase().replace(/\s+/g, '');
+    const val = inp.value.trim().toLowerCase().replace(/\s+/g, '');
+    if (!val) return;
+    mark(id, val === answer || val.includes(answer));
+  }
+
+  // Enter key to check
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+      const btn = e.target.parentElement.querySelector('.check-icon');
+      if (btn) btn.click();
+    }
+  });
+</script>
+</body>
+</html>

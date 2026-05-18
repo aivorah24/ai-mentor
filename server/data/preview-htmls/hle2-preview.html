@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PYP:2 Telugu Practice Task Sheet - Letters and Words - Aivorah</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
+
+    /* ── Header — Aivorah Enchanted Forest ── */
+    .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 28px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); }
+    .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 4px; }
+    .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; }
+    .header-meta { font-size: 13px; color: #5A6B69; margin-top: 4px; }
+
+    /* ── Score Badge ── */
+    .score { position: fixed; top: 20px; right: 24px; width: 76px; height: 76px; border-radius: 50%;
+             background: linear-gradient(135deg, #93B0AC, #7AADA8); color: #0F0F0F;
+             display: flex; flex-direction: column; align-items: center; justify-content: center;
+             box-shadow: 0 4px 20px rgba(147,176,172,0.3); z-index: 100; }
+    .score-num { font-size: 22px; font-weight: 800; line-height: 1; }
+    .score-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 2px; }
+
+    /* ── Progress ── */
+    .progress-wrap { padding: 20px 0 4px; }
+    .progress-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5A6B69; margin-bottom: 8px; }
+    .progress-bar { background: #252525; border-radius: 6px; height: 12px; overflow: hidden; border: 1px solid rgba(195,220,216,0.08); }
+    .progress-fill { background: linear-gradient(90deg, #93B0AC, #C3DCD8); height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+    .progress-pct { text-align: right; font-size: 12px; color: #93B0AC; font-weight: 600; margin-top: 4px; }
+
+    /* ── Container ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px 60px; }
+
+    /* ── Concepts ── */
+    .concepts-row { display: flex; gap: 16px; margin: 24px 0; flex-wrap: wrap; }
+    .concept-card { flex: 1; min-width: 220px; padding: 20px; border-radius: 12px; color: #F0EEEC; }
+    .concept-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #A8B5B3; line-height: 1.5; }
+    .concept-unit { margin-top: 8px; font-size: 12px; color: #5A6B69; }
+    .concept-icon { font-size: 20px; margin-bottom: 6px; }
+
+    /* ── Question cards ── */
+    .q-card { background: #1C1C1C; padding: 20px 24px; border-radius: 10px; margin: 14px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid rgba(195,220,216,0.12); }
+    .q-text { font-size: 15px; color: #F0EEEC; margin-bottom: 14px; line-height: 1.6; }
+    .q-text strong { color: #C3DCD8; }
+
+    /* ── Input row ── */
+    .q-input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .q-label { font-weight: 700; font-size: 14px; color: #A8B5B3; }
+    .q-input { width: 130px; padding: 10px 12px; border: 2px solid rgba(195,220,216,0.25); border-radius: 8px;
+               font-size: 16px; text-align: center; transition: border-color 0.2s; background: #252525; color: #F0EEEC; }
+    .q-input:focus { border-color: #93B0AC; outline: none; box-shadow: 0 0 0 3px rgba(147,176,172,0.2); }
+    .q-unit { font-size: 14px; color: #A8B5B3; font-weight: 500; }
+
+    /* ── MCQ ── */
+    .mcq-opt { display: block; margin: 8px 0; padding: 10px 14px; border-radius: 8px;
+               border: 1.5px solid rgba(195,220,216,0.15); cursor: pointer; font-size: 14px; color: #F0EEEC; transition: all 0.2s; }
+    .mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .mcq-opt input { margin-right: 8px; }
+
+    /* ── Buttons ── */
+    .btn-check { background: #93B0AC; color: #0F0F0F; border: none; padding: 10px 24px; border-radius: 8px;
+                 font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+    .btn-check:hover { background: #7AADA8; transform: translateY(-1px); }
+    .btn-hint { background: #C5BD96; color: #0F0F0F; border: none; padding: 10px 20px; border-radius: 8px;
+                font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .btn-hint:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-show { background: #93B0AC; color: #0F0F0F; border: none; padding: 8px 18px; border-radius: 6px;
+                font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 10px; }
+    .btn-show:hover { background: #7AADA8; }
+
+    /* ── Feedback boxes ── */
+    .hint-box { margin-top: 12px; padding: 14px 16px; background: rgba(197,189,150,0.1); border-radius: 8px;
+                border-left: 4px solid #C5BD96; color: #C5BD96; font-size: 14px; line-height: 1.5; }
+    .result-box { margin-top: 8px; font-size: 14px; min-height: 6px; }
+    .solution-box { margin-top: 12px; padding: 16px 18px; background: rgba(147,176,172,0.1); border-radius: 8px;
+                    border-left: 4px solid #93B0AC; color: #93B0AC; font-size: 14px; line-height: 1.7; }
+
+    /* ── Activity boxes ── */
+    .activity-box { background: linear-gradient(135deg, rgba(147,176,172,0.08), rgba(197,189,150,0.08)) !important;
+                    border-color: rgba(147,176,172,0.25) !important; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .header { padding: 20px; }
+      .header h1 { font-size: 20px; }
+      .container { padding: 0 14px 40px; }
+      .q-card { padding: 16px; }
+      .score { width: 60px; height: 60px; top: 14px; right: 14px; }
+      .score-num { font-size: 18px; }
+      .concepts-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-sub">Aivorah &middot; 2</div>
+    <h1>PYP:2 Telugu Practice Task Sheet - Letters and Words</h1>
+    <div class="header-meta">Subject: Telugu &nbsp;|&nbsp; Powered by Aivorah</div>
+  </div>
+
+  <div class="score" id="score-badge">
+    <span class="score-num" id="score-num">0/14</span>
+    <span class="score-label">Score</span>
+  </div>
+
+  <div class="container">
+    <div class="progress-wrap">
+      <div class="progress-title">Quiz Progress</div>
+      <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+      <div class="progress-pct" id="pp">0% complete</div>
+    </div>
+
+    <div class="concepts-row">
+        <div class="concept-card" style="background:#93B0AC18;border:1px solid #93B0AC40">
+          <div class="concept-icon" style="color:#93B0AC">&#128218;</div>
+          <h3 style="color:#93B0AC">Letter-Picture Matching</h3>
+          <p>Match Telugu words to their corresponding pictures.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#C5BD9618;border:1px solid #C5BD9640">
+          <div class="concept-icon" style="color:#C5BD96">&#128218;</div>
+          <h3 style="color:#C5BD96">Word Formation</h3>
+          <p>Form words using given Telugu letters.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#D4A89818;border:1px solid #D4A89840">
+          <div class="concept-icon" style="color:#D4A898">&#128218;</div>
+          <h3 style="color:#D4A898">Diacritic Addition</h3>
+          <p>Add diacritics (like '=') to Telugu letters to form correct words.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#C3DCD818;border:1px solid #C3DCD840">
+          <div class="concept-icon" style="color:#C3DCD8">&#128218;</div>
+          <h3 style="color:#C3DCD8">Dirgham Identification</h3>
+          <p>Identify and circle long vowels (dirgham) in Telugu sentences.</p>
+          
+        </div></div>
+    
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">@. 25°5020%0 HBS Hoe) BSDHSS0H.</h2><div class="q-card" id="q1-card">
+        <p class="q-text"><strong>a)</strong> Match the word <strong>గొడుగు</strong> to the correct picture.</p><div class="q-image" style="margin:0 0 14px;text-align:center"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKoAAACXCAYAAACFksDxAAAACXBIWXMAAAsTAAALEwEAmpwYAAAXvElEQVR4nO2dCbRN5fvH+VWSyqyBRFEIaUDIrElmKXMkhcxjhoQoQ+aZzMkUIlumRKZkrMhMMiWZCZXr+a/Ps+7xP67L5d59nLPveb5r7cW6w7l77/fzPtO73/0kkDjor7/+kttvv11efvllCXc988wz8vTTT8svv/wi4SjHceS5556T+vXry++//+765yeIyy8bqP8vA9UxUL0gA9UxUL0gA9UxUG9GFy9elL///luP+A7qxYsX5fz58xIKshj1JvTvv//K2rVrpUuXLvL5559LfAb19OnTMnfuXOnUqZNec7BloN6gLly4IMuXL5eqVatK9uzZpWfPnhJfQT1+/LhOxIIFC8pTTz0lCxculGDLQL0B4eYZrAoVKkjOnDmlXbt2snnzZomPoB45ckRGjBgh+fPn1783cOBAOXz4sARbBmqkjh07JrNmzZLJkydfUac7e/as3qRy5cpJoUKFZMCAAbJ3795bPlBugUrcySSbPn26bNq06YrvHTp0SPr37y/PP/+8lClTRqZNmyanTp2SUJCBGqk1a9ZI+fLl5YknnlAYAZc47auvvpJKlSrJa6+9poN74sSJoAyUW6AePXpUw5ZcuXJJy5YtZc+ePXLp0iWdnD169JASJUpI48aNZeXKlQp1qMhAjdT27duldevWkj59ei2DjB49WiZOnCg1a9bUgVuxYoUmU8GSW6ASfw4dOlSyZMkimTJlUjjXrl0rXbt2lYoVK0rv3r0V3lCTgRqpiIgI2bJli/Tt21ddH7AWL15cChQooJkvMepvv/0WNCvjZoy6e/duBTNfvnx6jRUrVtSk6c0335Tvv/9ePUlMYtISQnz99dcyYcIEGTdunMycOVPWr18v//zzj7gtAzVKZr906VKNzzJkyCCvvPKK1KpVS2rXrq3/4ioZmGC4f7dAJTGaMWOGNG/eXGrUqKEhTYkSJbSa8c4770jDhg11sv700086eaOKr/EZeJy3335b4eb++O4Rx6BBg2T//v0aUrglAzVSWMply5ZJnTp1NHHq3r27zJkzR2O1xYsXy8iRI3UwiGPHjx8vZ86cEa+B+scff8iQIUOkZMmSCubgwYP1GpcsWSKrV6+W2bNnXw4BePiDuN1f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" alt="Worksheet diagram" style="max-width:320px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q1-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q1')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q1')">Hint</button>
+        </div>
+        <div id="q1-hint" class="hint-box" style="display:none">Look for the picture of an umbrella.</div>
+        <div id="q1-result" class="result-box"></div>
+        <div id="q1-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The word 'గొడుగు' means 'umbrella' in Telugu. Match it to the picture showing an umbrella.
+          
+        </div>
+        <button id="q1-show" class="btn-show" style="display:none" onclick="toggleSolution('q1')">Show Answer</button>
+      </div><div class="q-card" id="q2-card">
+        <p class="q-text"><strong>b)</strong> Match the word <strong>కోడి</strong> to the correct picture.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q2-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q2')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q2')">Hint</button>
+        </div>
+        <div id="q2-hint" class="hint-box" style="display:none">Look for the picture of a chicken.</div>
+        <div id="q2-result" class="result-box"></div>
+        <div id="q2-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The word 'కోడి' means 'chicken' in Telugu. Match it to the picture showing a chicken.
+          
+        </div>
+        <button id="q2-show" class="btn-show" style="display:none" onclick="toggleSolution('q2')">Show Answer</button>
+      </div><div class="q-card" id="q3-card">
+        <p class="q-text"><strong>c)</strong> Match the word <strong>పాలు</strong> to the correct picture.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q3-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q3')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q3')">Hint</button>
+        </div>
+        <div id="q3-hint" class="hint-box" style="display:none">Look for the picture of milk.</div>
+        <div id="q3-result" class="result-box"></div>
+        <div id="q3-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The word 'పాలు' means 'milk' in Telugu. Match it to the picture showing milk.
+          
+        </div>
+        <button id="q3-show" class="btn-show" style="display:none" onclick="toggleSolution('q3')">Show Answer</button>
+      </div><div class="q-card" id="q4-card">
+        <p class="q-text"><strong>d)</strong> Match the word <strong>బొద్దు</strong> to the correct picture.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q4-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q4')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q4')">Hint</button>
+        </div>
+        <div id="q4-hint" class="hint-box" style="display:none">Look for the picture of an ox.</div>
+        <div id="q4-result" class="result-box"></div>
+        <div id="q4-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The word 'బొద్దు' means 'ox' in Telugu. Match it to the picture showing an ox.
+          
+        </div>
+        <button id="q4-show" class="btn-show" style="display:none" onclick="toggleSolution('q4')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">@. HBES°D wired Soren 0rohos.</h2><div class="q-card" id="q5-card">
+        <p class="q-text"><strong>a)</strong> Form a word using the letters: <strong>దో | వో | స్ | ఓ</strong>.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q5-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q5')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q5')">Hint</button>
+        </div>
+        <div id="q5-hint" class="hint-box" style="display:none">Combine the letters to form a meaningful Telugu word.</div>
+        <div id="q5-result" class="result-box"></div>
+        <div id="q5-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Combine 'దో', 'వో' to form 'దోవ' (path/way).
+          
+        </div>
+        <button id="q5-show" class="btn-show" style="display:none" onclick="toggleSolution('q5')">Show Answer</button>
+      </div><div class="q-card" id="q6-card">
+        <p class="q-text"><strong>b)</strong> Form a word using the letters: <strong>గో | ఓ | సో</strong>.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q6-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q6')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q6')">Hint</button>
+        </div>
+        <div id="q6-hint" class="hint-box" style="display:none">Combine the letters to form a meaningful Telugu word.</div>
+        <div id="q6-result" class="result-box"></div>
+        <div id="q6-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Combine 'గో', 'సో' to form 'గోసో' (a name or word).
+          
+        </div>
+        <button id="q6-show" class="btn-show" style="display:none" onclick="toggleSolution('q6')">Show Answer</button>
+      </div><div class="q-card" id="q7-card">
+        <p class="q-text"><strong>c)</strong> Form a word using the letters: <strong>ఓ | సో | ఓ</strong>.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q7-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q7')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q7')">Hint</button>
+        </div>
+        <div id="q7-hint" class="hint-box" style="display:none">Combine the letters to form a meaningful Telugu word.</div>
+        <div id="q7-result" class="result-box"></div>
+        <div id="q7-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Combine 'ఓ', 'సో' to form 'ఓసో' (a word).
+          
+        </div>
+        <button id="q7-show" class="btn-show" style="display:none" onclick="toggleSolution('q7')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">2. ad) wore Bo TY orohod.</h2><table class="ws-table" style="width:100%;border-collapse:collapse;border:1px solid rgba(195,220,216,0.2);border-radius:8px;overflow:hidden;"><tr><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q8-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">a)</strong> Add '=' to <strong>ఎవే</strong> and write the word.</span><input type="text" id="q8-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q8')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q8')">Hint</button></div><div id="q8-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Add the diacritic '=' to the letter 'వే'.</div><div id="q8-result" class="result-box" style="margin:0 14px;"></div><div id="q8-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> Add '=' to 'వే' to form 'ఎవ్వే' (a name or word).</div><button id="q8-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q8')">Show Answer</button></td><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q10-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">c)</strong> Add '=' to <strong>ఈసో</strong> and write the word.</span><input type="text" id="q10-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q10')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q10')">Hint</button></div><div id="q10-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Add the diacritic '=' to the letter 'సో'.</div><div id="q10-result" class="result-box" style="margin:0 14px;"></div><div id="q10-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> Add '=' to 'సో' to form 'ఈసోవ్'.</div><button id="q10-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q10')">Show Answer</button></td></tr><tr><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q9-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">b)</strong> Add '=' to <strong>హేఓ</strong> and write the word.</span><input type="text" id="q9-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q9')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q9')">Hint</button></div><div id="q9-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Add the diacritic '=' to the letter 'ఓ'.</div><div id="q9-result" class="result-box" style="margin:0 14px;"></div><div id="q9-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> Add '=' to 'ఓ' to form 'హేఓవ్'.</div><button id="q9-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q9')">Show Answer</button></td><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"></td></tr></table></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">&. 808 Frmgen SEHed. bogs dered (1) ihgod. oeahol.</h2><div class="q-card" id="q11-card">
+        <p class="q-text"><strong>a)</strong> Circle the dirgham word in: <strong>సీత =D సోము సోము</strong>. Write the dirgham word.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q11-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q11')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q11')">Hint</button>
+        </div>
+        <div id="q11-hint" class="hint-box" style="display:none">Look for the word with a long vowel (dirgham).</div>
+        <div id="q11-result" class="result-box"></div>
+        <div id="q11-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The word 'సీత' has a long 'ఈ' sound, so it is the dirgham word.
+          
+        </div>
+        <button id="q11-show" class="btn-show" style="display:none" onclick="toggleSolution('q11')">Show Answer</button>
+      </div><div class="q-card" id="q12-card">
+        <p class="q-text"><strong>b)</strong> Circle the dirgham word in: <strong>ఒక మనిషి పాలు తాగెను</strong>. Write the dirgham word.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q12-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q12')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q12')">Hint</button>
+        </div>
+        <div id="q12-hint" class="hint-box" style="display:none">Look for the word with a long vowel (dirgham).</div>
+        <div id="q12-result" class="result-box"></div>
+        <div id="q12-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The word 'పాలు' has a long 'ా' sound, so it is the dirgham word.
+          
+        </div>
+        <button id="q12-show" class="btn-show" style="display:none" onclick="toggleSolution('q12')">Show Answer</button>
+      </div><div class="q-card" id="q13-card">
+        <p class="q-text"><strong>c)</strong> Circle the dirgham word in: <strong>నేను సోము దగ్గరకు వెళ్లాను</strong>. Write the dirgham word.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q13-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q13')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q13')">Hint</button>
+        </div>
+        <div id="q13-hint" class="hint-box" style="display:none">Look for the word with a long vowel (dirgham).</div>
+        <div id="q13-result" class="result-box"></div>
+        <div id="q13-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The word 'సోము' has a long 'ో' sound, so it is the dirgham word.
+          
+        </div>
+        <button id="q13-show" class="btn-show" style="display:none" onclick="toggleSolution('q13')">Show Answer</button>
+      </div><div class="q-card" id="q14-card">
+        <p class="q-text"><strong>d)</strong> Circle the dirgham word in: <strong>ఆవు పాలు ఇచ్చింది</strong>. Write the dirgham word.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q14-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q14')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q14')">Hint</button>
+        </div>
+        <div id="q14-hint" class="hint-box" style="display:none">Look for the word with a long vowel (dirgham).</div>
+        <div id="q14-result" class="result-box"></div>
+        <div id="q14-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The word 'పాలు' has a long 'ా' sound, so it is the dirgham word.
+          
+        </div>
+        <button id="q14-show" class="btn-show" style="display:none" onclick="toggleSolution('q14')">Show Answer</button>
+      </div></div>
+  </div>
+
+  <script>
+    let sc = 0;
+    const tot = 14;
+    const done = new Set();
+    const answers = {"q1":{"answer":"గొడుగు","isNum":false,"range":null},"q2":{"answer":"కోడి","isNum":false,"range":null},"q3":{"answer":"పాలు","isNum":false,"range":null},"q4":{"answer":"బొద్దు","isNum":false,"range":null},"q5":{"answer":"దోవ","isNum":false,"range":null},"q6":{"answer":"గోసో","isNum":false,"range":null},"q7":{"answer":"ఓసో","isNum":false,"range":null},"q8":{"answer":"ఎవ్వే","isNum":false,"range":null},"q9":{"answer":"హేఓవ్","isNum":false,"range":null},"q10":{"answer":"ఈసోవ్","isNum":false,"range":null},"q11":{"answer":"సీత","isNum":false,"range":null},"q12":{"answer":"పాలు","isNum":false,"range":null},"q13":{"answer":"సోము","isNum":false,"range":null},"q14":{"answer":"పాలు","isNum":false,"range":null}};
+
+    function up() {
+      document.getElementById('score-num').textContent = sc + '/' + tot;
+      const pct = Math.round((done.size / tot) * 100);
+      document.getElementById('pf').style.width = pct + '%';
+      document.getElementById('pp').textContent = pct + '% complete';
+      // Report score to parent window (for student assignment iframe)
+      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot }, '*'); } catch(e) {}
+    }
+
+    function checkAnswer(id) {
+      const a = answers[id];
+      if (!a) return;
+      const inp = document.getElementById(id + '-input');
+      const val = inp.value.trim();
+      if (!val) { inp.style.borderColor = '#C5BD96'; return; }
+      const r = document.getElementById(id + '-result');
+      let ok = false;
+      if (a.isNum) {
+        const v = parseFloat(val);
+        if (isNaN(v)) { inp.style.borderColor = '#C5BD96'; return; }
+        ok = a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01;
+      } else {
+        ok = val.replace(/\s+/g,'').toLowerCase() === String(a.answer).replace(/\s+/g,'').toLowerCase();
+      }
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        inp.style.borderColor = '#93B0AC';
+        inp.style.background = 'rgba(147,176,172,0.1)';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        inp.style.borderColor = '#EFD1D4';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkMCQ(id) {
+      const a = answers[id];
+      if (!a) return;
+      const sel = document.querySelector('input[name="' + id + '"]:checked');
+      if (!sel) return;
+      const r = document.getElementById(id + '-result');
+      if (sel.value === a.correctLetter) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function toggleHint(id) {
+      const el = document.getElementById(id + '-hint');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleSolution(id) {
+      const el = document.getElementById(id + '-solution');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>

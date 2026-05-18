@@ -265,7 +265,11 @@ export default function ScheduleScreen({ navigation }: any) {
 
   function prevWeek() { const d = new Date(weekBase); d.setDate(d.getDate() - 7); setWeekBase(d); }
   function nextWeek() { const d = new Date(weekBase); d.setDate(d.getDate() + 7); setWeekBase(d); }
-  function goToday()  { setWeekBase(today); }
+  function goToday() {
+    setWeekBase(new Date());
+    setCalYear(new Date().getFullYear());
+    setCalMonth(new Date().getMonth() + 1);
+  }
 
   const { width: screenWidth } = useWindowDimensions();
   const colWidth = Math.max(DAY_COL_WIDTH, Math.floor((screenWidth - TIME_LABEL_WIDTH) / 7));

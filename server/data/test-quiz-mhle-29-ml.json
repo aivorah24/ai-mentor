@@ -1,0 +1,353 @@
+{
+  "title": "Mathematics MHLE - 29",
+  "subject": "Mathematics",
+  "grade": "PYP 4",
+  "school": "The Shri Ram Academy",
+  "concepts": [
+    {
+      "term": "Metric Units of Weight",
+      "definition": "Standard units to measure how heavy things are: kilograms (kg), grams (gm), milligrams (mg).",
+      "unit": "kg, gm, mg"
+    },
+    {
+      "term": "Metric Units of Capacity",
+      "definition": "Standard units to measure how much liquid a container can hold: litres (l), millilitres (ml), kilolitres (kl).",
+      "unit": "l, ml, kl"
+    },
+    {
+      "term": "Reducing Fractions",
+      "definition": "Simplifying a fraction by dividing the numerator and denominator by their greatest common factor.",
+      "unit": "fractions"
+    },
+    {
+      "term": "Fraction Comparison",
+      "definition": "Deciding if one fraction is less than, greater than, or equal to another fraction.",
+      "unit": "fractions"
+    },
+    {
+      "term": "Real-World Measurement",
+      "definition": "Using measurement units to solve problems in everyday situations.",
+      "unit": "l, ml"
+    }
+  ],
+  "tasks": [
+    {
+      "tier": "MUST DO",
+      "title": "Task 1: Convert the following units of measurement.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "two-column",
+        "columns": 2,
+        "columnGroups": [
+          {
+            "hasDiagram": true,
+            "questionIds": [
+              "a",
+              "b",
+              "c",
+              "d",
+              "e"
+            ]
+          },
+          {
+            "hasDiagram": true,
+            "questionIds": [
+              "f",
+              "g",
+              "h",
+              "i",
+              "j"
+            ]
+          }
+        ]
+      },
+      "questions": [
+        {
+          "id": "a",
+          "type": "numeric",
+          "question": "4 kg = ___ gm",
+          "unit": "gm",
+          "answer": 4000,
+          "hint": "1 kg = 1000 gm",
+          "solution": "4 \u00c3\u2014 1000 = 4000 gm",
+          "hasImage": false
+        },
+        {
+          "id": "b",
+          "type": "numeric",
+          "question": "12000 mg = ___ gm",
+          "unit": "gm",
+          "answer": 12,
+          "hint": "1000 mg = 1 gm",
+          "solution": "12000 \u00c3\u00b7 1000 = 12 gm",
+          "hasImage": false
+        },
+        {
+          "id": "c",
+          "type": "numeric",
+          "question": "10000 gm = ___ kg",
+          "unit": "kg",
+          "answer": 10,
+          "hint": "1000 gm = 1 kg",
+          "solution": "10000 \u00c3\u00b7 1000 = 10 kg",
+          "hasImage": false
+        },
+        {
+          "id": "d",
+          "type": "numeric",
+          "question": "3 kg = ___ mg",
+          "unit": "mg",
+          "answer": 3000000,
+          "hint": "1 kg = 1000 gm, 1 gm = 1000 mg",
+          "solution": "3 \u00c3\u2014 1000 \u00c3\u2014 1000 = 3000000 mg",
+          "hasImage": false
+        },
+        {
+          "id": "e",
+          "type": "numeric",
+          "question": "10 gm = ___ mg",
+          "unit": "mg",
+          "answer": 10000,
+          "hint": "1 gm = 1000 mg",
+          "solution": "10 \u00c3\u2014 1000 = 10000 mg",
+          "hasImage": false
+        },
+        {
+          "id": "f",
+          "type": "numeric",
+          "question": "5 l = ___ ml",
+          "unit": "ml",
+          "answer": 5000,
+          "hint": "1 l = 1000 ml",
+          "solution": "5 \u00c3\u2014 1000 = 5000 ml",
+          "hasImage": false
+        },
+        {
+          "id": "g",
+          "type": "numeric",
+          "question": "1000 ml = ___ l",
+          "unit": "l",
+          "answer": 1,
+          "hint": "1000 ml = 1 l",
+          "solution": "1000 \u00c3\u00b7 1000 = 1 l",
+          "hasImage": false
+        },
+        {
+          "id": "h",
+          "type": "numeric",
+          "question": "13 l = ___ ml",
+          "unit": "ml",
+          "answer": 13000,
+          "hint": "1 l = 1000 ml",
+          "solution": "13 \u00c3\u2014 1000 = 13000 ml",
+          "hasImage": false
+        },
+        {
+          "id": "i",
+          "type": "numeric",
+          "question": "15000 ml = ___ l",
+          "unit": "l",
+          "answer": 15,
+          "hint": "1000 ml = 1 l",
+          "solution": "15000 \u00c3\u00b7 1000 = 15 l",
+          "hasImage": false
+        },
+        {
+          "id": "j",
+          "type": "numeric",
+          "question": "2000 l = ___ kl",
+          "unit": "kl",
+          "answer": 2,
+          "hint": "1000 l = 1 kl",
+          "solution": "2000 \u00c3\u00b7 1000 = 2 kl",
+          "hasImage": false
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/21702779_page1.png"
+    },
+    {
+      "tier": "MUST DO",
+      "title": "Task 2: Reduce the fractions to their lowest terms.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "a",
+          "type": "text",
+          "question": "Reduce **30/45** to its lowest terms.",
+          "unit": "",
+          "answer": "2/3",
+          "hint": "Find the greatest common factor of 30 and 45.",
+          "solution": "30 \u00c3\u00b7 15 = 2, 45 \u00c3\u00b7 15 = 3 \u00e2\u2020\u2019 2/3",
+          "hasImage": false
+        },
+        {
+          "id": "b",
+          "type": "text",
+          "question": "Reduce **18/24** to its lowest terms.",
+          "unit": "",
+          "answer": "3/4",
+          "hint": "Find the greatest common factor of 18 and 24.",
+          "solution": "18 \u00c3\u00b7 6 = 3, 24 \u00c3\u00b7 6 = 4 \u00e2\u2020\u2019 3/4",
+          "hasImage": false
+        },
+        {
+          "id": "c",
+          "type": "text",
+          "question": "Reduce **14/28** to its lowest terms.",
+          "unit": "",
+          "answer": "1/2",
+          "hint": "Find the greatest common factor of 14 and 28.",
+          "solution": "14 \u00c3\u00b7 14 = 1, 28 \u00c3\u00b7 14 = 2 \u00e2\u2020\u2019 1/2",
+          "hasImage": false
+        },
+        {
+          "id": "d",
+          "type": "text",
+          "question": "Reduce **20/50** to its lowest terms.",
+          "unit": "",
+          "answer": "2/5",
+          "hint": "Find the greatest common factor of 20 and 50.",
+          "solution": "20 \u00c3\u00b7 10 = 2, 50 \u00c3\u00b7 10 = 5 \u00e2\u2020\u2019 2/5",
+          "hasImage": false
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/21702779_page1.png"
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task 3: Solve the following.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "a",
+          "type": "text",
+          "question": "40 l 300 ml + 12 l 985 ml",
+          "unit": "l and ml",
+          "answer": "53 l 285 ml",
+          "hint": "Add litres and millilitres separately, then convert if needed.",
+          "solution": "40 l + 12 l = 52 l, 300 ml + 985 ml = 1285 ml = 1 l 285 ml \u00e2\u2020\u2019 52 l + 1 l 285 ml = 53 l 285 ml",
+          "hasImage": false
+        },
+        {
+          "id": "b",
+          "type": "numeric",
+          "question": "21200 ml - 11300 ml",
+          "unit": "ml",
+          "answer": 9900,
+          "hint": "Subtract the millilitres directly.",
+          "solution": "21200 - 11300 = 9900 ml",
+          "hasImage": false
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/21702779_page1.png"
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task 4: Compare fractions with < or > or = in the box.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "a",
+          "type": "text",
+          "question": "**7/8** ___ **6/8**",
+          "unit": "",
+          "answer": ">",
+          "hint": "Compare numerators when denominators are the same.",
+          "solution": "7 > 6 \u00e2\u2020\u2019 7/8 > 6/8",
+          "hasImage": false
+        },
+        {
+          "id": "b",
+          "type": "text",
+          "question": "**1/8** ___ **9/8**",
+          "unit": "",
+          "answer": "<",
+          "hint": "Compare numerators when denominators are the same.",
+          "solution": "1 < 9 \u00e2\u2020\u2019 1/8 < 9/8",
+          "hasImage": false
+        },
+        {
+          "id": "c",
+          "type": "text",
+          "question": "**1/12** ___ **7/12**",
+          "unit": "",
+          "answer": "<",
+          "hint": "Compare numerators when denominators are the same.",
+          "solution": "1 < 7 \u00e2\u2020\u2019 1/12 < 7/12",
+          "hasImage": false
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/21702779_page1.png"
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task 5: Application of measurement in real situations.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "a",
+          "type": "text",
+          "question": "A can of **14 l** of oil was purchased for an event. After the event, **6 l 325 ml** of oil was left in the can. How much oil was used for the event?",
+          "unit": "l and ml",
+          "answer": "7 l 675 ml",
+          "hint": "Subtract the remaining oil from the total oil purchased.",
+          "solution": "14 l = 13 l 1000 ml, 13 l 1000 ml - 6 l 325 ml = 7 l 675 ml",
+          "hasImage": false
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/21702779_page1.png"
+    },
+    {
+      "tier": "ENRICHMENT",
+      "title": "Enrichment Task:",
+      "sourcePage": 1,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "a",
+          "type": "text",
+          "question": "A bottle of juice holds **900 ml** of juice. Can three such bottles be poured into a jar of **2900 l**? Explain your answer with proper reasoning and show your thinking in the workspace provided.",
+          "unit": "ml and l",
+          "answer": "No, 2700 ml (2.7 l) is less than 2900 l, but the jar's capacity is likely 2900 ml (2.9 l), so yes. Clarify units: 2900 l is too large; likely 2900 ml. Then 2700 ml < 2900 ml \u00e2\u2020\u2019 yes.",
+          "hint": "Convert all measurements to the same unit (ml or l) and compare.",
+          "solution": "3 bottles = 3 \u00c3\u2014 900 ml = 2700 ml. Jar capacity is likely 2900 ml (not 2900 l). 2700 ml < 2900 ml \u00e2\u2020\u2019 yes, it can be poured.",
+          "hasImage": false
+        }
+      ],
+      "pageImageUrl": "/data/images/quiz/21702779_page1.png"
+    }
+  ],
+  "fullPageImages": [
+    {
+      "pageNum": 1,
+      "imageUrl": "/data/images/quiz/21702779_page1.png"
+    },
+    {
+      "pageNum": 2,
+      "imageUrl": "/data/images/quiz/21702779_page2.png"
+    }
+  ],
+  "engine": "gemini",
+  "sourceFile": "Toddle-18d1b2d2-239c-414a-8d82-142053d025d3-Revised PYP4 -MHLE-29.pdf",
+  "generatedAt": "2026-05-16T06:10:57.763Z",
+  "status": "draft"
+}

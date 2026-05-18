@@ -1,0 +1,436 @@
+{
+  "title": "The Shri Ram Academy PYP 4 Mathematics",
+  "subject": "Mathematics",
+  "grade": "PYP 4",
+  "school": "The Shri Ram Academy",
+  "concepts": [
+    {
+      "term": "Measurement Unit Conversion",
+      "definition": "Converting between different units of weight (kilograms, grams, milligrams) and capacity (kiloliters, liters, milliliters).",
+      "unit": "various"
+    },
+    {
+      "term": "Fraction Simplification",
+      "definition": "Reducing fractions to their lowest terms by dividing the numerator and denominator by their greatest common factor.",
+      "unit": "unitless"
+    },
+    {
+      "term": "Fraction Comparison",
+      "definition": "Comparing the size of two fractions using < (less than), > (greater than), or = (equal to).",
+      "unit": "unitless"
+    },
+    {
+      "term": "Operations with Measurements",
+      "definition": "Adding and subtracting measurements involving liters and milliliters.",
+      "unit": "l, ml"
+    },
+    {
+      "term": "Problem Solving (Measurement)",
+      "definition": "Applying measurement conversion and operations to solve real-world problems.",
+      "unit": "l, ml"
+    }
+  ],
+  "tasks": [
+    {
+      "tier": "MUST DO",
+      "title": "Task 1: Convert the following units of measurement.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "two-column",
+        "columns": 2,
+        "columnGroups": [
+          {
+            "hasDiagram": true,
+            "questionIds": [
+              "a",
+              "b",
+              "c",
+              "d",
+              "e"
+            ]
+          },
+          {
+            "hasDiagram": true,
+            "questionIds": [
+              "f",
+              "g",
+              "h",
+              "i",
+              "j"
+            ]
+          }
+        ]
+      },
+      "questions": [
+        {
+          "id": "a",
+          "type": "numeric",
+          "question": "4 kg = ___ gm",
+          "unit": "gm",
+          "answer": 4000,
+          "hint": "1 kg = 1000 gm",
+          "solution": "To convert kilograms to grams, multiply by 1000. \n4 kg \u00c3\u2014 1000 = 4000 gm",
+          "hasImage": false
+        },
+        {
+          "id": "b",
+          "type": "numeric",
+          "question": "12000 mg = ___ gm",
+          "unit": "gm",
+          "answer": 12,
+          "hint": "1 gm = 1000 mg",
+          "solution": "To convert milligrams to grams, divide by 1000. \n12000 mg \u00c3\u00b7 1000 = 12 gm",
+          "hasImage": false
+        },
+        {
+          "id": "c",
+          "type": "numeric",
+          "question": "10000 gm = ___ kg",
+          "unit": "kg",
+          "answer": 10,
+          "hint": "1 kg = 1000 gm",
+          "solution": "To convert grams to kilograms, divide by 1000. \n10000 gm \u00c3\u00b7 1000 = 10 kg",
+          "hasImage": false
+        },
+        {
+          "id": "d",
+          "type": "numeric",
+          "question": "3 kg = ___ mg",
+          "unit": "mg",
+          "answer": 3000000,
+          "hint": "1 kg = 1000 gm, 1 gm = 1000 mg. So 1 kg = 1,000,000 mg.",
+          "solution": "To convert kilograms to milligrams, multiply by 1000 (to get grams) then by 1000 (to get milligrams). \n3 kg \u00c3\u2014 1000 = 3000 gm\n3000 gm \u00c3\u2014 1000 = 3,000,000 mg",
+          "hasImage": false
+        },
+        {
+          "id": "e",
+          "type": "numeric",
+          "question": "10 gm = ___ mg",
+          "unit": "mg",
+          "answer": 10000,
+          "hint": "1 gm = 1000 mg",
+          "solution": "To convert grams to milligrams, multiply by 1000. \n10 gm \u00c3\u2014 1000 = 10000 mg",
+          "hasImage": false
+        },
+        {
+          "id": "f",
+          "type": "numeric",
+          "question": "5 l = ___ ml",
+          "unit": "ml",
+          "answer": 5000,
+          "hint": "1 l = 1000 ml",
+          "solution": "To convert liters to milliliters, multiply by 1000. \n5 l \u00c3\u2014 1000 = 5000 ml",
+          "hasImage": false
+        },
+        {
+          "id": "g",
+          "type": "numeric",
+          "question": "1000 ml = ___ l",
+          "unit": "l",
+          "answer": 1,
+          "hint": "1 l = 1000 ml",
+          "solution": "To convert milliliters to liters, divide by 1000. \n1000 ml \u00c3\u00b7 1000 = 1 l",
+          "hasImage": false
+        },
+        {
+          "id": "h",
+          "type": "numeric",
+          "question": "13 l = ___ ml",
+          "unit": "ml",
+          "answer": 13000,
+          "hint": "1 l = 1000 ml",
+          "solution": "To convert liters to milliliters, multiply by 1000. \n13 l \u00c3\u2014 1000 = 13000 ml",
+          "hasImage": false
+        },
+        {
+          "id": "i",
+          "type": "numeric",
+          "question": "15000 ml = ___ l",
+          "unit": "l",
+          "answer": 15,
+          "hint": "1 l = 1000 ml",
+          "solution": "To convert milliliters to liters, divide by 1000. \n15000 ml \u00c3\u00b7 1000 = 15 l",
+          "hasImage": false
+        },
+        {
+          "id": "j",
+          "type": "numeric",
+          "question": "2000 l = ___ kl",
+          "unit": "kl",
+          "answer": 2,
+          "hint": "1 kl = 1000 l",
+          "solution": "To convert liters to kiloliters, divide by 1000. \n2000 l \u00c3\u00b7 1000 = 2 kl",
+          "hasImage": false
+        }
+      ]
+    },
+    {
+      "tier": "MUST DO",
+      "title": "Task 2: Reduce the fractions to their lowest terms.",
+      "sourcePage": 1,
+      "layout": {
+        "type": "two-column",
+        "columns": 2,
+        "columnGroups": [
+          {
+            "questionIds": [
+              "1",
+              "2",
+              "3",
+              "4"
+            ]
+          },
+          {
+            "questionIds": [
+              "5",
+              "6",
+              "7",
+              "8"
+            ]
+          }
+        ]
+      },
+      "questions": [
+        {
+          "id": "1",
+          "type": "text",
+          "question": "28/50 =",
+          "answer": "14/25",
+          "solution": "Find the greatest common factor (GCF) of 28 and 50. The GCF is 2.\nDivide both the numerator and denominator by 2:\n28 \u00c3\u00b7 2 = 14\n50 \u00c3\u00b7 2 = 25\nSo, 28/50 reduces to 14/25.",
+          "hasImage": false
+        },
+        {
+          "id": "2",
+          "type": "text",
+          "question": "8/24 =",
+          "answer": "1/3",
+          "solution": "The GCF of 8 and 24 is 8.\nDivide both by 8:\n8 \u00c3\u00b7 8 = 1\n24 \u00c3\u00b7 8 = 3\nSo, 8/24 reduces to 1/3.",
+          "hasImage": false
+        },
+        {
+          "id": "3",
+          "type": "text",
+          "question": "30/54 =",
+          "answer": "5/9",
+          "solution": "The GCF of 30 and 54 is 6.\nDivide both by 6:\n30 \u00c3\u00b7 6 = 5\n54 \u00c3\u00b7 6 = 9\nSo, 30/54 reduces to 5/9.",
+          "hasImage": false
+        },
+        {
+          "id": "4",
+          "type": "text",
+          "question": "18/42 =",
+          "answer": "3/7",
+          "solution": "The GCF of 18 and 42 is 6.\nDivide both by 6:\n18 \u00c3\u00b7 6 = 3\n42 \u00c3\u00b7 6 = 7\nSo, 18/42 reduces to 3/7.",
+          "hasImage": false
+        },
+        {
+          "id": "5",
+          "type": "text",
+          "question": "32/48 =",
+          "answer": "2/3",
+          "solution": "The GCF of 32 and 48 is 16.\nDivide both by 16:\n32 \u00c3\u00b7 16 = 2\n48 \u00c3\u00b7 16 = 3\nSo, 32/48 reduces to 2/3.",
+          "hasImage": false
+        },
+        {
+          "id": "6",
+          "type": "text",
+          "question": "36/54 =",
+          "answer": "2/3",
+          "solution": "The GCF of 36 and 54 is 18.\nDivide both by 18:\n36 \u00c3\u00b7 18 = 2\n54 \u00c3\u00b7 18 = 3\nSo, 36/54 reduces to 2/3.",
+          "hasImage": false
+        },
+        {
+          "id": "7",
+          "type": "text",
+          "question": "14/56 =",
+          "answer": "1/4",
+          "solution": "The GCF of 14 and 56 is 14.\nDivide both by 14:\n14 \u00c3\u00b7 14 = 1\n56 \u00c3\u00b7 14 = 4\nSo, 14/56 reduces to 1/4.",
+          "hasImage": false
+        },
+        {
+          "id": "8",
+          "type": "text",
+          "question": "18/28 =",
+          "answer": "9/14",
+          "solution": "The GCF of 18 and 28 is 2.\nDivide both by 2:\n18 \u00c3\u00b7 2 = 9\n28 \u00c3\u00b7 2 = 14\nSo, 18/28 reduces to 9/14.",
+          "hasImage": false
+        }
+      ]
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task 3: Solve the following.",
+      "sourcePage": 2,
+      "layout": {
+        "type": "two-column",
+        "columns": 2,
+        "columnGroups": [
+          {
+            "questionIds": [
+              "a"
+            ]
+          },
+          {
+            "questionIds": [
+              "b"
+            ]
+          }
+        ]
+      },
+      "questions": [
+        {
+          "id": "a",
+          "type": "text",
+          "question": "40 l 300 ml + 12 l 985 ml",
+          "answer": "53 l 285 ml",
+          "solution": "Add the milliliters: 300 ml + 985 ml = 1285 ml.\nSince 1000 ml = 1 l, 1285 ml = 1 l and 285 ml.\nAdd the liters: 40 l + 12 l + 1 l (from milliliters) = 53 l.\nCombined, the answer is 53 l 285 ml.",
+          "hasImage": false
+        },
+        {
+          "id": "b",
+          "type": "text",
+          "question": "2 l 200 ml \u00e2\u20ac\u201c 1 l 300 ml",
+          "answer": "900 ml",
+          "solution": "We cannot subtract 300 ml from 200 ml directly.\nBorrow 1 liter from the 2 liters, converting it to 1000 ml.\nSo, 2 l 200 ml becomes 1 l (200 + 1000) ml = 1 l 1200 ml.\nNow subtract the milliliters: 1200 ml - 300 ml = 900 ml.\nSubtract the liters: 1 l - 1 l = 0 l.\nThe result is 900 ml.",
+          "hasImage": false
+        }
+      ]
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task 4: Compare fractions with < or > or = in the box.",
+      "sourcePage": 2,
+      "layout": {
+        "type": "grid",
+        "columns": 3,
+        "questionIds": [
+          "1a",
+          "1b",
+          "1c",
+          "2a",
+          "2b",
+          "2c",
+          "3a",
+          "3b",
+          "3c"
+        ]
+      },
+      "questions": [
+        {
+          "id": "1a",
+          "type": "text",
+          "question": "7/11 [ ] 6/11",
+          "answer": ">",
+          "solution": "When denominators are the same, compare the numerators. 7 is greater than 6.",
+          "hasImage": false
+        },
+        {
+          "id": "1b",
+          "type": "text",
+          "question": "1/2 [ ] 9/9",
+          "answer": "<",
+          "solution": "1/2 is 0.5. 9/9 is 1. 0.5 is less than 1.",
+          "hasImage": false
+        },
+        {
+          "id": "1c",
+          "type": "text",
+          "question": "11/6 [ ] 1/2",
+          "answer": ">",
+          "solution": "11/6 is an improper fraction (greater than 1). 1/2 is a proper fraction (less than 1).",
+          "hasImage": false
+        },
+        {
+          "id": "2a",
+          "type": "text",
+          "question": "1/2 [ ] 11/2",
+          "answer": "<",
+          "solution": "When denominators are the same, compare the numerators. 1 is less than 11.",
+          "hasImage": false
+        },
+        {
+          "id": "2b",
+          "type": "text",
+          "question": "8/1 [ ] 8/1",
+          "answer": "=",
+          "solution": "Both fractions are equal to 8.",
+          "hasImage": false
+        },
+        {
+          "id": "2c",
+          "type": "text",
+          "question": "8/8 [ ] 8/12",
+          "answer": ">",
+          "solution": "8/8 is 1. 8/12 is less than 1. So, 1 is greater than 8/12.",
+          "hasImage": false
+        },
+        {
+          "id": "3a",
+          "type": "text",
+          "question": "1/10 [ ] 8/8",
+          "answer": "<",
+          "solution": "1/10 is less than 1. 8/8 is 1. So, 1/10 is less than 1.",
+          "hasImage": false
+        },
+        {
+          "id": "3b",
+          "type": "text",
+          "question": "1/7 [ ] 12/7",
+          "answer": "<",
+          "solution": "When denominators are the same, compare the numerators. 1 is less than 12.",
+          "hasImage": false
+        },
+        {
+          "id": "3c",
+          "type": "text",
+          "question": "7/7 [ ] 12/6",
+          "answer": "<",
+          "solution": "7/7 is 1. 12/6 is 2. 1 is less than 2.",
+          "hasImage": false
+        }
+      ]
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task 5: Application of measurement in real situations.",
+      "sourcePage": 2,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "q1",
+          "type": "text",
+          "question": "A can of **14 l** of oil was purchased for an event. After the event, **6 l 325 ml** of oil was left in the can. How much oil was used for the event?",
+          "answer": "7 l 675 ml",
+          "solution": "Total oil purchased = 14 l\nOil left = 6 l 325 ml\nOil used = Total oil - Oil left\nConvert total oil to l and ml to make subtraction easier: 14 l 0 ml\n\n   14 l   000 ml\n-   6 l   325 ml\n-------------------\n\nWe need to borrow from the liters for the milliliters subtraction.\n14 l becomes 13 l and 1000 ml.\n\n   13 l  1000 ml\n-   6 l   325 ml\n-------------------\n    7 l   675 ml\n\nSo, 7 l 675 ml of oil was used.",
+          "hasImage": false
+        }
+      ]
+    },
+    {
+      "tier": "ENRICHMENT",
+      "title": "Enrichment Task:",
+      "sourcePage": 2,
+      "layout": {
+        "type": "single-column",
+        "columns": 1
+      },
+      "questions": [
+        {
+          "id": "q1",
+          "type": "text",
+          "question": "A bottle of juice holds **900 ml** of juice, can three such bottles be poured into a jar of **2900 l**. Explain your answer with proper reasoning and show your thinking in the workspace provided.",
+          "answer": "Yes",
+          "solution": "1. Calculate the total volume of juice from three bottles:\n   Volume per bottle = 900 ml\n   Total volume from 3 bottles = 3 \u00c3\u2014 900 ml = 2700 ml\n\n2. Convert the jar's capacity to milliliters to compare with the juice volume:\n   Jar capacity = 2900 l\n   Since 1 l = 1000 ml, convert 2900 l to ml:\n   2900 l \u00c3\u2014 1000 ml/l = 2,900,000 ml\n\n3. Compare the total juice volume with the jar's capacity:\n   Total juice = 2700 ml\n   Jar capacity = 2,900,000 ml\n   Since 2700 ml < 2,900,000 ml, the three bottles of juice can easily be poured into the jar.\n\nExplanation: Yes, three bottles of juice can be poured into the jar. Three bottles contain 2700 ml of juice in total. The jar has a capacity of 2900 liters, which is a very large volume, equivalent to 2,900,000 milliliters. Since 2700 ml is significantly less than 2,900,000 ml, the jar can hold the juice from three bottles.",
+          "hasImage": false
+        }
+      ]
+    }
+  ],
+  "engine": "gemini",
+  "sourceFile": "Toddle-18d1b2d2-239c-414a-8d82-142053d025d3-Revised PYP4 -MHLE-29.pdf",
+  "generatedAt": "2026-05-16T14:28:15.051Z",
+  "status": "draft"
+}
