@@ -918,18 +918,28 @@ function matchDiagramsToQuestions(extractionResult, quiz) {
         return false;
       }
 
-      // Rule 3: Wide figure (aspect > 2.0) that is isolated above the main content cluster.
-      // If there are more figures than questions need, and this wide figure sits alone
-      // above the cluster of real diagrams, it's likely decorative.
+      // Rule 3: Wide decorative figure above the main content cluster.
+      // Conditions: aspect > 2.0, more figures than questions need, AND either:
+      //   (a) topmost figure with a gap > 5% of page to next figure, OR
+      //   (b) topmost figure in top half of page AND much wider than average content figure
       if (aspect > 2.0 && figures.length > totalImgQ) {
         const yIdx = sortedByY.indexOf(f);
         if (yIdx === 0 && sortedByY.length > 1) {
-          // This is the topmost figure — check gap to the next figure
           const nextFig = sortedByY[1];
           const gap = nextFig.bbox.y - (f.bbox.y + f.bbox.h);
           const gapRatio = gap / pageHeight;
-          if (gapRatio > 0.08) {
-            console.log(`[diagram] Skipping isolated wide figure: y=${f.bbox.y} aspect=${aspect.toFixed(1)} gap=${gap}px (${(gapRatio*100).toFixed(0)}% of page)`);
+
+          // (a) Gap-based: any measurable separation from content cluster
+          if (gapRatio > 0.05) {
+            console.log(`[diagram] Skipping isolated wide figure: y=${f.bbox.y} aspect=${aspect.toFixed(1)} gap=${gap}px (${(gapRatio*100).toFixed(1)}% of page)`);
+            return false;
+          }
+
+          // (b) Aspect outlier: this figure is much wider (aspect-wise) than the others
+          const otherAspects = sortedByY.slice(1).map(o => o.bbox.w / Math.max(o.bbox.h, 1));
+          const avgOtherAspect = otherAspects.reduce((a, b) => a + b, 0) / otherAspects.length;
+          if (aspect > avgOtherAspect * 1.8 && cy < pageHeight * 0.5) {
+            console.log(`[diagram] Skipping wide aspect outlier: aspect=${aspect.toFixed(1)} vs avg=${avgOtherAspect.toFixed(1)}, y=${f.bbox.y}`);
             return false;
           }
         }
@@ -971,11 +981,25 @@ function matchDiagramsToQuestions(extractionResult, quiz) {
           }
 
           // Only take as many figures as this task needs, picking topmost by y.
-          // Prevents consuming figures that belong to later tasks on the same page.
           const needed = imgQuestions.length;
           const byY = [...available].sort((a, b) => a.bbox.y - b.bbox.y);
           const taskFigures = byY.slice(0, needed);
           console.log(`[diagram] 2-col heuristic: ${available.length} figs available, taking top ${needed} by y for "${task.title?.substring(0, 40)}"`);
+
+          // If column groups are degenerate (all questions in one group — common with
+          // text-only LLMs that can't see the layout), fall back to x-order matching:
+          // sort figures left-to-right, assign to questions in order.
+          if (rightQs.length === 0 && leftQs.length > 1) {
+            console.log(`[diagram] Degenerate column groups — using x-order matching for ${leftQs.length} questions`);
+            const byX = [...taskFigures].sort((a, b) => a.bbox.x - b.bbox.x);
+            for (let i = 0; i < leftQs.length && i < byX.length; i++) {
+              leftQs[i].imageUrl = byX[i].imageUrl;
+              leftQs[i].diagramBbox = byX[i].bbox;
+              byX[i]._matched = true;
+              console.log(`[diagram] x-order: ${byX[i].imageUrl?.split('/').pop()} → Q(${leftQs[i].id}) x=${byX[i].bbox.x}`);
+            }
+            continue;
+          }
 
           const byX = [...taskFigures].sort((a, b) => a.bbox.x - b.bbox.x);
           const midX = byX[0].bbox.x + (byX[byX.length - 1].bbox.x - byX[0].bbox.x) / 2;
