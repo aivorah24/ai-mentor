@@ -2789,6 +2789,9 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                     <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{activeAssignment.title}</Text>
                     <Text style={{ color: colors.subText, fontSize: 12, marginTop: 2 }}>Interactive Quiz</Text>
                   </View>
+                  <TouchableOpacity onPress={() => setActiveAssignment(null)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="x" size={18} color={colors.text} />
+                  </TouchableOpacity>
                 </View>
                 {/* Quiz iframe */}
                 <View
