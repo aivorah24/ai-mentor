@@ -1,6 +1,6 @@
 const express  = require('express');
 const router   = express.Router();
-const { client, COLLECTION, searchContent } = require('../services/qdrant');
+const { client, searchContent, resolveCollection } = require('../services/qdrant');
 const { embed } = require('../services/embeddings');
 const { normalizeCurriculum } = require('../utils/curriculum');
 
@@ -11,18 +11,18 @@ const { normalizeCurriculum } = require('../utils/curriculum');
 router.get('/', async (req, res) => {
   try {
     const { grade } = req.query;
-    // Qdrant stores 'IB_PYP' (underscore) — normalize both directions
-    const curriculum = normalizeCurriculum(req.query.curriculum, 'IB_PYP');
+    const normCurr = normalizeCurriculum(req.query.curriculum, 'IB PYP');
+    const { collection, qdrantCurriculum, qdrantGrade } = resolveCollection(normCurr, grade || null);
 
     const seen   = new Set();
     const topics = [];
     let offset   = null;
 
-    const mustFilters = [{ key: 'curriculum', match: { value: curriculum } }];
-    if (grade) mustFilters.push({ key: 'grade', match: { value: grade } });
+    const mustFilters = [{ key: 'curriculum', match: { value: qdrantCurriculum } }];
+    if (grade) mustFilters.push({ key: 'grade', match: { value: qdrantGrade } });
 
     do {
-      const result = await client.scroll(COLLECTION, {
+      const result = await client.scroll(collection, {
         filter:       { must: mustFilters },
         limit:        100,
         offset:       offset ?? undefined,
@@ -71,7 +71,7 @@ router.get('/', async (req, res) => {
     const grades      = Object.keys(grouped).sort();
     const totalTopics = topics.length;
 
-    res.json({ curriculum, grades, topics, grouped, totalTopics });
+    res.json({ curriculum: normCurr, grades, topics, grouped, totalTopics });
   } catch (err) {
     console.error('Error in GET /curriculum:', err.message);
     res.status(500).json({ error: 'Failed to fetch curriculum data' });
@@ -84,19 +84,19 @@ router.get('/', async (req, res) => {
 router.get('/subjects', async (req, res) => {
   try {
     const { grade = 'Grade 3' } = req.query;
-    // Qdrant stores 'IB_PYP' (underscore) — normalize both directions
-    const curriculum = normalizeCurriculum(req.query.curriculum, 'IB_PYP');
+    const normCurr2 = normalizeCurriculum(req.query.curriculum, 'IB PYP');
+    const { collection: col2, qdrantCurriculum: qCurr2, qdrantGrade: qGrade2 } = resolveCollection(normCurr2, grade);
 
     const seen    = new Set();
     const topicMap = {};   // subject → Set<topic>
     let offset    = null;
 
     do {
-      const result = await client.scroll(COLLECTION, {
+      const result = await client.scroll(col2, {
         filter: {
           must: [
-            { key: 'curriculum', match: { value: curriculum } },
-            { key: 'grade',      match: { value: grade      } },
+            { key: 'curriculum', match: { value: qCurr2 } },
+            { key: 'grade',      match: { value: qGrade2 } },
           ],
         },
         limit:        100,
@@ -129,7 +129,7 @@ router.get('/subjects', async (req, res) => {
       topics:     topics.sort((a, b) => (a.chapter ?? 0) - (b.chapter ?? 0) || a.topic.localeCompare(b.topic)),
     })).sort((a, b) => a.subject.localeCompare(b.subject));
 
-    res.json({ grade, curriculum, subjects });
+    res.json({ grade, curriculum: normCurr2, subjects });
   } catch (err) {
     console.error('Error in GET /curriculum/subjects:', err.message);
     res.status(500).json({ error: 'Failed to fetch subjects' });

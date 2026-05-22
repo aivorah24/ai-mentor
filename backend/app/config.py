@@ -16,9 +16,10 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str | None = None
     qdrant_collection: str = "aivorah_curriculum_chunks_v1"
-    embedding_dimension: int = 1536
+    embedding_dimension: int = 384
 
     openai_api_key: str = Field(default="", repr=False)
+    gemini_api_key: str = Field(default="", repr=False)
     embedding_model: str = "text-embedding-3-small"
     llm_model: str = "gpt-4.1"
     llm_temperature: float = 0.2

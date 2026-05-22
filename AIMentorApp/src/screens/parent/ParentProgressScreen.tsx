@@ -113,8 +113,8 @@ export default function ParentProgressScreen({ navigation }: any) {
   useEffect(() => { fetchData(); }, [selectedIdx, children]);
 
   const completedTopics: string[] = stats?.completedTopics ?? [];
-  const totalTopics = 14;
-  const progressPct = Math.round((completedTopics.length / totalTopics) * 100);
+  const totalTopics = stats?.totalTopics || completedTopics.length || 1;
+  const progressPct = Math.min(100, Math.round((completedTopics.length / totalTopics) * 100));
   const actMax = Math.max(...weekly, 60);
   const totalWeekMins = weekly.reduce((a, b) => a + b, 0);
 
@@ -163,7 +163,7 @@ export default function ParentProgressScreen({ navigation }: any) {
                   { icon: 'award', label: 'Level', value: `Level ${stats?.level ?? 1}`, color: colors.accentPurple },
                   { icon: 'trending-up', label: 'Streak', value: `${stats?.currentStreak ?? 0} days`, color: colors.accentGreen },
                   { icon: 'clock', label: 'Total Study', value: formatStudyTime(stats?.studyTimeMinutes ?? 0), color: colors.accentBlue },
-                  { icon: 'book-open', label: 'Chapters Done', value: `${completedTopics.length}/${totalTopics}`, color: colors.primary },
+                  { icon: 'book-open', label: 'Topics Done', value: `${completedTopics.length}/${totalTopics}`, color: colors.primary },
                   { icon: 'clipboard', label: 'Assignments', value: `${stats?.assignmentsDone ?? 0} done`, color: colors.accentCyan },
                 ].map(item => (
                   <View key={item.label} style={styles.statCard}>
@@ -177,10 +177,10 @@ export default function ParentProgressScreen({ navigation }: any) {
               </View>
 
               {/* Chapter progress */}
-              <Text style={styles.sectionTitle}>Chapter Completion</Text>
+              <Text style={styles.sectionTitle}>Topic Completion</Text>
               <View style={styles.card}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md }}>
-                  <Text style={styles.cardSub}>{completedTopics.length} of {totalTopics} chapters complete</Text>
+                  <Text style={styles.cardSub}>{completedTopics.length} of {totalTopics} topics complete</Text>
                   <Text style={[styles.cardSub, { color: colors.primary }]}>{progressPct}%</Text>
                 </View>
                 <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>

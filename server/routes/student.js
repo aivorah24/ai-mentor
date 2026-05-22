@@ -1,8 +1,58 @@
 const express  = require('express');
 const router   = express.Router();
 const supabase = require('../services/supabase');
+const { client: qdrant, resolveCollection } = require('../services/qdrant');
+const { normalizeCurriculum } = require('../utils/curriculum');
 
 // ── Helpers ────────────────────────────────────────────────
+
+/**
+ * Query Qdrant for the number of unique topics for a given curriculum + grade.
+ * Returns 0 if Qdrant is unreachable (graceful fallback — caller can show "—").
+ */
+/**
+ * Normalize grade to match Qdrant payload format.
+ * Supabase stores "grade 4", Qdrant stores "Grade 4".
+ */
+function normalizeGrade(grade) {
+  const g = String(grade || '').trim();
+  // Plain integer string → integer (Qdrant stores grade as integer)
+  if (/^\d+$/.test(g)) return parseInt(g, 10);
+  // "grade 4", "Grade 4", "GRADE 4" → integer 4
+  const m = g.match(/^grade\s+(\d+)$/i);
+  if (m) return parseInt(m[1], 10);
+  return g; // pass through as-is (fallback)
+}
+
+async function fetchTotalTopicsFromQdrant(curriculum, grade) {
+  try {
+    const normCurr = normalizeCurriculum(curriculum, 'IB PYP');
+    const { collection, qdrantCurriculum, qdrantGrade } = resolveCollection(normCurr, grade);
+    const mustFilters = [
+      { key: 'curriculum', match: { value: qdrantCurriculum } },
+      { key: 'grade',      match: { value: qdrantGrade } },
+    ];
+    const seen   = new Set();
+    let offset   = null;
+    do {
+      const result = await qdrant.scroll(collection, {
+        filter:       { must: mustFilters },
+        limit:        100,
+        offset:       offset ?? undefined,
+        with_payload: true,
+        with_vector:  false,
+      });
+      for (const point of result.points) {
+        const p = point.payload;
+        seen.add(`${p.subject}|${p.topic}`);
+      }
+      offset = result.next_page_offset ?? null;
+    } while (offset !== null);
+    return seen.size;
+  } catch {
+    return 0;
+  }
+}
 
 function todayISO() {
   return new Date().toISOString().split('T')[0];
@@ -227,7 +277,18 @@ router.get('/:id', async (req, res) => {
       record = updated ?? record;
     }
 
-    res.json(normalise(record));
+    // Fetch user profile to get curriculum + grade for dynamic totalTopics
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('curriculum, grade')
+      .eq('id', id)
+      .single();
+
+    const curriculum  = userRow?.curriculum ?? '';
+    const grade       = userRow?.grade ?? '';
+    const totalTopics = await fetchTotalTopicsFromQdrant(curriculum, grade);
+
+    res.json({ ...normalise(record), totalTopics });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -438,24 +499,17 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
     const statsMap = {};
     (stats ?? []).forEach(s => { statsMap[s.student_id] = s; });
 
-    const students = links.map(link => {
+    const students = await Promise.all(links.map(async link => {
       const s = statsMap[link.student_id] ?? {};
       const user = link.users ?? {};
       const topicsCount = [...new Set(s.completed_topics ?? [])].length;
 
-      // Dynamic total topics based on student's actual curriculum + grade
-      const curriculum = (user.curriculum ?? '').toLowerCase();
-      const grade = (user.grade ?? '').toLowerCase();
-      // Real topic counts from Qdrant curriculum data (all subjects combined)
-      const TOPIC_COUNTS = {
-        'ncert':   { 'grade 3': 37, 'grade 4': 37, 'grade 5': 37, 'grade 6': 37 },
-        'ib pyp':  { 'grade 3': 55, 'grade 4': 54, 'grade 5': 36 },
-        'ib_pyp':  { 'grade 3': 55, 'grade 4': 54, 'grade 5': 36 },
-        'cbse':    { 'grade 3': 37, 'grade 4': 37, 'grade 5': 37, 'grade 6': 37 },
-      };
-      const currKey = Object.keys(TOPIC_COUNTS).find(k => curriculum.includes(k)) ?? 'ncert';
-      const totalTopics = TOPIC_COUNTS[currKey]?.[grade] ?? 14;
-      const progressPct = Math.min(100, Math.round((topicsCount / totalTopics) * 100));
+      const curriculum = user.curriculum ?? '';
+      const grade      = user.grade ?? '';
+      const totalTopics = await fetchTotalTopicsFromQdrant(curriculum, grade);
+      const progressPct = totalTopics > 0
+        ? Math.min(100, Math.round((topicsCount / totalTopics) * 100))
+        : 0;
 
       return {
         id:             link.student_id,
@@ -478,14 +532,12 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
           const studyTime = s.study_time_minutes ?? 0;
           const xp = s.xp_points ?? 0;
           const chapters = (s.completed_topics ?? []).length;
-          // Brand new student — no study time, no XP, no chapters done → not yet active, don't flag
           if (studyTime === 0 && xp === 0 && chapters === 0) return false;
-          // Active student — flag if low progress or streak broken
           return progressPct < 30 || (s.current_streak ?? 0) < 2;
         })(),
         photoUrl:       user.photo_url ?? null,
       };
-    });
+    }));
 
     res.json(students);
   } catch (err) {

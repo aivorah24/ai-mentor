@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius } from '../../theme';
@@ -19,7 +20,7 @@ import ScreenLayout from '../../components/common/ScreenLayout';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentData } from '../../context/StudentDataContext';
-import { askAIMentor, type ChatHistoryTurn } from '../../services/aiMentorApi';
+import { askAIMentor, type ChatHistoryTurn, type AskImage } from '../../services/aiMentorApi';
 import SERVER_URL from '../../config/serverUrl';
 
 interface Message {
@@ -28,6 +29,7 @@ interface Message {
   text: string;
   timestamp: string;
   isError?: boolean;
+  images?: AskImage[];
 }
 
 function sanitizeDisplayedAIText(text: string): string {
@@ -291,7 +293,7 @@ export default function AICoachScreen({ navigation }: any) {
         text: m.text,
       }));
 
-    const { answer, error, limitReached: hitLimit } = await askAIMentor(
+    const { answer, images: answerImages, error, limitReached: hitLimit } = await askAIMentor(
       msgText,
       userGrade,
       undefined,
@@ -319,6 +321,7 @@ export default function AICoachScreen({ navigation }: any) {
       text: error ? error : answer,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isError: !!error,
+      images: !error && answerImages && answerImages.length > 0 ? answerImages : undefined,
     };
     setMessages((prev) => [...prev, aiMsg]);
     setIsTyping(false);
@@ -458,6 +461,29 @@ export default function AICoachScreen({ navigation }: any) {
                   </Text>
                 </View>
               </View>
+              {msg.role === 'ai' && msg.images && msg.images.length > 0 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.imageStrip}
+                  contentContainerStyle={styles.imageStripContent}
+                >
+                  {msg.images.map((img, imgIdx) => (
+                    <View key={imgIdx} style={[styles.imageCard, { backgroundColor: colors.cardDark, borderColor: colors.borderColor }]}>
+                      <Image
+                        source={{ uri: img.url }}
+                        style={styles.imageThumb}
+                        resizeMode="cover"
+                      />
+                      {!!img.caption && (
+                        <Text style={[styles.imageCaption, { color: colors.textMuted }]} numberOfLines={2}>
+                          {img.caption}
+                        </Text>
+                      )}
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
               {msg.role === 'user' && (
                 <View style={styles.userAvatar}>
                   <Feather name="user" size={14} color={colors.textMuted} />
@@ -725,6 +751,11 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   speakBtnActive: { backgroundColor: c.primary, borderColor: c.primary },
   speakBtnText: { fontSize: 11, fontWeight: '700' },
   timestamp: { fontSize: 10, color: c.textDim, textAlign: 'right', flex: 1 },
+  imageStrip: { marginTop: 8, marginLeft: 42 },
+  imageStripContent: { gap: 8, paddingRight: 4 },
+  imageCard: { width: 160, borderRadius: 10, borderWidth: 1, overflow: 'hidden' },
+  imageThumb: { width: 160, height: 100 },
+  imageCaption: { fontSize: 11, lineHeight: 15, padding: 6 },
 
   typingBubble: {
     backgroundColor: c.cardDark,

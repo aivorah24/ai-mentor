@@ -1,7 +1,12 @@
+import asyncio
+import logging
+
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import Distance, FieldCondition, Filter, MatchAny, MatchValue, PointStruct, VectorParams
 
 from app.config import Settings
+
+LOGGER = logging.getLogger(__name__)
 
 
 class QdrantService:
@@ -24,8 +29,17 @@ class QdrantService:
                 )
 
     async def upsert(self, points: list[PointStruct]) -> None:
-        await self.ensure_collection()
-        await self.client.upsert(self.settings.qdrant_collection, points=points, wait=True)
+        for attempt in range(5):
+            try:
+                await self.ensure_collection()
+                await self.client.upsert(self.settings.qdrant_collection, points=points, wait=True)
+                return
+            except Exception as e:
+                if attempt == 4:
+                    raise
+                wait = 10 * (attempt + 1)
+                LOGGER.warning("Qdrant upsert failed (%s), retrying in %ds...", e, wait)
+                await asyncio.sleep(wait)
 
     async def search(self, vector: list[float], filters: dict, limit: int) -> list:
         await self.ensure_collection()

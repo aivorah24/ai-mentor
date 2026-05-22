@@ -91,33 +91,23 @@ export default function ProgressScreen({ navigation }: any) {
 
   const [weeklyDays, setWeeklyDays] = useState<DayActivity[]>([]);
   const [curriculum, setCurriculum] = useState<CurriculumData | null>(null);
-  const [ncertTotal, setNcertTotal] = useState(14); // NCERT Grade 3 has 14 chapters
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!studentId) return;
-    Promise.all([
-      fetch(`${SERVER_URL}/student/${studentId}/weekly`).then(r => r.json()).catch(() => ({ days: [] })),
-      fetch(`${SERVER_URL}/ncert/chapters`).then(r => r.json()).catch(() => null),
-    ]).then(([weekly, ncert]) => {
-      setWeeklyDays(weekly.days ?? []);
-      // Build CurriculumData from NCERT chapters for subject breakdown
-      if (ncert?.chapters?.length) {
-        setNcertTotal(ncert.chapters.length);
-        const topics = ncert.chapters.map((ch: any) => ({ topic: ch.topic, unit: ch.unit || 'General' }));
-        const grouped: any = { 'Class 3': { Mathematics: topics.map((t: any) => ({ topic: t.topic, unit: t.unit })) } };
-        setCurriculum({ grades: ['Class 3'], topics: ncert.chapters.map((ch: any) => ({ grade: 'Class 3', subject: 'Mathematics', unit: ch.unit || 'General', topic: ch.topic, content_type: 'text' })), grouped, totalTopics: ncert.chapters.length });
-      }
-      setLoading(false);
-    });
+    fetch(`${SERVER_URL}/student/${studentId}/weekly`).then(r => r.json()).catch(() => ({ days: [] }))
+      .then((weekly) => {
+        setWeeklyDays(weekly.days ?? []);
+        setLoading(false);
+      });
   }, [studentId]);
 
   // ── Derived real values ───────────────────────────────────
 
   const completedSet = useMemo(() => new Set(stats.completedTopics ?? []), [stats.completedTopics]);
-  // Use NCERT total as primary (student is doing NCERT Grade 3)
-  const totalTopics = ncertTotal;
-  const overallPct = totalTopics > 0 ? Math.round((completedSet.size / totalTopics) * 100) : 0;
+  // Use totalTopics from server stats — curriculum-aware (IB PYP Grade 4 = 54, NCERT etc.)
+  const totalTopics = stats.totalTopics ?? 0;
+  const overallPct = totalTopics > 0 ? Math.min(100, Math.round((completedSet.size / totalTopics) * 100)) : 0;
 
   // Subject performance: % of topics completed per subject
   const subjectStats = useMemo(() => {
@@ -211,7 +201,7 @@ export default function ProgressScreen({ navigation }: any) {
                   : 'Outstanding work!'}
               </Text>
               <Text style={styles.heroSub}>
-                {completedSet.size} of {totalTopics} chapters completed · {stats.currentStreak}-day streak · Level {stats.level}
+                {completedSet.size} of {totalTopics} topics completed · {stats.currentStreak}-day streak · Level {stats.level}
               </Text>
             </View>
             {/* XP bar */}

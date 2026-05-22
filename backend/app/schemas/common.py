@@ -40,6 +40,7 @@ class CurriculumMetadata(BaseModel):
     source_reference: str | None = Field(default=None, max_length=500)
     license_status: str = "processed_reference"
     tags: list[str] = Field(default_factory=list)
+    image_url: str | None = Field(default=None, max_length=1000)
 
     def payload(self) -> dict[str, Any]:
         data = self.model_dump()

@@ -18,6 +18,7 @@ import LandingScreen from './src/screens/auth/LandingScreen';
 import VerifyEmailScreen from './src/screens/auth/VerifyEmailScreen';
 import ResetPasswordScreen from './src/screens/auth/ResetPasswordScreen';
 import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
+import OnboardingDemo from './src/screens/onboarding/OnboardingDemo';
 import SetPasswordScreen from './src/screens/onboarding/SetPasswordScreen';
 import AdminPanelScreen from './src/screens/admin/AdminPanelScreen';
 import { AuthProvider, useAuth, getPendingReturnRole } from './src/context/AuthContext';
@@ -122,12 +123,27 @@ function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
 }
 
 function NotificationBannerWrapper() {
+  const { isAuthenticated, user } = useAuth();
   const navigation = useNavigation<any>();
-  return (
-    <NotificationBanner
-      onNavigate={(screen, params) => navigation.navigate(screen, params)}
-    />
-  );
+
+  // Only show notifications when user is fully logged in and past onboarding
+  const isDemoOrTest = user?.email?.endsWith('@demo.com') || user?.email?.endsWith('@test.ai');
+  const isReady = isAuthenticated &&
+    (isDemoOrTest || (user?.onboardingComplete === true && user?.emailVerified !== false)) &&
+    !user?.mustChangePassword;
+
+  if (!isReady) return null;
+
+  function handleNavigate(screen: string, params?: Record<string, any>) {
+    try {
+      navigation.navigate(screen, params);
+    } catch {
+      // Screen might be in a nested navigator — try navigate with nesting
+      try { navigation.navigate('Assignments'); } catch {}
+    }
+  }
+
+  return <NotificationBanner onNavigate={handleNavigate} />;
 }
 
 function RootNavigator() {
@@ -185,6 +201,11 @@ function RootNavigator() {
     onboardingComplete: user?.onboardingComplete,
     isDemoOrTest 
   });
+
+  // Demo mode — access via ?demo=onboarding in URL
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'onboarding') {
+    return <OnboardingDemo />;
+  }
 
   if (needsEmailVerification) {
     console.log('[Auth] Verification required, showing VerifyEmailScreen');

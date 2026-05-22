@@ -88,6 +88,7 @@ router.post('/', async (req, res) => {
 
     let context = '';
     let sources = [];
+    let images = [];
     let ragMeta = { strategy: 'none', strictCandidates: 0, broadCandidates: 0, selected: 0 };
     let webMeta = { enabled: false, query: '', count: 0 };
 
@@ -104,6 +105,7 @@ router.post('/', async (req, res) => {
       });
       context = rag.context;
       sources = rag.sources;
+      images = rag.images || [];
       ragMeta = rag.meta;
     } catch (qdrantErr) {
       // Continue with no context if retrieval is unavailable
@@ -160,7 +162,7 @@ router.post('/', async (req, res) => {
     // Track usage for free-tier limit
     if (!isPro && emailLc) incrementDailyUsage(emailLc).catch(() => {});
 
-    res.json({ answer, sources });
+    res.json({ answer, sources, images });
   } catch (err) {
     console.error('Error in /ask:', err.message);
     logEvent('ai_ask', {
@@ -351,6 +353,7 @@ router.post('/stream', async (req, res) => {
   try {
     let context = '';
     let sources = [];
+    let images = [];
     let ragMeta = { strategy: 'none', strictCandidates: 0, broadCandidates: 0, selected: 0 };
     let webMeta = { enabled: false, query: '', count: 0 };
 
@@ -367,6 +370,7 @@ router.post('/stream', async (req, res) => {
       });
       context = rag.context;
       sources = rag.sources;
+      images = rag.images || [];
       ragMeta = rag.meta;
     } catch (qdrantErr) {
       console.warn('Qdrant unavailable, using no-context mode:', qdrantErr.message);
@@ -392,8 +396,8 @@ router.post('/stream', async (req, res) => {
       }
     }
 
-    // Send sources first
-    res.write(`data: ${JSON.stringify({ type: 'sources', sources })}\n\n`);
+    // Send sources + images first
+    res.write(`data: ${JSON.stringify({ type: 'sources', sources, images })}\n\n`);
 
     // 2. Stream answer tokens
     await generateAnswerStream({
