@@ -96,7 +96,7 @@ def load_phase1_index() -> dict:
 
 _PHASE1_INDEX: dict = {}  # populated in main()
 
-MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "r1K22qEd7o3exdCi85luR43kMqzLZ23l")
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "")
 MISTRAL_VISION_MODEL = "pixtral-12b-2409"
 _mistral_client = openai.OpenAI(
     api_key=MISTRAL_API_KEY,
