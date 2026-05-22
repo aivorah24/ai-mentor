@@ -54,7 +54,11 @@ class IngestionService:
             session.add(document)
             await session.flush()
 
-            chunks = self.chunking.split(cleaned)
+            # Image items: keep as single chunk so the full caption is embedded
+            if item.metadata.image_url:
+                chunks = [cleaned]
+            else:
+                chunks = self.chunking.split(cleaned)
             vectors = await self.embeddings.embed_texts(chunks)
             points: list[PointStruct] = []
 

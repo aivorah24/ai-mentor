@@ -1,23 +1,38 @@
-from openai import AsyncOpenAI
+import asyncio
+import logging
+
+from sentence_transformers import SentenceTransformer
 
 from app.config import Settings
-from app.utils.errors import AppError
+
+LOGGER = logging.getLogger(__name__)
+
+EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"  # 384-dim, free, runs locally, no quota
+BATCH_SIZE = 256
 
 
 class EmbeddingService:
+    _model: SentenceTransformer | None = None
+
     def __init__(self, settings: Settings):
-        if not settings.openai_api_key:
-            raise AppError("OPENAI_API_KEY is required for embeddings.", status_code=500, code="missing_openai_key")
-        self.settings = settings
-        self.client = AsyncOpenAI(api_key=settings.openai_api_key)
+        # Lazy-load model on first use (downloads once, cached locally)
+        if EmbeddingService._model is None:
+            LOGGER.info("Loading sentence-transformers model %s...", EMBEDDING_MODEL_NAME)
+            EmbeddingService._model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+            LOGGER.info("Model loaded. Embedding dim: %d", EmbeddingService._model.get_sentence_embedding_dimension())
+
+    def _embed_batch(self, texts: list[str]) -> list[list[float]]:
+        vectors = EmbeddingService._model.encode(texts, batch_size=BATCH_SIZE, show_progress_bar=False)
+        return [v.tolist() for v in vectors]
 
     async def embed_texts(self, texts: list[str]) -> list[list[float]]:
-        response = await self.client.embeddings.create(
-            model=self.settings.embedding_model,
-            input=texts,
-        )
-        return [item.embedding for item in response.data]
+        loop = asyncio.get_event_loop()
+        results = []
+        for i in range(0, len(texts), BATCH_SIZE):
+            batch = texts[i: i + BATCH_SIZE]
+            batch_results = await loop.run_in_executor(None, self._embed_batch, batch)
+            results.extend(batch_results)
+        return results
 
     async def embed_query(self, query: str) -> list[float]:
         return (await self.embed_texts([query]))[0]
-

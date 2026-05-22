@@ -98,7 +98,11 @@ function buildContext(results) {
   return results
     .map((r) => {
       const p = r.payload || {};
-      return `[${p.subject || ''} > ${p.unit || ''} > ${p.topic || ''}]\n${p.content || ''}`;
+      // Image chunks: include caption in context so LLM knows the image exists
+      if (p.content_type === 'image' && p.image_url) {
+        return `[${p.subject || ''} > ${p.topic || ''}]\n[IMAGE] ${p.text || ''}`;
+      }
+      return `[${p.subject || ''} > ${p.unit || ''} > ${p.topic || ''}]\n${p.text || p.content || ''}`;
     })
     .join('\n\n---\n\n');
 }
@@ -113,6 +117,21 @@ function buildSources(results) {
       score: Math.round((r.blendedScore || r.score || 0) * 100) / 100,
     };
   });
+}
+
+function buildImages(results) {
+  return results
+    .filter((r) => (r.payload || {}).content_type === 'image' && (r.payload || {}).image_url)
+    .map((r) => {
+      const p = r.payload || {};
+      return {
+        url: p.image_url,
+        caption: p.text ? p.text.replace(/^\[IMAGE\]\s*/i, '').split('\n')[0] : '',
+        subject: p.subject || '',
+        grade: p.grade || '',
+        topic: p.topic || '',
+      };
+    });
 }
 
 async function retrieveCurriculumContext({
@@ -172,6 +191,7 @@ async function retrieveCurriculumContext({
   return {
     context: buildContext(selected),
     sources: buildSources(selected),
+    images: buildImages(selected),
     meta: {
       strategy,
       strictCandidates: strictResults.length,
@@ -191,4 +211,5 @@ module.exports = {
   inferSubjectFromText,
   rankResults,
   overlapRatio,
+  buildImages,
 };

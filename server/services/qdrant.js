@@ -1,6 +1,23 @@
 const { QdrantClient } = require('@qdrant/js-client-rest');
 
-const COLLECTION = 'ai_mentor_content';
+const COLLECTION        = 'aivorah_curriculum_chunks_v1'; // NCERT + new content
+const IB_COLLECTION     = 'ai_mentor_content';            // IB PYP, CBSE, Cambridge, etc.
+
+// Pick the right collection and normalise grade/curriculum for Qdrant
+function resolveCollection(normCurriculum, grade) {
+  if (normCurriculum === 'NCERT') {
+    // NCERT collection stores grade as integer (6, 7, …)
+    const m = String(grade || '').match(/(\d+)/);
+    const qdrantGrade = m ? parseInt(m[1], 10) : grade;
+    return { collection: COLLECTION, qdrantCurriculum: normCurriculum, qdrantGrade };
+  }
+  // All other curricula (IB PYP → IB_PYP, CBSE, Cambridge, …) live in ai_mentor_content
+  // Those store grade as "Grade 4" string and curriculum with underscores for IB PYP
+  const qdrantCurriculum = normCurriculum === 'IB PYP' ? 'IB_PYP' : normCurriculum;
+  const m = String(grade || '').match(/(\d+)/);
+  const qdrantGrade = m ? `Grade ${m[1]}` : grade;
+  return { collection: IB_COLLECTION, qdrantCurriculum, qdrantGrade };
+}
 const VECTOR_SIZE = 384; // all-MiniLM-L6-v2 (local, no API key)
 
 const client = new QdrantClient({
@@ -59,4 +76,4 @@ async function getCollectionInfo() {
   return client.getCollection(COLLECTION);
 }
 
-module.exports = { initCollection, searchContent, upsertContent, getCollectionInfo, client, COLLECTION };
+module.exports = { initCollection, searchContent, upsertContent, getCollectionInfo, client, COLLECTION, IB_COLLECTION, resolveCollection };

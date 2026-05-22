@@ -648,9 +648,15 @@ export default function DashboardScreen({ navigation }: any) {
                   <Text style={styles.heroGreeting}>{getGreeting()},</Text>
                   <Text style={styles.heroName}>{firstName}</Text>
                   <Text style={styles.heroSub}>
-                    {stats.topicsExplored > 0
-                      ? `${Math.min(stats.topicsExplored, curriculum.totalTopics)} of ${curriculum.totalTopics} topics explored. Keep it up!`
-                      : `${curriculum.totalTopics} topics ready for your first sprint.`}
+                    {(() => {
+                      const total = curriculum.totalTopics;
+                      const done  = completedSet.size;
+                      if (done === 0)              return `${total} topics ready for your first sprint.`;
+                      if (done >= total)           return `You've nailed it! All ${total} topics mastered.`;
+                      const pct = Math.round((done / total) * 100);
+                      if (pct >= 80)               return `So close! ${total - done} topic${total - done === 1 ? '' : 's'} left to complete.`;
+                      return `${done} of ${total} topics mastered. Keep going!`;
+                    })()}
                   </Text>
 
                   {/* XP bar */}
@@ -664,14 +670,28 @@ export default function DashboardScreen({ navigation }: any) {
                     </View>
                   </View>
 
-                  {/* CTA */}
-                  <TouchableOpacity style={styles.heroCta} onPress={() => navigation.navigate('LearningPaths')} activeOpacity={0.85}>
-                    <View style={styles.heroCtaPlay}>
-                      <Feather name="play" size={13} color={BRAND.indigo} />
-                    </View>
-                    <Text style={styles.heroCtaTxt}>Resume Learning Path</Text>
-                    <Feather name="chevron-right" size={16} color="rgba(255,255,255,0.55)" />
-                  </TouchableOpacity>
+                  {/* CTA — label and destination change based on completion state */}
+                  {(() => {
+                    const done  = completedSet.size;
+                    const total = curriculum.totalTopics;
+                    const isComplete = done >= total && total > 0;
+                    const isNew      = done === 0;
+                    return (
+                      <TouchableOpacity
+                        style={styles.heroCta}
+                        onPress={() => navigation.navigate(isComplete ? 'Challenges' : 'LearningPaths')}
+                        activeOpacity={0.85}
+                      >
+                        <View style={styles.heroCtaPlay}>
+                          <Feather name={isComplete ? 'award' : 'play'} size={13} color={BRAND.indigo} />
+                        </View>
+                        <Text style={styles.heroCtaTxt}>
+                          {isComplete ? 'Explore Challenges' : isNew ? 'Start Learning' : 'Resume Learning Path'}
+                        </Text>
+                        <Feather name="chevron-right" size={16} color="rgba(255,255,255,0.55)" />
+                      </TouchableOpacity>
+                    );
+                  })()}
                 </LinearGradient>
 
               </Animated.View>

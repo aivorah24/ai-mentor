@@ -1,10 +1,12 @@
 import React from 'react';
-import { useWindowDimensions } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { DrawerParamList } from './types';
 import { useTheme } from '../context/ThemeContext';
+import { useNavigation } from '@react-navigation/native';
 
 import DrawerContent from '../components/common/DrawerContent';
+import NotificationBanner from '../components/common/NotificationBanner';
 import DashboardScreen from '../screens/student/DashboardScreen';
 import ProfileScreen from '../screens/student/ProfileScreen';
 import LearningPathsScreen from '../screens/student/LearningPathsScreen';
@@ -37,12 +39,22 @@ import MessagesScreen from '../screens/shared/MessagesScreen';
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
+function NotificationOverlay() {
+  const navigation = useNavigation<any>();
+  return (
+    <NotificationBanner
+      onNavigate={(screen, params) => navigation.navigate(screen, params)}
+    />
+  );
+}
+
 export default function AppNavigator() {
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768;
   const { colors } = useTheme();
 
   return (
+    <View style={{ flex: 1 }}>
     <Drawer.Navigator
       initialRouteName="Dashboard"
       backBehavior="history"
@@ -90,5 +102,7 @@ export default function AppNavigator() {
       <Drawer.Screen name="Subscription" component={SubscriptionScreen} />
       <Drawer.Screen name="Messages" component={MessagesScreen} />
     </Drawer.Navigator>
+    <NotificationOverlay />
+    </View>
   );
 }
