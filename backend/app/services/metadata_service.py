@@ -9,7 +9,7 @@ class MetadataService:
                 "source_id": source_id,
                 "title": title,
                 "chunk_index": chunk_index,
-                "content_type": "semantic_chunk",
+                "content_type": "image" if metadata.image_url else "semantic_chunk",
             }
         )
         return payload

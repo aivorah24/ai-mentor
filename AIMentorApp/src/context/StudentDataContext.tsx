@@ -39,6 +39,7 @@ export interface StudentStats {
   todayXP:             number;
   completedTopics:     string[];
   lastLesson:          string;
+  totalTopics:         number;
 }
 
 interface StudentDataContextType {
@@ -69,6 +70,7 @@ const ZERO_STATS: StudentStats = {
   todayXP:             0,
   completedTopics:     [],
   lastLesson:          '',
+  totalTopics:         0,
 };
 
 // ─────────────────────────────────────────────────────────

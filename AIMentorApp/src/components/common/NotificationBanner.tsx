@@ -63,25 +63,26 @@ export default function NotificationBanner({ onNavigate }: Props) {
   let targetScreen = msgScreen;
   let targetParams: Record<string, any> | undefined;
 
-  if (hasMsg) {
+  if (hasAssign) {
+    icon = 'check-square';
+    iconColor = colors.accentBlue;
+    title = unreadAssignments === 1 ? 'New assignment added' : `${unreadAssignments} new assignments`;
+    subtitle = 'Tap to open your assignments';
+    targetScreen = assignScreen;
+    targetParams = { highlight: 'new' };
+  } else if (hasChallenge) {
+    icon = 'award';
+    iconColor = colors.accentPurple;
+    title = unreadChallenges === 1 ? 'New challenge assigned' : `${unreadChallenges} new challenges`;
+    subtitle = 'Tap to view your challenges';
+    targetScreen = challengeScreen;
+    targetParams = { tab: 'assigned' };
+  } else if (hasMsg) {
     icon = 'message-square';
     iconColor = colors.primary;
     title = `Message from ${latestNotif!.senderName}`;
     subtitle = latestNotif!.preview || 'Tap to read';
     targetScreen = msgScreen;
-  } else if (hasAssign) {
-    icon = 'check-square';
-    iconColor = colors.accentBlue;
-    title = unreadAssignments === 1 ? 'New assignment' : `${unreadAssignments} new assignments`;
-    subtitle = 'Tap to view your assignments';
-    targetScreen = assignScreen;
-  } else if (hasChallenge) {
-    icon = 'award';
-    iconColor = colors.accentPurple;
-    title = unreadChallenges === 1 ? 'New challenge' : `${unreadChallenges} new challenges`;
-    subtitle = 'Tap to view your challenges';
-    targetScreen = challengeScreen;
-    targetParams = { tab: 'assigned' };
   }
 
   function handleTap() {
@@ -102,25 +103,25 @@ export default function NotificationBanner({ onNavigate }: Props) {
       ]}
       pointerEvents="box-none"
     >
-      <TouchableOpacity style={styles.inner} onPress={handleTap} activeOpacity={0.85}>
-        {/* Icon */}
-        <View style={[styles.iconWrap, { backgroundColor: iconColor + '22' }]}>
-          <Feather name={icon as any} size={18} color={iconColor} />
+      <TouchableOpacity style={styles.inner} onPress={handleTap} activeOpacity={0.88}>
+        {/* App icon area */}
+        <View style={[styles.iconWrap, { backgroundColor: iconColor }]}>
+          <Feather name={icon as any} size={20} color="#fff" />
         </View>
 
         {/* Text */}
         <View style={styles.textWrap}>
           <View style={styles.titleRow}>
-            <View style={[styles.dot, { backgroundColor: iconColor }]} />
-            <Text style={[styles.appName, { color: iconColor }]}>Aivorah</Text>
+            <Text style={[styles.appName, { color: colors.textMuted }]}>AIVORAH</Text>
+            <Text style={[styles.timeText, { color: colors.textDim }]}>now</Text>
           </View>
           <Text style={[styles.title, { color: colors.textMain }]} numberOfLines={1}>{title}</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]} numberOfLines={2}>{subtitle}</Text>
         </View>
 
         {/* Dismiss */}
-        <TouchableOpacity onPress={dismissToast} style={styles.closeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Feather name="x" size={14} color={colors.textDim} />
+        <TouchableOpacity onPress={dismissToast} style={styles.closeBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Feather name="x" size={16} color={colors.textDim} />
         </TouchableOpacity>
       </TouchableOpacity>
 
@@ -153,28 +154,30 @@ function AutoProgressBar({ color, duration, onComplete }: { color: string; durat
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: Platform.OS === 'web' ? 56 : 80,   // sits just below the header/bell row
+    top: Platform.OS === 'web' ? 16 : 50,
+    left: Platform.OS === 'web' ? undefined : 12,
     right: 12,
-    width: 320,
-    borderRadius: 16,
+    width: Platform.OS === 'web' ? 360 : undefined,
+    borderRadius: 18,
     borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 16,
     zIndex: 9999,
     overflow: 'hidden',
   },
   inner: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     gap: 12,
   },
   iconWrap: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -182,45 +185,43 @@ const styles = StyleSheet.create({
   },
   textWrap: {
     flex: 1,
-    gap: 2,
+    gap: 1,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    marginBottom: 1,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    justifyContent: 'space-between',
+    marginBottom: 2,
   },
   appName: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  timeText: {
+    fontSize: 11,
   },
   title: {
     fontSize: 14,
     fontWeight: '700',
-    lineHeight: 18,
+    lineHeight: 19,
   },
   subtitle: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 17,
+    marginTop: 1,
   },
   closeBtn: {
     padding: 4,
     alignSelf: 'flex-start',
+    marginTop: 2,
   },
   progressTrack: {
     height: 3,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     flexDirection: 'row',
   },
   progressBar: {
     height: 3,
-    borderRadius: 2,
   },
 });

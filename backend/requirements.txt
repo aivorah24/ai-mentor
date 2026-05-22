@@ -12,3 +12,4 @@ python-dotenv>=1.0.1,<2.0
 tenacity>=9.0.0,<10.0
 redis>=5.2.1,<7.0
 httpx>=0.28.1,<1.0
+PyMuPDF>=1.24.0,<2.0

@@ -1,8 +1,17 @@
 import SERVER_URL from '../config/serverUrl';
 
+export interface AskImage {
+  url: string;
+  caption: string;
+  subject: string;
+  grade: string | number;
+  topic: string;
+}
+
 export interface AskResponse {
   answer: string;
   sources: { subject: string; unit: string; topic: string; score: number }[];
+  images?: AskImage[];
 }
 
 export interface ChatHistoryTurn {
@@ -19,7 +28,7 @@ export async function askAIMentor(
   userEmail?: string,
   role?: string,
   history?: ChatHistoryTurn[],
-): Promise<{ answer: string; sources: AskResponse['sources']; error?: string; limitReached?: boolean }> {
+): Promise<{ answer: string; sources: AskResponse['sources']; images: AskImage[]; error?: string; limitReached?: boolean }> {
   try {
     const payload: any = { question, curriculum, grade, subject, topic, userEmail, role };
     if (history && history.length > 0) payload.history = history;
@@ -33,17 +42,18 @@ export async function askAIMentor(
     // Handle free-tier limit reached
     if (response.status === 429) {
       const data = await response.json();
-      return { answer: '', sources: [], error: data.error, limitReached: true };
+      return { answer: '', sources: [], images: [], error: data.error, limitReached: true };
     }
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
     const data: AskResponse = await response.json();
-    return { answer: data.answer, sources: data.sources };
+    return { answer: data.answer, sources: data.sources, images: data.images || [] };
   } catch (err: any) {
     return {
       answer: '',
       sources: [],
+      images: [],
       error: 'Could not connect to Aivorah. Make sure the server is running.',
     };
   }
@@ -63,7 +73,7 @@ export async function askAIMentorStream(
   role?: string,
   history?: ChatHistoryTurn[],
   onToken?: (token: string) => void,
-): Promise<{ answer: string; sources: AskResponse['sources']; error?: string; limitReached?: boolean }> {
+): Promise<{ answer: string; sources: AskResponse['sources']; images: AskImage[]; error?: string; limitReached?: boolean }> {
   try {
     const payload: any = {
       question,
@@ -85,7 +95,7 @@ export async function askAIMentorStream(
     if (!response.ok) {
       try {
         const errBody = await response.json();
-        if (errBody.limitReached) return { answer: '', sources: [], error: errBody.error, limitReached: true };
+        if (errBody.limitReached) return { answer: '', sources: [], images: [], error: errBody.error, limitReached: true };
       } catch {}
       throw new Error(`Server error: ${response.status}`);
     }
@@ -96,6 +106,7 @@ export async function askAIMentorStream(
     const decoder = new TextDecoder();
     let fullAnswer = '';
     let sources: AskResponse['sources'] = [];
+    let images: AskImage[] = [];
     let buffer = '';
 
     while (true) {
@@ -117,18 +128,20 @@ export async function askAIMentorStream(
             onToken?.(data.token);
           } else if (data.type === 'sources') {
             sources = data.sources || [];
+            images = data.images || [];
           } else if (data.type === 'error') {
-            return { answer: '', sources: [], error: data.error };
+            return { answer: '', sources: [], images: [], error: data.error };
           }
         } catch {}
       }
     }
 
-    return { answer: fullAnswer, sources };
+    return { answer: fullAnswer, sources, images };
   } catch (err: any) {
     return {
       answer: '',
       sources: [],
+      images: [],
       error: 'Could not connect to Aivorah. Make sure the server is running.',
     };
   }

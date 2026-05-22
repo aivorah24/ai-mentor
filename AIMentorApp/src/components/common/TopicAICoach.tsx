@@ -7,12 +7,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, Animated, ActivityIndicator, Keyboard,
-  Platform, KeyboardAvoidingView,
+  Platform, KeyboardAvoidingView, Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { askAIMentorStream, type ChatHistoryTurn } from '../../services/aiMentorApi';
+import { askAIMentorStream, type ChatHistoryTurn, type AskImage } from '../../services/aiMentorApi';
 import { spacing, radius } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
@@ -135,6 +135,7 @@ function startSpeechRecognition(
 interface Message {
   role: 'user' | 'ai';
   text: string;
+  images?: AskImage[];
 }
 
 function sanitizeDisplayedAIText(text: string): string {
@@ -309,6 +310,16 @@ export default function TopicAICoach({
         updated[updated.length - 1] = { role: 'ai', text: errText };
         return updated;
       });
+    } else if (result.images && result.images.length > 0) {
+      // Attach images to the last AI message
+      setMessages(prev => {
+        const updated = [...prev];
+        const last = updated[updated.length - 1];
+        if (last && last.role === 'ai') {
+          updated[updated.length - 1] = { ...last, images: result.images };
+        }
+        return updated;
+      });
     }
 
     setLoading(false);
@@ -426,6 +437,29 @@ export default function TopicAICoach({
                     <Text style={[styles.bubbleText, { color: '#fff' }]}>{shownText}</Text>
                   )}
                 </View>
+                {msg.role === 'ai' && msg.images && msg.images.length > 0 && (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.imageStrip}
+                    contentContainerStyle={styles.imageStripContent}
+                  >
+                    {msg.images.map((img, imgIdx) => (
+                      <View key={imgIdx} style={[styles.imageCard, { backgroundColor: colors.cardHover, borderColor: colors.borderColor }]}>
+                        <Image
+                          source={{ uri: img.url }}
+                          style={styles.imageThumb}
+                          resizeMode="cover"
+                        />
+                        {!!img.caption && (
+                          <Text style={[styles.imageCaption, { color: colors.textMuted }]} numberOfLines={2}>
+                            {img.caption}
+                          </Text>
+                        )}
+                      </View>
+                    ))}
+                  </ScrollView>
+                )}
                 {msg.role === 'ai' && (
                   <View style={styles.feedbackRow}>
                     <TouchableOpacity
@@ -638,5 +672,28 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  imageStrip: {
+    marginTop: 8,
+    marginLeft: 4,
+  },
+  imageStripContent: {
+    gap: 8,
+    paddingRight: 4,
+  },
+  imageCard: {
+    width: 140,
+    borderRadius: 8,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  imageThumb: {
+    width: 140,
+    height: 90,
+  },
+  imageCaption: {
+    fontSize: 10,
+    lineHeight: 13,
+    padding: 5,
   },
 });

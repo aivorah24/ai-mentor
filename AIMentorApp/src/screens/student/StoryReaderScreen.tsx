@@ -92,35 +92,19 @@ function buildBoundaries(tokens: string[]): number[] {
   return weights.map(w => { cum += w; return cum / total; });
 }
 
-// Page flip sound — single shared context to prevent stacking
-let _flipCtx: any = null;
+// Page flip sound
+const PAGE_FLIP_SRC = require('../../../assets/sounds/page-flip.mp3');
+let _flipAudio: HTMLAudioElement | null = null;
+
 function playPageFlip() {
   if (Platform.OS !== 'web') return;
   try {
-    if (!_flipCtx || _flipCtx.state === 'closed') {
-      _flipCtx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
+    if (!_flipAudio) {
+      _flipAudio = new Audio(PAGE_FLIP_SRC);
+      _flipAudio.volume = 0.6;
     }
-    const ctx = _flipCtx;
-    if (ctx.state === 'suspended') ctx.resume();
-    // Paper rustle: lowpass-filtered noise burst — soft, not buzzy
-    const duration = 0.14; // seconds
-    const buf = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) {
-      // Two-phase envelope: quick attack then slow fade (paper swish)
-      const t = i / ctx.sampleRate;
-      const env = t < 0.02
-        ? t / 0.02                                   // 20ms attack
-        : Math.exp(-(t - 0.02) / 0.055);            // ~55ms decay
-      d[i] = (Math.random() * 2 - 1) * env;
-    }
-    const src = ctx.createBufferSource(); src.buffer = buf;
-    // Lowpass at 900 Hz removes high-frequency buzz → warm paper sound
-    const lpf = ctx.createBiquadFilter();
-    lpf.type = 'lowpass'; lpf.frequency.value = 900; lpf.Q.value = 0.5;
-    const g = ctx.createGain(); g.gain.value = 0.18;
-    src.connect(lpf); lpf.connect(g); g.connect(ctx.destination);
-    src.start();
+    _flipAudio.currentTime = 0;
+    _flipAudio.play().catch(() => {});
   } catch {}
 }
 
@@ -351,9 +335,20 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   useEffect(() => {
     fetch(`${SERVER_URL}/stories/${storyId}`)
       .then(r => r.json())
-      .then((data: Story) => { setStory(data); setLoading(false); })
+      .then((data: Story) => {
+        setStory(data);
+        setLoading(false);
+        // Auto-start ambient music when story opens (soft background)
+        if (Platform.OS === 'web') {
+          setTimeout(() => {
+            if (!ambientRef.current) {
+              ambientRef.current = createAmbientMusic(data.id);
+            }
+          }, 500);
+        }
+      })
       .catch(() => setLoading(false));
-    return () => { stopAudio(); ambientRef.current?.stop(); };
+    return () => { stopAudio(); ambientRef.current?.stop(); ambientRef.current = null; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storyId]);
 
@@ -523,6 +518,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
 
   function goToPage(idx: number) {
     if (!story) return;
+    playPageFlip();
     stopAudio();
     animateTurn(() => setCurrentPage(idx));
   }

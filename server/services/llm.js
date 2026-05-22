@@ -2,9 +2,35 @@ const Groq = require('groq-sdk');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+// NVIDIA NIM — OpenAI-compatible endpoint, used as fallback when Groq hits rate limits
+const NVIDIA_NIM_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+const NVIDIA_MODEL   = 'mistralai/mistral-small-4-119b-2603';
+
 // Model routing: fast model for simple verdicts, powerful for explanations
 const MODEL_FAST  = 'llama-3.1-8b-instant';       // ~300-500ms TTFT
 const MODEL_POWER = 'llama-3.3-70b-versatile';     // best reasoning
+
+async function callNvidiaNim(messages, maxTokens = 1024) {
+  const res = await fetch(NVIDIA_NIM_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.NVIDIA_NIM_API_KEY}`,
+      'Content-Type':  'application/json',
+      'Accept':        'application/json',
+    },
+    body: JSON.stringify({
+      model:       NVIDIA_MODEL,
+      messages,
+      max_tokens:  maxTokens,
+      temperature: 0.2,
+      top_p:       1.0,
+      stream:      false,
+    }),
+  });
+  if (!res.ok) throw new Error(`NVIDIA NIM ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
 
 function getAgeGuardrails(grade) {
   const g = (grade || '').toLowerCase();
@@ -155,18 +181,25 @@ CONVERSATION: Read the chat history before replying. Never repeat the same examp
 
 async function generateAnswer({ question, context, grade, subject, topic, history }) {
   const { systemPrompt, userPrompt, model, maxTokens } = buildPrompts({ question, context, grade, subject, topic, history });
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user',   content: userPrompt },
+  ];
 
-  const response = await groq.chat.completions.create({
-    model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user',   content: userPrompt },
-    ],
-    temperature: 0.2,
-    max_tokens: maxTokens,
-  });
+  // Primary: Groq
+  try {
+    const response = await groq.chat.completions.create({
+      model, messages, temperature: 0.2, max_tokens: maxTokens,
+    });
+    return response.choices?.[0]?.message?.content || '';
+  } catch (err) {
+    const is429 = err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('rate_limit');
+    if (!is429) throw err;
+    console.warn('[LLM] Groq rate limit — falling back to NVIDIA NIM');
+  }
 
-  return response.choices?.[0]?.message?.content || '';
+  // Fallback: NVIDIA NIM
+  return await callNvidiaNim(messages, maxTokens);
 }
 
 /**
@@ -175,26 +208,31 @@ async function generateAnswer({ question, context, grade, subject, topic, histor
  */
 async function generateAnswerStream({ question, context, grade, subject, topic, history, onToken }) {
   const { systemPrompt, userPrompt, model, maxTokens } = buildPrompts({ question, context, grade, subject, topic, history });
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user',   content: userPrompt },
+  ];
 
-  const stream = await groq.chat.completions.create({
-    model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user',   content: userPrompt },
-    ],
-    temperature: 0.2,
-    max_tokens: maxTokens,
-    stream: true,
-  });
-
-  let full = '';
-  for await (const chunk of stream) {
-    const delta = chunk.choices?.[0]?.delta?.content;
-    if (delta) {
-      full += delta;
-      onToken(delta);
+  // Primary: Groq streaming
+  try {
+    const stream = await groq.chat.completions.create({
+      model, messages, temperature: 0.2, max_tokens: maxTokens, stream: true,
+    });
+    let full = '';
+    for await (const chunk of stream) {
+      const delta = chunk.choices?.[0]?.delta?.content;
+      if (delta) { full += delta; onToken(delta); }
     }
+    return full;
+  } catch (err) {
+    const is429 = err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('rate_limit');
+    if (!is429) throw err;
+    console.warn('[LLM] Groq rate limit (stream) — falling back to NVIDIA NIM');
   }
+
+  // Fallback: NVIDIA NIM (non-streaming, emit full response as one chunk)
+  const full = await callNvidiaNim(messages, maxTokens);
+  onToken(full);
   return full;
 }
 
