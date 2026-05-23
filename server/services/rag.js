@@ -1,5 +1,5 @@
 const { embed } = require('./embeddings');
-const { searchContent } = require('./qdrant');
+const { searchContent, resolveCollection } = require('./qdrant');
 
 const FOLLOW_UP_HINT_RE = /\b(more|another|examples?|same|that|this|again|please|explain more|real examples?)\b/i;
 
@@ -148,10 +148,14 @@ async function retrieveCurriculumContext({
   const retrievalQuestion = buildRetrievalQuestion({ question, topic, history });
   const vector = await embed(retrievalQuestion);
 
+  // Normalise curriculum + grade to match what's stored in Qdrant
+  const normCurriculum = curriculum ? curriculum.replace(/_/g, ' ').trim() : curriculum;
+  const { qdrantGrade, qdrantCurriculum } = resolveCollection(normCurriculum, grade);
+
   const strictResults = await searchContent({
     vector,
-    curriculum,
-    grade,
+    curriculum: qdrantCurriculum,
+    grade: qdrantGrade,
     subject: effectiveSubject,
     topic,
     limit: 10,
@@ -171,8 +175,8 @@ async function retrieveCurriculumContext({
   if (selected.length === 0) {
     broadResults = await searchContent({
       vector,
-      curriculum,
-      grade,
+      curriculum: qdrantCurriculum,
+      grade: qdrantGrade,
       subject: effectiveSubject,
       limit: 12,
     });
