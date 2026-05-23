@@ -39,19 +39,13 @@ import MessagesScreen from '../screens/shared/MessagesScreen';
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
-function NotificationOverlay() {
-  const navigation = useNavigation<any>();
-  return (
-    <NotificationBanner
-      onNavigate={(screen, params) => navigation.navigate(screen, params)}
-    />
-  );
-}
-
 export default function AppNavigator() {
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768;
   const { colors } = useTheme();
+  // useNavigation here is scoped to the Drawer navigator since AppNavigator
+  // is rendered as a child of NavigationContainer → gives us drawer nav.
+  const navigation = useNavigation<any>();
 
   return (
     <View style={{ flex: 1 }}>
@@ -102,7 +96,9 @@ export default function AppNavigator() {
       <Drawer.Screen name="Subscription" component={SubscriptionScreen} />
       <Drawer.Screen name="Messages" component={MessagesScreen} />
     </Drawer.Navigator>
-    <NotificationOverlay />
+    <NotificationBanner
+      onNavigate={(screen, params) => navigation.navigate(screen, params)}
+    />
     </View>
   );
 }

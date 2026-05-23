@@ -21,7 +21,7 @@ interface Props {
 }
 
 export default function NotificationBanner({ onNavigate }: Props) {
-  const { toastVisible, latestNotif, unreadAssignments, unreadChallenges, dismissToast } = useNotification();
+  const { toastVisible, latestNotif, unreadAssignments, unreadChallenges, notificationItems, dismissToast } = useNotification();
   const { colors } = useTheme();
   const { user } = useAuth();
 
@@ -66,8 +66,12 @@ export default function NotificationBanner({ onNavigate }: Props) {
   if (hasAssign) {
     icon = 'check-square';
     iconColor = colors.accentBlue;
-    title = unreadAssignments === 1 ? 'New assignment added' : `${unreadAssignments} new assignments`;
-    subtitle = 'Tap to open your assignments';
+    // Show the actual assignment title if available
+    const latestItem = notificationItems[0];
+    title = latestItem
+      ? (latestItem.type === 'quiz' ? `New quiz: ${latestItem.title}` : `New assignment: ${latestItem.title}`)
+      : (unreadAssignments === 1 ? 'New assignment added' : `${unreadAssignments} new assignments`);
+    subtitle = latestItem ? latestItem.subtitle : 'Tap to open your assignments';
     targetScreen = assignScreen;
     targetParams = { highlight: 'new' };
   } else if (hasChallenge) {
