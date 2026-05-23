@@ -12,6 +12,7 @@ import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 
 import SERVER_URL from '../../config/serverUrl';
+import TimePicker from '../../components/common/TimePicker';
 
 const TIMES = ['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
 const DAYS_SHORT = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -115,16 +116,17 @@ export default function TeacherScheduleScreen({ navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalDate, setModalDate] = useState(todayISO);
   const [newTitle, setNewTitle] = useState('');
-  const [newHour, setNewHour] = useState('09');
-  const [newMinute, setNewMinute] = useState('00');
-  const newTime = `${newHour}:${newMinute}`;
-  const [newDuration, setNewDuration] = useState('1 hr');
+  const [newStartTime, setNewStartTime] = useState('09:00');
+  const [newEndTime, setNewEndTime] = useState('10:00');
   const [newType, setNewType] = useState('lesson');
   const [newNote, setNewNote] = useState('');
   const [targetStudents, setTargetStudents] = useState<'all' | 'specific'>('all');
   const [selectedStudent, setSelectedStudent] = useState<StudentItem | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+
+  // Drag-to-create preview
+  const [dragPreviewTeacher, setDragPreviewTeacher] = useState<{ dayIso: string; top: number; height: number; startT: string; endT: string } | null>(null);
 
   // ── Drag system: pure native DOM ────────────────────────────────────────────
   const dragRef = useRef<{
@@ -230,7 +232,13 @@ export default function TeacherScheduleScreen({ navigation }: any) {
 
   function openModal(presetDate?: string, presetTime?: string) {
     setModalDate(presetDate ?? todayISO);
-    if (presetTime) { setNewHour(presetTime.split(':')[0]); setNewMinute(presetTime.split(':')[1] ?? '00'); }
+    if (presetTime) {
+      const [h] = presetTime.split(':');
+      const sh = h.padStart(2, '0');
+      const eh = String(Math.min(23, parseInt(sh) + 1)).padStart(2, '0');
+      setNewStartTime(`${sh}:00`);
+      setNewEndTime(`${eh}:00`);
+    }
     setSaveError('');
     setModalVisible(true);
   }
@@ -246,8 +254,8 @@ export default function TeacherScheduleScreen({ navigation }: any) {
         body: JSON.stringify({
           title:     newTitle,
           date:      modalDate,
-          startTime: newTime,
-          endTime:   calcEndTime(newTime, newDuration),
+          startTime: newStartTime,
+          endTime:   newEndTime,
           type:      newType,
           note:      newNote,
           studentId: assignTo,
@@ -375,8 +383,50 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                         e => e.type !== 'deadline' && e.startTime !== '23:59'
                       );
                       return (
-                        <View key={d.iso} style={[styles.dayCol, { width: colWidth, height: gridHeight }]}>
-                          {/* Hour grid lines — tappable */}
+                        <View
+                          key={d.iso}
+                          style={[styles.dayCol, { width: colWidth, height: gridHeight }]}
+                          // @ts-ignore
+                          onMouseDown={(e: any) => {
+                            if (e.button !== 0) return;
+                            if ((e.target as HTMLElement).closest('[data-delbtn],[data-event]')) return;
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                            const startY = e.clientY - rect.top;
+                            const gh = gridHeight;
+                            const yToT = (y: number) => {
+                              const mins = Math.round((Math.max(0, Math.min(y, gh)) / HOUR_HEIGHT * 60 + TIMELINE_START_HOUR * 60) / 15) * 15;
+                              return `${String(Math.floor(mins/60)%24).padStart(2,'0')}:${String(mins%60).padStart(2,'0')}`;
+                            };
+                            setDragPreviewTeacher({ dayIso: d.iso, top: startY, height: 0, startT: yToT(startY), endT: yToT(startY) });
+                            e.preventDefault();
+                            const onMove = (ev: MouseEvent) => {
+                              const curY = ev.clientY - rect.top;
+                              setDragPreviewTeacher({ dayIso: d.iso, top: Math.min(startY, curY), height: Math.abs(curY - startY), startT: yToT(Math.min(startY, curY)), endT: yToT(Math.max(startY, curY)) });
+                            };
+                            const onUp = (ev: MouseEvent) => {
+                              window.removeEventListener('mousemove', onMove);
+                              window.removeEventListener('mouseup', onUp);
+                              setDragPreviewTeacher(null);
+                              const curY = ev.clientY - rect.top;
+                              const startT = yToT(Math.min(startY, curY));
+                              const endT = yToT(Math.max(startY, curY));
+                              const [sh, sm] = startT.split(':').map(Number);
+                              const [eh, em] = endT.split(':').map(Number);
+                              const dur = (eh * 60 + em) - (sh * 60 + sm);
+                              const closest = DURATIONS.reduce((best, lbl) => {
+                                const mins = DURATION_MINS[lbl] ?? 60;
+                                return Math.abs(mins - dur) < Math.abs((DURATION_MINS[best] ?? 60) - dur) ? lbl : best;
+                              }, '1 hr');
+                              setModalDate(d.iso);
+                              setNewStartTime(startT);
+                              setNewEndTime(endT);
+                              setModalVisible(true);
+                            };
+                            window.addEventListener('mousemove', onMove);
+                            window.addEventListener('mouseup', onUp);
+                          }}
+                        >
+                          {/* Hour grid lines */}
                           {TIMES.map((t, idx) => (
                             <TouchableOpacity
                               key={t}
@@ -385,6 +435,22 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                               activeOpacity={0.3}
                             />
                           ))}
+                          {/* Drag-to-create preview */}
+                          {dragPreviewTeacher?.dayIso === d.iso && dragPreviewTeacher.height > 8 && (
+                            <View style={{
+                              position: 'absolute', left: 2, right: 2,
+                              top: dragPreviewTeacher.top, height: Math.max(dragPreviewTeacher.height, 20),
+                              backgroundColor: colors.primary + '28',
+                              borderLeftWidth: 3, borderLeftColor: colors.primary,
+                              borderRadius: 4, paddingHorizontal: 5, paddingVertical: 3,
+                              zIndex: 10, // @ts-ignore
+                              pointerEvents: 'none',
+                            }}>
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>
+                                {dragPreviewTeacher.startT} – {dragPreviewTeacher.endT}
+                              </Text>
+                            </View>
+                          )}
                           {/* Absolutely positioned events — raw div for reliable drag */}
                           {dayEvents.map(event => {
                             const origTop = calcEventTop(event.startTime);
@@ -473,31 +539,17 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
-                <Text style={styles.modalLabel}>Start time: <Text style={{ color: colors.primary, fontWeight: '800' }}>{newTime}</Text></Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chipRowContent}>
-                  {Array.from({ length: 17 }, (_, i) => String(i + 6).padStart(2, '0')).map(h => (
-                    <TouchableOpacity key={h} style={[styles.timeChip, newHour === h && styles.timeChipActive]} onPress={() => setNewHour(h)}>
-                      <Text style={[styles.timeChipText, newHour === h && { color: colors.primary }]}>{h}:00</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-                {newHour !== '' && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chipRowContent}>
-                    {['00', '15', '30', '45'].map(m => (
-                      <TouchableOpacity key={m} style={[styles.timeChip, newMinute === m && styles.timeChipActive]} onPress={() => setNewMinute(m)}>
-                        <Text style={[styles.timeChipText, newMinute === m && { color: colors.primary }]}>{newHour}:{m}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
-                <Text style={styles.modalLabel}>Duration:</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chipRowContent}>
-                  {DURATIONS.map(d => (
-                    <TouchableOpacity key={d} style={[styles.timeChip, newDuration === d && styles.timeChipActive]} onPress={() => setNewDuration(d)}>
-                      <Text style={[styles.timeChipText, newDuration === d && { color: colors.primary }]}>{d}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 4, zIndex: 100 }}>
+                  <TimePicker label="Start time" value={newStartTime} onChange={(v) => {
+                    setNewStartTime(v);
+                    if (v >= newEndTime) {
+                      const [h, m] = v.split(':').map(Number);
+                      const end = new Date(0, 0, 0, h, m + 30);
+                      setNewEndTime(`${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`);
+                    }
+                  }} />
+                  <TimePicker label="End time" value={newEndTime} onChange={setNewEndTime} minTime={newStartTime} />
+                </View>
 
                 {/* Assign to */}
                 <Text style={styles.modalLabel}>Assign to:</Text>
