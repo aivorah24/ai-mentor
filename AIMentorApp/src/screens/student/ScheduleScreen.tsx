@@ -276,6 +276,16 @@ export default function ScheduleScreen({ navigation }: any) {
   const gridHeight = TIMES.length * HOUR_HEIGHT;
   const totalGridWidth = TIME_LABEL_WIDTH + colWidth * 7;
 
+  const hScrollRef = useRef<ScrollView>(null);
+
+  // Auto-scroll horizontal timeline to show today's column
+  useEffect(() => {
+    const todayIdx = week.findIndex(d => d.iso === todayISO);
+    if (todayIdx < 0 || !hScrollRef.current) return;
+    const scrollX = Math.max(0, TIME_LABEL_WIDTH + todayIdx * colWidth - colWidth);
+    setTimeout(() => hScrollRef.current?.scrollTo({ x: scrollX, animated: true }), 100);
+  }, [week, todayISO, colWidth]);
+
   return (
     <ScreenLayout>
       <View style={styles.screen}>
@@ -308,7 +318,7 @@ export default function ScheduleScreen({ navigation }: any) {
             {/* ── Left: Week Calendar Grid ── */}
             <View style={styles.calendarContainer}>
               {/* Scrollable: header + time grid together so columns stay aligned */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <ScrollView ref={hScrollRef} horizontal showsHorizontalScrollIndicator={false}>
                 <View style={{ width: totalGridWidth }}>
                   {/* Day header row — inside scroll */}
                   <View style={styles.dayHeaderRow}>
