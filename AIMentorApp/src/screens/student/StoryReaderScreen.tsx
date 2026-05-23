@@ -92,15 +92,14 @@ function buildBoundaries(tokens: string[]): number[] {
   return weights.map(w => { cum += w; return cum / total; });
 }
 
-// Page flip sound
-const PAGE_FLIP_SRC = require('../../../assets/sounds/page-flip.mp3');
+// Page flip sound — served from Express so it works in web builds
 let _flipAudio: HTMLAudioElement | null = null;
 
 function playPageFlip() {
   if (Platform.OS !== 'web') return;
   try {
     if (!_flipAudio) {
-      _flipAudio = new Audio(PAGE_FLIP_SRC);
+      _flipAudio = new Audio(`${SERVER_URL}/sounds/page-flip.mp3`);
       _flipAudio.volume = 0.6;
     }
     _flipAudio.currentTime = 0;
