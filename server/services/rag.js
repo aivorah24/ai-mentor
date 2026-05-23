@@ -1,5 +1,6 @@
 const { embed } = require('./embeddings');
 const { searchContent, resolveCollection } = require('./qdrant');
+const { resolveImageUrl } = require('./cloudinaryUrls');
 
 const FOLLOW_UP_HINT_RE = /\b(more|another|examples?|same|that|this|again|please|explain more|real examples?)\b/i;
 
@@ -121,12 +122,18 @@ function buildSources(results) {
 
 function buildImages(results) {
   return results
-    .filter((r) => (r.payload || {}).content_type === 'image' && (r.payload || {}).image_url)
+    .filter((r) => {
+      const p = r.payload || {};
+      return p.content_type === 'image' && (p.image_url || p.image_path);
+    })
     .map((r) => {
       const p = r.payload || {};
+      // Prefer image_url (Cloudinary); fall back to resolving image_path via Cloudinary map
+      const url = p.image_url || resolveImageUrl(p.image_path);
+      const captionSource = p.text || p.content || '';
       return {
-        url: p.image_url,
-        caption: p.text ? p.text.replace(/^\[IMAGE\]\s*/i, '').split('\n')[0] : '',
+        url,
+        caption: captionSource.replace(/^\[IMAGE\]\s*/i, '').split('\n')[0],
         subject: p.subject || '',
         grade: p.grade || '',
         topic: p.topic || '',
@@ -150,7 +157,7 @@ async function retrieveCurriculumContext({
 
   // Normalise curriculum + grade to match what's stored in Qdrant
   const normCurriculum = curriculum ? curriculum.replace(/_/g, ' ').trim() : curriculum;
-  const { qdrantGrade, qdrantCurriculum } = resolveCollection(normCurriculum, grade);
+  const { collection: qdrantCollection, qdrantGrade, qdrantCurriculum } = resolveCollection(normCurriculum, grade);
 
   const strictResults = await searchContent({
     vector,
@@ -159,6 +166,7 @@ async function retrieveCurriculumContext({
     subject: effectiveSubject,
     topic,
     limit: 10,
+    collection: qdrantCollection,
   });
 
   let selected = rankResults({
@@ -179,6 +187,7 @@ async function retrieveCurriculumContext({
       grade: qdrantGrade,
       subject: effectiveSubject,
       limit: 12,
+      collection: qdrantCollection,
     });
 
     selected = rankResults({
@@ -208,8 +217,33 @@ async function retrieveCurriculumContext({
   };
 }
 
+/**
+ * Dedicated NCERT image retrieval for IB PYP fallback.
+ * Searches ONLY image chunks in the NCERT collection via vector similarity.
+ * No topic filter (NCERT image topics are captions, not real topic names).
+ */
+async function retrieveNcertImages({ question, subject, topic, maxImages = 3 }) {
+  const queryText = `${question || ''} ${topic || ''}`.trim();
+  if (!queryText) return [];
+
+  const vector = await embed(queryText);
+  const { collection: ncertCollection } = resolveCollection('NCERT', undefined);
+
+  const results = await searchContent({
+    vector,
+    curriculum: 'NCERT',
+    subject: subject || undefined,
+    contentType: 'image',
+    limit: maxImages,
+    collection: ncertCollection,
+  });
+
+  return buildImages(results.filter((r) => (r.score || 0) >= 0.15));
+}
+
 module.exports = {
   retrieveCurriculumContext,
+  retrieveNcertImages,
   buildRetrievalQuestion,
   isLikelyFollowUp,
   inferSubjectFromText,
