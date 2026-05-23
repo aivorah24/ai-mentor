@@ -8,6 +8,7 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
+  Platform,
   useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -18,6 +19,7 @@ import ScreenLayout from '../../components/common/ScreenLayout';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import SERVER_URL from '../../config/serverUrl';
+import TimePicker from '../../components/common/TimePicker';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const DAYS_SHORT = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -139,14 +141,13 @@ export default function ParentScheduleScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
 
   // Add event modal
+  const [dragPreview, setDragPreview] = useState<{ dayIso: string; top: number; height: number; startT: string; endT: string } | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalDate, setModalDate] = useState(todayISO);
   const [newTitle, setNewTitle] = useState('');
   const [newNote, setNewNote] = useState('');
-  const [newHour, setNewHour] = useState('09');
-  const [newMinute, setNewMinute] = useState('00');
-  const newTime = `${newHour}:${newMinute}`;
-  const [newDuration, setNewDuration] = useState('1 hr');
+  const [newStartTime, setNewStartTime] = useState('09:00');
+  const [newEndTime, setNewEndTime] = useState('10:00');
   const [newType, setNewType] = useState('assignment');
   const [saving, setSaving] = useState(false);
 
@@ -196,8 +197,10 @@ export default function ParentScheduleScreen({ navigation }: any) {
 
   function openSlotModal(dayISO: string, timeLabel: string) {
     setModalDate(dayISO);
-    setNewHour(timeLabel.split(':')[0]);
-    setNewMinute('00');
+    const sh = timeLabel.split(':')[0].padStart(2, '0');
+    const eh = String(Math.min(23, parseInt(sh) + 1)).padStart(2, '0');
+    setNewStartTime(`${sh}:00`);
+    setNewEndTime(`${eh}:00`);
     setModalVisible(true);
   }
 
@@ -211,8 +214,8 @@ export default function ParentScheduleScreen({ navigation }: any) {
         body: JSON.stringify({
           title:     newTitle,
           date:      modalDate,
-          startTime: newTime,
-          endTime:   calcEndTime(newTime, newDuration),
+          startTime: newStartTime,
+          endTime:   newEndTime,
           type:      newType,
           note:      newNote,
           studentId: child.id,
@@ -339,8 +342,46 @@ export default function ParentScheduleScreen({ navigation }: any) {
                           e => e.type !== 'deadline' && e.startTime !== '23:59'
                         );
                         return (
-                          <View key={d.iso} style={[styles.dayCol, { width: colWidth, height: gridHeight }]}>
-                            {/* Hour grid lines — tappable */}
+                          <View
+                            key={d.iso}
+                            style={[styles.dayCol, { width: colWidth, height: gridHeight }]}
+                            // @ts-ignore
+                            onMouseDown={(e: any) => {
+                              if (e.button !== 0) return;
+                              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                              const startY = e.clientY - rect.top;
+                              const gh = gridHeight;
+                              const yToT = (y: number) => {
+                                const mins = Math.round((Math.max(0, Math.min(y, gh)) / HOUR_HEIGHT * 60 + TIMELINE_START_HOUR * 60) / 15) * 15;
+                                return `${String(Math.floor(mins/60)%24).padStart(2,'0')}:${String(mins%60).padStart(2,'0')}`;
+                              };
+                              setDragPreview({ dayIso: d.iso, top: startY, height: 0, startT: yToT(startY), endT: yToT(startY) });
+                              e.preventDefault();
+                              const onMove = (ev: MouseEvent) => {
+                                const curY = ev.clientY - rect.top;
+                                setDragPreview({ dayIso: d.iso, top: Math.min(startY, curY), height: Math.abs(curY - startY), startT: yToT(Math.min(startY, curY)), endT: yToT(Math.max(startY, curY)) });
+                              };
+                              const onUp = (ev: MouseEvent) => {
+                                window.removeEventListener('mousemove', onMove);
+                                window.removeEventListener('mouseup', onUp);
+                                setDragPreview(null);
+                                const curY = ev.clientY - rect.top;
+                                const startT = yToT(Math.min(startY, curY));
+                                const endT = yToT(Math.max(startY, curY));
+                                const [sh, sm] = startT.split(':').map(Number);
+                                const [eh, em] = endT.split(':').map(Number);
+                                const dur = (eh * 60 + em) - (sh * 60 + sm);
+                                const closest = DURATIONS.reduce((best, lbl) => Math.abs((DURATION_MINS[lbl]??60)-dur) < Math.abs((DURATION_MINS[best]??60)-dur) ? lbl : best, '1 hr');
+                                setModalDate(d.iso);
+                                setNewStartTime(startT);
+                                setNewEndTime(endT);
+                                setModalVisible(true);
+                              };
+                              window.addEventListener('mousemove', onMove);
+                              window.addEventListener('mouseup', onUp);
+                            }}
+                          >
+                            {/* Hour grid lines */}
                             {TIMES.map((t, idx) => (
                               <TouchableOpacity
                                 key={t}
@@ -349,6 +390,22 @@ export default function ParentScheduleScreen({ navigation }: any) {
                                 activeOpacity={0.3}
                               />
                             ))}
+                            {/* Drag preview */}
+                            {dragPreview?.dayIso === d.iso && dragPreview.height > 8 && (
+                              <View style={{
+                                position: 'absolute', left: 2, right: 2,
+                                top: dragPreview.top, height: Math.max(dragPreview.height, 20),
+                                backgroundColor: colors.primary + '28',
+                                borderLeftWidth: 3, borderLeftColor: colors.primary,
+                                borderRadius: 4, paddingHorizontal: 5, paddingVertical: 3,
+                                zIndex: 10, // @ts-ignore
+                                pointerEvents: 'none',
+                              }}>
+                                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>
+                                  {dragPreview.startT} – {dragPreview.endT}
+                                </Text>
+                              </View>
+                            )}
                             {/* Absolutely positioned events */}
                             {dayEvents.map(event => {
                               const top    = calcEventTop(event.startTime);
@@ -391,7 +448,7 @@ export default function ParentScheduleScreen({ navigation }: any) {
               </ScrollView>
 
               {/* Add event button */}
-              <TouchableOpacity style={styles.addEventBtn} onPress={() => { setModalDate(todayISO); setModalVisible(true); }} activeOpacity={0.8}>
+              <TouchableOpacity style={styles.addEventBtn} onPress={() => { setModalDate(todayISO); setNewStartTime('09:00'); setNewEndTime('10:00'); setModalVisible(true); }} activeOpacity={0.8}>
                 <Feather name="plus" size={16} color={colors.primary} />
                 <Text style={styles.addEventText}>Add Event for {child?.name ?? 'Child'}</Text>
               </TouchableOpacity>
@@ -499,31 +556,17 @@ export default function ParentScheduleScreen({ navigation }: any) {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-              <Text style={styles.modalLabel}>Start time: <Text style={{ color: colors.primary, fontWeight: '800' }}>{newTime}</Text></Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {Array.from({ length: 17 }, (_, i) => String(i + 6).padStart(2, '0')).map(h => (
-                  <TouchableOpacity key={h} style={[styles.timeChip, newHour === h && styles.timeChipActive]} onPress={() => setNewHour(h)}>
-                    <Text style={[styles.timeChipText, newHour === h && { color: colors.primary }]}>{h}:00</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              {newHour !== '' && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {['00', '15', '30', '45'].map(m => (
-                    <TouchableOpacity key={m} style={[styles.timeChip, newMinute === m && styles.timeChipActive]} onPress={() => setNewMinute(m)}>
-                      <Text style={[styles.timeChipText, newMinute === m && { color: colors.primary }]}>{newHour}:{m}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              )}
-              <Text style={styles.modalLabel}>Duration:</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {DURATIONS.map((d) => (
-                  <TouchableOpacity key={d} style={[styles.timeChip, newDuration === d && styles.timeChipActive]} onPress={() => setNewDuration(d)}>
-                    <Text style={[styles.timeChipText, newDuration === d && { color: colors.primary }]}>{d}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 4, zIndex: 100 }}>
+                <TimePicker label="Start time" value={newStartTime} onChange={(v) => {
+                  setNewStartTime(v);
+                  if (v >= newEndTime) {
+                    const [h, m] = v.split(':').map(Number);
+                    const end = new Date(0, 0, 0, h, m + 30);
+                    setNewEndTime(`${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`);
+                  }
+                }} />
+                <TimePicker label="End time" value={newEndTime} onChange={setNewEndTime} minTime={newStartTime} />
+              </View>
               <View style={styles.modalBtns}>
                 <TouchableOpacity style={styles.modalCancel} onPress={() => setModalVisible(false)}>
                   <Text style={styles.modalCancelText}>Cancel</Text>
