@@ -671,7 +671,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center' },
   modal: {
-    width: '85%', backgroundColor: c.cardDark, borderWidth: 1,
+    width: '90%', maxWidth: 480, backgroundColor: c.cardDark, borderWidth: 1,
     borderColor: c.borderColor, borderRadius: radius.xl,
     padding: spacing.xxl, gap: spacing.lg,
   },
