@@ -32,7 +32,6 @@ const STUDENT_NAV_ITEMS = [
   { label: 'Leaderboard',      icon: 'award',        screen: 'Leaderboard',        group: 'FOCUS',   premium: false },
   { label: 'Progress',         icon: 'bar-chart-2',  screen: 'Progress',           group: 'FOCUS',   premium: false },
   { label: 'Rewards',          icon: 'gift',         screen: 'Rewards',            group: 'FOCUS',   premium: false },
-  { label: 'Messages',         icon: 'message-square', screen: 'Messages',         group: 'FOCUS',   premium: false },
   { label: 'Plans & Billing',  icon: 'credit-card',  screen: 'Subscription',       group: 'SYSTEM',  premium: false },
   { label: 'Help Center',      icon: 'help-circle',  screen: 'HelpCenter',         group: 'SYSTEM',  premium: false },
   { label: 'Settings',         icon: 'settings',     screen: 'Settings',           group: 'SYSTEM',  premium: false },

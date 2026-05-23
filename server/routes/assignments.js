@@ -1393,7 +1393,9 @@ router.post('/', async (req, res) => {
     })();
   }
 
-  // Auto-send message notification to student(s) + parent(s) when assignment is created
+  // Notify parents via message when assignment is created.
+  // Students do NOT get a message — they have the Assignments screen + bell notification.
+  // Sending system messages to students polluted their Messages inbox.
   try {
     const teacherRes = creatorId
       ? await supabase.from('users').select('email, name').eq('id', creatorId).single()
@@ -1403,12 +1405,11 @@ router.post('/', async (req, res) => {
     const dueStr = dueDate ? new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
     const msgContent = `New ${type === 'quiz' ? 'Quiz' : 'Assignment'} assigned: "${title}"${subject ? ` (${subject})` : ''}${dueStr ? `. Due: ${dueStr}` : ''}.`;
 
-    // Determine which students to notify
+    // Determine which students were assigned (for parent lookup)
     let studentIds = [];
     if (userId) {
       studentIds = [userId];
     } else if (curriculum) {
-      // All students class-wide — find students with matching curriculum
       const { data: classStudents } = await supabase
         .from('users')
         .select('id')
@@ -1418,24 +1419,12 @@ router.post('/', async (req, res) => {
     }
 
     if (studentIds.length > 0) {
-      // Fetch student details
       const { data: studentRecords } = await supabase
         .from('users')
-        .select('id, email, name')
+        .select('id, name')
         .in('id', studentIds);
 
-      const studentMsgs = (studentRecords || []).map(s => ({
-        sender_email:    teacherEmail.toLowerCase().trim(),
-        sender_name:     teacherName,
-        sender_role:     'teacher',
-        recipient_email: s.email.toLowerCase().trim(),
-        recipient_name:  s.name || s.email,
-        content:         msgContent,
-        student_id:      s.id,
-      }));
-      if (studentMsgs.length > 0) await supabase.from('messages').insert(studentMsgs);
-
-      // Notify parents of all affected students
+      // Notify parents only — students see assignments in the Assignments screen + bell
       const { data: parentLinks } = await supabase
         .from('parent_children')
         .select('parent_email, child_id')

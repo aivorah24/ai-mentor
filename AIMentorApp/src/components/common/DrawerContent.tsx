@@ -32,7 +32,6 @@ const STUDENT_NAV_ITEMS = [
   { label: 'Leaderboard', icon: 'award', screen: 'Leaderboard', group: 'FOCUS' },
   { label: 'Progress', icon: 'bar-chart-2', screen: 'Progress', group: 'FOCUS' },
   { label: 'Rewards', icon: 'gift', screen: 'Rewards', group: 'FOCUS' },
-  { label: 'Messages', icon: 'message-square', screen: 'Messages', group: 'FOCUS' },
   { label: 'Help Center', icon: 'help-circle', screen: 'HelpCenter', group: 'SYSTEM' },
   { label: 'Settings', icon: 'settings', screen: 'Settings', group: 'SYSTEM' },
 ];
