@@ -72,6 +72,8 @@ app.use('/data/videos', express.static(path.join(__dirname, 'data/videos')));
 app.use('/data/audio', express.static(path.join(__dirname, 'data/audio')));
 // Serve message attachments
 app.use('/data/uploads', express.static(path.join(__dirname, 'data/uploads')));
+// Serve UI sounds
+app.use('/sounds', express.static(path.join(__dirname, 'public/sounds')));
 
 // Redirect browser direct-navigation to SPA paths back to index.html
 // This prevents API routes from returning errors when user refreshes /assignments, /teacher/assignments, etc.
