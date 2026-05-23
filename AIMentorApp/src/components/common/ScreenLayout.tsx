@@ -35,7 +35,7 @@ export default function ScreenLayout({ children }: ScreenLayoutProps) {
     <View style={styles.desktopContainer}>
       <Sidebar
         currentScreen={route.name}
-        onNavigate={(screen) => navigation.navigate(screen)}
+        onNavigate={(screen) => navigation.navigate(screen as any)}
       />
       <View style={styles.content}>{children}</View>
       {isTeacher && <TeacherAIPanel />}

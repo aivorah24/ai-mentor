@@ -14,11 +14,21 @@ interface LatestNotif {
   createdAt: string;
 }
 
+export interface NotifItem {
+  id: string;
+  type: 'assignment' | 'quiz' | 'challenge' | 'message';
+  title: string;
+  subtitle: string;
+  senderName: string;
+  createdAt: string;
+}
+
 interface NotificationState {
   unreadCount: number;
   unreadAssignments: number;
   unreadChallenges: number;
   latestNotif: LatestNotif | null;
+  notificationItems: NotifItem[];
   toastVisible: boolean;
   dismissToast: () => void;
   clearUnread: () => Promise<void>;
@@ -32,6 +42,7 @@ const NotificationContext = createContext<NotificationState>({
   unreadAssignments: 0,
   unreadChallenges: 0,
   latestNotif: null,
+  notificationItems: [],
   toastVisible: false,
   dismissToast: () => {},
   clearUnread: async () => {},
@@ -88,11 +99,12 @@ function normalizeLatest(raw: any): LatestNotif | null {
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
 
-  const [unreadCount,      setUnreadCount]      = useState(0);
+  const [unreadCount,       setUnreadCount]       = useState(0);
   const [unreadAssignments, setUnreadAssignments] = useState(0);
   const [unreadChallenges,  setUnreadChallenges]  = useState(0);
-  const [latestNotif,      setLatestNotif]      = useState<LatestNotif | null>(null);
-  const [toastVisible,     setToastVisible]     = useState(false);
+  const [latestNotif,       setLatestNotif]       = useState<LatestNotif | null>(null);
+  const [notificationItems, setNotificationItems] = useState<NotifItem[]>([]);
+  const [toastVisible,      setToastVisible]      = useState(false);
 
   const prevMsgRef       = useRef(0);
   const prevAssignRef    = useRef(0);
@@ -145,6 +157,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const assignCount  = typeof data.assignments === 'number' && data.assignments >= 0 ? Math.floor(data.assignments) : 0;
       const challengeCount = typeof data.challenges === 'number' && data.challenges >= 0 ? Math.floor(data.challenges) : 0;
       const latest       = normalizeLatest(data.latest);
+      const items: NotifItem[] = Array.isArray(data.notificationItems) ? data.notificationItems : [];
 
       if (markReadInFlight.current && !allowDuringMarkRead) return;
 
@@ -180,6 +193,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setUnreadAssignments(assignCount);
       setUnreadChallenges(challengeCount);
       setLatestNotif(msgCount > 0 ? latest : null);
+      setNotificationItems(items);
       if (msgCount === 0 && assignCount === 0 && challengeCount === 0) setToastVisible(false);
 
       if (__DEV__) console.debug(`[NotifCtx] poll(${reason}) → msg:${msgCount} assign:${assignCount} challenge:${challengeCount}`);
@@ -271,7 +285,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   return (
     <NotificationContext.Provider value={{
       unreadCount, unreadAssignments, unreadChallenges,
-      latestNotif, toastVisible,
+      latestNotif, notificationItems, toastVisible,
       dismissToast, clearUnread, clearUnreadAssignments, clearUnreadChallenges, refresh,
     }}>
       {children}
