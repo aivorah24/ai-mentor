@@ -136,21 +136,24 @@ CRITICAL RULES:
 - After feedback, ask if they want another question or a new topic.`;
     } else {
       teachingRule = `Math teaching format:
-1. Start with one warm sentence explaining what this concept means in plain English.
-2. Give a real-life analogy (using food, toys, money, sports — something a ${gradeLabel} student loves).
-3. Show a worked example step by step: Step 1 → Step 2 → Answer. Use actual numbers.
-4. End with ONE simple practice question for the student to try.
-5. If the student asked for multiple steps/concepts "one by one", teach the FIRST one only, then ask if they are ready for the next.
-Never rush. Stay on one idea at a time. Be encouraging after every step.`;
+1. Start with a warm, curious hook that makes the student WANT to learn this ("Have you ever wondered how to share a chocolate bar equally? That's exactly what fractions are!").
+2. Explain the concept clearly in simple words — what it IS, why it matters in real life. Use 2-3 sentences. Make it feel like a story, not a textbook.
+3. Give a vivid real-life analogy the student can picture (using pizza, chocolate, money, toys, sports — things a ${gradeLabel} student loves). Paint the scene.
+4. Show a worked example step by step: Step 1, Step 2, Step 3... Answer. Use actual numbers. Explain WHY each step works, not just what to do.
+5. Give a second, slightly different example to build confidence.
+6. End with ONE fun practice question for the student to try — make it feel like a game, not a test.
+7. If the student asked for multiple steps/concepts "one by one", teach the FIRST one only, then ask if they are ready for the next.
+Never rush. Stay on one idea at a time. Be encouraging after every step. Explain the "why" behind each rule — don't just give procedures.`;
     }
   } else {
     teachingRule = studentAnsweringPractice
       ? `Student answered your question. Evaluate first. Correct: praise warmly with "That's right!" and briefly explain why. Wrong: say "Almost! Let me help." then explain gently and give another chance. Do NOT move to a new topic.`
-      : `1. Start with a fun, relatable hook — connect the topic to something the student knows (food, games, weather, animals).
-2. Explain the concept in 2-3 short sentences.
-3. Give one clear real-world example with specifics.
-4. If the student asked for multiple things "one by one", explain the FIRST item only, then ask "Ready for the next one?"
-5. End with an encouraging question to check understanding.`;
+      : `1. Start with a fun, relatable hook that sparks curiosity — connect the topic to something the student already knows and loves (food, games, weather, animals, their daily life). Make them think "Wow, I never noticed that!"
+2. Explain the concept clearly in 3-4 sentences. Break it into small, digestible pieces. Use comparisons: "Think of it like..." or "Imagine if...". Make abstract ideas concrete.
+3. Give a vivid real-world example with specific details — not just "plants need sunlight" but "Think about a sunflower in your garden. It turns its face to follow the sun all day long! That's because it needs sunlight to make its own food through photosynthesis."
+4. Add a fun fact or "Did you know?" moment to make it memorable.
+5. If the student asked for multiple things "one by one", explain the FIRST item only, then ask "Ready for the next one?"
+6. End with an encouraging question to check understanding — make it feel like a conversation, not a quiz.`;
   }
 
   const systemPrompt = `You are Ms. Zara — warm, enthusiastic, patient AI tutor for IB PYP ${gradeLabel} students on Aivorah.
@@ -173,8 +176,8 @@ CONVERSATION: Read the chat history before replying. Never repeat the same examp
 
   // Always use powerful 70b model for quality responses
   const model = MODEL_POWER;
-  // Give enough tokens for quality explanations
-  const maxTokens = studentAnsweringPractice ? 250 : 520;
+  // Give enough tokens for rich, detailed explanations (ChatGPT/Claude quality)
+  const maxTokens = studentAnsweringPractice ? 350 : 900;
 
   return { hasContext, mathMode, systemPrompt, userPrompt, model, maxTokens };
 }

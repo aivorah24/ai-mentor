@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { generateAnswer, generateAnswerStream } = require('../services/llm');
-const { retrieveCurriculumContext } = require('../services/rag');
+const { retrieveCurriculumContext, retrieveNcertImages } = require('../services/rag');
 const { retrieveWebContext } = require('../services/webSearch');
 const { logEvent } = require('../services/analytics');
 const { normalizeCurriculum } = require('../utils/curriculum');
@@ -107,9 +107,26 @@ router.post('/', async (req, res) => {
       sources = rag.sources;
       images = rag.images || [];
       ragMeta = rag.meta;
+
+      // IB PYP has no images ingested — fall back to NCERT images for the same topic.
+      // Uses dedicated image-only search to avoid text chunks crowding out images.
+      if (images.length === 0 && normalizedCurriculum === 'IB PYP') {
+        try {
+          const ncertImages = await retrieveNcertImages({ question, subject, topic });
+          if (ncertImages.length > 0) images = ncertImages;
+        } catch (_) { /* silent — images are supplementary */ }
+      }
     } catch (qdrantErr) {
       // Continue with no context if retrieval is unavailable
       console.warn('Qdrant unavailable, using no-context mode:', qdrantErr.message);
+    }
+
+    // IB PYP image fallback — runs even if IB_PYP RAG failed above
+    if (images.length === 0 && normalizedCurriculum === 'IB PYP') {
+      try {
+        const ncertImages = await retrieveNcertImages({ question, subject, topic });
+        if (ncertImages.length > 0) images = ncertImages;
+      } catch (_) { /* silent — images are supplementary */ }
     }
 
     // 1b. Curriculum-aware web search fallback when RAG has no context
@@ -372,8 +389,24 @@ router.post('/stream', async (req, res) => {
       sources = rag.sources;
       images = rag.images || [];
       ragMeta = rag.meta;
+
+      // IB PYP image fallback — dedicated image-only search from NCERT
+      if (images.length === 0 && normalizedCurriculum === 'IB PYP') {
+        try {
+          const ncertImages = await retrieveNcertImages({ question, subject, topic });
+          if (ncertImages.length > 0) images = ncertImages;
+        } catch (_) { /* silent */ }
+      }
     } catch (qdrantErr) {
       console.warn('Qdrant unavailable, using no-context mode:', qdrantErr.message);
+    }
+
+    // IB PYP image fallback — runs even if IB_PYP RAG failed above
+    if (images.length === 0 && normalizedCurriculum === 'IB PYP') {
+      try {
+        const ncertImages = await retrieveNcertImages({ question, subject, topic });
+        if (ncertImages.length > 0) images = ncertImages;
+      } catch (_) { /* silent */ }
     }
 
     // 1b. Curriculum-aware web search fallback when RAG has no context
