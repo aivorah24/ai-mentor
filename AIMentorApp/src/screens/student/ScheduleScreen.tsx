@@ -8,6 +8,7 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
+  Platform,
   useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -19,6 +20,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useStudentData } from '../../context/StudentDataContext';
 
 import SERVER_URL from '../../config/serverUrl';
+import TimePicker from '../../components/common/TimePicker';
 
 const DAYS_SHORT = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const TIMES = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
@@ -138,10 +140,8 @@ export default function ScheduleScreen({ navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalDate, setModalDate] = useState(todayISO);
   const [newTitle, setNewTitle] = useState('');
-  const [newHour, setNewHour] = useState('09');
-  const [newMinute, setNewMinute] = useState('00');
-  const newTime = `${newHour}:${newMinute}`;
-  const [newDuration, setNewDuration] = useState('1 hr');
+  const [newStartTime, setNewStartTime] = useState('09:00');
+  const [newEndTime, setNewEndTime] = useState('10:00');
   const [newType, setNewType] = useState('study');
   const [newNote, setNewNote] = useState('');
   const [saving, setSaving] = useState(false);
@@ -218,8 +218,11 @@ export default function ScheduleScreen({ navigation }: any) {
 
   function openSlotModal(dateISO: string, timeLabel: string) {
     setModalDate(dateISO);
-    setNewHour(timeLabel.split(':')[0]);
-    setNewMinute('00');
+    const [h] = timeLabel.split(':');
+    const startH = h.padStart(2, '0');
+    const endH = String(Math.min(23, parseInt(startH) + 1)).padStart(2, '0');
+    setNewStartTime(`${startH}:00`);
+    setNewEndTime(`${endH}:00`);
     setModalVisible(true);
   }
 
@@ -233,8 +236,8 @@ export default function ScheduleScreen({ navigation }: any) {
         body: JSON.stringify({
           title:     newTitle,
           date:      modalDate,
-          startTime: newTime,
-          endTime:   calcEndTime(newTime, newDuration),
+          startTime: newStartTime,
+          endTime:   newEndTime,
           type:      newType,
           note:      newNote,
           studentId,
@@ -269,21 +272,90 @@ export default function ScheduleScreen({ navigation }: any) {
     setWeekBase(new Date());
     setCalYear(new Date().getFullYear());
     setCalMonth(new Date().getMonth() + 1);
+    scrollToCurrentTime();
   }
 
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const colWidth = Math.max(DAY_COL_WIDTH, Math.floor((screenWidth - TIME_LABEL_WIDTH) / 7));
   const gridHeight = TIMES.length * HOUR_HEIGHT;
   const totalGridWidth = TIME_LABEL_WIDTH + colWidth * 7;
 
   const hScrollRef = useRef<ScrollView>(null);
+  const vScrollRef = useRef<ScrollView>(null);
+
+  // ── Drag-to-create ────────────────────────────────────────────────────────
+  const [dragPreview, setDragPreview] = useState<{ dayIso: string; top: number; height: number; startT: string; endT: string } | null>(null);
+
+  const gh = TIMES.length * HOUR_HEIGHT;
+
+  function yToTime(y: number): string {
+    const clampedY = Math.max(0, Math.min(y, gh));
+    const totalMins = Math.round((clampedY / HOUR_HEIGHT * 60 + TIMELINE_START_HOUR * 60) / 15) * 15;
+    const h = Math.floor(totalMins / 60) % 24;
+    const m = totalMins % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  function handleColMouseDown(e: any, dayIso: string) {
+    if (Platform.OS !== 'web') return;
+    if (e.button !== 0) return;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const startY = e.clientY - rect.top;
+    setDragPreview({ dayIso, top: startY, height: 0, startT: yToTime(startY), endT: yToTime(startY) });
+    e.preventDefault();
+
+    const onMove = (ev: MouseEvent) => {
+      const curY = ev.clientY - rect.top;
+      const top = Math.min(startY, curY);
+      const height = Math.abs(curY - startY);
+      setDragPreview({ dayIso, top, height, startT: yToTime(Math.min(startY, curY)), endT: yToTime(Math.max(startY, curY)) });
+    };
+
+    const onUp = (ev: MouseEvent) => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      setDragPreview(null);
+      const curY = ev.clientY - rect.top;
+      const startT = yToTime(Math.min(startY, curY));
+      const endT   = yToTime(Math.max(startY, curY));
+      const [sh, sm] = startT.split(':').map(Number);
+      const [eh, em] = endT.split(':').map(Number);
+      const durationMins = (eh * 60 + em) - (sh * 60 + sm);
+
+      if (durationMins >= 15) {
+        const closest = Object.entries(DURATION_MINS).reduce<string>((best, [label, mins]) =>
+          Math.abs(mins - durationMins) < Math.abs(DURATION_MINS[best] - durationMins) ? label : best, '1 hr');
+        setModalDate(dayIso);
+        setNewStartTime(startT);
+        setNewEndTime(endT);
+        setModalVisible(true);
+      } else {
+        openSlotModal(dayIso, startT);
+      }
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }
 
   // Auto-scroll horizontal timeline to show today's column
+  function scrollToCurrentTime(animated = true) {
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    // Offset within grid: 1 hour before current time so you see context
+    const timeOffsetY = Math.max(0, ((currentMins - TIMELINE_START_HOUR * 60 - 60) / 60) * HOUR_HEIGHT);
+    setTimeout(() => vScrollRef.current?.scrollTo({ y: timeOffsetY, animated }), 200);
+  }
+
   useEffect(() => {
     const todayIdx = week.findIndex(d => d.iso === todayISO);
-    if (todayIdx < 0 || !hScrollRef.current) return;
-    const scrollX = Math.max(0, TIME_LABEL_WIDTH + todayIdx * colWidth - colWidth);
-    setTimeout(() => hScrollRef.current?.scrollTo({ x: scrollX, animated: true }), 100);
+    // Horizontal: scroll to today's column (no TIME_LABEL_WIDTH offset — fixed column is outside the scroll)
+    if (todayIdx >= 0) {
+      const scrollX = Math.max(0, todayIdx * colWidth - colWidth);
+      setTimeout(() => hScrollRef.current?.scrollTo({ x: scrollX, animated: true }), 100);
+    }
+    // Vertical: scroll outer page ScrollView to current time
+    scrollToCurrentTime();
   }, [week, todayISO, colWidth]);
 
   return (
@@ -296,7 +368,7 @@ export default function ScheduleScreen({ navigation }: any) {
           onMenuPress={() => navigation.openDrawer()}
         />
 
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView ref={vScrollRef} style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
           {/* ── Week navigation bar ── */}
           <View style={styles.weekNavBar}>
@@ -317,102 +389,116 @@ export default function ScheduleScreen({ navigation }: any) {
           <View style={styles.mainLayout}>
             {/* ── Left: Week Calendar Grid ── */}
             <View style={styles.calendarContainer}>
-              {/* Scrollable: header + time grid together so columns stay aligned */}
-              <ScrollView ref={hScrollRef} horizontal showsHorizontalScrollIndicator={false}>
-                <View style={{ width: totalGridWidth }}>
-                  {/* Day header row — inside scroll */}
-                  <View style={styles.dayHeaderRow}>
-                    <View style={{ width: TIME_LABEL_WIDTH }} />
-                    {week.map((d) => {
-                      const isToday = d.iso === todayISO;
-                      const hasDot  = eventDates.has(d.iso);
-                      return (
-                        <View key={d.iso} style={[styles.dayHeader, { width: colWidth }]}>
-                          <Text style={[styles.dayHeaderLabel, isToday && styles.dayHeaderLabelToday]}>{d.day}</Text>
-                          <View style={[styles.dayHeaderCircle, isToday && styles.dayHeaderCircleToday]}>
-                            <Text style={[styles.dayHeaderDate, isToday && styles.dayHeaderDateToday]}>{d.date}</Text>
-                          </View>
-                          {hasDot && <View style={[styles.dayDot, isToday && { backgroundColor: colors.primary }]} />}
-                        </View>
-                      );
-                    })}
+              {loading ? (
+                <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={styles.emptyText}>Loading schedule…</Text>
+                </View>
+              ) : (
+                <View style={{ flexDirection: 'row' }}>
+                  {/* FIXED LEFT: time labels (never scroll horizontally) */}
+                  <View style={{ width: TIME_LABEL_WIDTH, backgroundColor: colors.bgDark, zIndex: 2 }}>
+                    <View style={styles.timeColHeader} />
+                    {TIMES.map((t) => (
+                      <View key={t} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 4 }}>
+                        <Text style={styles.timeLabel}>{t}</Text>
+                      </View>
+                    ))}
                   </View>
-                  {loading ? (
-                    <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                      <ActivityIndicator size="small" color={colors.primary} />
-                      <Text style={styles.emptyText}>Loading schedule…</Text>
-                    </View>
-                  ) : (
-                    <View style={{ flexDirection: 'row' }}>
-                      {/* Time label column */}
-                      <View style={{ width: TIME_LABEL_WIDTH }}>
-                        {TIMES.map((t, idx) => (
-                          <View key={t} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 4 }}>
-                            <Text style={styles.timeLabel}>{t}</Text>
-                          </View>
-                        ))}
+
+                  {/* SCROLLABLE RIGHT: day headers + columns */}
+                  <ScrollView ref={hScrollRef} horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
+                    <View style={{ width: colWidth * 7 }}>
+                      {/* Day header row */}
+                      <View style={styles.dayHeaderRow}>
+                        {week.map((d) => {
+                          const isToday = d.iso === todayISO;
+                          const hasDot  = eventDates.has(d.iso);
+                          return (
+                            <View key={d.iso} style={[styles.dayHeader, { width: colWidth }]}>
+                              <Text style={[styles.dayHeaderLabel, isToday && styles.dayHeaderLabelToday]}>{d.day}</Text>
+                              <View style={[styles.dayHeaderCircle, isToday && styles.dayHeaderCircleToday]}>
+                                <Text style={[styles.dayHeaderDate, isToday && styles.dayHeaderDateToday]}>{d.date}</Text>
+                              </View>
+                              {hasDot && <View style={[styles.dayDot, isToday && { backgroundColor: colors.primary }]} />}
+                            </View>
+                          );
+                        })}
                       </View>
 
                       {/* Day columns */}
-                      {week.map((d) => {
-                        const dayEvents = (eventsMap[d.iso] ?? []).filter(
-                          e => e.type !== 'deadline' && e.type !== 'challenge' && e.startTime !== '23:59'
-                        );
-                        return (
-                          <View key={d.iso} style={[styles.dayCol, { width: colWidth, height: gridHeight }]}>
-                            {/* Hour grid lines — tappable empty slots */}
-                            {TIMES.map((t, idx) => (
-                              <TouchableOpacity
-                                key={t}
-                                style={[styles.hourCell, { top: idx * HOUR_HEIGHT }]}
-                                onPress={() => openSlotModal(d.iso, t)}
-                                activeOpacity={0.3}
-                              />
-                            ))}
-                            {/* Absolutely positioned events */}
-                            {dayEvents.map(event => {
-                              const top = calcEventTop(event.startTime);
-                              const height = calcEventHeight(event.startTime, event.endTime);
-                              const color = typeColor(event.type, colors);
-                              return (
-                                <TouchableOpacity
-                                  key={event.id}
-                                  style={[styles.eventBlock, {
-                                    top,
-                                    height,
-                                    backgroundColor: color + '20',
-                                    borderLeftColor: color,
-                                  }]}
-                                  activeOpacity={0.82}
-                                  onPress={() => {
-                                    const t = event.type;
-                                    if (t === 'assignment' || t === 'deadline') navigation.navigate('Assignments' as any, { highlightId: event.assignmentId || event.id } as any);
-                                    else if (t === 'challenge') navigation.navigate('Challenges' as any, { highlightId: event.assignmentId || event.id } as any);
-                                    else if (t === 'lesson' || t === 'study') navigation.navigate('LearningPaths' as any);
-                                  }}
-                                >
-                                  <Text style={styles.eventTitle} numberOfLines={1}>{toTitleCase(event.title)}</Text>
-                                  <Text style={styles.eventTime}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</Text>
+                      <View style={{ flexDirection: 'row' }}>
+                        {week.map((d, colIdx) => {
+                          const dayEvents = (eventsMap[d.iso] ?? []).filter(
+                            e => e.type !== 'deadline' && e.type !== 'challenge' && e.startTime !== '23:59'
+                          );
+                          return (
+                            <View
+                              key={d.iso}
+                              style={[styles.dayCol, { width: colWidth, height: gridHeight }]}
+                              // @ts-ignore — onMouseDown is valid in React Native Web
+                              onMouseDown={(e: any) => handleColMouseDown(e, d.iso)}
+                            >
+                              {TIMES.map((t, idx) => (
+                                <View key={t} style={[styles.hourCell, { top: idx * HOUR_HEIGHT }]} />
+                              ))}
+
+                              {dragPreview?.dayIso === d.iso && dragPreview.height > 8 && (
+                                <View style={{
+                                  position: 'absolute', left: 2, right: 2,
+                                  top: dragPreview.top, height: Math.max(dragPreview.height, 20),
+                                  backgroundColor: colors.primary + '28',
+                                  borderLeftWidth: 3, borderLeftColor: colors.primary,
+                                  borderRadius: 4, paddingHorizontal: 5, paddingVertical: 3,
+                                  zIndex: 10,
+                                  // @ts-ignore
+                                  pointerEvents: 'none',
+                                }}>
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>
+                                    {dragPreview.startT} – {dragPreview.endT}
+                                  </Text>
+                                </View>
+                              )}
+
+                              {dayEvents.map(event => {
+                                const top = calcEventTop(event.startTime);
+                                const height = calcEventHeight(event.startTime, event.endTime);
+                                const color = typeColor(event.type, colors);
+                                return (
                                   <TouchableOpacity
-                                    style={styles.deleteBtn}
-                                    onPress={() => removeEvent(event.id, d.iso)}
-                                    hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+                                    key={event.id}
+                                    style={[styles.eventBlock, { top, height, backgroundColor: color + '20', borderLeftColor: color }]}
+                                    activeOpacity={0.82}
+                                    onPress={() => {
+                                      const t = event.type;
+                                      if (t === 'assignment' || t === 'deadline') navigation.navigate('Assignments' as any, { highlightId: event.assignmentId || event.id } as any);
+                                      else if (t === 'challenge') navigation.navigate('Challenges' as any, { highlightId: event.assignmentId || event.id } as any);
+                                      else if (t === 'lesson' || t === 'study') navigation.navigate('LearningPaths' as any);
+                                    }}
                                   >
-                                    <Feather name="x" size={10} color={colors.textDim} />
+                                    <Text style={styles.eventTitle} numberOfLines={1}>{toTitleCase(event.title)}</Text>
+                                    <Text style={styles.eventTime}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</Text>
+                                    <TouchableOpacity
+                                      style={styles.deleteBtn}
+                                      onPress={() => removeEvent(event.id, d.iso)}
+                                      hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+                                    >
+                                      <Feather name="x" size={10} color={colors.textDim} />
+                                    </TouchableOpacity>
                                   </TouchableOpacity>
-                                </TouchableOpacity>
-                              );
-                            })}
-                          </View>
-                        );
-                      })}
+                                );
+                              })}
+                            </View>
+                          );
+                        })}
+                      </View>
                     </View>
-                  )}
+                  </ScrollView>
                 </View>
-              </ScrollView>
+              )}
 
               {/* Add event button */}
-              <TouchableOpacity style={styles.addEventBtn} onPress={() => { setModalDate(todayISO); setModalVisible(true); }} activeOpacity={0.8}>
+              <TouchableOpacity style={styles.addEventBtn} onPress={() => { setModalDate(todayISO); setNewStartTime('09:00'); setNewEndTime('10:00'); setModalVisible(true); }} activeOpacity={0.8}>
                 <Feather name="plus" size={16} color={colors.primary} />
                 <Text style={styles.addEventText}>Add Event</Text>
               </TouchableOpacity>
@@ -515,31 +601,17 @@ export default function ScheduleScreen({ navigation }: any) {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-              <Text style={styles.modalLabel}>Start time: <Text style={{ color: colors.primary, fontWeight: '800' }}>{newTime}</Text></Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {Array.from({ length: 17 }, (_, i) => String(i + 6).padStart(2, '0')).map(h => (
-                  <TouchableOpacity key={h} style={[styles.timeChip, newHour === h && styles.timeChipActive]} onPress={() => setNewHour(h)}>
-                    <Text style={[styles.timeChipText, newHour === h && { color: colors.primary }]}>{h}:00</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              {newHour !== '' && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {['00', '15', '30', '45'].map(m => (
-                    <TouchableOpacity key={m} style={[styles.timeChip, newMinute === m && styles.timeChipActive]} onPress={() => setNewMinute(m)}>
-                      <Text style={[styles.timeChipText, newMinute === m && { color: colors.primary }]}>{newHour}:{m}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              )}
-              <Text style={styles.modalLabel}>Duration:</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {DURATIONS.map((d) => (
-                  <TouchableOpacity key={d} style={[styles.timeChip, newDuration === d && styles.timeChipActive]} onPress={() => setNewDuration(d)}>
-                    <Text style={[styles.timeChipText, newDuration === d && { color: colors.primary }]}>{d}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 4, zIndex: 100 }}>
+                <TimePicker label="Start time" value={newStartTime} onChange={(v) => {
+                  setNewStartTime(v);
+                  if (v >= newEndTime) {
+                    const [h, m] = v.split(':').map(Number);
+                    const end = new Date(0, 0, 0, h, m + 30);
+                    setNewEndTime(`${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`);
+                  }
+                }} />
+                <TimePicker label="End time" value={newEndTime} onChange={setNewEndTime} minTime={newStartTime} />
+              </View>
               <View style={styles.modalBtns}>
                 <TouchableOpacity style={styles.modalCancel} onPress={() => setModalVisible(false)}>
                   <Text style={styles.modalCancelText}>Cancel</Text>
@@ -580,6 +652,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   calendarContainer: { flex: 1.5 },
   sideCol:           { flex: 1, gap: spacing.lg },
 
+  timeColHeader: { height: 60 }, // matches dayHeader height so time labels align with grid
   // Day header row (above grid)
   dayHeaderRow: {
     flexDirection: 'row',
