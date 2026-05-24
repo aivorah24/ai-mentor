@@ -411,11 +411,21 @@ RULES:
 5. Pay careful attention to UNITS.
 6. Every question MUST have a "solution" field with a clear step-by-step explanation. NEVER write "Not provided" — work through the problem and explain how to get the answer.
 7. Every question MUST have a "hint" field — a short clue that guides the student without giving the full answer. NEVER leave hint empty or omit it.
-8. For questions that have a diagram/shape/image in the worksheet, set "hasImage": true. For text-only word problems, set "hasImage": false.
-   When "hasImage": true, also include:
-   - "diagramDescription": a short description of the diagram (e.g. "regular octagon inside a square", "L-shaped polygon with sides 5m, 6m, 8m, 3m", "irregular closed shape on a grid")
-   - "diagramPosition": approximate position on the page: "top-left", "top-right", "top-center", "middle-left", "middle-right", "middle-center", "bottom-left", "bottom-right", "bottom-center"
-   These fields are used by the server to match cropped images to the correct questions.
+8. DIAGRAM/IMAGE HANDLING (CRITICAL — read carefully):
+   a) If MULTIPLE questions in a task ALL reference the SAME shared diagram/picture (e.g. a picture of objects where Q1-Q4 all ask about the same picture, or a set of weighing scales where all questions refer to the same image), then:
+      - Set "sharedImage": true on the TASK object (not on individual questions)
+      - Set "sharedImageDescription": description of the shared diagram
+      - Set "sharedImagePosition": position on the page ("top-center", "middle-center", etc.)
+      - Set "hasImage": false on ALL individual questions (the image belongs to the task, not to any single question)
+      Example: A picture showing a book, bench, and foot — with Q1 "The book is ___ foot", Q2 "The bench is ___ feet", Q3 "The book is ___ than the bench" — ALL reference the SAME picture. Use sharedImage on the task.
+   b) If a question has its OWN UNIQUE diagram that no other question uses, set "hasImage": true on that question with:
+      - "diagramDescription": short description (e.g. "L-shaped polygon with sides 5m, 6m, 8m, 3m")
+      - "diagramPosition": approximate position on the page: "top-left", "top-right", "top-center", "middle-left", "middle-right", "middle-center", "bottom-left", "bottom-right", "bottom-center"
+   c) For text-only questions with no diagram, set "hasImage": false.
+   These fields are used by the server to match cropped images to the correct questions. Getting this wrong causes images to appear on the wrong questions.
+   d) If a task/section has an ILLUSTRATION or DECORATIVE IMAGE (e.g. a cartoon character, animal picture, beehive, tree diagram, branching arrows) that provides context but is not a per-question diagram, treat it as a sharedImage on the task:
+      - Set "sharedImage": true, "sharedImageDescription": description, "sharedImagePosition": position
+      This ensures ALL visual elements from the worksheet are preserved, not just math diagrams.
 9. Do NOT generate SVG, HTML diagrams, or diagramHTML. The server handles all image rendering separately.
 10. For questions that reference a graph/chart/image: READ the visual data from the image to compute the answer. For example, if a bar graph shows football=16, tennis=8 and the Y-axis goes 0,2,4,6... then the scale is 2.
 
@@ -451,6 +461,19 @@ Return this EXACT JSON structure:
       "questions": [
         { "id": "a", "type": "numeric", "question": "4 kg = ___ gm", "unit": "gm", "answer": 4000, "hint": "1 kg = 1000 gm", "solution": "4 × 1000 = 4000 gm", "hasImage": false },
         { "id": "f", "type": "numeric", "question": "5 l = ___ ml", "unit": "ml", "answer": 5000, "hint": "1 l = 1000 ml", "solution": "5 × 1000 = 5000 ml", "hasImage": false }
+      ]
+    },
+    {
+      "tier": "COULD DO",
+      "title": "Task 3: Observe the picture and fill in the blanks",
+      "sourcePage": 2,
+      "sharedImage": true,
+      "sharedImageDescription": "Picture showing a book, a bench, and a foot as measurement unit",
+      "sharedImagePosition": "top-center",
+      "layout": { "type": "single-column", "columns": 1 },
+      "questions": [
+        { "id": "a", "type": "numeric", "question": "The length of the book is ___ foot.", "unit": "foot", "answer": 1, "hasImage": false },
+        { "id": "b", "type": "numeric", "question": "The length of the bench is ___ feet.", "unit": "feet", "answer": 4, "hasImage": false }
       ]
     }
   ]
@@ -854,7 +877,12 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
     quiz.generatedAt = new Date().toISOString();
     quiz.status = 'draft';
 
-    res.json({ quiz });
+    // Auto-validate quality
+    const qualityCheck = validateQuiz(quiz);
+    console.log(`[quiz] Quality: ${qualityCheck.grade} (${qualityCheck.score}/100) — ${qualityCheck.totalQuestions} questions, ${qualityCheck.issues.length} issues`);
+    if (qualityCheck.issues.length) console.log(`[quiz] Issues:`, qualityCheck.issues.join('; '));
+
+    res.json({ quiz, validation: qualityCheck });
   } catch (err) {
     console.error('Quiz generate error:', err);
     res.status(500).json({ error: err.message });
@@ -1075,7 +1103,11 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
     quiz.generatedAt = new Date().toISOString();
     quiz.status = 'draft';
 
-    res.json({ quiz });
+    const validation = validateQuiz(quiz);
+    console.log(`[quiz] Quality: ${validation.grade} (${validation.score}/100) — ${validation.totalQuestions} questions, ${validation.issues.length} issues`);
+    if (validation.issues.length) console.log(`[quiz] Issues:`, validation.issues.join('; '));
+
+    res.json({ quiz, validation });
   } catch (err) {
     console.error('Quiz generate-image error:', err);
     res.status(500).json({ error: err.message });
@@ -1294,6 +1326,57 @@ function renderExtractionPreview(extraction, filename) {
   ${pagesHTML}
 </body></html>`;
 }
+
+// ── POST /quiz/validate — Validate a quiz JSON and return quality score ──
+router.post('/validate', express.json({ limit: '5mb' }), (req, res) => {
+  try {
+    const quiz = req.body.quiz || req.body;
+    if (!quiz) return res.status(400).json({ error: 'No quiz data' });
+    const validation = validateQuiz(quiz);
+    res.json(validation);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /quiz/batch-test — Upload multiple PDFs, generate + validate all, return summary ──
+router.post('/batch-test', upload.array('pdfs', 20), async (req, res) => {
+  if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'No PDF files' });
+  const { grade, subject, school } = req.body;
+  const results = [];
+
+  for (const file of req.files) {
+    try {
+      const parts = [{ inlineData: { data: file.buffer.toString('base64'), mimeType: 'application/pdf' } }];
+      const result = await callGeminiVision(parts, { grade, subject, school });
+      const quiz = typeof result === 'string' ? JSON.parse(result) : result;
+      const validation = validateQuiz(quiz);
+      results.push({
+        file: file.originalname,
+        status: 'success',
+        grade: validation.grade,
+        score: validation.score,
+        questions: validation.totalQuestions,
+        tasks: validation.totalTasks,
+        issues: validation.issues,
+        warnings: validation.warnings,
+      });
+    } catch (err) {
+      results.push({ file: file.originalname, status: 'error', error: err.message });
+    }
+  }
+
+  const avgScore = results.filter(r => r.score != null).reduce((s, r) => s + r.score, 0) / Math.max(1, results.filter(r => r.score != null).length);
+  res.json({
+    summary: {
+      total: results.length,
+      passed: results.filter(r => r.score >= 75).length,
+      failed: results.filter(r => r.score < 75 || r.status === 'error').length,
+      avgScore: Math.round(avgScore),
+    },
+    results,
+  });
+});
 
 // ── POST /quiz/render-preview — Accept quiz JSON, return fully rendered interactive HTML ──
 // Used by frontend to show Student Preview (rich server-rendered HTML with two-column layouts, SVGs, etc.)
@@ -1794,6 +1877,74 @@ function embedQuizImages(quiz) {
 }
 
 // ── HTML renderer — Aivorah Enchanted Forest dark theme ────────────────────
+// ── Quiz Quality Validator — automatically scores generated quizzes ──
+function validateQuiz(quiz) {
+  const issues = [];
+  const warnings = [];
+  let score = 100;
+
+  if (!quiz) return { score: 0, issues: ['No quiz data'], warnings: [], grade: 'F' };
+
+  // 1. Basic structure
+  if (!quiz.title) { issues.push('Missing title'); score -= 5; }
+  if (!quiz.subject) { issues.push('Missing subject'); score -= 3; }
+  if (!quiz.tasks || quiz.tasks.length === 0) { issues.push('No tasks found'); score -= 30; }
+
+  let totalQ = 0;
+  let missingAnswers = 0;
+  let missingHints = 0;
+  let missingSolutions = 0;
+  let notProvidedCount = 0;
+  let emptyQuestions = 0;
+  let hasImageCount = 0;
+  let sharedImageCount = 0;
+
+  for (const task of (quiz.tasks || [])) {
+    if (!task.title) { warnings.push('Task missing title'); score -= 2; }
+    if (task.sharedImage) sharedImageCount++;
+
+    for (const q of (task.questions || [])) {
+      totalQ++;
+      if (!q.question || q.question.trim().length < 3) { emptyQuestions++; score -= 5; }
+      if (!q.answer && q.answer !== 0) { missingAnswers++; score -= 4; }
+      if (!q.hint) { missingHints++; score -= 1; }
+      if (!q.solution) { missingSolutions++; score -= 1; }
+
+      // Check for "Not provided" lazy answers
+      const ansStr = String(q.answer || '');
+      const solStr = String(q.solution || '');
+      if (/not provided|n\/a|unknown/i.test(ansStr) || /not provided|n\/a/i.test(solStr)) {
+        notProvidedCount++;
+        score -= 8;
+      }
+
+      if (q.hasImage) hasImageCount++;
+    }
+  }
+
+  if (totalQ === 0) { issues.push('Zero questions extracted'); score -= 40; }
+  if (missingAnswers > 0) issues.push(`${missingAnswers}/${totalQ} questions missing answers`);
+  if (notProvidedCount > 0) issues.push(`${notProvidedCount} questions have "Not provided" answers`);
+  if (emptyQuestions > 0) issues.push(`${emptyQuestions} questions have empty/too-short text`);
+  if (missingHints > 0) warnings.push(`${missingHints}/${totalQ} questions missing hints`);
+  if (missingSolutions > 0) warnings.push(`${missingSolutions}/${totalQ} questions missing solutions`);
+
+  // Clamp score
+  score = Math.max(0, Math.min(100, score));
+
+  const grade = score >= 90 ? 'A' : score >= 75 ? 'B' : score >= 60 ? 'C' : score >= 40 ? 'D' : 'F';
+
+  return {
+    score,
+    grade,
+    totalQuestions: totalQ,
+    totalTasks: (quiz.tasks || []).length,
+    issues,
+    warnings,
+    stats: { missingAnswers, missingHints, missingSolutions, notProvidedCount, emptyQuestions, hasImageCount, sharedImageCount },
+  };
+}
+
 function renderQuizHTML(quiz) {
   // Helper: convert relative image URL to base64 data URI so HTML works standalone
   const serverRoot = path.resolve(__dirname, '..');
@@ -1934,6 +2085,20 @@ function renderQuizHTML(quiz) {
     return s;
   }
 
+  // Detect non-Latin/non-English scripts for language-specific input support
+  const allText = (quiz.tasks || []).map(t =>
+    `${t.title || ''} ${(t.questions || []).map(q => q.question || '').join(' ')}`
+  ).join(' ');
+  const hasTeluguScript = /[\u0C00-\u0C7F]/.test(allText);
+  const hasDevanagari = /[\u0900-\u097F]/.test(allText);
+  const hasFrenchChars = /[àâæçéèêëïîôùûüÿœÀÂÆÇÉÈÊËÏÎÔÙÛÜŸŒ]/.test(allText);
+  const isFrench = hasFrenchChars || /french|fran[çc]ais/i.test(quiz.subject || '');
+  const detectedLang = hasTeluguScript ? 'te' : hasDevanagari ? 'hi' : isFrench ? 'fr' : 'en';
+  const inputLangAttr = detectedLang !== 'en' ? ` lang="${detectedLang}"` : '';
+  const htmlLang = detectedLang;
+  const isLanguageWorksheet = hasTeluguScript || hasDevanagari || isFrench ||
+    /telugu|hindi|sanskrit|urdu|tamil|kannada|malayalam|bengali|marathi|gujarati|french|fran[çc]ais|spanish|espa[ñn]ol|german|deutsch/i.test(quiz.subject || '');
+
   let tasksHTML = '';
   let qNum = 0;
   const answersMap = {};
@@ -1980,7 +2145,7 @@ function renderQuizHTML(quiz) {
       html += `<span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">${qLabel}</strong> ${fmtQuestion(questionText)}</span>`;
 
       if (!isActivity && !isMcq) {
-        html += `<input type="text" id="${qId}-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?">`;
+        html += `<input type="text" id="${qId}-input" class="q-input"${inputLangAttr} style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?">`;
         if (displayUnit) html += `<span style="font-size:13px;color:#A8B5B3;">${displayUnit}</span>`;
         html += `<button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('${qId}')">&#10003;</button>`;
         if (q.hint) html += `<button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('${qId}')">Hint</button>`;
@@ -2003,8 +2168,47 @@ function renderQuizHTML(quiz) {
       html += `<div id="${qId}-result" class="result-box" style="margin:0 14px;"></div>`;
       html += `<div id="${qId}-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> ${fmt(solutionText)}</div>`;
       html += `<button id="${qId}-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('${qId}')">Show Answer</button>`;
+    } else if (isLanguageWorksheet) {
+      // ── Language worksheet layout: clean, document-like ──
+      // Mimics original worksheet: sentence + dotted-line answer fields, no "Answer ="
+      html += `<div class="lang-q-row" id="${qId}-card">`;
+      html += `<div class="lang-q-left">`;
+      html += `<span class="lang-q-num">(${q.id || qNum})</span>`;
+      html += `<span class="lang-q-text">${fmtQuestion(q.question)}</span>`;
+      html += `</div>`;
+
+      if (q.example) {
+        html += `<div class="lang-example">${fmt(q.example)}</div>`;
+      }
+
+      if (isMcq) {
+        html += `<div class="lang-mcq-opts">`;
+        html += q.options.map((opt, i) => {
+          const letter = String.fromCharCode(65 + i);
+          const label = typeof opt === 'string' ? opt : (opt.label || opt);
+          return `<label class="lang-mcq-opt"><input type="radio" name="${qId}" value="${letter}"> ${fmt(label)}</label>`;
+        }).join('');
+        html += `<button class="lang-btn-check" onclick="checkMCQ('${qId}')">&#10003;</button>`;
+        html += `</div>`;
+      } else {
+        // Language worksheets: ALWAYS show input field (even for activities/riddles)
+        html += `<div class="lang-q-answer">`;
+        html += `<input type="text" id="${qId}-input" class="lang-input"${inputLangAttr} placeholder="">`;
+        html += `<div class="lang-q-actions">`;
+        html += `<button class="lang-btn-check" onclick="checkAnswer('${qId}')">&#10003;</button>`;
+        if (q.hint) html += `<button class="lang-btn-hint" onclick="toggleHint('${qId}')">?</button>`;
+        html += `</div></div>`;
+      }
+
+      const solutionText = (q.solution || '').replace(/Answer:/g, '<br><strong>Answer:</strong>');
+      html += `
+        <div id="${qId}-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">${fmt(q.hint || '')}</div>
+        <div id="${qId}-result" class="lang-result"></div>
+        <div id="${qId}-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> ${fmt(solutionText)}</div>
+        <button id="${qId}-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('${qId}')">Show Answer</button>
+      </div>`;
     } else {
-      // Card layout (existing style)
+      // Card layout (existing style — math/science)
       html += `<div class="q-card" id="${qId}-card">
         <p class="q-text"><strong>${qLabel}</strong> ${fmtQuestion(q.question)}</p>`;
 
@@ -2013,7 +2217,7 @@ function renderQuizHTML(quiz) {
         html += `<div style="margin:8px 0 12px;padding:10px 14px;background:rgba(195,220,216,0.07);border-left:3px solid rgba(195,220,216,0.4);border-radius:0 8px 8px 0;font-size:13px;color:#A8B5B3;font-style:italic;">${fmt(q.example)}</div>`;
       }
 
-      if (q.imageUrl) {
+      if (q.imageUrl && !q._sharedImage) {
         html += `<div class="q-image" style="margin:0 0 14px;text-align:center"><img src="${embedImage(q.imageUrl)}" alt="${q.diagramDescription || 'Worksheet diagram'}" style="max-width:320px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div>`;
       }
 
@@ -2044,7 +2248,7 @@ function renderQuizHTML(quiz) {
         if (isLong) {
           html += `
         <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
-          <textarea id="${qId}-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <textarea id="${qId}-input" class="q-input"${inputLangAttr} rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
           <div style="display:flex;gap:10px;">
             <button class="btn-check" onclick="checkAnswer('${qId}')">Check</button>
             ${q.hint ? `<button class="btn-hint" onclick="toggleHint('${qId}')">Hint</button>` : ''}
@@ -2054,7 +2258,7 @@ function renderQuizHTML(quiz) {
           html += `
         <div class="q-input-row">
           <span class="q-label">${labelText}</span>
-          <input type="text" id="${qId}-input" class="q-input" placeholder="${placeholder}">
+          <input type="text" id="${qId}-input" class="q-input"${inputLangAttr} placeholder="${placeholder}">
           ${displayUnit ? `<span class="q-unit">${displayUnit}</span>` : ''}
           <button class="btn-check" onclick="checkAnswer('${qId}')">Check</button>
           ${q.hint ? `<button class="btn-hint" onclick="toggleHint('${qId}')">Hint</button>` : ''}
@@ -2088,6 +2292,104 @@ function renderQuizHTML(quiz) {
       <span class="tier-badge" style="display:inline-block;background:${s.labelBg};color:${s.label};font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">${task.tier}</span>
       <h2 style="font-size:18px;color:${s.label};margin:6px 0 18px;font-weight:700;">${taskTitle}</h2>
       ${task.passage ? `<div style="margin:0 0 20px;padding:16px 20px;background:rgba(255,255,255,0.04);border:1px solid rgba(195,220,216,0.2);border-radius:10px;font-size:14px;color:#D8E8E6;line-height:1.8;">${fmt(task.passage)}</div>` : ''}`;
+
+    // ── SHARED IMAGE: show one diagram for the entire task (all questions reference it) ──
+    if (task.sharedImage) {
+      const sharedUrl = (questions[0] && questions[0].imageUrl) || task.pageImageUrl;
+      if (sharedUrl) {
+        tasksHTML += `<div style="text-align:center;margin:0 0 16px;"><img src="${embedImage(sharedUrl)}" alt="${task.sharedImageDescription || 'Worksheet diagram'}" style="max-width:320px;max-height:300px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div>`;
+      } else if (task.sharedImageDescription) {
+        // Fallback: render branching/tree diagrams as HTML when image extraction missed them
+        const desc = task.sharedImageDescription || '';
+        let trees = [];
+
+        // If description mentions "branch", try to build tree from QUESTION DATA
+        // (more reliable than parsing LLM descriptions which vary each time)
+        if (/branch/i.test(desc) && questions.length >= 2) {
+          // Strategy 1: Group by question ID (e.g., id="మీద" → root from question text first word)
+          // In Telugu worksheets: question="చెట్టు మీద __", id="మీద" → root="చెట్టు", branch="మీద"
+          const rootMapFromQ = {};
+          for (const q of questions) {
+            const qText = String(q.question || '').trim();
+            const qId = String(q.id || '').trim();
+            // Try extracting root as first word of question text
+            const firstWord = qText.split(/\s+/)[0];
+            const secondWord = qText.split(/\s+/)[1] || '';
+            if (firstWord && secondWord && qId) {
+              if (!rootMapFromQ[firstWord]) rootMapFromQ[firstWord] = [];
+              // Use id as branch label (cleaner), avoid duplicates
+              if (!rootMapFromQ[firstWord].includes(qId)) {
+                rootMapFromQ[firstWord].push(qId);
+              }
+            }
+          }
+          const rootsFromQ = Object.keys(rootMapFromQ).filter(r => rootMapFromQ[r].length >= 1);
+          if (rootsFromQ.length >= 2 || (rootsFromQ.length === 1 && rootMapFromQ[rootsFromQ[0]].length >= 2)) {
+            trees = rootsFromQ.map(r => ({ root: r, branches: rootMapFromQ[r] }));
+          }
+
+          // Strategy 2: Group by answer — each unique answer is a tree root
+          if (trees.length === 0) {
+            const rootMap = {};
+            for (const q of questions) {
+              const ans = String(q.answer || '').trim();
+              const qText = String(q.question || q.id || '').trim();
+              if (ans && qText && ans !== qText) {
+                if (!rootMap[ans]) rootMap[ans] = [];
+                rootMap[ans].push(qText);
+              }
+            }
+            const roots = Object.keys(rootMap).filter(r => rootMap[r].length >= 1);
+            if (roots.length >= 2 || (roots.length === 1 && rootMap[roots[0]].length >= 2)) {
+              trees = roots.map(r => ({ root: r, branches: rootMap[r] }));
+            }
+          }
+        }
+
+        // Fallback: try regex patterns on the description text
+        if (trees.length === 0) {
+          let bm;
+          // Pattern A: "'చెట్టు' branching to 'మీద' and 'కింద'"
+          const patA = /[''']([^''']+)[''']\s*branch(?:ing|es)?\s*to\s*[''']([^''']+)['''](?:\s*(?:and|,)\s*[''']([^''']+)['''])?/gi;
+          while ((bm = patA.exec(desc)) !== null) {
+            trees.push({ root: bm[1], branches: [bm[2], bm[3]].filter(Boolean) });
+          }
+          // Pattern B: "'మీద' and 'కింద' branch from 'చెట్టు'"
+          if (trees.length === 0) {
+            const patB = /[''']([^''']+)['''](?:\s*(?:and|,)\s*[''']([^''']+)['''])?\s*branch(?:es)?\s*from\s*[''']([^''']+)[''']/gi;
+            while ((bm = patB.exec(desc)) !== null) {
+              trees.push({ root: bm[3], branches: [bm[1], bm[2]].filter(Boolean) });
+            }
+          }
+          // Pattern C: "'చెట్టు' with branches labeled 'మీద' and 'కింద'"
+          if (trees.length === 0) {
+            const patC = /[''']([^''']+)[''']\s*(?:\([^)]*\)\s*)?with\s*branches?\s*(?:labeled\s*)?[''']([^''']+)['''](?:\s*(?:\([^)]*\)\s*)?(?:and|,)\s*[''']([^''']+)['''])?/gi;
+            while ((bm = patC.exec(desc)) !== null) {
+              trees.push({ root: bm[1], branches: [bm[2], bm[3]].filter(Boolean) });
+            }
+          }
+        }
+        if (trees.length > 0) {
+          tasksHTML += `<div class="branch-diagram" style="display:flex;gap:40px;justify-content:center;margin:16px 0 20px;flex-wrap:wrap;">`;
+          for (const tree of trees) {
+            tasksHTML += `<div class="branch-tree" style="display:flex;align-items:center;gap:12px;">`;
+            tasksHTML += `<span style="font-size:17px;font-weight:700;color:#C3DCD8;">${tree.root}</span>`;
+            tasksHTML += `<div style="display:flex;flex-direction:column;gap:0;position:relative;">`;
+            // Draw bracket/brace
+            tasksHTML += `<div style="position:absolute;left:-8px;top:4px;bottom:4px;width:8px;border-left:2px solid #93B0AC;border-top:2px solid #93B0AC;border-bottom:2px solid #93B0AC;border-radius:4px 0 0 4px;"></div>`;
+            for (const b of tree.branches) {
+              const branchQId = `branch_${qNum}_${b.replace(/\s/g,'')}`;
+              tasksHTML += `<div style="padding:6px 0 6px 12px;font-size:15px;color:#F0EEEC;display:flex;align-items:center;gap:8px;">${b} <input type="text" class="lang-input"${inputLangAttr} style="flex:1;max-width:200px;" placeholder=""></div>`;
+            }
+            tasksHTML += `</div></div>`;
+          }
+          tasksHTML += `</div>`;
+        } else {
+          // Generic fallback: show description as a styled note
+          tasksHTML += `<div style="margin:0 0 16px;padding:12px 16px;background:rgba(195,220,216,0.06);border:1px dashed rgba(195,220,216,0.25);border-radius:8px;font-size:13px;color:#A8B5B3;text-align:center;font-style:italic;">📐 ${fmt(desc)}</div>`;
+        }
+      }
+    }
 
     // ── PAGE IMAGE FALLBACK: show worksheet page when individual crops are missing ──
     const anyQuestionNeedsImage = questions.some(q => q.hasImage && !q.imageUrl);
@@ -2178,14 +2480,14 @@ function renderQuizHTML(quiz) {
   }
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${htmlLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${quiz.title || 'Quiz'} - Aivorah</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
+    body { font-family: -apple-system, 'Segoe UI', Roboto, 'Noto Sans Telugu', 'Noto Sans Devanagari', Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
 
     /* ── Header — Aivorah Enchanted Forest ── */
     .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 28px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); }
@@ -2261,12 +2563,47 @@ function renderQuizHTML(quiz) {
     .activity-box { background: linear-gradient(135deg, rgba(147,176,172,0.08), rgba(197,189,150,0.08)) !important;
                     border-color: rgba(147,176,172,0.25) !important; }
 
+    /* ── Language worksheet layout (Telugu, Hindi, etc.) ── */
+    .lang-q-row { padding: 16px 20px 12px; margin: 6px 0; border-bottom: 1px solid rgba(195,220,216,0.08); }
+    .lang-q-left { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+    .lang-q-num { font-size: 15px; color: #93B0AC; font-weight: 700; flex-shrink: 0; min-width: 28px; }
+    .lang-q-text { font-size: 16px; color: #F0EEEC; line-height: 1.8; }
+    .lang-q-text strong { color: #C3DCD8; }
+    .lang-example { margin: 4px 0 10px 38px; padding: 8px 14px; background: rgba(195,220,216,0.05);
+                    border-left: 3px solid rgba(195,220,216,0.3); border-radius: 0 6px 6px 0;
+                    font-size: 14px; color: #A8B5B3; font-style: italic; }
+    .lang-q-answer { display: flex; align-items: center; gap: 12px; margin-left: 38px; flex-wrap: wrap; }
+    .lang-input { flex: 1; max-width: 280px; padding: 8px 4px; font-size: 16px; color: #F0EEEC;
+                  background: transparent; border: none; border-bottom: 2px dotted rgba(195,220,216,0.35);
+                  outline: none; font-family: inherit; transition: border-color 0.2s; }
+    .lang-input:focus { border-bottom-color: #93B0AC; border-bottom-style: solid; }
+    .lang-input::placeholder { color: transparent; }
+    .lang-q-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .lang-btn-check { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(147,176,172,0.4);
+                      background: transparent; color: #93B0AC; font-size: 14px; cursor: pointer;
+                      display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-check:hover { background: rgba(147,176,172,0.15); border-color: #93B0AC; }
+    .lang-btn-hint { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(197,189,150,0.4);
+                     background: transparent; color: #C5BD96; font-size: 14px; font-weight: 700; cursor: pointer;
+                     display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-hint:hover { background: rgba(197,189,150,0.1); border-color: #C5BD96; }
+    .lang-result { margin: 4px 0 0 38px; font-size: 14px; min-height: 4px; }
+    .lang-mcq-opts { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px 38px; align-items: center; }
+    .lang-mcq-opt { font-size: 14px; color: #F0EEEC; cursor: pointer; padding: 6px 12px;
+                    border: 1px solid rgba(195,220,216,0.2); border-radius: 6px; transition: all 0.2s; }
+    .lang-mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .lang-mcq-opt input { margin-right: 6px; }
+
     /* ── Responsive ── */
     @media (max-width: 640px) {
       .header { padding: 20px; }
       .header h1 { font-size: 20px; }
       .container { padding: 0 14px 40px; }
       .q-card { padding: 16px; }
+      .lang-q-row { padding: 12px 14px 10px; }
+      .lang-q-answer { margin-left: 28px; }
+      .lang-result { margin-left: 28px; }
+      .lang-example { margin-left: 28px; }
       .score { width: 60px; height: 60px; top: 14px; right: 14px; }
       .score-num { font-size: 18px; }
       .concepts-row { flex-direction: column; }
@@ -2400,6 +2737,208 @@ function renderQuizHTML(quiz) {
       const el = document.getElementById(id + '-solution');
       el.style.display = el.style.display === 'none' ? 'block' : 'none';
     }
+    // ── Indic language input support ──
+    // Students type English phonetically (e.g. "muggulu") → auto-converts to Telugu/Hindi
+    // Uses Google Input Tools REST API for transliteration with dropdown suggestions
+    ${(hasTeluguScript || hasDevanagari) ? `
+    (function() {
+      const LANG = '${hasTeluguScript ? 'te' : 'hi'}';
+      const IME = 'transliteration_en_' + LANG;
+      const LANG_LABEL = '${hasTeluguScript ? 'తె' : 'हि'}';
+      const LANG_NAME = '${hasTeluguScript ? 'Telugu' : 'Hindi'}';
+      let enabled = true;
+
+      // Transliterate via Google Input Tools REST API
+      async function transliterate(word) {
+        if (!word || word.length < 1) return [];
+        try {
+          const url = 'https://inputtools.google.com/request?text=' +
+            encodeURIComponent(word) + '&itc=' + IME + '&num=5&cp=0&cs=1&ie=utf-8&oe=utf-8';
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1]) {
+            return data[1][0][1]; // array of suggestions
+          }
+        } catch(e) { console.warn('Transliteration failed:', e); }
+        return [];
+      }
+
+      // Suggestion dropdown
+      let dropdown = document.createElement('div');
+      dropdown.id = 'translit-dropdown';
+      dropdown.style.cssText = 'position:absolute;z-index:9999;background:#1C1C1C;border:1px solid rgba(147,176,172,0.4);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.5);display:none;overflow:hidden;min-width:120px;';
+      document.body.appendChild(dropdown);
+
+      let activeInput = null;
+      let currentWord = '';
+      let wordStart = 0;
+
+      function hideDropdown() { dropdown.style.display = 'none'; dropdown.innerHTML = ''; }
+
+      function showDropdown(suggestions, input) {
+        if (!suggestions.length) { hideDropdown(); return; }
+        dropdown.innerHTML = '';
+        suggestions.forEach(function(s, i) {
+          var opt = document.createElement('div');
+          opt.textContent = s;
+          opt.style.cssText = 'padding:8px 14px;font-size:15px;color:#F0EEEC;cursor:pointer;border-bottom:1px solid rgba(195,220,216,0.08);';
+          if (i === 0) opt.style.background = 'rgba(147,176,172,0.15)';
+          opt.onmouseenter = function() {
+            dropdown.querySelectorAll('div').forEach(function(d) { d.style.background = 'transparent'; });
+            opt.style.background = 'rgba(147,176,172,0.15)';
+          };
+          opt.onmousedown = function(e) {
+            e.preventDefault();
+            applySelection(s, input);
+          };
+          dropdown.appendChild(opt);
+        });
+        // Position near the input
+        var rect = input.getBoundingClientRect();
+        dropdown.style.left = rect.left + 'px';
+        dropdown.style.top = (rect.bottom + 4) + 'px';
+        dropdown.style.display = 'block';
+      }
+
+      function applySelection(text, input) {
+        var val = input.value;
+        input.value = val.substring(0, wordStart) + text + val.substring(wordStart + currentWord.length);
+        currentWord = '';
+        hideDropdown();
+        input.focus();
+      }
+
+      // Extract current English word being typed
+      function getCurrentWord(input) {
+        var val = input.value;
+        var pos = input.selectionStart || val.length;
+        var before = val.substring(0, pos);
+        var match = before.match(/[a-zA-Z]+$/);
+        if (match) {
+          wordStart = pos - match[0].length;
+          return match[0];
+        }
+        return '';
+      }
+
+      // Debounce
+      let debounceTimer = null;
+
+      function onInput(e) {
+        if (!enabled) return;
+        var input = e.target;
+        activeInput = input;
+        currentWord = getCurrentWord(input);
+        if (currentWord.length >= 2) {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(async function() {
+            var suggestions = await transliterate(currentWord);
+            showDropdown(suggestions, input);
+          }, 200);
+        } else {
+          hideDropdown();
+        }
+      }
+
+      function onKeydown(e) {
+        if (!enabled) return;
+        if (dropdown.style.display === 'none') return;
+        var items = dropdown.querySelectorAll('div');
+        var active = dropdown.querySelector('div[style*="rgba(147,176,172,0.15)"]');
+        var idx = Array.from(items).indexOf(active);
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          items.forEach(function(d) { d.style.background = 'transparent'; });
+          var next = (idx + 1) % items.length;
+          items[next].style.background = 'rgba(147,176,172,0.15)';
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          items.forEach(function(d) { d.style.background = 'transparent'; });
+          var prev = (idx - 1 + items.length) % items.length;
+          items[prev].style.background = 'rgba(147,176,172,0.15)';
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          if (active) {
+            e.preventDefault();
+            applySelection(active.textContent + (e.key === ' ' ? ' ' : ''), activeInput);
+          }
+        } else if (e.key === 'Escape') {
+          hideDropdown();
+        }
+      }
+
+      // Attach to all quiz inputs
+      document.querySelectorAll('.lang-input, .q-input').forEach(function(inp) {
+        inp.setAttribute('lang', LANG);
+        inp.addEventListener('input', onInput);
+        inp.addEventListener('keydown', onKeydown);
+        inp.addEventListener('blur', function() { setTimeout(hideDropdown, 200); });
+      });
+
+      // Toggle indicator (fixed bottom-left)
+      var indicator = document.createElement('div');
+      indicator.id = 'lang-indicator';
+      indicator.innerHTML = '<span class="lang-ind-icon">' + LANG_LABEL + '</span><span class="lang-ind-text">' + LANG_NAME + ' ON</span>';
+      indicator.style.cssText = 'position:fixed;bottom:20px;left:20px;background:#1C1C1C;color:#93B0AC;padding:8px 16px;border-radius:20px;border:1px solid rgba(147,176,172,0.3);z-index:999;display:flex;align-items:center;gap:8px;font-family:inherit;box-shadow:0 2px 12px rgba(0,0,0,0.4);cursor:pointer;user-select:none;transition:all 0.2s;';
+      indicator.onclick = function() {
+        enabled = !enabled;
+        indicator.querySelector('.lang-ind-text').textContent = enabled ? LANG_NAME + ' ON' : 'English';
+        indicator.querySelector('.lang-ind-icon').textContent = enabled ? LANG_LABEL : 'EN';
+        indicator.style.borderColor = enabled ? 'rgba(147,176,172,0.3)' : 'rgba(197,189,150,0.3)';
+        if (!enabled) hideDropdown();
+      };
+      document.body.appendChild(indicator);
+
+      // Style for indicator
+      var style = document.createElement('style');
+      style.textContent = '.lang-ind-icon{font-size:14px;font-weight:800;} .lang-ind-text{font-size:11px;opacity:0.7;} #lang-indicator:hover{transform:scale(1.05);border-color:#93B0AC!important;}';
+      document.head.appendChild(style);
+    })();
+    ` : ''}
+    // ── French accent palette ──
+    // Floating toolbar with accented characters students can click to insert
+    ${isFrench ? `
+    (function() {
+      const ACCENTS = ['é','è','ê','ë','à','â','ç','ù','û','ü','ô','î','ï','œ','æ','É','È','Ê','Ç','À','Â'];
+      let activeInput = null;
+
+      // Build palette
+      var palette = document.createElement('div');
+      palette.id = 'fr-palette';
+      palette.style.cssText = 'position:fixed;bottom:20px;left:20px;background:#1C1C1C;border:1px solid rgba(147,176,172,0.3);border-radius:12px;z-index:999;padding:8px 10px;display:flex;flex-wrap:wrap;gap:4px;max-width:320px;box-shadow:0 4px 16px rgba(0,0,0,0.4);align-items:center;';
+
+      // Label
+      var label = document.createElement('span');
+      label.textContent = 'FR';
+      label.style.cssText = 'font-size:12px;font-weight:800;color:#93B0AC;margin-right:6px;';
+      palette.appendChild(label);
+
+      ACCENTS.forEach(function(ch) {
+        var btn = document.createElement('button');
+        btn.textContent = ch;
+        btn.style.cssText = 'width:28px;height:28px;border:1px solid rgba(195,220,216,0.2);border-radius:6px;background:transparent;color:#F0EEEC;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;padding:0;';
+        btn.onmouseenter = function() { btn.style.background = 'rgba(147,176,172,0.2)'; btn.style.borderColor = '#93B0AC'; };
+        btn.onmouseleave = function() { btn.style.background = 'transparent'; btn.style.borderColor = 'rgba(195,220,216,0.2)'; };
+        btn.onmousedown = function(e) {
+          e.preventDefault();
+          if (!activeInput) return;
+          var pos = activeInput.selectionStart || activeInput.value.length;
+          var val = activeInput.value;
+          activeInput.value = val.substring(0, pos) + ch + val.substring(pos);
+          activeInput.selectionStart = activeInput.selectionEnd = pos + ch.length;
+          activeInput.focus();
+        };
+        palette.appendChild(btn);
+      });
+      document.body.appendChild(palette);
+
+      // Track active input
+      document.querySelectorAll('.lang-input, .q-input').forEach(function(inp) {
+        inp.setAttribute('lang', 'fr');
+        inp.addEventListener('focus', function() { activeInput = inp; });
+      });
+    })();
+    ` : ''}
   </script>
 </body>
 </html>`;

@@ -791,12 +791,50 @@ function matchDiagramsToQuestions(extractionResult, quiz) {
     }
   }
 
+  // Step 2.7: Handle sharedImage tasks — match ONE diagram to the task,
+  // then propagate the same imageUrl to ALL questions in the task.
+  // This handles cases like "observe the picture" where Q1-Q4 all reference one shared image.
+  const sharedImageTasks = (quiz.tasks || []).filter(t => t.sharedImage);
+  for (const task of sharedImageTasks) {
+    const pg = task.sourcePage || 1;
+    const figures = figuresByPage[pg] || [];
+    if (figures.length === 0) continue;
+
+    const available = figures.filter(f => !f._matched);
+    if (available.length === 0) continue;
+
+    // Use sharedImagePosition to find the best matching figure
+    const target = task.sharedImagePosition ? positionToRankTarget(task.sharedImagePosition) : null;
+    let bestFig = available[0]; // default: first available
+
+    if (target && available.length > 1) {
+      const byY = [...available].sort((a, b) => (a.bbox.y + a.bbox.h/2) - (b.bbox.y + b.bbox.h/2));
+      const byX = [...available].sort((a, b) => (a.bbox.x + a.bbox.w/2) - (b.bbox.x + b.bbox.w/2));
+      const n = available.length;
+      let bestScore = Infinity;
+      for (let i = 0; i < available.length; i++) {
+        const yRank = n > 1 ? byY.indexOf(available[i]) / (n-1) : 0.5;
+        const xRank = n > 1 ? byX.indexOf(available[i]) / (n-1) : 0.5;
+        const score = Math.sqrt(1.5 * (yRank - target.yRank)**2 + (xRank - target.xRank)**2);
+        if (score < bestScore) { bestScore = score; bestFig = available[i]; }
+      }
+    }
+
+    // Assign the SAME image to ALL questions in this task
+    bestFig._matched = true;
+    for (const q of (task.questions || [])) {
+      q.imageUrl = bestFig.imageUrl;
+      q.diagramBbox = bestFig.bbox;
+      q._sharedImage = true; // mark so HTML renderer knows to show once
+    }
+    console.log(`[diagram] Shared image: "${task.sharedImageDescription?.substring(0, 40)}" → ${bestFig.imageUrl?.split('/').pop()} → all ${task.questions?.length} questions`);
+  }
+
   // Step 3: Collect TASKS with hasImage questions, grouped by source page.
-  // Key insight: multiple questions in the SAME task share ONE diagram (e.g. a bar graph
-  // task has Q1, Q2, Q3 all referencing the same graph). We match figures to TASKS first,
-  // then propagate to all questions within that task.
+  // Skip sharedImage tasks (already handled above).
   const tasksByPage = {};
   for (const task of (quiz.tasks || [])) {
+    if (task.sharedImage) continue; // already matched
     const pg = task.sourcePage || 1;
     if (!tasksByPage[pg]) tasksByPage[pg] = [];
     const imgQuestions = (task.questions || []).filter(q => q.hasImage);
