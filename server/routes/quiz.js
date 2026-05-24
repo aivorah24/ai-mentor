@@ -1339,41 +1339,130 @@ router.post('/validate', express.json({ limit: '5mb' }), (req, res) => {
   }
 });
 
-// ── POST /quiz/batch-test — Upload multiple PDFs, generate + validate all, return summary ──
-router.post('/batch-test', upload.array('pdfs', 20), async (req, res) => {
+// ── POST /quiz/batch-test — Upload multiple PDFs, generate + validate + compare, return summary ──
+// Accepts up to 25 PDFs. For each: generates quiz, validates structure, then uses Gemini Vision
+// to compare the original PDF against the generated quiz (questions, images, layout, answers).
+// Query: ?compare=true (default true) to enable PDF-vs-quiz comparison via Gemini
+// Query: ?save=true to save each quiz JSON to disk for debugging
+router.post('/batch-test', upload.array('pdfs', 25), async (req, res) => {
   if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'No PDF files' });
   const { grade, subject, school } = req.body;
+  const doCompare = req.query.compare !== 'false'; // default true
+  const doSave = req.query.save === 'true';
   const results = [];
+  const startTime = Date.now();
 
-  for (const file of req.files) {
+  for (let i = 0; i < req.files.length; i++) {
+    const file = req.files[i];
+    const fileStart = Date.now();
+    console.log(`[batch-test] (${i + 1}/${req.files.length}) Processing: ${file.originalname}`);
+
     try {
+      // Step 1: Generate quiz from PDF
       const parts = [{ inlineData: { data: file.buffer.toString('base64'), mimeType: 'application/pdf' } }];
-      const result = await callGeminiVision(parts, { grade, subject, school });
-      const quiz = typeof result === 'string' ? JSON.parse(result) : result;
+      const rawResult = await callGeminiVision(parts, { grade, subject, school });
+      let quiz;
+      try {
+        quiz = typeof rawResult === 'string' ? JSON.parse(rawResult.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')) : rawResult;
+      } catch (parseErr) {
+        results.push({ file: file.originalname, status: 'error', error: `JSON parse failed: ${parseErr.message}`, timeMs: Date.now() - fileStart });
+        continue;
+      }
+
+      // Step 2: Structural validation (fast, local)
       const validation = validateQuiz(quiz);
-      results.push({
+
+      // Step 3: Save quiz JSON if requested
+      if (doSave) {
+        const safeName = file.originalname.replace(/[^a-zA-Z0-9_.-]/g, '_').replace(/\.pdf$/i, '');
+        const savePath = path.join(__dirname, '..', 'data', `test-quiz-${safeName}.json`);
+        fs.writeFileSync(savePath, JSON.stringify(quiz, null, 2));
+      }
+
+      // Step 4: PDF-vs-Quiz comparison via Gemini Vision (if enabled)
+      let comparison = null;
+      if (doCompare) {
+        try {
+          comparison = await compareQuizWithPDF(file.buffer, quiz);
+        } catch (compErr) {
+          comparison = { error: compErr.message };
+        }
+      }
+
+      const entry = {
         file: file.originalname,
         status: 'success',
-        grade: validation.grade,
-        score: validation.score,
-        questions: validation.totalQuestions,
-        tasks: validation.totalTasks,
+        timeMs: Date.now() - fileStart,
+        // Structural validation
+        structuralScore: validation.score,
+        structuralGrade: validation.grade,
+        totalQuestions: validation.totalQuestions,
+        totalTasks: validation.totalTasks,
         issues: validation.issues,
         warnings: validation.warnings,
-      });
+        checks: validation.checks,
+      };
+
+      // PDF comparison results
+      if (comparison && !comparison.error) {
+        entry.comparison = comparison;
+        entry.comparisonScore = comparison.score || comparison.checks?.overall_fidelity?.score || null;
+        // Combined score: 40% structural + 60% comparison (comparison is the real test)
+        if (entry.comparisonScore != null) {
+          entry.finalScore = Math.round(validation.score * 0.4 + entry.comparisonScore * 0.6);
+          entry.finalGrade = entry.finalScore >= 90 ? 'A' : entry.finalScore >= 75 ? 'B' : entry.finalScore >= 60 ? 'C' : entry.finalScore >= 40 ? 'D' : 'F';
+        }
+        // Count pass/fail checks
+        if (comparison.checks) {
+          entry.checksPassed = comparison.passed || Object.values(comparison.checks).filter(c => c.status === 'PASS').length;
+          entry.checksFailed = comparison.failed || Object.values(comparison.checks).filter(c => c.status === 'FAIL').length;
+        }
+      } else if (comparison?.error) {
+        entry.comparisonError = comparison.error;
+        entry.finalScore = validation.score;
+        entry.finalGrade = validation.grade;
+      } else {
+        entry.finalScore = validation.score;
+        entry.finalGrade = validation.grade;
+      }
+
+      results.push(entry);
+      console.log(`[batch-test] (${i + 1}/${req.files.length}) ${file.originalname}: score=${entry.finalScore}, grade=${entry.finalGrade}, ${entry.totalQuestions}q, ${Math.round((Date.now() - fileStart) / 1000)}s`);
+
     } catch (err) {
-      results.push({ file: file.originalname, status: 'error', error: err.message });
+      results.push({ file: file.originalname, status: 'error', error: err.message, timeMs: Date.now() - fileStart });
+      console.error(`[batch-test] (${i + 1}/${req.files.length}) ${file.originalname}: ERROR — ${err.message}`);
     }
   }
 
-  const avgScore = results.filter(r => r.score != null).reduce((s, r) => s + r.score, 0) / Math.max(1, results.filter(r => r.score != null).length);
+  // Summary
+  const scored = results.filter(r => r.finalScore != null);
+  const avgScore = scored.reduce((s, r) => s + r.finalScore, 0) / Math.max(1, scored.length);
+  const totalQuestions = results.reduce((s, r) => s + (r.totalQuestions || 0), 0);
+
+  // Aggregate check failures across all files
+  const allCheckFailures = [];
+  for (const r of results) {
+    if (r.comparison?.checks) {
+      for (const [checkName, checkVal] of Object.entries(r.comparison.checks)) {
+        if (checkVal.status === 'FAIL') {
+          allCheckFailures.push({ file: r.file, check: checkName, details: checkVal });
+        }
+      }
+    }
+  }
+
   res.json({
     summary: {
       total: results.length,
-      passed: results.filter(r => r.score >= 75).length,
-      failed: results.filter(r => r.score < 75 || r.status === 'error').length,
+      passed: results.filter(r => (r.finalScore || 0) >= 75).length,
+      failed: results.filter(r => (r.finalScore || 0) < 75 || r.status === 'error').length,
       avgScore: Math.round(avgScore),
+      totalQuestions,
+      totalTimeMs: Date.now() - startTime,
+      checkFailures: allCheckFailures.length,
     },
+    failedChecks: allCheckFailures,
     results,
   });
 });
@@ -1883,7 +1972,7 @@ function validateQuiz(quiz) {
   const warnings = [];
   let score = 100;
 
-  if (!quiz) return { score: 0, issues: ['No quiz data'], warnings: [], grade: 'F' };
+  if (!quiz) return { score: 0, issues: ['No quiz data'], warnings: [], grade: 'F', checks: {} };
 
   // 1. Basic structure
   if (!quiz.title) { issues.push('Missing title'); score -= 5; }
@@ -1898,10 +1987,53 @@ function validateQuiz(quiz) {
   let emptyQuestions = 0;
   let hasImageCount = 0;
   let sharedImageCount = 0;
+  let imagesRendered = 0;
+  let imagesMissing = 0;
+  let layoutCount = 0;
+  let twoColumnCount = 0;
+  let branchDiagramCount = 0;
+  let mcqCount = 0;
+  let mcqMissingOptions = 0;
+  let activityCount = 0;
+  let passageCount = 0;
+
+  // Language detection
+  const allText = (quiz.tasks || []).map(t =>
+    (t.title || '') + ' ' + (t.questions || []).map(q => q.question || '').join(' ')
+  ).join(' ');
+  const hasTeluguScript = /[\u0C00-\u0C7F]/.test(allText);
+  const hasDevanagari = /[\u0900-\u097F]/.test(allText);
+  const hasFrenchChars = /[àâæçéèêëïîôùûüÿœ]/i.test(allText);
+  const detectedLang = hasTeluguScript ? 'te' : hasDevanagari ? 'hi' : hasFrenchChars ? 'fr' : 'en';
+  const isLanguageWorksheet = hasTeluguScript || hasDevanagari || hasFrenchChars ||
+    /telugu|hindi|french|fran[çc]ais|language acquisition/i.test(quiz.subject || '');
 
   for (const task of (quiz.tasks || [])) {
     if (!task.title) { warnings.push('Task missing title'); score -= 2; }
     if (task.sharedImage) sharedImageCount++;
+    if (task.layout) layoutCount++;
+    if (task.layout?.type === 'two-column') twoColumnCount++;
+    if (task.passage) passageCount++;
+
+    // Check shared image rendering
+    if (task.sharedImage) {
+      const firstQ = (task.questions || [])[0];
+      const hasUrl = firstQ?.imageUrl || task.pageImageUrl;
+      const hasDesc = task.sharedImageDescription;
+      const isBranchDiagram = hasDesc && /branch/i.test(hasDesc);
+      if (isBranchDiagram) branchDiagramCount++;
+      if (hasUrl) {
+        imagesRendered++;
+      } else if (isBranchDiagram) {
+        // Branch diagrams fall back to HTML — that's OK
+        imagesRendered++;
+      } else if (hasDesc) {
+        // Has description but no image URL — might render as fallback text
+        imagesMissing++;
+        warnings.push(`Task "${(task.title || '').slice(0, 30)}" sharedImage has no image URL`);
+        score -= 3;
+      }
+    }
 
     for (const q of (task.questions || [])) {
       totalQ++;
@@ -1918,7 +2050,37 @@ function validateQuiz(quiz) {
         score -= 8;
       }
 
-      if (q.hasImage) hasImageCount++;
+      // Image checks per question
+      if (q.hasImage) {
+        hasImageCount++;
+        if (q.imageUrl) {
+          imagesRendered++;
+        } else if (task.pageImageUrl) {
+          imagesRendered++; // page fallback will show
+        } else {
+          imagesMissing++;
+          warnings.push(`Question "${q.id}" has hasImage=true but no imageUrl or page fallback`);
+          score -= 3;
+        }
+      }
+
+      // MCQ checks
+      if (q.type === 'mcq') {
+        mcqCount++;
+        if (!q.options || q.options.length < 2) {
+          mcqMissingOptions++;
+          issues.push(`MCQ "${q.id}" has missing/insufficient options`);
+          score -= 5;
+        } else {
+          const hasCorrect = q.options.some(o => o.correct);
+          if (!hasCorrect) {
+            issues.push(`MCQ "${q.id}" has no correct option marked`);
+            score -= 5;
+          }
+        }
+      }
+
+      if (q.type === 'activity') activityCount++;
     }
   }
 
@@ -1928,21 +2090,94 @@ function validateQuiz(quiz) {
   if (emptyQuestions > 0) issues.push(`${emptyQuestions} questions have empty/too-short text`);
   if (missingHints > 0) warnings.push(`${missingHints}/${totalQ} questions missing hints`);
   if (missingSolutions > 0) warnings.push(`${missingSolutions}/${totalQ} questions missing solutions`);
+  if (imagesMissing > 0) issues.push(`${imagesMissing} images referenced but not rendered`);
 
   // Clamp score
   score = Math.max(0, Math.min(100, score));
-
   const grade = score >= 90 ? 'A' : score >= 75 ? 'B' : score >= 60 ? 'C' : score >= 40 ? 'D' : 'F';
 
   return {
-    score,
-    grade,
+    score, grade,
     totalQuestions: totalQ,
     totalTasks: (quiz.tasks || []).length,
-    issues,
-    warnings,
-    stats: { missingAnswers, missingHints, missingSolutions, notProvidedCount, emptyQuestions, hasImageCount, sharedImageCount },
+    issues, warnings,
+    checks: {
+      images: { rendered: imagesRendered, missing: imagesMissing, sharedImages: sharedImageCount, perQuestion: hasImageCount },
+      layout: { tasksWithLayout: layoutCount, twoColumn: twoColumnCount, branchDiagrams: branchDiagramCount },
+      content: { missingAnswers, missingHints, missingSolutions, notProvidedCount, emptyQuestions, mcq: mcqCount, mcqMissingOptions, activities: activityCount, passages: passageCount },
+      language: { detected: detectedLang, isLanguageWorksheet, hasTransliteration: isLanguageWorksheet && (detectedLang === 'te' || detectedLang === 'hi'), hasFrenchAccents: isLanguageWorksheet && detectedLang === 'fr' },
+    },
   };
+}
+
+// ── Vision-based comparison: original PDF vs generated quiz ──────────────
+// Sends BOTH the original PDF and the quiz JSON to Gemini and asks it to compare
+async function compareQuizWithPDF(pdfBuffer, quiz, quizHTML) {
+  if (!genAI) throw new Error('GEMINI_API_KEY not configured');
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+  const prompt = `You are a Quality Assurance expert for an EdTech platform called Aivorah.
+
+I will show you TWO things:
+1. The ORIGINAL worksheet PDF (the teacher uploaded this)
+2. The GENERATED interactive quiz JSON (our AI extracted this from the PDF)
+
+Your job: Compare them CAREFULLY and report what matches and what's missing/wrong.
+
+CHECK EACH OF THESE (give a PASS/FAIL + details for each):
+
+1. **QUESTIONS_COUNT**: Count every question in the original PDF. Count every question in the quiz JSON. Do they match? List any missing questions by their number/letter.
+
+2. **QUESTIONS_TEXT**: Are the question texts extracted correctly? Check for typos, wrong numbers, missing words, wrong symbols (×, ÷, +, −). Check that special characters (Telugu, Hindi, French accents) are preserved.
+
+3. **ANSWERS_CORRECT**: For each question, verify the answer is mathematically/factually correct. List any wrong answers with the correct answer.
+
+4. **IMAGES_PRESENT**: Look at every diagram, illustration, picture, table, chart in the PDF. For each one, check if the quiz JSON has a corresponding "hasImage", "sharedImage", or "diagramDescription". List any images in the PDF that are NOT captured in the quiz JSON.
+
+5. **LAYOUT_MATCH**: Does the quiz preserve the worksheet layout? If the PDF has two columns, does the quiz JSON have layout.type="two-column"? If there's a branch/tree diagram, is it described? If questions are grouped in a table/grid, is that captured?
+
+6. **HINTS_SOLUTIONS**: Does every question have a hint and solution? Are they helpful and correct?
+
+7. **LANGUAGE_SUPPORT**: If the worksheet is in Telugu/Hindi/French, are all characters preserved correctly? No mojibake or missing diacritics?
+
+8. **TASK_TIERS**: Does the quiz preserve the tier structure (MUST DO / COULD DO / ENRICHMENT)? Any sections from the PDF missing entirely?
+
+9. **PASSAGES_NOTES**: If the PDF has reading passages, instructions, or "Note to Parents", are they extracted into the quiz?
+
+10. **OVERALL_FIDELITY**: On a scale of 1-100, how faithful is the quiz to the original PDF? Would a teacher say "yes, this is my worksheet"?
+
+Return ONLY valid JSON:
+{
+  "checks": {
+    "questions_count": { "status": "PASS|FAIL", "pdf_count": N, "quiz_count": N, "missing": ["list of missing question IDs"] },
+    "questions_text": { "status": "PASS|FAIL", "errors": [{"id": "q1", "issue": "wrong number: PDF says 456 but quiz says 465"}] },
+    "answers_correct": { "status": "PASS|FAIL", "errors": [{"id": "q1", "expected": "correct answer", "got": "wrong answer"}] },
+    "images_present": { "status": "PASS|FAIL", "pdf_images": N, "quiz_images": N, "missing": ["description of missing images"] },
+    "layout_match": { "status": "PASS|FAIL", "notes": "description" },
+    "hints_solutions": { "status": "PASS|FAIL", "missing_hints": N, "missing_solutions": N, "bad_hints": [{"id":"q1","issue":"too vague"}] },
+    "language_support": { "status": "PASS|FAIL|N/A", "language": "en|te|hi|fr", "issues": [] },
+    "task_tiers": { "status": "PASS|FAIL", "pdf_sections": N, "quiz_sections": N, "missing": [] },
+    "passages_notes": { "status": "PASS|FAIL|N/A", "notes": "" },
+    "overall_fidelity": { "score": 85, "summary": "one sentence summary" }
+  },
+  "passed": 8,
+  "failed": 2,
+  "score": 85
+}
+
+Return ONLY valid JSON, no markdown fences.`;
+
+  const parts = [
+    { inlineData: { mimeType: 'application/pdf', data: pdfBuffer.toString('base64') } },
+    { text: 'ORIGINAL WORKSHEET PDF is above.\n\nGENERATED QUIZ JSON:\n' + JSON.stringify(quiz, null, 2) },
+    { text: prompt },
+  ];
+
+  const result = await model.generateContent(parts);
+  let text = result.response.text().trim();
+  // Strip markdown fences if present
+  text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+  return JSON.parse(text);
 }
 
 function renderQuizHTML(quiz) {
