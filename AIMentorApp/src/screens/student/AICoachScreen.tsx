@@ -11,6 +11,11 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  Animated,
+  Easing,
+  Modal,
+  Dimensions,
+  Pressable,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius } from '../../theme';
@@ -20,40 +25,119 @@ import ScreenLayout from '../../components/common/ScreenLayout';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentData } from '../../context/StudentDataContext';
-import { askAIMentor, type ChatHistoryTurn, type AskImage } from '../../services/aiMentorApi';
+import { askAIMentorStream, type ChatHistoryTurn, type AskImage } from '../../services/aiMentorApi';
 import SERVER_URL from '../../config/serverUrl';
 
 interface Message {
   id: number;
   role: 'user' | 'ai';
   text: string;
-  timestamp: string;
   isError?: boolean;
   images?: AskImage[];
 }
 
 function sanitizeDisplayedAIText(text: string): string {
   return String(text || '')
-    .replace(/\*\*(.*?)\*\*/g, '$1')
-    .replace(/\*(.*?)\*/g, '$1')
     .replace(/^#{1,6}\s+/gm, '')
-    .replace(/^\s*[-•]\s+/gm, '')
     .replace(/`{1,3}/g, '')
     .replace(/\r/g, '')
     .replace(/\s+(Step\s*\d+[\s:→–])/g, '\n$1')
     .replace(/\s+(Answer\s*:)/gi, '\n$1')
     .replace(/\s+(Try this\s*:|Now,?\s*can you|Here'?s? a practice)/gi, '\n$1')
-    // Prevent confusing animal words for tech terms
     .replace(/\bkeyboards and mice\b/gi, 'keyboards and a mouse')
     .replace(/\bmice\b(?=.*computer|\b)/gi, 'mouse');
 }
 
-// Fallback suggestions per grade — only used if curriculum fetch fails
 const FALLBACK_SUGGESTIONS: Record<string, string[]> = {
   'Grade 3': ['What is colour theory?', 'How do we add numbers?', 'What is internet safety?', 'What is rhythm and beat?', 'How do plants grow?'],
   'Grade 4': ['What are fractions?', 'How does the water cycle work?', 'What is a food chain?', 'What are adjectives?', 'How does electricity work?'],
   'Grade 5': ['What is photosynthesis?', 'How do decimals work?', 'What are ecosystems?', 'What is force and motion?', 'How does the human body work?'],
 };
+
+// Animated thinking shimmer
+function ThinkingIndicator({ colors }: { colors: AppColors }) {
+  const shimmer = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
+        Animated.timing(shimmer, { toValue: 0.3, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 4 }}>
+      <Animated.View style={{
+        width: 18, height: 18, borderRadius: 9,
+        backgroundColor: colors.primary,
+        opacity: shimmer,
+      }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Feather name="zap" size={10} color="#fff" />
+        </View>
+      </Animated.View>
+      <Animated.Text style={{ fontSize: 13, color: colors.textMuted, opacity: shimmer, fontWeight: '500' }}>
+        Aivorah is thinking...
+      </Animated.Text>
+    </View>
+  );
+}
+
+// Render markdown-style AI text with bullets, bold, and structure
+function renderFormattedAIText(text: string, colors: AppColors) {
+  const lines = text.split('\n').filter(l => l.trim());
+  return (
+    <View style={{ gap: 5 }}>
+      {lines.map((line, li) => {
+        const trimmed = line.trim();
+        const isStep = /^step\s*\d+[:.]/i.test(trimmed);
+        const isAnswer = /^answer[:.]/i.test(trimmed);
+        const isPractice = /^(try this|practice|here is a question|question)[:.]/i.test(trimmed);
+        const isOption = /^[A-D][).]/.test(trimmed);
+        const isBullet = /^[-•]\s/.test(trimmed);
+        const isNumbered = /^\d+[.)]\s/.test(trimmed);
+
+        const parts = trimmed.replace(/^[-•]\s+/, '').replace(/^\d+[.)]\s+/, '');
+        const boldRegex = /\*\*(.*?)\*\*/g;
+        const segments: { text: string; bold: boolean }[] = [];
+        let lastIdx = 0;
+        let match;
+        const source = isBullet || isNumbered ? parts : trimmed;
+        while ((match = boldRegex.exec(source)) !== null) {
+          if (match.index > lastIdx) segments.push({ text: source.slice(lastIdx, match.index), bold: false });
+          segments.push({ text: match[1], bold: true });
+          lastIdx = match.index + match[0].length;
+        }
+        if (lastIdx < source.length) segments.push({ text: source.slice(lastIdx), bold: false });
+
+        return (
+          <View key={li} style={{ flexDirection: 'row', paddingLeft: (isBullet || isNumbered || isOption) ? 14 : 0, marginTop: (isStep || isAnswer || isPractice) && li > 0 ? 8 : 2 }}>
+            {(isBullet || isNumbered) && (
+              <Text style={{ fontSize: 15, color: colors.textMuted, marginRight: 6, lineHeight: 24 }}>
+                {isNumbered ? trimmed.match(/^\d+[.)]/)?.[0] || '•' : '•'}
+              </Text>
+            )}
+            <Text style={[
+              { fontSize: 15, color: colors.textMain, lineHeight: 24, flex: 1 },
+              isStep && { fontWeight: '700', color: colors.primary },
+              isAnswer && { fontWeight: '700', color: '#4A9E70' },
+              isPractice && { fontWeight: '600', color: colors.textMuted, fontStyle: 'italic' as const },
+              isOption && { color: colors.textMain },
+            ]}>
+              {segments.map((seg, si) => (
+                <Text key={si} style={seg.bold ? { fontWeight: '700' } : undefined}>{seg.text}</Text>
+              ))}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
 
 export default function AICoachScreen({ navigation }: any) {
   const { user } = useAuth();
@@ -64,7 +148,7 @@ export default function AICoachScreen({ navigation }: any) {
   const userCurriculum = user?.curriculum || 'IB PYP';
   const isPro = user?.isPro === true;
 
-  // ── Free-tier usage tracking ──────────────────────────────────
+  // ── Free-tier usage tracking
   const [dailyUsage, setDailyUsage] = useState<{ used: number; remaining: number; dailyLimit: number } | null>(null);
   const [limitReached, setLimitReached] = useState(false);
 
@@ -88,21 +172,24 @@ export default function AICoachScreen({ navigation }: any) {
       id: 1,
       role: 'ai',
       text: `Hi ${firstName}! I'm your Aivorah AI Coach for ${userCurriculum}. I can help you with ${userGrade} topics. Ask me anything from your curriculum!`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ];
 
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [streamingMsgId, setStreamingMsgId] = useState<number | null>(null);
+  const [zoomedImage, setZoomedImage] = useState<{ url: string; caption: string } | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>(FALLBACK_SUGGESTIONS[userGrade] ?? FALLBACK_SUGGESTIONS['Grade 3']);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const scrollRef = useRef<ScrollView>(null);
   const recognitionRef = useRef<any>(null);
   const ttsAudioRef = useRef<any>(null);
+  const inputRef = useRef<TextInput>(null);
 
-  // Fetch real curriculum topics and build suggestions from them
+  // Fetch real curriculum topics for suggestions
   useEffect(() => {
     const isIBPYP = !userCurriculum || userCurriculum.toLowerCase().includes('ib');
     const endpoint = isIBPYP
@@ -114,14 +201,10 @@ export default function AICoachScreen({ navigation }: any) {
       .then(data => {
         const topics: { topic: string; subject: string }[] = data.topics || [];
         if (!topics.length) return;
-
-        // Pick one topic per subject — varied and representative
         const bySubject: Record<string, string> = {};
         for (const t of topics) {
           if (!bySubject[t.subject]) bySubject[t.subject] = t.topic;
         }
-
-        // Turn topics into natural questions
         const QUESTION_TEMPLATES = [
           (t: string) => `What is ${t}?`,
           (t: string) => `Can you explain ${t}?`,
@@ -129,17 +212,15 @@ export default function AICoachScreen({ navigation }: any) {
           (t: string) => `Tell me about ${t}`,
           (t: string) => `What do we learn in ${t}?`,
         ];
-
         const chips = Object.values(bySubject)
           .slice(0, 6)
           .map((topic, i) => QUESTION_TEMPLATES[i % QUESTION_TEMPLATES.length](topic));
-
         setSuggestions(chips);
       })
-      .catch(() => {}); // keep fallback on error
+      .catch(() => {});
   }, [userGrade, userCurriculum]);
 
-  // ── Preprocess text for TTS to avoid mis-readings ────────────────────────
+  // ── TTS ──
   function preprocessForTTS(raw: string): string {
     const ORDINALS: Record<string, string> = {
       '1': 'one', '2': 'two', '3': 'three', '4': 'four', '5': 'five',
@@ -153,50 +234,35 @@ export default function AICoachScreen({ navigation }: any) {
       '100': 'hundredths', '1000': 'thousandths',
     };
     return raw
-      // fractions like 3/10 → "3 tenths", 1/2 → "1 half"
       .replace(/\b(\d+)\/(\d+)\b/g, (_m, num, den) => {
         const n = ORDINALS[num] || num;
         const d = DENOM[den] || `over ${den}`;
         return `${n} ${d}`;
       })
-      // decimals like 0.3 → "0 point 3", 5.25 → "5 point 25"
       .replace(/\b(\d+)\.(\d+)\b/g, (_m, int, frac) => `${int} point ${frac}`)
-      // math ops: + → "plus", - → "minus", = → "equals", × → "times", ÷ → "divided by"
       .replace(/\s*\+\s*/g, ' plus ')
       .replace(/\s*=\s*/g, ' equals ')
       .replace(/\s*×\s*/g, ' times ')
       .replace(/\s*÷\s*/g, ' divided by ');
   }
 
-  // ── Read aloud AI response (instant browser TTS — zero latency) ──────────
   const speakMessage = useCallback((msgId: number, text: string) => {
     if (Platform.OS !== 'web') return;
-
-    // Toggle off if already speaking this message
-    if (speakingId === msgId) {
-      stopSpeaking();
-      return;
-    }
-
+    if (speakingId === msgId) { stopSpeaking(); return; }
     stopSpeaking();
     setSpeakingId(msgId);
-
     if (!(window as any).speechSynthesis) { setSpeakingId(null); return; }
-
     const synth = (window as any).speechSynthesis;
     const utterance = new (window as any).SpeechSynthesisUtterance(preprocessForTTS(text));
     utterance.lang = 'en-IN';
     utterance.rate = 0.88;
     utterance.pitch = 1.1;
     utterance.volume = 1;
-
-    // Pick a female voice if available
     const voices: SpeechSynthesisVoice[] = synth.getVoices();
-    const female = voices.find(v =>
+    const female = voices.find((v: SpeechSynthesisVoice) =>
       v.lang.startsWith('en') && /female|woman|zira|samantha|victoria|karen|moira/i.test(v.name)
-    ) || voices.find(v => v.lang.startsWith('en'));
+    ) || voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('en'));
     if (female) utterance.voice = female;
-
     utterance.onend = () => setSpeakingId(null);
     utterance.onerror = () => setSpeakingId(null);
     synth.speak(utterance);
@@ -213,47 +279,36 @@ export default function AICoachScreen({ navigation }: any) {
     setSpeakingId(null);
   }
 
-  // ── Voice input via Web Speech API ────────────────────────────────────────
+  // ── Voice input
   const toggleVoice = useCallback(() => {
     if (Platform.OS !== 'web') return;
-
-    // Stop if already listening
     if (isListening && recognitionRef.current) {
       recognitionRef.current.stop();
       setIsListening(false);
       return;
     }
-
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       Alert.alert('Not Supported', 'Voice input is not supported in this browser. Try Chrome.');
       return;
     }
-
     const recognition = new SpeechRecognition();
     recognition.lang = 'en-IN';
     recognition.interimResults = true;
     recognition.continuous = false;
     recognition.maxAlternatives = 1;
     recognitionRef.current = recognition;
-
     let finalTranscript = '';
-
     recognition.onstart = () => setIsListening(true);
-
     recognition.onresult = (event: any) => {
       let interim = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-        } else {
-          interim += transcript;
-        }
+        if (event.results[i].isFinal) finalTranscript += transcript;
+        else interim += transcript;
       }
       setInput(finalTranscript || interim);
     };
-
     recognition.onerror = (event: any) => {
       console.warn('Speech recognition error:', event.error);
       setIsListening(false);
@@ -261,39 +316,37 @@ export default function AICoachScreen({ navigation }: any) {
         Alert.alert('Microphone Access', 'Please allow microphone access in your browser settings.');
       }
     };
-
     recognition.onend = () => {
       setIsListening(false);
       recognitionRef.current = null;
-      // Auto-send if we got meaningful text
-      if (finalTranscript.trim().length > 2) {
-        setInput(finalTranscript.trim());
-      }
+      if (finalTranscript.trim().length > 2) setInput(finalTranscript.trim());
     };
-
     recognition.start();
   }, [isListening]);
 
+  // ── Send message with streaming ──
   async function sendMessage(text?: string) {
     const msgText = (text ?? input).trim();
     if (!msgText || isTyping || limitReached) return;
 
-    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const userMsg: Message = { id: Date.now(), role: 'user', text: msgText, timestamp: now };
+    const userMsg: Message = { id: Date.now(), role: 'user', text: msgText };
+    const aiMsgId = Date.now() + 1;
 
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
+    setStreamingMsgId(aiMsgId);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
 
     const history: ChatHistoryTurn[] = messages
       .slice(-8)
-      .map((m) => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        text: m.text,
-      }));
+      .map(m => ({ role: m.role === 'user' ? 'user' as const : 'assistant' as const, text: m.text }));
 
-    const { answer, images: answerImages, error, limitReached: hitLimit } = await askAIMentor(
+    // Add placeholder AI message for streaming
+    const aiPlaceholder: Message = { id: aiMsgId, role: 'ai', text: '' };
+    setMessages(prev => [...prev, aiPlaceholder]);
+
+    const { answer, images: answerImages, error, limitReached: hitLimit } = await askAIMentorStream(
       msgText,
       userGrade,
       undefined,
@@ -301,11 +354,19 @@ export default function AICoachScreen({ navigation }: any) {
       undefined,
       user?.email,
       user?.role,
-      history
+      history,
+      (token: string) => {
+        // Update the streaming message in real-time
+        setMessages(prev =>
+          prev.map(m => m.id === aiMsgId ? { ...m, text: m.text + token } : m)
+        );
+        // Auto-scroll during streaming
+        scrollRef.current?.scrollToEnd({ animated: false });
+      }
     );
+
     if (!error) {
-      exploreTopic(); // Track real topic exploration
-      // Update local usage counter
+      exploreTopic();
       if (!isPro && dailyUsage) {
         const newUsed = dailyUsage.used + 1;
         const newRemaining = Math.max(0, dailyUsage.dailyLimit - newUsed);
@@ -315,16 +376,17 @@ export default function AICoachScreen({ navigation }: any) {
     }
     if (hitLimit) setLimitReached(true);
 
-    const aiMsg: Message = {
-      id: Date.now() + 1,
-      role: 'ai',
-      text: error ? error : answer,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isError: !!error,
-      images: !error && answerImages && answerImages.length > 0 ? answerImages : undefined,
-    };
-    setMessages((prev) => [...prev, aiMsg]);
+    // Finalize the AI message
+    setMessages(prev =>
+      prev.map(m => m.id === aiMsgId ? {
+        ...m,
+        text: error ? error : (answer || m.text),
+        isError: !!error,
+        images: !error && answerImages && answerImages.length > 0 ? answerImages : undefined,
+      } : m)
+    );
     setIsTyping(false);
+    setStreamingMsgId(null);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }
 
@@ -340,7 +402,7 @@ export default function AICoachScreen({ navigation }: any) {
     <View style={styles.screen}>
       <Header
         title="AI Coach"
-        subtitle="Powered by Groq LLaMA 3 · IB PYP"
+        subtitle={`Powered by Aivorah · ${userCurriculum}`}
         searchPlaceholder="Search conversations..."
         onMenuPress={() => navigation.openDrawer()}
         onProfilePress={() => navigation.navigate('Profile')}
@@ -372,146 +434,143 @@ export default function AICoachScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
         >
-          {/* Suggestions */}
+          {/* Welcome + Suggestions — ChatGPT style centered */}
           {messages.length === 1 && (
-            <View style={styles.suggestionsSection}>
-              <Text style={styles.suggestionsLabel}>Try asking...</Text>
-              <View style={styles.suggestionsRow}>
+            <View style={styles.welcomeSection}>
+              <View style={styles.welcomeIconWrap}>
+                <Feather name="zap" size={28} color={colors.primary} />
+              </View>
+              <Text style={styles.welcomeTitle}>Aivorah AI Coach</Text>
+              <Text style={styles.welcomeSub}>Ask me anything about your {userGrade} curriculum</Text>
+              <View style={styles.suggestionsGrid}>
                 {suggestions.map((s) => (
                   <TouchableOpacity
                     key={s}
-                    style={styles.suggestionChip}
+                    style={styles.suggestionCard}
                     onPress={() => sendMessage(s)}
                     activeOpacity={0.7}
                   >
-                    <Feather name="zap" size={11} color={colors.primary} style={{ marginRight: 4 }} />
-                    <Text style={styles.suggestionText}>{s}</Text>
+                    <Text style={styles.suggestionText} numberOfLines={2}>{s}</Text>
+                    <Feather name="arrow-up-right" size={14} color={colors.textDim} style={{ marginTop: 4 }} />
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
           )}
 
-          {/* Messages */}
+          {/* Messages — clean, modern layout */}
           {messages.map((msg) => {
             const shownText = msg.role === 'ai' ? sanitizeDisplayedAIText(msg.text) : msg.text;
+            const isStreaming = msg.id === streamingMsgId;
+
             return (
-            <View
-              key={msg.id}
-              style={[styles.messageRow, msg.role === 'user' ? styles.messageRowUser : styles.messageRowAI]}
-            >
-              {msg.role === 'ai' && (
-                <View style={[styles.aiAvatar, msg.isError && { backgroundColor: colors.accentRed }]}>
-                  <Feather name={msg.isError ? 'alert-circle' : 'zap'} size={14} color="white" />
-                </View>
-              )}
-              <View style={[
-                styles.bubble,
-                msg.role === 'user' ? styles.bubbleUser : styles.bubbleAI,
-                msg.isError && styles.bubbleError,
+              <View key={msg.id} style={[
+                styles.messageRow,
+                msg.role === 'user' ? styles.messageRowUser : styles.messageRowAI,
               ]}>
-                {msg.role === 'ai' && !msg.isError ? (
-                  // Render AI text line-by-line with visual hierarchy
-                  <View style={{ gap: 6 }}>
-                    {shownText.split('\n').filter(l => l.trim()).map((line, li) => {
-                      const isStep    = /^step\s*\d+[:.]/i.test(line.trim());
-                      const isAnswer  = /^answer[:.]/i.test(line.trim());
-                      const isPractice = /^(try this|practice|here is a question|question)[:.]/i.test(line.trim());
-                      const isOption  = /^[A-D][).]/.test(line.trim());
-                      return (
-                        <Text
-                          key={li}
-                          style={[
-                            styles.bubbleText,
-                            isStep     && { fontWeight: '700', color: colors.primary, marginTop: li > 0 ? 4 : 0 },
-                            isAnswer   && { fontWeight: '700', color: '#4A9E70', marginTop: 4 },
-                            isPractice && { fontWeight: '600', color: colors.textMuted, fontStyle: 'italic', marginTop: 4 },
-                            isOption   && { marginLeft: 12, color: colors.textMain },
-                          ]}
-                        >
-                          {line}
-                        </Text>
-                      );
-                    })}
+                {msg.role === 'ai' && (
+                  <View style={styles.aiHeader}>
+                    <View style={[styles.aiAvatar, msg.isError && { backgroundColor: colors.accentRed }]}>
+                      <Feather name={msg.isError ? 'alert-circle' : 'zap'} size={12} color="white" />
+                    </View>
+                    <Text style={styles.aiName}>Aivorah</Text>
+                  </View>
+                )}
+
+                {msg.role === 'user' ? (
+                  <View style={[styles.userBubble, msg.role === 'user' && styles.userBubbleStyle]}>
+                    <Text style={styles.userText}>{shownText}</Text>
                   </View>
                 ) : (
-                  <Text style={[styles.bubbleText, msg.role === 'user' && styles.bubbleTextUser, msg.isError && styles.bubbleTextError]}>
-                    {shownText}
-                  </Text>
-                )}
-                <View style={styles.bubbleFooter}>
-                  {msg.role === 'ai' && !msg.isError && Platform.OS === 'web' && (
-                    <TouchableOpacity
-                      style={[styles.speakBtn, speakingId === msg.id && styles.speakBtnActive]}
-                      onPress={() => speakMessage(msg.id, shownText)}
-                      activeOpacity={0.7}
-                    >
-                      <Feather
-                        name={speakingId === msg.id ? 'volume-2' : 'volume-1'}
-                        size={13}
-                        color={speakingId === msg.id ? '#fff' : colors.primary}
-                      />
-                      <Text style={[styles.speakBtnText, { color: speakingId === msg.id ? '#fff' : colors.primary }]}>
-                        {speakingId === msg.id ? 'Playing...' : 'Listen'}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                  <Text style={[styles.timestamp, msg.role === 'user' && { color: 'rgba(255,255,255,0.5)' }]}>
-                    {msg.timestamp}
-                  </Text>
-                </View>
-              </View>
-              {msg.role === 'ai' && msg.images && msg.images.length > 0 && (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.imageStrip}
-                  contentContainerStyle={styles.imageStripContent}
-                >
-                  {msg.images.map((img, imgIdx) => (
-                    <View key={imgIdx} style={[styles.imageCard, { backgroundColor: colors.cardDark, borderColor: colors.borderColor }]}>
-                      <Image
-                        source={{ uri: img.url }}
-                        style={styles.imageThumb}
-                        resizeMode="cover"
-                      />
-                      {!!img.caption && (
-                        <Text style={[styles.imageCaption, { color: colors.textMuted }]} numberOfLines={2}>
-                          {img.caption}
-                        </Text>
-                      )}
-                    </View>
-                  ))}
-                </ScrollView>
-              )}
-              {msg.role === 'user' && (
-                <View style={styles.userAvatar}>
-                  <Feather name="user" size={14} color={colors.textMuted} />
-                </View>
-              )}
-            </View>
-          )})}
+                  <View style={styles.aiBody}>
+                    {shownText ? (
+                      <>
+                        {msg.isError ? (
+                          <Text style={styles.errorText}>{shownText}</Text>
+                        ) : (
+                          renderFormattedAIText(shownText, colors)
+                        )}
+                        {/* Cursor while streaming */}
+                        {isStreaming && (
+                          <Animated.View style={styles.streamCursor} />
+                        )}
+                      </>
+                    ) : isStreaming ? (
+                      <ThinkingIndicator colors={colors} />
+                    ) : null}
 
-          {/* Typing indicator */}
-          {isTyping && (
-            <View style={styles.messageRow}>
-              <View style={styles.aiAvatar}>
-                <Feather name="zap" size={14} color="white" />
+                    {/* Action buttons — show after streaming done */}
+                    {msg.role === 'ai' && !msg.isError && !isStreaming && shownText && (
+                      <View style={styles.actionRow}>
+                        {Platform.OS === 'web' && (
+                          <TouchableOpacity
+                            style={[styles.actionBtn, speakingId === msg.id && styles.actionBtnActive]}
+                            onPress={() => speakMessage(msg.id, shownText)}
+                            activeOpacity={0.7}
+                          >
+                            <Feather
+                              name={speakingId === msg.id ? 'volume-2' : 'volume-1'}
+                              size={14}
+                              color={speakingId === msg.id ? '#fff' : colors.textDim}
+                            />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    )}
+
+                    {/* Images — hide any that fail to load */}
+                    {msg.images && msg.images.filter(img => !failedImages.has(img.url)).length > 0 && (
+                      <View style={styles.imageGrid}>
+                        {msg.images.filter(img => !failedImages.has(img.url)).map((img, imgIdx) => (
+                          <TouchableOpacity
+                            key={imgIdx}
+                            activeOpacity={0.8}
+                            onPress={() => setZoomedImage({ url: img.url, caption: (img.caption || '').replace(/\*\*/g, '').replace(/\*/g, '') })}
+                          >
+                            <View style={[styles.imageCard, { backgroundColor: colors.cardDark, borderColor: colors.borderColor }]}>
+                              <Image
+                                source={{ uri: img.url }}
+                                style={styles.imageThumb}
+                                resizeMode="cover"
+                                onError={() => setFailedImages(prev => new Set(prev).add(img.url))}
+                              />
+                              {!!img.caption && (
+                                <Text style={[styles.imageCaption, { color: colors.textMuted }]} numberOfLines={2}>
+                                  {img.caption.replace(/\*\*/g, '').replace(/\*/g, '')}
+                                </Text>
+                              )}
+                            </View>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                )}
               </View>
-              <View style={styles.typingBubble}>
-                <Text style={styles.typingDots}>● ● ●</Text>
+            );
+          })}
+
+          {/* Thinking — only if no streaming placeholder yet */}
+          {isTyping && !streamingMsgId && (
+            <View style={[styles.messageRow, styles.messageRowAI]}>
+              <View style={styles.aiHeader}>
+                <View style={styles.aiAvatar}>
+                  <Feather name="zap" size={12} color="white" />
+                </View>
+                <Text style={styles.aiName}>Aivorah</Text>
+              </View>
+              <View style={styles.aiBody}>
+                <ThinkingIndicator colors={colors} />
               </View>
             </View>
           )}
 
-          {/* ── Claude-style upgrade card — appears inline in chat ── */}
+          {/* Upgrade card */}
           {limitReached && !isPro && (
             <View style={styles.upgradeCard}>
-              {/* Glow icon */}
               <View style={styles.upgradeIconWrap}>
                 <Feather name="zap" size={24} color="#C5A56A" />
               </View>
-
               <Text style={[styles.upgradeTitle, { color: colors.textMain }]}>
                 You've reached your daily limit
               </Text>
@@ -519,10 +578,7 @@ export default function AICoachScreen({ navigation }: any) {
                 You've used all {dailyUsage?.dailyLimit || 10} free messages for today.{'\n'}
                 Upgrade your plan for more AI Coach interactions.
               </Text>
-
-              {/* Plan options */}
               <View style={styles.upgradePlans}>
-                {/* Pro */}
                 <TouchableOpacity
                   style={styles.upgradePlanCard}
                   onPress={() => navigation.navigate('Subscription')}
@@ -556,7 +612,6 @@ export default function AICoachScreen({ navigation }: any) {
                   </View>
                 </TouchableOpacity>
 
-                {/* Max */}
                 <TouchableOpacity
                   style={[styles.upgradePlanCard, { borderColor: '#EFD1D4' + '30' }]}
                   onPress={() => navigation.navigate('Subscription')}
@@ -585,7 +640,6 @@ export default function AICoachScreen({ navigation }: any) {
                   </View>
                 </TouchableOpacity>
               </View>
-
               <Text style={[styles.upgradeFooter, { color: colors.textDim }]}>
                 Your free messages reset daily at midnight
               </Text>
@@ -594,17 +648,13 @@ export default function AICoachScreen({ navigation }: any) {
 
         </ScrollView>
 
-        {/* Input */}
+        {/* Input bar — ChatGPT/Claude style */}
         <View style={styles.inputBar}>
-          {messages.length > 1 && (
-            <TouchableOpacity style={styles.clearBtn} onPress={clearChat} activeOpacity={0.7}>
-              <Feather name="trash-2" size={16} color={colors.textDim} />
-            </TouchableOpacity>
-          )}
-          <View style={styles.inputWrapper}>
+          <View style={styles.inputContainer}>
             <TextInput
+              ref={inputRef}
               style={styles.input}
-              placeholder={isListening ? 'Listening...' : 'Ask Aivorah anything...'}
+              placeholder={isListening ? 'Listening...' : 'Message Aivorah...'}
               placeholderTextColor={isListening ? colors.primary : colors.textDim}
               value={input}
               onChangeText={setInput}
@@ -613,11 +663,7 @@ export default function AICoachScreen({ navigation }: any) {
               returnKeyType="send"
               onSubmitEditing={() => sendMessage()}
               onKeyPress={(e: any) => {
-                if (
-                  Platform.OS === 'web' &&
-                  e?.nativeEvent?.key === 'Enter' &&
-                  !e?.nativeEvent?.shiftKey
-                ) {
+                if (Platform.OS === 'web' && e?.nativeEvent?.key === 'Enter' && !e?.nativeEvent?.shiftKey) {
                   e.preventDefault?.();
                   sendMessage();
                 }
@@ -625,33 +671,67 @@ export default function AICoachScreen({ navigation }: any) {
               blurOnSubmit={false}
               editable={!isTyping && !limitReached}
             />
-          </View>
-          {/* Mic button — voice input */}
-          {Platform.OS === 'web' && (
-            <TouchableOpacity
-              style={[styles.micBtn, isListening && styles.micBtnActive]}
-              onPress={toggleVoice}
-              disabled={isTyping}
-              activeOpacity={0.8}
-            >
-              {isListening ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Feather name="mic" size={18} color={isTyping ? colors.textDim : colors.primary} />
+            <View style={styles.inputActions}>
+              {messages.length > 1 && (
+                <TouchableOpacity style={styles.inputActionBtn} onPress={clearChat} activeOpacity={0.7}>
+                  <Feather name="trash-2" size={16} color={colors.textDim} />
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={[styles.sendBtn, (!input.trim() || isTyping) && styles.sendBtnDisabled]}
-            onPress={() => sendMessage()}
-            disabled={!input.trim() || isTyping || limitReached}
-            activeOpacity={0.8}
-          >
-            <Feather name={isTyping ? 'loader' : 'send'} size={18} color="white" />
-          </TouchableOpacity>
+              {Platform.OS === 'web' && (
+                <TouchableOpacity
+                  style={[styles.inputActionBtn, isListening && styles.micActive]}
+                  onPress={toggleVoice}
+                  disabled={isTyping}
+                  activeOpacity={0.8}
+                >
+                  {isListening ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Feather name="mic" size={16} color={isTyping ? colors.textDim : colors.textMuted} />
+                  )}
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={[styles.sendBtn, (!input.trim() || isTyping) && styles.sendBtnDisabled]}
+                onPress={() => sendMessage()}
+                disabled={!input.trim() || isTyping || limitReached}
+                activeOpacity={0.8}
+              >
+                <Feather name="arrow-up" size={18} color="white" />
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </View>
+
+    {/* Image Zoom Modal */}
+    {zoomedImage && (
+      <Modal transparent visible animationType="fade" onRequestClose={() => setZoomedImage(null)}>
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' }}
+          onPress={() => setZoomedImage(null)}
+        >
+          <TouchableOpacity
+            style={{ position: 'absolute', top: 50, right: 20, zIndex: 10, padding: 8 }}
+            onPress={() => setZoomedImage(null)}
+          >
+            <Feather name="x" size={28} color="white" />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: zoomedImage.url }}
+            style={{ width: Dimensions.get('window').width * 0.9, height: Dimensions.get('window').height * 0.6 }}
+            resizeMode="contain"
+          />
+          {!!zoomedImage.caption && (
+            <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, marginTop: 12, textAlign: 'center', paddingHorizontal: 20 }}>
+              {zoomedImage.caption}
+            </Text>
+          )}
+        </Pressable>
+      </Modal>
+    )}
+
     </ScreenLayout>
   );
 }
@@ -661,170 +741,173 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   keyboardView: { flex: 1 },
 
   messagesScroll: { flex: 1 },
-  messagesContent: { padding: spacing.xl, paddingBottom: spacing.lg },
-
-  apiWarning: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-    backgroundColor: c.accentYellow + '12',
-    borderWidth: 1,
-    borderColor: c.accentYellow + '30',
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
+  messagesContent: {
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
+    ...(Platform.OS === 'web' ? { maxWidth: 760, alignSelf: 'center', width: '100%' } as any : {}),
   },
-  apiWarningText: { flex: 1, fontSize: 12, color: c.textMuted, lineHeight: 18 },
 
-  suggestionsSection: { marginBottom: spacing.xxl },
-  suggestionsLabel: { fontSize: 12, color: c.textMuted, fontWeight: '600', marginBottom: spacing.md },
-  suggestionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  suggestionChip: {
-    flexDirection: 'row',
+  // ── Welcome / suggestions — centered like ChatGPT ──
+  welcomeSection: {
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 9,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: c.primary + '40',
-    backgroundColor: c.primaryGlow,
+    paddingVertical: 48,
+    paddingHorizontal: spacing.xl,
   },
-  suggestionText: { fontSize: 13, color: c.textMuted },
-
-  messageRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    marginBottom: spacing.lg,
-    gap: spacing.sm,
+  welcomeIconWrap: {
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: c.primary + '18',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 1, borderColor: c.primary + '30',
   },
-  messageRowUser: { flexDirection: 'row-reverse' },
-  messageRowAI: {},
-
-  aiAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: c.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
+  welcomeTitle: {
+    fontSize: 22, fontWeight: '700', color: c.textMain, marginBottom: 6,
   },
-  userAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: c.cardDark,
-    borderWidth: 1,
-    borderColor: c.borderColor,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
+  welcomeSub: {
+    fontSize: 14, color: c.textMuted, marginBottom: 28,
   },
-
-  bubble: {
-    maxWidth: '75%',
-    borderRadius: radius.lg,
-    padding: spacing.lg,
+  suggestionsGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 10,
+    justifyContent: 'center', maxWidth: 600,
   },
-  bubbleAI: {
-    backgroundColor: c.cardDark,
-    borderWidth: 1,
-    borderColor: c.borderColor,
-    borderBottomLeftRadius: 4,
-  },
-  bubbleUser: {
-    backgroundColor: c.primary,
-    borderBottomRightRadius: 4,
-  },
-  bubbleError: { borderColor: c.accentRed + '40', backgroundColor: c.accentRed + '08' },
-  bubbleText: { fontSize: 14, color: c.textMain, lineHeight: 24 },
-  bubbleTextUser: { color: 'white' },
-  bubbleTextError: { color: c.accentRed },
-  bubbleFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, gap: 8 },
-  speakBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 10, paddingVertical: 4,
+  suggestionCard: {
+    width: 170, minHeight: 72,
+    paddingHorizontal: 14, paddingVertical: 12,
     borderRadius: 14, borderWidth: 1,
-    borderColor: c.primary + '50',
-    backgroundColor: c.primary + '12',
+    borderColor: c.borderColor + '60',
+    backgroundColor: c.cardDark,
+    justifyContent: 'space-between',
   },
-  speakBtnActive: { backgroundColor: c.primary, borderColor: c.primary },
-  speakBtnText: { fontSize: 11, fontWeight: '700' },
-  timestamp: { fontSize: 10, color: c.textDim, textAlign: 'right', flex: 1 },
-  imageStrip: { marginTop: 8, marginLeft: 42 },
-  imageStripContent: { gap: 8, paddingRight: 4 },
-  imageCard: { width: 160, borderRadius: 10, borderWidth: 1, overflow: 'hidden' },
+  suggestionText: { fontSize: 13, color: c.textMuted, lineHeight: 18 },
+
+  // ── Messages ──
+  messageRow: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 6,
+  },
+  messageRowUser: {
+    alignItems: 'flex-end',
+    paddingVertical: 4,
+  },
+  messageRowAI: {
+    alignItems: 'flex-start',
+    paddingVertical: 10,
+  },
+
+  aiHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8,
+  },
+  aiAvatar: {
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: c.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  aiName: {
+    fontSize: 13, fontWeight: '600', color: c.textMuted,
+  },
+
+  aiBody: {
+    paddingLeft: 34,
+    paddingRight: spacing.md,
+    maxWidth: '100%',
+  },
+
+  userBubble: {
+    maxWidth: '80%',
+  },
+  userBubbleStyle: {
+    backgroundColor: c.cardDark,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderWidth: 1,
+    borderColor: c.borderColor + '50',
+  },
+  userText: {
+    fontSize: 15, color: c.textMain, lineHeight: 22,
+  },
+
+  errorText: {
+    fontSize: 15, color: c.accentRed, lineHeight: 22,
+  },
+
+  streamCursor: {
+    width: 2, height: 18,
+    backgroundColor: c.primary,
+    borderRadius: 1,
+    marginTop: 2,
+    opacity: 0.8,
+  },
+
+  // ── Action buttons (listen, copy) ──
+  actionRow: {
+    flexDirection: 'row', gap: 4, marginTop: 10,
+  },
+  actionBtn: {
+    width: 32, height: 32, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  actionBtnActive: {
+    backgroundColor: c.primary,
+    borderRadius: 8,
+  },
+
+  // ── Images ──
+  imageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
+  imageCard: { width: 160, borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
   imageThumb: { width: 160, height: 100 },
   imageCaption: { fontSize: 11, lineHeight: 15, padding: 6 },
 
-  typingBubble: {
-    backgroundColor: c.cardDark,
-    borderWidth: 1,
-    borderColor: c.borderColor,
-    borderRadius: radius.lg,
-    borderBottomLeftRadius: 4,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  typingDots: { fontSize: 12, color: c.textMuted, letterSpacing: 4 },
-
+  // ── Input bar — modern, centered ──
   inputBar: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.md,
-    padding: spacing.xl,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: c.borderColor,
-    backgroundColor: c.bgDark,
-  },
-  clearBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: c.cardDark,
-    borderWidth: 1,
-    borderColor: c.borderColor,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inputWrapper: {
-    flex: 1,
-    backgroundColor: c.cardDark,
-    borderWidth: 1,
-    borderColor: c.borderColor,
-    borderRadius: radius.lg,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    minHeight: 48,
-    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    paddingBottom: spacing.md,
+    backgroundColor: c.bgDark,
+    ...(Platform.OS === 'web' ? { maxWidth: 760, alignSelf: 'center', width: '100%' } as any : {}),
   },
-  input: { fontSize: 14, color: c.textMain, maxHeight: 120 },
-  micBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  inputContainer: {
+    flexDirection: 'column',
     backgroundColor: c.cardDark,
-    borderWidth: 1.5,
-    borderColor: c.primary + '50',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: c.borderColor + '60',
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 6,
+    minHeight: 52,
   },
-  micBtnActive: {
+  input: {
+    fontSize: 15,
+    color: c.textMain,
+    maxHeight: 120,
+    paddingVertical: 2,
+    lineHeight: 22,
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none', outlineWidth: 0 } as any : {}),
+  },
+  inputActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+    paddingTop: 4,
+  },
+  inputActionBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  micActive: {
     backgroundColor: c.primary,
-    borderColor: c.primary,
   },
   sendBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 34, height: 34, borderRadius: 17,
     backgroundColor: c.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
-  sendBtnDisabled: { opacity: 0.4 },
+  sendBtnDisabled: { opacity: 0.25, backgroundColor: c.textDim },
 
-  // ── Free-tier usage bar ─────────────────────────────────────
+  // ── Free-tier usage bar ──
   usageBar: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: spacing.xl, paddingVertical: 8,
@@ -834,7 +917,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   usageText: { flex: 1, fontSize: 11, fontWeight: '600' },
   usageUpgrade: { fontSize: 11, fontWeight: '800', color: '#C5A56A' },
 
-  // ── Claude-style upgrade card (inline in chat) ──────────────
+  // ── Upgrade card ──
   upgradeCard: {
     alignItems: 'center', gap: 14,
     marginTop: spacing.xl, marginBottom: spacing.lg,
@@ -851,7 +934,6 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   upgradeTitle: { fontSize: 18, fontWeight: '800', textAlign: 'center' },
   upgradeSub: { fontSize: 13, lineHeight: 20, textAlign: 'center', maxWidth: 340 },
-
   upgradePlans: {
     flexDirection: 'row', gap: spacing.md,
     width: '100%', marginTop: 4,
@@ -882,6 +964,5 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: '#C5A56A', marginTop: 4,
   },
   upgradePlanCtaText: { fontSize: 12, fontWeight: '800', color: '#fff' },
-
   upgradeFooter: { fontSize: 11, textAlign: 'center', marginTop: 2 },
 });

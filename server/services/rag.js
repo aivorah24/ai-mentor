@@ -133,7 +133,7 @@ function buildImages(results) {
       const captionSource = p.text || p.content || '';
       return {
         url,
-        caption: captionSource.replace(/^\[IMAGE\]\s*/i, '').split('\n')[0],
+        caption: captionSource.replace(/^\[IMAGE\]\s*/i, '').split('\n')[0].replace(/\*\*/g, '').replace(/\*/g, ''),
         subject: p.subject || '',
         grade: p.grade || '',
         topic: p.topic || '',
@@ -204,7 +204,7 @@ async function retrieveCurriculumContext({
   return {
     context: buildContext(selected),
     sources: buildSources(selected),
-    images: buildImages(selected),
+    images: buildImages(selected.filter((r) => (r.score || 0) >= 0.30)),
     meta: {
       strategy,
       strictCandidates: strictResults.length,
@@ -229,16 +229,63 @@ async function retrieveNcertImages({ question, subject, topic, maxImages = 3 }) 
   const vector = await embed(queryText);
   const { collection: ncertCollection } = resolveCollection('NCERT', undefined);
 
+  // Infer subject from the question if not provided
+  const effectiveSubject = subject || inferSubjectFromText({ question, topic, history: [] });
+
+  // Search with subject + topic filter for relevant images
   const results = await searchContent({
     vector,
     curriculum: 'NCERT',
-    subject: subject || undefined,
+    subject: effectiveSubject || undefined,
+    topic: topic || undefined,
     contentType: 'image',
-    limit: maxImages,
+    limit: maxImages + 4,
     collection: ncertCollection,
   });
 
-  return buildImages(results.filter((r) => (r.score || 0) >= 0.15));
+  // Strict score threshold — NCERT book scans are often low-quality for IB PYP students.
+  // Only show images that are highly relevant and whose captions prove usefulness.
+  const MIN_IMAGE_SCORE = 0.58;
+  let relevant = results.filter((r) => (r.score || 0) >= MIN_IMAGE_SCORE);
+
+  // Validate caption relevance: image caption/text must share multiple keywords with the question
+  const questionWords = queryText.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+  relevant = relevant.filter((r) => {
+    const caption = ((r.payload?.text || '') + ' ' + (r.payload?.topic || '')).toLowerCase();
+    // Require at least 2 keyword matches for confidence, or 1 if it's a very specific term
+    const matches = questionWords.filter(w => caption.includes(w));
+    return matches.length >= 2 || (matches.length === 1 && matches[0].length >= 6);
+  });
+
+  // Filter out generic/unhelpful captions (e.g. "This image illustrates...")
+  const GENERIC_CAPTION_RE = /^this image (illustrates|shows|depicts|represents)/i;
+  relevant = relevant.filter((r) => {
+    const caption = (r.payload?.text || '').trim();
+    // If the caption is just a generic "This image illustrates X" with no real detail, skip it
+    if (GENERIC_CAPTION_RE.test(caption) && caption.length < 80) return false;
+    return true;
+  });
+
+  // If subject-filtered search found nothing, try broader but with even higher threshold
+  if (relevant.length === 0) {
+    const broadResults = await searchContent({
+      vector,
+      curriculum: 'NCERT',
+      contentType: 'image',
+      limit: maxImages + 2,
+      collection: ncertCollection,
+    });
+    relevant = broadResults
+      .filter((r) => (r.score || 0) >= 0.62)
+      .filter((r) => {
+        const caption = ((r.payload?.text || '') + ' ' + (r.payload?.topic || '')).toLowerCase();
+        const matches = questionWords.filter(w => caption.includes(w));
+        return matches.length >= 2;
+      })
+      .filter((r) => !GENERIC_CAPTION_RE.test((r.payload?.text || '').trim()));
+  }
+
+  return buildImages(relevant).slice(0, maxImages);
 }
 
 module.exports = {
