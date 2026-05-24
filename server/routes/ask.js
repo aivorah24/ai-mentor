@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { generateAnswer, generateAnswerStream } = require('../services/llm');
 const { retrieveCurriculumContext, retrieveNcertImages } = require('../services/rag');
-const { retrieveWebContext } = require('../services/webSearch');
+const { retrieveWebContext, retrieveWebImages } = require('../services/webSearch');
 const { logEvent } = require('../services/analytics');
 const { normalizeCurriculum } = require('../utils/curriculum');
 const supabase = require('../services/supabase');
@@ -149,8 +149,15 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // 2. Generate grounded answer
-    const answer = await generateAnswer({ question, context, grade, subject, topic, history });
+    // 2. Generate answer + fetch web images IN PARALLEL for speed
+    const needsWebImages = images.length === 0;
+    const [answer, webImagesResult] = await Promise.all([
+      generateAnswer({ question, context, grade, subject, topic, history }),
+      needsWebImages
+        ? retrieveWebImages({ question, topic, subject, grade }).catch(() => [])
+        : Promise.resolve([]),
+    ]);
+    if (needsWebImages && webImagesResult.length > 0) images = webImagesResult;
 
     logEvent('ai_ask', {
       userEmail,
@@ -406,6 +413,14 @@ router.post('/stream', async (req, res) => {
       try {
         const ncertImages = await retrieveNcertImages({ question, subject, topic });
         if (ncertImages.length > 0) images = ncertImages;
+      } catch (_) { /* silent */ }
+    }
+
+    // Web image fallback — if no relevant book images, fetch safe images from Wikipedia
+    if (images.length === 0) {
+      try {
+        const webImages = await retrieveWebImages({ question, topic, subject, grade });
+        if (webImages.length > 0) images = webImages;
       } catch (_) { /* silent */ }
     }
 
