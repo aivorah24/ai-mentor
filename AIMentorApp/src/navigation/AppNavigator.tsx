@@ -33,6 +33,7 @@ import WorldAndYouScreen from '../screens/student/WorldAndYouScreen';
 import TopicLessonScreen from '../screens/student/TopicLessonScreen';
 import BhagavathaStoriesScreen from '../screens/student/BhagavathaStoriesScreen';
 import StoryReaderScreen from '../screens/student/StoryReaderScreen';
+import ReadAloudScreen from '../screens/student/ReadAloudScreen';
 import DailyHabitsScreen from '../screens/student/DailyHabitsScreen';
 import SubscriptionScreen from '../screens/student/SubscriptionScreen';
 import MessagesScreen from '../screens/shared/MessagesScreen';
@@ -92,6 +93,7 @@ export default function AppNavigator() {
       <Drawer.Screen name="TopicLesson" component={TopicLessonScreen} />
       <Drawer.Screen name="BhagavathaStories" component={BhagavathaStoriesScreen} />
       <Drawer.Screen name="StoryReader" component={StoryReaderScreen} />
+      <Drawer.Screen name="ReadAloud" component={ReadAloudScreen} />
       <Drawer.Screen name="DailyHabits" component={DailyHabitsScreen} />
       <Drawer.Screen name="Subscription" component={SubscriptionScreen} />
       <Drawer.Screen name="Messages" component={MessagesScreen} />
