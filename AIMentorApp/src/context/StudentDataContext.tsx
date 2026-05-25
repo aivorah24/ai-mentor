@@ -152,6 +152,7 @@ export function StudentDataProvider({ children }: { children: ReactNode }) {
   // ── Load from server — re-run whenever logged-in email changes ──
   useEffect(() => {
     if (!user?.email) return;
+    if (user?.role && user.role !== 'student') { setLoaded(true); return; }
     setLoaded(false);
     setStats(ZERO_STATS);
 

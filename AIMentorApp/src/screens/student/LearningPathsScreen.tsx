@@ -314,11 +314,13 @@ function SubjectCard({
   completedSet,
   onPress,
   width,
+  isBlocked,
 }: {
   data: SubjectData;
   completedSet: Set<string>;
   onPress: () => void;
   width: `${number}%` | number;
+  isBlocked?: boolean;
 }) {
   const { isDark } = useTheme();
   const meta   = subjectMeta(data.subject);
@@ -326,9 +328,8 @@ function SubjectCard({
   const pct    = data.topicCount > 0 ? Math.round((done / data.topicCount) * 100) : 0;
   const accent = isDark ? meta.accentDark : meta.accentLight;
 
-  // Same light pastel card for both dark & light mode
   return (
-    <TouchableOpacity style={[cardStyles.touch, { width }]} activeOpacity={0.86} onPress={onPress}>
+    <TouchableOpacity style={[cardStyles.touch, { width }]} activeOpacity={isBlocked ? 1 : 0.86} onPress={isBlocked ? undefined : onPress}>
       <LinearGradient
         colors={[meta.bgFromDark, meta.bgToDark]}
         start={{ x: 0, y: 0 }}
@@ -351,6 +352,15 @@ function SubjectCard({
         <View style={[cardStyles.track, { backgroundColor: accent + '40' }]}>
           <View style={[cardStyles.fill, { width: `${pct}%`, backgroundColor: accent }]} />
         </View>
+
+        {isBlocked && (
+          <View style={cardStyles.blockedOverlay}>
+            <View style={cardStyles.blockedBadge}>
+              <Feather name="lock" size={14} color="#fff" />
+              <Text style={cardStyles.blockedText}>Blocked by parent</Text>
+            </View>
+          </View>
+        )}
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -474,6 +484,16 @@ const cardStyles = StyleSheet.create({
     paddingVertical: 4,
   },
   ncertBadgeText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.2 },
+  blockedOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  blockedBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(0,0,0,0.7)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20,
+  },
+  blockedText: { color: '#fff', fontSize: 12, fontWeight: '700' },
 });
 
 function normalizeText(value: string): string {
@@ -677,6 +697,20 @@ export default function LearningPathsScreen({ navigation }: any) {
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const completedSet = useMemo(() => new Set(stats.completedTopics ?? []), [stats.completedTopics]);
+
+  // Parental subject filter
+  const [blockedSubjects, setBlockedSubjects] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user?.email) return;
+    fetch(`${SERVER_URL}/parent/screen-time-status/${encodeURIComponent(user.email)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.subjectFilter?.enabled && Array.isArray(data.subjectFilter.blockedSubjects)) {
+          setBlockedSubjects(new Set(data.subjectFilter.blockedSubjects));
+        }
+      })
+      .catch(() => {});
+  }, [user?.email]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1096,6 +1130,7 @@ export default function LearningPathsScreen({ navigation }: any) {
                     data={subject}
                     completedSet={completedSet}
                     width={cardWidth}
+                    isBlocked={blockedSubjects.has(subject.subject)}
                     onPress={() =>
                       navigation.navigate('SubjectTopics', {
                         subject: subject.subject,
