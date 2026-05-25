@@ -70,6 +70,8 @@ app.use('/data/images', express.static(path.join(__dirname, 'data/images')));
 app.use('/data/videos', express.static(path.join(__dirname, 'data/videos')));
 // Serve cached TTS audio files
 app.use('/data/audio', express.static(path.join(__dirname, 'data/audio')));
+// Serve read-aloud audio
+app.use('/data/read-aloud/audio', express.static(path.join(__dirname, 'data/read-aloud/audio')));
 // Serve message attachments
 app.use('/data/uploads', express.static(path.join(__dirname, 'data/uploads')));
 // Serve UI sounds
@@ -112,6 +114,7 @@ app.use('/stories',      storiesRoute);
 app.use('/habits',       habitsRoute);
 app.use('/payment',      lazyRoute('./routes/payment'));
 app.use('/quiz',         lazyRoute('./routes/quiz'));
+app.use('/read-aloud',   lazyRoute('./routes/read-aloud'));
 
 
 app.get('/health', async (req, res) => {
