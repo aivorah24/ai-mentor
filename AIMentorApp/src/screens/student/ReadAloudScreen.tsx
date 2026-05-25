@@ -708,6 +708,7 @@ export default function ReadAloudScreen() {
     recordedBlobRef.current = audioBlob;
     const blobUrl = URL.createObjectURL(audioBlob);
     setRecordedBlobUrl(blobUrl);
+    setIsPlayingBack(false);
     setPhase('preview');
   }, [stopWaveform]);
 
