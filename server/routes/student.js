@@ -85,14 +85,29 @@ function normalise(row) {
 
 // Get or create student_stats row
 async function getOrCreate(studentId) {
-  let { data, error } = await supabase
+  let { data } = await supabase
     .from('student_stats')
     .select('*')
     .eq('student_id', studentId)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) {
-    // Auto-create with defaults
+  if (!data) {
+    // Verify the user exists before inserting (avoids FK violation)
+    const { data: userExists } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', studentId)
+      .maybeSingle();
+
+    if (!userExists) {
+      // Return default stats object without persisting
+      return {
+        student_id: studentId, xp_points: 0, level: 1, current_streak: 0,
+        completed_topics: [], study_time_minutes: 0, today_study_minutes: 0,
+        today_xp: 0, assignments_done: 0, last_active_date: todayISO(),
+      };
+    }
+
     const { data: created, error: createErr } = await supabase
       .from('student_stats')
       .insert({ student_id: studentId, last_active_date: todayISO() })
