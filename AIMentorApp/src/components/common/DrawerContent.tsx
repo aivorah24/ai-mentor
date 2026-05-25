@@ -25,6 +25,7 @@ const STUDENT_NAV_ITEMS = [
   { label: 'AI Coach', icon: 'message-circle', screen: 'AICoach', group: 'MENU' },
   { label: 'Schedule', icon: 'calendar', screen: 'Schedule', group: 'MENU' },
   { label: 'The World & You', icon: 'globe', screen: 'WorldAndYou', group: 'MENU' },
+  { label: 'Read Aloud', icon: 'mic', screen: 'ReadAloud', group: 'MENU' },
   { label: 'Bedtime Stories', icon: 'book', screen: 'BhagavathaStories', group: 'MENU', premium: true },
   { label: 'Daily Habits', icon: 'sun', screen: 'DailyHabits', group: 'MENU', premium: true },
   { label: 'Assignments', icon: 'check-square', screen: 'Assignments', group: 'FOCUS', premium: false },

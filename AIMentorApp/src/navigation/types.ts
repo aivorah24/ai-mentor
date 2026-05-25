@@ -25,6 +25,7 @@ export type DrawerParamList = {
   TopicLesson: { topic: string; grade: string; subject: string; curriculum?: string };
   BhagavathaStories: undefined;
   StoryReader: { storyId: string; storyTitle: string };
+  ReadAloud: undefined;
   DailyHabits: undefined;
   Subscription: undefined;
 };
