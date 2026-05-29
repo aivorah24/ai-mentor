@@ -86,6 +86,10 @@ export default function ChallengesScreen({ navigation, route }: any) {
   const [quizSubmitting, setQuizSubmitting] = useState(false);
   const [quizResult, setQuizResult] = useState<{ score: number; xpAwarded: number } | null>(null);
 
+  // Timer state
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Challenge leaderboard state
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [leaderLoading, setLeaderLoading] = useState(false);
@@ -196,10 +200,38 @@ export default function ChallengesScreen({ navigation, route }: any) {
         }));
         setQuestions(qs);
         setAnswers(new Array(qs.length).fill(null));
+        // Start countdown timer
+        if (ch.timeLimitMinutes && ch.timeLimitMinutes > 0) {
+          const secs = ch.timeLimitMinutes * 60;
+          setTimeLeft(secs);
+          if (timerRef.current) clearInterval(timerRef.current);
+          timerRef.current = setInterval(() => {
+            setTimeLeft(prev => {
+              if (prev === null || prev <= 1) {
+                clearInterval(timerRef.current!);
+                timerRef.current = null;
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        }
       }
     } catch {}
     setQuizLoading(false);
   }
+
+  // Auto-submit when timer expires
+  React.useEffect(() => {
+    if (timeLeft === 0 && !quizResult && !quizLoading && questions.length > 0) {
+      submitQuiz();
+    }
+  }, [timeLeft]);
+
+  // Cleanup timer on unmount or quiz close
+  React.useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
 
   async function submitQuiz() {
     if (!activeChallenge?.assignmentId) return;
@@ -233,6 +265,8 @@ export default function ChallengesScreen({ navigation, route }: any) {
   }
 
   function closeQuiz() {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setTimeLeft(null);
     setQuizVisible(false);
     setActiveChallenge(null);
     setQuestions([]);
@@ -245,7 +279,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
   return (
     <ScreenLayout>
       <View style={styles.screen}>
-        <Header title="Challenges" subtitle={`${grade} · Mathematics`} onMenuPress={() => navigation.openDrawer()} />
+        <Header title="Challenges" onMenuPress={() => navigation.openDrawer()} />
 
         <ScrollView
           contentContainerStyle={styles.content}
@@ -321,7 +355,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
             {filtered.map(ch => {
               const diffColor = DIFF_COLORS[ch.difficulty] ?? colors.primary;
               const catColor  = CAT_COLORS[ch.category]   ?? colors.primary;
-              const rawImg = ch.imageUrl ?? null;
+              const rawImg = (ch as any).thumbnailUrl ?? ch.imageUrl ?? null;
               const imgUrl = rawImg ? (rawImg.startsWith('http') ? rawImg : `${SERVER_URL}${rawImg}`) : null;
               return (
                 <View key={ch.id} style={styles.challengeCard}>
@@ -401,7 +435,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
         </ScrollView>
 
         {/* Quiz Modal */}
-        <Modal visible={quizVisible} animationType="slide" transparent onRequestClose={closeQuiz}>
+        <Modal visible={quizVisible} animationType="fade" transparent onRequestClose={closeQuiz}>
           <View style={styles.quizOverlay}>
             <View style={styles.quizSheet}>
               {/* Quiz header */}
@@ -410,6 +444,19 @@ export default function ChallengesScreen({ navigation, route }: any) {
                   <Text style={styles.quizTitle}>{activeChallenge?.title}</Text>
                   <Text style={styles.quizSub}>{questions.length || activeChallenge?.questionCount} questions · {activeChallenge?.timeLimitMinutes} min</Text>
                 </View>
+                {timeLeft !== null && !quizResult && (() => {
+                  const m = Math.floor(timeLeft / 60);
+                  const s = timeLeft % 60;
+                  const urgent = timeLeft <= 60;
+                  return (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: urgent ? colors.accentRed + '22' : colors.cardDark, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, marginRight: 10 }}>
+                      <Feather name="clock" size={13} color={urgent ? colors.accentRed : colors.textMuted} />
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: urgent ? colors.accentRed : colors.textMain, fontVariant: ['tabular-nums'] as any }}>
+                        {String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}
+                      </Text>
+                    </View>
+                  );
+                })()}
                 {!quizResult && (
                   <TouchableOpacity onPress={closeQuiz} activeOpacity={0.7}>
                     <Feather name="x" size={20} color={colors.textMuted} />
@@ -558,20 +605,22 @@ export default function ChallengesScreen({ navigation, route }: any) {
                     <View key={qi} style={styles.questionBlock}>
                       <Text style={styles.questionNum}>Q{qi + 1} of {questions.length}</Text>
                       <Text style={styles.questionText}>{q.question}</Text>
-                      {q.options.map((opt, oi) => (
-                        <TouchableOpacity
-                          key={oi}
-                          style={[
-                            styles.optionBtn,
-                            answers[qi] === opt && { backgroundColor: colors.primary + '20', borderColor: colors.primary },
-                          ]}
-                          onPress={() => setAnswers(prev => prev.map((a, i) => i === qi ? opt : a))}
-                          activeOpacity={0.75}
-                        >
-                          <View style={[styles.optionDot, answers[qi] === opt && { backgroundColor: colors.primary, borderColor: colors.primary }]} />
-                          <Text style={[styles.optionText, answers[qi] === opt && { color: colors.primary, fontWeight: '600' }]}>{opt}</Text>
-                        </TouchableOpacity>
-                      ))}
+                      <View style={styles.optionsGrid}>
+                        {q.options.map((opt, oi) => (
+                          <TouchableOpacity
+                            key={oi}
+                            style={[
+                              styles.optionBtn,
+                              answers[qi] === opt && { backgroundColor: colors.primary + '20', borderColor: colors.primary },
+                            ]}
+                            onPress={() => setAnswers(prev => prev.map((a, i) => i === qi ? opt : a))}
+                            activeOpacity={0.75}
+                          >
+                            <View style={[styles.optionDot, answers[qi] === opt && { backgroundColor: colors.primary, borderColor: colors.primary }]} />
+                            <Text style={[styles.optionText, answers[qi] === opt && { color: colors.primary, fontWeight: '600' }]}>{opt}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
                     </View>
                   ))}
                   <TouchableOpacity
@@ -660,8 +709,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   emptyText:    { fontSize: 13, color: c.textDim, textAlign: 'center' },
 
   // Quiz modal
-  quizOverlay:  { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
-  quizSheet:    { backgroundColor: c.cardDark, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '92%', borderWidth: 1, borderColor: c.borderColor },
+  quizOverlay:  { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 16 },
+  quizSheet:    { backgroundColor: c.cardDark, borderRadius: 20, width: '100%', maxWidth: 720, maxHeight: '92%', borderWidth: 1, borderColor: c.borderColor },
   quizHeader:   { flexDirection: 'row', alignItems: 'center', padding: spacing.xl, borderBottomWidth: 1, borderBottomColor: c.borderColor },
   quizTitle:    { fontSize: 16, fontWeight: '800', color: c.textMain },
   quizSub:      { fontSize: 12, color: c.textDim, marginTop: 2 },
@@ -671,7 +720,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   questionBlock:{ gap: spacing.md },
   questionNum:  { fontSize: 11, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.5 },
   questionText: { fontSize: 15, fontWeight: '600', color: c.textMain, lineHeight: 22 },
-  optionBtn:    { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark },
+  optionsGrid:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  optionBtn:    { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 12, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark, flexBasis: '48%', flexGrow: 1 },
   optionDot:    { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: c.textDim },
   optionText:   { fontSize: 14, color: c.textMuted, flex: 1 },
   submitQuizBtn:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: c.primary, paddingVertical: 14, borderRadius: radius.md, marginTop: spacing.md },
