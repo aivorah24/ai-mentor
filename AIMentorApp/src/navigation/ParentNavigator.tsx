@@ -14,6 +14,7 @@ import ParentAssignmentsScreen from '../screens/parent/ParentAssignmentsScreen';
 import ParentChallengesScreen from '../screens/parent/ParentChallengesScreen';
 import ParentLeaderboardScreen from '../screens/parent/ParentLeaderboardScreen';
 import ParentProgressScreen from '../screens/parent/ParentProgressScreen';
+import ParentAIReportsScreen from '../screens/parent/ParentAIReportsScreen';
 import ParentControlsScreen from '../screens/parent/ParentControlsScreen';
 import ParentSettingsScreen from '../screens/parent/ParentSettingsScreen';
 import ParentHelpScreen from '../screens/parent/ParentHelpScreen';
@@ -53,6 +54,7 @@ export default function ParentNavigator() {
       <Drawer.Screen name="ParentChallenges" component={ParentChallengesScreen} />
       <Drawer.Screen name="ParentLeaderboard" component={ParentLeaderboardScreen} />
       <Drawer.Screen name="ParentProgress" component={ParentProgressScreen} />
+      <Drawer.Screen name="ParentAIReports" component={ParentAIReportsScreen} />
       <Drawer.Screen name="ParentControls" component={ParentControlsScreen} />
       <Drawer.Screen name="ParentSettings" component={ParentSettingsScreen} />
       <Drawer.Screen name="ParentHelp" component={ParentHelpScreen} />

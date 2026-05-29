@@ -74,7 +74,20 @@ const THEME_OPTIONS: { id: ThemeMode; icon: string; label: string }[] = [
   { id: 'auto', icon: 'monitor', label: 'Auto' },
 ];
 
-const ROLE_DASH: Record<string, string> = { teacher: 'TeacherDashboard', parent: 'ParentDashboard', student: 'Dashboard' };
+const SUPER_ADMIN_NAV_ITEMS = [
+  { label: 'Dashboard',         icon: 'grid',           screen: 'TeacherDashboard',    group: 'MENU' },
+  { label: 'Students',          icon: 'users',          screen: 'TeacherStudents',     group: 'MENU' },
+  { label: 'Assignments',       icon: 'check-square',   screen: 'TeacherAssignments',  group: 'MENU' },
+  { label: 'Challenges',        icon: 'target',         screen: 'TeacherChallenges',   group: 'MENU' },
+  { label: 'Challenge Manager', icon: 'shield',         screen: 'ChallengeManager',    group: 'MENU' },
+  { label: 'Schedule',          icon: 'calendar',       screen: 'TeacherSchedule',     group: 'MENU' },
+  { label: 'Student Progress',  icon: 'bar-chart-2',    screen: 'TeacherProgress',     group: 'MENU' },
+  { label: 'Messages',          icon: 'message-square', screen: 'TeacherMessages',     group: 'MENU' },
+  { label: 'Learning Paths',    icon: 'map',            screen: 'TeacherLearningPaths',group: 'SYSTEM' },
+  { label: 'Settings',          icon: 'settings',       screen: 'TeacherSettings',     group: 'SYSTEM' },
+];
+
+const ROLE_DASH: Record<string, string> = { super_admin: 'ChallengeManager', teacher: 'TeacherDashboard', parent: 'ParentDashboard', student: 'Dashboard' };
 export default function DrawerContent(props: any) {
   const { state, navigation } = props;
   const currentRoute = state.routes[state.index]?.name;
@@ -84,10 +97,11 @@ export default function DrawerContent(props: any) {
   const { colors, themeMode, setThemeMode } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
+  const isSuperAdmin = user?.role === 'super_admin';
   const isTeacher = user?.role === 'teacher';
   const isParent = user?.role === 'parent';
-  const NAV_ITEMS = isTeacher ? TEACHER_NAV_ITEMS : isParent ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
-  const groups = isTeacher ? ['MENU', 'TEACHING DEVELOPMENT', 'SYSTEM'] : isParent ? ['PARENT MENU', 'CONTROLS', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
+  const NAV_ITEMS = isSuperAdmin ? SUPER_ADMIN_NAV_ITEMS : isTeacher ? TEACHER_NAV_ITEMS : isParent ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
+  const groups = (isSuperAdmin || isTeacher) ? ['MENU', 'TEACHING DEVELOPMENT', 'SYSTEM'] : isParent ? ['PARENT MENU', 'CONTROLS', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
   const { unreadCount, unreadAssignments, unreadChallenges } = useNotification();
   const MESSAGE_SCREENS    = ['TeacherMessages', 'ParentMessages', 'Messages'];
   const ASSIGNMENT_SCREENS = ['Assignments', 'ParentAssignments'];
