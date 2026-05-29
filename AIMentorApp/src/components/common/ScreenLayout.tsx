@@ -41,7 +41,7 @@ export default function ScreenLayout({ children }: ScreenLayoutProps) {
   const { colors } = useTheme();
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const isTeacher = user?.role === 'teacher';
+  const isTeacher = user?.role === 'teacher' || user?.role === 'super_admin';
   const isParent = user?.role === 'parent';
   const isStudent = user?.role === 'student';
 

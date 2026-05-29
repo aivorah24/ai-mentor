@@ -870,6 +870,7 @@ export default function LandingScreen() {
                 { role: 'student', label: 'Student', icon: 'book-open', color: CYAN },
                 { role: 'teacher', label: 'Teacher', icon: 'users', color: PURPLE },
                 { role: 'parent', label: 'Parent', icon: 'heart', color: GREEN },
+                { role: 'super_admin', label: 'Super Admin', icon: 'shield', color: '#F59E0B' },
               ] as const).map(d => (
                 <TouchableOpacity
                   key={d.role}
