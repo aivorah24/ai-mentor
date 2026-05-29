@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, View, ActivityIndicator, Platform, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Platform, Text, TouchableOpacity, Modal } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Feather } from '@expo/vector-icons';
 import { applyActionCode } from 'firebase/auth';
@@ -146,6 +146,136 @@ function NotificationBannerWrapper() {
 
   return <NotificationBanner onNavigate={handleNavigate} />;
 }
+
+const IDLE_WARN_MS   = 5 * 60 * 1000; // 5 min idle → show warning
+const IDLE_LOGOUT_MS = 1 * 60 * 1000; // 1 min after warning → auto-logout
+
+function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
+  const { user, logout } = useAuth();
+  const { colors: c } = useTheme();
+  const [showWarning, setShowWarning] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+
+  // Use refs so event handlers never go stale
+  const lastActivityRef = useRef(Date.now());
+  const showWarningRef  = useRef(false);
+  const userRef         = useRef(user);
+  const logoutRef       = useRef(logout);
+  const tickerRef       = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => { userRef.current = user; }, [user]);
+  useEffect(() => { logoutRef.current = logout; }, [logout]);
+
+  const isStudent = user?.role === 'student';
+
+  const doLogout = useCallback(() => {
+    if (tickerRef.current)    clearInterval(tickerRef.current);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    showWarningRef.current = false;
+    setShowWarning(false);
+    // Notify parent (fire and forget)
+    const u = userRef.current;
+    if (u?.email) {
+      fetch(`${require('./src/config/serverUrl').default}/student/idle-logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentEmail: u.email, studentName: u.name }),
+      }).catch(() => {});
+    }
+    logoutRef.current();
+  }, []);
+
+  const onStillHere = () => {
+    showWarningRef.current = false;
+    setShowWarning(false);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    lastActivityRef.current = Date.now(); // reset idle clock
+  };
+
+  useEffect(() => {
+    if (!isStudent) return;
+
+    // Single interval polls every second — no timer-reset-on-activity races
+    tickerRef.current = setInterval(() => {
+      const idle = Date.now() - lastActivityRef.current;
+
+      if (!showWarningRef.current && idle >= IDLE_WARN_MS) {
+        // Show warning + start countdown
+        showWarningRef.current = true;
+        setShowWarning(true);
+        setCountdown(Math.round(IDLE_LOGOUT_MS / 1000));
+
+        let secs = Math.round(IDLE_LOGOUT_MS / 1000);
+        countdownRef.current = setInterval(() => {
+          secs -= 1;
+          setCountdown(secs);
+          if (secs <= 0) {
+            clearInterval(countdownRef.current!);
+            doLogout();
+          }
+        }, 1000);
+      }
+    }, 1000);
+
+    // Reset activity timestamp on any user interaction
+    const resetActivity = () => {
+      if (!showWarningRef.current) lastActivityRef.current = Date.now();
+    };
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      events.forEach(e => window.addEventListener(e, resetActivity, { passive: true }));
+    }
+
+    return () => {
+      if (tickerRef.current)    clearInterval(tickerRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        events.forEach(e => window.removeEventListener(e, resetActivity));
+      }
+    };
+  }, [isStudent, doLogout]);
+
+  return (
+    <>
+      {children}
+      {showWarning && (
+        <Modal transparent animationType="fade" visible>
+          <View style={idleStyles.overlay}>
+            <View style={[idleStyles.box, { backgroundColor: c.cardDark, borderColor: c.borderColor }]}>
+              <View style={[idleStyles.iconWrap, { backgroundColor: c.accentYellow + '22' }]}>
+                <Feather name="clock" size={26} color={c.accentYellow} />
+              </View>
+              <Text style={[idleStyles.title, { color: c.textMain }]}>Are you still there?</Text>
+              <Text style={[idleStyles.body, { color: c.textMuted }]}>
+                You've been inactive for 5 minutes.{'\n'}
+                Logging out in <Text style={{ color: c.accentRed, fontWeight: '700' }}>{countdown}s</Text>...
+              </Text>
+              <TouchableOpacity style={[idleStyles.btn, { backgroundColor: c.primary }]} onPress={onStillHere} activeOpacity={0.85}>
+                <Text style={idleStyles.btnText}>Yes, I'm here!</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[idleStyles.logoutBtn, { borderColor: c.borderColor }]} onPress={doLogout} activeOpacity={0.7}>
+                <Text style={[idleStyles.logoutBtnText, { color: c.textMuted }]}>Logout now</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+    </>
+  );
+}
+
+const idleStyles = StyleSheet.create({
+  overlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  box:       { width: 340, maxWidth: '95%', borderRadius: 20, padding: 28, alignItems: 'center', borderWidth: 1 },
+  iconWrap:  { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  title:     { fontSize: 20, fontWeight: '800', marginBottom: 10, textAlign: 'center' },
+  body:      { fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  btn:       { width: '100%', paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginBottom: 10 },
+  btnText:   { color: '#fff', fontWeight: '700', fontSize: 15 },
+  logoutBtn: { width: '100%', paddingVertical: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1 },
+  logoutBtnText: { fontSize: 14 },
+});
 
 function RootNavigator() {
   const { isAuthenticated, loading, user } = useAuth();
@@ -312,8 +442,10 @@ function ThemedRoot() {
               }}
             >
               <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={c.bgDark} />
-              <RootNavigator />
-              <NotificationBannerWrapper />
+              <IdleTimeoutGuard>
+                <RootNavigator />
+                <NotificationBannerWrapper />
+              </IdleTimeoutGuard>
             </NavigationContainer>
           </NotificationProvider>
         </StudentDataProvider>
