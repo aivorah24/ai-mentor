@@ -1,9 +1,16 @@
-const express = require('express');
-const router  = express.Router();
-const Groq    = require('groq-sdk');
-const axios   = require('axios');
+const express  = require('express');
+const router   = express.Router();
+const Groq     = require('groq-sdk');
+const axios    = require('axios');
+const supabase = require('../services/supabase');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+function computeLevel(xp) {
+  let level = 1, threshold = 500, total = 0;
+  while (xp >= total + threshold) { total += threshold; threshold += 250; level++; }
+  return level;
+}
 
 // ── In-memory daily cache: key = `${grade}_YYYY-MM-DD` ──────────────
 const cache = {};
@@ -245,6 +252,74 @@ router.get('/', async (req, res) => {
   } catch (err) {
     console.error('daily-tidbit error:', err.message);
     res.status(500).json({ error: 'Could not fetch daily tidbit. Please try again.' });
+  }
+});
+
+// ── POST /daily-tidbit/quiz ──────────────────────────────────────────
+// Generate 2 MCQ comprehension questions from a current affairs article
+router.post('/quiz', async (req, res) => {
+  const { headline, summary, grade = 'Grade 3' } = req.body;
+  if (!headline || !summary) return res.status(400).json({ error: 'headline and summary required' });
+
+  const rules = ageRule(grade);
+  try {
+    const resp = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a quiz maker for kids. ${rules}
+Based on the news article, create exactly 2 multiple-choice questions to test reading comprehension.
+Each question must have 4 short options with exactly one correct answer.
+Respond ONLY with a valid JSON array — no markdown, no explanation:
+[{"question":"...","options":["A","B","C","D"],"correct":0},{"question":"...","options":["A","B","C","D"],"correct":2}]
+(correct is the 0-based index of the right option)`,
+        },
+        { role: 'user', content: `Article headline: ${headline}\nSummary: ${summary}` },
+      ],
+      temperature: 0.4,
+      max_tokens: 400,
+    });
+
+    const raw   = resp.choices[0].message.content.trim();
+    const clean = raw.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+    const questions = JSON.parse(clean);
+    res.json({ questions });
+  } catch (e) {
+    console.error('[daily-tidbit/quiz]', e.message);
+    res.status(500).json({ error: 'Could not generate quiz. Please try again.' });
+  }
+});
+
+// ── POST /daily-tidbit/quiz-complete ─────────────────────────────────
+// Award XP after student completes the comprehension quiz
+router.post('/quiz-complete', async (req, res) => {
+  const { studentId, correct = 0 } = req.body;
+  const xpAwarded = correct * 10; // 10 XP per correct answer
+
+  if (!studentId || xpAwarded === 0) return res.json({ xpAwarded: 0 });
+
+  try {
+    const { data: stats } = await supabase
+      .from('student_stats')
+      .select('*')
+      .eq('student_id', studentId)
+      .single();
+
+    if (stats) {
+      const newXP = (stats.xp_points || 0) + xpAwarded;
+      await supabase.from('student_stats').update({
+        xp_points:        newXP,
+        today_xp:         (stats.today_xp || 0) + xpAwarded,
+        level:            computeLevel(newXP),
+        last_active_date: new Date().toISOString().split('T')[0],
+        updated_at:       new Date().toISOString(),
+      }).eq('student_id', studentId);
+    }
+    res.json({ xpAwarded });
+  } catch (e) {
+    console.error('[daily-tidbit/quiz-complete]', e.message);
+    res.json({ xpAwarded: 0 });
   }
 });
 
