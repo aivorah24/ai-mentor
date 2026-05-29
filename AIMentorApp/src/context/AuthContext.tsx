@@ -23,7 +23,7 @@ function isCachedProfileForEmail(profile: Partial<User>, email: string) {
   return normalizeEmail(profile.email) === normalizeEmail(email);
 }
 
-export type UserRole = 'student' | 'teacher' | 'parent';
+export type UserRole = 'student' | 'teacher' | 'parent' | 'super_admin';
 
 export interface User {
   name: string;
@@ -876,9 +876,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function demoLogin(role: UserRole = 'student') {
     const demos: Record<UserRole, User> = {
-      student: { name: 'Alex Richardson', email: 'alex@demo.com', role: 'student', grade: 'Grade 3', curriculum: 'IB PYP', school: 'Hyderabad International School', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true },
-      teacher: { name: 'Ms. Zara',        email: 'teacher@demo.com', role: 'teacher', school: 'Hyderabad International School', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true, teaches: [{ grade: 'Grade 3', curriculum: 'IB PYP' }] },
-      parent:  { name: 'Priya Richardson', email: 'parent@demo.com', role: 'parent', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true, children: [{ name: 'Alex Richardson', grade: 'Grade 3', curriculum: 'IB PYP', email: 'alex@demo.com' }] },
+      student:     { name: 'Alex Richardson',  email: 'alex@demo.com',    role: 'student',     grade: 'Grade 3', curriculum: 'IB PYP', school: 'Hyderabad International School', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true },
+      teacher:     { name: 'Ms. Zara',         email: 'teacher@demo.com', role: 'teacher',     school: 'Hyderabad International School', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true, teaches: [{ grade: 'Grade 3', curriculum: 'IB PYP' }] },
+      parent:      { name: 'Priya Richardson', email: 'parent@demo.com',  role: 'parent',      location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true, children: [{ name: 'Alex Richardson', grade: 'Grade 3', curriculum: 'IB PYP', email: 'alex@demo.com' }] },
+      super_admin: { name: 'Sunitha Gujjula',  email: 'gujjula.sunitha@gmail.com', role: 'super_admin', school: 'The Shri Ram Academy', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true },
     };
     setUser(demos[role]);
   }

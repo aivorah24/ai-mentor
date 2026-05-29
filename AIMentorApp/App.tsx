@@ -13,6 +13,7 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
 }
 import AppNavigator from './src/navigation/AppNavigator';
 import TeacherNavigator from './src/navigation/TeacherNavigator';
+import SuperAdminNavigator from './src/navigation/SuperAdminNavigator';
 import ParentNavigator from './src/navigation/ParentNavigator';
 import LandingScreen from './src/screens/auth/LandingScreen';
 import VerifyEmailScreen from './src/screens/auth/VerifyEmailScreen';
@@ -226,6 +227,7 @@ function RootNavigator() {
   console.log(`[Auth] Routing to ${user?.role} navigator`);
   // Role-based navigator — if pendingReturnRole is set, honour it (teacher finishing parent onboarding)
   const activeRole = getPendingReturnRole() || user?.role;
+  if (activeRole === 'super_admin') return <SuperAdminNavigator />;
   if (activeRole === 'teacher') return <TeacherNavigator />;
   if (activeRole === 'parent')  return <ParentNavigator />;
 
@@ -288,6 +290,7 @@ function ThemedRoot() {
                     TeacherHelp: 'teacher/help',
                     TeacherSettings: 'teacher/settings',
                     TeacherMessages: 'teacher/messages',
+                    ChallengeManager: 'super-admin/challenges',
                     ProjectDetails: 'teacher/project-details',
                     // Parent screens
                     ParentDashboard: 'parent/dashboard',

@@ -59,7 +59,7 @@ const PARENT_NAV_ITEMS = [
   { label: 'Learning',          icon: 'book-open',      screen: 'ParentLearning',     group: 'CHILDREN', premium: false },
   { label: 'Assignments',       icon: 'check-square',   screen: 'ParentAssignments',  group: 'CHILDREN', premium: false },
   { label: 'Progress',          icon: 'bar-chart-2',    screen: 'ParentProgress',     group: 'CHILDREN', premium: false },
-  { label: 'AI Progress Reports', icon: 'file-text',    screen: 'ParentAIReports',    group: 'CHILDREN', premium: true  },
+  { label: 'AI Progress Report',  icon: 'file-text',    screen: 'ParentAIReports',    group: 'CHILDREN', premium: false },
   { label: 'Challenges',        icon: 'target',         screen: 'ParentChallenges',   group: 'CHILDREN', premium: false },
   { label: 'Messages',          icon: 'message-square', screen: 'ParentMessages',     group: 'CHILDREN', premium: false },
   { label: 'Parental Controls', icon: 'shield',         screen: 'ParentControls',     group: 'CHILDREN', premium: true  },
@@ -79,15 +79,28 @@ interface SidebarProps {
   onNavigate: (screen: string) => void;
 }
 
-const ROLE_DASH: Record<string, string> = { teacher: 'TeacherDashboard', parent: 'ParentDashboard', student: 'Dashboard' };
+const SUPER_ADMIN_NAV_ITEMS = [
+  { label: 'Dashboard',          icon: 'grid',         screen: 'TeacherDashboard',   group: 'MENU'    },
+  { label: 'Students',           icon: 'users',        screen: 'TeacherStudents',    group: 'MENU'    },
+  { label: 'Schedule',           icon: 'calendar',     screen: 'TeacherSchedule',    group: 'MENU'    },
+  { label: 'Assignments',        icon: 'check-square', screen: 'TeacherAssignments', group: 'MANAGE'  },
+  { label: 'Challenges',         icon: 'target',       screen: 'TeacherChallenges',  group: 'MANAGE'  },
+  { label: 'Challenge Manager',  icon: 'shield',       screen: 'ChallengeManager',   group: 'MANAGE'  },
+  { label: 'Student Progress',   icon: 'bar-chart-2',  screen: 'TeacherProgress',    group: 'MANAGE'  },
+  { label: 'Learning Paths',     icon: 'map',          screen: 'TeacherLearningPaths', group: 'MANAGE' },
+  { label: 'Messages',           icon: 'message-square', screen: 'TeacherMessages',  group: 'MANAGE'  },
+  { label: 'Settings',           icon: 'settings',     screen: 'TeacherSettings',    group: 'SYSTEM'  },
+];
+
+const ROLE_DASH: Record<string, string> = { super_admin: 'TeacherDashboard', teacher: 'TeacherDashboard', parent: 'ParentDashboard', student: 'Dashboard' };
 
 export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
   const { logout, user, switchRole, updateUser } = useAuth();
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
   const isDualRole = (user?.roles?.length ?? 0) > 1;
   const role = user?.role;
-  const NAV_ITEMS = role === 'teacher' ? TEACHER_NAV_ITEMS : role === 'parent' ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
-  const groups = role === 'teacher' ? ['MENU', 'MANAGE', 'SYSTEM'] : role === 'parent' ? ['MENU', 'CHILDREN', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
+  const NAV_ITEMS = role === 'super_admin' ? SUPER_ADMIN_NAV_ITEMS : role === 'teacher' ? TEACHER_NAV_ITEMS : role === 'parent' ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
+  const groups = (role === 'super_admin' || role === 'teacher') ? ['MENU', 'MANAGE', 'SYSTEM'] : role === 'parent' ? ['MENU', 'CHILDREN', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
   const { colors, themeMode, setThemeMode } = useTheme();
   const { unreadCount, unreadAssignments, unreadChallenges } = useNotification();
   const styles = useMemo(() => makeStyles(colors), [colors]);

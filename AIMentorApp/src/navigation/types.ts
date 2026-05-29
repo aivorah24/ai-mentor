@@ -28,6 +28,7 @@ export type DrawerParamList = {
   ReadAloud: undefined;
   DailyHabits: undefined;
   Subscription: undefined;
+  Messages: undefined;
 };
 
 export type ParentDrawerParamList = {
@@ -40,6 +41,7 @@ export type ParentDrawerParamList = {
   ParentChallenges: undefined;
   ParentLeaderboard: undefined;
   ParentProgress: undefined;
+  ParentAIReports: undefined;
   ParentControls: undefined;
   ParentSettings: undefined;
   ParentHelp: undefined;

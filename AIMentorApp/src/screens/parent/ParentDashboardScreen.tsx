@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Modal,
   Platform,
+  Linking,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius } from '../../theme';
@@ -199,6 +200,11 @@ export default function ParentDashboardScreen({ navigation, route }: any) {
   const [loadingCreds, setLoadingCreds] = useState(false);
   const [copiedField, setCopiedField] = useState('');
 
+  // AI Report modal
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [reportData, setReportData] = useState<any>(null);
+  const [loadingReport, setLoadingReport] = useState(false);
+
   function copyToClipboard(text: string, field: string) {
     if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(text).catch(() => {});
@@ -218,6 +224,119 @@ export default function ParentDashboardScreen({ navigation, route }: any) {
       setCreds(null);
     } finally {
       setLoadingCreds(false);
+    }
+  }
+
+  async function generateReport() {
+    if (!selectedChild.id) return;
+    setReportModalVisible(true);
+    setReportData(null);
+    setLoadingReport(true);
+    try {
+      const res = await fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children/${selectedChild.id}/ai-report`);
+      const data = res.ok ? await res.json() : null;
+      setReportData(data);
+    } catch {
+      setReportData(null);
+    } finally {
+      setLoadingReport(false);
+    }
+  }
+
+  function downloadReportPDF() {
+    if (!reportData) return;
+    const { student, metrics, report, generatedAt } = reportData;
+    const date = new Date(generatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    const studyH = `${Math.floor(metrics.studyTimeMinutes / 60)}h ${metrics.studyTimeMinutes % 60}m`;
+    const weekH = `${Math.floor(metrics.weeklyStudyMinutes / 60)}h ${metrics.weeklyStudyMinutes % 60}m`;
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Student Report - ${student.name}</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 800px; margin: 0 auto; padding: 40px; color: #1a1a2e; }
+  .header { border-bottom: 3px solid #5F8A86; padding-bottom: 20px; margin-bottom: 30px; }
+  .logo { font-size: 24px; font-weight: 700; color: #5F8A86; letter-spacing: 2px; }
+  .report-title { font-size: 20px; color: #444; margin-top: 4px; }
+  .student-info { background: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 24px; display: flex; gap: 24px; flex-wrap: wrap; }
+  .info-item { display: flex; flex-direction: column; }
+  .info-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; }
+  .info-value { font-size: 15px; font-weight: 600; color: #1a1a2e; margin-top: 2px; }
+  .section { margin-bottom: 24px; }
+  .section-title { font-size: 15px; font-weight: 700; color: #5F8A86; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #e0e0e0; padding-bottom: 6px; margin-bottom: 12px; }
+  .summary { font-size: 14px; line-height: 1.7; color: #333; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .metric-card { background: #f8f9fa; border-radius: 8px; padding: 12px; text-align: center; }
+  .metric-value { font-size: 22px; font-weight: 700; color: #5F8A86; }
+  .metric-label { font-size: 11px; color: #888; margin-top: 2px; }
+  ul { margin: 0; padding-left: 20px; }
+  li { font-size: 13px; line-height: 1.8; color: #333; }
+  .encouragement { background: #5F8A8610; border-left: 4px solid #5F8A86; padding: 14px 16px; border-radius: 4px; font-style: italic; font-size: 14px; color: #444; }
+  .footer { margin-top: 40px; border-top: 1px solid #e0e0e0; padding-top: 16px; font-size: 11px; color: #aaa; text-align: center; }
+  @media print { body { padding: 20px; } }
+</style></head>
+<body>
+<div class="header">
+  <div class="logo">AIVORAH</div>
+  <div class="report-title">Student Performance Report</div>
+  <div style="font-size:12px;color:#888;margin-top:6px;">Generated on ${date}</div>
+</div>
+
+<div class="student-info">
+  <div class="info-item"><span class="info-label">Student</span><span class="info-value">${student.name}</span></div>
+  <div class="info-item"><span class="info-label">Grade</span><span class="info-value">${student.grade}</span></div>
+  <div class="info-item"><span class="info-label">Curriculum</span><span class="info-value">${student.curriculum}</span></div>
+  ${student.school ? `<div class="info-item"><span class="info-label">School</span><span class="info-value">${student.school}</span></div>` : ''}
+</div>
+
+<div class="section">
+  <div class="section-title">Overview</div>
+  <p class="summary">${report.summary || ''}</p>
+</div>
+
+<div class="section">
+  <div class="section-title">Key Metrics</div>
+  <div class="metrics-grid">
+    <div class="metric-card"><div class="metric-value">${metrics.xp.toLocaleString()}</div><div class="metric-label">Total XP (Level ${metrics.level})</div></div>
+    <div class="metric-card"><div class="metric-value">${studyH}</div><div class="metric-label">Total Study Time</div></div>
+    <div class="metric-card"><div class="metric-value">${weekH}</div><div class="metric-label">This Week</div></div>
+    <div class="metric-card"><div class="metric-value">${metrics.currentStreak} days</div><div class="metric-label">Current Streak</div></div>
+    <div class="metric-card"><div class="metric-value">${metrics.topicsCompleted}</div><div class="metric-label">Topics Completed</div></div>
+    <div class="metric-card"><div class="metric-value">${metrics.assignmentsDone}</div><div class="metric-label">Assignments Done</div></div>
+    ${metrics.avgAssignmentScore != null ? `<div class="metric-card"><div class="metric-value">${metrics.avgAssignmentScore}%</div><div class="metric-label">Avg Assignment Score</div></div>` : ''}
+    ${metrics.avgChallengeScore != null ? `<div class="metric-card"><div class="metric-value">${metrics.avgChallengeScore}%</div><div class="metric-label">Avg Challenge Score</div></div>` : ''}
+    <div class="metric-card"><div class="metric-value">${metrics.activeDaysThisWeek}/7</div><div class="metric-label">Active Days (This Week)</div></div>
+  </div>
+</div>
+
+${report.consistency ? `<div class="section"><div class="section-title">Study Consistency</div><p class="summary">${report.consistency}</p></div>` : ''}
+${report.assignment_performance ? `<div class="section"><div class="section-title">Assignment Performance</div><p class="summary">${report.assignment_performance}</p></div>` : ''}
+
+<div class="section">
+  <div class="section-title">Strengths</div>
+  <ul>${(report.strengths || []).map((s: string) => `<li>${s}</li>`).join('')}</ul>
+</div>
+
+<div class="section">
+  <div class="section-title">Areas for Improvement</div>
+  <ul>${(report.areas_for_improvement || []).map((s: string) => `<li>${s}</li>`).join('')}</ul>
+</div>
+
+<div class="section">
+  <div class="section-title">Recommendations</div>
+  <ul>${(report.recommendations || []).map((s: string) => `<li>${s}</li>`).join('')}</ul>
+</div>
+
+${report.encouragement ? `<div class="section"><div class="section-title">Message to Share</div><div class="encouragement">"${report.encouragement}"</div></div>` : ''}
+
+<div class="footer">This report was generated by Aivorah AI. For questions, contact your child's teacher or school.</div>
+</body></html>`;
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const win = window.open('', '_blank');
+      if (win) {
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
+      }
     }
   }
 
@@ -540,6 +659,18 @@ export default function ParentDashboardScreen({ navigation, route }: any) {
             </View>
           )}
 
+          {/* AI Report Button */}
+          {selectedChild.id ? (
+            <TouchableOpacity
+              style={[styles.reportBtn, { backgroundColor: colors.primary }]}
+              onPress={generateReport}
+              activeOpacity={0.85}
+            >
+              <Feather name="file-text" size={16} color="#fff" />
+              <Text style={styles.reportBtnText}>Generate AI Performance Report</Text>
+            </TouchableOpacity>
+          ) : null}
+
           {/* Highlights & Points row */}
           <View style={styles.bottomRow}>
             {/* Highlights — positive reinforcement only */}
@@ -589,6 +720,154 @@ export default function ParentDashboardScreen({ navigation, route }: any) {
 
         </ScrollView>
       </View>
+
+      {/* AI Report Modal */}
+      <Modal visible={reportModalVisible} transparent animationType="slide" onRequestClose={() => setReportModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalBox, { maxHeight: '90%' }]}>
+            {/* Header */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="file-text" size={16} color={colors.primary} />
+                </View>
+                <View>
+                  <Text style={styles.modalTitle}>AI Performance Report</Text>
+                  <Text style={styles.modalDesc}>{selectedChild.name}</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setReportModalVisible(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Feather name="x" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {loadingReport ? (
+              <View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
+                <ActivityIndicator color={colors.primary} size="large" />
+                <Text style={[styles.modalDesc, { textAlign: 'center' }]}>Analyzing {selectedChild.name}'s learning data...</Text>
+              </View>
+            ) : !reportData ? (
+              <View style={{ alignItems: 'center', paddingVertical: 32, gap: 8 }}>
+                <Feather name="alert-circle" size={28} color={colors.accentRed} />
+                <Text style={[styles.modalDesc, { textAlign: 'center' }]}>Could not generate report. Please try again.</Text>
+              </View>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+                {/* Metrics strip */}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                  {[
+                    { label: 'XP', value: reportData.metrics.xp.toLocaleString() },
+                    { label: 'Level', value: String(reportData.metrics.level) },
+                    { label: 'Streak', value: `${reportData.metrics.currentStreak}d` },
+                    { label: 'Topics', value: String(reportData.metrics.topicsCompleted) },
+                    { label: 'Assignments', value: String(reportData.metrics.assignmentsDone) },
+                    { label: 'Active Days', value: `${reportData.metrics.activeDaysThisWeek}/7` },
+                  ].map(m => (
+                    <View key={m.label} style={{ backgroundColor: colors.bgDark, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center', minWidth: 70, borderWidth: 1, borderColor: colors.borderColor }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.primary }}>{m.value}</Text>
+                      <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2 }}>{m.label}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Summary */}
+                {reportData.report.summary ? (
+                  <View style={styles.reportSection}>
+                    <Text style={styles.reportSectionTitle}>Overview</Text>
+                    <Text style={styles.reportBody}>{reportData.report.summary}</Text>
+                  </View>
+                ) : null}
+
+                {/* Consistency */}
+                {reportData.report.consistency ? (
+                  <View style={styles.reportSection}>
+                    <Text style={styles.reportSectionTitle}>Study Consistency</Text>
+                    <Text style={styles.reportBody}>{reportData.report.consistency}</Text>
+                  </View>
+                ) : null}
+
+                {/* Assignment performance */}
+                {reportData.report.assignment_performance ? (
+                  <View style={styles.reportSection}>
+                    <Text style={styles.reportSectionTitle}>Assignment Performance</Text>
+                    <Text style={styles.reportBody}>{reportData.report.assignment_performance}</Text>
+                  </View>
+                ) : null}
+
+                {/* Strengths */}
+                {(reportData.report.strengths || []).length > 0 ? (
+                  <View style={styles.reportSection}>
+                    <Text style={styles.reportSectionTitle}>Strengths</Text>
+                    {reportData.report.strengths.map((s: string, i: number) => (
+                      <View key={i} style={styles.reportListItem}>
+                        <Feather name="check-circle" size={13} color={colors.accentGreen} style={{ marginTop: 2 }} />
+                        <Text style={[styles.reportBody, { flex: 1 }]}>{s}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+
+                {/* Areas for improvement */}
+                {(reportData.report.areas_for_improvement || []).length > 0 ? (
+                  <View style={styles.reportSection}>
+                    <Text style={styles.reportSectionTitle}>Areas for Improvement</Text>
+                    {reportData.report.areas_for_improvement.map((s: string, i: number) => (
+                      <View key={i} style={styles.reportListItem}>
+                        <Feather name="arrow-up-circle" size={13} color={colors.accentYellow} style={{ marginTop: 2 }} />
+                        <Text style={[styles.reportBody, { flex: 1 }]}>{s}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+
+                {/* Recommendations */}
+                {(reportData.report.recommendations || []).length > 0 ? (
+                  <View style={styles.reportSection}>
+                    <Text style={styles.reportSectionTitle}>Recommendations</Text>
+                    {reportData.report.recommendations.map((s: string, i: number) => (
+                      <View key={i} style={styles.reportListItem}>
+                        <Feather name="star" size={13} color={colors.accentBlue} style={{ marginTop: 2 }} />
+                        <Text style={[styles.reportBody, { flex: 1 }]}>{s}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+
+                {/* Encouragement */}
+                {reportData.report.encouragement ? (
+                  <View style={[styles.reportSection, { backgroundColor: colors.primary + '10', borderRadius: 10, padding: 14, borderWidth: 1, borderColor: colors.primary + '30' }]}>
+                    <Text style={[styles.reportSectionTitle, { color: colors.primary }]}>Share with {selectedChild.name}</Text>
+                    <Text style={[styles.reportBody, { fontStyle: 'italic' }]}>"{reportData.report.encouragement}"</Text>
+                  </View>
+                ) : null}
+
+                <View style={{ height: 8 }} />
+              </ScrollView>
+            )}
+
+            {/* Footer buttons */}
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+              <TouchableOpacity
+                style={{ flex: 1, borderRadius: 10, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: colors.borderColor }}
+                onPress={() => setReportModalVisible(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 14 }}>Close</Text>
+              </TouchableOpacity>
+              {reportData && Platform.OS === 'web' ? (
+                <TouchableOpacity
+                  style={{ flex: 1, borderRadius: 10, paddingVertical: 13, alignItems: 'center', backgroundColor: colors.primary, flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+                  onPress={downloadReportPDF}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="download" size={15} color="#fff" />
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Download PDF</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Login Credentials Modal */}
       <Modal visible={!!credsChild} transparent animationType="fade" onRequestClose={() => { setCredsChild(null); setCreds(null); }}>
@@ -865,4 +1144,23 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     minWidth: 60,
   },
   badgeLabel: { fontSize: 9, fontWeight: '600', textAlign: 'center' },
+
+  // AI Report button
+  reportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: radius.lg,
+    paddingVertical: 14,
+    marginTop: spacing.xxl,
+    marginBottom: spacing.md,
+  },
+  reportBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+
+  // AI Report modal sections
+  reportSection: { marginBottom: 16 },
+  reportSectionTitle: { fontSize: 12, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 },
+  reportBody: { fontSize: 13, color: c.textMain, lineHeight: 20 },
+  reportListItem: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', marginBottom: 6 },
 });
