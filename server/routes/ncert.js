@@ -7,7 +7,8 @@ const router  = express.Router();
 const Groq    = require('groq-sdk');
 const { client, COLLECTION } = require('../services/qdrant');
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq     = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const supabase = require('../services/supabase');
 
 // ── Static chapter metadata ────────────────────────────────────────────────
 const CHAPTERS = [
@@ -362,10 +363,23 @@ router.post('/quiz', async (req, res) => {
     const { topic, context = '', count = 5, grade = 'Grade 3', subject = 'Mathematics', difficulty = 'Easy', challengeType = '', challengeId = '' } = req.body;
     if (!topic) return res.status(400).json({ error: 'topic is required' });
 
-    // ── Serve curated questions if available for this challenge ──
+    // ── 1. Check Supabase challenge_questions table (super-admin created) ──
+    if (challengeId) {
+      const { data: dbQs } = await supabase
+        .from('challenge_questions')
+        .select('*')
+        .eq('challenge_id', challengeId)
+        .order('sort_order');
+      if (dbQs && dbQs.length > 0) {
+        const shuffled = [...dbQs].sort(() => Math.random() - 0.5);
+        console.log(`Serving ${shuffled.length} DB questions for challenge ${challengeId}`);
+        return res.json({ topic, questions: shuffled.map(q => ({ question: q.question, options: q.options, correct: q.correct, explanation: q.explanation || '' })) });
+      }
+    }
+
+    // ── 2. Fall back to curated JSON questions ──
     if (challengeId && CURATED_QUESTIONS[challengeId]) {
       const curated = CURATED_QUESTIONS[challengeId].questions;
-      // Shuffle questions so each attempt feels different
       const shuffled = [...curated].sort(() => Math.random() - 0.5);
       console.log(`Serving ${shuffled.length} curated questions for challenge ${challengeId}`);
       return res.json({ topic, questions: shuffled });

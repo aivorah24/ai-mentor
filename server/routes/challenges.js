@@ -4,11 +4,49 @@ const fs       = require('fs');
 const path     = require('path');
 const supabase = require('../services/supabase');
 
-const CHALLENGES_PATH  = path.join(__dirname, '../data/challenges.json');
 const CLOUDINARY_URLS  = path.join(__dirname, '../data/cloudinary_urls.json');
 
-function readChallenges() { try { return JSON.parse(fs.readFileSync(CHALLENGES_PATH, 'utf8')); } catch { return []; } }
 function readCloudinaryUrls() { try { return JSON.parse(fs.readFileSync(CLOUDINARY_URLS, 'utf8')); } catch { return {}; } }
+
+// Map snake_case DB row → camelCase challenge object
+function rowToChallenge(row) {
+  return {
+    id:               row.id,
+    title:            row.title,
+    description:      row.description,
+    subject:          row.subject,
+    topic:            row.topic || '',
+    grade:            row.grade,
+    curriculum:       row.curriculum,
+    category:         row.category,
+    difficulty:       row.difficulty,
+    xpReward:         row.xp_reward,
+    questionCount:    row.question_count,
+    timeLimitMinutes: row.time_limit_minutes,
+    type:             row.type || '',
+    tags:             row.tags,
+    isPublished:      row.is_published,
+    created_at:       row.created_at,
+    thumbnailUrl:     row.thumbnail_url || null,
+  };
+}
+
+// Fetch all challenges with optional grade/curriculum filters
+async function getChallenges(grade, curriculum) {
+  let query = supabase.from('challenges').select('*').eq('is_published', true);
+  if (grade)      query = query.eq('grade', grade);
+  if (curriculum) query = query.eq('curriculum', curriculum);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []).map(rowToChallenge);
+}
+
+// Fetch a single challenge by id
+async function getChallengeById(id) {
+  const { data, error } = await supabase.from('challenges').select('*').eq('id', id).single();
+  if (error || !data) return null;
+  return rowToChallenge(data);
+}
 
 function attachImageUrl(challenge) {
   const urlMap = readCloudinaryUrls();
@@ -36,9 +74,9 @@ function computeLevel(xp) {
 
 router.get('/', async (req, res) => {
   const { grade, curriculum = 'NCERT', studentId } = req.query;
-  let challenges = readChallenges();
-  if (grade)      challenges = challenges.filter(c => c.grade === grade);
-  if (curriculum) challenges = challenges.filter(c => c.curriculum === curriculum);
+  let challenges;
+  try { challenges = await getChallenges(grade, curriculum); }
+  catch (e) { return res.status(500).json({ error: e.message }); }
 
   if (!studentId) return res.json(challenges.map(attachImageUrl));
 
@@ -76,7 +114,9 @@ router.get('/assigned', async (req, res) => {
     .select('*')
     .eq('student_id', studentId);
 
-  const challenges = readChallenges();
+  let challenges;
+  try { challenges = await getChallenges(); }
+  catch (e) { return res.status(500).json({ error: e.message }); }
   const result = (assignments ?? []).map(a => {
     const ch = challenges.find(c => c.id === a.challenge_id);
     if (!ch) return null;
@@ -118,8 +158,8 @@ router.post('/assign', async (req, res) => {
   const { challengeId, studentId, assignedById, assignedByRole = 'teacher', dueDate } = req.body;
   if (!challengeId || !studentId) return res.status(400).json({ error: 'challengeId and studentId required' });
 
-  const challenges = readChallenges();
-  if (!challenges.find(c => c.id === challengeId)) return res.status(404).json({ error: 'Challenge not found' });
+  const challengeCheck = await getChallengeById(challengeId);
+  if (!challengeCheck) return res.status(404).json({ error: 'Challenge not found' });
 
   // Return existing if already assigned
   const { data: existing } = await supabase
@@ -147,7 +187,7 @@ router.post('/assign', async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
 
   // Auto-add to schedule if dueDate provided
-  const challenge = challenges.find(c => c.id === challengeId);
+  const challenge = challengeCheck;
   if (dueDate && challenge) {
     try {
       await supabase.from('schedule_events').insert({
@@ -211,7 +251,7 @@ router.post('/:assignmentId/complete', async (req, res) => {
   if (assignment.student_id !== studentId)  return res.status(403).json({ error: 'Forbidden' });
   if (assignment.status === 'completed')    return res.json({ ...assignment, xpAwarded: assignment.xp_awarded });
 
-  const challenge  = readChallenges().find(c => c.id === assignment.challenge_id);
+  const challenge  = await getChallengeById(assignment.challenge_id);
   const xpAwarded  = Math.round((challenge?.xpReward ?? 100) * (score / 100));
 
   const { data: updated } = await supabase
