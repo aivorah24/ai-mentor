@@ -713,4 +713,52 @@ router.get('/:id/performance', async (req, res) => {
   }
 });
 
+// ── POST /student/idle-logout ─────────────────────────────────────────────
+// Called when student is auto-logged out due to inactivity — notifies linked parent via message
+router.post('/idle-logout', async (req, res) => {
+  const { studentEmail, studentName } = req.body;
+  if (!studentEmail) return res.status(400).json({ error: 'studentEmail required' });
+  try {
+    // Find student's user ID
+    const { data: studentUser } = await supabase
+      .from('users')
+      .select('id, name')
+      .eq('email', studentEmail.toLowerCase().trim())
+      .maybeSingle();
+
+    const name = studentName || studentUser?.name || studentEmail;
+
+    // Find linked parent via parent_children table
+    let parentEmail = null;
+    if (studentUser?.id) {
+      const { data: link } = await supabase
+        .from('parent_children')
+        .select('parent_email')
+        .eq('child_id', studentUser.id)
+        .maybeSingle();
+      parentEmail = link?.parent_email || null;
+    }
+
+    if (parentEmail) {
+      const now = new Date().toISOString();
+      const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
+      await supabase.from('messages').insert({
+        sender_email: 'system@aivorah.com',
+        sender_name: 'Aivorah',
+        sender_role: 'teacher',
+        recipient_email: parentEmail,
+        recipient_name: parentEmail,
+        content: `[Auto-Logout] ${name} was automatically logged out of Aivorah at ${timeStr} after 5 minutes of inactivity. If this seems unexpected, you may want to check in with them.`,
+        created_at: now,
+      });
+      console.log(`[idle-logout] Message sent to parent ${parentEmail} for student ${studentEmail}`);
+    }
+
+    res.json({ success: true, parentNotified: !!parentEmail });
+  } catch (e) {
+    console.error('[idle-logout]', e.message);
+    res.json({ success: true }); // never block the logout
+  }
+});
+
 module.exports = router;
