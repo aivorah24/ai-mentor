@@ -762,3 +762,4 @@ router.post('/idle-logout', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.fetchTotalTopicsFromQdrant = fetchTotalTopicsFromQdrant;

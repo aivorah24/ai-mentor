@@ -2,6 +2,7 @@ const express  = require('express');
 const router   = express.Router();
 const supabase = require('../services/supabase');
 const { randomUUID, randomInt, randomBytes } = require('crypto');
+const { fetchTotalTopicsFromQdrant } = require('./student');
 const { sendCredentialsEmail, sendVerificationEmail, sendPasswordResetEmail } = require('../services/mailer');
 const Groq = require('groq-sdk');
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -144,9 +145,10 @@ router.get('/:parentEmail/children', async (req, res) => {
     const statsMap = {};
     (stats ?? []).forEach(s => { statsMap[s.student_id] = s; });
 
-    const children = links.map(link => {
+    const children = await Promise.all(links.map(async (link) => {
       const user = link.users ?? {};
       const s    = statsMap[link.child_id] ?? {};
+      const totalTopics = await fetchTotalTopicsFromQdrant(user.curriculum || 'IB PYP', user.grade || 'Grade 3');
       return {
         id:               link.child_id,
         name:             user.name    || 'Student',
@@ -154,6 +156,7 @@ router.get('/:parentEmail/children', async (req, res) => {
         grade:            user.grade      || 'Grade 3',
         curriculum:       user.curriculum || 'IB PYP',
         school:           user.school     || '',
+        totalTopics,
         xpPoints:         s.xp_points         ?? 0,
         level:            s.level             ?? 1,
         currentStreak:    s.current_streak    ?? 0,
@@ -165,7 +168,7 @@ router.get('/:parentEmail/children', async (req, res) => {
         lastActive:       s.last_active_date  || null,
         addedAt:          link.added_at,
       };
-    });
+    }));
 
     res.json(children);
   } catch (err) {
