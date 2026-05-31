@@ -206,6 +206,75 @@ router.get('/child-report', async (req, res) => {
   }
 });
 
+// GET /analytics/practice-trends?studentEmail=
+// Returns per-topic mistake trends for learning path practice tests — used by teacher dashboard
+router.get('/practice-trends', async (req, res) => {
+  try {
+    const studentEmail = String(req.query.studentEmail || '').toLowerCase().trim();
+    if (!studentEmail) return res.status(400).json({ error: 'studentEmail required' });
+
+    const events = await readEvents();
+    const quizEvents = events.filter(e =>
+      String(e.userEmail || '').toLowerCase() === studentEmail &&
+      (e.eventType === 'ibpyp_quiz_result' || e.eventType === 'ncert_quiz_result') &&
+      typeof e.score === 'number'
+    ).sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
+
+    // Group by topic — keep chronological order of attempts
+    const topicMap = {};
+    for (const e of quizEvents) {
+      const topic = e.topic || 'Unknown';
+      if (!topicMap[topic]) {
+        topicMap[topic] = { subject: e.subject || '', grade: e.grade || '', attempts: [] };
+      }
+      topicMap[topic].attempts.push({
+        score:               e.score,
+        firstAttemptCorrect: e.meta?.firstAttemptCorrect ?? null,
+        totalQuestions:      e.meta?.totalQuestions ?? null,
+        timestamp:           e.timestamp || '',
+      });
+    }
+
+    // Compute trend per topic
+    const topics = {};
+    for (const [topic, t] of Object.entries(topicMap)) {
+      const attempts = t.attempts;
+      const firstScore  = attempts[0]?.score ?? null;
+      const latestScore = attempts[attempts.length - 1]?.score ?? null;
+      const attemptCount = attempts.length;
+
+      // Trend: compare last 2 attempts
+      let trend = 'stable';
+      if (attempts.length >= 2) {
+        const diff = attempts[attempts.length - 1].score - attempts[attempts.length - 2].score;
+        if (diff >= 10)       trend = 'improving';
+        else if (diff <= -10) trend = 'declining';
+      }
+
+      // First attempt mistakes = questions wrong on first try
+      const firstAttemptData = attempts[0];
+      const firstAttemptMistakes = (firstAttemptData?.totalQuestions != null && firstAttemptData?.firstAttemptCorrect != null)
+        ? firstAttemptData.totalQuestions - firstAttemptData.firstAttemptCorrect
+        : null;
+
+      topics[topic] = {
+        subject:              t.subject,
+        grade:                t.grade,
+        attemptCount,
+        firstScore,
+        latestScore,
+        trend,                // 'improving' | 'declining' | 'stable'
+        firstAttemptMistakes, // how many wrong on very first try
+        scores:               attempts.map(a => a.score),
+      };
+    }
+
+    res.json({ studentEmail, topics });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /analytics/summary (admin)
 router.get('/summary', requireAdminAccess, async (_req, res) => {
   try {

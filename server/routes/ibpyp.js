@@ -225,6 +225,9 @@ router.post('/track-result', async (req, res) => {
       totalQuestions,
       correctAnswers,
       role = 'student',
+      firstAttemptCorrect,   // questions correct on first try (no hints used)
+      attemptNumber,         // which attempt number is this? (1st, 2nd, 3rd time redoing quiz)
+      perQuestionAttempts,   // array like [1, 2, 1, 3, 1] — tries per question
     } = req.body;
 
     await logEvent('ibpyp_quiz_result', {
@@ -233,7 +236,7 @@ router.post('/track-result', async (req, res) => {
       status: 'success',
       topic, subject, grade,
       score,
-      meta: { totalQuestions, correctAnswers },
+      meta: { totalQuestions, correctAnswers, firstAttemptCorrect, attemptNumber, perQuestionAttempts },
     });
 
     res.json({ ok: true });

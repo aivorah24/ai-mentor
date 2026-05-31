@@ -28,7 +28,7 @@ type Student = {
   xpPoints: number; level: number; currentStreak: number;
   studyTime: number; completedTopics: string[]; progressPct: number;
   assignmentsDone: number; lastActive: string; needsAttention: boolean;
-  totalTopics?: number;
+  totalTopics?: number; email?: string;
 };
 
 function initials(name: string) {
@@ -476,6 +476,8 @@ export default function TeacherProgressScreen({ navigation }: any) {
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'All' | 'At Risk' | 'On Track'>('All');
+  const [practiceTrends, setPracticeTrends] = useState<Record<string, any>>({});
+  const [loadingTrends, setLoadingTrends] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -488,6 +490,20 @@ export default function TeacherProgressScreen({ navigation }: any) {
   }, [user]);
 
   useEffect(() => { load(); }, [load]);
+
+  async function fetchPracticeTrends(studentEmail: string) {
+    if (practiceTrends[studentEmail] || loadingTrends === studentEmail) return;
+    setLoadingTrends(studentEmail);
+    try {
+      const res = await fetch(`${SERVER_URL}/analytics/practice-trends?studentEmail=${encodeURIComponent(studentEmail)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPracticeTrends(prev => ({ ...prev, [studentEmail]: data.topics || {} }));
+      }
+    } catch {/* */} finally {
+      setLoadingTrends(null);
+    }
+  }
 
   useEffect(() => {
     const unsub1 = navigation.addListener('focus', load);
@@ -592,7 +608,10 @@ export default function TeacherProgressScreen({ navigation }: any) {
                   key={s.id}
                   style={[styles.studentCard, s.needsAttention && { borderColor: P.rose + '50' }]}
                   activeOpacity={0.9}
-                  onPress={() => setExpanded(isExpanded ? null : s.id)}
+                  onPress={() => {
+                    setExpanded(isExpanded ? null : s.id);
+                    if (!isExpanded && s.email) fetchPracticeTrends(s.email);
+                  }}
                 >
                   {/* Top row */}
                   <View style={styles.studentTop}>
@@ -681,6 +700,48 @@ export default function TeacherProgressScreen({ navigation }: any) {
                           ))}
                         </View>
                       )}
+
+                      {/* Practice Trends — mistake tracking per topic */}
+                      {(() => {
+                        const trends = practiceTrends[s.email] || {};
+                        const trendTopics = Object.entries(trends);
+                        if (loadingTrends === s.email) return (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                            <ActivityIndicator size="small" color={P.teal} />
+                            <Text style={{ fontSize: 12, color: c.textDim }}>Loading practice trends...</Text>
+                          </View>
+                        );
+                        if (trendTopics.length === 0) return null;
+                        return (
+                          <View style={{ marginBottom: 12, gap: 6 }}>
+                            <Text style={styles.topicsTitle}>Practice Test Performance</Text>
+                            {trendTopics.map(([topic, t]: [string, any]) => {
+                              const trendIcon = t.trend === 'improving' ? 'trending-up' : t.trend === 'declining' ? 'trending-down' : 'minus';
+                              const trendColor = t.trend === 'improving' ? P.green : t.trend === 'declining' ? P.rose : c.textDim;
+                              return (
+                                <View key={topic} style={{ flexDirection: 'row', alignItems: 'center', gap: 10,
+                                  padding: 10, borderRadius: 10, borderWidth: 1,
+                                  borderColor: trendColor + '30', backgroundColor: trendColor + '08' }}>
+                                  <Feather name={trendIcon as any} size={14} color={trendColor} />
+                                  <View style={{ flex: 1 }}>
+                                    <Text style={{ fontSize: 12, fontWeight: '700', color: c.textMain }} numberOfLines={1}>{topic}</Text>
+                                    <Text style={{ fontSize: 11, color: c.textDim, marginTop: 1 }}>
+                                      {t.attemptCount} attempt{t.attemptCount !== 1 ? 's' : ''}
+                                      {t.firstScore != null ? `  ·  First: ${t.firstScore}%` : ''}
+                                      {t.latestScore != null && t.attemptCount > 1 ? `  →  Latest: ${t.latestScore}%` : ''}
+                                      {t.firstAttemptMistakes != null ? `  ·  ${t.firstAttemptMistakes} mistake${t.firstAttemptMistakes !== 1 ? 's' : ''} on 1st try` : ''}
+                                    </Text>
+                                  </View>
+                                  <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                                    <Text style={{ fontSize: 13, fontWeight: '800', color: trendColor }}>{t.latestScore ?? t.firstScore ?? '—'}%</Text>
+                                    <Text style={{ fontSize: 10, color: trendColor, fontWeight: '600', textTransform: 'uppercase' }}>{t.trend}</Text>
+                                  </View>
+                                </View>
+                              );
+                            })}
+                          </View>
+                        );
+                      })()}
 
                       {/* Progress bar with milestones */}
                       <View style={{ gap: 6 }}>
