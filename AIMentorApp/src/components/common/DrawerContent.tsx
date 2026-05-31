@@ -76,7 +76,7 @@ const THEME_OPTIONS: { id: ThemeMode; icon: string; label: string }[] = [
 
 const SUPER_ADMIN_NAV_ITEMS = [
   { label: 'Dashboard',         icon: 'grid',           screen: 'TeacherDashboard',    group: 'MENU' },
-  { label: 'Students',          icon: 'users',          screen: 'TeacherStudents',     group: 'MENU' },
+  { label: 'Student Manager',   icon: 'users',          screen: 'SuperAdminStudents',  group: 'MENU' },
   { label: 'Assignments',       icon: 'check-square',   screen: 'TeacherAssignments',  group: 'MENU' },
   { label: 'Challenges',        icon: 'target',         screen: 'TeacherChallenges',   group: 'MENU' },
   { label: 'Challenge Manager', icon: 'shield',         screen: 'ChallengeManager',    group: 'MENU' },

@@ -421,8 +421,10 @@ function ThemedRoot() {
                     TeacherSettings: 'teacher/settings',
                     TeacherMessages: 'teacher/messages',
                     ChallengeManager: 'super-admin/challenges',
+                    SuperAdminStudents: 'super-admin/students',
                     ProjectDetails: 'teacher/project-details',
                     // Parent screens
+                    ParentStudentView: 'parent/student-view',
                     ParentDashboard: 'parent/dashboard',
                     ParentProfile: 'parent/profile',
                     ParentMyKids: 'parent/my-kids',

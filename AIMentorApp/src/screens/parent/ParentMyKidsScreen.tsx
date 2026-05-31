@@ -49,7 +49,7 @@ function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onMana
     <TouchableOpacity
       style={styles.childCard}
       activeOpacity={0.9}
-      onPress={() => navigation.navigate('ParentDashboard', { childId: child.id })}
+      onPress={() => navigation.navigate('ParentStudentView', { childData: child })}
     >
       <View style={styles.childCardHeader}>
         <View style={[styles.avatar, { backgroundColor: badgeColor + '20' }]}>
@@ -128,7 +128,7 @@ function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onMana
 
       <View style={styles.quickNav}>
         {[
-          { icon: 'grid', label: 'Dashboard', screen: 'ParentDashboard' },
+          { icon: 'grid', label: 'Dashboard', screen: 'ParentStudentView' },
           { icon: 'book-open', label: 'Learning', screen: 'ParentLearning' },
           { icon: 'bar-chart-2', label: 'Progress', screen: 'ParentProgress' },
           { icon: 'calendar', label: 'Schedule', screen: 'ParentSchedule' },
@@ -136,7 +136,9 @@ function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onMana
           <TouchableOpacity
             key={btn.label}
             style={styles.quickBtn}
-            onPress={() => navigation.navigate(btn.screen, { childId: child.id })}
+            onPress={() => btn.screen === 'ParentStudentView'
+              ? navigation.navigate(btn.screen, { childData: child })
+              : navigation.navigate(btn.screen, { childId: child.id })}
             activeOpacity={0.7}
           >
             <Feather name={btn.icon as any} size={14} color={colors.primary} />

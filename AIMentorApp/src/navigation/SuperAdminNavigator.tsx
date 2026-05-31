@@ -18,6 +18,7 @@ import TeacherVideoLibraryScreen from '../screens/teacher/TeacherVideoLibraryScr
 import TeacherMessagesScreen from '../screens/teacher/TeacherMessagesScreen';
 import ProjectDetailsScreen from '../screens/teacher/ProjectDetailsScreen';
 import ChallengeManagerScreen from '../screens/teacher/ChallengeManagerScreen';
+import SuperAdminStudentsScreen from '../screens/teacher/SuperAdminStudentsScreen';
 
 export type SuperAdminDrawerParamList = {
   TeacherDashboard: undefined;
@@ -34,6 +35,7 @@ export type SuperAdminDrawerParamList = {
   TeacherMessages: undefined;
   ProjectDetails: undefined;
   ChallengeManager: undefined;
+  SuperAdminStudents: undefined;
 };
 
 const Drawer = createDrawerNavigator<SuperAdminDrawerParamList>();
@@ -74,6 +76,7 @@ export default function SuperAdminNavigator() {
       <Drawer.Screen name="TeacherMessages" component={TeacherMessagesScreen} />
       <Drawer.Screen name="ProjectDetails" component={ProjectDetailsScreen} />
       <Drawer.Screen name="ChallengeManager" component={ChallengeManagerScreen} />
+      <Drawer.Screen name="SuperAdminStudents" component={SuperAdminStudentsScreen} />
     </Drawer.Navigator>
   );
 }

@@ -17,6 +17,7 @@ import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useResponsive } from '../../hooks/useResponsive';
 import SERVER_URL from '../../config/serverUrl';
 
 // ── Subject meta — light pastels ─────────────────────────────────────────────
@@ -191,12 +192,14 @@ function SubjectCard({
   analyticsReport,
   isExpanded,
   onToggle,
+  width,
 }: {
   sub: any;
   completedSet: Set<string>;
   analyticsReport: ChildReport | null;
   isExpanded: boolean;
   onToggle: () => void;
+  width?: `${number}%` | number;
 }) {
   const meta    = subjectMeta(sub.subject);
   const accent  = meta.accentDark;
@@ -210,7 +213,7 @@ function SubjectCard({
   const pct     = sub.topicCount > 0 ? Math.round((done / sub.topicCount) * 100) : 0;
 
   return (
-    <View style={cardStyles.wrapper}>
+    <View style={[cardStyles.wrapper, width ? { width } : undefined]}>
       <LinearGradient
         colors={[meta.bgFromDark, meta.bgToDark]}
         start={{ x: 0, y: 0 }}
@@ -272,7 +275,7 @@ function SubjectCard({
 }
 
 const cardStyles = StyleSheet.create({
-  wrapper:     { marginBottom: spacing.md, borderRadius: 16, overflow: 'hidden' },
+  wrapper:     { borderRadius: 16, overflow: 'hidden' },
   gradient:    { borderRadius: 16 },
   header:      { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   iconWrap:    { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
@@ -291,7 +294,9 @@ const cardStyles = StyleSheet.create({
 export default function ParentLearningScreen({ navigation, route }: any) {
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
+  const { isMobile } = useResponsive();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const cardWidth = (isMobile ? '100%' : '48.7%') as `${number}%`;
   const parentEmail = user?.email || 'parent@demo.com';
 
   const [children, setChildren]               = useState<any[]>([]);
@@ -456,16 +461,19 @@ export default function ParentLearningScreen({ navigation, route }: any) {
                   <Text style={styles.emptyText}>No content found for {childCurriculum || 'this curriculum'} {childGrade}.{'\n'}Content will appear once ingested.</Text>
                 </View>
               ) : (
-                subjects.map((sub) => (
-                  <SubjectCard
-                    key={sub.subject}
-                    sub={sub}
-                    completedSet={completedSet}
-                    analyticsReport={analyticsReport}
-                    isExpanded={expandedSubject === sub.subject}
-                    onToggle={() => setExpandedSubject(prev => prev === sub.subject ? null : sub.subject)}
-                  />
-                ))
+                <View style={styles.subjectGrid}>
+                  {subjects.map((sub) => (
+                    <SubjectCard
+                      key={sub.subject}
+                      sub={sub}
+                      completedSet={completedSet}
+                      analyticsReport={analyticsReport}
+                      isExpanded={expandedSubject === sub.subject}
+                      onToggle={() => setExpandedSubject(prev => prev === sub.subject ? null : sub.subject)}
+                      width={cardWidth}
+                    />
+                  ))}
+                </View>
               )}
             </>
           )}
@@ -480,6 +488,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   scroll:  { flex: 1 },
   content: { padding: spacing.xl, paddingBottom: 48, gap: spacing.lg },
 
+  subjectGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12 },
   childRow: { flexDirection: 'row' },
   childTab: {
     alignItems: 'center', marginRight: spacing.md,
