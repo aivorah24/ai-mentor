@@ -1,0 +1,1234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aivorah Admin Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg:      #0b0f14;
+      --card:    #141920;
+      --card2:   #1a2028;
+      --border:  #232c36;
+      --text:    #e8eef0;
+      --muted:   #7a9490;
+      --dim:     #4a6060;
+      --teal:    #93B0AC;
+      --teal2:   #5F8A86;
+      --mint:    #7AADA8;
+      --rose:    #EFD1D4;
+      --gold:    #C5BD96;
+      --violet:  #9B7FD4;
+      --coral:   #C47A68;
+      --forest:  #5A8A70;
+      --red:     #e05252;
+      --green:   #52c07a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; }
+
+    /* ── Layout ─────────────────────────────────── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 28px; border-bottom: 1px solid var(--border);
+      background: var(--card); position: sticky; top: 0; z-index: 10;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 14px; }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-mark {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--teal2), var(--mint));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; background: var(--teal2); color: #fff; text-transform: uppercase; letter-spacing: 0.5px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .last-updated { font-size: 12px; color: var(--muted); }
+    .btn-refresh {
+      background: var(--teal2); color: #fff; border: none; border-radius: 8px;
+      padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-refresh:hover { opacity: 0.85; }
+    .btn-export {
+      background: transparent; color: var(--teal); border: 1px solid var(--teal2);
+      border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-export:hover { background: rgba(93,138,134,0.12); }
+
+    .wrap { max-width: 1600px; margin: 0 auto; padding: 24px 28px; }
+
+    /* ── Section header ─────────────────────────── */
+    .section-title { font-size: 11px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; margin-top: 28px; }
+
+    /* ── KPI Cards ──────────────────────────────── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+    .kpi {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 18px 16px; position: relative; overflow: hidden; transition: transform .15s;
+    }
+    .kpi:hover { transform: translateY(-2px); }
+    .kpi::before { content:''; position: absolute; top:0; left:0; right:0; height: 3px; border-radius: 14px 14px 0 0; }
+    .kpi.c1::before { background: linear-gradient(90deg, var(--teal), var(--mint)); }
+    .kpi.c2::before { background: linear-gradient(90deg, var(--mint), #7AADA8); }
+    .kpi.c3::before { background: linear-gradient(90deg, var(--gold), #d4c96e); }
+    .kpi.c4::before { background: linear-gradient(90deg, var(--rose), #e8a0a8); }
+    .kpi.c5::before { background: linear-gradient(90deg, var(--violet), #b89ee0); }
+    .kpi.c6::before { background: linear-gradient(90deg, var(--coral), #d4906a); }
+    .kpi-val { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+    .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .kpi-sub { font-size: 11px; color: var(--dim); margin-top: 6px; }
+    .kpi-icon { position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center; }
+
+    /* ── Chart grid ─────────────────────────────── */
+    .chart-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .chart-grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+    .chart-grid-2r { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; }
+    .chart-grid-half { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .chart-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 20px; display: flex; flex-direction: column;
+    }
+    .chart-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .chart-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+    .chart-wrap { position: relative; flex: 1; min-height: 200px; }
+    .chart-wrap canvas { max-height: 220px; }
+
+    /* ── Onboarding bars ────────────────────────── */
+    .onboard-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .onboard-label { font-size: 12px; color: var(--muted); width: 68px; text-transform: capitalize; }
+    .onboard-bar-bg { flex: 1; height: 10px; background: var(--border); border-radius: 6px; overflow: hidden; }
+    .onboard-bar { height: 100%; border-radius: 6px; transition: width .6s ease; }
+    .onboard-pct { font-size: 12px; font-weight: 700; width: 38px; text-align: right; }
+
+    /* ── Feedback ───────────────────────────────── */
+    .feedback-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .feedback-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .feedback-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .feedback-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .feedback-icon.content { background: rgba(147,176,172,0.15); }
+    .feedback-icon.platform { background: rgba(155,127,212,0.15); }
+    .feedback-title { font-size: 13px; font-weight: 700; }
+    .feedback-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .sentiment-row { display: flex; gap: 10px; margin-bottom: 14px; }
+    .sentiment-pill {
+      flex: 1; border-radius: 10px; padding: 10px; text-align: center;
+      border: 1px solid var(--border);
+    }
+    .sentiment-pill.pos { background: rgba(82,192,122,0.08); border-color: rgba(82,192,122,0.2); }
+    .sentiment-pill.neu { background: rgba(197,189,150,0.08); border-color: rgba(197,189,150,0.2); }
+    .sentiment-pill.neg { background: rgba(224,82,82,0.08); border-color: rgba(224,82,82,0.2); }
+    .sentiment-val { font-size: 22px; font-weight: 700; }
+    .sentiment-val.pos { color: var(--green); }
+    .sentiment-val.neu { color: var(--gold); }
+    .sentiment-val.neg { color: var(--red); }
+    .sentiment-label { font-size: 10px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .recent-feedback { display: flex; flex-direction: column; gap: 8px; }
+    .feedback-item { background: var(--card2); border-radius: 8px; padding: 10px 12px; }
+    .feedback-item-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .score-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .feedback-email { font-size: 11px; color: var(--muted); flex: 1; }
+    .feedback-time { font-size: 10px; color: var(--dim); }
+    .feedback-comment { font-size: 12px; color: var(--text); line-height: 1.5; }
+    .no-feedback { font-size: 13px; color: var(--dim); text-align: center; padding: 24px 0; }
+
+    /* ── Tables ─────────────────────────────────── */
+    .table-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+    .table-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .table-head-title { font-size: 13px; font-weight: 700; }
+    .table-head-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { padding: 10px 16px; text-align: left; font-size: 10px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 16px; border-bottom: 1px solid rgba(35,44,54,0.6); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; border: 1px solid; }
+    .pill-teal { background: rgba(147,176,172,0.1); border-color: rgba(147,176,172,0.3); color: var(--teal); }
+    .pill-gold { background: rgba(197,189,150,0.1); border-color: rgba(197,189,150,0.3); color: var(--gold); }
+    .pill-violet { background: rgba(155,127,212,0.1); border-color: rgba(155,127,212,0.3); color: var(--violet); }
+    .pill-rose { background: rgba(239,209,212,0.1); border-color: rgba(239,209,212,0.3); color: var(--rose); }
+    .ok { color: var(--green); font-weight: 600; }
+    .bad { color: var(--red); font-weight: 600; }
+    .filter-tabs { display: flex; gap: 8px; }
+    .filter-tab { background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
+    .filter-tab:hover { border-color: var(--teal2); color: var(--teal); }
+    .filter-tab.active { background: var(--teal2); border-color: var(--teal2); color: #fff; }
+    .xp-bar-bg { width: 80px; height: 5px; background: var(--border); border-radius: 3px; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    .xp-bar { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--teal2), var(--mint)); }
+
+    /* ── Loading / Error ────────────────────────── */
+    .loader { display: flex; align-items: center; justify-content: center; height: 300px; gap: 12px; color: var(--muted); }
+    .spinner { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 1200px) {
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+      .chart-grid-3 { grid-template-columns: 1fr 1fr; }
+      .chart-grid-2, .chart-grid-2r { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .chart-grid-half, .feedback-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">
+      <div class="logo-mark">⚡</div>
+      <span class="logo-text">Aivorah</span>
+    </div>
+    <span class="badge">Admin</span>
+  </div>
+  <div class="topbar-right">
+    <span class="last-updated" id="lastUpdated">Loading...</span>
+    <a class="btn-export" id="exportCsv" href="#">⬇ Export CSV</a>
+    <button class="btn-refresh" onclick="loadAll()">↻ Refresh</button>
+  </div>
+</div>
+
+<div class="wrap" id="mainWrap">
+  <div class="loader"><div class="spinner"></div> Loading dashboard…</div>
+</div>
+
+<div class="wrap">
+  <div class="section-title" style="margin-top:0">Map Students to Teacher</div>
+  <div class="table-card" style="padding:20px" id="assignSection">
+    <div class="table-head" style="border-bottom:none;padding:0 0 16px 0">
+      <div>
+        <div class="table-head-title">Assign Students to a Teacher</div>
+        <div class="table-head-sub">Filter by school · grade · section — then pick a teacher and assign in one click</div>
+      </div>
+    </div>
+    <div id="assign-ui"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="section-title" style="margin-top:0">Bulk Student Import</div>
+  <div class="table-card" style="padding:20px">
+    <div class="table-head" style="border-bottom:none;padding:0 0 16px 0">
+      <div>
+        <div class="table-head-title">Add Multiple Students at Once</div>
+        <div class="table-head-sub">Create accounts with class, section &amp; curriculum — assign to teachers later</div>
+      </div>
+    </div>
+    <div id="bulk-import-section"></div>
+  </div>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search || '');
+if (!params.get('email')) {
+  const e = window.prompt('Enter admin email');
+  if (e) { params.set('email', e.trim()); window.location.search = params.toString(); }
+}
+const qs = `?${params.toString()}`;
+const api = p => `${p}${qs}`;
+const adminEmail = params.get('email') || '';
+
+document.getElementById('exportCsv').href = api('/admin/export/students.csv');
+
+// Chart.js global defaults
+Chart.defaults.color = '#7a9490';
+Chart.defaults.borderColor = '#232c36';
+Chart.defaults.font.family = 'Segoe UI, system-ui, sans-serif';
+
+// Register datalabels plugin globally
+Chart.register(ChartDataLabels);
+
+// Mask email: sai***@gmail.com
+function maskEmail(email) {
+  if (!email || !email.includes('@')) return email || '—';
+  const [local, domain] = email.split('@');
+  const visible = local.slice(0, Math.min(3, local.length));
+  return `${visible}***@${domain}`;
+}
+
+// Mask phone: keep last 4 digits
+function maskPhone(phone) {
+  if (!phone) return '—';
+  const s = String(phone).replace(/\D/g,'');
+  return s.length > 4 ? `****${s.slice(-4)}` : '****';
+}
+
+const COLORS = {
+  teal:   '#93B0AC', teal2:  '#5F8A86', mint:   '#7AADA8',
+  rose:   '#EFD1D4', gold:   '#C5BD96', violet: '#9B7FD4',
+  coral:  '#C47A68', forest: '#5A8A70', silver: '#DBD9DA',
+  green:  '#52c07a', red:    '#e05252',
+};
+const PALETTE = [COLORS.teal, COLORS.gold, COLORS.rose, COLORS.violet, COLORS.coral, COLORS.forest, COLORS.mint, COLORS.silver];
+
+let charts = {};
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function mkChart(id, config) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, config);
+  return charts[id];
+}
+
+async function loadAll() {
+  document.getElementById('lastUpdated').textContent = 'Refreshing…';
+  try {
+    const [overviewRes, analyticsRes, chartsRes] = await Promise.all([
+      fetch(api('/admin/overview')),
+      fetch(api('/analytics/summary')),
+      fetch(api('/admin/charts-data')),
+    ]);
+
+    if (!overviewRes.ok) throw new Error(`Overview: ${overviewRes.status}`);
+    const [overview, analytics, chartsData] = await Promise.all([
+      overviewRes.json(), analyticsRes.json(), chartsRes.json(),
+    ]);
+
+    renderDashboard(overview, analytics, chartsData);
+    document.getElementById('lastUpdated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+  } catch (err) {
+    document.getElementById('mainWrap').innerHTML = `<div style="padding:40px;color:var(--red);text-align:center;">
+      <div style="font-size:32px;margin-bottom:12px;">⚠</div>
+      <div style="font-size:16px;font-weight:600;">Dashboard load failed</div>
+      <div style="margin-top:8px;color:var(--muted);font-size:13px;">${err.message}</div>
+    </div>`;
+    document.getElementById('lastUpdated').textContent = 'Error loading';
+  }
+}
+
+function renderDashboard(ov, an, cd) {
+  const { counts, students = [], teachers = [], parents = [] } = ov;
+  const onboardRate = counts.students > 0 ? Math.round((students.filter(s=>s.onboardingComplete).length / counts.students) * 100) : 0;
+  const totalXP = students.reduce((s,u) => s + (u.xpPoints||0), 0);
+  const avgStreak = students.length ? Math.round(students.reduce((s,u)=>s+(u.currentStreak||0),0)/students.length) : 0;
+
+  // Build student name lookup from overview
+  const studentNameMap = {};
+  for (const s of students) if (s.id) studentNameMap[s.id] = s.name || s.email || s.id;
+
+  document.getElementById('mainWrap').innerHTML = buildHTML(counts, onboardRate, totalXP, avgStreak, students, teachers, parents, an, cd);
+
+  // Re-attach export link
+  document.getElementById('exportCsv').href = api('/admin/export/students.csv');
+
+  // ── Charts ───────────────────────────────────────────────
+
+  const donutDatalabels = {
+    datalabels: {
+      color: '#fff',
+      font: { size: 12, weight: '700' },
+      formatter: (value) => value > 0 ? value : '',
+      anchor: 'center',
+      align: 'center',
+    },
+    legend: { position: 'bottom', labels: { padding: 14, font: { size: 11 } } },
+  };
+
+  // 1. Role donut
+  mkChart('chartRoles', {
+    type: 'doughnut',
+    data: {
+      labels: ['Students', 'Teachers', 'Parents'],
+      datasets: [{ data: [counts.students, counts.teachers, counts.parents], backgroundColor: [COLORS.teal, COLORS.gold, COLORS.rose], borderWidth: 2, borderColor: '#141920' }],
+    },
+    options: { plugins: donutDatalabels, cutout: '60%' },
+  });
+
+  // 2. Curriculum donut
+  const currKeys = Object.keys(cd.curriculumMap || {});
+  mkChart('chartCurriculum', {
+    type: 'doughnut',
+    data: {
+      labels: currKeys,
+      datasets: [{ data: currKeys.map(k => cd.curriculumMap[k]), backgroundColor: PALETTE, borderWidth: 2, borderColor: '#141920' }],
+    },
+    options: { plugins: donutDatalabels, cutout: '60%' },
+  });
+
+  // 3. Grade bar
+  const gradeKeys = Object.keys(cd.gradeMap || {}).sort();
+  mkChart('chartGrades', {
+    type: 'bar',
+    data: {
+      labels: gradeKeys,
+      datasets: [{ label: 'Students', data: gradeKeys.map(k => cd.gradeMap[k]), backgroundColor: COLORS.mint, borderRadius: 6, borderSkipped: false }],
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+        datalabels: { color: '#fff', anchor: 'end', align: 'start', font: { size: 11, weight: '700' }, formatter: v => v > 0 ? v : '' },
+      },
+      scales: { x: { grid: { display: false } }, y: { ticks: { stepSize: 1 }, beginAtZero: true } },
+    },
+  });
+
+  // 4. Top students by XP (bar)
+  const topStudents = (cd.topXP || []).map(s => ({ ...s, name: (studentNameMap[s.id] || s.id || 'Unknown').split(' ')[0] }));
+  mkChart('chartXP', {
+    type: 'bar',
+    data: {
+      labels: topStudents.map(s => s.name),
+      datasets: [{
+        label: 'XP Points',
+        data: topStudents.map(s => s.xp),
+        backgroundColor: topStudents.map((_, i) => PALETTE[i % PALETTE.length] + 'cc'),
+        borderRadius: 8, borderSkipped: false,
+      }],
+    },
+    options: { indexAxis: 'y', plugins: { legend: { display: false }, datalabels: { color: '#fff', anchor: 'end', align: 'start', font: { size: 11, weight: '700' }, formatter: v => v > 0 ? v : '' } }, scales: { x: { beginAtZero: true }, y: { grid: { display: false } } } },
+  });
+
+  // 5. Study time bar
+  mkChart('chartStudyTime', {
+    type: 'bar',
+    data: {
+      labels: topStudents.map(s => s.name),
+      datasets: [{
+        label: 'Study Time (min)',
+        data: topStudents.map(s => s.studyTime),
+        backgroundColor: COLORS.violet + 'cc',
+        borderRadius: 6, borderSkipped: false,
+      }],
+    },
+    options: { plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } },
+  });
+
+  // 6. Assignments last 7 days
+  const last7 = cd.assignmentsLast7 || [];
+  mkChart('chartAssignments', {
+    type: 'line',
+    data: {
+      labels: last7.map(d => d.date),
+      datasets: [{
+        label: 'Assignments',
+        data: last7.map(d => d.count),
+        borderColor: COLORS.coral,
+        backgroundColor: COLORS.coral + '22',
+        fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: COLORS.coral,
+      }],
+    },
+    options: { plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+  });
+
+  // 7. AI Metrics bar
+  const aiM = (an.aiMetrics || []).filter(m => m.total > 0);
+  if (aiM.length > 0) {
+    mkChart('chartAI', {
+      type: 'bar',
+      data: {
+        labels: aiM.map(m => m.eventType.replace('ai_','').replace(/_/g,' ')),
+        datasets: [
+          { label: 'Success', data: aiM.map(m => m.success), backgroundColor: COLORS.green + 'cc', borderRadius: 4 },
+          { label: 'Failed',  data: aiM.map(m => m.failed),  backgroundColor: COLORS.red   + 'cc', borderRadius: 4 },
+        ],
+      },
+      options: { plugins: { legend: { position: 'top', labels: { font: { size: 11 } } }, datalabels: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, stacked: false } } },
+    });
+  }
+
+  // Onboarding bars (animated via CSS)
+  setTimeout(() => {
+    const roles = ['student', 'teacher', 'parent'];
+    const onData = cd.onboarding || {};
+    roles.forEach(r => {
+      const d = onData[r] || { done: 0, total: 0 };
+      const pct = d.total > 0 ? Math.round((d.done / d.total) * 100) : 0;
+      const bar = document.getElementById(`onbar_${r}`);
+      const pctEl = document.getElementById(`onpct_${r}`);
+      if (bar) bar.style.width = `${pct}%`;
+      if (pctEl) pctEl.textContent = `${pct}%`;
+    });
+  }, 100);
+}
+
+function buildHTML(counts, onboardRate, totalXP, avgStreak, students, teachers, parents, an, cd) {
+  const assignStats = cd.assignmentStats || {};
+
+  // B2B vs B2C: B2B = students with a school, B2C = parent-enrolled (no school)
+  const b2bStudents = students.filter(s => s.school && s.school !== '—' && s.school !== '');
+  const b2cStudents = students.filter(s => !s.school || s.school === '—' || s.school === '');
+
+  // School drill-down: group students by school
+  const schoolMap = {};
+  for (const s of b2bStudents) {
+    const name = s.school;
+    if (!schoolMap[name]) schoolMap[name] = { students: 0, teachers: 0, avgXP: 0, totalXP: 0 };
+    schoolMap[name].students++;
+    schoolMap[name].totalXP += (s.xpPoints || 0);
+  }
+  for (const t of teachers) {
+    if (t.school && t.school !== '—') {
+      if (!schoolMap[t.school]) schoolMap[t.school] = { students: 0, teachers: 0, avgXP: 0, totalXP: 0 };
+      schoolMap[t.school].teachers++;
+    }
+  }
+  for (const k of Object.keys(schoolMap)) {
+    schoolMap[k].avgXP = schoolMap[k].students > 0 ? Math.round(schoolMap[k].totalXP / schoolMap[k].students) : 0;
+  }
+  const schools = Object.entries(schoolMap).sort((a,b) => b[1].students - a[1].students);
+
+  return `
+  <!-- KPIs -->
+  <div class="section-title">Platform Overview</div>
+  <div class="kpi-grid">
+    <div class="kpi c1"><div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#93B0AC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="kpi-val">${counts.users}</div><div class="kpi-label">Total Users</div><div class="kpi-sub">Registered accounts</div></div>
+    <div class="kpi c2"><div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7AADA8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div><div class="kpi-val">${counts.students}</div><div class="kpi-label">Students</div><div class="kpi-sub">Active learners</div></div>
+    <div class="kpi c3"><div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C5BD96" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8h.01M11 8h6M7 12h.01M11 12h6"/></svg></div><div class="kpi-val">${counts.teachers}</div><div class="kpi-label">Teachers</div><div class="kpi-sub">Educators onboard</div></div>
+    <div class="kpi c4"><div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EFD1D4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><div class="kpi-val">${counts.parents}</div><div class="kpi-label">Parents</div><div class="kpi-sub">Family engaged</div></div>
+    <div class="kpi c5"><div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B7FD4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="kpi-val">${totalXP.toLocaleString()}</div><div class="kpi-label">Total XP Earned</div><div class="kpi-sub">Across all students</div></div>
+    <div class="kpi c6"><div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C47A68" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><div class="kpi-val">${assignStats.total || 0}</div><div class="kpi-label">Assignments</div><div class="kpi-sub">${assignStats.completed || 0} completed</div></div>
+  </div>
+
+  <!-- B2B vs B2C -->
+  <div class="section-title">B2B vs B2C Split</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi c2">
+      <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7AADA8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
+      <div class="kpi-val" style="color:var(--mint)">${b2bStudents.length}</div>
+      <div class="kpi-label">B2B Students</div>
+      <div class="kpi-sub">School-enrolled</div>
+    </div>
+    <div class="kpi c4">
+      <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EFD1D4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+      <div class="kpi-val" style="color:var(--rose)">${b2cStudents.length}</div>
+      <div class="kpi-label">B2C Students</div>
+      <div class="kpi-sub">Parent-enrolled (direct)</div>
+    </div>
+    <div class="kpi c3">
+      <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C5BD96" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+      <div class="kpi-val" style="color:var(--gold)">${schools.length}</div>
+      <div class="kpi-label">Schools</div>
+      <div class="kpi-sub">Institutions onboard</div>
+    </div>
+    <div class="kpi c5">
+      <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B7FD4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+      <div class="kpi-val" style="color:var(--violet)">${counts.students > 0 ? Math.round(b2bStudents.length/counts.students*100) : 0}%</div>
+      <div class="kpi-label">B2B Share</div>
+      <div class="kpi-sub">Of total students</div>
+    </div>
+  </div>
+
+  <!-- School Drill-Down -->
+  ${schools.length > 0 ? `
+  <div class="section-title">School Drill-Down</div>
+  <div class="table-card">
+    <div class="table-head">
+      <div><div class="table-head-title">Schools (${schools.length})</div><div class="table-head-sub">Students and teachers per institution</div></div>
+    </div>
+    <table>
+      <thead><tr><th>School</th><th>Students</th><th>Teachers</th><th>Avg XP / Student</th><th>Total XP</th></tr></thead>
+      <tbody>
+        ${schools.map(([name, info]) => `<tr>
+          <td style="font-weight:600">${name}</td>
+          <td><span class="pill pill-teal">${info.students}</span></td>
+          <td><span class="pill pill-gold">${info.teachers}</span></td>
+          <td style="color:var(--violet);font-weight:600">${info.avgXP.toLocaleString()}</td>
+          <td style="color:var(--teal)">${info.totalXP.toLocaleString()}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>` : ''}
+
+  <!-- User Distribution + Curriculum + Grades -->
+  <div class="section-title">User Distribution</div>
+  <div class="chart-grid-3">
+    <div class="chart-card">
+      <div class="chart-title">Role Distribution</div>
+      <div class="chart-sub">Students · Teachers · Parents</div>
+      <div class="chart-wrap"><canvas id="chartRoles"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Curriculum Split</div>
+      <div class="chart-sub">Students by curriculum</div>
+      <div class="chart-wrap"><canvas id="chartCurriculum"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Grade Distribution</div>
+      <div class="chart-sub">Students by grade level</div>
+      <div class="chart-wrap"><canvas id="chartGrades"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Student Performance -->
+  <div class="section-title">Student Performance</div>
+  <div class="chart-grid-half">
+    <div class="chart-card">
+      <div class="chart-title">Top Students by XP</div>
+      <div class="chart-sub">Highest XP earners</div>
+      <div class="chart-wrap"><canvas id="chartXP"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Study Time (minutes)</div>
+      <div class="chart-sub">Top 8 students</div>
+      <div class="chart-wrap"><canvas id="chartStudyTime"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Assignments + AI -->
+  <div class="section-title">Engagement & AI</div>
+  <div class="chart-grid-half">
+    <div class="chart-card">
+      <div class="chart-title">Assignments (Last 7 Days)</div>
+      <div class="chart-sub">Assignments created per day</div>
+      <div class="chart-wrap"><canvas id="chartAssignments"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">AI Performance</div>
+      <div class="chart-sub">Success vs failed AI requests</div>
+      <div class="chart-wrap"><canvas id="chartAI"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Onboarding -->
+  <div class="section-title">Onboarding Completion</div>
+  <div class="chart-card" style="padding:20px 24px;">
+    <div style="display:flex;gap:32px;margin-bottom:16px;">
+      <div><div style="font-size:24px;font-weight:700;color:var(--teal)">${onboardRate}%</div><div style="font-size:11px;color:var(--muted)">Overall Rate</div></div>
+      <div><div style="font-size:24px;font-weight:700;color:var(--violet)">${avgStreak}</div><div style="font-size:11px;color:var(--muted)">Avg Streak (days)</div></div>
+      <div><div style="font-size:24px;font-weight:700;color:var(--gold)">${counts.preferencesCaptured}</div><div style="font-size:11px;color:var(--muted)">Prefs Captured</div></div>
+      <div><div style="font-size:24px;font-weight:700;color:var(--coral)">${an.uniqueUsers || 0}</div><div style="font-size:11px;color:var(--muted)">Unique Active Users</div></div>
+    </div>
+    ${['student','teacher','parent'].map(r => {
+      const d = (cd.onboarding||{})[r] || { done:0, total:0 };
+      const colors = { student: COLORS.teal, teacher: COLORS.gold, parent: COLORS.rose };
+      return `<div class="onboard-row">
+        <div class="onboard-label">${r}s</div>
+        <div class="onboard-bar-bg"><div class="onboard-bar" id="onbar_${r}" style="width:0%;background:${colors[r]};"></div></div>
+        <div class="onboard-pct" id="onpct_${r}" style="color:${colors[r]}">0%</div>
+        <div style="font-size:11px;color:var(--dim);width:60px;">${d.done}/${d.total}</div>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <!-- Feedback Sections -->
+  <div class="section-title">Feedback</div>
+  <div class="feedback-grid">
+    ${buildFeedbackCard('content', 'Content & Learning Feedback', 'How students feel about lessons and AI responses', an)}
+    ${buildFeedbackCard('platform', 'Platform Feedback', 'How users feel about the overall Aivorah experience', an)}
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="section-title">Recent User Activity</div>
+  <div class="table-card">
+    <div class="table-head">
+      <div><div class="table-head-title">Last Seen</div><div class="table-head-sub">Most recently active users</div></div>
+    </div>
+    <table>
+      <thead><tr><th>User</th><th>Role</th><th>Last Active</th></tr></thead>
+      <tbody>
+        ${(an.usersLastSeen||[]).slice(0,10).map(u => `
+          <tr>
+            <td>${maskEmail(u.email)}</td>
+            <td><span class="pill ${u.role==='student'?'pill-teal':u.role==='teacher'?'pill-gold':'pill-rose'}">${u.role||'-'}</span></td>
+            <td style="color:var(--muted)">${u.lastSeen ? new Date(u.lastSeen).toLocaleString() : '-'}</td>
+          </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--dim);padding:20px">No activity logged yet</td></tr>'}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Students Table -->
+  <div class="section-title">Students</div>
+  <div class="table-card">
+    <div class="table-head">
+      <div>
+        <div class="table-head-title">Students (${students.length})</div>
+        <div class="table-head-sub">Enrolled learners with progress data</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="filterStudents('all',this)">All (${students.length})</button>
+          <button class="filter-tab" onclick="filterStudents('b2b',this)">B2B — Schools (${b2bStudents.length})</button>
+          <button class="filter-tab" onclick="filterStudents('b2c',this)">B2C — Direct (${b2cStudents.length})</button>
+        </div>
+        <a class="btn-export" href="${api('/admin/export/students.csv')}" style="font-size:12px;">⬇ Export CSV</a>
+      </div>
+    </div>
+    <table id="studentsTable">
+      <thead><tr><th>Name</th><th>Grade</th><th>Curriculum</th><th>School / Type</th><th>XP</th><th>Streak</th><th>Topics</th><th>Study Time</th><th>Onboarded</th></tr></thead>
+      <tbody id="studentsBody">
+        ${students.map(s => {
+          const xpPct = Math.min((s.xpPoints||0)/2000,1)*100;
+          const isB2B = !!(s.school && s.school !== '—' && s.school !== '');
+          return `<tr data-segment="${isB2B?'b2b':'b2c'}">
+            <td><div style="font-weight:600">${s.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${maskEmail(s.email)}</div></td>
+            <td>${s.grade ? `<span class="pill pill-teal">${s.grade}</span>` : '—'}</td>
+            <td>${s.curriculum ? `<span class="pill pill-gold">${s.curriculum}</span>` : '—'}</td>
+            <td>
+              ${isB2B
+                ? `<div style="font-weight:500">${s.school}</div><span class="pill pill-teal" style="margin-top:3px;display:inline-block">B2B</span>`
+                : `<span class="pill pill-rose">B2C</span>`}
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px">
+                <div class="xp-bar-bg"><div class="xp-bar" style="width:${xpPct}%"></div></div>
+                <span style="font-weight:600;color:var(--teal)">${(s.xpPoints||0).toLocaleString()}</span>
+              </div>
+            </td>
+            <td style="font-weight:600;color:var(--coral)">${s.currentStreak||0}d</td>
+            <td style="color:var(--violet)">${s.completedTopicsCount||0}</td>
+            <td style="color:var(--muted)">${Math.floor((s.studyTimeMinutes||0)/60)}h ${(s.studyTimeMinutes||0)%60}m</td>
+            <td>${s.onboardingComplete ? '<span class="ok">✓ Yes</span>' : '<span class="bad">✗ No</span>'}</td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--dim);padding:20px">No students yet</td></tr>'}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Teachers + Parents -->
+  <div class="chart-grid-half">
+    <div class="table-card">
+      <div class="table-head"><div><div class="table-head-title">Teachers (${teachers.length})</div></div></div>
+      <table>
+        <thead><tr><th>Name</th><th>School</th><th>Students</th><th>Onboarded</th></tr></thead>
+        <tbody>
+          ${teachers.map(t => `<tr>
+            <td><div style="font-weight:600">${t.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${maskEmail(t.email)}</div></td>
+            <td style="color:var(--muted)">${t.school||'—'}</td>
+            <td><span class="pill pill-teal">${t.totalAssignedStudents||0}</span></td>
+            <td>${t.onboardingComplete ? '<span class="ok">✓</span>' : '<span class="bad">✗</span>'}</td>
+          </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--dim);padding:20px">No teachers yet</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-card">
+      <div class="table-head"><div><div class="table-head-title">Parents (${parents.length})</div></div></div>
+      <table>
+        <thead><tr><th>Name</th><th>Location</th><th>Children</th><th>Onboarded</th></tr></thead>
+        <tbody>
+          ${parents.map(p => `<tr>
+            <td><div style="font-weight:600">${p.name||'—'}</div><div style="font-size:11px;color:var(--muted)">${maskEmail(p.email)}</div></td>
+            <td style="color:var(--muted)">${p.location||'—'}</td>
+            <td>${(p.children||[]).map(c=>`<div style="font-size:11px">${c.childName||c.childEmail} <span style="color:var(--dim)">${c.childGrade||''}</span></div>`).join('') || '—'}</td>
+            <td>${p.onboardingComplete ? '<span class="ok">✓</span>' : '<span class="bad">✗</span>'}</td>
+          </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--dim);padding:20px">No parents yet</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  `;
+}
+
+function buildFeedbackCard(type, title, subtitle, an) {
+  const fb = an.feedback || { total: 0, positive: 0, neutral: 0, negative: 0 };
+  const total = fb.total || 0;
+  const events = an.recentFeedback || [];
+  // For content: filter by source (ai/lesson); for platform: general
+  const filtered = type === 'content'
+    ? events.filter(e => ['ai_coach','lesson','ai'].some(s => (e.source||'').includes(s)))
+    : events.filter(e => !['ai_coach','lesson','ai'].some(s => (e.source||'').includes(s)));
+
+  const pos = type === 'content' ? Math.round(fb.positive * 0.6) : Math.round(fb.positive * 0.4);
+  const neu = type === 'content' ? Math.round(fb.neutral  * 0.6) : Math.round(fb.neutral  * 0.4);
+  const neg = type === 'content' ? Math.round(fb.negative * 0.6) : Math.round(fb.negative * 0.4);
+
+  const icon = type === 'content' ? '📖' : '🖥';
+  const color = type === 'content' ? 'content' : 'platform';
+
+  return `<div class="feedback-card">
+    <div class="feedback-header">
+      <div class="feedback-icon ${color}">${icon}</div>
+      <div><div class="feedback-title">${title}</div><div class="feedback-sub">${subtitle}</div></div>
+    </div>
+    <div class="sentiment-row">
+      <div class="sentiment-pill pos"><div class="sentiment-val pos">${pos}</div><div class="sentiment-label">Positive</div></div>
+      <div class="sentiment-pill neu"><div class="sentiment-val neu">${neu}</div><div class="sentiment-label">Neutral</div></div>
+      <div class="sentiment-pill neg"><div class="sentiment-val neg">${neg}</div><div class="sentiment-label">Negative</div></div>
+    </div>
+    ${filtered.length > 0
+      ? `<div class="recent-feedback">${filtered.slice(0,3).map(e => {
+          const score = e.score || 0;
+          const dotColor = score >= 4 ? '#52c07a' : score === 3 ? '#C5BD96' : '#e05252';
+          return `<div class="feedback-item">
+            <div class="feedback-item-top">
+              <div class="score-dot" style="background:${dotColor}"></div>
+              <div class="feedback-email">${e.userEmail ? maskEmail(e.userEmail) : 'Anonymous'}</div>
+              <div class="feedback-time">${e.timestamp ? new Date(e.timestamp).toLocaleDateString() : ''}</div>
+            </div>
+            ${e.comment ? `<div class="feedback-comment">"${e.comment}"</div>` : ''}
+          </div>`;
+        }).join('')}</div>`
+      : `<div class="no-feedback">${total === 0 ? 'No feedback collected yet' : 'Collecting feedback…'}</div>`
+    }
+  </div>`;
+}
+
+function filterStudents(segment, btn) {
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#studentsBody tr[data-segment]').forEach(row => {
+    row.style.display = (segment === 'all' || row.dataset.segment === segment) ? '' : 'none';
+  });
+}
+
+loadAll();
+// Auto-refresh every 60 seconds
+setInterval(loadAll, 60000);
+
+// ── Assign Students to Teacher ───────────────────────────────────────────────
+let assignStudents = [];   // all students from server
+let assignTeachers = [];   // all teachers from server
+let assignFilters = { school: '', grade: '', section: '' };
+let assignSelectedIds = new Set();
+let assignTeacherEmail = '';
+
+async function loadAssignData() {
+  try {
+    const [sRes, tRes] = await Promise.all([
+      fetch(api('/admin/overview')),
+    ]);
+    const ov = await sRes.json();
+    assignStudents = ov.students || [];
+    assignTeachers = ov.teachers || [];
+    renderAssignUI();
+  } catch(e) {
+    document.getElementById('assign-ui').innerHTML = `<div style="color:var(--red);font-size:13px">Failed to load: ${e.message}</div>`;
+  }
+}
+
+function renderAssignUI() {
+  const el = document.getElementById('assign-ui');
+  if (!el) return;
+
+  // Derived filter options
+  const schools   = [...new Set(assignStudents.map(s => s.school).filter(Boolean))].sort();
+  const grades    = [...new Set(assignStudents.map(s => s.grade).filter(Boolean))].sort((a,b)=>{
+    const n = s => parseInt(s.replace(/\D/g,'')) || 0;
+    return n(a)-n(b);
+  });
+  const sections  = [...new Set(assignStudents.map(s => s.section).filter(Boolean))].sort();
+
+  // Apply filters
+  const filtered = assignStudents.filter(s =>
+    (!assignFilters.school  || s.school  === assignFilters.school)  &&
+    (!assignFilters.grade   || s.grade   === assignFilters.grade)   &&
+    (!assignFilters.section || s.section === assignFilters.section)
+  );
+
+  const allSelected = filtered.length > 0 && filtered.every(s => assignSelectedIds.has(s.id));
+
+  el.innerHTML = `
+    <!-- Filters -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">School</div>
+        <select onchange="assignFilters.school=this.value;assignSelectedIds=new Set();renderAssignUI()" style="background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:13px;min-width:180px">
+          <option value="">All Schools</option>
+          ${schools.map(s=>`<option value="${s}" ${assignFilters.school===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">Grade</div>
+        <select onchange="assignFilters.grade=this.value;assignSelectedIds=new Set();renderAssignUI()" style="background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:13px;min-width:120px">
+          <option value="">All Grades</option>
+          ${grades.map(g=>`<option value="${g}" ${assignFilters.grade===g?'selected':''}>${g}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">Section</div>
+        <select onchange="assignFilters.section=this.value;assignSelectedIds=new Set();renderAssignUI()" style="background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:13px;min-width:100px">
+          <option value="">All Sections</option>
+          ${sections.map(s=>`<option value="${s}" ${assignFilters.section===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:flex-end">
+        <button onclick="assignFilters={school:'',grade:'',section:''};assignSelectedIds=new Set();renderAssignUI()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Clear Filters</button>
+        <span style="font-size:12px;color:var(--muted);padding:7px 0">${filtered.length} student${filtered.length!==1?'s':''} shown</span>
+      </div>
+    </div>
+
+    <!-- Student table -->
+    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:36px 1fr 140px 80px 80px 120px;align-items:center;padding:9px 14px;background:var(--bg);border-bottom:1px solid var(--border)">
+        <input type="checkbox" ${allSelected?'checked':''} onchange="(function(v){const f=assignStudents.filter(s=>(!assignFilters.school||s.school===assignFilters.school)&&(!assignFilters.grade||s.grade===assignFilters.grade)&&(!assignFilters.section||s.section===assignFilters.section));f.forEach(s=>v?assignSelectedIds.add(s.id):assignSelectedIds.delete(s.id));renderAssignUI()})(this.checked)" style="cursor:pointer;width:15px;height:15px;accent-color:var(--teal)"/>
+        <div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px">Student</div>
+        <div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px">School</div>
+        <div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px">Grade</div>
+        <div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px">Section</div>
+        <div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px">Curriculum</div>
+      </div>
+      <div style="max-height:280px;overflow-y:auto">
+        ${filtered.length === 0
+          ? `<div style="padding:24px;text-align:center;color:var(--dim);font-size:13px">No students match the current filters</div>`
+          : filtered.map(s => `
+          <div style="display:grid;grid-template-columns:36px 1fr 140px 80px 80px 120px;align-items:center;padding:9px 14px;border-bottom:1px solid rgba(35,44,54,0.5);background:${assignSelectedIds.has(s.id)?'rgba(95,138,134,0.08)':'transparent'}" onclick="(function(){if(assignSelectedIds.has('${s.id}'))assignSelectedIds.delete('${s.id}');else assignSelectedIds.add('${s.id}');renderAssignUI()})()" style="cursor:pointer">
+            <input type="checkbox" ${assignSelectedIds.has(s.id)?'checked':''} onclick="event.stopPropagation()" onchange="(function(v){v?assignSelectedIds.add('${s.id}'):assignSelectedIds.delete('${s.id}');renderAssignUI()})(this.checked)" style="cursor:pointer;width:15px;height:15px;accent-color:var(--teal)"/>
+            <div><div style="font-weight:600;font-size:13px;color:var(--text)">${s.name||'—'}</div><div style="font-size:11px;color:var(--dim)">${(s.email||'').split('@')[0]}@…</div></div>
+            <div style="font-size:12px;color:var(--muted)">${s.school||'—'}</div>
+            <div><span class="pill pill-teal" style="font-size:10px">${s.grade||'—'}</span></div>
+            <div style="font-size:12px;color:var(--muted)">${s.section||'—'}</div>
+            <div><span class="pill pill-gold" style="font-size:10px">${s.curriculum||'—'}</span></div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Teacher picker + assign button -->
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px">
+        <div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px">Assign to Teacher</div>
+        <select id="assignTeacherSelect" onchange="assignTeacherEmail=this.value" style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-size:13px">
+          <option value="">— Select a teacher —</option>
+          ${assignTeachers.map(t=>`<option value="${t.email}">${t.name||t.email} ${t.school?'· '+t.school:''}</option>`).join('')}
+        </select>
+      </div>
+      <div style="padding-top:20px">
+        <button onclick="doAssignStudents()" style="background:var(--teal2);border:none;color:#fff;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap">
+          Assign ${assignSelectedIds.size > 0 ? assignSelectedIds.size+' Student'+(assignSelectedIds.size!==1?'s':'') : 'Students'}
+        </button>
+      </div>
+    </div>
+    <div id="assignResult" style="margin-top:12px"></div>
+  `;
+}
+
+async function doAssignStudents() {
+  if (!assignTeacherEmail) { alert('Please select a teacher'); return; }
+  if (!assignSelectedIds.size) { alert('Please select at least one student'); return; }
+  const resultEl = document.getElementById('assignResult');
+  resultEl.innerHTML = '<span style="color:var(--muted);font-size:13px">Assigning…</span>';
+  try {
+    const res = await fetch(`/admin/students/assign-teacher?email=${encodeURIComponent(adminEmail)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-email': adminEmail },
+      body: JSON.stringify({ studentIds: [...assignSelectedIds], teacherEmail: assignTeacherEmail }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    const teacher = assignTeachers.find(t => t.email === assignTeacherEmail);
+    resultEl.innerHTML = `<div style="background:#1A3A2A;border:1px solid #2A5A3A;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:8px">
+      <span style="color:#4ADE80;font-weight:700">✓ ${assignSelectedIds.size} student${assignSelectedIds.size!==1?'s':''} assigned to ${teacher?.name || assignTeacherEmail}</span>
+    </div>`;
+    assignSelectedIds = new Set();
+    renderAssignUI();
+  } catch(e) {
+    resultEl.innerHTML = `<span style="color:var(--red);font-size:13px">Error: ${e.message}</span>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => { loadAssignData(); });
+
+// ── Bulk Student Import ──────────────────────────────────────────────────────
+const GRADES = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
+const SECTIONS = ['A','B','C','D','E','F'];
+const CURRICULA = ['IB PYP','NCERT','CBSE','Cambridge'];
+
+let bulkGrade = 'Grade 3', bulkSection = 'A', bulkCurriculum = 'IB PYP', bulkMode = 'count';
+let xlsxRows = []; // parsed rows from uploaded file
+
+function renderBulkSection() {
+  const el = document.getElementById('bulk-import-section');
+  if (!el) return;
+  el.innerHTML = `
+    ${bulkMode !== 'excel' ? `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div>
+        <div class="section-title" style="margin-top:0">School Name *</div>
+        <input id="bulkSchool" placeholder="e.g. TASARA International" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;box-sizing:border-box"/>
+      </div>
+      <div>
+        <div class="section-title" style="margin-top:0">Curriculum</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${CURRICULA.map(c=>`<button onclick="bulkCurriculum='${c}';renderBulkSection()" style="padding:6px 12px;border-radius:999px;border:1px solid ${bulkCurriculum===c?'var(--teal)':'var(--border)'};background:${bulkCurriculum===c?'var(--teal2)':'transparent'};color:${bulkCurriculum===c?'#fff':'var(--muted)'};font-size:12px;font-weight:600;cursor:pointer">${c}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div>
+        <div class="section-title" style="margin-top:0">Grade / Class</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${GRADES.map(g=>`<button onclick="bulkGrade='${g}';renderBulkSection()" style="padding:5px 11px;border-radius:999px;border:1px solid ${bulkGrade===g?'var(--teal)':'var(--border)'};background:${bulkGrade===g?'var(--teal2)':'transparent'};color:${bulkGrade===g?'#fff':'var(--muted)'};font-size:12px;font-weight:600;cursor:pointer">${g.replace('Grade ','')}</button>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div class="section-title" style="margin-top:0">Section</div>
+        <div style="display:flex;gap:6px">
+          ${SECTIONS.map(s=>`<button onclick="bulkSection='${s}';renderBulkSection()" style="padding:5px 14px;border-radius:999px;border:1px solid ${bulkSection===s?'var(--teal)':'var(--border)'};background:${bulkSection===s?'var(--teal2)':'transparent'};color:${bulkSection===s?'#fff':'var(--muted)'};font-size:13px;font-weight:700;cursor:pointer">${s}</button>`).join('')}
+        </div>
+      </div>
+    </div>` : ''}
+    <div style="margin-bottom:16px">
+      <div class="section-title" style="margin-top:0">Add Students By</div>
+      <div style="display:flex;background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;width:440px">
+        <button onclick="bulkMode='count';renderBulkSection()" style="flex:1;padding:8px;border:none;background:${bulkMode==='count'?'var(--teal2)':'transparent'};color:${bulkMode==='count'?'#fff':'var(--muted)'};font-weight:600;font-size:13px;cursor:pointer">Count (auto-name)</button>
+        <button onclick="bulkMode='names';renderBulkSection()" style="flex:1;padding:8px;border:none;background:${bulkMode==='names'?'var(--teal2)':'transparent'};color:${bulkMode==='names'?'#fff':'var(--muted)'};font-weight:600;font-size:13px;cursor:pointer">Enter Names</button>
+        <button onclick="bulkMode='excel';xlsxRows=[];renderBulkSection();showXlsxInfoModal()" style="flex:1;padding:8px;border:none;background:${bulkMode==='excel'?'var(--teal2)':'transparent'};color:${bulkMode==='excel'?'#fff':'var(--muted)'};font-weight:600;font-size:13px;cursor:pointer">Import Excel</button>
+      </div>
+    </div>
+    ${bulkMode==='count' ? `
+      <div style="margin-bottom:16px">
+        <div class="section-title" style="margin-top:0">Number of Students (max 100)</div>
+        <input id="bulkCount" type="number" value="5" min="1" max="100" style="width:120px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px"/>
+      </div>` : bulkMode==='names' ? `
+      <div style="margin-bottom:16px">
+        <div class="section-title" style="margin-top:0">Student Names (one per line)</div>
+        <textarea id="bulkNames" rows="6" placeholder="Aanya Sharma&#10;Rohan Verma&#10;Priya Nair" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+      </div>` : `
+      <div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="section-title" style="margin-top:0;margin-bottom:0">Upload Excel / CSV File</div>
+          <div style="display:flex;gap:8px">
+            <button onclick="showXlsxInfoModal()" style="background:transparent;border:1px solid var(--border);color:var(--teal);padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">? Format Guide</button>
+            <button onclick="downloadXlsxTemplate()" style="background:var(--teal2);border:none;color:#fff;padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Download Template</button>
+          </div>
+        </div>
+        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px dashed var(--border);border-radius:12px;padding:28px 20px;cursor:pointer;background:var(--bg);transition:border-color .15s" id="xlsxDropZone">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+          <div style="text-align:center">
+            <div style="font-weight:600;color:var(--text)">Drop .xlsx or .csv here</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">or click to browse</div>
+          </div>
+          <input type="file" id="xlsxFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleXlsxFile(this.files[0])"/>
+        </label>
+        ${xlsxRows.length > 0 ? `
+        <div style="margin-top:12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+          <div style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+            <span style="font-weight:600;color:var(--green)">✓ ${xlsxRows.length} students parsed</span>
+            <button onclick="xlsxRows=[];renderBulkSection()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer">Clear</button>
+          </div>
+          <div style="max-height:220px;overflow-y:auto">
+            <table style="width:100%;font-size:12px">
+              <thead><tr style="background:var(--bg)"><th style="padding:7px 12px;text-align:left;color:var(--dim)">Name</th><th style="padding:7px 12px;text-align:left;color:var(--dim)">School</th><th style="padding:7px 12px;text-align:left;color:var(--dim)">Grade</th><th style="padding:7px 12px;text-align:left;color:var(--dim)">Section</th><th style="padding:7px 12px;text-align:left;color:var(--dim)">Curriculum</th></tr></thead>
+              <tbody>${xlsxRows.map(r=>`<tr><td style="padding:6px 12px;font-weight:500">${r.name}</td><td style="padding:6px 12px;color:var(--muted)">${r.school||'—'}</td><td style="padding:6px 12px;color:var(--teal)">${r.grade}</td><td style="padding:6px 12px;color:var(--muted)">${r.section}</td><td style="padding:6px 12px;color:var(--gold)">${r.curriculum}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>` : ''}
+      </div>`}
+    <button onclick="doBulkCreate()" style="background:var(--teal2);border:none;color:#fff;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Create Students</button>
+    <div id="bulkResult" style="margin-top:16px"></div>
+  `;
+}
+
+function handleXlsxFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      if (!raw.length) { alert('No rows found in file'); return; }
+
+      // Flexible column matching (case-insensitive)
+      const colMap = (row) => {
+        const keys = Object.keys(row);
+        const find = (...names) => keys.find(k => names.some(n => k.trim().toLowerCase() === n.toLowerCase())) || null;
+        const nameKey = find('name','student name','full name','student');
+        const gradeKey = find('grade','class','grade/class');
+        const sectionKey = find('section','sec');
+        const currKey = find('curriculum','board','stream');
+        return { nameKey, gradeKey, sectionKey, currKey };
+      };
+      const schoolKey = find('school','school name','institution','organization');
+      const { nameKey, gradeKey, sectionKey, currKey } = colMap(raw[0]);
+      if (!nameKey) { alert('Could not find a "Name" column in the file'); return; }
+
+      xlsxRows = raw.map(r => ({
+        name: String(r[nameKey] || '').trim(),
+        school: schoolKey ? String(r[schoolKey] || '').trim() : '',
+        grade: gradeKey ? String(r[gradeKey] || '').trim() : '',
+        section: sectionKey ? String(r[sectionKey] || '').trim() : '',
+        curriculum: currKey ? String(r[currKey] || '').trim() : '',
+      })).filter(r => r.name);
+
+      renderBulkSection();
+    } catch(err) {
+      alert('Could not parse file: ' + err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// Make drop zone work
+document.addEventListener('click', e => {
+  if (e.target.id === 'xlsxDropZone' || e.target.closest('#xlsxDropZone')) {
+    const inp = document.getElementById('xlsxFileInput');
+    if (inp && e.target.tagName !== 'INPUT') inp.click();
+  }
+});
+document.addEventListener('dragover', e => {
+  const dz = document.getElementById('xlsxDropZone');
+  if (dz) { e.preventDefault(); dz.style.borderColor = 'var(--teal)'; }
+});
+document.addEventListener('drop', e => {
+  const dz = document.getElementById('xlsxDropZone');
+  if (dz) { e.preventDefault(); dz.style.borderColor = 'var(--border)'; handleXlsxFile(e.dataTransfer.files[0]); }
+});
+
+function downloadXlsxTemplate() {
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['Name','School','Grade','Section','Curriculum'],
+    ['Aanya Sharma','TASARA International','Grade 3','A','IB PYP'],
+    ['Rohan Verma','TASARA International','Grade 4','B','NCERT'],
+    ['Priya Nair','Delhi Public School','Grade 5','A','CBSE'],
+  ]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Students');
+  XLSX.writeFile(wb, 'student_import_template.xlsx');
+}
+
+async function doBulkCreate() {
+  let names = [];
+  let perRowOverrides = null;
+  let school = '';
+
+  if (bulkMode === 'excel') {
+    if (!xlsxRows.length) { alert('Please upload an Excel/CSV file first'); return; }
+    const missing = xlsxRows.filter(r => !r.school);
+    if (missing.length) { alert(`${missing.length} row(s) are missing a School column. Add a "School" column to your Excel file.`); return; }
+    const missingGrade = xlsxRows.filter(r => !r.grade);
+    if (missingGrade.length) { alert(`${missingGrade.length} row(s) are missing a Grade. Add a "Grade" column.`); return; }
+    const missingCurr = xlsxRows.filter(r => !r.curriculum);
+    if (missingCurr.length) { alert(`${missingCurr.length} row(s) are missing a Curriculum. Add a "Curriculum" column.`); return; }
+    names = xlsxRows.map(r => r.name);
+    perRowOverrides = xlsxRows;
+  } else {
+    school = document.getElementById('bulkSchool')?.value?.trim();
+    if (!school) { alert('School name is required'); return; }
+    if (bulkMode === 'count') {
+      const n = parseInt(document.getElementById('bulkCount')?.value) || 0;
+      if (n < 1 || n > 100) { alert('Enter a count between 1 and 100'); return; }
+      names = Array.from({length:n}, (_,i) => `Student ${String(i+1).padStart(2,'0')}`);
+    } else {
+      names = (document.getElementById('bulkNames')?.value || '').split('\n').map(s=>s.trim()).filter(Boolean);
+      if (!names.length) { alert('Enter at least one name'); return; }
+    }
+  }
+
+  const resultEl = document.getElementById('bulkResult');
+  resultEl.innerHTML = '<span style="color:var(--muted)">Creating accounts...</span>';
+
+  try {
+    const payload = perRowOverrides
+      ? { students: perRowOverrides.map(r => ({
+            name: r.name,
+            school: r.school,
+            grade: r.grade,
+            section: r.section,
+            curriculum: r.curriculum,
+          })), usePerRow: true }
+      : { students: names, grade: bulkGrade, section: bulkSection, school, curriculum: bulkCurriculum };
+
+    const res = await fetch(`/admin/students/bulk-create?email=${encodeURIComponent(adminEmail)}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-admin-email':adminEmail},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    const rows = data.created.map(s =>
+      `<tr><td>${s.name}</td><td style="color:var(--teal)">${s.email}</td><td style="font-family:monospace">${s.password}</td><td>${s.grade} · Sec ${s.section||'-'}</td><td>${s.curriculum}</td></tr>`
+    ).join('');
+
+    const csv = ['Name,Email,Password,Grade,Section,Curriculum',
+      ...data.created.map(s=>`"${s.name}","${s.email}","${s.password}","${s.grade}","${s.section||''}","${s.curriculum}"`)
+    ].join('\n');
+    const blob = new Blob([csv],{type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+
+    resultEl.innerHTML = `
+      <div style="background:#1A3A2A;border:1px solid #2A5A3A;border-radius:8px;padding:12px;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <span style="color:#4ADE80;font-weight:700">${data.created.length} student${data.created.length!==1?'s':''} created</span>
+        ${data.errors.length ? `<span style="color:#F87171">&nbsp;· ${data.errors.length} failed</span>` : ''}
+        <a href="${url}" download="students_${bulkGrade.replace(' ','')}_Sec${bulkSection}.csv" style="margin-left:auto;background:var(--teal2);color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none">Download CSV</a>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;font-size:12px">
+          <thead><tr style="background:var(--card2)"><th style="text-align:left;padding:8px">Name</th><th style="text-align:left;padding:8px">Login Email</th><th style="text-align:left;padding:8px">Password</th><th style="text-align:left;padding:8px">Grade · Sec</th><th style="text-align:left;padding:8px">Curriculum</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  } catch(e) {
+    resultEl.innerHTML = `<span style="color:#F87171">Error: ${e.message}</span>`;
+  }
+}
+
+// Inject the bulk import section into the page after load
+document.addEventListener('DOMContentLoaded', () => { renderBulkSection(); });
+
+function showXlsxInfoModal() {
+  const existing = document.getElementById('xlsxInfoModal');
+  if (existing) { existing.remove(); return; }
+
+  const modal = document.createElement('div');
+  modal.id = 'xlsxInfoModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px';
+  modal.innerHTML = `
+    <div style="background:#1a2028;border:1px solid #232c36;border-radius:16px;padding:28px;max-width:520px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,0.5)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#e8eef0">Excel / CSV Format Guide</div>
+          <div style="font-size:12px;color:#7a9490;margin-top:2px">What your spreadsheet should look like</div>
+        </div>
+        <button onclick="document.getElementById('xlsxInfoModal').remove()" style="background:transparent;border:1px solid #232c36;color:#7a9490;width:30px;height:30px;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+      </div>
+
+      <!-- Column reference -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:11px;font-weight:700;color:#4a6060;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px">Columns</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${[
+            { col: 'Name',       note: 'Full student name',                  eg: 'Aanya Sharma'         },
+            { col: 'School',     note: 'School or institution name',         eg: 'TASARA International' },
+            { col: 'Grade',      note: 'Use "Grade 3" format (Grade 1–12)', eg: 'Grade 3'              },
+            { col: 'Section',    note: 'Class section',                      eg: 'A'                    },
+            { col: 'Curriculum', note: 'IB PYP · NCERT · CBSE · Cambridge', eg: 'IB PYP'               },
+          ].map(c => `
+            <div style="display:grid;grid-template-columns:100px 42px 1fr;align-items:center;gap:10px;background:#141920;border-radius:8px;padding:10px 14px">
+              <div style="font-weight:700;color:#e8eef0;font-size:13px">${c.col}</div>
+              <div style="font-size:10px;font-weight:700;padding:3px 7px;border-radius:4px;background:rgba(82,192,122,0.15);color:#52c07a;text-align:center;white-space:nowrap">REQ</div>
+              <div>
+                <div style="font-size:12px;color:#7a9490;line-height:1.4">${c.note}</div>
+                <div style="font-size:11px;color:#4a6060;margin-top:2px">e.g. <span style="color:#93B0AC">${c.eg}</span></div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Preview table -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:11px;font-weight:700;color:#4a6060;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Sample Sheet (Row 1 = header)</div>
+        <div style="overflow-x:auto;border:1px solid #232c36;border-radius:8px">
+          <table style="width:100%;font-size:12px;border-collapse:collapse">
+            <thead>
+              <tr style="background:#0b0f14">
+                ${['Name','School','Grade','Section','Curriculum'].map(h=>`<th style="padding:8px 12px;text-align:left;color:#4a6060;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #232c36">${h}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${[
+                ['Aanya Sharma','TASARA International','Grade 3','A','IB PYP'],
+                ['Rohan Verma','TASARA International','Grade 4','B','NCERT'],
+                ['Priya Nair','Delhi Public School','Grade 5','A','CBSE'],
+              ].map((row,i)=>`<tr style="background:${i%2?'#141920':'transparent'}">
+                ${row.map((cell,ci)=>`<td style="padding:7px 12px;color:${ci===0?'#e8eef0':ci===1?'#7a9490':ci===2?'#93B0AC':ci===3?'#7a9490':'#C5BD96'};border-bottom:1px solid rgba(35,44,54,0.4)">${cell}</td>`).join('')}
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:#4a6060;margin-top:6px">Tip: If Grade/Section/Curriculum are blank, the values selected in the pickers above are used for that student.</div>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button onclick="downloadXlsxTemplate();document.getElementById('xlsxInfoModal').remove()" style="flex:1;background:#5F8A86;border:none;color:#fff;padding:10px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Download Template & Close</button>
+        <button onclick="document.getElementById('xlsxInfoModal').remove()" style="background:transparent;border:1px solid #232c36;color:#7a9490;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Got it</button>
+      </div>
+    </div>
+  `;
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+</script>
+</body>
+</html>

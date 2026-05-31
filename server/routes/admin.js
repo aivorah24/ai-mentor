@@ -3,6 +3,39 @@ const fs = require('fs');
 const path = require('path');
 const router = express.Router();
 const supabase = require('../services/supabase');
+const { randomUUID, randomInt } = require('crypto');
+
+function toTitleCase(str) {
+  return String(str || '').replace(/\b\w/g, c => c.toUpperCase());
+}
+function generateSecurePassword() {
+  const groups = ['ABCDEFGHJKLMNPQRSTUVWXYZ','abcdefghijkmnopqrstuvwxyz','23456789','#@$%&*?'];
+  const all = groups.join('');
+  const chars = groups.map(g => g[randomInt(g.length)]);
+  while (chars.length < 10) chars.push(all[randomInt(all.length)]);
+  for (let i = chars.length - 1; i > 0; i--) { const j = randomInt(i + 1); [chars[i], chars[j]] = [chars[j], chars[i]]; }
+  return chars.join('');
+}
+function generateStudentEmail(name, school) {
+  const slug = String(name || 'student').trim().toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '.').slice(0, 30);
+  const schoolSlug = String(school || 'school').trim().toLowerCase()
+    .replace(/[^a-z0-9]/g, '').slice(0, 10);
+  return `${slug}.${Date.now()}@${schoolSlug}.student`;
+}
+
+async function createFirebaseAccount(email, password) {
+  const apiKey = process.env.FIREBASE_API_KEY;
+  if (!apiKey) throw new Error('FIREBASE_API_KEY not set');
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, returnSecureToken: false }) }
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error?.message || 'Firebase signup failed');
+  return data.localId;
+}
 
 const PREFS_FILE = path.join(__dirname, '../data/student_preferences.json');
 
@@ -349,6 +382,121 @@ router.get('/export/students.csv', async (_req, res) => {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="admin_students_${date}.csv"`);
     res.status(200).send(csv);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /admin/students ────────────────────────────────────────────────────────
+// List all students with optional filters: grade, section, school
+router.get('/students', async (req, res) => {
+  try {
+    const { grade, section, school, unassigned } = req.query;
+    let query = supabase
+      .from('users')
+      .select(`
+        id, name, email, grade, curriculum, school, section, created_at,
+        student_stats (xp_points, level, current_streak, study_time_minutes, topics_explored, last_active_date),
+        teacher_student (teacher_id, users!teacher_student_teacher_id_fkey(name, email))
+      `)
+      .eq('role', 'student')
+      .order('created_at', { ascending: false });
+
+    if (grade) query = query.eq('grade', grade);
+    if (section) query = query.eq('section', section);
+    if (school) query = query.ilike('school', `%${school}%`);
+
+    const { data, error } = await query;
+    if (error) return res.status(500).json({ error: error.message });
+
+    let students = data || [];
+    if (unassigned === 'true') {
+      students = students.filter(s => !s.teacher_student || s.teacher_student.length === 0);
+    }
+
+    res.json({ students });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /admin/students/bulk-create ──────────────────────────────────────────
+// Bulk create student accounts (no teacher assignment yet)
+// Body: { students: [{name}], grade, section, school, curriculum }
+router.post('/students/bulk-create', async (req, res) => {
+  try {
+    const { students, grade: defaultGrade, section: defaultSection, school, curriculum: defaultCurriculum, usePerRow } = req.body || {};
+    if (!Array.isArray(students) || students.length === 0) return res.status(400).json({ error: 'students array is required' });
+
+    // students can be strings (name only) or objects { name, grade, section, curriculum }
+    const rows = students.map(s => typeof s === 'string' ? { name: s } : s);
+    if (!usePerRow && !defaultGrade && !defaultCurriculum) return res.status(400).json({ error: 'grade and curriculum are required' });
+
+    const created = [];
+    const errors = [];
+
+    for (const row of rows) {
+      const name = toTitleCase(String(row.name || '').trim());
+      if (!name) continue;
+      const grade = row.grade || defaultGrade;
+      const section = row.section || defaultSection || '';
+      const curriculum = row.curriculum || defaultCurriculum;
+      const rowSchool = row.school || school || '';
+      if (!grade || !curriculum) { errors.push({ name, error: 'missing grade or curriculum' }); continue; }
+      try {
+        const email = generateStudentEmail(name, rowSchool);
+        const password = generateSecurePassword();
+
+        // Check for duplicate
+        const { data: dup } = await supabase.from('users').select('id').eq('email', email).maybeSingle();
+        if (dup) { errors.push({ name, error: 'Email already exists' }); continue; }
+
+        // Create Firebase Auth account so student can log in
+        const firebaseUid = await createFirebaseAccount(email, password);
+
+        const userId = randomUUID();
+
+        const { error: userErr } = await supabase.from('users').insert({
+          id: userId, name, email, role: 'student',
+          grade, curriculum, school: rowSchool, section,
+          onboarding_complete: true,
+        });
+        if (userErr) { errors.push({ name, error: userErr.message }); continue; }
+
+        await supabase.from('student_stats').insert({ student_id: userId });
+        await supabase.from('user_preferences').upsert({
+          user_email: email,
+          data: { loginId: email, initialPassword: password, studentName: name, grade, curriculum, section, school: rowSchool, firebaseUid },
+        });
+
+        created.push({ name, email, password, grade, curriculum, section, school: rowSchool });
+      } catch (e) {
+        errors.push({ name, error: e.message });
+      }
+    }
+
+    res.json({ created, errors, total: created.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /admin/students/assign-teacher ───────────────────────────────────────
+// Assign one or more students to a teacher
+// Body: { studentIds: [uuid], teacherEmail }
+router.post('/students/assign-teacher', async (req, res) => {
+  try {
+    const { studentIds, teacherEmail } = req.body || {};
+    if (!Array.isArray(studentIds) || !teacherEmail) return res.status(400).json({ error: 'studentIds and teacherEmail are required' });
+
+    const { data: teacher } = await supabase.from('users').select('id').eq('email', teacherEmail.toLowerCase().trim()).maybeSingle();
+    if (!teacher) return res.status(404).json({ error: 'Teacher not found' });
+
+    const rows = studentIds.map(sid => ({ teacher_id: teacher.id, student_id: sid }));
+    const { error } = await supabase.from('teacher_student').upsert(rows, { onConflict: 'teacher_id,student_id', ignoreDuplicates: true });
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ success: true, assigned: studentIds.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

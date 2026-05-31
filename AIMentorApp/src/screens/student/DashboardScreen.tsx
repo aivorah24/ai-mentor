@@ -234,13 +234,32 @@ const FALLBACK_CURRICULUM: CurriculumData = (() => {
 // Main Screen
 // ─────────────────────────────────────────────────────────
 
-export default function DashboardScreen({ navigation }: any) {
+export default function DashboardScreen({ navigation, route }: any) {
   const { user } = useAuth();
-  const { stats, studentId } = useStudentData();
+  const { stats: ctxStats, studentId } = useStudentData();
   const { colors, isDark } = useTheme();
   const { unreadAssignments, unreadCount } = useNotification();
   const { isMobile, isTablet } = useResponsive();
   const styles = useMemo(() => makeStyles(colors, isMobile, isDark), [colors, isMobile, isDark]);
+
+  // ── Parent-view-as-child override ────────────────────────
+  const childOverride = route?.params?.childData as {
+    name: string; grade: string; curriculum: string;
+    xpPoints: number; level: number; currentStreak: number;
+    studyTimeMinutes: number; topicsExplored: number;
+    completedTopics: string[]; totalTopics: number;
+  } | undefined;
+
+  const stats = childOverride ? {
+    ...ctxStats,
+    xpPoints: childOverride.xpPoints ?? 0,
+    level: childOverride.level ?? 1,
+    currentStreak: childOverride.currentStreak ?? 0,
+    studyTimeMinutes: childOverride.studyTimeMinutes ?? 0,
+    topicsExplored: childOverride.topicsExplored ?? 0,
+    completedTopics: childOverride.completedTopics ?? [],
+    todayStudyMinutes: 0,
+  } : ctxStats;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [curriculum, setCurriculum] = useState<CurriculumData>(FALLBACK_CURRICULUM);
@@ -256,8 +275,8 @@ export default function DashboardScreen({ navigation }: any) {
   const bodyAnim  = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  const firstName = user?.name?.split(' ')[0] || 'there';
-  const curriculumName = user?.curriculum || 'IB PYP';
+  const firstName = (childOverride?.name ?? user?.name)?.split(' ')[0] || 'there';
+  const curriculumName = childOverride?.curriculum ?? user?.curriculum ?? 'IB PYP';
   const xpInfo = xpForNextLevel(stats.xpPoints);
   const xpPct  = xpInfo.current / xpInfo.needed;
 
@@ -269,8 +288,9 @@ export default function DashboardScreen({ navigation }: any) {
   const contentMax = isMobile ? undefined : isTablet ? 920 : 1080;
 
   // ── Data fetching (cache-first) ──────────────────────────
-  const isIBPYP = !user?.curriculum || user.curriculum.toLowerCase().includes('ib');
-  const studentGrade = user?.grade || 'Grade 3';
+  const childCurriculum = childOverride?.curriculum ?? user?.curriculum;
+  const isIBPYP = !childCurriculum || childCurriculum.toLowerCase().includes('ib');
+  const studentGrade = childOverride?.grade ?? user?.grade ?? 'Grade 3';
   const CACHE_KEY = `dashboard_curriculum_${isIBPYP ? 'ibpyp' : 'ncert'}_${studentGrade}_v1`;
   const CACHE_TTL = 5 * 60 * 1000; // 5 min
 
@@ -314,16 +334,19 @@ export default function DashboardScreen({ navigation }: any) {
         const cached = await AsyncStorage.getItem(CACHE_KEY);
         if (cached) {
           const { data, ts, type } = JSON.parse(cached);
-          setCurriculum(type === 'ibpyp' ? parseIBPYPCurriculum(data) : parseNCERTCurriculum(data));
+          setCurriculum((childOverride || type === 'ibpyp') ? parseIBPYPCurriculum(data) : parseNCERTCurriculum(data));
           setLoading(false);
           // If cache is fresh, skip network call
           if (Date.now() - ts < CACHE_TTL) return;
         }
         // 2. Fetch fresh data silently in background
         let data: any;
-        if (isIBPYP) {
+        if (childOverride || isIBPYP) {
+          // Use unified endpoint for all curricula when viewing a child's dashboard,
+          // and always for IB PYP
+          const curricParam = encodeURIComponent(isIBPYP ? 'IB_PYP' : (childCurriculum ?? 'NCERT'));
           const gradeParam = encodeURIComponent(studentGrade);
-          const res = await fetch(`${SERVER_URL}/curriculum?curriculum=IB_PYP&grade=${gradeParam}`);
+          const res = await fetch(`${SERVER_URL}/curriculum?curriculum=${curricParam}&grade=${gradeParam}`);
           if (!res.ok) throw new Error();
           data = await res.json();
           setCurriculum(parseIBPYPCurriculum(data));
@@ -345,14 +368,14 @@ export default function DashboardScreen({ navigation }: any) {
   }, [user?.curriculum, user?.grade]);
 
   useEffect(() => {
-    if (!studentId) return;
+    if (!studentId || childOverride) return;
     fetch(`${SERVER_URL}/schedule/upcoming?studentId=${studentId}`)
       .then(r => r.json()).then(d => { if (Array.isArray(d)) setUpcomingDeadlines(d); }).catch(() => {});
-  }, [studentId]);
+  }, [studentId, childOverride]);
 
   // Fetch real quiz scores — on mount AND every time screen comes back into focus (after quiz)
   const fetchPerfData = useCallback(() => {
-    if (!studentId || !user?.email) return;
+    if (!studentId || !user?.email || childOverride) return;
     fetch(`${SERVER_URL}/student/${studentId}/performance?email=${encodeURIComponent(user.email)}`)
       .then(r => r.json())
       .then(d => { if (d.topics) setPerfData(d); })
@@ -575,12 +598,12 @@ export default function DashboardScreen({ navigation }: any) {
         <View style={styles.blobBR} pointerEvents="none" />
 
      <Header
-  title={`${getGreeting()}, ${firstName}`}
-  subtitle={`${curriculumName} · ${user?.grade || 'Grade 3'}`}
+  title={childOverride ? `${firstName}'s Dashboard` : `${getGreeting()}, ${firstName}`}
+  subtitle={`${curriculumName} · ${studentGrade}`}
   showSearch={false}
-  onMenuPress={() => navigation.openDrawer()}
-  onProfilePress={() => navigation.navigate('Profile')}
-  notificationCount={unreadCount}
+  onMenuPress={childOverride ? () => navigation.goBack() : () => navigation.openDrawer()}
+  onProfilePress={childOverride ? undefined : () => navigation.navigate('Profile')}
+  notificationCount={childOverride ? 0 : unreadCount}
 />
 
         {/* ── Loading ─────────────────────────────────────── */}
@@ -944,9 +967,9 @@ export default function DashboardScreen({ navigation }: any) {
                   </View>
                 </View>
 
-                {/* ── QUICK ACTIONS ───────────────────────────── */}
-                <SectionHeader title="Quick Actions" sub="Jump anywhere instantly" />
-                <View style={styles.quickGrid}>
+                {/* ── QUICK ACTIONS ── hidden in parent child-view mode ── */}
+                {!childOverride && <SectionHeader title="Quick Actions" sub="Jump anywhere instantly" />}
+                {!childOverride && <View style={styles.quickGrid}>
                   {QUICK_NAV.map(item => (
                     <TouchableOpacity
                       key={item.label}
@@ -964,7 +987,7 @@ export default function DashboardScreen({ navigation }: any) {
                       <Text style={[styles.quickDesc, { color: colors.textMuted }]}>{item.desc}</Text>
                     </TouchableOpacity>
                   ))}
-                </View>
+                </View>}
 
                 {/* ── CONTINUE LEARNING ───────────────────────── */}
                 {featuredLesson && (
