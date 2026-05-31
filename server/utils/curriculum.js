@@ -15,6 +15,9 @@ function normalizeCurriculum(curriculum, fallback = 'IB PYP') {
     'Pearson':       'Pearson',
     'Singapore MOE': 'Singapore MOE',
     'Singapore_MOE': 'Singapore MOE',
+    'CBSE':          'NCERT',
+    'cbse':          'NCERT',
+    'Cbse':          'NCERT',
   };
 
   return canonicalMap[value] ?? value;

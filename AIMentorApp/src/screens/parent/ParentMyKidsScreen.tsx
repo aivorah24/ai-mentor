@@ -35,7 +35,10 @@ function generateStudentId(name: string) {
 }
 
 function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onManageTasks, onViewCreds }: any) {
-  const progressPct = Math.round(((child.completedTopics?.length ?? 0) / 14) * 100);
+  const totalTopics = child.totalTopics || 0;
+  const progressPct = totalTopics > 0
+    ? Math.round(((child.completedTopics?.length ?? 0) / totalTopics) * 100)
+    : 0;
   const isNewStudent = (child.xpPoints ?? 0) === 0 && (child.studyTime ?? 0) === 0 && progressPct === 0;
   const hasActivity = (child.xpPoints ?? 0) > 0 || (child.studyTime ?? 0) > 0 || progressPct > 0;
   const isOnTrack = hasActivity && (child.currentStreak ?? 0) >= 1;
@@ -56,7 +59,7 @@ function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onMana
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={styles.childName} numberOfLines={1}>{child.name}</Text>
-          <Text style={styles.childSub} numberOfLines={1}>{child.grade}{child.school ? ` · ${child.school}` : ''}</Text>
+          <Text style={styles.childSub} numberOfLines={1}>{child.grade}{child.curriculum ? ` · ${child.curriculum}` : ''}{child.school ? ` · ${child.school}` : ''}</Text>
         </View>
         <View style={{ flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
           <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -81,8 +84,8 @@ function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onMana
         <View style={styles.statDivider} />
         <View style={styles.statBox}>
           <Text style={styles.statLabel}>Chapters Done</Text>
-          <Text style={[styles.statValue, { color: progressPct >= 50 ? colors.accentGreen : colors.textMain }]}>
-            {child.completedTopics?.length ?? 0}/14
+          <Text style={[styles.statValue, { color: totalTopics > 0 && progressPct >= 50 ? colors.accentGreen : colors.textMain }]}>
+            {totalTopics > 0 ? `${child.completedTopics?.length ?? 0}/${totalTopics}` : 'Coming Soon'}
           </Text>
         </View>
         <View style={styles.statDivider} />

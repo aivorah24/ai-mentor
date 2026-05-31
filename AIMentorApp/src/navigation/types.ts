@@ -32,15 +32,15 @@ export type DrawerParamList = {
 };
 
 export type ParentDrawerParamList = {
-  ParentDashboard: undefined;
+  ParentDashboard: { childId?: string } | undefined;
   ParentProfile: undefined;
   ParentMyKids: undefined;
-  ParentSchedule: undefined;
-  ParentLearning: undefined;
+  ParentSchedule: { childId?: string } | undefined;
+  ParentLearning: { childId?: string } | undefined;
   ParentAssignments: undefined;
   ParentChallenges: undefined;
   ParentLeaderboard: undefined;
-  ParentProgress: undefined;
+  ParentProgress: { childId?: string } | undefined;
   ParentAIReports: undefined;
   ParentControls: undefined;
   ParentSettings: undefined;
