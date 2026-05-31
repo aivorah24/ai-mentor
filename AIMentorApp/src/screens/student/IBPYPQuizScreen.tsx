@@ -116,7 +116,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
     const pct = Math.round((finalScore / questions.length) * 100);
     fetch(`${SERVER_URL}/ibpyp/track-result`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userEmail: user?.email, role: user?.role, topic, subject, grade, score: pct, totalQuestions: questions.length, correctAnswers: finalScore }),
+      body: JSON.stringify({ userEmail: user?.email, role: user?.role, topic, subject, grade, score: pct, totalQuestions: questions.length, correctAnswers: finalScore,  firstAttemptCorrect: finalScore, attemptNumber: 1, perQuestionAttempts: [],   }),
     }).catch(() => {});
     completeLesson(topic);
     addXP(pct >= 80 ? 100 : pct >= 60 ? 60 : 30);
