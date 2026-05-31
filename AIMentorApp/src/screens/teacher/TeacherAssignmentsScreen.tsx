@@ -278,6 +278,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [stepsError, setStepsError] = useState('');
   const [quizDifficulty, setQuizDifficulty] = useState<'easy'|'medium'|'hard'>('medium');
   const [quizCount, setQuizCount] = useState(5);
+  const [quizType, setQuizType] = useState<'mcq'|'fill_blank'|'mixed'>('mcq');
   const [teacherNotes, setTeacherNotes] = useState('');
   const [docFiles, setDocFiles] = useState<{ name: string; base64: string; mime: string; url?: string }[]>([]);
   const originalPdfRef = React.useRef<{ name: string; base64: string; mime: string } | null>(null);
@@ -855,8 +856,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   }
 
   async function generateIBAssignment() {
-    const topic = (title || chapter || '').trim();
-    if (!topic) { setFormError('Enter a title or topic first'); return; }
+    const topic = (title || chapter || unitOfInquiry || '').trim();
+    if (!topic) { setFormError('Please fill in the Title or Chapter / Topic field before generating'); return; }
     setGeneratingIB(true); setFormError('');
     try {
       const res = await fetch(`${SERVER_URL}/assignments/generate-ibpyp`, {
@@ -937,10 +938,26 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       const normalized = (items || [])
         .map((q: any, i: number) => {
           const question = String(q?.question || '').trim();
+          if (!question) return null;
+
+          // fill_blank type
+          if (q?.type === 'fill_blank') {
+            return {
+              id: q?.id || `q${i + 1}`,
+              question,
+              type: 'fill_blank',
+              options: [],
+              correct: String(q?.correct || '').trim(),
+              hint: q?.hint || '',
+              explanation: q?.explanation || '',
+            };
+          }
+
+          // MCQ type
           const options = Array.isArray(q?.options)
             ? q.options.map((o: any) => String(o).replace(/^[A-D]\.\s*/i, '').trim()).filter(Boolean)
             : [];
-          if (!question || options.length !== 4) return null;
+          if (options.length < 2) return null;
 
           let correct = '';
           if (typeof q?.correct === 'number' && options[q.correct]) {
@@ -1021,7 +1038,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       const res = await fetch(`${SERVER_URL}/assignments/generate-quiz`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, chapter: chapter.trim(), grade, curriculum, difficulty: quizDifficulty, count: quizCount, teacherNotes: teacherNotes.trim() }),
+        body: JSON.stringify({ subject, chapter: chapter.trim(), grade, curriculum, difficulty: quizDifficulty, count: quizCount, teacherNotes: teacherNotes.trim(), quizType }),
       });
       const data = await res.json().catch(() => null);
       if (res.ok && Array.isArray(data?.questions)) {
@@ -1283,11 +1300,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               <Text style={styles.emptyText}>Tap "New" to create your first assignment</Text>
             </View>
           ) : (
-            filtered.map((a) => {
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+            {filtered.map((a) => {
               const due = daysUntil(a.dueDate);
               const subjectColor = SUBJECT_COLORS[a.subject] || colors.primary;
               return (
-                <TouchableOpacity key={a.id} style={styles.card} activeOpacity={0.85} onPress={() => setDetailAssignment(a)}>
+                <TouchableOpacity key={a.id} style={[styles.card, { width: '47.5%', flexGrow: 1, minWidth: 280 }]} activeOpacity={0.85} onPress={() => setDetailAssignment(a)}>
                   <View style={[styles.cardAccent, { backgroundColor: subjectColor }]} />
                   <View style={styles.cardBody}>
                     {/* Header */}
@@ -1357,7 +1375,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   </View>
                 </TouchableOpacity>
               );
-            })
+            })}
+            </View>
           ))}
         </ScrollView>
 
@@ -1878,6 +1897,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                   </View>
                                   <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMain, flex: 1 }}>{step.label || step.type}</Text>
                                 </View>
+                                {step.provocation ? <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 17, marginLeft: 32, fontStyle: 'italic' }}>{step.provocation}</Text> : null}
                                 {step.instructions ? <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17, marginLeft: 32 }}>{step.instructions}</Text> : null}
                                 {Array.isArray(step.sections) && step.sections.length > 0 && (
                                   <View style={{ marginLeft: 32, gap: 4 }}>
@@ -2405,6 +2425,26 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   {/* Generate Interactive Quiz button moved to Output Format section below */}
                   </>)}
 
+
+                  {/* ── Assignment / Quiz type switcher (AI mode only) ── */}
+                  {createMode === 'ai' && (
+                    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
+                      {([['assignment', 'IB Assignment', 'layers'], ['quiz', 'Quiz / MCQ', 'check-square']] as const).map(([val, label, icon]) => (
+                        <TouchableOpacity key={val}
+                          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            paddingVertical: 10, borderRadius: 10, borderWidth: 1.5,
+                            borderColor: type === val ? '#5F8A86' : colors.borderColor,
+                            backgroundColor: type === val ? '#5F8A8618' : 'transparent' }}
+                          onPress={() => setType(val)}
+                          activeOpacity={0.75}
+                        >
+                          <Feather name={icon as any} size={14} color={type === val ? '#5F8A86' : colors.textMuted} />
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: type === val ? '#5F8A86' : colors.textMuted }}>{label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+
                   {/* ── COMMON FIELDS (shown in both modes) ── */}
                   {createMode !== 'choose' && (<>
                   {(createMode === 'ai' || uploadStep === 3) && (<>
@@ -2510,8 +2550,96 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                   {/* Output Format + Quiz Generator moved to after extracted questions */}
 
-                  {/* ── AI Assignment Generator (only in AI mode) ── */}
-                  {createMode === 'ai' && <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#7AADA840', backgroundColor: '#7AADA808', gap: 10 }}>
+                  {/* ── Quiz Generator (AI mode, type === quiz) ── */}
+                  {createMode === 'ai' && type === 'quiz' && (
+                    <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#5F8A8640', backgroundColor: '#5F8A8608', gap: 12 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Feather name="check-square" size={16} color="#5F8A86" />
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#5F8A86' }}>Quiz Generator</Text>
+                      </View>
+
+                      {/* Question Type */}
+                      <View style={{ gap: 6 }}>
+                        <Text style={styles.fieldLabel}>Question Type</Text>
+                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                          {([['mcq', 'MCQ Only', 'list'], ['fill_blank', 'Fill Blanks', 'edit-3'], ['mixed', 'Mixed', 'layers']] as const).map(([val, label, icon]) => (
+                            <TouchableOpacity key={val}
+                              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
+                                paddingVertical: 9, borderRadius: 10, borderWidth: 1.5,
+                                borderColor: quizType === val ? '#5F8A86' : colors.borderColor,
+                                backgroundColor: quizType === val ? '#5F8A8618' : 'transparent' }}
+                              onPress={() => setQuizType(val)}
+                              activeOpacity={0.75}
+                            >
+                              <Feather name={icon as any} size={12} color={quizType === val ? '#5F8A86' : colors.textMuted} />
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: quizType === val ? '#5F8A86' : colors.textMuted }}>{label}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* Difficulty */}
+                      <View style={{ gap: 6 }}>
+                        <Text style={styles.fieldLabel}>Difficulty</Text>
+                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                          {(['easy','medium','hard'] as const).map(d => (
+                            <TouchableOpacity key={d}
+                              style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
+                                borderColor: quizDifficulty === d ? '#5F8A86' : colors.borderColor,
+                                backgroundColor: quizDifficulty === d ? '#5F8A8618' : 'transparent' }}
+                              onPress={() => setQuizDifficulty(d)}
+                              activeOpacity={0.75}
+                            >
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: quizDifficulty === d ? '#5F8A86' : colors.textMuted, textTransform: 'capitalize' }}>{d}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* Count */}
+                      <View style={{ gap: 6 }}>
+                        <Text style={styles.fieldLabel}>Number of Questions</Text>
+                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                          {[3, 5, 8, 10].map(n => (
+                            <TouchableOpacity key={n}
+                              style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
+                                borderColor: quizCount === n ? '#5F8A86' : colors.borderColor,
+                                backgroundColor: quizCount === n ? '#5F8A8618' : 'transparent' }}
+                              onPress={() => setQuizCount(n)}
+                              activeOpacity={0.75}
+                            >
+                              <Text style={{ fontSize: 13, fontWeight: '800', color: quizCount === n ? '#5F8A86' : colors.textMuted }}>{n}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* Generate button */}
+                      {!!formError && createMode === 'ai' && type === 'quiz' && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 10, borderRadius: 8, backgroundColor: '#ef444418', borderWidth: 1, borderColor: '#ef444440' }}>
+                          <Feather name="alert-circle" size={13} color="#ef4444" />
+                          <Text style={{ flex: 1, fontSize: 12, color: '#ef4444', lineHeight: 17 }}>{formError}</Text>
+                        </View>
+                      )}
+                      <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+                          padding: 14, borderRadius: 12, backgroundColor: generatingQuiz ? colors.borderColor : '#5F8A86' }}
+                        onPress={generateQuiz}
+                        activeOpacity={0.85}
+                        disabled={generatingQuiz}
+                      >
+                        {generatingQuiz
+                          ? <ActivityIndicator size="small" color="#fff" />
+                          : <Feather name="cpu" size={16} color="#fff" />}
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#fff' }}>
+                          {generatingQuiz ? 'Generating Quiz...' : `Generate ${quizType === 'mcq' ? 'MCQ' : quizType === 'fill_blank' ? 'Fill-in-the-Blank' : 'Mixed'} Quiz`}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {/* ── AI Assignment Generator (only in AI mode, type === assignment) ── */}
+                  {createMode === 'ai' && type === 'assignment' && <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#7AADA840', backgroundColor: '#7AADA808', gap: 10 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <Feather name="cpu" size={16} color="#7AADA8" />
                       <Text style={{ fontSize: 14, fontWeight: '800', color: '#7AADA8' }}>
@@ -2533,6 +2661,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       onChangeText={setUnitOfInquiry}
                     />
 
+                    {!!formError && createMode === 'ai' && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 10, borderRadius: 8, backgroundColor: '#ef444418', borderWidth: 1, borderColor: '#ef444440' }}>
+                        <Feather name="alert-circle" size={13} color="#ef4444" />
+                        <Text style={{ flex: 1, fontSize: 12, color: '#ef4444', lineHeight: 17 }}>{formError}</Text>
+                      </View>
+                    )}
                     <TouchableOpacity
                       style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
                         padding: 14, borderRadius: 12, backgroundColor: generatingIB ? colors.borderColor : '#7AADA8' }}
@@ -2676,38 +2810,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     )}
                   </View>}
 
-                  {/* ── Task Steps (AI mode only) ── */}
-                  {createMode === 'ai' && <View style={{ marginTop: 4 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.fieldLabel}>Task Steps</Text>
-                        <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>Build a scaffolded assignment: Brainstorm → Draw → Write</Text>
-                      </View>
-                      <TouchableOpacity
-                        onPress={generateSteps}
-                        disabled={generatingSteps}
-                        activeOpacity={0.8}
-                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10,
-                          borderRadius: 20, backgroundColor: generatingSteps ? colors.borderColor : '#93B0AC',
-                          opacity: generatingSteps ? 0.7 : 1 }}
-                      >
-                        {generatingSteps
-                          ? <ActivityIndicator size="small" color="#fff" />
-                          : <Feather name="cpu" size={13} color="#fff" />}
-                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#fff' }}>
-                          {generatingSteps ? 'Generating...' : 'Generate with AI'}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                    {!!stepsError && (
-                      <View style={{ marginTop: 6, padding: 10, borderRadius: 8, backgroundColor: '#ef444418', borderWidth: 1, borderColor: '#ef444440' }}>
-                        <Text style={{ fontSize: 12, color: '#ef4444' }}>{stepsError}</Text>
-                      </View>
-                    )}
-                  </View>}
+                  {/* ── Task Steps label (AI mode, assignment type only) ── */}
+                  {createMode === 'ai' && type === 'assignment' && taskSteps.length > 0 && (
+                    <Text style={styles.fieldLabel}>Task Steps</Text>
+                  )}
 
                   {/* Step type picker — subject-appropriate options per IB PYP pedagogy */}
-                  {createMode === 'ai' && (() => {
+                  {createMode === 'ai' && type === 'assignment' && (() => {
                     const SUBJECT_STEP_PICKER: Record<string, StepType[]> = {
                       'Mathematics':          ['tuning_in', 'problem_solving', 'math_reflection'],
                       'Science':              ['prior_knowledge', 'drawing', 'structured_writing'],
@@ -2753,7 +2862,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   })()}
 
                   {/* Existing steps */}
-                  {createMode === 'ai' && taskSteps.map((step, idx) => (
+                  {createMode === 'ai' && type === 'assignment' && taskSteps.map((step, idx) => (
                     <View key={step.id} style={{ borderWidth: 1, borderColor: STEP_COLORS[step.type] + '40', borderRadius: 12, padding: 12, gap: 8, backgroundColor: STEP_COLORS[step.type] + '06' }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: STEP_COLORS[step.type], alignItems: 'center', justifyContent: 'center' }}>
@@ -2790,6 +2899,20 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         value={step.label}
                         onChangeText={t => updateTaskStep(step.id, { label: t })}
                       />
+                      {step.provocation !== undefined && (
+                        <>
+                          <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '600' }}>Scenario / Provocation</Text>
+                          <TextInput
+                            style={[styles.input, styles.inputMulti, { borderColor: STEP_COLORS[step.type] + '60', minHeight: 72 }]}
+                            placeholder="Write the scenario or provocation text the student will read..."
+                            placeholderTextColor={colors.textDim}
+                            value={step.provocation}
+                            onChangeText={t => updateTaskStep(step.id, { provocation: t })}
+                            multiline
+                            numberOfLines={3}
+                          />
+                        </>
+                      )}
                       <TextInput
                         style={[styles.input, styles.inputMulti, { borderColor: STEP_COLORS[step.type] + '40' }]}
                         placeholder="Instructions for student..."
@@ -2850,8 +2973,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </View>
                   ))}
 
-                  {/* Questions for Students — only in AI mode */}
-                  {createMode === 'ai' && (<>
+                  {/* Questions for Students — only in AI assignment mode */}
+                  {createMode === 'ai' && type === 'assignment' && (<>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text style={styles.fieldLabel}>Questions for Students</Text>
                     {questions.length < 10 && (
@@ -2881,7 +3004,79 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       )}
                     </View>
                   ))}
+                  </>)}
 
+                  {/* Quiz Questions — editable with options + correct answer (quiz mode) */}
+                  {createMode === 'ai' && type === 'quiz' && quizQuestions.length > 0 && (<>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={styles.fieldLabel}>Quiz Questions ({quizQuestions.length})</Text>
+                  </View>
+                  {quizQuestions.map((q, i) => (
+                    <View key={q.id || i} style={{ padding: 12, borderRadius: 12, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, gap: 8 }}>
+                      {/* Question text */}
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#5F8A86', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{i + 1}</Text>
+                        </View>
+                        <TextInput
+                          style={[styles.input, { flex: 1, fontSize: 13, marginBottom: 0 }]}
+                          value={q.question}
+                          onChangeText={(t) => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, question: t } : qq))}
+                          multiline
+                          placeholder="Question text..."
+                          placeholderTextColor={colors.textDim}
+                        />
+                        <TouchableOpacity onPress={() => setQuizQuestions(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.7}>
+                          <Feather name="trash-2" size={14} color={colors.accentRed} />
+                        </TouchableOpacity>
+                      </View>
+                      {/* MCQ options */}
+                      {q.type !== 'fill_blank' && q.options?.map((opt: string, oi: number) => (
+                        <View key={oi} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 32 }}>
+                          <TouchableOpacity
+                            onPress={() => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, correct: oi } : qq))}
+                            style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5,
+                              borderColor: oi === q.correct ? colors.accentGreen : colors.borderColor,
+                              backgroundColor: oi === q.correct ? colors.accentGreen + '20' : 'transparent',
+                              alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                          >
+                            <Text style={{ fontSize: 10, fontWeight: '800', color: oi === q.correct ? colors.accentGreen : colors.textDim }}>
+                              {String.fromCharCode(65 + oi)}
+                            </Text>
+                          </TouchableOpacity>
+                          <TextInput
+                            style={[styles.input, { flex: 1, fontSize: 12, paddingVertical: 6, marginBottom: 0,
+                              borderColor: oi === q.correct ? colors.accentGreen + '60' : colors.borderColor }]}
+                            value={opt}
+                            onChangeText={(t) => setQuizQuestions(prev => prev.map((qq, j) => {
+                              if (j !== i) return qq;
+                              const newOpts = [...(qq.options || [])];
+                              const wasCorrect = oi === qq.correct;
+                              newOpts[oi] = t;
+                              return { ...qq, options: newOpts };
+                            }))}
+                            placeholder={`Option ${String.fromCharCode(65 + oi)}...`}
+                            placeholderTextColor={colors.textDim}
+                          />
+                          {oi === q.correct && <Feather name="check-circle" size={14} color={colors.accentGreen} />}
+                        </View>
+                      ))}
+                      {/* Fill blank answer */}
+                      {q.type === 'fill_blank' && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 32 }}>
+                          <Feather name="check-circle" size={13} color={colors.accentGreen} />
+                          <Text style={{ fontSize: 11, color: colors.accentGreen, fontWeight: '700' }}>Answer:</Text>
+                          <TextInput
+                            style={[styles.input, { flex: 1, fontSize: 12, paddingVertical: 6, marginBottom: 0, borderColor: colors.accentGreen + '50' }]}
+                            value={String(q.correct || '')}
+                            onChangeText={(t) => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, correct: t } : qq))}
+                            placeholder="Correct answer..."
+                            placeholderTextColor={colors.textDim}
+                          />
+                        </View>
+                      )}
+                    </View>
+                  ))}
                   </>)}
 
                   {createMode === 'upload' && (<>
@@ -3269,41 +3464,6 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   {/* Close Step 3 guard for upload mode */}
                   </>)}
 
-                  {/* ── Student Experience Preview (AI mode only) ── */}
-                  {createMode === 'ai' && type === 'assignment' && (() => {
-                    const hasSteps = taskSteps.length > 0;
-                    const hasDocs  = docFiles.length > 0;
-                    const mode = hasSteps ? 'scaffolded' : hasDocs ? 'worksheet' : 'paper';
-                    const modeColor = hasSteps ? '#5A8A70' : hasDocs ? '#5F8A86' : '#8A8358';
-                    const modeIcon  = hasSteps ? 'layers' : hasDocs ? 'file-text' : 'camera';
-                    const modeLabel = hasSteps
-                      ? 'Interactive Online Assignment'
-                      : hasDocs
-                      ? 'Worksheet + Photo Submission'
-                      : 'Paper + Photo Submission';
-                    const modeDesc = hasSteps
-                      ? `Student will complete ${taskSteps.length} interactive step${taskSteps.length > 1 ? 's' : ''} online: ${taskSteps.map(s => s.label || s.type).join(' → ')}. AI grades each step automatically.`
-                      : hasDocs
-                      ? `Student will see ${docFiles.length} worksheet page${docFiles.length > 1 ? 's' : ''}, complete on paper, then upload a photo. AI grades the photo.`
-                      : 'Student will read the instructions, complete on paper, then upload a photo. AI grades the photo.';
-                    return (
-                      <View style={{ padding: 14, borderRadius: 12, borderWidth: 1.5, borderColor: modeColor + '50', backgroundColor: modeColor + '10', gap: 8 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Feather name={modeIcon as any} size={16} color={modeColor} />
-                          <Text style={{ fontSize: 12, fontWeight: '800', color: modeColor }}>Student will see: {modeLabel}</Text>
-                        </View>
-                        <Text style={{ fontSize: 11, color: colors.textMuted, lineHeight: 17 }}>{modeDesc}</Text>
-                        {mode === 'paper' && (
-                          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
-                            <Feather name="alert-circle" size={12} color={colors.accentYellow} style={{ marginTop: 1 }} />
-                            <Text style={{ flex: 1, fontSize: 11, color: colors.accentYellow, lineHeight: 16 }}>
-                              To make this interactive (brainstorm + draw + write online), use "Generate AI Assignment" above to create task steps.
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    );
-                  })()}
 
                   {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
 
@@ -3605,7 +3765,18 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                             <Feather name="trash-2" size={14} color={colors.accentRed} />
                           </TouchableOpacity>
                         </View>
-                        {q.options?.map((opt: string, oi: number) => (
+                        {q.type === 'fill_blank' ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 32 }}>
+                            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accentGreen }}>Answer:</Text>
+                            <TextInput
+                              style={[styles.input, { flex: 1, fontSize: 12, paddingVertical: 5, marginBottom: 0, borderColor: colors.accentGreen + '60' }]}
+                              value={q.correct}
+                              onChangeText={(t) => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, correct: t } : qq))}
+                              placeholder="Correct answer..."
+                            />
+                            <Feather name="check-circle" size={14} color={colors.accentGreen} />
+                          </View>
+                        ) : q.options?.map((opt: string, oi: number) => (
                           <View key={oi} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 32 }}>
                             <TouchableOpacity
                               onPress={() => setQuizQuestions(prev => prev.map((qq, j) => j === i ? { ...qq, correct: opt } : qq))}
@@ -3657,6 +3828,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           </View>
                           <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMain }}>{step.label}</Text>
                         </View>
+                        {step.provocation ? <Text style={{ fontSize: 11, color: colors.textMain, paddingLeft: 32, lineHeight: 16, fontStyle: 'italic' }}>{step.provocation}</Text> : null}
                         <Text style={{ fontSize: 11, color: colors.textDim, paddingLeft: 32 }}>{step.instructions}</Text>
                         {step.sections.length > 0 && (
                           <View style={{ paddingLeft: 32, gap: 2, marginTop: 2 }}>

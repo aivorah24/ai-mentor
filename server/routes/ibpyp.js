@@ -68,27 +68,38 @@ Student profile: IB PYP ${grade}, ages ${ageRange}
 Subject focus: ${ctx.focus}
 Teaching rule: ${ctx.rule}
 
-Generate EXACTLY 5 multiple-choice questions. Requirements:
+Generate EXACTLY 5 questions — a mix of:
+- 3 multiple-choice questions (type "mcq"): 4 options each, correct is 0-based index
+- 2 fill-in-the-blank questions (type "fill_blank"): question contains "___", correct is a short answer (1-4 words)
+
+Requirements:
 1. Simple, clear language appropriate for ages ${ageRange}
-2. One clearly correct answer per question
-3. Three plausible wrong answers (not obviously silly)
-4. Questions increase slightly in difficulty from Q1 to Q5
-5. Each explanation must be encouraging and use a real-world example
-6. Questions must directly test the topic "${topic}" — IB PYP style (concept-based, inquiry-driven)
+2. Questions increase slightly in difficulty from Q1 to Q5
+3. Each question must have a "hint" — one gentle clue that does NOT give away the answer
+4. Each explanation must be encouraging and use a real-world example
+5. Questions must directly test the topic "${topic}" — IB PYP style (concept-based, inquiry-driven)
+6. CRITICAL for fill_blank: double-check your arithmetic before writing the "correct" value. If a question involves calculation (e.g. "2 cats have ___ legs total"), compute the exact answer (2×4=8, so correct:"8"). Never write a wrong answer.
 
 Return ONLY valid JSON — no markdown, no extra text:
 {
   "questions": [
     {
+      "type": "mcq",
       "question": "...",
       "options": ["option 1", "option 2", "option 3", "option 4"],
       "correct": 0,
-      "explanation": "Short encouraging explanation for ${grade} students (2 sentences max)"
+      "hint": "Think about...",
+      "explanation": "Short encouraging explanation (2 sentences max)"
+    },
+    {
+      "type": "fill_blank",
+      "question": "The process by which plants make food is called ___.",
+      "correct": "photosynthesis",
+      "hint": "It involves sunlight and leaves",
+      "explanation": "Plants use sunlight, water and carbon dioxide to make their own food."
     }
   ]
-}
-
-"correct" is the 0-based index of the correct option in the options array.`;
+}`;
 
     const completion = await groq.chat.completions.create({
       model:       'llama-3.1-8b-instant',
@@ -103,16 +114,30 @@ Return ONLY valid JSON — no markdown, no extra text:
 
     const parsed = JSON.parse(json);
 
-    // Normalise: handle both letter ("A") and 0-based index correct answers
+    // Normalise: handle both MCQ and fill_blank
     const LETTER_MAP = { A: 0, B: 1, C: 2, D: 3 };
-    const questions = (parsed.questions || []).map(q => ({
-      question:    q.question,
-      options:     (q.options || []).map(opt => String(opt).replace(/^[A-D]\.\s*/i, '').trim()),
-      correct:     typeof q.correct === 'string'
-        ? (LETTER_MAP[String(q.correct).toUpperCase()] ?? 0)
-        : (typeof q.correct === 'number' ? q.correct : 0),
-      explanation: q.explanation || '',
-    }));
+    const questions = (parsed.questions || []).map(q => {
+      if (q.type === 'fill_blank') {
+        return {
+          type:        'fill_blank',
+          question:    q.question,
+          options:     [],
+          correct:     String(q.correct || '').trim(),
+          hint:        q.hint || '',
+          explanation: q.explanation || '',
+        };
+      }
+      return {
+        type:        'mcq',
+        question:    q.question,
+        options:     (q.options || []).map(opt => String(opt).replace(/^[A-D]\.\s*/i, '').trim()),
+        correct:     typeof q.correct === 'string'
+          ? (LETTER_MAP[String(q.correct).toUpperCase()] ?? 0)
+          : (typeof q.correct === 'number' ? q.correct : 0),
+        hint:        q.hint || '',
+        explanation: q.explanation || '',
+      };
+    });
 
     logEvent('ibpyp_quiz_generated', {
       userEmail, role,
