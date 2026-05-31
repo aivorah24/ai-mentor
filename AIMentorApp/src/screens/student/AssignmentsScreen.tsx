@@ -51,7 +51,7 @@ interface Assignment {
 interface QuizQuestion {
   id: string;
   question: string;
-  type: 'mcq' | 'short_answer';
+  type: 'mcq' | 'short_answer' | 'fill_blank';
   options?: string[];
   correct: string;
   hint?: string;
@@ -86,7 +86,8 @@ type StepAnswer = {
   drawingMime: string;
   sections: { label: string; text: string }[];
   problemAnswers?: string[];      // problem_solving
-  tunedInText?: string;           // tuning_in
+  tunedInText?: string;           // tuning_in (generic)
+  noticeWonderKnow?: { notice: string; wonder: string; know: string }; // social_inquiry / tuning_in / text_connection
   reflectionAnswers?: string[];   // math_reflection
   priorKnowledge?: { knows: string; predicts: string }; // prior_knowledge
 };
@@ -370,18 +371,29 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
   const color = SUBJECT_COLOR[assignment.subject] ?? '#6366f1';
   const questions = assignment.quizQuestions || [];
 
-  const [currentQ,    setCurrentQ]   = useState(0);
-  const [answers,     setAnswers]    = useState<Record<number, string>>({});
-  const [showHint,    setShowHint]   = useState(false);
-  const [submitting,  setSubmitting] = useState(false);
-  const [result,      setResult]     = useState<GradeResult | null>(null);
-  const [showReview,  setShowReview] = useState(false);
-  const [shortInput,  setShortInput] = useState('');
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [currentQ,       setCurrentQ]      = useState(0);
+  const [answers,        setAnswers]       = useState<Record<number, string>>({});
+  const [showHint,       setShowHint]      = useState(false);
+  const [submitting,     setSubmitting]    = useState(false);
+  const [result,         setResult]        = useState<GradeResult | null>(null);
+  const [showReview,     setShowReview]    = useState(false);
+  const [shortInput,     setShortInput]    = useState('');
+  const [showConfirm,    setShowConfirm]   = useState(false);
+  // Fill-in-the-blank state
+  const [fillInput,        setFillInput]        = useState<Record<number, string>>({});
+  const [fillAttempts,     setFillAttempts]     = useState<Record<number, number>>({});
+  const [fillFeedback,     setFillFeedback]     = useState<Record<number, 'wrong1' | 'wrong2' | 'revealed'>>({});
+  const [fillValidating,   setFillValidating]   = useState(false);
+  // Which attempt # the student got it correct (1 = full points, 2 = partial, revealed = 0)
+  const [fillCorrectAttempt, setFillCorrectAttempt] = useState<Record<number, number>>({});
+  const [showCheckNudge,   setShowCheckNudge]   = useState(false);
 
   const q         = questions[currentQ];
   const isLast    = currentQ === questions.length - 1;
+  const isFillQ   = q?.type === 'fill_blank';
   const answered  = answers[currentQ] !== undefined;
+  // For fill_blank: has the student typed something but not yet checked?
+  const fillTypedNotChecked = isFillQ && !answered && !!(fillInput[currentQ] || '').trim();
   const stamp     = result ? getStamp(result.score) : null;
 
   function selectOption(option: string) {
@@ -393,8 +405,46 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
       setShortInput('');
     }
   }
-  function next() { setShowHint(false); setShortInput(''); setCurrentQ(i => i + 1); }
-  function prev() { setShowHint(false); setShortInput(''); setCurrentQ(i => i - 1); }
+  function next() { setShowHint(false); setShortInput(''); setShowCheckNudge(false); setCurrentQ(i => i + 1); }
+  function prev() { setShowHint(false); setShortInput(''); setShowCheckNudge(false); setCurrentQ(i => i - 1); }
+
+  async function submitFillBlank() {
+    const currentInput = (fillInput[currentQ] || '').trim();
+    if (!currentInput) return;
+    setFillValidating(true);
+    try {
+      const resp = await fetch(`${SERVER_URL}/assignments/validate-fill-blank`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentAnswer: currentInput, correctAnswer: q.correct }),
+      });
+      const { correct } = await resp.json();
+      if (correct) {
+        const attemptNum = (fillAttempts[currentQ] || 0) + 1;
+        setFillCorrectAttempt(prev => ({ ...prev, [currentQ]: attemptNum }));
+        // Encode attempt in answer so backend can score: [attempt:N] prefix
+        setAnswers(prev => ({ ...prev, [currentQ]: `[attempt:${attemptNum}] ${currentInput}` }));
+        setFillInput(prev => ({ ...prev, [currentQ]: '' }));
+        setShowCheckNudge(false);
+      } else {
+        const attempts = (fillAttempts[currentQ] || 0) + 1;
+        setFillAttempts(prev => ({ ...prev, [currentQ]: attempts }));
+        if (attempts === 1) setFillFeedback(prev => ({ ...prev, [currentQ]: 'wrong1' }));
+        else if (attempts === 2) setFillFeedback(prev => ({ ...prev, [currentQ]: 'wrong2' }));
+        else {
+          // 3rd attempt — reveal answer
+          setFillFeedback(prev => ({ ...prev, [currentQ]: 'revealed' }));
+          setAnswers(prev => ({ ...prev, [currentQ]: `[revealed] ${q.correct}` }));
+          setFillInput(prev => ({ ...prev, [currentQ]: '' }));
+        }
+      }
+    } catch {
+      // network error — just save as-is
+      setAnswers(prev => ({ ...prev, [currentQ]: currentInput }));
+      setFillInput(prev => ({ ...prev, [currentQ]: '' }));
+    } finally {
+      setFillValidating(false);
+    }
+  }
 
   async function handleSubmit() {
     setShowReview(false); setSubmitting(true);
@@ -449,7 +499,7 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
             </View>
             <TouchableOpacity onPress={onClose}><Feather name="x" size={22} color={colors.textMuted} /></TouchableOpacity>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { maxWidth: 720, alignSelf: 'center', width: '100%' }]}>
             <View style={styles.resultBox}>
               <View style={[styles.scoreBadge, { backgroundColor: color + '15', borderColor: color + '30' }]}>
                 <Text style={[styles.scoreNum, { color }]}>{result.score != null ? `${result.score}%` : 'Done'}</Text>
@@ -533,7 +583,7 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                   <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{result.teacherFeedback}</Text>
                 </View>
               ) : null}
-              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color }]} onPress={onClose} activeOpacity={0.85}>
+              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color, alignSelf: 'center', width: '100%', maxWidth: 360 }]} onPress={onClose} activeOpacity={0.85}>
                 <Feather name="check" size={16} color="#fff" />
                 <Text style={styles.submitBtnText}>Done</Text>
               </TouchableOpacity>
@@ -557,7 +607,8 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
             </View>
             <TouchableOpacity onPress={() => setShowReview(false)}><Feather name="x" size={22} color={colors.textMuted} /></TouchableOpacity>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+          <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 48, alignItems: 'center' }}>
+            <View style={{ maxWidth: 720, width: '100%', gap: 0 }}>
             {questions.map((q, i) => (
               <TouchableOpacity key={i} onPress={() => { setCurrentQ(i); setShowReview(false); }} activeOpacity={0.8}
                 style={[styles.qReviewRow, { borderColor: answers[i] ? color + '40' : colors.accentRed + '40', backgroundColor: answers[i] ? color + '06' : colors.accentRed + '06' }]}>
@@ -566,24 +617,38 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, color: colors.textMain, fontWeight: '600' }} numberOfLines={1}>{q.question}</Text>
-                  <Text style={{ fontSize: 11, color: answers[i] ? colors.accentGreen : colors.accentRed, marginTop: 2, fontWeight: '600' }}>
-                    {answers[i] ? answers[i] : 'Not answered — tap to answer'}
-                  </Text>
+                  {(() => {
+                    const ans = answers[i];
+                    if (!ans) return <Text style={{ fontSize: 11, color: colors.accentRed, marginTop: 2, fontWeight: '600' }}>Not answered — tap to answer</Text>;
+                    if (ans.startsWith('[revealed]')) return <Text style={{ fontSize: 11, color: colors.accentRed, marginTop: 2, fontWeight: '600' }}>Revealed: {ans.replace(/^\[revealed\]\s*/, '')}</Text>;
+                    const attemptMatch = ans.match(/^\[attempt:(\d+)\]\s*/);
+                    const displayAns = attemptMatch ? ans.replace(/^\[attempt:\d+\]\s*/, '') : ans;
+                    const attemptNum = attemptMatch ? parseInt(attemptMatch[1]) : 1;
+                    const pointsLabel = attemptNum === 1 ? 'Full points' : 'Partial points';
+                    const pointsColor = attemptNum === 1 ? colors.accentGreen : '#E8A020';
+                    return (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                        <Text style={{ fontSize: 11, color: colors.accentGreen, fontWeight: '600' }} numberOfLines={1}>{displayAns}</Text>
+                        <Text style={{ fontSize: 10, color: pointsColor, fontWeight: '700' }}>· {pointsLabel}</Text>
+                      </View>
+                    );
+                  })()}
                 </View>
               </TouchableOpacity>
             ))}
             {Object.keys(answers).length < questions.length && (
-              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', padding: 12, borderRadius: 10, backgroundColor: colors.accentYellow + '12', borderWidth: 1, borderColor: colors.accentYellow + '30' }}>
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', padding: 12, borderRadius: 10, backgroundColor: colors.accentYellow + '12', borderWidth: 1, borderColor: colors.accentYellow + '30', marginBottom: 12 }}>
                 <Feather name="alert-triangle" size={14} color={colors.accentYellow} />
                 <Text style={{ flex: 1, fontSize: 12, color: colors.accentYellow, fontWeight: '600' }}>
                   {questions.length - Object.keys(answers).length} question{questions.length - Object.keys(answers).length > 1 ? 's' : ''} unanswered.
                 </Text>
               </View>
             )}
-            <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color }]} onPress={handleSubmit} activeOpacity={0.85}>
+            <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color, maxWidth: 360, alignSelf: 'center', width: '100%' }]} onPress={handleSubmit} activeOpacity={0.85}>
               <Feather name="send" size={16} color="#fff" />
               <Text style={styles.submitBtnText}>Submit Quiz</Text>
             </TouchableOpacity>
+            </View>
           </ScrollView>
         </View>
       </View>
@@ -607,18 +672,21 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
             onConfirm={onClose} onCancel={() => setShowConfirm(false)} />
 
           {/* Progress dots */}
-          <View style={{ flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 10, gap: 5 }}>
-            {questions.map((_, i) => (
-              <View key={i} style={{ flex: 1, height: 4, borderRadius: 2,
-                backgroundColor: answers[i] !== undefined ? color : i === currentQ ? color + '60' : colors.borderColor }} />
-            ))}
+          <View style={{ alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 10, gap: 5, maxWidth: 720, width: '100%' }}>
+              {questions.map((_, i) => (
+                <View key={i} style={{ flex: 1, height: 4, borderRadius: 2,
+                  backgroundColor: answers[i] !== undefined ? color : i === currentQ ? color + '60' : colors.borderColor }} />
+              ))}
+            </View>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { gap: 16 }]}>
+          <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, paddingBottom: 48, alignItems: 'center' }}>
+          <View style={{ maxWidth: 720, width: '100%', gap: 16 }}>
             {/* Question */}
             <View style={[styles.questionCard, { borderColor: color + '30', backgroundColor: color + '06' }]}>
               <View style={[styles.qNumBadge, { backgroundColor: color }]}>
-                <Text style={styles.qNumBadgeText}>Q{currentQ + 1} - {q.type === 'mcq' ? 'Multiple Choice' : 'Short Answer'}</Text>
+                <Text style={styles.qNumBadgeText}>Q{currentQ + 1} - {q.type === 'mcq' ? 'Multiple Choice' : q.type === 'fill_blank' ? 'Fill in the Blank' : 'Short Answer'}</Text>
               </View>
               <Text style={styles.questionText}>{q.question}</Text>
 
@@ -698,12 +766,107 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
               </View>
             )}
 
+            {/* Fill in the blank */}
+            {q.type === 'fill_blank' && (() => {
+              const fb = fillFeedback[currentQ];
+              const isRevealed = fb === 'revealed';
+              const isCorrect  = answers[currentQ] && !answers[currentQ].startsWith('[revealed]');
+              const displayAnswer = (answers[currentQ] || '').replace(/^\[attempt:\d+\]\s*/, '');
+              const attemptNum = fillCorrectAttempt[currentQ] || 1;
+
+              if (isCorrect) return (
+                <View style={{ gap: 6 }}>
+                  <View style={{ padding: 14, borderRadius: 12, borderWidth: 1.5, borderColor: '#4A9E7060', backgroundColor: '#4A9E7010' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Feather name="check-circle" size={14} color="#4A9E70" />
+                      <Text style={{ fontSize: 14, color: '#4A9E70', fontWeight: '700' }}>{displayAnswer}</Text>
+                      <Text style={{ fontSize: 11, color: attemptNum === 1 ? '#4A9E70' : '#E8A020', fontWeight: '700', marginLeft: 'auto' as any }}>
+                        {attemptNum === 1 ? 'Full points' : 'Partial points'}
+                      </Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity onPress={() => { setAnswers(prev => { const n = {...prev}; delete n[currentQ]; return n; }); setFillFeedback(prev => { const n = {...prev}; delete n[currentQ]; return n; }); setFillAttempts(prev => { const n = {...prev}; delete n[currentQ]; return n; }); setFillInput(prev => ({ ...prev, [currentQ]: '' })); }}
+                    activeOpacity={0.75} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center' }}>
+                    <Feather name="edit-2" size={12} color={color} />
+                    <Text style={{ fontSize: 12, color, fontWeight: '600' }}>Try again</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+
+              if (isRevealed) return (
+                <View style={{ gap: 8 }}>
+                  <View style={{ padding: 14, borderRadius: 12, borderWidth: 1.5, borderColor: '#C8587050', backgroundColor: '#C8587010', gap: 6 }}>
+                    <Text style={{ fontSize: 12, color: '#C85870', fontWeight: '700' }}>Answer revealed</Text>
+                    <Text style={{ fontSize: 14, color: colors.textMain, fontWeight: '600' }}>{q.correct}</Text>
+                    {q.explanation ? <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 20, marginTop: 2 }}>{q.explanation}</Text> : null}
+                  </View>
+                </View>
+              );
+
+              return (
+                <View style={{ gap: 10, width: '100%' }}>
+                  {/* Question with blank highlighted */}
+                  <TextInput
+                    style={{ borderWidth: 1.5, borderColor: fb ? '#C8587060' : color + '60', borderRadius: 12,
+                      padding: 14, fontSize: 15, color: colors.textMain, backgroundColor: colors.bgDark, width: '100%' }}
+                    placeholder="Type your answer here..."
+                    placeholderTextColor={colors.textDim}
+                    value={fillInput[currentQ] || ''}
+                    onChangeText={text => setFillInput(prev => ({ ...prev, [currentQ]: text }))}
+                    onSubmitEditing={submitFillBlank}
+                    returnKeyType="done"
+                    editable={!fillValidating}
+                  />
+
+                  {/* Feedback nudges */}
+                  {fb === 'wrong1' && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 4 }}>
+                      <Feather name="alert-circle" size={13} color="#E8A020" />
+                      <Text style={{ fontSize: 13, color: '#E8A020', fontWeight: '600' }}>Not quite — want to try again?</Text>
+                    </View>
+                  )}
+                  {fb === 'wrong2' && (
+                    <View style={{ padding: 10, borderRadius: 10, backgroundColor: color + '12', borderWidth: 1, borderColor: color + '30', gap: 4 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Feather name="help-circle" size={13} color={color} />
+                        <Text style={{ fontSize: 12, color, fontWeight: '700' }}>Hint</Text>
+                      </View>
+                      <Text style={{ fontSize: 13, color: colors.textMuted, fontStyle: 'italic' }}>{q.hint || 'Think carefully about the topic!'}</Text>
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    style={[styles.submitBtn, styles.compactBtn, { backgroundColor: fillValidating ? color + '60' : color, alignSelf: 'flex-start' }]}
+                    onPress={submitFillBlank}
+                    activeOpacity={0.85}
+                    disabled={fillValidating || !(fillInput[currentQ] || '').trim()}
+                  >
+                    {fillValidating
+                      ? <ActivityIndicator size="small" color="#fff" />
+                      : <Text style={styles.submitBtnText}>Check Answer</Text>
+                    }
+                  </TouchableOpacity>
+                </View>
+              );
+            })()}
+
+            {/* Check nudge for fill_blank */}
+            {showCheckNudge && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 10, borderRadius: 8,
+                backgroundColor: '#E8A02015', borderWidth: 1, borderColor: '#E8A02040' }}>
+                <Feather name="alert-circle" size={13} color="#E8A020" />
+                <Text style={{ fontSize: 12, color: '#E8A020', fontWeight: '600', flex: 1 }}>
+                  Please check your answer before moving to the next question.
+                </Text>
+              </View>
+            )}
+
             {/* Navigation */}
             <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'flex-end' }}>
               {currentQ > 0 && (
                 <TouchableOpacity
                   style={[styles.submitBtn, styles.compactBtn, { backgroundColor: colors.borderColor }]}
-                  onPress={prev}
+                  onPress={() => { setShowCheckNudge(false); prev(); }}
                   activeOpacity={0.85}
                 >
                   <Feather name="chevron-left" size={16} color={colors.textMuted} />
@@ -712,7 +875,11 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
               )}
               <TouchableOpacity
                 style={[styles.submitBtn, styles.compactBtn, { backgroundColor: answered ? color : colors.borderColor }]}
-                onPress={() => isLast ? setShowReview(true) : next()}
+                onPress={() => {
+                  if (fillTypedNotChecked) { setShowCheckNudge(true); return; }
+                  setShowCheckNudge(false);
+                  isLast ? setShowReview(true) : next();
+                }}
                 activeOpacity={0.85}
               >
                 <Text style={[styles.submitBtnText, { color: answered ? '#fff' : colors.textMuted }]}>
@@ -722,11 +889,13 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
               </TouchableOpacity>
             </View>
 
-            {!answered && (
-              <TouchableOpacity onPress={() => isLast ? setShowReview(true) : next()} activeOpacity={0.7} style={{ alignSelf: 'center' }}>
+            {/* Skip only allowed for non-fill_blank questions */}
+            {!answered && !isFillQ && (
+              <TouchableOpacity onPress={() => { setShowCheckNudge(false); isLast ? setShowReview(true) : next(); }} activeOpacity={0.7} style={{ alignSelf: 'center' }}>
                 <Text style={{ fontSize: 12, color: colors.textDim, textDecorationLine: 'underline' }}>Skip this question</Text>
               </TouchableOpacity>
             )}
+          </View>
           </ScrollView>
         </View>
       </View>
@@ -1005,6 +1174,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
       sections: (s.sections?.length ? s.sections : ['Beginning','Middle','End']).map(l => ({ label: l, text: '' })),
       problemAnswers: s.problems?.map(() => '') || [],
       tunedInText: '',
+      noticeWonderKnow: { notice: '', wonder: '', know: '' },
       reflectionAnswers: s.reflectionPrompts?.map(() => '') || ['', '', ''],
       priorKnowledge: { knows: '', predicts: '' },
     }))
@@ -1039,10 +1209,23 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
   async function handleSubmit() {
     setSubmitting(true);
     try {
+      // Flatten noticeWonderKnow → tunedInText for server compatibility
+      const normalizedAnswers = stepAnswers.map(a => {
+        if (a.noticeWonderKnow) {
+          const nwk = a.noticeWonderKnow;
+          const combined = [
+            nwk.notice ? `I Notice: ${nwk.notice}` : '',
+            nwk.wonder ? `I Wonder: ${nwk.wonder}` : '',
+            nwk.know   ? `I Already Know: ${nwk.know}` : '',
+          ].filter(Boolean).join('\n');
+          return { ...a, tunedInText: combined };
+        }
+        return a;
+      });
       const res = await fetch(`${SERVER_URL}/assignments/${assignment.id}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId, stepAnswers, selfAssessment: selfChecked }),
+        body: JSON.stringify({ studentId, stepAnswers: normalizedAnswers, selfAssessment: selfChecked }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -1095,7 +1278,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
             </View>
             <TouchableOpacity onPress={onClose} activeOpacity={0.7}><Feather name="x" size={22} color={colors.textMuted} /></TouchableOpacity>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { maxWidth: 720, alignSelf: 'center', width: '100%' }]}>
             <View style={styles.resultBox}>
               <View style={[styles.scoreBadge, { backgroundColor: color + '15', borderColor: color + '30' }]}>
                 <Text style={[styles.scoreNum, { color }]}>{result.score != null ? `${result.score}%` : 'Done'}</Text>
@@ -1170,7 +1353,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
                   <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{result.teacherFeedback}</Text>
                 </View>
               ) : null}
-              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color }]} onPress={onClose} activeOpacity={0.85}>
+              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color, alignSelf: 'center', width: '100%', maxWidth: 360 }]} onPress={onClose} activeOpacity={0.85}>
                 <Feather name="check" size={16} color="#fff" />
                 <Text style={styles.submitBtnText}>Done</Text>
               </TouchableOpacity>
@@ -1196,7 +1379,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
         <ConfirmCloseOverlay visible={showConfirm} color={color} colors={colors}
           onConfirm={onClose} onCancel={() => setShowConfirm(false)} />
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 40 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 40, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
 
           {/* ── IB PYP Central Idea ── */}
           {assignment.note ? (
@@ -1346,7 +1529,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
 
             {/* Start button */}
             <TouchableOpacity
-              style={[styles.submitBtn, { backgroundColor: color }]}
+              style={[styles.submitBtn, { backgroundColor: color, alignSelf: 'center', width: '100%', maxWidth: 360 }]}
               onPress={() => setCurrentStep(0)}
               activeOpacity={0.85}
             >
@@ -1441,7 +1624,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
             <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.borderColor, opacity: 0.3 }} />
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { gap: 16 }]}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { gap: 16, maxWidth: 720, alignSelf: 'center', width: '100%' }]}>
             {/* Assignment purpose — shown once at the top of the first step */}
             {currentStep === 0 && assignment.note ? (
               <View style={{ padding: 12, borderRadius: 10, backgroundColor: color + '10', borderWidth: 1, borderColor: color + '30' }}>
@@ -1567,18 +1750,48 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
                     <Text style={{ fontSize: 15, color: colors.textMain, lineHeight: 23, fontWeight: '500', fontStyle: 'italic' }}>{step.provocation}</Text>
                   </View>
                 ) : null}
-                <Text style={[styles.sectionLabel, { color: stepColor }]}>My Initial Thinking</Text>
-                <TextInput
-                  style={{ borderWidth: 1.5, borderColor: stepColor + '50', borderRadius: 12,
-                    padding: 14, fontSize: 15, color: colors.textMain, backgroundColor: colors.bgDark,
-                    minHeight: 110, textAlignVertical: 'top', lineHeight: 24 }}
-                  placeholder="Write your first thoughts here — there are no wrong answers!"
-                  placeholderTextColor={colors.textDim}
-                  value={ans.tunedInText ?? ''}
-                  onChangeText={t => patchAns({ tunedInText: t })}
-                  multiline
-                />
-                <Text style={{ fontSize: 11, color: colors.textDim, textAlign: 'center' }}>Share what you think — every idea matters!</Text>
+                {(['social_inquiry','tuning_in','text_connection'] as StepType[]).includes(step.type) ? (
+                  // Structured Notice / Wonder / Know for inquiry-based steps
+                  <View style={{ gap: 12 }}>
+                    <Text style={[styles.sectionLabel, { color: stepColor }]}>My Initial Thinking</Text>
+                    {([
+                      { key: 'notice',  label: 'I Notice', placeholder: 'What do you observe or see?' },
+                      { key: 'wonder',  label: 'I Wonder', placeholder: 'What are you curious about?' },
+                      { key: 'know',    label: 'I Already Know', placeholder: 'What do you already know?' },
+                    ] as const).map(({ key, label, placeholder }) => (
+                      <View key={key} style={{ gap: 4 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: stepColor }}>{label}</Text>
+                        <TextInput
+                          style={{ borderWidth: 1.5, borderColor: stepColor + '40', borderRadius: 10,
+                            paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: colors.textMain,
+                            backgroundColor: colors.bgDark, minHeight: 52, textAlignVertical: 'top', lineHeight: 20 }}
+                          placeholder={placeholder}
+                          placeholderTextColor={colors.textDim}
+                          value={(ans.noticeWonderKnow as any)?.[key] ?? ''}
+                          onChangeText={t => patchAns({ noticeWonderKnow: { ...(ans.noticeWonderKnow || { notice: '', wonder: '', know: '' }), [key]: t } })}
+                          multiline
+                        />
+                      </View>
+                    ))}
+                    <Text style={{ fontSize: 11, color: colors.textDim, textAlign: 'center' }}>Every idea matters — there are no wrong answers!</Text>
+                  </View>
+                ) : (
+                  // Generic open text for other hook types (language_culture, artistic_exploration, etc.)
+                  <View style={{ gap: 8 }}>
+                    <Text style={[styles.sectionLabel, { color: stepColor }]}>My Initial Thinking</Text>
+                    <TextInput
+                      style={{ borderWidth: 1.5, borderColor: stepColor + '50', borderRadius: 12,
+                        padding: 14, fontSize: 15, color: colors.textMain, backgroundColor: colors.bgDark,
+                        minHeight: 110, textAlignVertical: 'top', lineHeight: 24 }}
+                      placeholder="Write your first thoughts here — there are no wrong answers!"
+                      placeholderTextColor={colors.textDim}
+                      value={ans.tunedInText ?? ''}
+                      onChangeText={t => patchAns({ tunedInText: t })}
+                      multiline
+                    />
+                    <Text style={{ fontSize: 11, color: colors.textDim, textAlign: 'center' }}>Share what you think — every idea matters!</Text>
+                  </View>
+                )}
               </View>
             )}
 
@@ -1696,7 +1909,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
 
 
             {/* Navigation */}
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flexDirection: 'row', gap: 10, alignSelf: 'center', width: '100%', maxWidth: 480 }}>
               {currentStep > 0 && (
                 <TouchableOpacity style={[styles.submitBtn, { flex: 1, backgroundColor: colors.borderColor }]}
                   onPress={() => setCurrentStep(s => s - 1)} activeOpacity={0.85}>
@@ -2445,28 +2658,22 @@ export default function AssignmentsScreen({ navigation, route }: any) {
   }, [studentId]);
 
   const sortByPendingFirst = (list: Assignment[]) => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const priority = (a: Assignment) => {
-      if (a.status === 'completed') return 3;
-      const due = new Date(a.dueDate); due.setHours(0, 0, 0, 0);
-      if (due < today && !a.joinedAfterDue) return 0;  // truly overdue — highest priority
-      if (due < today) return 2; // joined after due date — treat as normal pending
-      if (due.getTime() === today.getTime()) return 1; // due today
-      return 2; // future pending
-    };
     return [...list].sort((a, b) => {
-      const pa = priority(a), pb = priority(b);
-      if (pa !== pb) return pa - pb;
-      // same priority bucket: sort by due date ascending (except completed: descending)
-      if (pa === 3) return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
-      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      // Completed always at bottom
+      const ac = a.status === 'completed' ? 1 : 0;
+      const bc = b.status === 'completed' ? 1 : 0;
+      if (ac !== bc) return ac - bc;
+      // Within pending: newest created first
+      const ca = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const cb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return cb - ca;
     });
   };
 
   const filtered = useMemo(() => {
     if (activeFilter === 'All')       return sortByPendingFirst(assignments);
     if (activeFilter === 'Pending')   return sortByPendingFirst(assignments.filter(a => a.status === 'pending'));
-    if (activeFilter === 'Completed') return assignments.filter(a => a.status === 'completed').sort((a,b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+    if (activeFilter === 'Completed') return assignments.filter(a => a.status === 'completed').sort((a,b) => new Date(b.createdAt || b.dueDate).getTime() - new Date(a.createdAt || a.dueDate).getTime());
     if (activeFilter === 'Quizzes')   return sortByPendingFirst(assignments.filter(a => a.type === 'quiz'));
     return sortByPendingFirst(assignments);
   }, [assignments, activeFilter]);
@@ -2498,6 +2705,20 @@ export default function AssignmentsScreen({ navigation, route }: any) {
         ? q.options.map((opt: any) => String(opt).trim()).filter(Boolean)
         : undefined;
       const optionTexts = options?.map((opt: string) => opt.replace(/^[A-D]\.\s*/i, '').trim());
+      // fill_blank type
+      if (q.type === 'fill_blank') {
+        acc.push({
+          id: String(q.id || `q${i + 1}`),
+          question: questionText,
+          type: 'fill_blank',
+          options: [],
+          correct: typeof q.correct === 'string' ? q.correct.trim() : '',
+          hint: q.hint ? String(q.hint) : '',
+          explanation: q.explanation ? String(q.explanation) : '',
+        });
+        return acc;
+      }
+
       const normalizedType: 'mcq' | 'short_answer' =
         (q.type === 'short_answer' || !optionTexts || optionTexts.length === 0) ? 'short_answer' : 'mcq';
       if (normalizedType !== 'mcq') return acc;

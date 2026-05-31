@@ -146,12 +146,10 @@ app.use(
   express.static(path.join(__dirname, 'public/fonts'), { maxAge: '1y', immutable: true })
 );
 
-// Static assets (JS/CSS) are hashed — cache forever; HTML must not be cached
+// Disable all caching in development
 app.use(express.static(FRONTEND_DIR, {
-  setHeaders(res, filePath) {
-    if (filePath.endsWith('.html')) {
-      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    }
+  setHeaders(res) {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   }
 }));
 // SPA fallback — all non-API routes serve index.html

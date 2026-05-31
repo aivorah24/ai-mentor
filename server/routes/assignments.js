@@ -834,6 +834,7 @@ router.post('/generate-quiz', async (req, res) => {
   const {
     subject = '', chapter = '', grade = '', curriculum = '',
     difficulty = 'medium', count = 5, teacherNotes = '',
+    quizType = 'mcq',   // 'mcq' | 'fill_blank' | 'mixed'
   } = req.body;
 
   const cleanSubject = String(subject || '').trim();
@@ -879,62 +880,60 @@ router.post('/generate-quiz', async (req, res) => {
       hard:   'Application and analysis. Multi-step thinking, real-world scenarios.',
     }[difficulty] || 'moderate difficulty';
 
-    const prompt = `You are creating a quiz for Grade ${cleanGrade || '3'} students.
-Subject: ${cleanSubject || 'General'}
-Chapter/Topic: ${cleanChapter || cleanSubject}
-Curriculum: ${cleanCurriculum || 'NCERT'}
+    const baseContext = `Grade: ${cleanGrade || '3'}, Subject: ${cleanSubject || 'General'}, Topic: ${cleanChapter || cleanSubject}, Curriculum: ${cleanCurriculum || 'NCERT'}, Difficulty: ${difficultyGuide}`;
+    const contextBlock = context ? `TEXTBOOK CONTENT:\n${context}\n\n` : '';
+    const notesBlock = cleanNotes ? `TEACHER NOTES: ${cleanNotes}\n\n` : '';
 
-${context ? `TEXTBOOK CONTENT (use this as the primary source):\n\n${context}` : ''}
-${cleanNotes ? `\nTEACHER'S ADDITIONAL NOTES (include these specific requirements):\n${cleanNotes}` : ''}
+    const makeMcqPrompt = (n) => `${contextBlock}${notesBlock}Generate ${n} MCQ questions for ${baseContext}.
+Each question: type "mcq", exactly 4 options, "correct" is the exact text of the correct option, include "hint" and "explanation".
+Respond ONLY as valid JSON: {"questions":[{"id":"q1","question":"...","type":"mcq","options":["A","B","C","D"],"correct":"A","hint":"...","explanation":"..."}]}`;
 
-Generate exactly ${requestedCount} quiz questions.
-Difficulty: ${difficultyGuide}
-Format: ALL questions must be MCQ (4 options each).
 
-Rules:
-- Base questions STRICTLY on the subject + chapter/topic above
-- If textbook content is available, align closely to it
-- If textbook content is unavailable, still stay strictly within this chapter/topic
-- Age-appropriate language for ${cleanGrade || 'Grade 3'} students (8-10 year olds)
-- Every question MUST be type "mcq"
-- Each MCQ must have exactly 4 clear options
-- Only ONE correct option per question
-- Hint: one gentle clue without giving away the answer
-- Explanation: why the correct answer is right (for post-quiz learning)
 
-Respond ONLY as valid JSON:
-{
-  "questions": [
-    {
-      "id": "q1",
-      "question": "question text here",
-      "type": "mcq",
-      "options": ["option1", "option2", "option3", "option4"],
-      "correct": "option1",
-      "hint": "Think about...",
-      "explanation": "The correct answer is A because..."
+    let generated = [];
+
+    if (quizType === 'fill_blank') {
+      // Generate as MCQ then convert all to fill_blank
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: makeMcqPrompt(requestedCount) }],
+        response_format: { type: 'json_object' },
+      });
+      const result = JSON.parse(completion.choices[0].message.content);
+      const mcqQs = normalizeQuizQuestions(Array.isArray(result.questions) ? result.questions : [], requestedCount);
+      generated = mcqQs.map(q => mcqToFillBlank(q));
+    } else if (quizType === 'mixed') {
+      const totalNeeded = requestedCount;
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: makeMcqPrompt(totalNeeded) }],
+        response_format: { type: 'json_object' },
+      });
+      const result = JSON.parse(completion.choices[0].message.content);
+      const allMcq = normalizeQuizQuestions(Array.isArray(result.questions) ? result.questions : [], totalNeeded);
+      // Convert every other question to fill_blank
+      generated = allMcq.map((q, i) => i % 2 === 1 ? mcqToFillBlank(q) : q);
+    } else {
+      // MCQ only
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: makeMcqPrompt(requestedCount) }],
+        response_format: { type: 'json_object' },
+      });
+      const result = JSON.parse(completion.choices[0].message.content);
+      generated = normalizeQuizQuestions(Array.isArray(result.questions) ? result.questions : [], requestedCount);
     }
-  ]
-}`;
-
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-    });
-
-    const result = JSON.parse(completion.choices[0].message.content);
-    const generated = normalizeQuizQuestions(Array.isArray(result.questions) ? result.questions : [], requestedCount);
     if (generated.length === 0) {
       const fallbackQuestions = buildFallbackQuiz({
         subject: cleanSubject,
         chapter: cleanChapter,
         count: requestedCount,
+        quizType,
       });
       if (fallbackQuestions.length > 0) {
         return res.json({ questions: fallbackQuestions, sourceChunks, fallback: true });
       }
-      return res.status(502).json({ error: 'Quiz generation returned no valid MCQ questions. Please try again.' });
+      return res.status(502).json({ error: 'Quiz generation returned no valid questions. Please try again.' });
     }
 
     res.json({ questions: generated, sourceChunks });
@@ -945,6 +944,7 @@ Respond ONLY as valid JSON:
       subject: cleanSubject,
       chapter: cleanChapter,
       count: requestedCount,
+      quizType,
     });
     if (fallbackQuestions.length > 0) {
       return res.json({ questions: fallbackQuestions, sourceChunks: 0, fallback: true });
@@ -1713,7 +1713,41 @@ router.post('/:id/submit', async (req, res) => {
             comment: 'You skipped this question.', explanation: q.explanation || '' };
         }
 
-        if (q.type === 'mcq') {
+        if (q.type === 'fill_blank') {
+          const wasRevealed = studentAns.startsWith('[revealed]');
+          const attemptMatch = studentAns.match(/^\[attempt:(\d+)\]\s*/i);
+          const attemptNum = attemptMatch ? parseInt(attemptMatch[1]) : 1;
+          const cleanAns = studentAns.replace(/^\[revealed\]\s*/i, '').replace(/^\[attempt:\d+\]\s*/i, '');
+          // Fuzzy match
+          const normalize = s => s.toLowerCase().trim().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ');
+          const sNorm = normalize(cleanAns);
+          const cNorm = normalize(q.correct);
+          let isCorrect = sNorm === cNorm || sNorm.includes(cNorm) || cNorm.includes(sNorm);
+          if (!isCorrect) {
+            const a = sNorm, b = cNorm;
+            const m = a.length, n = b.length;
+            const dp = Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>i===0?j:j===0?i:0));
+            for(let ii=1;ii<=m;ii++)for(let jj=1;jj<=n;jj++) dp[ii][jj]=a[ii-1]===b[jj-1]?dp[ii-1][jj-1]:1+Math.min(dp[ii-1][jj],dp[ii][jj-1],dp[ii-1][jj-1]);
+            isCorrect = dp[m][n] <= Math.floor(Math.max(m,n)/4);
+          }
+          // Scoring: attempt 1 = 100, attempt 2 = 60, attempt 3+ or revealed = 0
+          const score = wasRevealed ? 0 : !isCorrect ? 0 : attemptNum === 1 ? 100 : 60;
+          const comment = wasRevealed
+            ? `Answer was revealed: ${q.correct}`
+            : !isCorrect ? `The correct answer is: ${q.correct}`
+            : attemptNum === 1 ? 'Correct on first attempt! Full marks.'
+            : 'Correct after hint. Partial marks awarded.';
+          return {
+            number: i+1, question: q.question, type: 'fill_blank',
+            answered: true, score,
+            correct: isCorrect && !wasRevealed,
+            studentAnswer: cleanAns,
+            correctAnswer: q.correct,
+            attemptNum: wasRevealed ? null : attemptNum,
+            comment,
+            explanation: q.explanation || '',
+          };
+        } else if (q.type === 'mcq') {
           const expected = normaliseAnswerToOptionText(q.correct, q.options || []);
           const selected = normaliseAnswerToOptionText(studentAns, q.options || []);
           const isCorrect = !!expected && !!selected && normalizeText(expected) === normalizeText(selected);
@@ -2477,15 +2511,41 @@ function normaliseAnswerToOptionText(answer, options = []) {
   return exact || cleaned;
 }
 
+function mcqToFillBlank(q) {
+  if (!q || q.type === 'fill_blank') return q;
+  const answer = String(q.correct || '').trim();
+  if (!answer) return q;
+  const questionText = String(q.question || '');
+  const fillQuestion = questionText.replace(/\??\s*$/, '') + '? The answer is ___.';
+  return { ...q, type: 'fill_blank', question: fillQuestion, options: [], correct: answer };
+}
+
 function normalizeQuizQuestion(question, index) {
   if (!question || typeof question !== 'object') return null;
 
   const prompt = String(question.question || '').trim();
+  if (!prompt) return null;
+
+  // fill_blank — no options needed
+  if (question.type === 'fill_blank') {
+    const correct = String(question.correct || '').trim();
+    if (!correct) return null;
+    return {
+      id: String(question.id || `q${index + 1}`),
+      question: prompt,
+      type: 'fill_blank',
+      options: [],
+      correct,
+      hint: question.hint ? String(question.hint) : '',
+      explanation: question.explanation ? String(question.explanation) : '',
+    };
+  }
+
   const options = Array.isArray(question.options)
     ? question.options.map(opt => stripOptionPrefix(opt)).filter(Boolean).slice(0, 4)
     : [];
 
-  if (!prompt || options.length !== 4) return null;
+  if (options.length !== 4) return null;
 
   const correctOption = normaliseAnswerToOptionText(question.correct, options);
   const correct = options.find(opt => normalizeText(opt) === normalizeText(correctOption)) || options[0];
@@ -2524,7 +2584,7 @@ function shuffleArray(items) {
   return copy;
 }
 
-function buildFallbackQuiz({ subject = '', chapter = '', count = 5 }) {
+function buildFallbackQuiz({ subject = '', chapter = '', count = 5, quizType = 'mcq' }) {
   const safeCount = normalizeQuizCount(count, 5);
   const topic = `${chapter || subject}`.toLowerCase();
   const subjectLower = String(subject || '').toLowerCase();
@@ -2632,7 +2692,10 @@ function buildFallbackQuiz({ subject = '', chapter = '', count = 5 }) {
     };
   });
 
-  return normalizeQuizQuestions(chosen, safeCount);
+  const normalized = normalizeQuizQuestions(chosen, safeCount);
+  if (quizType === 'fill_blank') return normalized.map(q => mcqToFillBlank(q));
+  if (quizType === 'mixed') return normalized.map((q, i) => i % 2 === 1 ? mcqToFillBlank(q) : q);
+  return normalized;
 }
 
 const DEMO_MAP = {
@@ -2732,6 +2795,56 @@ Respond ONLY as JSON: {"steps":["Step 1: ...","Step 2: ...","Step 3: ..."],"corr
     console.error('Explain question error:', e.message);
     res.status(500).json({ error: 'Could not generate explanation' });
   }
+});
+
+// ── POST /assignments/validate-fill-blank ────────────────────────────
+// Validates a student's fill-in-the-blank answer with fuzzy tolerance
+router.post('/validate-fill-blank', async (req, res) => {
+  const { studentAnswer, correctAnswer } = req.body;
+  if (!studentAnswer || !correctAnswer) return res.status(400).json({ error: 'studentAnswer and correctAnswer required' });
+
+  const normalize = s => s.toLowerCase().trim().replace(/[^a-z0-9./\s]/g, '').replace(/\s+/g, ' ');
+  const sNorm = normalize(String(studentAnswer));
+  const cNorm = normalize(String(correctAnswer));
+
+  // Exact match after normalization
+  if (sNorm === cNorm) return res.json({ correct: true });
+
+  // Extract leading number/fraction from both (e.g. "4 novels" → "4", "1/2" → "1/2")
+  const extractNum = s => (s.match(/^[\d./]+/) || [''])[0];
+  const sNum = extractNum(sNorm);
+  const cNum = extractNum(cNorm);
+
+  // If the correct answer contains a number, compare numbers strictly — no fuzzy
+  if (cNum) {
+    // Allow student to write just the number ("4") when correct is "4 novels"
+    if (sNum === cNum) return res.json({ correct: true });
+    // Decimal equivalence: "0.5" == "1/2" etc.
+    const toDecimal = s => { const parts = s.split('/'); return parts.length === 2 ? parseFloat(parts[0]) / parseFloat(parts[1]) : parseFloat(s); };
+    const sVal = toDecimal(sNum), cVal = toDecimal(cNum);
+    if (!isNaN(sVal) && !isNaN(cVal) && Math.abs(sVal - cVal) < 0.001) return res.json({ correct: true });
+    // Numbers differ → wrong (skip fuzzy for numeric answers)
+    return res.json({ correct: false });
+  }
+
+  // Text-only answers: contains match (e.g. "new delhi" for "New Delhi, India")
+  if (sNorm.includes(cNorm) || cNorm.includes(sNorm)) return res.json({ correct: true });
+
+  // Levenshtein for text-only, longer answers (tolerance: 1 char per 5 chars, min 5 chars)
+  if (cNorm.length >= 5) {
+    function levenshtein(a, b) {
+      const m = a.length, n = b.length;
+      const dp = Array.from({ length: m + 1 }, (_, i) => Array.from({ length: n + 1 }, (_, j) => i === 0 ? j : j === 0 ? i : 0));
+      for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++)
+        dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+      return dp[m][n];
+    }
+    const maxLen = Math.max(sNorm.length, cNorm.length);
+    const tolerance = Math.floor(maxLen / 5);
+    if (levenshtein(sNorm, cNorm) <= tolerance) return res.json({ correct: true });
+  }
+
+  return res.json({ correct: false });
 });
 
 module.exports = router;
