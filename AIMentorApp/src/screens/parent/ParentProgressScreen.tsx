@@ -27,7 +27,7 @@ function formatStudyTime(minutes: number) {
   return `${h}h ${m}m`;
 }
 
-export default function ParentProgressScreen({ navigation }: any) {
+export default function ParentProgressScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -44,9 +44,18 @@ export default function ParentProgressScreen({ navigation }: any) {
   useEffect(() => {
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data) && data.length > 0) setChildren(data); })
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setChildren(data);
+          const targetChildId = route?.params?.childId;
+          if (targetChildId) {
+            const idx = data.findIndex((c: any) => c.id === targetChildId);
+            if (idx >= 0) setSelectedIdx(idx);
+          }
+        }
+      })
       .catch(() => {});
-  }, [parentEmail]);
+  }, [parentEmail, route?.params?.childId]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;

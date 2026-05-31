@@ -287,17 +287,8 @@ const cardStyles = StyleSheet.create({
 });
 
 // ── NCERT unit color map ──────────────────────────────────────────────────────
-const UNIT_COLORS: Record<string, string> = {
-  Numbers: '#6366f1', Geometry: '#8b5cf6',
-  'Addition & Subtraction': '#06b6d4', Measurement: '#f59e0b',
-  'Weight & Mass': '#10b981', Time: '#3b82f6',
-  'Multiplication & Division': '#ef4444', Patterns: '#f59e0b',
-  Capacity: '#0ea5e9', 'Division & Fractions': '#a855f7',
-  'Data Handling': '#14b8a6', Money: '#eab308',
-};
-
 // ── Screen ────────────────────────────────────────────────────────────────────
-export default function ParentLearningScreen({ navigation }: any) {
+export default function ParentLearningScreen({ navigation, route }: any) {
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -306,7 +297,6 @@ export default function ParentLearningScreen({ navigation }: any) {
   const [children, setChildren]               = useState<any[]>([]);
   const [selectedIdx, setSelectedIdx]         = useState(0);
   const [subjects, setSubjects]               = useState<any[]>([]);
-  const [chapters, setChapters]               = useState<any[]>([]);
   const [completedTopics, setCompletedTopics] = useState<string[]>([]);
   const [topicsExplored, setTopicsExplored]   = useState(0);
   const [loading, setLoading]                 = useState(true);
@@ -329,9 +319,19 @@ export default function ParentLearningScreen({ navigation }: any) {
     }
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data) && data.length > 0) setChildren(data); })
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setChildren(data);
+          // Auto-select child from navigation params
+          const targetChildId = route?.params?.childId;
+          if (targetChildId) {
+            const idx = data.findIndex((c: any) => c.id === targetChildId);
+            if (idx >= 0) setSelectedIdx(idx);
+          }
+        }
+      })
       .catch(() => {});
-  }, [parentEmail, user?.children]);
+  }, [parentEmail, user?.children, route?.params?.childId]);
 
   const child           = children[selectedIdx];
   const childCurriculum = child?.curriculum ?? '';
@@ -359,21 +359,14 @@ export default function ParentLearningScreen({ navigation }: any) {
         } catch {}
       }
 
-      if (isIBPYP) {
-        const currRes = await fetch(
-          `${SERVER_URL}/curriculum/subjects?grade=${encodeURIComponent(childGrade)}&curriculum=${encodeURIComponent(childCurriculum)}`
-        ).then(r => r.json()).catch(() => ({ subjects: [] }));
-        setSubjects(currRes.subjects ?? []);
-        setChapters([]);
-      } else {
-        const chapRes = await fetch(`${SERVER_URL}/ncert/chapters`)
-          .then(r => r.json()).catch(() => []);
-        setChapters(Array.isArray(chapRes) ? chapRes : chapRes?.chapters ?? []);
-        setSubjects([]);
-      }
+      // Fetch subjects/topics from Qdrant for ALL curricula via /curriculum/subjects
+      const currRes = await fetch(
+        `${SERVER_URL}/curriculum/subjects?grade=${encodeURIComponent(childGrade)}&curriculum=${encodeURIComponent(childCurriculum)}`
+      ).then(r => r.json()).catch(() => ({ subjects: [] }));
+      setSubjects(currRes.subjects ?? []);
     } catch {}
     finally { setLoading(false); setRefreshing(false); }
-  }, [child, isIBPYP, childGrade, childCurriculum]);
+  }, [child, childGrade, childCurriculum]);
 
   // Reset analytics + expanded card when child switches, then fetch fresh data
   useEffect(() => {
@@ -385,26 +378,17 @@ export default function ParentLearningScreen({ navigation }: any) {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const { totalItems, doneItems, overallPct, curriculumLabel } = useMemo(() => {
-    // Use topicsExplored (same source as student dashboard) for the done count
     const exploredCount = topicsExplored > 0 ? topicsExplored : completedTopics.length;
-    if (isIBPYP) {
-      const total = subjects.reduce((s, sub) => s + (sub.topicCount ?? 0), 0);
-      const done  = Math.min(exploredCount, total);
-      return { totalItems: total, doneItems: done,
-        overallPct: total > 0 ? Math.round((done / total) * 100) : 0,
-        curriculumLabel: `IB PYP · ${subjects.length} Subjects` };
-    }
-    const total = chapters.length || 14;
+    const total = subjects.reduce((s, sub) => s + (sub.topicCount ?? 0), 0);
     const done  = Math.min(exploredCount, total);
-    return { totalItems: total, doneItems: done,
-      overallPct: Math.round((done / total) * 100),
-      curriculumLabel: `${childCurriculum || 'NCERT'} · Maths Mela` };
-  }, [isIBPYP, subjects, chapters, completedTopics, childCurriculum, topicsExplored]);
-
-  function isChapterDone(ch: any) {
-    const id = ch.id || ch.file || '';
-    return completedSet.has(id) || [...completedSet].some(t => t.includes(id) || id.includes(t));
-  }
+    const currLabel = isIBPYP ? 'IB PYP' : (childCurriculum || 'NCERT');
+    return {
+      totalItems: total,
+      doneItems: done,
+      overallPct: total > 0 ? Math.round((done / total) * 100) : 0,
+      curriculumLabel: `${currLabel} · ${subjects.length} Subjects`,
+    };
+  }, [subjects, completedTopics, childCurriculum, topicsExplored, isIBPYP]);
 
   return (
     <ScreenLayout>
@@ -454,7 +438,7 @@ export default function ParentLearningScreen({ navigation }: any) {
                 <Text style={[styles.pctText, { color: overallPct >= 50 ? colors.accentGreen : colors.primary }]}>{overallPct}%</Text>
               </View>
             </View>
-            <Text style={styles.progressLabel}>{doneItems} of {totalItems} {isIBPYP ? 'topics' : 'chapters'} done</Text>
+            <Text style={styles.progressLabel}>{doneItems} of {totalItems} topics done</Text>
             <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>
               <View style={[styles.progressFill, { width: `${overallPct}%`, backgroundColor: colors.primary }]} />
             </View>
@@ -462,14 +446,14 @@ export default function ParentLearningScreen({ navigation }: any) {
 
           {loading ? (
             <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
-          ) : isIBPYP ? (
+          ) : (
             <>
               <Text style={styles.sectionTitle}>Subjects Overview</Text>
               <Text style={styles.sectionHint}>Tap a subject to see topic-by-topic progress</Text>
               {subjects.length === 0 ? (
                 <View style={styles.emptyCard}>
                   <Feather name="inbox" size={28} color={colors.textMuted} />
-                  <Text style={styles.emptyText}>No IB PYP content found for {childGrade}.{'\n'}Content will appear once ingested.</Text>
+                  <Text style={styles.emptyText}>No content found for {childCurriculum || 'this curriculum'} {childGrade}.{'\n'}Content will appear once ingested.</Text>
                 </View>
               ) : (
                 subjects.map((sub) => (
@@ -483,39 +467,6 @@ export default function ParentLearningScreen({ navigation }: any) {
                   />
                 ))
               )}
-            </>
-          ) : (
-            <>
-              <Text style={styles.sectionTitle}>Chapter Overview</Text>
-              <View style={styles.chaptersCard}>
-                {(chapters.length > 0
-                  ? chapters
-                  : Array.from({ length: 14 }, (_, i) => ({ id: `ch${i + 1}`, topic: `Chapter ${i + 1}`, unit: 'Maths' }))
-                ).map((ch, i) => {
-                  const done  = isChapterDone(ch);
-                  const color = UNIT_COLORS[ch.unit] ?? colors.primary;
-                  return (
-                    <View key={ch.id ?? i} style={[styles.chapterRow, i > 0 && styles.chapterBorder]}>
-                      <View style={[styles.chapterNum, { backgroundColor: done ? colors.accentGreen + '20' : color + '15' }]}>
-                        {done
-                          ? <Feather name="check" size={13} color={colors.accentGreen} />
-                          : <Text style={[styles.chapterNumText, { color }]}>{i + 1}</Text>}
-                      </View>
-                      <View style={styles.chapterInfo}>
-                        <Text style={[styles.chapterTitle, done && { opacity: 0.6 }]} numberOfLines={2}>
-                          {ch.topic || ch.title || `Chapter ${i + 1}`}
-                        </Text>
-                        {ch.unit ? (
-                          <View style={[styles.unitTag, { backgroundColor: color + '15' }]}>
-                            <Text style={[styles.unitText, { color }]}>{ch.unit}</Text>
-                          </View>
-                        ) : null}
-                      </View>
-                      <View style={[styles.statusDot, { backgroundColor: done ? colors.accentGreen : colors.borderColor }]} />
-                    </View>
-                  );
-                })}
-              </View>
             </>
           )}
         </ScrollView>
@@ -555,20 +506,6 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   sectionTitle: { fontSize: 15, fontWeight: '700', color: c.textMain },
   sectionHint:  { fontSize: 12, color: c.textMuted, marginTop: -spacing.sm },
-
-  chaptersCard: {
-    backgroundColor: c.cardDark, borderWidth: 1,
-    borderColor: c.borderColor, borderRadius: radius.xl, overflow: 'hidden',
-  },
-  chapterRow:     { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg },
-  chapterBorder:  { borderTopWidth: 1, borderTopColor: c.borderColor },
-  chapterNum:     { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  chapterNumText: { fontSize: 13, fontWeight: '700' },
-  chapterInfo:    { flex: 1, gap: 4 },
-  chapterTitle:   { fontSize: 13, fontWeight: '600', color: c.textMain },
-  unitTag:        { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  unitText:       { fontSize: 10, fontWeight: '600' },
-  statusDot:      { width: 10, height: 10, borderRadius: 5, flexShrink: 0 },
 
   emptyCard: {
     backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,

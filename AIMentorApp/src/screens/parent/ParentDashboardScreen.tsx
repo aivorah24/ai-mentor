@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,9 @@ interface ChildData {
   id: string;
   name: string;
   grade: string;
+  curriculum?: string;
+  school?: string;
+  totalTopics?: number;
   status: 'on_track' | 'needs_attention' | 'getting_started';
   xpPoints: number;
   completedTopics: string[];
@@ -111,7 +114,7 @@ function ChildCard({
         </Text>
       </View>
       <Text style={styles.childName}>{child.name}</Text>
-      <Text style={styles.childGrade}>{child.grade}</Text>
+      <Text style={styles.childGrade}>{child.grade}{child.curriculum ? ` · ${child.curriculum}` : ''}</Text>
       <View style={[styles.statusBadge, { backgroundColor: badgeColor + '18', borderColor: badgeColor + '33' }]}>
         <View style={[styles.statusDot, { backgroundColor: badgeColor }]} />
         <Text style={[styles.statusText, { color: badgeColor }]}>{badgeLabel}</Text>
@@ -342,8 +345,10 @@ ${report.encouragement ? `<div class="section"><div class="section-title">Messag
 
   const parentEmail = user?.email || 'parent@demo.com';
 
-  // Load linked children on mount
-  useEffect(() => {
+  const lastChildIdRef = useRef<string | undefined>(undefined);
+
+  // Load children and auto-select based on route params
+  const loadChildren = useCallback((targetChildId?: string) => {
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
       .then(r => r.json())
       .then(data => {
@@ -352,6 +357,9 @@ ${report.encouragement ? `<div class="section"><div class="section-title">Messag
             id: c.id,
             name: c.name,
             grade: c.grade,
+            curriculum: c.curriculum ?? '',
+            totalTopics: c.totalTopics ?? 0,
+            school: c.school ?? '',
             status: (() => { const hasActivity = (c.xpPoints ?? 0) > 0 || (c.studyTimeMinutes ?? 0) > 0 || (c.completedTopics?.length ?? 0) > 0; if (!hasActivity) return 'getting_started'; return (c.currentStreak ?? 0) >= 1 ? 'on_track' : 'needs_attention'; })(),
             xpPoints: c.xpPoints ?? 0,
             completedTopics: c.completedTopics ?? [],
@@ -360,16 +368,28 @@ ${report.encouragement ? `<div class="section"><div class="section-title">Messag
             assignmentsDone: c.assignmentsDone ?? 0,
           }));
           setChildren(mapped);
-          
-          // Auto-select child from navigation params if provided
-          const targetChildId = route.params?.childId;
-          const found = targetChildId ? mapped.find(c => c.id === targetChildId) : null;
+          const id = targetChildId ?? route.params?.childId;
+          const found = id ? mapped.find(c => c.id === id) : null;
           setSelectedChild(found || mapped[0]);
         }
       })
       .catch(() => {})
       .finally(() => setChildrenLoading(false));
   }, [parentEmail, route.params?.childId]);
+
+  // Load on mount and when childId param changes
+  useEffect(() => {
+    const incoming = route.params?.childId;
+    if (incoming !== lastChildIdRef.current) {
+      lastChildIdRef.current = incoming;
+      loadChildren(incoming);
+    }
+  }, [route.params?.childId, loadChildren]);
+
+  // Initial load
+  useEffect(() => {
+    loadChildren();
+  }, [parentEmail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
