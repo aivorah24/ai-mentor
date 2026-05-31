@@ -5,6 +5,7 @@ import { ParentDrawerParamList } from './types';
 import { useTheme } from '../context/ThemeContext';
 
 import DrawerContent from '../components/common/DrawerContent';
+import DashboardScreen from '../screens/student/DashboardScreen';
 import ParentDashboardScreen from '../screens/parent/ParentDashboardScreen';
 import ParentProfileScreen from '../screens/parent/ParentProfileScreen';
 import ParentMyKidsScreen from '../screens/parent/ParentMyKidsScreen';
@@ -46,6 +47,7 @@ export default function ParentNavigator() {
       } as any}
     >
       <Drawer.Screen name="ParentDashboard" component={ParentDashboardScreen} />
+      <Drawer.Screen name="ParentStudentView" component={DashboardScreen} />
       <Drawer.Screen name="ParentProfile" component={ParentProfileScreen} />
       <Drawer.Screen name="ParentMyKids" component={ParentMyKidsScreen} />
       <Drawer.Screen name="ParentSchedule" component={ParentScheduleScreen} />

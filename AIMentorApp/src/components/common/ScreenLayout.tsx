@@ -49,6 +49,14 @@ export default function ScreenLayout({ children }: ScreenLayoutProps) {
   // Break enforcer: track continuous session time
   const [breakActive, setBreakActive] = useState(false);
   const [breakSecondsLeft, setBreakSecondsLeft] = useState(0);
+  // Persist across screen remounts using sessionStorage
+  const getLastBreakThreshold = () => {
+    try { return parseInt(sessionStorage.getItem('lastBreakThreshold') ?? '-1', 10); } catch { return -1; }
+  };
+  const setLastBreakThreshold = (v: number) => {
+    try { sessionStorage.setItem('lastBreakThreshold', String(v)); } catch {}
+  };
+  const lastBreakThresholdRef = useRef<number>(getLastBreakThreshold());
 const breakTimerRef = useRef<any>(null);
   const controlsIntervalRef = useRef<any>(null);
   const heartbeatRef = useRef<any>(null);
@@ -91,15 +99,17 @@ const breakTimerRef = useRef<any>(null);
     return () => clearInterval(controlsIntervalRef.current);
   }, [isStudent, user?.email]);
 
-  // Break enforcer: triggers when cumulative daily usage crosses a multiple of intervalMinutes
+  // Break enforcer: triggers when cumulative daily usage crosses a NEW multiple of intervalMinutes
   useEffect(() => {
     if (!controls?.breakEnforcer?.enabled || breakActive) return;
     const cfg = controls.breakEnforcer;
     const interval = cfg.intervalMinutes ?? 25;
     const usedMin = controls.usedMinutes ?? 0;
-    // Fire if usage has crossed a break threshold and we haven't broken yet for this threshold
     const threshold = Math.floor(usedMin / interval) * interval;
-    if (threshold > 0 && usedMin >= threshold) {
+    // Only fire if this is a new threshold we haven't served yet
+    if (threshold > 0 && usedMin >= threshold && threshold !== lastBreakThresholdRef.current) {
+      lastBreakThresholdRef.current = threshold;
+      setLastBreakThreshold(threshold);
       setBreakActive(true);
       setBreakSecondsLeft((cfg.breakDurationMinutes ?? 5) * 60);
     }
@@ -130,6 +140,9 @@ const breakTimerRef = useRef<any>(null);
     const h = now.getHours();
     const start = controls.allowedHours.startHour ?? 14;
     const end = controls.allowedHours.endHour ?? 21;
+    // Overnight range (e.g. 9 AM – 2 AM crosses midnight): block only when h < start AND h >= end
+    if (end < start) return h < start && h >= end;
+    // Same-day range (e.g. 9 AM – 9 PM): block when outside start–end
     return h < start || h >= end;
   })();
 

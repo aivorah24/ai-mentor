@@ -33,6 +33,7 @@ export type DrawerParamList = {
 
 export type ParentDrawerParamList = {
   ParentDashboard: { childId?: string } | undefined;
+  ParentStudentView: { childData: any } | undefined;
   ParentProfile: undefined;
   ParentMyKids: undefined;
   ParentSchedule: { childId?: string } | undefined;
