@@ -13,6 +13,7 @@ import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 import { useResponsive } from '../../hooks/useResponsive';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface TopicItem {
@@ -22,18 +23,18 @@ interface TopicItem {
 }
 
 // ─── Subject visual config ────────────────────────────────────────────────────
-const SUBJECT_META: Record<string, { icon: any; color: string; bg: string }> = {
-  'Mathematics':        { icon: 'trending-up', color: '#5F8A86', bg: '#1E4A46' },
-  'Science':            { icon: 'zap',         color: '#5A8A70', bg: '#1A3D2A' },
-  'EVS':                { icon: 'sun',         color: '#8A9E4A', bg: '#2A3D1A' },
-  'Social Studies':     { icon: 'globe',       color: '#8A8358', bg: '#38320C' },
-  'English':            { icon: 'book-open',   color: '#B8797E', bg: '#4A2228' },
-  'Arts':               { icon: 'feather',     color: '#C4836A', bg: '#4A2418' },
-  'Physical Education': { icon: 'activity',    color: '#B8595F', bg: '#4A1E28' },
-  'ICT':                { icon: 'monitor',     color: '#7AADA8', bg: '#1A3C3A' },
+const SUBJECT_META: Record<string, { icon: any; color: string; bgFrom: string; bgTo: string }> = {
+  'Mathematics':        { icon: 'trending-up', color: '#4A9E9A', bgFrom: '#B8DDD8', bgTo: '#C8EAE6' },
+  'Science':            { icon: 'zap',         color: '#4A9E70', bgFrom: '#B0D8C0', bgTo: '#C4E8D4' },
+  'EVS':                { icon: 'sun',         color: '#8A9E4A', bgFrom: '#D0D8A0', bgTo: '#DEE8B8' },
+  'Social Studies':     { icon: 'globe',       color: '#A89840', bgFrom: '#E0D898', bgTo: '#EEE8B4' },
+  'English':            { icon: 'book-open',   color: '#C85870', bgFrom: '#F0C8D0', bgTo: '#F8D8E0' },
+  'Arts':               { icon: 'feather',     color: '#C87848', bgFrom: '#F0C8A8', bgTo: '#F8D8BC' },
+  'Physical Education': { icon: 'activity',    color: '#C84868', bgFrom: '#F0B8C8', bgTo: '#F8CCD8' },
+  'ICT':                { icon: 'monitor',     color: '#3A9896', bgFrom: '#A8D8D8', bgTo: '#BCE8E8' },
 };
 function meta(subject: string) {
-  return SUBJECT_META[subject] ?? { icon: 'book', color: '#6366f1', bg: '#1e1b4b' };
+  return SUBJECT_META[subject] ?? { icon: 'book', color: '#5F8A86', bgFrom: '#B8DDD8', bgTo: '#C8EAE6' };
 }
 
 // ─── Module buttons per subject ───────────────────────────────────────────────
@@ -78,7 +79,7 @@ const SUBJECT_MODULES: Record<string, Array<{ label: string; icon: any; color: s
 };
 function subjectModules(subject: string) {
   return SUBJECT_MODULES[subject] ?? [
-    { label: 'Start Learning', icon: 'play-circle',  color: '#6366f1', route: 'Learn5E'   },
+    { label: 'Start Learning', icon: 'play-circle',  color: '#5F8A86', route: 'Learn5E'   },
     { label: 'Practice Test',  icon: 'check-square', color: '#4A9E9A', route: 'IBPYPQuiz' },
   ];
 }
@@ -498,34 +499,38 @@ export default function SubjectTopicsScreen({ navigation, route }: any) {
           showsVerticalScrollIndicator={false}
         >
           {/* ── Subject hero banner ── */}
-          <View style={[styles.heroBanner, {
-            backgroundColor: isDark ? m.bg : m.color + '18',
-            borderColor: m.color + (isDark ? '40' : '50'),
-          }]}>
-            <View style={[styles.heroIcon, { backgroundColor: m.color + (isDark ? '25' : '30') }]}>
+          <LinearGradient
+            colors={[m.bgFrom, m.bgTo]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.heroBanner, {
+              borderColor: m.color + '40',
+            }]}
+          >
+            <View style={[styles.heroIcon, { backgroundColor: '#ffffff50' }]}>
               <Feather name={m.icon} size={32} color={m.color} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.heroTitle, { color: isDark ? '#ffffff' : '#1C2A28' }]}>{subject}</Text>
+              <Text style={[styles.heroTitle, { color: '#1C2A28' }]}>{subject}</Text>
               <Text style={[styles.heroSub, { color: m.color }]}>
-                {curriculum} · {grade}
+                {curriculum} · GRADE {grade?.replace(/\D/g, '') || grade}
               </Text>
-              <Text style={[styles.heroProgress, { color: isDark ? colors.textMuted : m.color + 'cc' }]}>
+              <Text style={[styles.heroProgress, { color: m.color + 'cc' }]}>
                 {doneCount}/{topics.length} topics completed
               </Text>
             </View>
             <View style={[styles.progressRing, {
               borderColor: pct === 100 ? '#10b981' : m.color,
-              backgroundColor: isDark ? 'transparent' : m.color + '10',
+              backgroundColor: m.color + '10',
             }]}>
               <Text style={[styles.progressPct, { color: pct === 100 ? '#10b981' : m.color }]}>
                 {pct}%
               </Text>
             </View>
-          </View>
+          </LinearGradient>
 
           {/* ── Progress bar ── */}
-          <View style={[styles.progressTrack, { backgroundColor: isDark ? colors.borderColor : m.color + '20' }]}>
+          <View style={[styles.progressTrack, { backgroundColor: m.color + '25' }]}>
             <View style={[styles.progressFill, { width: `${pct}%` as any, backgroundColor: m.color }]} />
           </View>
 
