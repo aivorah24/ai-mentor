@@ -394,24 +394,43 @@ router.get('/students', async (req, res) => {
     const { grade, section, school, unassigned } = req.query;
     let query = supabase
       .from('users')
-      .select(`
-        id, name, email, grade, curriculum, school, section, created_at,
-        student_stats (xp_points, level, current_streak, study_time_minutes, topics_explored, last_active_date),
-        teacher_student (teacher_id, users!teacher_student_teacher_id_fkey(name, email))
-      `)
+      .select('id, name, email, grade, curriculum, school, section, created_at, student_stats (xp_points, level, current_streak, study_time_minutes, topics_explored, last_active_date)')
       .eq('role', 'student')
       .order('created_at', { ascending: false });
 
-    if (grade) query = query.eq('grade', grade);
+    if (grade)   query = query.eq('grade', grade);
     if (section) query = query.eq('section', section);
-    if (school) query = query.ilike('school', `%${school}%`);
+    if (school)  query = query.ilike('school', `%${school}%`);
 
     const { data, error } = await query;
     if (error) return res.status(500).json({ error: error.message });
 
-    let students = data || [];
+    // Fetch teacher assignments separately to avoid FK ambiguity
+    const { data: tsData } = await supabase
+      .from('teacher_student')
+      .select('student_id, teacher_id, subject');
+
+    const { data: teacherUsers } = await supabase
+      .from('users')
+      .select('id, name, email')
+      .eq('role', 'teacher');
+
+    const teacherMap = {};
+    for (const t of (teacherUsers || [])) teacherMap[t.id] = t;
+
+    const tsByStudent = {};
+    for (const ts of (tsData || [])) {
+      if (!tsByStudent[ts.student_id]) tsByStudent[ts.student_id] = [];
+      tsByStudent[ts.student_id].push({ teacher_id: ts.teacher_id, subject: ts.subject, teacher: teacherMap[ts.teacher_id] || null });
+    }
+
+    let students = (data || []).map(s => ({
+      ...s,
+      teacher_student: tsByStudent[s.id] || [],
+    }));
+
     if (unassigned === 'true') {
-      students = students.filter(s => !s.teacher_student || s.teacher_student.length === 0);
+      students = students.filter(s => s.teacher_student.length === 0);
     }
 
     res.json({ students });
@@ -482,21 +501,133 @@ router.post('/students/bulk-create', async (req, res) => {
 });
 
 // ── POST /admin/students/assign-teacher ───────────────────────────────────────
-// Assign one or more students to a teacher
-// Body: { studentIds: [uuid], teacherEmail }
+// Assign one or more students to a teacher (optionally with a subject)
+// Body: { studentIds: [uuid], teacherEmail, subject? }
 router.post('/students/assign-teacher', async (req, res) => {
   try {
-    const { studentIds, teacherEmail } = req.body || {};
+    const { studentIds, teacherEmail, subject } = req.body || {};
     if (!Array.isArray(studentIds) || !teacherEmail) return res.status(400).json({ error: 'studentIds and teacherEmail are required' });
 
     const { data: teacher } = await supabase.from('users').select('id').eq('email', teacherEmail.toLowerCase().trim()).maybeSingle();
     if (!teacher) return res.status(404).json({ error: 'Teacher not found' });
 
-    const rows = studentIds.map(sid => ({ teacher_id: teacher.id, student_id: sid }));
-    const { error } = await supabase.from('teacher_student').upsert(rows, { onConflict: 'teacher_id,student_id', ignoreDuplicates: true });
+    const resolvedSubject = subject || 'General';
+    const rows = studentIds.map(sid => ({
+      teacher_id: teacher.id,
+      student_id: sid,
+      subject: resolvedSubject,
+    }));
+    const { error } = await supabase.from('teacher_student').upsert(rows, { onConflict: 'teacher_id,student_id,subject' });
     if (error) return res.status(500).json({ error: error.message });
 
     res.json({ success: true, assigned: studentIds.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /admin/teachers ────────────────────────────────────────────────────────
+// Returns all teachers with their teaches[] from user_preferences
+router.get('/teachers', async (req, res) => {
+  try {
+    const { data: teachers, error } = await supabase
+      .from('users')
+      .select('id, name, email, school, curriculum')
+      .eq('role', 'teacher')
+      .order('name');
+    if (error) return res.status(500).json({ error: error.message });
+
+    const emails = teachers.map(t => t.email).filter(Boolean);
+    const { data: prefs } = await supabase
+      .from('user_preferences')
+      .select('user_email, data')
+      .in('user_email', emails);
+
+    const prefMap = {};
+    for (const p of (prefs || [])) prefMap[p.user_email] = p.data;
+
+    const result = teachers.map(t => ({
+      ...t,
+      teaches: prefMap[t.email]?.teaches || [],
+    }));
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /admin/llm-stats?days=7
+router.get('/llm-stats', async (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 7;
+    const since = new Date(Date.now() - days * 86400_000).toISOString();
+
+    const { data, error } = await supabase
+      .from('llm_logs')
+      .select('provider, model, route, student_email, grade, subject, topic, prompt_tokens, completion_tokens, total_tokens, estimated_cost_usd, response_time_ms, streamed, feedback, created_at')
+      .gte('created_at', since)
+      .order('created_at', { ascending: false });
+
+    if (error) return res.status(500).json({ error: error.message });
+    const rows = data || [];
+
+    // Aggregate totals
+    const totalCalls     = rows.length;
+    const totalTokens    = rows.reduce((s, r) => s + (r.total_tokens || 0), 0);
+    const totalCost      = rows.reduce((s, r) => s + parseFloat(r.estimated_cost_usd || 0), 0);
+    const avgResponseMs  = totalCalls ? Math.round(rows.reduce((s, r) => s + (r.response_time_ms || 0), 0) / totalCalls) : 0;
+
+    // Per-model breakdown
+    const byModel = {};
+    for (const r of rows) {
+      const key = r.model;
+      if (!byModel[key]) byModel[key] = { model: key, provider: r.provider, calls: 0, tokens: 0, cost: 0 };
+      byModel[key].calls++;
+      byModel[key].tokens += r.total_tokens || 0;
+      byModel[key].cost   += parseFloat(r.estimated_cost_usd || 0);
+    }
+
+    // Daily breakdown (last N days)
+    const byDay = {};
+    for (const r of rows) {
+      const day = r.created_at.slice(0, 10);
+      if (!byDay[day]) byDay[day] = { date: day, calls: 0, tokens: 0, cost: 0 };
+      byDay[day].calls++;
+      byDay[day].tokens += r.total_tokens || 0;
+      byDay[day].cost   += parseFloat(r.estimated_cost_usd || 0);
+    }
+
+    // Provider split (exclude feedback rows)
+    const byProvider = {};
+    for (const r of rows) {
+      if (r.model === 'session_feedback') continue;
+      const p = r.provider || 'unknown';
+      if (!byProvider[p]) byProvider[p] = { provider: p, calls: 0 };
+      byProvider[p].calls++;
+    }
+
+    // Feedback aggregation
+    const feedbackRows = rows.filter(r => r.model === 'session_feedback' && r.feedback);
+    const feedbackCounts = { 1: 0, 2: 0, 3: 0 };
+    for (const r of feedbackRows) {
+      const rating = Number(r.feedback);
+      if (rating >= 1 && rating <= 3) feedbackCounts[rating]++;
+    }
+    const totalFeedback = feedbackRows.length;
+    const avgRating = totalFeedback
+      ? parseFloat((feedbackRows.reduce((s, r) => s + Number(r.feedback || 0), 0) / totalFeedback).toFixed(1))
+      : null;
+
+    res.json({
+      days,
+      summary: { totalCalls, totalTokens, totalCost: parseFloat(totalCost.toFixed(6)), avgResponseMs },
+      byModel:    Object.values(byModel).filter(m => m.model !== 'session_feedback').sort((a, b) => b.calls - a.calls),
+      byDay:      Object.values(byDay).sort((a, b) => a.date.localeCompare(b.date)),
+      byProvider: Object.values(byProvider),
+      feedback:   { total: totalFeedback, avg: avgRating, counts: feedbackCounts, recent: feedbackRows.slice(0, 10) },
+      recent:     rows.filter(r => r.model !== 'session_feedback').slice(0, 50),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -24,7 +24,15 @@ function normalizeGrade(grade) {
   return g; // pass through as-is (fallback)
 }
 
+// Module-level cache for topic counts — avoids repeated Qdrant pagination on every page load
+const _topicCountCache = new Map(); // key → { count, expiresAt }
+const TOPIC_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
 async function fetchTotalTopicsFromQdrant(curriculum, grade) {
+  const cacheKey = `${curriculum}|${grade}`;
+  const cached = _topicCountCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.count;
+
   try {
     const normCurr = normalizeCurriculum(curriculum, 'IB PYP');
     const { collection, qdrantCurriculum, qdrantGrade } = resolveCollection(normCurr, grade);
@@ -48,7 +56,9 @@ async function fetchTotalTopicsFromQdrant(curriculum, grade) {
       }
       offset = result.next_page_offset ?? null;
     } while (offset !== null);
-    return seen.size;
+    const count = seen.size;
+    _topicCountCache.set(cacheKey, { count, expiresAt: Date.now() + TOPIC_CACHE_TTL_MS });
+    return count;
   } catch {
     return 0;
   }
@@ -503,7 +513,16 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
 
     if (error) return res.status(500).json({ error: error.message });
 
-    const studentIds = links.map(l => l.student_id);
+    // Deduplicate links by student_id — a student can have multiple subjects assigned
+    // (e.g., "General" + "Mathematics") but should only appear once in the list
+    const seenStudentIds = new Set();
+    const uniqueLinks = links.filter(l => {
+      if (seenStudentIds.has(l.student_id)) return false;
+      seenStudentIds.add(l.student_id);
+      return true;
+    });
+
+    const studentIds = uniqueLinks.map(l => l.student_id);
     if (studentIds.length === 0) return res.json([]);
 
     const { data: stats } = await supabase
@@ -514,14 +533,22 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
     const statsMap = {};
     (stats ?? []).forEach(s => { statsMap[s.student_id] = s; });
 
-    const students = await Promise.all(links.map(async link => {
+    // Pre-fetch totalTopics once per unique curriculum+grade combo — avoids N Qdrant queries
+    const combos = [...new Set(uniqueLinks.map(l => `${l.users?.curriculum ?? ''}|${l.users?.grade ?? ''}`))];
+    const topicsCache = {};
+    await Promise.all(combos.map(async key => {
+      const [curriculum, grade] = key.split('|');
+      topicsCache[key] = await fetchTotalTopicsFromQdrant(curriculum, grade);
+    }));
+
+    const students = await Promise.all(uniqueLinks.map(async link => {
       const s = statsMap[link.student_id] ?? {};
       const user = link.users ?? {};
       const topicsCount = [...new Set(s.completed_topics ?? [])].length;
 
       const curriculum = user.curriculum ?? '';
       const grade      = user.grade ?? '';
-      const totalTopics = await fetchTotalTopicsFromQdrant(curriculum, grade);
+      const totalTopics = topicsCache[`${curriculum}|${grade}`] ?? 0;
       const progressPct = totalTopics > 0
         ? Math.min(100, Math.round((topicsCount / totalTopics) * 100))
         : 0;
