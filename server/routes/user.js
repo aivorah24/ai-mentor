@@ -247,24 +247,38 @@ router.patch('/profile', async (req, res) => {
 
     const emailLc = email.toLowerCase().trim();
 
-    // First try update; if no row matched (new signup flow), upsert instead
-    let { data, error } = await supabase
-      .from('users')
-      .update(patch)
-      .eq('email', emailLc)
-      .select('id, name, email, role, grade, school, curriculum, location, phone, onboarding_complete')
-      .single();
+    // Only hit the users table if there is something to update there
+    let data = null;
+    let error = null;
 
-    if (error && error.code === 'PGRST116') {
-      // PGRST116 = no rows returned — user row doesn't exist yet, upsert it
+    if (Object.keys(patch).length > 0) {
+      // First try update; if no row matched (new signup flow), upsert instead
       ({ data, error } = await supabase
         .from('users')
-        .upsert({ email: emailLc, ...patch }, { onConflict: 'email' })
+        .update(patch)
+        .eq('email', emailLc)
         .select('id, name, email, role, grade, school, curriculum, location, phone, onboarding_complete')
         .single());
-    }
 
-    if (error) return res.status(500).json({ error: error.message });
+      if (error && error.code === 'PGRST116') {
+        // PGRST116 = no rows returned — user row doesn't exist yet, upsert it
+        ({ data, error } = await supabase
+          .from('users')
+          .upsert({ email: emailLc, ...patch }, { onConflict: 'email' })
+          .select('id, name, email, role, grade, school, curriculum, location, phone, onboarding_complete')
+          .single());
+      }
+
+      if (error) return res.status(500).json({ error: error.message });
+    } else {
+      // No users-table fields to update — just fetch existing row for the response
+      const { data: existing } = await supabase
+        .from('users')
+        .select('id, name, email, role, grade, school, curriculum, location, phone, onboarding_complete')
+        .eq('email', emailLc)
+        .maybeSingle();
+      data = existing;
+    }
 
     // Store teacher teaches[] in preferences file (no extra table needed)
     if (teaches && Array.isArray(teaches)) {
