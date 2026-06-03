@@ -364,14 +364,22 @@ router.get('/:id/weekly', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Build date range
+    // Build current calendar week (Mon → Sun), zeros for future days
+    const today = new Date();
+    const todayDay = today.getDay(); // 0=Sun,1=Mon,...,6=Sat
+    const mondayOffset = todayDay === 0 ? -6 : 1 - todayDay; // days back to Monday
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + mondayOffset);
+
+    const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
       days.push({
-        date: d.toISOString().split('T')[0],
-        day:  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()],
+        date:   d.toISOString().split('T')[0],
+        day:    DAY_NAMES[d.getDay()],
+        future: d > today,
       });
     }
     const from = days[0].date;
@@ -391,9 +399,9 @@ router.get('/:id/weekly', async (req, res) => {
       days: days.map(d => ({
         date:            d.date,
         day:             d.day,
-        studyMinutes:    logMap[d.date]?.study_minutes    ?? 0,
-        xp:              logMap[d.date]?.xp_earned        ?? 0,
-        topicsCompleted: logMap[d.date]?.topics_completed ?? 0,
+        studyMinutes:    d.future ? 0 : (logMap[d.date]?.study_minutes    ?? 0),
+        xp:              d.future ? 0 : (logMap[d.date]?.xp_earned        ?? 0),
+        topicsCompleted: d.future ? 0 : (logMap[d.date]?.topics_completed ?? 0),
       })),
     });
   } catch (err) {
@@ -533,6 +541,18 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
     const statsMap = {};
     (stats ?? []).forEach(s => { statsMap[s.student_id] = s; });
 
+    // Fetch passed topics from topic_attempts — supplements student_stats.completed_topics
+    const { data: passedAttempts } = await supabase
+      .from('topic_attempts')
+      .select('student_id, topic')
+      .in('student_id', studentIds)
+      .eq('passed', true);
+    const passedTopicsMap = {};
+    (passedAttempts ?? []).forEach(a => {
+      if (!passedTopicsMap[a.student_id]) passedTopicsMap[a.student_id] = new Set();
+      passedTopicsMap[a.student_id].add(a.topic);
+    });
+
     // Pre-fetch totalTopics once per unique curriculum+grade combo — avoids N Qdrant queries
     const combos = [...new Set(uniqueLinks.map(l => `${l.users?.curriculum ?? ''}|${l.users?.grade ?? ''}`))];
     const topicsCache = {};
@@ -544,7 +564,12 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
     const students = await Promise.all(uniqueLinks.map(async link => {
       const s = statsMap[link.student_id] ?? {};
       const user = link.users ?? {};
-      const topicsCount = [...new Set(s.completed_topics ?? [])].length;
+
+      // Merge completed_topics from student_stats + passed topics from topic_attempts
+      const statsTopics = s.completed_topics ?? [];
+      const attemptsPassed = passedTopicsMap[link.student_id] ?? new Set();
+      const mergedTopics = [...new Set([...statsTopics, ...attemptsPassed])];
+      const topicsCount = mergedTopics.length;
 
       const curriculum = user.curriculum ?? '';
       const grade      = user.grade ?? '';
@@ -566,17 +591,11 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
         level:          s.level            ?? 1,
         currentStreak:  s.current_streak   ?? 0,
         studyTime:      s.study_time_minutes ?? 0,
-        completedTopics: s.completed_topics ?? [],
+        completedTopics: mergedTopics,
         progressPct,
         assignmentsDone: s.assignments_done ?? 0,
         lastActive:     s.last_active_date,
-        needsAttention: (() => {
-          const studyTime = s.study_time_minutes ?? 0;
-          const xp = s.xp_points ?? 0;
-          const chapters = (s.completed_topics ?? []).length;
-          if (studyTime === 0 && xp === 0 && chapters === 0) return false;
-          return progressPct < 30 || (s.current_streak ?? 0) < 2;
-        })(),
+        needsAttention: false, // deprecated — AI prompt computes status from real metrics
         photoUrl:       user.photo_url ?? null,
       };
     }));
@@ -785,6 +804,160 @@ router.post('/idle-logout', async (req, res) => {
   } catch (e) {
     console.error('[idle-logout]', e.message);
     res.json({ success: true }); // never block the logout
+  }
+});
+
+// ── POST /student/track-attempt ───────────────────────────
+// Save a quiz attempt to topic_attempts table (Issue #121)
+router.post('/track-attempt', async (req, res) => {
+  try {
+    const {
+      studentId,
+      topic,
+      subject,
+      grade,
+      curriculum = '',
+      totalQuestions,
+      correctAnswers,
+      score,                  // 0-100
+      timeSpentSeconds = 0,
+      perQuestionResults = [],// [{ question, studentAnswer, correctAnswer, isCorrect, timeSeconds }]
+      attemptNumber = 1,
+    } = req.body;
+
+    if (!studentId || !topic || !subject || !grade || score == null) {
+      return res.status(400).json({ error: 'studentId, topic, subject, grade, score are required' });
+    }
+
+    const passed = score >= 60;
+
+    const { data, error } = await supabase
+      .from('topic_attempts')
+      .insert({
+        student_id:           studentId,
+        topic,
+        subject,
+        grade,
+        curriculum,
+        attempt_number:       attemptNumber,
+        total_questions:      totalQuestions || perQuestionResults.length || 0,
+        correct_answers:      correctAnswers ?? perQuestionResults.filter(q => q.isCorrect).length,
+        score:                parseFloat(score),
+        passed,
+        time_spent_seconds:   timeSpentSeconds,
+        per_question_results: perQuestionResults,
+      })
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ ok: true, passed, attempt: data });
+  } catch (err) {
+    console.error('POST /student/track-attempt error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /student/:id/mistake-trends ──────────────────────
+// Returns practice insights: per-topic attempts, score trends, struggling topics, time spent
+router.get('/:id/mistake-trends', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { subject, grade, limit: rowLimit } = req.query;
+
+    let query = supabase
+      .from('topic_attempts')
+      .select('*')
+      .eq('student_id', id)
+      .order('created_at', { ascending: false });
+
+    if (subject) query = query.eq('subject', subject);
+    if (grade)   query = query.eq('grade', grade);
+    if (rowLimit) query = query.limit(parseInt(rowLimit) || 200);
+
+    const { data: attempts, error } = await query;
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Group by topic
+    const byTopic = {};
+    for (const a of (attempts || [])) {
+      if (!byTopic[a.topic]) {
+        byTopic[a.topic] = {
+          topic:          a.topic,
+          subject:        a.subject,
+          grade:          a.grade,
+          attempts:       [],
+          totalAttempts:  0,
+          bestScore:      0,
+          latestScore:    0,
+          passed:         false,
+          totalTimeSeconds: 0,
+        };
+      }
+      const t = byTopic[a.topic];
+      t.attempts.push({
+        attemptNumber:    a.attempt_number,
+        score:            parseFloat(a.score),
+        passed:           a.passed,
+        correctAnswers:   a.correct_answers,
+        totalQuestions:    a.total_questions,
+        timeSpentSeconds: a.time_spent_seconds,
+        date:             a.created_at,
+        perQuestionResults: a.per_question_results || [],
+      });
+      t.totalAttempts++;
+      t.bestScore       = Math.max(t.bestScore, parseFloat(a.score));
+      t.totalTimeSeconds += a.time_spent_seconds || 0;
+      if (a.passed) t.passed = true;
+    }
+
+    // Set latest score and sort attempts chronologically within each topic
+    const topics = Object.values(byTopic).map(t => {
+      t.attempts.sort((a, b) => new Date(a.date) - new Date(b.date));
+      t.latestScore = t.attempts[t.attempts.length - 1]?.score || 0;
+      t.improving   = t.attempts.length >= 2 &&
+        t.attempts[t.attempts.length - 1].score > t.attempts[t.attempts.length - 2].score;
+      t.struggling  = t.totalAttempts >= 2 && !t.passed;
+      return t;
+    });
+
+    // Find most-missed questions across all attempts
+    const wrongQuestions = [];
+    for (const a of (attempts || [])) {
+      for (const q of (a.per_question_results || [])) {
+        if (!q.isCorrect) {
+          wrongQuestions.push({
+            topic:         a.topic,
+            question:      q.question,
+            studentAnswer: q.studentAnswer,
+            correctAnswer: q.correctAnswer,
+            date:          a.created_at,
+          });
+        }
+      }
+    }
+
+    // Summary stats
+    const totalPracticeTime = topics.reduce((s, t) => s + t.totalTimeSeconds, 0);
+    const struggling = topics.filter(t => t.struggling);
+    const mastered   = topics.filter(t => t.passed);
+
+    res.json({
+      topics,
+      summary: {
+        totalTopicsPracticed: topics.length,
+        mastered:             mastered.length,
+        struggling:           struggling.length,
+        totalPracticeTimeSeconds: totalPracticeTime,
+        totalAttempts:        (attempts || []).length,
+      },
+      strugglingTopics: struggling.map(t => ({ topic: t.topic, subject: t.subject, attempts: t.totalAttempts, bestScore: t.bestScore })),
+      recentMistakes:   wrongQuestions.slice(0, 20),
+    });
+  } catch (err) {
+    console.error('GET /student/:id/mistake-trends error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 

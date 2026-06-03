@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { darkColors, lightColors, AppColors } from '../theme';
 
@@ -23,8 +22,26 @@ const ThemeContext = createContext<ThemeContextType>({
   isDark: true,
 });
 
+// Auto mode: time-based — Light 6AM–6PM, Dark 6PM–6AM
+function isNightTime(): boolean {
+  const hour = new Date().getHours();
+  return hour < 6 || hour >= 18;
+}
+
+function useSystemDark(): boolean {
+  const [dark, setDark] = useState<boolean>(isNightTime);
+
+  useEffect(() => {
+    // Re-check every minute so it switches exactly at 6AM/6PM
+    const interval = setInterval(() => setDark(isNightTime()), 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return dark;
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const systemScheme = useColorScheme();
+  const systemIsDark = useSystemDark();
   const [themeMode, setThemeModeState] = useState<ThemeMode>('dark');
 
   useEffect(() => {
@@ -41,14 +58,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }
 
   const { colors, isDark } = useMemo(() => {
-    let isDark = true;
-    if (themeMode === 'auto') {
-      isDark = systemScheme !== 'light';
-    } else {
-      isDark = themeMode === 'dark';
-    }
-    return { colors: isDark ? darkColors : lightColors, isDark };
-  }, [themeMode, systemScheme]);
+    const dark = themeMode === 'auto' ? systemIsDark : themeMode === 'dark';
+    return { colors: dark ? darkColors : lightColors, isDark: dark };
+  }, [themeMode, systemIsDark]);
 
   return (
     <ThemeContext.Provider value={{ themeMode, setThemeMode, colors, isDark }}>
