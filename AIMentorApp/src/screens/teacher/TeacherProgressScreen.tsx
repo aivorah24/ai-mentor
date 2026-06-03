@@ -262,7 +262,6 @@ function GradeBreakdown({ students, colors }: { students: Student[]; colors: any
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
       {gradeList.map(([grade, list], idx) => {
         const avg = Math.round(list.reduce((a, s) => a + (s.progressPct || 0), 0) / list.length);
-        const atRisk = list.filter(s => s.needsAttention).length;
         const color = GRADE_PALETTE[idx % GRADE_PALETTE.length];
         return (
           <View key={grade} style={{
@@ -278,12 +277,6 @@ function GradeBreakdown({ students, colors }: { students: Student[]; colors: any
             <View style={{ width: '100%', height: 4, backgroundColor: color + '20', borderRadius: 2, overflow: 'hidden' }}>
               <View style={{ height: '100%', width: `${avg}%` as any, backgroundColor: color, borderRadius: 2 }} />
             </View>
-            {atRisk > 0 && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.rose + '15', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
-                <Feather name="alert-circle" size={10} color={P.rose} />
-                <Text style={{ fontSize: 10, color: P.rose, fontWeight: '600' }}>{atRisk} at risk</Text>
-              </View>
-            )}
           </View>
         );
       })}
@@ -300,14 +293,37 @@ const QUICK_PROMPTS = [
   'Which students are ready for advanced work?',
 ];
 
-function AIAnalysis({ students, colors, styles }: { students: Student[]; colors: any; styles: any }) {
+function AIAnalysis({ students, colors, styles, practiceTrends }: { students: Student[]; colors: any; styles: any; practiceTrends: Record<string, any> }) {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const classSummary = students.map(s =>
-    `${s.name} (${s.grade}, ${s.curriculum}): ${s.progressPct}% progress, ${(s.completedTopics || []).length} topics completed [${(s.completedTopics || []).join(', ') || 'none'}], ${s.currentStreak || 0}-day streak, ${s.assignmentsDone || 0} assignments done, last active: ${s.lastActive ? new Date(s.lastActive).toDateString() : 'never'}, ${s.needsAttention ? 'NEEDS ATTENTION' : 'on track'}`
-  ).join('\n');
+  const classSummary = students.map(s => {
+    const done = (s.completedTopics || []).length;
+    const total = s.totalTopics || 0;
+    const pct = s.progressPct || 0;
+    // Data-driven status — no stale needsAttention flag
+    let status = 'on track';
+    if (pct >= 80) status = 'excellent';
+    else if (pct >= 50) status = 'good progress';
+    else if (pct > 0 && pct < 30) status = 'early stage — may need support';
+    else if (done === 0 && (s.studyTime || 0) === 0) status = 'not started yet';
+
+    // Include detailed practice test data per topic
+    const trends = practiceTrends[s.email] || {};
+    const trendEntries = Object.entries(trends);
+    let practiceInfo = '';
+    if (trendEntries.length > 0) {
+      const topicDetails = trendEntries.map(([topic, t]: any) => {
+        const score = t.latestScore ?? t.firstScore ?? 0;
+        const passedStr = t.passed !== false ? 'PASSED' : 'FAILED';
+        return `${topic}: ${score}% (${t.attemptCount} attempt${t.attemptCount !== 1 ? 's' : ''}, ${passedStr}, trend: ${t.trend})`;
+      });
+      practiceInfo = ` | Practice quiz results: [${topicDetails.join('; ')}]`;
+    }
+
+    return `${s.name} (${s.grade}, ${s.curriculum}): ${pct}% progress, ${done}/${total} topics completed [${(s.completedTopics || []).join(', ') || 'none'}], ${s.currentStreak || 0}-day streak, ${s.assignmentsDone || 0} assignments done, last active: ${s.lastActive ? new Date(s.lastActive).toDateString() : 'never'}, status: ${status}${practiceInfo}`;
+  }).join('\n');
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || loading) return;
@@ -317,7 +333,7 @@ function AIAnalysis({ students, colors, styles }: { students: Student[]; colors:
     setLoading(true);
 
     try {
-      const systemContext = `You are an expert AI teaching assistant helping a professional teacher. You have full access to class performance data. Be direct, specific, and professional — no child-friendly guardrails. Use student names. Give actionable, data-driven recommendations. You can analyse assignments, flag struggling students, suggest interventions, and generate report summaries.\n\nClass data:\n${classSummary}`;
+      const systemContext = `You are an expert AI teaching assistant for the Aivorah platform.\n\nRULES:\n1. ONLY use the data provided. Never invent information.\n2. Students with 0% progress and "not started yet" are INACTIVE — do NOT flag as needing attention.\n3. High-completion students (50+ topics, 80%+ progress) are doing WELL — never flag them.\n4. "Needs attention" = student IS active but STRUGGLING (low scores <60%, declining trends, repeated failures).\n5. TOPICS TO RETEACH: If MULTIPLE students score below 60% on the SAME topic, recommend reteaching it. A passed topic (60%+) does NOT need reteaching.\n6. When flagging a student, cite specific data (score, topic, attempts).\n7. Keep responses concise with headers and bullets.\n\nClass data:\n${classSummary}`;
       const prompt = `${systemContext}\n\nTeacher's question: ${text}`;
 
       const res = await fetch(`${SERVER_URL}/ask/teacher`, {
@@ -475,7 +491,8 @@ export default function TeacherProgressScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'All' | 'At Risk' | 'On Track'>('All');
+  const [showAllPractice, setShowAllPractice] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'All' | 'On Track'>('All');
   const [practiceTrends, setPracticeTrends] = useState<Record<string, any>>({});
   const [loadingTrends, setLoadingTrends] = useState<string | null>(null);
 
@@ -491,19 +508,55 @@ export default function TeacherProgressScreen({ navigation }: any) {
 
   useEffect(() => { load(); }, [load]);
 
-  async function fetchPracticeTrends(studentEmail: string) {
-    if (practiceTrends[studentEmail] || loadingTrends === studentEmail) return;
-    setLoadingTrends(studentEmail);
+  async function fetchPracticeTrends(studentKey: string, studentId?: string) {
+    if (practiceTrends[studentKey] || loadingTrends === studentKey) return;
+    setLoadingTrends(studentKey);
     try {
-      const res = await fetch(`${SERVER_URL}/analytics/practice-trends?studentEmail=${encodeURIComponent(studentEmail)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setPracticeTrends(prev => ({ ...prev, [studentEmail]: data.topics || {} }));
+      // Prefer new topic_attempts endpoint (by ID), fall back to legacy analytics endpoint (by email)
+      let data: any = null;
+      if (studentId) {
+        const res = await fetch(`${SERVER_URL}/student/${studentId}/mistake-trends`);
+        if (res.ok) {
+          const json = await res.json();
+          // Convert new format to existing UI format
+          const topics: Record<string, any> = {};
+          for (const t of (json.topics || [])) {
+            const attempts = t.attempts || [];
+            topics[t.topic] = {
+              attemptCount:        t.totalAttempts,
+              firstScore:          attempts[0]?.score ?? null,
+              latestScore:         t.latestScore,
+              firstAttemptMistakes: attempts[0] ? (attempts[0].totalQuestions - attempts[0].correctAnswers) : null,
+              trend:               t.improving ? 'improving' : t.struggling ? 'declining' : 'stable',
+              totalTimeSeconds:    t.totalTimeSeconds,
+              passed:              t.passed,
+            };
+          }
+          data = topics;
+        }
       }
+      if (!data) {
+        const res = await fetch(`${SERVER_URL}/analytics/practice-trends?studentEmail=${encodeURIComponent(studentKey)}`);
+        if (res.ok) {
+          const json = await res.json();
+          data = json.topics || {};
+        }
+      }
+      if (data) setPracticeTrends(prev => ({ ...prev, [studentKey]: data }));
     } catch {/* */} finally {
       setLoadingTrends(null);
     }
   }
+
+  // Preload practice trends for all students so AI Assistant has full data
+  useEffect(() => {
+    if (students.length === 0) return;
+    students.forEach(s => {
+      if (s.email && s.id && !practiceTrends[s.email]) {
+        fetchPracticeTrends(s.email, s.id);
+      }
+    });
+  }, [students]);
 
   useEffect(() => {
     const unsub1 = navigation.addListener('focus', load);
@@ -525,11 +578,9 @@ export default function TeacherProgressScreen({ navigation }: any) {
 
   const filtered = students.filter(s => {
     const matchSearch = !search || s.name.toLowerCase().includes(search.toLowerCase());
-    const matchTab = activeTab === 'All' ? true : activeTab === 'At Risk' ? s.needsAttention : !s.needsAttention;
+    const matchTab = activeTab === 'All' ? true : (s.progressPct || 0) >= 30;
     return matchSearch && matchTab;
   }).sort((a, b) => (a.progressPct || 0) - (b.progressPct || 0));
-
-  const atRisk = students.filter(s => s.needsAttention).length;
 
   return (
     <ScreenLayout>
@@ -563,7 +614,7 @@ export default function TeacherProgressScreen({ navigation }: any) {
           </View>
 
           {/* ── AI ANALYSIS ── */}
-          <AIAnalysis students={students} colors={c} styles={styles} />
+          <AIAnalysis students={students} colors={c} styles={styles} practiceTrends={practiceTrends} />
 
           {/* ── STUDENT LIST ── */}
           <View style={{ gap: spacing.sm }}>
@@ -581,14 +632,11 @@ export default function TeacherProgressScreen({ navigation }: any) {
             </View>
 
             <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-              {(['All', 'At Risk', 'On Track'] as const).map(tab => (
+              {(['All', 'On Track'] as const).map(tab => (
                 <TouchableOpacity key={tab}
                   style={[styles.filterTab, activeTab === tab && styles.filterTabActive]}
                   onPress={() => setActiveTab(tab)} activeOpacity={0.75}>
                   <Text style={[styles.filterTabText, activeTab === tab && { color: P.teal }]}>{tab}</Text>
-                  {tab === 'At Risk' && atRisk > 0 && (
-                    <View style={styles.tabBadge}><Text style={styles.tabBadgeText}>{atRisk}</Text></View>
-                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -597,7 +645,26 @@ export default function TeacherProgressScreen({ navigation }: any) {
 
             {loading ? (
               <ActivityIndicator color={P.teal} style={{ marginTop: 40 }} />
-            ) : filtered.map(s => {
+            ) : (<View style={{ gap: spacing.md }}>{(() => {
+              // Build rows: expanded card gets its own full-width row, others pair up
+              const rows: Student[][] = [];
+              let pair: Student[] = [];
+              for (const s of filtered) {
+                if (expanded === s.id) {
+                  if (pair.length > 0) { rows.push(pair); pair = []; }
+                  rows.push([s]); // own row — full width
+                } else {
+                  pair.push(s);
+                  if (pair.length === 2) { rows.push(pair); pair = []; }
+                }
+              }
+              if (pair.length > 0) rows.push(pair);
+
+              return rows.map((row, ri) => {
+                const isSingleExpanded = row.length === 1 && expanded === row[0].id;
+                return (
+                  <View key={ri} style={[styles.studentGrid, isSingleExpanded && { flexWrap: 'nowrap' }]}>
+                    {row.map(s => {
               const color = avatarColor(s.name);
               const isExpanded = expanded === s.id;
               const done = s.completedTopics || [];
@@ -606,11 +673,11 @@ export default function TeacherProgressScreen({ navigation }: any) {
               return (
                 <TouchableOpacity
                   key={s.id}
-                  style={[styles.studentCard, s.needsAttention && { borderColor: P.rose + '50' }]}
+                  style={[styles.studentCard, isExpanded && { width: '100%' }]}
                   activeOpacity={0.9}
                   onPress={() => {
                     setExpanded(isExpanded ? null : s.id);
-                    if (!isExpanded && s.email) fetchPracticeTrends(s.email);
+                    if (!isExpanded && s.email) fetchPracticeTrends(s.email, s.id);
                   }}
                 >
                   {/* Top row */}
@@ -619,24 +686,17 @@ export default function TeacherProgressScreen({ navigation }: any) {
                       <Text style={[styles.avatarText, { color }]}>{initials(s.name)}</Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={styles.studentName}>{s.name}</Text>
-                        {s.needsAttention && (
-                          <View style={styles.riskBadge}>
-                            <Text style={styles.riskBadgeText}>At Risk</Text>
-                          </View>
-                        )}
-                      </View>
+                      <Text style={styles.studentName}>{s.name}</Text>
                       <Text style={styles.studentMeta}>{s.grade} · {s.curriculum} · Lv.{s.level}</Text>
                     </View>
                     <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                      <Text style={[styles.progressPct, { color: s.needsAttention ? P.rose : P.green }]}>
+                      <Text style={[styles.progressPct, { color: P.green }]}>
                         {s.progressPct}%
                       </Text>
                       <View style={styles.progressBarBg}>
                         <View style={[styles.progressBarFill, {
                           width: `${s.progressPct}%` as any,
-                          backgroundColor: s.needsAttention ? P.rose : P.teal,
+                          backgroundColor: P.teal,
                         }]} />
                       </View>
                     </View>
@@ -712,10 +772,53 @@ export default function TeacherProgressScreen({ navigation }: any) {
                           </View>
                         );
                         if (trendTopics.length === 0) return null;
+
+                        // Sort: struggling first, then by latest score ascending
+                        const sorted = [...trendTopics].sort(([,a]: any, [,b]: any) => {
+                          if (a.trend === 'declining' && b.trend !== 'declining') return -1;
+                          if (b.trend === 'declining' && a.trend !== 'declining') return 1;
+                          return (a.latestScore ?? a.firstScore ?? 0) - (b.latestScore ?? b.firstScore ?? 0);
+                        });
+
+                        const showAll = showAllPractice === s.id;
+                        const visible = showAll ? sorted : sorted.slice(0, 5);
+                        const hasMore = sorted.length > 5;
+
+                        // Summary stats
+                        const totalTime = trendTopics.reduce((sum, [, t]: any) => sum + (t.totalTimeSeconds || 0), 0);
+                        const passed = trendTopics.filter(([, t]: any) => t.passed !== false).length;
+                        const failing = trendTopics.filter(([, t]: any) => t.passed === false && t.attemptCount >= 2).length;
+
                         return (
-                          <View style={{ marginBottom: 12, gap: 6 }}>
+                          <View style={{ marginBottom: 12, gap: 8 }}>
                             <Text style={styles.topicsTitle}>Practice Test Performance</Text>
-                            {trendTopics.map(([topic, t]: [string, any]) => {
+
+                            {/* Quick summary bar */}
+                            <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.teal + '15', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                                <Feather name="target" size={10} color={P.teal} />
+                                <Text style={{ fontSize: 10, fontWeight: '700', color: P.teal }}>{trendTopics.length} topics</Text>
+                              </View>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.green + '15', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                                <Feather name="check-circle" size={10} color={P.green} />
+                                <Text style={{ fontSize: 10, fontWeight: '700', color: P.green }}>{passed} passed</Text>
+                              </View>
+                              {failing > 0 && (
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: P.rose + '15', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                                  <Feather name="alert-circle" size={10} color={P.rose} />
+                                  <Text style={{ fontSize: 10, fontWeight: '700', color: P.rose }}>{failing} struggling</Text>
+                                </View>
+                              )}
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.borderColor, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                                <Feather name="clock" size={10} color={c.textDim} />
+                                <Text style={{ fontSize: 10, fontWeight: '700', color: c.textDim }}>
+                                  {totalTime >= 3600 ? `${(totalTime / 3600).toFixed(1)}h` : totalTime >= 60 ? `${Math.floor(totalTime / 60)}m` : `${totalTime}s`} total
+                                </Text>
+                              </View>
+                            </View>
+
+                            {/* Topic rows */}
+                            {visible.map(([topic, t]: [string, any]) => {
                               const trendIcon = t.trend === 'improving' ? 'trending-up' : t.trend === 'declining' ? 'trending-down' : 'minus';
                               const trendColor = t.trend === 'improving' ? P.green : t.trend === 'declining' ? P.rose : c.textDim;
                               return (
@@ -730,7 +833,14 @@ export default function TeacherProgressScreen({ navigation }: any) {
                                       {t.firstScore != null ? `  ·  First: ${t.firstScore}%` : ''}
                                       {t.latestScore != null && t.attemptCount > 1 ? `  →  Latest: ${t.latestScore}%` : ''}
                                       {t.firstAttemptMistakes != null ? `  ·  ${t.firstAttemptMistakes} mistake${t.firstAttemptMistakes !== 1 ? 's' : ''} on 1st try` : ''}
+                                      {t.totalTimeSeconds ? `  ·  ${t.totalTimeSeconds >= 60 ? `${Math.floor(t.totalTimeSeconds / 60)}m ${t.totalTimeSeconds % 60}s` : `${t.totalTimeSeconds}s`}` : ''}
                                     </Text>
+                                    {t.passed === false && t.attemptCount >= 2 && (
+                                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                                        <Feather name="alert-circle" size={9} color={P.rose} />
+                                        <Text style={{ fontSize: 10, color: P.rose, fontWeight: '600' }}>Not passed yet (needs 60%)</Text>
+                                      </View>
+                                    )}
                                   </View>
                                   <View style={{ alignItems: 'flex-end', gap: 2 }}>
                                     <Text style={{ fontSize: 13, fontWeight: '800', color: trendColor }}>{t.latestScore ?? t.firstScore ?? '—'}%</Text>
@@ -739,6 +849,20 @@ export default function TeacherProgressScreen({ navigation }: any) {
                                 </View>
                               );
                             })}
+
+                            {/* Show more / less toggle */}
+                            {hasMore && (
+                              <TouchableOpacity
+                                onPress={() => setShowAllPractice(showAll ? null : s.id)}
+                                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8 }}
+                                activeOpacity={0.7}
+                              >
+                                <Feather name={showAll ? 'chevron-up' : 'chevron-down'} size={13} color={P.teal} />
+                                <Text style={{ fontSize: 11, fontWeight: '700', color: P.teal }}>
+                                  {showAll ? 'Show less' : `Show all ${sorted.length} topics`}
+                                </Text>
+                              </TouchableOpacity>
+                            )}
                           </View>
                         );
                       })()}
@@ -747,7 +871,7 @@ export default function TeacherProgressScreen({ navigation }: any) {
                       <View style={{ gap: 6 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                           <Text style={{ fontSize: 11, color: c.textDim }}>Curriculum Progress</Text>
-                          <Text style={{ fontSize: 11, fontWeight: '700', color: s.needsAttention ? P.rose : P.teal }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: P.teal }}>
                             {s.progressPct}%
                           </Text>
                         </View>
@@ -755,7 +879,7 @@ export default function TeacherProgressScreen({ navigation }: any) {
                           <View style={{
                             height: '100%', borderRadius: 5,
                             width: `${s.progressPct}%` as any,
-                            backgroundColor: s.needsAttention ? P.rose : P.teal,
+                            backgroundColor: P.teal,
                           }} />
                         </View>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -766,22 +890,6 @@ export default function TeacherProgressScreen({ navigation }: any) {
                           ))}
                         </View>
                       </View>
-
-                      {/* Attention flag */}
-                      {s.needsAttention && (
-                        <View style={[styles.attentionWarn, { borderColor: P.rose + '30', backgroundColor: P.rose + '10' }]}>
-                          <Feather name="alert-triangle" size={14} color={P.rose} />
-                          <Text style={[styles.attentionText, { color: P.rose }]}>
-                            {s.progressPct < 10
-                              ? `Hasn't started — ${s.progressPct}% completion. Immediate intervention needed.`
-                              : s.progressPct < 30
-                              ? `Very low progress at ${s.progressPct}%. Consider a one-on-one session.`
-                              : (s.currentStreak || 0) < 2
-                              ? `Streak dropped to ${s.currentStreak || 0} days. Student may be disengaging.`
-                              : `Progress at ${s.progressPct}% — below expected level for this stage.`}
-                          </Text>
-                        </View>
-                      )}
 
                       <TouchableOpacity
                         style={styles.assignBtn}
@@ -795,7 +903,11 @@ export default function TeacherProgressScreen({ navigation }: any) {
                   )}
                 </TouchableOpacity>
               );
-            })}
+                    })}
+                  </View>
+                );
+              });
+            })()}</View>)}
           </View>
         </ScrollView>
       </View>
@@ -843,7 +955,9 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   sectionTitle: { fontSize: 12, fontWeight: '600', color: c.textDim },
 
+  studentGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, alignItems: 'flex-start' },
   studentCard: {
+    width: '49%' as any,
     backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
     borderRadius: radius.xl, padding: spacing.lg, gap: spacing.sm,
   },

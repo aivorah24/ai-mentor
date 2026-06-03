@@ -5,10 +5,11 @@ const { retrieveCurriculumContext, retrieveNcertImages } = require('../services/
 const { retrieveWebContext, retrieveWebImages } = require('../services/webSearch');
 const { logEvent } = require('../services/analytics');
 const { normalizeCurriculum } = require('../utils/curriculum');
+const { checkInputSafety } = require('../services/contentSafety');
 const supabase = require('../services/supabase');
 
 // ── Free-tier daily message limit ──────────────────────────────────
-const FREE_DAILY_LIMIT = 10;
+const FREE_DAILY_LIMIT = 9999; // unlimited during testing
 
 async function getIsPro(email) {
   if (!email) return false;
@@ -71,6 +72,13 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'question is required' });
     }
 
+    // ── Content safety pre-flight ──────────────────────────────────
+    const safety = checkInputSafety(question);
+    if (!safety.safe) {
+      console.warn('[Safety] Blocked input:', safety.category, '| email:', userEmail);
+      return res.json({ answer: safety.response, sources: [], images: [] });
+    }
+
     // ── Free-tier usage gate ────────────────────────────────────────
     const emailLc = (userEmail || '').toLowerCase().trim();
     const isPro = await getIsPro(emailLc);
@@ -112,7 +120,7 @@ router.post('/', async (req, res) => {
       // Uses dedicated image-only search to avoid text chunks crowding out images.
       if (images.length === 0 && normalizedCurriculum === 'IB PYP') {
         try {
-          const ncertImages = await retrieveNcertImages({ question, subject, topic });
+          const ncertImages = await retrieveNcertImages({ question, subject, topic, grade });
           if (ncertImages.length > 0) images = ncertImages;
         } catch (_) { /* silent — images are supplementary */ }
       }
@@ -124,7 +132,7 @@ router.post('/', async (req, res) => {
     // IB PYP image fallback — runs even if IB_PYP RAG failed above
     if (images.length === 0 && normalizedCurriculum === 'IB PYP') {
       try {
-        const ncertImages = await retrieveNcertImages({ question, subject, topic });
+        const ncertImages = await retrieveNcertImages({ question, subject, topic, grade });
         if (ncertImages.length > 0) images = ncertImages;
       } catch (_) { /* silent — images are supplementary */ }
     }
@@ -150,14 +158,19 @@ router.post('/', async (req, res) => {
     }
 
     // 2. Generate answer + fetch web images IN PARALLEL for speed
-    const needsWebImages = images.length === 0;
+    // Only fetch Wikipedia images when RAG found real curriculum context — avoids off-topic images
+    const needsWebImages = images.length === 0 && !!context;
     const [answer, webImagesResult] = await Promise.all([
-      generateAnswer({ question, context, grade, subject, topic, history }),
+      generateAnswer({ question, context, grade, subject, topic, history, _meta: { route: '/ask', studentEmail: userEmail } }),
       needsWebImages
         ? retrieveWebImages({ question, topic, subject, grade }).catch(() => [])
         : Promise.resolve([]),
     ]);
     if (needsWebImages && webImagesResult.length > 0) images = webImagesResult;
+
+    // Never show images alongside an off-topic redirect or no-context fallback
+    const isRedirectAnswer = /I'm your school AI Coach|Let's finish|Great curiosity!/i.test(answer);
+    if (isRedirectAnswer) images = [];
 
     logEvent('ai_ask', {
       userEmail,
@@ -230,16 +243,25 @@ router.post('/teacher', async (req, res) => {
     const Groq = require('groq-sdk');
     const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    const systemPrompt = `You are an expert AI teaching assistant helping a professional school teacher.
-You have full access to the teacher's class data below.
-Be direct, specific, and professional. No child-friendly guardrails.
-Use student names in your responses. Give data-driven, actionable insights.
-Format responses with clear bullet points and headers where appropriate.
-If asked about weak topics, analyse actual completed topic counts.
-If asked about struggling students, use the NEEDS ATTENTION flag and low progress %.
-If given an image of an assignment or worksheet, analyse it, grade it if possible, identify mistakes, and give teacher feedback.
-If given PDF text (assignment/worksheet), extract questions, grade answers, and provide per-student feedback.
-Never hallucinate — only use data provided.
+    const systemPrompt = `You are an expert AI teaching assistant for the Aivorah platform, helping a professional school teacher make data-driven decisions.
+
+RULES — follow these strictly:
+1. ONLY use the data provided below. Never invent scores, topics, or student behaviour.
+2. Students with 0% progress AND 0 topics AND "not started yet" status are INACTIVE accounts — do NOT flag them as needing attention. Simply note them as "not yet active" if asked.
+3. A student who has high completion (e.g. 50+ topics, 80%+ progress) is doing WELL — never flag them as needing attention.
+4. "Needs attention" means: the student HAS been active but is STRUGGLING — low practice test scores (<60%), declining trends, or repeated failures on specific topics.
+5. TOPICS TO RETEACH IN CLASS: Look at practice test data across ALL students. If MULTIPLE students score below 60% on the SAME topic, that topic likely needs reteaching. A topic that one student passed with 80%+ does NOT need reteaching.
+6. Do NOT recommend "revisiting" topics a student has already passed (scored 60%+). That wastes class time.
+7. When listing students who need help, explain WHY with specific data: "Sai Mohan scored 40% on Currency Conversion after 1 attempt — needs practice."
+8. Keep responses concise with clear headers and bullet points. No fluff, no generic advice.
+9. If given an image of an assignment or worksheet, analyse it, grade it if possible, identify mistakes, and give teacher feedback.
+10. If given PDF text (assignment/worksheet), extract questions, grade answers, and provide per-student feedback.
+
+HOW TO READ THE DATA:
+- "Practice tests: N topics attempted, M passed" = quiz performance data
+- "STRUGGLING in: TopicName (score%, attempts)" = topics where student is failing
+- "status: excellent/good progress/on track/early stage/not started yet" = computed from real progress data
+- Students without practice test data simply haven't taken quizzes yet — that's not the same as struggling.
 
 CLASS DATA:
 ${classSummary || 'No class data provided.'}`;
@@ -352,6 +374,13 @@ router.post('/stream', async (req, res) => {
     return res.status(400).json({ error: 'question is required' });
   }
 
+  // ── Content safety pre-flight (stream) ────────────────────────
+  const streamSafety = checkInputSafety(question);
+  if (!streamSafety.safe) {
+    console.warn('[Safety] Blocked stream input:', streamSafety.category, '| email:', userEmail);
+    return res.json({ answer: streamSafety.response, sources: [], images: [] });
+  }
+
   // ── Free-tier usage gate (stream) ─────────────────────────────
   const streamEmailLc = (userEmail || '').toLowerCase().trim();
   const streamIsPro = await getIsPro(streamEmailLc);
@@ -400,7 +429,7 @@ router.post('/stream', async (req, res) => {
       // IB PYP image fallback — dedicated image-only search from NCERT
       if (images.length === 0 && normalizedCurriculum === 'IB PYP') {
         try {
-          const ncertImages = await retrieveNcertImages({ question, subject, topic });
+          const ncertImages = await retrieveNcertImages({ question, subject, topic, grade });
           if (ncertImages.length > 0) images = ncertImages;
         } catch (_) { /* silent */ }
       }
@@ -411,13 +440,14 @@ router.post('/stream', async (req, res) => {
     // IB PYP image fallback — runs even if IB_PYP RAG failed above
     if (images.length === 0 && normalizedCurriculum === 'IB PYP') {
       try {
-        const ncertImages = await retrieveNcertImages({ question, subject, topic });
+        const ncertImages = await retrieveNcertImages({ question, subject, topic, grade });
         if (ncertImages.length > 0) images = ncertImages;
       } catch (_) { /* silent */ }
     }
 
-    // Web image fallback — if no relevant book images, fetch safe images from Wikipedia
-    if (images.length === 0) {
+    // Web image fallback — only fetch Wikipedia images when RAG returned real curriculum context.
+    // If Qdrant had nothing (no context), Wikipedia images are likely off-topic too — skip them.
+    if (images.length === 0 && context) {
       try {
         const webImages = await retrieveWebImages({ question, topic, subject, grade });
         if (webImages.length > 0) images = webImages;
@@ -455,6 +485,7 @@ router.post('/stream', async (req, res) => {
       subject,
       topic,
       history,
+      _meta: { route: '/ask/stream', studentEmail: userEmail },
       onToken: (token) => {
         res.write(`data: ${JSON.stringify({ type: 'token', token })}\n\n`);
       },
@@ -516,6 +547,33 @@ router.get('/usage', async (req, res) => {
       used: count,
       remaining: Math.max(0, FREE_DAILY_LIMIT - count),
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /ask/feedback — session rating (1/2/3) from AI Coach
+router.post('/feedback', async (req, res) => {
+  try {
+    const { studentEmail, rating, grade, messageCount } = req.body;
+    if (!rating || ![1, 2, 3].includes(Number(rating))) {
+      return res.status(400).json({ error: 'rating must be 1, 2, or 3' });
+    }
+    await supabase.from('llm_logs').insert({
+      provider: 'session',
+      model: 'session_feedback',
+      route: '/session/feedback',
+      student_email: studentEmail || null,
+      grade: grade || null,
+      prompt_tokens: 0,
+      completion_tokens: 0,
+      total_tokens: messageCount || 0,
+      estimated_cost_usd: 0,
+      response_time_ms: 0,
+      feedback: Number(rating),
+      streamed: false,
+    });
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
