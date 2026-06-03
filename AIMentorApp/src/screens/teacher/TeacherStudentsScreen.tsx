@@ -169,7 +169,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   const [linkGradeFilter, setLinkGradeFilter] = useState<string>('All');
   const [linkableStudents, setLinkableStudents] = useState<any[]>([]);
   const [linkableLoading,  setLinkableLoading]  = useState(false);
-  const [selectedStudent,  setSelectedStudent]  = useState<any>(null);
+  const [selectedStudents, setSelectedStudents] = useState<any[]>([]);
   // Remove student
   const [removingId, setRemovingId] = useState<string | null>(null);
   // Credentials popup after creating
@@ -226,7 +226,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
     setNewCurriculum(user?.curriculum || 'IB PYP');
     setCreateError('');
     setLinkEmail(''); setLinkError('');
-    setLinkSearch(''); setSelectedStudent(null);
+    setLinkSearch(''); setSelectedStudents([]);
     setBulkResults(null); setBulkSummary(null); setBulkError('');
     setBulkGrade(user?.grade || 'Grade 3');
     setBulkCurriculum(user?.curriculum || 'IB PYP');
@@ -347,22 +347,26 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   }
 
   async function handleLinkStudent() {
-    const emailToLink = selectedStudent?.email || linkEmail.trim();
-    if (!emailToLink) { setLinkError('Please select or enter a student.'); return; }
+    const emailsToLink = selectedStudents.map(s => s.email).filter(Boolean);
+    if (emailsToLink.length === 0 && !linkEmail.trim()) { setLinkError('Please select at least one student.'); return; }
+    if (linkEmail.trim()) emailsToLink.push(linkEmail.trim());
     setLinking(true); setLinkError('');
     try {
-      const res = await fetch(
-        `${SERVER_URL}/teacher/${encodeURIComponent(user?.email || '')}/students/link-existing`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ studentEmail: emailToLink }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) { setLinkError(data.error || 'Could not link student.'); return; }
+      for (const email of emailsToLink) {
+        const res = await fetch(
+          `${SERVER_URL}/teacher/${encodeURIComponent(user?.email || '')}/students/link-existing`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ studentEmail: email }),
+          }
+        );
+        const data = await res.json();
+        if (!res.ok) { setLinkError(data.error || `Could not link ${email}.`); setLinking(false); return; }
+      }
       setAddModal(false);
       setLinkEmail('');
+      setSelectedStudents([]);
       load();
     } catch (e: any) {
       setLinkError(e.message || 'Something went wrong. Please try again.');
@@ -522,7 +526,8 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
               )}
             </View>
           ) : (
-            filtered.map((s) => {
+            <View style={styles.studentGrid}>
+            {filtered.map((s) => {
               const displayName = toTitleCase(s.name);
               const grad = avatarGradient(displayName);
               return (
@@ -596,7 +601,8 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                   </View>
                 </TouchableOpacity>
               );
-            })
+            })}
+            </View>
           )}
         </ScrollView>
       </View>
@@ -790,11 +796,13 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                         return matchSearch && matchGrade;
                       })
                       .map(s => {
-                        const isSelected = selectedStudent?.id === s.id;
+                        const isSelected = selectedStudents.some(x => x.id === s.id);
                         return (
                           <TouchableOpacity
                             key={s.id}
-                            onPress={() => setSelectedStudent(isSelected ? null : s)}
+                            onPress={() => setSelectedStudents(prev =>
+                              isSelected ? prev.filter(x => x.id !== s.id) : [...prev, s]
+                            )}
                             activeOpacity={0.8}
                             style={{
                               flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -825,11 +833,13 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                   </ScrollView>
                 )}
 
-                {selectedStudent && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 8, backgroundColor: colors.primaryGlow }}>
+                {selectedStudents.length > 0 && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 8, backgroundColor: colors.primaryGlow, flexWrap: 'wrap' }}>
                     <Feather name="user-check" size={13} color={colors.primary} />
                     <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>
-                      Selected: {selectedStudent.name}
+                      {selectedStudents.length === 1
+                        ? `Selected: ${selectedStudents[0].name}`
+                        : `${selectedStudents.length} students selected: ${selectedStudents.map(s => s.name).join(', ')}`}
                     </Text>
                   </View>
                 )}
@@ -841,13 +851,13 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                     <Text style={styles.modalCancelText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.modalSaveBtn, !selectedStudent && { opacity: 0.5 }]}
+                    style={[styles.modalSaveBtn, selectedStudents.length === 0 && !linkEmail.trim() && { opacity: 0.5 }]}
                     onPress={handleLinkStudent}
-                    disabled={linking || !selectedStudent}
+                    disabled={linking || (selectedStudents.length === 0 && !linkEmail.trim())}
                   >
                     {linking
                       ? <ActivityIndicator color="white" size="small" />
-                      : <Text style={styles.modalSaveText}>Link Student</Text>}
+                      : <Text style={styles.modalSaveText}>{selectedStudents.length > 1 ? `Link ${selectedStudents.length} Students` : 'Link Student'}</Text>}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1072,9 +1082,15 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   empty: { alignItems: 'center', gap: 12, paddingTop: 40 },
   emptyText: { fontSize: 14, color: c.textDim },
 
+  studentGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+  },
   studentCard: {
     backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
     borderRadius: radius.xl, padding: spacing.lg, gap: spacing.md,
+    width: '49%',
   },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   avatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },

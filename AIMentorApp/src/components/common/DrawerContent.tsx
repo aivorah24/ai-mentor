@@ -80,6 +80,7 @@ const SUPER_ADMIN_NAV_ITEMS = [
   { label: 'Assignments',       icon: 'check-square',   screen: 'TeacherAssignments',  group: 'MENU' },
   { label: 'Challenges',        icon: 'target',         screen: 'TeacherChallenges',   group: 'MENU' },
   { label: 'Challenge Manager', icon: 'shield',         screen: 'ChallengeManager',    group: 'MENU' },
+  { label: 'Staff Subjects',    icon: 'book-open',      screen: 'StaffSubjectMapping', group: 'MENU' },
   { label: 'Schedule',          icon: 'calendar',       screen: 'TeacherSchedule',     group: 'MENU' },
   { label: 'Student Progress',  icon: 'bar-chart-2',    screen: 'TeacherProgress',     group: 'MENU' },
   { label: 'Messages',          icon: 'message-square', screen: 'TeacherMessages',     group: 'MENU' },

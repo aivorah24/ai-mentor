@@ -75,6 +75,56 @@ type AnalyticsSummary = {
   };
 };
 
+type LLMByModel = {
+  model: string;
+  provider: string;
+  calls: number;
+  tokens: number;
+  cost: number;
+};
+
+type LLMByDay = {
+  date: string;
+  calls: number;
+  tokens: number;
+  cost: number;
+};
+
+type LLMFeedbackCounts = { 1: number; 2: number; 3: number };
+
+type LLMRecentRow = {
+  route: string;
+  model: string;
+  student_email?: string;
+  grade?: string;
+  subject?: string;
+  topic?: string;
+  total_tokens?: number;
+  response_time_ms?: number;
+  feedback?: string | number;
+  created_at: string;
+};
+
+type LLMStats = {
+  days: number;
+  summary: {
+    totalCalls: number;
+    totalTokens: number;
+    totalCost: number;
+    avgResponseMs: number;
+  };
+  byModel: LLMByModel[];
+  byDay: LLMByDay[];
+  byProvider: { provider: string; calls: number }[];
+  feedback: {
+    total: number;
+    avg: number | null;
+    counts: LLMFeedbackCounts;
+    recent: LLMRecentRow[];
+  };
+  recent: LLMRecentRow[];
+};
+
 type StudentProgress = {
   xpPoints?: number;
   level?: number;
@@ -388,6 +438,7 @@ export default function AdminPanelScreen() {
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [preferencesAvailable, setPreferencesAvailable] = useState(false);
+  const [llmStats, setLlmStats] = useState<LLMStats | null>(null);
 
   const querySuffix = useMemo(() => {
     const params = new URLSearchParams();
@@ -431,6 +482,14 @@ export default function AdminPanelScreen() {
           setAnalytics(null);
         }
 
+        try {
+          const llmData = await fetchJson(`${base}/admin/llm-stats?days=30${adminEmail ? '&email=' + encodeURIComponent(adminEmail) : ''}`);
+          if (isRecord(llmData) && isRecord((llmData as any).summary)) setLlmStats(llmData as LLMStats);
+          else setLlmStats(null);
+        } catch {
+          setLlmStats(null);
+        }
+
         setPreferencesAvailable(true);
         return;
       } catch {}
@@ -453,6 +512,15 @@ export default function AdminPanelScreen() {
         } catch {
           setAnalytics(null);
         }
+
+        try {
+          const llmData = await fetchJson(`${base}/admin/llm-stats?days=30${adminEmail ? '&email=' + encodeURIComponent(adminEmail) : ''}`);
+          if (isRecord(llmData) && isRecord((llmData as any).summary)) setLlmStats(llmData as LLMStats);
+          else setLlmStats(null);
+        } catch {
+          setLlmStats(null);
+        }
+
         return;
       } catch {}
     }
@@ -460,6 +528,7 @@ export default function AdminPanelScreen() {
     setApiBase('');
     setOverview(null);
     setAnalytics(null);
+    setLlmStats(null);
     setPreferencesAvailable(false);
     setNotice('');
     setError('Live admin data is unreachable on all detected backends.');
@@ -655,6 +724,129 @@ export default function AdminPanelScreen() {
               ))}
             </View>
           )}
+
+          {!!llmStats && (
+            <>
+              {/* LLM Usage Summary */}
+              <View style={styles.cards}>
+                <View style={styles.card}>
+                  <Text style={styles.cardLabel}>AI Calls (30d)</Text>
+                  <Text style={styles.cardValue}>{llmStats.summary.totalCalls}</Text>
+                </View>
+                <View style={styles.card}>
+                  <Text style={styles.cardLabel}>Tokens Used</Text>
+                  <Text style={styles.cardValue}>{(llmStats.summary.totalTokens / 1000).toFixed(1)}k</Text>
+                </View>
+                <View style={styles.card}>
+                  <Text style={styles.cardLabel}>Avg Response</Text>
+                  <Text style={styles.cardValue}>{llmStats.summary.avgResponseMs}ms</Text>
+                </View>
+                <View style={styles.card}>
+                  <Text style={styles.cardLabel}>Est. Cost</Text>
+                  <Text style={styles.cardValue}>${llmStats.summary.totalCost.toFixed(4)}</Text>
+                </View>
+              </View>
+
+              {/* AI Coach Feedback */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Student Feedback</Text>
+                {llmStats.feedback.total === 0 ? (
+                  <Text style={styles.meta}>No feedback collected yet.</Text>
+                ) : (
+                  <>
+                    {/* Compact summary bar */}
+                    <View style={styles.feedbackBar}>
+                      {/* Score */}
+                      <View style={styles.feedbackScoreBlock}>
+                        <Text style={styles.feedbackAvgVal}>{llmStats.feedback.avg ?? '-'}</Text>
+                        <Text style={styles.feedbackAvgDenom}> / 3</Text>
+                        <Text style={styles.feedbackTotal}>  ({llmStats.feedback.total} rating{llmStats.feedback.total !== 1 ? 's' : ''})</Text>
+                      </View>
+
+                      {/* Divider */}
+                      <View style={styles.feedbackDivider} />
+
+                      {/* Counts */}
+                      <View style={styles.feedbackCountsRow}>
+                        <View style={styles.feedbackCountItem}>
+                          <Text style={styles.feedbackEmoji}>👍</Text>
+                          <Text style={[styles.feedbackCount, { color: '#4ADE80' }]}>{llmStats.feedback.counts[1]}</Text>
+                          <Text style={styles.feedbackLbl}>Great (3)</Text>
+                        </View>
+                        <View style={styles.feedbackCountItem}>
+                          <Text style={styles.feedbackEmoji}>😐</Text>
+                          <Text style={[styles.feedbackCount, { color: '#FCD34D' }]}>{llmStats.feedback.counts[2]}</Text>
+                          <Text style={styles.feedbackLbl}>Okay (2)</Text>
+                        </View>
+                        <View style={styles.feedbackCountItem}>
+                          <Text style={styles.feedbackEmoji}>👎</Text>
+                          <Text style={[styles.feedbackCount, { color: '#F87171' }]}>{llmStats.feedback.counts[3]}</Text>
+                          <Text style={styles.feedbackLbl}>Poor (1)</Text>
+                        </View>
+                      </View>
+
+                      {/* Recent users — right aligned */}
+                      {llmStats.feedback.recent.length > 0 && (
+                        <View style={styles.feedbackRecentBlock}>
+                          <Text style={styles.feedbackRecentLbl}>Recent:</Text>
+                          <Text style={styles.feedbackRecentNames} numberOfLines={1}>
+                            {llmStats.feedback.recent
+                              .slice(0, 5)
+                              .map(r => (r.student_email || 'anon').split('@')[0])
+                              .join(', ')}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Per-user breakdown */}
+                    {llmStats.feedback.recent.length > 0 && (
+                      <View style={{ marginTop: 14 }}>
+                        <Text style={[styles.meta, { marginBottom: 8, color: '#A8B5B3', fontSize: 13 }]}>Who gave feedback</Text>
+                        {llmStats.feedback.recent.map((r, idx) => {
+                          const rating = Number(r.feedback);
+                          const emoji = rating === 1 ? '👍' : rating === 2 ? '😐' : '👎';
+                          const label = rating === 1 ? 'Great' : rating === 2 ? 'Okay' : 'Poor';
+                          const color = rating === 1 ? '#4ADE80' : rating === 2 ? '#FCD34D' : '#F87171';
+                          const username = (r.student_email || 'anonymous').split('@')[0];
+                          return (
+                            <View key={idx} style={styles.feedbackUserRow}>
+                              <Text style={styles.feedbackUserEmoji}>{emoji}</Text>
+                              <View style={{ flex: 1 }}>
+                                <Text style={styles.name}>{r.student_email || 'Anonymous'}</Text>
+                                <Text style={styles.meta}>
+                                  {r.subject || '-'}{r.grade ? ` · ${r.grade}` : ''}{r.topic ? ` · ${r.topic}` : ''}
+                                </Text>
+                              </View>
+                              <View style={styles.feedbackUserRight}>
+                                <Text style={[styles.feedbackUserLabel, { color }]}>{label}</Text>
+                                <Text style={styles.meta}>{new Date(r.created_at).toLocaleDateString()}</Text>
+                              </View>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    )}
+                  </>
+                )}
+              </View>
+
+              {/* Model Breakdown */}
+              {llmStats.byModel.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>LLM Model Usage</Text>
+                  {llmStats.byModel.map((m, idx) => (
+                    <View key={idx} style={styles.row}>
+                      <Text style={styles.name}>{m.model}</Text>
+                      <Text style={styles.meta}>
+                        {m.provider} | calls: {m.calls} | tokens: {(m.tokens / 1000).toFixed(1)}k | cost: ${m.cost.toFixed(4)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </>
+          )}
         </>
       )}
     </ScrollView>
@@ -752,4 +944,64 @@ const styles = StyleSheet.create({
   },
   name: { color: '#F0EEEC', fontSize: 14, fontWeight: '600' },
   meta: { color: '#A8B5B3', fontSize: 12, marginTop: 3 },
+  // Feedback bar (compact summary row)
+  feedbackBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 14,
+    backgroundColor: '#141414',
+    borderWidth: 1,
+    borderColor: 'rgba(195,220,216,0.14)',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  feedbackScoreBlock: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  feedbackAvgVal: { color: '#F0EEEC', fontSize: 20, fontWeight: '800' },
+  feedbackAvgDenom: { color: '#6B7E7C', fontSize: 14, fontWeight: '600' },
+  feedbackTotal: { color: '#6B7E7C', fontSize: 12 },
+  feedbackDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: 'rgba(195,220,216,0.18)',
+  },
+  feedbackCountsRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  feedbackCountItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  feedbackEmoji: { fontSize: 16 },
+  feedbackCount: { fontSize: 16, fontWeight: '700' },
+  feedbackLbl: { color: '#6B7E7C', fontSize: 12 },
+  feedbackRecentBlock: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+  },
+  feedbackRecentLbl: { color: '#6B7E7C', fontSize: 12 },
+  feedbackRecentNames: { color: '#A8B5B3', fontSize: 12, flexShrink: 1 },
+  // Per-user breakdown rows
+  feedbackUserRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(195,220,216,0.10)',
+  },
+  feedbackUserEmoji: { fontSize: 18, marginTop: 1 },
+  feedbackUserRight: { alignItems: 'flex-end', gap: 2 },
+  feedbackUserLabel: { fontSize: 12, fontWeight: '700' },
+  ratingDot: { width: 8, height: 8, borderRadius: 4 },
 });
