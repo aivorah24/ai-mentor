@@ -916,19 +916,21 @@ export default function LandingScreen() {
                 {({
                   'IB PYP': [
                     { label: 'Students', color: CYAN, accounts: [
-                      { name: 'Aanya Kapoor', email: 'aanya@test.ai',  sub: 'Grade 3 · IB PYP' },
-                      { name: 'Ishaan Mehta', email: 'ishaan@test.ai', sub: 'Grade 4 · IB PYP' },
-                      { name: 'Rohan Patel',  email: 'rohan@test.ai',  sub: 'Grade 5 · IB PYP' },
-                      { name: 'Diya Sharma',  email: 'diya@test.ai',   sub: 'Grade 3 · IB PYP' },
+                      { name: 'Anaya Reddy',  email: 'anaya@aivorah.ai', sub: 'Grade 4 · IB PYP · DEMO' },
+                      { name: 'Aanya Kapoor', email: 'aanya@test.ai',    sub: 'Grade 3 · IB PYP' },
+                      { name: 'Ishaan Mehta', email: 'ishaan@test.ai',   sub: 'Grade 4 · IB PYP' },
+                      { name: 'Rohan Patel',  email: 'rohan@test.ai',    sub: 'Grade 5 · IB PYP' },
+                      { name: 'Diya Sharma',  email: 'diya@test.ai',     sub: 'Grade 3 · IB PYP' },
                     ]},
                     { label: 'Teachers', color: PURPLE, accounts: [
-                      { name: 'Ms. Anjali Kumar', email: 'anjali@test.ai',  sub: 'Grade 4 & 5 · IB PYP' },
-                      { name: 'Priya Kapoor',     email: 'priya.k@test.ai', sub: 'Grade 3 · Teacher + Parent' },
-                      { name: 'Vikram Sharma',    email: 'vikram@test.ai',  sub: 'Grade 3 & 4 · Teacher + Parent' },
+                      { name: 'Priya Kapoor',     email: 'priya.k@test.ai', sub: 'Teacher of Anaya · Grade 4 IB PYP' },
+                      { name: 'Ms. Anjali Kumar', email: 'anjali@test.ai',  sub: 'Teacher of Ishaan & Rohan · Grade 4 & 5' },
+                      { name: 'Vikram Sharma',    email: 'vikram@test.ai',  sub: 'Teacher of Diya · Grade 3 & 4' },
                     ]},
                     { label: 'Parents', color: GREEN, accounts: [
-                      { name: 'Suresh Mehta', email: 'suresh@test.ai', sub: 'Parent of Ishaan' },
-                      { name: 'Deepa Patel',  email: 'deepa@test.ai',  sub: 'Parent of Rohan' },
+                      { name: 'Meera Reddy',  email: 'meera.reddy@aivorah.ai', sub: 'Parent of Anaya · DEMO' },
+                      { name: 'Suresh Mehta', email: 'suresh@test.ai',         sub: 'Parent of Ishaan' },
+                      { name: 'Deepa Patel',  email: 'deepa@test.ai',          sub: 'Parent of Rohan' },
                     ]},
                   ],
                   'NCERT': [

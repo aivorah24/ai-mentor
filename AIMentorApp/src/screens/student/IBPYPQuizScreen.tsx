@@ -16,9 +16,21 @@ import { useAuth } from '../../context/AuthContext';
 import { useStudentData } from '../../context/StudentDataContext';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
+import Confetti from '../../components/common/Confetti';
+import TrophyIcon from '../../components/common/TrophyIcon';
 import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
+
+// Play a sound effect (web only)
+function playSound(name: 'gold' | 'silver' | 'bronze') {
+  if (Platform.OS !== 'web') return;
+  try {
+    const audio = new Audio(`${SERVER_URL}/sounds/${name}.wav`);
+    audio.volume = 0.6;
+    audio.play().catch(() => {});
+  } catch {}
+}
 
 type Question = {
   type:        'mcq' | 'fill_blank';
@@ -71,8 +83,40 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
   const [explanation, setExplanation]     = useState('');
   const [loadingExplain, setLoadingExplain] = useState(false);
 
+  // Issue #121 — attempt tracking, time tracking, per-question results
+  const [attemptNumber, setAttemptNumber] = useState(1);
+  const perQuestionResultsRef = useRef<any[]>([]);
+  const explanationsRef       = useRef<Record<number, string>>({});
+  const quizStartTimeRef      = useRef(Date.now());
+  const questionStartTimeRef  = useRef(Date.now());
+
+  // Issue #106 — auto-loaded explanations in result screen
+  const [resultExplanations, setResultExplanations] = useState<Record<number, string>>({});
+
   const scoreRef = useRef(score);
   scoreRef.current = score;
+
+  // Auto-fetch explanations for all wrong answers when results load
+  useEffect(() => {
+    if (phase !== 'result') return;
+    perQuestionResultsRef.current.forEach((r, i) => {
+      if (r.isCorrect) return;
+      if (explanationsRef.current[i]) return; // already have it
+      fetch(`${SERVER_URL}/ibpyp/explain-wrong`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, subject, grade, question: r.question, wrongAnswer: r.studentAnswer, correctAnswer: r.correctAnswer }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          const text = data.explanation || 'The correct answer is shown above.';
+          explanationsRef.current[i] = text;
+          setResultExplanations(prev => ({ ...prev, [i]: text }));
+        })
+        .catch(() => {
+          setResultExplanations(prev => ({ ...prev, [i]: 'The correct answer is shown above.' }));
+        });
+    });
+  }, [phase]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -85,10 +129,16 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
     return () => handler.remove();
   }, [phase]);
 
-  const fetchQuiz = useCallback(async () => {
+  const fetchQuiz = useCallback(async (isRetake = false) => {
     setPhase('loading');
     setScore(0); setCurrentQ(0);
     resetQuestionState();
+    perQuestionResultsRef.current = [];
+    explanationsRef.current = {};
+    setResultExplanations({});
+    quizStartTimeRef.current = Date.now();
+    questionStartTimeRef.current = Date.now();
+    if (isRetake) setAttemptNumber(n => n + 1);
     try {
       const res  = await fetch(`${SERVER_URL}/ibpyp/quiz`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -114,23 +164,67 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
 
   function finishQuiz(finalScore: number) {
     const pct = Math.round((finalScore / questions.length) * 100);
+    const totalTimeSeconds = Math.round((Date.now() - quizStartTimeRef.current) / 1000);
+
+    // Legacy analytics
     fetch(`${SERVER_URL}/ibpyp/track-result`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userEmail: user?.email, role: user?.role, topic, subject, grade, score: pct, totalQuestions: questions.length, correctAnswers: finalScore,  firstAttemptCorrect: finalScore, attemptNumber: 1, perQuestionAttempts: [],   }),
+      body: JSON.stringify({ userEmail: user?.email, role: user?.role, topic, subject, grade, score: pct, totalQuestions: questions.length, correctAnswers: finalScore, firstAttemptCorrect: finalScore, attemptNumber, perQuestionAttempts: [] }),
     }).catch(() => {});
-    completeLesson(topic);
+
+    // Issue #121 — detailed attempt tracking
+    if (user?.id) {
+      fetch(`${SERVER_URL}/student/track-attempt`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId:          user.id,
+          topic, subject, grade, curriculum,
+          totalQuestions:      questions.length,
+          correctAnswers:      finalScore,
+          score:               pct,
+          timeSpentSeconds:    totalTimeSeconds,
+          perQuestionResults:  perQuestionResultsRef.current,
+          attemptNumber,
+        }),
+      }).catch(() => {});
+    }
+
+    if (pct >= 60) completeLesson(topic);
     addXP(pct >= 80 ? 100 : pct >= 60 ? 60 : 30);
+
+    // Sound effect based on score tier
+    playSound(pct >= 80 ? 'gold' : pct >= 60 ? 'silver' : 'bronze');
+
     setScore(finalScore);
     setPhase('result');
   }
 
   function goNext(isCorrect: boolean) {
+    const q = questions[currentQ];
+    const qTimeSeconds = Math.round((Date.now() - questionStartTimeRef.current) / 1000);
+
+    // Record per-question result
+    const studentAnswer = q.type === 'fill_blank'
+      ? fillInput.trim()
+      : (mcqSelected != null ? q.options[mcqSelected] : '');
+    const correctAnswer = q.type === 'fill_blank'
+      ? String(q.correct)
+      : q.options[q.correct as number];
+    perQuestionResultsRef.current.push({
+      question:      q.question,
+      studentAnswer,
+      correctAnswer,
+      isCorrect,
+      timeSeconds:   qTimeSeconds,
+    });
+
     const newScore = scoreRef.current + (isCorrect ? 1 : 0);
     scoreRef.current = newScore;
     setScore(newScore);
     if (currentQ < questions.length - 1) {
-      setCurrentQ(q => q + 1);
+      setCurrentQ(c => c + 1);
       resetQuestionState();
+      questionStartTimeRef.current = Date.now();
     } else {
       finishQuiz(newScore);
     }
@@ -163,7 +257,12 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
   }
 
   async function fetchExplanation(q: Question, wrong: string, correct: string, wasCorrect: boolean) {
-    if (wasCorrect) { setExplanation(q.explanation || 'Great job! That\'s correct!'); return; }
+    if (wasCorrect) {
+      const text = q.explanation || 'Great job! That\'s correct!';
+      setExplanation(text);
+      explanationsRef.current[currentQ] = text;
+      return;
+    }
     setLoadingExplain(true);
     try {
       const res = await fetch(`${SERVER_URL}/ibpyp/explain-wrong`, {
@@ -171,9 +270,13 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
         body: JSON.stringify({ topic, subject, grade, question: q.question, wrongAnswer: wrong, correctAnswer: correct }),
       });
       const data = await res.json();
-      setExplanation(data.explanation || q.explanation || 'The correct answer is highlighted above.');
+      const text = data.explanation || q.explanation || 'The correct answer is highlighted above.';
+      setExplanation(text);
+      explanationsRef.current[currentQ] = text;
     } catch {
-      setExplanation(q.explanation || 'The correct answer is highlighted above. Keep going!');
+      const text = q.explanation || 'The correct answer is highlighted above. Keep going!';
+      setExplanation(text);
+      explanationsRef.current[currentQ] = text;
     } finally {
       setLoadingExplain(false);
     }
@@ -190,8 +293,10 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
       });
       const { correct } = await resp.json();
       if (correct) {
+        const text = questions[currentQ].explanation || 'Excellent! That\'s correct!';
         setFillFeedback('correct');
-        setExplanation(questions[currentQ].explanation || 'Excellent! That\'s correct!');
+        setExplanation(text);
+        explanationsRef.current[currentQ] = text;
       } else {
         const attempts = fillAttempts + 1;
         setFillAttempts(attempts);
@@ -199,12 +304,16 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
         else if (attempts === 2) setFillFeedback('wrong2');
         else {
           setFillFeedback('revealed');
-          setExplanation(questions[currentQ].explanation || '');
+          const text = questions[currentQ].explanation || '';
+          setExplanation(text);
+          explanationsRef.current[currentQ] = text;
         }
       }
     } catch {
       setFillFeedback('correct'); // network error — give benefit of doubt
-      setExplanation(questions[currentQ].explanation || '');
+      const text = questions[currentQ].explanation || '';
+      setExplanation(text);
+      explanationsRef.current[currentQ] = text;
     } finally {
       setFillValidating(false);
     }
@@ -222,35 +331,167 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
 
   // ── Results ────────────────────────────────────────────────────
   if (phase === 'result') {
-    const pct      = Math.round((score / questions.length) * 100);
-    const scoreColor = pct === 100 ? '#4ade80' : pct >= 70 ? '#4A9E70' : accent;
-    const emoji    = pct === 100 ? '🌟' : pct >= 80 ? '🏆' : pct >= 60 ? '👍' : '💪';
-    const message  = pct === 100 ? 'Perfect score! Outstanding work!'
+    const pct        = Math.round((score / questions.length) * 100);
+    const passed     = pct >= 60;
+    const totalTime  = Math.round((Date.now() - quizStartTimeRef.current) / 1000);
+    const timeStr    = totalTime >= 60 ? `${Math.floor(totalTime / 60)}m ${totalTime % 60}s` : `${totalTime}s`;
+    const scoreColor = pct === 100 ? '#4ade80' : pct >= 70 ? '#4A9E70' : pct >= 60 ? accent : '#C85870';
+    const trophyTier: 'gold' | 'silver' | 'bronze' = pct >= 80 ? 'gold' : pct >= 60 ? 'silver' : 'bronze';
+    const message    = pct === 100 ? 'Perfect score! Outstanding work!'
       : pct >= 80 ? 'Excellent! You really understand this topic!'
       : pct >= 60 ? 'Good job! A little more practice and you will master this!'
-      : 'Keep practising — every attempt makes you stronger!';
+      : 'Keep going! Review what you missed below and try again.';
+
+    const correctQs = perQuestionResultsRef.current.filter(r => r.isCorrect);
+    const wrongQs   = perQuestionResultsRef.current.map((r, i) => ({ ...r, idx: i })).filter(r => !r.isCorrect);
+
     return (
       <ScreenLayout>
         <View style={styles.screen}>
-          <Header title="Quiz Results" showBack onBack={() => navigation.goBack()} onMenuPress={() => navigation.openDrawer()} />
-          <ScrollView contentContainerStyle={[styles.scrollContent]}><View style={[styles.content, { alignItems: 'center', paddingTop: 32 }]}>
-            <Text style={{ fontSize: 64 }}>{emoji}</Text>
-            <Text style={[styles.resultScore, { color: scoreColor }]}>{pct}%</Text>
+          <Header title="Practice Results" showBack onBack={() => navigation.goBack()} onMenuPress={() => navigation.openDrawer()} />
+          <ScrollView contentContainerStyle={[styles.scrollContent]} showsVerticalScrollIndicator={false}>
+          <View style={[styles.content, { alignItems: 'center', paddingTop: 32 }]}>
+
+            {/* ── Score hero ── */}
+            {passed && <Confetti trigger />}
+            <TrophyIcon size={96} tier={trophyTier} />
+            <Text style={[styles.resultScore, { color: scoreColor, marginTop: 12 }]}>{pct}%</Text>
             <Text style={[styles.resultLabel, { color: colors.textMain }]}>{score} / {questions.length} correct</Text>
             <Text style={[styles.resultMessage, { color: colors.textMuted }]}>{message}</Text>
-            <View style={[styles.topicBadge, { backgroundColor: accent + '18', borderColor: accent + '40' }]}>
-              <Text style={[styles.topicBadgeText, { color: accent }]}>{topic}</Text>
+
+            {/* badges */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12, justifyContent: 'center' }}>
+              <View style={[styles.topicBadge, { backgroundColor: accent + '18', borderColor: accent + '40' }]}>
+                <Text style={[styles.topicBadgeText, { color: accent }]}>{topic}</Text>
+              </View>
+              <View style={[styles.topicBadge, { backgroundColor: colors.cardDark, borderColor: colors.borderColor }]}>
+                <Feather name="clock" size={11} color={colors.textMuted} />
+                <Text style={[styles.topicBadgeText, { color: colors.textMuted }]}> {timeStr}</Text>
+              </View>
+              {attemptNumber > 1 && (
+                <View style={[styles.topicBadge, { backgroundColor: colors.cardDark, borderColor: colors.borderColor }]}>
+                  <Text style={[styles.topicBadgeText, { color: colors.textMuted }]}>Attempt #{attemptNumber}</Text>
+                </View>
+              )}
             </View>
+
+            {/* action buttons */}
             <View style={styles.resultBtns}>
-              <TouchableOpacity style={[styles.retryBtn, { borderColor: accent, backgroundColor: accent + '14' }]} onPress={fetchQuiz} activeOpacity={0.8}>
-                <Feather name="refresh-cw" size={16} color={accent} />
-                <Text style={[styles.retryBtnText, { color: accent }]}>Try Again</Text>
+              <TouchableOpacity
+                style={[styles.retryBtn, { borderColor: !passed ? '#C85870' : accent, backgroundColor: !passed ? '#C8587014' : accent + '14' }]}
+                onPress={() => fetchQuiz(true)} activeOpacity={0.8}
+              >
+                <Feather name="refresh-cw" size={16} color={!passed ? '#C85870' : accent} />
+                <Text style={[styles.retryBtnText, { color: !passed ? '#C85870' : accent }]}>
+                  {!passed ? 'Retake (New Questions)' : 'Try Again'}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.doneBtn, { backgroundColor: accent }]} onPress={() => navigation.navigate('SubjectTopics', { subject, grade, curriculum })} activeOpacity={0.8}>
-                <Text style={styles.doneBtnText}>Back to Topics</Text>
-              </TouchableOpacity>
+              {passed && (
+                <TouchableOpacity style={[styles.doneBtn, { backgroundColor: accent }]} onPress={() => navigation.navigate('SubjectTopics', { subject, grade, curriculum })} activeOpacity={0.8}>
+                  <Text style={styles.doneBtnText}>Back to Topics</Text>
+                </TouchableOpacity>
+              )}
             </View>
-          </View></ScrollView>
+
+            {/* ── What you got RIGHT ── */}
+            {correctQs.length > 0 && (
+              <View style={styles.reviewSection}>
+                <View style={styles.reviewSectionHeader}>
+                  <View style={[styles.reviewSectionIcon, { backgroundColor: '#93B0AC20' }]}>
+                    <Feather name="check-circle" size={16} color="#93B0AC" />
+                  </View>
+                  <Text style={[styles.reviewSectionTitle, { color: '#93B0AC' }]}>
+                    Questions You Got Right ({correctQs.length})
+                  </Text>
+                </View>
+                {correctQs.map((r, i) => (
+                  <View key={i} style={[styles.reviewCard, {
+                    backgroundColor: colors.cardDark,
+                    borderColor: '#93B0AC30',
+                    borderLeftColor: '#93B0AC',
+                  }]}>
+                    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+                      <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#93B0AC20', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                        <Feather name="check" size={13} color="#93B0AC" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMain, lineHeight: 22 }}>{r.question}</Text>
+                        <View style={[styles.reviewAnswerRow, { backgroundColor: colors.bgDark, borderRadius: 8, marginTop: 10 }]}>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#93B0AC', width: 90, letterSpacing: 0.3 }}>Your answer</Text>
+                          <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#93B0AC' }}>{r.studentAnswer}</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* ── What you got WRONG ── */}
+            {wrongQs.length > 0 && (
+              <View style={styles.reviewSection}>
+                <View style={styles.reviewSectionHeader}>
+                  <View style={[styles.reviewSectionIcon, { backgroundColor: '#C5BD9620' }]}>
+                    <Feather name="x-circle" size={16} color="#C5BD96" />
+                  </View>
+                  <Text style={[styles.reviewSectionTitle, { color: '#C5BD96' }]}>
+                    Questions You Got Wrong ({wrongQs.length})
+                  </Text>
+                </View>
+                {wrongQs.map((r) => {
+                  const expl = resultExplanations[r.idx] || explanationsRef.current[r.idx];
+                  return (
+                    <View key={r.idx} style={[styles.reviewCard, {
+                      backgroundColor: colors.cardDark,
+                      borderColor: '#C5BD9630',
+                      borderLeftColor: '#C5BD96',
+                    }]}>
+                      {/* question */}
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
+                        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#C5BD9620', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                          <Feather name="x" size={13} color="#C5BD96" />
+                        </View>
+                        <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: colors.textMain, lineHeight: 22 }}>{r.question}</Text>
+                      </View>
+
+                      {/* your answer vs correct answer */}
+                      <View style={{ gap: 7, marginBottom: 14, marginLeft: 36 }}>
+                        <View style={[styles.reviewAnswerRow, { backgroundColor: colors.bgDark, borderRadius: 8 }]}>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#C4836A', width: 100, letterSpacing: 0.3 }}>Your answer</Text>
+                          <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: '#C4836A' }}>{r.studentAnswer || '—'}</Text>
+                        </View>
+                        <View style={[styles.reviewAnswerRow, { backgroundColor: colors.bgDark, borderRadius: 8 }]}>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#C5BD96', width: 100, letterSpacing: 0.3 }}>Correct answer</Text>
+                          <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#C5BD96' }}>{r.correctAnswer}</Text>
+                        </View>
+                      </View>
+
+                      {/* Aivorah explanation */}
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 10, backgroundColor: isDark ? '#171612' : '#F8F6ED', borderWidth: 1, borderColor: '#C5BD9625' }}>
+                        {expl ? (
+                          <>
+                            <View style={{ width: 26, height: 26, borderRadius: 8, backgroundColor: '#C5BD9620', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <Feather name="book-open" size={12} color="#C5BD96" />
+                            </View>
+                            <Text style={{ flex: 1, fontSize: 13, color: colors.textMain, lineHeight: 21 }}>
+                              <Text style={{ fontWeight: '800', color: '#C5BD96' }}>Aivorah: </Text>{expl}
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <ActivityIndicator size="small" color="#C5BD96" />
+                            <Text style={{ fontSize: 12, color: colors.textMuted, fontStyle: 'italic' }}>Aivorah is preparing your explanation…</Text>
+                          </>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+          </View>
+          </ScrollView>
         </View>
       </ScreenLayout>
     );
@@ -355,7 +596,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
                 <View style={[styles.hintBanner, { backgroundColor: isDark ? '#0F2624' : '#EBF5F4', borderColor: '#5F8A8660' }]}>
                   <Feather name="zap" size={12} color="#fff" />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.hintBannerLabel}>Ms. Zara's Hint</Text>
+                    <Text style={styles.hintBannerLabel}>Aivorah's Hint</Text>
                     <Text style={styles.hintBannerText}>{q.hint || 'Think carefully before your next attempt!'}</Text>
                   </View>
                   <View style={[styles.retryChip, { backgroundColor: accent + '20', borderColor: accent + '40' }]}>
@@ -431,7 +672,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
                       color={(mcqCorrect || fillFeedback === 'correct') ? '#4A9E70' : '#C87848'} />
                     <Text style={[styles.explanationText, { color: isDark ? colors.textMuted : '#666' }]}>
                       <Text style={{ fontWeight: '700', color: (mcqCorrect || fillFeedback === 'correct') ? '#4A9E70' : '#C87848' }}>
-                        {(mcqCorrect || fillFeedback === 'correct') ? 'Well done! ' : 'Ms. Zara: '}
+                        {(mcqCorrect || fillFeedback === 'correct') ? 'Well done! ' : 'Aivorah: '}
                       </Text>
                       {explanation}
                     </Text>
@@ -464,6 +705,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
 const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   screen:       { flex: 1, backgroundColor: c.bgDark },
   scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
+  content:      { width: '100%', maxWidth: 480 },
   loadingText:  { marginTop: 16, fontSize: 14, textAlign: 'center' },
 
   // Two-panel layout
@@ -537,6 +779,8 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   nextBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: radius.lg, paddingVertical: 11, paddingHorizontal: 20, margin: spacing.lg, marginTop: 4, alignSelf: 'flex-end' },
   nextBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
+  failBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, borderWidth: 1, marginTop: 12 },
+  failBannerText: { fontSize: 13, fontWeight: '700', color: '#C85870' },
   resultScore: { fontSize: 64, fontWeight: '900', marginTop: 16 },
   resultLabel: { fontSize: 18, fontWeight: '700', marginTop: 4 },
   resultMessage: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginTop: 8, maxWidth: 320 },
@@ -547,4 +791,14 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   retryBtnText: { fontSize: 14, fontWeight: '700' },
   doneBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: radius.lg, paddingVertical: 14 },
   doneBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+
+  // Answer review
+  reviewSection: { width: '100%', marginTop: 28 },
+  reviewSectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  reviewSectionIcon: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  reviewSectionTitle: { fontSize: 15, fontWeight: '800' },
+  reviewCard: { width: '100%', borderWidth: 1, borderLeftWidth: 3, borderRadius: radius.lg, padding: 14, marginBottom: 10 },
+  reviewQNum: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  reviewAnswerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, borderRadius: 8 },
+  reviewExplRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingTop: 12, borderTopWidth: 1 },
 });

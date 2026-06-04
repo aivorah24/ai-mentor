@@ -9,6 +9,8 @@ const DEMO_IDS: Record<string, string> = {
   'alex@demo.com':    '00000000-0000-0000-0000-000000000001',
   'mia@demo.com':     '00000000-0000-0000-0000-000000000002',
   'student@demo.com': '00000000-0000-0000-0000-000000000001',
+  // Demo accounts (interconnected: Anaya + Meera + Priya)
+  'anaya@aivorah.ai': 'a1000000-0000-0000-0000-000000000001',
   // IB PYP test accounts (real Supabase UUIDs)
   'aanya@test.ai':    '106a2ac6-1e17-4fd7-a82c-7d8ded943100',
   'ishaan@test.ai':   '8cade9a5-8e27-414c-9087-d95e2ef37d5f',
