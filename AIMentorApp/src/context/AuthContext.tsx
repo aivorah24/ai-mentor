@@ -770,6 +770,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const TEST_USERS: Record<string, User> = {
 
+      // ── DEMO ACCOUNTS (interconnected: Anaya + Meera + Priya) ───────────────
+      'anaya@aivorah.ai': {
+        ...base, name: 'Anaya Reddy', email: 'anaya@aivorah.ai',
+        role: 'student', grade: 'Grade 4', curriculum: 'IB PYP',
+        avatarStyle: 'scholar',
+        id: 'a1000000-0000-0000-0000-000000000001',
+      },
+      'meera.reddy@aivorah.ai': {
+        ...base, name: 'Meera Reddy', email: 'meera.reddy@aivorah.ai',
+        role: 'parent', roles: ['parent'],
+        children: [{ name: 'Anaya Reddy', grade: 'Grade 4', curriculum: 'IB PYP', email: 'anaya@aivorah.ai' }],
+        id: 'a2000000-0000-0000-0000-000000000002',
+      },
+
       // ── IB PYP STUDENTS (4) — Demo for principal ──────────────────────────────
       'aanya@test.ai': {
         ...base, name: 'Aanya Kapoor', email: 'aanya@test.ai',
@@ -803,11 +817,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
 
       // ── DUAL ROLE: Teacher + Parent ───────────────────────────────────────────
-      // Priya Kapoor — Grade 3 IB PYP teacher AND mother of Aanya (Grade 3)
+      // Priya Kapoor — Grade 3 & 4 IB PYP teacher (teaches Anaya, Grade 4 demo student)
       'priya.k@test.ai': {
         ...base, name: 'Priya Kapoor', email: 'priya.k@test.ai',
         role: 'teacher', roles: ['teacher', 'parent'], activeRole: 'teacher',
-        teaches: [{ grade: 'Grade 3', curriculum: 'IB PYP' }],
+        teaches: [
+          { grade: 'Grade 3', curriculum: 'IB PYP' },
+          { grade: 'Grade 4', curriculum: 'IB PYP' },
+        ],
         children: [{ name: 'Aanya Kapoor', grade: 'Grade 3', curriculum: 'IB PYP', email: 'aanya@test.ai' }],
       },
       // Vikram Sharma — Grade 3 & 4 IB PYP teacher AND father of Diya (Grade 3)

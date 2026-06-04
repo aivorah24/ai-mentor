@@ -366,6 +366,7 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
   assignment: Assignment; colors: AppColors;
   onClose: () => void; onSubmitted: (updated: any) => void;
 }) {
+  const { isDark } = useTheme();
   const styles = useMemo(() => makeModalStyles(colors), [colors]);
   const { studentId } = useStudentData();
   const color = SUBJECT_COLOR[assignment.subject] ?? '#6366f1';
@@ -377,6 +378,7 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
   const [submitting,     setSubmitting]    = useState(false);
   const [result,         setResult]        = useState<GradeResult | null>(null);
   const [showReview,     setShowReview]    = useState(false);
+  const [aiExplanations, setAiExplanations] = useState<Record<number, string>>({});
   const [shortInput,     setShortInput]    = useState('');
   const [showConfirm,    setShowConfirm]   = useState(false);
   // Fill-in-the-blank state
@@ -484,6 +486,44 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
     </Modal>
   );
 
+  async function explainWrong(idx: number, q: QuizQuestion, studentAns: string) {
+    try {
+      const res = await fetch(`${SERVER_URL}/ibpyp/explain-wrong`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: assignment.chapter,
+          subject: assignment.subject,
+          grade: assignment.grade || 'Grade 4',
+          question: q.question,
+          wrongAnswer: studentAns,
+          correctAnswer: q.correct,
+        }),
+      });
+      const data = await res.json();
+      setAiExplanations(prev => ({ ...prev, [idx]: data.explanation || q.explanation || 'The correct answer is shown above.' }));
+    } catch {
+      setAiExplanations(prev => ({ ...prev, [idx]: q.explanation || 'The correct answer is shown above.' }));
+    }
+  }
+
+  // Auto-fetch explanations for all wrong answers when result arrives
+  useEffect(() => {
+    if (!result) return;
+    result.perQuestion.forEach((q: any, idx: number) => {
+      if (q.correct) return;
+      const origQ = questions[idx];
+      // For old assignments without quizQuestions, build a minimal QuizQuestion from perQuestion data
+      const fallbackQ: QuizQuestion = origQ || {
+        id: String(idx),
+        question: q.question,
+        type: 'mcq',
+        correct: q.correctAnswer || '',
+        explanation: q.explanation || '',
+      };
+      explainWrong(idx, fallbackQ, q.studentAnswer || '');
+    });
+  }, [result]);
+
   // Results
   if (result) return (
     <Modal visible animationType="slide" transparent onRequestClose={onClose}>
@@ -547,27 +587,90 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                   </View>
                 </View>
               ) : null}
-              {/* Per question breakdown */}
-              {result.perQuestion.length > 0 && (
+              {/* ── Questions you got RIGHT ── */}
+              {result.perQuestion.filter((q: any) => q.correct).length > 0 && (
                 <View style={{ gap: 8 }}>
-                  <Text style={styles.feedbackTitle}>Question by Question</Text>
-                  {result.perQuestion.map((q: any, idx: number) => {
-                    const qc = !q.answered ? colors.textDim : q.correct ? colors.accentGreen : colors.accentRed;
-                    return (
-                      <View key={idx} style={[styles.qRow, { borderColor: qc + '40', backgroundColor: qc + '06' }]}>
-                        <View style={styles.qLeft}>
-                          <Feather name={!q.answered ? 'minus-circle' : q.correct ? 'check-circle' : 'x-circle'} size={16} color={qc} />
-                          <View style={{ flex: 1 }}>
-                            <Text style={[styles.qNum, { color: qc }]}>Q{q.number}</Text>
-                            <Text style={styles.qText} numberOfLines={2}>{q.question}</Text>
-                            {q.studentAnswer && <Text style={[styles.qAnswer, { color: colors.textDim }]}>Your answer: {q.studentAnswer}</Text>}
-                            {!q.correct && q.correctAnswer && <Text style={[styles.qAnswer, { color: colors.accentGreen, fontWeight: '600' }]}>Correct: {q.correctAnswer}</Text>}
-                            <Text style={[styles.qComment, { color: colors.textMuted }]}>{q.comment}</Text>
-                            {q.explanation ? <Text style={[styles.qAnswer, { color: colors.textDim, fontStyle: 'italic' }]}>{q.explanation}</Text> : null}
-                          </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#93B0AC20', alignItems: 'center', justifyContent: 'center' }}>
+                      <Feather name="check-circle" size={15} color="#93B0AC" />
+                    </View>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#93B0AC' }}>
+                      Questions You Got Right ({result.perQuestion.filter((q: any) => q.correct).length})
+                    </Text>
+                  </View>
+                  {result.perQuestion.filter((q: any) => q.correct).map((q: any, idx: number) => (
+                    <View key={idx} style={[styles.qRow, { borderColor: '#93B0AC30', backgroundColor: colors.cardDark, borderLeftWidth: 3, borderLeftColor: '#93B0AC' }]}>
+                      <View style={styles.qLeft}>
+                        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#93B0AC20', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Feather name="check" size={13} color="#93B0AC" />
                         </View>
-                        <View style={[styles.qScore, { backgroundColor: qc + '20' }]}>
-                          <Text style={[styles.qScoreText, { color: qc }]}>{q.answered ? `${q.score}%` : '--'}</Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.qText}>{q.question}</Text>
+                          {q.studentAnswer ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, padding: 8, borderRadius: 8, backgroundColor: colors.bgDark }}>
+                              <Text style={{ fontSize: 11, fontWeight: '800', color: '#93B0AC', width: 90, letterSpacing: 0.3 }}>Your answer</Text>
+                              <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#93B0AC' }}>{q.studentAnswer}</Text>
+                            </View>
+                          ) : null}
+                        </View>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* ── Questions you got WRONG ── */}
+              {result.perQuestion.filter((q: any) => !q.correct).length > 0 && (
+                <View style={{ gap: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#C5BD9620', alignItems: 'center', justifyContent: 'center' }}>
+                      <Feather name="x-circle" size={15} color="#C5BD96" />
+                    </View>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#C5BD96' }}>
+                      Questions You Got Wrong ({result.perQuestion.filter((q: any) => !q.correct).length})
+                    </Text>
+                  </View>
+                  {result.perQuestion.filter((q: any) => !q.correct).map((q: any, idx: number) => {
+                    const origIdx = result.perQuestion.indexOf(q);
+                    const aiExp = aiExplanations[origIdx];
+                    return (
+                      <View key={idx} style={[styles.qRow, { borderColor: '#C5BD9630', backgroundColor: colors.cardDark, borderLeftWidth: 3, borderLeftColor: '#C5BD96' }]}>
+                        <View style={styles.qLeft}>
+                          <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#C5BD9620', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Feather name="x" size={13} color="#C5BD96" />
+                          </View>
+                          <View style={{ flex: 1, gap: 7 }}>
+                            <Text style={styles.qText}>{q.question}</Text>
+                            {q.studentAnswer ? (
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 8, backgroundColor: colors.bgDark }}>
+                                <Text style={{ fontSize: 11, fontWeight: '800', color: '#C4836A', width: 100, letterSpacing: 0.3 }}>Your answer</Text>
+                                <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: '#C4836A' }}>{q.studentAnswer}</Text>
+                              </View>
+                            ) : null}
+                            {q.correctAnswer ? (
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 8, backgroundColor: colors.bgDark }}>
+                                <Text style={{ fontSize: 11, fontWeight: '800', color: '#C5BD96', width: 100, letterSpacing: 0.3 }}>Correct answer</Text>
+                                <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#C5BD96' }}>{q.correctAnswer}</Text>
+                              </View>
+                            ) : null}
+                            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 10, backgroundColor: isDark ? '#171612' : '#F8F6ED', borderWidth: 1, borderColor: '#C5BD9625' }}>
+                              {aiExp ? (
+                                <>
+                                  <View style={{ width: 24, height: 24, borderRadius: 7, backgroundColor: '#C5BD9620', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                    <Feather name="book-open" size={12} color="#C5BD96" />
+                                  </View>
+                                  <Text style={{ flex: 1, fontSize: 13, color: colors.textMain, lineHeight: 21 }}>
+                                    <Text style={{ fontWeight: '800', color: '#C5BD96' }}>Aivorah: </Text>{aiExp}
+                                  </Text>
+                                </>
+                              ) : (
+                                <>
+                                  <ActivityIndicator size="small" color="#C5BD96" />
+                                  <Text style={{ fontSize: 12, color: colors.textMuted, fontStyle: 'italic' }}>Aivorah is preparing your explanation…</Text>
+                                </>
+                              )}
+                            </View>
+                          </View>
                         </View>
                       </View>
                     );
@@ -583,10 +686,15 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                   <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{result.teacherFeedback}</Text>
                 </View>
               ) : null}
-              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color, alignSelf: 'center', width: '100%', maxWidth: 360 }]} onPress={onClose} activeOpacity={0.85}>
-                <Feather name="check" size={16} color="#fff" />
-                <Text style={styles.submitBtnText}>Done</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row' }}>
+                <View style={{ flex: 1 }} />
+                <TouchableOpacity onPress={onClose} activeOpacity={0.85}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, paddingHorizontal: 40, borderRadius: 14, backgroundColor: color }}>
+                  <Feather name="check" size={16} color="#fff" />
+                  <Text style={styles.submitBtnText}>Done</Text>
+                </TouchableOpacity>
+                <View style={{ flex: 1 }} />
+              </View>
             </View>
           </ScrollView>
         </View>
@@ -1353,10 +1461,15 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
                   <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{result.teacherFeedback}</Text>
                 </View>
               ) : null}
-              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color, alignSelf: 'center', width: '100%', maxWidth: 360 }]} onPress={onClose} activeOpacity={0.85}>
-                <Feather name="check" size={16} color="#fff" />
-                <Text style={styles.submitBtnText}>Done</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row' }}>
+                <View style={{ flex: 1 }} />
+                <TouchableOpacity onPress={onClose} activeOpacity={0.85}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, paddingHorizontal: 40, borderRadius: 14, backgroundColor: color }}>
+                  <Feather name="check" size={16} color="#fff" />
+                  <Text style={styles.submitBtnText}>Done</Text>
+                </TouchableOpacity>
+                <View style={{ flex: 1 }} />
+              </View>
             </View>
           </ScrollView>
         </View>
@@ -1529,7 +1642,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
 
             {/* Start button */}
             <TouchableOpacity
-              style={[styles.submitBtn, { backgroundColor: color, alignSelf: 'center', width: '100%', maxWidth: 360 }]}
+              style={[styles.submitBtn, { backgroundColor: color, alignSelf: 'center', minWidth: 160, maxWidth: 220 }]}
               onPress={() => setCurrentStep(0)}
               activeOpacity={0.85}
             >
@@ -2166,10 +2279,15 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
                     <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{result.teacherFeedback}</Text>
                   </View>
                 ) : null}
-                <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color }]} onPress={onClose} activeOpacity={0.85}>
-                  <Feather name="check" size={16} color="#fff" />
-                  <Text style={styles.submitBtnText}>Done</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <View style={{ flex: 1 }} />
+                  <TouchableOpacity onPress={onClose} activeOpacity={0.85}
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, paddingHorizontal: 40, borderRadius: 14, backgroundColor: color }}>
+                    <Feather name="check" size={16} color="#fff" />
+                    <Text style={styles.submitBtnText}>Done</Text>
+                  </TouchableOpacity>
+                  <View style={{ flex: 1 }} />
+                </View>
               </View>
             </ScrollView>
           </View>
@@ -2619,7 +2737,7 @@ function WorksheetRefThumb({ url, pageNum, color, colors }: { url: string; pageN
 export default function AssignmentsScreen({ navigation, route }: any) {
   const highlightId = route?.params?.highlightId;
   const [activeFilter, setActiveFilter] = useState('All');
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { studentId } = useStudentData();
   const { clearUnreadAssignments } = useNotification();
@@ -2630,6 +2748,27 @@ export default function AssignmentsScreen({ navigation, route }: any) {
   const [openingAssignmentId, setOpeningAssignmentId] = useState<string | null>(null);
   const [viewingResult, setViewingResult] = useState<Assignment | null>(null);
   const [expandedExplain, setExpandedExplain] = useState<Record<number, { loading: boolean; steps?: string[]; correctAnswer?: string; tip?: string }>>({});
+
+  // Auto-fetch explanations for all wrong answers when a completed result is opened
+  useEffect(() => {
+    if (!viewingResult) return;
+    let pq: any[] = [];
+    try { pq = JSON.parse(viewingResult.aiFeedback || '{}').perQuestion || []; } catch {}
+    pq.forEach((q: any, i: number) => {
+      if (q.correct || !q.answered) return;
+      setExpandedExplain(prev => {
+        if (prev[i]?.steps || prev[i]?.loading) return prev;
+        return { ...prev, [i]: { loading: true } };
+      });
+      fetch(`${SERVER_URL}/assignments/${viewingResult.id}/explain-question`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q.question, studentAnswer: q.studentAnswer, correctAnswer: q.correctAnswer, score: q.score, subject: viewingResult.subject, grade: viewingResult.grade }),
+      })
+        .then(r => r.json())
+        .then(data => setExpandedExplain(prev => ({ ...prev, [i]: { loading: false, steps: data.steps || [], correctAnswer: data.correctAnswer || q.correctAnswer || '', tip: data.tip || '' } })))
+        .catch(() => setExpandedExplain(prev => ({ ...prev, [i]: { loading: false, steps: [], correctAnswer: q.correctAnswer || '', tip: '' } })));
+    });
+  }, [viewingResult]);
 
   function load() {
     if (!studentId) return;
@@ -3160,80 +3299,119 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                     </View>
                   ) : null}
 
-                  {/* Per-question breakdown */}
-                  {pq.length > 0 && (
-                    <View style={{ gap: 10 }}>
-                      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8 }}>Question Breakdown ({pq.length})</Text>
-                      {pq.map((q: any, i: number) => {
-                        const isCorrect = q.correct;
-                        const qColor = !q.answered ? colors.textDim : isCorrect ? colors.accentGreen : q.score >= 50 ? colors.accentYellow : colors.accentRed;
+                  {/* ── Questions You Got Right ── */}
+                  {pq.filter((q: any) => q.correct).length > 0 && (
+                    <View style={{ gap: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#93B0AC20', alignItems: 'center', justifyContent: 'center' }}>
+                          <Feather name="check-circle" size={15} color="#93B0AC" />
+                        </View>
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#93B0AC' }}>
+                          Questions You Got Right ({pq.filter((q: any) => q.correct).length})
+                        </Text>
+                      </View>
+                      {pq.filter((q: any) => q.correct).map((q: any, i: number) => (
+                        <View key={i} style={{ padding: 14, borderRadius: 12, borderWidth: 1, borderLeftWidth: 3, borderColor: '#93B0AC30', borderLeftColor: '#93B0AC', backgroundColor: colors.cardDark, gap: 8 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                            <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#93B0AC20', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                              <Feather name="check" size={12} color="#93B0AC" />
+                            </View>
+                            <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: colors.textMain, lineHeight: 20 }}>{q.question}</Text>
+                          </View>
+                          {q.studentAnswer ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, borderRadius: 8, backgroundColor: colors.bgDark, marginLeft: 32 }}>
+                              <Text style={{ fontSize: 11, fontWeight: '800', color: '#93B0AC', width: 90 }}>Your answer</Text>
+                              <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: '#93B0AC' }}>{q.studentAnswer}</Text>
+                            </View>
+                          ) : null}
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* ── Questions You Got Wrong ── */}
+                  {pq.filter((q: any) => !q.correct && q.answered).length > 0 && (
+                    <View style={{ gap: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#C5BD9620', alignItems: 'center', justifyContent: 'center' }}>
+                          <Feather name="x-circle" size={15} color="#C5BD96" />
+                        </View>
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#C5BD96' }}>
+                          Questions You Got Wrong ({pq.filter((q: any) => !q.correct && q.answered).length})
+                        </Text>
+                      </View>
+                      {pq.filter((q: any) => !q.correct && q.answered).map((q: any, i: number) => {
+                        const exp = expandedExplain[i];
+                        const fetchExpl = async () => {
+                          if (exp?.steps) { setExpandedExplain(prev => { const n = { ...prev }; delete n[i]; return n; }); return; }
+                          setExpandedExplain(prev => ({ ...prev, [i]: { loading: true } }));
+                          try {
+                            const r = await fetch(`${SERVER_URL}/assignments/${a.id}/explain-question`, {
+                              method: 'POST', headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ question: q.question, studentAnswer: q.studentAnswer, correctAnswer: q.correctAnswer, score: q.score, subject: a.subject, grade: a.grade }),
+                            });
+                            const data = await r.json();
+                            setExpandedExplain(prev => ({ ...prev, [i]: { loading: false, steps: data.steps || [], correctAnswer: data.correctAnswer || q.correctAnswer || '', tip: data.tip || '' } }));
+                          } catch {
+                            setExpandedExplain(prev => ({ ...prev, [i]: { loading: false, steps: [], correctAnswer: q.correctAnswer || '', tip: '' } }));
+                          }
+                        };
                         return (
-                          <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: qColor + '30', backgroundColor: qColor + '06' }}>
-                            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: qColor, alignItems: 'center', justifyContent: 'center' }}>
-                              <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>{q.number ?? i + 1}</Text>
+                          <View key={i} style={{ padding: 14, borderRadius: 12, borderWidth: 1, borderLeftWidth: 3, borderColor: '#C5BD9630', borderLeftColor: '#C5BD96', backgroundColor: colors.cardDark, gap: 8 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                              <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#C5BD9620', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                                <Feather name="x" size={12} color="#C5BD96" />
+                              </View>
+                              <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: colors.textMain, lineHeight: 20 }}>{q.question}</Text>
                             </View>
-                            <View style={{ flex: 1, gap: 4 }}>
-                              {q.question ? <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain, lineHeight: 20 }} numberOfLines={3}>{q.question}</Text> : null}
+                            <View style={{ gap: 6, marginLeft: 32 }}>
                               {q.studentAnswer ? (
-                                <Text style={{ fontSize: 12, color: colors.textDim, lineHeight: 18 }}>
-                                  <Text style={{ fontWeight: '700' }}>Your answer: </Text>{q.studentAnswer}
-                                </Text>
-                              ) : !q.answered ? (
-                                <Text style={{ fontSize: 12, color: colors.textDim, fontStyle: 'italic' }}>Not attempted</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, borderRadius: 8, backgroundColor: colors.bgDark }}>
+                                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#C4836A', width: 100 }}>Your answer</Text>
+                                  <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: '#C4836A' }}>{q.studentAnswer}</Text>
+                                </View>
                               ) : null}
-                              {q.comment ? <Text style={{ fontSize: 12, color: qColor, lineHeight: 18, fontWeight: '500' }}>{q.comment}</Text> : null}
-                              {/* Learn to score 100% — only for questions < 100% */}
-                              {q.answered && q.score < 100 && (() => {
-                                const exp = expandedExplain[i];
-                                const fetchExplanation = async () => {
-                                  if (exp?.steps) { setExpandedExplain(prev => { const n = { ...prev }; delete n[i]; return n; }); return; }
-                                  setExpandedExplain(prev => ({ ...prev, [i]: { loading: true } }));
-                                  try {
-                                    const r = await fetch(`${SERVER_URL}/assignments/${a.id}/explain-question`, {
-                                      method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ question: q.question, studentAnswer: q.studentAnswer, correctAnswer: q.correctAnswer, score: q.score, subject: a.subject, grade: a.grade }),
-                                    });
-                                    const data = await r.json();
-                                    setExpandedExplain(prev => ({ ...prev, [i]: { loading: false, steps: data.steps || [], correctAnswer: data.correctAnswer || '', tip: data.tip || '' } }));
-                                  } catch { setExpandedExplain(prev => ({ ...prev, [i]: { loading: false, steps: ['Sorry, could not load explanation. Please try again.'], correctAnswer: '', tip: '' } })); }
-                                };
-                                return (
-                                  <View style={{ marginTop: 6, gap: 8 }}>
-                                    <TouchableOpacity onPress={fetchExplanation} activeOpacity={0.7}
-                                      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 10, backgroundColor: sc + '15', borderWidth: 1, borderColor: sc + '30' }}>
-                                      {exp?.loading ? <ActivityIndicator size="small" color={sc} /> : <Feather name={exp?.steps ? 'chevron-up' : 'zap'} size={13} color={sc} />}
-                                      <Text style={{ fontSize: 11, fontWeight: '700', color: sc }}>{exp?.steps ? 'Hide' : 'Learn to score 100%'}</Text>
+                              {(q.correctAnswer || (q.comment && q.comment.includes('correct answer'))) ? (
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, borderRadius: 8, backgroundColor: colors.bgDark }}>
+                                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#C5BD96', width: 100 }}>Correct answer</Text>
+                                  <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: '#C5BD96' }}>
+                                    {q.correctAnswer || q.comment?.replace(/.*correct answer[:\s]*/i, '').trim()}
+                                  </Text>
+                                </View>
+                              ) : null}
+                              {/* Aivorah explanation */}
+                              {exp?.steps && exp.steps.length > 0 ? (
+                                <View style={{ padding: 12, borderRadius: 10, backgroundColor: isDark ? '#171612' : '#F8F6ED', borderWidth: 1, borderColor: '#C5BD9625', gap: 8 }}>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                    <View style={{ width: 22, height: 22, borderRadius: 7, backgroundColor: '#C5BD9620', alignItems: 'center', justifyContent: 'center' }}>
+                                      <Feather name="book-open" size={11} color="#C5BD96" />
+                                    </View>
+                                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#C5BD96' }}>Aivorah explains</Text>
+                                    <TouchableOpacity onPress={fetchExpl} style={{ marginLeft: 'auto' as any }}>
+                                      <Feather name="chevron-up" size={14} color={colors.textMuted} />
                                     </TouchableOpacity>
-                                    {exp?.steps && (
-                                      <View style={{ backgroundColor: sc + '08', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: sc + '20', gap: 8 }}>
-                                        {exp.steps.map((step: string, si: number) => (
-                                          <View key={si} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-                                            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: sc + '25', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
-                                              <Text style={{ fontSize: 10, fontWeight: '800', color: sc }}>{si + 1}</Text>
-                                            </View>
-                                            <Text style={{ flex: 1, fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{step.replace(/^Step \d+:\s*/i, '')}</Text>
-                                          </View>
-                                        ))}
-                                        {exp.correctAnswer ? (
-                                          <View style={{ backgroundColor: colors.accentGreen + '12', borderRadius: 8, padding: 10, borderWidth: 1, borderColor: colors.accentGreen + '25', marginTop: 2 }}>
-                                            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accentGreen }}>Correct Answer:</Text>
-                                            <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18, marginTop: 2 }}>{exp.correctAnswer}</Text>
-                                          </View>
-                                        ) : null}
-                                        {exp.tip ? (
-                                          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start', marginTop: 2 }}>
-                                            <Feather name="heart" size={12} color={sc} style={{ marginTop: 2 }} />
-                                            <Text style={{ flex: 1, fontSize: 11, color: sc, fontWeight: '600', lineHeight: 16, fontStyle: 'italic' }}>{exp.tip}</Text>
-                                          </View>
-                                        ) : null}
-                                      </View>
-                                    )}
                                   </View>
-                                );
-                              })()}
-                            </View>
-                            <View style={{ backgroundColor: qColor + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, alignSelf: 'flex-start' }}>
-                              <Text style={{ fontSize: 13, fontWeight: '800', color: qColor }}>{q.answered ? `${q.score}%` : '--'}</Text>
+                                  {exp.steps.map((step: string, si: number) => (
+                                    <View key={si} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+                                      <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.bgDark, alignItems: 'center', justifyContent: 'center' }}>
+                                        <Text style={{ fontSize: 10, fontWeight: '800', color: '#7AADA8' }}>{si + 1}</Text>
+                                      </View>
+                                      <Text style={{ flex: 1, fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{step.replace(/^Step \d+:\s*/i, '')}</Text>
+                                    </View>
+                                  ))}
+                                  {exp.tip ? (
+                                    <Text style={{ fontSize: 12, color: '#7AADA8', fontStyle: 'italic', lineHeight: 18 }}>{exp.tip}</Text>
+                                  ) : null}
+                                </View>
+                              ) : (
+                                <TouchableOpacity onPress={fetchExpl} activeOpacity={0.75}
+                                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 9, backgroundColor: '#C5BD9615', borderWidth: 1, borderColor: '#C5BD9640' }}>
+                                  {exp?.loading
+                                    ? <><ActivityIndicator size="small" color="#C5BD96" /><Text style={{ fontSize: 12, color: '#C5BD96', fontWeight: '700' }}>Aivorah is thinking…</Text></>
+                                    : <><Feather name="help-circle" size={13} color="#C5BD96" /><Text style={{ fontSize: 12, color: '#C5BD96', fontWeight: '700' }}>Aivorah, explain this</Text></>
+                                  }
+                                </TouchableOpacity>
+                              )}
                             </View>
                           </View>
                         );
@@ -3253,10 +3431,15 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                   ) : null}
 
                   {/* Close button */}
-                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: 14, backgroundColor: sc }} onPress={() => { setViewingResult(null); setExpandedExplain({}); }} activeOpacity={0.85}>
-                    <Feather name="check" size={16} color="#fff" />
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>Done</Text>
-                  </TouchableOpacity>
+                  <View style={{ flexDirection: 'row' }}>
+                    <View style={{ flex: 1 }} />
+                    <TouchableOpacity onPress={() => { setViewingResult(null); setExpandedExplain({}); }} activeOpacity={0.85}
+                      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, paddingHorizontal: 40, borderRadius: 14, backgroundColor: sc }}>
+                      <Feather name="check" size={16} color="#fff" />
+                      <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>Done</Text>
+                    </TouchableOpacity>
+                    <View style={{ flex: 1 }} />
+                  </View>
                 </ScrollView>
               </View>
             </Modal>
