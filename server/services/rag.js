@@ -222,20 +222,32 @@ async function retrieveCurriculumContext({
  * Searches ONLY image chunks in the NCERT collection via vector similarity.
  * No topic filter (NCERT image topics are captions, not real topic names).
  */
-async function retrieveNcertImages({ question, subject, topic, maxImages = 3 }) {
+async function retrieveNcertImages({ question, subject, topic, grade, maxImages = 3 }) {
   const queryText = `${question || ''} ${topic || ''}`.trim();
   if (!queryText) return [];
 
   const vector = await embed(queryText);
-  const { collection: ncertCollection } = resolveCollection('NCERT', undefined);
+
+  // Resolve the NCERT grade to search.
+  // IB PYP Grade 3/4/5 students → search NCERT Grade 3/4/5 only (never show Grade 8 diagrams to Grade 3 kids).
+  // If no grade given, default to Grade 3/4/5 range (safe for primary school).
+  const gradeNum = String(grade || '').match(/(\d+)/)?.[1];
+  const ncertGrade = gradeNum ? parseInt(gradeNum, 10) : null;
+
+  // Only allow primary grades (3–5). Higher grade images are too complex for primary students.
+  // If the student's grade maps to a higher NCERT grade, skip NCERT images entirely.
+  if (ncertGrade && ncertGrade > 5) return [];
+
+  const { collection: ncertCollection } = resolveCollection('NCERT', ncertGrade ? `Grade ${ncertGrade}` : undefined);
 
   // Infer subject from the question if not provided
   const effectiveSubject = subject || inferSubjectFromText({ question, topic, history: [] });
 
-  // Search with subject + topic filter for relevant images
+  // Search with subject + grade + topic filter for relevant images
   const results = await searchContent({
     vector,
     curriculum: 'NCERT',
+    grade: ncertGrade || undefined,
     subject: effectiveSubject || undefined,
     topic: topic || undefined,
     contentType: 'image',
@@ -243,9 +255,9 @@ async function retrieveNcertImages({ question, subject, topic, maxImages = 3 }) 
     collection: ncertCollection,
   });
 
-  // Strict score threshold — NCERT book scans are often low-quality for IB PYP students.
-  // Only show images that are highly relevant and whose captions prove usefulness.
-  const MIN_IMAGE_SCORE = 0.58;
+  // Higher threshold — NCERT images shown to IB PYP students must be very confident matches.
+  // Better to show no image than a wrong/confusing one.
+  const MIN_IMAGE_SCORE = 0.65;
   let relevant = results.filter((r) => (r.score || 0) >= MIN_IMAGE_SCORE);
 
   // Validate caption relevance: image caption/text must share multiple keywords with the question
@@ -267,16 +279,18 @@ async function retrieveNcertImages({ question, subject, topic, maxImages = 3 }) 
   });
 
   // If subject-filtered search found nothing, try broader but with even higher threshold
+  // Broad fallback — still enforce grade filter and raise threshold
   if (relevant.length === 0) {
     const broadResults = await searchContent({
       vector,
       curriculum: 'NCERT',
+      grade: ncertGrade || undefined,   // never cross grade boundaries
       contentType: 'image',
       limit: maxImages + 2,
       collection: ncertCollection,
     });
     relevant = broadResults
-      .filter((r) => (r.score || 0) >= 0.62)
+      .filter((r) => (r.score || 0) >= 0.68)  // higher bar for broad search
       .filter((r) => {
         const caption = ((r.payload?.text || '') + ' ' + (r.payload?.topic || '')).toLowerCase();
         const matches = questionWords.filter(w => caption.includes(w));

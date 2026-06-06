@@ -836,8 +836,13 @@ router.post('/send-verification', async (req, res) => {
     const appBase = frontendOrigin || 'https://aivorah.ai';
     const redirect = encodeURIComponent(appBase + '/verify-success');
     const encodedEmail = encodeURIComponent(email.toLowerCase());
-    // Include email in URL so verify endpoint can look up by PK (reliable, no JSONB scan needed)
-    const verifyUrl = `${serverBase}/user/verify/${token}?email=${encodedEmail}&redirect=${redirect}`;
+    const fullVerifyUrl = `${serverBase}/user/verify/${token}?email=${encodedEmail}&redirect=${redirect}`;
+
+    // Generate a short code and store the full URL so we can send a clean /v/:code link
+    const shortCode = crypto.randomBytes(5).toString('hex'); // 10-char hex
+    const expiresAt = new Date(expiry).toISOString();
+    await supabase.from('short_links').insert({ code: shortCode, url: fullVerifyUrl, expires_at: expiresAt });
+    const verifyUrl = `${serverBase}/v/${shortCode}`;
 
     await sendVerificationEmail({ to: email, name, verifyUrl });
     res.json({ ok: true });
