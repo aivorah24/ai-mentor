@@ -110,7 +110,7 @@ router.post('/:teacherEmail/students/link-created', async (req, res) => {
       teacher_id: teacher.id,
       student_id: userId,
       subject: curriculum,
-    }, { onConflict: 'teacher_id,student_id', ignoreDuplicates: true });
+    }, { onConflict: 'teacher_id,student_id,subject', ignoreDuplicates: true });
 
     // 4. Save preferences (credentials + meta)
     const { data: existingPrefs } = await supabase.from('user_preferences').select('data').eq('user_email', cleanEmail).maybeSingle();
@@ -209,7 +209,7 @@ router.post('/:teacherEmail/students/link-existing', async (req, res) => {
       teacher_id: teacher.id,
       student_id: student.id,
       subject: student.curriculum || 'General',
-    }, { onConflict: 'teacher_id,student_id', ignoreDuplicates: true });
+    }, { onConflict: 'teacher_id,student_id,subject', ignoreDuplicates: true });
     if (error) return res.status(500).json({ error: error.message });
 
     res.json({ success: true, student });
@@ -339,7 +339,7 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
 
         await supabase.from('teacher_student').upsert({
           teacher_id: teacher.id, student_id: userId, subject: curriculum,
-        }, { onConflict: 'teacher_id,student_id', ignoreDuplicates: true });
+        }, { onConflict: 'teacher_id,student_id,subject', ignoreDuplicates: true });
 
         await supabase.from('user_preferences').upsert({
           user_email: studentEmail,

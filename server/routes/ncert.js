@@ -301,17 +301,24 @@ Return ONLY valid JSON in this exact format:
     if (!json) return res.status(500).json({ error: 'Failed to parse quiz' });
     const parsed = JSON.parse(json);
 
-    // Normalize: convert correct from letter ("A","B","C","D") to 0-based index if needed
-    // The frontend PracticePhase expects correct as a number (0-3)
+    // Normalize + shuffle options to fix position bias (correct answer always at same spot)
     const LETTER_MAP = { A: 0, B: 1, C: 2, D: 3 };
-    const questions = (parsed.questions || []).map(q => ({
-      ...q,
-      correct: typeof q.correct === 'string'
+    const questions = (parsed.questions || []).map(q => {
+      const rawOptions = (q.options || []).map(opt => opt.replace(/^[A-D]\.\s*/i, ''));
+      const correctIdx = typeof q.correct === 'string'
         ? (LETTER_MAP[q.correct.toUpperCase()] ?? 0)
-        : q.correct,
-      // Strip "A. ", "B. " prefixes from options if present
-      options: (q.options || []).map(opt => opt.replace(/^[A-D]\.\s*/i, '')),
-    }));
+        : q.correct;
+      const indexed = rawOptions.map((opt, i) => ({ opt, wasCorrect: i === correctIdx }));
+      for (let i = indexed.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indexed[i], indexed[j]] = [indexed[j], indexed[i]];
+      }
+      return {
+        ...q,
+        options: indexed.map(x => x.opt),
+        correct: indexed.findIndex(x => x.wasCorrect),
+      };
+    });
 
     res.json({ questions });
   } catch (err) {
@@ -492,7 +499,26 @@ correct = index 0-3 of the right answer.`;
       }
     }
 
-    res.json({ topic, questions: questions.slice(0, questionCount) });
+    // Normalize + shuffle options to fix position bias (correct answer always at same spot)
+    const LETTER_MAP = { A: 0, B: 1, C: 2, D: 3 };
+    const shuffled = questions.slice(0, questionCount).map(q => {
+      const rawOptions = (q.options || []).map(opt => String(opt).replace(/^[A-D]\.\s*/i, '').trim());
+      const correctIdx = typeof q.correct === 'string'
+        ? (LETTER_MAP[q.correct.toUpperCase()] ?? 0)
+        : (typeof q.correct === 'number' ? q.correct : 0);
+      const indexed = rawOptions.map((opt, i) => ({ opt, wasCorrect: i === correctIdx }));
+      for (let i = indexed.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indexed[i], indexed[j]] = [indexed[j], indexed[i]];
+      }
+      return {
+        ...q,
+        options: indexed.map(x => x.opt),
+        correct: indexed.findIndex(x => x.wasCorrect),
+      };
+    });
+
+    res.json({ topic, questions: shuffled });
   } catch (err) {
     console.error('Error in POST /ncert/quiz:', err.message);
     res.status(500).json({ error: 'Failed to generate quiz' });

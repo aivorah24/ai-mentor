@@ -5,6 +5,8 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const FormDataNode = require('form-data');
+const https = require('https');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -239,13 +241,96 @@ Return ONLY valid JSON, no markdown fences.`,
   }
 });
 
+// ── Lexile helpers ──────────────────────────────────────────────────────
+const LEXILE_DIR = path.join(__dirname, '..', 'data', 'read-aloud', 'lexile');
+fs.mkdirSync(LEXILE_DIR, { recursive: true });
+
+const GRADE_BASE_LEXILE = { 'Grade 1': 200, 'Grade 2': 300, 'Grade 3': 400, 'Grade 4': 500, 'Grade 5': 600 };
+
+function lexileToLevel(lexile) {
+  if (lexile < 300) return 'easy';
+  if (lexile <= 600) return 'medium';
+  return 'hard';
+}
+
+function getStudentLexile(email) {
+  const hash = crypto.createHash('md5').update(email).digest('hex').slice(0, 12);
+  const lexilePath = path.join(LEXILE_DIR, `${hash}.json`);
+  if (fs.existsSync(lexilePath)) return JSON.parse(fs.readFileSync(lexilePath, 'utf8'));
+  return null;
+}
+
+function saveStudentLexile(email, data) {
+  const hash = crypto.createHash('md5').update(email).digest('hex').slice(0, 12);
+  const lexilePath = path.join(LEXILE_DIR, `${hash}.json`);
+  fs.writeFileSync(lexilePath, JSON.stringify(data, null, 2));
+}
+
+// ── Calibration passages (one per grade, ~100 words, medium difficulty) ──
+const CALIBRATION_PASSAGES = {
+  'Grade 3': { title: 'The Butterfly Garden', text: 'Last spring, our class planted a butterfly garden behind the school. We chose flowers that butterflies love, like marigolds and sunflowers. Every morning, we watered the plants and pulled out the weeds. After a few weeks, tiny green caterpillars appeared on the leaves. We watched them grow bigger each day. One morning, we found a chrysalis hanging from a branch. Two weeks later, a beautiful orange butterfly came out and flew into the sky. Our teacher said that butterflies help flowers grow by carrying pollen from one plant to another. Now our garden is full of colour and life.' },
+  'Grade 4': { title: 'The River Journey', text: 'Rivers are nature\'s highways. They begin as tiny streams high up in the mountains, fed by melting snow and rainfall. As the water flows downhill, it gathers strength and joins other streams to form a river. Along the way, rivers carve valleys, create waterfalls, and carry soil to new places. Many great cities were built beside rivers because people needed water for drinking, farming, and transportation. The Ganges in India, the Nile in Egypt, and the Amazon in South America are among the world\'s most important rivers. They provide water to millions of people and support countless plants and animals.' },
+  'Grade 5': { title: 'The Science of Sound', text: 'Every sound you hear is created by vibrations. When you pluck a guitar string, it vibrates back and forth very quickly. These vibrations push the air molecules around them, creating invisible waves that travel through the air. When these sound waves reach your ear, tiny bones and a thin membrane called the eardrum vibrate in response. Your brain interprets these vibrations as sound. Sound travels at different speeds through different materials. In air, sound moves at about three hundred and forty metres per second. In water, it travels four times faster. In steel, sound races along at over five thousand metres per second. That is why you can hear a train coming by pressing your ear to the railway track long before you can hear it through the air.' },
+};
+
+// ── GET /read-aloud/lexile — Get student's Lexile level ─────────────────
+router.get('/lexile', (req, res) => {
+  const email = req.query.email;
+  if (!email) return res.status(400).json({ error: 'email required' });
+  const data = getStudentLexile(email);
+  if (!data) return res.json({ lexile: null, needsCalibration: true });
+  res.json({ lexile: data.lexile, level: lexileToLevel(data.lexile), history: data.history || [], needsCalibration: false });
+});
+
+// ── POST /read-aloud/lexile — Set/update Lexile after calibration ───────
+router.post('/lexile', express.json(), (req, res) => {
+  const { email, lexile, source } = req.body;
+  if (!email || lexile == null) return res.status(400).json({ error: 'email and lexile required' });
+  const clamped = Math.max(100, Math.min(900, Math.round(lexile)));
+  const existing = getStudentLexile(email) || { history: [] };
+  existing.lexile = clamped;
+  existing.history = existing.history || [];
+  existing.history.push({ date: new Date().toISOString(), lexile: clamped, source: source || 'manual' });
+  if (existing.history.length > 50) existing.history.splice(0, existing.history.length - 50);
+  saveStudentLexile(email, existing);
+  res.json({ lexile: clamped, level: lexileToLevel(clamped) });
+});
+
+// ── GET /read-aloud/calibration — Get calibration passage for grade ─────
+router.get('/calibration', (req, res) => {
+  const grade = req.query.grade || 'Grade 3';
+  const passage = CALIBRATION_PASSAGES[grade] || CALIBRATION_PASSAGES['Grade 3'];
+  res.json({ ...passage, wordCount: passage.text.split(/\s+/).length });
+});
+
+// ── Star rewards constants ──────────────────────────────────────────────
+const STARS = { listen: 10, read: 50, questions: 150 };
+
 // ── GET /read-aloud/passages — List available passages for a grade ──────
 router.get('/passages', (req, res) => {
   const grade = req.query.grade || 'Grade 3';
+  const lexile = req.query.lexile ? parseInt(req.query.lexile) : null;
   const passages = SEED_PASSAGES[grade] || SEED_PASSAGES['Grade 3'];
+
+  // If lexile provided, filter to matching difficulty + one level up/down
+  let filtered = passages;
+  if (lexile != null) {
+    const targetLevel = lexileToLevel(lexile);
+    // Show target level first, then adjacent levels
+    const levelOrder = targetLevel === 'easy' ? ['easy', 'medium'] :
+                       targetLevel === 'hard' ? ['hard', 'medium'] :
+                       ['medium', 'easy', 'hard'];
+    filtered = passages.slice().sort((a, b) => {
+      const ai = levelOrder.indexOf(a.level);
+      const bi = levelOrder.indexOf(b.level);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+  }
+
   res.json({
     grade,
-    passages: passages.map(p => ({
+    recommendedLevel: lexile != null ? lexileToLevel(lexile) : null,
+    passages: filtered.map(p => ({
       title: p.title,
       topic: p.topic,
       level: p.level,
@@ -319,6 +404,32 @@ Give brief, encouraging feedback (2-3 sentences max). Be specific about what the
       else feedback = `Nice try! Reading gets easier with practice. Try reading the passage again slowly, one word at a time.`;
     }
 
+    // Star rewards: reading mode = 50 stars
+    const starsEarned = STARS.read;
+
+    // Auto-adjust Lexile based on errors
+    let lexileChange = 0;
+    let newLexile = null;
+    if (studentEmail) {
+      const lexileData = getStudentLexile(studentEmail);
+      if (lexileData) {
+        const errorCount = misread + skipped;
+        if (errorCount > 5) lexileChange = -25;
+        else if (errorCount < 3) lexileChange = 25;
+        if (lexileChange !== 0) {
+          newLexile = Math.max(100, Math.min(900, lexileData.lexile + lexileChange));
+          lexileData.lexile = newLexile;
+          lexileData.history = lexileData.history || [];
+          lexileData.history.push({ date: new Date().toISOString(), lexile: newLexile, source: 'auto', errors: errorCount });
+          if (lexileData.history.length > 50) lexileData.history.splice(0, lexileData.history.length - 50);
+          saveStudentLexile(studentEmail, lexileData);
+          console.log(`[read-aloud] Lexile ${lexileChange > 0 ? 'up' : 'down'}: ${newLexile} (errors=${errorCount})`);
+        } else {
+          newLexile = lexileData.lexile;
+        }
+      }
+    }
+
     const result = {
       accuracy,
       wcpm,
@@ -331,6 +442,9 @@ Give brief, encouraging feedback (2-3 sentences max). Be specific about what the
       errors,
       feedback,
       level,
+      starsEarned,
+      lexile: newLexile,
+      lexileChange,
     };
 
     // Save to history
@@ -350,6 +464,8 @@ Give brief, encouraging feedback (2-3 sentences max). Be specific about what the
           level,
           totalWords,
           duration: Math.round(duration),
+          starsEarned,
+          lexile: newLexile,
         });
         // Keep last 50 entries
         if (history.length > 50) history.splice(0, history.length - 50);
@@ -414,21 +530,61 @@ function fuzzy(spoken, expected) {
   return levenshtein(spoken, expected) <= (expected.length > 6 ? 2 : 1);
 }
 
+// Find where in the passage the student actually started reading.
+// Tries matching the first ~10 whisper words at each passage offset
+// and returns the offset with the highest match score.
+function findBestOffset(spokenWords, passageWords, maxOffset = 25) {
+  const sampleSize = Math.min(10, spokenWords.length);
+  if (sampleSize < 2) return 0;
+  let bestOffset = 0, bestScore = 0;
+
+  for (let offset = 0; offset <= Math.min(maxOffset, passageWords.length - 1); offset++) {
+    let score = 0, pos = offset;
+    for (let i = 0; i < sampleSize && pos < passageWords.length; i++) {
+      const spoken = norm(spokenWords[i]);
+      if (!spoken) continue;
+      for (let ahead = 0; ahead <= 3 && pos + ahead < passageWords.length; ahead++) {
+        if (fuzzy(spoken, norm(passageWords[pos + ahead]))) {
+          score++;
+          pos = pos + ahead + 1;
+          break;
+        }
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestOffset = offset;
+    }
+  }
+  // Only use offset if it's clearly better than starting at 0
+  if (bestOffset > 0 && bestScore > 3) return bestOffset;
+  return 0;
+}
+
+const LOOKAHEAD = 8; // Handle mid-passage skips of up to 8 words
+
 function matchWordsToPassage(spokenWords, passageWords) {
   const statuses = new Array(passageWords.length).fill('pending');
-  let pos = 0;
+
+  // Phase 1: find where the student started (handles skipped opening)
+  const startOffset = findBestOffset(spokenWords, passageWords);
+  if (startOffset > 0) {
+    for (let i = 0; i < startOffset; i++) statuses[i] = 'skipped';
+  }
+
+  // Phase 2: sequential matching with wider lookahead
+  let pos = startOffset;
   for (const sw of spokenWords) {
     if (pos >= passageWords.length) break;
-    const expected = norm(passageWords[pos]);
     const spoken = norm(sw);
     if (!spoken) continue;
 
-    if (fuzzy(spoken, expected)) {
+    if (fuzzy(spoken, norm(passageWords[pos]))) {
       statuses[pos] = 'correct';
       pos++;
     } else {
       let found = false;
-      for (let ahead = 1; ahead <= 3 && pos + ahead < passageWords.length; ahead++) {
+      for (let ahead = 1; ahead <= LOOKAHEAD && pos + ahead < passageWords.length; ahead++) {
         if (fuzzy(spoken, norm(passageWords[pos + ahead]))) {
           for (let k = pos; k < pos + ahead; k++) statuses[k] = 'skipped';
           statuses[pos + ahead] = 'correct';
@@ -461,33 +617,144 @@ async function transcribeWithWhisper(audioBuffer, mimeType, passageHint) {
             : mimeType?.includes('wav')  ? 'wav'
             : 'webm';
 
-  const blob = new Blob([audioBuffer], { type: mimeType || 'audio/webm' });
-  const form = new FormData();
-  form.append('file', blob, `recording.${ext}`);
+  // Use form-data npm package (not browser FormData) to reliably send multipart
+  // from Node.js. Native fetch + browser Blob + FormData in Node can produce
+  // a malformed multipart body that Groq rejects with 400.
+  // Also: Groq Whisper does NOT support timestamp_granularities[] — removed.
+  const form = new FormDataNode();
+  form.append('file', audioBuffer, { filename: `recording.${ext}`, contentType: mimeType || 'audio/webm' });
   form.append('model', 'whisper-large-v3-turbo');
   form.append('response_format', 'verbose_json');
-  form.append('timestamp_granularities[]', 'word');
   form.append('language', 'en');
+  form.append('timestamp_granularities[]', 'word');
 
-  // Pass the passage text as a prompt hint — this dramatically improves
-  // accuracy by telling Whisper the expected vocabulary and context
+  // Pass a vocabulary hint (NOT the full passage — Whisper treats the prompt
+  // as "already spoken" context and will skip matching words at the start).
+  // Extract unique long words as domain vocabulary hints only.
   if (passageHint) {
-    form.append('prompt', passageHint.slice(0, 500));
+    const uniqueWords = [...new Set(passageHint.match(/\b[a-zA-Z]{5,}\b/g) || [])];
+    const vocabHint = uniqueWords.slice(0, 30).join(', ');
+    if (vocabHint) form.append('prompt', vocabHint);
   }
 
-  const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}` },
-    body: form,
+  const responseBody = await new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'api.groq.com',
+      path: '/openai/v1/audio/transcriptions',
+      method: 'POST',
+      headers: {
+        ...form.getHeaders(),
+        'Authorization': `Bearer ${apiKey}`,
+      },
+    };
+    const req = https.request(options, (res) => {
+      let body = '';
+      res.on('data', d => { body += d; });
+      res.on('end', () => {
+        if (res.statusCode >= 400) {
+          reject(new Error(`Whisper ${res.statusCode}: ${body.slice(0, 300)}`));
+        } else {
+          try { resolve(JSON.parse(body)); } catch { reject(new Error(`Whisper parse error: ${body.slice(0, 200)}`)); }
+        }
+      });
+    });
+    req.on('error', reject);
+    form.pipe(req);
   });
 
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`Whisper ${res.status}: ${body.slice(0, 200)}`);
-  }
-
-  return res.json();
+  return responseBody;
 }
+
+// ── POST /read-aloud/transcribe-live — Lightweight live ASR for real-time highlight ──
+// Called every ~3 seconds with the accumulated audio so far.
+// Returns word-level statuses matched against the passage — no AI feedback, no history save.
+router.post('/transcribe-live', upload.single('audio'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No audio file' });
+
+    const passageText = req.body.passage || '';
+    const passageWords = passageText.match(/\S+/g) || [];
+    if (!passageWords.length) return res.json({ wordStatuses: [], matchedUpTo: 0 });
+
+    const data = await transcribeWithWhisper(req.file.buffer, req.file.mimetype, passageText);
+    const rawWords = data.words || [];
+    const audioDuration = data.duration || 0;
+    console.log(`[transcribe-live] duration=${audioDuration}s, rawWords=${rawWords.length}:`, rawWords.map(w => `${w.word}(${w.start?.toFixed(1)}s)`).join(', '));
+
+    // Hallucination detection: if Whisper words don't span at least 25% of
+    // the audio duration, they're likely noise-generated artifacts.
+    // Real speech fills the audio; hallucinations cluster at 0.0s.
+    const wordTimeSpan = rawWords.length > 0
+      ? Math.max(...rawWords.map(w => w.end || w.start || 0)) - Math.min(...rawWords.map(w => w.start || 0))
+      : 0;
+    if (audioDuration > 1 && wordTimeSpan < audioDuration * 0.25) {
+      console.log(`[transcribe-live] REJECTED: hallucination (span=${wordTimeSpan.toFixed(1)}s vs duration=${audioDuration.toFixed(1)}s)`);
+      return res.json({ wordStatuses: new Array(passageWords.length).fill('pending'), matchedUpTo: 0 });
+    }
+
+    const whisperWords = rawWords.map(w => w.word);
+    console.log(`[transcribe-live] duration=${audioDuration.toFixed(1)}s, words=${whisperWords.length}, span=${wordTimeSpan.toFixed(1)}s`);
+
+    // Phase 1: find where the student started reading
+    const startOffset = findBestOffset(whisperWords, passageWords);
+    const statuses = new Array(passageWords.length).fill('pending');
+    if (startOffset > 0) {
+      for (let i = 0; i < startOffset; i++) statuses[i] = 'skipped';
+      console.log(`[transcribe-live] Student skipped to word ${startOffset} ("${passageWords[startOffset]}")`);
+    }
+
+    // Phase 2: sequential matching with lookahead 8 (handles mid-passage skips)
+    let pos = startOffset;
+
+    for (const sw of whisperWords) {
+      if (pos >= passageWords.length) break;
+      const spoken = norm(sw);
+      if (!spoken) continue;
+
+      // Try matching at current position
+      if (fuzzy(spoken, norm(passageWords[pos]))) {
+        statuses[pos] = 'correct';
+        pos++;
+        continue;
+      }
+
+      // Try lookahead (student skipped words)
+      let found = false;
+      for (let ahead = 1; ahead <= LOOKAHEAD && pos + ahead < passageWords.length; ahead++) {
+        if (fuzzy(spoken, norm(passageWords[pos + ahead]))) {
+          for (let k = pos; k < pos + ahead; k++) statuses[k] = 'skipped';
+          statuses[pos + ahead] = 'correct';
+          pos = pos + ahead + 1;
+          found = true;
+          break;
+        }
+      }
+      if (found) continue;
+
+      // No match — mark current as misread, advance so we don't get stuck
+      statuses[pos] = 'misread';
+      pos++;
+    }
+
+    // Time-based cap: a child reads max ~3 words/second.
+    // If Whisper hallucinated matches from noise, pos will be impossibly high.
+    const maxByDuration = Math.ceil(audioDuration * 3);
+    if (pos > maxByDuration) {
+      console.log(`[transcribe-live] CAPPED ${pos} → ${maxByDuration} (${audioDuration.toFixed(1)}s audio)`);
+      // Reset statuses beyond the cap
+      for (let i = maxByDuration; i < pos; i++) statuses[i] = 'pending';
+      pos = maxByDuration;
+    }
+
+    if (pos > 0 && pos < passageWords.length) statuses[pos] = 'current';
+
+    console.log(`[transcribe-live] matched ${pos}/${passageWords.length}`);
+    res.json({ wordStatuses: statuses, matchedUpTo: pos });
+  } catch (err) {
+    console.error('[read-aloud/transcribe-live] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── POST /read-aloud/transcribe — Transcribe recorded audio + match words ──
 router.post('/transcribe', upload.single('audio'), async (req, res) => {
@@ -519,6 +786,13 @@ router.post('/transcribe', upload.single('audio'), async (req, res) => {
     console.error('[read-aloud/transcribe] Error:', err.message);
     res.status(500).json({ error: err.message });
   }
+});
+
+// ── GET /read-aloud/deepgram-key — Provide Deepgram API key to client ───
+router.get('/deepgram-key', (req, res) => {
+  const key = process.env.DEEPGRAM_API_KEY;
+  if (!key) return res.status(500).json({ error: 'DEEPGRAM_API_KEY not configured' });
+  res.json({ key });
 });
 
 // ── POST /read-aloud/tts — Generate audio for a passage ─────────────────

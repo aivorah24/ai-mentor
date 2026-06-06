@@ -21,8 +21,17 @@ import SERVER_URL from '../../config/serverUrl';
 import firebaseApp from '../../config/firebase';
 
 // ── Constants ──────────────────────────────────────────────
-const CURRICULA = ['IB PYP', 'NCERT', 'CBSE', 'ICSE', 'Cambridge', 'State Board'];
-const GRADES = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
+const CURRICULA = ['IB PYP', 'IB MYP', 'IB DP', 'NCERT', 'CBSE', 'ICSE', 'Cambridge', 'State Board'];
+
+function getGradesForCurriculum(curr: string): string[] {
+  if (curr === 'IB PYP') return ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5'];
+  if (curr === 'IB MYP') return ['Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
+  if (curr === 'IB DP')  return ['Grade 11','Grade 12'];
+  if (curr === 'Cambridge') return ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
+  return ['Nursery','LKG','UKG','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
+}
+
+const GRADES_TEACHER = ['Nursery','LKG','UKG','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
 const SUBJECTS = ['Mathematics','Science','English','Social Studies','Hindi','ICT','Art','Music','Physical Education'];
 const GENDERS = ['Male', 'Female', 'Prefer not to say'];
 const LEARNING_STYLES: { id: string; label: string; icon: string; desc: string }[] = [
@@ -77,8 +86,8 @@ function getSteps(role: string) {
   // Student
   return [
     { title: 'Personal Info', icon: 'user', subtitle: 'Tell us about yourself' },
-    { title: 'School & Grade', icon: 'home', subtitle: 'Your school details' },
     { title: 'Curriculum', icon: 'book-open', subtitle: 'What do you study?' },
+    { title: 'School & Grade', icon: 'home', subtitle: 'Your school details' },
     { title: 'Your Avatar', icon: 'smile', subtitle: 'Pick your look' },
     { title: 'Learning Style', icon: 'zap', subtitle: 'How do you learn best?' },
   ];
@@ -184,8 +193,8 @@ export default function OnboardingScreen() {
         const age = getAge(dob);
         return age !== null && age >= 14;
       }
-      if (step === 1) return school.trim().length >= 2 && grade.length > 0;
-      if (step === 2) return curriculum.length > 0;
+      if (step === 1) return curriculum.length > 0;
+      if (step === 2) return school.trim().length >= 2 && grade.length > 0;
       if (step === 3) return true; // avatar optional
       if (step === 4) return true; // learning style optional
     }
@@ -566,9 +575,32 @@ export default function OnboardingScreen() {
           <TextInput style={styles.input} value={fullName} onChangeText={setFullName}
             placeholder="Enter your full name" placeholderTextColor={colors.textDim} autoCapitalize="words" />
           
-          <Text style={styles.fieldLabel}>Date of Birth (DD/MM/YYYY)</Text>
-          <TextInput style={styles.input} value={dob} onChangeText={setDob}
-            placeholder="e.g. 15/04/2010" placeholderTextColor={colors.textDim} keyboardType="numeric" />
+          <Text style={styles.fieldLabel}>Date of Birth</Text>
+          {Platform.OS === 'web' ? (
+            <input
+              type="date"
+              max={new Date().toISOString().split('T')[0]}
+              value={dob ? `${dob.split('/')[2]}-${dob.split('/')[1]}-${dob.split('/')[0]}` : ''}
+              onChange={e => {
+                const v = e.target.value; // YYYY-MM-DD
+                if (v) {
+                  const [y, m, d] = v.split('-');
+                  setDob(`${d}/${m}/${y}`);
+                } else {
+                  setDob('');
+                }
+              }}
+              style={{
+                width: '100%', padding: '12px 14px', borderRadius: 10,
+                border: `1.5px solid ${colors.border}`, background: colors.surface,
+                color: colors.text, fontSize: 15, outline: 'none', boxSizing: 'border-box',
+                marginBottom: 4, cursor: 'pointer',
+              }}
+            />
+          ) : (
+            <TextInput style={styles.input} value={dob} onChangeText={setDob}
+              placeholder="DD/MM/YYYY" placeholderTextColor={colors.textDim} keyboardType="numeric" />
+          )}
           
           {dob.length >= 10 && getAge(dob) !== null && getAge(dob)! < 14 && (
             <View style={{ backgroundColor: '#ef444415', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#ef444430' }}>
@@ -591,6 +623,19 @@ export default function OnboardingScreen() {
       );
       if (step === 1) return (
         <View style={styles.stepContent}>
+          <Text style={styles.fieldLabel}>Curriculum</Text>
+          <View style={styles.chipRow}>
+            {CURRICULA.map(c => (
+              <TouchableOpacity key={c} style={[styles.chip, curriculum === c && styles.chipActive]}
+                onPress={() => { setCurriculum(c); setGrade(''); }} activeOpacity={0.8}>
+                <Text style={[styles.chipText, curriculum === c && styles.chipTextActive]}>{c}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      );
+      if (step === 2) return (
+        <View style={styles.stepContent}>
           <Text style={styles.fieldLabel}>School Name</Text>
           <TextInput style={styles.input} value={school} onChangeText={setSchool}
             placeholder="e.g. Hyderabad International School" placeholderTextColor={colors.textDim} />
@@ -599,23 +644,10 @@ export default function OnboardingScreen() {
             placeholder="e.g. Hyderabad" placeholderTextColor={colors.textDim} />
           <Text style={styles.fieldLabel}>Grade</Text>
           <View style={styles.chipRow}>
-            {GRADES.map(g => (
+            {getGradesForCurriculum(curriculum).map(g => (
               <TouchableOpacity key={g} style={[styles.chip, grade === g && styles.chipActive]}
                 onPress={() => setGrade(g)} activeOpacity={0.8}>
                 <Text style={[styles.chipText, grade === g && styles.chipTextActive]}>{g}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      );
-      if (step === 2) return (
-        <View style={styles.stepContent}>
-          <Text style={styles.fieldLabel}>Curriculum</Text>
-          <View style={styles.chipRow}>
-            {CURRICULA.map(c => (
-              <TouchableOpacity key={c} style={[styles.chip, curriculum === c && styles.chipActive]}
-                onPress={() => setCurriculum(c)} activeOpacity={0.8}>
-                <Text style={[styles.chipText, curriculum === c && styles.chipTextActive]}>{c}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -675,7 +707,7 @@ export default function OnboardingScreen() {
           </View>
           <Text style={styles.fieldLabel}>Grades You Teach (select multiple)</Text>
           <View style={styles.chipRow}>
-            {GRADES.map(g => (
+            {GRADES_TEACHER.map(g => (
               <TouchableOpacity key={g} style={[styles.chip, teachGrades.includes(g) && styles.chipActive]}
                 onPress={() => toggleArrayItem(teachGrades, g, setTeachGrades)} activeOpacity={0.8}>
                 <Text style={[styles.chipText, teachGrades.includes(g) && styles.chipTextActive]}>{g}</Text>
@@ -757,21 +789,21 @@ export default function OnboardingScreen() {
               </View>
             )}
 
-            <Text style={styles.fieldLabel}>Child's Grade</Text>
-            <View style={styles.chipRow}>
-              {GRADES.map(g => (
-                <TouchableOpacity key={g} style={[styles.chip, activeChild.grade === g && styles.chipActive]}
-                  onPress={() => updateChild('grade', g)} activeOpacity={0.8}>
-                  <Text style={[styles.chipText, activeChild.grade === g && styles.chipTextActive]}>{g}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
             <Text style={styles.fieldLabel}>Child's Curriculum</Text>
             <View style={styles.chipRow}>
               {CURRICULA.map(c => (
                 <TouchableOpacity key={c} style={[styles.chip, activeChild.curriculum === c && styles.chipActive]}
-                  onPress={() => updateChild('curriculum', c)} activeOpacity={0.8}>
+                  onPress={() => { updateChild('curriculum', c); updateChild('grade', ''); }} activeOpacity={0.8}>
                   <Text style={[styles.chipText, activeChild.curriculum === c && styles.chipTextActive]}>{c}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.fieldLabel}>Child's Grade</Text>
+            <View style={styles.chipRow}>
+              {getGradesForCurriculum(activeChild.curriculum).map(g => (
+                <TouchableOpacity key={g} style={[styles.chip, activeChild.grade === g && styles.chipActive]}
+                  onPress={() => updateChild('grade', g)} activeOpacity={0.8}>
+                  <Text style={[styles.chipText, activeChild.grade === g && styles.chipTextActive]}>{g}</Text>
                 </TouchableOpacity>
               ))}
             </View>
