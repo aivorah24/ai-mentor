@@ -101,67 +101,99 @@ async function retrieveWebContext({ question, curriculum, grade, subject, topic 
 }
 
 // ── Web image fallback: fetch safe, educational images from Wikipedia ──
-// Used when Qdrant has no relevant book images for the topic.
-// IMPORTANT: Children (Grade 3–5, ages 8–11) use this — every image must be
-// simple, clear, colourful, and directly relevant. No graphs, charts, data
-// plots, technical diagrams, microscopy, or anything a child can't understand
-// at a glance. When in doubt, show NO image rather than a confusing one.
+// STRICT MODE: children aged 8–11 (Grade 3–5). Show NO image rather than a wrong one.
+// Key rule: validate the Wikipedia ARTICLE is educational before touching its images.
+
+// Article-level blocklist — if the Wikipedia article description matches these,
+// the entire article is rejected (prevents movie posters, album covers, etc.)
+const NON_EDU_ARTICLE_RE = /\b(film|movie|television|tv series|tv show|web series|anime|sitcom|drama series|reality (tv|show)|documentary film|album|single|song|ep\b|extended play|band|musician|singer|rapper|actor|actress|footballer|cricketer|athlete|politician|sportsperson|video game|game\b|novel|book series|manga|comic|fictional character|character in|superhero|villain|person born|born \d{4}|died \d{4})\b/i;
+
+// Filename-level blocklist — junk, UI elements, portraits, posters
+const JUNK_RE = /icon|logo|flag|commons|edit|button|arrow|wiki|symbol|cscr|lock|replace|stub|disambig|portal|question_book|unbalanced|merge|ambox|text-|padlock|template|info[-_]?box|navbar|wiktionary|wikiquote|wikisource|wikimedia|portrait|painting|statue|bust|metro.?map|metabolic|semi.?protect|shackle|poster|cover.?art|album.?art|dvd|blu.?ray|soundtrack|promo|promotional|press.?photo/i;
+
+// Unsafe / inappropriate for children
+const UNSAFE_RE = /dissect|surg|blood|injur|dead|skull|weapon|nude|naked|reproductive|genital|violence|murder|autopsy|corpse|drug|alcohol|tobacco|cigarette|sex/i;
+
+// Scientific/technical images a child won't understand
+const TECHNICAL_RE = /spectr|molecul|crystal|structur|microscop|electron|formula|equation|graph\b|chart\b|histogram|dewpoint|isotherm|phase.?diagram|scatter.?plot|regression|logarithm|data.?table|cross.?section|thin.?section|xrd|sem\b|tem\b|nmr\b|infrared|ultraviolet|x-ray|chromatogra|electrophores|karyotype|genome|dna.?gel|protein.?struct|cell.?cycle|mitosis.?stage|taxonomy|phylogen|cladogram|dendrogram|chloroplast|thylakoid|pathway|hatch.?slack|calvin|krebs|citric|stroma|granum|scheme.*of|diagram.*of.*cell|cross.*section/i;
+
+// Advanced biology/chemistry — too complex for primary school
+const ADVANCED_TERMS = /calvin cycle|spectr|molecul|absorption|wavelength|electron|mitochond|cytoplasm|adenosine|rubisco|atp|nadph|chloroplast ultrastructure|taxonomy|phylogen|krebs|citric acid cycle|oxidative phosphorylation|thylakoid|stroma|granum/i;
+
+/**
+ * Validate that a Wikipedia article is educational (not a film, album, person, etc.)
+ * Uses the REST summary API which returns a human-readable description like
+ * "2019 American superhero film" or "English rock band" — easy to block.
+ * Returns { ok: boolean, title: string }
+ */
+async function validateWikiArticle(title) {
+  try {
+    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'Aivorah-AI-Coach/1.0' } });
+    if (!res.ok) return { ok: false };
+    const data = await res.json();
+    const description = String(data.description || '').toLowerCase();
+    const pageType   = String(data.type || '');
+
+    // Disambiguation pages have no images worth showing
+    if (pageType === 'disambiguation') return { ok: false };
+
+    // Block entertainment, biography, fiction articles
+    if (NON_EDU_ARTICLE_RE.test(description)) return { ok: false };
+
+    return { ok: true, description };
+  } catch {
+    return { ok: false };
+  }
+}
+
 async function retrieveWebImages({ question, topic, subject, grade, maxImages = 2 }) {
   const query = (topic || question || '').trim();
   if (!query) return [];
 
-  // Extract grade number for age-appropriate filtering
-  const gradeNum = parseInt(String(grade || '').replace(/\D/g, ''), 10) || 0;
-  const isYoungChild = gradeNum >= 1 && gradeNum <= 5;
-
   try {
-    // 1. Search Wikipedia for the topic — use the topic name directly
-    //    Adding extra words like "for kids" or "diagram" pollutes the search
-    //    and returns unrelated articles. Keep the query clean.
+    // 1. Search Wikipedia — fetch top 4 results so we can pick the best educational article
     const searchUrl = new URL(WIKI_SEARCH_API);
     searchUrl.searchParams.set('action', 'query');
     searchUrl.searchParams.set('list', 'search');
     searchUrl.searchParams.set('format', 'json');
     searchUrl.searchParams.set('utf8', '1');
-    searchUrl.searchParams.set('srlimit', '1');
+    searchUrl.searchParams.set('srlimit', '4');  // try up to 4, pick first educational one
     searchUrl.searchParams.set('srsearch', query);
 
-    const searchRes = await fetch(searchUrl.toString(), {
-      headers: { 'User-Agent': 'Aivorah-AI-Coach/1.0' },
-    });
+    const searchRes = await fetch(searchUrl.toString(), { headers: { 'User-Agent': 'Aivorah-AI-Coach/1.0' } });
     if (!searchRes.ok) return [];
     const searchJson = await searchRes.json();
-    const title = searchJson?.query?.search?.[0]?.title;
-    if (!title) return [];
+    const candidates = (searchJson?.query?.search || []).map(r => r.title).filter(Boolean);
+    if (!candidates.length) return [];
 
-    // 2. Get images from the Wikipedia article
+    // 2. Validate each candidate article — pick first one that is educational
+    let chosenTitle = null;
+    for (const title of candidates) {
+      const { ok } = await validateWikiArticle(title);
+      if (ok) { chosenTitle = title; break; }
+    }
+    // No educational article found — return nothing rather than show wrong images
+    if (!chosenTitle) return [];
+
+    // 3. Fetch image list from the validated educational article
     const imgUrl = new URL(WIKI_SEARCH_API);
     imgUrl.searchParams.set('action', 'query');
-    imgUrl.searchParams.set('titles', title);
+    imgUrl.searchParams.set('titles', chosenTitle);
     imgUrl.searchParams.set('prop', 'images');
     imgUrl.searchParams.set('format', 'json');
-    imgUrl.searchParams.set('imlimit', '20');
+    imgUrl.searchParams.set('imlimit', '25');
 
-    const imgRes = await fetch(imgUrl.toString(), {
-      headers: { 'User-Agent': 'Aivorah-AI-Coach/1.0' },
-    });
+    const imgRes = await fetch(imgUrl.toString(), { headers: { 'User-Agent': 'Aivorah-AI-Coach/1.0' } });
     if (!imgRes.ok) return [];
     const imgJson = await imgRes.json();
-
-    // ── Filename blocklists ──
-    // UI/template junk + portraits/people photos
-    const JUNK_RE = /icon|logo|flag|commons|edit|button|arrow|wiki|symbol|cscr|lock|replace|stub|disambig|portal|question_book|unbalanced|merge|ambox|text-|padlock|template|info[-_]?box|navbar|wiktionary|wikiquote|wikisource|wikimedia|portrait|painting|statue|bust|metro.?map|metabolic|semi.?protect|shackle/i;
-    // Unsafe / inappropriate for children
-    const UNSAFE_RE = /dissect|surg|blood|injur|dead|skull|weapon|nude|naked|reproductive|genital|violence|murder|autopsy|corpse|drug|alcohol|tobacco|cigarette|sex/i;
-    // Scientific/technical images a child won't understand
-    const TECHNICAL_RE = /spectr|molecul|crystal|structur|microscop|electron|formula|equation|graph\b|chart\b|histogram|dewpoint|isotherm|phase.?diagram|scatter.?plot|regression|logarithm|data.?table|cross.?section|thin.?section|xrd|sem\b|tem\b|nmr\b|infrared|ultraviolet|x-ray|chromatogra|electrophores|karyotype|genome|dna.?gel|protein.?struct|cell.?cycle|mitosis.?stage|taxonomy|phylogen|cladogram|dendrogram|chloroplast|thylakoid|pathway|hatch.?slack|calvin|krebs|citric|stroma|granum|scheme.*of|diagram.*of.*cell|cross.*section/i;
 
     const pages = imgJson?.query?.pages || {};
     const imageNames = [];
     for (const page of Object.values(pages)) {
       for (const img of (page.images || [])) {
         const name = img.title || '';
-        if (/\.(jpg|jpeg|png|svg)$/i.test(name) &&
+        if (/\.(jpg|jpeg|png)$/i.test(name) &&   // no SVG — often technical diagrams
             !JUNK_RE.test(name) &&
             !UNSAFE_RE.test(name) &&
             !TECHNICAL_RE.test(name)) {
@@ -169,11 +201,10 @@ async function retrieveWebImages({ question, topic, subject, grade, maxImages = 
         }
       }
     }
-
     if (imageNames.length === 0) return [];
 
-    // 3. Get actual image URLs + metadata (fetch a few extra for filtering)
-    const selected = imageNames.slice(0, maxImages + 4);
+    // 4. Get image URLs + metadata
+    const selected = imageNames.slice(0, maxImages + 6);
     const infoUrl = new URL(WIKI_SEARCH_API);
     infoUrl.searchParams.set('action', 'query');
     infoUrl.searchParams.set('titles', selected.join('|'));
@@ -182,9 +213,7 @@ async function retrieveWebImages({ question, topic, subject, grade, maxImages = 
     infoUrl.searchParams.set('iiurlwidth', '400');
     infoUrl.searchParams.set('format', 'json');
 
-    const infoRes = await fetch(infoUrl.toString(), {
-      headers: { 'User-Agent': 'Aivorah-AI-Coach/1.0' },
-    });
+    const infoRes = await fetch(infoUrl.toString(), { headers: { 'User-Agent': 'Aivorah-AI-Coach/1.0' } });
     if (!infoRes.ok) return [];
     const infoJson = await infoRes.json();
 
@@ -196,62 +225,33 @@ async function retrieveWebImages({ question, topic, subject, grade, maxImages = 
       const thumbUrl = info.thumburl || info.url;
       if (!thumbUrl) continue;
 
-      // Skip tiny images (likely icons) or SVGs that are just diagrams
-      const width = info.width || 0;
-      const height = info.height || 0;
-      if (width < 150 || height < 100) continue;
+      // Skip tiny images (icons) — require decent size for classroom context
+      if ((info.width || 0) < 200 || (info.height || 0) < 150) continue;
 
-      // Get description from metadata
       const desc = info.extmetadata?.ImageDescription?.value || '';
-      const cleanDesc = stripHtml(desc).slice(0, 120);
+      const cleanDesc = stripHtml(desc).slice(0, 150);
       const rawCaption = cleanDesc || page.title?.replace('File:', '').replace(/\.\w+$/, '').replace(/_/g, ' ') || '';
 
-      // Skip images whose captions/descriptions contain technical or unsafe terms
-      if (TECHNICAL_RE.test(rawCaption) || UNSAFE_RE.test(rawCaption)) continue;
-      if (TECHNICAL_RE.test(thumbUrl) || UNSAFE_RE.test(thumbUrl)) continue;
+      // Block unsafe/technical captions and URLs
+      if (UNSAFE_RE.test(rawCaption) || TECHNICAL_RE.test(rawCaption)) continue;
+      if (UNSAFE_RE.test(thumbUrl)   || TECHNICAL_RE.test(thumbUrl))   continue;
+      if (ADVANCED_TERMS.test(rawCaption) || ADVANCED_TERMS.test(thumbUrl)) continue;
 
-      // For young children: skip anything that sounds like a data visualization or technical content
-      if (isYoungChild) {
-        const captionLower = rawCaption.toLowerCase();
-        if (/\b(plot|axis|data|percent|ratio|coefficient|parameter|variable|regression|correlation|humidity|dewpoint|pressure|temperature.*(graph|chart|plot)|vs\.?\s)/i.test(captionLower)) continue;
-        if (/template|for\s+.*\s+related/i.test(captionLower)) continue;
-        // Skip SVG code descriptions, cloud chambers, lab equipment, etc.
-        if (/svg file|code for|cloud chamber|isopropanol|apparatus|laboratory|experiment setup/i.test(captionLower)) continue;
-        // Skip "Scheme of..." or "Diagram of..." — typically technical cross-sections
-        if (/^(scheme|diagram|cross.?section|structure|anatomy)\s+(of|showing)/i.test(captionLower)) continue;
-      }
+      // Block data/chart/lab captions
+      if (/\b(plot|axis|data|percent|ratio|coefficient|parameter|variable|regression|correlation|vs\.?\s|apparatus|laboratory|experiment setup|svg file|code for|cloud chamber)\b/i.test(rawCaption)) continue;
+      if (/^(scheme|diagram|cross.?section|structure|anatomy)\s+(of|showing)/i.test(rawCaption)) continue;
 
-      results.push({
-        url: thumbUrl,
-        caption: rawCaption,
-        subject: subject || '',
-        grade: '',
-        topic: topic || query,
-        source: 'wikipedia',
-      });
+      results.push({ url: thumbUrl, caption: rawCaption, subject: subject || '', grade: '', topic: topic || query, source: 'wikipedia' });
     }
 
-    // Final child-safety filter on captions + URLs
-    const ADVANCED_TERMS = /calvin cycle|spectr|molecul|absorption|wavelength|electron|mitochond|cytoplasm|adenosine|rubisco|atp|nadph|chloroplast ultrastructure|taxonomy|phylogen|krebs|citric acid cycle|oxidative phosphorylation|thylakoid|stroma|granum/i;
-    let kidFriendly = results.filter((r) => !ADVANCED_TERMS.test(r.caption) && !ADVANCED_TERMS.test(r.url));
-
-    // Caption relevance check: the image caption should relate to the topic.
-    // Extract key words from the query and require at least one to appear in the caption.
+    // 5. Relevance check — caption MUST contain at least one query keyword (no short-caption bypass)
     const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length >= 4);
-    if (queryWords.length > 0) {
-      const relevant = kidFriendly.filter((r) => {
-        const cap = (r.caption || '').toLowerCase();
-        // At least one query keyword must appear in caption or the caption must be very short (like "A leaf")
-        return queryWords.some(w => cap.includes(w)) || cap.length <= 20;
-      });
-      // Only use relevance-filtered if we have results; otherwise skip images entirely
-      kidFriendly = relevant;
-    }
+    const relevant = queryWords.length > 0
+      ? results.filter(r => queryWords.some(w => (r.caption || '').toLowerCase().includes(w)))
+      : results;
 
-    // For young children, only return images if we have genuinely good ones
-    if (isYoungChild && kidFriendly.length === 0) return [];
+    return relevant.slice(0, maxImages);
 
-    return kidFriendly.slice(0, maxImages);
   } catch (err) {
     console.warn('[retrieveWebImages] Wikipedia image fetch failed:', err.message);
     return [];

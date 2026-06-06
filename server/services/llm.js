@@ -1,4 +1,5 @@
 const Groq = require('groq-sdk');
+const { logLLMCall } = require('./tokenLogger');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -183,7 +184,7 @@ CONVERSATION: Read the chat history before replying. Never repeat the same examp
   return { hasContext, mathMode, systemPrompt, userPrompt, model, maxTokens };
 }
 
-async function generateAnswer({ question, context, grade, subject, topic, history }) {
+async function generateAnswer({ question, context, grade, subject, topic, history, _meta = {} }) {
   const { systemPrompt, userPrompt, model, maxTokens } = buildPrompts({ question, context, grade, subject, topic, history });
   const messages = [
     { role: 'system', content: systemPrompt },
@@ -192,8 +193,19 @@ async function generateAnswer({ question, context, grade, subject, topic, histor
 
   // Primary: Groq
   try {
+    const t0 = Date.now();
     const response = await groq.chat.completions.create({
       model, messages, temperature: 0.2, max_tokens: maxTokens,
+    });
+    const responseTimeMs = Date.now() - t0;
+    const usage = response.usage || {};
+    logLLMCall({
+      provider: 'groq', model,
+      route: _meta.route, studentEmail: _meta.studentEmail,
+      grade, subject, topic,
+      promptTokens: usage.prompt_tokens || 0,
+      completionTokens: usage.completion_tokens || 0,
+      responseTimeMs, streamed: false,
     });
     return response.choices?.[0]?.message?.content || '';
   } catch (err) {
@@ -203,14 +215,23 @@ async function generateAnswer({ question, context, grade, subject, topic, histor
   }
 
   // Fallback: NVIDIA NIM
-  return await callNvidiaNim(messages, maxTokens);
+  const t0 = Date.now();
+  const text = await callNvidiaNim(messages, maxTokens);
+  logLLMCall({
+    provider: 'nvidia', model: NVIDIA_MODEL,
+    route: _meta.route, studentEmail: _meta.studentEmail,
+    grade, subject, topic,
+    promptTokens: 0, completionTokens: 0, // NVIDIA doesn't return usage
+    responseTimeMs: Date.now() - t0, streamed: false,
+  });
+  return text;
 }
 
 /**
  * Stream answer token-by-token via callback.
  * Returns the full assembled text when done.
  */
-async function generateAnswerStream({ question, context, grade, subject, topic, history, onToken }) {
+async function generateAnswerStream({ question, context, grade, subject, topic, history, onToken, _meta = {} }) {
   const { systemPrompt, userPrompt, model, maxTokens } = buildPrompts({ question, context, grade, subject, topic, history });
   const messages = [
     { role: 'system', content: systemPrompt },
@@ -219,14 +240,26 @@ async function generateAnswerStream({ question, context, grade, subject, topic, 
 
   // Primary: Groq streaming
   try {
+    const t0 = Date.now();
     const stream = await groq.chat.completions.create({
       model, messages, temperature: 0.2, max_tokens: maxTokens, stream: true,
     });
     let full = '';
+    let usage = {};
     for await (const chunk of stream) {
       const delta = chunk.choices?.[0]?.delta?.content;
       if (delta) { full += delta; onToken(delta); }
+      // Groq sends usage in the last chunk
+      if (chunk.x_groq?.usage) usage = chunk.x_groq.usage;
     }
+    logLLMCall({
+      provider: 'groq', model,
+      route: _meta.route, studentEmail: _meta.studentEmail,
+      grade, subject, topic,
+      promptTokens: usage.prompt_tokens || 0,
+      completionTokens: usage.completion_tokens || 0,
+      responseTimeMs: Date.now() - t0, streamed: true,
+    });
     return full;
   } catch (err) {
     const is429 = err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('rate_limit');
@@ -235,8 +268,16 @@ async function generateAnswerStream({ question, context, grade, subject, topic, 
   }
 
   // Fallback: NVIDIA NIM (non-streaming, emit full response as one chunk)
+  const t0 = Date.now();
   const full = await callNvidiaNim(messages, maxTokens);
   onToken(full);
+  logLLMCall({
+    provider: 'nvidia', model: NVIDIA_MODEL,
+    route: _meta.route, studentEmail: _meta.studentEmail,
+    grade, subject, topic,
+    promptTokens: 0, completionTokens: 0,
+    responseTimeMs: Date.now() - t0, streamed: false,
+  });
   return full;
 }
 

@@ -158,8 +158,7 @@ async function sendVerificationEmail({ to, name, verifyUrl }) {
           </div>
 
           <p style="font-size:13px;color:#666;line-height:1.6">
-            Or copy and paste this link into your browser:<br/>
-            <a href="${verifyUrl}" style="color:#7C3AED;word-break:break-all">${verifyUrl}</a>
+            If the button doesn't work, <a href="${verifyUrl}" style="color:#7C3AED">click here</a> to verify your email.
           </p>
 
           <p style="font-size:13px;color:#999;margin-top:24px">This link expires in 24 hours.</p>

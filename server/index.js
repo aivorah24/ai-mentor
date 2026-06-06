@@ -42,6 +42,7 @@ const worldRoute       = require('./routes/world');
 const helpRoute        = require('./routes/help');
 const storiesRoute     = require('./routes/stories');
 const habitsRoute      = require('./routes/habits');
+const shortlinkRoute   = require('./routes/shortlink');
 // Payment route — lazy-loaded to avoid crash if Razorpay env vars missing
 // const paymentRoute  = require('./routes/payment');
 
@@ -112,6 +113,7 @@ app.use('/world',        worldRoute);
 app.use('/help',         helpRoute);
 app.use('/stories',      storiesRoute);
 app.use('/habits',       habitsRoute);
+app.use('/v',            shortlinkRoute);
 app.use('/payment',      lazyRoute('./routes/payment'));
 app.use('/quiz',         lazyRoute('./routes/quiz'));
 app.use('/read-aloud',   lazyRoute('./routes/read-aloud'));
