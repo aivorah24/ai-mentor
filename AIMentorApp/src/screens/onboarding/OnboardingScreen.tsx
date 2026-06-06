@@ -3,7 +3,7 @@
  * Multi-step onboarding for Student, Teacher, Parent
  * Collects role-specific data, saves to backend, marks onboardingComplete
  */
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
   StyleSheet, KeyboardAvoidingView, Platform, Modal, Alert, BackHandler,
@@ -19,6 +19,191 @@ import type { AppColors } from '../../theme';
 import { AVATAR_STYLES } from '../../constants/avatarStyles';
 import SERVER_URL from '../../config/serverUrl';
 import firebaseApp from '../../config/firebase';
+
+// ── Custom Date Picker ─────────────────────────────────────
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+// mode: 'day' | 'month' | 'year'
+function DatePickerInput({ value, onChange, colors }: {
+  value: string;
+  onChange: (v: string) => void;
+  colors: any;
+}) {
+  const [open, setOpen]     = useState(false);
+  const [pos,  setPos]      = useState({ top: 0, left: 0 });
+  const [mode, setMode]     = useState<'day'|'month'|'year'>('day');
+  const [yearRangeStart, setYearRangeStart] = useState(0);
+  const btnRef = useRef<any>(null);
+
+  const today  = new Date();
+  const parsed = value ? (() => {
+    const [d, m, y] = value.split('/').map(Number);
+    return new Date(y, m - 1, d);
+  })() : null;
+
+  const [viewYear,  setViewYear]  = useState(parsed?.getFullYear()  ?? today.getFullYear() - 15);
+  const [viewMonth, setViewMonth] = useState(parsed?.getMonth()      ?? today.getMonth());
+
+  function openPicker() {
+    if (Platform.OS === 'web' && btnRef.current) {
+      const rect = (btnRef.current as any).getBoundingClientRect?.();
+      if (rect) setPos({ top: rect.bottom + window.scrollY + 6, left: rect.left + window.scrollX });
+    }
+    setMode('day');
+    setOpen(o => !o);
+  }
+
+  useEffect(() => {
+    if (!open || Platform.OS !== 'web') return;
+    const handler = (e: any) => {
+      const cal = document.getElementById('aivorah-cal');
+      if (cal && !cal.contains(e.target) && btnRef.current && !(btnRef.current as any).contains?.(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const bg = colors.bgDark, border = colors.borderColor, text = colors.textMain, muted = colors.textMuted;
+  const displayValue = value || 'DD / MM / YYYY';
+  const selectedDay  = parsed?.getMonth() === viewMonth && parsed?.getFullYear() === viewYear ? parsed.getDate() : null;
+
+  const navBtn  = `background:transparent;border:none;color:${TEAL};font-size:16px;cursor:pointer;padding:4px 8px;border-radius:6px;`;
+  const headBtn = `background:transparent;border:none;color:${text};font-weight:700;font-size:15px;cursor:pointer;padding:4px 8px;border-radius:6px;text-decoration:underline dotted ${TEAL};`;
+
+  function buildDayView() {
+    const firstDay    = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const cells: (number|null)[] = [...Array(firstDay).fill(null), ...Array.from({length:daysInMonth},(_,i)=>i+1)];
+    while (cells.length % 7 !== 0) cells.push(null);
+
+    const dayHeaders = DAYS.map(d => `<div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:${muted};padding:4px 0">${d}</div>`).join('');
+    const dayRows = Array.from({length: cells.length/7}, (_, row) => {
+      const cols = cells.slice(row*7, row*7+7).map(day => {
+        const isSel   = day !== null && day === selectedDay;
+        const isToday = day !== null && viewYear === today.getFullYear() && viewMonth === today.getMonth() && day === today.getDate();
+        return `<button data-day="${day??''}" style="flex:1;height:34px;border:none;border-radius:8px;background:${isSel?TEAL:isToday?TEAL+'33':'transparent'};color:${isSel?'#fff':day?text:'transparent'};font-size:13px;font-weight:${isSel||isToday?'700':'400'};cursor:${day?'pointer':'default'}">${day??''}</button>`;
+      }).join('');
+      return `<div style="display:flex;margin-bottom:2px">${cols}</div>`;
+    }).join('');
+    const clearBtn = value ? `<button id="aivorah-cal-clear" style="margin-top:10px;width:100%;background:transparent;border:none;color:#ef4444;font-size:12px;cursor:pointer">Clear date</button>` : '';
+
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <button id="cal-pm" style="${navBtn}">‹</button>
+        <div style="display:flex;gap:4px">
+          <button id="cal-hm" style="${headBtn}">${MONTHS[viewMonth]}</button>
+          <button id="cal-hy" style="${headBtn}">${viewYear}</button>
+        </div>
+        <button id="cal-nm" style="${navBtn}">›</button>
+      </div>
+      <div style="display:flex;margin-bottom:6px">${dayHeaders}</div>
+      ${dayRows}${clearBtn}`;
+  }
+
+  function buildMonthView() {
+    const rows = Array.from({length:3}, (_,row) => {
+      const cols = Array.from({length:4}, (_,col) => {
+        const mi = row*4+col;
+        const isSel = mi === viewMonth;
+        return `<button data-month="${mi}" style="flex:1;padding:10px 4px;border:none;border-radius:8px;background:${isSel?TEAL:'transparent'};color:${isSel?'#fff':text};font-size:13px;font-weight:${isSel?'700':'400'};cursor:pointer">${MONTHS[mi].slice(0,3)}</button>`;
+      }).join('');
+      return `<div style="display:flex;gap:4px;margin-bottom:4px">${cols}</div>`;
+    }).join('');
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <button id="cal-py" style="${navBtn}">‹</button>
+        <button id="cal-hy" style="${headBtn}">${viewYear}</button>
+        <button id="cal-ny" style="${navBtn}">›</button>
+      </div>
+      ${rows}`;
+  }
+
+  function buildYearView() {
+    const start = yearRangeStart || Math.floor(viewYear/12)*12;
+    const years = Array.from({length:12}, (_,i) => start+i);
+    const rows = Array.from({length:3}, (_,row) => {
+      const cols = years.slice(row*4, row*4+4).map(yr => {
+        const isSel = yr === viewYear;
+        return `<button data-year="${yr}" style="flex:1;padding:10px 4px;border:none;border-radius:8px;background:${isSel?TEAL:'transparent'};color:${isSel?'#fff':text};font-size:13px;font-weight:${isSel?'700':'400'};cursor:pointer">${yr}</button>`;
+      }).join('');
+      return `<div style="display:flex;gap:4px;margin-bottom:4px">${cols}</div>`;
+    }).join('');
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <button id="cal-pyr" style="${navBtn}">‹</button>
+        <span style="font-weight:700;font-size:14px;color:${text}">${start} – ${start+11}</span>
+        <button id="cal-nyr" style="${navBtn}">›</button>
+      </div>
+      ${rows}`;
+  }
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    let el = document.getElementById('aivorah-cal');
+    if (!open) { if (el) el.style.display = 'none'; return; }
+    if (!el) { el = document.createElement('div'); el.id = 'aivorah-cal'; document.body.appendChild(el); }
+    el.style.cssText = `position:fixed;top:${pos.top}px;left:${pos.left}px;z-index:99999;background:${bg};border:1.5px solid ${TEAL}80;border-radius:14px;padding:16px;width:290px;display:block;box-shadow:0 8px 32px rgba(0,0,0,0.5);`;
+
+    if (mode === 'day')   el.innerHTML = buildDayView();
+    if (mode === 'month') el.innerHTML = buildMonthView();
+    if (mode === 'year')  el.innerHTML = buildYearView();
+
+    // Day view events
+    document.getElementById('cal-pm')?.addEventListener('click', () => {
+      if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y-1); } else setViewMonth(m => m-1);
+    });
+    document.getElementById('cal-nm')?.addEventListener('click', () => {
+      if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y+1); } else setViewMonth(m => m+1);
+    });
+    document.getElementById('cal-hm')?.addEventListener('click', () => setMode('month'));
+    document.getElementById('cal-hy')?.addEventListener('click', () => {
+      setYearRangeStart(Math.floor(viewYear/12)*12);
+      setMode('year');
+    });
+    el.querySelectorAll('button[data-day]').forEach(btn => {
+      const day = parseInt((btn as HTMLElement).dataset.day || '');
+      if (day) btn.addEventListener('click', () => {
+        const d = String(day).padStart(2,'0'), m = String(viewMonth+1).padStart(2,'0');
+        onChange(`${d}/${m}/${viewYear}`); setOpen(false);
+      });
+    });
+    document.getElementById('aivorah-cal-clear')?.addEventListener('click', () => { onChange(''); setOpen(false); });
+
+    // Month view events
+    document.getElementById('cal-py')?.addEventListener('click', () => setViewYear(y => y-1));
+    document.getElementById('cal-ny')?.addEventListener('click', () => setViewYear(y => y+1));
+    el.querySelectorAll('button[data-month]').forEach(btn => {
+      const mi = parseInt((btn as HTMLElement).dataset.month || '');
+      btn.addEventListener('click', () => { setViewMonth(mi); setMode('day'); });
+    });
+
+    // Year view events
+    document.getElementById('cal-pyr')?.addEventListener('click', () => setYearRangeStart(s => (s||Math.floor(viewYear/12)*12) - 12));
+    document.getElementById('cal-nyr')?.addEventListener('click', () => setYearRangeStart(s => (s||Math.floor(viewYear/12)*12) + 12));
+    el.querySelectorAll('button[data-year]').forEach(btn => {
+      const yr = parseInt((btn as HTMLElement).dataset.year || '');
+      btn.addEventListener('click', () => { setViewYear(yr); setMode('month'); });
+    });
+  }, [open, mode, viewMonth, viewYear, yearRangeStart, pos, selectedDay, value]);
+
+  useEffect(() => () => { document.getElementById('aivorah-cal')?.remove(); }, []);
+
+  return (
+    <TouchableOpacity ref={btnRef} onPress={openPicker} activeOpacity={0.8}
+      style={{
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        height: 48, paddingHorizontal: 14, borderRadius: 10,
+        borderWidth: 1, borderColor: open ? TEAL : border,
+        backgroundColor: bg, alignSelf: 'flex-start' as any, minWidth: 220,
+      }}>
+      <Text style={{ fontSize: 15, color: value ? text : muted, marginRight: 12 }}>{displayValue}</Text>
+      <Feather name="calendar" size={16} color={open ? TEAL : muted} />
+    </TouchableOpacity>
+  );
+}
 
 // ── Constants ──────────────────────────────────────────────
 const CURRICULA = ['IB PYP', 'IB MYP', 'IB DP', 'NCERT', 'CBSE', 'ICSE', 'Cambridge', 'State Board'];
@@ -577,26 +762,7 @@ export default function OnboardingScreen() {
           
           <Text style={styles.fieldLabel}>Date of Birth</Text>
           {Platform.OS === 'web' ? (
-            <input
-              type="date"
-              max={new Date().toISOString().split('T')[0]}
-              value={dob ? `${dob.split('/')[2]}-${dob.split('/')[1]}-${dob.split('/')[0]}` : ''}
-              onChange={e => {
-                const v = e.target.value; // YYYY-MM-DD
-                if (v) {
-                  const [y, m, d] = v.split('-');
-                  setDob(`${d}/${m}/${y}`);
-                } else {
-                  setDob('');
-                }
-              }}
-              style={{
-                width: '100%', padding: '12px 14px', borderRadius: 10,
-                border: `1.5px solid ${colors.border}`, background: colors.surface,
-                color: colors.text, fontSize: 15, outline: 'none', boxSizing: 'border-box',
-                marginBottom: 4, cursor: 'pointer',
-              }}
-            />
+            <DatePickerInput value={dob} onChange={setDob} colors={colors} />
           ) : (
             <TextInput style={styles.input} value={dob} onChangeText={setDob}
               placeholder="DD/MM/YYYY" placeholderTextColor={colors.textDim} keyboardType="numeric" />
@@ -956,7 +1122,8 @@ export default function OnboardingScreen() {
   return (
     <View style={styles.screen}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {/* Exit confirmation modal */}
+
+        {/* ── Exit modal ── */}
         <Modal visible={exitConfirm} transparent animationType="fade" onRequestClose={() => setExitConfirm(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalBox}>
@@ -974,54 +1141,7 @@ export default function OnboardingScreen() {
           </View>
         </Modal>
 
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.headerLeft} onPress={showExitConfirm} activeOpacity={0.7}>
-            <View style={styles.logoMark}>
-              <Feather name="zap" size={16} color="#fff" />
-            </View>
-            <Text style={styles.logoText}>Aivorah</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={showExitConfirm} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: '#ef444418', borderWidth: 1, borderColor: '#ef444440' }} activeOpacity={0.7}>
-            <Feather name="log-out" size={13} color="#ef4444" />
-            <Text style={{ fontSize: 13, color: '#ef4444', fontWeight: '700' }}>Exit</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Progress bar */}
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progress * 100}%` as any }]} />
-        </View>
-
-        {/* Step title */}
-        <View style={styles.stepHeaderWrap}>
-          <View style={styles.stepHeader}>
-            <View style={styles.stepIconCircle}>
-              <Feather name={steps[step].icon as any} size={20} color={TEAL} />
-            </View>
-            <View>
-              <Text style={styles.stepTitle}>{steps[step].title}</Text>
-              <Text style={styles.stepSubtitle}>{steps[step].subtitle}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Content */}
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <View style={styles.centeredCard}>
-            {renderStepContent()}
-          </View>
-        </ScrollView>
-
-        {/* Save error */}
-        {saveError ? (
-          <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm }}>
-            <Text style={{ color: '#ef4444', fontSize: 13, textAlign: 'center' }}>{saveError}</Text>
-          </View>
-        ) : null}
-
-        {/* Child account credentials modal */}
+        {/* ── Child credentials modal ── */}
         <Modal visible={showChildCreds} transparent animationType="fade" onRequestClose={confirmChildCredsAndFinish}>
           <View style={styles.modalOverlay}>
             <View style={[styles.modalBox, { maxHeight: '80%' as any }]}>
@@ -1034,17 +1154,11 @@ export default function OnboardingScreen() {
                   <Text style={styles.modalText}>Share these login details with your {createdChildCreds.length > 1 ? 'children' : 'child'}</Text>
                 </View>
               </View>
-
               <ScrollView style={{ flexGrow: 0 }}>
                 {createdChildCreds.map((cred, idx) => (
                   <View key={idx} style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 14, gap: 12, borderWidth: 1, borderColor: colors.borderColor, marginBottom: idx < createdChildCreds.length - 1 ? 12 : 0 }}>
-                    {createdChildCreds.length > 1 && (
-                      <Text style={{ fontSize: 14, fontWeight: '700', color: TEAL }}>{cred.name}</Text>
-                    )}
-                    <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center' }}>
-                      Save these — {cred.name} uses them to log in as a Student on any device.
-                    </Text>
-
+                    {createdChildCreds.length > 1 && <Text style={{ fontSize: 14, fontWeight: '700', color: TEAL }}>{cred.name}</Text>}
+                    <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center' }}>Save these — {cred.name} uses them to log in as a Student on any device.</Text>
                     {[
                       { label: 'Student ID', value: cred.studentId, field: `studentId-${idx}` },
                       { label: 'Login ID (Email)', value: cred.loginId, field: `loginId-${idx}` },
@@ -1054,15 +1168,12 @@ export default function OnboardingScreen() {
                         <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
                         <TouchableOpacity
                           style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.cardDark, borderWidth: 1, borderColor: copiedField === field ? TEAL : colors.borderColor, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, gap: 8 }}
-                          onPress={() => copyToClipboard(value, field)}
-                          activeOpacity={0.7}
-                        >
+                          onPress={() => copyToClipboard(value, field)} activeOpacity={0.7}>
                           <Text style={{ flex: 1, color: colors.textMain, fontSize: 13, fontFamily: 'monospace' }} selectable>{value}</Text>
                           <Feather name={copiedField === field ? 'check' : 'copy'} size={14} color={copiedField === field ? TEAL : colors.textDim} />
                         </TouchableOpacity>
                       </View>
                     ))}
-
                     {cred.verificationRequired && (
                       <View style={{ backgroundColor: '#5F8A8612', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: '#5F8A8630', gap: 4 }}>
                         <Text style={{ fontSize: 12, fontWeight: '700', color: '#5F8A86' }}>Your child can log in right away.</Text>
@@ -1074,7 +1185,6 @@ export default function OnboardingScreen() {
                   </View>
                 ))}
               </ScrollView>
-
               <TouchableOpacity style={styles.modalBtn} onPress={confirmChildCredsAndFinish} activeOpacity={0.85}>
                 <Text style={styles.modalBtnText}>Got it, I've saved these</Text>
               </TouchableOpacity>
@@ -1082,33 +1192,136 @@ export default function OnboardingScreen() {
           </View>
         </Modal>
 
-        {/* Navigation buttons */}
-        <View style={styles.navRow}>
-          {step > 0 ? (
-            <TouchableOpacity style={styles.backBtn} onPress={handleBack} activeOpacity={0.8}>
-              <Feather name="arrow-left" size={16} color={colors.textMuted} />
-              <Text style={[styles.backBtnText, { color: colors.textMuted }]}>Back</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={[styles.backBtn, { backgroundColor: '#ef444418', borderRadius: 20, borderWidth: 1, borderColor: '#ef444440', paddingHorizontal: 12, paddingVertical: 7 }]} onPress={showExitConfirm} activeOpacity={0.8}>
-              <Feather name="arrow-left" size={15} color="#ef4444" />
-              <Text style={[styles.backBtnText, { color: '#ef4444', fontWeight: '700' }]}>Sign Out</Text>
-            </TouchableOpacity>
-          )}
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-          <TouchableOpacity
-            style={[styles.nextBtn, !canProceed() && styles.nextBtnDisabled]}
-            onPress={handleNext}
-            disabled={!canProceed() || saving}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.nextBtnText}>
-              {saving ? 'Saving...' : isLastStep ? 'Get Started' : 'Continue'}
-            </Text>
-            {!isLastStep && <Feather name="arrow-right" size={16} color="#fff" />}
-            {isLastStep && <Feather name="check" size={16} color="#fff" />}
-          </TouchableOpacity>
-        </View>
+          {/* ── Header ── */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.headerLeft} onPress={showExitConfirm} activeOpacity={0.7}>
+              <View style={styles.logoMark}>
+                <Feather name="zap" size={16} color="#fff" />
+              </View>
+              <Text style={styles.logoText}>Aivorah</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={showExitConfirm}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: '#ef444418', borderWidth: 1, borderColor: '#ef444440' }}
+              activeOpacity={0.7}>
+              <Feather name="log-out" size={13} color="#ef4444" />
+              <Text style={{ fontSize: 13, color: '#ef4444', fontWeight: '700' }}>Exit</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* ── Horizontal step cards ── */}
+          <View style={styles.stepsRow}>
+            {steps.map((s, i) => {
+              const isCompleted = i < step;
+              const isActive    = i === step;
+              const isLocked    = i > step;
+              return (
+                <TouchableOpacity
+                  key={i}
+                  style={[
+                    styles.stepCard,
+                    isCompleted && styles.stepCardDone,
+                    isActive    && styles.stepCardActive,
+                    isLocked    && styles.stepCardLocked,
+                  ]}
+                  onPress={() => isCompleted && setStep(i)}
+                  activeOpacity={isCompleted ? 0.7 : 1}
+                  disabled={isLocked}
+                >
+                  {/* Number / status badge */}
+                  <View style={[
+                    styles.stepBadge,
+                    isCompleted && { backgroundColor: TEAL },
+                    isActive    && { backgroundColor: TEAL },
+                    isLocked    && { backgroundColor: colors.borderColor },
+                  ]}>
+                    {isCompleted
+                      ? <Feather name="check" size={13} color="#fff" />
+                      : isLocked
+                        ? <Feather name="lock" size={11} color={colors.textDim} />
+                        : <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>{i + 1}</Text>
+                    }
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[
+                      styles.stepCardTitle,
+                      isActive    && { color: TEAL },
+                      isCompleted && { color: TEAL },
+                      isLocked    && { color: colors.textDim },
+                    ]}>{s.title}</Text>
+                    <Text style={[styles.stepCardSub, isLocked && { color: colors.borderColor }]}>{s.subtitle}</Text>
+                  </View>
+                  {isCompleted && (
+                    <Feather name="edit-2" size={12} color={TEAL + '80'} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* ── Connector line between cards ── */}
+          <View style={styles.connectorRow}>
+            {steps.map((_, i) => i < steps.length - 1 && (
+              <View key={i} style={[styles.connector, i < step && { backgroundColor: TEAL }]} />
+            ))}
+          </View>
+
+          {/* ── Form card ── */}
+          <View style={styles.formCard}>
+            {/* Step heading inside card */}
+            <View style={styles.formCardHeader}>
+              <View style={[styles.stepIconCircle, { backgroundColor: TEAL + '18' }]}>
+                <Feather name={steps[step].icon as any} size={18} color={TEAL} />
+              </View>
+              <View>
+                <Text style={styles.formCardTitle}>{steps[step].title}</Text>
+                <Text style={styles.formCardSub}>{steps[step].subtitle}</Text>
+              </View>
+            </View>
+
+            <View style={styles.formDivider} />
+
+            {/* Step content */}
+            {renderStepContent()}
+
+            {/* Save error */}
+            {saveError ? (
+              <Text style={{ color: '#ef4444', fontSize: 13, textAlign: 'center', marginTop: 8 }}>{saveError}</Text>
+            ) : null}
+
+            {/* ── Navigation buttons inside card ── */}
+            <View style={styles.navRow}>
+              {step > 0 ? (
+                <TouchableOpacity style={styles.backBtn} onPress={handleBack} activeOpacity={0.8}>
+                  <Feather name="arrow-left" size={16} color={colors.textMuted} />
+                  <Text style={[styles.backBtnText, { color: colors.textMuted }]}>Back</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: '#ef444418', borderWidth: 1, borderColor: '#ef444440' }}
+                  onPress={showExitConfirm} activeOpacity={0.8}>
+                  <Feather name="log-out" size={13} color="#ef4444" />
+                  <Text style={{ fontSize: 13, color: '#ef4444', fontWeight: '700' }}>Sign Out</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={[styles.nextBtn, !canProceed() && styles.nextBtnDisabled]}
+                onPress={handleNext}
+                disabled={!canProceed() || saving}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.nextBtnText}>
+                  {saving ? 'Saving...' : isLastStep ? 'Get Started' : 'Continue'}
+                </Text>
+                {!saving && !isLastStep && <Feather name="arrow-right" size={16} color="#fff" />}
+                {!saving &&  isLastStep && <Feather name="check"       size={16} color="#fff" />}
+              </TouchableOpacity>
+            </View>
+          </View>
+
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
@@ -1117,66 +1330,106 @@ export default function OnboardingScreen() {
 const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bgDark },
 
+  scrollContent: { flexGrow: 1, alignItems: 'center', paddingBottom: 48, paddingHorizontal: spacing.md },
+
+  // ── Header ──
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl, paddingTop: 40, paddingBottom: spacing.md,
+    width: '100%', maxWidth: 900,
+    paddingTop: 40, paddingBottom: spacing.lg, alignSelf: 'center',
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  logoMark: {
-    width: 32, height: 32, borderRadius: radius.sm,
-    backgroundColor: TEAL, alignItems: 'center', justifyContent: 'center',
-  },
+  logoMark: { width: 32, height: 32, borderRadius: radius.sm, backgroundColor: TEAL, alignItems: 'center', justifyContent: 'center' },
   logoText: { fontSize: 18, fontWeight: '700', color: c.textMain, letterSpacing: -0.3 },
-  stepCounter: { fontSize: 13, color: c.textMuted, fontWeight: '600' },
 
-  progressTrack: {
-    height: 4, backgroundColor: c.borderColor,
-    marginHorizontal: spacing.xl, borderRadius: 2, overflow: 'hidden',
+  // ── Horizontal step cards ──
+  stepsRow: {
+    flexDirection: 'row', gap: 0,
+    width: '100%', maxWidth: 900, alignSelf: 'center',
+    marginBottom: 0,
   },
-  progressFill: { height: '100%', backgroundColor: TEAL, borderRadius: 2 },
+  stepCard: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 16, paddingHorizontal: 14,
+    backgroundColor: c.cardDark,
+    borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: 0,
+  },
+  stepCardActive: {
+    borderColor: TEAL,
+    backgroundColor: TEAL + '10',
+    borderBottomWidth: 3,
+    borderBottomColor: TEAL,
+  },
+  stepCardDone: {
+    borderColor: TEAL + '50',
+    backgroundColor: TEAL + '08',
+  },
+  stepCardLocked: {
+    opacity: 0.5,
+  },
+  stepBadge: {
+    width: 26, height: 26, borderRadius: 13,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: TEAL,
+  },
+  stepCardTitle: { fontSize: 13, fontWeight: '700', color: c.textMain },
+  stepCardSub:   { fontSize: 11, color: c.textMuted, marginTop: 1 },
 
-  stepHeader: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    width: '100%', maxWidth: 520,
-    paddingTop: 28, paddingBottom: spacing.md,
+  // Connector dots between cards
+  connectorRow: {
+    flexDirection: 'row', width: '100%', maxWidth: 900, alignSelf: 'center',
+    marginBottom: 24,
   },
+  connector: {
+    flex: 1, height: 2,
+    backgroundColor: c.borderColor,
+  },
+
+  // ── Form card ──
+  formCard: {
+    width: '100%', maxWidth: 900, alignSelf: 'center',
+    backgroundColor: c.cardDark,
+    borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
+    gap: spacing.lg,
+  },
+  formCardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   stepIconCircle: {
-    width: 44, height: 44, borderRadius: 12,
-    backgroundColor: TEAL + '18', alignItems: 'center', justifyContent: 'center',
+    width: 40, height: 40, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center',
   },
-  stepTitle: { fontSize: 20, fontWeight: '800', color: c.textMain },
-  stepSubtitle: { fontSize: 13, color: c.textMuted, marginTop: 2 },
+  formCardTitle: { fontSize: 18, fontWeight: '800', color: c.textMain },
+  formCardSub:   { fontSize: 13, color: c.textMuted, marginTop: 2 },
+  formDivider:   { height: 1, backgroundColor: c.borderColor },
 
-  scrollContent: { flexGrow: 1, alignItems: 'center', paddingVertical: 8, paddingHorizontal: spacing.md, paddingBottom: 32 },
-  centeredCard: { width: '100%', maxWidth: 520, gap: spacing.lg },
   stepContent: { gap: spacing.lg },
 
-  stepHeaderWrap: { alignItems: 'center', paddingHorizontal: spacing.xl },
   fieldLabel: {
     fontSize: 13, fontWeight: '700', color: c.textMuted,
     textTransform: 'uppercase', letterSpacing: 0.5,
   },
   input: {
-    height: 48, backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
+    height: 48, backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor,
     borderRadius: radius.md, paddingHorizontal: spacing.md,
-    fontSize: 15, color: c.textMain,
+    fontSize: 15, color: c.textMain, maxWidth: 480,
   },
 
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     paddingHorizontal: 14, paddingVertical: 10,
     borderRadius: 20, borderWidth: 1, borderColor: c.borderColor,
-    backgroundColor: c.cardDark,
+    backgroundColor: c.bgDark,
   },
   chipActive: { backgroundColor: TEAL + '20', borderColor: TEAL },
   chipText: { fontSize: 13, fontWeight: '600', color: c.textMuted },
   chipTextActive: { color: TEAL },
 
-  // Learning style cards
   lsCard: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
     padding: spacing.lg, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.cardDark,
+    borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark,
   },
   lsCardActive: { borderColor: TEAL, backgroundColor: TEAL + '10' },
   lsIcon: {
@@ -1186,20 +1439,16 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   lsLabel: { fontSize: 15, fontWeight: '700', color: c.textMain },
   lsDesc: { fontSize: 12, color: c.textMuted, marginTop: 2 },
 
-  // Avatar grid
   avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   avatarCard: {
-    flexBasis: '30%', flexGrow: 1,
+    flexBasis: '22%', flexGrow: 1, maxWidth: '25%',
     alignItems: 'center', gap: 10,
     paddingVertical: spacing.lg, paddingHorizontal: spacing.sm,
     borderRadius: radius.lg,
-    borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.cardDark,
+    borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark,
   },
   avatarCardActive: { borderColor: TEAL, backgroundColor: TEAL + '15' },
-  avatarCircle: {
-    width: 72, height: 72, borderRadius: 36,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  avatarCircle: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
   avatarLabel: { fontSize: 13, fontWeight: '600', color: c.textMuted, textAlign: 'center' },
   avatarCheck: {
     position: 'absolute', top: 8, right: 8,
@@ -1207,11 +1456,11 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
     backgroundColor: TEAL, alignItems: 'center', justifyContent: 'center',
   },
 
-  // Navigation
   navRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl, paddingVertical: spacing.lg,
+    paddingTop: spacing.md,
     borderTopWidth: 1, borderTopColor: c.borderColor,
+    marginTop: spacing.sm,
   },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: spacing.sm },
   backBtnText: { fontSize: 14, fontWeight: '600' },
@@ -1223,32 +1472,14 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   nextBtnDisabled: { opacity: 0.4 },
   nextBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   modalBox: {
-    width: '100%',
-    maxWidth: 420,
-    backgroundColor: c.cardDark,
-    borderWidth: 1,
-    borderColor: c.borderColor,
-    borderRadius: radius.xl,
-    padding: spacing.xl,
-    gap: spacing.md,
+    width: '100%', maxWidth: 420,
+    backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: radius.xl, padding: spacing.xl, gap: spacing.md,
   },
   modalTitle: { fontSize: 18, fontWeight: '800', color: c.textMain },
   modalText: { fontSize: 14, color: c.textMuted, lineHeight: 20 },
-  modalBtn: {
-    marginTop: spacing.sm,
-    alignSelf: 'flex-end',
-    backgroundColor: TEAL,
-    borderRadius: radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
+  modalBtn: { marginTop: spacing.sm, alignSelf: 'flex-end', backgroundColor: TEAL, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 10 },
   modalBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 });

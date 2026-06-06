@@ -10,7 +10,11 @@ export type AvatarStyleId =
   | 'scientist'
   | 'athlete'
   | 'musician'
-  | 'ninja';
+  | 'ninja'
+  | 'dreamer'
+  | 'coder'
+  | 'leader'
+  | 'adventurer';
 
 export type AvatarStyle = {
   id: AvatarStyleId;
@@ -30,8 +34,12 @@ export const AVATAR_STYLES: AvatarStyle[] = [
   { id: 'artist',    label: 'Artist',     icon: 'feather',     gradient: ['#9B6EA8', '#CFA8D8'] },
   { id: 'scientist', label: 'Scientist',  icon: 'cpu',         gradient: ['#4A8A7A', '#7DBDAD'] },
   { id: 'athlete',   label: 'Athlete',    icon: 'activity',    gradient: ['#A86B3C', '#D4A070'] },
-  { id: 'musician',  label: 'Musician',   icon: 'music',       gradient: ['#6B5EA8', '#9E93D4'] },
-  { id: 'ninja',     label: 'Ninja',      icon: 'shield',      gradient: ['#3C3C5A', '#6B6B9A'] },
+  { id: 'musician',    label: 'Musician',    icon: 'music',      gradient: ['#6B5EA8', '#9E93D4'] },
+  { id: 'ninja',       label: 'Ninja',       icon: 'shield',     gradient: ['#3C3C5A', '#6B6B9A'] },
+  { id: 'dreamer',     label: 'Dreamer',     icon: 'moon',       gradient: ['#5B6EA8', '#93A8D4'] },
+  { id: 'coder',       label: 'Coder',       icon: 'code',       gradient: ['#2D7A5A', '#4DB88A'] },
+  { id: 'leader',      label: 'Leader',      icon: 'star',       gradient: ['#A87B3C', '#D4B070'] },
+  { id: 'adventurer',  label: 'Adventurer',  icon: 'map',        gradient: ['#7A4A8A', '#B07AC0'] },
 ];
 
 const FALLBACK_AVATAR = AVATAR_STYLES[0];
