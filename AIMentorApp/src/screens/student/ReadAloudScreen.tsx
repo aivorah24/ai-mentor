@@ -457,10 +457,30 @@ export default function ReadAloudScreen() {
 
   // ── Countdown → Start Reading ──────────────────────────────────────
   const beginReadingRef = useRef<() => void>(() => {});
+  const startLiveRecognitionRef = useRef<() => void>(() => {});
   const startCountdown = useCallback(() => {
     stopListening();
     setPhase('countdown');
     setCountdownNum(3);
+
+    // Warm up the mic + recognizer DURING the countdown (not at "Go!"). Vosk's
+    // VAD/recognizer needs ~200-300ms to lock onto the audio stream — starting
+    // it only when reading begins clips the very first word the child says,
+    // which then gets wrongly marked "skipped". Acquiring the stream ~2.4s
+    // early (the 3-2-1 countdown) means it's already warm by the time they
+    // speak — this is how Google Read Along avoids losing the opening word.
+    if (Platform.OS === 'web' && !mediaStreamRef.current) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then((stream) => {
+          mediaStreamRef.current = stream;
+          // Spin up the recognizer now too — any speech caught during the
+          // countdown gets wiped by beginReading()'s state reset, so starting
+          // early is risk-free and guarantees the engine is hot for word one.
+          startLiveRecognitionRef.current?.();
+        })
+        .catch((err) => console.warn('[ReadAloud] Mic warm-up failed (will retry at start):', err?.message));
+    }
+
     let count = 3;
     countdownTimer.current = setInterval(() => {
       count--;
@@ -736,15 +756,18 @@ export default function ReadAloudScreen() {
     // don't match nearby and are ignored).
     const recent = spoken.slice(-14);
 
-    // ⍰ = Vosk [unk]: the child spoke something that is NOT a passage word →
-    // a likely mispronunciation of the word they're currently on.
-    if (recent.includes('⍰')) misreadCandidateRef.current.add(cursor);
-
     const skipped: number[] = [];
     const misread: number[] = [];
     let pi = cursor;
     for (const word of recent) {
-      if (word === '⍰') continue; // off-script token, not a passage word
+      if (word === '⍰') {
+        // Vosk [unk]: the child spoke something off-script — a likely
+        // mispronunciation of whatever word the matcher is CURRENTLY sitting
+        // on (pi), not the stale cursor from the start of this batch — by the
+        // time ⍰ appears mid-sequence, pi may have already advanced past it.
+        misreadCandidateRef.current.add(pi);
+        continue;
+      }
       if (pi >= pWords.length) break;
       if (pi - cursor >= 14) break; // cap advance per event (allows fast reading)
 
@@ -1144,6 +1167,7 @@ export default function ReadAloudScreen() {
       }, 3000);
     }
   }, [sendAudioForLiveASR, advanceHighlightTo, followAlong]);
+  useEffect(() => { startLiveRecognitionRef.current = startLiveRecognition; }, [startLiveRecognition]);
 
   // ── Begin Recording ───────────────────────────────────────────────
   const beginReading = useCallback(async () => {
@@ -1153,17 +1177,23 @@ export default function ReadAloudScreen() {
       return;
     }
 
-    // Request microphone
+    // Reuse the stream acquired during the countdown warm-up if we have one —
+    // re-requesting would tear down the already-warm recognizer and reintroduce
+    // the startup-clipping gap we're trying to avoid.
     let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (err) {
-      console.error('[ReadAloud] Mic denied:', err);
-      Alert.alert('Microphone Access', 'Please allow microphone access in your browser settings.');
-      setPhase('idle');
-      return;
+    if (mediaStreamRef.current) {
+      stream = mediaStreamRef.current;
+    } else {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        console.error('[ReadAloud] Mic denied:', err);
+        Alert.alert('Microphone Access', 'Please allow microphone access in your browser settings.');
+        setPhase('idle');
+        return;
+      }
+      mediaStreamRef.current = stream;
     }
-    mediaStreamRef.current = stream;
 
     // Reset state
     const initialStatuses: WordStatus[] = new Array(words.length).fill('pending');
@@ -1210,7 +1240,17 @@ export default function ReadAloudScreen() {
 
     // Start waveform visualizer
     startWaveform(stream);
-    startLiveRecognition();
+    // If the recognizer is already warm from the countdown, leave it running
+    // (restarting it would tear down the engine and reopen the clipping gap).
+    // Its `onWords` already routes into followAlong, which is gated on
+    // liveRecognitionActiveRef — flip that on and it picks up immediately.
+    if (voskActiveRef.current || speechRecogRef.current) {
+      liveRecognitionActiveRef.current = true;
+      setLiveSpeechStatus('listening');
+      console.log('[ReadAloud] Reusing pre-warmed recognizer — no clipping gap');
+    } else {
+      startLiveRecognition();
+    }
 
     // Timer only. Word highlighting is driven by live speech recognition.
     recordingTimerRef.current = setInterval(() => {
