@@ -22,6 +22,10 @@ COPY AIMentorApp/dist2/favicon.ico  ./AIMentorApp/dist2/favicon.ico
 COPY AIMentorApp/dist2/metadata.json ./AIMentorApp/dist2/metadata.json
 # Copy font assets explicitly — avoids .dockerignore node_modules exclusion
 COPY AIMentorApp/dist2/assets       ./AIMentorApp/dist2/assets
+# Vosk on-device speech model for Read Aloud — served at /models/... so the
+# in-browser "Read Along" engine works in production too. Sourced from the
+# committed AIMentorApp/public/models (small, stable — not the rebuilt dist2/models).
+COPY AIMentorApp/public/models      ./AIMentorApp/dist2/models
 
 # ── Copy startup script ──
 COPY start.sh /app/start.sh

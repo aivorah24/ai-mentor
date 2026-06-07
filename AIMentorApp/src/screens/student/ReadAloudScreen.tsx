@@ -23,8 +23,15 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentData } from '../../context/StudentDataContext';
 import SERVER_URL from '../../config/serverUrl';
+import {
+  isVoskSupported,
+  loadVoskModel,
+  isVoskModelReady,
+  startVoskRecognition,
+  stopVoskRecognition,
+} from '../../services/voskRecognition';
 
-type Phase = 'pick' | 'idle' | 'countdown' | 'reading' | 'preview' | 'analysing' | 'reviewing';
+type Phase = 'pick' | 'calibration' | 'idle' | 'countdown' | 'reading' | 'preview' | 'analysing' | 'reviewing';
 type WordStatus = 'pending' | 'current' | 'correct' | 'misread' | 'skipped';
 type DifficultyFilter = 'all' | 'easy' | 'medium' | 'hard';
 
@@ -89,8 +96,12 @@ function levenshtein(a: string, b: string): number {
 
 function fuzzyMatch(spoken: string, expected: string): boolean {
   if (spoken === expected) return true;
-  if (expected.length <= 3) return spoken === expected;
-  return levenshtein(spoken, expected) <= (expected.length > 6 ? 2 : 1);
+  // Short words must match exactly — too many false positives otherwise
+  // e.g., "mood"→"food" (lev=2), "from"→"food" (lev=2)
+  if (expected.length <= 4) return spoken === expected;
+  // Longer words allow 1 edit (typo/accent), very long allow 2
+  const maxDist = expected.length >= 8 ? 2 : 1;
+  return levenshtein(spoken, expected) <= maxDist;
 }
 
 // ── Word-weight model for TTS highlight sync ────────────────────────────
@@ -141,7 +152,7 @@ export default function ReadAloudScreen() {
   const { colors, isDark } = useTheme();
   const navigation = useNavigation<any>();
   const { user } = useAuth();
-  const { stats } = useStudentData();
+  const { stats, addXP } = useStudentData();
   const s = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const screenW = Dimensions.get('window').width;
   const isWide = screenW > 700;
@@ -163,6 +174,10 @@ export default function ReadAloudScreen() {
   const [loadingPassage, setLoadingPassage] = useState(false);
   const [diffFilter, setDiffFilter] = useState<DifficultyFilter>('all');
   const [highlightIdx, setHighlightIdx] = useState(-1);
+  const [studentLexile, setStudentLexile] = useState<number | null>(null);
+  const [needsCalibration, setNeedsCalibration] = useState(false);
+  const [starsEarned, setStarsEarned] = useState(0);
+  const isCalibrationRef = useRef(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -172,6 +187,12 @@ export default function ReadAloudScreen() {
   const [recordedBlobUrl, setRecordedBlobUrl] = useState<string | null>(null);
   const [isPlayingBack, setIsPlayingBack] = useState(false);
   const [liveSpeechStatus, setLiveSpeechStatus] = useState<'idle' | 'listening' | 'unavailable' | 'error'>('idle');
+  // Vosk (on-device, passage-constrained) is the ONLY engine that gives the
+  // Google-Read-Along feel — instant, accurate, no cloud round-trip. We track
+  // its load state so "Start Reading" waits for it instead of silently
+  // falling through to the laggy Web Speech API.
+  const [voskStatus, setVoskStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
+  const [activeEngine, setActiveEngine] = useState<'vosk' | 'webspeech' | 'whisper' | null>(null);
   const [waveformBars, setWaveformBars] = useState<number[]>(new Array(24).fill(3));
   const recordingTimerRef = useRef<any>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -187,19 +208,42 @@ export default function ReadAloudScreen() {
   const countdownTimer = useRef<any>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const scrollRef = useRef<ScrollView>(null);
+  const wordYRef = useRef<number[]>([]); // vertical offset of each word, for auto-scroll
   const rafRef = useRef<number>(0);
 
-  // Keep refs in sync
+  // Keep refs in sync — sourcePos only.
+  // NOTE: wordStatusesRef is set explicitly wherever wordStatuses is updated
+  // (loadPassage, beginRecording, sendAudioForLiveASR, tryAgain).
+  // A useEffect sync would cause a race condition where the effect fires with
+  // the PREVIOUS render's state, overwriting the ref with stale data.
   useEffect(() => { sourcePosRef.current = sourcePos; }, [sourcePos]);
-  useEffect(() => { wordStatusesRef.current = wordStatuses; }, [wordStatuses]);
 
-  // ── Fetch passage list on mount ─────────────────────────────────────
+  // ── Fetch Lexile level + passage list on mount ─────────────────────
   useEffect(() => {
-    fetch(`${SERVER_URL}/read-aloud/passages?grade=${encodeURIComponent(userGrade)}`)
+    const email = user?.email;
+    if (email) {
+      fetch(`${SERVER_URL}/read-aloud/lexile?email=${encodeURIComponent(email)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.needsCalibration) {
+            setNeedsCalibration(true);
+            setStudentLexile(null);
+          } else {
+            setStudentLexile(data.lexile);
+            setNeedsCalibration(false);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user?.email]);
+
+  useEffect(() => {
+    const lexileParam = studentLexile != null ? `&lexile=${studentLexile}` : '';
+    fetch(`${SERVER_URL}/read-aloud/passages?grade=${encodeURIComponent(userGrade)}${lexileParam}`)
       .then(r => r.json())
       .then(data => setPassageList(data.passages || []))
       .catch(() => {});
-  }, [userGrade]);
+  }, [userGrade, studentLexile]);
 
   // ── Pulse animation while recording ────────────────────────────────
   useEffect(() => {
@@ -236,6 +280,7 @@ export default function ReadAloudScreen() {
         liveRecognitionActiveRef.current = false;
         try { recognitionRef.current.stop(); } catch {}
       }
+      if (liveASRTimerRef.current) clearInterval(liveASRTimerRef.current);
     };
   }, []);
 
@@ -255,7 +300,9 @@ export default function ReadAloudScreen() {
         setPassage(data);
         const w = splitWords(data.text);
         setWords(w);
-        setWordStatuses(new Array(w.length).fill('pending'));
+        const initialStatuses: WordStatus[] = new Array(w.length).fill('pending');
+        setWordStatuses(initialStatuses);
+        wordStatusesRef.current = initialStatuses;
         setSourcePos(0);
         setResult(null);
         setHighlightIdx(-1);
@@ -409,6 +456,7 @@ export default function ReadAloudScreen() {
   }, [cancelHighlightLoop]);
 
   // ── Countdown → Start Reading ──────────────────────────────────────
+  const beginReadingRef = useRef<() => void>(() => {});
   const startCountdown = useCallback(() => {
     stopListening();
     setPhase('countdown');
@@ -419,12 +467,12 @@ export default function ReadAloudScreen() {
       if (count <= 0) {
         clearInterval(countdownTimer.current);
         setCountdownNum(0);
-        beginReading();
+        beginReadingRef.current();
       } else {
         setCountdownNum(count);
       }
     }, 800);
-  }, []);
+  }, [stopListening]);
 
   // ── Refs to avoid stale closures in recorder callbacks ─────────────
   const passageRef = useRef(passage);
@@ -472,119 +520,630 @@ export default function ReadAloudScreen() {
     setWaveformBars(new Array(24).fill(3));
   }, []);
 
-  const updateLiveWordHighlight = useCallback((spokenWords: string[]) => {
-    const passageWords = wordsRef.current;
-    if (!passageWords.length || !spokenWords.length) return;
+  // ── Server-side ASR: send audio snapshots to Whisper every ~3.5s ────
+  const liveASRTimerRef = useRef<any>(null);
+  const liveASRBusyRef = useRef(false);
+  const liveASRMatchedRef = useRef(0); // highest confirmed word position
+  const liveASRChunkStartRef = useRef(0); // index into audioChunksRef where current window starts
+  const recordingStartTimeRef = useRef(0); // when recording started (for time-based cap)
 
-    const liveStatuses: WordStatus[] = new Array(passageWords.length).fill('pending');
-    let pos = 0;
+  // Animate highlight from current pos to target pos, one word at a time.
+  // Speed adapts to the gap: small gap = slow (reader is slow),
+  // large gap = fast catch-up (reader is fast and highlight is behind).
+  // serverStatuses: if provided, uses the server's per-word status
+  // (correct/misread/skipped) so errors show live during reading.
+  const serverStatusesRef = useRef<string[]>([]);
+  const animTimerRef = useRef<any>(null);
+  const animateToPos = useCallback((targetPos: number, serverStatuses?: string[]) => {
+    if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = null; }
+    if (serverStatuses) serverStatusesRef.current = serverStatuses;
+    const passageText = passageRef.current?.text;
+    if (!passageText) return;
+    const passageWords = passageText.match(/\S+/g) || [];
+    const totalWords = passageWords.length;
 
-    for (const spokenRaw of spokenWords) {
-      if (pos >= passageWords.length) break;
-      const spoken = normalize(spokenRaw);
-      if (!spoken) continue;
-
-      if (fuzzyMatch(spoken, normalize(passageWords[pos]))) {
-        liveStatuses[pos] = 'correct';
-        pos++;
-        continue;
-      }
-
-      let foundAhead = false;
-      for (let ahead = 1; ahead <= 3 && pos + ahead < passageWords.length; ahead++) {
-        if (fuzzyMatch(spoken, normalize(passageWords[pos + ahead]))) {
-          for (let k = pos; k < pos + ahead; k++) liveStatuses[k] = 'skipped';
-          liveStatuses[pos + ahead] = 'correct';
-          pos = pos + ahead + 1;
-          foundAhead = true;
-          break;
-        }
-      }
-
-      if (!foundAhead) {
-        liveStatuses[pos] = 'misread';
-        pos++;
+    // Time-based cap: max ~3 words/second from recording start.
+    // Prevents Whisper from jumping ahead when it hallucinates matches.
+    const MAX_WORDS_PER_SEC = 2;
+    if (recordingStartTimeRef.current > 0) {
+      const elapsedSec = (Date.now() - recordingStartTimeRef.current) / 1000;
+      const maxAllowed = Math.ceil(elapsedSec * MAX_WORDS_PER_SEC);
+      if (targetPos > maxAllowed) {
+        console.log(`[Highlight] capped ${targetPos} → ${maxAllowed} (${elapsedSec.toFixed(1)}s elapsed)`);
+        targetPos = maxAllowed;
       }
     }
 
-    for (let i = 0; i < liveStatuses.length; i++) {
-      if (liveStatuses[i] === 'current') liveStatuses[i] = 'pending';
-    }
+    const gap = targetPos - liveASRMatchedRef.current;
+    if (gap <= 0) return;
+    // Smooth animation speed based on gap size:
+    // Small gap (1-3): reader is slow, animate at reading pace (200ms/word)
+    // Medium gap (4-8): normal catch-up (120ms/word)
+    // Large gap (9+): reader is fast, quick catch-up (60ms/word)
+    const interval = gap <= 3 ? 200 : gap <= 8 ? 120 : 60;
 
-    if (pos < liveStatuses.length && liveStatuses[pos] === 'pending') {
-      liveStatuses[pos] = 'current';
-    }
+    animTimerRef.current = setInterval(() => {
+      const curPos = liveASRMatchedRef.current;
+      if (curPos >= targetPos || curPos >= totalWords) {
+        clearInterval(animTimerRef.current);
+        animTimerRef.current = null;
+        return;
+      }
+      const newPos = curPos + 1;
+      liveASRMatchedRef.current = newPos;
+      console.log(`[Highlight] word=${curPos} t=${Date.now()}`);
 
-    setSourcePos(pos);
-    sourcePosRef.current = pos;
-    setWordStatuses(liveStatuses);
-    wordStatusesRef.current = liveStatuses;
+      const fullStatuses: WordStatus[] = wordStatusesRef.current.length === totalWords
+        ? wordStatusesRef.current.slice()
+        : new Array(totalWords).fill('pending') as WordStatus[];
+
+      const srvStatus = serverStatusesRef.current[curPos];
+      if (srvStatus === 'misread' || srvStatus === 'skipped') {
+        fullStatuses[curPos] = srvStatus as WordStatus;
+      } else {
+        fullStatuses[curPos] = 'correct';
+      }
+      if (newPos < totalWords) fullStatuses[newPos] = 'current';
+      setWordStatuses(fullStatuses);
+      wordStatusesRef.current = fullStatuses;
+      webSpeechPosRef.current = newPos;
+      setSourcePos(newPos);
+      sourcePosRef.current = newPos;
+    }, interval);
   }, []);
+
+  const sendAudioForLiveASR = useCallback(async () => {
+    if (liveASRBusyRef.current) return;
+    const chunks = audioChunksRef.current;
+    if (!chunks.length) return;
+    const passageText = passageRef.current?.text;
+    if (!passageText) return;
+
+    liveASRBusyRef.current = true;
+    try {
+      const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
+      const blob = new Blob(chunks, { type: mimeType });
+      if (blob.size < 25000) { liveASRBusyRef.current = false; return; } // 25KB min to avoid noise-only clips
+      if (blob.size > 1500000) {
+        console.log(`[ReadAloud] Skipping: too large (${(blob.size/1024).toFixed(0)}KB)`);
+        liveASRBusyRef.current = false;
+        return;
+      }
+
+      const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
+      const file = new File([blob], `live.${ext}`, { type: mimeType });
+      const form = new FormData();
+      form.append('audio', file);
+      form.append('passage', passageText);
+      form.append('offset', '0');
+
+      const resp = await fetch(`${SERVER_URL}/read-aloud/transcribe-live`, {
+        method: 'POST',
+        body: form,
+      });
+      if (!resp.ok) {
+        liveASRBusyRef.current = false;
+        return; // silently skip — next cycle will retry
+      }
+
+      const data = await resp.json();
+      const serverPos = data.matchedUpTo || 0;
+      console.log(`[ReadAloud] ASR: server=${serverPos}, current=${liveASRMatchedRef.current}`);
+
+      // Whisper is the primary accuracy driver — let it advance freely
+      // as long as the server matched words. Server-side Whisper matching
+      // is more accurate than Deepgram streaming for children's reading.
+      if (serverPos > liveASRMatchedRef.current) {
+        animateToPos(serverPos, data.wordStatuses);
+      }
+    } catch (err: any) {
+      console.warn('[ReadAloud] ASR error:', err?.message || err);
+    }
+    liveASRBusyRef.current = false;
+  }, [animateToPos]);
+
+  // ── Web Speech API for INSTANT word highlighting ────────────────────
+  // Uses browser's built-in speech recognition (webkitSpeechRecognition).
+  // KEY ADVANTAGE: Has built-in VAD — won't fire on silence/fan noise.
+  // Unlike Whisper, it never hallucinates words from background noise.
+  const speechRecogRef = useRef<any>(null);
+  const voskActiveRef = useRef(false); // true while Vosk (on-device) is driving the highlight
+  const misreadCandidateRef = useRef<Set<number>>(new Set()); // words with off-script speech ([unk])
+  const displayPosRef = useRef(0); // smoothly-animated visible cursor (lags target)
+  const targetStatusesRef = useRef<WordStatus[]>([]); // authoritative statuses (for scoring)
+  const stepTimerRef = useRef<any>(null); // reveal / catch-up animation timer
+  const webSpeechPosRef = useRef(0); // authoritative passage cursor (shared by all engines)
+  const webSpeechAccumulatedRef = useRef<string[]>([]); // words accumulated across Web Speech sessions
+
+  // ── Smooth reveal (catch-up animation) ───────────────────────────────
+  // ASR delivers words in bursts, which makes the highlight leap several words
+  // at once. We keep the AUTHORITATIVE position (webSpeechPosRef + target
+  // statuses) and glide the VISIBLE cursor toward it one step per tick — the
+  // smooth karaoke sweep Google Read Along has.
+  const revealStep = useCallback(() => {
+    const total = targetStatusesRef.current.length;
+    const stop = () => { if (stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; } };
+    if (!total) { stop(); return; }
+    const target = webSpeechPosRef.current;
+    let display = displayPosRef.current;
+    if (display >= target) { stop(); return; }
+    const gap = target - display;
+    display = Math.min(target, display + Math.max(1, Math.round(gap / 3))); // glide, catch up if far behind
+    displayPosRef.current = display;
+    const vis = targetStatusesRef.current.slice();
+    for (let i = display + 1; i < total; i++) vis[i] = 'pending'; // hide words not yet reached
+    if (display < total) vis[display] = 'current';
+    setWordStatuses(vis);
+    wordStatusesRef.current = vis;
+    setSourcePos(display);
+    sourcePosRef.current = display;
+  }, []);
+
+  const ensureStepper = useCallback(() => {
+    if (stepTimerRef.current) return;
+    stepTimerRef.current = setInterval(() => revealStep(), 55);
+  }, [revealStep]);
+
+  const advanceHighlightTo = useCallback((newPos: number, marks?: { skipped?: number[]; misread?: number[] }) => {
+    const passageText = passageRef.current?.text;
+    if (!passageText) return;
+    const passageWords = passageText.match(/\S+/g) || [];
+    const totalWords = passageWords.length;
+    if (newPos <= webSpeechPosRef.current) return; // never go backwards
+    if (newPos > totalWords) newPos = totalWords;
+    // Glide past punctuation-only tokens (e.g. "—") — the cursor must never
+    // rest on something nobody can pronounce.
+    while (newPos < totalWords && !/[a-z]/i.test(passageWords[newPos])) newPos++;
+
+    // Authoritative target statuses (used for scoring); revealed gradually above.
+    const target: WordStatus[] = targetStatusesRef.current.length === totalWords
+      ? targetStatusesRef.current.slice()
+      : new Array(totalWords).fill('pending') as WordStatus[];
+    for (let i = 0; i < newPos; i++) {
+      if (target[i] === 'pending' || target[i] === 'current') {
+        target[i] = marks?.misread?.includes(i) ? 'misread'
+                  : marks?.skipped?.includes(i) ? 'skipped'
+                  : 'correct';
+      }
+    }
+    if (newPos < totalWords) target[newPos] = 'current';
+    targetStatusesRef.current = target;
+
+    webSpeechPosRef.current = newPos;
+    if (newPos > liveASRMatchedRef.current) liveASRMatchedRef.current = newPos;
+    ensureStepper();
+  }, [ensureStepper]);
+
+  // ── Read-Along follow algorithm (shared by Vosk + Web Speech) ─────────
+  // Because the passage is KNOWN, we only ask: did the child just say the NEXT
+  // expected word? Match → advance; word-after-next (content word) → they
+  // skipped one, advance two; no confident match → WAIT (do nothing). Noise/
+  // mis-hears can't match the specific next word, so the highlight never races
+  // ahead; an unclear word just pauses in place instead of sticking then jumping.
+  const followAlong = useCallback((spoken: string[]) => {
+    if (!liveRecognitionActiveRef.current) return;
+    if (spoken.length === 0) return;
+    const pText = passageRef.current?.text || '';
+    const pWords = pText.match(/\S+/g) || [];
+    if (pWords.length === 0) return;
+
+    const cursor = webSpeechPosRef.current;
+    if (cursor >= pWords.length) return;
+
+    const isCommon = (w: string) => FUNCTION_WORDS.has(w) || w.length <= 3;
+    // Use a longer tail so a fast reader's burst of words is all available to
+    // align in one pass (older words that are already behind the cursor simply
+    // don't match nearby and are ignored).
+    const recent = spoken.slice(-14);
+
+    // ⍰ = Vosk [unk]: the child spoke something that is NOT a passage word →
+    // a likely mispronunciation of the word they're currently on.
+    if (recent.includes('⍰')) misreadCandidateRef.current.add(cursor);
+
+    const skipped: number[] = [];
+    const misread: number[] = [];
+    let pi = cursor;
+    for (const word of recent) {
+      if (word === '⍰') continue; // off-script token, not a passage word
+      if (pi >= pWords.length) break;
+      if (pi - cursor >= 14) break; // cap advance per event (allows fast reading)
+
+      // A content word may bridge a skip: search a few words ahead to find
+      // where the reader actually is. Common words (to/of/and…) must be the
+      // immediate next word, so they can never cause a big jump (no racing).
+      const window = isCommon(word) ? 1 : 5;
+      let found = -1;
+      for (let d = 0; d <= window && pi + d < pWords.length; d++) {
+        if (fuzzyMatch(word, normalize(pWords[pi + d]))) { found = d; break; }
+      }
+      if (found >= 0) {
+        // Words pi..pi+found-1 were jumped over: misread if the reader
+        // attempted them (heard [unk]), otherwise skipped entirely.
+        for (let k = pi; k < pi + found; k++) {
+          if (!/[a-z]/i.test(pWords[k])) continue; // punctuation (e.g. "—") isn't a skip
+          if (misreadCandidateRef.current.has(k)) misread.push(k);
+          else skipped.push(k);
+        }
+        pi = pi + found + 1;
+      }
+      // else: not found nearby — noise/mispronunciation → wait, ignore it
+    }
+
+    if (pi > cursor) {
+      console.log(`[ReadAlong] ${cursor} → ${pi}/${pWords.length} (heard: "${recent.join(' ')}"${misread.length ? ' misread:' + misread.join(',') : ''}${skipped.length ? ' skipped:' + skipped.join(',') : ''})`);
+      advanceHighlightTo(pi, { skipped, misread });
+    }
+  }, [advanceHighlightTo]);
+
+  // Preload the Vosk model in the background so it's ready when reading starts.
+  // "Start Reading" is gated on this (see renderIdle) so the session ALWAYS
+  // runs the on-device, passage-constrained engine — the Google Read Along feel.
+  useEffect(() => {
+    if (Platform.OS === 'web' && isVoskSupported()) {
+      loadVoskModel().then((ok) => {
+        if (ok) {
+          console.log('[ReadAloud] Vosk model preloaded — Read Along engine ready');
+          setVoskStatus('ready');
+        } else {
+          console.log('[ReadAloud] Vosk unavailable — will use Web Speech fallback');
+          setVoskStatus('unavailable');
+        }
+      });
+    } else {
+      setVoskStatus('unavailable');
+    }
+  }, []);
+
+  // Clear the reveal animation timer on unmount.
+  useEffect(() => () => { if (stepTimerRef.current) clearInterval(stepTimerRef.current); }, []);
+
+  // Auto-scroll the passage so the word being read stays in view (Read Along
+  // keeps the current word near the top third, like Google Read Along / karaoke).
+  useEffect(() => {
+    if (phase !== 'reading') return;
+    const y = wordYRef.current[sourcePos];
+    if (y == null) return;
+    const target = Math.max(0, y - 130); // keep current line ~1/3 down the viewport
+    scrollRef.current?.scrollTo({ y: target, animated: true });
+  }, [sourcePos, phase]);
+
+  // ── Deepgram Streaming ASR for instant word highlighting ────────────
+  const deepgramWsRef = useRef<WebSocket | null>(null);
+  const deepgramAudioCtxRef = useRef<any>(null);
+  const deepgramProcessorRef = useRef<any>(null);
+  const deepgramSourceRef = useRef<any>(null);
+  const dgLastAdvanceTimeRef = useRef(0); // rate limiter: last time Deepgram advanced
+
+  const startDeepgramStreaming = useCallback(async (stream: MediaStream) => {
+    if (Platform.OS !== 'web') return false;
+
+    try {
+      // Fetch Deepgram API key from server
+      const keyResp = await fetch(`${SERVER_URL}/read-aloud/deepgram-key`);
+      if (!keyResp.ok) {
+        console.warn('[Deepgram] Failed to get API key');
+        return false;
+      }
+      const { key } = await keyResp.json();
+
+      // Build keywords from passage for better accuracy
+      const passageText = passageRef.current?.text || '';
+      const uniqueWords = [...new Set(passageText.match(/\S+/g)?.map((w: string) => w.replace(/[^a-zA-Z']/g, '').toLowerCase()).filter((w: string) => w.length > 3) || [])];
+      const keywords = uniqueWords.slice(0, 20).map((w: string) => `${w}:2`).join('&keywords=');
+
+      // Open WebSocket to Deepgram streaming API
+      const dgUrl = `wss://api.deepgram.com/v1/listen?model=nova-2&language=en&smart_format=false&interim_results=true&punctuate=false&encoding=linear16&sample_rate=16000&endpointing=300&vad_events=true${keywords ? '&keywords=' + keywords : ''}`;
+      const ws = new WebSocket(dgUrl, ['token', key]);
+      deepgramWsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('[Deepgram] WebSocket connected');
+
+        // Set up AudioContext to convert mic audio to 16kHz linear16 PCM
+        const audioCtx = new AudioContext({ sampleRate: 16000 });
+        deepgramAudioCtxRef.current = audioCtx;
+        const source = audioCtx.createMediaStreamSource(stream);
+        deepgramSourceRef.current = source;
+
+        // Use ScriptProcessorNode (widely supported) to get raw PCM
+        const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+        deepgramProcessorRef.current = processor;
+
+        processor.onaudioprocess = (e: any) => {
+          if (ws.readyState !== WebSocket.OPEN) return;
+          const float32 = e.inputBuffer.getChannelData(0);
+          // Convert float32 to int16
+          const int16 = new Int16Array(float32.length);
+          for (let i = 0; i < float32.length; i++) {
+            const s = Math.max(-1, Math.min(1, float32[i]));
+            int16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          }
+          ws.send(int16.buffer);
+        };
+
+        source.connect(processor);
+        processor.connect(audioCtx.destination);
+      };
+
+      ws.onmessage = (event) => {
+        if (!liveRecognitionActiveRef.current) return;
+        try {
+          const data = JSON.parse(event.data);
+          if (!data.channel?.alternatives?.[0]) return;
+
+          const alt = data.channel.alternatives[0];
+          const transcript = alt.transcript || '';
+          const isFinal = data.is_final;
+          const words = alt.words || [];
+
+          if (!transcript.trim()) return;
+
+          const passageText = passageRef.current?.text;
+          if (!passageText) return;
+          const passageWords = passageText.match(/\S+/g) || [];
+          const pos = webSpeechPosRef.current;
+          if (pos >= passageWords.length) return;
+
+          // Extract spoken words from Deepgram with confidence
+          const dgWords: { word: string; confidence: number }[] = words.map((w: any) => ({
+            word: (w.word || '').toLowerCase().replace(/[^a-z']/g, ''),
+            confidence: w.confidence || 0,
+          })).filter((w: any) => w.word);
+
+          // Fallback to transcript if no word-level data
+          const spokenWords = dgWords.length > 0
+            ? dgWords
+            : transcript.trim().toLowerCase().replace(/[^a-z'\s]/g, '').split(/\s+/).filter(Boolean).map((w: string) => ({ word: w, confidence: 0.5 }));
+
+          if (spokenWords.length > 0) {
+            const expected = pos < passageWords.length ? normalize(passageWords[pos]) : '(end)';
+            console.log(`[Deepgram] "${spokenWords.map((w: any) => w.word).join(' ')}" (final=${isFinal}, pos=${pos}, expect="${expected}")`);
+          }
+
+          // ── Sliding Window Alignment (MonkeyType approach) ──
+          // Only compare against a small window around current position.
+          // Rate-limited: max 3 words/second to match natural reading speed.
+          const WINDOW = 5;
+          const MAX_ADVANCE = 2;
+          const MIN_CONFIDENCE = 0.65;
+          const MIN_INTERVAL_MS = 350; // min time between advances (~3 words/sec max)
+
+          // Rate limit: skip if we advanced too recently
+          const now = Date.now();
+          if (now - dgLastAdvanceTimeRef.current < MIN_INTERVAL_MS) {
+            return; // too soon since last advance
+          }
+
+          // Build the window of expected words
+          const windowEnd = Math.min(pos + WINDOW, passageWords.length);
+          const windowWords = passageWords.slice(pos, windowEnd).map((w: string) => normalize(w));
+
+          // Extract spoken words (only sufficient confidence)
+          const validSpoken = spokenWords
+            .filter((w: { confidence: number }) => w.confidence >= MIN_CONFIDENCE)
+            .map((w: { word: string }) => w.word.toLowerCase());
+
+          if (validSpoken.length === 0) {
+            // No confident words — skip
+          } else {
+            // Sequential alignment: match spoken words against window in order
+            let windowIdx = 0;
+            let matched = 0;
+
+            for (const spoken of validSpoken) {
+              if (windowIdx >= windowWords.length) break;
+              if (matched >= MAX_ADVANCE) break;
+
+              // Try match at current window position
+              if (fuzzyMatch(spoken, windowWords[windowIdx])) {
+                windowIdx++;
+                matched++;
+                continue;
+              }
+
+              // Try next position (student may have skipped 1 word)
+              if (windowIdx + 1 < windowWords.length && fuzzyMatch(spoken, windowWords[windowIdx + 1])) {
+                windowIdx += 2;
+                matched++;
+                continue;
+              }
+              // No match — noise or mispronunciation, ignore
+            }
+
+            if (matched >= 1) {
+              const newPos = pos + windowIdx;
+              dgLastAdvanceTimeRef.current = now;
+              console.log(`[Deepgram] ${pos} → ${newPos} (+${windowIdx}, ${matched}match, spoken="${validSpoken.join(' ')}")`);
+              advanceHighlightTo(newPos);
+            }
+          }
+        } catch (err) {
+          // ignore parse errors
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.warn('[Deepgram] WebSocket error:', err);
+      };
+
+      ws.onclose = (event) => {
+        console.log(`[Deepgram] WebSocket closed (code=${event.code})`);
+      };
+
+      console.log('[Deepgram] Streaming started');
+      return true;
+    } catch (err: any) {
+      console.warn('[Deepgram] Start failed:', err?.message || err);
+      return false;
+    }
+  }, [advanceHighlightTo]);
+
+  const stopDeepgramStreaming = useCallback(() => {
+    if (deepgramProcessorRef.current) {
+      try { deepgramProcessorRef.current.disconnect(); } catch {}
+      deepgramProcessorRef.current = null;
+    }
+    if (deepgramSourceRef.current) {
+      try { deepgramSourceRef.current.disconnect(); } catch {}
+      deepgramSourceRef.current = null;
+    }
+    if (deepgramAudioCtxRef.current) {
+      try { deepgramAudioCtxRef.current.close(); } catch {}
+      deepgramAudioCtxRef.current = null;
+    }
+    if (deepgramWsRef.current) {
+      try {
+        // Send CloseStream message before closing
+        if (deepgramWsRef.current.readyState === WebSocket.OPEN) {
+          deepgramWsRef.current.send(JSON.stringify({ type: 'CloseStream' }));
+        }
+        deepgramWsRef.current.close();
+      } catch {}
+      deepgramWsRef.current = null;
+    }
+  }, []);
+
+  // Keep old ref name for backward compat in stopWebSpeech calls
+  const stopWebSpeech = stopDeepgramStreaming;
 
   const stopLiveRecognition = useCallback(() => {
     liveRecognitionActiveRef.current = false;
     setLiveSpeechStatus('idle');
-    const recognition = recognitionRef.current;
-    if (!recognition) return;
-    recognition.onresult = null;
-    recognition.onerror = null;
-    recognition.onend = null;
-    try { recognition.stop(); } catch {}
-    recognitionRef.current = null;
-  }, []);
+    if (liveASRTimerRef.current) { clearInterval(liveASRTimerRef.current); liveASRTimerRef.current = null; }
+    if (animTimerRef.current) { clearInterval(animTimerRef.current); animTimerRef.current = null; }
+    // Stop Vosk (on-device) recognition
+    if (voskActiveRef.current) {
+      stopVoskRecognition();
+      voskActiveRef.current = false;
+    }
+    // Stop Web Speech recognition
+    if (speechRecogRef.current) {
+      try { speechRecogRef.current.stop(); } catch {}
+      speechRecogRef.current = null;
+    }
+    stopWebSpeech();
+    // Snap the smooth reveal to the true final position (so scoring/review sees
+    // the complete, accurate statuses immediately).
+    if (stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; }
+    if (targetStatusesRef.current.length) {
+      displayPosRef.current = webSpeechPosRef.current;
+      const finalStatuses = targetStatusesRef.current.slice();
+      setWordStatuses(finalStatuses);
+      wordStatusesRef.current = finalStatuses;
+      setSourcePos(webSpeechPosRef.current);
+      sourcePosRef.current = webSpeechPosRef.current;
+    }
+  }, [stopWebSpeech]);
 
-  const startLiveRecognition = useCallback(() => {
+  const startLiveRecognition = useCallback(async () => {
     if (Platform.OS !== 'web') return;
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setLiveSpeechStatus('unavailable');
-      return;
-    }
-
-    stopLiveRecognition();
     liveRecognitionActiveRef.current = true;
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event: any) => {
-      let interimTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const spoken = event.results[i][0]?.transcript || '';
-        if (event.results[i].isFinal) {
-          liveFinalTranscriptRef.current = `${liveFinalTranscriptRef.current} ${spoken}`.trim();
-        } else {
-          interimTranscript += ` ${spoken}`;
-        }
-      }
-      const transcript = `${liveFinalTranscriptRef.current} ${interimTranscript}`.trim();
-      updateLiveWordHighlight(transcript.match(/\S+/g) || []);
-    };
-    recognition.onerror = (event: any) => {
-      console.warn('[ReadAloud] Live recognition error:', event?.error);
-      setLiveSpeechStatus('error');
-    };
-    recognition.onend = () => {
-      recognitionRef.current = null;
-      if (!liveRecognitionActiveRef.current) return;
-      setTimeout(() => {
-        if (liveRecognitionActiveRef.current) startLiveRecognition();
-      }, 150);
-    };
-
-    recognitionRef.current = recognition;
-    try { recognition.start(); } catch (e) {
-      console.warn('[ReadAloud] Live recognition start failed:', e);
-      liveRecognitionActiveRef.current = false;
-      setLiveSpeechStatus('error');
-      recognitionRef.current = null;
-      return;
-    }
     setLiveSpeechStatus('listening');
-  }, [stopLiveRecognition, updateLiveWordHighlight]);
+    // DO NOT reset webSpeechPosRef here — it must persist across pause/resume
+    // It is only reset in beginReading() when a fresh recording starts
+    webSpeechAccumulatedRef.current = [];
+
+    // ── PRIMARY: Vosk on-device, constrained to the known passage ──
+    // This is the Google Read Along approach: the recognizer can only output
+    // words from THIS passage, so it can't drift to off-script words. If the
+    // model isn't ready (still downloading) or fails, we fall through to the
+    // open Web Speech engine below.
+    if (isVoskSupported() && isVoskModelReady() && mediaStreamRef.current) {
+      const grammarWords = passageRef.current?.text?.match(/\S+/g) || [];
+      const started = await startVoskRecognition({
+        stream: mediaStreamRef.current,
+        grammarWords,
+        onWords: followAlong,
+      });
+      if (started && liveRecognitionActiveRef.current) {
+        voskActiveRef.current = true;
+        setActiveEngine('vosk');
+        console.log('[ReadAloud] Vosk mode (on-device, passage-constrained — Read Along)');
+        return;
+      }
+    }
+
+    // ── PRIMARY: Browser Web Speech API ──
+    // Works on: Chrome (Win/Mac/Android), Edge (Win/Mac), Safari (Mac/iOS), Opera
+    // Built-in VAD: will NOT fire on silence, fan noise, or background sounds.
+    // This is how Raz-Plus and production read-aloud systems work.
+    // Fallback: Whisper polling for Firefox or unsupported browsers.
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      recognition.maxAlternatives = 1;
+      speechRecogRef.current = recognition;
+
+      recognition.onaudiostart = () => {
+        console.log('[WebSpeech] Audio capture started — mic is active');
+      };
+      recognition.onspeechstart = () => {
+        console.log('[WebSpeech] Speech detected — VAD triggered');
+      };
+      recognition.onspeechend = () => {
+        console.log('[WebSpeech] Speech ended — VAD silence');
+      };
+
+      recognition.onresult = (event: any) => {
+        if (!liveRecognitionActiveRef.current) return;
+        // Gather the full session transcript (finals + interim); followAlong
+        // looks only at the most recent words and matches the known passage.
+        const spoken: string[] = [];
+        for (let i = 0; i < event.results.length; i++) {
+          const words = event.results[i][0].transcript
+            .toLowerCase().replace(/[^a-z'\s]/g, '').trim().split(/\s+/).filter(Boolean);
+          spoken.push(...words);
+        }
+        followAlong(spoken);
+      };
+
+      recognition.onerror = (event: any) => {
+        if (event.error === 'no-speech') return; // VAD detected silence — normal
+        if (event.error === 'aborted') return;
+        console.warn('[WebSpeech] error:', event.error);
+        // If not-allowed, the mic is blocked — fall back to Whisper
+        if (event.error === 'not-allowed') {
+          console.warn('[WebSpeech] Mic not allowed — falling back to Whisper polling');
+          speechRecogRef.current = null;
+          setTimeout(() => {
+            if (liveRecognitionActiveRef.current) sendAudioForLiveASR();
+          }, 3000);
+          liveASRTimerRef.current = setInterval(() => {
+            if (liveRecognitionActiveRef.current) sendAudioForLiveASR();
+          }, 3000);
+        }
+      };
+
+      recognition.onend = () => {
+        console.log(`[WebSpeech] Session ended at passage position ${webSpeechPosRef.current}`);
+        // Auto-restart if still recording (Web Speech stops after pauses)
+        if (liveRecognitionActiveRef.current) {
+          try { recognition.start(); } catch {}
+        }
+      };
+
+      try {
+        recognition.start();
+        setActiveEngine('webspeech');
+        console.log('[ReadAloud] Web Speech API mode (Chrome/Edge/Safari — built-in VAD)');
+      } catch (err: any) {
+        console.warn('[WebSpeech] start failed:', err?.message);
+      }
+    } else {
+      // Fallback for Firefox / unsupported browsers: Whisper polling
+      setActiveEngine('whisper');
+      console.log('[ReadAloud] Whisper fallback mode (Web Speech not available)');
+      setTimeout(() => {
+        if (liveRecognitionActiveRef.current) sendAudioForLiveASR();
+      }, 3000);
+      liveASRTimerRef.current = setInterval(() => {
+        if (liveRecognitionActiveRef.current) sendAudioForLiveASR();
+      }, 3000);
+    }
+  }, [sendAudioForLiveASR, advanceHighlightTo, followAlong]);
 
   // ── Begin Recording ───────────────────────────────────────────────
   const beginReading = useCallback(async () => {
@@ -613,8 +1172,15 @@ export default function ReadAloudScreen() {
     wordStatusesRef.current = initialStatuses;
     setSourcePos(0);
     sourcePosRef.current = 0;
-    liveFinalTranscriptRef.current = '';
     liveRecognitionActiveRef.current = false;
+    liveASRBusyRef.current = false;
+    liveASRMatchedRef.current = 0;
+    liveASRChunkStartRef.current = 0;
+    webSpeechPosRef.current = 0;
+    misreadCandidateRef.current.clear();
+    displayPosRef.current = 0;
+    targetStatusesRef.current = initialStatuses.slice();
+    if (stepTimerRef.current) { clearInterval(stepTimerRef.current); stepTimerRef.current = null; }
     setStartTime(Date.now());
     setRecordingTime(0);
     setIsPaused(false);
@@ -638,6 +1204,8 @@ export default function ReadAloudScreen() {
     };
 
     recorder.start(250);
+    recordingStartTimeRef.current = Date.now();
+    console.log(`[Recording] started t=${recordingStartTimeRef.current}`);
     console.log(`[ReadAloud] Recording started (${recorder.mimeType})`);
 
     // Start waveform visualizer
@@ -650,6 +1218,7 @@ export default function ReadAloudScreen() {
       setRecordingTime(Math.floor(elapsed));
     }, 200);
   }, [words, startWaveform, startLiveRecognition]);
+  useEffect(() => { beginReadingRef.current = beginReading; }, [beginReading]);
 
   // ── Pause / Resume Recording ──────────────────────────────────────
   const pauseRecording = useCallback(() => {
@@ -796,6 +1365,25 @@ export default function ReadAloudScreen() {
     }
   }, []);
 
+  // Handle calibration result after assess
+  const handleCalibrationResult = useCallback(async (accuracy: number, wcpm: number) => {
+    const gradeBase = { 'Grade 1': 200, 'Grade 2': 300, 'Grade 3': 400, 'Grade 4': 500, 'Grade 5': 600 }[userGrade] || 400;
+    let lexile: number;
+    if (accuracy >= 95 && wcpm >= 80) lexile = gradeBase + 100;
+    else if (accuracy >= 80 && wcpm >= 50) lexile = gradeBase;
+    else lexile = gradeBase - 100;
+    try {
+      await fetch(`${SERVER_URL}/read-aloud/lexile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user?.email, lexile, source: 'calibration' }),
+      });
+    } catch {}
+
+    setStudentLexile(lexile);
+    setNeedsCalibration(false);
+  }, [userGrade, user?.email]);
+
   // ── Finish and assess ──────────────────────────────────────────────
   const finishReading = useCallback(async (statuses: WordStatus[]) => {
     const dur = (Date.now() - startTimeRef.current) / 1000;
@@ -819,7 +1407,24 @@ export default function ReadAloudScreen() {
         }),
       });
       const data = await res.json();
+
+      // If calibration mode, compute Lexile and go back to pick
+      if (isCalibrationRef.current) {
+        isCalibrationRef.current = false;
+        await handleCalibrationResult(data.accuracy || 0, data.wcpm || 0);
+        setPhase('pick');
+        setResult(null);
+        return;
+      }
+
       setResult(data);
+      // Award stars as XP
+      if (data.starsEarned) {
+        setStarsEarned(data.starsEarned);
+        try { addXP(data.starsEarned); } catch {}
+      }
+      // Update Lexile
+      if (data.lexile != null) setStudentLexile(data.lexile);
     } catch {
       const correct = finalStatuses.filter(s => s === 'correct').length;
       const total = finalStatuses.length;
@@ -838,14 +1443,17 @@ export default function ReadAloudScreen() {
         level: correct / total >= 0.95 ? 'excellent' : correct / total >= 0.8 ? 'good' : correct / total >= 0.6 ? 'developing' : 'needs-practice',
       });
     }
-  }, [user, userGrade]);
+  }, [user, userGrade, handleCalibrationResult, addXP]);
 
   const tryAgain = useCallback(() => {
     if (!passage) return;
     const w = splitWords(passage.text);
     setWords(w);
-    setWordStatuses(new Array(w.length).fill('pending'));
+    const initialStatuses: WordStatus[] = new Array(w.length).fill('pending');
+    setWordStatuses(initialStatuses);
+    wordStatusesRef.current = initialStatuses;
     setSourcePos(0);
+    webSpeechPosRef.current = 0;
     setResult(null);
     setHighlightIdx(-1);
     setRecordingTime(0);
@@ -882,6 +1490,51 @@ export default function ReadAloudScreen() {
     return passageList.filter(p => p.level === diffFilter);
   }, [passageList, diffFilter]);
 
+  // ── Render: Calibration Prompt ──────────────────────────────────────
+  const startCalibration = useCallback(async () => {
+    try {
+      const res = await fetch(`${SERVER_URL}/read-aloud/calibration?grade=${encodeURIComponent(userGrade)}`);
+      const data = await res.json();
+      isCalibrationRef.current = true;
+      setPassage({ title: data.title, text: data.text, topic: 'Calibration', level: 'medium' });
+      const w = (data.text || '').match(/\S+/g) || [];
+      setWords(w);
+      const initStatuses: WordStatus[] = new Array(w.length).fill('pending');
+      if (initStatuses.length > 0) initStatuses[0] = 'current';
+      setWordStatuses(initStatuses);
+      wordStatusesRef.current = initStatuses;
+      startCountdown();
+    } catch {
+      // Skip calibration on error
+      setNeedsCalibration(false);
+    }
+  }, [userGrade, startCountdown]);
+
+  const renderCalibrationPrompt = () => (
+    <View style={{ alignItems: 'center', paddingTop: 40, paddingHorizontal: 20 }}>
+      <LinearGradient colors={['#93B0AC28', '#C3DCD818']} style={{ borderRadius: 20, padding: 32, alignItems: 'center', width: '100%', maxWidth: 500 }}>
+        <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <Feather name="bar-chart-2" size={32} color={colors.primary} />
+        </View>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, textAlign: 'center', marginBottom: 8 }}>Reading Level Check</Text>
+        <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+          Let's find the right reading level for you! Read a short passage aloud and we'll set your Lexile level.
+        </Text>
+        {studentLexile != null && (
+          <View style={{ backgroundColor: colors.primary + '18', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 8, marginBottom: 16 }}>
+            <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '700' }}>Current Lexile: {studentLexile}L</Text>
+          </View>
+        )}
+        <TouchableOpacity onPress={startCalibration} style={{ backgroundColor: colors.primary, borderRadius: 14, paddingHorizontal: 32, paddingVertical: 14, marginBottom: 12 }}>
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Start Reading Test</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => { setNeedsCalibration(false); setStudentLexile(400); }} style={{ paddingVertical: 8 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 13 }}>Skip for now</Text>
+        </TouchableOpacity>
+      </LinearGradient>
+    </View>
+  );
+
   // ── Render: Pick Phase ─────────────────────────────────────────────
   const renderPickPhase = () => (
     <View style={s.pickContainer}>
@@ -894,6 +1547,12 @@ export default function ReadAloudScreen() {
         <Text style={[s.heroSub, { color: colors.textMuted }]}>
           Pick a story, listen or read it aloud, and see how you do!
         </Text>
+        {studentLexile != null && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, backgroundColor: colors.primary + '18', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 5 }}>
+            <Feather name="bar-chart-2" size={14} color={colors.primary} />
+            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primary, marginLeft: 6 }}>Lexile {studentLexile}L</Text>
+          </View>
+        )}
       </LinearGradient>
 
       {/* Difficulty filter tabs */}
@@ -1040,14 +1699,26 @@ export default function ReadAloudScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[s.actionBtn, s.primaryBtn, { backgroundColor: colors.primary }]}
+            style={[s.actionBtn, s.primaryBtn, { backgroundColor: colors.primary, opacity: voskStatus === 'loading' ? 0.6 : 1 }]}
             onPress={startCountdown}
             activeOpacity={0.7}
+            disabled={voskStatus === 'loading'}
           >
-            <Feather name="mic" size={18} color="#fff" />
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Start Reading</Text>
+            {voskStatus === 'loading'
+              ? <ActivityIndicator size="small" color="#fff" />
+              : <Feather name="mic" size={18} color="#fff" />
+            }
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
+              {voskStatus === 'loading' ? 'Preparing voice engine…' : 'Start Reading'}
+            </Text>
           </TouchableOpacity>
         </View>
+        {voskStatus === 'loading' && (
+          <Text style={{ color: colors.textDim, fontSize: 12, textAlign: 'center', marginTop: 8 }}>
+            Loading the on-device Read Along engine (one-time, ~40MB) — this gives the smooth, accurate
+            word-tracking like Google Read Along. Please wait a moment before starting.
+          </Text>
+        )}
       </View>
     );
   };
@@ -1078,7 +1749,11 @@ export default function ReadAloudScreen() {
               const status = wordStatuses[i];
               const isCurrent = status === 'current';
               return (
-                <View key={`${w}-${i}`} style={s.liveWordSlot}>
+                <View
+                  key={`${w}-${i}`}
+                  style={s.liveWordSlot}
+                  onLayout={(e) => { wordYRef.current[i] = e.nativeEvent.layout.y; }}
+                >
                   {isCurrent ? <View style={[s.liveCaret, { backgroundColor: colors.primary }]} /> : null}
                   <Text
                     style={[
@@ -1135,13 +1810,18 @@ export default function ReadAloudScreen() {
           }}>
             {timeStr}
           </Text>
-          <Text style={{ color: colors.textDim, fontSize: 12, marginBottom: 14 }}>
+          <Text style={{ color: colors.textDim, fontSize: 12, marginBottom: 4 }}>
             {isPaused ? 'Paused'
               : liveSpeechStatus === 'listening' ? 'Listening... read the highlighted word aloud'
               : liveSpeechStatus === 'unavailable' ? 'Live highlight is not supported in this browser'
               : liveSpeechStatus === 'error' ? 'Live highlight needs microphone/speech permission'
               : 'Recording... read the passage aloud'}
           </Text>
+          {activeEngine && (
+            <Text style={{ color: colors.textDim + '99', fontSize: 10, marginBottom: 14 }}>
+              Engine: {activeEngine === 'vosk' ? 'On-device (Read Along)' : activeEngine === 'webspeech' ? 'Browser speech' : 'Cloud (fallback)'}
+            </Text>
+          )}
 
           {/* Buttons row */}
           <View style={s.recordingActionRow}>
@@ -1285,6 +1965,28 @@ export default function ReadAloudScreen() {
               <Text style={[s.statLabel, { color: colors.textDim }]}>WPM</Text>
             </View>
           </View>
+
+          {/* Stars earned + Lexile */}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 14, gap: 16 }}>
+            {starsEarned > 0 && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFD70020', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 6 }}>
+                <Feather name="star" size={18} color="#FFD700" />
+                <Text style={{ color: '#FFD700', fontWeight: '800', fontSize: 16, marginLeft: 6 }}>+{starsEarned}</Text>
+                <Text style={{ color: colors.textDim, fontSize: 11, marginLeft: 4 }}>stars</Text>
+              </View>
+            )}
+            {(result as any)?.lexile != null && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary + '15', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 6 }}>
+                <Feather name="bar-chart-2" size={14} color={colors.primary} />
+                <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13, marginLeft: 6 }}>Lexile {(result as any).lexile}L</Text>
+                {(result as any)?.lexileChange !== 0 && (
+                  <Text style={{ color: (result as any).lexileChange > 0 ? '#93B0AC' : '#EFD1D4', fontWeight: '700', fontSize: 12, marginLeft: 4 }}>
+                    {(result as any).lexileChange > 0 ? '+' : ''}{(result as any).lexileChange}
+                  </Text>
+                )}
+              </View>
+            )}
+          </View>
         </LinearGradient>
 
         {/* AI Feedback */}
@@ -1374,7 +2076,12 @@ export default function ReadAloudScreen() {
         onBack={handleHeaderBack}
       />
       <View style={{ flex: 1 }}>
-        {phase === 'pick' && (
+        {phase === 'pick' && needsCalibration && (
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
+            {renderCalibrationPrompt()}
+          </ScrollView>
+        )}
+        {phase === 'pick' && !needsCalibration && (
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
             {renderPickPhase()}
           </ScrollView>
