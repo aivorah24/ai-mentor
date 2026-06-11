@@ -97,7 +97,7 @@
         "sceneColor": "#0ea5e9",
         "sceneLabel": "The Royal Palace",
         "sceneEmoji": "🏯",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/dhruva/page_01.jpg",
         "text": "Once upon a time, there was a five-year-old prince named Dhruva. He lived in a great palace with his father, King Uttanapada.\n\nOne day, Dhruva saw his stepbrother sitting happily on their father's lap. Dhruva ran forward with a big smile, wanting to sit there too — but his stepmother stopped him coldly.\n\n'You may not sit on the king's lap,' she said. Little Dhruva's eyes filled with tears."
       },
       {
@@ -106,7 +106,7 @@
         "sceneColor": "#7c3aed",
         "sceneLabel": "Into the Forest",
         "sceneEmoji": "🌳",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/dhruva/page_02.jpg",
         "text": "Dhruva ran to his mother Suniti, crying. She hugged him and said softly: 'The only one who can truly give you what you deserve is Lord Vishnu himself. Go to the forest and pray to Him with all your heart.'\n\nWith a determined heart, the little five-year-old prince walked alone out of the palace — toward the deep, dark forest.\n\nOn his way, he met the wise sage Narada Muni, who taught him a special prayer and sent him to meditate at Madhuvana forest."
       },
       {
@@ -115,7 +115,7 @@
         "sceneColor": "#b45309",
         "sceneLabel": "Deep Meditation",
         "sceneEmoji": "🧘",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/dhruva/page_03.jpg",
         "text": "Dhruva sat under a tree and began to meditate. For one month, he ate only fallen leaves and fruits. For another month, he ate only water. He breathed very slowly and kept his mind only on Lord Vishnu.\n\nHis meditation became so powerful that all the world began to tremble! The gods in heaven were afraid.\n\n'Something extraordinary is happening on Earth!' they said."
       },
       {
@@ -124,7 +124,7 @@
         "sceneColor": "#f59e0b",
         "sceneLabel": "Lord Vishnu Appears!",
         "sceneEmoji": "⭐",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/dhruva/page_04.jpg",
         "text": "After five months of intense meditation, Lord Vishnu himself appeared before little Dhruva, riding on Garuda, glowing like a thousand suns!\n\nDhruva opened his eyes and was so overwhelmed he couldn't speak. Lord Vishnu gently touched his cheek with his conch shell — and immediately, beautiful words of prayer poured from Dhruva's heart.\n\nLord Vishnu smiled. 'Now that you have seen Me, do you still want a place on your father's lap?'"
       },
       {
@@ -133,11 +133,11 @@
         "sceneColor": "#0ea5e9",
         "sceneLabel": "The Pole Star",
         "sceneEmoji": "🌟",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/dhruva/page_05.jpg",
         "text": "Dhruva thought deeply. He said, 'O Lord, I am ashamed that I came here seeking something so small. You are everything!'\n\nLord Vishnu smiled deeply. 'Dear Dhruva, your determination is truly remarkable. You shall have the Dhruva Loka — the Pole Star! You will shine there for millions of years, and all the stars in the sky will revolve around you.'\n\nAnd when Dhruva's time came, a golden airplane from heaven took him up, up, up — to become the glowing Pole Star we see to this very day! 🌟 The end!"
       }
     ],
-    "coverImageUrl": null
+    "coverImageUrl": "/data/images/stories/dhruva/page_03.jpg"
   },
   {
     "id": "prahlada",
@@ -158,7 +158,7 @@
         "sceneColor": "#dc2626",
         "sceneLabel": "The Demon King",
         "sceneEmoji": "👹",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/prahlada/page_01.jpg",
         "text": "Long ago, there was a powerful demon king named Hiranyakashipu. He had received a special boon — he could not be killed by any human, animal, god, or demon. He could not be killed inside or outside, during day or night, on the ground or in the sky.\n\nWith this power, he declared: 'I AM GOD. Worship only me!'"
       },
       {
@@ -167,7 +167,7 @@
         "sceneColor": "#ec4899",
         "sceneLabel": "Little Prahlada",
         "sceneEmoji": "🙏",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/prahlada/page_02.jpg",
         "text": "But Hiranyakashipu had a son named Prahlada — and Prahlada was completely different from his father.\n\nEven as a tiny baby, Prahlada had heard stories of Lord Vishnu while inside his mother's womb. So from the very beginning, his heart was full of love for the Lord.\n\nNo matter what his father said, Prahlada would smile and say: 'Lord Vishnu is everywhere. He loves us all.'"
       },
       {
@@ -176,7 +176,7 @@
         "sceneColor": "#16a34a",
         "sceneLabel": "Nothing Could Harm Him",
         "sceneEmoji": "🛡️",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/prahlada/page_03.jpg",
         "text": "Hiranyakashipu tried everything to stop Prahlada.\n\nHe threw him off a cliff — but Prahlada was caught by Lord Vishnu's invisible hands. He threw him into a fire — but the boy sat peacefully in the flames, chanting, and was not burned. He had wild elephants try to trample him — but the elephants gently nudged away.\n\nNothing could harm Prahlada, because the Lord was always with him."
       },
       {
@@ -185,7 +185,7 @@
         "sceneColor": "#f59e0b",
         "sceneLabel": "The Pillar Breaks!",
         "sceneEmoji": "⚡",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/prahlada/page_04.jpg",
         "text": "'Where is your Vishnu now?!' shouted Hiranyakashipu. 'Is he in this pillar?!'\n\nPrahlada smiled calmly. 'Yes, Father. Lord Vishnu is everywhere — even in that pillar.'\n\nHiranyakashipu struck the pillar with his fist.\n\nCRACK! The pillar split open with a thunderous sound that shook the universe! From inside burst a form half-man, half-lion, with blazing eyes and a golden mane — Lord Narasimha!"
       },
       {
@@ -194,11 +194,11 @@
         "sceneColor": "#f59e0b",
         "sceneLabel": "Lord Narasimha's Blessing",
         "sceneEmoji": "🦁",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/prahlada/page_05.jpg",
         "text": "Lord Narasimha placed Hiranyakashipu on his lap — neither on ground nor sky. At the doorway — neither inside nor outside. At twilight — neither day nor night. With his claws — neither weapon nor human hands. The boon was fulfilled!\n\nThen little Prahlada walked forward quietly. With complete love, he placed his small hands in prayer.\n\nLord Narasimha's fierce expression melted into the most loving smile. He placed his hand on Prahlada's head.\n\n'Your love for me has never wavered,' said the Lord. 'You are truly extraordinary.' 🙏 The end!"
       }
     ],
-    "coverImageUrl": null
+    "coverImageUrl": "/data/images/stories/prahlada/page_04.jpg"
   },
   {
     "id": "ramayana_rama_sita",
@@ -420,7 +420,7 @@
         "sceneColor": "#10b981",
         "sceneLabel": "The Greatest King",
         "sceneEmoji": "🌍",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/bharat/page_01.jpg",
         "text": "King Bharat was one of the greatest kings who ever lived. He ruled the whole world wisely and with great love. In fact, our country India is named 'Bharata' after him!\n\nAfter many years of ruling, Bharat gave up his kingdom to go to the forest, meditate, and think only about God. He went to a beautiful place called Shalagrama and began his peaceful life of prayer."
       },
       {
@@ -429,7 +429,7 @@
         "sceneColor": "#ec4899",
         "sceneLabel": "The Little Deer",
         "sceneEmoji": "🦌",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/bharat/page_02.jpg",
         "text": "One day, sitting by the river, Bharat saw a pregnant deer startled by a lion. She gave birth right there — and the tiny fawn fell into the river!\n\nBharat's heart was flooded with compassion. He waded in and saved the little deer.\n\nHe brought the fawn home and began to care for it every single day. Slowly, slowly, Bharat began spending more time with the deer... and less time in meditation.\n\nHis mind, which once rested on God, was now always thinking about the little deer."
       },
       {
@@ -438,7 +438,7 @@
         "sceneColor": "#7c3aed",
         "sceneLabel": "A Surprising Rebirth",
         "sceneEmoji": "🔄",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/bharat/page_03.jpg",
         "text": "When Bharat's time came, his last thought was of his beloved deer — and so he was reborn as a deer himself!\n\nBut even as a deer, Bharat remembered his past life. 'I let attachment distract me,' he thought. This time, he lived quietly, alone, remembering God.\n\nWhen the deer-body ended, Bharat was born again as a human — this time in a family of wise teachers."
       },
       {
@@ -447,10 +447,1991 @@
         "sceneColor": "#0891b2",
         "sceneLabel": "The Silent Wise Man",
         "sceneEmoji": "🕊️",
-        "imageUrl": null,
+        "imageUrl": "/data/images/stories/bharat/page_04.jpg",
         "text": "This new Bharat appeared very strange to everyone. He would not speak. He would just sit quietly, doing whatever work was given to him — whether praised or insulted, whether hot or cold. Nothing disturbed his inner peace.\n\nHis brothers thought he was simple and called him 'Jada Bharata' — the unmoving Bharat.\n\nBut inside, he was completely free. His mind rested only on God. He had learned the lesson of his deer life: never let attachment take you away from what truly matters.\n\nWhat looks like silence is sometimes the deepest wisdom. 🙏 The end!"
       }
     ],
-    "coverImageUrl": null
+    "coverImageUrl": "/data/images/stories/bharat/page_02.jpg"
+  },
+  {
+    "id": "churning_of_ocean",
+    "title": "The Churning of the Ocean",
+    "subtitle": "A Tale of Patience and Working Together",
+    "coverColor": "#0ea5e9",
+    "coverGradient": "#0ea5e9",
+    "coverIcon": "anchor",
+    "ageGroup": "6-12",
+    "collection": "Mahabharata Tales",
+    "coverImageUrl": "/data/images/stories/churning_of_ocean/page_04.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "users",
+        "sceneColor": "#0ea5e9",
+        "sceneLabel": "The Gods and Demons Meet",
+        "sceneEmoji": "🤝",
+        "imageUrl": "/data/images/stories/churning_of_ocean/page_01.jpg",
+        "text": "Long, long ago, my dear, the shining gods and the grumbling demons both wanted a magical treasure — a nectar that could make anyone live forever. So, just for a while, they agreed to work together to find it."
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "triangle",
+        "sceneColor": "#82A896",
+        "sceneLabel": "The Great Mountain as a Stick",
+        "sceneEmoji": "⛰️",
+        "imageUrl": "/data/images/stories/churning_of_ocean/page_02.jpg",
+        "text": "They chose a huge mountain called Mandara to use as a giant churning stick, and the king of serpents, long Vasuki, agreed to be the rope wound around it. The gods held one end, the demons held the other, ready to churn the great Ocean of Milk."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "shield",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "Vishnu Becomes a Turtle",
+        "sceneEmoji": "🐢",
+        "imageUrl": "/data/images/stories/churning_of_ocean/page_03.jpg",
+        "text": "But the heavy mountain began to sink into the soft ocean floor! So kind Lord Vishnu turned himself into a giant turtle, swam beneath the mountain, and held it steady on his strong shell, so the churning could go on."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "refresh-cw",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Round and Round They Pull",
+        "sceneEmoji": "🔄",
+        "imageUrl": "/data/images/stories/churning_of_ocean/page_04.jpg",
+        "text": "Back and forth, back and forth, the gods and demons pulled the great serpent like a rope, turning the mountain round and round. The whole ocean churned and frothed, and wonderful treasures began to rise up from the deep."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "award",
+        "sceneColor": "#C08898",
+        "sceneLabel": "Treasures From the Deep",
+        "sceneEmoji": "🏺",
+        "imageUrl": "/data/images/stories/churning_of_ocean/page_05.jpg",
+        "text": "Up came the loveliest things — a magical wishing cow, a beautiful flying horse, glowing jewels, and even the gentle moon herself, rising to take her place in the night sky."
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "wind",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "The Dark Smoke",
+        "sceneEmoji": "🌫️",
+        "imageUrl": "/data/images/stories/churning_of_ocean/page_06.jpg",
+        "text": "But then, up came a terrible dark smoke too — a poison so strong it could harm the whole world! Everyone was frightened. So kind Lord Shiva, to protect everyone, drank the poison himself and held it safely in his throat, never swallowing it."
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "star",
+        "sceneColor": "#0ea5e9",
+        "sceneLabel": "The Nectar at Last",
+        "sceneEmoji": "🌟",
+        "imageUrl": "/data/images/stories/churning_of_ocean/page_07.jpg",
+        "text": "Finally, after all that churning, the nectar of long life rose up, golden and glowing. Lord Vishnu made sure it was shared fairly and wisely, so that goodness, not greed, would win the day.\n\nAnd that, my dear, is how patience, teamwork, and a kind heart can turn even the biggest, stormiest task into something wonderful. Now close your eyes and rest. Sleep well."
+      }
+    ]
+  },
+  {
+    "id": "dashavatara",
+    "title": "The Ten Avatars of Vishnu",
+    "subtitle": "Dashavatara — The Story of Lord Vishnu's Ten Forms",
+    "coverColor": "#16a34a",
+    "coverGradient": "#16a34a",
+    "coverIcon": "globe",
+    "ageGroup": "6-12",
+    "collection": "Mahabharata Tales",
+    "coverImageUrl": "/data/images/stories/dashavatara/cover.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "moon",
+        "sceneColor": "#16a34a",
+        "sceneLabel": "A Question Before Bedtime",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/dashavatara/page_01.jpg",
+        "text": "\"Have you ever wondered,\" I'll ask you tonight before you close your eyes, \"why the world keeps going, even when things go wrong? Why, just when everything seems darkest, something — or someone — always turns up to make it right again?\"\n\nThe ancient sages had a beautiful answer to that question. They said: Lord Vishnu, the great protector of all creation, takes on whatever form is needed — at exactly the right time — to restore goodness to the world. He has done this ten times, in ten different shapes. These ten great rescues are called the Dashavatara — and tonight, I'll tell you all of them."
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "droplets",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "Matsya — The Fish",
+        "sceneEmoji": "🐟",
+        "imageUrl": "/data/images/stories/dashavatara/page_02.jpg",
+        "text": "Long ago, the whole world was sinking beneath a great flood, and ancient sacred wisdom was about to be washed away and lost forever. So Lord Vishnu became a tiny golden fish.\n\nThat fish swam to a kind king named Satyavrata, who cupped the small creature in his hands. The fish spoke: \"Protect me, and I will protect you.\" The king did — and as the flood rose, the fish grew and grew, until it was a magnificent creature filling the sea itself, guiding the king's boat safely through the storm, and carrying the precious wisdom safely to the other side.\n\nEven the smallest form, used at the right moment, can save the whole world."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "anchor",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Kurma — The Turtle",
+        "sceneEmoji": "🐢",
+        "imageUrl": "/data/images/stories/dashavatara/page_03.jpg",
+        "text": "You've already heard about the churning of the cosmic ocean, haven't you? When the great mountain began to sink, Lord Vishnu became Kurma — a patient, enormous turtle — and silently settled beneath the mountain, holding it on his steady shell.\n\nThere's a lesson in this, my dear: sometimes the most important help is the kind that works quietly, underneath everything, asking for no praise — just holding things up so everyone else can keep going."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "triangle",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "Varaha — The Boar",
+        "sceneEmoji": "🌍",
+        "imageUrl": "/data/images/stories/dashavatara/page_04.jpg",
+        "text": "Once, a great demon dragged the entire earth — yes, the whole beautiful earth — down into the murky depths of the cosmic sea.\n\nSo Lord Vishnu became Varaha, a mighty boar, and dived deep into the water. He searched and searched until he found the earth resting on the ocean floor, gently lifted it on his great tusks, and carried it back up — all the way up — into the sunlight where it belonged.\n\nThe earth was restored. The flowers bloomed again. And children like you could run across green fields once more."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "zap",
+        "sceneColor": "#C08898",
+        "sceneLabel": "Narasimha — The Lion-Man",
+        "sceneEmoji": "🦁",
+        "imageUrl": "/data/images/stories/dashavatara/page_05.jpg",
+        "text": "You remember little Prahlada, don't you? The boy who loved Lord Vishnu with his whole heart, even though his own father — the fierce demon king — tried every trick to stop him?\n\nWhen that demon king finally cried out \"Where is your Vishnu? Is he in this pillar?!\" — the pillar burst open, and out stepped Narasimha: half man, half lion, with a roar that shook the earth. Not quite a man, not quite an animal, appearing at twilight in the doorway — none of the conditions of the demon's protection applied.\n\nPrahlada was kept safe. Goodness was protected. And the fearless love in a small boy's heart turned out to be stronger than any demon's power."
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "chevrons-down",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Vamana — The Little Dwarf",
+        "sceneEmoji": "👣",
+        "imageUrl": "/data/images/stories/dashavatara/page_06.jpg",
+        "text": "Now here's a story about how a very small thing can hold very great power — which I think you, my dear, might understand perfectly well.\n\nA generous but dangerously powerful demon king named Bali had grown so mighty that he ruled all three worlds. Lord Vishnu came to him in the form of Vamana — a tiny dwarf brahmin boy — and asked for just a simple gift: only as much land as he could cover in three small steps.\n\nBali laughed kindly and agreed — how much could a tiny fellow cover in three steps? But as soon as the gift was given, Vamana grew and grew and grew — until with one step he covered the earth, with the second the heavens, and for the third... he placed his foot gently on Bali's own head, pressing him lovingly down into the lower realms.\n\nThe three worlds were restored. And Bali, to his credit, bowed — and was honoured for his generosity forever."
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "feather",
+        "sceneColor": "#7BA8A4",
+        "sceneLabel": "Parashurama, Rama, and Balarama",
+        "sceneEmoji": "🏹",
+        "imageUrl": "/data/images/stories/dashavatara/page_07.jpg",
+        "text": "Vishnu came again as Parashurama — a determined warrior sage who restored balance when the powerful had grown cruel and unjust to ordinary people.\n\nThen came Rama — gentle, noble, and true-hearted. You know his story: the prince of Ayodhya, who kept every promise, faced exile with grace, and rescued his beloved Sita from the demon Ravana. Rama showed us that a good person walks with their head held high even when the road is hardest.\n\nAnd then came Balarama — strong as the earth, steady and protective, always beside his younger brother Krishna, always ready to lend his strength to those who needed it."
+      },
+      {
+        "pageNumber": 8,
+        "sceneIcon": "heart",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "Krishna — The Beloved",
+        "sceneEmoji": "🪈",
+        "imageUrl": "/data/images/stories/dashavatara/page_08.jpg",
+        "text": "And then... then came Krishna.\n\nOh, my dear, how do you even describe Krishna in just a few words? He came as a mischievous, laughing, flute-playing cowherd boy who stole butter and made everyone around him feel loved. He grew into the wisest, most tender-hearted guide any warrior could hope for — the same dear friend who sat beside Arjuna on that battlefield and spoke the words that helped the trembling archer find his steady heart again.\n\nKrishna's life showed us that goodness doesn't have to be solemn and serious. It can dance. It can play. It can love with a wide-open, joyful heart."
+      },
+      {
+        "pageNumber": 9,
+        "sceneIcon": "sun",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Buddha — The Compassionate",
+        "sceneEmoji": "🧘",
+        "imageUrl": "/data/images/stories/dashavatara/page_09.jpg",
+        "text": "Vishnu came once more as the Buddha — the gentle, quiet sage who sat beneath a tree and understood the deepest truths about suffering and kindness. He looked at the world's pain with clear, calm eyes and said: compassion — feeling the hurt of others as if it were your own, and gently trying to ease it — is the greatest thing a human being can practice.\n\nHis message was so simple that children understand it at once: be kind. Be patient. Don't cause unnecessary pain."
+      },
+      {
+        "pageNumber": 10,
+        "sceneIcon": "star",
+        "sceneColor": "#6366f1",
+        "sceneLabel": "Kalki — Still to Come",
+        "sceneEmoji": "⭐",
+        "imageUrl": "/data/images/stories/dashavatara/page_10.jpg",
+        "text": "The tenth avatar hasn't arrived yet — his name is Kalki, and the ancient stories say he will come at the end of this age, on a white horse, to restore goodness when the world has wandered very, very far from kindness.\n\nPerhaps that's why the sages told us this story in the first place — not just to remember the nine rescues that have already happened, but to remind us that goodness always returns. No matter how dark things look, the story isn't over. Balance comes back. Kindness wins — in the end, it always wins."
+      },
+      {
+        "pageNumber": 11,
+        "sceneIcon": "moon",
+        "sceneColor": "#16a34a",
+        "sceneLabel": "What These Ten Teach Us",
+        "sceneEmoji": "💫",
+        "imageUrl": "/data/images/stories/dashavatara/page_11.jpg",
+        "text": "And that, my darling one, is the story of the Dashavatara — the ten forms of Lord Vishnu.\n\nA fish. A turtle. A boar. A lion-man. A tiny dwarf. A warrior. A noble king. A steady elder brother. A laughing, loving cowherd. A compassionate sage. And a tenth still to come.\n\nDid you notice? Every single time the world needed saving, the help that arrived was perfectly shaped for that exact moment. Not too big, not too small — just right.\n\nMaybe that's the most beautiful lesson of all: the right help, at the right moment, in exactly the right form, is always, always on its way.\n\nNow rest, my dear. The stars are watching over you tonight. Sleep well."
+      }
+    ]
+  },
+  {
+    "id": "endless_lamp",
+    "title": "The Endless Lamp",
+    "subtitle": "A Light That Never Runs Out",
+    "coverColor": "#f59e0b",
+    "coverGradient": "#f59e0b",
+    "coverIcon": "sun",
+    "ageGroup": "6-12",
+    "collection": "Mahabharata Tales",
+    "coverImageUrl": "/data/images/stories/endless_lamp/cover.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "moon",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Come, Sit Beside Me",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/endless_lamp/page_01.jpg",
+        "text": "Come closer, my dear one, and look at this little clay lamp glowing in the dark. See how its small flame pushes away the shadows?\n\nTonight I want to tell you about a wise old teacher and a single tiny lamp that taught a whole roomful of children the most beautiful secret in the world."
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "users",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "A Dark Hall",
+        "sceneEmoji": "🪔",
+        "imageUrl": "/data/images/stories/endless_lamp/page_02.jpg",
+        "text": "Long ago, in a quiet forest school, a kind teacher gathered his students one evening. The hall was so dark they could barely see each other's faces.\n\nIn his hands the teacher held just one small lamp, its flame no bigger than a flower petal. Every child watched that one warm light."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "frown",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "A Worried Boy",
+        "sceneEmoji": "😟",
+        "imageUrl": "/data/images/stories/endless_lamp/page_03.jpg",
+        "text": "The teacher said, 'Children, come and light your own lamps from mine.' But a thoughtful little boy frowned and held back.\n\n'Teacher,' he whispered, 'if you give your light to all of us, won't your own flame grow smaller and smaller until it disappears?' It seemed a very sensible worry."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "smile",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "The Teacher Smiles",
+        "sceneEmoji": "🙂",
+        "imageUrl": "/data/images/stories/endless_lamp/page_04.jpg",
+        "text": "The teacher only smiled and gently touched his flame to the boy's lamp. With a soft little flicker, the boy's lamp burst into light.\n\n'Now go,' said the teacher, 'and light the lamp of the child beside you.' So the boy did, and that child lit the next, and that one lit the next."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "sun",
+        "sceneColor": "#f59e0b",
+        "sceneLabel": "One Becomes Many",
+        "sceneEmoji": "✨",
+        "imageUrl": "/data/images/stories/endless_lamp/page_05.jpg",
+        "text": "One lamp became two. Two became ten. Ten became a hundred. Soon the whole dark hall was glowing with warm golden light, and every single face was shining and happy.\n\nThe children laughed in wonder. From just one little flame, a whole ocean of light had been born."
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "heart",
+        "sceneColor": "#C08898",
+        "sceneLabel": "The Flame Never Shrank",
+        "sceneEmoji": "💛",
+        "imageUrl": "/data/images/stories/endless_lamp/page_06.jpg",
+        "text": "Then the teacher lifted his own lamp high for everyone to see. 'Look carefully,' he said. 'Is my flame any smaller than before?'\n\nThe children gasped. His little flame was burning just as brightly as when the evening began. He had given his light to a hundred lamps, and lost nothing at all."
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "feather",
+        "sceneColor": "#82A896",
+        "sceneLabel": "The Beautiful Secret",
+        "sceneEmoji": "🌟",
+        "imageUrl": "/data/images/stories/endless_lamp/page_07.jpg",
+        "text": "'This, my children, is how kindness works,' the teacher said softly. 'And love. And everything good you know. When you share them, you never have less — the whole world simply grows brighter.'\n\nA kind word costs you nothing, yet it can light up someone's whole day. That is the magic of the endless lamp."
+      },
+      {
+        "pageNumber": 8,
+        "sceneIcon": "moon",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Goodnight, Little Light",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/endless_lamp/page_08.jpg",
+        "text": "So tomorrow, my dear, share your light freely. Help a friend, teach what you know, give a smile to someone who is sad. You will lose nothing, and the world will glow a little more.\n\nNow close your eyes and rest, my little lamp. Your light is safe and warm. Sleep well."
+      }
+    ]
+  },
+  {
+    "id": "dharmakshetra",
+    "title": "The Field of Righteousness",
+    "subtitle": "The Battle Inside Every Heart",
+    "coverColor": "#4f46e5",
+    "coverGradient": "#4f46e5",
+    "coverIcon": "shield",
+    "ageGroup": "6-12",
+    "collection": "Mahabharata Tales",
+    "coverImageUrl": "/data/images/stories/dharmakshetra/cover.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "moon",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Come, Sit Beside Me",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/dharmakshetra/page_01.jpg",
+        "text": "Settle in close, my dear one. Tonight's story is a little different — it is about a battlefield, but not the kind with swords and elephants.\n\nIt is about a secret battlefield that you visit every single day, even today. Can you guess where it is? Let me tell you."
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "globe",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "A Field With Two Names",
+        "sceneEmoji": "🌍",
+        "imageUrl": "/data/images/stories/dharmakshetra/page_02.jpg",
+        "text": "Long ago there was a great, wide field called Kurukshetra, where the famous battle of the Mahabharata was fought.\n\nBut that field had another, more beautiful name. People also called it Dharmakshetra — which means 'the field of righteousness,' the field where you choose what is right."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "eye",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Why Righteousness?",
+        "sceneEmoji": "👀",
+        "imageUrl": "/data/images/stories/dharmakshetra/page_03.jpg",
+        "text": "Now why would a battlefield be called the field of doing right? Because the wise ones knew a deep truth.\n\nThe hardest battles in life are not fought with bows and arrows at all. They are fought quietly, inside our own hearts, where no one else can see."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "alert-triangle",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "Your Own Little Battles",
+        "sceneEmoji": "⚔️",
+        "imageUrl": "/data/images/stories/dharmakshetra/page_04.jpg",
+        "text": "Think about your own day, my dear. When you wanted to tell a little lie because the truth was scary — that was a tiny battle. When you wanted to keep the whole sweet but your heart said share it — that was a battle too.\n\nWhen someone was unkind and you felt like being unkind back, but chose to stay gentle — that was the bravest battle of all."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "users",
+        "sceneColor": "#C08898",
+        "sceneLabel": "Two Armies Inside",
+        "sceneEmoji": "🤝",
+        "imageUrl": "/data/images/stories/dharmakshetra/page_05.jpg",
+        "text": "Inside each of us, two little armies line up every day. On one side stand honesty, kindness, patience and courage.\n\nOn the other side stand the trickier feelings — anger, greed, jealousy and fear. They face each other on the field of your heart, just like the armies at Kurukshetra."
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "shield",
+        "sceneColor": "#4f46e5",
+        "sceneLabel": "You Choose the Winner",
+        "sceneEmoji": "✨",
+        "imageUrl": "/data/images/stories/dharmakshetra/page_06.jpg",
+        "text": "And here is the wonderful part: you are the one who decides which side wins. Not your friends, not your teacher — you.\n\nEvery time you choose the kind thing, the true thing, the patient thing, the good army grows a little stronger and braver inside you."
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "heart",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Krishna's Quiet Whisper",
+        "sceneEmoji": "💛",
+        "imageUrl": "/data/images/stories/dharmakshetra/page_07.jpg",
+        "text": "On that great field, Arjuna was not alone — wise Krishna stood beside him and guided him with calm, loving words.\n\nYou have a guide too. It is the quiet, good little voice inside you that always knows what is right. If you grow still and listen, you will hear it whispering."
+      },
+      {
+        "pageNumber": 8,
+        "sceneIcon": "moon",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Goodnight, Brave Heart",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/dharmakshetra/page_08.jpg",
+        "text": "So tomorrow, when you step onto your own field of righteousness, remember you are braver than any warrior. Choose the kind thing, even when it is the harder thing.\n\nNow rest, my brave one. Today's battles are done, and you did well. Sleep peacefully."
+      }
+    ]
+  },
+  {
+    "id": "actor_on_stage",
+    "title": "The Actor on Stage",
+    "subtitle": "Who Are You, Really?",
+    "coverColor": "#7c3aed",
+    "coverGradient": "#7c3aed",
+    "coverIcon": "eye",
+    "ageGroup": "6-12",
+    "collection": "Mahabharata Tales",
+    "coverImageUrl": "/data/images/stories/actor_on_stage/page_02.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "moon",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Come, Sit Beside Me",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/actor_on_stage/page_01.jpg",
+        "text": "Snuggle in, my dear one. Long ago, on a great battlefield, Krishna told his dear friend Arjuna a gentle story about a travelling theatre that once came to a little town, and the wisest actor who ever lived.\n\nIt is a gentle story that answers a very big question: who are you, really, deep down inside?"
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "star",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "The Greatest Actor",
+        "sceneEmoji": "⭐",
+        "imageUrl": "/data/images/stories/actor_on_stage/page_02.jpg",
+        "text": "In the troupe was an actor so skilled that people came from far away just to watch him. He could become anyone at all.\n\nOne night he was a mighty king in golden robes. The next he was a poor beggar in rags. Then a fierce growling demon, then a giggling little child."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "smile",
+        "sceneColor": "#C08898",
+        "sceneLabel": "So Real!",
+        "sceneEmoji": "💫",
+        "imageUrl": "/data/images/stories/actor_on_stage/page_03.jpg",
+        "text": "When he played the king, the whole crowd bowed and cheered. When he played the sad beggar, everyone wept real tears for him.\n\nWhen he played the demon, the children hid behind their mothers! His acting was so real that people forgot it was only a play."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "refresh-cw",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "After the Curtain Falls",
+        "sceneEmoji": "🔄",
+        "imageUrl": "/data/images/stories/actor_on_stage/page_04.jpg",
+        "text": "But each night, when the show ended and the curtain came down, something quiet and lovely happened.\n\nThe actor wiped away the paint, set down the golden crown or the beggar's bowl, and became simply himself again — calm, smiling, and the very same as always."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "eye",
+        "sceneColor": "#7c3aed",
+        "sceneLabel": "A Child's Question",
+        "sceneEmoji": "👀",
+        "imageUrl": "/data/images/stories/actor_on_stage/page_05.jpg",
+        "text": "One evening a curious little boy crept up to him and asked, 'Weren't you so proud when you were the king? And weren't you terribly sad when you were the poor beggar?'\n\nThe actor laughed kindly and knelt down to answer. 'Ah,' he said, 'let me tell you my little secret.'"
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "heart",
+        "sceneColor": "#82A896",
+        "sceneLabel": "The Actor's Secret",
+        "sceneEmoji": "💛",
+        "imageUrl": "/data/images/stories/actor_on_stage/page_06.jpg",
+        "text": "'All through the play,' he said, 'I never once forgot that the crown and the rags were only costumes. The king came and went. The beggar came and went.\n\nBut I, the one wearing them, stayed exactly the same underneath. So I could play every part happily, and never get lost in any of them.'"
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "users",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "We Are All Actors",
+        "sceneEmoji": "✨",
+        "imageUrl": "/data/images/stories/actor_on_stage/page_07.jpg",
+        "text": "Krishna smiled at Arjuna and said, 'And here is the secret for you too, dear friend. Each day you play many parts — a student, a friend, a warrior, a son. And feelings come and go like costumes: sometimes happy, sometimes cross, sometimes afraid.\n\nBut the real you, the calm and bright soul wearing all those feelings, never changes. Moods are just costumes. They come, and they go.'"
+      },
+      {
+        "pageNumber": 8,
+        "sceneIcon": "moon",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Goodnight, Sweet Actor",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/actor_on_stage/page_08.jpg",
+        "text": "'So whatever costume tomorrow brings — a happy one or a difficult one — remember it is only for a little while. The peaceful you underneath is always there,' said Krishna gently.\n\nAnd Arjuna's heart grew calm and brave once more. Now the curtain falls on today, my dear. Set down all your costumes and rest. Sleep well."
+      }
+    ]
+  },
+  {
+    "id": "chariot_of_mind",
+    "title": "The Chariot of the Mind",
+    "subtitle": "Holding the Reins of Your Senses",
+    "coverColor": "#ea580c",
+    "coverGradient": "#ea580c",
+    "coverIcon": "navigation",
+    "ageGroup": "6-12",
+    "collection": "Mahabharata Tales",
+    "coverImageUrl": "/data/images/stories/chariot_of_mind/cover.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "moon",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Come, Sit Beside Me",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/chariot_of_mind/page_01.jpg",
+        "text": "Come and lean on my shoulder, my dear one. Tonight I will show you a beautiful picture that the wise ones drew long, long ago to explain something tricky — your very own mind.\n\nClose your eyes and imagine a grand chariot, pulled by five strong horses, racing across a wide plain."
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "navigation",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "A Wise Old Picture",
+        "sceneEmoji": "🏹",
+        "imageUrl": "/data/images/stories/chariot_of_mind/page_02.jpg",
+        "text": "The old sages said: a person is just like that chariot rolling through life. Every part of the chariot stands for a part of you.\n\nLet me point them out one by one, and soon you will understand yourself in a whole new way."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "zap",
+        "sceneColor": "#ea580c",
+        "sceneLabel": "The Chariot and Horses",
+        "sceneEmoji": "⚡",
+        "imageUrl": "/data/images/stories/chariot_of_mind/page_03.jpg",
+        "text": "Your body, they said, is the chariot itself — the thing that carries you about your day.\n\nAnd your five senses — your eyes, ears, nose, tongue and skin — are five strong, eager horses. They always want to gallop off: toward sweets, toward shiny toys, toward every loud and exciting thing."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "alert-triangle",
+        "sceneColor": "#C08898",
+        "sceneLabel": "The Reins",
+        "sceneEmoji": "⚔️",
+        "imageUrl": "/data/images/stories/chariot_of_mind/page_04.jpg",
+        "text": "Now, what holds five wild horses together? The reins! And the reins, said the sages, are your mind.\n\nWithout reins, the horses bolt wherever they please — and the chariot bumps and crashes. That is what happens when our wishes pull us this way and that, with nothing to hold them."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "eye",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "The Charioteer",
+        "sceneEmoji": "👀",
+        "imageUrl": "/data/images/stories/chariot_of_mind/page_05.jpg",
+        "text": "But reins need clever hands to hold them. So who is the driver? The charioteer is your wisdom — the wise part of you that thinks, 'Is this a good idea? Should I stop, or go?'\n\nA steady charioteer holds the reins firmly and gently, and guides the horses down the right road."
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "star",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "The Quiet Rider",
+        "sceneEmoji": "⭐",
+        "imageUrl": "/data/images/stories/chariot_of_mind/page_06.jpg",
+        "text": "And riding inside the chariot, calm and still, sits the most important one of all — the true you, your own bright spirit.\n\nThe rider knows where it wants to go: to a beautiful place called peace, and goodness, and being your very best self."
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "frown",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Runaway Horses",
+        "sceneEmoji": "😟",
+        "imageUrl": "/data/images/stories/chariot_of_mind/page_07.jpg",
+        "text": "Sometimes we let the horses run wild — one more sweet, one more hour of the screen, one big stormy temper. The reins slip, the charioteer dozes off, and the chariot goes crashing into the bushes.\n\nWe have all felt that crash, haven't we? The grumpy, tired, upside-down feeling when our horses ran away with us."
+      },
+      {
+        "pageNumber": 8,
+        "sceneIcon": "navigation",
+        "sceneColor": "#ea580c",
+        "sceneLabel": "Holding the Reins",
+        "sceneEmoji": "✨",
+        "imageUrl": "/data/images/stories/chariot_of_mind/page_08.jpg",
+        "text": "But a wise charioteer simply takes a slow, deep breath, picks up the reins again, and gently turns the horses home. That is all self-control really is — kindly holding your own reins.\n\nLittle by little, you become the calm driver of your own grand chariot, going wherever your good heart chooses."
+      },
+      {
+        "pageNumber": 9,
+        "sceneIcon": "moon",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Goodnight, Little Charioteer",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/chariot_of_mind/page_09.jpg",
+        "text": "Tonight, let your five horses rest in their stable. They have galloped all day and earned their sleep.\n\nTomorrow you will take up the reins again, calm and strong. Now rest, my little charioteer. Sleep well."
+      }
+    ]
+  },
+  {
+    "id": "matsya_fish",
+    "title": "The Fish Who Saved the World",
+    "subtitle": "The Story of Matsya and King Satyavrata",
+    "coverColor": "#0891b2",
+    "coverGradient": "#0891b2",
+    "coverIcon": "droplet",
+    "ageGroup": "6-12",
+    "collection": "Mahabharata Tales",
+    "coverImageUrl": "/data/images/stories/matsya_fish/page_03.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "droplet",
+        "sceneColor": "#0891b2",
+        "sceneLabel": "A World of Endless Rain",
+        "sceneEmoji": "🌊",
+        "imageUrl": "/data/images/stories/matsya_fish/page_01.jpg",
+        "text": "Now let me tell you a story from even longer ago, my dear. There once lived a good and gentle king named Satyavrata, who loved to pray quietly by the riverside every morning, cupping water in his hands."
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "droplet",
+        "sceneColor": "#82A896",
+        "sceneLabel": "A Tiny Fish Asks for Help",
+        "sceneEmoji": "🐟",
+        "imageUrl": "/data/images/stories/matsya_fish/page_02.jpg",
+        "text": "One morning, a tiny little fish swam into his cupped hands. 'Please, kind king,' said the fish, 'protect me — the bigger fish want to eat me!' Satyavrata smiled and gently placed the little fish in his water jug to keep it safe."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "refresh-cw",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "The Fish That Would Not Stop Growing",
+        "sceneEmoji": "📈",
+        "imageUrl": "/data/images/stories/matsya_fish/page_03.jpg",
+        "text": "But the next morning, the fish had grown too big for the jug! So the king moved it to a pond. Then it outgrew the pond, so he moved it to a lake, then to the river, and finally — only the wide ocean was big enough to hold it!"
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "shield",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Matsya's Gentle Warning",
+        "sceneEmoji": "🐟",
+        "imageUrl": "/data/images/stories/matsya_fish/page_04.jpg",
+        "text": "By now, Satyavrata realised this was no ordinary fish — it was Lord Vishnu himself, as Matsya the fish! Matsya gave the king a gentle warning: 'In seven days, a great flood will cover the whole world. Build a sturdy boat, and gather seeds, plants, and animals of every kind.'"
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "tool",
+        "sceneColor": "#C08898",
+        "sceneLabel": "Building the Boat",
+        "sceneEmoji": "🛠️",
+        "imageUrl": "/data/images/stories/matsya_fish/page_05.jpg",
+        "text": "King Satyavrata worked quickly and carefully, building the strongest boat he could, and gathering little ones of every creature, and seeds of every plant, just as Matsya had said — for when someone kind asks for help, it is wise to listen."
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "moon",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "Safe Through the Storm",
+        "sceneEmoji": "🌌",
+        "imageUrl": "/data/images/stories/matsya_fish/page_06.jpg",
+        "text": "When the great flood came and the rains poured down and down, Matsya appeared as an enormous golden fish. The king tied his boat to Matsya's horn with the great serpent as a rope, and together they sailed safely through the storm until the waters calmed.\n\nAnd that, my darling one, is how kindness to even the smallest creature can come back to protect you, in the biggest of storms. Now close your eyes and rest. Sleep well, sweet dreams."
+      }
+    ]
+  },
+  {
+    "id": "maha_part1",
+    "title": "The Mahabharata: How It All Began",
+    "subtitle": "From Ganga's Promise to Draupadi's Swayamvara",
+    "coverColor": "#dc2626",
+    "coverGradient": "#dc2626",
+    "coverIcon": "feather",
+    "ageGroup": "6-12",
+    "collection": "The Mahabharata",
+    "coverImageUrl": "/data/images/stories/maha_part1/page_11.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "droplet",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "The Promise by the River",
+        "sceneEmoji": "🌊",
+        "imageUrl": "/data/images/stories/maha_part1/page_01.jpg",
+        "text": "Come and settle in close, my dear one. Long, long ago, a kind king named Santanu walked beside a shining river — and there he met a beautiful, mysterious lady named Ganga, who was really the goddess of the river herself.\n\nThey fell deeply in love, and Ganga agreed to marry him with one gentle promise: he must never question anything she did. With a heart full of love, the king happily agreed."
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "book",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Devayani and Kacha",
+        "sceneEmoji": "📖",
+        "imageUrl": "/data/images/stories/maha_part1/page_02.jpg",
+        "text": "In those long-ago days there also lived a clever young student named Kacha, who travelled far to learn from a great and powerful teacher. The teacher's kind daughter, Devayani, became his dear friend.\n\nThese old families and friendships, my dear, are like the deep roots of a great tree — and from them would one day grow the brave heroes of our story."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "users",
+        "sceneColor": "#C08898",
+        "sceneLabel": "The Royal Family Grows",
+        "sceneEmoji": "🤝",
+        "imageUrl": "/data/images/stories/maha_part1/page_03.jpg",
+        "text": "Devayani later married a noble king named Yayati, and they had children, and then grandchildren, and then great-grandchildren.\n\nLittle by little, through many kings and queens, the great royal family of the Kurus was growing — the very family into which our heroes would soon be born."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "star",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "The Birth of Pandu",
+        "sceneEmoji": "⭐",
+        "imageUrl": "/data/images/stories/maha_part1/page_04.jpg",
+        "text": "After many years, a special prince was born into that royal family. His name was Pandu, and he grew up to be a brave, fair, and much-loved king.\n\nPandu had brothers too, and together they carried the hopes of the whole kingdom upon their shoulders."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "sun",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "Wise Vidura and Brave Karna",
+        "sceneEmoji": "🌅",
+        "imageUrl": "/data/images/stories/maha_part1/page_05.jpg",
+        "text": "Around that same time, a wise and gentle soul was born as Vidura — a man so honest and fair that everyone trusted his every single word.\n\nAnd far away, a bright baby boy named Karna came into the world — a child who would grow into one of the greatest and most generous warriors anyone had ever known."
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "moon",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "A Gentle Goodbye",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/maha_part1/page_06.jpg",
+        "text": "King Pandu had five wonderful sons — the Pandavas. But while they were still little, a great sorrow came, and their dear father passed away, going to watch over them from the heavens.\n\nSo the five young brothers and their loving mother, Kunti, came to live in the care of the royal family, in the grand city of Hastinapura."
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "award",
+        "sceneColor": "#82A896",
+        "sceneLabel": "The Princes Go to School",
+        "sceneEmoji": "🏹",
+        "imageUrl": "/data/images/stories/maha_part1/page_07.jpg",
+        "text": "The young Pandavas, along with their hundred cousins the Kauravas, were sent to a forest school to learn from the great teacher Drona.\n\nThere they learned everything a prince must know — riding, archery, and most of all how to be brave and good. And of them all, Arjuna became the finest archer in the land."
+      },
+      {
+        "pageNumber": 8,
+        "sceneIcon": "frown",
+        "sceneColor": "#C08898",
+        "sceneLabel": "A Cousin's Jealousy",
+        "sceneEmoji": "😟",
+        "imageUrl": "/data/images/stories/maha_part1/page_08.jpg",
+        "text": "But not every heart was happy. The eldest cousin, Duryodhana, grew jealous of the strong and kind Pandavas — especially of mighty Bhima.\n\nHis jealousy once led to a wicked trick against Bhima. But brave Bhima was protected, and came back stronger than ever — though sadly, the jealousy did not melt away."
+      },
+      {
+        "pageNumber": 9,
+        "sceneIcon": "zap",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "Escape in the Night",
+        "sceneEmoji": "✨",
+        "imageUrl": "/data/images/stories/maha_part1/page_09.jpg",
+        "text": "Duryodhana's jealousy grew so dark that he secretly built a house of wax for the Pandavas — a house that could easily catch fire.\n\nBut wise Vidura warned them just in time. Through a hidden tunnel, the five brothers and their mother slipped away safely into the night. They were saved — but now they had to live quietly, in disguise."
+      },
+      {
+        "pageNumber": 10,
+        "sceneIcon": "shield",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Bhima and the Demon",
+        "sceneEmoji": "🦁",
+        "imageUrl": "/data/images/stories/maha_part1/page_10.jpg",
+        "text": "While living in disguise in a small village, the brothers learned that a fearsome demon named Bakasura was frightening all the people.\n\nKind, mighty Bhima would not stand for it. He faced the demon bravely and freed the whole village — and the happy people never once guessed that their rescuer was a hidden prince."
+      },
+      {
+        "pageNumber": 11,
+        "sceneIcon": "heart",
+        "sceneColor": "#C08898",
+        "sceneLabel": "Draupadi Chooses Arjuna",
+        "sceneEmoji": "💛",
+        "imageUrl": "/data/images/stories/maha_part1/page_11.jpg",
+        "text": "Then came a grand contest: a beautiful, noble princess named Draupadi was to choose her husband. Many proud kings tried to string a mighty bow and strike a tiny spinning target — and one by one, they all failed.\n\nThen Arjuna, the finest archer, calmly lifted the great bow and struck the target perfectly! Draupadi joyfully chose him, and she became the beloved wife of the Pandava family.\n\nAnd that, my dear one, is how our great story truly begins. Now close your eyes and rest — for there is so much more adventure still to come. Sleep well."
+      }
+    ]
+  },
+  {
+    "id": "maha_part2",
+    "title": "The Mahabharata: The Game of Dice",
+    "subtitle": "The Pandavas Lose All and Begin Their Exile",
+    "coverColor": "#ea580c",
+    "coverGradient": "#ea580c",
+    "coverIcon": "feather",
+    "ageGroup": "6-12",
+    "collection": "The Mahabharata",
+    "coverImageUrl": "/data/images/stories/maha_part2/page_03.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "award",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "The Days of Glory",
+        "sceneEmoji": "⭐",
+        "imageUrl": "/data/images/stories/maha_part2/page_01.jpg",
+        "text": "Welcome back, my dear one. After Draupadi's wedding, the Pandavas built a dazzling city called Indraprastha and ruled so wisely that kings from far and wide came to honour Yudhishthira, the eldest brother.\n\nThose were golden days — the five brothers were loved, their kingdom shone, and goodness seemed to fill the whole land."
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "frown",
+        "sceneColor": "#C08898",
+        "sceneLabel": "A Jealous Plan",
+        "sceneEmoji": "😟",
+        "imageUrl": "/data/images/stories/maha_part2/page_02.jpg",
+        "text": "But Duryodhana's jealousy burned hotter than ever when he saw the Pandavas' glory. His cunning uncle, Shakuni, leaned close and whispered a wicked plan.\n\n'We cannot beat them in battle,' Shakuni smiled slyly, 'so let us beat them at a game of dice — a game I never, ever lose.'"
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "alert-triangle",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "The Game of Dice",
+        "sceneEmoji": "⚔️",
+        "imageUrl": "/data/images/stories/maha_part2/page_03.jpg",
+        "text": "The Pandavas were invited to a great hall to play. But Shakuni's dice were tricky, and roll after roll, Yudhishthira lost — first his gold, then his kingdom, and at last everything the brothers owned.\n\nIt was a sorrowful day, my dear — a reminder that even the wise can be tricked when others choose to play unfair."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "heart",
+        "sceneColor": "#C08898",
+        "sceneLabel": "Draupadi's Courage",
+        "sceneEmoji": "💛",
+        "imageUrl": "/data/images/stories/maha_part2/page_04.jpg",
+        "text": "In that hall, gentle Draupadi was treated unkindly, and her heart filled with sorrow. So she closed her eyes and prayed with all her soul to her dearest friend, Lord Krishna.\n\nAnd Krishna heard her at once — quietly and lovingly, he protected her honour. Even in her very hardest moment, she was never truly alone."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "eye",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "A Worried Old King",
+        "sceneEmoji": "👀",
+        "imageUrl": "/data/images/stories/maha_part2/page_05.jpg",
+        "text": "The blind old king Dhritarashtra — father of the Kauravas — grew frightened by all that had happened, fearing the unfair game would bring great trouble.\n\nTo cool the anger, it was decided that the Pandavas must live away in the forest for thirteen long years. And so their great exile quietly began."
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "sun",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "A Short-Tempered Sage",
+        "sceneEmoji": "🙏",
+        "imageUrl": "/data/images/stories/maha_part2/page_06.jpg",
+        "text": "During the exile, a famously short-tempered sage named Durvasa arrived with hundreds of hungry students, hoping to catch the Pandavas with no food to offer.\n\nBut with Krishna's gentle help and Draupadi's faith, every single guest was satisfied — and the sage left giving his blessing. Once again, kindness and trust had saved the day."
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "smile",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Bhima Meets Hanuman",
+        "sceneEmoji": "🦁",
+        "imageUrl": "/data/images/stories/maha_part2/page_07.jpg",
+        "text": "Deep in the forest, mighty Bhima found an old monkey resting right across his path, its long tail in the way. 'Move your tail, old one!' said Bhima — but try as he might, he could not lift it even a little!\n\nThe monkey smiled warmly — it was the great Hanuman himself, Bhima's own spirit-brother. He blessed Bhima, and the two embraced with great joy."
+      },
+      {
+        "pageNumber": 8,
+        "sceneIcon": "shield",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "The Brave Protector",
+        "sceneEmoji": "🛡️",
+        "imageUrl": "/data/images/stories/maha_part2/page_08.jpg",
+        "text": "The forest was full of adventures, and not all of them were gentle. When fearsome beings of the woods threatened his family, brave Bhima stepped forward without a moment's fear.\n\nWith his great strength and his even greater love, he kept his mother and brothers safe — for a loving family, my dear, is the strongest shield of all."
+      },
+      {
+        "pageNumber": 9,
+        "sceneIcon": "droplet",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "The Wise Answers",
+        "sceneEmoji": "💫",
+        "imageUrl": "/data/images/stories/maha_part2/page_09.jpg",
+        "text": "One day, beside a still forest lake, a mysterious spirit called a Yaksha asked Yudhishthira many deep riddles before he would let anyone drink the water.\n\nYudhishthira answered each one with such honesty and wisdom that the delighted Yaksha — who was secretly his own divine father — blessed the entire family."
+      },
+      {
+        "pageNumber": 10,
+        "sceneIcon": "moon",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "The Year in Disguise",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/maha_part2/page_10.jpg",
+        "text": "For the very last year, the Pandavas had to live in secret, in clever disguises, in the kingdom of good King Virata — and no one must ever guess who they truly were.\n\nThey served quietly and waited with great patience for the day they could step back into the light. And that day was coming very soon... but for now, my dear, close your eyes and rest. Sleep well."
+      }
+    ]
+  },
+  {
+    "id": "maha_part3",
+    "title": "The Mahabharata: The Great War Begins",
+    "subtitle": "Two Armies Meet on the Field of Kurukshetra",
+    "coverColor": "#0891b2",
+    "coverGradient": "#0891b2",
+    "coverIcon": "wind",
+    "ageGroup": "6-12",
+    "collection": "The Mahabharata",
+    "coverImageUrl": "/data/images/stories/maha_part3/page_06.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "frown",
+        "sceneColor": "#C08898",
+        "sceneLabel": "When Kindness Was Refused",
+        "sceneEmoji": "😟",
+        "imageUrl": "/data/images/stories/maha_part3/page_01.jpg",
+        "text": "Settle in close, my dear one. When the thirteen years ended at last, the Pandavas asked only for their fair share of the kingdom back — but Duryodhana refused them even a needle-point of land.\n\nKind Krishna himself went as a messenger of peace, yet stubborn Duryodhana would not listen. And sometimes, when fairness is refused again and again, a great struggle becomes very hard to avoid."
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "users",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "Two Great Armies",
+        "sceneEmoji": "⚔️",
+        "imageUrl": "/data/images/stories/maha_part3/page_02.jpg",
+        "text": "And so two enormous armies gathered upon a wide, dusty field called Kurukshetra — friends, cousins, and teachers now standing on opposite sides.\n\nElephants, horses, chariots and bright banners stretched as far as the eye could see. The whole world seemed to hold its breath."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "eye",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "The Old King Listens",
+        "sceneEmoji": "👀",
+        "imageUrl": "/data/images/stories/maha_part3/page_03.jpg",
+        "text": "Far away in his palace, the blind king Dhritarashtra could not see the battlefield at all. So his wise helper Sanjaya, blessed with special faraway sight, described every detail to him.\n\n'Tell me, Sanjaya,' the old king asked anxiously, 'what are my sons and the Pandavas doing on that field of righteousness?' And so Sanjaya began the tale."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "frown",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "Duryodhana's Worry",
+        "sceneEmoji": "😟",
+        "imageUrl": "/data/images/stories/maha_part3/page_04.jpg",
+        "text": "Out on the field, even proud Duryodhana felt a flutter of worry as he gazed across at the mighty Pandava army, strong and steady.\n\nHe hurried to his old teacher, trying his best to look brave — but deep inside, he sensed that all his years of unfairness had led straight to this very moment."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "zap",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "The Conches Sound",
+        "sceneEmoji": "✨",
+        "imageUrl": "/data/images/stories/maha_part3/page_05.jpg",
+        "text": "Then, from Krishna and Arjuna's grand chariot, divine conch-shells were blown — their sound rolling across the sky like thunder and echoing through every heart on the field.\n\nThe great moment had arrived. A hush fell over everyone, and all eyes turned to the centre."
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "compass",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "Between the Two Armies",
+        "sceneEmoji": "🏹",
+        "imageUrl": "/data/images/stories/maha_part3/page_06.jpg",
+        "text": "Brave Arjuna asked his dear friend and charioteer, Krishna, to drive their chariot right into the middle, between the two armies, so he could see everyone he would have to face.\n\nAnd there, gazing upon his own grandfather, his teachers, his cousins and friends, Arjuna's heart filled with sadness and doubt. What Krishna gently told him next became the most beautiful song of wisdom ever spoken — the Bhagavad Gita. But that, my dear, is the very next story. Sleep peacefully tonight."
+      }
+    ]
+  },
+  {
+    "id": "gita_part1",
+    "title": "The Bhagavad Gita: The Soul That Never Fades",
+    "subtitle": "Krishna's First Words of Wisdom to Arjuna",
+    "coverColor": "#4f46e5",
+    "coverGradient": "#4f46e5",
+    "coverIcon": "sun",
+    "ageGroup": "6-12",
+    "collection": "The Mahabharata",
+    "coverImageUrl": "/data/images/stories/gita_part1/page_06.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "frown",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Arjuna's Sad Heart",
+        "sceneEmoji": "💔",
+        "imageUrl": "/data/images/stories/gita_part1/page_01.jpg",
+        "text": "Here begins the most beautiful song of wisdom ever told, my dear one. Standing between the two armies, brave Arjuna looked out and saw his own grandfather, his teachers, his cousins and friends.\n\nHis heart sank, his mighty bow slipped from his hand, and he whispered, 'Krishna, how can I fight against my own family? My heart is too heavy.'"
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "shield",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "A Gentle Reminder",
+        "sceneEmoji": "⚖️",
+        "imageUrl": "/data/images/stories/gita_part1/page_02.jpg",
+        "text": "Krishna, his dear friend and charioteer, listened kindly. He gently reminded Arjuna that they had tried every peaceful path, again and again, to avoid this day.\n\nWhen unfairness has hurt the innocent and refused every chance to make peace, Krishna said, standing up for what is right becomes a brave and sacred duty."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "sun",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "The Wise Do Not Grieve",
+        "sceneEmoji": "🌟",
+        "imageUrl": "/data/images/stories/gita_part1/page_03.jpg",
+        "text": "Then Krishna began to teach Arjuna the deepest secret of all. 'The truly wise,' he said softly, 'do not grieve — not for those who live, nor for those who pass on.'\n\nFor there is something inside every one of us, he explained, that was never born and can never truly end. Listen closely, little one, for this is wonderful."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "refresh-cw",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "Like Changing Old Clothes",
+        "sceneEmoji": "🔄",
+        "imageUrl": "/data/images/stories/gita_part1/page_04.jpg",
+        "text": "'You know how you take off old, worn-out clothes,' Krishna smiled, 'and happily put on fresh new ones? The soul does just the same.'\n\nWhen one body grows old and tired, the soul simply slips into a new one — bright and fresh. The soul itself is never harmed, never lost. Isn't that a comforting thought at bedtime?"
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "star",
+        "sceneColor": "#82A896",
+        "sceneLabel": "You Are Not Just Your Body",
+        "sceneEmoji": "✨",
+        "imageUrl": "/data/images/stories/gita_part1/page_05.jpg",
+        "text": "'Think about it,' said Krishna. 'Once you were a tiny baby, then a small child, and one day you'll be grown and then old.' The body keeps changing all the time.\n\n'But the real *you* — the one watching it all — stays the very same.' That quiet, bright spark inside is your true self, and it shines on and on."
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "heart",
+        "sceneColor": "#C08898",
+        "sceneLabel": "Two Friends on a Tree",
+        "sceneEmoji": "💛",
+        "imageUrl": "/data/images/stories/gita_part1/page_06.jpg",
+        "text": "Krishna shared a lovely picture. 'Imagine two friends sitting together on the same tree,' he said. 'One happily tastes the fruits, while the other simply watches with love.'\n\nThat loving watcher, my dear, is the Lord, always seated in your heart — never leaving you, gently caring for you through everything."
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "eye",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "Watching Our Wishes",
+        "sceneEmoji": "👀",
+        "imageUrl": "/data/images/stories/gita_part1/page_07.jpg",
+        "text": "Last for tonight, Krishna gave a gentle warning. 'When we keep staring at something we want,' he said, 'the wanting grows bigger and bigger, until it can pull us this way and that.'\n\nThe wise learn to notice their wishes calmly, like watching clouds drift by, and stay peaceful inside. Now rest, my dear — Krishna's beautiful song goes on tomorrow. Sleep well."
+      }
+    ]
+  },
+  {
+    "id": "gita_part2",
+    "title": "The Bhagavad Gita: Doing Good and Loving the Divine",
+    "subtitle": "Krishna's Teachings on Work, Devotion and Kindness",
+    "coverColor": "#10b981",
+    "coverGradient": "#10b981",
+    "coverIcon": "heart",
+    "ageGroup": "6-12",
+    "collection": "The Mahabharata",
+    "coverImageUrl": "/data/images/stories/gita_part2/page_05.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "gift",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Work as a Loving Gift",
+        "sceneEmoji": "🎁",
+        "imageUrl": "/data/images/stories/gita_part2/page_01.jpg",
+        "text": "Krishna's beautiful song went on, my dear. He shared a happy secret: when we do our work and our little duties not just for ourselves, but as a loving gift to the whole world, our hearts grow joyful.\n\n'Do your share with love,' Krishna said gently, 'and you will be blessed with everything you truly need.'"
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "sun",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "When We Share, Heaven Smiles",
+        "sceneEmoji": "🌅",
+        "imageUrl": "/data/images/stories/gita_part2/page_02.jpg",
+        "text": "Krishna explained that the whole world works together like one big, happy family. When we kindly give and share, the gentle powers of nature give back to us in return.\n\nThe sun, the rain, and the earth all share their gifts freely. So we too should share, my dear, and never only take."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "wind",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "The Smoke of Greed",
+        "sceneEmoji": "🌫️",
+        "imageUrl": "/data/images/stories/gita_part2/page_03.jpg",
+        "text": "But Krishna gave a kind little warning. 'One thing clouds a person's bright heart,' he said, 'and that is selfish greed — always wanting more and more, just for oneself.'\n\nGreed is like smoke that hides a glowing fire. When we let go of grabbing and share instead, our inner light shines clear and warm once more."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "book",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "Wisdom as Old as the Sun",
+        "sceneEmoji": "🌞",
+        "imageUrl": "/data/images/stories/gita_part2/page_04.jpg",
+        "text": "Krishna smiled and told Arjuna this wonderful wisdom was not new at all. 'Long, long ago,' he said, 'I first taught it to the sun, and it was passed gently down through wise and noble kings.'\n\nSo the words Arjuna heard were ancient and precious — a treasure handed down across the ages, all the way to that very day."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "shield",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "Whenever Goodness Fades",
+        "sceneEmoji": "🌟",
+        "imageUrl": "/data/images/stories/gita_part2/page_05.jpg",
+        "text": "Then Krishna shared one of his most comforting promises of all. 'Whenever goodness grows weak in the world, dear Arjuna, and unkindness starts to spread — at that very moment, I Myself come.'\n\nSo however dark things may seem, you can always remember: goodness is never left all alone in this world."
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "heart",
+        "sceneColor": "#C08898",
+        "sceneLabel": "To Protect the Gentle",
+        "sceneEmoji": "💛",
+        "imageUrl": "/data/images/stories/gita_part2/page_06.jpg",
+        "text": "'I come,' Krishna said warmly, 'to protect those who are good and gentle, to lovingly guide those who have lost their way, and to set things right again.'\n\nLike a caring parent who always returns to help, the Lord comes back age after age, so that love and fairness can bloom anew."
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "smile",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Love Comes Back to You",
+        "sceneEmoji": "😊",
+        "imageUrl": "/data/images/stories/gita_part2/page_07.jpg",
+        "text": "Krishna shared a gentle truth about love itself. 'However someone comes to Me,' he said, 'that is exactly how I lovingly welcome them in return.'\n\nIt is just like a smile, my dear — when you offer one warmly, the whole world tends to smile right back at you."
+      },
+      {
+        "pageNumber": 8,
+        "sceneIcon": "compass",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "Many Paths, One Home",
+        "sceneEmoji": "🧭",
+        "imageUrl": "/data/images/stories/gita_part2/page_08.jpg",
+        "text": "Arjuna wondered which was better — to work busily, or to sit quietly thinking of God. Krishna laughed softly. 'Do not worry, dear one. Both good paths lead to the very same beautiful home.'\n\nWhether you help others with busy hands, or grow calm and wise in the quiet, a loving heart always finds its way."
+      },
+      {
+        "pageNumber": 9,
+        "sceneIcon": "eye",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Seeing Everyone Kindly",
+        "sceneEmoji": "👀",
+        "imageUrl": "/data/images/stories/gita_part2/page_09.jpg",
+        "text": "Krishna described the gentlest kind of wise person. 'The truly humble,' he said, 'look upon everyone with the same loving eyes — a great teacher, a simple worker, even the little animals.'\n\nThey see the same bright spark of life shining in every being. What a kind way to look at the world, isn't it?"
+      },
+      {
+        "pageNumber": 10,
+        "sceneIcon": "heart",
+        "sceneColor": "#C08898",
+        "sceneLabel": "Keep Him in Your Heart",
+        "sceneEmoji": "💫",
+        "imageUrl": "/data/images/stories/gita_part2/page_10.jpg",
+        "text": "Krishna then taught Arjuna how to find peace inside. 'Sit quietly,' he said, 'and gently hold Me within your heart, like a warm little lamp that never goes out.'\n\nWhen we keep something loving at the very centre of our hearts, even a stormy day can feel calm and safe."
+      },
+      {
+        "pageNumber": 11,
+        "sceneIcon": "refresh-cw",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Practice, Little by Little",
+        "sceneEmoji": "🔄",
+        "imageUrl": "/data/images/stories/gita_part2/page_11.jpg",
+        "text": "Becoming calm and good, Krishna explained, is like learning anything wonderful — it takes a little gentle practice every single day.\n\n'Do not give up,' he encouraged. 'Step by step, with patience and a steady heart, you will grow more peaceful than you ever imagined.'"
+      },
+      {
+        "pageNumber": 12,
+        "sceneIcon": "wind",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "The Restless Mind",
+        "sceneEmoji": "💨",
+        "imageUrl": "/data/images/stories/gita_part2/page_12.jpg",
+        "text": "Arjuna sighed, 'But Krishna, my mind is so restless! It jumps about like the wind — how can I ever hold it still?'\n\nKrishna nodded kindly. 'Yes, the mind is restless — but with gentle practice and a little patience, even the wind can be guided. Do not be discouraged, brave one.'"
+      },
+      {
+        "pageNumber": 13,
+        "sceneIcon": "heart",
+        "sceneColor": "#C08898",
+        "sceneLabel": "The Dearest Friend",
+        "sceneEmoji": "💛",
+        "imageUrl": "/data/images/stories/gita_part2/page_13.jpg",
+        "text": "Of all the wise and holy people, Krishna shared, the one dearest to him is simply the one who loves him with a warm and faithful heart.\n\nNot the strongest, not the cleverest — just the most loving. Isn't that a lovely thought to drift off to sleep with?"
+      },
+      {
+        "pageNumber": 14,
+        "sceneIcon": "users",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "All Who Call Are Welcome",
+        "sceneEmoji": "🤝",
+        "imageUrl": "/data/images/stories/gita_part2/page_14.jpg",
+        "text": "Krishna said all sorts of people turn to God — those who are sad and need comfort, those who are curious, those searching for something good, and those who are already wise.\n\nAnd every single one, he said, is warmly welcome. No one who reaches out with a sincere heart is ever turned away."
+      },
+      {
+        "pageNumber": 15,
+        "sceneIcon": "star",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "The Forever Home",
+        "sceneEmoji": "⭐",
+        "imageUrl": "/data/images/stories/gita_part2/page_15.jpg",
+        "text": "Krishna spoke of a beautiful, shining home — a place of endless peace and love. 'Those who reach it,' he said gently, 'are so happy and full that they never need to wander again.'\n\nIt is the softest, safest place of all, my dear — the loving heart of the Divine itself."
+      },
+      {
+        "pageNumber": 16,
+        "sceneIcon": "eye",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Seeing With the Heart",
+        "sceneEmoji": "🌟",
+        "imageUrl": "/data/images/stories/gita_part2/page_16.jpg",
+        "text": "Last for tonight, Krishna gave a gentle smile. 'Sometimes people do not recognise Me when I come in a simple, humble form,' he said, 'for they look only with their eyes.'\n\n'But the wise look with their hearts, and they see Me everywhere.' So always look kindly, dear one — there is wonder hiding in the simplest things. Now close your eyes and rest. Sleep well."
+      }
+    ]
+  },
+  {
+    "id": "gita_part3",
+    "title": "The Bhagavad Gita: Krishna's Wonderful Glories",
+    "subtitle": "Where to Find the Divine in All the Best Things",
+    "coverColor": "#7c3aed",
+    "coverGradient": "#7c3aed",
+    "coverIcon": "sun",
+    "ageGroup": "6-12",
+    "collection": "The Mahabharata",
+    "coverImageUrl": "/data/images/stories/gita_part3/page_03.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "eye",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "Where to Find Me",
+        "sceneEmoji": "✨",
+        "imageUrl": "/data/images/stories/gita_part3/page_01.jpg",
+        "text": "Now Krishna shared the most wonderful secret of all, my dear one. 'Not even the gods, nor the wisest sages, fully know where I come from,' He said gently, 'for I am the quiet source of everything that is.'"
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "heart",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "Arjuna's Wonder",
+        "sceneEmoji": "💛",
+        "imageUrl": "/data/images/stories/gita_part3/page_02.jpg",
+        "text": "Arjuna's eyes filled with love. 'Yes, Krishna!' he said softly. 'You are the highest and purest of all — the beginning of everything.' And so Krishna began to show him where He could be found in all the wide world."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "sun",
+        "sceneColor": "#82A896",
+        "sceneLabel": "In the Brightest Light",
+        "sceneEmoji": "☀️",
+        "imageUrl": "/data/images/stories/gita_part3/page_03.jpg",
+        "text": "'Among all the shining ones of the heavens,' Krishna said warmly, 'look for Me in the brightest light of all — the golden sun that wakes the world each morning.'"
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "wind",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "In the Racing Wind",
+        "sceneEmoji": "💨",
+        "imageUrl": "/data/images/stories/gita_part3/page_04.jpg",
+        "text": "'Among the swift wind-gods who race across the sky, I am their shining leader' — for the gentle breeze that cools your cheek carries a little touch of the Divine."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "moon",
+        "sceneColor": "#C08898",
+        "sceneLabel": "In the Quiet Moon",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/gita_part3/page_05.jpg",
+        "text": "'And when night falls, dear one, look up,' said Krishna. 'Among all the twinkling stars, I am the soft, glowing moon that watches over you while you sleep.'"
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "eye",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "In Your Own Mind",
+        "sceneEmoji": "💭",
+        "imageUrl": "/data/images/stories/gita_part3/page_06.jpg",
+        "text": "'Of all your wonderful senses,' Krishna smiled, 'I am the mind itself — the quiet thinker inside you that wonders, remembers, and dreams.'"
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "heart",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "In the Peaceful Heart",
+        "sceneEmoji": "🙏",
+        "imageUrl": "/data/images/stories/gita_part3/page_07.jpg",
+        "text": "'Among the great and powerful beings, I am the most peaceful and kind of all' — for true greatness, He taught, is always gentle at heart."
+      },
+      {
+        "pageNumber": 8,
+        "sceneIcon": "award",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "In the Keeper of Treasure",
+        "sceneEmoji": "🏺",
+        "imageUrl": "/data/images/stories/gita_part3/page_08.jpg",
+        "text": "'Among the guardians of hidden treasure, I am their lord' — yet the richest treasure of all, He whispered, is simply a loving heart."
+      },
+      {
+        "pageNumber": 9,
+        "sceneIcon": "zap",
+        "sceneColor": "#82A896",
+        "sceneLabel": "In the Warm Fire",
+        "sceneEmoji": "🔥",
+        "imageUrl": "/data/images/stories/gita_part3/page_09.jpg",
+        "text": "'Among the bright and glowing elements, I am the fire' — the cozy little flame that gives warmth and light to everyone gathered near."
+      },
+      {
+        "pageNumber": 10,
+        "sceneIcon": "triangle",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "In the Tallest Mountain",
+        "sceneEmoji": "⛰️",
+        "imageUrl": "/data/images/stories/gita_part3/page_10.jpg",
+        "text": "'Among all the mighty mountains, look for Me in the tallest, grandest peak' — the one that lifts its snowy head right up into the clouds."
+      },
+      {
+        "pageNumber": 11,
+        "sceneIcon": "book",
+        "sceneColor": "#C08898",
+        "sceneLabel": "In the Wise Guide",
+        "sceneEmoji": "📖",
+        "imageUrl": "/data/images/stories/gita_part3/page_11.jpg",
+        "text": "'Among the wise temple-guides, I am their chief' — the gentle teacher who patiently shows others the path to goodness."
+      },
+      {
+        "pageNumber": 12,
+        "sceneIcon": "shield",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "In the Brave Leader",
+        "sceneEmoji": "🛡️",
+        "imageUrl": "/data/images/stories/gita_part3/page_12.jpg",
+        "text": "'Among the brave commanders, I am the noblest and most fearless' — strong of arm, yet always there to protect those who are small."
+      },
+      {
+        "pageNumber": 13,
+        "sceneIcon": "droplet",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "In the Wide Ocean",
+        "sceneEmoji": "🌊",
+        "imageUrl": "/data/images/stories/gita_part3/page_13.jpg",
+        "text": "'Among all the waters of the world, I am the great, deep ocean' — vast and calm, holding countless quiet wonders within."
+      },
+      {
+        "pageNumber": 14,
+        "sceneIcon": "star",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "In the Greatest Sage",
+        "sceneEmoji": "⭐",
+        "imageUrl": "/data/images/stories/gita_part3/page_14.jpg",
+        "text": "'Among the wise sages of long ago, I am the very greatest' — those whose kind wisdom still lights our way, even today."
+      },
+      {
+        "pageNumber": 15,
+        "sceneIcon": "music",
+        "sceneColor": "#82A896",
+        "sceneLabel": "In the Sweet Chant",
+        "sceneEmoji": "🎶",
+        "imageUrl": "/data/images/stories/gita_part3/page_15.jpg",
+        "text": "'Among all the lovely ways to pray, I am the soft chanting of the holy names' — a gentle little song the heart loves most to sing."
+      },
+      {
+        "pageNumber": 16,
+        "sceneIcon": "feather",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "In the Giving Tree",
+        "sceneEmoji": "🌳",
+        "imageUrl": "/data/images/stories/gita_part3/page_16.jpg",
+        "text": "'Among all the trees, I am the great banyan' — its wide, friendly arms giving cool shade and a resting place to every weary traveller."
+      },
+      {
+        "pageNumber": 17,
+        "sceneIcon": "music",
+        "sceneColor": "#C08898",
+        "sceneLabel": "In the Heavenly Singer",
+        "sceneEmoji": "🎼",
+        "imageUrl": "/data/images/stories/gita_part3/page_17.jpg",
+        "text": "'Among the sages who wander the heavens singing of God, I am the most beloved' — whose joyful music fills the whole sky."
+      },
+      {
+        "pageNumber": 18,
+        "sceneIcon": "music",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "In the Sweetest Music",
+        "sceneEmoji": "🎵",
+        "imageUrl": "/data/images/stories/gita_part3/page_18.jpg",
+        "text": "'Among the gentle music-makers of the heavens, I am their finest' — for sweet music, Krishna said, is a gift straight from the Divine."
+      },
+      {
+        "pageNumber": 19,
+        "sceneIcon": "star",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "In the Royal Elephant",
+        "sceneEmoji": "🐘",
+        "imageUrl": "/data/images/stories/gita_part3/page_19.jpg",
+        "text": "'Among all the lordly elephants, I am the grandest of them all' — the great shining elephant of the gods, gentle yet mighty."
+      },
+      {
+        "pageNumber": 20,
+        "sceneIcon": "zap",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "In the Mighty Thunder",
+        "sceneEmoji": "⚡",
+        "imageUrl": "/data/images/stories/gita_part3/page_20.jpg",
+        "text": "'Among all powerful things, I am the thunderbolt' — yet that same great power, He taught, is best used to protect, and never to harm."
+      },
+      {
+        "pageNumber": 21,
+        "sceneIcon": "heart",
+        "sceneColor": "#82A896",
+        "sceneLabel": "In Loving Hearts",
+        "sceneEmoji": "💕",
+        "imageUrl": "/data/images/stories/gita_part3/page_21.jpg",
+        "text": "'I am the pure, loving warmth that brings families close together' — the gentle love from which all new joy and life begins."
+      },
+      {
+        "pageNumber": 22,
+        "sceneIcon": "refresh-cw",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "In the Endless Serpent",
+        "sceneEmoji": "🐉",
+        "imageUrl": "/data/images/stories/gita_part3/page_22.jpg",
+        "text": "'Among the great serpents, I am the endless one called Ananta' — who tenderly cradles the whole resting world upon his soft coils."
+      },
+      {
+        "pageNumber": 23,
+        "sceneIcon": "droplet",
+        "sceneColor": "#C08898",
+        "sceneLabel": "In the Lord of Waters",
+        "sceneEmoji": "🌊",
+        "imageUrl": "/data/images/stories/gita_part3/page_23.jpg",
+        "text": "'Among the beings of the deep, I am their kind ruler' — who watches gently over every river, every lake, and every sea."
+      },
+      {
+        "pageNumber": 24,
+        "sceneIcon": "heart",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "In the Devoted Child",
+        "sceneEmoji": "🙏",
+        "imageUrl": "/data/images/stories/gita_part3/page_24.jpg",
+        "text": "'And even among the demons, I am dear little Prahlada' — the brave boy whose love for God never once wavered, no matter what."
+      },
+      {
+        "pageNumber": 25,
+        "sceneIcon": "clock",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "In Time Itself",
+        "sceneEmoji": "⏳",
+        "imageUrl": "/data/images/stories/gita_part3/page_25.jpg",
+        "text": "'Among all the things that gently turn the world, I am Time' — which carries each day softly into the next, just as bedtime always follows play."
+      },
+      {
+        "pageNumber": 26,
+        "sceneIcon": "shield",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "In the Noble Lion",
+        "sceneEmoji": "🦁",
+        "imageUrl": "/data/images/stories/gita_part3/page_26.jpg",
+        "text": "'Among all the strong beasts of the forest, I am the noble lion' — fearless and proud, the gentle king of every creature there."
+      },
+      {
+        "pageNumber": 27,
+        "sceneIcon": "navigation",
+        "sceneColor": "#82A896",
+        "sceneLabel": "In the Soaring Eagle",
+        "sceneEmoji": "🦅",
+        "imageUrl": "/data/images/stories/gita_part3/page_27.jpg",
+        "text": "'Among all the birds of the sky, I am Garuda, the mighty eagle' — who soars the very highest of all, closest to the sun."
+      },
+      {
+        "pageNumber": 28,
+        "sceneIcon": "wind",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "In the Fresh Wind",
+        "sceneEmoji": "🍃",
+        "imageUrl": "/data/images/stories/gita_part3/page_28.jpg",
+        "text": "'Among all things that cleanse and freshen the world, I am the wind' — sweeping it clean and carrying sweet scents gently along."
+      },
+      {
+        "pageNumber": 29,
+        "sceneIcon": "droplet",
+        "sceneColor": "#C08898",
+        "sceneLabel": "In the Swift Fish",
+        "sceneEmoji": "🐟",
+        "imageUrl": "/data/images/stories/gita_part3/page_29.jpg",
+        "text": "'Among all the creatures that swim, I am the swiftest and strongest' — gliding like an arrow through the cool, clear water."
+      },
+      {
+        "pageNumber": 30,
+        "sceneIcon": "droplet",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "In the Holy River",
+        "sceneEmoji": "🌊",
+        "imageUrl": "/data/images/stories/gita_part3/page_30.jpg",
+        "text": "'Among all the flowing rivers, I am the holy Ganga' — sparkling and pure, singing and dancing all the way down to the sea."
+      },
+      {
+        "pageNumber": 31,
+        "sceneIcon": "refresh-cw",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "In Beginnings and Endings",
+        "sceneEmoji": "🔄",
+        "imageUrl": "/data/images/stories/gita_part3/page_31.jpg",
+        "text": "'Of all that is made, I am the beginning, the middle, and the end' — for I hold the whole story of everything, just as a tale has a start, a middle, and a sleepy goodnight."
+      },
+      {
+        "pageNumber": 32,
+        "sceneIcon": "book",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "In Gentle Words",
+        "sceneEmoji": "💬",
+        "imageUrl": "/data/images/stories/gita_part3/page_32.jpg",
+        "text": "'Among the building-blocks of speech, I am the most balanced and complete' — for the Divine, He said, is found even in the kind words we speak."
+      },
+      {
+        "pageNumber": 33,
+        "sceneIcon": "music",
+        "sceneColor": "#82A896",
+        "sceneLabel": "In the Sweetest Song",
+        "sceneEmoji": "🎶",
+        "imageUrl": "/data/images/stories/gita_part3/page_33.jpg",
+        "text": "'Among all the holy songs and verses, I am the sweetest, most sacred melody' — the kind that calms every heart that hears it."
+      },
+      {
+        "pageNumber": 34,
+        "sceneIcon": "sun",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "In the Gentlest Season",
+        "sceneEmoji": "🌸",
+        "imageUrl": "/data/images/stories/gita_part3/page_34.jpg",
+        "text": "'Among the months and the seasons, I am the softest, most blossoming time of year' — when flowers open and the whole world feels new."
+      },
+      {
+        "pageNumber": 35,
+        "sceneIcon": "heart",
+        "sceneColor": "#C08898",
+        "sceneLabel": "In Krishna Himself",
+        "sceneEmoji": "💙",
+        "imageUrl": "/data/images/stories/gita_part3/page_35.jpg",
+        "text": "'And among the noble Vrishni family, dear Arjuna, I am Krishna' — your very own friend and guide, standing right here beside you."
+      },
+      {
+        "pageNumber": 36,
+        "sceneIcon": "star",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "In Brave Arjuna",
+        "sceneEmoji": "🏹",
+        "imageUrl": "/data/images/stories/gita_part3/page_36.jpg",
+        "text": "'And among the five Pandava brothers,' Krishna said with a loving smile, 'I am you, dear Arjuna — for a pure and devoted heart is always very close to Me.'\n\nAnd so you see, my little one: wherever there is something good, brave, or beautiful in this whole world, a gentle spark of the Divine is quietly shining there. Now close your eyes and rest. Sleep well."
+      }
+    ]
+  },
+  {
+    "id": "gita_part4",
+    "title": "The Mahabharata: The Song and the Peace",
+    "subtitle": "Krishna's Final Teachings and the Story's Gentle End",
+    "coverColor": "#6366f1",
+    "coverGradient": "#6366f1",
+    "coverIcon": "sun",
+    "ageGroup": "6-12",
+    "collection": "The Mahabharata",
+    "coverImageUrl": "/data/images/stories/gita_part4/page_04.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "book",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "The Wisest Storyteller",
+        "sceneEmoji": "📖",
+        "imageUrl": "/data/images/stories/gita_part4/page_01.jpg",
+        "text": "Krishna kept sharing His glories, my dear. 'Among the great wise sages, I am Vyasa' — the very one who lovingly gathered this whole grand story, so that little ones like you could hear it at bedtime."
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "eye",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "The Clearest Thinker",
+        "sceneEmoji": "💭",
+        "imageUrl": "/data/images/stories/gita_part4/page_02.jpg",
+        "text": "'And among the deepest thinkers, I am the wisest of all' — for clear, gentle, honest thinking is itself a quiet gift from the Divine."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "sun",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Just a Single Spark",
+        "sceneEmoji": "✨",
+        "imageUrl": "/data/images/stories/gita_part4/page_03.jpg",
+        "text": "Then Krishna gave the loveliest thought of all. 'Anything you ever see that is beautiful, or strong, or wonderful,' He said softly, 'springs from just one tiny spark of My splendour.'\n\nJust a single spark, my dear — imagine how bright the whole flame must be!"
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "star",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "A Wonder Beyond Wonders",
+        "sceneEmoji": "🌌",
+        "imageUrl": "/data/images/stories/gita_part4/page_04.jpg",
+        "text": "Then Arjuna longed to see Krishna's true, full form. So Krishna showed him a wonder beyond all wonders — within Himself, Arjuna beheld the entire universe: every sun and star, every living being, all held lovingly together.\n\nArjuna gasped, filled with awe and amazement."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "heart",
+        "sceneColor": "#C08898",
+        "sceneLabel": "Held in Loving Hands",
+        "sceneEmoji": "💛",
+        "imageUrl": "/data/images/stories/gita_part4/page_05.jpg",
+        "text": "It was so vast and dazzling that gentle Arjuna grew a little afraid. So Krishna softened back into his dear, familiar friend, and smiled.\n\n'Those who love Me simply and sweetly,' He said, 'I carry safely — just like a parent carrying a sleepy child to bed.'"
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "refresh-cw",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "The Three Gentle Threads",
+        "sceneEmoji": "🧵",
+        "imageUrl": "/data/images/stories/gita_part4/page_06.jpg",
+        "text": "Krishna explained that the whole world is woven from three kinds of threads — one bright and peaceful, one busy and restless, and one dull and sleepy.\n\nThe wise, He said, gently choose more and more of the bright, peaceful thread, day by day."
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "feather",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "The Upside-Down Tree",
+        "sceneEmoji": "🌳",
+        "imageUrl": "/data/images/stories/gita_part4/page_07.jpg",
+        "text": "'Picture a great tree,' Krishna said, 'but one whose roots grow upward into the sky, and whose branches spread down into the world.'\n\nIt was His gentle way of saying that everything we see grows from something higher and unseen — from love itself."
+      },
+      {
+        "pageNumber": 8,
+        "sceneIcon": "globe",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "Two Quiet Worlds",
+        "sceneEmoji": "🌍",
+        "imageUrl": "/data/images/stories/gita_part4/page_08.jpg",
+        "text": "There are two worlds, Krishna taught — the one we see and touch, which is always changing, and a quiet, shining world beyond it that never changes at all.\n\nAnd the loving Lord, He said, holds them both as gently as you hold a treasure."
+      },
+      {
+        "pageNumber": 9,
+        "sceneIcon": "wind",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Carried Along Like a Scent",
+        "sceneEmoji": "🍃",
+        "imageUrl": "/data/images/stories/gita_part4/page_09.jpg",
+        "text": "'When the soul travels from one life to the next,' Krishna said gently, 'it carries its thoughts and habits along — like a soft breeze carrying the sweet scent of flowers.'\n\nSo fill your heart with kind and lovely things, dear one, and they will travel with you."
+      },
+      {
+        "pageNumber": 10,
+        "sceneIcon": "frown",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "The Clouding Feelings",
+        "sceneEmoji": "🌫️",
+        "imageUrl": "/data/images/stories/gita_part4/page_10.jpg",
+        "text": "Krishna warned, with great kindness, about feelings that can cloud a bright little heart — too much pride, and always, always wanting one's own way.\n\nEven clever people, He said, can lose their way when they let these grow too big."
+      },
+      {
+        "pageNumber": 11,
+        "sceneIcon": "alert-triangle",
+        "sceneColor": "#C08898",
+        "sceneLabel": "Three Little Gates",
+        "sceneEmoji": "🚪",
+        "imageUrl": "/data/images/stories/gita_part4/page_11.jpg",
+        "text": "'There are three little gates,' He said, 'that lead away from the light — selfish wanting, greedy grabbing, and hot, stormy anger.'\n\nThe wise gently keep these three gates closed, and so they stay happy, peaceful, and free."
+      },
+      {
+        "pageNumber": 12,
+        "sceneIcon": "heart",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "What We Believe",
+        "sceneEmoji": "🙏",
+        "imageUrl": "/data/images/stories/gita_part4/page_12.jpg",
+        "text": "Krishna explained that what we believe slowly shapes who we become — much as the food we eat each day shapes how we grow.\n\nSo He gently encouraged a faith that is pure, calm, and full of kindness."
+      },
+      {
+        "pageNumber": 13,
+        "sceneIcon": "award",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Doing Things With Care",
+        "sceneEmoji": "🛠️",
+        "imageUrl": "/data/images/stories/gita_part4/page_13.jpg",
+        "text": "When we set out to do anything at all, Krishna said, many things quietly come together — our hands, our tools, our effort, and a little help from above.\n\nRemembering this, He smiled, keeps our hearts humble and thankful."
+      },
+      {
+        "pageNumber": 14,
+        "sceneIcon": "sun",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "Joy in Everyday Work",
+        "sceneEmoji": "🌞",
+        "imageUrl": "/data/images/stories/gita_part4/page_14.jpg",
+        "text": "'You can reach the very highest happiness,' Krishna promised, 'simply by doing your own everyday work with love, and gently offering it up to Me.'\n\nEven small, ordinary tasks become beautiful and bright when they are done that way."
+      },
+      {
+        "pageNumber": 15,
+        "sceneIcon": "heart",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Always Think of Me",
+        "sceneEmoji": "💙",
+        "imageUrl": "/data/images/stories/gita_part4/page_15.jpg",
+        "text": "Then came Krishna's sweetest instruction of all. 'Always remember Me, love Me, and be My dear friend,' He said tenderly, 'and you will surely come home to Me.'\n\n'This,' He whispered, 'is My most loving promise to you.'"
+      },
+      {
+        "pageNumber": 16,
+        "sceneIcon": "star",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "Wherever Love and Courage Meet",
+        "sceneEmoji": "🌟",
+        "imageUrl": "/data/images/stories/gita_part4/page_16.jpg",
+        "text": "And the great song ended with a golden truth: 'Wherever there is loving wisdom — like Krishna — together with sincere, brave effort — like Arjuna — there you will always find goodness, success, and joy.'\n\nArjuna's doubts melted clean away. He lifted his bow once more, his heart now calm, clear, and brave."
+      },
+      {
+        "pageNumber": 17,
+        "sceneIcon": "moon",
+        "sceneColor": "#C08898",
+        "sceneLabel": "The Grandfather's Rest",
+        "sceneEmoji": "🕊️",
+        "imageUrl": "/data/images/stories/gita_part4/page_17.jpg",
+        "text": "And so the great struggle on the field unfolded. The noble old grandfather Bhishma — so brave, and so dearly loved by everyone — at last lay down his bow to rest.\n\nFriends and cousins alike gathered round him with respect and tears, for goodness is honoured by all."
+      },
+      {
+        "pageNumber": 18,
+        "sceneIcon": "shield",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "A Brave Promise Kept",
+        "sceneEmoji": "🏹",
+        "imageUrl": "/data/images/stories/gita_part4/page_18.jpg",
+        "text": "Arjuna had made a solemn promise to set a great wrong right before the sun went down that day.\n\nWith courage and Krishna's gentle guidance, he kept his word — for a promise, my dear, is a precious thing to hold."
+      },
+      {
+        "pageNumber": 19,
+        "sceneIcon": "sun",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Brave Hearts Return Home",
+        "sceneEmoji": "🌅",
+        "imageUrl": "/data/images/stories/gita_part4/page_19.jpg",
+        "text": "One by one, even the greatest warriors — the wise teacher Drona, and generous Karna, who never refused a soul in need — gave their all upon the field.\n\nWhen their time came, they returned peacefully to the heavens, remembered always for their courage and their gifts."
+      },
+      {
+        "pageNumber": 20,
+        "sceneIcon": "refresh-cw",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "The Long Sorrow Ends",
+        "sceneEmoji": "☮️",
+        "imageUrl": "/data/images/stories/gita_part4/page_20.jpg",
+        "text": "At last the long, sorrowful struggle drew to its close. The unfairness that had begun so long ago, on the day of the tricky dice game, was finally set right.\n\nThe Pandavas had their kingdom again — yet their hearts were gentle, not proud, for they knew the cost of it all."
+      },
+      {
+        "pageNumber": 21,
+        "sceneIcon": "frown",
+        "sceneColor": "#82A896",
+        "sceneLabel": "When Grief Turned to Anger",
+        "sceneEmoji": "😔",
+        "imageUrl": "/data/images/stories/gita_part4/page_21.jpg",
+        "text": "But one sorrowful warrior named Ashvatthama, heartbroken at losing his dear father, let his grief turn into anger.\n\nGrief is heavy, my dear — and when we do not share it gently, it can sometimes lead even a clever person astray."
+      },
+      {
+        "pageNumber": 22,
+        "sceneIcon": "shield",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "Caught, and Shown Mercy",
+        "sceneEmoji": "🤝",
+        "imageUrl": "/data/images/stories/gita_part4/page_22.jpg",
+        "text": "Ashvatthama was soon caught. Mighty Bhima was very angry — but wise Yudhishthira and gentle Draupadi looked into their hearts.\n\nEven after all their sorrow, they chose mercy over cruelty — for that is the truest kind of strength."
+      },
+      {
+        "pageNumber": 23,
+        "sceneIcon": "heart",
+        "sceneColor": "#C08898",
+        "sceneLabel": "The Brave Choose Kindness",
+        "sceneEmoji": "🕊️",
+        "imageUrl": "/data/images/stories/gita_part4/page_23.jpg",
+        "text": "And so they let the sorrowful warrior go, asking only that he learn from his mistakes.\n\nTo forgive, when you have every reason to be angry, is one of the bravest and most beautiful things a heart can do."
+      },
+      {
+        "pageNumber": 24,
+        "sceneIcon": "shield",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "Krishna Protects the Baby",
+        "sceneEmoji": "👶",
+        "imageUrl": "/data/images/stories/gita_part4/page_24.jpg",
+        "text": "In his last burst of anger, Ashvatthama loosed a terrible weapon, aimed even at a precious unborn baby.\n\nBut loving Krishna reached out at once and gently shielded the little one. That child was kept perfectly safe — and grew up to become a wise and good king."
+      },
+      {
+        "pageNumber": 25,
+        "sceneIcon": "navigation",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Krishna Goes Home to Dwaraka",
+        "sceneEmoji": "🏰",
+        "imageUrl": "/data/images/stories/gita_part4/page_25.jpg",
+        "text": "With peace restored at last and goodness set firmly upon its feet, Krishna returned to his own beautiful seaside city of Dwaraka.\n\nHis loving work was done — yet His gentle wisdom stayed behind, shining in every heart."
+      },
+      {
+        "pageNumber": 26,
+        "sceneIcon": "book",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "Kind Words for the Old King",
+        "sceneEmoji": "🧓",
+        "imageUrl": "/data/images/stories/gita_part4/page_26.jpg",
+        "text": "Gentle, honest Vidura — who had always spoken the truth — sat beside the grieving old king Dhritarashtra.\n\nWith soft and wise words, he comforted him, and helped his tired heart find a little peace at last."
+      },
+      {
+        "pageNumber": 27,
+        "sceneIcon": "star",
+        "sceneColor": "#82A896",
+        "sceneLabel": "The Lord Returns to the Stars",
+        "sceneEmoji": "🌟",
+        "imageUrl": "/data/images/stories/gita_part4/page_27.jpg",
+        "text": "When all His work on earth was complete, Lord Krishna lovingly returned to His eternal home beyond the stars.\n\nBut He left behind the most precious gift of all — His beautiful song, the Gita — for you, and for everyone, to keep forever."
+      },
+      {
+        "pageNumber": 28,
+        "sceneIcon": "moon",
+        "sceneColor": "#C0A07E",
+        "sceneLabel": "The Brothers' Peaceful Journey",
+        "sceneEmoji": "🌙",
+        "imageUrl": "/data/images/stories/gita_part4/page_28.jpg",
+        "text": "And at last, their long, brave story finished, the five Pandava brothers and dear Draupadi set off on one final, peaceful journey — climbing gently toward the shining heavens, together to the very end.\n\nAnd that, my darling one, is the great tale of the Mahabharata. Hold its kindness in your heart. Now close your eyes and rest. Sleep well, and sweet dreams."
+      }
+    ]
+  },
+  {
+    "id": "canto8_part1",
+    "title": "Srimad Bhagavatam: Gajendra and the Churning of the Ocean",
+    "subtitle": "The Elephant King's Rescue and the Great Churning of the Milk Ocean",
+    "coverColor": "#0ea5e9",
+    "coverGradient": "#0ea5e9",
+    "coverIcon": "droplet",
+    "ageGroup": "6-12",
+    "collection": "Srimad Bhagavatam",
+    "coverImageUrl": "/data/images/stories/canto8_part1/page_06.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "sun",
+        "sceneColor": "#0ea5e9",
+        "sceneLabel": "The Elephant King's Garden",
+        "sceneEmoji": "🐘",
+        "imageUrl": "/data/images/stories/canto8_part1/page_01.jpg",
+        "text": "Long, long ago, my dear, there lived a great elephant king named Gajendra. He was strong and proud, and he loved to wander with his elephant family through a beautiful mountain forest, full of cool lakes and sweet fruit trees."
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "droplet",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Into the Cool Lake",
+        "sceneEmoji": "🌊",
+        "imageUrl": "/data/images/stories/canto8_part1/page_02.jpg",
+        "text": "One hot day, Gajendra led his family down to a sparkling lake to bathe and play. He waded in happily, splashing water over his back, feeling cool and free, with not a worry in the world."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "alert-triangle",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "The Crocodile Strikes",
+        "sceneEmoji": "🐊",
+        "imageUrl": "/data/images/stories/canto8_part1/page_03.jpg",
+        "text": "But hidden beneath the water was a mighty crocodile. Suddenly it grabbed Gajendra's leg in its powerful jaws! Gajendra trumpeted in fright and pulled with all his strength, but the crocodile would not let go."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "clock",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "A Long, Long Struggle",
+        "sceneEmoji": "⏳",
+        "imageUrl": "/data/images/stories/canto8_part1/page_04.jpg",
+        "text": "They pulled and pulled — for what felt like ages and ages. Gajendra's elephant friends tried to help, but it was no use. Slowly, the great elephant king grew tired, and his strength began to fade away."
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "heart",
+        "sceneColor": "#C08898",
+        "sceneLabel": "One Last Cry for Help",
+        "sceneEmoji": "🙏",
+        "imageUrl": "/data/images/stories/canto8_part1/page_05.jpg",
+        "text": "When Gajendra had nothing left, he stopped struggling for himself. Instead, with his trunk raised high and a flower offering, he closed his eyes and called out from the very bottom of his heart: 'Lord, please help me — not just for me, but for anyone in trouble.'"
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "star",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "Vishnu Comes Flying",
+        "sceneEmoji": "✨",
+        "imageUrl": "/data/images/stories/canto8_part1/page_06.jpg",
+        "text": "And do you know what happened, my dear? In that very instant, Lord Vishnu, riding on his great eagle Garuda, swooped down from the heavens faster than thought itself. With one gentle, glowing touch he freed Gajendra and lifted both elephant and crocodile safely onto the shore.\n\nThe Lord always comes running when someone calls with a true and humble heart — remember that, little one."
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "users",
+        "sceneColor": "#0ea5e9",
+        "sceneLabel": "The Gods and Demons Meet",
+        "sceneEmoji": "🤝",
+        "imageUrl": "/data/images/stories/canto8_part1/page_07.jpg",
+        "text": "Now let me tell you another wonderful story from long ago. The shining gods and the grumbling demons both wanted a magical treasure — a nectar that could make anyone live forever. So, just for a while, they agreed to work together to find it."
+      },
+      {
+        "pageNumber": 8,
+        "sceneIcon": "triangle",
+        "sceneColor": "#82A896",
+        "sceneLabel": "The Great Mountain as a Stick",
+        "sceneEmoji": "⛰️",
+        "imageUrl": "/data/images/stories/canto8_part1/page_08.jpg",
+        "text": "They chose a huge mountain called Mandara to use as a giant churning stick, and the king of serpents, long Vasuki, agreed to be the rope wound around it. The gods held one end, the demons held the other, ready to churn the great Ocean of Milk."
+      },
+      {
+        "pageNumber": 9,
+        "sceneIcon": "shield",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "Vishnu Becomes a Turtle",
+        "sceneEmoji": "🐢",
+        "imageUrl": "/data/images/stories/canto8_part1/page_09.jpg",
+        "text": "But the heavy mountain began to sink into the soft ocean floor! So kind Lord Vishnu turned himself into a giant turtle, swam beneath the mountain, and held it steady on his strong shell, so the churning could go on."
+      },
+      {
+        "pageNumber": 10,
+        "sceneIcon": "refresh-cw",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Round and Round They Pull",
+        "sceneEmoji": "🔄",
+        "imageUrl": "/data/images/stories/canto8_part1/page_10.jpg",
+        "text": "Back and forth, back and forth, the gods and demons pulled the great serpent like a rope, turning the mountain round and round. The whole ocean churned and frothed, and wonderful treasures began to rise up from the deep."
+      },
+      {
+        "pageNumber": 11,
+        "sceneIcon": "award",
+        "sceneColor": "#C08898",
+        "sceneLabel": "Treasures From the Deep",
+        "sceneEmoji": "🏺",
+        "imageUrl": "/data/images/stories/canto8_part1/page_11.jpg",
+        "text": "Up came the loveliest things — a magical wishing cow, a beautiful flying horse, glowing jewels, and even the gentle moon herself, rising to take her place in the night sky."
+      },
+      {
+        "pageNumber": 12,
+        "sceneIcon": "wind",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "The Dark Smoke",
+        "sceneEmoji": "🌫️",
+        "imageUrl": "/data/images/stories/canto8_part1/page_12.jpg",
+        "text": "But then, up came a terrible dark smoke too — a poison so strong it could harm the whole world! Everyone was frightened. So kind Lord Shiva, to protect everyone, drank the poison himself and held it safely in his throat, never swallowing it."
+      },
+      {
+        "pageNumber": 13,
+        "sceneIcon": "star",
+        "sceneColor": "#0ea5e9",
+        "sceneLabel": "The Nectar at Last",
+        "sceneEmoji": "🌟",
+        "imageUrl": "/data/images/stories/canto8_part1/page_13.jpg",
+        "text": "Finally, after all that churning, the nectar of long life rose up, golden and glowing. Lord Vishnu made sure it was shared fairly and wisely, so that goodness, not greed, would win the day.\n\nAnd that, my dear, is how patience, teamwork, and a kind heart can turn even the biggest, stormiest task into something wonderful. Now close your eyes and rest. Sleep well."
+      }
+    ]
+  },
+  {
+    "id": "canto8_part2",
+    "title": "Srimad Bhagavatam: The Tiny Visitor and the Great Flood",
+    "subtitle": "King Bali's Promise and Matsya's Rescue From the Flood",
+    "coverColor": "#16a34a",
+    "coverGradient": "#16a34a",
+    "coverIcon": "droplet",
+    "ageGroup": "6-12",
+    "collection": "Srimad Bhagavatam",
+    "coverImageUrl": "/data/images/stories/canto8_part2/page_07.jpg",
+    "pages": [
+      {
+        "pageNumber": 1,
+        "sceneIcon": "crown",
+        "sceneColor": "#16a34a",
+        "sceneLabel": "A King Grows Too Proud",
+        "sceneEmoji": "👑",
+        "imageUrl": "/data/images/stories/canto8_part2/page_01.jpg",
+        "text": "My dear, long ago there was a powerful king named Bali. He was generous and brave, but slowly, slowly, he began to feel that he was the greatest of all — even greater than the gods themselves. And that, little one, is a tricky kind of pride."
+      },
+      {
+        "pageNumber": 2,
+        "sceneIcon": "sun",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "A Tiny Visitor Arrives",
+        "sceneEmoji": "🧒",
+        "imageUrl": "/data/images/stories/canto8_part2/page_02.jpg",
+        "text": "One day, while King Bali was giving gifts to everyone who came to him, a small, gentle brahmin boy walked up. He was short — barely the size of an umbrella — and he asked for just one tiny thing: as much land as he could cover in three steps."
+      },
+      {
+        "pageNumber": 3,
+        "sceneIcon": "smile",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "Just Three Steps?",
+        "sceneEmoji": "😊",
+        "imageUrl": "/data/images/stories/canto8_part2/page_03.jpg",
+        "text": "King Bali laughed kindly. 'Just three steps? Dear child, you could ask for a whole kingdom and I would give it!' He happily agreed, without realising that this small visitor was Lord Vishnu himself, in the form of Vamana."
+      },
+      {
+        "pageNumber": 4,
+        "sceneIcon": "star",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "Growing and Growing",
+        "sceneEmoji": "✨",
+        "imageUrl": "/data/images/stories/canto8_part2/page_04.jpg",
+        "text": "The moment Bali agreed, something amazing began to happen. Little Vamana started to grow — bigger, and bigger, and BIGGER — until he was taller than the mountains, taller than the clouds, taller than anything anyone had ever seen!"
+      },
+      {
+        "pageNumber": 5,
+        "sceneIcon": "navigation",
+        "sceneColor": "#C08898",
+        "sceneLabel": "One Step, Two Steps",
+        "sceneEmoji": "👣",
+        "imageUrl": "/data/images/stories/canto8_part2/page_05.jpg",
+        "text": "With his very first step, Vamana covered the whole earth. With his second step, he covered the whole sky, all the stars and planets too. Everyone watched in wonder — such a giant stride from such a tiny visitor!"
+      },
+      {
+        "pageNumber": 6,
+        "sceneIcon": "heart",
+        "sceneColor": "#82A896",
+        "sceneLabel": "A Promise Kept With Love",
+        "sceneEmoji": "💛",
+        "imageUrl": "/data/images/stories/canto8_part2/page_06.jpg",
+        "text": "Now only one step remained, and there was nowhere left to place it. King Bali, though he had lost everything, did not feel angry. He bowed his head humbly and said, 'Place your third step on my head, dear Lord — for a promise must always be kept.'"
+      },
+      {
+        "pageNumber": 7,
+        "sceneIcon": "feather",
+        "sceneColor": "#16a34a",
+        "sceneLabel": "The Gentle Lesson",
+        "sceneEmoji": "🕊️",
+        "imageUrl": "/data/images/stories/canto8_part2/page_07.jpg",
+        "text": "Lord Vishnu was so touched by Bali's honesty and humility that he gently placed his foot on Bali's head — not to hurt him, but to bless him. He let Bali keep a peaceful kingdom below the earth, where he still rules kindly to this day.\n\nThe lesson, my dear, is that being humble and keeping your promises is worth more than all the kingdoms in the world."
+      },
+      {
+        "pageNumber": 8,
+        "sceneIcon": "droplet",
+        "sceneColor": "#C5A56A",
+        "sceneLabel": "A World of Endless Rain",
+        "sceneEmoji": "🌊",
+        "imageUrl": "/data/images/stories/canto8_part2/page_08.jpg",
+        "text": "Now here is one more story, from even longer ago. There once lived a good and gentle king named Satyavrata, who loved to pray quietly by the riverside every morning, cupping water in his hands."
+      },
+      {
+        "pageNumber": 9,
+        "sceneIcon": "droplet",
+        "sceneColor": "#7EA8C0",
+        "sceneLabel": "A Tiny Fish Asks for Help",
+        "sceneEmoji": "🐟",
+        "imageUrl": "/data/images/stories/canto8_part2/page_09.jpg",
+        "text": "One morning, a tiny little fish swam into his cupped hands. 'Please, kind king,' said the fish, 'protect me — the bigger fish want to eat me!' Satyavrata smiled and gently placed the little fish in his water jug to keep it safe."
+      },
+      {
+        "pageNumber": 10,
+        "sceneIcon": "refresh-cw",
+        "sceneColor": "#9B8FC0",
+        "sceneLabel": "The Fish That Would Not Stop Growing",
+        "sceneEmoji": "📈",
+        "imageUrl": "/data/images/stories/canto8_part2/page_10.jpg",
+        "text": "But the next morning, the fish had grown too big for the jug! So the king moved it to a pond. Then it outgrew the pond, so he moved it to a lake, then to the river, and finally — only the wide ocean was big enough to hold it!"
+      },
+      {
+        "pageNumber": 11,
+        "sceneIcon": "shield",
+        "sceneColor": "#C08898",
+        "sceneLabel": "Matsya's Gentle Warning",
+        "sceneEmoji": "🐟",
+        "imageUrl": "/data/images/stories/canto8_part2/page_11.jpg",
+        "text": "By now, Satyavrata realised this was no ordinary fish — it was Lord Vishnu himself, as Matsya the fish! Matsya gave the king a gentle warning: 'In seven days, a great flood will cover the whole world. Build a sturdy boat, and gather seeds, plants, and animals of every kind.'"
+      },
+      {
+        "pageNumber": 12,
+        "sceneIcon": "tool",
+        "sceneColor": "#82A896",
+        "sceneLabel": "Building the Boat",
+        "sceneEmoji": "🛠️",
+        "imageUrl": "/data/images/stories/canto8_part2/page_12.jpg",
+        "text": "King Satyavrata worked quickly and carefully, building the strongest boat he could, and gathering little ones of every creature, and seeds of every plant, just as Matsya had said — for when someone kind asks for help, it is wise to listen."
+      },
+      {
+        "pageNumber": 13,
+        "sceneIcon": "moon",
+        "sceneColor": "#16a34a",
+        "sceneLabel": "Safe Through the Storm",
+        "sceneEmoji": "🌌",
+        "imageUrl": "/data/images/stories/canto8_part2/page_13.jpg",
+        "text": "When the great flood came and the rains poured down and down, Matsya appeared as an enormous golden fish. The king tied his boat to Matsya's horn with the great serpent as a rope, and together they sailed safely through the storm until the waters calmed.\n\nAnd that, my darling one, is how kindness to even the smallest creature can come back to protect you, in the biggest of storms. Now close your eyes and rest. Sleep well, sweet dreams."
+      }
+    ]
   }
 ]
