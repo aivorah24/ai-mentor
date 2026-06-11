@@ -19,9 +19,11 @@ const TIKTOK_VOICE = {
 // Maria Moody — Grandmotherly Storykeeper: wGcFBfKz5yUQqhqr0mVy
 const GRANDMOTHER_VOICE_ID = process.env.EL_VOICE_GRANDMOTHER || 'XrExE9yKIg1WjnnlVkGX'; // Matilda — premade, free plan
 const GRANDFATHER_VOICE_ID = process.env.EL_VOICE_GRANDFATHER || 'JBFqnCBsd6RMkjVDRZzb'; // George  — premade, free plan
+// Lower stability + higher style = more expressive, less monotone "storytelling" delivery
+// (more pitch/pace variation between sentences, instead of a flat reading-aloud tone).
 const EL_VOICE_SETTINGS = {
-  grandmother: { stability: 0.72, similarity_boost: 0.78, style: 0.50, use_speaker_boost: false },
-  grandfather: { stability: 0.65, similarity_boost: 0.78, style: 0.50, use_speaker_boost: true  },
+  grandmother: { stability: 0.45, similarity_boost: 0.80, style: 0.80, use_speaker_boost: false },
+  grandfather: { stability: 0.42, similarity_boost: 0.80, style: 0.75, use_speaker_boost: true  },
 };
 
 function readStories() {
@@ -335,8 +337,12 @@ router.post('/prewarm', async (req, res) => {
         if (fs.existsSync(cacheFile)) { results.skipped++; continue; }
 
         try {
-          const { buffer, provider } = await generateAndCacheAudio(page.text, narrator);
+          const { buffer, wordTimings, provider } = await generateAndCacheAudio(page.text, narrator);
           fs.writeFileSync(cacheFile, buffer);
+          if (wordTimings) {
+            const timingsFile = path.join(AUDIO_DIR, `${cacheKey}.timings.json`);
+            fs.writeFileSync(timingsFile, JSON.stringify(wordTimings));
+          }
           results.generated++;
           console.log(`  Prewarm: ${story.id}/p${page.pageNumber}/${narrator}/${provider} cached (${(buffer.length/1024).toFixed(0)}KB)`);
           // Small delay to avoid rate limiting

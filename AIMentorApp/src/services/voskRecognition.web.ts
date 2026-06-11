@@ -101,16 +101,40 @@ export async function startVoskRecognition(opts: {
       if (words.length) onWords(words);
     };
 
+    // Confidence threshold below which a grammar-forced word is treated as a
+    // likely mispronunciation rather than a clean match. Grammar-constrained
+    // decoding ALWAYS snaps to the nearest in-grammar word — it can't say "I
+    // don't know" — so `[unk]` alone misses most real mispronunciations. Final
+    // results (with `setWords(true)`) carry per-word acoustic confidence; a
+    // low-confidence word is the actual mispronunciation signal Read Along uses.
+    const LOW_CONF_THRESHOLD = 0.45;
+
+    // Final results carry per-word confidence (`result.result[].conf`) — swap
+    // any low-confidence word for the ⍰ sentinel so the matcher flags it as
+    // misread, same as a true [unk]. Partial results don't carry confidence.
+    const emitFinal = (message: any) => {
+      const r = message?.result;
+      const wordList: Array<{ word: string; conf?: number }> | undefined = r?.result;
+      if (Array.isArray(wordList) && wordList.length) {
+        const words: string[] = [];
+        for (const w of wordList) {
+          const cleaned = String(w.word || '').toLowerCase().replace(/[^a-z']/g, '');
+          if (!cleaned || cleaned === '[unk]') { words.push('⍰'); continue; }
+          words.push(typeof w.conf === 'number' && w.conf < LOW_CONF_THRESHOLD ? '⍰' : cleaned);
+        }
+        if (words.length) onWords(words);
+        return;
+      }
+      if (r?.text) emit(r.text);
+    };
+
     // Partial results fire continuously as the child speaks — this drives the
-    // live highlight. Final results refine but we treat them the same.
+    // live highlight (no confidence available yet).
     recognizer.on('partialresult', (message: any) => {
       const partial = message?.result?.partial;
       if (partial) emit(partial);
     });
-    recognizer.on('result', (message: any) => {
-      const text = message?.result?.text;
-      if (text) emit(text);
-    });
+    recognizer.on('result', emitFinal);
 
     source = audioContext.createMediaStreamSource(stream);
     processor = audioContext.createScriptProcessor(4096, 1, 1);
