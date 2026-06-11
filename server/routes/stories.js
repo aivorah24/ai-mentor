@@ -116,12 +116,15 @@ async function generateTimingsViaWhisper(mp3Path, text) {
     const M = whisperWords.length;
     const N = speechIdxs.length;
 
-    // Map each speech word to a Whisper word by proportional position
+    // Map each speech word to a Whisper word by direct 1:1 position.
     const timings = new Array(textWords.length).fill(null);
     for (let si = 0; si < N; si++) {
       const { i } = speechIdxs[si];
-      // Proportional index into Whisper words
-      const wi  = Math.min(Math.round((si / Math.max(N - 1, 1)) * (M - 1)), M - 1);
+      // True 1:1 positional index into Whisper words (matches the comment above —
+      // proportional scaling here would stretch/compress timings across the whole
+      // page whenever M != N, causing the highlight to drift further from the
+      // spoken word as the page progresses).
+      const wi  = Math.min(si, M - 1);
       const ww  = whisperWords[wi];
       timings[i] = {
         word:      textWords[i],
