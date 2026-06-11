@@ -184,6 +184,10 @@ export default function AICoachScreen({ navigation }: any) {
   const [speakingId, setSpeakingId] = useState<number | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>(FALLBACK_SUGGESTIONS[userGrade] ?? FALLBACK_SUGGESTIONS['Grade 3']);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackDone, setFeedbackDone] = useState(false);
+  const [feedbackAnim] = useState(new Animated.Value(0));
+  const aiResponseCount = useRef(0);
   const scrollRef = useRef<ScrollView>(null);
   const recognitionRef = useRef<any>(null);
   const ttsAudioRef = useRef<any>(null);
@@ -388,12 +392,43 @@ export default function AICoachScreen({ navigation }: any) {
     setIsTyping(false);
     setStreamingMsgId(null);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+
+    // Show feedback strip after 5th AI response (once per session)
+    if (!error && !feedbackDone) {
+      aiResponseCount.current += 1;
+      if (aiResponseCount.current === 3) {
+        setTimeout(() => {
+          setShowFeedback(true);
+          Animated.spring(feedbackAnim, { toValue: 1, useNativeDriver: true, tension: 80, friction: 10 }).start();
+        }, 800);
+      }
+    }
+  }
+
+  function submitFeedback(rating: number) {
+    setFeedbackDone(true);
+    Animated.timing(feedbackAnim, { toValue: 0, duration: 250, useNativeDriver: true }).start(() => setShowFeedback(false));
+    fetch(`${SERVER_URL}/ask/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentEmail: user?.email,
+        rating,
+        grade: userGrade,
+        messageCount: aiResponseCount.current,
+      }),
+    }).catch(() => {});
+  }
+
+  function dismissFeedback() {
+    setFeedbackDone(true);
+    Animated.timing(feedbackAnim, { toValue: 0, duration: 250, useNativeDriver: true }).start(() => setShowFeedback(false));
   }
 
   function clearChat() {
     Alert.alert('Clear Chat', 'Start a new conversation?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear', style: 'destructive', onPress: () => setMessages(INITIAL_MESSAGES) },
+      { text: 'Clear', style: 'destructive', onPress: () => { setMessages(INITIAL_MESSAGES); aiResponseCount.current = 0; setFeedbackDone(false); setShowFeedback(false); feedbackAnim.setValue(0); } },
     ]);
   }
 
@@ -407,8 +442,8 @@ export default function AICoachScreen({ navigation }: any) {
         onMenuPress={() => navigation.openDrawer()}
         onProfilePress={() => navigation.navigate('Profile')}
       />
-      {/* Free-tier usage bar */}
-      {!isPro && dailyUsage && (
+      {/* Free-tier usage bar — hidden during testing */}
+      {false && !isPro && dailyUsage && (
         <View style={styles.usageBar}>
           <Feather name="zap" size={12} color={limitReached ? '#C5A56A' : colors.primary} />
           <Text style={[styles.usageText, { color: limitReached ? '#C5A56A' : colors.textMuted }]}>
@@ -647,6 +682,27 @@ export default function AICoachScreen({ navigation }: any) {
           )}
 
         </ScrollView>
+
+        {/* Session feedback strip */}
+        {showFeedback && (
+          <Animated.View style={[
+            styles.feedbackStrip,
+            { opacity: feedbackAnim, transform: [{ translateY: feedbackAnim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }] },
+          ]}>
+            <Text style={styles.feedbackLabel}>How is Aivorah doing?</Text>
+            <View style={styles.feedbackBtns}>
+              {([1, 2, 3] as const).map(r => (
+                <TouchableOpacity key={r} style={styles.feedbackBtn} onPress={() => submitFeedback(r)} activeOpacity={0.7}>
+                  <Text style={styles.feedbackBtnText}>{r === 1 ? '👎' : r === 2 ? '😐' : '👍'}</Text>
+                  <Text style={styles.feedbackBtnNum}>{r}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity onPress={dismissFeedback} style={styles.feedbackSkip}>
+              <Feather name="x" size={14} color={colors.textDim} />
+            </TouchableOpacity>
+          </Animated.View>
+        )}
 
         {/* Input bar — ChatGPT/Claude style */}
         <View style={styles.inputBar}>
@@ -965,4 +1021,26 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   upgradePlanCtaText: { fontSize: 12, fontWeight: '800', color: '#fff' },
   upgradeFooter: { fontSize: 11, textAlign: 'center', marginTop: 2 },
+
+  // ── Session feedback strip ──
+  feedbackStrip: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: spacing.lg, paddingVertical: 10,
+    backgroundColor: c.cardDark,
+    borderTopWidth: 1, borderTopColor: c.borderColor + '60',
+    gap: 10,
+    ...(Platform.OS === 'web' ? { maxWidth: 760, alignSelf: 'center', width: '100%' } as any : {}),
+  },
+  feedbackLabel: { fontSize: 13, color: c.textMuted, fontWeight: '600', flex: 1 },
+  feedbackBtns: { flexDirection: 'row', gap: 6 },
+  feedbackBtn: {
+    alignItems: 'center', justifyContent: 'center',
+    width: 44, height: 44, borderRadius: 12,
+    backgroundColor: c.bgDark,
+    borderWidth: 1, borderColor: c.borderColor + '80',
+    gap: 1,
+  },
+  feedbackBtnText: { fontSize: 18 },
+  feedbackBtnNum: { fontSize: 9, color: c.textDim, fontWeight: '700' },
+  feedbackSkip: { padding: 6 },
 });

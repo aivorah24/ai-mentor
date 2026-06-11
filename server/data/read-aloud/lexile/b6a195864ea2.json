@@ -1,0 +1,28 @@
+{
+  "history": [
+    {
+      "date": "2026-06-05T17:28:17.255Z",
+      "lexile": 400,
+      "source": "calibration"
+    },
+    {
+      "date": "2026-06-06T05:18:06.267Z",
+      "lexile": 375,
+      "source": "auto",
+      "errors": 68
+    },
+    {
+      "date": "2026-06-07T06:56:00.494Z",
+      "lexile": 350,
+      "source": "auto",
+      "errors": 65
+    },
+    {
+      "date": "2026-06-07T07:15:45.013Z",
+      "lexile": 325,
+      "source": "auto",
+      "errors": 113
+    }
+  ],
+  "lexile": 325
+}

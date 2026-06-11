@@ -1,0 +1,74 @@
+[
+  {
+    "date": "2026-06-05T14:03:19.660Z",
+    "topic": "Calibration",
+    "grade": "Grade 4",
+    "accuracy": 5,
+    "wcpm": 8,
+    "level": "needs-practice",
+    "totalWords": 100,
+    "duration": 40,
+    "starsEarned": 50,
+    "lexile": null
+  },
+  {
+    "date": "2026-06-05T14:04:55.588Z",
+    "topic": "Calibration",
+    "grade": "Grade 4",
+    "accuracy": 5,
+    "wcpm": 8,
+    "level": "needs-practice",
+    "totalWords": 100,
+    "duration": 39,
+    "starsEarned": 50,
+    "lexile": null
+  },
+  {
+    "date": "2026-06-05T14:08:04.017Z",
+    "topic": "Calibration",
+    "grade": "Grade 4",
+    "accuracy": 5,
+    "wcpm": 8,
+    "level": "needs-practice",
+    "totalWords": 100,
+    "duration": 39,
+    "starsEarned": 50,
+    "lexile": null
+  },
+  {
+    "date": "2026-06-05T14:11:23.463Z",
+    "topic": "Calibration",
+    "grade": "Grade 4",
+    "accuracy": 5,
+    "wcpm": 8,
+    "level": "needs-practice",
+    "totalWords": 100,
+    "duration": 39,
+    "starsEarned": 50,
+    "lexile": null
+  },
+  {
+    "date": "2026-06-05T14:12:41.952Z",
+    "topic": "Calibration",
+    "grade": "Grade 4",
+    "accuracy": 5,
+    "wcpm": 8,
+    "level": "needs-practice",
+    "totalWords": 100,
+    "duration": 39,
+    "starsEarned": 50,
+    "lexile": null
+  },
+  {
+    "date": "2026-06-05T14:13:56.233Z",
+    "topic": "Where We Are in Place and Time",
+    "grade": "Grade 4",
+    "accuracy": 58,
+    "wcpm": 57,
+    "level": "needs-practice",
+    "totalWords": 92,
+    "duration": 56,
+    "starsEarned": 50,
+    "lexile": 375
+  }
+]
