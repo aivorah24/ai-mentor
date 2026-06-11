@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Image,
+  StyleSheet, ActivityIndicator, Image, useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,6 +15,9 @@ import SERVER_URL from '../../config/serverUrl';
 const TEAL   = '#5F8A86';
 const FOREST = '#5A8A70';
 const AMBER  = '#C5A56A';  // warm pastel gold — premium
+
+// Premium gating temporarily OFF — flip to true to re-enable the lock + upgrade banner later.
+const PREMIUM_ENABLED = false;
 
 interface StoryMeta {
   id: string;
@@ -58,6 +61,8 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
   const { user } = useAuth();
   const isPro = user?.isPro === true;
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { width } = useWindowDimensions();
+  const isWide = width >= 700;   // desktop / tablet → 2-column grid
 
   const [stories, setStories] = useState<StoryMeta[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +92,7 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
     return ids;
   }, [grouped]);
 
-  function isLocked(storyId: string) { return isPro ? false : !freeIds.has(storyId); }
+  function isLocked(storyId: string) { return PREMIUM_ENABLED && !isPro && !freeIds.has(storyId); }
 
   return (
     <ScreenLayout>
@@ -119,8 +124,8 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
             </View>
           </LinearGradient>
 
-          {/* Premium notice */}
-          {isPro ? (
+          {/* Premium notice — hidden while PREMIUM_ENABLED is false */}
+          {PREMIUM_ENABLED && (isPro ? (
             <View style={[styles.premiumBar, { backgroundColor: FOREST + '12', borderColor: FOREST + '40' }]}>
               <Feather name="unlock" size={13} color={FOREST} />
               <Text style={[styles.premiumBarText, { color: FOREST }]}>
@@ -140,7 +145,7 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
                 <Text style={styles.upgradeBtnText}>Upgrade</Text>
               </TouchableOpacity>
             </View>
-          )}
+          ))}
 
           {loading && (
             <View style={styles.center}>
@@ -167,13 +172,14 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
                   <View style={[styles.sectionLine, { backgroundColor: collColor + '30' }]} />
                 </View>
 
+                <View style={isWide ? styles.grid : styles.list}>
                 {items.map(story => {
                   const grad   = PASTEL_GRAD[story.coverColor] ?? ['#7BA8A4', '#82A896'];
                   const locked = isLocked(story.id);
                   return (
                     <TouchableOpacity
                       key={story.id}
-                      style={[styles.card, {
+                      style={[styles.card, isWide && styles.cardWide, {
                         backgroundColor: colors.cardDark,
                         borderColor: locked ? AMBER + '50' : colors.borderColor,
                       }]}
@@ -245,6 +251,7 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
                     </TouchableOpacity>
                   );
                 })}
+                </View>
               </View>
             );
           })}
@@ -282,6 +289,10 @@ const makeStyles = (c: any) => StyleSheet.create({
   sectionDot:    { width: 8, height: 8, borderRadius: 4 },
   sectionTitle:  { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8 },
   sectionLine:   { flex: 1, height: 1 },
+
+  list:     { gap: spacing.sm },
+  grid:     { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.md },
+  cardWide: { width: '48.8%' },
 
   card: {
     flexDirection: 'row', alignItems: 'center',

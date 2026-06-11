@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+
 import {
   View,
   Text,
@@ -674,6 +675,30 @@ export default function ReadAloudScreen() {
   const stepTimerRef = useRef<any>(null); // reveal / catch-up animation timer
   const webSpeechPosRef = useRef(0); // authoritative passage cursor (shared by all engines)
   const webSpeechAccumulatedRef = useRef<string[]>([]); // words accumulated across Web Speech sessions
+  // Both engines re-deliver their FULL transcript-so-far on every event (Vosk's
+  // growing partial, Web Speech's all-results loop) — occasionally as single
+  // fresh words instead. Re-walking the same words each time is what produced
+  // the big "catch-up" jumps (e.g. 33→42 in one step): a stale cursor would
+  // match late words like a 3rd "water" against an early "water" occurrence.
+  // We diff against the last-seen transcript by longest-common-prefix and feed
+  // only the new tail — works whether delivery is cumulative or incremental —
+  // keeping each step small: the smooth, word-at-a-time Read Along feel.
+  const lastSpokenRef = useRef<string[]>([]);
+  // Vosk's grammar is constrained to passage words, so on a long/uncommon word
+  // it sometimes "snaps" its partial guess to the FULL word the instant it
+  // hears just the first syllable (e.g. hearing "appr…" already outputs
+  // "appreciation") — the matcher would then mark it correct/advance before
+  // the child finishes saying it.
+  //
+  // Fix: keep two positions. `scanPosRef` is where the alignment SCAN believes
+  // the reader is (always advances — so words after a long one still align
+  // correctly). `webSpeechPosRef` (displayed/authoritative) freezes just
+  // BEFORE an unconfirmed long word — so it isn't painted "correct" early —
+  // and catches up in one jump once confirmed (by surviving a repeat emission
+  // unchanged, or by the scan clearly moving past it).
+  const scanPosRef = useRef(0);
+  const pendingLongMatchRef = useRef<{ pos: number; skipped: number[]; misread: number[] } | null>(null);
+  const LONG_WORD_LEN = 7;
 
   // ── Smooth reveal (catch-up animation) ───────────────────────────────
   // ASR delivers words in bursts, which makes the highlight leap several words
@@ -750,15 +775,48 @@ export default function ReadAloudScreen() {
     const cursor = webSpeechPosRef.current;
     if (cursor >= pWords.length) return;
 
-    const isCommon = (w: string) => FUNCTION_WORDS.has(w) || w.length <= 3;
-    // Use a longer tail so a fast reader's burst of words is all available to
-    // align in one pass (older words that are already behind the cursor simply
-    // don't match nearby and are ignored).
-    const recent = spoken.slice(-14);
+    // Feed only the words spoken since the last call: find how much of the
+    // previous transcript this one still starts with (longest common prefix)
+    // and take the tail beyond that. Handles cumulative-growing transcripts
+    // (Vosk partials, Web Speech's all-results) AND single-fresh-word delivery
+    // alike, without ever re-walking words already aligned.
+    const prevSpoken = lastSpokenRef.current;
+    const maxLcp = Math.min(prevSpoken.length, spoken.length);
+    let lcp = 0;
+    while (lcp < maxLcp && prevSpoken[lcp] === spoken[lcp]) lcp++;
+    const newWords = spoken.slice(lcp);
+    lastSpokenRef.current = spoken;
+    const pending = pendingLongMatchRef.current;
+    if (newWords.length === 0) {
+      // Transcript unchanged since last call (Vosk emits partials periodically
+      // even when the text hasn't moved). If we're holding a long-word match
+      // for confirmation, its surviving a repeat emission unchanged IS the
+      // confirmation — a premature "snap-ahead" guess would instead have been
+      // extended/replaced as more audio came in. Flush it (and everything the
+      // scan already moved past while it was held) now.
+      if (pending !== null) {
+        pendingLongMatchRef.current = null;
+        advanceHighlightTo(scanPosRef.current, { skipped: pending.skipped, misread: pending.misread });
+      }
+      return;
+    }
 
-    const skipped: number[] = [];
-    const misread: number[] = [];
-    let pi = cursor;
+    const isCommon = (w: string) => FUNCTION_WORDS.has(w) || w.length <= 3;
+    // `newWords` is already exactly the new speech since last event — never
+    // stale — so process all of it. A fast reader simply produces a longer
+    // batch here; truncating it would leave the tail unprocessed and the
+    // highlight stuck (it can never "go back" for dropped words).
+    const recent = newWords;
+
+    // Resume scanning from wherever the internal scan position got to —
+    // `scanPosRef` always advances with true alignment, even while the
+    // AUTHORITATIVE cursor (`webSpeechPosRef`/`cursor`) stays frozen on a
+    // long word pending confirmation. This prevents the desync that broke
+    // alignment for words that came after a held long word.
+    const skipped: number[] = pending ? pending.skipped.slice() : [];
+    const misread: number[] = pending ? pending.misread.slice() : [];
+    let pi = pending ? scanPosRef.current : cursor;
+    let pendingNow = pending;
     for (const word of recent) {
       if (word === '⍰') {
         // Vosk [unk]: the child spoke something off-script — a likely
@@ -769,32 +827,73 @@ export default function ReadAloudScreen() {
         continue;
       }
       if (pi >= pWords.length) break;
-      if (pi - cursor >= 14) break; // cap advance per event (allows fast reading)
+      // No advance cap: `recent` is exactly the new speech in order, so there
+      // is no "stale batch" to bound — a fast reader's longer burst must all
+      // be consumed or the highlight stalls (it never revisits dropped words).
 
-      // A content word may bridge a skip: search a few words ahead to find
+      // A content word may bridge a skip: search a couple words ahead to find
       // where the reader actually is. Common words (to/of/and…) must be the
       // immediate next word, so they can never cause a big jump (no racing).
-      const window = isCommon(word) ? 1 : 5;
+      // Window stays narrow (3) — `recent` words are genuinely sequential and
+      // fresh, so a wider search would only risk matching a LATER repeat of
+      // the same word (e.g. "water" appears 5x) instead of the true next one.
+      const window = isCommon(word) ? 1 : 3;
       let found = -1;
       for (let d = 0; d <= window && pi + d < pWords.length; d++) {
         if (fuzzyMatch(word, normalize(pWords[pi + d]))) { found = d; break; }
       }
       if (found >= 0) {
+        const matchedPos = pi + found;
+        const expectedWord = normalize(pWords[matchedPos]);
+
+        // Immediate-next match on a long word: start (or keep) holding it for
+        // confirmation — guards against Vosk's grammar "snapping" a partial
+        // guess to the full word the instant it hears the first syllable
+        // (e.g. "appr…" → "appreciation"). Keep scanning forward (don't
+        // freeze the scan) so later words still align; only the AUTHORITATIVE
+        // cursor stays frozen at this position until confirmed.
+        if (found === 0 && expectedWord.length >= LONG_WORD_LEN && (pendingNow === null || pendingNow.pos !== matchedPos)) {
+          pendingNow = { pos: matchedPos, skipped: skipped.slice(), misread: misread.slice() };
+          pi = matchedPos + 1;
+          continue;
+        }
+        if (pendingNow !== null && pendingNow.pos === matchedPos) {
+          // Repeat match on the held word (e.g. re-emitted in a later batch) — keep holding.
+          pi = matchedPos + 1;
+          continue;
+        }
+
         // Words pi..pi+found-1 were jumped over: misread if the reader
         // attempted them (heard [unk]), otherwise skipped entirely.
         for (let k = pi; k < pi + found; k++) {
           if (!/[a-z]/i.test(pWords[k])) continue; // punctuation (e.g. "—") isn't a skip
+          if (pendingNow !== null && k === pendingNow.pos) continue; // confirmed via "moved on" below
           if (misreadCandidateRef.current.has(k)) misread.push(k);
           else skipped.push(k);
         }
-        pi = pi + found + 1;
+        // Reaching past a held long word proves it was actually spoken —
+        // confirm it as correct (drop the hold) rather than leaving it pending.
+        if (pendingNow !== null && matchedPos > pendingNow.pos) {
+          pendingNow = null;
+        }
+        pi = matchedPos + 1;
       }
       // else: not found nearby — noise/mispronunciation → wait, ignore it
     }
 
-    if (pi > cursor) {
-      console.log(`[ReadAlong] ${cursor} → ${pi}/${pWords.length} (heard: "${recent.join(' ')}"${misread.length ? ' misread:' + misread.join(',') : ''}${skipped.length ? ' skipped:' + skipped.join(',') : ''})`);
-      advanceHighlightTo(pi, { skipped, misread });
+    scanPosRef.current = pi;
+    pendingLongMatchRef.current = pendingNow;
+
+    // Authoritative cursor: if a long word is still pending confirmation,
+    // freeze the DISPLAY at it (don't paint it correct yet) while the scan
+    // keeps tracking true progress underneath. Otherwise commit everything
+    // the scan reached.
+    const commitTo = pendingNow !== null ? pendingNow.pos : pi;
+    const commitSkipped = pendingNow !== null ? skipped.filter((k) => k < pendingNow!.pos) : skipped;
+    const commitMisread = pendingNow !== null ? misread.filter((k) => k < pendingNow!.pos) : misread;
+    if (commitTo > cursor) {
+      console.log(`[ReadAlong] ${cursor} → ${commitTo}/${pWords.length} (heard: "${recent.join(' ')}"${pendingNow ? ` [holding @${pendingNow.pos}]` : ''}${commitMisread.length ? ' misread:' + commitMisread.join(',') : ''}${commitSkipped.length ? ' skipped:' + commitSkipped.join(',') : ''})`);
+      advanceHighlightTo(commitTo, { skipped: commitSkipped, misread: commitMisread });
     }
   }, [advanceHighlightTo]);
 
@@ -1207,6 +1306,7 @@ export default function ReadAloudScreen() {
     liveASRMatchedRef.current = 0;
     liveASRChunkStartRef.current = 0;
     webSpeechPosRef.current = 0;
+    lastSpokenRef.current = []; pendingLongMatchRef.current = null; scanPosRef.current = 0;
     misreadCandidateRef.current.clear();
     displayPosRef.current = 0;
     targetStatusesRef.current = initialStatuses.slice();
@@ -1494,6 +1594,7 @@ export default function ReadAloudScreen() {
     wordStatusesRef.current = initialStatuses;
     setSourcePos(0);
     webSpeechPosRef.current = 0;
+    lastSpokenRef.current = []; pendingLongMatchRef.current = null; scanPosRef.current = 0;
     setResult(null);
     setHighlightIdx(-1);
     setRecordingTime(0);

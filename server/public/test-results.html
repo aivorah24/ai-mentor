@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quiz Result Demo — Aivorah</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#1a1a1a; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+  .header { padding:20px 32px; border-bottom:1px solid #333; display:flex; align-items:center; gap:16px; }
+  .header h1 { font-size:18px; font-weight:700; }
+  .header p { font-size:12px; color:#888; }
+  .cards { display:flex; gap:24px; padding:32px; justify-content:center; flex-wrap:wrap; }
+  .card {
+    width:340px; background:#222; border:1px solid #333; border-radius:20px;
+    padding:32px 24px; text-align:center; position:relative; overflow:hidden; cursor:pointer;
+    transition: transform .2s, border-color .3s;
+  }
+  .card:hover { transform:translateY(-4px); border-color:#5F8A86; }
+  .card h2 { font-size:13px; color:#888; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:16px; }
+  .trophy-wrap { position:relative; display:inline-block; }
+  .trophy-svg { animation: bounceIn .6s ease-out both; }
+  @keyframes bounceIn {
+    0%   { transform:scale(0); opacity:0; }
+    50%  { transform:scale(1.15); }
+    70%  { transform:scale(0.95); }
+    100% { transform:scale(1); opacity:1; }
+  }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+  .trophy-svg { animation: bounceIn .6s ease-out both, pulse 2.5s ease-in-out 1s infinite; }
+  .score { font-size:56px; font-weight:900; margin:12px 0 4px; }
+  .score-gold { color:#4ade80; }
+  .score-silver { color:#5F8A86; }
+  .score-bronze { color:#C85870; }
+  .label { font-size:16px; font-weight:600; margin-bottom:8px; }
+  .msg { font-size:13px; color:#888; line-height:1.5; max-width:280px; margin:0 auto 16px; }
+  .badges { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:16px; }
+  .badge { padding:6px 14px; border-radius:999px; border:1px solid #444; font-size:12px; font-weight:600; color:#aaa; }
+  .fail-banner {
+    display:flex; align-items:center; gap:8px; padding:8px 14px; border-radius:10px;
+    background:rgba(200,88,112,0.08); border:1px solid rgba(200,88,112,0.25);
+    margin:8px auto 12px; width:fit-content;
+  }
+  .fail-banner span { font-size:12px; font-weight:700; color:#C85870; }
+  .btns { display:flex; gap:10px; margin-top:8px; }
+  .btn {
+    flex:1; padding:12px; border-radius:12px; font-size:13px; font-weight:700;
+    border:1.5px solid #5F8A86; background:transparent; color:#5F8A86; cursor:pointer;
+  }
+  .btn-primary { background:#5F8A86; color:#fff; border-color:#5F8A86; }
+  .btn-fail { border-color:#C85870; color:#C85870; }
+
+  /* Confetti container */
+  .confetti-container {
+    position:absolute; top:-50px; left:-50px; right:-50px; bottom:-50px;
+    pointer-events:none; z-index:10;
+  }
+  .confetti-container dotlottie-player,
+  .confetti-container div { width:100%!important; height:100%!important; }
+
+  .play-hint { font-size:11px; color:#555; margin-top:12px; }
+</style>
+<script src="https://unpkg.com/@lottiefiles/dotlottie-wc@latest/dist/dotlottie-wc.js" type="module"></script>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Quiz Result Demo</h1>
+    <p>Click any card to replay the animation + sound. All three tiers shown side by side.</p>
+  </div>
+</div>
+
+<div class="cards">
+
+  <!-- GOLD — 100% -->
+  <div class="card" onclick="playDemo('gold', this)">
+    <h2>Gold Tier (80%+)</h2>
+    <div class="confetti-container" id="confetti-gold"></div>
+    <div class="trophy-wrap" id="trophy-gold"></div>
+    <div class="score score-gold">100%</div>
+    <div class="label">5 / 5 correct</div>
+    <div class="msg">Perfect score! Outstanding work!</div>
+    <div class="badges">
+      <span class="badge">Barter System</span>
+      <span class="badge">45s</span>
+    </div>
+    <div class="btns">
+      <button class="btn">Try Again</button>
+      <button class="btn btn-primary">Back to Topics</button>
+    </div>
+    <div class="play-hint">Click card to replay</div>
+  </div>
+
+  <!-- SILVER — 60% -->
+  <div class="card" onclick="playDemo('silver', this)">
+    <h2>Silver Tier (60–79%)</h2>
+    <div class="confetti-container" id="confetti-silver"></div>
+    <div class="trophy-wrap" id="trophy-silver"></div>
+    <div class="score score-silver">60%</div>
+    <div class="label">3 / 5 correct</div>
+    <div class="msg">Good job! A little more practice and you will master this!</div>
+    <div class="badges">
+      <span class="badge">Barter System</span>
+      <span class="badge">1m 23s</span>
+    </div>
+    <div class="btns">
+      <button class="btn">Try Again</button>
+      <button class="btn btn-primary">Back to Topics</button>
+    </div>
+    <div class="play-hint">Click card to replay</div>
+  </div>
+
+  <!-- BRONZE — 40% (fail) -->
+  <div class="card" onclick="playDemo('bronze', this)">
+    <h2>Bronze Tier (&lt;60%)</h2>
+    <div class="trophy-wrap" id="trophy-bronze"></div>
+    <div class="score score-bronze">40%</div>
+    <div class="label">2 / 5 correct</div>
+    <div class="fail-banner">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C85870" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>Minimum 60% required to pass</span>
+    </div>
+    <div class="msg">You need at least 60% to pass. New questions will be generated — let's try again!</div>
+    <div class="badges">
+      <span class="badge">Barter System</span>
+      <span class="badge">2m 10s</span>
+      <span class="badge">Attempt #2</span>
+    </div>
+    <div class="btns">
+      <button class="btn btn-fail">Retake (New Questions)</button>
+    </div>
+    <div class="play-hint">Click card to replay</div>
+  </div>
+
+</div>
+
+<script>
+const TIERS = {
+  gold:   { body:['#FFD700','#F5A623'], base:'#8B6914', shine:'#FFF3B0' },
+  silver: { body:['#C0C0C0','#9A9A9A'], base:'#6B6B6B', shine:'#E8E8E8' },
+  bronze: { body:['#CD7F32','#A0522D'], base:'#6B3A1F', shine:'#E8B87A' },
+};
+
+function makeTrophySVG(tier, id) {
+  const t = TIERS[tier];
+  return `<svg class="trophy-svg" width="100" height="100" viewBox="0 0 80 80">
+    <defs>
+      <linearGradient id="bg${id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${t.body[0]}"/><stop offset="1" stop-color="${t.body[1]}"/>
+      </linearGradient>
+      <linearGradient id="bs${id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${t.base}"/><stop offset="1" stop-color="${t.body[1]}"/>
+      </linearGradient>
+    </defs>
+    <rect x="24" y="64" width="32" height="6" rx="2" fill="url(#bs${id})"/>
+    <rect x="28" y="60" width="24" height="6" rx="2" fill="${t.base}"/>
+    <rect x="36" y="50" width="8" height="12" rx="2" fill="${t.body[1]}"/>
+    <path d="M22 16 C22 16 22 44 40 50 C58 44 58 16 58 16 Z" fill="url(#bg${id})"/>
+    <path d="M22 18 C14 18 12 28 18 32 C20 33 22 31 22 28" stroke="${t.body[1]}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M58 18 C66 18 68 28 62 32 C60 33 58 31 58 28" stroke="${t.body[1]}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <rect x="20" y="14" width="40" height="5" rx="2.5" fill="${t.body[0]}"/>
+    <path d="M28 20 C28 20 28 36 36 42" stroke="${t.shine}" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M40 24 L42.2 30.5 L49 30.5 L43.4 34.5 L45.6 41 L40 37 L34.4 41 L36.6 34.5 L31 30.5 L37.8 30.5 Z" fill="#fff" opacity="0.85"/>
+  </svg>`;
+}
+
+// Render trophies on load
+['gold','silver','bronze'].forEach(tier => {
+  document.getElementById('trophy-' + tier).innerHTML = makeTrophySVG(tier, tier);
+});
+
+// Render confetti for gold and silver (passed)
+function spawnConfetti(containerId) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = `<dotlottie-wc src="https://lottie.host/6bec841b-4eb2-470e-a6f2-6a2a860c7ee8/W5Yn6XYk4s.lottie" autoplay style="width:100%;height:100%"></dotlottie-wc>`;
+  // Remove after animation
+  setTimeout(() => { el.innerHTML = ''; }, 4000);
+}
+
+// Initial confetti
+setTimeout(() => spawnConfetti('confetti-gold'), 400);
+setTimeout(() => spawnConfetti('confetti-silver'), 600);
+
+// Play sound
+function playSound(tier) {
+  const a = new Audio('/sounds/' + tier + '.wav');
+  a.volume = 0.6;
+  a.play().catch(() => {});
+}
+
+// Initial sounds staggered
+setTimeout(() => playSound('gold'), 300);
+
+// Replay on click
+function playDemo(tier, card) {
+  // Re-trigger trophy bounce
+  const wrap = card.querySelector('.trophy-wrap');
+  wrap.innerHTML = '';
+  setTimeout(() => {
+    wrap.innerHTML = makeTrophySVG(tier, tier + Date.now());
+  }, 50);
+
+  // Re-trigger confetti for passing tiers
+  if (tier !== 'bronze') {
+    const confId = 'confetti-' + tier;
+    spawnConfetti(confId);
+  }
+
+  // Play sound
+  playSound(tier);
+}
+</script>
+
+</body>
+</html>

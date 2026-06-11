@@ -1,0 +1,436 @@
+{
+  "audioFile": "test-audio-misread.wav",
+  "audioDuration": 46.890684416,
+  "passageWordCount": 92,
+  "matchedWords": 84,
+  "timestamps": [
+    {
+      "spokenAt": 0,
+      "word": "Our",
+      "whisper": "Our"
+    },
+    {
+      "spokenAt": 2.22,
+      "word": "solar",
+      "whisper": "solar"
+    },
+    {
+      "spokenAt": 2.62,
+      "word": "system",
+      "whisper": "system"
+    },
+    {
+      "spokenAt": 2.64,
+      "word": "is",
+      "whisper": "is"
+    },
+    {
+      "spokenAt": 4.3,
+      "word": "a",
+      "whisper": "a"
+    },
+    null,
+    {
+      "spokenAt": 5.74,
+      "word": "of",
+      "whisper": "of"
+    },
+    {
+      "spokenAt": 5.98,
+      "word": "planets",
+      "whisper": "planets"
+    },
+    {
+      "spokenAt": 6.58,
+      "word": "orbiting",
+      "whisper": "orbiting"
+    },
+    {
+      "spokenAt": 8.36,
+      "word": "the",
+      "whisper": "the"
+    },
+    {
+      "spokenAt": 8.74,
+      "word": "Sun.",
+      "whisper": "Sun"
+    },
+    null,
+    null,
+    {
+      "spokenAt": 10.58,
+      "word": "is",
+      "whisper": "is"
+    },
+    {
+      "spokenAt": 10.88,
+      "word": "a",
+      "whisper": "a"
+    },
+    {
+      "spokenAt": 11.2,
+      "word": "giant",
+      "whisper": "giant"
+    },
+    null,
+    {
+      "spokenAt": 11.7,
+      "word": "that",
+      "whisper": "that"
+    },
+    {
+      "spokenAt": 13.14,
+      "word": "gives",
+      "whisper": "gives"
+    },
+    {
+      "spokenAt": 13.46,
+      "word": "us",
+      "whisper": "us"
+    },
+    {
+      "spokenAt": 13.64,
+      "word": "light",
+      "whisper": "light"
+    },
+    {
+      "spokenAt": 14.02,
+      "word": "and",
+      "whisper": "and"
+    },
+    {
+      "spokenAt": 14.66,
+      "word": "warmth.",
+      "whisper": "warmth."
+    },
+    {
+      "spokenAt": 16.2,
+      "word": "Mercury",
+      "whisper": "Mercury"
+    },
+    {
+      "spokenAt": 16.52,
+      "word": "is",
+      "whisper": "is"
+    },
+    {
+      "spokenAt": 16.68,
+      "word": "the",
+      "whisper": "the"
+    },
+    {
+      "spokenAt": 16.84,
+      "word": "closest",
+      "whisper": "closest"
+    },
+    {
+      "spokenAt": 17.24,
+      "word": "planet",
+      "whisper": "planet"
+    },
+    {
+      "spokenAt": 17.72,
+      "word": "and",
+      "whisper": "and"
+    },
+    {
+      "spokenAt": 17.96,
+      "word": "moves",
+      "whisper": "moves"
+    },
+    {
+      "spokenAt": 18.14,
+      "word": "the",
+      "whisper": "the"
+    },
+    {
+      "spokenAt": 18.4,
+      "word": "fastest.",
+      "whisper": "fastest."
+    },
+    {
+      "spokenAt": 19.9,
+      "word": "Earth",
+      "whisper": "Earth"
+    },
+    {
+      "spokenAt": 19.98,
+      "word": "is",
+      "whisper": "is"
+    },
+    {
+      "spokenAt": 20.1,
+      "word": "the",
+      "whisper": "the"
+    },
+    {
+      "spokenAt": 20.3,
+      "word": "third",
+      "whisper": "third"
+    },
+    {
+      "spokenAt": 20.46,
+      "word": "planet",
+      "whisper": "planet"
+    },
+    {
+      "spokenAt": 21.74,
+      "word": "and",
+      "whisper": "and"
+    },
+    {
+      "spokenAt": 22.6,
+      "word": "the",
+      "whisper": "the"
+    },
+    {
+      "spokenAt": 22.74,
+      "word": "only",
+      "whisper": "only"
+    },
+    {
+      "spokenAt": 23,
+      "word": "one",
+      "whisper": "one"
+    },
+    {
+      "spokenAt": 23.34,
+      "word": "we",
+      "whisper": "we"
+    },
+    {
+      "spokenAt": 23.78,
+      "word": "know",
+      "whisper": "know"
+    },
+    {
+      "spokenAt": 24,
+      "word": "that",
+      "whisper": "that"
+    },
+    {
+      "spokenAt": 24.3,
+      "word": "has",
+      "whisper": "has"
+    },
+    {
+      "spokenAt": 24.78,
+      "word": "life.",
+      "whisper": "life."
+    },
+    {
+      "spokenAt": 25.38,
+      "word": "Mars",
+      "whisper": "Mors"
+    },
+    {
+      "spokenAt": 26.12,
+      "word": "is",
+      "whisper": "is"
+    },
+    {
+      "spokenAt": 26.26,
+      "word": "called",
+      "whisper": "called"
+    },
+    {
+      "spokenAt": 26.52,
+      "word": "the",
+      "whisper": "the"
+    },
+    {
+      "spokenAt": 26.7,
+      "word": "Red",
+      "whisper": "red"
+    },
+    {
+      "spokenAt": 26.82,
+      "word": "Planet",
+      "whisper": "planet"
+    },
+    {
+      "spokenAt": 27.22,
+      "word": "because",
+      "whisper": "because"
+    },
+    {
+      "spokenAt": 27.72,
+      "word": "of",
+      "whisper": "of"
+    },
+    {
+      "spokenAt": 28.2,
+      "word": "its",
+      "whisper": "its"
+    },
+    {
+      "spokenAt": 28.38,
+      "word": "dusty",
+      "whisper": "dusty"
+    },
+    {
+      "spokenAt": 28.78,
+      "word": "red",
+      "whisper": "red"
+    },
+    {
+      "spokenAt": 29.24,
+      "word": "surface.",
+      "whisper": "surface."
+    },
+    {
+      "spokenAt": 30.34,
+      "word": "Jupiter",
+      "whisper": "Jupiter"
+    },
+    {
+      "spokenAt": 30.8,
+      "word": "is",
+      "whisper": "is"
+    },
+    {
+      "spokenAt": 31.28,
+      "word": "the",
+      "whisper": "the"
+    },
+    null,
+    null,
+    {
+      "spokenAt": 31.5,
+      "word": "and",
+      "whisper": "and"
+    },
+    {
+      "spokenAt": 33,
+      "word": "could",
+      "whisper": "could"
+    },
+    {
+      "spokenAt": 33.66,
+      "word": "fit",
+      "whisper": "fit"
+    },
+    {
+      "spokenAt": 33.94,
+      "word": "over",
+      "whisper": "over"
+    },
+    null,
+    {
+      "spokenAt": 34.46,
+      "word": "thousand",
+      "whisper": "thousand"
+    },
+    {
+      "spokenAt": 34.74,
+      "word": "Earths",
+      "whisper": "Earths"
+    },
+    {
+      "spokenAt": 35.2,
+      "word": "inside",
+      "whisper": "inside"
+    },
+    {
+      "spokenAt": 35.36,
+      "word": "it.",
+      "whisper": "it."
+    },
+    {
+      "spokenAt": 35.8,
+      "word": "Saturn",
+      "whisper": "Saturn"
+    },
+    {
+      "spokenAt": 36.78,
+      "word": "has",
+      "whisper": "has"
+    },
+    {
+      "spokenAt": 36.8,
+      "word": "beautiful",
+      "whisper": "beautiful"
+    },
+    {
+      "spokenAt": 37.12,
+      "word": "rings",
+      "whisper": "rings"
+    },
+    {
+      "spokenAt": 37.5,
+      "word": "made",
+      "whisper": "made"
+    },
+    {
+      "spokenAt": 37.88,
+      "word": "of",
+      "whisper": "of"
+    },
+    {
+      "spokenAt": 38.06,
+      "word": "ice",
+      "whisper": "ice"
+    },
+    {
+      "spokenAt": 38.32,
+      "word": "and",
+      "whisper": "and"
+    },
+    {
+      "spokenAt": 38.5,
+      "word": "rock.",
+      "whisper": "rock."
+    },
+    {
+      "spokenAt": 39.16,
+      "word": "Learning",
+      "whisper": "Learning"
+    },
+    null,
+    {
+      "spokenAt": 40.52,
+      "word": "space",
+      "whisper": "space"
+    },
+    {
+      "spokenAt": 41.22,
+      "word": "helps",
+      "whisper": "helps"
+    },
+    {
+      "spokenAt": 41.86,
+      "word": "us",
+      "whisper": "us"
+    },
+    {
+      "spokenAt": 42.32,
+      "word": "understand",
+      "whisper": "understand"
+    },
+    {
+      "spokenAt": 42.82,
+      "word": "our",
+      "whisper": "our"
+    },
+    {
+      "spokenAt": 43.02,
+      "word": "place",
+      "whisper": "places"
+    },
+    {
+      "spokenAt": 43.34,
+      "word": "in",
+      "whisper": "in"
+    },
+    {
+      "spokenAt": 43.52,
+      "word": "the",
+      "whisper": "the"
+    },
+    {
+      "spokenAt": 43.64,
+      "word": "universe.",
+      "whisper": "universe."
+    }
+  ]
+}

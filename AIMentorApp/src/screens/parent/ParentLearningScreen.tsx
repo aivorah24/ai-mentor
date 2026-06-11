@@ -60,6 +60,14 @@ function subjectMeta(subject: string): SubjectMeta {
   };
 }
 
+function formatStudyTime(minutes: number) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
 // ── Analytics types ───────────────────────────────────────────────────────────
 type TopicAnalytics = {
   subject: string;
@@ -84,7 +92,7 @@ type ChildReport = {
 function StatsBanner({ report, colors, isDark }: { report: ChildReport | null; colors: AppColors; isDark: boolean }) {
   const bg = isDark ? colors.cardDark : '#FFFFFF';
   const items = [
-    { icon: 'clock', label: 'Study Time', value: report ? `${report.totalMinutes}m` : '–' },
+    { icon: 'clock', label: 'Study Time', value: report ? formatStudyTime(report.totalMinutes) : '–' },
     { icon: 'message-circle', label: 'AI Chats', value: report ? String(report.totalAIChats) : '–' },
     { icon: 'star', label: 'Avg Score', value: report?.avgScore != null ? `${report.avgScore}%` : '–' },
     { icon: 'book', label: 'Topics Active', value: report ? String(report.topicCount) : '–' },
@@ -383,9 +391,9 @@ export default function ParentLearningScreen({ navigation, route }: any) {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const { totalItems, doneItems, overallPct, curriculumLabel } = useMemo(() => {
-    const exploredCount = topicsExplored > 0 ? topicsExplored : completedTopics.length;
     const total = subjects.reduce((s, sub) => s + (sub.topicCount ?? 0), 0);
-    const done  = Math.min(exploredCount, total);
+    // Use completedTopics (from student stats) as the source of truth for done count
+    const done  = Math.min(completedTopics.length, total);
     const currLabel = isIBPYP ? 'IB PYP' : (childCurriculum || 'NCERT');
     return {
       totalItems: total,

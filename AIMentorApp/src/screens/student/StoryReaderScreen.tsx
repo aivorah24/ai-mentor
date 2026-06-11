@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Animated, Platform, Image, ScrollView,
+  ActivityIndicator, Animated, Platform, Image, ScrollView, useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,13 +12,15 @@ import { spacing, radius } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
 interface Page { pageNumber: number; text: string; sceneIcon: string; sceneColor: string; sceneLabel: string; imageUrl: string | null; }
-interface Story { id: string; title: string; subtitle: string; coverColor: string; collection: string; pages: Page[]; }
+interface Story { id: string; title: string; subtitle: string; coverColor: string; collection: string; coverImageUrl?: string | null; pages: Page[]; }
 type VoiceOption = 'grandmother' | 'grandfather';
 
 const VOICE_CONFIG: Record<VoiceOption, { label: string; icon: string; color: string }> = {
-  grandmother: { label: 'Grandmother', icon: 'heart',  color: '#ec4899' },
-  grandfather: { label: 'Grandfather', icon: 'anchor', color: '#0891b2' },
+  grandmother: { label: 'Grandmother', icon: 'heart',  color: '#C08898' },  // Aivorah pastel rose
+  grandfather: { label: 'Grandfather', icon: 'anchor', color: '#7EA8C0' },  // Aivorah pastel blue
 };
+
+const PASTEL_GOLD = '#C5A56A';  // Aivorah warm pastel gold — Auto toggle + completion badges
 
 // Story-specific ambient music profiles
 const STORY_AMBIENT: Record<string, { root: number; style: 'tanpura' | 'flute' | 'tabla' | 'veena' }> = {
@@ -29,7 +31,54 @@ const STORY_AMBIENT: Record<string, { root: number; style: 'tanpura' | 'flute' |
   dhruva:               { root: 247,  style: 'tanpura' }, // determination drone
   ambarisha:            { root: 220,  style: 'veena'   }, // devotion, calm
   bharat:               { root: 264,  style: 'flute'   }, // gentle, lyrical
+  // Mahabharata Tales — mood matched to each story
+  churning_of_ocean:    { root: 207,  style: 'tabla'   }, // effort & rhythm of the churning
+  dashavatara:          { root: 220,  style: 'tanpura' }, // grand, cosmic, divine
+  endless_lamp:         { root: 277,  style: 'flute'   }, // warm, gentle light
+  dharmakshetra:        { root: 220,  style: 'veena'   }, // inner reflection, wisdom
+  actor_on_stage:       { root: 294,  style: 'flute'   }, // light, playful, lyrical
+  chariot_of_mind:      { root: 196,  style: 'tabla'   }, // movement, holding the reins
+  matsya_fish:          { root: 247,  style: 'flute'   }, // flowing water, gentle
+  // Srimad Bhagavatam — Canto 8
+  canto8_part1:         { root: 207,  style: 'tabla'   }, // Gajendra's struggle, churning rhythm
+  canto8_part2:         { root: 220,  style: 'flute'   }, // Vamana's growth, Matsya's flowing waters
 };
+
+// ── Situational (per-page) ambient moods ──────────────────────────────────
+// Each scene within a story can feel different — tense, joyful, watery, mysterious —
+// so we sniff the page's scene icon + text for mood keywords and pick a matching
+// ambient profile. Falls back to the story-wide STORY_AMBIENT profile if nothing matches.
+type AmbientProfile = { root: number; style: 'tanpura' | 'flute' | 'tabla' | 'veena'; bpm?: number; intensity?: number };
+
+const MOOD_PROFILES: Record<string, AmbientProfile> = {
+  tense:       { root: 175, style: 'tabla',   bpm: 78, intensity: 1.2  }, // danger, storms, fear
+  triumphant:  { root: 294, style: 'tanpura', intensity: 1.15 },          // victory, treasure, light
+  water:       { root: 247, style: 'flute',   intensity: 0.9  },          // oceans, rivers, rain
+  mysterious:  { root: 165, style: 'veena',   intensity: 0.85 },          // secrets, riddles, deep questions
+  playful:     { root: 311, style: 'flute',   intensity: 1.0  },          // children, laughter, lightness
+  peaceful:    { root: 264, style: 'flute',   intensity: 0.8  },          // calm, prayer, gentle moments
+  night:       { root: 196, style: 'veena',   intensity: 0.65 },          // sleepy, ending lullaby pages
+};
+
+// Keyword groups checked against the page's scene label/icon/emoji + narration text.
+// Order matters — first match wins, so put the more specific moods first.
+const MOOD_KEYWORDS: { mood: string; words: RegExp }[] = [
+  { mood: 'night',      words: /\b(sleep|sleepy|rest now|good ?night|close your eyes|sweet dreams|curtain falls|bedtime)\b/i },
+  { mood: 'tense',      words: /\b(danger|frightened|terrible|fierce|demon|poison|storm|flood|battle|growl|roar|afraid|scary|dark smoke|sink(?:ing)?)\b/i },
+  { mood: 'triumphant', words: /\b(nectar|treasure|golden|victory|celebrat|won|glow(?:ing)?|jewels?|lamp|shine|shining|triumph)\b/i },
+  { mood: 'water',      words: /\b(ocean|river|sea|water|wave|flood|swam|swim|rain|fish|lake|pond)\b/i },
+  { mood: 'mysterious', words: /\b(secret|wonder|mystery|riddle|soul|question|hidden|curious|strange)\b/i },
+  { mood: 'playful',    words: /\b(laugh|giggle|child|playful|smiled|fun|game|dance)\b/i },
+  { mood: 'peaceful',   words: /\b(pray|calm|gentle|quiet|peaceful|breathe|still)\b/i },
+];
+
+function getPageMoodProfile(page: { sceneIcon?: string; sceneLabel?: string; sceneEmoji?: string; text?: string } | null | undefined, storyId: string): AmbientProfile {
+  const haystack = `${page?.sceneLabel ?? ''} ${page?.text ?? ''}`;
+  for (const { mood, words } of MOOD_KEYWORDS) {
+    if (words.test(haystack)) return MOOD_PROFILES[mood];
+  }
+  return STORY_AMBIENT[storyId] ?? { root: 220, style: 'tanpura' };
+}
 
 function getPastelGradient(c: string): [string, string] {
   const map: Record<string, [string, string]> = {
@@ -50,6 +99,19 @@ function splitSentences(text: string): string[] {
 // Split text into words, preserving trailing spaces so joined text is identical
 function splitWords(text: string): string[] {
   return text.match(/\S+\s*/g) || [text];
+}
+
+// Group flat tokens into paragraphs while keeping each word's GLOBAL index (gi),
+// so word-by-word highlighting (which uses the flat wordIndex) is unaffected.
+function buildParagraphs(text: string): { token: string; gi: number }[][] {
+  const groups: { token: string; gi: number }[][] = [];
+  let cur: { token: string; gi: number }[] = [];
+  splitWords(text).forEach((tok, i) => {
+    cur.push({ token: tok, gi: i });
+    if (/\n[ \t]*\n/.test(tok)) { groups.push(cur); cur = []; }
+  });
+  if (cur.length) groups.push(cur);
+  return groups;
 }
 
 // Common short function words that TTS speaks faster than syllable count suggests
@@ -107,12 +169,23 @@ function playPageFlip() {
   } catch {}
 }
 
+// Registry of EVERY ambient source ever created, so a pause can guarantee silence
+// even if a wrapper instance leaks (e.g. auto-start race). Safety net.
+const _ambientAudios = new Set<HTMLAudioElement>();
+const _ambientCtxs   = new Set<AudioContext>();
+function silenceAllAmbient() {
+  _ambientAudios.forEach(a => { try { a.pause(); } catch {} });
+  _ambientCtxs.forEach(c => { try { if (c.state === 'running') c.suspend(); } catch {} });
+}
+
 // Indian ambient music via Web Audio API — story-specific instrument styles
-function createAmbientMusic(storyId: string) {
+function createAmbientMusic(storyId: string, moodProfile?: AmbientProfile) {
   if (Platform.OS !== 'web') return null;
   try {
-    const profile = STORY_AMBIENT[storyId] ?? { root: 220, style: 'tanpura' };
+    const profile = moodProfile ?? STORY_AMBIENT[storyId] ?? { root: 220, style: 'tanpura' };
+    const intensity = profile.intensity ?? 1;
     const ctx = new ((window as any).AudioContext || (window as any).webkitAudioContext)();
+    _ambientCtxs.add(ctx);
     // Resume in case browser auto-suspended the context
     if (ctx.state === 'suspended') ctx.resume();
     const master = ctx.createGain();
@@ -204,7 +277,7 @@ function createAmbientMusic(storyId: string) {
 
     } else if (profile.style === 'tabla') {
       // Tabla: bol pattern — dha dhin dhin dha (16-beat teentaal feel, slow)
-      const bpm = 52;
+      const bpm = profile.bpm ?? 52;
       const beat = 60000 / bpm;
       const pattern = [1,0,0.6,0,1,0,0.6,0.4,1,0,0.6,0,1,0,0.6,0];
       let step = 0;
@@ -270,40 +343,125 @@ function createAmbientMusic(storyId: string) {
     });
 
     // Fade in gently — keep gain low so it doesn't compete with narration
+    const TARGET_GAIN = 0.35 * intensity;
     master.gain.setValueAtTime(0, ctx.currentTime);
-    master.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 3);
+    master.gain.linearRampToValueAtTime(TARGET_GAIN, ctx.currentTime + 3);
 
     return {
       ctx,
       master,
       pause() {
         try {
-          master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
-          master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+          const now = ctx.currentTime, v = master.gain.value;
+          master.gain.cancelScheduledValues(now);
+          master.gain.setValueAtTime(v, now);
+          master.gain.linearRampToValueAtTime(0, now + 0.25);
+          // Hard-stop the audio clock after the fade — guaranteed silence, can't be undone by stray ramps.
+          setTimeout(() => { try { ctx.suspend(); } catch {} }, 280);
         } catch {}
       },
       resume() {
         try {
-          master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
-          master.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 1);
+          if (ctx.state === 'suspended') ctx.resume();   // un-suspend first
+          const now = ctx.currentTime, v = master.gain.value;
+          master.gain.cancelScheduledValues(now);
+          master.gain.setValueAtTime(Math.max(v, 0.0001), now);
+          master.gain.linearRampToValueAtTime(TARGET_GAIN, now + 0.9);
         } catch {}
       },
       stop() {
         try {
-          master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
-          master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
+          const now = ctx.currentTime, v = master.gain.value;
+          master.gain.cancelScheduledValues(now);
+          master.gain.setValueAtTime(v, now);
+          master.gain.linearRampToValueAtTime(0, now + 1.2);
           nodes.forEach(n => { try { if (typeof n === 'number') clearTimeout(n); else n.stop?.(); } catch {} });
-          setTimeout(() => { try { ctx.close(); } catch {} }, 1600);
+          setTimeout(() => { try { ctx.close(); } catch {} _ambientCtxs.delete(ctx); }, 1600);
         } catch {}
       }
     };
   } catch { return null; }
 }
 
+// ── Real royalty-free background tracks (preferred over the synth when present) ──
+// A small library of mood tracks shared across stories. Drop the mp3 files into
+// server/public/sounds/music/ — they are served at /sounds/music/<file>.mp3.
+// If a file is missing/unsupported, playback falls back to the synth automatically.
+const MOOD_TRACK: Record<string, string> = {
+  devotional: '/sounds/music/devotional.mp3', // calm sitar/tanpura — Bhagavatam devotion
+  gentle:     '/sounds/music/gentle.mp3',     // soft flute — peaceful tales
+  rhythmic:   '/sounds/music/rhythmic.mp3',   // light tabla — energetic / effort
+  wisdom:     '/sounds/music/wisdom.mp3',     // meditative veena — Gita / reflection
+  water:      '/sounds/music/water.mp3',      // flowing, oceanic — Matsya
+  night:      '/sounds/music/night.mp3',      // soft bedtime lullaby
+};
+const STORY_MOOD: Record<string, keyof typeof MOOD_TRACK> = {
+  ramayana_rama_sita: 'gentle',     hanuman: 'rhythmic',        bhagavad_gita_arjuna: 'wisdom',
+  ambarisha: 'devotional',          dhruva: 'devotional',       prahlada: 'devotional',
+  bharat: 'gentle',                 churning_of_ocean: 'rhythmic', dashavatara: 'devotional',
+  endless_lamp: 'gentle',           dharmakshetra: 'wisdom',    actor_on_stage: 'gentle',
+  chariot_of_mind: 'rhythmic',      matsya_fish: 'water',
+};
+
+// Smoothly ramp an <audio> element's volume.
+function rampVolume(audio: HTMLAudioElement, to: number, ms: number) {
+  const from = audio.volume; const steps = 24; let i = 0;
+  const id = setInterval(() => {
+    i++;
+    try { audio.volume = Math.max(0, Math.min(1, from + (to - from) * (i / steps))); } catch {}
+    if (i >= steps) clearInterval(id);
+  }, Math.max(10, ms / steps));
+  return id;
+}
+
+// Looping recorded background track — same pause/resume/stop interface as the synth.
+function createAmbientTrack(url: string) {
+  try {
+    const audio = new (window as any).Audio(url) as HTMLAudioElement;
+    _ambientAudios.add(audio);
+    audio.loop = true;
+    audio.volume = 0;
+    const TARGET = 0.28; // soft — must sit under the narration
+    const pr = audio.play(); if (pr && (pr as any).catch) (pr as any).catch(() => {});
+    rampVolume(audio, TARGET, 2000);
+    return {
+      _audio: audio,
+      pause()  { try { audio.pause(); } catch {} },                          // synchronous, guaranteed stop
+      resume() { try { audio.volume = 0; const p = audio.play(); if (p && (p as any).catch) (p as any).catch(() => {}); } catch {} rampVolume(audio, TARGET, 700); },
+      stop()   { try { audio.pause(); audio.src = ''; } catch {} _ambientAudios.delete(audio); }, // synchronous, guaranteed stop
+    };
+  } catch { return null; }
+}
+
+// Prefer a real mood track if one is mapped; if the file is missing/errors, seamlessly fall back to the synth.
+function createAmbient(storyId: string, page?: { sceneIcon?: string; sceneLabel?: string; sceneEmoji?: string; text?: string } | null) {
+  if (Platform.OS !== 'web') return null;
+  let inner: any = null;
+  let paused = false;
+  const moodProfile = getPageMoodProfile(page, storyId);
+  const mood = STORY_MOOD[storyId];
+  const path = mood ? MOOD_TRACK[mood] : null;
+  const useSynth = () => { inner = createAmbientMusic(storyId, moodProfile); if (paused) { try { inner?.pause?.(); } catch {} } };
+  if (path) {
+    const track = createAmbientTrack(`${SERVER_URL}${path}`);
+    if (track) {
+      inner = track;
+      track._audio?.addEventListener?.('error', () => { try { track.stop(); } catch {} useSynth(); }, { once: true });
+    } else { useSynth(); }
+  } else { useSynth(); }
+  return {
+    pause()  { paused = true;  try { inner?.pause?.(); } catch {} },
+    resume() { paused = false; try { inner?.resume?.(); } catch {} },
+    stop()   { try { inner?.stop?.(); } catch {} inner = null; },
+  };
+}
+
 export default function StoryReaderScreen({ route, navigation }: any) {
   const { storyId } = route.params ?? {};
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
+  const { width } = useWindowDimensions();
+  const isWide = width >= 820;   // desktop / tablet-landscape → image-left, text-right
 
   const [story,        setStory]        = useState<Story | null>(null);
   const [loading,      setLoading]      = useState(true);
@@ -315,6 +473,9 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   const [wordIndex,    setWordIndex]    = useState(0);
   const [donePages,    setDonePages]    = useState<Set<number>>(new Set());
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [donePagesLoaded, setDonePagesLoaded] = useState(false);
+  const [resumedFrom,  setResumedFrom]  = useState<number | null>(null);  // 1-based page we auto-resumed to
+  const didResume      = useRef(false);
 
   const audioRef   = useRef<any>(null);
   const ambientRef = useRef<any>(null);
@@ -328,8 +489,27 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   useEffect(() => {
     AsyncStorage.getItem(`story_done_${storyId}`).then(v => {
       if (v) setDonePages(new Set(JSON.parse(v)));
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setDonePagesLoaded(true));
   }, [storyId]);
+
+  // Resume where the reader left off (YouTube-style): jump to the first page not yet finished.
+  // Runs once, after both the story and the saved progress are loaded.
+  useEffect(() => {
+    if (didResume.current || !story || !donePagesLoaded) return;
+    didResume.current = true;
+    const idx = story.pages.findIndex(p => !donePages.has(p.pageNumber));
+    if (idx > 0) {                 // -1 (all done) or 0 (at start) → no resume needed
+      setCurrentPage(idx);
+      setResumedFrom(idx + 1);     // 1-based page number for the banner
+    }
+  }, [story, donePagesLoaded, donePages]);
+
+  // Auto-hide the "resumed" banner after a few seconds (Start-over stays available via top dots).
+  useEffect(() => {
+    if (resumedFrom == null) return;
+    const t = setTimeout(() => setResumedFrom(null), 8000);
+    return () => clearTimeout(t);
+  }, [resumedFrom]);
 
   useEffect(() => {
     fetch(`${SERVER_URL}/stories/${storyId}`)
@@ -337,14 +517,8 @@ export default function StoryReaderScreen({ route, navigation }: any) {
       .then((data: Story) => {
         setStory(data);
         setLoading(false);
-        // Auto-start ambient music when story opens (soft background)
-        if (Platform.OS === 'web') {
-          setTimeout(() => {
-            if (!ambientRef.current) {
-              ambientRef.current = createAmbientMusic(data.id);
-            }
-          }, 500);
-        }
+        // NOTE: ambient music intentionally NOT auto-started here — it starts with the
+        // narration (in speakPage) so it shares one lifecycle and always stops on pause.
       })
       .catch(() => setLoading(false));
     return () => { stopAudio(); ambientRef.current?.stop(); ambientRef.current = null; };
@@ -421,8 +595,9 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   function pauseAudio() {
     cancelHighlightLoop();
     if (audioRef.current) try { audioRef.current.pause(); } catch {}
-    // Fade out ambient music
+    // Pause the current ambient, then force-silence ANY stray ambient instance (safety net).
     try { ambientRef.current?.pause(); } catch {}
+    silenceAllAmbient();
     setPlaying(false);
   }
 
@@ -484,8 +659,9 @@ export default function StoryReaderScreen({ route, navigation }: any) {
         // Store metadata so resume can restart the loop
         audioMeta.current = { words, timings, wordBounds, timingProvider };
 
-        // Start story-specific ambient music
-        ambientRef.current = createAmbientMusic(story.id);
+        // Start ambient music matched to this page's scene/mood
+        const currentPageObj = story.pages.find(p => p.pageNumber === pageNum);
+        ambientRef.current = createAmbient(story.id, currentPageObj);
 
         audio.onended = () => {
           cancelHighlightLoop();
@@ -535,9 +711,13 @@ export default function StoryReaderScreen({ route, navigation }: any) {
   const isFirst     = currentPage === 0;
   const isLast      = currentPage === story.pages.length - 1;
   const progress    = (currentPage + 1) / story.pages.length;
+  // Page art: each page shows ITS OWN scene-matched image (no repeated/cover fallback).
+  // Resolves local /data/images paths against SERVER_URL; full http URLs pass through.
+  const pageImg     = page.imageUrl ? (page.imageUrl.startsWith('http') ? page.imageUrl : `${SERVER_URL}${page.imageUrl}`) : null;
   const pastelGrad  = getPastelGradient(story.coverColor);
   const pastelAccent= pastelGrad[0];
   const words       = splitWords(page.text);
+  const paragraphs  = buildParagraphs(page.text);   // plain call (NOT a hook — runs after early return)
   const isBusy      = isLoading || playing;
   const isPaused    = !playing && !isLoading && audioRef.current && audioRef.current.currentTime > 0;
   const totalDone   = donePages.size;
@@ -576,24 +756,45 @@ export default function StoryReaderScreen({ route, navigation }: any) {
           <View style={[styles.progressFill, { width: `${progress * 100}%` as any, backgroundColor: pastelAccent }]} />
         </View>
 
+        {/* Resumed banner — YouTube-style "continue where you left off" with a Start-over escape hatch */}
+        {resumedFrom != null && (
+          <View style={[styles.resumeBar, { backgroundColor: pastelAccent + '1A', borderColor: pastelAccent + '40' }]}>
+            <Feather name="rotate-ccw" size={13} color={pastelAccent} />
+            <Text style={[styles.resumeText, { color: colors.textMain }]} numberOfLines={1}>
+              Continuing from page {resumedFrom}
+            </Text>
+            <TouchableOpacity
+              style={[styles.startOverBtn, { borderColor: pastelAccent + '66' }]}
+              onPress={() => { setResumedFrom(null); goToPage(0); }}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.startOverText, { color: pastelAccent }]}>Start over</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setResumedFrom(null)} activeOpacity={0.7} style={styles.resumeClose}>
+              <Feather name="x" size={14} color={colors.textDim} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Completion badge */}
         {totalDone > 0 && (
           <View style={[styles.completionBar, { backgroundColor: colors.cardDark }]}>
-            <Feather name="check-circle" size={12} color="#16a34a" />
-            <Text style={[styles.completionText, { color: '#16a34a' }]}>
+            <Feather name="check-circle" size={12} color={PASTEL_GOLD} />
+            <Text style={[styles.completionText, { color: PASTEL_GOLD }]}>
               {totalDone} of {story.pages.length} pages completed
             </Text>
           </View>
         )}
 
         <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+          <Animated.View style={[{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }, isWide && styles.spreadRow]}>
 
-            {page.imageUrl ? (
-              <View style={styles.imageContainer}>
-                <Image source={{ uri: page.imageUrl }} style={styles.imageBg} resizeMode="cover" blurRadius={18} />
+            <View style={isWide ? styles.imageColWide : undefined}>
+            {pageImg ? (
+              <View style={[styles.imageContainer, isWide && styles.imageContainerWide]}>
+                <Image source={{ uri: pageImg }} style={styles.imageBg} resizeMode="cover" blurRadius={18} />
                 <View style={styles.imageBgTint} />
-                <Image source={{ uri: page.imageUrl }} style={styles.storyImage} resizeMode="contain" />
+                <Image source={{ uri: pageImg }} style={styles.storyImage} resizeMode="contain" />
                 <LinearGradient colors={['transparent','rgba(0,0,0,0.70)']} style={styles.imageOverlay}>
                   <View style={styles.sceneLabelRow}>
                     <Feather name={page.sceneIcon as any} size={13} color="rgba(255,255,255,0.9)" />
@@ -611,7 +812,7 @@ export default function StoryReaderScreen({ route, navigation }: any) {
                 </LinearGradient>
               </View>
             ) : (
-              <LinearGradient colors={[pastelGrad[0]+'E0', pastelGrad[1]+'B0']} style={styles.sceneBanner}>
+              <LinearGradient colors={[pastelGrad[0]+'E0', pastelGrad[1]+'B0']} style={[styles.sceneBanner, isWide && styles.sceneBannerWide]}>
                 <View style={styles.sceneIconOuter}>
                   <View style={styles.sceneIconInner}>
                     <Feather name={page.sceneIcon as any} size={36} color="#fff" />
@@ -620,85 +821,120 @@ export default function StoryReaderScreen({ route, navigation }: any) {
                 <Text style={styles.sceneLabelFallback}>{page.sceneLabel}</Text>
               </LinearGradient>
             )}
-
-            <View style={[styles.textCard, { backgroundColor: colors.cardDark }]}>
-              <View style={[styles.cardAccentBar, { backgroundColor: pastelAccent }]} />
-
-              {/* Story text — word-by-word highlight (like Raz-Kids)
-                  - Current word  → accent color + bold + soft glow
-                  - Past words    → grey (shows reading progress even when paused)
-                  - Future words  → normal white */}
-              <Text style={styles.storyText}>
-                {words.map((w, i) => {
-                  const isCurrent = (playing || isPaused) && i === wordIndex;
-                  const isPast    = i < wordIndex;
-                  return (
-                    <Text
-                      key={i}
-                      style={{
-                        color:           isCurrent ? pastelAccent : isPast ? colors.textMuted : colors.textMain,
-                        fontWeight:      isCurrent ? '700' : '400',
-                        backgroundColor: isCurrent ? pastelAccent + '30' : 'transparent',
-                      }}
-                    >
-                      {w}
-                    </Text>
-                  );
-                })}
-              </Text>
-
-              <View style={styles.listenRow}>
-                <TouchableOpacity
-                  style={[styles.listenBtn, { backgroundColor: playing ? '#e11d48' : isPaused ? '#f59e0b' : pastelAccent }]}
-                  onPress={() => playing ? pauseAudio() : speakPage(page.pageNumber)}
-                  activeOpacity={0.85}
-                >
-                  {isLoading
-                    ? <ActivityIndicator size="small" color="#fff" />
-                    : <Feather name={playing ? 'pause' : isPaused ? 'play' : 'headphones'} size={14} color="#fff" />
-                  }
-                  <Text style={styles.listenBtnText}>{isLoading ? 'Loading…' : playing ? 'Pause' : isPaused ? 'Resume' : 'Listen'}</Text>
-                </TouchableOpacity>
-
-                {(Object.keys(VOICE_CONFIG) as VoiceOption[]).map(v => {
-                  const cfg = VOICE_CONFIG[v]; const active = voice === v;
-                  return (
-                    <TouchableOpacity key={v}
-                      style={[styles.voiceChip, active ? { backgroundColor: cfg.color+'20', borderColor: cfg.color } : { backgroundColor: 'transparent', borderColor: colors.borderColor }]}
-                      onPress={() => { stopAudio(); setVoice(v); }} activeOpacity={0.8}
-                    >
-                      <Feather name={cfg.icon as any} size={11} color={active ? cfg.color : colors.textDim} />
-                      <Text style={[styles.voiceChipText, { color: active ? cfg.color : colors.textDim }]}>{cfg.label}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-
-                <TouchableOpacity
-                  style={[styles.voiceChip, autoPlay ? { backgroundColor: '#16a34a20', borderColor: '#16a34a' } : { backgroundColor: 'transparent', borderColor: colors.borderColor }]}
-                  onPress={() => { stopAudio(); setAutoPlay(p => !p); }} activeOpacity={0.8}
-                >
-                  <Feather name={autoPlay ? 'pause-circle' : 'play-circle'} size={11} color={autoPlay ? '#16a34a' : colors.textDim} />
-                  <Text style={[styles.voiceChipText, { color: autoPlay ? '#16a34a' : colors.textDim }]}>Auto</Text>
-                </TouchableOpacity>
-
-                {/* Playback speed control */}
-                {([0.5, 1, 1.5, 2] as const).map(rate => (
-                  <TouchableOpacity
-                    key={rate}
-                    style={[styles.voiceChip, playbackRate === rate
-                      ? { backgroundColor: pastelAccent + '25', borderColor: pastelAccent }
-                      : { backgroundColor: 'transparent', borderColor: colors.borderColor }
-                    ]}
-                    onPress={() => setPlaybackRate(rate)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.voiceChipText, { color: playbackRate === rate ? pastelAccent : colors.textDim }]}>
-                      {rate}x
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
             </View>
+
+            <LinearGradient
+              colors={isDark ? [pastelAccent + '1F', colors.cardDark] : [pastelAccent + '14', colors.cardDark]}
+              start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+              style={[styles.textCard, isWide && styles.textCardWide, { borderColor: pastelAccent + '2E' }]}
+            >
+              {/* Panel header — scene icon + label, like a storybook chapter heading */}
+              <View style={styles.panelHeader}>
+                <View style={[styles.panelHeaderIcon, { backgroundColor: pastelAccent + '26' }]}>
+                  <Feather name={page.sceneIcon as any} size={15} color={pastelAccent} />
+                </View>
+                <Text style={[styles.panelHeaderText, { color: pastelAccent }]} numberOfLines={1}>
+                  {page.sceneLabel}
+                </Text>
+              </View>
+
+              {/* Story text — serif, paragraph blocks with a divider, word-by-word highlight.
+                  Each word keeps its GLOBAL index (gi) so highlighting matches the flat wordIndex. */}
+              <View style={styles.storyBody}>
+                <View style={[styles.storyAccentBar, { backgroundColor: pastelAccent + '88' }]} />
+                <View style={{ flex: 1 }}>
+                  {paragraphs.map((para, pi) => (
+                    <React.Fragment key={pi}>
+                      {pi > 0 && (
+                        <View style={styles.paraDivider}>
+                          <View style={[styles.paraDividerLine, { backgroundColor: pastelAccent + '33' }]} />
+                          <Feather name="star" size={11} color={pastelAccent + 'AA'} />
+                          <View style={[styles.paraDividerLine, { backgroundColor: pastelAccent + '33' }]} />
+                        </View>
+                      )}
+                      <Text style={styles.storyText}>
+                        {para.map(({ token, gi }, li) => {
+                          const isCurrent = (playing || isPaused) && gi === wordIndex;
+                          const isPast    = gi < wordIndex;
+                          const display   = li === para.length - 1 ? token.replace(/\s+$/, '') : token;
+                          return (
+                            <Text
+                              key={gi}
+                              style={{
+                                color:           isCurrent ? pastelAccent : isPast ? colors.textMuted : colors.textMain,
+                                fontWeight:      isCurrent ? '700' : '400',
+                                backgroundColor: isCurrent ? pastelAccent + '30' : 'transparent',
+                              }}
+                            >
+                              {display}
+                            </Text>
+                          );
+                        })}
+                      </Text>
+                    </React.Fragment>
+                  ))}
+                </View>
+              </View>
+
+              {/* Controls — Listen + narrator + Auto on one row, Speed on its own labeled row */}
+              <View style={styles.controlsCol}>
+                <View style={styles.listenRow}>
+                  <TouchableOpacity
+                    style={[styles.listenBtn, { backgroundColor: pastelAccent, opacity: isPaused ? 0.85 : 1 }]}
+                    onPress={() => playing ? pauseAudio() : speakPage(page.pageNumber)}
+                    activeOpacity={0.85}
+                  >
+                    {isLoading
+                      ? <ActivityIndicator size="small" color="#fff" />
+                      : <Feather name={playing ? 'pause' : isPaused ? 'play' : 'headphones'} size={15} color="#fff" />
+                    }
+                    <Text style={styles.listenBtnText}>{isLoading ? 'Loading…' : playing ? 'Pause' : isPaused ? 'Resume' : 'Listen'}</Text>
+                  </TouchableOpacity>
+
+                  {(Object.keys(VOICE_CONFIG) as VoiceOption[]).map(v => {
+                    const cfg = VOICE_CONFIG[v]; const active = voice === v;
+                    // All chips share the story's pastel accent — active = filled, inactive = dim.
+                    return (
+                      <TouchableOpacity key={v}
+                        style={[styles.voiceChip, active ? { backgroundColor: pastelAccent + '20', borderColor: pastelAccent } : { backgroundColor: 'transparent', borderColor: colors.borderColor }]}
+                        onPress={() => { stopAudio(); setVoice(v); }} activeOpacity={0.8}
+                      >
+                        <Feather name={cfg.icon as any} size={12} color={active ? pastelAccent : colors.textDim} />
+                        <Text style={[styles.voiceChipText, { color: active ? pastelAccent : colors.textDim }]}>{cfg.label}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+
+                  <TouchableOpacity
+                    style={[styles.voiceChip, autoPlay ? { backgroundColor: pastelAccent + '20', borderColor: pastelAccent } : { backgroundColor: 'transparent', borderColor: colors.borderColor }]}
+                    onPress={() => { stopAudio(); setAutoPlay(p => !p); }} activeOpacity={0.8}
+                  >
+                    <Feather name={autoPlay ? 'pause-circle' : 'play-circle'} size={12} color={autoPlay ? pastelAccent : colors.textDim} />
+                    <Text style={[styles.voiceChipText, { color: autoPlay ? pastelAccent : colors.textDim }]}>Auto</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Playback speed — its own labeled row */}
+                <View style={styles.speedRow}>
+                  <Text style={[styles.speedLabel, { color: colors.textDim }]}>Speed</Text>
+                  {([0.5, 1, 1.5, 2] as const).map(rate => (
+                    <TouchableOpacity
+                      key={rate}
+                      style={[styles.speedChip, playbackRate === rate
+                        ? { backgroundColor: pastelAccent + '25', borderColor: pastelAccent }
+                        : { backgroundColor: 'transparent', borderColor: colors.borderColor }
+                      ]}
+                      onPress={() => setPlaybackRate(rate)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.voiceChipText, { color: playbackRate === rate ? pastelAccent : colors.textDim }]}>
+                        {rate}x
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </LinearGradient>
           </Animated.View>
         </ScrollView>
 
@@ -755,6 +991,11 @@ const makeStyles = (c: any, isDark: boolean) => StyleSheet.create({
   progressTrack:  { height: 2, backgroundColor: c.borderColor },
   progressFill:   { height: '100%' },
   completionBar:  { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: spacing.lg, paddingVertical: 6 },
+  resumeBar:      { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: spacing.md, marginTop: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.lg, borderWidth: 1 },
+  resumeText:     { flex: 1, fontSize: 12.5, fontWeight: '600' },
+  startOverBtn:   { paddingHorizontal: 11, paddingVertical: 5, borderRadius: 14, borderWidth: 1 },
+  startOverText:  { fontSize: 11.5, fontWeight: '700' },
+  resumeClose:    { padding: 2 },
   completionText: { fontSize: 11, fontWeight: '600' },
   imageContainer: { width: '100%', height: 420, position: 'relative', backgroundColor: '#0a0a0a' },
   imageBg:        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
@@ -765,20 +1006,40 @@ const makeStyles = (c: any, isDark: boolean) => StyleSheet.create({
   sceneLabelText: { fontSize: 13, fontWeight: '700', color: '#fff', flex: 1 },
   pageChip:       { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },
   pageChipText:   { fontSize: 11, fontWeight: '700', color: '#fff' },
-  doneBadge:      { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#16a34a', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 10 },
+  doneBadge:      { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: PASTEL_GOLD, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 10 },
   doneBadgeText:  { fontSize: 10, fontWeight: '700', color: '#fff' },
   sceneBanner:    { height: 220, alignItems: 'center', justifyContent: 'center', gap: 16 },
   sceneIconOuter: { width: 90, height: 90, borderRadius: 45, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.25)' },
   sceneIconInner: { width: 68, height: 68, borderRadius: 34, backgroundColor: 'rgba(255,255,255,0.20)', alignItems: 'center', justifyContent: 'center' },
   sceneLabelFallback: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  // ── Wide-screen (desktop / tablet-landscape) two-column layout: image left, text right ──
+  spreadRow:          { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
+  imageColWide:       { flex: 1, maxWidth: 560, borderRadius: radius.xl, overflow: 'hidden' },
+  imageContainerWide: { width: '100%', height: 460 },
+  sceneBannerWide:    { height: 460, borderRadius: radius.xl },
+  textCardWide:       { flex: 1.15, margin: 0, borderWidth: 1 },
   textCard: { margin: spacing.md, borderRadius: radius.xl, overflow: 'hidden', paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xl, gap: spacing.lg },
   cardAccentBar:  { height: 3, borderRadius: 2, marginBottom: 4 },
-  storyText:      { fontSize: 16, lineHeight: 30, fontWeight: '400', letterSpacing: 0.2 },
-  listenRow:      { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  listenBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
-  listenBtnText:  { fontSize: 13, fontWeight: '700', color: '#fff' },
-  voiceChip:      { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
-  voiceChipText:  { fontSize: 11, fontWeight: '600' },
+  // Panel header (storybook chapter heading)
+  panelHeader:     { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  panelHeaderIcon: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  panelHeaderText: { fontSize: 12, fontWeight: '800', letterSpacing: 1.4, textTransform: 'uppercase', flex: 1 },
+  // Story body: vertical accent bar + serif paragraphs
+  storyBody:       { flexDirection: 'row', gap: 14 },
+  storyAccentBar:  { width: 3, borderRadius: 2, alignSelf: 'stretch' },
+  storyText:      { fontSize: 17, lineHeight: 31, fontWeight: '400', letterSpacing: 0.2, fontFamily: Platform.select({ web: 'Georgia, "Times New Roman", serif', ios: 'Georgia', default: 'serif' }) },
+  paraDivider:     { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 14 },
+  paraDividerLine: { flex: 1, height: 1 },
+  // Controls
+  controlsCol:    { gap: 12, marginTop: 2 },
+  listenRow:      { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 },
+  listenBtn:      { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 18, paddingVertical: 11, borderRadius: 24 },
+  listenBtnText:  { fontSize: 14, fontWeight: '700', color: '#fff' },
+  voiceChip:      { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 13, paddingVertical: 9, borderRadius: 22, borderWidth: 1 },
+  voiceChipText:  { fontSize: 12, fontWeight: '600' },
+  speedRow:       { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
+  speedLabel:     { fontSize: 12, fontWeight: '700', marginRight: 2 },
+  speedChip:      { paddingHorizontal: 13, paddingVertical: 8, borderRadius: 18, borderWidth: 1, minWidth: 42, alignItems: 'center' },
   bottomNav:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingVertical: 12, borderTopWidth: 1, gap: spacing.md },
   navArrow:       { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   navCenter:      { flex: 1, alignItems: 'center', gap: 2 },

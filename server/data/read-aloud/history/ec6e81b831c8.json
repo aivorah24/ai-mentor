@@ -1,0 +1,112 @@
+[
+  {
+    "date": "2026-05-25T05:43:57.052Z",
+    "topic": "Who We Are",
+    "grade": "Grade 3",
+    "accuracy": 4,
+    "wcpm": 1,
+    "level": "needs-practice",
+    "totalWords": 75,
+    "duration": 166
+  },
+  {
+    "date": "2026-05-25T06:35:36.861Z",
+    "topic": "Who We Are",
+    "grade": "Grade 3",
+    "accuracy": 87,
+    "wcpm": 96,
+    "level": "good",
+    "totalWords": 75,
+    "duration": 41
+  },
+  {
+    "date": "2026-05-25T06:51:50.365Z",
+    "topic": "Who We Are",
+    "grade": "Grade 3",
+    "accuracy": 60,
+    "wcpm": 71,
+    "level": "developing",
+    "totalWords": 75,
+    "duration": 38
+  },
+  {
+    "date": "2026-05-25T07:06:00.012Z",
+    "topic": "Who We Are",
+    "grade": "Grade 3",
+    "accuracy": 70,
+    "wcpm": 8,
+    "level": "developing",
+    "totalWords": 76,
+    "duration": 399
+  },
+  {
+    "date": "2026-05-25T07:34:26.087Z",
+    "topic": "Where We Are in Place and Time",
+    "grade": "Grade 3",
+    "accuracy": 7,
+    "wcpm": 20,
+    "level": "needs-practice",
+    "totalWords": 101,
+    "duration": 21
+  },
+  {
+    "date": "2026-05-25T07:35:23.090Z",
+    "topic": "Who We Are",
+    "grade": "Grade 3",
+    "accuracy": 0,
+    "wcpm": 0,
+    "level": "needs-practice",
+    "totalWords": 76,
+    "duration": 22
+  },
+  {
+    "date": "2026-05-25T07:41:37.216Z",
+    "topic": "Who We Are",
+    "grade": "Grade 3",
+    "accuracy": 5,
+    "wcpm": 8,
+    "level": "needs-practice",
+    "totalWords": 75,
+    "duration": 32
+  },
+  {
+    "date": "2026-05-25T07:42:24.091Z",
+    "topic": "Who We Are",
+    "grade": "Grade 3",
+    "accuracy": 23,
+    "wcpm": 31,
+    "level": "needs-practice",
+    "totalWords": 75,
+    "duration": 33
+  },
+  {
+    "date": "2026-05-25T07:44:54.864Z",
+    "topic": "Who We Are",
+    "grade": "Grade 3",
+    "accuracy": 29,
+    "wcpm": 34,
+    "level": "needs-practice",
+    "totalWords": 75,
+    "duration": 38
+  },
+  {
+    "date": "2026-05-25T07:46:09.764Z",
+    "topic": "Who We Are",
+    "grade": "Grade 3",
+    "accuracy": 22,
+    "wcpm": 74,
+    "level": "needs-practice",
+    "totalWords": 76,
+    "duration": 14
+  },
+  {
+    "date": "2026-05-25T10:13:16.367Z",
+    "topic": "Sharing the Planet",
+    "grade": "Grade 3",
+    "accuracy": 27,
+    "wcpm": 41,
+    "level": "needs-practice",
+    "totalWords": 66,
+    "duration": 26
+  }
+]
