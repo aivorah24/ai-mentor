@@ -380,7 +380,14 @@ router.post('/quiz', async (req, res) => {
       if (dbQs && dbQs.length > 0) {
         const shuffled = [...dbQs].sort(() => Math.random() - 0.5);
         console.log(`Serving ${shuffled.length} DB questions for challenge ${challengeId}`);
-        return res.json({ topic, questions: shuffled.map(q => ({ question: q.question, options: q.options, correct: q.correct, explanation: q.explanation || '' })) });
+        return res.json({ topic, questions: shuffled.map(q => ({
+          question: q.question,
+          options: q.options,
+          correct: q.correct,
+          explanation: q.explanation || '',
+          type: q.question_type || 'mcq',
+          acceptAnswers: q.accept_answers || null,
+        })) });
       }
     }
 

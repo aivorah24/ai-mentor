@@ -212,10 +212,12 @@ router.post('/challenges', async (req, res) => {
     const qRows = questions.map((q, i) => ({
       challenge_id: id,
       question: q.question,
-      options: q.options,
-      correct: q.correct,
+      options: q.options ?? null,
+      correct: q.correct ?? null,
       explanation: q.explanation || '',
       sort_order: i,
+      question_type: q.questionType || q.question_type || 'mcq',
+      accept_answers: q.acceptAnswers || q.accept_answers || null,
     }));
     const { error: qErr } = await supabase.from('challenge_questions').insert(qRows);
     if (qErr) throw qErr;
@@ -258,10 +260,12 @@ router.put('/challenges/:id', async (req, res) => {
       const qRows = questions.map((q, i) => ({
         challenge_id: id,
         question: q.question,
-        options: q.options,
-        correct: q.correct,
+        options: q.options ?? null,
+        correct: q.correct ?? null,
         explanation: q.explanation || '',
         sort_order: i,
+        question_type: q.questionType || q.question_type || 'mcq',
+        accept_answers: q.acceptAnswers || q.accept_answers || null,
       }));
       const { error: qErr } = await supabase.from('challenge_questions').insert(qRows);
       if (qErr) throw qErr;
