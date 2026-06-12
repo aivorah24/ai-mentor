@@ -15,6 +15,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useStudentData } from '../../context/StudentDataContext';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
+import { NumberLineVisual, VennCirclesVisual, BarModelVisual, ConversionChartVisual } from '../../components/common/LessonVisuals';
 import { spacing, radius } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
@@ -1190,6 +1191,27 @@ interface LessonScene {
   accent?: string;
   imageUrl?: string;
   imageCaption?: string;
+  visual?: {
+    type: 'numberline' | 'venn' | 'barmodel' | 'chart';
+    // numberline
+    min?: number;
+    max?: number;
+    highlights?: number[];
+    answer?: number;
+    label?: string;
+    // venn
+    leftLabel?: string;
+    rightLabel?: string;
+    leftOnly?: (number | string)[];
+    rightOnly?: (number | string)[];
+    overlap?: (number | string)[];
+    // barmodel
+    total?: number;
+    filled?: number;
+    // chart
+    items?: string[];
+    factors?: string[];
+  };
 }
 
 interface Lesson {
@@ -1646,6 +1668,43 @@ export default function TopicLessonScreen({ navigation, route }: any) {
               ))}
             </View>
 
+            {/* Visual: number line or Venn circles */}
+            {scene.visual?.type === 'numberline' && (
+              <NumberLineVisual
+                min={scene.visual.min ?? 0}
+                max={scene.visual.max ?? 20}
+                highlights={scene.visual.highlights ?? []}
+                answer={scene.visual.answer}
+                label={scene.visual.label}
+                accent={accent}
+              />
+            )}
+            {scene.visual?.type === 'venn' && (
+              <VennCirclesVisual
+                leftLabel={scene.visual.leftLabel ?? 'A'}
+                rightLabel={scene.visual.rightLabel ?? 'B'}
+                leftOnly={scene.visual.leftOnly ?? []}
+                rightOnly={scene.visual.rightOnly ?? []}
+                overlap={scene.visual.overlap ?? []}
+                accent={accent}
+              />
+            )}
+            {scene.visual?.type === 'barmodel' && (
+              <BarModelVisual
+                total={scene.visual.total ?? 4}
+                filled={scene.visual.filled ?? 1}
+                label={scene.visual.label}
+                accent={accent}
+              />
+            )}
+            {scene.visual?.type === 'chart' && (
+              <ConversionChartVisual
+                items={scene.visual.items ?? []}
+                factors={scene.visual.factors ?? []}
+                accent={accent}
+              />
+            )}
+
             {/* Divider */}
             <View style={[s.divider, { backgroundColor: accent + '30' }]} />
 
@@ -1681,7 +1740,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
               <View style={[s.avatarDot, { backgroundColor: accent }]}>
                 <Feather name="volume-2" size={13} color="#fff" />
               </View>
-              <Text style={[s.speakLabel, { color: colors.textMuted }]}>Ms. Zara</Text>
+              <Text style={[s.speakLabel, { color: colors.textMuted }]}>Aivorah</Text>
               {speaking && !paused && (
                 <View style={[s.speakingPill, { backgroundColor: accent + '20', borderColor: accent + '40' }]}>
                   <ActivityIndicator size="small" color={accent} style={{ transform: [{ scale: 0.7 }] }} />
