@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Modal, RefreshControl, Image,
+  ActivityIndicator, Modal, RefreshControl, Image, TextInput,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius } from '../../theme';
@@ -57,6 +57,8 @@ interface Question {
   question: string;
   options: string[];
   answer: string;
+  type?: 'mcq' | 'fill_blank' | 'open_ended';
+  acceptAnswers?: string[] | null;
 }
 
 export default function ChallengesScreen({ navigation, route }: any) {
@@ -64,7 +66,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
   const initialTab = route?.params?.tab;
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { stats, studentId } = useStudentData();
+  const { stats, studentId, addXP } = useStudentData();
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState(initialTab === 'assigned' ? 'Assigned' : 'Available');
@@ -195,8 +197,11 @@ export default function ChallengesScreen({ navigation, route }: any) {
         const data = await qRes.json();
         const qs: Question[] = (Array.isArray(data.questions) ? data.questions : []).map((q: any) => ({
           ...q,
+          options: q.options ?? [],
           // server returns `correct` as index (0-3); map to the option string for comparison
           answer: q.options?.[q.correct] ?? q.answer ?? '',
+          type: q.type || 'mcq',
+          acceptAnswers: q.acceptAnswers ?? null,
         }));
         setQuestions(qs);
         setAnswers(new Array(qs.length).fill(null));
@@ -233,9 +238,25 @@ export default function ChallengesScreen({ navigation, route }: any) {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
+  // Score a single question: mcq compares to the correct option,
+  // fill_blank checks the typed text against any accepted answer (case/space-insensitive),
+  // open_ended has no wrong answer — any non-empty response earns credit.
+  function isQuestionCorrect(q: Question, given: string | null): boolean {
+    if (given === null) return false;
+    const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (q.type === 'fill_blank') {
+      const accepted = (q.acceptAnswers && q.acceptAnswers.length > 0) ? q.acceptAnswers : [q.answer];
+      return accepted.some(a => norm(a) === norm(given));
+    }
+    if (q.type === 'open_ended') {
+      return given.trim().length > 0;
+    }
+    return given === q.answer;
+  }
+
   async function submitQuiz() {
     if (!activeChallenge?.assignmentId) return;
-    const correct = questions.filter((q, i) => answers[i] === q.answer).length;
+    const correct = questions.filter((q, i) => isQuestionCorrect(q, answers[i])).length;
     const score = Math.round((correct / questions.length) * 100);
     setQuizSubmitting(true);
     try {
@@ -247,6 +268,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
       if (res.ok) {
         const data = await res.json();
         setQuizResult({ score: data.score, xpAwarded: data.xpAwarded });
+        if (data.xpAwarded) addXP(data.xpAwarded);
         setChallenges(prev => prev.map(c =>
           c.id === activeChallenge.id
             ? { ...c, status: 'completed', score: data.score, xpAwarded: data.xpAwarded }
@@ -274,7 +296,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
     setQuizResult(null);
   }
 
-  const allAnswered = answers.length > 0 && answers.every(a => a !== null);
+  const allAnswered = answers.length > 0 && answers.every(a => a !== null && a.trim().length > 0);
 
   return (
     <ScreenLayout>
@@ -605,22 +627,34 @@ export default function ChallengesScreen({ navigation, route }: any) {
                     <View key={qi} style={styles.questionBlock}>
                       <Text style={styles.questionNum}>Q{qi + 1} of {questions.length}</Text>
                       <Text style={styles.questionText}>{q.question}</Text>
-                      <View style={styles.optionsGrid}>
-                        {q.options.map((opt, oi) => (
-                          <TouchableOpacity
-                            key={oi}
-                            style={[
-                              styles.optionBtn,
-                              answers[qi] === opt && { backgroundColor: colors.primary + '20', borderColor: colors.primary },
-                            ]}
-                            onPress={() => setAnswers(prev => prev.map((a, i) => i === qi ? opt : a))}
-                            activeOpacity={0.75}
-                          >
-                            <View style={[styles.optionDot, answers[qi] === opt && { backgroundColor: colors.primary, borderColor: colors.primary }]} />
-                            <Text style={[styles.optionText, answers[qi] === opt && { color: colors.primary, fontWeight: '600' }]}>{opt}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
+                      {q.type === 'fill_blank' || q.type === 'open_ended' ? (
+                        <TextInput
+                          style={[styles.textAnswerInput, { color: colors.textMain, borderColor: colors.borderColor, backgroundColor: colors.bgDark }]}
+                          placeholder={q.type === 'fill_blank' ? 'Type your answer...' : 'Write your answer here...'}
+                          placeholderTextColor={colors.textDim}
+                          value={answers[qi] ?? ''}
+                          onChangeText={(text) => setAnswers(prev => prev.map((a, i) => i === qi ? text : a))}
+                          multiline={q.type === 'open_ended'}
+                          numberOfLines={q.type === 'open_ended' ? 4 : 1}
+                        />
+                      ) : (
+                        <View style={styles.optionsGrid}>
+                          {q.options.map((opt, oi) => (
+                            <TouchableOpacity
+                              key={oi}
+                              style={[
+                                styles.optionBtn,
+                                answers[qi] === opt && { backgroundColor: colors.primary + '20', borderColor: colors.primary },
+                              ]}
+                              onPress={() => setAnswers(prev => prev.map((a, i) => i === qi ? opt : a))}
+                              activeOpacity={0.75}
+                            >
+                              <View style={[styles.optionDot, answers[qi] === opt && { backgroundColor: colors.primary, borderColor: colors.primary }]} />
+                              <Text style={[styles.optionText, answers[qi] === opt && { color: colors.primary, fontWeight: '600' }]}>{opt}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
                     </View>
                   ))}
                   <TouchableOpacity
@@ -721,6 +755,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   questionNum:  { fontSize: 11, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.5 },
   questionText: { fontSize: 15, fontWeight: '600', color: c.textMain, lineHeight: 22 },
   optionsGrid:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  textAnswerInput: { borderWidth: 1, borderRadius: radius.md, padding: spacing.md, fontSize: 14, marginTop: 4, textAlignVertical: 'top' },
   optionBtn:    { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 12, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark, flexBasis: '48%', flexGrow: 1 },
   optionDot:    { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: c.textDim },
   optionText:   { fontSize: 14, color: c.textMuted, flex: 1 },
