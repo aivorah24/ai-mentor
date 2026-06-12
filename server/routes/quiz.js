@@ -2255,7 +2255,11 @@ function renderQuizHTML(quiz) {
     }
   }
 
-  const totalQ = quiz.tasks?.reduce((s, t) => s + (t.questions?.length || 0), 0) || 0;
+  // NOTE: totalQ is finalized to qNum after the task loop below registers every
+  // checkable question — registerQuestion() may run more/fewer times than
+  // task.questions.length (e.g. two-column layouts can register a question
+  // twice), so counting task.questions directly could make the score (sc)
+  // exceed this total.
 
   const tierStyles = {
     'MUST DO':     { bg: 'rgba(147,176,172,0.08)', border: '#93B0AC', label: '#93B0AC', labelBg: 'rgba(147,176,172,0.15)' },
@@ -2853,7 +2857,7 @@ function renderQuizHTML(quiz) {
   </div>
 
   <div class="score" id="score-badge">
-    <span class="score-num" id="score-num">0/${totalQ}</span>
+    <span class="score-num" id="score-num">0/${qNum}</span>
     <span class="score-label">Score</span>
   </div>
 
@@ -2878,7 +2882,7 @@ function renderQuizHTML(quiz) {
 
   <script>
     let sc = 0;
-    const tot = ${totalQ};
+    const tot = ${qNum};
     const done = new Set();
     const answers = ${JSON.stringify(answersMap)};
     const studentAnswers = {}; // { qId: { answer, correct, timeSpent } }
