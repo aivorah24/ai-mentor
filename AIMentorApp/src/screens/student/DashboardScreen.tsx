@@ -277,8 +277,6 @@ export default function DashboardScreen({ navigation, route }: any) {
 
   const firstName = (childOverride?.name ?? user?.name)?.split(' ')[0] || 'there';
   const curriculumName = childOverride?.curriculum ?? user?.curriculum ?? 'IB PYP';
-  const xpInfo = xpForNextLevel(stats.xpPoints);
-  const xpPct  = xpInfo.current / xpInfo.needed;
 
   // card surfaces — wired to pastel theme tokens
   const cardBg     = colors.cardDark;
@@ -511,7 +509,9 @@ export default function DashboardScreen({ navigation, route }: any) {
   const studyGoal  = 60;  const studyDone  = Math.min(stats.todayStudyMinutes, studyGoal);
   // Topics goal = total topics in student's curriculum for their grade (dynamic)
   const topicsGoal = curriculum ? Math.max(curriculum.totalTopics, 1) : 1;
-  const topicsDone = Math.min(stats.topicsExplored ?? 0, topicsGoal);
+  // "Mastered" topics — same count used in the hero ("X of Y topics mastered")
+  const topicsMastered = completedSet.size;
+  const topicsDone = Math.min(topicsMastered, topicsGoal);
   // Badge thresholds: 25%, 50%, 100% of curriculum — purely percentage-based
   const t25 = Math.floor(topicsGoal * 0.25);
   const t50 = Math.floor(topicsGoal * 0.50);
@@ -526,6 +526,8 @@ export default function DashboardScreen({ navigation, route }: any) {
   const xpDone = Math.min(stats.xpPoints, xpGoal);
   const xp25   = Math.floor(xpGoal * 0.25);
   const xp50   = Math.floor(xpGoal * 0.50);
+  // Max level reachable for this grade — the level the XP cap falls into
+  const maxLevel = xpForNextLevel(xpGoal).level;
 
   const GOALS = [
     { label: 'Study Time', val: formatStudyTime(studyDone), target: '1h',
@@ -533,30 +535,30 @@ export default function DashboardScreen({ navigation, route }: any) {
       pct: studyGoal > 0 ? studyDone / studyGoal : 0,
       color: BRAND.teal, pastel: PASTEL.teal, icon: 'clock' as const,
       badges: [
-        // Unlock when today's study time crosses the threshold
-        { icon: 'zap'   as const, label: 'Early Bird', color: '#7AADA8', bg: '#C3DCD8', unlocked: stats.todayStudyMinutes >= 15, tip: '15 min today' },
-        { icon: 'sun'   as const, label: 'Half Hour',  color: '#5A8A70', bg: '#D4E8E5', unlocked: stats.todayStudyMinutes >= 30, tip: '30 min today' },
-        { icon: 'award' as const, label: 'Study Hero', color: '#9B7FD4', bg: '#E8DFFA', unlocked: stats.todayStudyMinutes >= 60, tip: '60 min today' },
+        // Unlock when today's study time crosses the threshold — all badges share the card's teal theme
+        { icon: 'zap'   as const, label: 'Early Bird', color: BRAND.teal, bg: PASTEL.teal, unlocked: stats.todayStudyMinutes >= 15, tip: '15 min today' },
+        { icon: 'sun'   as const, label: 'Half Hour',  color: BRAND.teal, bg: PASTEL.teal, unlocked: stats.todayStudyMinutes >= 30, tip: '30 min today' },
+        { icon: 'award' as const, label: 'Study Hero', color: BRAND.teal, bg: PASTEL.teal, unlocked: stats.todayStudyMinutes >= 60, tip: '60 min today' },
       ]},
-    { label: 'Topics', val: `${Math.min(stats.topicsExplored, topicsGoal)} / ${topicsGoal}`, target: `${topicsGoal} topics`,
-      sub: 'total', raw: topicsDone, goal: topicsGoal,
+    { label: 'Topics', val: `${topicsDone} / ${topicsGoal}`, target: `${topicsGoal} topics`,
+      sub: 'total', caption: 'topics mastered', raw: topicsDone, goal: topicsGoal,
       pct: topicsDone / topicsGoal,
       color: BRAND.rose, pastel: PASTEL.pink, icon: 'book-open' as const,
       badges: [
-        // 25% → Explorer, 50% → Deep Diver, 100% → Scholar (all topics done!)
-        { icon: 'compass' as const, label: 'Explorer',   color: '#C47A68', bg: '#F5E0DA', unlocked: stats.topicsExplored >= t25,       tip: `Complete ${t25} topics`       },
-        { icon: 'layers'  as const, label: 'Deep Diver', color: '#5F8A86', bg: '#E4F0EE', unlocked: stats.topicsExplored >= t50,       tip: `Complete ${t50} topics`       },
-        { icon: 'book'    as const, label: 'Scholar',    color: '#8A8358', bg: '#EDEAD4', unlocked: stats.topicsExplored >= topicsGoal, tip: `Complete all ${topicsGoal} topics` },
+        // 25% → Explorer, 50% → Deep Diver, 100% → Scholar — all badges share the card's rose theme
+        { icon: 'compass' as const, label: 'Explorer',   color: BRAND.rose, bg: PASTEL.pink, unlocked: topicsMastered >= t25,       tip: `Master ${t25} topics`       },
+        { icon: 'layers'  as const, label: 'Deep Diver', color: BRAND.rose, bg: PASTEL.pink, unlocked: topicsMastered >= t50,       tip: `Master ${t50} topics`       },
+        { icon: 'book'    as const, label: 'Scholar',    color: BRAND.rose, bg: PASTEL.pink, unlocked: topicsMastered >= topicsGoal, tip: `Master all ${topicsGoal} topics` },
       ]},
     { label: 'XP Earned', val: stats.xpPoints.toLocaleString(), target: `${xpGoal.toLocaleString()} XP`,
-      sub: 'total', raw: xpDone, goal: xpGoal,
+      sub: 'total', caption: 'XP earned', raw: xpDone, goal: xpGoal,
       pct: xpDone / xpGoal,
       color: BRAND.gold, pastel: PASTEL.yellow, icon: 'star' as const,
       badges: [
-        // 25% / 50% / 100% of grade max XP
-        { icon: 'star'        as const, label: 'XP Spark',  color: '#8A8358', bg: '#EDEAD4', unlocked: stats.xpPoints >= xp25,   tip: `Earn ${xp25.toLocaleString()} XP`    },
-        { icon: 'trending-up' as const, label: 'Leveling',  color: '#9B7FD4', bg: '#E8DFFA', unlocked: stats.xpPoints >= xp50,   tip: `Earn ${xp50.toLocaleString()} XP`    },
-        { icon: 'shield'      as const, label: 'XP Master', color: '#7AADA8', bg: '#C3DCD8', unlocked: stats.xpPoints >= xpGoal,  tip: `Earn all ${xpGoal.toLocaleString()} XP` },
+        // 25% / 50% / 100% of grade max XP — all badges share the card's gold theme
+        { icon: 'star'        as const, label: 'XP Spark',  color: BRAND.gold, bg: PASTEL.yellow, unlocked: stats.xpPoints >= xp25,   tip: `Earn ${xp25.toLocaleString()} XP`    },
+        { icon: 'trending-up' as const, label: 'Leveling',  color: BRAND.gold, bg: PASTEL.yellow, unlocked: stats.xpPoints >= xp50,   tip: `Earn ${xp50.toLocaleString()} XP`    },
+        { icon: 'shield'      as const, label: 'XP Master', color: BRAND.gold, bg: PASTEL.yellow, unlocked: stats.xpPoints >= xpGoal,  tip: `Earn all ${xpGoal.toLocaleString()} XP` },
       ]},
   ];
 
@@ -564,7 +566,7 @@ export default function DashboardScreen({ navigation, route }: any) {
     { icon: 'clock'       as const, val: formatStudyTime(stats.studyTimeMinutes), label: 'Study Time',  color: BRAND.teal,   pastel: PASTEL.teal,   sub: 'this week',     pct: Math.min(stats.studyTimeMinutes / (7 * 60), 1) },
     { icon: 'zap'         as const, val: String(stats.currentStreak),             label: 'Day Streak',  color: BRAND.rose,   pastel: PASTEL.pink,   sub: 'days in a row', pct: Math.min(stats.currentStreak / 14, 1) },
     { icon: 'star'        as const, val: stats.xpPoints.toLocaleString(),         label: 'Total XP',    color: BRAND.gold,   pastel: PASTEL.yellow, sub: 'points earned', pct: Math.min(stats.xpPoints / 5000, 1) },
-    { icon: 'book-open'   as const, val: String(stats.topicsExplored),            label: 'Topics Done', color: BRAND.forest, pastel: PASTEL.green,  sub: 'completed',     pct: curriculum ? Math.min(stats.topicsExplored / Math.max(curriculum.totalTopics, 1), 1) : 0 },
+    { icon: 'book-open'   as const, val: String(topicsMastered),                  label: 'Topics Done', color: BRAND.forest, pastel: PASTEL.green,  sub: 'mastered',      pct: curriculum ? Math.min(topicsMastered / Math.max(curriculum.totalTopics, 1), 1) : 0 },
   ];
 
 
@@ -682,15 +684,20 @@ export default function DashboardScreen({ navigation, route }: any) {
                     })()}
                   </Text>
 
-                  {/* XP bar */}
+                  {/* Level + weekly consistency bar */}
                   <View style={styles.xpBlock}>
                     <View style={styles.xpLabelRow}>
-                      <Text style={styles.xpLbl}>Level {stats.level} → {stats.level + 1}</Text>
-                      <Text style={styles.xpNum}>{xpInfo.current} / {xpInfo.needed} XP</Text>
+                      <Text style={styles.xpLbl}>{stats.level >= maxLevel ? `Level ${maxLevel} · Max Level` : `Level ${stats.level} → ${stats.level + 1}`}</Text>
+                      <Text style={styles.xpNum}>{Math.min(stats.currentStreak, 7)} of 7 days active this week</Text>
                     </View>
                     <View style={styles.xpTrack}>
-                      <View style={[styles.xpFill, { width: `${Math.max(xpPct * 100, 2)}%` as any }]} />
+                      <View style={[styles.xpFill, { width: `${Math.max((Math.min(stats.currentStreak, 7) / 7) * 100, 2)}%` as any }]} />
                     </View>
+                    <Text style={styles.xpTotal}>
+                      {stats.currentStreak >= 7
+                        ? 'Perfect week — keep your streak going!'
+                        : `${7 - Math.min(stats.currentStreak, 7)} more day${7 - Math.min(stats.currentStreak, 7) === 1 ? '' : 's'} to a full week streak!`}
+                    </Text>
                   </View>
 
                   {/* CTA — label and destination change based on completion state */}
@@ -763,7 +770,7 @@ export default function DashboardScreen({ navigation, route }: any) {
                               </View>
                               <View style={styles.goalValueWrap}>
                                 <Text style={[styles.goalVal, { color: colors.textMain }]}>{g.val}</Text>
-                                <Text style={[styles.goalTarget, { color: colors.textDim }]}>{(g as any).sub === 'total' ? 'total completed' : 'completed today'}</Text>
+                                <Text style={[styles.goalTarget, { color: colors.textDim }]}>{(g as any).caption ?? ((g as any).sub === 'total' ? 'total completed' : 'completed today')}</Text>
                                 <View style={[styles.goalMiniMeta, { backgroundColor: g.color + '25', borderColor: g.color + '50' }]}>
                                   <Feather name="target" size={10} color={g.color} />
                                   <Text style={[styles.goalMiniMetaTxt, { color: g.color }]}>{helper}</Text>
@@ -814,7 +821,7 @@ export default function DashboardScreen({ navigation, route }: any) {
                             {/* Value + helper — centered vertically */}
                             <View style={styles.goalValueWrap}>
                               <Text style={[styles.goalVal, { color: colors.textMain }]}>{g.val}</Text>
-                              <Text style={[styles.goalTarget, { color: colors.textDim }]}>{(g as any).sub === 'total' ? 'total completed' : 'completed today'}</Text>
+                              <Text style={[styles.goalTarget, { color: colors.textDim }]}>{(g as any).caption ?? ((g as any).sub === 'total' ? 'total completed' : 'completed today')}</Text>
                               <View style={[styles.goalMiniMeta, { backgroundColor: g.color + '25', borderColor: g.color + '50' }]}>
                                 <Feather name="target" size={10} color={g.color} />
                                 <Text style={[styles.goalMiniMetaTxt, { color: g.color }]}>{helper}</Text>
@@ -1269,6 +1276,7 @@ const makeStyles = (c: AppColors, isMobile: boolean, isDark: boolean) => StyleSh
   xpNum:      { fontSize: 10, fontWeight: '800', color: '#fff' },
   xpTrack:    { height: 8, backgroundColor: 'rgba(255,255,255,0.28)', borderRadius: 4, overflow: 'hidden' },
   xpFill:     { height: '100%', backgroundColor: '#fff', borderRadius: 4 },
+  xpTotal:    { fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.7)', marginTop: 6 },
 
   heroCta:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 16, alignSelf: 'flex-start', zIndex: 1 },
   heroCtaPlay:  { width: 22, height: 22, borderRadius: 11, backgroundColor: BRAND.indigo + '15', alignItems: 'center', justifyContent: 'center' },

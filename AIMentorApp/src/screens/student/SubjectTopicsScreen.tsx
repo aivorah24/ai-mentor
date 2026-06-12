@@ -158,6 +158,7 @@ const IB_PYP_STATIC_TOPICS: Record<string, Record<string, TopicItem[]>> = {
   'Grade 4': {
     'Mathematics': [
       { topic: 'Indian Place Value Chart',    unit: 'Number',             description: 'Ones, tens, hundreds, thousands, ten-thousands, lakhs, ten-lakhs, crores — the Indian number system.' },
+      { topic: 'LCM (Least Common Multiple)', unit: 'Number',             description: 'Finding the LCM using the listing-multiples and prime-factorisation methods, with real-life examples.' },
       { topic: 'Large Numbers up to 100,000', unit: 'Number',           description: 'Reading, writing, comparing, and ordering 5-digit numbers.' },
       { topic: 'Long Multiplication',       unit: 'Number',             description: 'Multiplying 2 and 3-digit numbers using the column method.' },
       { topic: 'Long Division',             unit: 'Number',             description: 'Dividing larger numbers with and without remainders.' },
@@ -172,6 +173,12 @@ const IB_PYP_STATIC_TOPICS: Record<string, Record<string, TopicItem[]>> = {
       { topic: 'Roman Numerals',            unit: 'Number',             description: 'Reading and writing Roman numerals I to C.' },
       { topic: 'Probability',               unit: 'Data Handling',      description: 'Likelihood of events — impossible, unlikely, even, likely, certain.' },
       { topic: 'Line Graphs and Data Analysis', unit: 'Data Handling',  description: 'Reading and interpreting line graphs. Identifying trends.' },
+      { topic: 'Estimation and Rounding Off', unit: 'Number',           description: 'Rounding numbers to the nearest 10, 100, and 1000, and estimating answers in real-life situations.' },
+      { topic: 'Properties of Lines',       unit: 'Shape and Space',    description: 'Parallel, perpendicular, horizontal, vertical, and intersecting lines.' },
+      { topic: 'Types of Fractions',        unit: 'Number',             description: 'Unit, proper, improper, mixed, like, and unlike fractions, with bar models.' },
+      { topic: 'Fractions on a Number Line', unit: 'Number',            description: 'Placing and comparing fractions on a number line.' },
+      { topic: 'Conversion of Length Units', unit: 'Measurement',       description: 'Converting between kilometres, metres, centimetres, and millimetres, with real-life measurement problems.' },
+      { topic: 'Successors and Predecessors', unit: 'Number',           description: 'Finding the number that comes just before (predecessor) and just after (successor) a given number.' },
     ],
     'Science': [
       { topic: 'Forces and Motion',         unit: 'How the World Works', description: 'Push, pull, gravity, friction — how forces change movement.' },
