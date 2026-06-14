@@ -1,0 +1,206 @@
+{
+  "id": "pyp_g4_mathematics_lcm_least_common_multiple",
+  "title": "LCM (Least Common Multiple)",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "9-10 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": ["LCM", "STEP", "BY STEP"],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hi, I'm Aivorah. Today we're learning the LCM, the Least Common Multiple. I'll show you two ways to find it, one step at a time, using real numbers.",
+      "accent": "#38bdf8",
+      "duration": 12
+    },
+    {
+      "id": "02_what_is_lcm",
+      "scene_number": 2,
+      "type": "concept",
+      "words": ["LCM", "=", "SMALLEST SHARED MULTIPLE"],
+      "subtext": "What is the LCM?",
+      "voice": "LCM stands for Least Common Multiple. It is the smallest number that two or more numbers can both divide into evenly. We'll learn two ways to find it.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "03_what_is_multiple",
+      "scene_number": 3,
+      "type": "concept",
+      "words": ["3", "6", "9", "12", "..."],
+      "subtext": "First, What's a Multiple?",
+      "voice": "Before we start, let's recall multiples. A multiple is a number you land on when you count up by the same amount. Counting by 3s gives 3, 6, 9, 12, and so on, forever.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "04_two_methods",
+      "scene_number": 4,
+      "type": "concept",
+      "words": ["METHOD 1", "&", "METHOD 2"],
+      "subtext": "Two Ways to Find the LCM",
+      "voice": "There are two ways to find the LCM. Method 1 is Listing Multiples, and Method 2 is Prime Factorisation. Let's try both with real examples.",
+      "accent": "#38bdf8",
+      "duration": 12
+    },
+    {
+      "id": "05_method1_title",
+      "scene_number": 5,
+      "type": "concept",
+      "words": ["METHOD 1", "LISTING", "MULTIPLES"],
+      "subtext": "Method 1: Listing Multiples",
+      "voice": "Method 1 is Listing Multiples. The idea is simple. List the multiples of each number, then find the smallest one they share. Let's find the LCM of 3 and 5.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "06_step_multiples3",
+      "scene_number": 6,
+      "type": "concept",
+      "words": ["3", "6", "9", "12", "15"],
+      "subtext": "Step 1: List Multiples of 3",
+      "voice": "Step 1. Write the multiples of 3 by counting up in 3s. 3, 6, 9, 12, 15.",
+      "accent": "#38bdf8",
+      "duration": 10,
+      "visual": { "type": "numberline", "min": 0, "max": 15, "highlights": [3, 6, 9, 12, 15], "label": "Hopping by 3s" }
+    },
+    {
+      "id": "07_step_multiples5",
+      "scene_number": 7,
+      "type": "concept",
+      "words": ["5", "10", "15", "20"],
+      "subtext": "Step 2: List Multiples of 5",
+      "voice": "Step 2. Now write the multiples of 5 by counting up in 5s. 5, 10, 15, 20.",
+      "accent": "#38bdf8",
+      "duration": 10,
+      "visual": { "type": "numberline", "min": 0, "max": 20, "highlights": [5, 10, 15, 20], "label": "Hopping by 5s" }
+    },
+    {
+      "id": "08_step_match",
+      "scene_number": 8,
+      "type": "concept",
+      "words": ["LCM(3, 5)", "=", "15"],
+      "subtext": "Step 3: Find the Smallest Match",
+      "voice": "Step 3. Look at both lists. The number 15 appears in both, and it's the smallest one that does. So the LCM of 3 and 5 is 15.",
+      "accent": "#38bdf8",
+      "duration": 14,
+      "visual": { "type": "venn", "leftLabel": "Multiples of 3", "rightLabel": "Multiples of 5", "leftOnly": [3, 6, 9, 12], "rightOnly": [5, 10, 20], "overlap": [15] }
+    },
+    {
+      "id": "09_method1_practice",
+      "scene_number": 9,
+      "type": "concept",
+      "words": ["LCM(6, 8)", "=", "24"],
+      "subtext": "Your Turn: LCM of 6 and 8",
+      "voice": "Let's try one more with Method 1. Multiples of 6 are 6, 12, 18, 24. Multiples of 8 are 8, 16, 24. The first number in both lists is 24. So the LCM of 6 and 8 is 24.",
+      "accent": "#38bdf8",
+      "duration": 16,
+      "visual": { "type": "venn", "leftLabel": "Multiples of 6", "rightLabel": "Multiples of 8", "leftOnly": [6, 12, 18], "rightOnly": [8, 16], "overlap": [24] }
+    },
+    {
+      "id": "10_method2_title",
+      "scene_number": 10,
+      "type": "concept",
+      "words": ["METHOD 2", "PRIME", "FACTORISATION"],
+      "subtext": "Method 2: Prime Factorisation",
+      "voice": "Method 2 is Prime Factorisation. This is faster for bigger numbers. We break each number down into its prime factors. Let's find the LCM of 8 and 12.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "11_step_factor8",
+      "scene_number": 11,
+      "type": "concept",
+      "words": ["8", "=", "2 × 2 × 2"],
+      "subtext": "Step 1: Break Down 8",
+      "voice": "Step 1. Break 8 into prime factors. 8 equals 2 times 2 times 2. That's three 2s.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "12_step_factor12",
+      "scene_number": 12,
+      "type": "concept",
+      "words": ["12", "=", "2 × 2 × 3"],
+      "subtext": "Step 2: Break Down 12",
+      "voice": "Step 2. Break 12 into prime factors. 12 equals 2 times 2 times 3. That's two 2s and one 3.",
+      "accent": "#38bdf8",
+      "duration": 10
+    },
+    {
+      "id": "13_step_combine",
+      "scene_number": 13,
+      "type": "concept",
+      "words": ["2", "→ 3 TIMES", "3", "→ 1 TIME"],
+      "subtext": "Step 3: Take the Highest Count of Each",
+      "voice": "Step 3. Compare the two. For the factor 2, the most times it shows up is three, in 8. For the factor 3, the most times it shows up is one, in 12. We take these highest counts.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "14_step_multiply",
+      "scene_number": 14,
+      "type": "concept",
+      "words": ["LCM(8, 12)", "=", "24"],
+      "subtext": "Step 4: Multiply Them Together",
+      "voice": "Step 4. Multiply those highest counts together. 2 times 2 times 2 times 3 equals 24. So the LCM of 8 and 12 is 24, the same answer Method 1 would give.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "15_method2_practice",
+      "scene_number": 15,
+      "type": "concept",
+      "words": ["LCM(9, 12)", "=", "36"],
+      "subtext": "Your Turn: LCM of 9 and 12",
+      "voice": "Let's try Method 2 again. 9 equals 3 times 3. 12 equals 2 times 2 times 3. The highest count of 2 is two, and the highest count of 3 is two. Multiply: 2 times 2 times 3 times 3 equals 36.",
+      "accent": "#38bdf8",
+      "duration": 18
+    },
+    {
+      "id": "16_real_life_bus",
+      "scene_number": 16,
+      "type": "concept",
+      "words": ["BUS A: 4 MIN", "BUS B: 6 MIN", "TOGETHER: 12 MIN"],
+      "subtext": "LCM in Real Life: Bus Stop",
+      "voice": "Here's where LCM helps in real life. Bus A leaves every 4 minutes, and Bus B leaves every 6 minutes. They left together just now. They will both leave together again after the LCM of 4 and 6, which is 12 minutes.",
+      "accent": "#38bdf8",
+      "duration": 18
+    },
+    {
+      "id": "17_real_life_packs",
+      "scene_number": 17,
+      "type": "concept",
+      "words": ["HOT DOGS: 8", "BUNS: 12", "BUY: 24 EACH"],
+      "subtext": "LCM in Real Life: Party Packs",
+      "voice": "Another example. Hot dogs come in packs of 8, and buns come in packs of 12. To have an equal number of each with none left over, you need the LCM of 8 and 12, which is 24. That's 3 packs of hot dogs and 2 packs of buns.",
+      "accent": "#38bdf8",
+      "duration": 18
+    },
+    {
+      "id": "18_quiz",
+      "scene_number": 18,
+      "type": "quiz",
+      "words": ["LCM(4, 5)", "=", "?"],
+      "subtext": "Test Your Knowledge",
+      "voice": "Now it's your turn. Two joggers run around a track, one every 4 minutes and the other every 5 minutes. They start together. After how many minutes will they both be back at the start at the same time? That's the LCM of 4 and 5.",
+      "accent": "#38bdf8",
+      "duration": 16,
+      "answer": "20"
+    },
+    {
+      "id": "19_summary",
+      "scene_number": 19,
+      "type": "summary",
+      "words": ["GREAT", "JOB!", "YOU DID IT"],
+      "subtext": "Recap and Celebrate",
+      "voice": "Wonderful work! You learned that LCM is the smallest shared multiple. You found it two ways, by listing multiples and by prime factorisation, and you used it to solve real-life problems. Keep practicing, and you'll be an LCM expert!",
+      "accent": "#38bdf8",
+      "duration": 16
+    }
+  ]
+}

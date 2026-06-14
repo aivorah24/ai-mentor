@@ -1,0 +1,115 @@
+{
+  "id": "pyp_g4_mathematics_fractions_on_a_number_line",
+  "title": "Fractions on a Number Line",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "7-8 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": ["FRACTIONS", "ON A", "NUMBER LINE"],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hi, I'm Aivorah. Fractions live on the number line too, in the spaces between whole numbers. Let's learn how to place and compare them.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "02_splitting_the_line",
+      "scene_number": 2,
+      "type": "concept",
+      "words": ["0", "TO", "1"],
+      "subtext": "Splitting the Gap from 0 to 1",
+      "voice": "Take the space between 0 and 1. If we split it into equal hops, each hop is a fraction of the whole. The more hops, the smaller each fraction.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "03_quarters",
+      "scene_number": 3,
+      "type": "concept",
+      "words": ["4 HOPS", "=", "QUARTERS"],
+      "subtext": "Step 1: Split into Quarters",
+      "voice": "Split the line from 0 to 1 into 4 equal hops. Each hop is 1 quarter. After 1 hop you're at 1 fourth, after 2 hops at 2 fourths which is the same as one half, after 3 hops at 3 fourths, and after 4 hops you reach the whole number 1.",
+      "accent": "#38bdf8",
+      "duration": 18,
+      "visual": { "type": "numberline", "min": 0, "max": 4, "highlights": [1, 2, 3, 4], "label": "Each hop = 1/4 (4 hops = 1 whole)" }
+    },
+    {
+      "id": "04_placing_3_4",
+      "scene_number": 4,
+      "type": "concept",
+      "words": ["3/4", "=", "3 HOPS"],
+      "subtext": "Step 2: Place 3/4 on the Line",
+      "voice": "To place 3 fourths, count 3 hops from 0, each hop being 1 fourth. You land just before the whole number 1.",
+      "accent": "#38bdf8",
+      "duration": 14,
+      "visual": { "type": "numberline", "min": 0, "max": 4, "highlights": [3], "answer": 3, "label": "3 hops of 1/4 = 3/4" }
+    },
+    {
+      "id": "05_thirds",
+      "scene_number": 5,
+      "type": "concept",
+      "words": ["3 HOPS", "=", "THIRDS"],
+      "subtext": "Step 3: Split into Thirds",
+      "voice": "Now split the same gap from 0 to 1 into 3 equal hops instead. Each hop is now 1 third, a bigger step than 1 fourth, because there are fewer hops to cover the same distance.",
+      "accent": "#38bdf8",
+      "duration": 16,
+      "visual": { "type": "numberline", "min": 0, "max": 3, "highlights": [1, 2, 3], "label": "Each hop = 1/3 (3 hops = 1 whole)" }
+    },
+    {
+      "id": "06_comparing",
+      "scene_number": 6,
+      "type": "concept",
+      "words": ["1/3", ">", "1/4"],
+      "subtext": "Comparing Fractions on the Line",
+      "voice": "Here's the trick. On the number line, whichever fraction sits further to the right is bigger. Since 1 third needs a bigger hop than 1 fourth to cover the same gap, 1 third is greater than 1 fourth.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "07_your_turn",
+      "scene_number": 7,
+      "type": "concept",
+      "words": ["2/5", "=", "2 HOPS"],
+      "subtext": "Your Turn: Place 2/5",
+      "voice": "Let's place 2 fifths. Split the gap from 0 to 1 into 5 equal hops, then count 2 hops from 0. That point is 2 fifths.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "08_real_life",
+      "scene_number": 8,
+      "type": "concept",
+      "words": ["RULER", "MARKS", "=", "FRACTIONS"],
+      "subtext": "Fractions on a Number Line in Real Life",
+      "voice": "A ruler is a number line! The small marks between centimetres show fractions, like half a centimetre or a quarter of a centimetre. Measuring jugs work the same way.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "09_quiz",
+      "scene_number": 9,
+      "type": "quiz",
+      "words": ["WHICH IS BIGGER", "1/2", "OR", "1/5?"],
+      "subtext": "Test Your Knowledge",
+      "voice": "On a number line, which fraction is bigger, 1 half or 1 fifth?",
+      "accent": "#38bdf8",
+      "duration": 10,
+      "answer": "1/2"
+    },
+    {
+      "id": "10_summary",
+      "scene_number": 10,
+      "type": "summary",
+      "words": ["GREAT", "JOB!", "YOU DID IT"],
+      "subtext": "Recap and Celebrate",
+      "voice": "Great work! You learned that fractions live between whole numbers on a number line, and that the further right a fraction sits, the bigger it is. Keep practising placing fractions!",
+      "accent": "#38bdf8",
+      "duration": 14
+    }
+  ]
+}

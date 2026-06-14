@@ -1,0 +1,126 @@
+{
+  "id": "pyp_g4_mathematics_types_of_fractions",
+  "title": "Types of Fractions",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "9-10 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": ["TYPES OF", "FRACTIONS"],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hi, I'm Aivorah. Fractions come in different families. Today we'll meet unit, proper, improper, mixed, like, and unlike fractions, one at a time.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "02_recap_fraction",
+      "scene_number": 2,
+      "type": "concept",
+      "words": ["NUMERATOR", "/", "DENOMINATOR"],
+      "subtext": "Quick Recap: Parts of a Fraction",
+      "voice": "A fraction has two parts. The top number is the numerator, it tells how many parts we have. The bottom number is the denominator, it tells how many equal parts the whole is split into.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "03_unit_fraction",
+      "scene_number": 3,
+      "type": "concept",
+      "words": ["UNIT FRACTION", "1/4"],
+      "subtext": "Unit Fractions",
+      "voice": "A unit fraction has 1 as its numerator, just one part of the whole. 1 fourth, 1 third, and 1 fifth are all unit fractions.",
+      "accent": "#38bdf8",
+      "duration": 12,
+      "visual": { "type": "barmodel", "total": 4, "filled": 1, "label": "1/4 is a unit fraction" }
+    },
+    {
+      "id": "04_proper_fraction",
+      "scene_number": 4,
+      "type": "concept",
+      "words": ["PROPER FRACTION", "3/4"],
+      "subtext": "Proper Fractions",
+      "voice": "A proper fraction has a numerator smaller than its denominator, so it's always less than one whole. 3 fourths is a proper fraction, less than a whole pizza.",
+      "accent": "#38bdf8",
+      "duration": 14,
+      "visual": { "type": "barmodel", "total": 4, "filled": 3, "label": "3/4 is a proper fraction" }
+    },
+    {
+      "id": "05_improper_fraction",
+      "scene_number": 5,
+      "type": "concept",
+      "words": ["IMPROPER FRACTION", "7/4"],
+      "subtext": "Improper Fractions",
+      "voice": "An improper fraction has a numerator that is equal to or bigger than its denominator, so it's one whole or more. 7 fourths means more than one whole pizza, one whole pizza plus 3 more fourths.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "06_mixed_fraction",
+      "scene_number": 6,
+      "type": "concept",
+      "words": ["MIXED FRACTION", "1 3/4"],
+      "subtext": "Mixed Fractions",
+      "voice": "A mixed fraction has a whole number and a proper fraction together. 7 fourths can be written as the mixed fraction 1 and 3 fourths, one whole pizza plus 3 more fourths of another.",
+      "accent": "#38bdf8",
+      "duration": 16,
+      "visual": { "type": "barmodel", "total": 4, "filled": 4, "label": "7/4 = 1 whole + 3/4 = 1 3/4" }
+    },
+    {
+      "id": "07_like_fractions",
+      "scene_number": 7,
+      "type": "concept",
+      "words": ["LIKE FRACTIONS", "2/5", "&", "3/5"],
+      "subtext": "Like Fractions",
+      "voice": "Like fractions have the same denominator. 2 fifths and 3 fifths are like fractions, both split the whole into 5 equal parts, so they're easy to compare and add.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "08_unlike_fractions",
+      "scene_number": 8,
+      "type": "concept",
+      "words": ["UNLIKE FRACTIONS", "1/2", "&", "1/3"],
+      "subtext": "Unlike Fractions",
+      "voice": "Unlike fractions have different denominators. 1 half and 1 third are unlike fractions, the wholes are split into different numbers of parts, so we need extra steps to compare them.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "09_your_turn",
+      "scene_number": 9,
+      "type": "concept",
+      "words": ["5/8", "=", "PROPER & UNIT?"],
+      "subtext": "Your Turn: Classify 5/8",
+      "voice": "Let's classify 5 eighths. The numerator 5 is smaller than the denominator 8, so it's a proper fraction. Since the numerator is more than 1, it is not a unit fraction.",
+      "accent": "#38bdf8",
+      "duration": 14,
+      "visual": { "type": "barmodel", "total": 8, "filled": 5, "label": "5/8 is a proper fraction" }
+    },
+    {
+      "id": "10_quiz",
+      "scene_number": 10,
+      "type": "quiz",
+      "words": ["9/5", "IS A", "?"],
+      "subtext": "Test Your Knowledge",
+      "voice": "Is the fraction 9 fifths a proper fraction or an improper fraction?",
+      "accent": "#38bdf8",
+      "duration": 10,
+      "answer": "improper"
+    },
+    {
+      "id": "11_summary",
+      "scene_number": 11,
+      "type": "summary",
+      "words": ["GREAT", "JOB!", "YOU DID IT"],
+      "subtext": "Recap and Celebrate",
+      "voice": "Wonderful! You can now tell apart unit, proper, improper, mixed, like, and unlike fractions, using bar models to see what each one really means. Keep practising!",
+      "accent": "#38bdf8",
+      "duration": 14
+    }
+  ]
+}
