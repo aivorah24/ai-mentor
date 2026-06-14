@@ -20,6 +20,9 @@ import VerifyEmailScreen from './src/screens/auth/VerifyEmailScreen';
 import ResetPasswordScreen from './src/screens/auth/ResetPasswordScreen';
 import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
 import OnboardingDemo from './src/screens/onboarding/OnboardingDemo';
+import OnboardingStudentBoxes from './src/screens/onboarding/OnboardingStudentBoxes';
+import OnboardingTeacherBoxes from './src/screens/onboarding/OnboardingTeacherBoxes';
+import OnboardingParentBoxes from './src/screens/onboarding/OnboardingParentBoxes';
 import SetPasswordScreen from './src/screens/onboarding/SetPasswordScreen';
 import AdminPanelScreen from './src/screens/admin/AdminPanelScreen';
 import { AuthProvider, useAuth, getPendingReturnRole } from './src/context/AuthContext';
@@ -300,6 +303,19 @@ function RootNavigator() {
   if (isWebAdminPath) return <AdminPanelScreen />;
   if (isVerifySuccessPath) return <VerifySuccessPage onComplete={() => setVerifyDone(true)} />;
   if (isResetPasswordPath) return <ResetPasswordScreen />;
+
+  // Demo mode — access via ?demo=onboarding-student, ?demo=onboarding-teacher,
+  // or ?demo=onboarding-parent to preview the new "boxes" onboarding screens
+  // without a real account.
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'onboarding-student') {
+    return <OnboardingStudentBoxes />;
+  }
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'onboarding-teacher') {
+    return <OnboardingTeacherBoxes />;
+  }
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'onboarding-parent') {
+    return <OnboardingParentBoxes />;
+  }
 
   if (loading) {
     return (

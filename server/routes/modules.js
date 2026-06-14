@@ -506,7 +506,7 @@ router.post('/drawing-buddy', async (req, res) => {
     const { topic, unit, subject = 'Science', grade = 'Grade 3', curriculum = 'IB PYP', improveNote, usedTargets = [] } = req.body;
     if (!topic) return res.status(400).json({ error: 'topic is required' });
 
-    const context    = curriculum === 'NCERT' ? await getChapterContext(topic) : '';
+    const context    = (curriculum === 'NCERT' || curriculum === 'CBSE') ? await getChapterContext(topic) : '';
     const skill      = UNIT_SKILL[unit] || topic;
     const subjectCtx = `${grade} ${subject} (${curriculum}) topic: "${topic}" — which develops: ${skill}`;
 
