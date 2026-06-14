@@ -1,0 +1,116 @@
+{
+  "id": "pyp_g4_mathematics_successors_and_predecessors",
+  "title": "Successors and Predecessors",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "6-7 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": ["SUCCESSOR", "&", "PREDECESSOR"],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hi, I'm Aivorah. Today we'll learn about the successor and the predecessor of a number, the numbers that come right after and right before it.",
+      "accent": "#38bdf8",
+      "duration": 12
+    },
+    {
+      "id": "02_successor",
+      "scene_number": 2,
+      "type": "concept",
+      "words": ["47", "+ 1", "=", "48"],
+      "subtext": "What is a Successor?",
+      "voice": "The successor of a number is the number that comes right after it. To find it, just add 1. The successor of 47 is 47 plus 1, which is 48.",
+      "accent": "#38bdf8",
+      "duration": 14,
+      "visual": { "type": "numberline", "min": 45, "max": 49, "highlights": [47, 48], "answer": 48, "label": "47 → Successor is 48" }
+    },
+    {
+      "id": "03_predecessor",
+      "scene_number": 3,
+      "type": "concept",
+      "words": ["47", "- 1", "=", "46"],
+      "subtext": "What is a Predecessor?",
+      "voice": "The predecessor of a number is the number that comes right before it. To find it, subtract 1. The predecessor of 47 is 47 minus 1, which is 46.",
+      "accent": "#38bdf8",
+      "duration": 14,
+      "visual": { "type": "numberline", "min": 45, "max": 49, "highlights": [46, 47], "answer": 46, "label": "47 → Predecessor is 46" }
+    },
+    {
+      "id": "04_all_together",
+      "scene_number": 4,
+      "type": "concept",
+      "words": ["46", "47", "48"],
+      "subtext": "All Three Together",
+      "voice": "Put them in order: 46 is the predecessor, 47 is the number itself, and 48 is the successor. On a number line they always sit right next to each other.",
+      "accent": "#38bdf8",
+      "duration": 14,
+      "visual": { "type": "numberline", "min": 45, "max": 49, "highlights": [46, 47, 48], "answer": 47, "label": "Predecessor, Number, Successor" }
+    },
+    {
+      "id": "05_tricky_tens",
+      "scene_number": 5,
+      "type": "concept",
+      "words": ["9", "→", "10"],
+      "subtext": "Tricky Case: Crossing a Ten",
+      "voice": "Be careful near round numbers. The successor of 9 is 9 plus 1, which is 10. The predecessor of 10 is 10 minus 1, which is 9. The whole number changes shape!",
+      "accent": "#38bdf8",
+      "duration": 14,
+      "visual": { "type": "numberline", "min": 7, "max": 11, "highlights": [9, 10], "answer": 10, "label": "9 → Successor is 10" }
+    },
+    {
+      "id": "06_tricky_thousands",
+      "scene_number": 6,
+      "type": "concept",
+      "words": ["999", "→", "1000"],
+      "subtext": "Tricky Case: Crossing a Thousand",
+      "voice": "The same idea works for bigger numbers too. The successor of 999 is 999 plus 1, which is 1000. The predecessor of 1000 is 1000 minus 1, which is 999. All the digits change at once!",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "07_your_turn",
+      "scene_number": 7,
+      "type": "concept",
+      "words": ["2999", "→", "3000"],
+      "subtext": "Your Turn: 2999",
+      "voice": "Let's practise. What is the successor of 2999? Add 1 to get 3000. And what is the predecessor of 3000? Subtract 1 to get 2999.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "08_real_life",
+      "scene_number": 8,
+      "type": "concept",
+      "words": ["TOKEN", "199", "→", "200"],
+      "subtext": "Successors and Predecessors in Real Life",
+      "voice": "These ideas help everywhere, like token numbers, page numbers, and house numbers. If your token is 199, the next person's token is its successor, 200.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "09_quiz",
+      "scene_number": 9,
+      "type": "quiz",
+      "words": ["PREDECESSOR", "OF", "500"],
+      "subtext": "Test Your Knowledge",
+      "voice": "What is the predecessor of 500?",
+      "accent": "#38bdf8",
+      "duration": 10,
+      "answer": "499"
+    },
+    {
+      "id": "10_summary",
+      "scene_number": 10,
+      "type": "summary",
+      "words": ["GREAT", "JOB!", "YOU DID IT"],
+      "subtext": "Recap and Celebrate",
+      "voice": "Wonderful work! You now know how to find the successor by adding 1, and the predecessor by subtracting 1, even for tricky numbers like 999 and 1000. Keep practising!",
+      "accent": "#38bdf8",
+      "duration": 14
+    }
+  ]
+}

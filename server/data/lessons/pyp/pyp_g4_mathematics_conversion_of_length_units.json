@@ -1,0 +1,117 @@
+{
+  "id": "pyp_g4_mathematics_conversion_of_length_units",
+  "title": "Conversion of Length Units",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "8-9 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": ["KM", "M", "CM", "MM"],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hi, I'm Aivorah. Today we'll learn how to convert between units of length, kilometres, metres, centimetres, and millimetres.",
+      "accent": "#38bdf8",
+      "duration": 12
+    },
+    {
+      "id": "02_conversion_chart",
+      "scene_number": 2,
+      "type": "concept",
+      "words": ["THE", "CONVERSION", "CHART"],
+      "subtext": "The Length Conversion Chart",
+      "voice": "Here's the chart we'll use. Each unit is a multiple of the next. To go down the chart, multiply. To go up the chart, divide.",
+      "accent": "#38bdf8",
+      "duration": 14,
+      "visual": {
+        "type": "chart",
+        "items": ["1 kilometre (km)", "1000 metres (m)", "100 centimetres (cm)", "10 millimetres (mm)"],
+        "factors": ["× 1000", "× 100", "× 10"]
+      }
+    },
+    {
+      "id": "03_km_to_m",
+      "scene_number": 3,
+      "type": "concept",
+      "words": ["3 KM", "× 1000", "=", "3000 M"],
+      "subtext": "Step 1: Kilometres to Metres",
+      "voice": "1 kilometre equals 1000 metres. So to convert kilometres to metres, multiply by 1000. 3 kilometres equals 3 times 1000, which is 3000 metres.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "04_m_to_cm",
+      "scene_number": 4,
+      "type": "concept",
+      "words": ["5 M", "× 100", "=", "500 CM"],
+      "subtext": "Step 2: Metres to Centimetres",
+      "voice": "1 metre equals 100 centimetres. So to convert metres to centimetres, multiply by 100. 5 metres equals 5 times 100, which is 500 centimetres.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "05_cm_to_mm",
+      "scene_number": 5,
+      "type": "concept",
+      "words": ["7 CM", "× 10", "=", "70 MM"],
+      "subtext": "Step 3: Centimetres to Millimetres",
+      "voice": "1 centimetre equals 10 millimetres. So to convert centimetres to millimetres, multiply by 10. 7 centimetres equals 7 times 10, which is 70 millimetres.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "06_going_up",
+      "scene_number": 6,
+      "type": "concept",
+      "words": ["250 CM", "÷ 100", "=", "2.5 M"],
+      "subtext": "Step 4: Going Up the Chart — Divide",
+      "voice": "To go the other way, from a smaller unit to a bigger unit, we divide instead. 250 centimetres divided by 100 equals 2.5 metres.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "07_your_turn",
+      "scene_number": 7,
+      "type": "concept",
+      "words": ["2 KM", "=", "2000 M"],
+      "subtext": "Your Turn: Convert 2 km",
+      "voice": "Let's practise. How many metres are in 2 kilometres? Multiply by 1000. 2 kilometres equals 2000 metres.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "08_measurement_real_life",
+      "scene_number": 8,
+      "type": "concept",
+      "words": ["2L 200ML", "+", "1L 300ML", "=", "3L 500ML"],
+      "subtext": "Measurement in Real Life: Adding Volumes",
+      "voice": "Conversion helps with volume too. 1 litre equals 1000 millilitres. If a bottle has 2 litres 200 millilitres, and another has 1 litre 300 millilitres, add the litres together, 2 plus 1 is 3, and the millilitres together, 200 plus 300 is 500. The total is 3 litres 500 millilitres.",
+      "accent": "#38bdf8",
+      "duration": 18
+    },
+    {
+      "id": "09_quiz",
+      "scene_number": 9,
+      "type": "quiz",
+      "words": ["4 M", "=", "? CM"],
+      "subtext": "Test Your Knowledge",
+      "voice": "How many centimetres are in 4 metres?",
+      "accent": "#38bdf8",
+      "duration": 10,
+      "answer": "400"
+    },
+    {
+      "id": "10_summary",
+      "scene_number": 10,
+      "type": "summary",
+      "words": ["GREAT", "JOB!", "YOU DID IT"],
+      "subtext": "Recap and Celebrate",
+      "voice": "Excellent work! You learned the length conversion chart, multiplied to go to smaller units, divided to go to bigger units, and even added volumes in litres and millilitres. Keep practising!",
+      "accent": "#38bdf8",
+      "duration": 14
+    }
+  ]
+}
