@@ -1,0 +1,112 @@
+{
+  "id": "pyp_g4_mathematics_properties_of_lines",
+  "title": "Properties of Lines",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "8-9 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": ["LINES", "ALL", "AROUND US"],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hi, I'm Aivorah. Lines are everywhere around us, on roads, books, and buildings. Today we'll learn five special kinds of lines and how to spot them.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "02_horizontal",
+      "scene_number": 2,
+      "type": "concept",
+      "words": ["HORIZONTAL", "←", "→"],
+      "subtext": "Horizontal Lines",
+      "voice": "A horizontal line goes flat, from left to right, like the horizon where the sky meets the sea. The top and bottom edges of your book are horizontal lines.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "03_vertical",
+      "scene_number": 3,
+      "type": "concept",
+      "words": ["VERTICAL", "↑", "↓"],
+      "subtext": "Vertical Lines",
+      "voice": "A vertical line goes straight up and down, like a flagpole or the edge of a door. Vertical lines stand tall, perfectly upright.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "04_parallel",
+      "scene_number": 4,
+      "type": "concept",
+      "words": ["PARALLEL", "‖", "NEVER MEET"],
+      "subtext": "Parallel Lines",
+      "voice": "Parallel lines point in the same direction and stay the same distance apart forever, they never meet, no matter how far they go. Railway tracks are a perfect example of parallel lines.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "05_perpendicular",
+      "scene_number": 5,
+      "type": "concept",
+      "words": ["PERPENDICULAR", "⊥", "90°"],
+      "subtext": "Perpendicular Lines",
+      "voice": "Perpendicular lines meet at a perfect right angle, exactly 90 degrees, like the corner of this page or the letter L. Wherever two perpendicular lines cross, you'll see a square corner.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "06_intersecting",
+      "scene_number": 6,
+      "type": "concept",
+      "words": ["INTERSECTING", "✕", "CROSS"],
+      "subtext": "Intersecting Lines",
+      "voice": "Intersecting lines cross each other at one point. They can cross at any angle, not just a right angle. The letter X is made of two intersecting lines. Remember, perpendicular lines are intersecting lines too, but they cross at exactly 90 degrees.",
+      "accent": "#38bdf8",
+      "duration": 18
+    },
+    {
+      "id": "07_spot_around_you",
+      "scene_number": 7,
+      "type": "concept",
+      "words": ["DOOR", "=", "PERPENDICULAR"],
+      "subtext": "Spot Them Around You",
+      "voice": "Look around your room. The top and side edges of a door meet at a corner, that's perpendicular. The two long edges of a ruler never meet, that's parallel. The floor stretches flat, that's horizontal.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "08_your_turn",
+      "scene_number": 8,
+      "type": "concept",
+      "words": ["LADDER", "RUNGS", "=", "PARALLEL"],
+      "subtext": "Your Turn: Ladder Rungs",
+      "voice": "Think about a ladder. The two long side rails go up and down, so they're vertical. The rungs you step on are flat and equally spaced, so they're parallel to each other, and perpendicular to the side rails.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "09_quiz",
+      "scene_number": 9,
+      "type": "quiz",
+      "words": ["TWO LINES", "MEET AT", "90°"],
+      "subtext": "Test Your Knowledge",
+      "voice": "Two lines cross and form a perfect right angle of 90 degrees. What type of lines are they?",
+      "accent": "#38bdf8",
+      "duration": 12,
+      "answer": "perpendicular"
+    },
+    {
+      "id": "10_summary",
+      "scene_number": 10,
+      "type": "summary",
+      "words": ["GREAT", "JOB!", "YOU DID IT"],
+      "subtext": "Recap and Celebrate",
+      "voice": "Fantastic work! You can now spot horizontal, vertical, parallel, perpendicular, and intersecting lines all around you. Keep looking for them wherever you go!",
+      "accent": "#38bdf8",
+      "duration": 14
+    }
+  ]
+}

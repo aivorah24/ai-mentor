@@ -1,0 +1,124 @@
+{
+  "id": "pyp_g4_mathematics_estimation_and_rounding_off",
+  "title": "Estimation and Rounding Off",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "8-9 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": ["ESTIMATION", "&", "ROUNDING"],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hi, I'm Aivorah. Today we'll learn estimation and rounding off, a quick way to find an answer that's close enough, without doing all the exact maths.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "02_what_is_estimation",
+      "scene_number": 2,
+      "type": "concept",
+      "words": ["ESTIMATE", "=", "CLOSE GUESS"],
+      "subtext": "What is Estimation?",
+      "voice": "An estimate is a sensible guess that is close to the real answer. We use rounding to make numbers simpler before we estimate.",
+      "accent": "#38bdf8",
+      "duration": 12
+    },
+    {
+      "id": "03_rounding_rule",
+      "scene_number": 3,
+      "type": "concept",
+      "words": ["0-4", "ROUND DOWN", "5-9", "ROUND UP"],
+      "subtext": "The Rounding Rule",
+      "voice": "Here's the rule. Look at the digit you're rounding. If it's 0, 1, 2, 3 or 4, round down. If it's 5, 6, 7, 8 or 9, round up.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "04_round_47_to_10",
+      "scene_number": 4,
+      "type": "concept",
+      "words": ["47", "→", "50"],
+      "subtext": "Step 1: Round 47 to the Nearest 10",
+      "voice": "Let's round 47 to the nearest 10. The ones digit is 7, and 7 is 5 or more, so we round up. 47 rounds to 50.",
+      "accent": "#38bdf8",
+      "duration": 14,
+      "visual": { "type": "numberline", "min": 40, "max": 50, "highlights": [47, 50], "answer": 50, "label": "47 rounds up to 50" }
+    },
+    {
+      "id": "05_round_43_to_10",
+      "scene_number": 5,
+      "type": "concept",
+      "words": ["43", "→", "40"],
+      "subtext": "Step 2: Round 43 to the Nearest 10",
+      "voice": "Now let's round 43 to the nearest 10. The ones digit is 3, and 3 is less than 5, so we round down. 43 rounds to 40.",
+      "accent": "#38bdf8",
+      "duration": 14,
+      "visual": { "type": "numberline", "min": 40, "max": 50, "highlights": [43, 40], "answer": 40, "label": "43 rounds down to 40" }
+    },
+    {
+      "id": "06_round_to_100",
+      "scene_number": 6,
+      "type": "concept",
+      "words": ["350", "→", "400"],
+      "subtext": "Rounding to the Nearest 100",
+      "voice": "We can round to the nearest 100 too. Look at the tens digit. 350 has a tens digit of 5, so we round up to 400. But 240 has a tens digit of 4, so it rounds down to 200.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "07_round_to_1000",
+      "scene_number": 7,
+      "type": "concept",
+      "words": ["4500", "→", "5000"],
+      "subtext": "Rounding to the Nearest 1000",
+      "voice": "For the nearest 1000, look at the hundreds digit. 4500 has a hundreds digit of 5, so it rounds up to 5000. And 3200 has a hundreds digit of 2, so it rounds down to 3000.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "08_your_turn",
+      "scene_number": 8,
+      "type": "concept",
+      "words": ["2780", "→", "2800"],
+      "subtext": "Your Turn: Round 2780 to the Nearest 100",
+      "voice": "Let's practise. Round 2780 to the nearest 100. The tens digit is 8, which is 5 or more, so we round up. 2780 rounds to 2800.",
+      "accent": "#38bdf8",
+      "duration": 14
+    },
+    {
+      "id": "09_real_life",
+      "scene_number": 9,
+      "type": "concept",
+      "words": ["BILL", "≈", "RS 500"],
+      "subtext": "Estimation in Real Life",
+      "voice": "Estimation helps in everyday life. If you buy items costing 198, 95, and 210 rupees, you can round each to the nearest 100, 200 plus 100 plus 200, and estimate the total is about 500 rupees, before you even add it up exactly.",
+      "accent": "#38bdf8",
+      "duration": 16
+    },
+    {
+      "id": "10_quiz",
+      "scene_number": 10,
+      "type": "quiz",
+      "words": ["ROUND", "368", "TO NEAREST 10"],
+      "subtext": "Test Your Knowledge",
+      "voice": "Round 368 to the nearest 10. What do you get?",
+      "accent": "#38bdf8",
+      "duration": 10,
+      "answer": "370"
+    },
+    {
+      "id": "11_summary",
+      "scene_number": 11,
+      "type": "summary",
+      "words": ["GREAT", "JOB!", "YOU DID IT"],
+      "subtext": "Recap and Celebrate",
+      "voice": "Excellent work! You learned the rounding rule, rounded numbers to the nearest 10, 100, and 1000, and used estimation to check answers quickly in real life. Keep practising!",
+      "accent": "#38bdf8",
+      "duration": 14
+    }
+  ]
+}

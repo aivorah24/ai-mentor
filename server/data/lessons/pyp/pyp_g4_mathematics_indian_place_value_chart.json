@@ -1,0 +1,110 @@
+{
+  "id": "pyp_g4_mathematics_indian_place_value_chart",
+  "title": "Indian Place Value Chart",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "curriculum": "IB PYP",
+  "accent": "#38bdf8",
+  "duration_estimate": "7-8 minutes",
+  "scenes": [
+    {
+      "id": "01_intro",
+      "scene_number": 1,
+      "type": "intro",
+      "words": [
+        "THE INDIAN",
+        "PLACE VALUE",
+        "CHART!"
+      ],
+      "subtext": "Grade 4 · Mathematics",
+      "voice": "Hey kids! Today we're building a place value chart the Indian way. It helps us read and write really big numbers, all the way up to crores. Ready to explore?",
+      "accent": "#38bdf8",
+      "duration": 15
+    },
+    {
+      "id": "02_concept_1",
+      "scene_number": 2,
+      "type": "concept",
+      "words": [
+        "ONES",
+        "TENS",
+        "HUNDREDS"
+      ],
+      "subtext": "Starting Small: Ones, Tens, Hundreds",
+      "voice": "Every number starts with ones, tens, and hundreds. In the number 4 5 6, the 6 is in the ones place, the 5 is in the tens place, and the 4 is in the hundreds place. Each spot has its own value!",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "03_concept_2",
+      "scene_number": 3,
+      "type": "concept",
+      "words": [
+        "THOUSANDS",
+        "TEN-THOUSANDS",
+        "GROUP UP!"
+      ],
+      "subtext": "Thousands and Ten-Thousands",
+      "voice": "After hundreds comes thousands, then ten-thousands. In the Indian system we group numbers in pairs after the first three digits. So 12,345 is read as 12 thousand, 3 hundred and 45.",
+      "accent": "#38bdf8",
+      "duration": 30
+    },
+    {
+      "id": "04_concept_3",
+      "scene_number": 4,
+      "type": "concept",
+      "words": [
+        "LAKHS",
+        "AND",
+        "TEN-LAKHS"
+      ],
+      "subtext": "Lakhs and Ten-Lakhs",
+      "voice": "Next come lakhs! One lakh is 1 followed by 5 zeros, written as 1,00,000. Ten lakhs is 10,00,000. We write a comma after every two digits once we pass the thousands place.",
+      "accent": "#38bdf8",
+      "duration": 35
+    },
+    {
+      "id": "05_concept_4",
+      "scene_number": 5,
+      "type": "concept",
+      "words": [
+        "CRORES",
+        "VS",
+        "MILLIONS"
+      ],
+      "subtext": "Crores and the International System",
+      "voice": "One crore is 1 followed by 7 zeros, written as 1,00,00,000. In the international system, the same number is called 10 million. Lakhs and crores are the Indian names, while thousands and millions are used internationally — same numbers, different names!",
+      "accent": "#38bdf8",
+      "duration": 40
+    },
+    {
+      "id": "06_quiz",
+      "scene_number": 6,
+      "type": "quiz",
+      "words": [
+        "HOW MANY",
+        "ZEROS IN",
+        "ONE LAKH?"
+      ],
+      "subtext": "Test Your Knowledge",
+      "voice": "How many zeros are there in one lakh — 1,00,000?",
+      "accent": "#38bdf8",
+      "duration": 15,
+      "answer": "5"
+    },
+    {
+      "id": "07_summary",
+      "scene_number": 7,
+      "type": "summary",
+      "words": [
+        "YOU BUILT",
+        "THE WHOLE",
+        "CHART!"
+      ],
+      "subtext": "Recap and Celebrate",
+      "voice": "Amazing work! You now know the Indian place value chart from ones all the way to crores, and how it compares to thousands and millions. Keep practicing reading big numbers — you're becoming a place value expert!",
+      "accent": "#38bdf8",
+      "duration": 20
+    }
+  ]
+}
