@@ -19,13 +19,16 @@ import type { AppColors } from '../../theme';
 import { AVATAR_STYLES } from '../../constants/avatarStyles';
 import SERVER_URL from '../../config/serverUrl';
 import firebaseApp from '../../config/firebase';
+import OnboardingStudentBoxes from './OnboardingStudentBoxes';
+import OnboardingTeacherBoxes from './OnboardingTeacherBoxes';
+import OnboardingParentBoxes from './OnboardingParentBoxes';
 
 // ── Custom Date Picker ─────────────────────────────────────
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
 // mode: 'day' | 'month' | 'year'
-function DatePickerInput({ value, onChange, colors }: {
+export function DatePickerInput({ value, onChange, colors }: {
   value: string;
   onChange: (v: string) => void;
   colors: any;
@@ -206,9 +209,9 @@ function DatePickerInput({ value, onChange, colors }: {
 }
 
 // ── Constants ──────────────────────────────────────────────
-const CURRICULA = ['IB PYP', 'IB MYP', 'IB DP', 'NCERT', 'CBSE', 'ICSE', 'Cambridge', 'State Board'];
+export const CURRICULA = ['IB PYP', 'IB MYP', 'IB DP', 'CBSE', 'ICSE', 'Cambridge'];
 
-function getGradesForCurriculum(curr: string): string[] {
+export function getGradesForCurriculum(curr: string): string[] {
   if (curr === 'IB PYP') return ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5'];
   if (curr === 'IB MYP') return ['Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
   if (curr === 'IB DP')  return ['Grade 11','Grade 12'];
@@ -216,17 +219,17 @@ function getGradesForCurriculum(curr: string): string[] {
   return ['Nursery','LKG','UKG','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
 }
 
-const GRADES_TEACHER = ['Nursery','LKG','UKG','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
-const SUBJECTS = ['Mathematics','Science','English','Social Studies','Hindi','ICT','Art','Music','Physical Education'];
-const GENDERS = ['Male', 'Female', 'Prefer not to say'];
-const LEARNING_STYLES: { id: string; label: string; icon: string; desc: string }[] = [
+export const GRADES_TEACHER = ['Nursery','LKG','UKG','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
+export const SUBJECTS = ['Mathematics','Science','English','Social Studies','Hindi','ICT','Art','Music','Physical Education'];
+export const GENDERS = ['Male', 'Female', 'Prefer not to say'];
+export const LEARNING_STYLES: { id: string; label: string; icon: string; desc: string }[] = [
   { id: 'visual', label: 'Visual', icon: 'eye', desc: 'I learn best with pictures and diagrams' },
   { id: 'reading', label: 'Reading', icon: 'book', desc: 'I learn best by reading and writing' },
   { id: 'hands-on', label: 'Hands-on', icon: 'tool', desc: 'I learn best by doing and experimenting' },
   { id: 'auditory', label: 'Auditory', icon: 'headphones', desc: 'I learn best by listening' },
 ];
 
-const TEAL = '#5F8A86';
+export const TEAL = '#5F8A86';
 const FOREST = '#5A8A70';
 
 function generateStudentId(name: string) {
@@ -283,7 +286,20 @@ export default function OnboardingScreen() {
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
-  const role = user?.role || 'student';
+  const role: string = user?.role || 'student';
+
+  // Students and teachers get the "boxes" layout — all sections visible on
+  // one page, active box expands, completed boxes collapse to summary chips.
+  if (role === 'student') {
+    return <OnboardingStudentBoxes />;
+  }
+  if (role === 'teacher') {
+    return <OnboardingTeacherBoxes />;
+  }
+  if (role === 'parent') {
+    return <OnboardingParentBoxes />;
+  }
+
   const steps = getSteps(role);
 
   // Read return role from module-level variable (completely outside React state,
