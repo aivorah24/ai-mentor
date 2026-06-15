@@ -53,19 +53,45 @@ export default function VerifyEmailScreen() {
   // server marks them verified and this screen auto-advances to Onboarding.
   useEffect(() => {
     if (!user?.email) return;
-    const poll = setInterval(async () => {
+
+    const checkVerified = async () => {
       try {
-        const res = await fetch(`${SERVER_URL}/user/check-verified?email=${encodeURIComponent(user.email)}`);
+        const res = await fetch(`${SERVER_URL}/user/check-verified?email=${encodeURIComponent(user.email!)}`);
         if (res.ok) {
           const data = await res.json();
           if (data.verified) {
-            clearInterval(poll);
             updateUser({ emailVerified: true });
           }
         }
       } catch {}
-    }, 2000);
-    return () => clearInterval(poll);
+    };
+
+    const poll = setInterval(checkVerified, 2000);
+
+    // Safari (macOS/iOS) throttles/suspends setInterval in background tabs —
+    // when the user verifies in another tab and switches back here, re-check
+    // immediately instead of waiting on a possibly-stalled interval.
+    const onFocus = () => checkVerified();
+    const onVisibility = () => { if (document.visibilityState === 'visible') checkVerified(); };
+    // The /verify-success tab (opened from the email link) writes to
+    // localStorage on success — the 'storage' event fires here even while
+    // this tab is in the background, so we react the instant it's verified
+    // instead of waiting for the user to switch back.
+    const onStorage = (e: StorageEvent) => { if (e.key === 'aivorah_email_verified_ping') checkVerified(); };
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.addEventListener('focus', onFocus);
+      document.addEventListener('visibilitychange', onVisibility);
+      window.addEventListener('storage', onStorage);
+    }
+
+    return () => {
+      clearInterval(poll);
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.removeEventListener('focus', onFocus);
+        document.removeEventListener('visibilitychange', onVisibility);
+        window.removeEventListener('storage', onStorage);
+      }
+    };
   }, [user?.email]);
 
   // Pulsing animation
