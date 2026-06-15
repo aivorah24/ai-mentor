@@ -349,7 +349,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           (supaProfile.onboardingComplete !== false && savedLocal.onboardingComplete === true)
         );
         const activeRole = isAddingNewRole ? _pendingRole : resolvedRole;
-        const resolvedUser = { ...baseUser, ...savedLocal, ...supaProfile, email, onboardingComplete, role: activeRole };
+        // emailVerified + onboardingComplete are applied LAST so the freshly-computed
+        // values always win over a stale localStorage profile. Without this, a leftover
+        // emailVerified:true from a previous completed session of the SAME email would
+        // override the fresh emailVerified:false and skip the "Check your inbox" screen
+        // on re-signup (only a manual browser-cache clear would fix it).
+        const resolvedUser = { ...baseUser, ...savedLocal, ...supaProfile, email, onboardingComplete, emailVerified, role: activeRole };
         setUser(resolvedUser);
 
         // Persist locally
