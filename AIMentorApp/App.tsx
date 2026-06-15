@@ -85,6 +85,19 @@ function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
     }
   }
 
+  function handleContinue() {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      // The original signup tab is already polling and will advance to onboarding
+      // on its own within ~2s. A user-gesture-triggered window.close() has a much
+      // better chance of working than one fired from a timer; if the browser still
+      // blocks it, fall back to navigating this tab into the app instead.
+      window.close();
+      setTimeout(goToApp, 400);
+    } else {
+      goToApp();
+    }
+  }
+
   const isError = status === 'error';
 
   return (
@@ -101,12 +114,12 @@ function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
             ? 'Please wait...'
             : isError
               ? 'This link may have already been used or expired. Go back to the app and click "Resend Email" to get a new one.'
-              : 'Your email has been verified successfully. Tap Continue to set up your account.'}
+              : 'Your email has been verified. Tap Continue to proceed.'}
         </Text>
         {status === 'success' && (
           <TouchableOpacity
             style={[styles.verifySuccessButton, { backgroundColor: c.primary }]}
-            onPress={goToApp}
+            onPress={handleContinue}
             activeOpacity={0.85}
           >
             <Text style={styles.verifySuccessButtonText}>Continue</Text>

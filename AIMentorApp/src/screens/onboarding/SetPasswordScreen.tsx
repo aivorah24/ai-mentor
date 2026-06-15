@@ -22,7 +22,7 @@ import SERVER_URL from '../../config/serverUrl';
 const TEAL = '#5F8A86';
 
 export default function SetPasswordScreen() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
@@ -230,6 +230,11 @@ export default function SetPasswordScreen() {
           <Text style={styles.footer}>
             Your password is encrypted and never shared with anyone, including your parents.
           </Text>
+
+          {/* Escape hatch — wrong account / not you → back to Landing */}
+          <TouchableOpacity onPress={logout} style={styles.signOutLink} activeOpacity={0.7}>
+            <Text style={styles.signOutText}>Not you? Sign out</Text>
+          </TouchableOpacity>
         </ScrollView>
       </LinearGradient>
     </KeyboardAvoidingView>
@@ -276,4 +281,6 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   },
   btnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
   footer: { fontSize: 11, color: c.textDim, textAlign: 'center', marginTop: 20, maxWidth: 340 },
+  signOutLink: { marginTop: 16, paddingVertical: spacing.sm },
+  signOutText: { fontSize: 13, color: c.textMuted, textDecorationLine: 'underline' },
 });
