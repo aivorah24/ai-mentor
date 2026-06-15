@@ -23,6 +23,12 @@ import {
 
 const TEACHER_ROLES = ['Teacher', 'Coordinator', 'Principal'];
 const EXPERIENCE_RANGES = ['0 - 2 years', '3 - 5 years', '5 - 10 years', '10+ years'];
+const GRADE_GROUPS = [
+  { label: 'Early Years', grades: ['Nursery', 'LKG', 'UKG'] },
+  { label: 'Primary', grades: ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'] },
+  { label: 'Middle School', grades: ['Grade 6', 'Grade 7', 'Grade 8'] },
+  { label: 'Senior School', grades: ['Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'] },
+];
 
 export default function OnboardingTeacherBoxes() {
   const { user, updateUser } = useAuth();
@@ -62,6 +68,13 @@ export default function OnboardingTeacherBoxes() {
 
   function toggleGrade(g: string) {
     setTeachGrades(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]);
+  }
+
+  function toggleGradeGroup(groupGrades: string[]) {
+    const allSelected = groupGrades.every(g => teachGrades.includes(g));
+    setTeachGrades(prev => allSelected
+      ? prev.filter(x => !groupGrades.includes(x))
+      : [...prev, ...groupGrades.filter(g => !prev.includes(g))]);
   }
 
   function toggleSubject(s: string) {
@@ -160,7 +173,7 @@ export default function OnboardingTeacherBoxes() {
         </View>
 
         {/* ── Row 1: Personal Info / School Details / Teaching Info ── */}
-        <View style={styles.rowWrap}>
+        <View style={[styles.rowWrap, styles.rowWrapStretch]}>
           {/* Personal Info */}
           <View style={[styles.card, styles.card3]}>
             <CardHeader icon="user" title="Personal Info" subtitle="Tell us about yourself." done={personalDone} styles={styles} />
@@ -272,35 +285,57 @@ export default function OnboardingTeacherBoxes() {
             <CardHeader icon="book-open" title="Teaching Info" subtitle="What do you teach?" done={teachingDone} styles={styles} />
             <View style={styles.fieldGroup}>
               <Text style={styles.lbl}>Curriculum</Text>
-              <View style={styles.chipRow}>
-                {CURRICULA.map(c => (
-                  <TouchableOpacity key={c} style={[styles.chip, curriculum === c && styles.chipActive]}
-                    onPress={() => { setCurriculum(c); setTeachGrades([]); }} activeOpacity={0.8}>
-                    <Text style={[styles.chipTxt, curriculum === c && styles.chipTxtActive]}>{c}</Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.fieldBox}>
+                <View style={styles.chipRow}>
+                  {CURRICULA.map(c => (
+                    <TouchableOpacity key={c} style={[styles.chip, curriculum === c && styles.chipActive]}
+                      onPress={() => { setCurriculum(c); setTeachGrades([]); }} activeOpacity={0.8}>
+                      <Text style={[styles.chipTxt, curriculum === c && styles.chipTxtActive]}>{c}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             </View>
             <View style={styles.fieldGroup}>
               <Text style={styles.lbl}>Grades You Teach</Text>
-              <View style={styles.chipRow}>
-                {getGradesForCurriculum(curriculum).map(g => (
-                  <TouchableOpacity key={g} style={[styles.chip, teachGrades.includes(g) && styles.chipActive]}
-                    onPress={() => toggleGrade(g)} activeOpacity={0.8}>
-                    <Text style={[styles.chipTxt, teachGrades.includes(g) && styles.chipTxtActive]}>{g}</Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.gradeGroupsWrap}>
+                {GRADE_GROUPS.map(group => {
+                  const available = group.grades.filter(g => getGradesForCurriculum(curriculum).includes(g));
+                  if (available.length === 0) return null;
+                  const allSelected = available.every(g => teachGrades.includes(g));
+                  return (
+                    <View key={group.label} style={styles.gradeGroup}>
+                      <View style={styles.gradeGroupHead}>
+                        <View style={styles.gradeGroupDot} />
+                        <Text style={styles.gradeGroupLbl}>{group.label}</Text>
+                        <TouchableOpacity onPress={() => toggleGradeGroup(available)} activeOpacity={0.7}>
+                          <Text style={styles.gradeGroupSelectAll}>{allSelected ? 'Clear' : 'Select all'}</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.chipRow}>
+                        {available.map(g => (
+                          <TouchableOpacity key={g} style={[styles.chip, teachGrades.includes(g) && styles.chipActive]}
+                            onPress={() => toggleGrade(g)} activeOpacity={0.8}>
+                            <Text style={[styles.chipTxt, teachGrades.includes(g) && styles.chipTxtActive]}>{g}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
             </View>
             <View style={styles.fieldGroup}>
               <Text style={styles.lbl}>Subjects</Text>
-              <View style={styles.chipRow}>
-                {SUBJECTS.map(s => (
-                  <TouchableOpacity key={s} style={[styles.chip, teachSubjects.includes(s) && styles.chipActive]}
-                    onPress={() => toggleSubject(s)} activeOpacity={0.8}>
-                    <Text style={[styles.chipTxt, teachSubjects.includes(s) && styles.chipTxtActive]}>{s}</Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.fieldBox}>
+                <View style={styles.chipRow}>
+                  {SUBJECTS.map(s => (
+                    <TouchableOpacity key={s} style={[styles.chip, teachSubjects.includes(s) && styles.chipActive]}
+                      onPress={() => toggleSubject(s)} activeOpacity={0.8}>
+                      <Text style={[styles.chipTxt, teachSubjects.includes(s) && styles.chipTxtActive]}>{s}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             </View>
           </View>
@@ -376,6 +411,7 @@ function useStyles(colors: any) {
     greetSub: { fontSize: 14, color: colors.textMuted, marginTop: 4 },
 
     rowWrap: { flexDirection: 'row', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 16 },
+    rowWrapStretch: { alignItems: 'stretch' },
     card: {
       backgroundColor: colors.cardDark, borderWidth: 1, borderColor: colors.borderColor,
       borderRadius: 16, padding: 20, gap: 16,
@@ -420,6 +456,21 @@ function useStyles(colors: any) {
     dropdownItem: { paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.borderColor },
     dropdownTxt: { fontSize: 13, color: colors.textMain },
 
+    fieldBox: {
+      backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor,
+      borderRadius: 12, padding: 12,
+    },
+    gradeGroupsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+    gradeGroup: {
+      flexBasis: '48%', flexGrow: 1, minWidth: 260,
+      backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor,
+      borderRadius: 12, padding: 12, gap: 10,
+    },
+    gradeGroupHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    gradeGroupDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: TEAL },
+    gradeGroupLbl: { flex: 1, fontSize: 12, fontWeight: '800', color: colors.textMain, textTransform: 'uppercase', letterSpacing: 0.5 },
+    gradeGroupSelectAll: { fontSize: 11, fontWeight: '700', color: TEAL },
+
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 18, borderWidth: 1, borderColor: colors.borderColor, backgroundColor: colors.bgDark },
     chipActive: { backgroundColor: TEAL + '20', borderColor: TEAL },
@@ -428,7 +479,7 @@ function useStyles(colors: any) {
 
     avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     avatarTile: {
-      flexBasis: '12%', flexGrow: 1, minWidth: 76, alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: 12,
+      flexBasis: '11%', flexGrow: 1, minWidth: 90, alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: 12,
       borderWidth: 1, borderColor: colors.borderColor, backgroundColor: colors.bgDark, position: 'relative',
     },
     avatarTileActive: { borderColor: TEAL, backgroundColor: TEAL + '10' },
