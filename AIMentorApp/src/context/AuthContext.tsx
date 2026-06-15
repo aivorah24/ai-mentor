@@ -91,8 +91,8 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 // Fetch full profile from Supabase (includes curriculum, grade, location, onboardingComplete)
-async function fetchSupabaseProfile(email: string): Promise<Partial<User>> {
-  const combined: Partial<User> = {};
+async function fetchSupabaseProfile(email: string): Promise<Partial<User> & { _syncOk?: boolean; _accountExists?: boolean }> {
+  const combined: Partial<User> & { _syncOk?: boolean; _accountExists?: boolean } = {};
   try {
     const res = await fetch(`${SERVER_URL}/user/sync`, {
       method: 'POST',
@@ -101,6 +101,13 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User>> {
     });
     if (res.ok) {
       const data = await res.json();
+      // _syncOk: the DB lookup itself succeeded (distinguishes "account missing"
+      // from "network error" — only the former should trigger a forced sign-out).
+      // _accountExists: a real identity row was returned. When no row exists,
+      // /user/sync replies with just { email, onboardingComplete:false } (no id,
+      // no role) — meaning the account was never created or has been deleted.
+      combined._syncOk = true;
+      combined._accountExists = !!(data.id || data.role);
       Object.assign(combined, {
         grade:              data.grade      || undefined,
         curriculum:         data.curriculum || undefined,
@@ -142,6 +149,17 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User>> {
 let _pendingRole: UserRole = 'student';
 let _pendingRoleSet = false; // true only when role was explicitly chosen this session (not the default)
 let _isAddingRole = false; // true when an existing user is adding a second role (teacher↔parent only)
+// True while a user-initiated sign-in / sign-up is running (and briefly after).
+// The "account deleted server-side" auto-sign-out must NOT fire during this window,
+// because a brand-new signup can momentarily look account-less to a concurrent
+// onAuthStateChanged before its /user/sync row finishes writing.
+let _authActionInProgress = false;
+function markAuthAction() {
+  _authActionInProgress = true;
+  // Keep the guard active a few seconds past the function returning so the
+  // post-action onAuthStateChanged cycle (incl. its network fetch) completes.
+  setTimeout(() => { _authActionInProgress = false; }, 3000);
+}
 
 // AsyncStorage key — persists across multiple onAuthStateChanged fires (module flag gets cleared too early)
 const PENDING_VERIFY_KEY = 'aivorah_pending_verify_email';
@@ -190,7 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const email = firebaseUser.email || '';
 
         // Load saved local profile + fetch Supabase profile (needed to detect parent-activated accounts)
-        let supaProfile: Partial<User> = {};
+        let supaProfile: Partial<User> & { _syncOk?: boolean; _accountExists?: boolean } = {};
         let savedRaw: string | null = null;
         try {
           [supaProfile, savedRaw] = await Promise.all([
@@ -228,21 +246,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const allowParentActivated = supaProfile.accountStatus === 'active';
         const storedRole = (firebaseUser.displayName?.split('|')[1] as UserRole) || (supaProfile.role as UserRole) || _pendingRole || 'student';
 
+        // ── Deleted / non-existent account guard ──────────────────────────────
+        // Firebase keeps a cached client session for up to ~1h after the account
+        // is removed server-side. Without this, revisiting in the same browser
+        // restores the stale localStorage profile and the user gets stuck on an
+        // intermediate screen (Set Password / Onboarding) and never reaches the
+        // Landing page. If the DB lookup SUCCEEDED but found no account — and this
+        // isn't an active sign-in/up (which can race a not-yet-written row) nor an
+        // auto-generated @aivorah.student account — sign out cleanly to Landing.
+        if (
+          supaProfile._syncOk === true &&
+          supaProfile._accountExists === false &&
+          !allowAutoGen &&
+          !_authActionInProgress
+        ) {
+          console.log('[Auth] Account no longer exists in DB — signing out to Landing:', email);
+          await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
+          await AsyncStorage.removeItem(PENDING_VERIFY_KEY).catch(() => {});
+          await signOut(auth).catch(() => {});
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
         // Block first-time Google SSO users until they click the Aivorah verification link.
         // Google users always have firebaseUser.emailVerified = true, so we can't rely on that.
         // Instead: if the user signed in via Google AND onboarding isn't complete (new user),
         // require accountStatus === 'active' (set by server when they click the email link).
         // AsyncStorage flag is kept as a secondary signal but we no longer race-depend on it.
         const isGoogleProvider = firebaseUser.providerData.some(p => p.providerId === 'google.com');
+        const isPasswordProvider = firebaseUser.providerData.some(p => p.providerId === 'password');
         const isExistingUser = supaProfile.onboardingComplete === true;
         const pendingVerifyEmail = await AsyncStorage.getItem(PENDING_VERIFY_KEY).catch(() => null);
         let requiresVerification: boolean;
-        if (isGoogleProvider && !isExistingUser && !allowAutoGen) {
-          // New Google SSO user (teacher/parent/student) — must verify via Aivorah link
+        if ((isGoogleProvider || isPasswordProvider) && !isExistingUser && !allowAutoGen) {
+          // New signup (Google SSO or email/password) — must verify via Aivorah link.
+          // Require accountStatus === 'active' explicitly: right after signup, onAuthStateChanged
+          // can fire before /user/send-verification finishes creating the user_preferences row,
+          // so accountStatus is briefly undefined — that must NOT be treated as verified.
           requiresVerification = supaProfile.accountStatus !== 'active';
         } else {
-          // Email/password users or returning verified users — use accountStatus or AsyncStorage flag
-          requiresVerification = (pendingVerifyEmail === email) || supaProfile.accountStatus === 'pending_verification';
+          // Email/password users or returning verified users — use accountStatus or AsyncStorage flag.
+          // An already-active account (verified via the Aivorah link) always wins over a
+          // stale local "pending verification" flag from signup time.
+          requiresVerification = !allowParentActivated &&
+            ((pendingVerifyEmail === email) || supaProfile.accountStatus === 'pending_verification');
         }
         // Clear the AsyncStorage flag once the user is actually verified (accountStatus = active)
         if (pendingVerifyEmail === email && allowParentActivated) {
@@ -405,6 +453,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signInWithEmail(email: string, password: string, role: UserRole) {
     _pendingRole = role; _pendingRoleSet = true;
+    markAuthAction();
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
 
@@ -525,6 +574,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signUpWithEmail(name: string, email: string, password: string, role: UserRole, curriculum?: string) {
     _pendingRole = role; _pendingRoleSet = true;
+    markAuthAction();
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: `${name}|${role}` });
@@ -602,6 +652,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signInWithGoogle(role: UserRole) {
     _pendingRole = role; _pendingRoleSet = true;
+    markAuthAction();
     if (Platform.OS === 'web') {
       try {
         const provider = new GoogleAuthProvider();

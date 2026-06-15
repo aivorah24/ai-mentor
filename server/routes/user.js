@@ -877,7 +877,19 @@ router.get('/verify/:token', async (req, res) => {
 
     console.log('[verify]', email, '| token match:', pref?.data?.verifyToken === token, '| fetchErr:', fetchErr?.message);
 
-    if (fetchErr || !pref || pref.data?.verifyToken !== token) {
+    if (fetchErr || !pref) {
+      return res.redirect(errorUrl);
+    }
+
+    // Token already consumed (cleared after first verification) — this happens
+    // when an email client (e.g. Apple Mail Privacy Protection, Outlook Safe
+    // Links) pre-fetches the link before the user taps it, which verifies the
+    // account on the first hit. If the account is already active, treat any
+    // later hit on the same link as a success too, not an error.
+    if (pref.data?.verifyToken !== token) {
+      if (pref.data?.accountStatus === 'active') {
+        return res.redirect(successUrl);
+      }
       return res.redirect(errorUrl);
     }
 
