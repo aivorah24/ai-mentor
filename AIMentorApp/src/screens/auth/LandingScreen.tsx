@@ -242,8 +242,8 @@ function LoginModal({ visible, onClose, onSwitchSignup, onSwitchForgot, signInEm
 
   async function submit() {
     setError('');
-    const emailTrim = email.trim();
-    const passTrim = pass.trim();
+    const emailTrim = email.replace(/\s+/g, '');
+    const passTrim = pass.replace(/\s+/g, '');
     if (!emailTrim || !passTrim) { setError('Please fill in all fields.'); return; }
     setLoading(true);
     try { await signInEmail(emailTrim, passTrim, role); onClose(); }
