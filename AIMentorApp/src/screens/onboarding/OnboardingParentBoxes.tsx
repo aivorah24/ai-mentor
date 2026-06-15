@@ -39,12 +39,13 @@ interface ChildEntry {
   grade: string;
   curriculum: string;
   school: string;
+  schoolCity: string;
   email: string;
   linkEmail: string;
   password: string;
 }
 function emptyChild(): ChildEntry {
-  return { name: '', age: '', grade: '', curriculum: '', school: '', email: '', linkEmail: '', password: '' };
+  return { name: '', age: '', grade: '', curriculum: '', school: '', schoolCity: '', email: '', linkEmail: '', password: '' };
 }
 
 function generateStudentId(name: string) {
@@ -78,6 +79,7 @@ export default function OnboardingParentBoxes() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [locating, setLocating] = useState(false);
+  const [schoolLocating, setSchoolLocating] = useState(false);
   const cityBBoxCache = useRef<Map<string, BBox | null>>(new Map());
 
   // Form state
@@ -163,6 +165,7 @@ export default function OnboardingParentBoxes() {
             name: c.name.trim(),
             grade: c.grade,
             school: c.school,
+            schoolCity: c.schoolCity,
             curriculum: c.curriculum,
             email: c.email.trim().toLowerCase() || undefined,
           })),
@@ -271,6 +274,7 @@ export default function OnboardingParentBoxes() {
             grade: child.grade,
             curriculum: child.curriculum,
             school: child.school,
+            schoolCity: child.schoolCity,
             verificationRequired: emailProvided,
             age: child.age ? parseInt(child.age, 10) : undefined,
             initialPassword: finalPassword,
@@ -486,6 +490,30 @@ export default function OnboardingParentBoxes() {
               <TextInput style={styles.input} value={activeChild.age} onChangeText={v => updateChild('age', v)}
                 placeholder="e.g. 9" placeholderTextColor={colors.textDim} keyboardType="numeric" maxLength={2} />
             </View>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.lbl}>{children.length > 1 ? `${activeChild.name || 'Child'}'s School` : "Child's School"}</Text>
+              <TextInput style={styles.input} value={activeChild.school} onChangeText={v => updateChild('school', v)}
+                placeholder="e.g. Hyderabad International School" placeholderTextColor={colors.textDim} />
+            </View>
+            <View style={styles.fieldGroup}>
+              <View style={styles.lblRow}>
+                <Text style={styles.lbl}>School Location</Text>
+                {Platform.OS === 'web' && (
+                  <TouchableOpacity style={styles.locateBtn} onPress={() => locateCity(v => updateChild('schoolCity', v), setSchoolLocating)} disabled={schoolLocating} activeOpacity={0.8}>
+                    <Feather name="crosshair" size={12} color={TEAL} />
+                    <Text style={styles.locateTxt}>{schoolLocating ? 'Locating...' : 'Use my location'}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <AutocompleteField
+                value={activeChild.schoolCity}
+                onChange={v => updateChild('schoolCity', v)}
+                fetchSuggestions={fetchCitySuggestions}
+                placeholder="Search for the school's city"
+                colors={colors}
+                styles={styles}
+              />
+            </View>
 
             {activeChild.age.length > 0 && (
               <View style={[styles.hintBox, { backgroundColor: (parseInt(activeChild.age, 10) >= 14 ? TEAL : FOREST) + '15', borderColor: (parseInt(activeChild.age, 10) >= 14 ? TEAL : FOREST) + '40' }]}>
@@ -511,10 +539,12 @@ export default function OnboardingParentBoxes() {
               </TouchableOpacity>
             </View>
           </View>
+        </View>
 
-          {/* Child's Account */}
-          <View style={[styles.card, styles.card3]}>
-            <CardHeader icon="key" title="3. Child's Account" subtitle="Link or create their login." done={accountDone} styles={styles} />
+        {/* ── Row 2: Child's Learning Profile ── */}
+        <View style={styles.rowWrap}>
+          <View style={[styles.card, styles.cardFull]}>
+            <CardHeader icon="book-open" title="3. Child's Learning Profile" subtitle="What is your child learning?" done={curriculumDone} styles={styles} />
 
             {children.length > 1 && (
               <View style={styles.chipRow}>
@@ -532,80 +562,6 @@ export default function OnboardingParentBoxes() {
               </View>
             )}
 
-            {(activeChild.age ? parseInt(activeChild.age, 10) : 0) >= 14 ? (
-              <>
-                <View style={[styles.hintBox, { backgroundColor: TEAL + '12', borderColor: TEAL + '30' }]}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: TEAL, marginBottom: 4 }}>Link {activeChild.name || 'your child'}'s Account</Text>
-                  <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17 }}>
-                    Students 14+ have their own Aivorah account. Ask your child for their registered email, then enter it below to link it to your parent dashboard.
-                  </Text>
-                </View>
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.lbl}>Child's Registered Email</Text>
-                  <TextInput style={styles.input} value={activeChild.linkEmail} onChangeText={v => updateChild('linkEmail', v)}
-                    placeholder="child@email.com" placeholderTextColor={colors.textDim}
-                    keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
-                </View>
-                <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17 }}>
-                  If your child hasn't signed up yet, ask them to create a Student account first, then come back to complete this step.
-                </Text>
-              </>
-            ) : (
-              <>
-                <View style={[styles.hintBox, { backgroundColor: FOREST + '12', borderColor: FOREST + '30' }]}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: FOREST, marginBottom: 4 }}>Create {activeChild.name || "your child"}'s Login</Text>
-                  <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17 }}>
-                    Aivorah will set up a Student account for {activeChild.name || 'your child'} using the details below — you'll get their login ID and password to share with them.
-                  </Text>
-                </View>
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.lbl}>{children.length > 1 ? `${activeChild.name || 'Child'}'s School` : "Child's School"}</Text>
-                  <TextInput style={styles.input} value={activeChild.school} onChangeText={v => updateChild('school', v)}
-                    placeholder="e.g. Hyderabad International School" placeholderTextColor={colors.textDim} />
-                </View>
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.lbl}>{children.length > 1 ? `${activeChild.name || 'Child'}'s Email (optional)` : "Child's Email (optional)"}</Text>
-                  <TextInput style={styles.input} value={activeChild.email} onChangeText={v => updateChild('email', v)}
-                    placeholder="child@email.com" placeholderTextColor={colors.textDim}
-                    keyboardType="email-address" autoCapitalize="none" />
-                  <Text style={styles.subHint}>Leave blank — Aivorah auto-generates a login ID. Real email requires verification before login.</Text>
-                </View>
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.lbl}>Password (optional)</Text>
-                  <View style={{ position: 'relative' }}>
-                    <TextInput
-                      style={[styles.input, { paddingRight: 48 }]}
-                      value={activeChild.password}
-                      onChangeText={v => updateChild('password', v)}
-                      placeholder="Leave blank to auto-generate"
-                      placeholderTextColor={colors.textDim}
-                      secureTextEntry={!showChildPassword}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      autoComplete="off"
-                      importantForAutofill="no"
-                    />
-                    <TouchableOpacity
-                      style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}
-                      onPress={() => setShowChildPassword(v => !v)}
-                      activeOpacity={0.7}>
-                      <Feather name={showChildPassword ? 'eye-off' : 'eye'} size={16} color={colors.textDim} />
-                    </TouchableOpacity>
-                  </View>
-                  {activeChild.password.length > 0 && activeChild.password.length < 6 && (
-                    <Text style={{ fontSize: 12, color: '#ef4444' }}>Password must be at least 6 characters.</Text>
-                  )}
-                  <Text style={styles.subHint}>Set a password your child will remember, or leave blank to auto-generate one.</Text>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-
-        {/* ── Row 2: Child's Learning Profile ── */}
-        <View style={styles.rowWrap}>
-          <View style={[styles.card, styles.cardFull]}>
-            <CardHeader icon="book-open" title="Child's Learning Profile" subtitle="What is your child learning?" done={curriculumDone} styles={styles} />
             <View style={styles.fieldGroup}>
               <Text style={styles.lbl}>Child's Curriculum</Text>
               <View style={styles.fieldBox}>
@@ -647,10 +603,102 @@ export default function OnboardingParentBoxes() {
           </View>
         </View>
 
-        {/* ── Row 3: Your Avatar ── */}
+        {/* ── Row 3: Child's Account ── */}
         <View style={styles.rowWrap}>
           <View style={[styles.card, styles.cardFull]}>
-            <CardHeader icon="smile" title="4. Your Avatar" subtitle="Choose an avatar that represents you." done={avatarDone} styles={styles} />
+            <CardHeader icon="key" title="4. Child's Account" subtitle="Link or create their login." done={accountDone} styles={styles} />
+
+            {children.length > 1 && (
+              <View style={styles.chipRow}>
+                {children.map((c, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={[styles.chip, activeChildIdx === i && styles.chipActive]}
+                    onPress={() => { setActiveChildIdx(i); setShowChildPassword(false); }}
+                    activeOpacity={0.8}>
+                    <Text style={[styles.chipTxt, activeChildIdx === i && styles.chipTxtActive]}>
+                      {c.name.trim() || `Child ${i + 1}`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {(activeChild.age ? parseInt(activeChild.age, 10) : 0) >= 14 ? (
+              <>
+                <View style={[styles.hintBox, { backgroundColor: TEAL + '12', borderColor: TEAL + '30' }]}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: TEAL, marginBottom: 4 }}>Link {activeChild.name || 'your child'}'s Account</Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17 }}>
+                    Students 14+ have their own Aivorah account. Ask your child for their registered email, then enter it below to link it to your parent dashboard.
+                  </Text>
+                </View>
+                <View style={styles.fieldRow}>
+                  <View style={[styles.fieldGroup, styles.fieldThird]}>
+                    <Text style={styles.lbl}>Child's Registered Email</Text>
+                    <TextInput style={styles.input} value={activeChild.linkEmail} onChangeText={v => updateChild('linkEmail', v)}
+                      placeholder="child@email.com" placeholderTextColor={colors.textDim}
+                      keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
+                  </View>
+                  <View style={[styles.fieldGroup, styles.fieldThird, { justifyContent: 'center' }]}>
+                    <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17 }}>
+                      If your child hasn't signed up yet, ask them to create a Student account first, then come back to complete this step.
+                    </Text>
+                  </View>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={[styles.hintBox, { backgroundColor: FOREST + '12', borderColor: FOREST + '30' }]}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: FOREST, marginBottom: 4 }}>Create {activeChild.name || "your child"}'s Login</Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17 }}>
+                    Aivorah will set up a Student account for {activeChild.name || 'your child'} using the details below — you'll get their login ID and password to share with them.
+                  </Text>
+                </View>
+                <View style={styles.fieldRow}>
+                  <View style={[styles.fieldGroup, styles.fieldHalf]}>
+                    <Text style={styles.lbl}>{children.length > 1 ? `${activeChild.name || 'Child'}'s Email (optional)` : "Child's Email (optional)"}</Text>
+                    <TextInput style={styles.input} value={activeChild.email} onChangeText={v => updateChild('email', v)}
+                      placeholder="child@email.com" placeholderTextColor={colors.textDim}
+                      keyboardType="email-address" autoCapitalize="none" />
+                    <Text style={styles.subHint}>Leave blank — Aivorah auto-generates a login ID. Real email requires verification before login.</Text>
+                  </View>
+                  <View style={[styles.fieldGroup, styles.fieldHalf]}>
+                    <Text style={styles.lbl}>Password (optional)</Text>
+                    <View style={{ position: 'relative' }}>
+                      <TextInput
+                        style={[styles.input, { paddingRight: 48 }]}
+                        value={activeChild.password}
+                        onChangeText={v => updateChild('password', v)}
+                        placeholder="Leave blank to auto-generate"
+                        placeholderTextColor={colors.textDim}
+                        secureTextEntry={!showChildPassword}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="off"
+                        importantForAutofill="no"
+                      />
+                      <TouchableOpacity
+                        style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}
+                        onPress={() => setShowChildPassword(v => !v)}
+                        activeOpacity={0.7}>
+                        <Feather name={showChildPassword ? 'eye-off' : 'eye'} size={16} color={colors.textDim} />
+                      </TouchableOpacity>
+                    </View>
+                    {activeChild.password.length > 0 && activeChild.password.length < 6 && (
+                      <Text style={{ fontSize: 12, color: '#ef4444' }}>Password must be at least 6 characters.</Text>
+                    )}
+                    <Text style={styles.subHint}>Set a password your child will remember, or leave blank to auto-generate one.</Text>
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+
+        {/* ── Row 4: Your Avatar ── */}
+        <View style={styles.rowWrap}>
+          <View style={[styles.card, styles.cardFull]}>
+            <CardHeader icon="smile" title="5. Your Avatar" subtitle="Choose an avatar that represents you." done={avatarDone} styles={styles} />
             <View style={styles.avatarGrid}>
               {AVATAR_STYLES.map(av => (
                 <TouchableOpacity key={av.id}
@@ -767,6 +815,9 @@ function useStyles(colors: any) {
     hintBoxFill: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
     hintBoxRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     fillCenter: { flex: 1, justifyContent: 'center', gap: 12 },
+    fieldRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+    fieldThird: { flexBasis: '30%', flexGrow: 1, minWidth: 240 },
+    fieldHalf: { flexBasis: '46%', flexGrow: 1, minWidth: 240 },
 
     fieldBox: {
       backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor,
