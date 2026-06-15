@@ -23,6 +23,13 @@ import {
   AutocompleteField, CardHeader, BBox, fetchCitySuggestions, fetchSchoolSuggestions, locateCity,
 } from './OnboardingSharedFields';
 
+const GRADE_GROUPS = [
+  { label: 'Early Years', grades: ['Nursery', 'LKG', 'UKG'] },
+  { label: 'Primary', grades: ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'] },
+  { label: 'Middle School', grades: ['Grade 6', 'Grade 7', 'Grade 8'] },
+  { label: 'Senior School', grades: ['Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'] },
+];
+
 function getAge(dobStr: string): number | null {
   const parts = dobStr.split('/');
   if (parts.length !== 3) return null;
@@ -218,9 +225,9 @@ export default function OnboardingStudentBoxes() {
             </View>
           </View>
 
-          {/* School & Grade */}
+          {/* School */}
           <View style={[styles.card, styles.card3]}>
-            <CardHeader icon="award" title="School & Grade" subtitle="Tell us about your school and grade." done={schoolGradeDone} styles={styles} />
+            <CardHeader icon="award" title="School" subtitle="Tell us about your school." done={schoolGradeDone} styles={styles} />
             <View style={styles.fieldGroup}>
               <Text style={styles.lbl}>School Name</Text>
               <AutocompleteField
@@ -252,16 +259,34 @@ export default function OnboardingStudentBoxes() {
                 styles={styles}
               />
             </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>Grade</Text>
-              <View style={styles.chipRow}>
-                {getGradesForCurriculum(curriculum).map(g => (
-                  <TouchableOpacity key={g} style={[styles.chip, grade === g && styles.chipActive]}
-                    onPress={() => setGrade(g)} activeOpacity={0.8}>
-                    <Text style={[styles.chipTxt, grade === g && styles.chipTxtActive]}>{g}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+          </View>
+        </View>
+
+        {/* ── Row 2: Your Grade ── */}
+        <View style={styles.rowWrap}>
+          <View style={[styles.card, styles.cardFull]}>
+            <CardHeader icon="layers" title="Your Grade" subtitle="Which grade are you in?" done={schoolGradeDone} styles={styles} />
+            <View style={styles.gradeGroupsWrap}>
+              {GRADE_GROUPS.map(group => {
+                const available = group.grades.filter(g => getGradesForCurriculum(curriculum).includes(g));
+                if (available.length === 0) return null;
+                return (
+                  <View key={group.label} style={styles.gradeGroup}>
+                    <View style={styles.gradeGroupHead}>
+                      <View style={styles.gradeGroupDot} />
+                      <Text style={styles.gradeGroupLbl}>{group.label}</Text>
+                    </View>
+                    <View style={styles.chipRow}>
+                      {available.map(g => (
+                        <TouchableOpacity key={g} style={[styles.chip, grade === g && styles.chipActive]}
+                          onPress={() => setGrade(g)} activeOpacity={0.8}>
+                          <Text style={[styles.chipTxt, grade === g && styles.chipTxtActive]}>{g}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                );
+              })}
             </View>
           </View>
         </View>
@@ -361,6 +386,17 @@ function useStyles(colors: any) {
     card3: { flexGrow: 1, flexBasis: 320, minWidth: 280 },
     card3Wide: { flexGrow: 2, flexBasis: 460, minWidth: 320 },
     card2: { flexGrow: 1.5, flexBasis: 360, minWidth: 300 },
+    cardFull: { flexGrow: 1, flexBasis: '100%', minWidth: 280 },
+
+    gradeGroupsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+    gradeGroup: {
+      flexBasis: '23%', flexGrow: 1, minWidth: 220,
+      backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor,
+      borderRadius: 12, padding: 12, gap: 10,
+    },
+    gradeGroupHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    gradeGroupDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: TEAL },
+    gradeGroupLbl: { flex: 1, fontSize: 12, fontWeight: '800', color: colors.textMain, textTransform: 'uppercase', letterSpacing: 0.5 },
 
     cardHeaderRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
     cardIcon: {

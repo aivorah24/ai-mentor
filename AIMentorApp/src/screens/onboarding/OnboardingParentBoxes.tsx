@@ -26,6 +26,12 @@ import {
 } from './OnboardingSharedFields';
 
 const FOREST = '#5A8A70';
+const GRADE_GROUPS = [
+  { label: 'Early Years', grades: ['Nursery', 'LKG', 'UKG'] },
+  { label: 'Primary', grades: ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'] },
+  { label: 'Middle School', grades: ['Grade 6', 'Grade 7', 'Grade 8'] },
+  { label: 'Senior School', grades: ['Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'] },
+];
 
 interface ChildEntry {
   name: string;
@@ -118,7 +124,8 @@ export default function OnboardingParentBoxes() {
 
   // ── Per-card completion ────────────────────────────
   const personalDone = fullName.trim().length >= 2 && city.trim().length >= 2;
-  const childrenDone = children.every(c => c.name.trim().length >= 2 && c.curriculum.length > 0 && c.grade.length > 0);
+  const childrenDone = children.every(c => c.name.trim().length >= 2);
+  const curriculumDone = children.every(c => c.curriculum.length > 0 && c.grade.length > 0);
   const accountDone = children.every(c => {
     const age = c.age ? parseInt(c.age, 10) : 0;
     if (age >= 14) return /^\S+@\S+\.\S+$/.test(c.linkEmail.trim());
@@ -126,9 +133,9 @@ export default function OnboardingParentBoxes() {
   });
   const avatarDone = avatarStyle.length > 0;
 
-  const requiredDone = personalDone && childrenDone && accountDone;
-  const doneCount = [personalDone, childrenDone, accountDone, avatarDone].filter(Boolean).length;
-  const completionPct = Math.round((doneCount / 4) * 100);
+  const requiredDone = personalDone && childrenDone && curriculumDone && accountDone;
+  const doneCount = [personalDone, childrenDone, curriculumDone, accountDone, avatarDone].filter(Boolean).length;
+  const completionPct = Math.round((doneCount / 5) * 100);
 
   async function handleFinish() {
     if (!requiredDone) {
@@ -437,6 +444,13 @@ export default function OnboardingParentBoxes() {
                   placeholder="98765 43210" placeholderTextColor={colors.textDim} keyboardType="phone-pad" />
               </View>
             </View>
+
+            <View style={[styles.hintBox, styles.hintBoxFill, { backgroundColor: TEAL + '10', borderColor: TEAL + '25' }]}>
+              <Feather name="shield" size={16} color={TEAL} />
+              <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17, flex: 1 }}>
+                Your details help us personalise learning recommendations for your child and are kept private.
+              </Text>
+            </View>
           </View>
 
           {/* Your Child(ren) */}
@@ -483,33 +497,19 @@ export default function OnboardingParentBoxes() {
               </View>
             )}
 
-            <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>Child's Curriculum</Text>
-              <View style={styles.chipRow}>
-                {CURRICULA.map(c => (
-                  <TouchableOpacity key={c} style={[styles.chip, activeChild.curriculum === c && styles.chipActive]}
-                    onPress={() => { updateChild('curriculum', c); updateChild('grade', ''); }} activeOpacity={0.8}>
-                    <Text style={[styles.chipTxt, activeChild.curriculum === c && styles.chipTxtActive]}>{c}</Text>
-                  </TouchableOpacity>
-                ))}
+            <View style={styles.fillCenter}>
+              <View style={[styles.hintBox, styles.hintBoxRow, { backgroundColor: FOREST + '10', borderColor: FOREST + '25' }]}>
+                <Feather name="users" size={16} color={FOREST} />
+                <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17, flex: 1 }}>
+                  Got more than one child? Each one gets their own curriculum, grade and learning path.
+                </Text>
               </View>
-            </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>Child's Grade</Text>
-              <View style={styles.chipRow}>
-                {getGradesForCurriculum(activeChild.curriculum).map(g => (
-                  <TouchableOpacity key={g} style={[styles.chip, activeChild.grade === g && styles.chipActive]}
-                    onPress={() => updateChild('grade', g)} activeOpacity={0.8}>
-                    <Text style={[styles.chipTxt, activeChild.grade === g && styles.chipTxtActive]}>{g}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
 
-            <TouchableOpacity style={styles.addChildBtn} onPress={addAnotherChild} activeOpacity={0.7}>
-              <Feather name="plus-circle" size={16} color={TEAL} />
-              <Text style={styles.addChildTxt}>Add Another Child</Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.addChildBtn} onPress={addAnotherChild} activeOpacity={0.7}>
+                <Feather name="plus-circle" size={16} color={TEAL} />
+                <Text style={styles.addChildTxt}>Add Another Child</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Child's Account */}
@@ -602,7 +602,52 @@ export default function OnboardingParentBoxes() {
           </View>
         </View>
 
-        {/* ── Row 2: Your Avatar ── */}
+        {/* ── Row 2: Child's Learning Profile ── */}
+        <View style={styles.rowWrap}>
+          <View style={[styles.card, styles.cardFull]}>
+            <CardHeader icon="book-open" title="Child's Learning Profile" subtitle="What is your child learning?" done={curriculumDone} styles={styles} />
+            <View style={styles.fieldGroup}>
+              <Text style={styles.lbl}>Child's Curriculum</Text>
+              <View style={styles.fieldBox}>
+                <View style={styles.chipRow}>
+                  {CURRICULA.map(c => (
+                    <TouchableOpacity key={c} style={[styles.chip, activeChild.curriculum === c && styles.chipActive]}
+                      onPress={() => { updateChild('curriculum', c); updateChild('grade', ''); }} activeOpacity={0.8}>
+                      <Text style={[styles.chipTxt, activeChild.curriculum === c && styles.chipTxtActive]}>{c}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.lbl}>Child's Grade</Text>
+              <View style={styles.gradeGroupsWrap}>
+                {GRADE_GROUPS.map(group => {
+                  const available = group.grades.filter(g => getGradesForCurriculum(activeChild.curriculum).includes(g));
+                  if (available.length === 0) return null;
+                  return (
+                    <View key={group.label} style={styles.gradeGroup}>
+                      <View style={styles.gradeGroupHead}>
+                        <View style={styles.gradeGroupDot} />
+                        <Text style={styles.gradeGroupLbl}>{group.label}</Text>
+                      </View>
+                      <View style={styles.chipRow}>
+                        {available.map(g => (
+                          <TouchableOpacity key={g} style={[styles.chip, activeChild.grade === g && styles.chipActive]}
+                            onPress={() => updateChild('grade', g)} activeOpacity={0.8}>
+                            <Text style={[styles.chipTxt, activeChild.grade === g && styles.chipTxtActive]}>{g}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* ── Row 3: Your Avatar ── */}
         <View style={styles.rowWrap}>
           <View style={[styles.card, styles.cardFull]}>
             <CardHeader icon="smile" title="4. Your Avatar" subtitle="Choose an avatar that represents you." done={avatarDone} styles={styles} />
@@ -719,6 +764,23 @@ function useStyles(colors: any) {
 
     subHint: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
     hintBox: { borderRadius: 10, padding: 12, borderWidth: 1 },
+    hintBoxFill: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
+    hintBoxRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    fillCenter: { flex: 1, justifyContent: 'center', gap: 12 },
+
+    fieldBox: {
+      backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor,
+      borderRadius: 12, padding: 12,
+    },
+    gradeGroupsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+    gradeGroup: {
+      flexBasis: '23%', flexGrow: 1, minWidth: 220,
+      backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor,
+      borderRadius: 12, padding: 12, gap: 10,
+    },
+    gradeGroupHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    gradeGroupDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: TEAL },
+    gradeGroupLbl: { flex: 1, fontSize: 12, fontWeight: '800', color: colors.textMain, textTransform: 'uppercase', letterSpacing: 0.5 },
 
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 18, borderWidth: 1, borderColor: colors.borderColor, backgroundColor: colors.bgDark },
@@ -735,7 +797,7 @@ function useStyles(colors: any) {
 
     avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     avatarTile: {
-      flexBasis: '12%', flexGrow: 1, minWidth: 76, alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: 12,
+      flexBasis: '11%', flexGrow: 1, minWidth: 90, alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: 12,
       borderWidth: 1, borderColor: colors.borderColor, backgroundColor: colors.bgDark, position: 'relative',
     },
     avatarTileActive: { borderColor: TEAL, backgroundColor: TEAL + '10' },
