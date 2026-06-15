@@ -72,10 +72,11 @@ function IndiaFlagIcon() {
 }
 
 export default function OnboardingParentBoxes() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const { colors } = useTheme();
   const styles = useStyles(colors);
 
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [locating, setLocating] = useState(false);
@@ -383,6 +384,15 @@ export default function OnboardingParentBoxes() {
         {/* ── Header ── */}
         <View style={styles.topbar}>
           <View style={styles.logoRow}>
+            <TouchableOpacity
+              onPress={() => setShowLeaveConfirm(true)}
+              style={styles.backBtn}
+              activeOpacity={0.7}
+              accessibilityLabel="Back to home page"
+            >
+              <Feather name="arrow-left" size={18} color={colors.textMuted} />
+              <Text style={styles.backTxt}>Back</Text>
+            </TouchableOpacity>
             <View style={styles.logoMark}><Feather name="zap" size={14} color="#fff" /></View>
             <Text style={styles.logoTxt}>Aivorah</Text>
           </View>
@@ -739,6 +749,36 @@ export default function OnboardingParentBoxes() {
           </View>
         </View>
       </ScrollView>
+
+      {/* ── Leave-to-home confirmation ── */}
+      <Modal transparent visible={showLeaveConfirm} animationType="fade" onRequestClose={() => setShowLeaveConfirm(false)}>
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmBox}>
+            <View style={styles.confirmIcon}>
+              <Feather name="log-out" size={22} color={TEAL} />
+            </View>
+            <Text style={styles.confirmTitle}>Return to the home page?</Text>
+            <Text style={styles.confirmBody}>
+              You'll be signed out and taken back to the Aivorah home page. Any details you
+              haven't saved on this page won't be kept.
+            </Text>
+            <TouchableOpacity
+              style={styles.confirmPrimary}
+              activeOpacity={0.85}
+              onPress={() => { setShowLeaveConfirm(false); logout(); }}
+            >
+              <Text style={styles.confirmPrimaryTxt}>Sign out & go to home page</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.confirmSecondary}
+              activeOpacity={0.7}
+              onPress={() => setShowLeaveConfirm(false)}
+            >
+              <Text style={styles.confirmSecondaryTxt}>Stay here</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -750,6 +790,27 @@ function useStyles(colors: any) {
 
     topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 },
     logoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    backBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8,
+      borderWidth: 1, borderColor: colors.borderColor, marginRight: 4,
+    },
+    backTxt: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
+    confirmOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+    confirmBox: {
+      width: 360, maxWidth: '95%', borderRadius: 20, padding: 28, alignItems: 'center',
+      backgroundColor: colors.cardDark, borderWidth: 1, borderColor: colors.borderColor,
+    },
+    confirmIcon: {
+      width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
+      backgroundColor: TEAL + '22', marginBottom: 16,
+    },
+    confirmTitle: { fontSize: 19, fontWeight: '800', color: colors.textMain, marginBottom: 10, textAlign: 'center' },
+    confirmBody: { fontSize: 14, color: colors.textMuted, lineHeight: 21, textAlign: 'center', marginBottom: 24 },
+    confirmPrimary: { width: '100%', backgroundColor: TEAL, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
+    confirmPrimaryTxt: { fontSize: 15, fontWeight: '700', color: '#fff' },
+    confirmSecondary: { width: '100%', paddingVertical: 12, alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: colors.borderColor },
+    confirmSecondaryTxt: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
     logoMark: { width: 28, height: 28, borderRadius: 8, backgroundColor: TEAL, alignItems: 'center', justifyContent: 'center' },
     logoTxt: { fontSize: 16, fontWeight: '800', color: colors.textMain },
     completionRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
