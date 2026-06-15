@@ -163,8 +163,9 @@ function NotificationBannerWrapper() {
   return <NotificationBanner onNavigate={handleNavigate} />;
 }
 
-const IDLE_WARN_MS   = 5 * 60 * 1000; // 5 min idle → show warning
-const IDLE_LOGOUT_MS = 1 * 60 * 1000; // 1 min after warning → auto-logout
+const IDLE_WARN_MS   = 15 * 60 * 1000; // 15 min idle → show warning
+const IDLE_LOGOUT_MS = 2 * 60 * 1000;  // 2 min after warning → auto-logout
+const IDLE_WARN_MIN  = Math.round(IDLE_WARN_MS / 60000); // for display copy
 
 function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -183,7 +184,17 @@ function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => { userRef.current = user; }, [user]);
   useEffect(() => { logoutRef.current = logout; }, [logout]);
 
+  // Only arm the idle-logout once the student is actually inside the app.
+  // During onboarding / email-verification / set-password the user is reading,
+  // typing and pausing to think — an idle timer there is pure disturbance and
+  // pointless (they haven't finished setup yet). Mirror RootNavigator's gate:
+  // in-app == verified + onboarding complete + no pending password change.
   const isStudent = user?.role === 'student';
+  const inApp =
+    isStudent &&
+    user?.emailVerified !== false &&
+    user?.onboardingComplete === true &&
+    user?.mustChangePassword !== true;
 
   const doLogout = useCallback(() => {
     if (tickerRef.current)    clearInterval(tickerRef.current);
@@ -210,9 +221,10 @@ function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (!isStudent) return;
+    if (!inApp) return;
 
     // Single interval polls every second — no timer-reset-on-activity races
+    lastActivityRef.current = Date.now(); // start fresh when entering the app
     tickerRef.current = setInterval(() => {
       const idle = Date.now() - lastActivityRef.current;
 
@@ -246,11 +258,14 @@ function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
     return () => {
       if (tickerRef.current)    clearInterval(tickerRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
+      // Clear any visible warning when leaving the app (e.g. logout/onboarding)
+      showWarningRef.current = false;
+      setShowWarning(false);
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
         events.forEach(e => window.removeEventListener(e, resetActivity));
       }
     };
-  }, [isStudent, doLogout]);
+  }, [inApp, doLogout]);
 
   return (
     <>
@@ -264,7 +279,7 @@ function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
               </View>
               <Text style={[idleStyles.title, { color: c.textMain }]}>Are you still there?</Text>
               <Text style={[idleStyles.body, { color: c.textMuted }]}>
-                You've been inactive for 5 minutes.{'\n'}
+                You've been inactive for {IDLE_WARN_MIN} minutes.{'\n'}
                 Logging out in <Text style={{ color: c.accentRed, fontWeight: '700' }}>{countdown}s</Text>...
               </Text>
               <TouchableOpacity style={[idleStyles.btn, { backgroundColor: c.primary }]} onPress={onStillHere} activeOpacity={0.85}>
