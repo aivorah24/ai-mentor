@@ -86,16 +86,11 @@ function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
   }
 
   function handleContinue() {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      // The original signup tab is already polling and will advance to onboarding
-      // on its own within ~2s. A user-gesture-triggered window.close() has a much
-      // better chance of working than one fired from a timer; if the browser still
-      // blocks it, fall back to navigating this tab into the app instead.
-      window.close();
-      setTimeout(goToApp, 400);
-    } else {
-      goToApp();
-    }
+    // Navigate THIS tab into the app. The account is now verified (active), so
+    // loading the app root lands the user on onboarding. We deliberately do NOT
+    // call window.close() here — closing the tab leaves the user with nothing
+    // and never reaches onboarding, which was the reported bug.
+    goToApp();
   }
 
   const isError = status === 'error';
