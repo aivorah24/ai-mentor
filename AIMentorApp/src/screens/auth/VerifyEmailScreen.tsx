@@ -10,13 +10,59 @@ import {
   Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import Svg, { Path, Rect, Circle } from 'react-native-svg';
+import Svg, { Path, Rect, Circle, Defs, Stop, LinearGradient as SvgGrad } from 'react-native-svg';
 import { auth } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
+
+// ── Landing-page "Enchanting Forest" palette (matches the marketing/auth UI) ──
+const BG     = '#050705';
+const CARD   = '#101510';
+const SURFACE= '#151D17';
+const BORDER = 'rgba(197,255,218,0.18)';
+const MUTED  = '#B6C7B9';
+const DIM    = '#728173';
+const FORE   = '#F5F7F0';
+const CYAN   = '#B7F2C7';
+const AMBER  = '#F4B84A';
+const GOLD   = '#BAA467';
+const RED    = '#E07F7F';
+const GREEN  = '#8FE6AE';
+
+// Gold→sage gradient CTA, identical to the landing page's primary button.
+function GradientButton({ label, onPress, icon, loading, disabled, style }: {
+  label: string; onPress: () => void; icon?: string; loading?: boolean; disabled?: boolean; style?: any;
+}) {
+  const [h, setH] = useState(52);
+  const [w, setW] = useState(200);
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      disabled={loading || disabled}
+      onLayout={e => { setH(e.nativeEvent.layout.height); setW(e.nativeEvent.layout.width); }}
+      style={[{ overflow: 'hidden', borderRadius: 10, width: '100%', opacity: disabled ? 0.5 : 1 }, style]}
+    >
+      <Svg style={StyleSheet.absoluteFill as any} width={w} height={h} pointerEvents="none">
+        <Defs>
+          <SvgGrad id="vbtn" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor="#8FE6AE" stopOpacity="1" />
+            <Stop offset="0.58" stopColor="#B7F2C7" stopOpacity="1" />
+            <Stop offset="1" stopColor="#F4B84A" stopOpacity="1" />
+          </SvgGrad>
+        </Defs>
+        <Rect x="0" y="0" width={w} height={h} fill="url(#vbtn)" />
+      </Svg>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15 }}>
+        {icon && <Feather name={icon as any} size={16} color="#061008" />}
+        <Text style={{ fontSize: 15, fontWeight: '700', color: '#061008' }}>{label}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 // ─── Envelope SVG illustration ───────────────────────────────────────────────
 function EnvelopeIllustration({ color, accent }: { color: string; accent: string }) {
@@ -176,7 +222,7 @@ export default function VerifyEmailScreen() {
         {/* Illustration */}
         <Animated.View style={[styles.illustrationWrap, { transform: [{ scale: pulseAnim }] }]}>
           <View style={styles.illustrationBg}>
-            <EnvelopeIllustration color={colors.cardHover} accent={colors.primary} />
+            <EnvelopeIllustration color="#0A0F0B" accent={CYAN} />
           </View>
         </Animated.View>
 
@@ -186,7 +232,7 @@ export default function VerifyEmailScreen() {
           We sent a verification link to
         </Text>
         <View style={styles.emailPill}>
-          <Feather name="mail" size={13} color={colors.primary} style={{ marginRight: 6 }} />
+          <Feather name="mail" size={13} color={CYAN} style={{ marginRight: 6 }} />
           <Text style={styles.emailText}>{user?.email || 'your email'}</Text>
         </View>
         <Text style={styles.hint}>
@@ -195,7 +241,7 @@ export default function VerifyEmailScreen() {
 
         {/* Spam folder warning */}
         <View style={styles.spamWarning}>
-          <Feather name="alert-triangle" size={15} color={colors.accentYellow} style={{ marginRight: 8, marginTop: 1 }} />
+          <Feather name="alert-triangle" size={15} color={GOLD} style={{ marginRight: 8, marginTop: 1 }} />
           <View style={{ flex: 1 }}>
             <Text style={styles.spamTitle}>Can't find the email?</Text>
             <Text style={styles.spamText}>
@@ -208,35 +254,31 @@ export default function VerifyEmailScreen() {
         {/* Error or success */}
         {verifyError !== '' && (
           <View style={styles.errorBox}>
-            <Feather name="alert-circle" size={14} color={colors.accentRed} style={{ marginRight: 6 }} />
+            <Feather name="alert-circle" size={14} color={RED} style={{ marginRight: 6 }} />
             <Text style={styles.errorText}>{verifyError}</Text>
           </View>
         )}
         {resendSuccess && (
           <View style={styles.successBox}>
-            <Feather name="check-circle" size={14} color={colors.accentGreen} style={{ marginRight: 6 }} />
+            <Feather name="check-circle" size={14} color={GREEN} style={{ marginRight: 6 }} />
             <Text style={styles.successText}>Verification email sent!</Text>
           </View>
         )}
         {verifiedSuccess && (
           <View style={styles.successBox}>
-            <Feather name="check-circle" size={14} color={colors.accentGreen} style={{ marginRight: 6 }} />
+            <Feather name="check-circle" size={14} color={GREEN} style={{ marginRight: 6 }} />
             <Text style={styles.successText}>Email verified! Taking you in...</Text>
           </View>
         )}
 
         {/* I've Verified */}
-        <TouchableOpacity
-          style={[styles.primaryBtn, checking && styles.btnDisabled]}
+        <GradientButton
+          label={checking ? 'Checking...' : "I've Verified My Email"}
+          icon={checking ? undefined : 'check'}
           onPress={handleVerified}
-          activeOpacity={0.85}
           disabled={checking}
-        >
-          <Feather name="check" size={16} color="#fff" style={{ marginRight: 8 }} />
-          <Text style={styles.primaryBtnText}>
-            {checking ? 'Checking...' : "I've Verified My Email"}
-          </Text>
-        </TouchableOpacity>
+          style={{ marginBottom: spacing.md }}
+        />
 
         {/* Resend */}
         <TouchableOpacity
@@ -245,7 +287,7 @@ export default function VerifyEmailScreen() {
           activeOpacity={0.75}
           disabled={cooldown > 0}
         >
-          <Feather name="refresh-cw" size={15} color={cooldown > 0 ? colors.textDim : colors.primary} style={{ marginRight: 7 }} />
+          <Feather name="refresh-cw" size={15} color={cooldown > 0 ? DIM : CYAN} style={{ marginRight: 7 }} />
           <Text style={[styles.secondaryBtnText, cooldown > 0 && styles.dimText]}>
             {cooldown > 0 ? `Resend Email (${cooldown}s)` : 'Resend Email'}
           </Text>
@@ -261,11 +303,11 @@ export default function VerifyEmailScreen() {
 }
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
-const makeStyles = (c: AppColors) =>
+const makeStyles = (_c: AppColors) =>
   StyleSheet.create({
     scrollContent: {
       flexGrow: 1,
-      backgroundColor: c.bgDark,
+      backgroundColor: BG,
       alignItems: 'center',
       justifyContent: 'center',
       padding: spacing.xl,
@@ -273,10 +315,10 @@ const makeStyles = (c: AppColors) =>
     card: {
       width: '100%',
       maxWidth: 440,
-      backgroundColor: c.cardDark,
+      backgroundColor: '#000000',
       borderRadius: radius.xl,
       borderWidth: 1,
-      borderColor: c.borderColor,
+      borderColor: BORDER,
       alignItems: 'center',
       padding: spacing.xxxl,
     },
@@ -287,44 +329,44 @@ const makeStyles = (c: AppColors) =>
       width: 140,
       height: 140,
       borderRadius: 70,
-      backgroundColor: c.primaryGlow,
+      backgroundColor: SURFACE,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1,
-      borderColor: c.borderColor,
+      borderColor: BORDER,
     },
     title: {
       fontSize: 24,
       fontWeight: '700',
-      color: c.textMain,
+      color: FORE,
       letterSpacing: -0.4,
       marginBottom: spacing.sm,
     },
     sub: {
       fontSize: 14,
-      color: c.textMuted,
+      color: MUTED,
       textAlign: 'center',
       marginBottom: spacing.sm,
     },
     emailPill: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: c.primaryGlow,
+      backgroundColor: SURFACE,
       borderRadius: 20,
       paddingHorizontal: spacing.md,
       paddingVertical: 6,
       marginBottom: spacing.md,
       borderWidth: 1,
-      borderColor: c.primary + '33',
+      borderColor: BORDER,
     },
     emailText: {
       fontSize: 13,
       fontWeight: '600',
-      color: c.primary,
+      color: CYAN,
     },
     hint: {
       fontSize: 13,
-      color: c.textMuted,
+      color: MUTED,
       textAlign: 'center',
       lineHeight: 20,
       marginBottom: spacing.md,
@@ -332,101 +374,86 @@ const makeStyles = (c: AppColors) =>
     spamWarning: {
       flexDirection: 'row',
       alignItems: 'flex-start',
-      backgroundColor: '#fef3c7' + '18',
+      backgroundColor: '#000000',
       borderRadius: radius.md,
       padding: spacing.md,
       marginBottom: spacing.xl,
       borderWidth: 1,
-      borderColor: '#f59e0b' + '30',
+      borderColor: 'rgba(186,164,103,0.40)',
       width: '100%',
     },
     spamTitle: {
       fontSize: 13,
       fontWeight: '700',
-      color: '#f59e0b',
+      color: GOLD,
       marginBottom: 3,
     },
     spamText: {
       fontSize: 12,
-      color: c.textMuted,
+      color: MUTED,
       lineHeight: 18,
     },
     errorBox: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: c.accentRed + '18',
+      backgroundColor: 'rgba(224,127,127,0.12)',
       borderRadius: radius.sm,
       padding: spacing.md,
       marginBottom: spacing.md,
       borderWidth: 1,
-      borderColor: c.accentRed + '40',
+      borderColor: 'rgba(224,127,127,0.40)',
       width: '100%',
     },
     errorText: {
       flex: 1,
       fontSize: 13,
-      color: c.accentRed,
+      color: RED,
     },
     successBox: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: c.accentGreen + '18',
+      backgroundColor: 'rgba(143,230,174,0.12)',
       borderRadius: radius.sm,
       padding: spacing.md,
       marginBottom: spacing.md,
       borderWidth: 1,
-      borderColor: c.accentGreen + '40',
+      borderColor: 'rgba(143,230,174,0.40)',
       width: '100%',
     },
     successText: {
       flex: 1,
       fontSize: 13,
-      color: c.accentGreen,
-    },
-    primaryBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: c.primary,
-      borderRadius: radius.md,
-      paddingVertical: 14,
-      width: '100%',
-      marginBottom: spacing.md,
-    },
-    primaryBtnText: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: '#fff',
+      color: GREEN,
     },
     secondaryBtn: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: c.cardHover,
+      backgroundColor: SURFACE,
       borderRadius: radius.md,
       paddingVertical: 13,
       width: '100%',
       borderWidth: 1,
-      borderColor: c.borderColor,
+      borderColor: BORDER,
       marginBottom: spacing.xl,
     },
     secondaryBtnText: {
       fontSize: 14,
       fontWeight: '600',
-      color: c.primary,
+      color: CYAN,
     },
     btnDisabled: {
       opacity: 0.5,
     },
     dimText: {
-      color: c.textDim,
+      color: DIM,
     },
     signOutLink: {
       paddingVertical: spacing.sm,
     },
     signOutText: {
       fontSize: 13,
-      color: c.textMuted,
+      color: MUTED,
       textDecorationLine: 'underline',
     },
   });

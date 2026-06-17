@@ -5,7 +5,7 @@
  * Everything is visible and editable at once; "Complete Setup" saves
  * the profile, links/creates child accounts, and finishes onboarding.
  */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
   StyleSheet, Platform, Modal,
@@ -43,9 +43,10 @@ interface ChildEntry {
   email: string;
   linkEmail: string;
   password: string;
+  verifiedEmail: string;   // the child email that has been OTP-verified (must equal `email`)
 }
 function emptyChild(): ChildEntry {
-  return { name: '', age: '', grade: '', curriculum: '', school: '', schoolCity: '', email: '', linkEmail: '', password: '' };
+  return { name: '', age: '', grade: '', curriculum: '', school: '', schoolCity: '', email: '', linkEmail: '', password: '', verifiedEmail: '' };
 }
 
 function generateStudentId(name: string) {
@@ -105,6 +106,72 @@ export default function OnboardingParentBoxes() {
   const updateChild = (field: keyof ChildEntry, value: string) => {
     setChildren(prev => prev.map((c, i) => i === activeChildIdx ? { ...c, [field]: value } : c));
   };
+
+  // ── Child email OTP verification (inline, code-based) ───────────────────────
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpErr, setOtpErr] = useState('');
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+
+  // Reset the OTP UI when switching between children.
+  useEffect(() => {
+    setOtpSent(false); setOtpCode(''); setOtpErr(''); setOtpCooldown(0);
+  }, [activeChildIdx]);
+
+  // Cooldown countdown for resending.
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const t = setTimeout(() => setOtpCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [otpCooldown]);
+
+  // Editing the email invalidates any prior verification + OTP session.
+  const onChildEmailChange = (v: string) => {
+    setChildren(prev => prev.map((c, i) => i === activeChildIdx ? { ...c, email: v, verifiedEmail: '' } : c));
+    setOtpSent(false); setOtpCode(''); setOtpErr('');
+  };
+
+  async function sendChildOtp() {
+    const email = activeChild.email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(email)) { setOtpErr('Enter a valid email first.'); return; }
+    setOtpSending(true); setOtpErr('');
+    try {
+      const res = await fetch(`${SERVER_URL}/user/email-otp/send`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name: activeChild.name.trim() || 'there' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Could not send the code.');
+      setOtpSent(true); setOtpCooldown(30);
+    } catch (e: any) {
+      setOtpErr(e?.message || 'Could not send the code. Please try again.');
+    } finally { setOtpSending(false); }
+  }
+
+  async function verifyChildOtp() {
+    const email = activeChild.email.trim().toLowerCase();
+    const code = otpCode.trim();
+    if (code.length < 4) { setOtpErr('Enter the 6-digit code.'); return; }
+    setOtpVerifying(true); setOtpErr('');
+    try {
+      const res = await fetch(`${SERVER_URL}/user/email-otp/verify`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp: code }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.verified) throw new Error(data?.error || 'Incorrect or expired code.');
+      updateChild('verifiedEmail', email);
+      setOtpSent(false); setOtpCode('');
+    } catch (e: any) {
+      setOtpErr(e?.message || 'Incorrect or expired code.');
+    } finally { setOtpVerifying(false); }
+  }
+
+  const childEmailVal = activeChild.email.trim().toLowerCase();
+  const childEmailValid = /^\S+@\S+\.\S+$/.test(childEmailVal);
+  const childEmailVerified = childEmailValid && activeChild.verifiedEmail.trim().toLowerCase() === childEmailVal;
   const addAnotherChild = () => {
     const newIdx = children.length;
     setChildren(prev => [...prev, emptyChild()]);
@@ -127,22 +194,40 @@ export default function OnboardingParentBoxes() {
 
   // ── Per-card completion ────────────────────────────
   const personalDone = fullName.trim().length >= 2 && city.trim().length >= 2;
-  const childrenDone = children.every(c => c.name.trim().length >= 2);
-  const curriculumDone = children.every(c => c.curriculum.length > 0 && c.grade.length > 0);
-  const accountDone = children.every(c => {
+
+  // Adding children is OPTIONAL during onboarding (client feedback, 2026-06-13):
+  // a parent may skip and add kids later from the dashboard. A child only has to
+  // be completed if the parent actually started adding one (entered a name).
+  const startedChildren = children.filter(c => c.name.trim().length >= 2);
+  const addingChildren = startedChildren.length > 0;
+  const childrenDone = true; // names are validated as part of "started"
+  const curriculumDone = startedChildren.every(c => c.curriculum.length > 0 && c.grade.length > 0);
+  const accountDone = startedChildren.every(c => {
     const age = c.age ? parseInt(c.age, 10) : 0;
     if (age >= 14) return /^\S+@\S+\.\S+$/.test(c.linkEmail.trim());
-    return c.school.trim().length >= 2 && (c.password.length === 0 || c.password.length >= 6);
+    if (c.school.trim().length < 2) return false;
+    if (c.password.length !== 0 && c.password.length < 6) return false;
+    // If a real child email was entered, it must be OTP-verified before continuing.
+    const email = c.email.trim().toLowerCase();
+    if (email.length > 0) {
+      if (!/^\S+@\S+\.\S+$/.test(email)) return false;
+      if (c.verifiedEmail.trim().toLowerCase() !== email) return false;
+    }
+    return true;
   });
   const avatarDone = avatarStyle.length > 0;
 
-  const requiredDone = personalDone && childrenDone && curriculumDone && accountDone;
-  const doneCount = [personalDone, childrenDone, curriculumDone, accountDone, avatarDone].filter(Boolean).length;
-  const completionPct = Math.round((doneCount / 5) * 100);
+  // Onboarding can complete with no children at all; only the parent's own info
+  // is mandatory. Started children must be finished before continuing.
+  const requiredDone = personalDone && curriculumDone && accountDone;
+  const doneCount = [personalDone, (addingChildren ? curriculumDone && accountDone : true), avatarDone].filter(Boolean).length;
+  const completionPct = Math.round((doneCount / 3) * 100);
 
   async function handleFinish() {
     if (!requiredDone) {
-      setSaveError('Please complete Personal Info, Your Child(ren), and Child\'s Account before continuing.');
+      setSaveError(addingChildren
+        ? 'Please finish the child details you started (curriculum, grade and account), or remove that child to skip.'
+        : 'Please complete your Personal Info to continue.');
       return;
     }
     setSaving(true);
@@ -459,7 +544,7 @@ export default function OnboardingParentBoxes() {
               </View>
             </View>
 
-            <View style={[styles.hintBox, styles.hintBoxFill, { backgroundColor: TEAL + '10', borderColor: TEAL + '25' }]}>
+            <View style={[styles.hintBox, styles.hintBoxRow, { backgroundColor: TEAL + '10', borderColor: TEAL + '25' }]}>
               <Feather name="shield" size={16} color={TEAL} />
               <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17, flex: 1 }}>
                 Your details help us personalise learning recommendations for your child and are kept private.
@@ -469,7 +554,7 @@ export default function OnboardingParentBoxes() {
 
           {/* Your Child(ren) */}
           <View style={[styles.card, styles.card3]}>
-            <CardHeader icon="users" title="2. Your Child(ren)" subtitle="Tell us about your child." done={childrenDone} styles={styles} />
+            <CardHeader icon="users" title="2. Your Children" subtitle="Optional — add now or later from your dashboard." done={!addingChildren || childrenDone} styles={styles} subtitleColor="#BAA467" />
 
             {children.length > 1 && (
               <View style={styles.chipRow}>
@@ -536,13 +621,6 @@ export default function OnboardingParentBoxes() {
             )}
 
             <View style={styles.fillCenter}>
-              <View style={[styles.hintBox, styles.hintBoxRow, { backgroundColor: FOREST + '10', borderColor: FOREST + '25' }]}>
-                <Feather name="users" size={16} color={FOREST} />
-                <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17, flex: 1 }}>
-                  Got more than one child? Each one gets their own curriculum, grade and learning path.
-                </Text>
-              </View>
-
               <TouchableOpacity style={styles.addChildBtn} onPress={addAnotherChild} activeOpacity={0.7}>
                 <Feather name="plus-circle" size={16} color={TEAL} />
                 <Text style={styles.addChildTxt}>Add Another Child</Text>
@@ -667,10 +745,46 @@ export default function OnboardingParentBoxes() {
                 <View style={styles.fieldRow}>
                   <View style={[styles.fieldGroup, styles.fieldHalf]}>
                     <Text style={styles.lbl}>{children.length > 1 ? `${activeChild.name || 'Child'}'s Email (optional)` : "Child's Email (optional)"}</Text>
-                    <TextInput style={styles.input} value={activeChild.email} onChangeText={v => updateChild('email', v)}
-                      placeholder="child@email.com" placeholderTextColor={colors.textDim}
-                      keyboardType="email-address" autoCapitalize="none" />
-                    <Text style={styles.subHint}>Leave blank — Aivorah auto-generates a login ID. Real email requires verification before login.</Text>
+                    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                      <TextInput style={[styles.input, { flex: 1 }]} value={activeChild.email} onChangeText={onChildEmailChange}
+                        placeholder="child@email.com" placeholderTextColor={colors.textDim}
+                        keyboardType="email-address" autoCapitalize="none" editable={!childEmailVerified} />
+                      {childEmailValid && !childEmailVerified && (
+                        <TouchableOpacity
+                          onPress={sendChildOtp}
+                          disabled={otpSending || otpCooldown > 0}
+                          style={{ paddingHorizontal: 14, paddingVertical: 11, borderRadius: 8, backgroundColor: '#B7CBB0', opacity: (otpSending || otpCooldown > 0) ? 0.5 : 1 }}
+                          activeOpacity={0.85}>
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#0b0b0b' }}>
+                            {otpSending ? 'Sending…' : otpCooldown > 0 ? `Resend (${otpCooldown}s)` : (otpSent ? 'Resend' : 'Send Code')}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      {childEmailVerified && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8, backgroundColor: 'rgba(143,230,174,0.15)', borderWidth: 1, borderColor: 'rgba(143,230,174,0.4)' }}>
+                          <Feather name="check-circle" size={14} color="#8FE6AE" />
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#8FE6AE' }}>Verified</Text>
+                        </View>
+                      )}
+                    </View>
+                    {otpSent && !childEmailVerified && (
+                      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 8 }}>
+                        <TextInput style={[styles.input, { flex: 1 }]} value={otpCode} onChangeText={setOtpCode}
+                          placeholder="Enter 6-digit code" placeholderTextColor={colors.textDim}
+                          keyboardType="number-pad" maxLength={6} />
+                        <TouchableOpacity onPress={verifyChildOtp} disabled={otpVerifying}
+                          style={{ paddingHorizontal: 16, paddingVertical: 11, borderRadius: 8, backgroundColor: '#BAA467', opacity: otpVerifying ? 0.5 : 1 }}
+                          activeOpacity={0.85}>
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#0b0b0b' }}>{otpVerifying ? 'Verifying…' : 'Verify'}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    {otpErr !== '' && <Text style={[styles.subHint, { color: '#E07F7F' }]}>{otpErr}</Text>}
+                    <Text style={styles.subHint}>
+                      {childEmailVerified
+                        ? 'Email verified. You can continue.'
+                        : 'Leave blank — Aivorah auto-generates a login ID. If you enter a real email, verify it with the code we send.'}
+                    </Text>
                   </View>
                   <View style={[styles.fieldGroup, styles.fieldHalf]}>
                     <Text style={styles.lbl}>Password (optional)</Text>
@@ -737,13 +851,32 @@ export default function OnboardingParentBoxes() {
           </View>
           <View style={styles.footerBtns}>
             {!requiredDone && (
-              <Text style={styles.requiredHint}>Complete all sections above to continue</Text>
+              <Text style={styles.requiredHint}>{(() => {
+                const missing: string[] = [];
+                if (!personalDone) missing.push('Personal Info');
+                // Child sections only matter once a child has been started.
+                if (!curriculumDone) {
+                  const who = startedChildren.filter(c => !(c.curriculum.length > 0 && c.grade.length > 0)).map(c => c.name.trim() || 'a child');
+                  missing.push(`Learning Profile (curriculum & grade${who.length ? ' for ' + who.join(', ') : ''})`);
+                }
+                if (!accountDone) {
+                  const who = startedChildren.filter(c => {
+                    const age = c.age ? parseInt(c.age, 10) : 0;
+                    return age >= 14 ? !/^\S+@\S+\.\S+$/.test(c.linkEmail.trim()) : c.school.trim().length < 2;
+                  }).map(c => c.name.trim() || 'a child');
+                  missing.push(`Child's Account${who.length ? ' for ' + who.join(', ') : ''}`);
+                }
+                return missing.length ? `Still needed: ${missing.join('; ')}` : 'Complete all sections above to continue';
+              })()}</Text>
+            )}
+            {requiredDone && !addingChildren && (
+              <Text style={styles.requiredHint}>Adding children is optional — you can add them anytime from your dashboard.</Text>
             )}
             <TouchableOpacity
               style={[styles.completeBtn, !requiredDone && { opacity: 0.4 }]}
               disabled={!requiredDone || saving}
               onPress={handleFinish} activeOpacity={0.85}>
-              <Text style={styles.completeTxt}>{saving ? 'Saving...' : 'Complete Setup'}</Text>
+              <Text style={styles.completeTxt}>{saving ? 'Saving...' : (addingChildren ? 'Complete Setup' : 'Skip for now & Finish')}</Text>
               {!saving && <Feather name="arrow-right" size={16} color="#fff" />}
             </TouchableOpacity>
           </View>
@@ -874,6 +1007,7 @@ function useStyles(colors: any) {
     subHint: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
     hintBox: { borderRadius: 10, padding: 12, borderWidth: 1 },
     hintBoxFill: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
+    hintBoxRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     hintBoxRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     fillCenter: { flex: 1, justifyContent: 'center', gap: 12 },
     fieldRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },

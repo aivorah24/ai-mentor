@@ -60,9 +60,9 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (fields: Partial<User>) => void;
   saveProfile: (fields: { curriculum?: string; grade?: string; school?: string; location?: string }) => Promise<void>;
-  signInWithEmail: (email: string, password: string, role: UserRole) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (name: string, email: string, password: string, role: UserRole, curriculum?: string) => Promise<void>;
-  signInWithGoogle: (role: UserRole) => Promise<void>;
+  signInWithGoogle: (role?: UserRole) => Promise<void>;
   demoLogin: (role?: UserRole) => void;
   testLogin: (email: string) => void;
   switchRole: (newRole: UserRole) => void;
@@ -243,31 +243,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Parent-activated student accounts (accountStatus = 'active') also bypass verification
         // All other roles (student, teacher, parent) must verify via Firebase email link
         const allowAutoGen = isSystemGeneratedStudentEmail(email);
-        const allowParentActivated = supaProfile.accountStatus === 'active';
-        const storedRole = (firebaseUser.displayName?.split('|')[1] as UserRole) || (supaProfile.role as UserRole) || _pendingRole || 'student';
 
         // ── Deleted / non-existent account guard ──────────────────────────────
-        // Firebase keeps a cached client session for up to ~1h after the account
-        // is removed server-side. Without this, revisiting in the same browser
-        // restores the stale localStorage profile and the user gets stuck on an
-        // intermediate screen (Set Password / Onboarding) and never reaches the
-        // Landing page. If the DB lookup SUCCEEDED but found no account — and this
-        // isn't an active sign-in/up (which can race a not-yet-written row) nor an
-        // auto-generated @aivorah.student account — sign out cleanly to Landing.
+        // If the DB lookup SUCCEEDED but found NO account, it's one of two things:
+        //   (a) a genuinely deleted account whose Firebase session is still cached
+        //       client-side (must go to Landing), or
+        //   (b) a brand-new signup whose users-row write simply hasn't landed yet
+        //       (must continue to "Check your inbox").
+        // The old timer-based flag was unreliable and sometimes bounced a fresh
+        // signup to Landing. Instead, re-confirm with one delayed re-fetch: a real
+        // deletion stays missing; a signup race finds the row the second time.
         if (
           supaProfile._syncOk === true &&
           supaProfile._accountExists === false &&
-          !allowAutoGen &&
-          !_authActionInProgress
+          !allowAutoGen
         ) {
-          console.log('[Auth] Account no longer exists in DB — signing out to Landing:', email);
-          await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
-          await AsyncStorage.removeItem(PENDING_VERIFY_KEY).catch(() => {});
-          await signOut(auth).catch(() => {});
-          setUser(null);
-          setLoading(false);
-          return;
+          await new Promise((r) => setTimeout(r, 1500));
+          let recheck: Partial<User> & { _syncOk?: boolean; _accountExists?: boolean } = {};
+          try { recheck = await fetchSupabaseProfile(email); } catch {}
+          if (recheck._syncOk === true && recheck._accountExists === false) {
+            // Confirmed missing — genuine deletion. Sign out cleanly to Landing.
+            console.log('[Auth] Account confirmed missing in DB — signing out to Landing:', email);
+            await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
+            await AsyncStorage.removeItem(PENDING_VERIFY_KEY).catch(() => {});
+            await signOut(auth).catch(() => {});
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+          // Account exists now (the signup row landed) — adopt the fresh data.
+          if (recheck._syncOk === true) supaProfile = recheck;
         }
+
+        const allowParentActivated = supaProfile.accountStatus === 'active';
+        const storedRole = (firebaseUser.displayName?.split('|')[1] as UserRole) || (supaProfile.role as UserRole) || _pendingRole || 'student';
 
         // Block first-time Google SSO users until they click the Aivorah verification link.
         // Google users always have firebaseUser.emailVerified = true, so we can't rely on that.
@@ -456,8 +465,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
-  async function signInWithEmail(email: string, password: string, role: UserRole) {
-    _pendingRole = role; _pendingRoleSet = true;
+  async function signInWithEmail(email: string, password: string) {
     markAuthAction();
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
@@ -487,21 +495,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const name = profile.name || cred.user.displayName?.split('|')[0] || cred.user.displayName || '';
-      const resolvedRole: UserRole = (profile.role as UserRole) || role;
-
-      // Validate that the selected role matches the registered role(s)
-      // Allow teacher+parent dual-role users to login with either role
-      const registeredRoles: UserRole[] = Array.isArray(profile.roles) && profile.roles.length > 0
-        ? profile.roles as UserRole[]
-        : [resolvedRole];
-      if (!registeredRoles.includes(role)) {
-        // Sign out silently in background — don't await so modal stays open to show error
-        signOut(auth).catch(() => {});
-        const registeredLabel = resolvedRole === 'teacher' ? 'Teacher'
-          : resolvedRole === 'parent' ? 'Parent'
-          : 'Student';
-        throw new Error(`This account is registered as a ${registeredLabel}. Please select the correct role and try again.`);
-      }
+      // Role comes straight from the account — at sign-in we never ask the user to
+      // declare it, so there's no "wrong role" rejection. _pendingRoleSet=false makes
+      // onAuthStateChanged skip its role-validation pass.
+      const resolvedRole: UserRole = (profile.role as UserRole) || 'student';
+      _pendingRole = resolvedRole; _pendingRoleSet = false;
 
       const isParentCreatedStudent = allowAutoGen && resolvedRole === 'student';
       const onboardingComplete =
@@ -511,7 +509,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (profile.onboardingComplete !== false && savedLocal.onboardingComplete === true);
 
       // Legacy: activate old pending_verification accounts on first verified login
-      if (cred.user.emailVerified && role === 'student' && profile.accountStatus === 'pending_verification') {
+      if (cred.user.emailVerified && resolvedRole === 'student' && profile.accountStatus === 'pending_verification') {
         fetch(`${SERVER_URL}/parent/children/activate-verified`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -655,8 +653,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function signInWithGoogle(role: UserRole) {
-    _pendingRole = role; _pendingRoleSet = true;
+  async function signInWithGoogle(role?: UserRole) {
+    // `role` is the chip selection. It only assigns a role to a BRAND-NEW account;
+    // a returning user's role always comes from the DB.
+    if (role) _pendingRole = role;
+    // Google NEVER runs onAuthStateChanged's role-validation: returning users use
+    // their stored role, new users have none to conflict with. Set this false up
+    // front (not after the async popup) so validation can't race ahead and show the
+    // old "This account is registered as a Student" error.
+    _pendingRoleSet = false;
     markAuthAction();
     if (Platform.OS === 'web') {
       try {
@@ -676,33 +681,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch {}
 
-        // Validate selected role matches registered role(s) for existing accounts
         const existingRole = profile.role as UserRole | undefined;
+
+        // NEW Google user with no role → came from the LOGIN modal (sign-in needs no
+        // role). We can't create an account without a role, so clear the transient
+        // Google session (prevents the deleted-account guard firing) and bounce them
+        // to the Sign-Up modal to choose a role.
+        if (!existingRole && !role) {
+          await signOut(auth).catch(() => {});
+          throw new Error(`NEW_GOOGLE_USER:${email}`);
+        }
+
+        // EXISTING account → always sign in with the STORED role. The role chip is
+        // ignored for returning users (they just tap Google). The single exception is
+        // the dual-profile case: a Teacher who explicitly picks "Parent" is offered
+        // to add a Parent profile. No "wrong role" rejection — a returning user can
+        // never be locked out by which chip happened to be selected.
         if (existingRole) {
+          // Returning user → ignore the role chip; the stored role is used. The one
+          // exception: a Teacher explicitly picking "Parent" → offer a Parent profile.
           const registeredRoles: UserRole[] = Array.isArray(profile.roles) && profile.roles.length > 0
             ? profile.roles as UserRole[]
             : [existingRole];
-          if (!registeredRoles.includes(role)) {
-            // Teacher signing in as Parent via Google SSO → offer to club profiles
-            // Do NOT sign out — keep the Google session alive so addParentRoleToTeacherSSO works
-            if (existingRole === 'teacher' && role === 'parent') {
-              throw new Error(`TEACHER_ADD_PARENT:${email}`);
-            }
-            // All other mismatches — sign out and show error
-            signOut(auth).catch(() => {});
-            const registeredLabel = existingRole === 'teacher' ? 'Teacher'
-              : existingRole === 'parent' ? 'Parent'
-              : 'Student';
-            throw new Error(`This account is registered as a ${registeredLabel}. Please select the correct role and try again.`);
+          if (role === 'parent' && existingRole === 'teacher' && !registeredRoles.includes('parent')) {
+            throw new Error(`TEACHER_ADD_PARENT:${email}`);
           }
         }
+
+        // Returning → stored role; brand-new signup → the role chosen BEFORE the tap.
+        // Because the role is known before account creation, there's never an
+        // "authenticated but account-less" window — so the core routing/guard is
+        // untouched by this flow.
+        const effectiveRole: UserRole = existingRole || role || 'student';
 
         const onboardingComplete =
           profile.onboardingComplete === true ||
           savedLocal.onboardingComplete === true;
         const newUser: User = {
-          name, email, role,
-          roles:              Array.isArray(profile.roles) ? profile.roles as UserRole[] : [role],
+          name, email, role: effectiveRole,
+          roles:              Array.isArray(profile.roles) ? profile.roles as UserRole[] : [effectiveRole],
           grade:              profile.grade      || undefined,
           curriculum:         profile.curriculum || undefined,
           school:             profile.school     || undefined,
@@ -721,7 +738,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Sync user to Supabase first so user_preferences row exists for token storage
           await fetch(`${SERVER_URL}/user/sync`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, role }),
+            body: JSON.stringify({ name, email, role: effectiveRole }),
           }).catch(() => {});
 
           // Now send the verification email
@@ -742,7 +759,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           fetch(`${SERVER_URL}/user/sync`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, role }),
+            body: JSON.stringify({ name, email, role: effectiveRole }),
           }).catch(() => {});
         }
       } catch (error: any) {
@@ -758,7 +775,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(message);
       }
     } else {
-      demoLogin(role);
+      demoLogin(role || 'student');
     }
   }
 
