@@ -1,0 +1,42 @@
+# Build-context ignore for `gcloud builds submit`.
+# Keep what the Cloud Run image needs (server code + served data + prebuilt dist2);
+# drop large/raw/local-only files so the upload stays small.
+
+# VCS / tooling
+.git/
+.gitignore
+.gitmodules
+
+# Dependencies (installed in the image via npm ci)
+node_modules/
+**/node_modules/
+
+# Secrets — never upload (also excluded by .dockerignore)
+.env
+server/.env
+**/.env
+
+# Separate Python backend — not part of this Node/Cloud Run image
+backend/
+**/__pycache__/
+
+# Raw ingestion source (2.5GB) — used by local scripts only, never served
+server/data/ncert_books/
+server/data/ncert_jsonl/
+server/data/ncert_image_jsonl/
+server/data/test-screenshots/
+
+# Stale / duplicate build outputs (image uses AIMentorApp/dist2)
+server/dist2/
+server/public/dist2/
+server/public/_expo/
+AIMentorApp/dist/
+AIMentorApp/.expo/
+
+# Logs & local test artifacts (scoped — do NOT touch served server/data/images)
+*.log
+/*.png
+AIMentorApp/*.png
+/readaloud_*.js
+AIMentorApp/readaloud_*.js
+/qd*.json
