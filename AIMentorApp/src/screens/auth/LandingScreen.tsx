@@ -14,9 +14,10 @@ import {
   Animated,
   Easing,
   Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import Svg, { Path, Circle, Defs, LinearGradient as SvgGrad, Stop, Rect } from 'react-native-svg';
+import Svg, { Path, Defs, LinearGradient as SvgGrad, Stop, Rect } from 'react-native-svg';
 import { useAuth, UserRole } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import SERVER_URL from '../../config/serverUrl';
@@ -25,18 +26,32 @@ import SERVER_URL from '../../config/serverUrl';
 // Constants
 // ─────────────────────────────────────────────────────────
 // ── Enchanting Forest palette ─────────────────────────────
-const BG        = '#0F0F0F';          // true black
-const CARD      = '#1C1C1C';          // dark card
-const BORDER    = 'rgba(195,220,216,0.16)'; // subtle teal border
-const MUTED     = '#A8B5B3';          // muted sage
-const DIM       = '#5A6B69';          // dark sage
-const FORE      = '#F0EEEC';          // warm off-white
-const CYAN      = '#93B0AC';          // sage teal (primary)
-const BLUE      = '#5F8A86';          // slate teal (darker)
-const GREEN     = '#5A8A70';          // forest green
-const AMBER     = '#C5BD96';          // khaki gold
-const RED       = '#B8797E';          // muted rose
-const PURPLE    = '#D4A898';          // warm peach
+const BG        = '#050705';
+const CARD      = '#101510';
+const SURFACE   = '#151D17';
+const BORDER    = 'rgba(197,255,218,0.18)';
+const MUTED     = '#B6C7B9';
+const DIM       = '#728173';
+const FORE      = '#F5F7F0';
+const CYAN      = '#B7F2C7';
+const BLUE      = '#6FAF91';
+const GREEN     = '#8FE6AE';
+const AMBER     = '#F4B84A';
+const RED       = '#E07F7F';
+const PURPLE    = '#E8C77A';
+
+// ── Lovable landing design palette (sage + gold on near-black) ────────────
+// Kept separate from the shared tokens above so the auth modals stay untouched.
+const LBG     = '#0B0B0B';
+const LSURF   = '#141414';
+const LSURF2  = '#101010';
+const LLINE   = 'rgba(245,243,238,0.08)';
+const LLINE2  = 'rgba(245,243,238,0.14)';
+const LTEXT   = '#F5F3EE';
+const LMUTED  = '#A9B0AC';
+const SAGE    = '#9FB2A4';
+const GOLD    = '#BAA467';
+const SERIF   = Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : 'Georgia';
 
 const { width: WIN_W } = Dimensions.get('window');
 const IS_WEB = Platform.OS === 'web';
@@ -45,9 +60,9 @@ const IS_LARGE = WIN_W >= 900;
 function BackgroundOrbs() {
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
-      <View style={s.bgOrbTop} />
-      <View style={s.bgOrbMid} />
-      <View style={s.bgOrbBottom} />
+      <View style={s.bgWashTop} />
+      <View style={s.bgWashMid} />
+      <View style={s.bgGrid} />
     </View>
   );
 }
@@ -86,19 +101,20 @@ function GradientButton({ label, onPress, style, textStyle, icon, loading }: {
       <Svg style={StyleSheet.absoluteFill as any} width={w} height={h} pointerEvents="none">
         <Defs>
           <SvgGrad id="grad" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#5F8A86" stopOpacity="1" />
-            <Stop offset="1" stopColor="#93B0AC" stopOpacity="1" />
+            <Stop offset="0" stopColor="#8FE6AE" stopOpacity="1" />
+            <Stop offset="0.58" stopColor="#B7F2C7" stopOpacity="1" />
+            <Stop offset="1" stopColor="#F4B84A" stopOpacity="1" />
           </SvgGrad>
         </Defs>
         <Rect x="0" y="0" width={w} height={h} fill="url(#grad)" />
       </Svg>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 24, paddingVertical: 14 }}>
         {loading ? (
-          <ActivityIndicator color="#fff" size="small" />
+          <ActivityIndicator color="#061008" size="small" />
         ) : (
           <>
-            {icon && <Feather name={icon as any} size={15} color="#fff" />}
-            <Text style={[{ fontSize: 15, fontWeight: '600', color: '#fff' }, textStyle]}>{label}</Text>
+            {icon && <Feather name={icon as any} size={15} color="#061008" />}
+            <Text style={[{ fontSize: 15, fontWeight: '700', color: '#061008' }, textStyle]}>{label}</Text>
           </>
         )}
       </View>
@@ -169,18 +185,142 @@ function RoleChips({ selected, onSelect }: { selected: UserRole; onSelect: (r: U
 // Auth Modal shell
 // ─────────────────────────────────────────────────────────
 function AuthModal({ visible, onClose, children }: { visible: boolean; onClose: () => void; children: React.ReactNode }) {
+  // Live viewport height — cap the modal body so it never spills past the screen
+  // (e.g. short Mac windows). The body scrolls within this cap; the close button
+  // stays pinned outside the scroll area so it's always reachable.
+  const { height: winH } = useWindowDimensions();
+  // Subtract overlay + modal chrome (~padding) so the whole card fits on screen,
+  // with a sensible floor for very short windows.
+  const bodyMaxHeight = Math.max(320, winH - 112);
   if (!visible) return null;
   return (
     <View style={s.overlay}>
       <TouchableOpacity activeOpacity={1} style={s.overlayBg} onPress={onClose} />
-      <View style={s.modal}>
+      <View style={[s.modal, { maxHeight: winH - 40 }]}>
         <TouchableOpacity style={s.modalClose} onPress={onClose}>
           <Feather name="x" size={18} color={MUTED} />
         </TouchableOpacity>
-        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ maxHeight: WIN_W < 400 ? 560 : undefined }}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={{ maxHeight: bodyMaxHeight }}
+          contentContainerStyle={{ paddingBottom: 4 }}
+        >
           {children}
         </ScrollView>
       </View>
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// Date of birth picker (themed calendar; outputs DD/MM/YYYY)
+// ─────────────────────────────────────────────────────────
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WEEKDAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+function DobPicker({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<'days' | 'years'>('days');
+  const today = new Date();
+  // Parse existing value (DD/MM/YYYY) or default the view to ~10 years ago.
+  const parsed = (() => {
+    const p = value.split('/').map(Number);
+    if (p.length === 3 && p[0] && p[1] && p[2]) return { d: p[0], m: p[1] - 1, y: p[2] };
+    return null;
+  })();
+  const [view, setView] = useState({ y: parsed ? parsed.y : today.getFullYear() - 10, m: parsed ? parsed.m : 0 });
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const selDay = parsed ? parsed.d : null;
+  const selMonth = parsed ? parsed.m : null;
+  const selYear = parsed ? parsed.y : null;
+
+  function pick(d: number) {
+    onChange(`${pad(d)}/${pad(view.m + 1)}/${view.y}`);
+    setOpen(false);
+  }
+  function shiftMonth(delta: number) {
+    let m = view.m + delta, y = view.y;
+    if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; }
+    setView({ y, m });
+  }
+  function shiftYear(delta: number) {
+    setView(v => ({ ...v, y: Math.min(today.getFullYear(), Math.max(1950, v.y + delta)) }));
+  }
+
+  const firstDay = new Date(view.y, view.m, 1).getDay();
+  const daysInMonth = new Date(view.y, view.m + 1, 0).getDate();
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  const years: number[] = [];
+  for (let y = today.getFullYear(); y >= 1950; y--) years.push(y);
+
+  const displayText = parsed ? `${pad(parsed.d)} ${MONTH_NAMES[parsed.m].slice(0,3)} ${parsed.y}` : 'Select your date of birth';
+
+  return (
+    <View style={{ marginBottom: 18, zIndex: open ? 50 : 1 }}>
+      <Text style={s.formLabel}>{label}</Text>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={[s.inputWrap, open && { borderColor: CYAN }]}
+        onPress={() => { setOpen(o => !o); setMode('days'); }}
+      >
+        <Text style={[s.input, { color: parsed ? FORE : DIM }]}>{displayText}</Text>
+        <Feather name="calendar" size={15} color={DIM} />
+      </TouchableOpacity>
+
+      {open && (
+        <View style={s.dobCal}>
+          {/* Header */}
+          <View style={s.dobHead}>
+            <View style={s.dobNavGroup}>
+              <TouchableOpacity onPress={() => shiftYear(-1)} style={s.dobNav}><Feather name="chevrons-left" size={16} color={FORE} /></TouchableOpacity>
+              <TouchableOpacity onPress={() => shiftMonth(-1)} style={s.dobNav}><Feather name="chevron-left" size={16} color={FORE} /></TouchableOpacity>
+            </View>
+            <TouchableOpacity onPress={() => setMode(mode === 'years' ? 'days' : 'years')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={s.dobHeadLabel}>{MONTH_NAMES[view.m]} {view.y}</Text>
+              <Feather name="chevron-down" size={14} color={MUTED} />
+            </TouchableOpacity>
+            <View style={s.dobNavGroup}>
+              <TouchableOpacity onPress={() => shiftMonth(1)} style={s.dobNav}><Feather name="chevron-right" size={16} color={FORE} /></TouchableOpacity>
+              <TouchableOpacity onPress={() => shiftYear(1)} style={s.dobNav}><Feather name="chevrons-right" size={16} color={FORE} /></TouchableOpacity>
+            </View>
+          </View>
+
+          {mode === 'years' ? (
+            <ScrollView style={{ maxHeight: 200 }}>
+              <View style={s.dobYearGrid}>
+                {years.map(y => (
+                  <TouchableOpacity key={y} style={[s.dobYear, y === view.y && s.dobSel]} onPress={() => { setView(v => ({ ...v, y })); setMode('days'); }}>
+                    <Text style={[s.dobYearTxt, y === view.y && { color: '#0b0b0b', fontWeight: '700' }]}>{y}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          ) : (
+            <>
+              <View style={s.dobDow}>
+                {WEEKDAYS.map(w => <Text key={w} style={s.dobDowTxt}>{w}</Text>)}
+              </View>
+              <View style={s.dobGrid}>
+                {cells.map((d, i) => {
+                  if (d === null) return <View key={`e${i}`} style={s.dobCell} />;
+                  const isFuture = new Date(view.y, view.m, d) > today;
+                  const isSel = d === selDay && view.m === selMonth && view.y === selYear;
+                  return (
+                    <TouchableOpacity key={d} disabled={isFuture} style={[s.dobCell, isSel && s.dobSel]} onPress={() => pick(d)}>
+                      <Text style={[s.dobCellTxt, isFuture && { color: DIM, opacity: 0.4 }, isSel && { color: '#0b0b0b', fontWeight: '700' }]}>{d}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -220,13 +360,13 @@ function FormInput({ label, value, onChange, placeholder, secureTextEntry, keybo
 // ─────────────────────────────────────────────────────────
 function LoginModal({ visible, onClose, onSwitchSignup, onSwitchForgot, signInEmail, signInGoogle, addParentRoleSSO, externalError, onClearExternalError }: {
   visible: boolean; onClose: () => void; onSwitchSignup: () => void; onSwitchForgot: () => void;
-  signInEmail: (email: string, pass: string, role: UserRole) => Promise<void>;
-  signInGoogle: (role: UserRole) => Promise<void>;
+  signInEmail: (email: string, pass: string) => Promise<void>;
+  signInGoogle: (role?: UserRole) => Promise<void>;
   addParentRoleSSO: (email: string) => Promise<void>;
   externalError?: string | null;
   onClearExternalError?: () => void;
 }) {
-  const [role, setRole] = useState<UserRole>('student');
+  // Sign-in needs NO role — returning users' role comes from their account.
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -246,7 +386,7 @@ function LoginModal({ visible, onClose, onSwitchSignup, onSwitchForgot, signInEm
     const passTrim = pass.replace(/\s+/g, '');
     if (!emailTrim || !passTrim) { setError('Please fill in all fields.'); return; }
     setLoading(true);
-    try { await signInEmail(emailTrim, passTrim, role); onClose(); }
+    try { await signInEmail(emailTrim, passTrim); onClose(); }
     catch (e: any) { 
       setError(e.message || 'Something went wrong. Please try again.'); 
     }
@@ -256,8 +396,15 @@ function LoginModal({ visible, onClose, onSwitchSignup, onSwitchForgot, signInEm
   async function googleSignIn() {
     setError('');
     setGoogleLoading(true);
-    try { await signInGoogle(role); onClose(); }
+    try { await signInGoogle(); onClose(); }   // no role — returning user uses their stored role
     catch (e: any) {
+      // Brand-new Google user used the "Welcome back" modal → send them to Sign-Up
+      // to pick a role. Returning users never hit this (they have a stored role).
+      if (e.message?.startsWith('NEW_GOOGLE_USER:')) {
+        setGoogleLoading(false);
+        onSwitchSignup();
+        return;
+      }
       if (e.message?.startsWith('TEACHER_ADD_PARENT:')) {
         const teacherEmail = e.message.replace('TEACHER_ADD_PARENT:', '');
         setGoogleLoading(false);
@@ -288,8 +435,6 @@ function LoginModal({ visible, onClose, onSwitchSignup, onSwitchForgot, signInEm
     <AuthModal visible={visible} onClose={onClose}>
       <Text style={s.modalTitle}>Welcome back</Text>
       <Text style={s.modalSubtitle}>Sign in to your Aivorah account</Text>
-
-      <RoleChips selected={role} onSelect={setRole} />
 
       <TouchableOpacity style={s.googleBtn} onPress={googleSignIn} activeOpacity={0.85}>
         {googleLoading ? <ActivityIndicator size="small" color="#3c4043" /> : <GoogleIcon />}
@@ -387,6 +532,14 @@ function SignupModal({ visible, onClose, onSwitchLogin, signUpEmail, signInGoogl
     setLoading(true);
     try {
       await signUpEmail(nameTrim, emailTrim, pass, role, showCurriculum ? curriculum : undefined);
+      // Persist the student's date of birth (collected here, not in onboarding).
+      if (role === 'student' && dob.trim()) {
+        fetch(`${SERVER_URL}/user/preferences`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailTrim.toLowerCase(), role: 'student', dob: dob.trim() }),
+        }).catch(() => {});
+      }
       onClose();
     } catch (e: any) {
       // Teacher trying to sign up as Parent → offer to add Parent profile
@@ -486,26 +639,27 @@ function SignupModal({ visible, onClose, onSwitchLogin, signUpEmail, signInGoogl
   return (
     <AuthModal visible={visible} onClose={onClose}>
       <Text style={s.modalTitle}>Create your account</Text>
-      <Text style={s.modalSubtitle}>Start learning with Aivorah — it's free forever</Text>
 
-      <TouchableOpacity style={s.googleBtn} onPress={googleSignIn} activeOpacity={0.85}>
-        {googleLoading ? <ActivityIndicator size="small" color="#3c4043" /> : <GoogleIcon />}
-        <Text style={s.googleBtnText}>Sign up with Google</Text>
-      </TouchableOpacity>
-
-      <View style={s.divider}><View style={s.divLine} /><Text style={s.divText}>or continue with email</Text><View style={s.divLine} /></View>
-
+      {/* Role FIRST — chosen before Google SSO (and used for email signup too) */}
+      <Text style={[s.formLabel, { marginBottom: 8 }]}>I'm creating an account as</Text>
       <RoleChips selected={role} onSelect={r => { setRole(r); setError(''); setDob(''); }} />
 
       {/* Under-14 notice — shown when student role selected */}
       {role === 'student' && (
-        <View style={{ backgroundColor: '#38bdf818', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#38bdf840', marginBottom: 14 }}>
-          <Text style={{ color: '#38bdf8', fontSize: 12, lineHeight: 18 }}>
+        <View style={{ backgroundColor: '#0B0B0B', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: 'rgba(186,164,103,0.45)', marginTop: 12, marginBottom: 4 }}>
+          <Text style={{ color: GOLD, fontSize: 12, lineHeight: 18 }}>
             Students aged 14 and above can register here.{'\n'}
             If you are under 14, ask your parent or teacher to create your account.
           </Text>
         </View>
       )}
+
+      <TouchableOpacity style={[s.googleBtn, { marginTop: 16 }]} onPress={googleSignIn} activeOpacity={0.85}>
+        {googleLoading ? <ActivityIndicator size="small" color="#3c4043" /> : <GoogleIcon />}
+        <Text style={s.googleBtnText}>Sign up with Google</Text>
+      </TouchableOpacity>
+
+      <View style={s.divider}><View style={s.divLine} /><Text style={s.divText}>or continue with email</Text><View style={s.divLine} /></View>
 
       {showCurriculum && (
         <View style={{ marginBottom: 18 }}>
@@ -526,7 +680,7 @@ function SignupModal({ visible, onClose, onSwitchLogin, signUpEmail, signInGoogl
 
       {/* DOB — only for students */}
       {role === 'student' && (
-        <FormInput label="Date of birth" value={dob} onChange={setDob} placeholder="DD/MM/YYYY" keyboardType="numeric" />
+        <DobPicker label="Date of birth" value={dob} onChange={setDob} />
       )}
 
       <View style={{ marginBottom: 6 }}>
@@ -668,14 +822,60 @@ const HOW_IT_WORKS = [
 // ─────────────────────────────────────────────────────────
 export default function LandingScreen() {
   const { colors: c } = useTheme();
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle, demoLogin, testLogin, addParentRoleToTeacher, addParentRoleToTeacherSSO, authError, clearAuthError, logout } = useAuth();
-  const [showTestAccounts, setShowTestAccounts] = useState(false);
-  const [testCurriculum, setTestCurriculum] = useState<'IB PYP' | 'NCERT' | 'CBSE'>('IB PYP');
+  const { signInWithEmail, signUpWithEmail, signInWithGoogle, demoLogin, addParentRoleToTeacher, addParentRoleToTeacherSSO, authError, clearAuthError, logout } = useAuth();
   const [showLogin,    setShowLogin]    = useState(false);
   const [showSignup,   setShowSignup]   = useState(false);
   const [showForgot,   setShowForgot]   = useState(false);
   const [teacherAddParentEmail, setTeacherAddParentEmail] = useState<string | null>(null);
   const [addingParentRole, setAddingParentRole] = useState(false);
+
+  // Open the login modal automatically when arriving with ?signin=1 — used after
+  // email verification when the verify tab wasn't logged in (e.g. link opened in a
+  // different browser/device), so the user can sign in and continue to onboarding.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('signin') === '1') {
+      setShowLogin(true);
+      // Clean the URL so a refresh doesn't keep re-opening it.
+      window.history.replaceState(null, '', '/');
+    }
+  }, []);
+
+  // Hidden demo access for sales/testing (the public buttons were removed).
+  // e.g. localhost:3006/?demo=student | teacher | parent | super_admin
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const d = new URLSearchParams(window.location.search).get('demo');
+    if (d && ['student', 'teacher', 'parent', 'super_admin'].includes(d)) {
+      demoLogin(d as UserRole);
+    }
+  }, []);
+
+  // Load the landing design fonts (Fraunces serif + Inter) once, on web.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    if (document.getElementById('aivorah-landing-fonts')) return;
+    const link = document.createElement('link');
+    link.id = 'aivorah-landing-fonts';
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap';
+    document.head.appendChild(link);
+  }, []);
+
+  // Embedded HTML landing (iframe) → open the REAL Login / Sign-up modal when its
+  // buttons are tapped. The iframe postMessages {type:'aivorah-auth', mode}.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const onMsg = (e: MessageEvent) => {
+      if (e?.data?.type === 'aivorah-auth') {
+        if (e.data.mode === 'login') setShowLogin(true);
+        else setShowSignup(true);
+      }
+    };
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
 
   // Re-open login modal when authError is set (e.g. Google SSO role mismatch)
   useEffect(() => {
@@ -788,7 +988,16 @@ export default function LandingScreen() {
   function openSignupWithRole(_role: UserRole) { setShowSignup(true); }
 
   return (
-    <View style={{ flex: 1, backgroundColor: BG }}>
+    <View style={{ flex: 1, backgroundColor: LBG }}>
+      {/* WEB: embed the exact HTML design; its buttons postMessage to open our modal */}
+      {IS_WEB && React.createElement('iframe', {
+        src: '/landing.html',
+        title: 'Aivorah — AI-Powered Adaptive Learning',
+        style: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', display: 'block' },
+      })}
+      {/* NATIVE fallback: the React-Native landing */}
+      {!IS_WEB && (
+      <>
       <BackgroundOrbs />
 
       {/* ── STICKY NAVBAR ─────────────────────────────── */}
@@ -797,7 +1006,7 @@ export default function LandingScreen() {
           {/* Brand */}
           <View style={s.navBrand}>
             <View style={s.navLogoBox}>
-              <Feather name="zap" size={18} color={CYAN} />
+              <Text style={s.navLogoMark}>Æ</Text>
             </View>
             <Text style={s.navBrandText}>Aivorah</Text>
           </View>
@@ -805,7 +1014,7 @@ export default function LandingScreen() {
           {/* Nav links (desktop only) */}
           {IS_LARGE && (
             <View style={s.navLinks}>
-              {['Features', 'About', 'Contact'].map(l => (
+              {['Features', 'How It Works', 'Platform', 'Schools', 'About'].map(l => (
                 <TouchableOpacity key={l} onPress={() => scrollToSection(l)} activeOpacity={0.7}>
                   <Text style={s.navLink}>{l}</Text>
                 </TouchableOpacity>
@@ -813,10 +1022,10 @@ export default function LandingScreen() {
             </View>
           )}
 
-          {/* Actions */}
+          {/* Actions — wired to our EXISTING auth modals (untouched) */}
           <View style={s.navActions}>
             <GhostButton label="Login" onPress={() => setShowLogin(true)} />
-            <GradientButton label="Get Started" onPress={() => setShowSignup(true)} style={{ paddingHorizontal: 4 }} />
+            <GradientButton label="Join Early Access" onPress={() => setShowSignup(true)} style={{ paddingHorizontal: 4 }} />
           </View>
         </View>
       </View>
@@ -842,19 +1051,19 @@ export default function LandingScreen() {
           ]}
         >
           <View style={s.eyebrow}>
-            <Feather name="star" size={12} color={CYAN} />
-            <Text style={s.eyebrowText}>Built for modern classrooms</Text>
+            <View style={s.eyebrowDot} />
+            <Text style={s.eyebrowText}>Private Beta · India 2026</Text>
           </View>
           <Text style={s.heroTitle}>
-            <Text style={s.gradientText}>AI-Powered</Text>
-            {'\n'}Learning Platform
+            AI-Powered{'\n'}Learning,{'\n'}
+            <Text style={s.gradientText}>for everyone.</Text>
           </Text>
           <Text style={s.heroSub}>
-            Empower your educational journey with intelligent insights, personalized tutoring, and seamless progress tracking for everyone involved.
+            A patient, personalised AI tutor for every student — with real-time classroom insight for teachers and weekly progress for parents.
           </Text>
           <View style={s.heroActions}>
             <GradientButton
-              label="Start Learning Free"
+              label="Get Early Access — Free"
               onPress={() => setShowSignup(true)}
               style={{ paddingHorizontal: 8 }}
               textStyle={{ fontSize: 16 }}
@@ -862,115 +1071,14 @@ export default function LandingScreen() {
             <GhostButton label="Book a Demo" onPress={() => {}} style={{ paddingHorizontal: 24, paddingVertical: 14 }} />
           </View>
 
-          {/* ── DEMO QUICK ACCESS ─── */}
-          <View style={s.demoStrip}>
-            <Text style={s.demoStripLabel}>Quick Demo Access</Text>
-            <View style={s.demoRow}>
-              {([
-                { role: 'student', label: 'Student', icon: 'book-open', color: CYAN },
-                { role: 'teacher', label: 'Teacher', icon: 'users', color: PURPLE },
-                { role: 'parent', label: 'Parent', icon: 'heart', color: GREEN },
-                { role: 'super_admin', label: 'Super Admin', icon: 'shield', color: '#F59E0B' },
-              ] as const).map(d => (
-                <TouchableOpacity
-                  key={d.role}
-                  style={[s.demoBtn, { borderColor: d.color + '60' }]}
-                  onPress={() => demoLogin(d.role)}
-                  activeOpacity={0.8}
-                >
-                  <Feather name={d.icon} size={14} color={d.color} />
-                  <Text style={[s.demoBtnText, { color: d.color }]}>{d.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Test Accounts Expander */}
-            <TouchableOpacity
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, alignSelf: 'center' }}
-              onPress={() => setShowTestAccounts(v => !v)}
-              activeOpacity={0.7}
-            >
-              <Feather name="database" size={12} color={MUTED} />
-              <Text style={{ fontSize: 11, color: MUTED, fontWeight: '600' }}>Test Accounts with Real Data</Text>
-              <Feather name={showTestAccounts ? 'chevron-up' : 'chevron-down'} size={12} color={MUTED} />
-            </TouchableOpacity>
-
-            {showTestAccounts && (
-              <View style={{ marginTop: 10, gap: 8 }}>
-                {/* Curriculum toggle */}
-                <View style={{ flexDirection: 'row', alignSelf: 'center', borderRadius: 20, borderWidth: 1, borderColor: BORDER, overflow: 'hidden' }}>
-                  {(['IB PYP', 'NCERT', 'CBSE'] as const).map(c => (
-                    <TouchableOpacity
-                      key={c}
-                      style={{ paddingHorizontal: 14, paddingVertical: 5, backgroundColor: testCurriculum === c ? CYAN + '22' : 'transparent' }}
-                      onPress={() => setTestCurriculum(c)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: testCurriculum === c ? CYAN : DIM }}>
-                        {c}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                {({
-                  'IB PYP': [
-                    { label: 'Students', color: CYAN, accounts: [
-                      { name: 'Anaya Reddy',  email: 'anaya@aivorah.ai', sub: 'Grade 4 · IB PYP · DEMO' },
-                      { name: 'Aanya Kapoor', email: 'aanya@test.ai',    sub: 'Grade 3 · IB PYP' },
-                      { name: 'Ishaan Mehta', email: 'ishaan@test.ai',   sub: 'Grade 4 · IB PYP' },
-                      { name: 'Rohan Patel',  email: 'rohan@test.ai',    sub: 'Grade 5 · IB PYP' },
-                      { name: 'Diya Sharma',  email: 'diya@test.ai',     sub: 'Grade 3 · IB PYP' },
-                    ]},
-                    { label: 'Teachers', color: PURPLE, accounts: [
-                      { name: 'Priya Kapoor',     email: 'priya.k@test.ai', sub: 'Teacher of Anaya · Grade 4 IB PYP' },
-                      { name: 'Ms. Anjali Kumar', email: 'anjali@test.ai',  sub: 'Teacher of Ishaan & Rohan · Grade 4 & 5' },
-                      { name: 'Vikram Sharma',    email: 'vikram@test.ai',  sub: 'Teacher of Diya · Grade 3 & 4' },
-                    ]},
-                    { label: 'Parents', color: GREEN, accounts: [
-                      { name: 'Meera Reddy',  email: 'meera.reddy@aivorah.ai', sub: 'Parent of Anaya · DEMO' },
-                      { name: 'Suresh Mehta', email: 'suresh@test.ai',         sub: 'Parent of Ishaan' },
-                      { name: 'Deepa Patel',  email: 'deepa@test.ai',          sub: 'Parent of Rohan' },
-                    ]},
-                  ],
-                  'NCERT': [
-                    { label: 'Students', color: AMBER, accounts: [
-                      { name: 'Arjun Sharma', email: 'arjun@test.ai', sub: 'Grade 3 · NCERT' },
-                      { name: 'Priya Nair',   email: 'priya@test.ai', sub: 'Grade 3 · NCERT' },
-                      { name: 'Kavya Reddy',  email: 'kavya@test.ai', sub: 'Grade 5 · NCERT' },
-                    ]},
-                  ],
-                  'CBSE': [
-                    { label: 'Students', color: CYAN, accounts: [
-                      { name: 'Tanvi Gupta',  email: 'tanvi@test.ai',  sub: 'Grade 3 · CBSE' },
-                      { name: 'Meera Joshi',  email: 'meera@test.ai',  sub: 'Grade 4 · CBSE' },
-                      { name: 'Vivaan Kumar', email: 'vivaan@test.ai', sub: 'Grade 5 · CBSE' },
-                      { name: 'Aarav Singh',  email: 'aarav@test.ai',  sub: 'Grade 6 · CBSE' },
-                    ]},
-                  ],
-                }[testCurriculum] as { label: string; color: string; accounts: { name: string; email: string; sub: string }[] }[]).map(group => (
-                  <View key={group.label}>
-                    <Text style={{ fontSize: 10, color: group.color, fontWeight: '700', marginBottom: 4, letterSpacing: 0.5 }}>
-                      {group.label.toUpperCase()}
-                    </Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                      {group.accounts.map(acc => (
-                        <TouchableOpacity
-                          key={acc.email}
-                          style={{ backgroundColor: group.color + '12', borderWidth: 1, borderColor: group.color + '40', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, minWidth: 140 }}
-                          onPress={() => testLogin(acc.email)}
-                          activeOpacity={0.8}
-                        >
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: FORE }}>{acc.name}</Text>
-                          <Text style={{ fontSize: 10, color: MUTED, marginTop: 2 }}>{acc.sub}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
+          {/* Trust line — aligned to boards, grounded in NCERT/textbooks */}
+          <View style={s.heroTrust}>
+            <Feather name="shield" size={16} color={SAGE} style={{ marginTop: 2 }} />
+            <Text style={s.heroTrustText}>
+              Aligned to <Text style={{ color: LTEXT, fontWeight: '600' }}>IB, CBSE, ICSE and Cambridge</Text> — content grounded in NCERT and official board textbooks.
+            </Text>
           </View>
+
         </Animated.View>
 
         {/* ── STATS BAR ─────────────────────────────── */}
@@ -1038,7 +1146,7 @@ export default function LandingScreen() {
         </View>
 
         {/* ── HOW IT WORKS ──────────────────────────── */}
-        <View style={[s.section, { backgroundColor: 'rgba(20,24,22,0.88)' }]}>
+        <View style={[s.section, { backgroundColor: 'rgba(15,25,17,0.88)', borderTopWidth: 1, borderBottomWidth: 1, borderColor: 'rgba(244,184,74,0.10)' }]}>
           <Text style={s.sectionTitle}>How It Works</Text>
           <Text style={s.sectionSub}>Get from sign-up to personalized learning in under 3 minutes.</Text>
           <View style={[s.howRow, IS_LARGE && { flexDirection: 'row' }]}>
@@ -1173,6 +1281,8 @@ export default function LandingScreen() {
         </View>
 
       </ScrollView>
+      </>
+      )}
 
       {/* ── LEGAL MODAL ──────────────────────────── */}
       <Modal visible={!!legalModal} transparent animationType="fade" onRequestClose={() => setLegalModal(null)}>
@@ -1226,7 +1336,7 @@ export default function LandingScreen() {
               <Feather name="users" size={26} color={c.primary} />
             </View>
             {/* Title */}
-            <Text style={{ fontSize: 22, fontWeight: '800', color: c.textMain, textAlign: 'center', letterSpacing: -0.3 }}>
+            <Text style={{ fontSize: 22, fontWeight: '800', color: c.textMain, textAlign: 'center', letterSpacing: 0 }}>
               Teacher Account Found
             </Text>
             {/* Body */}
@@ -1276,39 +1386,44 @@ export default function LandingScreen() {
 // ─────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   pageContent: { paddingBottom: 12 },
-  bgOrbTop: {
+  bgWashTop: {
     position: 'absolute',
-    width: 480,
-    height: 480,
-    borderRadius: 240,
-    backgroundColor: 'rgba(195,220,216,0.10)',  // sage mint glow
-    top: -220,
-    left: -160,
-  },
-  bgOrbMid: {
-    position: 'absolute',
-    width: 420,
+    top: 0,
+    left: 0,
+    right: 0,
     height: 420,
-    borderRadius: 210,
-    backgroundColor: 'rgba(239,209,212,0.08)',  // dusty rose glow
-    top: 260,
-    right: -180,
+    backgroundColor: 'rgba(143,230,174,0.08)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(244,184,74,0.10)',
   },
-  bgOrbBottom: {
+  bgWashMid: {
     position: 'absolute',
-    width: 380,
-    height: 380,
-    borderRadius: 190,
-    backgroundColor: 'rgba(197,189,150,0.07)',  // khaki gold glow
-    bottom: 10,
-    left: -120,
+    top: 360,
+    left: 0,
+    right: 0,
+    height: 520,
+    backgroundColor: 'rgba(244,184,74,0.045)',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(197,255,218,0.08)',
+  },
+  bgGrid: {
+    position: 'absolute',
+    top: 72,
+    left: 0,
+    right: 0,
+    height: 620,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(197,255,218,0.06)',
+    opacity: 0.75,
   },
   // ── Navbar
   navbar: {
     height: 72,
     borderBottomWidth: 1,
-    borderBottomColor: BORDER,
-    backgroundColor: 'rgba(15,15,15,0.92)',
+    borderBottomColor: 'rgba(197,255,218,0.14)',
+    backgroundColor: 'rgba(5,7,5,0.94)',
     ...(IS_WEB ? { position: 'sticky', top: 0, zIndex: 100 } as any : {}),
   },
   navInner: {
@@ -1319,19 +1434,20 @@ const s = StyleSheet.create({
     paddingHorizontal: IS_LARGE ? 48 : 20,
   },
   navBrand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  navLogoBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(195,220,216,0.18)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(195,220,216,0.4)' },
-  navBrandText: { fontSize: 20, fontWeight: '700', color: FORE, letterSpacing: -0.3 },
+  navLogoBox: { width: 30, height: 30, borderRadius: 8, backgroundColor: SAGE, alignItems: 'center', justifyContent: 'center' },
+  navLogoMark: { fontFamily: SERIF, fontSize: 16, fontWeight: '600', color: LBG },
+  navBrandText: { fontFamily: SERIF, fontSize: 22, fontWeight: '500', color: LTEXT, letterSpacing: -0.4 },
   navLinks: { flexDirection: 'row', gap: 32 },
   navLink: { fontSize: 14, fontWeight: '500', color: MUTED },
   navActions: { flexDirection: 'row', gap: 12, alignItems: 'center' },
 
-  ghostBtn: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 10, borderWidth: 1, borderColor: BORDER, backgroundColor: 'rgba(195,220,216,0.06)' },
-  ghostBtnText: { fontSize: 14, fontWeight: '500', color: FORE },
+  ghostBtn: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(183,242,199,0.24)', backgroundColor: 'rgba(16,21,16,0.72)' },
+  ghostBtnText: { fontSize: 14, fontWeight: '600', color: CYAN },
 
   // ── Sections
   section: { paddingVertical: 72, paddingHorizontal: IS_LARGE ? 80 : 20 },
 
-  sectionTitle: { fontSize: IS_LARGE ? 36 : 28, fontWeight: '700', color: FORE, textAlign: 'center', marginBottom: 14, letterSpacing: -0.4 },
+  sectionTitle: { fontSize: IS_LARGE ? 36 : 28, fontWeight: '700', color: FORE, textAlign: 'center', marginBottom: 14, letterSpacing: 0 },
   sectionSub: { fontSize: 17, color: MUTED, textAlign: 'center', maxWidth: 600, alignSelf: 'center', lineHeight: 26, marginBottom: 44 },
 
   // ── Hero
@@ -1339,25 +1455,28 @@ const s = StyleSheet.create({
   eyebrow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(195,220,216,0.14)',
+    gap: 10,
+    backgroundColor: 'rgba(245,243,238,0.02)',
     borderWidth: 1,
-    borderColor: 'rgba(195,220,216,0.35)',
+    borderColor: LLINE,
     borderRadius: 999,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 7,
-    marginBottom: 16,
+    marginBottom: 18,
   },
-  eyebrowText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase', color: '#C3DCD8' },
-  heroTitle: { fontSize: IS_LARGE ? 62 : 42, fontWeight: '800', letterSpacing: -1.5, lineHeight: IS_LARGE ? 74 : 52, textAlign: 'center', color: FORE, marginBottom: 22 },
-  gradientText: { color: CYAN },
-  heroSub: { fontSize: IS_LARGE ? 20 : 16, color: MUTED, textAlign: 'center', maxWidth: 680, lineHeight: 28, marginBottom: 36 },
-  heroActions: { flexDirection: 'row', gap: 16, flexWrap: 'wrap', justifyContent: 'center' },
+  eyebrowDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: SAGE },
+  eyebrowText: { fontSize: 11, fontWeight: '500', letterSpacing: 1.6, textTransform: 'uppercase', color: LMUTED },
+  heroTitle: { fontFamily: SERIF, fontSize: IS_LARGE ? 86 : 46, fontWeight: '400', letterSpacing: IS_LARGE ? -3 : -1.5, lineHeight: IS_LARGE ? 88 : 48, textAlign: 'center', color: LTEXT, marginBottom: 24 },
+  gradientText: { color: SAGE, fontStyle: 'italic', fontWeight: '300' },
+  heroSub: { fontSize: IS_LARGE ? 19 : 16, color: LMUTED, textAlign: 'center', maxWidth: 580, lineHeight: 30, marginBottom: 34 },
+  heroActions: { flexDirection: 'row', gap: 12, flexWrap: 'wrap', justifyContent: 'center' },
+  heroTrust: { marginTop: 32, flexDirection: 'row', alignItems: 'flex-start', gap: 12, maxWidth: 560 },
+  heroTrustText: { flex: 1, fontSize: 13.5, color: LMUTED, lineHeight: 20 },
   demoStrip: {
     marginTop: 32, alignItems: 'center', gap: 10, width: '100%', maxWidth: 820,
-    backgroundColor: 'rgba(28,28,28,0.90)', borderRadius: 20,
+    backgroundColor: SURFACE, borderRadius: 8,
     borderWidth: 1, borderColor: BORDER, padding: 20,
-    shadowColor: '#93B0AC', shadowOpacity: 0.08, shadowRadius: 20, shadowOffset: { width: 0, height: 8 },
+    shadowColor: '#8FE6AE', shadowOpacity: 0.08, shadowRadius: 20, shadowOffset: { width: 0, height: 8 },
   },
   demoStripLabel: { fontSize: 11, fontWeight: '700', color: MUTED, letterSpacing: 0.8, textTransform: 'uppercase' },
   demoRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', justifyContent: 'center' },
@@ -1372,40 +1491,40 @@ const s = StyleSheet.create({
   // ── Stats bar
   statsBar: {
     flexDirection: IS_LARGE ? 'row' : 'column',
-    backgroundColor: CARD,
+    backgroundColor: SURFACE,
     borderWidth: 1,
     borderColor: BORDER,
     paddingVertical: IS_LARGE ? 24 : 20,
     paddingHorizontal: IS_LARGE ? 80 : 20,
     gap: IS_LARGE ? 0 : 20,
     marginHorizontal: IS_LARGE ? 32 : 16,
-    borderRadius: 20,
+    borderRadius: 8,
   },
   statItem: { flex: IS_LARGE ? 1 : undefined, flexDirection: 'row', alignItems: 'center', gap: 14, justifyContent: IS_LARGE ? 'center' : 'flex-start', paddingVertical: 4 },
   statDivider: IS_LARGE ? { borderRightWidth: 1, borderRightColor: BORDER } : {},
-  statIconBox: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  statValue: { fontSize: IS_LARGE ? 22 : 20, fontWeight: '800', color: FORE, letterSpacing: -0.5 },
+  statIconBox: { width: 40, height: 40, borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(197,255,218,0.16)' },
+  statValue: { fontSize: IS_LARGE ? 22 : 20, fontWeight: '800', color: FORE, letterSpacing: 0 },
   statLabel: { fontSize: 12, color: MUTED, marginTop: 1 },
 
   // ── Cards grid
   grid3: { gap: 20 },
   grid2: { gap: 20 },
   card: {
-    backgroundColor: 'rgba(28,28,28,0.92)',
+    backgroundColor: 'rgba(16,21,16,0.94)',
     borderWidth: 1,
     borderColor: BORDER,
-    borderRadius: 18,
+    borderRadius: 8,
     padding: 28,
   },
   roleCard: {
-    backgroundColor: 'rgba(28,28,28,0.92)',
+    backgroundColor: 'rgba(16,21,16,0.94)',
     borderWidth: 1,
     borderColor: BORDER,
-    borderRadius: 18,
+    borderRadius: 8,
     padding: 28,
     overflow: 'hidden',
   },
-  cardIconWrap: { width: 52, height: 52, borderRadius: 12, backgroundColor: 'rgba(195,220,216,0.16)', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
+  cardIconWrap: { width: 52, height: 52, borderRadius: 8, backgroundColor: 'rgba(183,242,199,0.13)', borderWidth: 1, borderColor: 'rgba(244,184,74,0.18)', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   cardTitle: { fontSize: 20, fontWeight: '700', color: FORE, marginBottom: 6 },
   roleTagline: { fontSize: 14, fontWeight: '500', marginBottom: 20, lineHeight: 20 },
   cardDesc: { fontSize: 15, color: MUTED, lineHeight: 24 },
@@ -1418,10 +1537,10 @@ const s = StyleSheet.create({
   // ── How it works
   howRow: { gap: 24 },
   howCard: {
-    backgroundColor: 'rgba(28,28,28,0.92)',
+    backgroundColor: 'rgba(16,21,16,0.94)',
     borderWidth: 1,
     borderColor: BORDER,
-    borderRadius: 18,
+    borderRadius: 8,
     padding: 28,
     alignItems: 'flex-start',
     position: 'relative',
@@ -1436,33 +1555,33 @@ const s = StyleSheet.create({
     zIndex: 1,
   },
   howStepBadge: {
-    backgroundColor: 'rgba(195,220,216,0.15)',
-    borderRadius: 99,
+    backgroundColor: 'rgba(244,184,74,0.14)',
+    borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 3,
     marginBottom: 16,
   },
-  howStepNum: { fontSize: 11, fontWeight: '800', color: CYAN, letterSpacing: 0.5 },
-  howIconCircle: { width: 56, height: 56, borderRadius: 14, backgroundColor: 'rgba(195,220,216,0.12)', borderWidth: 1, borderColor: 'rgba(195,220,216,0.28)', alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
+  howStepNum: { fontSize: 11, fontWeight: '800', color: AMBER, letterSpacing: 0.5 },
+  howIconCircle: { width: 56, height: 56, borderRadius: 8, backgroundColor: 'rgba(183,242,199,0.12)', borderWidth: 1, borderColor: 'rgba(244,184,74,0.28)', alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
   howTitle: { fontSize: 18, fontWeight: '700', color: FORE, marginBottom: 10 },
   howDesc: { fontSize: 14, color: MUTED, lineHeight: 22 },
 
   // ── CTA
-  badge: { backgroundColor: 'rgba(195,220,216,0.14)', borderRadius: 99, paddingHorizontal: 14, paddingVertical: 7, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(195,220,216,0.25)' },
-  badgeText: { fontSize: 12, fontWeight: '600', color: '#C3DCD8' },
+  badge: { backgroundColor: 'rgba(183,242,199,0.14)', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(244,184,74,0.25)' },
+  badgeText: { fontSize: 12, fontWeight: '600', color: CYAN },
   ctaCard: {
     borderWidth: 1,
-    borderColor: 'rgba(195,220,216,0.25)',
-    borderRadius: 20,
+    borderColor: 'rgba(244,184,74,0.28)',
+    borderRadius: 8,
     padding: IS_LARGE ? 64 : 36,
     alignItems: 'center',
-    backgroundColor: 'rgba(28,36,32,0.55)',
+    backgroundColor: 'rgba(16,21,16,0.72)',
   },
   ctaTitle: { fontSize: IS_LARGE ? 40 : 28, fontWeight: '700', color: FORE, marginBottom: 14, textAlign: 'center' },
   ctaSub: { fontSize: 18, color: MUTED, marginBottom: 30, textAlign: 'center', lineHeight: 28 },
 
   // ── Footer
-  footer: { borderTopWidth: 1, borderTopColor: BORDER, paddingVertical: 56, paddingHorizontal: IS_LARGE ? 80 : 20, backgroundColor: 'rgba(15,15,15,0.85)' },
+  footer: { borderTopWidth: 1, borderTopColor: BORDER, paddingVertical: 56, paddingHorizontal: IS_LARGE ? 80 : 20, backgroundColor: 'rgba(5,7,5,0.92)' },
   footerTop: { flexDirection: IS_LARGE ? 'row' : 'column', justifyContent: 'space-between', marginBottom: 44 },
   footerBrandText: { fontSize: 18, fontWeight: '700', color: FORE },
   footerBrandDesc: { fontSize: 14, color: MUTED, lineHeight: 22 },
@@ -1474,14 +1593,14 @@ const s = StyleSheet.create({
   // ── Modal
   overlay: { position: 'absolute' as any, top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: WIN_W < 400 ? 12 : 20, paddingVertical: 20 },
   overlayBg: { position: 'absolute' as any, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)' },
-  modal: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 16, padding: WIN_W < 400 ? 18 : 36, width: '100%', maxWidth: 460, alignSelf: 'center', position: 'relative' },
+  modal: { backgroundColor: '#0B0B0B', borderWidth: 1, borderColor: 'rgba(245,243,238,0.12)', borderRadius: 16, padding: WIN_W < 400 ? 18 : 36, width: '100%', maxWidth: 460, alignSelf: 'center', position: 'relative' },
   modalClose: { position: 'absolute', top: 14, right: 14, padding: 6, borderRadius: 6 },
   modalTitle: { fontSize: 24, fontWeight: '700', color: FORE, marginBottom: 6 },
   modalSubtitle: { fontSize: 14, color: MUTED, marginBottom: 24 },
 
   // Role chips
   roleChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 99, borderWidth: 1, borderColor: BORDER },
-  roleChipActive: { borderColor: CYAN, backgroundColor: 'rgba(147,176,172,0.18)' },
+  roleChipActive: { borderColor: CYAN, backgroundColor: 'rgba(183,242,199,0.18)' },
   roleChipText: { fontSize: 13, fontWeight: '500', color: MUTED },
   roleChipTextActive: { color: CYAN },
 
@@ -1497,12 +1616,28 @@ const s = StyleSheet.create({
   // Form
   formLabel: { fontSize: 13, fontWeight: '500', color: '#d4d4d8' },
   inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: BG, borderWidth: 1, borderColor: BORDER, borderRadius: 7, paddingHorizontal: 14, height: 44, marginTop: 6 },
-  input: { flex: 1, fontSize: 14, color: FORE },
+  input: { flex: 1, fontSize: 14, color: FORE, outlineStyle: 'none', outlineWidth: 0 } as any,
+
+  // Date of birth picker
+  dobCal: { position: 'absolute', top: 74, left: 0, right: 0, backgroundColor: '#000000', borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 12, zIndex: 50, shadowColor: '#000', shadowOpacity: 0.6, shadowRadius: 24, shadowOffset: { width: 0, height: 16 }, elevation: 12 } as any,
+  dobHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  dobHeadLabel: { fontSize: 14, fontWeight: '600', color: FORE },
+  dobNavGroup: { flexDirection: 'row', gap: 6 },
+  dobNav: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 8, borderWidth: 1, borderColor: BORDER },
+  dobDow: { flexDirection: 'row' },
+  dobDowTxt: { flex: 1, textAlign: 'center', fontSize: 10.5, color: DIM, paddingVertical: 2 },
+  dobGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  dobCell: { width: `${100 / 7}%`, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 7 } as any,
+  dobCellTxt: { fontSize: 12.5, color: FORE },
+  dobSel: { backgroundColor: CYAN },
+  dobYearGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  dobYear: { width: '25%', paddingVertical: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 7 },
+  dobYearTxt: { fontSize: 13, color: FORE },
 
   errorBox: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(255,92,124,0.08)', borderWidth: 1, borderColor: 'rgba(255,92,124,0.25)', borderRadius: 7, padding: 12, marginBottom: 12 },
   errorText: { fontSize: 12, color: RED, flex: 1 },
 
-  successBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(90,138,112,0.12)', borderWidth: 1, borderColor: 'rgba(90,138,112,0.3)', borderRadius: 7, padding: 14, marginBottom: 16 },
+  successBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(143,230,174,0.12)', borderWidth: 1, borderColor: 'rgba(143,230,174,0.3)', borderRadius: 7, padding: 14, marginBottom: 16 },
   successText: { fontSize: 13, color: GREEN, flex: 1 },
 
   formFooter: { flexDirection: 'row', justifyContent: 'center', marginTop: 18 },

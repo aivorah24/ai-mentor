@@ -65,6 +65,7 @@ const path = require('path');
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true })); // for the founder demo-confirm form POST
 // Serve saved page images and scene images
 app.use('/data/images', express.static(path.join(__dirname, 'data/images')));
 // Serve chapter videos
@@ -120,6 +121,37 @@ app.use('/read-aloud',   lazyRoute('./routes/read-aloud'));
 app.use('/super-admin',  require('./routes/super-admin'));
 
 
+// Public contact / careers form submission (from the marketing landing page)
+const { sendContactEmail } = require('./services/mailer');
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { name, email, message, topic } = req.body || {};
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: 'Name, email and message are required.' });
+    }
+    if (!EMAIL_RE.test(String(email))) {
+      return res.status(400).json({ error: 'Please enter a valid email address.' });
+    }
+    if (String(message).length > 5000) {
+      return res.status(400).json({ error: 'Message is too long.' });
+    }
+    await sendContactEmail({
+      name: String(name).slice(0, 120),
+      email: String(email).slice(0, 200),
+      message: String(message).slice(0, 5000),
+      topic: topic ? String(topic).slice(0, 60) : undefined,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[contact] failed:', err.message);
+    res.status(500).json({ error: 'Could not send your message. Please try again later.' });
+  }
+});
+
+// Demo booking: visitor request → founder secure confirm link → Meet invite
+app.use('/', require('./routes/demo'));
+
 app.get('/health', async (req, res) => {
   try {
     const info = await getCollectionInfo();
@@ -154,6 +186,13 @@ app.use(express.static(FRONTEND_DIR, {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   }
 }));
+// Marketing landing page (the app's LandingScreen embeds this on web; its
+// Login / Early-Access buttons postMessage up to open the real auth modal).
+app.get('/landing.html', (req, res) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.sendFile(path.join(__dirname, 'public/landing.html'));
+});
+
 // SPA fallback — all non-API routes serve index.html
 app.get('*', (req, res) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
