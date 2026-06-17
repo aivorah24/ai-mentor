@@ -33,7 +33,7 @@ function htmlToPlainText(html) {
 }
 
 // ── Send email (Resend primary, Gmail fallback) ─────────────────────────────
-async function sendEmail({ to, subject, html }, retries = 3) {
+async function sendEmail({ to, subject, html, replyTo, attachments }, retries = 3) {
   const text = htmlToPlainText(html);
 
   // Try Resend first
@@ -46,6 +46,8 @@ async function sendEmail({ to, subject, html }, retries = 3) {
           subject,
           html,
           text,
+          ...(replyTo ? { replyTo } : {}),
+          ...(attachments ? { attachments: attachments.map(a => ({ filename: a.filename, content: a.content })) } : {}),
         });
         if (error) throw new Error(error.message);
         console.log(`[mailer:resend] Sent to ${to} (attempt ${attempt}), id: ${data?.id}`);
@@ -65,7 +67,8 @@ async function sendEmail({ to, subject, html }, retries = 3) {
         const info = await gmailTransporter.sendMail({
           from: `"Aivorah" <${process.env.EMAIL_USER}>`,
           to, subject, html, text,
-          replyTo: `"Aivorah" <${process.env.EMAIL_USER}>`,
+          replyTo: replyTo || `"Aivorah" <${process.env.EMAIL_USER}>`,
+          ...(attachments ? { attachments: attachments.map(a => ({ filename: a.filename, content: a.content, encoding: 'base64', contentType: a.contentType })) } : {}),
         });
         console.log(`[mailer:gmail] Sent to ${to} (attempt ${attempt}), messageId: ${info.messageId}`);
         return info;
@@ -333,4 +336,140 @@ async function sendRecoveryEmailConfirmation({ to, accountEmail, accountName }) 
   }
 }
 
-module.exports = { sendCredentialsEmail, sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendRecoveryEmailConfirmation, sendRecoveryOtpEmail };
+// ── Contact / careers form submission ───────────────────────────────────────
+// Delivers a website contact-form message to the Aivorah inbox. The visitor's
+// email is set as Reply-To so the team can reply directly from their inbox.
+async function sendContactEmail({ name, email, message, topic }) {
+  const inbox = process.env.CONTACT_INBOX || process.env.EMAIL_USER || 'aivorah24@gmail.com';
+  const safe = (s) => String(s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const data = await sendEmail({
+    to: inbox,
+    replyTo: email ? `"${String(name || '').replace(/"/g, '')}" <${email}>` : undefined,
+    subject: `New ${topic || 'Contact'} message from ${name || 'website visitor'}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#fff">
+        <div style="background:#7C3AED;border-radius:12px;padding:20px 24px;margin-bottom:24px">
+          <h1 style="margin:0;color:#fff;font-size:20px;font-weight:700">Aivorah</h1>
+          <p style="margin:6px 0 0;color:#e9d5ff;font-size:13px">New ${safe(topic) || 'contact'} message from the website</p>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333">
+          <tr><td style="padding:6px 0;color:#888;width:90px">Name</td><td style="padding:6px 0">${safe(name)}</td></tr>
+          <tr><td style="padding:6px 0;color:#888">Email</td><td style="padding:6px 0"><a href="mailto:${safe(email)}" style="color:#7C3AED">${safe(email)}</a></td></tr>
+          ${topic ? `<tr><td style="padding:6px 0;color:#888">Topic</td><td style="padding:6px 0">${safe(topic)}</td></tr>` : ''}
+        </table>
+        <div style="background:#f7f7f7;border-radius:10px;padding:16px;margin-top:16px;white-space:pre-wrap;line-height:1.6;color:#222">${safe(message)}</div>
+        <p style="font-size:12px;color:#aaa;margin-top:24px;border-top:1px solid #eee;padding-top:12px">
+          Reply directly to this email to respond to ${safe(name) || 'the sender'}.
+        </p>
+      </div>
+    `,
+  });
+  return data;
+}
+
+// ── Demo request: notify the founder with a secure confirm link ──────────────
+async function sendDemoRequestToFounder({ inbox, req, confirmUrl }) {
+  const to = inbox || process.env.CONTACT_INBOX || process.env.EMAIL_USER || 'aivorah24@gmail.com';
+  const safe = (s) => String(s || '—').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const row = (k, v) => `<tr><td style="padding:6px 0;color:#888;width:140px;vertical-align:top">${k}</td><td style="padding:6px 0;color:#222">${safe(v)}</td></tr>`;
+  return sendEmail({
+    to,
+    replyTo: req.email ? `"${String(req.name || '').replace(/"/g, '')}" <${req.email}>` : undefined,
+    subject: `New demo request — ${req.name || 'Unknown'}${req.school ? ' · ' + req.school : ''}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:580px;margin:0 auto;padding:24px;background:#fff">
+        <div style="background:#7C3AED;border-radius:12px;padding:20px 24px;margin-bottom:24px">
+          <h1 style="margin:0;color:#fff;font-size:20px;font-weight:700">Aivorah</h1>
+          <p style="margin:6px 0 0;color:#e9d5ff;font-size:13px">New demo request</p>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          ${row('Name', req.name)}
+          ${row('Email', req.email)}
+          ${row('School / org', req.school)}
+          ${row('Role', req.role)}
+          ${row('No. of students', req.team_size)}
+          ${row('Preferred times', req.preferred_times)}
+        </table>
+        ${req.message ? `<div style="background:#f7f7f7;border-radius:10px;padding:14px;margin-top:14px;white-space:pre-wrap;line-height:1.6;color:#222">${safe(req.message)}</div>` : ''}
+        <div style="text-align:center;margin:28px 0 8px">
+          <a href="${confirmUrl}" style="display:inline-block;background:#7C3AED;color:#fff;text-decoration:none;padding:13px 30px;border-radius:10px;font-size:15px;font-weight:700">
+            Review &amp; confirm a time
+          </a>
+        </div>
+        <p style="font-size:12px;color:#aaa;text-align:center;margin-top:8px">
+          Opening this link lets you set the meeting time and send the visitor a Google Meet invite.
+        </p>
+      </div>
+    `,
+  });
+}
+
+// ── Demo confirmation: send the visitor their Meet invite ────────────────────
+async function sendDemoConfirmation({ to, name, whenText, meetLink, founderEmail, icsContent }) {
+  if (!to) return;
+  const safe = (s) => String(s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const attachments = icsContent
+    ? [{ filename: 'aivorah-demo.ics', content: Buffer.from(icsContent).toString('base64'), contentType: 'text/calendar' }]
+    : undefined;
+  return sendEmail({
+    to,
+    replyTo: founderEmail ? `"Aivorah" <${founderEmail}>` : undefined,
+    subject: 'Your Aivorah demo is confirmed',
+    attachments,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#fff">
+        <div style="background:#7C3AED;border-radius:12px;padding:24px 24px 16px;margin-bottom:24px">
+          <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700">Aivorah</h1>
+          <p style="margin:8px 0 0;color:#e9d5ff;font-size:14px">Your demo is confirmed</p>
+        </div>
+        <p style="font-size:15px;color:#333;margin-bottom:4px">Hi ${safe(name) || 'there'},</p>
+        <p style="font-size:14px;color:#555;line-height:1.6">
+          Thank you for your interest in Aivorah. We're looking forward to showing you around. Here are your demo details:
+        </p>
+        <div style="background:#f5f3ff;border-radius:10px;padding:20px;margin:20px 0;border:1px solid #ddd6fe">
+          <p style="margin:0 0 10px;font-size:14px;color:#333"><strong>When:</strong> ${safe(whenText)}</p>
+          ${meetLink ? `<p style="margin:0;font-size:14px;color:#333"><strong>Join:</strong> <a href="${meetLink}" style="color:#7C3AED">${safe(meetLink)}</a></p>` : ''}
+        </div>
+        ${meetLink ? `<div style="text-align:center;margin:24px 0">
+          <a href="${meetLink}" style="display:inline-block;background:#7C3AED;color:#fff;text-decoration:none;padding:13px 32px;border-radius:10px;font-size:15px;font-weight:700">Join Google Meet</a>
+        </div>` : ''}
+        <p style="font-size:13px;color:#666;line-height:1.6">
+          A calendar invite is attached. If you need to reschedule, just reply to this email.
+        </p>
+        <p style="font-size:12px;color:#aaa;margin-top:32px;border-top:1px solid #eee;padding-top:16px">
+          Aivorah · Hyderabad, India
+        </p>
+      </div>
+    `,
+  });
+}
+
+// ── Generic email verification OTP (e.g. verifying a child's email) ──────────
+async function sendEmailOtpCode({ to, otp, name }) {
+  if (!to || !otp) return;
+  return sendEmail({
+    to,
+    subject: 'Your Aivorah verification code',
+    html: `
+      <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#fff">
+        <div style="background:#7C3AED;border-radius:12px;padding:24px 24px 16px;margin-bottom:24px">
+          <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700">Aivorah</h1>
+          <p style="margin:8px 0 0;color:#e9d5ff;font-size:14px">Verify your email</p>
+        </div>
+        <p style="font-size:15px;color:#333;margin-bottom:4px">Hi ${name || 'there'},</p>
+        <p style="font-size:14px;color:#555;line-height:1.6">
+          Enter the code below to verify this email address on Aivorah. This code expires in <strong>10 minutes</strong>.
+        </p>
+        <div style="text-align:center;margin:32px 0">
+          <div style="display:inline-block;background:#f5f3ff;border:2px solid #7C3AED;border-radius:16px;padding:20px 48px">
+            <span style="font-size:36px;font-weight:800;color:#7C3AED;letter-spacing:10px">${otp}</span>
+          </div>
+        </div>
+        <p style="font-size:13px;color:#666;line-height:1.6">If you didn't request this, you can safely ignore this email.</p>
+        <p style="font-size:12px;color:#aaa;margin-top:32px;border-top:1px solid #eee;padding-top:16px">Aivorah · Hyderabad, India</p>
+      </div>
+    `,
+  });
+}
+
+module.exports = { sendCredentialsEmail, sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendRecoveryEmailConfirmation, sendRecoveryOtpEmail, sendContactEmail, sendDemoRequestToFounder, sendDemoConfirmation, sendEmailOtpCode };

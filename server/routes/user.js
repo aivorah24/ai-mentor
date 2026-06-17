@@ -437,6 +437,13 @@ router.patch('/preferences', async (req, res) => {
       weeklyReport,
       assignmentAlerts,
       challengeUpdates,
+      // Additional onboarding fields (previously dropped)
+      gender,
+      dob,
+      mobile,
+      phone,
+      state,
+      country,
     } = req.body ?? {};
 
     if (!email) return res.status(400).json({ error: 'email required' });
@@ -467,13 +474,22 @@ router.patch('/preferences', async (req, res) => {
     if (assignmentAlerts != null) patch.assignmentAlerts = Boolean(assignmentAlerts);
     if (challengeUpdates != null) patch.challengeUpdates = Boolean(challengeUpdates);
 
+    // Additional onboarding fields — store in the preferences jsonb so nothing is dropped.
+    if (gender != null)  patch.gender  = String(gender);
+    if (dob != null)     patch.dob     = String(dob);
+    if (state != null)   patch.state   = String(state);
+    if (country != null) patch.country = String(country);
+    const phoneVal = phone ?? mobile;
+    if (phoneVal != null) patch.phone = String(phoneVal);
+
     patch.updatedAt = new Date().toISOString();
     await setPreferences(email, patch);
 
-    // Also persist grade / location to the users table so they survive re-login
+    // Also persist grade / location / phone to the users table so they survive re-login
     const usersPatch = {};
     if (grade != null) usersPatch.grade = String(grade);
     if (location != null) usersPatch.location = String(location);
+    if (phoneVal != null) usersPatch.phone = String(phoneVal);
     if (Object.keys(usersPatch).length > 0) {
       await supabase.from('users').update(usersPatch).eq('email', email.toLowerCase().trim());
     }
@@ -628,6 +644,46 @@ router.get('/role', async (req, res) => {
 
 // In-memory OTP store: key = accountEmail, value = { otp, recoveryEmail, expiresAt }
 const recoveryOtpStore = new Map();
+
+// ── Generic email-verification OTP (used to verify a child's email inline) ────
+const emailOtpStore = new Map(); // key = email, value = { otp, expiresAt }
+
+router.post('/email-otp/send', async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const name = req.body?.name ? String(req.body.name) : 'there';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address.' });
+    }
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    emailOtpStore.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+    const { sendEmailOtpCode } = require('../services/mailer');
+    await sendEmailOtpCode({ to: email, otp, name });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[email-otp/send]', err.message);
+    res.status(500).json({ error: 'Could not send the verification code. Please try again.' });
+  }
+});
+
+router.post('/email-otp/verify', async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const otp = String(req.body?.otp || '').trim();
+    const stored = emailOtpStore.get(email);
+    if (!stored) return res.status(400).json({ error: 'No code requested. Please send a code first.' });
+    if (Date.now() > stored.expiresAt) {
+      emailOtpStore.delete(email);
+      return res.status(400).json({ error: 'Code expired. Please request a new one.' });
+    }
+    if (stored.otp !== otp) return res.status(400).json({ error: 'Incorrect code. Please try again.' });
+    emailOtpStore.delete(email);
+    res.json({ verified: true });
+  } catch (err) {
+    console.error('[email-otp/verify]', err.message);
+    res.status(500).json({ error: 'Verification failed. Please try again.' });
+  }
+});
 
 // ── POST /user/recovery-email/send-code ──────────────────────
 // Generates a 6-digit OTP and emails it to the recovery address

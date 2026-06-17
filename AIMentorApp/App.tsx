@@ -78,7 +78,18 @@ function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
 
   function goToApp() {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.location.replace('/');
+      // The email link often opens in a DIFFERENT browser context than the one
+      // the user signed up in (e.g. signed up in Incognito, but the link opens in
+      // the normal window; or verified on a different device). In that context this
+      // tab has no Firebase session, so navigating to '/' would just show Landing.
+      // If logged in here → go straight to the app (onboarding). If not → send them
+      // to Landing with the login modal open so they can sign in and continue,
+      // instead of dumping them on a dead-end Landing page.
+      if (auth.currentUser) {
+        window.location.replace('/');
+      } else {
+        window.location.replace('/?signin=1');
+      }
     } else {
       updateUser({ emailVerified: true });
       onComplete();
@@ -303,6 +314,77 @@ const idleStyles = StyleSheet.create({
   logoutBtnText: { fontSize: 14 },
 });
 
+// ─────────────────────────────────────────────────────────
+// Web back-button guard
+// The app navigates via the sidebar, so the browser Back button is an
+// "exit" gesture. Left unhandled it dumps a logged-in user out to a broken
+// state. Instead: while authenticated (dashboard, onboarding, etc.), trap
+// Back and ask for confirmation — Yes → sign out to the Landing page.
+// ─────────────────────────────────────────────────────────
+function WebBackGuard({ children }: { children: React.ReactNode }) {
+  const { user, logout } = useAuth();
+  const { colors: c } = useTheme();
+  const [showConfirm, setShowConfirm] = useState(false);
+  // Only guard the "in-app" screens the user asked for: Dashboard + Onboarding.
+  // Deliberately EXCLUDE the pre-app screens — "Check your inbox" (emailVerified
+  // === false) and Set Password (mustChangePassword) — because the guard's history
+  // manipulation interferes with the verify flow there. Those screens already have
+  // their own "Sign out" links to get back to Landing.
+  const active =
+    Platform.OS === 'web' &&
+    !!user &&
+    user.emailVerified !== false &&
+    user.mustChangePassword !== true;
+
+  useEffect(() => {
+    if (!active || typeof window === 'undefined') return;
+    // Seed a guard entry so the first Back is captured instead of leaving the app.
+    window.history.pushState({ __aivorahGuard: true }, '');
+    const onPop = () => {
+      // Re-seed immediately so we stay on the current screen, then ask.
+      window.history.pushState({ __aivorahGuard: true }, '');
+      setShowConfirm(true);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [active]);
+
+  return (
+    <>
+      {children}
+      {showConfirm && (
+        <Modal transparent animationType="fade" visible onRequestClose={() => setShowConfirm(false)}>
+          <View style={idleStyles.overlay}>
+            <View style={[idleStyles.box, { backgroundColor: c.cardDark, borderColor: c.borderColor }]}>
+              <View style={[idleStyles.iconWrap, { backgroundColor: c.primary + '22' }]}>
+                <Feather name="log-out" size={24} color={c.primary} />
+              </View>
+              <Text style={[idleStyles.title, { color: c.textMain }]}>Return to the home page?</Text>
+              <Text style={[idleStyles.body, { color: c.textMuted }]}>
+                You'll be signed out and taken back to the Aivorah home page.
+              </Text>
+              <TouchableOpacity
+                style={[idleStyles.btn, { backgroundColor: c.primary }]}
+                activeOpacity={0.85}
+                onPress={() => { setShowConfirm(false); logout(); }}
+              >
+                <Text style={idleStyles.btnText}>Yes, go to home page</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[idleStyles.logoutBtn, { borderColor: c.borderColor }]}
+                activeOpacity={0.7}
+                onPress={() => setShowConfirm(false)}
+              >
+                <Text style={[idleStyles.logoutBtnText, { color: c.textMuted }]}>Stay here</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+    </>
+  );
+}
+
 function RootNavigator() {
   const { isAuthenticated, loading, user } = useAuth();
   const { colors: c } = useTheme();
@@ -484,7 +566,9 @@ function ThemedRoot() {
             >
               <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={c.bgDark} />
               <IdleTimeoutGuard>
-                <RootNavigator />
+                <WebBackGuard>
+                  <RootNavigator />
+                </WebBackGuard>
                 <NotificationBannerWrapper />
               </IdleTimeoutGuard>
             </NavigationContainer>
