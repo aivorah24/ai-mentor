@@ -863,6 +863,17 @@ export default function LandingScreen() {
     document.head.appendChild(link);
   }, []);
 
+  // Remove the browser's default body margin so the embedded landing iframe
+  // sits flush to the viewport edges (no thin gaps on the left/right).
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    if (document.getElementById('aivorah-reset')) return;
+    const style = document.createElement('style');
+    style.id = 'aivorah-reset';
+    style.textContent = 'html,body,#root{margin:0!important;padding:0!important;width:100%;overflow-x:hidden;background:#0B0B0B}';
+    document.head.appendChild(style);
+  }, []);
+
   // Embedded HTML landing (iframe) → open the REAL Login / Sign-up modal when its
   // buttons are tapped. The iframe postMessages {type:'aivorah-auth', mode}.
   useEffect(() => {
