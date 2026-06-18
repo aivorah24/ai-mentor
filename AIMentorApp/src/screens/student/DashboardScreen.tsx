@@ -290,6 +290,9 @@ export default function DashboardScreen({ navigation, route }: any) {
   const childCurriculum = childOverride?.curriculum ?? user?.curriculum;
   const isIBPYP = !childCurriculum || childCurriculum.toLowerCase().includes('ib');
   const studentGrade = childOverride?.grade ?? user?.grade ?? 'Grade 3';
+  // Early Years grades have no curriculum content yet — show "coming soon" copy
+  // instead of mock topic counts. (client feedback)
+  const noContentGrade = ['Nursery', 'LKG', 'UKG'].includes(studentGrade);
   const CACHE_KEY = `dashboard_curriculum_${isIBPYP ? 'ibpyp' : 'ncert'}_${studentGrade}_v1`;
   const CACHE_TTL = 5 * 60 * 1000; // 5 min
 
@@ -673,6 +676,7 @@ export default function DashboardScreen({ navigation, route }: any) {
                   <Text style={styles.heroName}>{firstName}</Text>
                   <Text style={styles.heroSub}>
                     {(() => {
+                      if (noContentGrade) return `Content for ${studentGrade} is on the way — we're adding it now!`;
                       const total = curriculum.totalTopics;
                       const done  = completedSet.size;
                       if (done === 0)              return `${total} topics ready for your first sprint.`;
