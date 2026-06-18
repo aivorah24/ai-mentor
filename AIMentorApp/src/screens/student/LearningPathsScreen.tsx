@@ -203,6 +203,10 @@ const IB_PYP_SUBJECTS_BY_GRADE: Record<string, SubjectData[]> = {
   ],
 };
 
+// Grades with no curriculum content ingested yet — show a "coming soon" state
+// instead of falling back to other grades' topics (mock data). (client feedback)
+const NO_CONTENT_GRADES = ['Nursery', 'LKG', 'UKG'];
+
 function buildSubjectsFromTopicBank(topics: CurriculumTopic[]): SubjectData[] {
   const subjectMap: Record<string, TopicItem[]> = {};
   for (const entry of topics) {
@@ -869,6 +873,29 @@ export default function LearningPathsScreen({ navigation }: any) {
           >
             <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Go to Settings</Text>
           </TouchableOpacity>
+        </View>
+      </ScreenLayout>
+    );
+  }
+
+  // No content ingested for this grade yet (e.g. Early Years) — show a polished
+  // "coming soon" message instead of another grade's topics.
+  if (NO_CONTENT_GRADES.includes(grade)) {
+    return (
+      <ScreenLayout>
+        <View style={styles.screen}>
+          <Header title="My Learning Journey" subtitle={`${isCBSE ? 'CBSE' : curriculum} - ${grade}`} onMenuPress={() => navigation.openDrawer()} />
+          <View style={[styles.center, { flex: 1, paddingHorizontal: 28 }]}>
+            <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: colors.primary + '1A', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+              <Feather name="book-open" size={32} color={colors.primary} />
+            </View>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: colors.textMain, textAlign: 'center', marginBottom: 10 }}>
+              Content for {grade} is on the way
+            </Text>
+            <Text style={[styles.dimText, { textAlign: 'center', maxWidth: 440, lineHeight: 21 }]}>
+              We're carefully crafting age-appropriate learning content for {grade}. It will appear here as soon as it's ready. Thank you for your patience!
+            </Text>
+          </View>
         </View>
       </ScreenLayout>
     );
