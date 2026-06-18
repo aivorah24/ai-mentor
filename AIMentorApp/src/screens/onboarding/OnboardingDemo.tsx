@@ -21,7 +21,7 @@ const BRAND40  = '#5F8A8640';
 const OFF      = '#0F1A19';
 
 const GRADES    = ['Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9'];
-const CURRICULA = ['IB PYP','NCERT','CBSE','Cambridge','State Board'];
+const CURRICULA = ['IB PYP','CBSE','ICSE','Cambridge','State Board'];
 const AVATARS   = ['🧑‍🚀','🧑‍💻','🧑‍🎨','🧑‍🔬','🧑‍🏫','🦸'];
 const AVATAR_LABELS = ['Explorer','Scholar','Artist','Scientist','Mentor','Hero'];
 

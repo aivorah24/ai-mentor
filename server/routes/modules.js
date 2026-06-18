@@ -81,8 +81,9 @@ router.post('/math-helper', async (req, res) => {
     const { topic, unit, subject = 'Mathematics', grade = 'Grade 3', curriculum = 'IB PYP', problem, previousProblems = [] } = req.body;
     if (!topic) return res.status(400).json({ error: 'topic is required' });
 
-    // Only fetch textbook context for NCERT topics — IB PYP has no ingested chunks yet
-    const context = curriculum === 'NCERT' ? await getChapterContext(topic) : '';
+    // Fetch textbook context for CBSE/NCERT topics (CBSE follows the NCERT
+    // syllabus, content is tagged NCERT) — IB PYP has no ingested chunks yet.
+    const context = (curriculum === 'NCERT' || curriculum === 'CBSE') ? await getChapterContext(topic) : '';
     const skill   = UNIT_SKILL[unit] || `understanding ${topic}`;
     const gradeNum = (grade.match(/\d+/) || ['3'])[0];
     const ageMap  = { '3': '8-9', '4': '9-10', '5': '10-11' };
