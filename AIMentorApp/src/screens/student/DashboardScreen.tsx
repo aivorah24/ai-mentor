@@ -18,7 +18,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 import { Feather } from '@expo/vector-icons';
 import Svg, { Path, Circle, G, Rect } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -49,43 +49,44 @@ interface CurriculumData {
 
 // ── Enchanting Forest palette ──────────────────────────────
 // Slightly darkened for use as text/icon on white backgrounds
+// Exact landing.html palette: SAGE (#9FB2A4) + GOLD (#BAA467) on #0B0B0B. No purple.
 const BRAND = {
-  teal:   '#5F8A86',   // darkened #93B0AC — primary
-  mint:   '#7AADA8',   // darkened #C3DCD8
-  rose:   '#B8797E',   // darkened #EFD1D4
-  blush:  '#C49098',   // mid-rose
-  gold:   '#8A8358',   // darkened #C5BD96
-  slate:  '#93B0AC',   // direct palette
-  silver: '#9A9898',   // darkened #DBD9DA
-  // Complementary accents for variety
-  violet: '#9B7FD4',   // soft purple complement
-  coral:  '#C47A68',   // warm coral
-  forest: '#5A8A70',   // deep forest green
+  teal:   '#9FB2A4',   // landing --sage (primary)
+  mint:   '#9FB2A4',   // sage
+  rose:   '#C98A8A',   // muted rose (kept for "wrong answer" semantics)
+  blush:  '#C99A9A',   // mid-rose
+  gold:   '#BAA467',   // landing --gold
+  slate:  '#9FB2A4',   // sage
+  silver: '#A9B0AC',   // landing --muted
+  // Accents — sage/gold family (no purples/corals)
+  violet: '#BAA467',   // → gold
+  coral:  '#C9A24E',   // deep gold
+  forest: '#9FB2A4',   // sage
   // Aliases used elsewhere in code
-  indigo: '#5F8A86',
-  violet2: '#9B7FD4',
-  purple: '#9B7FD4',
-  orange: '#C47A68',
-  amber:  '#8A8358',
-  green:  '#5A8A70',
-  cyan:   '#7AADA8',
-  blue:   '#5F8A86',
-  red:    '#B8797E',
-  pink:   '#C49098',
+  indigo: '#9FB2A4',
+  violet2: '#BAA467',  // gold
+  purple: '#BAA467',   // → gold
+  orange: '#C9A24E',   // deep gold
+  amber:  '#BAA467',   // landing GOLD
+  green:  '#9FB2A4',   // sage
+  cyan:   '#9FB2A4',   // sage
+  blue:   '#9FB2A4',
+  red:    '#C98A8A',   // muted rose
+  pink:   '#C98A8A',
 };
-// Enchanting Forest card backgrounds — direct from palette
+// Light-mode pastel card backgrounds — warm cream + sage/gold tints.
 const PASTEL = {
-  blue:   '#E4F0EE',   // lightest sage
-  teal:   '#C3DCD8',   // sage mint (palette)
-  green:  '#D4E8E5',   // light sage
-  orange: '#F0E8D8',   // warm cream-gold
-  yellow: '#EDEAD4',   // khaki cream
-  red:    '#FBE8ED',   // blush (palette)
-  cyan:   '#D4E8E5',   // sage
-  indigo: '#E8F0EE',   // palest sage
-  pink:   '#EFD1D4',   // dusty rose (palette)
-  purple: '#F0DFE2',   // blush-rose
-  silver: '#EBE9EA',   // soft silver-gray
+  blue:   '#E7F1EA',   // pale sage
+  teal:   '#D9EEE0',   // mint tint
+  green:  '#DCEFE2',   // light green
+  orange: '#F4ECD6',   // warm cream-gold
+  yellow: '#F1EAD2',   // gold cream
+  red:    '#F6E2E2',   // soft rose
+  cyan:   '#DEF3E6',   // mint
+  indigo: '#E7F1EA',   // pale sage
+  pink:   '#F2E3D9',   // warm blush
+  purple: '#F1E8D0',   // gold cream (was blush-rose)
+  silver: '#ECEFEA',   // soft sage-gray
 };
 
 const SUBJECT_COLORS: Record<string, string> = {
@@ -204,8 +205,8 @@ function PerformanceBarChart({ topics, color, isDark }: { topics: { label: strin
 function FlameIcon({ size = 16 }: { size?: number }) {
   return (
     <Svg width={size} height={size * 1.25} viewBox="0 0 20 25">
-      <Path d="M10 0C8 3.5 5 7.5 5 12.5C5 17 7.2 20 10 20C12.8 20 15 17 15 12.5C15 7.5 12 3.5 10 0Z" fill="#fb923c" />
-      <Path d="M10 6.5C9 9 7.5 11 7.5 13.5C7.5 15.5 8.5 17 10 17C11.5 17 12.5 15.5 12.5 13.5C12.5 11 11 9 10 6.5Z" fill="#fbbf24" />
+      <Path d="M10 0C8 3.5 5 7.5 5 12.5C5 17 7.2 20 10 20C12.8 20 15 17 15 12.5C15 7.5 12 3.5 10 0Z" fill="#BAA467" />
+      <Path d="M10 6.5C9 9 7.5 11 7.5 13.5C7.5 15.5 8.5 17 10 17C11.5 17 12.5 15.5 12.5 13.5C12.5 11 11 9 10 6.5Z" fill="#D4BE7E" />
     </Svg>
   );
 }
@@ -645,10 +646,8 @@ export default function DashboardScreen({ navigation, route }: any) {
                 transform: [{ translateY: heroAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
               }]}>
                 <LinearGradient
-                  colors={isDark
-                    ? ['#1A2E2C', '#2D5450', '#3D7068']
-                    : ['#5F8A86', '#93B0AC', '#C3DCD8']}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  colors={['#CDEBD7', '#DFF1E5', '#F6E6BE']}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                   style={styles.heroCard}
                 >
                   <HeroDots />
@@ -660,7 +659,7 @@ export default function DashboardScreen({ navigation, route }: any) {
                   {/* Top badges */}
                   <View style={styles.heroBadgeRow}>
                     <View style={styles.levelBadge}>
-                      <Feather name="shield" size={12} color="#fbbf24" />
+                      <Feather name="shield" size={12} color="#BAA467" />
                       <Text style={styles.levelTxt}>{formatLevel(stats.level)}</Text>
                     </View>
                     <View style={styles.streakBadge}>
@@ -1063,8 +1062,8 @@ export default function DashboardScreen({ navigation, route }: any) {
                 <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
                   <TouchableOpacity onPress={() => navigation.navigate('AICoach')} activeOpacity={0.88}>
                     <LinearGradient
-                      colors={isDark ? ['#1A2E2C', '#2D5450', '#3D7068'] : ['#5F8A86', '#93B0AC', '#C3DCD8']}
-                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                      colors={['#CDEBD7', '#DFF1E5', '#F6E6BE']}
+                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                       style={styles.aiBanner}
                     >
                       <View style={styles.aiGlow} />
@@ -1072,7 +1071,7 @@ export default function DashboardScreen({ navigation, route }: any) {
                       <View style={styles.aiAvatarWrap}>
                         <View style={styles.aiAvatarOuter}>
                           <View style={styles.aiAvatarInner}>
-                            <Feather name="cpu" size={22} color="#fff" />
+                            <Feather name="cpu" size={22} color="#0B0B0B" />
                           </View>
                         </View>
                         <View style={styles.aiOnline} />
@@ -1083,7 +1082,7 @@ export default function DashboardScreen({ navigation, route }: any) {
                         <Text style={styles.aiSub}>Maths, Science, any topic — patient & always here.</Text>
                       </View>
                       <View style={styles.aiBannerCta}>
-                        <Feather name="message-circle" size={20} color="rgba(255,255,255,0.9)" />
+                        <Feather name="message-circle" size={20} color="rgba(11,11,11,0.85)" />
                         <Text style={styles.aiBannerCtaTxt}>Chat now</Text>
                       </View>
                     </LinearGradient>
@@ -1236,8 +1235,8 @@ function SectionHeader({ title, sub, onPress, linkLabel }: { title: string; sub?
 
 const makeStyles = (c: AppColors, isMobile: boolean, isDark: boolean) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bgDark },
-  blobTL: { position: 'absolute', top: -180, left: -80,  width: 380, height: 380, borderRadius: 190, backgroundColor: isDark ? 'rgba(147,176,172,0.08)' : 'rgba(195,220,216,0.35)' },
-  blobBR: { position: 'absolute', bottom: -140, right: -80, width: 320, height: 320, borderRadius: 160, backgroundColor: isDark ? 'rgba(239,209,212,0.06)' : 'rgba(239,209,212,0.40)' },
+  blobTL: { display: 'none' },
+  blobBR: { display: 'none' },
 
   scroll:    { flex: 1 },
   scrollPad: { padding: isMobile ? 14 : 20, paddingBottom: 48 },
@@ -1254,33 +1253,34 @@ const makeStyles = (c: AppColors, isMobile: boolean, isDark: boolean) => StyleSh
 
   // ── Hero ──────────────────────────────────────────────
   heroCard: {
-    borderRadius: 24, padding: 20, paddingBottom: 18, overflow: 'hidden', position: 'relative', minHeight: 165,
-    shadowColor: '#93B0AC', shadowOpacity: isDark ? 0.5 : 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 8 },
+    borderRadius: 22, padding: 20, paddingBottom: 18, overflow: 'hidden', position: 'relative', minHeight: 165,
+    borderWidth: 1, borderColor: 'rgba(245,243,238,0.16)',
+    shadowColor: '#000', shadowOpacity: 0.45, shadowRadius: 24, shadowOffset: { width: 0, height: 12 },
   },
-  heroGlowLeft:  { position: 'absolute', left: -60,  top: -60,  width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.12)' },
-  heroGlowRight: { position: 'absolute', right: -50, bottom: -50, width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(197,189,150,0.15)' },
+  heroGlowLeft:  { display: 'none' },
+  heroGlowRight: { display: 'none' },
 
   heroBadgeRow: { flexDirection: 'row', gap: 8, marginBottom: 14, zIndex: 2 },
-  levelBadge:   { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
-  levelTxt:     { fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: 0.2 },
-  streakBadge:  { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(251,146,60,0.22)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(251,146,60,0.38)' },
-  streakTxt:    { fontSize: 10, fontWeight: '700', color: '#fff' },
+  levelBadge:   { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(11,11,11,0.12)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(11,11,11,0.18)' },
+  levelTxt:     { fontSize: 10, fontWeight: '800', color: '#0B0B0B', letterSpacing: 0.2 },
+  streakBadge:  { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(11,11,11,0.12)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(11,11,11,0.18)' },
+  streakTxt:    { fontSize: 10, fontWeight: '700', color: '#0B0B0B' },
 
-  heroGreeting: { fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.82)', zIndex: 1, textTransform: 'uppercase', letterSpacing: 0.5 },
-  heroName:     { fontSize: isMobile ? 28 : 34, fontWeight: '900', color: '#fff', letterSpacing: -1, lineHeight: isMobile ? 32 : 40, marginBottom: 4, zIndex: 1 },
-  heroSub:      { fontSize: 12, color: 'rgba(255,255,255,0.92)', lineHeight: 18, marginBottom: 14, zIndex: 1, maxWidth: '90%' },
+  heroGreeting: { fontSize: 12, fontWeight: '700', color: 'rgba(11,11,11,0.6)', zIndex: 1, textTransform: 'uppercase', letterSpacing: 0.5 },
+  heroName:     { fontFamily: fonts.serif, fontSize: isMobile ? 30 : 38, fontWeight: '500', color: '#0B0B0B', letterSpacing: -0.5, lineHeight: isMobile ? 34 : 44, marginBottom: 4, zIndex: 1 },
+  heroSub:      { fontSize: 12, color: 'rgba(11,11,11,0.78)', fontWeight: '500', lineHeight: 18, marginBottom: 14, zIndex: 1, maxWidth: '90%' },
 
   xpBlock:    { zIndex: 1, marginBottom: 14 },
   xpLabelRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  xpLbl:      { fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.82)' },
-  xpNum:      { fontSize: 10, fontWeight: '800', color: '#fff' },
-  xpTrack:    { height: 8, backgroundColor: 'rgba(255,255,255,0.28)', borderRadius: 4, overflow: 'hidden' },
-  xpFill:     { height: '100%', backgroundColor: '#fff', borderRadius: 4 },
-  xpTotal:    { fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.7)', marginTop: 6 },
+  xpLbl:      { fontSize: 10, fontWeight: '800', color: 'rgba(11,11,11,0.7)' },
+  xpNum:      { fontSize: 10, fontWeight: '800', color: 'rgba(11,11,11,0.7)' },
+  xpTrack:    { height: 8, backgroundColor: 'rgba(11,11,11,0.18)', borderRadius: 4, overflow: 'hidden' },
+  xpFill:     { height: '100%', backgroundColor: '#0B0B0B', borderRadius: 4 },
+  xpTotal:    { fontSize: 10, fontWeight: '700', color: 'rgba(11,11,11,0.62)', marginTop: 6 },
 
-  heroCta:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 16, alignSelf: 'flex-start', zIndex: 1 },
-  heroCtaPlay:  { width: 22, height: 22, borderRadius: 11, backgroundColor: BRAND.indigo + '15', alignItems: 'center', justifyContent: 'center' },
-  heroCtaTxt:   { fontSize: 13, fontWeight: '800', color: BRAND.indigo, flex: 1 },
+  heroCta:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#0B0B0B', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 16, alignSelf: 'flex-start', zIndex: 1 },
+  heroCtaPlay:  { width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  heroCtaTxt:   { fontSize: 13, fontWeight: '800', color: '#fff', flex: 1 },
 
   heroChipOutside: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 12, borderWidth: 1, shadowColor: '#000', shadowOpacity: isDark ? 0.2 : 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
   heroChipDot: { width: 6, height: 6, borderRadius: 3 },
@@ -1424,17 +1424,17 @@ const makeStyles = (c: AppColors, isMobile: boolean, isDark: boolean) => StyleSh
     flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, borderRadius: 22, overflow: 'hidden', position: 'relative',
     shadowColor: '#5F8A86', shadowOpacity: isDark ? 0.5 : 0.3, shadowRadius: 24, shadowOffset: { width: 0, height: 8 },
   },
-  aiGlow:       { position: 'absolute', right: -50, top: -50, width: 170, height: 170, borderRadius: 85, backgroundColor: 'rgba(255,255,255,0.07)' },
+  aiGlow:       { position: 'absolute', right: -50, top: -50, width: 170, height: 170, borderRadius: 85, backgroundColor: 'rgba(11,11,11,0.04)' },
   aiAvatarWrap: { position: 'relative', flexShrink: 0 },
-  aiAvatarOuter:{ width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.28)' },
-  aiAvatarInner:{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
-  aiOnline:     { position: 'absolute', bottom: 2, right: 2, width: 12, height: 12, borderRadius: 6, backgroundColor: BRAND.green, borderWidth: 2, borderColor: 'rgba(0,0,0,0.25)' },
+  aiAvatarOuter:{ width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(11,11,11,0.10)', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(11,11,11,0.18)' },
+  aiAvatarInner:{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(11,11,11,0.08)', alignItems: 'center', justifyContent: 'center' },
+  aiOnline:     { position: 'absolute', bottom: 2, right: 2, width: 12, height: 12, borderRadius: 6, backgroundColor: '#2E7D52', borderWidth: 2, borderColor: 'rgba(255,255,255,0.6)' },
   aiBannerBody: { flex: 1, gap: 2 },
-  aiTag:        { fontSize: 9, fontWeight: '800', color: 'rgba(255,255,255,0.6)', letterSpacing: 1 },
-  aiTitle:      { fontSize: 17, fontWeight: '900', color: '#fff', letterSpacing: -0.3 },
-  aiSub:        { fontSize: 12, color: 'rgba(255,255,255,0.72)', lineHeight: 17 },
+  aiTag:        { fontSize: 9, fontWeight: '800', color: 'rgba(11,11,11,0.55)', letterSpacing: 1 },
+  aiTitle:      { fontSize: 17, fontWeight: '900', color: '#0B0B0B', letterSpacing: -0.3 },
+  aiSub:        { fontSize: 12, color: 'rgba(11,11,11,0.72)', lineHeight: 17 },
   aiBannerCta:  { alignItems: 'center', gap: 4, flexShrink: 0 },
-  aiBannerCtaTxt:{ fontSize: 11, fontWeight: '800', color: 'rgba(255,255,255,0.85)' },
+  aiBannerCtaTxt:{ fontSize: 11, fontWeight: '800', color: 'rgba(11,11,11,0.85)' },
 
   // ── Stats grid ────────────────────────────────────────
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },

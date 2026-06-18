@@ -1,57 +1,58 @@
+// ── Exact landing.html palette (the marketing site = the design reference) ──
+// #0B0B0B base, warm off-white text, muted SAGE + GOLD accents, Fraunces serif.
 export const darkColors = {
-  // True black — Enchanting Forest accents glow on black
-  bgDark: '#0F0F0F',
-  cardDark: '#1C1C1C',
-  cardHover: '#252525',
-  sidebarDark: '#111111',
-  borderColor: 'rgba(195, 220, 216, 0.12)',  // subtle teal border
+  bgDark: '#0B0B0B',        // landing --bg
+  cardDark: '#141414',      // dark card surface
+  cardHover: '#1C1C1C',
+  sidebarDark: '#0B0B0B',   // same as bg (unified)
+  borderColor: 'rgba(245,243,238,0.14)',  // landing --line-strong
 
-  textMain: '#F0EEEC',    // warm off-white (not harsh pure white)
-  textMuted: '#A8B5B3',   // muted sage
-  textDim: '#5A6B69',     // dark sage
+  textMain: '#F5F3EE',      // landing --text
+  textMuted: '#A9B0AC',     // landing --muted
+  textDim: '#6E736B',
 
-  // Primary: sage teal — matches light mode, glows on black
-  primary: '#93B0AC',
-  primaryHover: '#7AADA8',
-  primaryGlow: 'rgba(147, 176, 172, 0.18)',
+  // Primary: sage (landing --sage)
+  primary: '#9FB2A4',
+  primaryHover: '#B2C2B7',
+  primaryGlow: 'rgba(159,178,164,0.14)',   // landing --sage-soft
 
-  // Enchanting Forest accents on black
-  accentBlue: '#C3DCD8',    // sage mint
-  accentPurple: '#EFD1D4',  // dusty rose
-  accentGreen: '#93B0AC',   // slate teal
-  accentYellow: '#C5BD96',  // khaki gold
-  accentRed: '#EFD1D4',     // blush rose
-  accentCyan: '#C3DCD8',    // sage
-  accentOrange: '#D4A898',  // warm peach
-  accentPink: '#EFD1D4',    // dusty rose
+  // Landing accents — sage + gold lead
+  accentBlue: '#9FB2A4',    // sage
+  accentPurple: '#BAA467',  // gold (landing --gold)
+  accentGreen: '#9FB2A4',   // sage
+  accentYellow: '#BAA467',  // gold
+  accentRed: '#C98A8A',     // muted rose
+  accentCyan: '#9FB2A4',    // sage
+  accentOrange: '#C9A24E',  // deep gold
+  accentPink: '#BAA467',    // gold
 };
 
+// Light mode derived from the same forest/gold identity (warm cream + deep green).
 export const lightColors = {
-  // Enchanting Forest — warm blush-tinted white base
-  bgDark: '#F9F3F4',        // barely-blush background
+  bgDark: '#F6F8F2',        // warm cream-green
   cardDark: '#FFFFFF',
-  cardHover: '#FBE8ED',     // blush hover (#FBE8ED)
-  sidebarDark: '#FFFFFF',
-  borderColor: 'rgba(239,209,212,0.70)',  // dusty rose border (#EFD1D4)
+  cardHover: '#EEF4EA',     // pale sage hover
+  sidebarDark: '#F6F8F2',   // same as bg (unified)
+  borderColor: 'rgba(95,138,134,0.22)',  // sage border
 
-  textMain: '#2C3830',      // deep forest — warm dark green (not pure black)
-  textMuted: '#7A8F8A',     // muted slate teal
-  textDim: '#B8CAC7',       // light sage
+  textMain: '#16241B',      // deep forest green-black
+  textMuted: '#5C6F62',     // muted forest
+  textDim: '#9FB0A4',       // light sage
 
-  // Primary: slate teal — readable on white, on-palette
-  primary: '#5F8A86',       // darkened #93B0AC
-  primaryHover: '#4A706D',
-  primaryGlow: 'rgba(147,176,172,0.30)',
+  // Primary: deep sage-green — readable on cream, same family as dark
+  primary: '#3F7A5E',
+  primaryHover: '#2F6149',
+  primaryGlow: 'rgba(63,122,94,0.16)',
 
-  // Enchanting Forest accents
-  accentBlue: '#C3DCD8',    // sage mint
-  accentPurple: '#EFD1D4',  // dusty rose
-  accentGreen: '#93B0AC',   // slate teal
-  accentYellow: '#C5BD96',  // khaki gold
-  accentRed: '#B8595F',     // muted rose — readable on white
-  accentCyan: '#DBD9DA',    // silver
-  accentOrange: '#D4A898',  // warm peach (derived)
-  accentPink: '#EFD1D4',    // dusty rose
+  // Accents — gold + green lead, tuned for contrast on light
+  accentBlue: '#3F7A5E',    // forest green
+  accentPurple: '#9A7B2E',  // deep gold
+  accentGreen: '#3F7A5E',   // forest green
+  accentYellow: '#9A7B2E',  // deep gold (readable on cream)
+  accentRed: '#B8595F',     // muted rose
+  accentCyan: '#3F7A5E',    // forest green
+  accentOrange: '#B07A1E',  // amber-gold
+  accentPink: '#9A7B2E',    // gold
 };
 
 // Default export keeps backward compat — ThemeContext overrides at runtime
@@ -74,6 +75,13 @@ export const radius = {
   lg: 20,
   xl: 28,
   xxl: 36,
+};
+
+// Landing fonts. On web these resolve to the loaded Google fonts; native falls back.
+import { Platform } from 'react-native';
+export const fonts = {
+  serif: Platform.OS === 'web' ? 'Fraunces, Georgia, "Times New Roman", serif' : 'serif',
+  sans: Platform.OS === 'web' ? 'Inter, system-ui, sans-serif' : undefined,
 };
 
 export const typography = {
