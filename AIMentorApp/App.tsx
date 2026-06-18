@@ -1,6 +1,13 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+
+// Shared ref so the web Back-guard can read the current route name.
+const navigationRef = createNavigationContainerRef<any>();
+
+// Role "home" screens. Back here = exit attempt → confirm. Back elsewhere =
+// normal in-app navigation to the previous screen (no popup).
+const HOME_ROUTES = new Set(['Dashboard', 'TeacherDashboard', 'ParentDashboard']);
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, View, ActivityIndicator, Platform, Text, TouchableOpacity, Modal } from 'react-native';
 import { useFonts } from 'expo-font';
@@ -325,24 +332,43 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const { colors: c } = useTheme();
   const [showConfirm, setShowConfirm] = useState(false);
-  // Only guard the "in-app" screens the user asked for: Dashboard + Onboarding.
-  // Deliberately EXCLUDE the pre-app screens — "Check your inbox" (emailVerified
-  // === false) and Set Password (mustChangePassword) — because the guard's history
-  // manipulation interferes with the verify flow there. Those screens already have
-  // their own "Sign out" links to get back to Landing.
+  const isHomeRef = useRef(false);      // is the CURRENT route a role-home screen?
+  const lastNavTsRef = useRef(0);       // when did the last in-app navigation happen?
   const active =
     Platform.OS === 'web' &&
     !!user &&
     user.emailVerified !== false &&
     user.mustChangePassword !== true;
 
+  // Track current-route home-ness + the timestamp of the last navigation.
+  useEffect(() => {
+    if (!active) return;
+    const update = () => {
+      const name = navigationRef.isReady() ? navigationRef.getCurrentRoute()?.name : undefined;
+      isHomeRef.current = !!name && HOME_ROUTES.has(name);
+      lastNavTsRef.current = Date.now();
+    };
+    update();
+    const unsub = navigationRef.isReady() ? navigationRef.addListener('state', update) : undefined;
+    return () => { if (unsub) unsub(); };
+  }, [active]);
+
+  // ── Back-button handling (mobile-style "exit from home" confirm) ────────────
+  // Only show the exit confirm when Back is pressed WHILE SITTING ON the home
+  // screen. Two race-proof checks decide this:
+  //   1. If a navigation happened in the last ~250ms, this Back just landed us
+  //      on a screen (e.g. AI Coach → Back → Dashboard) → it's normal back, no
+  //      popup. (This catches the "arrived at dashboard" case regardless of
+  //      whether RN's popstate handler runs before or after ours.)
+  //   2. If we're not on a home route → deep screen → let RN go back, no popup.
+  // Otherwise (on home, no recent navigation) → real exit attempt → confirm.
   useEffect(() => {
     if (!active || typeof window === 'undefined') return;
-    // Seed a guard entry so the first Back is captured instead of leaving the app.
     window.history.pushState({ __aivorahGuard: true }, '');
     const onPop = () => {
-      // Re-seed immediately so we stay on the current screen, then ask.
-      window.history.pushState({ __aivorahGuard: true }, '');
+      if (Date.now() - lastNavTsRef.current < 250) return;    // a nav just settled → back-arrival, no popup
+      if (!isHomeRef.current) return;                          // deep screen → let RN handle back
+      window.history.pushState({ __aivorahGuard: true }, ''); // on home, idle → confirm exit
       setShowConfirm(true);
     };
     window.addEventListener('popstate', onPop);
@@ -488,12 +514,25 @@ function RootNavigator() {
 // Inner component so useTheme() can be called inside ThemeProvider
 function ThemedRoot() {
   const { colors: c, isDark } = useTheme();
+
+  // Load the landing design fonts app-wide (web) so headings can use the serif.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    if (document.getElementById('aivorah-app-fonts')) return;
+    const link = document.createElement('link');
+    link.id = 'aivorah-app-fonts';
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@300;400;500;600;700;800&display=swap';
+    document.head.appendChild(link);
+  }, []);
+
   return (
     <View style={[styles.root, { backgroundColor: c.bgDark }]}>
       <AuthProvider>
         <StudentDataProvider>
           <NotificationProvider>
             <NavigationContainer
+              ref={navigationRef}
               documentTitle={{ formatter: () => 'Aivorah' }}
               linking={{
                 prefixes: [],
