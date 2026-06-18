@@ -831,6 +831,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Switch between teacher/parent profiles (dual-role users only)
   function switchRole(newRole: UserRole) {
+    // An explicit profile switch overrides any pending "return to <role>" flag
+    // left over from the add-parent onboarding flow. Without this, the navigator
+    // (chosen by getPendingReturnRole() || user.role) would stay stuck on the
+    // old role and "Switch Profile" would appear to do nothing.
+    _pendingReturnRole = undefined;
     setUser(prev => {
       if (!prev || !prev.roles?.includes(newRole)) return prev;
       const updated = { ...prev, role: newRole, activeRole: newRole };
