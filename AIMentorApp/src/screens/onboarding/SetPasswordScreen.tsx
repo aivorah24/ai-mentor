@@ -37,6 +37,25 @@ export default function SetPasswordScreen() {
   const [success, setSuccess]                 = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
+  // Auto-eject if the account is deleted while sitting on this screen.
+  // The page-load guard only runs on refresh, so we poll /user/role here: a 404
+  // means the account no longer exists → sign out to Landing immediately, so an
+  // admin deleting the ID drops this screen on its own (no manual "Sign out").
+  useEffect(() => {
+    const email = user?.email;
+    if (!email) return;
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const res = await fetch(`${SERVER_URL}/user/role?email=${encodeURIComponent(email)}`);
+        if (!cancelled && res.status === 404) { logout(); }
+      } catch {}
+    };
+    check();
+    const id = setInterval(check, 4000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [user?.email]);
+
   // Intercept the browser Back button (web): instead of navigating away, show the
   // same leave-confirmation. We keep an extra history entry to "catch" the back press.
   useEffect(() => {
