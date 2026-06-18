@@ -180,16 +180,21 @@ export default function SettingsScreen({ navigation, route }: any) {
 
   async function handleChangePassword() {
     setPasswordError('');
-    if (!currentPassword) { setPasswordError('Enter your current password.'); return; }
-    if (newPassword.length < 6) { setPasswordError('New password must be at least 6 characters.'); return; }
-    if (newPassword !== confirmPassword) { setPasswordError('Passwords do not match.'); return; }
+    // Strip all whitespace to match the login screen (pass.replace(/\s+/g,'')),
+    // so a copy-pasted current password with a stray space still re-authenticates. (#154)
+    const curPw = currentPassword.replace(/\s+/g, '');
+    const newPw = newPassword.replace(/\s+/g, '');
+    const confirmPw = confirmPassword.replace(/\s+/g, '');
+    if (!curPw) { setPasswordError('Enter your current password.'); return; }
+    if (newPw.length < 6) { setPasswordError('New password must be at least 6 characters.'); return; }
+    if (newPw !== confirmPw) { setPasswordError('Passwords do not match.'); return; }
     setModalLoading(true);
     try {
       const firebaseUser = auth.currentUser;
       if (firebaseUser && firebaseUser.email) {
-        const cred = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+        const cred = EmailAuthProvider.credential(firebaseUser.email, curPw);
         await reauthenticateWithCredential(firebaseUser, cred);
-        await updatePassword(firebaseUser, newPassword);
+        await updatePassword(firebaseUser, newPw);
         if (user?.mustChangePassword) {
           fetch(`${SERVER_URL}/user/clear-must-change-password`, {
             method: 'PATCH',

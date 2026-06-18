@@ -59,16 +59,21 @@ export default function ParentSettingsScreen({ navigation }: any) {
   }
 
   async function handleChangePassword() {
-    if (!currentPw) { Alert.alert('Required', 'Enter your current password.'); return; }
-    if (newPw.length < 6) { Alert.alert('Too Short', 'New password must be at least 6 characters.'); return; }
-    if (newPw !== confirmPw) { Alert.alert('Mismatch', 'Passwords do not match.'); return; }
+    // Strip all whitespace to match the login screen (pass.replace(/\s+/g,'')),
+    // so a copy-pasted current password with a stray space still re-authenticates. (#154)
+    const curPwClean = (currentPw || '').replace(/\s+/g, '');
+    const newPwClean = (newPw || '').replace(/\s+/g, '');
+    const confirmPwClean = (confirmPw || '').replace(/\s+/g, '');
+    if (!curPwClean) { Alert.alert('Required', 'Enter your current password.'); return; }
+    if (newPwClean.length < 6) { Alert.alert('Too Short', 'New password must be at least 6 characters.'); return; }
+    if (newPwClean !== confirmPwClean) { Alert.alert('Mismatch', 'Passwords do not match.'); return; }
     setModalLoading(true);
     try {
       const firebaseUser = auth.currentUser;
       if (firebaseUser && firebaseUser.email) {
-        const cred = EmailAuthProvider.credential(firebaseUser.email, currentPw);
+        const cred = EmailAuthProvider.credential(firebaseUser.email, curPwClean);
         await reauthenticateWithCredential(firebaseUser, cred);
-        await updatePassword(firebaseUser, newPw);
+        await updatePassword(firebaseUser, newPwClean);
       }
       closeModal();
       Alert.alert('Password Changed', 'Your password has been updated successfully.');
