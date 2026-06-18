@@ -253,10 +253,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // The old timer-based flag was unreliable and sometimes bounced a fresh
         // signup to Landing. Instead, re-confirm with one delayed re-fetch: a real
         // deletion stays missing; a signup race finds the row the second time.
+        // NOTE: this guard runs for ALL accounts including auto-generated
+        // @aivorah.student ones. `allowAutoGen` only bypasses email VERIFICATION,
+        // not the deleted-account check — without this, a parent-created student
+        // whose DB record was deleted stayed stuck on the cached "Set Password"
+        // screen instead of being signed out to Landing. (client feedback)
         if (
           supaProfile._syncOk === true &&
-          supaProfile._accountExists === false &&
-          !allowAutoGen
+          supaProfile._accountExists === false
         ) {
           await new Promise((r) => setTimeout(r, 1500));
           let recheck: Partial<User> & { _syncOk?: boolean; _accountExists?: boolean } = {};
