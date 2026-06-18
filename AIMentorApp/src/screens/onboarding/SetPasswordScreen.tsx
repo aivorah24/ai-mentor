@@ -3,11 +3,11 @@
  * Shown to auto-generated student accounts on first login.
  * Forces them to set their own password before entering the app.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, KeyboardAvoidingView,
-  Platform, ScrollView,
+  Platform, ScrollView, Modal,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,6 +35,21 @@ export default function SetPasswordScreen() {
   const [loading, setLoading]                 = useState(false);
   const [error, setError]                     = useState('');
   const [success, setSuccess]                 = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+
+  // Intercept the browser Back button (web): instead of navigating away, show the
+  // same leave-confirmation. We keep an extra history entry to "catch" the back press.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    window.history.pushState(null, '', window.location.href);
+    const onPop = () => {
+      // Re-push so the user stays on this screen until they confirm.
+      window.history.pushState(null, '', window.location.href);
+      setShowLeaveConfirm(true);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   const strength = (() => {
     if (newPassword.length === 0) return 0;
@@ -93,6 +108,14 @@ export default function SetPasswordScreen() {
         colors={isDark ? ['#0F1A19', '#162421', '#1A2E2C'] : ['#EAF3F2', '#F4F9F8', '#FFFFFF']}
         style={{ flex: 1 }}
       >
+        {/* Top bar — back navigation (signs out to the login/landing screen) */}
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={() => setShowLeaveConfirm(true)} style={styles.backBtn} activeOpacity={0.7} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Feather name="arrow-left" size={20} color={colors.textMain} />
+            <Text style={styles.backText}>Back</Text>
+          </TouchableOpacity>
+        </View>
+
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {/* Header */}
           <View style={styles.header}>
@@ -232,17 +255,39 @@ export default function SetPasswordScreen() {
           </Text>
 
           {/* Escape hatch — wrong account / not you → back to Landing */}
-          <TouchableOpacity onPress={logout} style={styles.signOutLink} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => setShowLeaveConfirm(true)} style={styles.signOutLink} activeOpacity={0.7}>
             <Text style={styles.signOutText}>Not you? Sign out</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        {/* Leave / back confirmation → sign out to the landing page */}
+        <Modal visible={showLeaveConfirm} transparent animationType="fade" onRequestClose={() => setShowLeaveConfirm(false)}>
+          <View style={styles.confirmOverlay}>
+            <View style={styles.confirmCard}>
+              <View style={styles.confirmIcon}><Feather name="log-out" size={22} color={TEAL} /></View>
+              <Text style={styles.confirmTitle}>Leave password setup?</Text>
+              <Text style={styles.confirmMsg}>
+                You'll be signed out and returned to the home page. You can sign back in anytime to finish setting your password.
+              </Text>
+              <TouchableOpacity style={styles.confirmPrimary} onPress={() => { setShowLeaveConfirm(false); logout(); }} activeOpacity={0.85}>
+                <Text style={styles.confirmPrimaryText}>Sign out & go to home</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.confirmSecondary} onPress={() => setShowLeaveConfirm(false)} activeOpacity={0.7}>
+                <Text style={styles.confirmSecondaryText}>Stay here</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
 
 const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
-  scroll: { flexGrow: 1, padding: spacing.xl, paddingTop: 60, alignItems: 'center' },
+  topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingTop: 18, paddingBottom: 4 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 6 },
+  backText: { fontSize: 15, fontWeight: '600', color: c.textMain },
+  scroll: { flexGrow: 1, padding: spacing.xl, paddingTop: 12, alignItems: 'center' },
   header: { alignItems: 'center', marginBottom: 32, maxWidth: 420, width: '100%' },
   iconWrap: {
     width: 72, height: 72, borderRadius: 36,
@@ -283,4 +328,19 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   footer: { fontSize: 11, color: c.textDim, textAlign: 'center', marginTop: 20, maxWidth: 340 },
   signOutLink: { marginTop: 16, paddingVertical: spacing.sm },
   signOutText: { fontSize: 13, color: c.textMuted, textDecorationLine: 'underline' },
+  confirmOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  confirmCard: {
+    width: 360, maxWidth: '95%', borderRadius: 20, padding: 28, alignItems: 'center',
+    backgroundColor: isDark ? c.cardDark : '#fff', borderWidth: 1, borderColor: c.borderColor,
+  },
+  confirmIcon: {
+    width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: TEAL + '18', borderWidth: 1, borderColor: TEAL + '40', marginBottom: 14,
+  },
+  confirmTitle: { fontSize: 18, fontWeight: '700', color: c.textMain, marginBottom: 8, textAlign: 'center' },
+  confirmMsg: { fontSize: 13.5, color: c.textMuted, lineHeight: 20, textAlign: 'center', marginBottom: 22 },
+  confirmPrimary: { width: '100%', backgroundColor: TEAL, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
+  confirmPrimaryText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  confirmSecondary: { width: '100%', paddingVertical: 12, alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: c.borderColor },
+  confirmSecondaryText: { fontSize: 14, fontWeight: '600', color: c.textMuted },
 });
