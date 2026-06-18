@@ -20,7 +20,8 @@ import {
   DatePickerInput, CURRICULA, getGradesForCurriculum, GENDERS, LEARNING_STYLES, TEAL,
 } from './OnboardingScreen';
 import {
-  AutocompleteField, CardHeader, BBox, fetchCitySuggestions, fetchSchoolSuggestions, locateCity,
+  AutocompleteField, CardHeader, BBox, fetchCitySuggestions, fetchSchoolSuggestions, locateCity, locateFull,
+  SelectField, COUNTRIES, INDIA_STATES, INDIA_CITIES,
 } from './OnboardingSharedFields';
 
 const GRADE_GROUPS = [
@@ -61,6 +62,8 @@ export default function OnboardingStudentBoxes() {
   const [curriculum, setCurriculum] = useState((user as any)?.curriculum || '');
   const [school, setSchool] = useState((user as any)?.school || '');
   const [city, setCity] = useState((user as any)?.location || '');
+  const [stateProv, setStateProv] = useState((user as any)?.state || '');
+  const [country, setCountry] = useState((user as any)?.country || 'India');
   const [grade, setGrade] = useState((user as any)?.grade || '');
   const [avatarStyle, setAvatarStyle] = useState('default');
   const [learningStyle, setLearningStyle] = useState('');
@@ -97,6 +100,8 @@ export default function OnboardingStudentBoxes() {
         complete: true,
         grade: grade.trim(),
         curriculum: curriculum.trim(),
+        state: stateProv || undefined,
+        country: country || undefined,
       };
 
       const profileRes = await fetch(`${SERVER_URL}/user/profile`, {
@@ -124,6 +129,8 @@ export default function OnboardingStudentBoxes() {
           curriculum: curriculum.trim(),
           school,
           location: city,
+          state: stateProv || undefined,
+          country: country || undefined,
           avatarStyle,
           learningStyle: learningStyle || undefined,
           gender: gender || undefined,
@@ -180,7 +187,7 @@ export default function OnboardingStudentBoxes() {
         </View>
 
         {/* ── Row 1: About You / Curriculum / School & Grade ── */}
-        <View style={styles.rowWrap}>
+        <View style={[styles.rowWrap, { zIndex: 20 }]}>
           {/* About You */}
           <View style={[styles.card, styles.card3]}>
             <CardHeader icon="user" title="About You" subtitle="Let's get to know you better." done={aboutYouDone} styles={styles} />
@@ -236,7 +243,7 @@ export default function OnboardingStudentBoxes() {
           </View>
 
           {/* School */}
-          <View style={[styles.card, styles.card3]}>
+          <View style={[styles.card, styles.card3, { zIndex: 10 }]}>
             <CardHeader icon="award" title="School" subtitle="Tell us about your school." done={schoolGradeDone} styles={styles} />
             <View style={styles.fieldGroup}>
               <Text style={styles.lbl}>School Name</Text>
@@ -250,24 +257,62 @@ export default function OnboardingStudentBoxes() {
                 disabledMessage={city.trim().length < 3 ? 'Enter your city below to search nearby schools.' : undefined}
               />
             </View>
-            <View style={styles.fieldGroup}>
-              <View style={styles.lblRow}>
-                <Text style={styles.lbl}>City</Text>
-                {Platform.OS === 'web' && (
-                  <TouchableOpacity style={styles.locateBtn} onPress={() => locateCity(setCity, setLocating)} disabled={locating} activeOpacity={0.8}>
-                    <Feather name="crosshair" size={12} color={TEAL} />
-                    <Text style={styles.locateTxt}>{locating ? 'Locating...' : 'Use my location'}</Text>
-                  </TouchableOpacity>
-                )}
+            {Platform.OS === 'web' && (
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 2 }}>
+                <TouchableOpacity style={styles.locateBtn} onPress={() => locateFull(({ city: c, state: s, country: co }) => { if (co) setCountry(co); if (s) setStateProv(s); if (c) setCity(c); }, setLocating)} disabled={locating} activeOpacity={0.8}>
+                  <Feather name="crosshair" size={12} color={TEAL} />
+                  <Text style={styles.locateTxt}>{locating ? 'Locating...' : 'Use my location'}</Text>
+                </TouchableOpacity>
               </View>
-              <AutocompleteField
-                value={city}
-                onChange={setCity}
-                fetchSuggestions={fetchCitySuggestions}
-                placeholder="Search for your city"
-                colors={colors}
-                styles={styles}
-              />
+            )}
+            <View style={[styles.fieldRow, { zIndex: 10 }]}>
+              <View style={[styles.fieldGroup, { flex: 1, zIndex: 20 }]}>
+                <Text style={styles.lbl}>Country</Text>
+                <SelectField
+                  value={country}
+                  onChange={(c) => { setCountry(c); if (c !== 'India') setStateProv(''); setCity(''); }}
+                  options={COUNTRIES}
+                  placeholder="Select your country"
+                  searchPlaceholder="Search country..."
+                  colors={colors}
+                  styles={styles}
+                />
+              </View>
+              <View style={[styles.fieldGroup, { flex: 1, zIndex: 15 }]}>
+                <Text style={styles.lbl}>State / Province</Text>
+                <SelectField
+                  value={stateProv}
+                  onChange={(s) => { setStateProv(s); setCity(''); }}
+                  options={country === 'India' ? INDIA_STATES : []}
+                  placeholder="Select your state"
+                  searchPlaceholder="Search state..."
+                  colors={colors}
+                  styles={styles}
+                />
+              </View>
+            </View>
+            <View style={[styles.fieldGroup, { zIndex: 5 }]}>
+              <Text style={styles.lbl}>City</Text>
+              {country === 'India' && INDIA_CITIES[stateProv] ? (
+                <SelectField
+                  value={city}
+                  onChange={setCity}
+                  options={[...INDIA_CITIES[stateProv]].sort()}
+                  placeholder="Select your city"
+                  searchPlaceholder="Search city..."
+                  colors={colors}
+                  styles={styles}
+                />
+              ) : (
+                <AutocompleteField
+                  value={city}
+                  onChange={setCity}
+                  fetchSuggestions={(q) => fetchCitySuggestions(q, { state: stateProv, country })}
+                  placeholder={stateProv || country ? 'Search for your city' : 'Select country & state first'}
+                  colors={colors}
+                  styles={styles}
+                />
+              )}
             </View>
           </View>
         </View>
@@ -472,6 +517,7 @@ function useStyles(colors: any) {
     },
 
     fieldGroup: { gap: 8 },
+    fieldRow: { flexDirection: 'row', gap: 12 },
     lbl: { fontSize: 12, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
     lblRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     locateBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
