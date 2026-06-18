@@ -574,9 +574,15 @@ export default function ParentMyKidsScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchChildren(); }} tintColor={colors.primary} />}
         >
-          <View style={{ marginBottom: spacing.xl }}>
-            <Text style={styles.pageTitle}>Managed Accounts</Text>
-            <Text style={styles.pageSubtitle}>View progress, manage controls, and update settings for your children.</Text>
+          <View style={styles.headerRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.pageTitle}>Managed Accounts</Text>
+              <Text style={styles.pageSubtitle}>View progress, manage controls, and update settings for your children.</Text>
+            </View>
+            <TouchableOpacity style={styles.addChildBtn} activeOpacity={0.85} onPress={() => openModal('create')}>
+              <Feather name="user-plus" size={16} color="#fff" />
+              <Text style={styles.addChildBtnTxt}>Add Child</Text>
+            </TouchableOpacity>
           </View>
 
           {loading ? (
@@ -598,18 +604,12 @@ export default function ParentMyKidsScreen({ navigation }: any) {
               ))}
 
               {children.length === 0 && (
-                <View style={styles.emptyState}>
-                  <Feather name="users" size={40} color={colors.textDim} />
+                <TouchableOpacity style={styles.emptyState} activeOpacity={0.7} onPress={() => openModal('create')}>
+                  <Feather name="user-plus" size={40} color={colors.textDim} />
                   <Text style={styles.emptyTitle}>No children linked yet</Text>
-                  <Text style={styles.emptySub}>Add your child's account using their registered email address.</Text>
-                </View>
+                  <Text style={styles.emptySub}>Tap here, or use "Add Child" above, to create a new account or link an existing one.</Text>
+                </TouchableOpacity>
               )}
-
-              <TouchableOpacity style={styles.addChildCard} activeOpacity={0.7} onPress={() => openModal('create')}>
-                <Feather name="user-plus" size={28} color={colors.textDim} />
-                <Text style={styles.addChildTitle}>Add {children.length > 0 ? 'Another' : 'a'} Child</Text>
-                <Text style={styles.addChildSub}>Create a new account or link an existing one.</Text>
-              </TouchableOpacity>
             </View>
           )}
         </ScrollView>
@@ -1136,6 +1136,13 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   pageTitle: { fontSize: 22, fontWeight: '700', color: c.textMain, marginBottom: 6 },
   pageSubtitle: { fontSize: 13, color: c.textMuted },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.xl },
+  addChildBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12,
+    backgroundColor: c.primary,
+  },
+  addChildBtnTxt: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
   cardsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-start' },
 
