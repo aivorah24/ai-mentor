@@ -88,16 +88,21 @@ export default function ParentProfileScreen({ navigation }: any) {
   }
 
   async function handleChangePassword() {
-    if (!newPass || newPass.length < 6) { setPassError('New password must be at least 6 characters.'); return; }
-    if (newPass !== confirmPass) { setPassError('Passwords do not match.'); return; }
+    // Strip all whitespace to match the login screen (pass.replace(/\s+/g,'')),
+    // so a copy-pasted current password with a stray space still re-authenticates. (#154)
+    const curPw = (currentPass || '').replace(/\s+/g, '');
+    const newPw = (newPass || '').replace(/\s+/g, '');
+    const confirmPw = (confirmPass || '').replace(/\s+/g, '');
+    if (!newPw || newPw.length < 6) { setPassError('New password must be at least 6 characters.'); return; }
+    if (newPw !== confirmPw) { setPassError('Passwords do not match.'); return; }
     setPassLoading(true); setPassError('');
     try {
       const firebaseAuth = getAuth();
       const currentUser = firebaseAuth.currentUser;
       if (!currentUser) throw new Error('Not logged in');
-      const credential = EmailAuthProvider.credential(email, currentPass);
+      const credential = EmailAuthProvider.credential(email, curPw);
       await reauthenticateWithCredential(currentUser, credential);
-      await updatePassword(currentUser, newPass);
+      await updatePassword(currentUser, newPw);
       setPassSuccess(true);
       setTimeout(() => setPassModalVisible(false), 1500);
     } catch (err: any) {

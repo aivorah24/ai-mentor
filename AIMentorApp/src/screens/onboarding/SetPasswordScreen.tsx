@@ -67,18 +67,25 @@ export default function SetPasswordScreen() {
 
   async function handleSetPassword() {
     setError('');
-    if (!currentPassword) { setError('Enter your temporary password.'); return; }
-    if (newPassword.length < 6) { setError('New password must be at least 6 characters.'); return; }
-    if (newPassword !== confirmPassword) { setError('Passwords do not match.'); return; }
-    if (newPassword === currentPassword) { setError('New password must be different from the temporary one.'); return; }
+    // Strip ALL whitespace — the login screen does the same (pass.replace(/\s+/g,'')),
+    // so a temp password copy-pasted with a stray space/newline still matches. Without
+    // this, login succeeds (stripped) but re-auth here failed → "Temporary password is
+    // incorrect" even when entered correctly. (Issue #153)
+    const tempPw = currentPassword.replace(/\s+/g, '');
+    const newPw = newPassword.replace(/\s+/g, '');
+    const confirmPw = confirmPassword.replace(/\s+/g, '');
+    if (!tempPw) { setError('Enter your temporary password.'); return; }
+    if (newPw.length < 6) { setError('New password must be at least 6 characters.'); return; }
+    if (newPw !== confirmPw) { setError('Passwords do not match.'); return; }
+    if (newPw === tempPw) { setError('New password must be different from the temporary one.'); return; }
 
     setLoading(true);
     try {
       const firebaseUser = auth.currentUser;
       if (firebaseUser && firebaseUser.email) {
-        const cred = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+        const cred = EmailAuthProvider.credential(firebaseUser.email, tempPw);
         await reauthenticateWithCredential(firebaseUser, cred);
-        await updatePassword(firebaseUser, newPassword);
+        await updatePassword(firebaseUser, newPw);
       }
 
       // Clear the mustChangePassword flag on server
