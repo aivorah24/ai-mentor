@@ -554,7 +554,7 @@ export default function OnboardingParentBoxes() {
 
           {/* Your Child(ren) */}
           <View style={[styles.card, styles.card3]}>
-            <CardHeader icon="users" title="2. Your Children" subtitle="Optional — add now or later from your dashboard." done={!addingChildren || childrenDone} styles={styles} subtitleColor="#BAA467" />
+            <CardHeader icon="users" title="2. Your Children" badge="Optional" subtitle="Add now, or skip and add them anytime from your dashboard." done={!addingChildren || childrenDone} styles={styles} subtitleColor="#BAA467" />
 
             {children.length > 1 && (
               <View style={styles.chipRow}>
