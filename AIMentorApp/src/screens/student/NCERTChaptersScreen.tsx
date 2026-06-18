@@ -101,7 +101,8 @@ const MODULE_DEFS = {
   draw: { label: 'Drawing Buddy', icon: 'edit-3', color: '#ec4899', route: 'DrawingBuddy' },
 };
 
-const CURRICULUM_OPTIONS: CurriculumKey[] = ['NCERT', 'IB', 'CBSE', 'IGCSE'];
+// CBSE follows the NCERT syllabus, so it's the single NCERT-syllabus option (#157).
+const CURRICULUM_OPTIONS: CurriculumKey[] = ['CBSE', 'IB', 'IGCSE'];
 const GRADE_OPTIONS: GradeKey[] = ['Grade 3', 'Grade 4', 'Grade 5'];
 
 const CURRICULUM_META: Record<
@@ -110,7 +111,7 @@ const CURRICULUM_META: Record<
 > = {
   NCERT: { accent: '#6366f1', icon: 'book-open', sub: 'National Curriculum', status: 'Active' },
   IB: { accent: '#10b981', icon: 'globe', sub: 'International Baccalaureate', status: 'Coming Soon' },
-  CBSE: { accent: '#f59e0b', icon: 'bookmark', sub: 'Central Board', status: 'Coming Soon' },
+  CBSE: { accent: '#6366f1', icon: 'book-open', sub: 'NCERT syllabus', status: 'Active' },
   IGCSE: { accent: '#06b6d4', icon: 'award', sub: 'Cambridge Track', status: 'Coming Soon' },
 };
 
@@ -225,7 +226,9 @@ export default function NCERTChaptersScreen({ navigation, route }: any) {
   const [error, setError] = useState('');
 
   // Use profile curriculum/grade — fall back to NCERT Grade 3
-  const profileCurriculum = (user?.curriculum ?? 'NCERT') as CurriculumKey;
+  // Legacy 'NCERT' accounts map to the unified CBSE option (#157).
+  const rawCurriculum = user?.curriculum ?? 'CBSE';
+  const profileCurriculum = (rawCurriculum === 'NCERT' ? 'CBSE' : rawCurriculum) as CurriculumKey;
   const profileGrade      = (user?.grade      ?? 'Grade 3') as GradeKey;
 
   // Only show the picker if the user hasn't set their profile yet
@@ -252,10 +255,12 @@ export default function NCERTChaptersScreen({ navigation, route }: any) {
   const ready = chapters.filter((c) => c.hasContent).length;
   const curriculumMeta = CURRICULUM_META[selectedCurriculum];
   const gradeMeta = GRADE_META[selectedGrade];
-  const isNcertGrade3 = selectedCurriculum === 'NCERT' && selectedGrade === 'Grade 3';
+  // CBSE follows the NCERT syllabus → treat them the same for content (#157).
+  const isNcertCurriculum = selectedCurriculum === 'NCERT' || selectedCurriculum === 'CBSE';
+  const isNcertGrade3 = isNcertCurriculum && selectedGrade === 'Grade 3';
 
   const getGradeStatus = (grade: GradeKey) =>
-    selectedCurriculum === 'NCERT' && grade === 'Grade 3' ? 'Active' : 'Coming Soon';
+    isNcertCurriculum && grade === 'Grade 3' ? 'Active' : 'Coming Soon';
 
   const getGradeSummary = (grade: GradeKey) => {
     if (selectedCurriculum !== 'NCERT') return 'Coming soon';

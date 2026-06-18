@@ -60,7 +60,7 @@ const TYPE_ICONS: Record<string, string> = {
 };
 const CATEGORIES = ['School Challenge', 'Olympiad', 'Advanced Practice', 'Chapter Quiz'];
 const QUESTION_COUNTS = ['5', '8', '10', '12', '15'];
-const CURRICULA = ['IB PYP', 'NCERT', 'CBSE', 'Cambridge', 'General'];
+const CURRICULA = ['IB PYP', 'CBSE', 'ICSE', 'Cambridge', 'General'];
 
 const DIFF_COLOR = (d: string, c: AppColors) =>
   d === 'Easy' ? c.accentGreen : d === 'Hard' ? c.accentRed : c.accentYellow;

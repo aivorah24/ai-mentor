@@ -15,7 +15,7 @@ import SERVER_URL from '../../config/serverUrl';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const GRADES = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
 const SECTIONS = ['A','B','C','D','E','F'];
-const CURRICULA = ['IB PYP','NCERT','CBSE','Cambridge'];
+const CURRICULA = ['IB PYP','CBSE','ICSE','Cambridge'];
 
 function getAdminHeaders(email: string) {
   return { 'Content-Type': 'application/json', 'x-admin-email': email };

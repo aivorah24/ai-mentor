@@ -471,7 +471,8 @@ function LoginModal({ visible, onClose, onSwitchSignup, onSwitchForgot, signInEm
 // ─────────────────────────────────────────────────────────
 // SIGN UP MODAL
 // ─────────────────────────────────────────────────────────
-const CURRICULA = ['NCERT', 'IB PYP', 'CBSE', 'Cambridge'];
+// CBSE follows the NCERT syllabus, so NCERT is not a separate board option (#157).
+const CURRICULA = ['IB PYP', 'CBSE', 'ICSE', 'Cambridge'];
 
 function SignupModal({ visible, onClose, onSwitchLogin, signUpEmail, signInGoogle, addParentRole, addParentRoleSSO }: {
   visible: boolean; onClose: () => void; onSwitchLogin: () => void;
@@ -481,7 +482,7 @@ function SignupModal({ visible, onClose, onSwitchLogin, signUpEmail, signInGoogl
   addParentRoleSSO: (email: string) => Promise<void>;
 }) {
   const [role, setRole]             = useState<UserRole>('student');
-  const [curriculum, setCurriculum] = useState('NCERT');
+  const [curriculum, setCurriculum] = useState('CBSE');
   const [name, setName]             = useState('');
   const [email, setEmail]           = useState('');
   const [pass, setPass]             = useState('');

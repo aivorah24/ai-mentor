@@ -795,7 +795,7 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                   <View style={[styles.input, styles.pickerWrap, { flex: 1 }]}>
                     <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 4 }}>Curriculum</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                      {['IB PYP','CBSE','NCERT'].map(c => (
+                      {['IB PYP','CBSE','ICSE','Cambridge'].map(c => (
                         <TouchableOpacity key={c} onPress={() => setNewCurriculum(c)} activeOpacity={0.8}
                           style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
                             backgroundColor: newCurriculum === c ? colors.primary + '20' : colors.cardDark,
@@ -1006,7 +1006,7 @@ export default function ParentMyKidsScreen({ navigation }: any) {
 
               <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>Curriculum</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                {['IB PYP','NCERT','CBSE'].map(c => (
+                {['IB PYP','CBSE','ICSE','Cambridge'].map(c => (
                   <TouchableOpacity key={c} onPress={() => setEditCurriculum(c)} activeOpacity={0.8}
                     style={[styles.chip, editCurriculum === c && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
                   >
