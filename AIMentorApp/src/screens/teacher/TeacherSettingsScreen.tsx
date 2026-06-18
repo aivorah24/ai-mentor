@@ -507,7 +507,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
       {/* Curriculum Modal */}
       <AppModal visible={activeModal === 'curriculum'} title="Curriculum & Grade" onClose={closeModal} styles={styles} colors={colors}>
         <Text style={styles.modalFieldLabel}>Curriculum</Text>
-        {(['IB PYP', 'NCERT', 'CBSE'] as const).map(c => (
+        {(['IB PYP', 'CBSE', 'ICSE', 'Cambridge'] as const).map(c => (
           <TouchableOpacity
             key={c} activeOpacity={0.8}
             style={[styles.modalInput, { height: 46, marginBottom: 6, justifyContent: 'space-between', borderColor: editCurriculum === c ? colors.primary : colors.borderColor, backgroundColor: editCurriculum === c ? colors.primaryGlow : colors.bgDark }]}
@@ -608,7 +608,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.fieldLabel}>Curriculum</Text>
-                    {(['IB PYP','NCERT','CBSE'] as const).map(c => (
+                    {(['IB PYP','CBSE','ICSE','Cambridge'] as const).map(c => (
                       <TouchableOpacity key={c} onPress={() => setChildCurriculum(c)} activeOpacity={0.8}
                         style={[styles.modalTextInput, { marginTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderColor: childCurriculum === c ? colors.primary : colors.borderColor }]}
                       >

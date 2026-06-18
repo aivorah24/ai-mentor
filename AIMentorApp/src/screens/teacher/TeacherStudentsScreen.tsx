@@ -885,7 +885,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.modalFieldLabel}>Default Curriculum</Text>
-                        {(['IB PYP', 'NCERT', 'CBSE'] as const).map(c => (
+                        {(['IB PYP', 'CBSE', 'ICSE', 'Cambridge'] as const).map(c => (
                           <TouchableOpacity key={c} activeOpacity={0.8} onPress={() => setBulkCurriculum(c)}
                             style={[styles.modalOption, { borderColor: bulkCurriculum === c ? colors.primary : colors.borderColor, backgroundColor: bulkCurriculum === c ? colors.primaryGlow : 'transparent' }]}>
                             <Text style={{ fontSize: 12, color: bulkCurriculum === c ? colors.primary : colors.textMuted, fontWeight: '600' }}>{c}</Text>
