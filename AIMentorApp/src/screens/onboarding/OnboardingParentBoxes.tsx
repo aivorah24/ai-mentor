@@ -629,6 +629,9 @@ export default function OnboardingParentBoxes() {
           </View>
         </View>
 
+        {/* Sections 3 & 4 only appear once the parent starts adding a child
+            (keeps onboarding clean for parents who skip the optional child step). */}
+        {addingChildren && (<>
         {/* ── Row 2: Child's Learning Profile ── */}
         <View style={styles.rowWrap}>
           <View style={[styles.card, styles.cardFull]}>
@@ -818,6 +821,7 @@ export default function OnboardingParentBoxes() {
             )}
           </View>
         </View>
+        </>)}
 
         {/* ── Row 4: Your Avatar ── */}
         <View style={styles.rowWrap}>
