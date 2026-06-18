@@ -812,6 +812,29 @@ router.post('/send-password-reset', async (req, res) => {
     const appBase = frontendOrigin || 'https://aivorah.ai';
     let resetLink = null;
 
+    // Synthetic student logins (@aivorah.student) have no real inbox — the
+    // Firebase credential lives on that email, but the reset email must be
+    // delivered to the parent's real address.
+    let deliverTo = emailLc;
+    let childName = null;
+    if (emailLc.endsWith('@aivorah.student')) {
+      const { data: childUser } = await supabase
+        .from('users').select('id, name').eq('email', emailLc).maybeSingle();
+      if (childUser?.id) {
+        const { data: link } = await supabase
+          .from('parent_children').select('parent_email').eq('child_id', childUser.id).maybeSingle();
+        if (link?.parent_email) {
+          deliverTo = link.parent_email.toLowerCase();
+          childName = childUser.name || 'your child';
+        }
+      }
+      if (deliverTo === emailLc) {
+        // No parent on file — nothing deliverable; don't leak existence.
+        console.warn('[send-password-reset] student account with no parent email:', emailLc);
+        return res.json({ ok: true, note: 'no_recipient' });
+      }
+    }
+
     // 1. Try Firebase Admin SDK if service account is available
     if (firebaseAdmin) {
       try {
@@ -856,8 +879,17 @@ router.post('/send-password-reset', async (req, res) => {
       }
     }
 
-    // 3. Send branded email from aivorah24@gmail.com
-    await sendPasswordResetEmail({ to: emailLc, resetLink });
+    // Point the link at OUR themed /reset-password page instead of Firebase's
+    // generic firebaseapp.com action page. Firebase's link carries the oobCode
+    // as a query param — extract it and rebuild against the Aivorah frontend.
+    let themedLink = resetLink;
+    try {
+      const oob = new URL(resetLink).searchParams.get('oobCode');
+      if (oob) themedLink = `${appBase}/reset-password?oobCode=${encodeURIComponent(oob)}`;
+    } catch (_) { /* keep original link if parsing fails */ }
+
+    // 3. Send branded email from aivorah24@gmail.com (to parent for student accounts)
+    await sendPasswordResetEmail({ to: deliverTo, resetLink: themedLink, childName });
     res.json({ ok: true });
   } catch (err) {
     console.error('[send-password-reset]', err.message);
