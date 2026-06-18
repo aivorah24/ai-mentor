@@ -18,7 +18,8 @@ import SERVER_URL from '../../config/serverUrl';
 import { AVATAR_STYLES } from '../../constants/avatarStyles';
 import { CURRICULA, getGradesForCurriculum, SUBJECTS, TEAL, DatePickerInput } from './OnboardingScreen';
 import {
-  AutocompleteField, CardHeader, BBox, fetchCitySuggestions, fetchSchoolSuggestions, locateCity,
+  AutocompleteField, CardHeader, BBox, fetchCitySuggestions, fetchSchoolSuggestions, locateCity, locateFull,
+  SelectField, COUNTRIES, INDIA_STATES, INDIA_CITIES,
 } from './OnboardingSharedFields';
 
 const TEACHER_ROLES = ['Teacher', 'Coordinator', 'Principal'];
@@ -183,7 +184,7 @@ export default function OnboardingTeacherBoxes() {
         </View>
 
         {/* ── Row 1: Personal Info / School Details / Teaching Info ── */}
-        <View style={[styles.rowWrap, styles.rowWrapStretch]}>
+        <View style={[styles.rowWrap, styles.rowWrapStretch, { zIndex: 20 }]}>
           {/* Personal Info */}
           <View style={[styles.card, styles.card3]}>
             <CardHeader icon="user" title="Personal Info" subtitle="Tell us about yourself." done={personalDone} styles={styles} />
@@ -214,7 +215,7 @@ export default function OnboardingTeacherBoxes() {
           </View>
 
           {/* School Details */}
-          <View style={[styles.card, styles.card3]}>
+          <View style={[styles.card, styles.card3, { zIndex: 10 }]}>
             <CardHeader icon="home" title="School Details" subtitle="Where do you teach?" done={schoolDone} styles={styles} />
             <View style={styles.fieldGroup}>
               <Text style={styles.lbl}>School Name</Text>
@@ -228,36 +229,62 @@ export default function OnboardingTeacherBoxes() {
                 disabledMessage={city.trim().length < 3 ? 'Enter your city below to search nearby schools.' : undefined}
               />
             </View>
-            <View style={styles.fieldGroup}>
-              <View style={styles.lblRow}>
-                <Text style={styles.lbl}>City</Text>
-                {Platform.OS === 'web' && (
-                  <TouchableOpacity style={styles.locateBtn} onPress={() => locateCity(setCity, setLocating)} disabled={locating} activeOpacity={0.8}>
-                    <Feather name="crosshair" size={12} color={TEAL} />
-                    <Text style={styles.locateTxt}>{locating ? 'Locating...' : 'Use my location'}</Text>
-                  </TouchableOpacity>
-                )}
+            {Platform.OS === 'web' && (
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 2 }}>
+                <TouchableOpacity style={styles.locateBtn} onPress={() => locateFull(({ city: c, state: s, country: co }) => { if (co) setCountry(co); if (s) setState(s); if (c) setCity(c); }, setLocating)} disabled={locating} activeOpacity={0.8}>
+                  <Feather name="crosshair" size={12} color={TEAL} />
+                  <Text style={styles.locateTxt}>{locating ? 'Locating...' : 'Use my location'}</Text>
+                </TouchableOpacity>
               </View>
-              <AutocompleteField
-                value={city}
-                onChange={setCity}
-                fetchSuggestions={fetchCitySuggestions}
-                placeholder="Search for your city"
-                colors={colors}
-                styles={styles}
-              />
-            </View>
-            <View style={styles.fieldRow}>
-              <View style={[styles.fieldGroup, { flex: 1 }]}>
-                <Text style={styles.lbl}>State / Province</Text>
-                <TextInput style={styles.input} value={state} onChangeText={setState}
-                  placeholder="e.g. Telangana" placeholderTextColor={colors.textDim} />
-              </View>
-              <View style={[styles.fieldGroup, { flex: 1 }]}>
+            )}
+            <View style={[styles.fieldRow, { zIndex: 10 }]}>
+              <View style={[styles.fieldGroup, { flex: 1, zIndex: 20 }]}>
                 <Text style={styles.lbl}>Country</Text>
-                <TextInput style={styles.input} value={country} onChangeText={setCountry}
-                  placeholder="e.g. India" placeholderTextColor={colors.textDim} />
+                <SelectField
+                  value={country}
+                  onChange={(c) => { setCountry(c); if (c !== 'India') setState(''); setCity(''); }}
+                  options={COUNTRIES}
+                  placeholder="Select your country"
+                  searchPlaceholder="Search country..."
+                  colors={colors}
+                  styles={styles}
+                />
               </View>
+              <View style={[styles.fieldGroup, { flex: 1, zIndex: 15 }]}>
+                <Text style={styles.lbl}>State / Province</Text>
+                <SelectField
+                  value={state}
+                  onChange={(s) => { setState(s); setCity(''); }}
+                  options={country === 'India' ? INDIA_STATES : []}
+                  placeholder="Select your state"
+                  searchPlaceholder="Search state..."
+                  colors={colors}
+                  styles={styles}
+                />
+              </View>
+            </View>
+            <View style={[styles.fieldGroup, { zIndex: 5 }]}>
+              <Text style={styles.lbl}>City</Text>
+              {country === 'India' && INDIA_CITIES[state] ? (
+                <SelectField
+                  value={city}
+                  onChange={setCity}
+                  options={[...INDIA_CITIES[state]].sort()}
+                  placeholder="Select your city"
+                  searchPlaceholder="Search city..."
+                  colors={colors}
+                  styles={styles}
+                />
+              ) : (
+                <AutocompleteField
+                  value={city}
+                  onChange={setCity}
+                  fetchSuggestions={(q) => fetchCitySuggestions(q, { state, country })}
+                  placeholder={state || country ? 'Search for your city' : 'Select country & state first'}
+                  colors={colors}
+                  styles={styles}
+                />
+              )}
             </View>
           </View>
 

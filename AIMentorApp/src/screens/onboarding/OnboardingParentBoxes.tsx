@@ -22,7 +22,8 @@ import firebaseApp from '../../config/firebase';
 import { AVATAR_STYLES } from '../../constants/avatarStyles';
 import { CURRICULA, getGradesForCurriculum, TEAL, DatePickerInput } from './OnboardingScreen';
 import {
-  AutocompleteField, CardHeader, BBox, fetchCitySuggestions, locateCity,
+  AutocompleteField, CardHeader, BBox, fetchCitySuggestions, locateCity, locateFull,
+  SelectField, COUNTRIES, INDIA_STATES, INDIA_CITIES, PhoneCodeSelect,
 } from './OnboardingSharedFields';
 
 const FOREST = '#5A8A70';
@@ -88,7 +89,10 @@ export default function OnboardingParentBoxes() {
   const [fullName, setFullName] = useState(user?.name || '');
   const [dob, setDob] = useState('');
   const [mobile, setMobile] = useState('');
+  const [mobileCode, setMobileCode] = useState('+91');
   const [city, setCity] = useState((user as any)?.location || '');
+  const [stateProv, setStateProv] = useState((user as any)?.state || '');
+  const [country, setCountry] = useState((user as any)?.country || 'India');
   const [avatarStyle, setAvatarStyle] = useState('default');
 
   const [children, setChildren] = useState<ChildEntry[]>([emptyChild()]);
@@ -275,8 +279,10 @@ export default function OnboardingParentBoxes() {
           name: fullName.trim(),
           role: 'parent',
           location: city,
+          state: stateProv || undefined,
+          country: country || undefined,
           dob: dob || undefined,
-          mobile: mobile ? `+91 ${mobile}` : undefined,
+          mobile: mobile ? `${mobileCode} ${mobile}` : undefined,
           avatarStyle,
         }),
       }).catch(() => {});
@@ -495,52 +501,89 @@ export default function OnboardingParentBoxes() {
         </View>
 
         {/* ── Row 1: Personal Info / Your Child(ren) / Child's Account ── */}
-        <View style={[styles.rowWrap, styles.rowWrapStretch]}>
+        <View style={[styles.rowWrap, styles.rowWrapStretch, { zIndex: 20 }]}>
           {/* Personal Info */}
-          <View style={[styles.card, styles.card3]}>
+          <View style={[styles.card, styles.card3, { zIndex: 10 }]}>
             <CardHeader icon="user" title="1. Personal Info" subtitle="Tell us about yourself." done={personalDone} styles={styles} />
             <View style={styles.fieldGroup}>
               <Text style={styles.lbl}>Full Name</Text>
               <TextInput style={styles.input} value={fullName} onChangeText={setFullName}
                 placeholder="Your name" placeholderTextColor={colors.textDim} autoCapitalize="words" />
             </View>
-            <View style={styles.fieldGroup}>
-              <View style={styles.lblRow}>
-                <Text style={styles.lbl}>City</Text>
-                {Platform.OS === 'web' && (
-                  <TouchableOpacity style={styles.locateBtn} onPress={() => locateCity(setCity, setLocating)} disabled={locating} activeOpacity={0.8}>
-                    <Feather name="crosshair" size={12} color={TEAL} />
-                    <Text style={styles.locateTxt}>{locating ? 'Locating...' : 'Use my location'}</Text>
-                  </TouchableOpacity>
-                )}
+            {Platform.OS === 'web' && (
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 2 }}>
+                <TouchableOpacity style={styles.locateBtn} onPress={() => locateFull(({ city: c, state: s, country: co }) => { if (co) setCountry(co); if (s) setStateProv(s); if (c) setCity(c); }, setLocating)} disabled={locating} activeOpacity={0.8}>
+                  <Feather name="crosshair" size={12} color={TEAL} />
+                  <Text style={styles.locateTxt}>{locating ? 'Locating...' : 'Use my location'}</Text>
+                </TouchableOpacity>
               </View>
-              <AutocompleteField
-                value={city}
-                onChange={setCity}
-                fetchSuggestions={fetchCitySuggestions}
-                placeholder="Search for your city"
-                colors={colors}
-                styles={styles}
-              />
+            )}
+            <View style={[styles.fieldRow, { zIndex: 10 }]}>
+              <View style={[styles.fieldGroup, { flex: 1, minWidth: 140, zIndex: 20 }]}>
+                <Text style={styles.lbl}>Country</Text>
+                <SelectField
+                  value={country}
+                  onChange={(c) => { setCountry(c); if (c !== 'India') setStateProv(''); setCity(''); }}
+                  options={COUNTRIES}
+                  placeholder="Select your country"
+                  searchPlaceholder="Search country..."
+                  colors={colors}
+                  styles={styles}
+                />
+              </View>
+              <View style={[styles.fieldGroup, { flex: 1, minWidth: 140, zIndex: 15 }]}>
+                <Text style={styles.lbl}>State / Province</Text>
+                <SelectField
+                  value={stateProv}
+                  onChange={(s) => { setStateProv(s); setCity(''); }}
+                  options={country === 'India' ? INDIA_STATES : []}
+                  placeholder="Select your state"
+                  searchPlaceholder="Search state..."
+                  colors={colors}
+                  styles={styles}
+                />
+              </View>
             </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>Date of Birth</Text>
-              {Platform.OS === 'web' ? (
-                <DatePickerInput value={dob} onChange={setDob} colors={colors} />
+            <View style={[styles.fieldGroup, { zIndex: 5 }]}>
+              <Text style={styles.lbl}>City</Text>
+              {country === 'India' && INDIA_CITIES[stateProv] ? (
+                <SelectField
+                  value={city}
+                  onChange={setCity}
+                  options={[...INDIA_CITIES[stateProv]].sort()}
+                  placeholder="Select your city"
+                  searchPlaceholder="Search city..."
+                  colors={colors}
+                  styles={styles}
+                />
               ) : (
-                <TextInput style={styles.input} value={dob} onChangeText={setDob}
-                  placeholder="DD/MM/YYYY" placeholderTextColor={colors.textDim} keyboardType="numeric" />
+                <AutocompleteField
+                  value={city}
+                  onChange={setCity}
+                  fetchSuggestions={(q) => fetchCitySuggestions(q, { state: stateProv, country })}
+                  placeholder={stateProv || country ? 'Search for your city' : 'Select country & state first'}
+                  colors={colors}
+                  styles={styles}
+                />
               )}
             </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>Mobile Number</Text>
-              <View style={styles.phoneRow}>
-                <View style={styles.phoneCode}>
-                  <IndiaFlagIcon />
-                  <Text style={styles.phoneCodeTxt}>+91</Text>
+            <View style={[styles.fieldRow, { zIndex: 4 }]}>
+              <View style={[styles.fieldGroup, { flex: 1, minWidth: 140 }]}>
+                <Text style={styles.lbl}>Date of Birth</Text>
+                {Platform.OS === 'web' ? (
+                  <DatePickerInput value={dob} onChange={setDob} colors={colors} />
+                ) : (
+                  <TextInput style={styles.input} value={dob} onChangeText={setDob}
+                    placeholder="DD/MM/YYYY" placeholderTextColor={colors.textDim} keyboardType="numeric" />
+                )}
+              </View>
+              <View style={[styles.fieldGroup, { flex: 1, minWidth: 140, zIndex: 6 }]}>
+                <Text style={styles.lbl}>Mobile Number</Text>
+                <View style={styles.phoneRow}>
+                  <PhoneCodeSelect value={mobileCode} onChange={setMobileCode} colors={colors} styles={styles} />
+                  <TextInput style={[styles.input, styles.phoneInput]} value={mobile} onChangeText={setMobile}
+                    placeholder="98765 43210" placeholderTextColor={colors.textDim} keyboardType="phone-pad" />
                 </View>
-                <TextInput style={[styles.input, styles.phoneInput]} value={mobile} onChangeText={setMobile}
-                  placeholder="98765 43210" placeholderTextColor={colors.textDim} keyboardType="phone-pad" />
               </View>
             </View>
 

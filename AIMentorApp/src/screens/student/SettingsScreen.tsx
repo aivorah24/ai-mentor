@@ -263,7 +263,11 @@ export default function SettingsScreen({ navigation, route }: any) {
   }
 
   // Grade modal
-  const GRADES = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10'];
+  const ALL_GRADES = ['Nursery','LKG','UKG','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'];
+  // A student can only move UP a grade — show their current grade and higher
+  // (through Grade 12), never lower grades.
+  const currentGradeIdx = ALL_GRADES.indexOf(user?.grade || '');
+  const GRADES = currentGradeIdx >= 0 ? ALL_GRADES.slice(currentGradeIdx) : ALL_GRADES;
   const [selectedGrade, setSelectedGrade] = useState(user?.grade || '');
   const [gradeLoading, setGradeLoading] = useState(false);
 
@@ -364,6 +368,8 @@ export default function SettingsScreen({ navigation, route }: any) {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
+          <View style={styles.columns}>
+          <View style={styles.col}>
           {/* ── Profile & Account ── */}
           <SectionHeader icon="user" label="Profile & Account" color={colors.primary} styles={styles} />
           <View style={styles.card}>
@@ -377,112 +383,30 @@ export default function SettingsScreen({ navigation, route }: any) {
               <View style={{ flex: 1 }}>
                 <Text style={styles.profileName}>{user?.name || 'User'}</Text>
                 <Text style={styles.profileRole}>
-                  {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Student'} · {levelLabel} · {user?.email}
+                  {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Student'} · {levelLabel}
                 </Text>
+                <Text style={styles.profileEmail}>{user?.email}</Text>
               </View>
             </View>
             <View style={styles.divider} />
 
-            <FieldRow
-              label="Display Name"
-              sub={user?.name || '—'}
-              btnLabel="Change"
-              onPress={() => openModal('name')}
-              styles={styles}
-            />
-            <View style={styles.divider} />
-            <FieldRow
-              label="Email Address"
-              sub={user?.email || '—'}
-              btnLabel="Change"
-              onPress={() => openModal('email')}
-              styles={styles}
-            />
-            <View style={styles.divider} />
-            <FieldRow
-              label="Grade / Year"
-              sub={user?.grade || 'Not set'}
-              btnLabel="Update"
-              onPress={() => openModal('grade')}
-              styles={styles}
-            />
-            <View style={styles.divider} />
-            <FieldRow
-              label="Location"
-              sub={user?.location || 'Not set'}
-              btnLabel="Update"
-              onPress={() => openModal('location')}
-              styles={styles}
-            />
-          </View>
-
-          {/* ── Security ── */}
-          <View onLayout={e => { securityY.current = e.nativeEvent.layout.y; }}>
-          <SectionHeader icon="shield" label="Security" color={colors.accentGreen} styles={styles} />
-          <View style={styles.card}>
-            <FieldRow
-              label="Password"
-              sub="Change your account password"
-              btnLabel="Change"
-              onPress={() => openModal('password')}
-              styles={styles}
-            />
-            <View style={styles.divider} />
-            <FieldRow
-              label="Recovery Email"
-              sub={recoverySaved || 'Backup email for account recovery'}
-              btnLabel={recoverySaved ? 'Update' : 'Set'}
-              onPress={() => openModal('recovery')}
-              styles={styles}
-            />
-            <View style={styles.divider} />
-            <View style={styles.fieldRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>Two-Factor Auth</Text>
-                <Text style={styles.fieldSub}>Add an extra layer of security</Text>
-              </View>
-              <View style={styles.comingSoonBadge}>
-                <Text style={styles.comingSoonText}>Soon</Text>
-              </View>
-            </View>
-          </View>
-          </View>
-
-          {/* ── Notifications ── */}
-          <View ref={notifRef} onLayout={e => { notifY.current = e.nativeEvent.layout.y; }}>
-          <SectionHeader icon="bell" label="Notifications" color={colors.accentYellow} styles={styles} />
-          <View style={styles.card}>
             {[
-              { label: 'Assignment Alerts', sub: 'Due date reminders', val: assignmentAlerts, key: 'assignmentAlerts', set: setAssignmentAlerts, live: false },
-              { label: 'Challenge Updates', sub: 'New challenges and leaderboard changes', val: challengeUpdates, key: 'challengeUpdates', set: setChallengeUpdates, live: false },
-              { label: 'Weekly Report', sub: 'Progress summary every week', val: weeklyReport, key: 'weeklyReport', set: setWeeklyReport, live: false },
-              { label: 'AI Suggestions', sub: 'Personalised learning tips from AI', val: aiSuggestions, key: 'aiSuggestions', set: setAiSuggestions, live: false },
-              { label: 'Push Notifications', sub: 'Real-time alerts on your device', val: pushNotifications, key: 'pushNotifications', set: setPushNotifications, live: false },
-            ].map((item, i) => (
-              <View key={item.label}>
-                {i > 0 && <View style={styles.divider} />}
-                <View style={styles.toggleRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>{item.label}</Text>
-                    <Text style={styles.fieldSub}>{item.sub}</Text>
-                  </View>
-                  {item.live ? (
-                    <Switch
-                      value={item.val}
-                      onValueChange={(v) => { item.set(v); saveNotifPref(item.key, v); }}
-                      trackColor={{ false: colors.borderColor, true: colors.primary }}
-                      thumbColor="white"
-                    />
-                  ) : (
-                    <View style={styles.comingSoonBadge}>
-                      <Text style={styles.comingSoonText}>Soon</Text>
-                    </View>
-                  )}
+              { label: 'Display Name', value: user?.name || '—', modal: 'name' },
+              { label: 'Email Address', value: user?.email || '—', modal: 'email' },
+              { label: 'Grade / Year', value: user?.grade || 'Not set', modal: 'grade' },
+              { label: 'Location', value: user?.location || 'Not set', modal: 'location' },
+            ].map((f, i) => (
+              <View key={f.label}>
+                {i > 0 && <View style={styles.rowDivider} />}
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>{f.label}</Text>
+                  <Text style={styles.infoValue} numberOfLines={1}>{f.value}</Text>
+                  <TouchableOpacity style={styles.editBtn} onPress={() => openModal(f.modal as any)} activeOpacity={0.7}>
+                    <Text style={styles.editBtnText}>Edit</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             ))}
-          </View>
-
           </View>
 
           {/* ── Appearance ── */}
@@ -494,29 +418,97 @@ export default function SettingsScreen({ navigation, route }: any) {
                 { id: 'dark', icon: 'moon', label: 'Dark' },
                 { id: 'light', icon: 'sun', label: 'Light' },
                 { id: 'auto', icon: 'monitor', label: 'Auto' },
-              ] as const).map((t) => (
+              ] as const).map((t) => {
+                const active = themeMode === t.id;
+                return (
                 <TouchableOpacity
                   key={t.id}
-                  style={[styles.themeOption, themeMode === t.id && styles.themeOptionActive]}
+                  style={[styles.themeOption, active && styles.themeOptionActive]}
                   onPress={() => setThemeMode(t.id)}
                   activeOpacity={0.7}
                 >
-                  <Feather name={t.icon} size={16} color={themeMode === t.id ? colors.primary : colors.textMuted} />
-                  <Text style={[styles.themeLabel, themeMode === t.id && { color: colors.primary }]}>{t.label}</Text>
+                  {active && (
+                    <View style={styles.themeCheck}>
+                      <Feather name="check" size={11} color="#fff" />
+                    </View>
+                  )}
+                  <Feather name={t.icon} size={24} color={active ? colors.primary : colors.textMuted} />
+                  <Text style={[styles.themeLabel, active && { color: colors.primary }]}>{t.label}</Text>
                 </TouchableOpacity>
-              ))}
+                );
+              })}
             </View>
           </View>
+          </View>{/* end left col */}
+
+          <View style={styles.col}>
+          {/* ── Security ── */}
+          <View onLayout={e => { securityY.current = e.nativeEvent.layout.y; }}>
+          <SectionHeader icon="shield" label="Security" color={colors.accentGreen} styles={styles} />
+          <View style={styles.card}>
+            {[
+              { icon: 'lock', label: 'Password', sub: 'Change your account password', btn: 'Change', onPress: () => openModal('password') },
+              { icon: 'mail', label: 'Recovery Email', sub: recoverySaved || 'Backup email for account recovery', btn: recoverySaved ? 'Update' : 'Set', onPress: () => openModal('recovery') },
+              { icon: 'shield', label: 'Two-Factor Auth', sub: 'Add an extra layer of security', btn: 'Soon', onPress: null },
+            ].map((r, i) => (
+              <View key={r.label}>
+                {i > 0 && <View style={styles.rowDivider} />}
+                <View style={styles.iconRow}>
+                  <View style={styles.iconBox}><Feather name={r.icon as any} size={18} color={colors.textMuted} /></View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>{r.label}</Text>
+                    <Text style={styles.fieldSub}>{r.sub}</Text>
+                  </View>
+                  {r.onPress ? (
+                    <TouchableOpacity style={styles.editBtn} onPress={r.onPress} activeOpacity={0.7}>
+                      <Text style={styles.editBtnText}>{r.btn}</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.comingSoonBadge}><Text style={styles.comingSoonText}>Soon</Text></View>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+          </View>
+
+          {/* ── Notifications ── */}
+          <View ref={notifRef} onLayout={e => { notifY.current = e.nativeEvent.layout.y; }}>
+          <SectionHeader icon="bell" label="Notifications" color={colors.accentYellow} styles={styles} />
+          <View style={styles.card}>
+            {[
+              { icon: 'bell', label: 'Assignment Alerts', sub: 'Due date reminders' },
+              { icon: 'bar-chart-2', label: 'Challenge Updates', sub: 'New challenges and leaderboard changes' },
+              { icon: 'file-text', label: 'Weekly Report', sub: 'Progress summary every week' },
+              { icon: 'zap', label: 'AI Suggestions', sub: 'Personalised learning tips from AI' },
+              { icon: 'send', label: 'Push Notifications', sub: 'Real-time alerts on your device' },
+            ].map((item, i) => (
+              <View key={item.label}>
+                {i > 0 && <View style={styles.rowDivider} />}
+                <View style={styles.iconRow}>
+                  <View style={styles.iconBox}><Feather name={item.icon as any} size={18} color={colors.textMuted} /></View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>{item.label}</Text>
+                    <Text style={styles.fieldSub}>{item.sub}</Text>
+                  </View>
+                  <View style={styles.comingSoonBadge}><Text style={styles.comingSoonText}>Soon</Text></View>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          </View>
+          </View>{/* end right col */}
+          </View>{/* end columns */}
 
           {/* ── Account Actions ── */}
-          <SectionHeader icon="alert-triangle" label="Account Actions" color={colors.accentRed} styles={styles} />
-          <View style={[styles.card, { flexDirection: 'row', gap: 12 }]}>
+          <View style={styles.actionsRow}>
             <TouchableOpacity style={styles.actionBtn} onPress={handleSignOut} activeOpacity={0.8}>
-              <Feather name="log-out" size={16} color={colors.accentRed} />
+              <Feather name="log-out" size={17} color={colors.accentRed} />
               <Text style={[styles.actionBtnText, { color: colors.accentRed }]}>Sign Out</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.accentRed + '14', borderColor: colors.accentRed + '40' }]} onPress={() => { setDeletePassword(''); setDeleteError(''); setDeleteModalVisible(true); }} activeOpacity={0.8}>
-              <Feather name="trash-2" size={16} color={colors.accentRed} />
+            <TouchableOpacity style={styles.actionBtn} onPress={() => { setDeletePassword(''); setDeleteError(''); setDeleteModalVisible(true); }} activeOpacity={0.8}>
+              <Feather name="trash-2" size={17} color={colors.accentRed} />
               <Text style={[styles.actionBtnText, { color: colors.accentRed }]}>Delete Account</Text>
             </TouchableOpacity>
           </View>
@@ -759,15 +751,16 @@ export default function SettingsScreen({ navigation, route }: any) {
                 key={g}
                 onPress={() => setSelectedGrade(g)}
                 style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 20,
+                  width: '22%',
+                  paddingVertical: 9,
+                  borderRadius: 10,
                   borderWidth: 1.5,
                   borderColor: active ? colors.primary : colors.borderColor,
                   backgroundColor: active ? colors.primary + '20' : 'transparent',
+                  alignItems: 'center',
                 }}
               >
-                <Text style={{ color: active ? colors.primary : colors.textMuted, fontWeight: active ? '700' : '400', fontSize: 13 }}>{g}</Text>
+                <Text style={{ color: active ? colors.primary : colors.textMuted, fontWeight: active ? '700' : '400', fontSize: 12.5 }} numberOfLines={1}>{g}</Text>
               </TouchableOpacity>
             );
           })}
@@ -915,11 +908,28 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderWidth: 2,
     borderColor: c.cardDark,
   },
-  profileName: { fontSize: 16, fontWeight: '700', color: c.textMain, marginBottom: 3 },
-  profileRole: { fontSize: 12, color: c.textMuted },
+  profileName: { fontSize: 18, fontWeight: '700', color: c.textMain, marginBottom: 4 },
+  profileRole: { fontSize: 13, color: c.textMuted, marginBottom: 2 },
+  profileEmail: { fontSize: 13, color: c.textMuted },
 
   divider: { height: 1, backgroundColor: c.borderColor, marginVertical: spacing.lg },
+  rowDivider: { height: 1, backgroundColor: c.borderColor },
   fieldRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md },
+
+  // Profile info rows (label · value · Edit)
+  infoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 13, gap: spacing.md },
+  infoLabel: { fontSize: 13, fontWeight: '600', color: c.textMain, width: 120 },
+  infoValue: { flex: 1, fontSize: 13, color: c.textMuted },
+  editBtn: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: radius.sm, borderWidth: 1, borderColor: c.borderColor, backgroundColor: 'rgba(255,255,255,0.02)' },
+  editBtnText: { fontSize: 13, fontWeight: '600', color: c.textMain },
+
+  // Icon-led rows (Security / Notifications)
+  iconRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 14 },
+  iconBox: { width: 40, height: 40, borderRadius: radius.sm, borderWidth: 1, borderColor: c.borderColor, backgroundColor: 'rgba(255,255,255,0.02)', alignItems: 'center', justifyContent: 'center' },
+  columns: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-start' },
+  col: { flex: 1, flexBasis: 0, minWidth: 340 },
+  gridWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  gridCell: { width: '48%', flexGrow: 1, minWidth: 200, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, padding: spacing.md, backgroundColor: c.cardDark },
   fieldLabel: { fontSize: 14, fontWeight: '600', color: c.textMain, marginBottom: 2 },
   fieldSub: { fontSize: 12, color: c.textMuted, maxWidth: 200 },
   changeBtn: {
@@ -937,18 +947,20 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   themeRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
   themeOption: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
+    gap: 12,
+    paddingVertical: 28,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: c.borderColor,
     backgroundColor: 'rgba(255,255,255,0.02)',
+    position: 'relative',
   },
   themeOptionActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
-  themeLabel: { fontSize: 13, fontWeight: '600', color: c.textMuted },
+  themeLabel: { fontSize: 14, fontWeight: '600', color: c.textMuted },
+  themeCheck: { position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
 
   langRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' },
   langChip: {
@@ -983,10 +995,11 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   comingSoonText: { fontSize: 11, color: c.primary, fontWeight: '600' },
 
   dangerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 2 },
+  actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, marginTop: spacing.lg },
   actionBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingVertical: 13, borderRadius: radius.md,
-    borderWidth: 1, borderColor: c.accentRed + '30',
+    flex: 1, flexBasis: 0, minWidth: 280, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    paddingVertical: 18, borderRadius: radius.md,
+    borderWidth: 1, borderColor: c.accentRed + '40',
     backgroundColor: c.accentRed + '0A',
   },
   actionBtnText: { fontSize: 14, fontWeight: '700' },
