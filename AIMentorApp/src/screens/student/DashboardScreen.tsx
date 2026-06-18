@@ -1095,6 +1095,18 @@ export default function DashboardScreen({ navigation, route }: any) {
 
                 {/* ── PROGRESS SNAPSHOT ───────────────────────── */}
                 {/* ── LEARNING PATH ───────────────────────────── */}
+                {noContentGrade ? (
+                  <View style={[styles.lessonContainer, { backgroundColor: cardBg, borderColor: cardBorder, alignItems: 'center', padding: 28, gap: 10, marginTop: 8 }]}>
+                    <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: BRAND.violet + '15', alignItems: 'center', justifyContent: 'center' }}>
+                      <Feather name="clock" size={22} color={BRAND.violet} />
+                    </View>
+                    <Text style={[styles.lessonTopic, { color: colors.textMain, fontSize: 17, textAlign: 'center' }]}>Lessons for {studentGrade} are coming soon</Text>
+                    <Text style={[styles.lessonMeta, { color: colors.textMuted, textAlign: 'center', lineHeight: 20, maxWidth: 380 }]}>
+                      Our team is carefully crafting playful, age-appropriate learning experiences for {studentGrade}. We'll let you know the moment they're ready to explore.
+                    </Text>
+                  </View>
+                ) : (
+                <>
                 <SectionHeader title="Learning Path" sub={`${curriculum.totalTopics} topics in your curriculum`} onPress={() => navigation.navigate('LearningPaths')} linkLabel={`See all ${curriculum.totalTopics}`} />
 
                 {/* Subject filter chips */}
@@ -1160,6 +1172,8 @@ export default function DashboardScreen({ navigation, route }: any) {
                       );
                     })}
                   </View>
+                )}
+                </>
                 )}
 
                 {/* ── UPCOMING DEADLINES ──────────────────────── */}
