@@ -225,172 +225,179 @@ export default function TeacherSettingsScreen({ navigation }: any) {
           onMenuPress={() => navigation.openDrawer()}
         />
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.columns}>
 
-          {/* ── Profile ── */}
-          <SectionHeader icon="user" label="Profile & Account" color={colors.primary} styles={styles} />
-          <View style={styles.card}>
-            <View style={styles.profileRow}>
-              <View style={styles.avatarBig}>
-                <Text style={styles.avatarInitial}>{user?.name ? user.name[0].toUpperCase() : 'T'}</Text>
-                <View style={styles.avatarCam}>
-                  <Feather name="camera" size={11} color="white" />
-                </View>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.profileName}>{user?.name || 'Teacher'}</Text>
-                <Text style={styles.profileSub}>{user?.email || ''}</Text>
-                <View style={styles.profileMeta}>
-                  <View style={styles.roleBadge}>
-                    <Feather name="briefcase" size={10} color={colors.primary} />
-                    <Text style={styles.roleBadgeText}>Teacher</Text>
-                  </View>
-                  {user?.school ? (
-                    <View style={[styles.roleBadge, { backgroundColor: colors.accentGreen + '15', borderColor: colors.accentGreen + '30' }]}>
-                      <Feather name="home" size={10} color={colors.accentGreen} />
-                      <Text style={[styles.roleBadgeText, { color: colors.accentGreen }]}>{user.school}</Text>
+            {/* ── Left column ── */}
+            <View style={styles.col}>
+              {/* ── Profile ── */}
+              <SectionHeader icon="user" label="Profile & Account" color={colors.primary} styles={styles} />
+              <View style={styles.card}>
+                <View style={styles.profileRow}>
+                  <View style={styles.avatarBig}>
+                    <Text style={styles.avatarInitial}>{user?.name ? user.name[0].toUpperCase() : 'T'}</Text>
+                    <View style={styles.avatarCam}>
+                      <Feather name="camera" size={11} color="white" />
                     </View>
-                  ) : null}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.profileName}>{user?.name || 'Teacher'}</Text>
+                    <Text style={styles.profileSub}>{user?.email || ''}</Text>
+                    <View style={styles.profileMeta}>
+                      <View style={styles.roleBadge}>
+                        <Feather name="briefcase" size={10} color={colors.primary} />
+                        <Text style={styles.roleBadgeText}>Teacher</Text>
+                      </View>
+                      {user?.school ? (
+                        <View style={[styles.roleBadge, { backgroundColor: colors.accentGreen + '15', borderColor: colors.accentGreen + '30' }]}>
+                          <Feather name="home" size={10} color={colors.accentGreen} />
+                          <Text style={[styles.roleBadgeText, { color: colors.accentGreen }]}>{user.school}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.divider} />
+                <FieldRow label="Display Name" sub={user?.name || '—'} btnLabel="Change" onPress={() => openModal('name')} styles={styles} />
+                <View style={styles.divider} />
+                <FieldRow label="Email Address" sub={user?.email || '—'} btnLabel="Change" onPress={() => openModal('email')} styles={styles} />
+                <View style={styles.divider} />
+                <FieldRow label="School / Institution" sub={user?.school || 'Not set'} btnLabel="Update" onPress={() => openModal('school')} styles={styles} />
+                <View style={styles.divider} />
+                <View style={styles.fieldRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>Parent Profile</Text>
+                    <Text style={styles.fieldSub}>
+                      {isDualRole
+                        ? 'You have a parent profile — switch from the sidebar'
+                        : 'Add a parent profile to monitor your child\'s learning'}
+                    </Text>
+                  </View>
+                  {isDualRole ? (
+                    <View style={[styles.comingSoonBadge, { backgroundColor: colors.accentGreen + '18', borderColor: colors.accentGreen + '40' }]}>
+                      <Text style={[styles.comingSoonText, { color: colors.accentGreen }]}>Active</Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.changeBtn, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '40', borderWidth: 1 }]}
+                      onPress={openParentOnboarding}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.changeBtnText, { color: colors.primary }]}>Add</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
-            </View>
-            <View style={styles.divider} />
-            <FieldRow label="Display Name" sub={user?.name || '—'} btnLabel="Change" onPress={() => openModal('name')} styles={styles} />
-            <View style={styles.divider} />
-            <FieldRow label="Email Address" sub={user?.email || '—'} btnLabel="Change" onPress={() => openModal('email')} styles={styles} />
-            <View style={styles.divider} />
-            <FieldRow label="School / Institution" sub={user?.school || 'Not set'} btnLabel="Update" onPress={() => openModal('school')} styles={styles} />
-            <View style={styles.divider} />
-            {/* Add Parent Profile */}
-            <View style={styles.fieldRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>Parent Profile</Text>
-                <Text style={styles.fieldSub}>
-                  {isDualRole
-                    ? 'You have a parent profile — switch from the sidebar'
-                    : 'Add a parent profile to monitor your child\'s learning'}
-                </Text>
-              </View>
-              {isDualRole ? (
-                <View style={[styles.comingSoonBadge, { backgroundColor: colors.accentGreen + '18', borderColor: colors.accentGreen + '40' }]}>
-                  <Text style={[styles.comingSoonText, { color: colors.accentGreen }]}>Active</Text>
+
+              {/* ── Security ── */}
+              <SectionHeader icon="shield" label="Security" color={colors.accentGreen} styles={styles} />
+              <View style={styles.card}>
+                <FieldRow label="Password" sub="Change your account password" btnLabel="Change" onPress={() => openModal('password')} styles={styles} />
+                <View style={styles.divider} />
+                <View style={styles.fieldRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>Two-Factor Auth</Text>
+                    <Text style={styles.fieldSub}>Add an extra layer of security</Text>
+                  </View>
+                  <View style={styles.comingSoonBadge}>
+                    <Text style={styles.comingSoonText}>Soon</Text>
+                  </View>
                 </View>
-              ) : (
-                <TouchableOpacity
-                  style={[styles.changeBtn, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '40', borderWidth: 1 }]}
-                  onPress={openParentOnboarding}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.changeBtnText, { color: colors.primary }]}>Add</Text>
+              </View>
+
+              {/* ── Account Actions ── */}
+              <SectionHeader icon="alert-triangle" label="Account Actions" color={colors.accentRed} styles={styles} />
+              <View style={styles.card}>
+                <TouchableOpacity style={styles.dangerRow} onPress={handleSignOut} activeOpacity={0.7}>
+                  <Feather name="log-out" size={16} color={colors.accentRed} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.fieldLabel, { color: colors.accentRed }]}>Sign Out</Text>
+                    <Text style={styles.fieldSub}>You will be returned to the login screen</Text>
+                  </View>
+                  <Feather name="chevron-right" size={16} color={colors.accentRed} />
                 </TouchableOpacity>
-              )}
+              </View>
             </View>
-          </View>
 
-          {/* ── Security ── */}
-          <SectionHeader icon="shield" label="Security" color={colors.accentGreen} styles={styles} />
-          <View style={styles.card}>
-            <FieldRow label="Password" sub="Change your account password" btnLabel="Change" onPress={() => openModal('password')} styles={styles} />
-            <View style={styles.divider} />
-            <View style={styles.fieldRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>Two-Factor Auth</Text>
-                <Text style={styles.fieldSub}>Add an extra layer of security</Text>
-              </View>
-              <View style={styles.comingSoonBadge}>
-                <Text style={styles.comingSoonText}>Soon</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* ── Teaching Preferences ── */}
-          <SectionHeader icon="settings" label="Teaching Preferences" color={colors.accentBlue} styles={styles} />
-          <View style={styles.card}>
-            <View style={styles.toggleRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>AI Auto-Grading</Text>
-                <Text style={styles.fieldSub}>Let AI grade assignments automatically</Text>
-              </View>
-              <Switch value={autoGrading} onValueChange={setAutoGrading} trackColor={{ false: colors.borderColor, true: colors.primary }} thumbColor="white" />
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.toggleRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>Share Progress with Parents</Text>
-                <Text style={styles.fieldSub}>Parents can see their child's scores and activity</Text>
-              </View>
-              <Switch value={shareProgress} onValueChange={setShareProgress} trackColor={{ false: colors.borderColor, true: colors.primary }} thumbColor="white" />
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.fieldRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>Curriculum</Text>
-                <Text style={styles.fieldSub}>{user?.curriculum || 'IB PYP'} · Grade {user?.grade?.replace('Grade ', '') || '3'}</Text>
-              </View>
-              <TouchableOpacity style={styles.changeBtn} onPress={() => openModal('curriculum')} activeOpacity={0.7}>
-                <Text style={styles.changeBtnText}>Update</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* ── Notifications ── */}
-          <SectionHeader icon="bell" label="Notifications" color={colors.accentYellow} styles={styles} />
-          <View style={styles.card}>
-            {[
-              { label: 'Assignment Submissions', sub: 'When a student submits work', val: submissionAlerts, set: setSubmissionAlerts },
-              { label: 'Parent Messages', sub: 'New messages from parents', val: parentMessages, set: setParentMessages },
-              { label: 'Weekly Class Report', sub: 'Summary of class activity each week', val: weeklyReport, set: setWeeklyReport },
-              { label: 'AI Class Insights', sub: 'Smart suggestions for your class', val: aiInsights, set: setAiInsights },
-              { label: 'Challenge Activity', sub: 'Student challenge completions and rankings', val: challengeAlerts, set: setChallengeAlerts },
-            ].map((item, i) => (
-              <View key={item.label}>
-                {i > 0 && <View style={styles.divider} />}
+            {/* ── Right column ── */}
+            <View style={styles.col}>
+              {/* ── Teaching Preferences ── */}
+              <SectionHeader icon="settings" label="Teaching Preferences" color={colors.accentBlue} styles={styles} />
+              <View style={styles.card}>
                 <View style={styles.toggleRow}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>{item.label}</Text>
-                    <Text style={styles.fieldSub}>{item.sub}</Text>
+                    <Text style={styles.fieldLabel}>AI Auto-Grading</Text>
+                    <Text style={styles.fieldSub}>Let AI grade assignments automatically</Text>
                   </View>
-                  <Switch value={item.val} onValueChange={item.set} trackColor={{ false: colors.borderColor, true: colors.primary }} thumbColor="white" />
+                  <Switch value={autoGrading} onValueChange={setAutoGrading} trackColor={{ false: colors.borderColor, true: colors.primary }} thumbColor="white" />
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.toggleRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>Share Progress with Parents</Text>
+                    <Text style={styles.fieldSub}>Parents can see their child's scores and activity</Text>
+                  </View>
+                  <Switch value={shareProgress} onValueChange={setShareProgress} trackColor={{ false: colors.borderColor, true: colors.primary }} thumbColor="white" />
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.fieldRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>Curriculum</Text>
+                    <Text style={styles.fieldSub}>{user?.curriculum || 'IB PYP'} · Grade {user?.grade?.replace('Grade ', '') || '3'}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.changeBtn} onPress={() => openModal('curriculum')} activeOpacity={0.7}>
+                    <Text style={styles.changeBtnText}>Update</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
-            ))}
-          </View>
 
-          {/* ── Appearance ── */}
-          <SectionHeader icon="moon" label="Appearance" color={colors.accentPurple} styles={styles} />
-          <View style={styles.card}>
-            <Text style={styles.fieldLabel}>Theme</Text>
-            <View style={styles.themeRow}>
-              {([
-                { id: 'dark', icon: 'moon', label: 'Dark' },
-                { id: 'light', icon: 'sun', label: 'Light' },
-                { id: 'auto', icon: 'monitor', label: 'Auto' },
-              ] as const).map(t => (
-                <TouchableOpacity
-                  key={t.id}
-                  style={[styles.themeOption, themeMode === t.id && styles.themeOptionActive]}
-                  onPress={() => setThemeMode(t.id)}
-                  activeOpacity={0.7}
-                >
-                  <Feather name={t.icon} size={16} color={themeMode === t.id ? colors.primary : colors.textMuted} />
-                  <Text style={[styles.themeLabel, themeMode === t.id && { color: colors.primary }]}>{t.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* ── Account Actions ── */}
-          <SectionHeader icon="alert-triangle" label="Account Actions" color={colors.accentRed} styles={styles} />
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.dangerRow} onPress={handleSignOut} activeOpacity={0.7}>
-              <Feather name="log-out" size={16} color={colors.accentRed} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.fieldLabel, { color: colors.accentRed }]}>Sign Out</Text>
-                <Text style={styles.fieldSub}>You will be returned to the login screen</Text>
+              {/* ── Notifications ── */}
+              <SectionHeader icon="bell" label="Notifications" color={colors.accentYellow} styles={styles} />
+              <View style={styles.card}>
+                {[
+                  { label: 'Assignment Submissions', sub: 'When a student submits work', val: submissionAlerts, set: setSubmissionAlerts },
+                  { label: 'Parent Messages', sub: 'New messages from parents', val: parentMessages, set: setParentMessages },
+                  { label: 'Weekly Class Report', sub: 'Summary of class activity each week', val: weeklyReport, set: setWeeklyReport },
+                  { label: 'AI Class Insights', sub: 'Smart suggestions for your class', val: aiInsights, set: setAiInsights },
+                  { label: 'Challenge Activity', sub: 'Student challenge completions and rankings', val: challengeAlerts, set: setChallengeAlerts },
+                ].map((item, i) => (
+                  <View key={item.label}>
+                    {i > 0 && <View style={styles.divider} />}
+                    <View style={styles.toggleRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.fieldLabel}>{item.label}</Text>
+                        <Text style={styles.fieldSub}>{item.sub}</Text>
+                      </View>
+                      <Switch value={item.val} onValueChange={item.set} trackColor={{ false: colors.borderColor, true: colors.primary }} thumbColor="white" />
+                    </View>
+                  </View>
+                ))}
               </View>
-              <Feather name="chevron-right" size={16} color={colors.accentRed} />
-            </TouchableOpacity>
-          </View>
 
+              {/* ── Appearance ── */}
+              <SectionHeader icon="moon" label="Appearance" color={colors.accentPurple} styles={styles} />
+              <View style={styles.card}>
+                <Text style={styles.fieldLabel}>Theme</Text>
+                <View style={styles.themeRow}>
+                  {([
+                    { id: 'dark', icon: 'moon', label: 'Dark' },
+                    { id: 'light', icon: 'sun', label: 'Light' },
+                    { id: 'auto', icon: 'monitor', label: 'Auto' },
+                  ] as const).map(t => (
+                    <TouchableOpacity
+                      key={t.id}
+                      style={[styles.themeOption, themeMode === t.id && styles.themeOptionActive]}
+                      onPress={() => setThemeMode(t.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name={t.icon} size={16} color={themeMode === t.id ? colors.primary : colors.textMuted} />
+                      <Text style={[styles.themeLabel, themeMode === t.id && { color: colors.primary }]}>{t.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+          </View>
           <Text style={styles.versionText}>Aivorah v1.0.0 · NuShift</Text>
         </ScrollView>
       </View>
@@ -751,7 +758,9 @@ function ModalButtons({ onCancel, onSave, loading, saveLabel = 'Save Changes', s
 const makeStyles = (c: AppColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bgDark },
   scroll: { flex: 1 },
-  content: { padding: spacing.xl, paddingBottom: 48, gap: spacing.md },
+  content: { padding: spacing.xl, paddingBottom: 48 },
+  columns: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-start' },
+  col: { flex: 1, flexBasis: 0, minWidth: 340, gap: spacing.md },
 
   sectionLabelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md, marginBottom: spacing.sm },
   sectionLabel: { fontSize: 13, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
