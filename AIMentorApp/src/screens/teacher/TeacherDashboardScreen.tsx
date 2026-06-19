@@ -1014,7 +1014,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
         >
 
           {/* ── AI SUGGESTED ACTION ─────────────────────── */}
-          <View style={styles.aiCard}>
+          <View style={[styles.aiCard, { marginBottom: spacing.xl }]}>
             <AICardDecoration />
             <View style={styles.aiTop}>
               <View style={styles.aiIconWrap}>
@@ -1033,7 +1033,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
           </View>
 
           {/* ── ROW 1: Student Overview + Class Progress ─── */}
-          <View style={styles.row}>
+          <View style={[styles.row, { marginBottom: spacing.xl }]}>
             {/* Student Overview */}
             <TouchableOpacity style={[styles.card, styles.flex1]} activeOpacity={0.85} onPress={() => navigation.navigate('TeacherStudents' as any)}>
               <View style={styles.cardHeader}>
@@ -1121,7 +1121,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
           </View>
 
           {/* ── AI Teaching Insights — 3 columns ────────────── */}
-          <View style={styles.insightsCard}>
+          <View style={[styles.insightsCard, { marginBottom: spacing.xl }]}>
             <View style={styles.insightsHeader}>
               <View style={styles.insightsHeaderLeft}>
                 <View style={styles.insightsIconWrap}>
@@ -1208,7 +1208,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
 
 
           {/* ── RECENT ACTIVITY ──────────────────────────── */}
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <Text style={[styles.sectionTitle, { marginBottom: spacing.md }]}>Recent Activity</Text>
           {recentStudents.length === 0 ? (
             <View style={[styles.activityCard, { padding: spacing.xl, alignItems: 'center' }]}>
               <Feather name="clock" size={24} color={colors.textDim} />
@@ -1259,7 +1259,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
 const makeStyles = (c: AppColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bgDark },
   scroll: { flex: 1 },
-  content: { padding: spacing.xl, paddingBottom: 48, gap: spacing.xl },
+  content: { padding: spacing.xl, paddingBottom: 48 },
 
   aiCard: {
     backgroundColor: c.primary,

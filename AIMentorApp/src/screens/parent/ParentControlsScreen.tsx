@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Circle } from 'react-native-svg';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
@@ -158,9 +159,12 @@ export default function ParentControlsScreen({ navigation }: any) {
 
   useEffect(() => {
     fetchControls(true);
-    const interval = setInterval(() => fetchControls(false), 30 * 1000);
+    const interval = setInterval(() => fetchControls(false), 15 * 1000);
     return () => clearInterval(interval);
   }, [fetchControls]);
+
+  // Refresh usage immediately whenever the screen regains focus.
+  useFocusEffect(useCallback(() => { fetchControls(false); }, [fetchControls]));
 
   const saveSettings = useCallback(async () => {
     if (!selectedChild || !parentEmail) return;
@@ -323,7 +327,7 @@ export default function ParentControlsScreen({ navigation }: any) {
                             transform="rotate(-90 36 36)" />
                         </Svg>
                         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-                          <Text style={{ color, fontWeight: '800', fontSize: 16 }}>{used}m</Text>
+                          <Text style={{ color, fontWeight: '800', fontSize: 15 }}>{formatMinutes(used)}</Text>
                           <Text style={{ color: colors.textDim, fontSize: 9 }}>used</Text>
                         </View>
                       </View>

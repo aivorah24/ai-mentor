@@ -4,6 +4,7 @@ import {
   ActivityIndicator, RefreshControl, Modal, TextInput, Alert, Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { spacing, radius } from '../../theme';
@@ -365,7 +366,16 @@ export default function ParentMyKidsScreen({ navigation }: any) {
     }
   }, [parentEmail, isDemo, user]);
 
-  useEffect(() => { fetchChildren(); }, [fetchChildren]);
+  // Initial fetch + auto-refresh every 15s so study time / progress update
+  // live without a manual page refresh (server logs study time each minute).
+  useEffect(() => {
+    fetchChildren();
+    const interval = setInterval(fetchChildren, 15 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchChildren]);
+
+  // Refresh immediately whenever the screen regains focus.
+  useFocusEffect(useCallback(() => { fetchChildren(); }, [fetchChildren]));
 
   async function createStudent() {
     if (!newName.trim()) { setCreateError('Child\'s name is required.'); return; }
