@@ -161,7 +161,7 @@ export default function ParentProgressScreen({ navigation, route }: any) {
   const completedTopics: string[] = stats?.completedTopics ?? [];
   const totalTopics = stats?.totalTopics || completedTopics.length || 1;
   const progressPct = Math.min(100, Math.round((completedTopics.length / totalTopics) * 100));
-  const actMax = Math.max(...weekly, 60);
+  const actMax = 240; // full bar = 4 hours (240 min); goal line (2h) sits at the halfway mark
   const totalWeekMins = weekly.reduce((a, b) => a + b, 0);
   const topics: any[] = practiceInsights?.topics ?? [];
 
@@ -386,7 +386,7 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                       {WEEK_DAYS.map((day, i) => {
                         const mins = weekly[i];
                         const maxH = 72;
-                        const barH = actMax > 0 ? Math.max(4, (mins / actMax) * maxH) : 4;
+                        const barH = Math.max(4, Math.min(mins / actMax, 1) * maxH);
                         const met = mins >= 120;
                         const hasData = mins > 0;
                         return (
