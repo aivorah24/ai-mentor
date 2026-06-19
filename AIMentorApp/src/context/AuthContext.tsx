@@ -262,7 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           supaProfile._syncOk === true &&
           supaProfile._accountExists === false
         ) {
-          await new Promise((r) => setTimeout(r, 1500));
+          await new Promise((r) => setTimeout(r, 300));
           let recheck: Partial<User> & { _syncOk?: boolean; _accountExists?: boolean } = {};
           try { recheck = await fetchSupabaseProfile(email); } catch {}
           if (recheck._syncOk === true && recheck._accountExists === false) {
@@ -393,6 +393,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return unsubscribe;
   }, []);
+
+  // Poll every 30 s while a real user is logged in.
+  // If the DB row is gone (admin deleted the account), sign out immediately to Landing.
+  useEffect(() => {
+    const isDemoOrTest = user?.email?.endsWith('@demo.com') || user?.email?.endsWith('@test.ai') || user?.email?.endsWith('@aivorah.ai');
+    if (!user?.email || isDemoOrTest) return;
+    const email = user.email;
+    const interval = setInterval(async () => {
+      try {
+        const profile = await fetchSupabaseProfile(email);
+        if (profile._syncOk === true && profile._accountExists === false) {
+          clearInterval(interval);
+          await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
+          await signOut(auth).catch(() => {});
+          setUser(null);
+        }
+      } catch {}
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [user?.email]);
 
   function login(userData: User) {
     setUser(userData);
