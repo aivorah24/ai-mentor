@@ -214,9 +214,7 @@ function SubjectCard({
   const topics: any[] = sub.topics ?? [];
   const done    = topics.filter((t: any) => {
     const name = typeof t === 'string' ? t : t.topic;
-    const inCompleted = completedSet.has(name) || [...completedSet].some(c => c.includes(name));
-    const inAnalytics = analyticsReport?.topics[name]?.hasActivity === true;
-    return inCompleted || inAnalytics;
+    return completedSet.has(name) || [...completedSet].some(c => c.includes(name));
   }).length;
   const pct     = sub.topicCount > 0 ? Math.round((done / sub.topicCount) * 100) : 0;
 
@@ -256,7 +254,7 @@ function SubjectCard({
             {topics.map((t: any, i: number) => {
               const topicName = typeof t === 'string' ? t : t.topic;
               const ta        = analyticsReport?.topics[topicName];
-              const isDone    = completedSet.has(topicName) || [...completedSet].some(c => c.includes(topicName)) || ta?.hasActivity === true;
+              const isDone    = completedSet.has(topicName) || [...completedSet].some(c => c.includes(topicName));
               return (
                 <TopicRow
                   key={topicName || i}
