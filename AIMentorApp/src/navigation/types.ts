@@ -48,6 +48,7 @@ export type ParentDrawerParamList = {
   ParentHelp: undefined;
   ParentMessages: undefined;
   ParentDailyTasks: undefined;
+  ParentSubscription: undefined;
 };
 
 export type TeacherDrawerParamList = {
