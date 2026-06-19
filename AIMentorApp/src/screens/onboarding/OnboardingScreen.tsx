@@ -33,9 +33,9 @@ export function DatePickerInput({ value, onChange, colors }: {
   onChange: (v: string) => void;
   colors: any;
 }) {
-  const [open, setOpen]     = useState(false);
-  const [pos,  setPos]      = useState({ top: 0, left: 0 });
-  const [mode, setMode]     = useState<'day'|'month'|'year'>('day');
+  const [open, setOpen] = useState(false);
+  const [pos,  setPos]  = useState({ top: 0, left: 0 });
+  const [mode, setMode] = useState<'day'|'month'|'year'>('day');
   const [yearRangeStart, setYearRangeStart] = useState(0);
   const btnRef = useRef<any>(null);
 
@@ -48,163 +48,156 @@ export function DatePickerInput({ value, onChange, colors }: {
   const [viewYear,  setViewYear]  = useState(parsed?.getFullYear()  ?? today.getFullYear() - 15);
   const [viewMonth, setViewMonth] = useState(parsed?.getMonth()      ?? today.getMonth());
 
-  function openPicker() {
-    if (Platform.OS === 'web' && btnRef.current) {
-      const rect = (btnRef.current as any).getBoundingClientRect?.();
-      if (rect) setPos({ top: rect.bottom + window.scrollY + 6, left: rect.left + window.scrollX });
-    }
-    setMode('day');
-    setOpen(o => !o);
-  }
-
-  useEffect(() => {
-    if (!open || Platform.OS !== 'web') return;
-    const handler = (e: any) => {
-      const cal = document.getElementById('aivorah-cal');
-      if (cal && !cal.contains(e.target) && btnRef.current && !(btnRef.current as any).contains?.(e.target)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
   const bg = colors.bgDark, border = colors.borderColor, text = colors.textMain, muted = colors.textMuted;
   const displayValue = value || 'DD / MM / YYYY';
   const selectedDay  = parsed?.getMonth() === viewMonth && parsed?.getFullYear() === viewYear ? parsed.getDate() : null;
 
-  const navBtn  = `background:transparent;border:none;color:${TEAL};font-size:16px;cursor:pointer;padding:4px 8px;border-radius:6px;`;
-  const headBtn = `background:transparent;border:none;color:${text};font-weight:700;font-size:15px;cursor:pointer;padding:4px 8px;border-radius:6px;text-decoration:underline dotted ${TEAL};`;
+  const firstDay    = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const cells: (number|null)[] = [...Array(firstDay).fill(null), ...Array.from({length:daysInMonth},(_,i)=>i+1)];
+  while (cells.length % 7 !== 0) cells.push(null);
 
-  function buildDayView() {
-    const firstDay    = new Date(viewYear, viewMonth, 1).getDay();
-    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-    const cells: (number|null)[] = [...Array(firstDay).fill(null), ...Array.from({length:daysInMonth},(_,i)=>i+1)];
-    while (cells.length % 7 !== 0) cells.push(null);
+  const yearStart = yearRangeStart || Math.floor(viewYear/12)*12;
+  const yearGrid  = Array.from({length:12}, (_,i) => yearStart+i);
 
-    const dayHeaders = DAYS.map(d => `<div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:${muted};padding:4px 0">${d}</div>`).join('');
-    const dayRows = Array.from({length: cells.length/7}, (_, row) => {
-      const cols = cells.slice(row*7, row*7+7).map(day => {
-        const isSel   = day !== null && day === selectedDay;
-        const isToday = day !== null && viewYear === today.getFullYear() && viewMonth === today.getMonth() && day === today.getDate();
-        return `<button data-day="${day??''}" style="flex:1;height:34px;border:none;border-radius:8px;background:${isSel?TEAL:isToday?TEAL+'33':'transparent'};color:${isSel?'#fff':day?text:'transparent'};font-size:13px;font-weight:${isSel||isToday?'700':'400'};cursor:${day?'pointer':'default'}">${day??''}</button>`;
-      }).join('');
-      return `<div style="display:flex;margin-bottom:2px">${cols}</div>`;
-    }).join('');
-    const clearBtn = value ? `<button id="aivorah-cal-clear" style="margin-top:10px;width:100%;background:transparent;border:none;color:#ef4444;font-size:12px;cursor:pointer">Clear date</button>` : '';
-
-    return `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <button id="cal-pm" style="${navBtn}">‹</button>
-        <div style="display:flex;gap:4px">
-          <button id="cal-hm" style="${headBtn}">${MONTHS[viewMonth]}</button>
-          <button id="cal-hy" style="${headBtn}">${viewYear}</button>
-        </div>
-        <button id="cal-nm" style="${navBtn}">›</button>
-      </div>
-      <div style="display:flex;margin-bottom:6px">${dayHeaders}</div>
-      ${dayRows}${clearBtn}`;
+  function openPicker() {
+    if (btnRef.current && typeof (btnRef.current as any).getBoundingClientRect === 'function') {
+      const rect = (btnRef.current as any).getBoundingClientRect();
+      const calHeight = 360;
+      const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
+      // Anchor below the field; flip above if not enough room.
+      const top = (rect.bottom + calHeight > winH && rect.top - calHeight > 0)
+        ? rect.top - calHeight - 6
+        : rect.bottom + 6;
+      setPos({ top, left: rect.left });
+    }
+    setMode('day');
+    setOpen(true);
   }
 
-  function buildMonthView() {
-    const rows = Array.from({length:3}, (_,row) => {
-      const cols = Array.from({length:4}, (_,col) => {
-        const mi = row*4+col;
-        const isSel = mi === viewMonth;
-        return `<button data-month="${mi}" style="flex:1;padding:10px 4px;border:none;border-radius:8px;background:${isSel?TEAL:'transparent'};color:${isSel?'#fff':text};font-size:13px;font-weight:${isSel?'700':'400'};cursor:pointer">${MONTHS[mi].slice(0,3)}</button>`;
-      }).join('');
-      return `<div style="display:flex;gap:4px;margin-bottom:4px">${cols}</div>`;
-    }).join('');
-    return `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <button id="cal-py" style="${navBtn}">‹</button>
-        <button id="cal-hy" style="${headBtn}">${viewYear}</button>
-        <button id="cal-ny" style="${navBtn}">›</button>
-      </div>
-      ${rows}`;
-  }
+  const calendarContent = (
+    <View style={{
+      backgroundColor: bg, borderWidth: 1.5, borderColor: TEAL + '99',
+      borderRadius: 14, padding: 16, width: 290,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.5, shadowRadius: 16,
+    }}>
+      {/* ── Day View ── */}
+      {mode === 'day' && (
+        <View>
+          <View style={{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+            <TouchableOpacity onPress={() => { if (viewMonth===0){setViewMonth(11);setViewYear(y=>y-1);}else setViewMonth(m=>m-1); }}
+              style={{ padding:6 }}><Text style={{ color:TEAL, fontSize:18 }}>‹</Text></TouchableOpacity>
+            <View style={{ flexDirection:'row', gap:4 }}>
+              <TouchableOpacity onPress={() => setMode('month')} style={{ padding:4 }}>
+                <Text style={{ color:text, fontWeight:'700', fontSize:15, textDecorationLine:'underline' }}>{MONTHS[viewMonth]}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => { setYearRangeStart(Math.floor(viewYear/12)*12); setMode('year'); }} style={{ padding:4 }}>
+                <Text style={{ color:text, fontWeight:'700', fontSize:15, textDecorationLine:'underline' }}>{viewYear}</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity onPress={() => { if (viewMonth===11){setViewMonth(0);setViewYear(y=>y+1);}else setViewMonth(m=>m+1); }}
+              style={{ padding:6 }}><Text style={{ color:TEAL, fontSize:18 }}>›</Text></TouchableOpacity>
+          </View>
+          <View style={{ flexDirection:'row', marginBottom:6 }}>
+            {DAYS.map(d => <Text key={d} style={{ flex:1, textAlign:'center', fontSize:11, fontWeight:'700', color:muted }}>{d}</Text>)}
+          </View>
+          {Array.from({length: cells.length/7}, (_,row) => (
+            <View key={row} style={{ flexDirection:'row', marginBottom:2 }}>
+              {cells.slice(row*7, row*7+7).map((day, ci) => {
+                const isSel   = day !== null && day === selectedDay;
+                const isToday = day !== null && viewYear===today.getFullYear() && viewMonth===today.getMonth() && day===today.getDate();
+                return (
+                  <TouchableOpacity key={ci} onPress={() => {
+                    if (!day) return;
+                    const dd = String(day).padStart(2,'0'), mm = String(viewMonth+1).padStart(2,'0');
+                    onChange(`${dd}/${mm}/${viewYear}`); setOpen(false);
+                  }} style={{ flex:1, height:34, borderRadius:8, alignItems:'center', justifyContent:'center',
+                    backgroundColor: isSel ? TEAL : isToday ? TEAL+'33' : 'transparent' }}>
+                    <Text style={{ fontSize:13, color: isSel?'#fff': day?text:'transparent', fontWeight: isSel||isToday?'700':'400' }}>{day??''}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))}
+          {value ? (
+            <TouchableOpacity onPress={() => { onChange(''); setOpen(false); }} style={{ marginTop:10 }}>
+              <Text style={{ textAlign:'center', color:'#ef4444', fontSize:12 }}>Clear date</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      )}
 
-  function buildYearView() {
-    const start = yearRangeStart || Math.floor(viewYear/12)*12;
-    const years = Array.from({length:12}, (_,i) => start+i);
-    const rows = Array.from({length:3}, (_,row) => {
-      const cols = years.slice(row*4, row*4+4).map(yr => {
-        const isSel = yr === viewYear;
-        return `<button data-year="${yr}" style="flex:1;padding:10px 4px;border:none;border-radius:8px;background:${isSel?TEAL:'transparent'};color:${isSel?'#fff':text};font-size:13px;font-weight:${isSel?'700':'400'};cursor:pointer">${yr}</button>`;
-      }).join('');
-      return `<div style="display:flex;gap:4px;margin-bottom:4px">${cols}</div>`;
-    }).join('');
-    return `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <button id="cal-pyr" style="${navBtn}">‹</button>
-        <span style="font-weight:700;font-size:14px;color:${text}">${start} – ${start+11}</span>
-        <button id="cal-nyr" style="${navBtn}">›</button>
-      </div>
-      ${rows}`;
-  }
+      {/* ── Month View ── */}
+      {mode === 'month' && (
+        <View>
+          <View style={{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+            <TouchableOpacity onPress={() => setViewYear(y=>y-1)} style={{ padding:6 }}><Text style={{ color:TEAL, fontSize:18 }}>‹</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => { setYearRangeStart(Math.floor(viewYear/12)*12); setMode('year'); }} style={{ padding:4 }}>
+              <Text style={{ color:text, fontWeight:'700', fontSize:15, textDecorationLine:'underline' }}>{viewYear}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setViewYear(y=>y+1)} style={{ padding:6 }}><Text style={{ color:TEAL, fontSize:18 }}>›</Text></TouchableOpacity>
+          </View>
+          {Array.from({length:3}, (_,row) => (
+            <View key={row} style={{ flexDirection:'row', gap:4, marginBottom:4 }}>
+              {Array.from({length:4}, (_,col) => { const mi=row*4+col; const isSel=mi===viewMonth; return (
+                <TouchableOpacity key={mi} onPress={() => { setViewMonth(mi); setMode('day'); }}
+                  style={{ flex:1, padding:10, borderRadius:8, alignItems:'center', backgroundColor: isSel?TEAL:'transparent' }}>
+                  <Text style={{ color:isSel?'#fff':text, fontSize:13, fontWeight:isSel?'700':'400' }}>{MONTHS[mi].slice(0,3)}</Text>
+                </TouchableOpacity>
+              );})}
+            </View>
+          ))}
+        </View>
+      )}
 
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    let el = document.getElementById('aivorah-cal');
-    if (!open) { if (el) el.style.display = 'none'; return; }
-    if (!el) { el = document.createElement('div'); el.id = 'aivorah-cal'; document.body.appendChild(el); }
-    el.style.cssText = `position:fixed;top:${pos.top}px;left:${pos.left}px;z-index:99999;background:${bg};border:1.5px solid ${TEAL}80;border-radius:14px;padding:16px;width:290px;display:block;box-shadow:0 8px 32px rgba(0,0,0,0.5);`;
-
-    if (mode === 'day')   el.innerHTML = buildDayView();
-    if (mode === 'month') el.innerHTML = buildMonthView();
-    if (mode === 'year')  el.innerHTML = buildYearView();
-
-    // Day view events
-    document.getElementById('cal-pm')?.addEventListener('click', () => {
-      if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y-1); } else setViewMonth(m => m-1);
-    });
-    document.getElementById('cal-nm')?.addEventListener('click', () => {
-      if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y+1); } else setViewMonth(m => m+1);
-    });
-    document.getElementById('cal-hm')?.addEventListener('click', () => setMode('month'));
-    document.getElementById('cal-hy')?.addEventListener('click', () => {
-      setYearRangeStart(Math.floor(viewYear/12)*12);
-      setMode('year');
-    });
-    el.querySelectorAll('button[data-day]').forEach(btn => {
-      const day = parseInt((btn as HTMLElement).dataset.day || '');
-      if (day) btn.addEventListener('click', () => {
-        const d = String(day).padStart(2,'0'), m = String(viewMonth+1).padStart(2,'0');
-        onChange(`${d}/${m}/${viewYear}`); setOpen(false);
-      });
-    });
-    document.getElementById('aivorah-cal-clear')?.addEventListener('click', () => { onChange(''); setOpen(false); });
-
-    // Month view events
-    document.getElementById('cal-py')?.addEventListener('click', () => setViewYear(y => y-1));
-    document.getElementById('cal-ny')?.addEventListener('click', () => setViewYear(y => y+1));
-    el.querySelectorAll('button[data-month]').forEach(btn => {
-      const mi = parseInt((btn as HTMLElement).dataset.month || '');
-      btn.addEventListener('click', () => { setViewMonth(mi); setMode('day'); });
-    });
-
-    // Year view events
-    document.getElementById('cal-pyr')?.addEventListener('click', () => setYearRangeStart(s => (s||Math.floor(viewYear/12)*12) - 12));
-    document.getElementById('cal-nyr')?.addEventListener('click', () => setYearRangeStart(s => (s||Math.floor(viewYear/12)*12) + 12));
-    el.querySelectorAll('button[data-year]').forEach(btn => {
-      const yr = parseInt((btn as HTMLElement).dataset.year || '');
-      btn.addEventListener('click', () => { setViewYear(yr); setMode('month'); });
-    });
-  }, [open, mode, viewMonth, viewYear, yearRangeStart, pos, selectedDay, value]);
-
-  useEffect(() => () => { document.getElementById('aivorah-cal')?.remove(); }, []);
+      {/* ── Year View ── */}
+      {mode === 'year' && (
+        <View>
+          <View style={{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+            <TouchableOpacity onPress={() => setYearRangeStart(s=>(s||Math.floor(viewYear/12)*12)-12)} style={{ padding:6 }}><Text style={{ color:TEAL, fontSize:18 }}>‹</Text></TouchableOpacity>
+            <Text style={{ color:text, fontWeight:'700', fontSize:14 }}>{yearStart} – {yearStart+11}</Text>
+            <TouchableOpacity onPress={() => setYearRangeStart(s=>(s||Math.floor(viewYear/12)*12)+12)} style={{ padding:6 }}><Text style={{ color:TEAL, fontSize:18 }}>›</Text></TouchableOpacity>
+          </View>
+          {Array.from({length:3}, (_,row) => (
+            <View key={row} style={{ flexDirection:'row', gap:4, marginBottom:4 }}>
+              {yearGrid.slice(row*4, row*4+4).map(yr => { const isSel=yr===viewYear; return (
+                <TouchableOpacity key={yr} onPress={() => { setViewYear(yr); setMode('month'); }}
+                  style={{ flex:1, padding:10, borderRadius:8, alignItems:'center', backgroundColor: isSel?TEAL:'transparent' }}>
+                  <Text style={{ color:isSel?'#fff':text, fontSize:13, fontWeight:isSel?'700':'400' }}>{yr}</Text>
+                </TouchableOpacity>
+              );})}
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
 
   return (
-    <TouchableOpacity ref={btnRef} onPress={openPicker} activeOpacity={0.8}
-      style={{
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        height: 48, paddingHorizontal: 14, borderRadius: 10,
-        borderWidth: 1, borderColor: open ? TEAL : border,
-        backgroundColor: bg, alignSelf: 'flex-start' as any, minWidth: 220,
-      }}>
-      <Text style={{ fontSize: 15, color: value ? text : muted, marginRight: 12 }}>{displayValue}</Text>
-      <Feather name="calendar" size={16} color={open ? TEAL : muted} />
-    </TouchableOpacity>
+    <>
+      <TouchableOpacity ref={btnRef} onPress={openPicker} activeOpacity={0.8}
+        style={{
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+          height: 48, paddingHorizontal: 14, borderRadius: 10,
+          borderWidth: 1, borderColor: open ? TEAL : border,
+          backgroundColor: bg, minWidth: 220,
+        }}>
+        <Text style={{ fontSize: 15, color: value ? text : muted, marginRight: 12 }}>{displayValue}</Text>
+        <Feather name="calendar" size={16} color={open ? TEAL : muted} />
+      </TouchableOpacity>
+
+      <Modal visible={open} transparent animationType="none" onRequestClose={() => setOpen(false)}>
+        <TouchableOpacity style={{ flex: 1, backgroundColor: 'transparent' }}
+          activeOpacity={1} onPress={() => setOpen(false)}>
+          <View style={{ position: 'absolute', top: pos.top, left: pos.left }}>
+            <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+              {calendarContent}
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
   );
 }
 

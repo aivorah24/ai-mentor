@@ -120,6 +120,10 @@ export default function OnboardingTeacherBoxes() {
         name: fullName.trim(),
         school,
         location: city,
+        dob: dob || undefined,
+        phone: mobile ? `${mobileCode} ${mobile}` : undefined,
+        state: state || undefined,
+        country: country || undefined,
         complete: true,
         curriculum: curriculum.trim(),
         teaches: teachGrades.map(g => ({ grade: g, curriculum: curriculum.trim(), subjects: teachSubjects })),
@@ -136,7 +140,7 @@ export default function OnboardingTeacherBoxes() {
       }
       const saved = await profileRes.json().catch(() => ({}));
 
-      fetch(`${SERVER_URL}/user/preferences`, {
+      await fetch(`${SERVER_URL}/user/preferences`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
