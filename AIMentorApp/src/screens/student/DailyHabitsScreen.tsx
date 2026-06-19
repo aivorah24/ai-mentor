@@ -6,6 +6,7 @@ import {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
 import Header from '../../components/common/Header';
@@ -71,7 +72,16 @@ export default function DailyHabitsScreen({ navigation }: any) {
     finally { setLoading(false); setRefreshing(false); }
   }, [user?.email]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  // Initial load + auto-refresh every 10s so tasks a parent allocates appear
+  // without the student manually refreshing the browser.
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 10 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  // Refresh immediately whenever the screen regains focus.
+  useFocusEffect(useCallback(() => { fetchData(); }, [fetchData]));
 
   async function toggleHabit(habitId: string) {
     if (!user?.email || checking) return;
