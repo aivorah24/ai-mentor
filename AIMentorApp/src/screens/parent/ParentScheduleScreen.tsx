@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -202,7 +203,13 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
     setLoading(false);
   }, [child, week, calYear, calMonth]);
 
-  useEffect(() => { fetchEvents(); }, [fetchEvents]);
+  useEffect(() => {
+    fetchEvents();
+    const interval = setInterval(() => fetchEvents(), 30 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchEvents]);
+
+  useFocusEffect(useCallback(() => { fetchEvents(); }, [fetchEvents]));
 
   function openSlotModal(dayISO: string, timeLabel: string) {
     setModalDate(dayISO);
