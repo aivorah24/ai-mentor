@@ -452,10 +452,13 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
     setShowReview(false); setSubmitting(true);
     try {
       const quizAnswers = questions.map((_, i) => ({ answer: answers[i] || '' }));
+      const ctrl1 = new AbortController();
+      const t1 = setTimeout(() => ctrl1.abort(), 120_000);
       const res = await fetch(`${SERVER_URL}/assignments/${assignment.id}/submit`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ studentId, quizAnswers, quizQuestions: questions }),
-      });
+        signal: ctrl1.signal,
+      }).finally(() => clearTimeout(t1));
       const data = await res.json();
       if (res.ok) {
         let feedbackText = data.aiFeedback || '';
@@ -1330,11 +1333,14 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
         }
         return a;
       });
+      const ctrl2 = new AbortController();
+      const t2 = setTimeout(() => ctrl2.abort(), 120_000);
       const res = await fetch(`${SERVER_URL}/assignments/${assignment.id}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ studentId, stepAnswers: normalizedAnswers, selfAssessment: selfChecked }),
-      });
+        signal: ctrl2.signal,
+      }).finally(() => clearTimeout(t2));
       const data = await res.json();
       if (res.ok) {
         let feedbackText = data.aiFeedback || '';
@@ -2131,11 +2137,14 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
         ? questionPhotos.map(a => ({ imageBase64: a.base64 || null, imageMime: a.mime }))
         : answers.map(a => ({ imageBase64: a.base64 || null, imageMime: a.mime }));
       const textAns = hasQuestions ? textAnswers : [];
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 120_000);
       const res = await fetch(`${SERVER_URL}/assignments/${assignment.id}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ studentId, answers: textAns, questionImages }),
-      });
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeout));
       const data = await res.json();
       if (res.ok) {
         let feedbackText = data.aiFeedback || '';
