@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Modal, TextInput, ActivityIndicator, useWindowDimensions, Platform,
@@ -219,7 +220,13 @@ export default function TeacherScheduleScreen({ navigation }: any) {
     setLoading(false);
   }, [week, user?.email]);
 
-  useEffect(() => { fetchEvents(); }, [fetchEvents]);
+  useEffect(() => {
+    fetchEvents();
+    const interval = setInterval(() => fetchEvents(), 30 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchEvents]);
+
+  useFocusEffect(useCallback(() => { fetchEvents(); }, [fetchEvents]));
 
   // Fetch students linked to this teacher
   useEffect(() => {
