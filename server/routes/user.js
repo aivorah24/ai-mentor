@@ -481,6 +481,9 @@ router.patch('/preferences', async (req, res) => {
     if (country != null) patch.country = String(country);
     const phoneVal = phone ?? mobile;
     if (phoneVal != null) patch.phone = String(phoneVal);
+    const { roles, activeRole } = req.body ?? {};
+    if (Array.isArray(roles) && roles.length > 0) patch.roles = roles;
+    if (activeRole != null) patch.activeRole = String(activeRole);
 
     patch.updatedAt = new Date().toISOString();
     await setPreferences(email, patch);

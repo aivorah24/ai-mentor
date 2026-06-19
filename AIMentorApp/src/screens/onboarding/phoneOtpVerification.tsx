@@ -27,9 +27,9 @@ import { Feather } from '@expo/vector-icons';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, signOut, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import firebaseApp from '../../config/firebase';
-import { TEAL } from './OnboardingScreen';
+const TEAL = '#5F8A86'; // same value as OnboardingScreen — kept local to avoid circular import
 
-export function usePhoneOtpVerification(mobile: string, setMobile: (v: string) => void) {
+export function usePhoneOtpVerification(mobile: string, setMobile: (v: string) => void, mobileCode = '+91') {
   const [mobileVerified, setMobileVerified] = useState(false);
   const [verifiedMobile, setVerifiedMobile] = useState('');
   const [otpSending, setOtpSending] = useState(false);
@@ -57,8 +57,9 @@ export function usePhoneOtpVerification(mobile: string, setMobile: (v: string) =
 
   async function handleSendOtp() {
     const digits = mobile.replace(/\D/g, '');
-    if (digits.length !== 10) {
-      setOtpError('Enter a valid 10-digit mobile number.');
+    const minDigits = mobileCode === '+91' ? 10 : 7;
+    if (digits.length < minDigits) {
+      setOtpError(`Enter a valid mobile number (min ${minDigits} digits).`);
       return;
     }
     if (Platform.OS !== 'web') {
@@ -77,7 +78,8 @@ export function usePhoneOtpVerification(mobile: string, setMobile: (v: string) =
       const verifier = new RecaptchaVerifier(phoneAuth, recaptchaContainerRef.current, { size: 'invisible' });
       recaptchaVerifierRef.current = verifier;
 
-      const confirmation = await signInWithPhoneNumber(phoneAuth, `+91${digits}`, verifier);
+      const fullPhone = `${mobileCode}${digits}`;
+      const confirmation = await signInWithPhoneNumber(phoneAuth, fullPhone, verifier);
       confirmationRef.current = confirmation;
       setOtpModalVisible(true);
       setOtpCode('');
@@ -140,9 +142,9 @@ interface PhoneOtpModalProps {
 }
 
 export function PhoneOtpModal({
-  mobile, otpModalVisible, otpCode, setOtpCode, otpError, otpVerifying,
+  mobile, mobileCode = '+91', otpModalVisible, otpCode, setOtpCode, otpError, otpVerifying,
   handleVerifyOtp, handleCancelOtp, colors, styles,
-}: PhoneOtpModalProps) {
+}: PhoneOtpModalProps & { mobileCode?: string }) {
   return (
     <Modal visible={otpModalVisible} transparent animationType="fade" onRequestClose={handleCancelOtp}>
       <View style={styles.modalOverlay}>
@@ -153,7 +155,7 @@ export function PhoneOtpModal({
             </View>
             <View>
               <Text style={styles.modalTitle}>Verify Mobile Number</Text>
-              <Text style={styles.modalText}>Enter the 6-digit code sent to +91 {mobile}</Text>
+              <Text style={styles.modalText}>Enter the 6-digit code sent to {mobileCode} {mobile}</Text>
             </View>
           </View>
           <TextInput
