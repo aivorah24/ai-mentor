@@ -2357,16 +2357,19 @@ Respond ONLY as JSON:
   "perQuestion": [{"number":1,"question":"...","answered":bool,"score":0-100,"studentAnswer":"...","correct":bool,"comment":"..."}]
 }`;
 
-      const completion = await groq.chat.completions.create({
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            { type: 'image_url', image_url: { url: `data:${imageMime};base64,${imageBase64}` } },
-          ],
-        }],
-      });
+      const completion = await Promise.race([
+        groq.chat.completions.create({
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              { type: 'image_url', image_url: { url: `data:${imageMime};base64,${imageBase64}` } },
+            ],
+          }],
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Grading timeout')), 55_000)),
+      ]);
       const raw  = completion.choices[0].message.content.replace(/```json[\s\S]*?```|```/g, '').trim();
       const result = JSON.parse(raw);
       perQuestion = Array.isArray(result.perQuestion) ? result.perQuestion : [];
