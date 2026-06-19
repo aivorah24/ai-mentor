@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   ActivityIndicator, Modal, RefreshControl, Image, TextInput,
@@ -136,7 +137,13 @@ export default function ChallengesScreen({ navigation, route }: any) {
     setRefreshing(false);
   }, [grade, studentId]);
 
-  useEffect(() => { fetchChallenges(); }, [fetchChallenges]);
+  useEffect(() => {
+    fetchChallenges();
+    const interval = setInterval(() => fetchChallenges(), 30 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchChallenges]);
+
+  useFocusEffect(useCallback(() => { fetchChallenges(); }, [fetchChallenges]));
 
   const filtered = useMemo(() => {
     if (activeTab === 'Available')  return challenges.filter(c => c.status === 'available');
