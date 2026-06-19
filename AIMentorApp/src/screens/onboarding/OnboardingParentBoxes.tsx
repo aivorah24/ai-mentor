@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Rect, Circle } from 'react-native-svg';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth, getPendingReturnRole } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import SERVER_URL from '../../config/serverUrl';
 import firebaseApp from '../../config/firebase';
@@ -94,6 +94,45 @@ export default function OnboardingParentBoxes() {
   const [stateProv, setStateProv] = useState((user as any)?.state || '');
   const [country, setCountry] = useState((user as any)?.country || 'India');
   const [avatarStyle, setAvatarStyle] = useState('default');
+
+  // Pre-fill from teacher profile when a teacher is adding a parent profile
+  useEffect(() => {
+    const isTeacherAddingParent = getPendingReturnRole() === 'teacher'
+      || (user as any)?.roles?.includes('teacher');
+    if (!isTeacherAddingParent || !user?.email) return;
+
+    function applyMobile(raw: string) {
+      const parts = raw.match(/^(\+\d+)\s(.+)$/);
+      if (parts) { setMobileCode(parts[1]); setMobile(parts[2]); }
+      else setMobile(raw);
+    }
+
+    // Immediate fill from user object
+    const u = user as any;
+    if (u?.name && !fullName)     setFullName(u.name);
+    if (u?.dob)                   setDob(u.dob);
+    if (u?.mobile)                applyMobile(u.mobile);
+    if (u?.phone)                 applyMobile(u.phone);
+    if (u?.state)                 setStateProv(u.state);
+    if (u?.country)               setCountry(u.country);
+    if (u?.location)              setCity(u.location);
+
+    // Fetch preferences for fresher DB values
+    fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(user.email)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(prefs => {
+        if (!prefs) return;
+        if (prefs.name)    setFullName(prefs.name);
+        if (prefs.dob)     setDob(prefs.dob);
+        const phoneRaw = prefs.mobile || prefs.phone;
+        if (phoneRaw)      applyMobile(phoneRaw);
+        if (prefs.state)   setStateProv(prefs.state);
+        if (prefs.country) setCountry(prefs.country);
+        if (prefs.location) setCity(prefs.location);
+        else if (u?.location) setCity(u.location);
+      })
+      .catch(() => {});
+  }, []);
 
   const [children, setChildren] = useState<ChildEntry[]>([emptyChild()]);
   const [activeChildIdx, setActiveChildIdx] = useState(0);
@@ -234,6 +273,14 @@ export default function OnboardingParentBoxes() {
         : 'Please complete your Personal Info to continue.');
       return;
     }
+    if (mobile.trim()) {
+      const digits = mobile.replace(/\D/g, '');
+      const minDigits = mobileCode === '+91' ? 10 : 7;
+      if (digits.length < minDigits) {
+        setSaveError(`Mobile number must have at least ${minDigits} digits.`);
+        return;
+      }
+    }
     setSaving(true);
     setSaveError('');
     try {
@@ -271,6 +318,8 @@ export default function OnboardingParentBoxes() {
         throw new Error(`Profile save failed (${profileRes.status}): ${errText.slice(0, 200)}`);
       }
 
+      const mergedRoles = getPendingReturnRole() === 'teacher' ? ['teacher', 'parent'] : ['parent'];
+
       fetch(`${SERVER_URL}/user/preferences`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -284,14 +333,17 @@ export default function OnboardingParentBoxes() {
           dob: dob || undefined,
           mobile: mobile ? `${mobileCode} ${mobile}` : undefined,
           avatarStyle,
+          roles: mergedRoles,
         }),
       }).catch(() => {});
-
       const localCompletionPatch: any = {
         name: fullName.trim(),
         location: city,
         onboardingComplete: true,
         avatarStyle,
+        roles: mergedRoles,
+        role: getPendingReturnRole() === 'teacher' ? 'teacher' : 'parent',
+        activeRole: getPendingReturnRole() === 'teacher' ? 'teacher' : 'parent',
       };
 
       // ── Child account handling ─────────────────────────────────────
@@ -581,7 +633,8 @@ export default function OnboardingParentBoxes() {
                 <Text style={styles.lbl}>Mobile Number</Text>
                 <View style={styles.phoneRow}>
                   <PhoneCodeSelect value={mobileCode} onChange={setMobileCode} colors={colors} styles={styles} />
-                  <TextInput style={[styles.input, styles.phoneInput]} value={mobile} onChangeText={setMobile}
+                  <TextInput style={[styles.input, styles.phoneInput]} value={mobile}
+                    onChangeText={setMobile}
                     placeholder="98765 43210" placeholderTextColor={colors.textDim} keyboardType="phone-pad" />
                 </View>
               </View>
@@ -1043,7 +1096,7 @@ function useStyles(colors: any) {
     dropdownItem: { paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.borderColor },
     dropdownTxt: { fontSize: 13, color: colors.textMain },
 
-    phoneRow: { flexDirection: 'row', gap: 8 },
+    phoneRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
     phoneCode: {
       height: 44, paddingHorizontal: 10, borderRadius: 10, borderWidth: 1, borderColor: colors.borderColor,
       backgroundColor: colors.bgDark, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
