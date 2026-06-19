@@ -210,7 +210,7 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
                   <TouchableOpacity
                     key={r}
                     style={[styles.rolePill, isActive && styles.rolePillActive]}
-                    onPress={() => { switchRole(r); onNavigate(ROLE_DASH[r] ?? 'Dashboard'); }}
+                    onPress={() => { switchRole(r); setTimeout(() => { try { onNavigate(ROLE_DASH[r] ?? 'Dashboard'); } catch (_) {} }, 50); }}
                     activeOpacity={0.75}
                   >
                     <Feather name={r === 'teacher' ? 'briefcase' : 'home'} size={12} color={isActive ? colors.primary : colors.textMuted} />

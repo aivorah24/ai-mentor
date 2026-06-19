@@ -504,11 +504,11 @@ function RootNavigator() {
   console.log(`[Auth] Routing to ${user?.role} navigator`);
   // Role-based navigator — if pendingReturnRole is set, honour it (teacher finishing parent onboarding)
   const activeRole = getPendingReturnRole() || user?.role;
-  if (activeRole === 'super_admin') return <SuperAdminNavigator />;
-  if (activeRole === 'teacher') return <TeacherNavigator />;
-  if (activeRole === 'parent')  return <ParentNavigator />;
+  if (activeRole === 'super_admin') return <SuperAdminNavigator key="super_admin" />;
+  if (activeRole === 'teacher') return <TeacherNavigator key="teacher" />;
+  if (activeRole === 'parent')  return <ParentNavigator key="parent" />;
 
-  return <AppNavigator />;
+  return <AppNavigator key="student" />;
 }
 
 // Inner component so useTheme() can be called inside ThemeProvider

@@ -214,7 +214,7 @@ export default function DrawerContent(props: any) {
                   <TouchableOpacity
                     key={r}
                     style={[styles.rolePill, isActive && styles.rolePillActive]}
-                    onPress={() => { switchRole(r); navigation.navigate(ROLE_DASH[r] ?? 'Dashboard'); }}
+                    onPress={() => { switchRole(r); setTimeout(() => { try { navigation.navigate(ROLE_DASH[r] ?? 'Dashboard'); } catch (_) {} }, 50); }}
                     activeOpacity={0.75}
                   >
                     <Feather name={r === 'teacher' ? 'briefcase' : 'home'} size={12} color={isActive ? colors.primary : colors.textMuted} />
