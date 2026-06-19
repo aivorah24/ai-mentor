@@ -12,7 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { spacing, radius, typography } from '../../theme';
 import type { AppColors } from '../../theme';
-import { useAuth, setPendingReturnRole } from '../../context/AuthContext';
+import { useAuth, setPendingReturnRole, getPendingReturnRole } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeMode } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -94,7 +94,11 @@ export default function DrawerContent(props: any) {
   const currentRoute = state.routes[state.index]?.name;
   const { logout, user, switchRole, updateUser } = useAuth();
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
-  const isDualRole = (user?.roles?.length ?? 0) > 1;
+  const pendingReturn = getPendingReturnRole();
+  const isDualRole = (user?.roles?.length ?? 0) > 1 || Boolean(pendingReturn);
+  const effectiveRoles: string[] = (user?.roles?.length ?? 0) > 1
+    ? user!.roles!
+    : pendingReturn === 'teacher' ? ['teacher', 'parent'] : [];
   const { colors, themeMode, setThemeMode } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -204,17 +208,17 @@ export default function DrawerContent(props: any) {
         </View>
 
         {/* Role switcher — only for dual-role users (teacher+parent) */}
-        {isDualRole && user?.roles && (
+        {isDualRole && effectiveRoles.length > 0 && (
           <View style={styles.roleSwitcher}>
             <Text style={styles.roleSwitcherLabel}>Switch Profile</Text>
             <View style={styles.roleSwitcherRow}>
-              {user.roles.map((r) => {
-                const isActive = user.role === r;
+              {effectiveRoles.map((r) => {
+                const isActive = user?.role === r;
                 return (
                   <TouchableOpacity
                     key={r}
                     style={[styles.rolePill, isActive && styles.rolePillActive]}
-                    onPress={() => { switchRole(r); setTimeout(() => { try { navigation.navigate(ROLE_DASH[r] ?? 'Dashboard'); } catch (_) {} }, 50); }}
+                    onPress={() => { switchRole(r as any); setTimeout(() => { try { navigation.navigate(ROLE_DASH[r] ?? 'Dashboard'); } catch (_) {} }, 50); }}
                     activeOpacity={0.75}
                   >
                     <Feather name={r === 'teacher' ? 'briefcase' : 'home'} size={12} color={isActive ? colors.primary : colors.textMuted} />
@@ -234,7 +238,8 @@ export default function DrawerContent(props: any) {
             style={styles.addParentHint}
             onPress={() => {
               setPendingReturnRole('teacher');
-              updateUser({ role: 'parent', onboardingComplete: false } as any);
+              const mergedRoles = Array.from(new Set([...(user?.roles || [user?.role || 'teacher']), 'parent']));
+              updateUser({ role: 'parent', roles: mergedRoles as any, onboardingComplete: false } as any);
               navigation.navigate('Onboarding');
             }}
             activeOpacity={0.8}

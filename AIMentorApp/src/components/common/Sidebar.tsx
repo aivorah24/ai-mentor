@@ -12,7 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { spacing, radius, typography } from '../../theme';
 import type { AppColors } from '../../theme';
-import { useAuth, setPendingReturnRole } from '../../context/AuthContext';
+import { useAuth, setPendingReturnRole, getPendingReturnRole } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeMode } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -98,7 +98,12 @@ const ROLE_DASH: Record<string, string> = { super_admin: 'TeacherDashboard', tea
 export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
   const { logout, user, switchRole, updateUser } = useAuth();
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
-  const isDualRole = (user?.roles?.length ?? 0) > 1;
+  const pendingReturn = getPendingReturnRole();
+  const isDualRole = (user?.roles?.length ?? 0) > 1 || Boolean(pendingReturn);
+  // Roles to display in Switch Profile pills — use actual roles or infer from pending return
+  const effectiveRoles: string[] = (user?.roles?.length ?? 0) > 1
+    ? user!.roles!
+    : pendingReturn === 'teacher' ? ['teacher', 'parent'] : [];
   const role = user?.role;
   const NAV_ITEMS = role === 'super_admin' ? SUPER_ADMIN_NAV_ITEMS : role === 'teacher' ? TEACHER_NAV_ITEMS : role === 'parent' ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
   const groups = (role === 'super_admin' || role === 'teacher') ? ['MENU', 'MANAGE', 'SYSTEM'] : role === 'parent' ? ['MENU', 'CHILDREN', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
@@ -200,17 +205,17 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
         </View>
 
         {/* Role switcher — only for dual-role users (teacher+parent) */}
-        {isDualRole && user?.roles && (
+        {isDualRole && effectiveRoles.length > 0 && (
           <View style={styles.roleSwitcher}>
             <Text style={styles.roleSwitcherLabel}>Switch Profile</Text>
             <View style={styles.roleSwitcherRow}>
-              {user.roles.map((r) => {
-                const isActive = user.role === r;
+              {effectiveRoles.map((r) => {
+                const isActive = user?.role === r;
                 return (
                   <TouchableOpacity
                     key={r}
                     style={[styles.rolePill, isActive && styles.rolePillActive]}
-                    onPress={() => { switchRole(r); setTimeout(() => { try { onNavigate(ROLE_DASH[r] ?? 'Dashboard'); } catch (_) {} }, 50); }}
+                    onPress={() => { switchRole(r as any); setTimeout(() => { try { onNavigate(ROLE_DASH[r] ?? 'Dashboard'); } catch (_) {} }, 50); }}
                     activeOpacity={0.75}
                   >
                     <Feather name={r === 'teacher' ? 'briefcase' : 'home'} size={12} color={isActive ? colors.primary : colors.textMuted} />
@@ -231,8 +236,8 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
             onPress={() => {
               // Store return role in module-level variable (immune to onAuthStateChanged resets)
               setPendingReturnRole('teacher');
-              // Temporarily set role to parent so OnboardingScreen shows parent flow
-              updateUser({ role: 'parent', onboardingComplete: false } as any);
+              const mergedRoles = Array.from(new Set([...(user?.roles || [user?.role || 'teacher']), 'parent']));
+              updateUser({ role: 'parent', roles: mergedRoles as any, onboardingComplete: false } as any);
               onNavigate('Onboarding');
             }}
             activeOpacity={0.8}
