@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -179,7 +180,13 @@ export default function ScheduleScreen({ navigation }: any) {
     setLoading(false);
   }, [studentId, week, calYear, calMonth]);
 
-  useEffect(() => { fetchEvents(); }, [fetchEvents]);
+  useEffect(() => {
+    fetchEvents();
+    const interval = setInterval(() => fetchEvents(), 30 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchEvents]);
+
+  useFocusEffect(useCallback(() => { fetchEvents(); }, [fetchEvents]));
 
   // Browser notifications
   const notifiedRef = useRef<Set<string>>(new Set());
