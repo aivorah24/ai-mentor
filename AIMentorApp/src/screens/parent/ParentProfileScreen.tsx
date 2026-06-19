@@ -1,4 +1,5 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -135,7 +136,7 @@ export default function ParentProfileScreen({ navigation }: any) {
       .catch(() => {});
   }, [email]);
 
-  useEffect(() => {
+  const loadActivity = useCallback(() => {
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
       .then(r => r.json())
       .then(data => {
@@ -167,6 +168,17 @@ export default function ParentProfileScreen({ navigation }: any) {
       .finally(() => setChildrenLoading(false));
   }, [parentEmail]);
 
+  // Initial load + auto-refresh every 15s (study time is logged each minute
+  // server-side), so the parent never has to manually refresh.
+  useEffect(() => {
+    loadActivity();
+    const interval = setInterval(loadActivity, 15 * 1000);
+    return () => clearInterval(interval);
+  }, [loadActivity]);
+
+  // Refresh instantly when the screen regains focus.
+  useFocusEffect(useCallback(() => { loadActivity(); }, [loadActivity]));
+
   const nameParts = (user?.name ?? '').split(' ');
   const firstName = nameParts[0] || '';
   const lastName = nameParts.slice(1).join(' ') || '';
@@ -194,9 +206,20 @@ export default function ParentProfileScreen({ navigation }: any) {
     setSaving(false);
   }
 
-  const maxActivity = Math.max(...weeklyActivity, 1);
+  // Each bar is scaled to a fixed 4-hour (240 min) reference: a full bar means
+  // 4h of usage that day, capped at 100%. (Previously normalized to the week's
+  // own max, so a single active day always looked full no matter how few mins.)
+  const FULL_BAR_MINUTES = 240;
   const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-  const totalStudyH = (weeklyActivity.reduce((a,b) => a+b, 0) / 60).toFixed(1);
+  const totalStudyMins = weeklyActivity.reduce((a,b) => a+b, 0);
+  // Format as m / h / h m: 39m, 60m→1h, 90m→1h 30m, 119m→1h 59m, 120m→2h
+  const totalStudyDisplay = (() => {
+    const h = Math.floor(totalStudyMins / 60);
+    const m = totalStudyMins % 60;
+    if (h === 0) return `${m}m`;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}m`;
+  })();
   const activeDays = weeklyActivity.filter(m => m > 0).length;
 
   return (
@@ -273,7 +296,7 @@ export default function ParentProfileScreen({ navigation }: any) {
                   <Text style={styles.overviewLabel}>ACTIVE DAYS</Text>
                 </View>
                 <View style={styles.overviewStat}>
-                  <Text style={[styles.overviewValue, { color: colors.textMain }]}>{totalStudyH}h</Text>
+                  <Text style={[styles.overviewValue, { color: colors.textMain }]}>{totalStudyDisplay}</Text>
                   <Text style={styles.overviewLabel}>TOTAL LEARNING</Text>
                 </View>
                 <View style={styles.overviewStat}>
@@ -284,7 +307,7 @@ export default function ParentProfileScreen({ navigation }: any) {
               <Text style={styles.chartLabel}>Day-wise Time Spent</Text>
               <View style={styles.miniChart}>
                 {WEEK_DAYS.map((d, i) => {
-                  const h = maxActivity > 0 ? Math.max(4, (weeklyActivity[i] / maxActivity) * 64) : 4;
+                  const h = Math.max(4, Math.min(weeklyActivity[i] / FULL_BAR_MINUTES, 1) * 64);
                   const isToday = i === todayIdx;
                   return (
                     <View key={d} style={styles.miniBarWrap}>

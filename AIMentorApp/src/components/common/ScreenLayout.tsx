@@ -34,6 +34,13 @@ function formatHour(h: number) {
   return `${h - 12}:00 PM`;
 }
 
+// Module-level singleton so the study-time heartbeat runs ONCE for the whole app.
+// The drawer navigator keeps every visited screen mounted, and each screen wraps
+// its own <ScreenLayout>. Without this guard, every mounted instance would run its
+// own 1-min heartbeat and multiply the logged study time (e.g. 2.5h shown as ~7h).
+let _heartbeatInterval: any = null;
+let _heartbeatRefCount = 0;
+
 export default function ScreenLayout({ children }: ScreenLayoutProps) {
   const { showPermanentSidebar } = useResponsive();
   const navigation = useNavigation<any>();
@@ -59,17 +66,19 @@ export default function ScreenLayout({ children }: ScreenLayoutProps) {
   const lastBreakThresholdRef = useRef<number>(getLastBreakThreshold());
 const breakTimerRef = useRef<any>(null);
   const controlsIntervalRef = useRef<any>(null);
-  const heartbeatRef = useRef<any>(null);
 
-  // 1-min heartbeat: track passive screen time for daily limit
+  // 1-min heartbeat: track screen time. Singleton across ALL ScreenLayout
+  // instances (see module-level guard above) so study time is counted once
+  // per minute, not once per mounted screen.
   useEffect(() => {
     if (!isStudent || !user?.email) return;
+    const email = user.email;
     const tick = async () => {
       try {
         const syncRes = await fetch(`${SERVER_URL}/user/sync`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user.email, role: 'student' }),
+          body: JSON.stringify({ email, role: 'student' }),
         });
         if (!syncRes.ok) return;
         const { id } = await syncRes.json();
@@ -81,8 +90,18 @@ const breakTimerRef = useRef<any>(null);
         }).catch(() => {});
       } catch {}
     };
-    heartbeatRef.current = setInterval(tick, 60 * 1000);
-    return () => clearInterval(heartbeatRef.current);
+    _heartbeatRefCount++;
+    if (!_heartbeatInterval) {
+      _heartbeatInterval = setInterval(tick, 60 * 1000);
+    }
+    return () => {
+      _heartbeatRefCount--;
+      if (_heartbeatRefCount <= 0 && _heartbeatInterval) {
+        clearInterval(_heartbeatInterval);
+        _heartbeatInterval = null;
+        _heartbeatRefCount = 0;
+      }
+    };
   }, [isStudent, user?.email]);
 
   // Fetch controls every 15s
