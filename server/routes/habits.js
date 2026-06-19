@@ -216,7 +216,22 @@ router.get('/parent-tasks', async (req, res) => {
     if (!childId) return res.status(400).json({ error: 'childId required' });
     const { data, error } = await supabase.from('parent_daily_tasks').select('*').eq('child_id', childId).order('created_at', { ascending: false });
     if (error) return res.status(500).json({ error: error.message });
-    res.json(data ?? []);
+    const tasks = data ?? [];
+
+    // Mark which tasks the child has completed today so the parent sees live status.
+    // habits_checkins.habit_id maps to parent_daily_tasks.id.
+    const today = todayStr();
+    const taskIds = tasks.map(t => t.id);
+    let completedSet = new Set();
+    if (taskIds.length > 0) {
+      const { data: checkins } = await supabase
+        .from('habits_checkins')
+        .select('habit_id')
+        .in('habit_id', taskIds)
+        .eq('date', today);
+      completedSet = new Set((checkins ?? []).map(c => c.habit_id));
+    }
+    res.json(tasks.map(t => ({ ...t, completedToday: completedSet.has(t.id) })));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
