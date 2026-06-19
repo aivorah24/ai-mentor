@@ -117,7 +117,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
             const assigned: Challenge[] = await assignedRes.json();
             for (const a of assigned) {
               if (!merged.find(c => c.id === a.id)) {
-                merged.push({ ...a, status: 'assigned' });
+                merged.push({ ...a });
               }
             }
           }
