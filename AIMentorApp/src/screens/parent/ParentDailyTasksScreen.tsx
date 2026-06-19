@@ -4,6 +4,7 @@ import {
   ActivityIndicator, TextInput, RefreshControl,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
@@ -79,18 +80,31 @@ export default function ParentDailyTasksScreen({ navigation }: any) {
     finally { setLoadingChildren(false); setRefreshing(false); }
   }, [parentEmail]);
 
-  const fetchTasks = useCallback(async (child: any) => {
+  const fetchTasks = useCallback(async (child: any, silent = false) => {
     if (!child?.id) return;
-    setLoadingTasks(true);
+    if (!silent) setLoadingTasks(true);
     try {
       const res = await fetch(`${SERVER_URL}/habits/parent-tasks?childId=${child.id}`);
       if (res.ok) setTasks(await res.json());
     } catch {}
-    finally { setLoadingTasks(false); }
+    finally { if (!silent) setLoadingTasks(false); }
   }, []);
 
   useEffect(() => { fetchChildren(); }, [fetchChildren]);
-  useEffect(() => { if (selectedChild) fetchTasks(selectedChild); }, [selectedChild, fetchTasks]);
+
+  // Load the selected child's tasks + auto-refresh every 10s (silent, no spinner)
+  // so the student's completions show up here without a manual refresh.
+  useEffect(() => {
+    if (!selectedChild) return;
+    fetchTasks(selectedChild);
+    const interval = setInterval(() => fetchTasks(selectedChild, true), 10 * 1000);
+    return () => clearInterval(interval);
+  }, [selectedChild, fetchTasks]);
+
+  // Refresh immediately when the screen regains focus.
+  useFocusEffect(useCallback(() => {
+    if (selectedChild) fetchTasks(selectedChild, true);
+  }, [selectedChild, fetchTasks]));
 
   async function addTask() {
     if (!label.trim()) { setError('Please enter a task description.'); return; }
@@ -223,6 +237,12 @@ export default function ParentDailyTasksScreen({ navigation }: any) {
                           <Text style={styles.taskLabel}>{task.label}</Text>
                           <Text style={styles.taskCoins}>{task.coins} coins</Text>
                         </View>
+                        {task.completedToday && (
+                          <View style={styles.doneBadge}>
+                            <Feather name="check-circle" size={13} color={colors.accentGreen} />
+                            <Text style={styles.doneBadgeText}>Done today</Text>
+                          </View>
+                        )}
                         <TouchableOpacity
                           onPress={() => deleteTask(task.id)}
                           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -383,6 +403,12 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   taskLabel: { fontSize: 14, fontWeight: '600', color: c.textMain },
   taskCoins: { fontSize: 11, color: GOLD, marginTop: 2 },
+  doneBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: c.accentGreen + '20', paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: 12, marginRight: 8,
+  },
+  doneBadgeText: { color: c.accentGreen, fontSize: 11, fontWeight: '700' },
 
   formCard: {
     backgroundColor: c.cardDark, borderWidth: 1,
