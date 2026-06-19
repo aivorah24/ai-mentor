@@ -138,6 +138,7 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User> & { _s
           teaches: Array.isArray(pref.teaches) && pref.teaches.length > 0 ? pref.teaches : undefined,
           children: Array.isArray(pref.children) && pref.children.length > 0 ? pref.children : undefined,
           roles: Array.isArray(pref.roles) && pref.roles.length > 0 ? pref.roles : undefined,
+          activeRole: pref.activeRole || undefined,
         });
       }
     }
@@ -361,13 +362,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Only trust local cache if DB didn't explicitly say false (prevents stale cache bypassing onboarding after account deletion)
           (supaProfile.onboardingComplete !== false && savedLocal.onboardingComplete === true)
         );
-        const activeRole = isAddingNewRole ? _pendingRole : resolvedRole;
-        // emailVerified + onboardingComplete are applied LAST so the freshly-computed
-        // values always win over a stale localStorage profile. Without this, a leftover
-        // emailVerified:true from a previous completed session of the SAME email would
-        // override the fresh emailVerified:false and skip the "Check your inbox" screen
-        // on re-signup (only a manual browser-cache clear would fix it).
-        const resolvedUser = { ...baseUser, ...savedLocal, ...supaProfile, email, onboardingComplete, emailVerified, role: activeRole };
+        // On refresh, honour the role the user last switched to (saved in AsyncStorage).
+        // Only fall back to DB resolvedRole if no local activeRole is saved, or if we're
+        // adding a new role this session.
+        // Best available roles — take whichever source has the most (DB pref > local cache > single)
+        const bestRoles: UserRole[] =
+          (Array.isArray(supaProfile.roles) && supaProfile.roles.length > 0 ? supaProfile.roles as UserRole[] : null) ||
+          (Array.isArray(savedLocal.roles)   && savedLocal.roles.length   > 0 ? savedLocal.roles   as UserRole[] : null) ||
+          [resolvedRole];
+        const validRoles = bestRoles;
+        // Priority: AsyncStorage > DB activeRole > DB role
+        const savedActiveRole = (savedLocal.activeRole || supaProfile.activeRole) as UserRole | undefined;
+        const activeRole: UserRole = isAddingNewRole
+          ? _pendingRole
+          : (savedActiveRole && validRoles.includes(savedActiveRole) ? savedActiveRole : resolvedRole);
+        const resolvedUser = { ...baseUser, ...savedLocal, ...supaProfile, email, onboardingComplete, emailVerified, role: activeRole, roles: bestRoles };
         setUser(resolvedUser);
 
         // Persist locally
@@ -851,15 +860,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Switch between teacher/parent profiles (dual-role users only)
   function switchRole(newRole: UserRole) {
-    // An explicit profile switch overrides any pending "return to <role>" flag
-    // left over from the add-parent onboarding flow. Without this, the navigator
-    // (chosen by getPendingReturnRole() || user.role) would stay stuck on the
-    // old role and "Switch Profile" would appear to do nothing.
     _pendingReturnRole = undefined;
     setUser(prev => {
       if (!prev || !prev.roles?.includes(newRole)) return prev;
       const updated = { ...prev, role: newRole, activeRole: newRole };
       AsyncStorage.setItem(PROFILE_KEY, JSON.stringify({ ...updated })).catch(() => {});
+      // Persist activeRole to DB so it survives browser storage clears
+      if (prev.email) {
+        fetch(`${SERVER_URL}/user/preferences`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: prev.email, activeRole: newRole }),
+        }).catch(() => {});
+      }
       return updated;
     });
   }

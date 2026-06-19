@@ -19,7 +19,7 @@ import { AVATAR_STYLES } from '../../constants/avatarStyles';
 import { CURRICULA, getGradesForCurriculum, SUBJECTS, TEAL, DatePickerInput } from './OnboardingScreen';
 import {
   AutocompleteField, CardHeader, BBox, fetchCitySuggestions, fetchSchoolSuggestions, locateCity, locateFull,
-  SelectField, COUNTRIES, INDIA_STATES, INDIA_CITIES,
+  SelectField, COUNTRIES, INDIA_STATES, INDIA_CITIES, PhoneCodeSelect,
 } from './OnboardingSharedFields';
 
 const TEACHER_ROLES = ['Teacher', 'Coordinator', 'Principal'];
@@ -46,6 +46,7 @@ export default function OnboardingTeacherBoxes() {
   const [fullName, setFullName] = useState(user?.name || '');
   const [dob, setDob] = useState('');
   const [mobile, setMobile] = useState('');
+  const [mobileCode, setMobileCode] = useState('+91');
   const [school, setSchool] = useState((user as any)?.school || '');
   const [city, setCity] = useState((user as any)?.location || '');
   const [state, setState] = useState('');
@@ -58,8 +59,8 @@ export default function OnboardingTeacherBoxes() {
   const [avatarStyle, setAvatarStyle] = useState('default');
 
   // ── Per-card completion ────────────────────────────
-  const personalDone = fullName.trim().length >= 2;
-  const schoolDone = school.trim().length >= 2 && city.trim().length >= 2;
+  const personalDone = fullName.trim().length >= 2 && dob.trim().length >= 6 && mobile.trim().length >= 7;
+  const schoolDone = school.trim().length >= 2 && city.trim().length >= 2 && state.trim().length >= 2;
   const professionalDone = teacherRole.length > 0 && experience.length > 0;
   const teachingDone = curriculum.length > 0 && teachGrades.length > 0 && teachSubjects.length > 0;
   const avatarDone = avatarStyle.length > 0;
@@ -85,8 +86,28 @@ export default function OnboardingTeacherBoxes() {
 
   async function handleFinish() {
     if (!requiredDone) {
-      setSaveError('Please complete Personal Info, School Details, Professional Info, and Teaching Info before continuing.');
+      setSaveError('Please complete all required fields including State / Province.');
       return;
+    }
+    if (!state.trim()) {
+      setSaveError('State / Province is required.');
+      return;
+    }
+    if (!dob.trim()) {
+      setSaveError('Date of Birth is required.');
+      return;
+    }
+    if (!mobile.trim()) {
+      setSaveError('Mobile Number is required.');
+      return;
+    }
+    if (mobile.trim()) {
+      const digits = mobile.replace(/\D/g, '');
+      const minDigits = mobileCode === '+91' ? 10 : 7;
+      if (digits.length < minDigits) {
+        setSaveError(`Mobile number must have at least ${minDigits} digits.`);
+        return;
+      }
     }
     setSaving(true);
     setSaveError('');
@@ -125,7 +146,7 @@ export default function OnboardingTeacherBoxes() {
           school,
           location: city,
           dob: dob || undefined,
-          mobile: mobile ? `+91 ${mobile}` : undefined,
+          mobile: mobile ? `${mobileCode} ${mobile}` : undefined,
           state: state || undefined,
           country: country || undefined,
           teacherRole,
@@ -194,7 +215,7 @@ export default function OnboardingTeacherBoxes() {
                 placeholder="Your name" placeholderTextColor={colors.textDim} autoCapitalize="words" />
             </View>
             <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>Date of Birth</Text>
+              <Text style={styles.lbl}>Date of Birth <Text style={{ color: '#ef4444', fontSize: 13 }}>*</Text></Text>
               {Platform.OS === 'web' ? (
                 <DatePickerInput value={dob} onChange={setDob} colors={colors} />
               ) : (
@@ -202,12 +223,10 @@ export default function OnboardingTeacherBoxes() {
                   placeholder="DD/MM/YYYY" placeholderTextColor={colors.textDim} keyboardType="numeric" />
               )}
             </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>Mobile Number</Text>
+            <View style={[styles.fieldGroup, { zIndex: 6 }]}>
+              <Text style={styles.lbl}>Mobile Number <Text style={{ color: '#ef4444', fontSize: 13 }}>*</Text></Text>
               <View style={styles.phoneRow}>
-                <View style={styles.phoneCode}>
-                  <Text style={styles.phoneCodeTxt}>+91</Text>
-                </View>
+                <PhoneCodeSelect value={mobileCode} onChange={setMobileCode} colors={colors} styles={styles} />
                 <TextInput style={[styles.input, styles.phoneInput]} value={mobile} onChangeText={setMobile}
                   placeholder="98765 43210" placeholderTextColor={colors.textDim} keyboardType="phone-pad" />
               </View>
@@ -251,7 +270,7 @@ export default function OnboardingTeacherBoxes() {
                 />
               </View>
               <View style={[styles.fieldGroup, { flex: 1, zIndex: 15 }]}>
-                <Text style={styles.lbl}>State / Province</Text>
+                <Text style={styles.lbl}>State / Province <Text style={{ color: '#ef4444', fontSize: 13 }}>*</Text></Text>
                 <SelectField
                   value={state}
                   onChange={(s) => { setState(s); setCity(''); }}
