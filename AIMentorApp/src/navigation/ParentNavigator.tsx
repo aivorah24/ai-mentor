@@ -21,6 +21,7 @@ import ParentSettingsScreen from '../screens/parent/ParentSettingsScreen';
 import ParentHelpScreen from '../screens/parent/ParentHelpScreen';
 import ParentMessagesScreen from '../screens/parent/ParentMessagesScreen';
 import ParentDailyTasksScreen from '../screens/parent/ParentDailyTasksScreen';
+import SubscriptionScreen from '../screens/student/SubscriptionScreen';
 
 const Drawer = createDrawerNavigator<ParentDrawerParamList>();
 
@@ -62,6 +63,7 @@ export default function ParentNavigator() {
       <Drawer.Screen name="ParentHelp" component={ParentHelpScreen} />
       <Drawer.Screen name="ParentMessages" component={ParentMessagesScreen} />
       <Drawer.Screen name="ParentDailyTasks" component={ParentDailyTasksScreen} />
+      <Drawer.Screen name="ParentSubscription" component={SubscriptionScreen} />
     </Drawer.Navigator>
   );
 }

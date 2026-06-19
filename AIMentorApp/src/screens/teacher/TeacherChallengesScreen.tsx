@@ -322,6 +322,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
       {/* Assign Modal */}
       <Modal visible={assignModal} transparent animationType="slide" onRequestClose={closeAssign}>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <TouchableOpacity style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} activeOpacity={1} onPress={closeAssign} />
           <View style={styles.modalSheet}>
             {/* Handle */}
             <View style={styles.modalHandle} />
