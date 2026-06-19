@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   ActivityIndicator, Modal, Platform, Alert, Image, Linking, TextInput,
@@ -2802,8 +2803,12 @@ export default function AssignmentsScreen({ navigation, route }: any) {
 
   useEffect(() => {
     load();
-    clearUnreadAssignments(); // mark assignments as seen when screen opens
+    clearUnreadAssignments();
+    const interval = setInterval(load, 30 * 1000);
+    return () => clearInterval(interval);
   }, [studentId]);
+
+  useFocusEffect(useCallback(() => { load(); }, [studentId]));
 
   const sortByPendingFirst = (list: Assignment[]) => {
     return [...list].sort((a, b) => {
