@@ -64,11 +64,15 @@ export default function TeacherSettingsScreen({ navigation }: any) {
   const [showCurrent,   setShowCurrent]  = useState(false);
   const [showNew,       setShowNew]      = useState(false);
   const [newSchool,     setNewSchool]    = useState(user?.school || '');
-  const [editCurriculum, setEditCurriculum] = useState(user?.curriculum || 'IB PYP');
-  // Multi-grade: a teacher can handle several grades (matches onboarding teaches[]).
+  // Multi-curriculum + multi-grade: a teacher can handle several curricula and grades.
+  const [editCurricula, setEditCurricula] = useState<string[]>(
+    Array.isArray(user?.teaches) && user.teaches.length > 0
+      ? [...new Set(user.teaches.map((t: any) => t.curriculum).filter(Boolean))] as string[]
+      : (user?.curriculum ? [user.curriculum] : [])
+  );
   const [editGrades, setEditGrades] = useState<string[]>(
     Array.isArray(user?.teaches) && user.teaches.length > 0
-      ? user.teaches.map((t: any) => t.grade).filter(Boolean)
+      ? [...new Set(user.teaches.map((t: any) => t.grade).filter(Boolean))] as string[]
       : (user?.grade ? [user.grade] : [])
   );
 
@@ -81,10 +85,14 @@ export default function TeacherSettingsScreen({ navigation }: any) {
     setNewEmail(''); setEmailPassword('');
     setCurrentPw(''); setNewPw(''); setConfirmPw('');
     setNewSchool(user?.school || '');
-    setEditCurriculum(user?.curriculum || 'IB PYP');
+    setEditCurricula(
+      Array.isArray(user?.teaches) && user.teaches.length > 0
+        ? [...new Set(user.teaches.map((t: any) => t.curriculum).filter(Boolean))] as string[]
+        : (user?.curriculum ? [user.curriculum] : [])
+    );
     setEditGrades(
       Array.isArray(user?.teaches) && user.teaches.length > 0
-        ? user.teaches.map((t: any) => t.grade).filter(Boolean)
+        ? [...new Set(user.teaches.map((t: any) => t.grade).filter(Boolean))] as string[]
         : (user?.grade ? [user.grade] : [])
     );
     setModalError('');
@@ -128,23 +136,26 @@ export default function TeacherSettingsScreen({ navigation }: any) {
   }
 
   async function handleSaveCurriculum() {
+    if (editCurricula.length === 0) { setModalError('Please select at least one curriculum.'); return; }
     if (editGrades.length === 0) { setModalError('Please select at least one grade.'); return; }
     setModalLoading(true);
     try {
-      // Build teaches[] from ALL selected grades — the authoritative source the
-      // assignment/student/challenge screens read for grade scoping. The users.grade
-      // column only holds one value, so we store the first selected grade there.
+      // Build teaches[] from every curriculum × grade the teacher selected — the
+      // authoritative source the assignment/student/challenge screens read. The
+      // users columns hold one value each (the first selected curriculum/grade).
       const subjects = ((user?.teaches?.[0] as any)?.subjects) || [];
+      const orderedCurricula = CURRICULA.filter(c => editCurricula.includes(c));
       const orderedGrades = GRADES_TEACHER.filter(g => editGrades.includes(g));
-      const teaches = orderedGrades.map(g => ({ grade: g, curriculum: editCurriculum, subjects }));
+      const teaches = orderedCurricula.flatMap(c => orderedGrades.map(g => ({ grade: g, curriculum: c, subjects })));
+      const primaryCurriculum = orderedCurricula[0];
       const primaryGrade = orderedGrades[0];
       const res = await fetch(`${SERVER_URL}/user/profile`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user?.email, curriculum: editCurriculum, grade: primaryGrade, teaches }),
+        body: JSON.stringify({ email: user?.email, curriculum: primaryCurriculum, grade: primaryGrade, teaches }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to save'); }
-      updateUser({ curriculum: editCurriculum, grade: primaryGrade, teaches: teaches as any });
+      updateUser({ curriculum: primaryCurriculum, grade: primaryGrade, teaches: teaches as any });
       closeModal();
       setFeedback({ title: 'Updated', message: 'Curriculum and grades have been saved.' });
     } catch (e: any) {
@@ -361,11 +372,16 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                   <View style={{ flex: 1 }}>
                     <Text style={styles.fieldLabel}>Curriculum</Text>
                     <Text style={styles.fieldSub}>{(() => {
-                      const tGrades = Array.isArray(user?.teaches) && user.teaches.length > 0
-                        ? user.teaches.map((t: any) => t.grade).filter(Boolean)
+                      const teaches = Array.isArray(user?.teaches) ? user.teaches : [];
+                      const tCurricula = teaches.length > 0
+                        ? [...new Set(teaches.map((t: any) => t.curriculum).filter(Boolean))]
+                        : (user?.curriculum ? [user.curriculum] : ['IB PYP']);
+                      const tGrades = teaches.length > 0
+                        ? [...new Set(teaches.map((t: any) => t.grade).filter(Boolean))]
                         : (user?.grade ? [user.grade] : []);
-                      const label = tGrades.length > 0 ? tGrades.map((g: string) => g.replace('Grade ', '')).join(', ') : '3';
-                      return `${user?.curriculum || 'IB PYP'} · Grade${tGrades.length > 1 ? 's' : ''} ${label}`;
+                      const cLabel = tCurricula.join(', ');
+                      const gLabel = tGrades.length > 0 ? tGrades.map((g: string) => g.replace('Grade ', '')).join(', ') : '3';
+                      return `${cLabel} · Grade${tGrades.length > 1 ? 's' : ''} ${gLabel}`;
                     })()}</Text>
                   </View>
                   <TouchableOpacity style={styles.changeBtn} onPress={() => openModal('curriculum')} activeOpacity={0.7}>
@@ -537,17 +553,20 @@ export default function TeacherSettingsScreen({ navigation }: any) {
 
       {/* Curriculum Modal */}
       <AppModal visible={activeModal === 'curriculum'} title="Curriculum & Grade" onClose={closeModal} styles={styles} colors={colors}>
-        <Text style={styles.modalFieldLabel}>Curriculum</Text>
-        {CURRICULA.map(c => (
-          <TouchableOpacity
-            key={c} activeOpacity={0.8}
-            style={[styles.modalInput, { height: 46, marginBottom: 6, justifyContent: 'space-between', borderColor: editCurriculum === c ? colors.primary : colors.borderColor, backgroundColor: editCurriculum === c ? colors.primaryGlow : colors.bgDark }]}
-            onPress={() => setEditCurriculum(c)}
-          >
-            <Text style={[styles.modalTextInput, { flex: 0, color: editCurriculum === c ? colors.primary : colors.textMuted }]}>{c}</Text>
-            {editCurriculum === c && <Feather name="check" size={15} color={colors.primary} />}
-          </TouchableOpacity>
-        ))}
+        <Text style={styles.modalFieldLabel}>Curricula you teach (select all that apply)</Text>
+        {CURRICULA.map(c => {
+          const on = editCurricula.includes(c);
+          return (
+            <TouchableOpacity
+              key={c} activeOpacity={0.8}
+              style={[styles.modalInput, { height: 46, marginBottom: 6, justifyContent: 'space-between', borderColor: on ? colors.primary : colors.borderColor, backgroundColor: on ? colors.primaryGlow : colors.bgDark }]}
+              onPress={() => setEditCurricula(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])}
+            >
+              <Text style={[styles.modalTextInput, { flex: 0, color: on ? colors.primary : colors.textMuted }]}>{c}</Text>
+              {on && <Feather name="check" size={15} color={colors.primary} />}
+            </TouchableOpacity>
+          );
+        })}
         <Text style={[styles.modalFieldLabel, { marginTop: 12 }]}>Grades you teach (select all that apply)</Text>
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
           {GRADES_TEACHER.map(g => {
