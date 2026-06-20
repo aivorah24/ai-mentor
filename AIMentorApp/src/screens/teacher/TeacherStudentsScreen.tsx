@@ -11,6 +11,7 @@ import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import SERVER_URL from '../../config/serverUrl';
@@ -222,8 +223,9 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
 
   useEffect(() => { load(); }, [load]);
 
-  // Fetch the teacher's grades authoritatively from saved preferences.
-  useEffect(() => {
+  // Fetch the teacher's grades authoritatively from saved preferences — on every
+  // focus, so a grade change in Settings shows up here instantly (no refresh).
+  useFocusEffect(useCallback(() => {
     const email = user?.email;
     if (!email) return;
     fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(email)}`)
@@ -235,7 +237,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
         if (g.length > 0) setFetchedGrades(g);
       })
       .catch(() => {});
-  }, [user?.email]);
+  }, [user?.email]));
 
   function openAddModal() {
     // Default to the teacher's first taught grade so the preselected value is

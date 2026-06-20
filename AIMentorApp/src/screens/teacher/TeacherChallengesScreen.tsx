@@ -8,6 +8,7 @@ import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import SERVER_URL from '../../config/serverUrl';
@@ -92,9 +93,9 @@ export default function TeacherChallengesScreen({ navigation }: any) {
       .catch(() => {});
   }, [user?.email]);
 
-  // Fetch the teacher's grades authoritatively from saved preferences, and clamp
-  // the selected grade to a valid option once they load.
-  useEffect(() => {
+  // Fetch the teacher's grades authoritatively from saved preferences — on every
+  // focus, so a grade change in Settings is reflected instantly (no refresh).
+  useFocusEffect(useCallback(() => {
     if (!user?.email) return;
     fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(user.email)}`)
       .then(r => r.ok ? r.json() : null)
@@ -108,7 +109,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
         }
       })
       .catch(() => {});
-  }, [user?.email]);
+  }, [user?.email]));
 
   // Fetch challenges for selected grade
   const fetchChallenges = useCallback(() => {
