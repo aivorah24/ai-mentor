@@ -170,9 +170,25 @@ router.get('/notifications-summary', async (req, res) => {
       .order('created_at', { ascending: false })
       .limit(20);
 
-    // 2. New assignments since last seen (personal + class-wide)
+    // 2. New assignments since last seen (personal + class-wide).
+    // Assignment notifications are for STUDENTS only — teachers create them and
+    // parents are notified via real messages, so notifying them here is noise.
+    const isStudent = userRole === 'student' || (!userRole && userId);
+
+    // Which teachers is this student linked to? A teacher's "All students"
+    // broadcast must only notify that teacher's own students (mirrors /assignments).
+    let studentTeacherIds = [];
+    if (isStudent && userId) {
+      const { data: tlinks } = await supabase
+        .from('teacher_student')
+        .select('teacher_id')
+        .eq('student_id', userId);
+      studentTeacherIds = [...new Set((tlinks || []).map(l => l.teacher_id).filter(Boolean))];
+    }
+
     let personalAssignQ = null;
-    if (userId) {
+    let classAssignQ = null;
+    if (isStudent && userId) {
       personalAssignQ = supabase
         .from('assignments')
         .select('id, title, subject, type, created_at, created_by_id')
@@ -180,31 +196,47 @@ router.get('/notifications-summary', async (req, res) => {
         .order('created_at', { ascending: false })
         .limit(10);
       if (since) personalAssignQ = personalAssignQ.gt('created_at', since);
+
+      classAssignQ = supabase
+        .from('assignments')
+        .select('id, title, subject, type, created_at, created_by_id, created_by_role')
+        .is('student_id', null)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      // Curriculum partition — mirror GET /assignments exactly: a class-wide item
+      // shows if its curriculum is null (untagged → everyone) OR matches the
+      // student's. A student with no curriculum recorded only sees untagged ones,
+      // never items tagged for another curriculum.
+      classAssignQ = studentCurriculum
+        ? classAssignQ.or(`curriculum.is.null,curriculum.eq."${studentCurriculum}"`)
+        : classAssignQ.is('curriculum', null);
+      if (studentGrade) classAssignQ = classAssignQ.or(`grade.is.null,grade.eq."${studentGrade}"`);
+      if (since)        classAssignQ = classAssignQ.gt('created_at', since);
+      // Teacher broadcasts only from this student's own teachers; non-teacher
+      // (admin/school) broadcasts stay curriculum-wide.
+      classAssignQ = studentTeacherIds.length > 0
+        ? classAssignQ.or(`created_by_role.neq.teacher,created_by_id.in.(${studentTeacherIds.join(',')})`)
+        : classAssignQ.neq('created_by_role', 'teacher');
     }
 
-    let classAssignQ = supabase
-      .from('assignments')
-      .select('id, title, subject, type, created_at, created_by_id')
-      .is('student_id', null)
-      .order('created_at', { ascending: false })
-      .limit(10);
-    if (studentCurriculum) classAssignQ = classAssignQ.eq('curriculum', studentCurriculum);
-    if (studentGrade)      classAssignQ = classAssignQ.eq('grade', studentGrade);
-    if (since)             classAssignQ = classAssignQ.gt('created_at', since);
-
-    // 3. New challenges
-    let challengeQ = supabase
-      .from('challenge_assignments')
-      .select('id', { count: 'exact', head: true })
-      .neq('status', 'completed');
-    if (userId) challengeQ = challengeQ.eq('student_id', userId);
-    if (since)  challengeQ = challengeQ.gt('created_at', since);
+    // 3. New challenges — fetch the actual rows so each can deep-link to its challenge
+    let challengeQ = null;
+    if (isStudent && userId) {
+      challengeQ = supabase
+        .from('challenge_assignments')
+        .select('id, challenge_id, assigned_by_id, assigned_by_role, created_at')
+        .eq('student_id', userId)
+        .neq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (since) challengeQ = challengeQ.gt('created_at', since);
+    }
 
     const [msgRes, personalAssignRes, classAssignRes, challengeRes] = await Promise.all([
       msgQ,
       personalAssignQ || Promise.resolve({ data: [] }),
-      classAssignQ,
-      challengeQ,
+      classAssignQ    || Promise.resolve({ data: [] }),
+      challengeQ      || Promise.resolve({ data: [] }),
     ]);
 
     // Real chat messages only (no system messages — students have no Messages section)
@@ -223,10 +255,10 @@ router.get('/notifications-summary', async (req, res) => {
     const seenIds = new Set();
     const uniqueAssigns = allAssigns.filter(a => { if (seenIds.has(a.id)) return false; seenIds.add(a.id); return true; });
 
+    const challengeRows  = challengeRes.data || [];
     const assignCount    = uniqueAssigns.length;
-    const challengeCount = Number.isFinite(challengeRes.count) ? Number(challengeRes.count) : 0;
+    const challengeCount = challengeRows.length;
 
-    // Build Google Classroom-style notification items from real assignment data
     // Fetch creator names in one shot
     const creatorIds = [...new Set(uniqueAssigns.map(a => a.created_by_id).filter(Boolean))];
     let creatorMap = {};
@@ -235,7 +267,17 @@ router.get('/notifications-summary', async (req, res) => {
       (creators || []).forEach(c => { creatorMap[c.id] = c.name || 'Teacher'; });
     }
 
-    const notificationItems = uniqueAssigns.slice(0, 10).map(a => ({
+    // Fetch challenge titles for the per-challenge notification items
+    const challengeIds = [...new Set(challengeRows.map(r => r.challenge_id).filter(Boolean))];
+    let challengeMap = {};
+    if (challengeIds.length > 0) {
+      const { data: chs } = await supabase.from('challenges').select('id, title, subject').in('id', challengeIds);
+      (chs || []).forEach(c => { challengeMap[c.id] = c; });
+    }
+
+    // Build Google Classroom-style notification items — assignments + challenges,
+    // each carrying the id its screen needs to open the exact item.
+    const assignmentItems = uniqueAssigns.map(a => ({
       id:         a.id,
       type:       a.type === 'quiz' ? 'quiz' : 'assignment',
       title:      a.title || 'New Assignment',
@@ -243,6 +285,18 @@ router.get('/notifications-summary', async (req, res) => {
       senderName: creatorMap[a.created_by_id] || 'Teacher',
       createdAt:  a.created_at,
     }));
+    const challengeItems = challengeRows.map(r => ({
+      id:         r.challenge_id,                       // ChallengesScreen matches challenge.id
+      type:       'challenge',
+      title:      challengeMap[r.challenge_id]?.title || 'New Challenge',
+      subtitle:   [challengeMap[r.challenge_id]?.subject, 'Challenge'].filter(Boolean).join(' · '),
+      senderName: r.assigned_by_role === 'parent' ? 'Your parent' : 'Your teacher',
+      createdAt:  r.created_at,
+    }));
+
+    const notificationItems = [...assignmentItems, ...challengeItems]
+      .sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0))
+      .slice(0, 10);
 
     res.json({ messages: msgCount, assignments: assignCount, challenges: challengeCount, latest, notificationItems });
   } catch (err) {
@@ -558,7 +612,9 @@ router.get('/conversations', async (req, res) => {
       // Use DB role lookup as source of truth; fall back to sender_role for incoming messages
       const otherRole  = roleMap[otherEmail] || (msg.sender_email !== userEmail ? msg.sender_role : null) || 'parent';
 
-      // Filter by active role: teacher sees parents, parent sees teachers
+      // Filter by active role: teacher sees parents, parent sees teachers.
+      // Aivorah system reminders use sender_role 'teacher' (system@aivorah.com),
+      // so they appear in the parent's (and student's) thread list automatically.
       if (activeRole === 'teacher' && otherRole !== 'parent') return;
       if (activeRole === 'parent'  && otherRole !== 'teacher') return;
 

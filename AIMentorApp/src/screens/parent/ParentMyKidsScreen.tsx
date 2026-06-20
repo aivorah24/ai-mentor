@@ -15,6 +15,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import SERVER_URL from '../../config/serverUrl';
 import firebaseApp from '../../config/firebase';
+import { CURRICULA, getGradesForCurriculum } from '../onboarding/OnboardingScreen';
 
 function formatStudyTime(minutes: number) {
   const h = Math.floor(minutes / 60);
@@ -786,14 +787,14 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                 <View style={styles.rowInputs}>
                   {/* Grade picker */}
                   <View style={[styles.input, styles.pickerWrap, { flex: 1 }]}>
-                    <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 4 }}>Grade</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 4 }}>Curriculum</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                      {['Grade 3','Grade 4','Grade 5'].map(g => (
-                        <TouchableOpacity key={g} onPress={() => setNewGrade(g)} activeOpacity={0.8}
+                      {CURRICULA.map(c => (
+                        <TouchableOpacity key={c} onPress={() => { setNewCurriculum(c); setNewGrade(getGradesForCurriculum(c)[0]); }} activeOpacity={0.8}
                           style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
-                            backgroundColor: newGrade === g ? colors.primary + '20' : colors.cardDark,
-                            borderWidth: 1, borderColor: newGrade === g ? colors.primary : colors.borderColor }}>
-                          <Text style={{ fontSize: 12, color: newGrade === g ? colors.primary : colors.textMuted, fontWeight: newGrade === g ? '700' : '400' }}>{g}</Text>
+                            backgroundColor: newCurriculum === c ? colors.primary + '20' : colors.cardDark,
+                            borderWidth: 1, borderColor: newCurriculum === c ? colors.primary : colors.borderColor }}>
+                          <Text style={{ fontSize: 12, color: newCurriculum === c ? colors.primary : colors.textMuted, fontWeight: newCurriculum === c ? '700' : '400' }}>{c}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -801,16 +802,16 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                 </View>
 
                 <View style={styles.rowInputs}>
-                  {/* Curriculum picker */}
+                  {/* Grade picker — grades depend on the selected curriculum (same as onboarding) */}
                   <View style={[styles.input, styles.pickerWrap, { flex: 1 }]}>
-                    <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 4 }}>Curriculum</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 4 }}>Grade</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                      {['IB PYP','CBSE','ICSE','Cambridge'].map(c => (
-                        <TouchableOpacity key={c} onPress={() => setNewCurriculum(c)} activeOpacity={0.8}
+                      {getGradesForCurriculum(newCurriculum).map(g => (
+                        <TouchableOpacity key={g} onPress={() => setNewGrade(g)} activeOpacity={0.8}
                           style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
-                            backgroundColor: newCurriculum === c ? colors.primary + '20' : colors.cardDark,
-                            borderWidth: 1, borderColor: newCurriculum === c ? colors.primary : colors.borderColor }}>
-                          <Text style={{ fontSize: 12, color: newCurriculum === c ? colors.primary : colors.textMuted, fontWeight: newCurriculum === c ? '700' : '400' }}>{c}</Text>
+                            backgroundColor: newGrade === g ? colors.primary + '20' : colors.cardDark,
+                            borderWidth: 1, borderColor: newGrade === g ? colors.primary : colors.borderColor }}>
+                          <Text style={{ fontSize: 12, color: newGrade === g ? colors.primary : colors.textMuted, fontWeight: newGrade === g ? '700' : '400' }}>{g}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -1003,24 +1004,24 @@ export default function ParentMyKidsScreen({ navigation }: any) {
               <TextInput style={styles.input} value={editName} onChangeText={t => { setEditName(t); setEditError(''); }}
                 placeholder="Child's name" placeholderTextColor={colors.textMuted} autoCapitalize="words" />
 
-              <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>Grade</Text>
+              <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>Curriculum</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {['Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'].map(g => (
-                  <TouchableOpacity key={g} onPress={() => setEditGrade(g)} activeOpacity={0.8}
-                    style={[styles.chip, editGrade === g && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+                {CURRICULA.map(c => (
+                  <TouchableOpacity key={c} onPress={() => { setEditCurriculum(c); if (!getGradesForCurriculum(c).includes(editGrade)) setEditGrade(getGradesForCurriculum(c)[0]); }} activeOpacity={0.8}
+                    style={[styles.chip, editCurriculum === c && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
                   >
-                    <Text style={[styles.chipText, editGrade === g && { color: colors.primary }]}>{g}</Text>
+                    <Text style={[styles.chipText, editCurriculum === c && { color: colors.primary }]}>{c}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
-              <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>Curriculum</Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                {['IB PYP','CBSE','ICSE','Cambridge'].map(c => (
-                  <TouchableOpacity key={c} onPress={() => setEditCurriculum(c)} activeOpacity={0.8}
-                    style={[styles.chip, editCurriculum === c && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+              <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>Grade</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {getGradesForCurriculum(editCurriculum).map(g => (
+                  <TouchableOpacity key={g} onPress={() => setEditGrade(g)} activeOpacity={0.8}
+                    style={[styles.chip, editGrade === g && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
                   >
-                    <Text style={[styles.chipText, editCurriculum === c && { color: colors.primary }]}>{c}</Text>
+                    <Text style={[styles.chipText, editGrade === g && { color: colors.primary }]}>{g}</Text>
                   </TouchableOpacity>
                 ))}
               </View>

@@ -62,6 +62,9 @@ export default function TeacherChallengesScreen({ navigation }: any) {
   const [selectedGrade, setSelectedGrade] = useState('Grade 3');
   const [challenges, setChallenges]       = useState<Challenge[]>([]);
   const [loading, setLoading]             = useState(false);
+  // Grades this teacher handles — fetched authoritatively from saved preferences.
+  const [fetchedGrades, setFetchedGrades] = useState<string[]>([]);
+  const gradeTabs = fetchedGrades.length > 0 ? fetchedGrades : GRADES;
 
   // Students for the assign picker
   const [students, setStudents]           = useState<StudentItem[]>([]);
@@ -86,6 +89,24 @@ export default function TeacherChallengesScreen({ navigation }: any) {
     fetch(`${SERVER_URL}/student/by-teacher/${encodeURIComponent(user.email)}`)
       .then(r => r.ok ? r.json() : [])
       .then(data => { if (Array.isArray(data)) setStudents(data); })
+      .catch(() => {});
+  }, [user?.email]);
+
+  // Fetch the teacher's grades authoritatively from saved preferences, and clamp
+  // the selected grade to a valid option once they load.
+  useEffect(() => {
+    if (!user?.email) return;
+    fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(user.email)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(p => {
+        const g = Array.isArray(p?.teaches)
+          ? [...new Set(p.teaches.map((t: any) => t.grade).filter(Boolean))] as string[]
+          : [];
+        if (g.length > 0) {
+          setFetchedGrades(g);
+          setSelectedGrade(prev => g.includes(prev) ? prev : g[0]);
+        }
+      })
       .catch(() => {});
   }, [user?.email]);
 
@@ -216,7 +237,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
               {/* Grade selector */}
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ height: 40 }}
                 contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                {GRADES.map(g => (
+                {gradeTabs.map(g => (
                   <TouchableOpacity
                     key={g}
                     style={[styles.gradeChip, selectedGrade === g && styles.gradeChipActive]}

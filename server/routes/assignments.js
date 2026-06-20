@@ -1458,77 +1458,10 @@ router.post('/', async (req, res) => {
     })();
   }
 
-  // Notify parents via message when assignment is created.
-  // Students do NOT get a message — they have the Assignments screen + bell notification.
-  // Sending system messages to students polluted their Messages inbox.
-  try {
-    const teacherRes = creatorId
-      ? await supabase.from('users').select('email, name').eq('id', creatorId).single()
-      : { data: null };
-    const teacherEmail = teacherRes.data?.email || 'teacher@aivorah.com';
-    const teacherName  = teacherRes.data?.name  || 'Your Teacher';
-    const dueStr = dueDate ? new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
-    const msgContent = `New ${type === 'quiz' ? 'Quiz' : 'Assignment'} assigned: "${title}"${subject ? ` (${subject})` : ''}${dueStr ? `. Due: ${dueStr}` : ''}.`;
-
-    // Determine which students were assigned (for parent lookup)
-    let studentIds = [];
-    if (userId) {
-      studentIds = [userId];
-    } else if (createdByRole === 'teacher' && creatorId) {
-      // Teacher "All students" broadcast → only this teacher's linked students
-      // (matching curriculum + grade), mirroring how students fetch assignments.
-      const { data: links } = await supabase
-        .from('teacher_student')
-        .select('student_id')
-        .eq('teacher_id', creatorId);
-      const linkedIds = [...new Set((links || []).map(l => l.student_id).filter(Boolean))];
-      if (linkedIds.length > 0) {
-        let q = supabase.from('users').select('id').eq('role', 'student').in('id', linkedIds);
-        if (finalCurriculum) q = q.eq('curriculum', finalCurriculum);
-        if (finalGrade)      q = q.eq('grade', finalGrade);
-        const { data: classStudents } = await q;
-        studentIds = (classStudents || []).map(s => s.id);
-      }
-    } else if (finalCurriculum) {
-      let classQuery = supabase
-        .from('users')
-        .select('id')
-        .eq('role', 'student')
-        .eq('curriculum', finalCurriculum);
-      if (finalGrade) classQuery = classQuery.eq('grade', finalGrade);
-      const { data: classStudents } = await classQuery;
-      studentIds = (classStudents || []).map(s => s.id);
-    }
-
-    if (studentIds.length > 0) {
-      const { data: studentRecords } = await supabase
-        .from('users')
-        .select('id, name')
-        .in('id', studentIds);
-
-      // Notify parents only — students see assignments in the Assignments screen + bell
-      const { data: parentLinks } = await supabase
-        .from('parent_children')
-        .select('parent_email, child_id')
-        .in('child_id', studentIds);
-
-      if (Array.isArray(parentLinks) && parentLinks.length > 0) {
-        const studentMap = {};
-        (studentRecords || []).forEach(s => { studentMap[s.id] = s.name || s.email; });
-
-        const parentMsgs = parentLinks.map(link => ({
-          sender_email:    teacherEmail.toLowerCase().trim(),
-          sender_name:     teacherName,
-          sender_role:     'teacher',
-          recipient_email: link.parent_email.toLowerCase().trim(),
-          recipient_name:  link.parent_email,
-          content:         `[${studentMap[link.child_id] || 'Your child'}] ${msgContent}`,
-          student_id:      link.child_id,
-        }));
-        await supabase.from('messages').insert(parentMsgs);
-      }
-    }
-  } catch (_) { /* non-blocking */ }
+  // Assignment reminders are delivered via the notification bell (which reads the
+  // assignments table directly) — NOT as chat messages. We intentionally do NOT
+  // create an "Aivorah" message thread here, to keep the Messages tab for real
+  // teacher/parent conversations only.
 
   // Auto-add deadline to schedule_events (Supabase) so it appears in student's calendar
   try {

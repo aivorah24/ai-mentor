@@ -205,6 +205,10 @@ router.post('/assign', async (req, res) => {
     } catch (_) {}
   }
 
+  // Challenge reminders are delivered via the notification bell (which reads the
+  // challenge_assignments table directly) — NOT as chat messages. No "Aivorah"
+  // thread is created, keeping the Messages tab for real conversations only.
+
   res.json({ ...data, assignmentId: data.id });
 });
 
