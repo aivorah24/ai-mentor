@@ -1683,38 +1683,38 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
               <Feather name="chevron-left" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-            <Text style={{ fontSize: 13, color: colors.textDim, lineHeight: 20, marginBottom: 4 }}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingTop: 10, paddingBottom: 16 }]}>
+            <Text style={{ fontSize: 12, color: colors.textDim, lineHeight: 18, marginBottom: 8 }}>
               Read each statement and tick if you did it. Be honest — this helps you learn!
             </Text>
             {criteria.length > 0 ? criteria.map((c, i) => {
               const checked = !!selfChecked[c];
               return (
                 <TouchableOpacity key={i} activeOpacity={0.75} onPress={() => setSelfChecked(prev => ({ ...prev, [c]: !prev[c] }))}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, marginBottom: 8,
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 10, marginBottom: 6,
                     borderWidth: 1.5, borderColor: checked ? color + '60' : colors.borderColor,
                     backgroundColor: checked ? color + '08' : colors.bgDark }}>
-                  <View style={{ width: 24, height: 24, borderRadius: 6, borderWidth: 2,
+                  <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 2,
                     borderColor: checked ? color : colors.textDim,
                     backgroundColor: checked ? color : 'transparent',
                     alignItems: 'center', justifyContent: 'center' }}>
-                    {checked && <Feather name="check" size={14} color="#fff" />}
+                    {checked && <Feather name="check" size={12} color="#fff" />}
                   </View>
-                  <Text style={{ flex: 1, fontSize: 14, color: colors.textMain, lineHeight: 20 }}>{c}</Text>
+                  <Text style={{ flex: 1, fontSize: 13, color: colors.textMain, lineHeight: 18 }}>{c}</Text>
                 </TouchableOpacity>
               );
             }) : (
-              <View style={{ padding: 16, borderRadius: 12, backgroundColor: colors.borderColor, alignItems: 'center' }}>
-                <Text style={{ color: colors.textDim, fontSize: 13 }}>No success criteria set for this assignment.</Text>
+              <View style={{ padding: 12, borderRadius: 10, backgroundColor: colors.borderColor, alignItems: 'center' }}>
+                <Text style={{ color: colors.textDim, fontSize: 12 }}>No success criteria set for this assignment.</Text>
               </View>
             )}
-            <View style={{ height: 16 }} />
-            <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color }]} onPress={handleSubmit} activeOpacity={0.85}>
-              <Feather name="send" size={16} color="#fff" />
-              <Text style={styles.submitBtnText}>Submit for AI Grading</Text>
+            <View style={{ height: 10 }} />
+            <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color, paddingVertical: 12 }]} onPress={handleSubmit} activeOpacity={0.85}>
+              <Feather name="send" size={14} color="#fff" />
+              <Text style={[styles.submitBtnText, { fontSize: 13 }]}>Submit for AI Grading</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setCurrentStep(steps.length - 1)} activeOpacity={0.7} style={{ alignSelf: 'center', paddingVertical: 4 }}>
-              <Text style={{ fontSize: 12, color: colors.textDim, textDecorationLine: 'underline' }}>Go back to last step</Text>
+              <Text style={{ fontSize: 11, color: colors.textDim, textDecorationLine: 'underline' }}>Go back to last step</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
