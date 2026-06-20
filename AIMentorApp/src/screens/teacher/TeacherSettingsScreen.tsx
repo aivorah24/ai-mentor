@@ -17,6 +17,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import SERVER_URL from '../../config/serverUrl';
+import { GRADES_TEACHER, CURRICULA } from '../onboarding/OnboardingScreen';
 
 type ModalType = 'name' | 'email' | 'password' | 'school' | 'curriculum' | null;
 
@@ -64,7 +65,12 @@ export default function TeacherSettingsScreen({ navigation }: any) {
   const [showNew,       setShowNew]      = useState(false);
   const [newSchool,     setNewSchool]    = useState(user?.school || '');
   const [editCurriculum, setEditCurriculum] = useState(user?.curriculum || 'IB PYP');
-  const [editGrade,     setEditGrade]    = useState(user?.grade || 'Grade 3');
+  // Multi-grade: a teacher can handle several grades (matches onboarding teaches[]).
+  const [editGrades, setEditGrades] = useState<string[]>(
+    Array.isArray(user?.teaches) && user.teaches.length > 0
+      ? user.teaches.map((t: any) => t.grade).filter(Boolean)
+      : (user?.grade ? [user.grade] : [])
+  );
 
   // Feedback + sign-out confirm (replaces Alert.alert on web)
   const [feedback,       setFeedback]       = useState<{ title: string; message: string } | null>(null);
@@ -76,7 +82,11 @@ export default function TeacherSettingsScreen({ navigation }: any) {
     setCurrentPw(''); setNewPw(''); setConfirmPw('');
     setNewSchool(user?.school || '');
     setEditCurriculum(user?.curriculum || 'IB PYP');
-    setEditGrade(user?.grade || 'Grade 3');
+    setEditGrades(
+      Array.isArray(user?.teaches) && user.teaches.length > 0
+        ? user.teaches.map((t: any) => t.grade).filter(Boolean)
+        : (user?.grade ? [user.grade] : [])
+    );
     setModalError('');
     setActiveModal(type);
   }
@@ -118,21 +128,25 @@ export default function TeacherSettingsScreen({ navigation }: any) {
   }
 
   async function handleSaveCurriculum() {
+    if (editGrades.length === 0) { setModalError('Please select at least one grade.'); return; }
     setModalLoading(true);
     try {
-      // Also update teaches[] — the authoritative source the assignment/student/
-      // challenge screens read for grade scoping — so the new grade shows there too.
+      // Build teaches[] from ALL selected grades — the authoritative source the
+      // assignment/student/challenge screens read for grade scoping. The users.grade
+      // column only holds one value, so we store the first selected grade there.
       const subjects = ((user?.teaches?.[0] as any)?.subjects) || [];
-      const teaches = [{ grade: editGrade, curriculum: editCurriculum, subjects }];
+      const orderedGrades = GRADES_TEACHER.filter(g => editGrades.includes(g));
+      const teaches = orderedGrades.map(g => ({ grade: g, curriculum: editCurriculum, subjects }));
+      const primaryGrade = orderedGrades[0];
       const res = await fetch(`${SERVER_URL}/user/profile`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user?.email, curriculum: editCurriculum, grade: editGrade, teaches }),
+        body: JSON.stringify({ email: user?.email, curriculum: editCurriculum, grade: primaryGrade, teaches }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to save'); }
-      updateUser({ curriculum: editCurriculum, grade: editGrade, teaches: teaches as any });
+      updateUser({ curriculum: editCurriculum, grade: primaryGrade, teaches: teaches as any });
       closeModal();
-      setFeedback({ title: 'Updated', message: 'Curriculum and grade have been saved.' });
+      setFeedback({ title: 'Updated', message: 'Curriculum and grades have been saved.' });
     } catch (e: any) {
       setModalError(e.message || 'Failed to update curriculum.');
     } finally { setModalLoading(false); }
@@ -346,7 +360,13 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                 <View style={styles.fieldRow}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.fieldLabel}>Curriculum</Text>
-                    <Text style={styles.fieldSub}>{user?.curriculum || 'IB PYP'} · Grade {user?.grade?.replace('Grade ', '') || '3'}</Text>
+                    <Text style={styles.fieldSub}>{(() => {
+                      const tGrades = Array.isArray(user?.teaches) && user.teaches.length > 0
+                        ? user.teaches.map((t: any) => t.grade).filter(Boolean)
+                        : (user?.grade ? [user.grade] : []);
+                      const label = tGrades.length > 0 ? tGrades.map((g: string) => g.replace('Grade ', '')).join(', ') : '3';
+                      return `${user?.curriculum || 'IB PYP'} · Grade${tGrades.length > 1 ? 's' : ''} ${label}`;
+                    })()}</Text>
                   </View>
                   <TouchableOpacity style={styles.changeBtn} onPress={() => openModal('curriculum')} activeOpacity={0.7}>
                     <Text style={styles.changeBtnText}>Update</Text>
@@ -518,7 +538,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
       {/* Curriculum Modal */}
       <AppModal visible={activeModal === 'curriculum'} title="Curriculum & Grade" onClose={closeModal} styles={styles} colors={colors}>
         <Text style={styles.modalFieldLabel}>Curriculum</Text>
-        {(['IB PYP', 'CBSE', 'ICSE', 'Cambridge'] as const).map(c => (
+        {CURRICULA.map(c => (
           <TouchableOpacity
             key={c} activeOpacity={0.8}
             style={[styles.modalInput, { height: 46, marginBottom: 6, justifyContent: 'space-between', borderColor: editCurriculum === c ? colors.primary : colors.borderColor, backgroundColor: editCurriculum === c ? colors.primaryGlow : colors.bgDark }]}
@@ -528,17 +548,21 @@ export default function TeacherSettingsScreen({ navigation }: any) {
             {editCurriculum === c && <Feather name="check" size={15} color={colors.primary} />}
           </TouchableOpacity>
         ))}
-        <Text style={[styles.modalFieldLabel, { marginTop: 12 }]}>Grade</Text>
+        <Text style={[styles.modalFieldLabel, { marginTop: 12 }]}>Grades you teach (select all that apply)</Text>
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-          {(['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9'] as const).map(g => (
-            <TouchableOpacity
-              key={g} activeOpacity={0.8}
-              style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: editGrade === g ? colors.primary : colors.borderColor, backgroundColor: editGrade === g ? colors.primaryGlow : 'transparent' }}
-              onPress={() => setEditGrade(g)}
-            >
-              <Text style={{ fontSize: 13, color: editGrade === g ? colors.primary : colors.textMuted, fontWeight: '600' }}>{g}</Text>
-            </TouchableOpacity>
-          ))}
+          {GRADES_TEACHER.map(g => {
+            const on = editGrades.includes(g);
+            return (
+              <TouchableOpacity
+                key={g} activeOpacity={0.8}
+                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, borderColor: on ? colors.primary : colors.borderColor, backgroundColor: on ? colors.primaryGlow : 'transparent' }}
+                onPress={() => setEditGrades(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])}
+              >
+                {on && <Feather name="check" size={12} color={colors.primary} />}
+                <Text style={{ fontSize: 13, color: on ? colors.primary : colors.textMuted, fontWeight: '600' }}>{g}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
         {modalError ? <Text style={{ color: colors.accentRed, fontSize: 13, marginTop: 8 }}>{modalError}</Text> : null}
         <ModalButtons onCancel={closeModal} onSave={handleSaveCurriculum} loading={modalLoading} saveLabel="Save" styles={styles} />
