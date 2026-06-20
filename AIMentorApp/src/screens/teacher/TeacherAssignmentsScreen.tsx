@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import DatePicker from '../../components/common/DatePicker';
+import { GRADES_TEACHER } from '../onboarding/OnboardingScreen';
 import SERVER_URL from '../../config/serverUrl';
 // @ts-ignore — pdfjs-dist v3 CommonJS import
 const pdfjsLib = Platform.OS === 'web' ? require('pdfjs-dist/build/pdf') : null;
@@ -362,8 +363,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     : [];
   const teacherGrades = fetchedGrades.length > 0 ? fetchedGrades : teachesGrades;
   const fullGradeList = isIBPYP ? IB_GRADES : ALL_GRADES;
+  // Show exactly the grades this teacher handles (ordered by the full teacher grade
+  // list so e.g. UKG sorts before Grade 4). Don't intersect with ALL_GRADES — that
+  // list only spans Grade 3–9 and would drop Nursery/LKG/UKG/Grade 1-2/10-12.
+  const orderedTeacherGrades = GRADES_TEACHER.filter(g => teacherGrades.includes(g));
   const gradeOptions = teacherGrades.length > 0
-    ? fullGradeList.filter(g => teacherGrades.includes(g))
+    ? (orderedTeacherGrades.length > 0 ? orderedTeacherGrades : teacherGrades)
     : fullGradeList;
   // Render-derived selected grade — always a valid option even if `grade` state is
   // momentarily stale, so a pill is always highlighted (no effect-timing gaps).
