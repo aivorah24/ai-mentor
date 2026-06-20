@@ -146,6 +146,9 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  // Grades this teacher handles — fetched authoritatively from saved preferences
+  // (user.teaches on the cached profile can be stale/empty after onboarding).
+  const [fetchedGrades, setFetchedGrades] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const initialTab = route?.params?.initialTab || 'All';
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -219,16 +222,34 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
 
   useEffect(() => { load(); }, [load]);
 
+  // Fetch the teacher's grades authoritatively from saved preferences.
+  useEffect(() => {
+    const email = user?.email;
+    if (!email) return;
+    fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(email)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(p => {
+        const g = Array.isArray(p?.teaches)
+          ? [...new Set(p.teaches.map((t: any) => t.grade).filter(Boolean))] as string[]
+          : [];
+        if (g.length > 0) setFetchedGrades(g);
+      })
+      .catch(() => {});
+  }, [user?.email]);
+
   function openAddModal() {
+    // Default to the teacher's first taught grade so the preselected value is
+    // always a valid (allowed) option, even when the teacher doesn't teach Grade 3.
+    const firstGrade = fetchedGrades[0] || user?.teaches?.[0]?.grade || user?.grade || 'Grade 3';
     setAddTab('create');
     setNewName(''); setNewEmail(''); setNewPassword('');
-    setNewGrade(user?.grade || 'Grade 3');
+    setNewGrade(firstGrade);
     setNewCurriculum(user?.curriculum || 'IB PYP');
     setCreateError('');
     setLinkEmail(''); setLinkError('');
     setLinkSearch(''); setSelectedStudents([]);
     setBulkResults(null); setBulkSummary(null); setBulkError('');
-    setBulkGrade(user?.grade || 'Grade 3');
+    setBulkGrade(firstGrade);
     setBulkCurriculum(user?.curriculum || 'IB PYP');
     loadLinkableStudents();
     setAddModal(true);
@@ -328,9 +349,12 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
     }
   }
 
-  // Grades this teacher handles — from user.teaches (set during onboarding)
+  // Grades this teacher handles. Prefer the freshly-fetched teaches[] grades;
+  // fall back to user.teaches (cached profile); only use a default if neither exists.
   const teacherGrades: string[] = user?.teaches?.map((t: any) => t.grade).filter(Boolean) ?? [];
-  const allowedGrades = teacherGrades.length > 0 ? teacherGrades : ['Grade 3', 'Grade 4', 'Grade 5'];
+  const allowedGrades = fetchedGrades.length > 0
+    ? fetchedGrades
+    : (teacherGrades.length > 0 ? teacherGrades : ['Grade 3', 'Grade 4', 'Grade 5']);
 
   async function loadLinkableStudents() {
     setLinkableLoading(true);
@@ -690,7 +714,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.modalFieldLabel}>Grade</Text>
-                    {(['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'] as const).map(g => (
+                    {allowedGrades.map(g => (
                       <TouchableOpacity
                         key={g} activeOpacity={0.8}
                         onPress={() => setNewGrade(g)}
@@ -875,7 +899,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                     <View style={{ flexDirection: 'row', gap: 10 }}>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.modalFieldLabel}>Default Grade</Text>
-                        {(['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'] as const).map(g => (
+                        {allowedGrades.map(g => (
                           <TouchableOpacity key={g} activeOpacity={0.8} onPress={() => setBulkGrade(g)}
                             style={[styles.modalOption, { borderColor: bulkGrade === g ? colors.primary : colors.borderColor, backgroundColor: bulkGrade === g ? colors.primaryGlow : 'transparent' }]}>
                             <Text style={{ fontSize: 12, color: bulkGrade === g ? colors.primary : colors.textMuted, fontWeight: '600' }}>{g}</Text>
@@ -885,13 +909,13 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.modalFieldLabel}>Default Curriculum</Text>
-                        {(['IB PYP', 'CBSE', 'ICSE', 'Cambridge'] as const).map(c => (
-                          <TouchableOpacity key={c} activeOpacity={0.8} onPress={() => setBulkCurriculum(c)}
-                            style={[styles.modalOption, { borderColor: bulkCurriculum === c ? colors.primary : colors.borderColor, backgroundColor: bulkCurriculum === c ? colors.primaryGlow : 'transparent' }]}>
-                            <Text style={{ fontSize: 12, color: bulkCurriculum === c ? colors.primary : colors.textMuted, fontWeight: '600' }}>{c}</Text>
-                            {bulkCurriculum === c && <Feather name="check" size={12} color={colors.primary} />}
-                          </TouchableOpacity>
-                        ))}
+                        <View style={[styles.modalOption, { borderColor: colors.primary, backgroundColor: colors.primaryGlow, marginTop: 2 }]}>
+                          <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700', flex: 1 }}>{bulkCurriculum}</Text>
+                          <Feather name="lock" size={11} color={colors.primary} />
+                        </View>
+                        <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 5, lineHeight: 14 }}>
+                          Matches your curriculum. Contact admin to change.
+                        </Text>
                       </View>
                     </View>
 

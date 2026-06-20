@@ -11,6 +11,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
+import DatePicker from '../../components/common/DatePicker';
 import SERVER_URL from '../../config/serverUrl';
 // @ts-ignore — pdfjs-dist v3 CommonJS import
 const pdfjsLib = Platform.OS === 'web' ? require('pdfjs-dist/build/pdf') : null;
@@ -346,22 +347,45 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [assignTo, setAssignTo] = useState<'all' | 'specific'>('all');
   const [selectedStudent, setSelectedStudent] = useState<StudentItem | null>(null);
   const [studentSearch, setStudentSearch] = useState('');
+  // Grades this teacher handles — fetched authoritatively from their saved
+  // preferences (teaches[]), since user.teaches on the cached profile can be stale.
+  const [fetchedGrades, setFetchedGrades] = useState<string[]>([]);
 
   const teacherEmail = user?.email || 'teacher@demo.com';
   const isIBPYP = (curriculum || teacherCurriculum || '').toLowerCase().includes('ib');
 
-  // Grade pills: only show grades the teacher handles; fall back to full list
-  const teacherGrades = Array.isArray(user?.teaches) && user.teaches.length > 0
+  // Grade pills: only show grades the teacher handles. Prefer the freshly-fetched
+  // teaches[] grades; fall back to user.teaches; only show the full list if we
+  // genuinely have no info for this teacher.
+  const teachesGrades = Array.isArray(user?.teaches) && user.teaches.length > 0
     ? user.teaches.map((t: any) => t.grade || t).filter(Boolean)
-    : null;
-  const gradeOptions = teacherGrades
-    ? (isIBPYP ? IB_GRADES : ALL_GRADES).filter(g => teacherGrades.includes(g))
-    : isIBPYP ? IB_GRADES : ALL_GRADES;
+    : [];
+  const teacherGrades = fetchedGrades.length > 0 ? fetchedGrades : teachesGrades;
+  const fullGradeList = isIBPYP ? IB_GRADES : ALL_GRADES;
+  const gradeOptions = teacherGrades.length > 0
+    ? fullGradeList.filter(g => teacherGrades.includes(g))
+    : fullGradeList;
+  const gradeOptionsKey = gradeOptions.join('|');
 
-  // When curriculum changes, clamp grade to valid options for this teacher
+  // Fetch the teacher's grades authoritatively from their saved preferences.
+  useEffect(() => {
+    if (!teacherEmail) return;
+    fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(teacherEmail)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(p => {
+        const g = Array.isArray(p?.teaches)
+          ? [...new Set(p.teaches.map((t: any) => t.grade).filter(Boolean))] as string[]
+          : [];
+        if (g.length > 0) setFetchedGrades(g);
+      })
+      .catch(() => {});
+  }, [teacherEmail]);
+
+  // Clamp the selected grade to a valid option whenever the option set changes
+  // (e.g. after grades load, or curriculum switches).
   useEffect(() => {
     if (gradeOptions.length > 0 && !gradeOptions.includes(grade)) setGrade(gradeOptions[0]);
-  }, [isIBPYP]);
+  }, [gradeOptionsKey]);
 
   const load = useCallback(async () => {
     try {
@@ -2527,26 +2551,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                   {(createMode === 'ai' || uploadStep === 3) && (<>
                   <Text style={styles.fieldLabel}>Due Date *</Text>
-                  {Platform.OS === 'web' ? (
-                    <View style={[styles.input, { justifyContent: 'center' }]}>
-                      <input
-                        type="date"
-                        value={dueDate}
-                        onChange={(e: any) => setDueDate(e.target.value)}
-                        onClick={(e: any) => { try { e.target.showPicker?.(); } catch (_) {} }}
-                        style={{ border: 'none', outline: 'none', background: 'transparent', width: '100%', fontSize: 14, color: colors.textMain, fontFamily: 'inherit', cursor: 'pointer' }}
-                      />
-                    </View>
-                  ) : (
-                    <TextInput
-                      style={styles.input}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={colors.textDim}
-                      value={dueDate}
-                      onChangeText={setDueDate}
-                      keyboardType="numeric"
-                    />
-                  )}
+                  <DatePicker
+                    value={dueDate}
+                    onChange={setDueDate}
+                    placeholder="Select a due date"
+                    minDate={new Date().toISOString().slice(0, 10)}
+                  />
 
                   </>)}
 

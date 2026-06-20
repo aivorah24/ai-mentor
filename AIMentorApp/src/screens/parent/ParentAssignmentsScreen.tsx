@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -58,6 +59,11 @@ function formatDue(iso: string): { label: string; isOverdue: boolean } {
   return { label: `Due ${due.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`, isOverdue: false };
 }
 
+// Grace period after a page load — a refresh that restores this route shouldn't
+// instantly clear the unread badge; only a real in-session navigation should.
+let pPageJustLoaded = true;
+setTimeout(() => { pPageJustLoaded = false; }, 3000);
+
 export default function ParentAssignmentsScreen({ navigation }: any) {
   const { colors } = useTheme();
   const { user } = useAuth();
@@ -95,12 +101,18 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
   const [showTopicPicker, setShowTopicPicker] = useState(false);
 
   useEffect(() => {
-    clearUnreadAssignments(); // mark as seen when parent opens this screen
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data) && data.length > 0) setChildren(data); })
       .catch(() => {});
   }, [parentEmail]);
+
+  // Mark assignments as seen only when this screen is actually focused (viewed),
+  // not on mount, and not during the post-refresh grace period — otherwise a page
+  // refresh clears the unread badge.
+  useFocusEffect(useCallback(() => {
+    if (!pPageJustLoaded) clearUnreadAssignments();
+  }, [parentEmail]));
 
   const child = children[selectedIdx];
 
