@@ -9,6 +9,7 @@ import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import DatePicker from '../../components/common/DatePicker';
@@ -374,9 +375,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   // momentarily stale, so a pill is always highlighted (no effect-timing gaps).
   const effectiveGrade = gradeOptions.includes(grade) ? grade : (gradeOptions[0] || grade);
 
-  // Fetch the teacher's grades authoritatively from their saved preferences, and
-  // make sure the currently-selected grade is one the teacher actually teaches.
-  useEffect(() => {
+  // Fetch the teacher's grades authoritatively from their saved preferences. Runs
+  // on every focus (not just mount) so a grade change in Settings is picked up
+  // instantly when the teacher returns to this screen — no manual refresh needed.
+  useFocusEffect(useCallback(() => {
     if (!teacherEmail) return;
     fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(teacherEmail)}`)
       .then(r => r.ok ? r.json() : null)
@@ -390,7 +392,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         }
       })
       .catch(() => {});
-  }, [teacherEmail]);
+  }, [teacherEmail]));
 
   // Keep the `grade` state in sync with the clamped effective grade so the publish
   // payload and AI-generate calls always use a grade the teacher actually teaches.
