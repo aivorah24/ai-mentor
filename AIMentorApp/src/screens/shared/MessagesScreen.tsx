@@ -61,8 +61,32 @@ function formatTime(iso: string) {
   return d.toLocaleDateString([], { day: 'numeric', month: 'short' });
 }
 
+function sameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+// Date chip shown above the first message of each day in a thread.
+function formatDateDivider(iso: string) {
+  const d = new Date(iso);
+  const now = new Date();
+  if (sameDay(d, now)) return 'Today';
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (sameDay(d, yesterday)) return 'Yesterday';
+  return d.toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+const AIVORAH_EMAIL = 'system@aivorah.com';
+// The Aivorah system sender (assignment/challenge reminders) is shown as a friendly
+// "Learning Buddy" rather than the raw DB role ('teacher').
+function isAivorah(c?: { otherEmail?: string; otherName?: string } | null) {
+  return c?.otherEmail === AIVORAH_EMAIL || c?.otherName === 'Aivorah';
+}
 function roleLabel(role: string) {
   return role === 'teacher' ? 'Teacher' : 'Parent';
+}
+function convoRoleLabel(c: { otherEmail?: string; otherName?: string; otherRole: string }) {
+  return isAivorah(c) ? 'Learning Buddy' : roleLabel(c.otherRole);
 }
 
 // Parse message content — may be plain text or JSON with attachment
@@ -336,7 +360,7 @@ export default function MessagesScreen(_props: any) {
         activeOpacity={0.7}
       >
         <View style={styles.convoAvatar}>
-          <Feather name={item.otherRole === 'teacher' ? 'book-open' : 'user'} size={16} color={colors.primary} />
+          <Feather name={isAivorah(item) ? 'star' : (item.otherRole === 'teacher' ? 'book-open' : 'user')} size={16} color={colors.primary} />
         </View>
         <View style={{ flex: 1 }}>
           <View style={styles.convoHeader}>
@@ -351,19 +375,28 @@ export default function MessagesScreen(_props: any) {
               </View>
             )}
           </View>
-          <Text style={styles.convoRole}>{roleLabel(item.otherRole)}</Text>
+          <Text style={styles.convoRole}>{convoRoleLabel(item)}</Text>
         </View>
       </TouchableOpacity>
     );
   };
 
   // ── Message Bubble ─────────────────────────────────────
-  const renderMessage = ({ item }: { item: Message }) => {
+  const renderMessage = ({ item, index }: { item: Message; index: number }) => {
     const isMine   = item.sender_email === userEmail;
     const seen     = isMine && item.read_at !== null;
     const showEdit = isMine && focusedMsgId === item.id;
+    // Show a date chip above the first message of each day.
+    const prev = index > 0 ? messages[index - 1] : null;
+    const showDateDivider = !prev || !sameDay(new Date(prev.created_at), new Date(item.created_at));
 
     return (
+      <>
+      {showDateDivider && (
+        <View style={styles.dateDivider}>
+          <Text style={styles.dateDividerText}>{formatDateDivider(item.created_at)}</Text>
+        </View>
+      )}
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() => setFocusedMsgId(focusedMsgId === item.id ? null : (isMine ? item.id : null))}
@@ -423,6 +456,7 @@ export default function MessagesScreen(_props: any) {
           </View>
         </View>
       </TouchableOpacity>
+      </>
     );
   };
 
@@ -495,14 +529,14 @@ export default function MessagesScreen(_props: any) {
               <View style={styles.chatHeader}>
                 <View style={styles.chatAvatar}>
                   <Feather
-                    name={activeConvo.otherRole === 'teacher' ? 'book-open' : 'user'}
+                    name={isAivorah(activeConvo) ? 'star' : (activeConvo.otherRole === 'teacher' ? 'book-open' : 'user')}
                     size={16}
                     color={colors.primary}
                   />
                 </View>
                 <View>
                   <Text style={styles.chatName}>{activeConvo.otherName}</Text>
-                  <Text style={styles.chatRole}>{roleLabel(activeConvo.otherRole)}</Text>
+                  <Text style={styles.chatRole}>{convoRoleLabel(activeConvo)}</Text>
                 </View>
               </View>
 
@@ -774,6 +808,10 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   chatName: { fontSize: 14, fontWeight: '600', color: c.textMain },
   chatRole: { fontSize: 11, color: c.primary },
   messageList: { padding: spacing.lg, gap: spacing.md, flexGrow: 1 },
+  dateDivider: { alignSelf: 'stretch', alignItems: 'center', marginVertical: spacing.sm },
+  dateDividerText: { fontSize: 11, fontWeight: '600', color: c.textDim, backgroundColor: c.cardDark,
+                     borderWidth: 1, borderColor: c.borderColor, borderRadius: 12,
+                     paddingHorizontal: 12, paddingVertical: 4, overflow: 'hidden' },
   bubbleWrap: { marginBottom: spacing.md, maxWidth: '70%' },
   bubbleWrapRight: { alignSelf: 'flex-end', alignItems: 'flex-end' },
   bubbleWrapLeft:  { alignSelf: 'flex-start', alignItems: 'flex-start' },

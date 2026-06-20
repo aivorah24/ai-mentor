@@ -109,6 +109,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const prevMsgRef       = useRef(0);
   const prevAssignRef    = useRef(0);
   const prevChallengeRef = useRef(0);
+  // False until the first poll after mount/login completes. The first poll only
+  // records the current counts as a baseline — it must NOT chime/toast, otherwise
+  // every page refresh re-alerts for notifications that already existed.
+  const hasBaselineRef   = useRef(false);
   const pollRef          = useRef<ReturnType<typeof setInterval> | null>(null);
   const toastTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollIdRef        = useRef(0);
@@ -172,10 +176,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         markReadCutoff.current = null;
       }
 
-      // Trigger sound + toast when ANY count goes up
-      const newMsg       = !markReadInFlight.current && msgCount       > prevMsgRef.current;
-      const newAssign    = !markReadInFlight.current && assignCount    > prevAssignRef.current;
-      const newChallenge = !markReadInFlight.current && challengeCount > prevChallengeRef.current;
+      // Only chime/toast when a count goes UP *after* the baseline is set.
+      // The first poll after mount/refresh just records the baseline silently.
+      const baseline = hasBaselineRef.current;
+      const newMsg       = baseline && !markReadInFlight.current && msgCount       > prevMsgRef.current;
+      const newAssign    = baseline && !markReadInFlight.current && assignCount    > prevAssignRef.current;
+      const newChallenge = baseline && !markReadInFlight.current && challengeCount > prevChallengeRef.current;
 
       if (newMsg || newAssign || newChallenge) {
         playNotificationSound();
@@ -188,6 +194,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       prevMsgRef.current       = msgCount;
       prevAssignRef.current    = assignCount;
       prevChallengeRef.current = challengeCount;
+      hasBaselineRef.current   = true;
 
       setUnreadCount(msgCount);
       setUnreadAssignments(assignCount);
@@ -207,6 +214,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setLatestNotif(null); setToastVisible(false);
       prevMsgRef.current = 0; prevAssignRef.current = 0; prevChallengeRef.current = 0;
       staleGuardUntil.current = 0; markReadCutoff.current = null;
+      hasBaselineRef.current = false;
       return;
     }
 

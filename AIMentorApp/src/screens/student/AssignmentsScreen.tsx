@@ -2794,6 +2794,13 @@ function WorksheetRefThumb({ url, pageNum, color, colors }: { url: string; pageN
 
 // ── Main Screen ────────────────────────────────────────────────
 
+// True only for a brief grace period right after a page load. A refresh that
+// restores the Assignments route focuses it immediately — during this window we
+// skip marking-as-seen, so the unread badge survives the refresh. A genuine
+// in-session navigation happens later and clears normally.
+let sPageJustLoaded = true;
+setTimeout(() => { sPageJustLoaded = false; }, 3000);
+
 export default function AssignmentsScreen({ navigation, route }: any) {
   const highlightId = route?.params?.highlightId;
   const [activeFilter, setActiveFilter] = useState('All');
@@ -2838,14 +2845,6 @@ export default function AssignmentsScreen({ navigation, route }: any) {
       .then(data => {
         if (Array.isArray(data)) {
           setAssignments(data);
-          // Auto-open the assignment tapped from Schedule
-          // Schedule stores assignmentId which matches assignment.id directly
-          if (highlightId) {
-            const target = data.find((a: Assignment) =>
-              a.id === highlightId || (a as any).scheduleId === highlightId
-            );
-            if (target) setActiveAssignment(target);
-          }
         }
         setLoading(false);
       })
@@ -2854,12 +2853,33 @@ export default function AssignmentsScreen({ navigation, route }: any) {
 
   useEffect(() => {
     load();
-    clearUnreadAssignments();
     const interval = setInterval(load, 30 * 1000);
     return () => clearInterval(interval);
   }, [studentId]);
 
-  useFocusEffect(useCallback(() => { load(); }, [studentId]));
+  // Mark assignments as "seen" only when the screen is actually focused (viewed) —
+  // NOT on mount, and NOT during the post-refresh grace period. Otherwise the unread
+  // badge gets wiped on every page refresh (the permanent drawer re-focuses this
+  // screen immediately on load).
+  useFocusEffect(useCallback(() => {
+    load();
+    if (!sPageJustLoaded) clearUnreadAssignments();
+  }, [studentId]));
+
+  // Deep-link open: when arriving from a notification or the Schedule (both pass
+  // highlightId), open the matching assignment the instant it's available — whether
+  // the list is already loaded (opens immediately, no flash) or still loading
+  // (opens as soon as it arrives). Clearing the param prevents reopening on refocus.
+  useEffect(() => {
+    if (!highlightId) return;
+    const target = assignments.find(a =>
+      a.id === highlightId || (a as any).scheduleId === highlightId
+    );
+    if (target) {
+      openAssignment(target);
+      navigation.setParams?.({ highlightId: undefined });
+    }
+  }, [highlightId, assignments]);
 
   const sortByPendingFirst = (list: Assignment[]) => {
     return [...list].sort((a, b) => {

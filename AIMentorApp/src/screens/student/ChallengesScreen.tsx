@@ -122,14 +122,6 @@ export default function ChallengesScreen({ navigation, route }: any) {
             }
           }
           setChallenges(merged);
-          // Auto-open the challenge tapped from Schedule
-          // Schedule stores assignmentId (challenge_assignments.id) OR challenge.id
-          if (highlightId) {
-            const target = merged.find((c: Challenge) =>
-              c.id === highlightId || (c as any).assignmentId === highlightId
-            );
-            if (target) setActiveChallenge(target);
-          }
         }
       }
     } catch {}
@@ -144,6 +136,23 @@ export default function ChallengesScreen({ navigation, route }: any) {
   }, [fetchChallenges]);
 
   useFocusEffect(useCallback(() => { fetchChallenges(); }, [fetchChallenges]));
+
+  // Deep-link open: when arriving from a notification or the Schedule (both pass
+  // highlightId), open the matching challenge the instant it's available — opens
+  // immediately if the list is already loaded (no flash), otherwise as soon as it
+  // arrives. Clearing the param prevents reopening on refocus.
+  useEffect(() => {
+    if (!highlightId) return;
+    const target = challenges.find(c =>
+      c.id === highlightId || (c as any).assignmentId === highlightId
+    );
+    if (target) {
+      // startChallenge opens the quiz modal (sets quizVisible). Just setting
+      // activeChallenge doesn't show anything — the modal is gated on quizVisible.
+      startChallenge(target);
+      navigation.setParams?.({ highlightId: undefined });
+    }
+  }, [highlightId, challenges]);
 
   const filtered = useMemo(() => {
     if (activeTab === 'Available')  return challenges.filter(c => c.status === 'available');

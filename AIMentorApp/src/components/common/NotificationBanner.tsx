@@ -73,14 +73,19 @@ export default function NotificationBanner({ onNavigate }: Props) {
       : (unreadAssignments === 1 ? 'New assignment added' : `${unreadAssignments} new assignments`);
     subtitle = latestItem ? latestItem.subtitle : 'Tap to open your assignments';
     targetScreen = assignScreen;
-    targetParams = { highlight: 'new' };
+    // Deep-link straight into the specific assignment (matches the bell dropdown).
+    targetParams = latestItem ? { highlightId: latestItem.id } : undefined;
   } else if (hasChallenge) {
     icon = 'award';
     iconColor = colors.accentPurple;
-    title = unreadChallenges === 1 ? 'New challenge assigned' : `${unreadChallenges} new challenges`;
-    subtitle = 'Tap to view your challenges';
+    const latestChallenge = notificationItems.find(i => i.type === 'challenge');
+    title = latestChallenge
+      ? `New challenge: ${latestChallenge.title}`
+      : (unreadChallenges === 1 ? 'New challenge assigned' : `${unreadChallenges} new challenges`);
+    subtitle = latestChallenge ? latestChallenge.subtitle : 'Tap to view your challenges';
     targetScreen = challengeScreen;
-    targetParams = { tab: 'assigned' };
+    // Deep-link straight into the specific challenge (matches the bell dropdown).
+    targetParams = latestChallenge ? { highlightId: latestChallenge.id, tab: 'assigned' } : { tab: 'assigned' };
   } else if (hasMsg) {
     icon = 'message-square';
     iconColor = colors.primary;

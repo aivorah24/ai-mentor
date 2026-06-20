@@ -283,22 +283,33 @@ const [editingName, setEditingName] = useState(false);
                   <View style={{ overflowY: 'auto', maxHeight: 400 } as any}>
 
                     {/* Individual assignment notification items (Google Classroom style) */}
-                    {notificationItems.map(item => (
+                    {notificationItems.map(item => {
+                      const isChallenge = item.type === 'challenge';
+                      const accent = isChallenge ? colors.accentPurple : colors.accentBlue;
+                      const iconName = isChallenge ? 'award' : (item.type === 'quiz' ? 'help-circle' : 'check-square');
+                      return (
                       <TouchableOpacity
                         key={item.id}
                         style={styles.notifItem}
                         activeOpacity={0.75}
                         onPress={() => {
                           setBellVisible(false);
-                          void clearUnreadAssignments();
-                          navigation.navigate(screenNames.assignments);
+                          // Deep-link straight into the tapped item — the target screen
+                          // auto-opens the entry matching highlightId.
+                          if (isChallenge) {
+                            void clearUnreadChallenges();
+                            navigation.navigate(screenNames.challenges, { highlightId: item.id, tab: 'assigned' });
+                          } else {
+                            void clearUnreadAssignments();
+                            navigation.navigate(screenNames.assignments, { highlightId: item.id });
+                          }
                         }}
                       >
-                        <View style={[styles.notifIconWrap, { backgroundColor: colors.accentBlue + '22' }]}>
+                        <View style={[styles.notifIconWrap, { backgroundColor: accent + '22' }]}>
                           <Feather
-                            name={item.type === 'quiz' ? 'help-circle' : 'check-square'}
+                            name={iconName as any}
                             size={16}
-                            color={colors.accentBlue}
+                            color={accent}
                           />
                         </View>
                         <View style={{ flex: 1 }}>
@@ -308,7 +319,8 @@ const [editingName, setEditingName] = useState(false);
                         </View>
                         <View style={styles.notifUnreadDot} />
                       </TouchableOpacity>
-                    ))}
+                      );
+                    })}
 
                     {/* Real unread messages */}
                     {unreadCount > 0 && (
@@ -346,8 +358,8 @@ const [editingName, setEditingName] = useState(false);
                       </TouchableOpacity>
                     )}
 
-                    {/* Challenges */}
-                    {unreadChallenges > 0 && (
+                    {/* Challenges summary — only when no per-challenge items are shown above */}
+                    {unreadChallenges > 0 && !notificationItems.some(i => i.type === 'challenge') && (
                       <TouchableOpacity
                         style={styles.notifItem}
                         activeOpacity={0.75}
