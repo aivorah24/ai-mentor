@@ -120,13 +120,17 @@ export default function TeacherSettingsScreen({ navigation }: any) {
   async function handleSaveCurriculum() {
     setModalLoading(true);
     try {
+      // Also update teaches[] — the authoritative source the assignment/student/
+      // challenge screens read for grade scoping — so the new grade shows there too.
+      const subjects = ((user?.teaches?.[0] as any)?.subjects) || [];
+      const teaches = [{ grade: editGrade, curriculum: editCurriculum, subjects }];
       const res = await fetch(`${SERVER_URL}/user/profile`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user?.email, curriculum: editCurriculum, grade: editGrade }),
+        body: JSON.stringify({ email: user?.email, curriculum: editCurriculum, grade: editGrade, teaches }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to save'); }
-      updateUser({ curriculum: editCurriculum, grade: editGrade });
+      updateUser({ curriculum: editCurriculum, grade: editGrade, teaches: teaches as any });
       closeModal();
       setFeedback({ title: 'Updated', message: 'Curriculum and grade have been saved.' });
     } catch (e: any) {
