@@ -147,9 +147,10 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  // Grades this teacher handles — fetched authoritatively from saved preferences
-  // (user.teaches on the cached profile can be stale/empty after onboarding).
+  // Grades + curricula this teacher handles — fetched authoritatively from saved
+  // preferences (user.teaches on the cached profile can be stale after onboarding).
   const [fetchedGrades, setFetchedGrades] = useState<string[]>([]);
+  const [fetchedCurricula, setFetchedCurricula] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const initialTab = route?.params?.initialTab || 'All';
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -223,36 +224,38 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
 
   useEffect(() => { load(); }, [load]);
 
-  // Fetch the teacher's grades authoritatively from saved preferences — on every
-  // focus, so a grade change in Settings shows up here instantly (no refresh).
+  // Fetch the teacher's grades + curricula authoritatively from saved preferences —
+  // on every focus, so a change in Settings shows up here instantly (no refresh).
   useFocusEffect(useCallback(() => {
     const email = user?.email;
     if (!email) return;
     fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(email)}`)
       .then(r => r.ok ? r.json() : null)
       .then(p => {
-        const g = Array.isArray(p?.teaches)
-          ? [...new Set(p.teaches.map((t: any) => t.grade).filter(Boolean))] as string[]
-          : [];
+        const teaches = Array.isArray(p?.teaches) ? p.teaches : [];
+        const g = [...new Set(teaches.map((t: any) => t.grade).filter(Boolean))] as string[];
+        const c = [...new Set(teaches.map((t: any) => t.curriculum).filter(Boolean))] as string[];
         if (g.length > 0) setFetchedGrades(g);
+        if (c.length > 0) setFetchedCurricula(c);
       })
       .catch(() => {});
   }, [user?.email]));
 
   function openAddModal() {
-    // Default to the teacher's first taught grade so the preselected value is
-    // always a valid (allowed) option, even when the teacher doesn't teach Grade 3.
+    // Default to the teacher's first taught grade/curriculum so the preselected
+    // values are always valid (allowed) options.
     const firstGrade = fetchedGrades[0] || user?.teaches?.[0]?.grade || user?.grade || 'Grade 3';
+    const firstCurr  = fetchedCurricula[0] || user?.teaches?.[0]?.curriculum || user?.curriculum || 'IB PYP';
     setAddTab('create');
     setNewName(''); setNewEmail(''); setNewPassword('');
     setNewGrade(firstGrade);
-    setNewCurriculum(user?.curriculum || 'IB PYP');
+    setNewCurriculum(firstCurr);
     setCreateError('');
     setLinkEmail(''); setLinkError('');
     setLinkSearch(''); setSelectedStudents([]);
     setBulkResults(null); setBulkSummary(null); setBulkError('');
     setBulkGrade(firstGrade);
-    setBulkCurriculum(user?.curriculum || 'IB PYP');
+    setBulkCurriculum(firstCurr);
     loadLinkableStudents();
     setAddModal(true);
   }
@@ -357,6 +360,11 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   const allowedGrades = fetchedGrades.length > 0
     ? fetchedGrades
     : (teacherGrades.length > 0 ? teacherGrades : ['Grade 3', 'Grade 4', 'Grade 5']);
+  // Curricula this teacher handles (for the student curriculum picker).
+  const teacherCurricula: string[] = [...new Set((user?.teaches?.map((t: any) => t.curriculum).filter(Boolean)) ?? [])] as string[];
+  const allowedCurricula = fetchedCurricula.length > 0
+    ? fetchedCurricula
+    : (teacherCurricula.length > 0 ? teacherCurricula : (user?.curriculum ? [user.curriculum] : ['IB PYP']));
 
   async function loadLinkableStudents() {
     setLinkableLoading(true);
@@ -729,12 +737,19 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.modalFieldLabel}>Curriculum</Text>
-                    <View style={[styles.modalOption, { borderColor: colors.primary, backgroundColor: colors.primaryGlow, marginTop: 2 }]}>
-                      <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700', flex: 1 }}>{newCurriculum}</Text>
-                      <Feather name="lock" size={11} color={colors.primary} />
-                    </View>
+                    {allowedCurricula.map(c => (
+                      <TouchableOpacity
+                        key={c} activeOpacity={0.8}
+                        onPress={() => setNewCurriculum(c)}
+                        disabled={allowedCurricula.length <= 1}
+                        style={[styles.modalOption, { borderColor: newCurriculum === c ? colors.primary : colors.borderColor, backgroundColor: newCurriculum === c ? colors.primaryGlow : 'transparent' }]}
+                      >
+                        <Text style={{ fontSize: 12, color: newCurriculum === c ? colors.primary : colors.textMuted, fontWeight: '600', flex: 1 }}>{c}</Text>
+                        {newCurriculum === c && <Feather name={allowedCurricula.length <= 1 ? 'lock' : 'check'} size={11} color={colors.primary} />}
+                      </TouchableOpacity>
+                    ))}
                     <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 5, lineHeight: 14 }}>
-                      Matches your curriculum. Contact admin to change.
+                      {allowedCurricula.length > 1 ? 'Pick the curriculum for this student.' : 'Matches your curriculum. Contact admin to change.'}
                     </Text>
                   </View>
                 </View>
@@ -911,12 +926,19 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.modalFieldLabel}>Default Curriculum</Text>
-                        <View style={[styles.modalOption, { borderColor: colors.primary, backgroundColor: colors.primaryGlow, marginTop: 2 }]}>
-                          <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700', flex: 1 }}>{bulkCurriculum}</Text>
-                          <Feather name="lock" size={11} color={colors.primary} />
-                        </View>
+                        {allowedCurricula.map(c => (
+                          <TouchableOpacity
+                            key={c} activeOpacity={0.8}
+                            onPress={() => setBulkCurriculum(c)}
+                            disabled={allowedCurricula.length <= 1}
+                            style={[styles.modalOption, { borderColor: bulkCurriculum === c ? colors.primary : colors.borderColor, backgroundColor: bulkCurriculum === c ? colors.primaryGlow : 'transparent' }]}
+                          >
+                            <Text style={{ fontSize: 12, color: bulkCurriculum === c ? colors.primary : colors.textMuted, fontWeight: '600', flex: 1 }}>{c}</Text>
+                            {bulkCurriculum === c && <Feather name={allowedCurricula.length <= 1 ? 'lock' : 'check'} size={11} color={colors.primary} />}
+                          </TouchableOpacity>
+                        ))}
                         <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 5, lineHeight: 14 }}>
-                          Matches your curriculum. Contact admin to change.
+                          {allowedCurricula.length > 1 ? 'Pick the curriculum for imported students.' : 'Matches your curriculum. Contact admin to change.'}
                         </Text>
                       </View>
                     </View>
