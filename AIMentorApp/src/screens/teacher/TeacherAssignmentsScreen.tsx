@@ -1741,14 +1741,16 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                                 </View>
                                                 {q.studentAnswer ? (
                                                   <View style={{ gap: 2 }}>
-                                                    <Text style={{ fontSize: 10, color: colors.textDim, fontWeight: '600' }}>Student's Answer:</Text>
+                                                    <Text style={{ fontSize: 10, color: colors.textDim, fontWeight: '600' }}>What the student did:</Text>
                                                     <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18, backgroundColor: colors.cardDark, borderRadius: 6, padding: 8 }}>{q.studentAnswer}</Text>
                                                   </View>
                                                 ) : null}
-                                                {q.comment ? (
+                                                {(q.teacherNote || q.comment) ? (
                                                   <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
-                                                    <Feather name="message-circle" size={11} color={colors.accentCyan} style={{ marginTop: 2 }} />
-                                                    <Text style={{ fontSize: 11, color: colors.accentCyan, flex: 1, lineHeight: 16 }}>{q.comment}</Text>
+                                                    <Feather name="clipboard" size={11} color={colors.accentCyan} style={{ marginTop: 2 }} />
+                                                    <Text style={{ fontSize: 11, color: colors.accentCyan, flex: 1, lineHeight: 16 }}>
+                                                      <Text style={{ fontWeight: '700' }}>AI assessment: </Text>{q.teacherNote || q.comment}
+                                                    </Text>
                                                   </View>
                                                 ) : null}
                                               </View>
@@ -1762,21 +1764,21 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                         </View>
                                       ) : null}
 
-                                      {/* AI Feedback summary */}
-                                      {(fbObj.text || fbObj.wellDone || fbObj.improve) ? (
+                                      {/* AI Feedback summary — teacher tone */}
+                                      {(fbObj.teacherSummary || fbObj.text || fbObj.wellDone || fbObj.improve) ? (
                                         <View style={{ backgroundColor: sc + '0E', borderRadius: 8, padding: 10, borderLeftWidth: 3, borderLeftColor: sc + '60', gap: 6 }}>
-                                          <Text style={{ fontSize: 10, color: sc, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 }}>AI Feedback</Text>
-                                          {fbObj.text ? <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{fbObj.text}</Text> : null}
+                                          <Text style={{ fontSize: 10, color: sc, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 }}>AI Assessment</Text>
+                                          {(fbObj.teacherSummary || fbObj.text) ? <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{fbObj.teacherSummary || fbObj.text}</Text> : null}
                                           {fbObj.wellDone ? (
                                             <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
                                               <Feather name="thumbs-up" size={11} color={colors.accentGreen} style={{ marginTop: 2 }} />
-                                              <Text style={{ fontSize: 11, color: colors.textMuted, flex: 1, lineHeight: 16 }}>{fbObj.wellDone}</Text>
+                                              <Text style={{ fontSize: 11, color: colors.textMuted, flex: 1, lineHeight: 16 }}><Text style={{ fontWeight: '700', color: colors.accentGreen }}>Strength: </Text>{fbObj.wellDone}</Text>
                                             </View>
                                           ) : null}
                                           {fbObj.improve ? (
                                             <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
                                               <Feather name="trending-up" size={11} color={colors.accentYellow} style={{ marginTop: 2 }} />
-                                              <Text style={{ fontSize: 11, color: colors.textMuted, flex: 1, lineHeight: 16 }}>{fbObj.improve}</Text>
+                                              <Text style={{ fontSize: 11, color: colors.textMuted, flex: 1, lineHeight: 16 }}><Text style={{ fontWeight: '700', color: colors.accentYellow }}>Next step: </Text>{fbObj.improve}</Text>
                                             </View>
                                           ) : null}
                                         </View>
@@ -2429,7 +2431,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   {/* ── Assignment / Quiz type switcher (AI mode only) ── */}
                   {createMode === 'ai' && (
                     <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
-                      {([['assignment', 'IB Assignment', 'layers'], ['quiz', 'Quiz / MCQ', 'check-square']] as const).map(([val, label, icon]) => (
+                      {([['assignment', `${curriculum || 'IB'} Assignment`, 'layers'], ['quiz', 'Quiz / MCQ', 'check-square']] as const).map(([val, label, icon]) => (
                         <TouchableOpacity key={val}
                           style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
                             paddingVertical: 10, borderRadius: 10, borderWidth: 1.5,

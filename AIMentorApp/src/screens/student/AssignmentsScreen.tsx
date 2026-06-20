@@ -1,4 +1,22 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback, Component } from 'react';
+
+class AssignmentErrorBoundary extends Component<{children: React.ReactNode; colors: any}, {hasError: boolean}> {
+  constructor(props: any) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: this.props.colors?.textMain || '#fff', textAlign: 'center' }}>Something went wrong</Text>
+          <TouchableOpacity onPress={() => this.setState({ hasError: false })} style={{ backgroundColor: '#5F8A86', borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+            <Text style={{ color: '#fff', fontWeight: '700' }}>Try again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
@@ -478,6 +496,25 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
     finally { setSubmitting(false); }
   }
 
+  // Auto-fetch explanations for all wrong answers when result arrives.
+  // MUST be declared before any conditional return to keep hook order stable (React error #300).
+  useEffect(() => {
+    if (!result) return;
+    result.perQuestion.forEach((q: any, idx: number) => {
+      if (q?.correct) return;
+      const origQ = questions[idx];
+      // For old assignments without quizQuestions, build a minimal QuizQuestion from perQuestion data
+      const fallbackQ: QuizQuestion = origQ || {
+        id: String(idx),
+        question: q.question,
+        type: 'mcq',
+        correct: q.correctAnswer || '',
+        explanation: q.explanation || '',
+      };
+      explainWrong(idx, fallbackQ, q.studentAnswer || '');
+    });
+  }, [result]);
+
   // Spinner
   if (submitting) return (
     <Modal visible animationType="slide" transparent>
@@ -510,27 +547,10 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
     }
   }
 
-  // Auto-fetch explanations for all wrong answers when result arrives
-  useEffect(() => {
-    if (!result) return;
-    result.perQuestion.forEach((q: any, idx: number) => {
-      if (q.correct) return;
-      const origQ = questions[idx];
-      // For old assignments without quizQuestions, build a minimal QuizQuestion from perQuestion data
-      const fallbackQ: QuizQuestion = origQ || {
-        id: String(idx),
-        question: q.question,
-        type: 'mcq',
-        correct: q.correctAnswer || '',
-        explanation: q.explanation || '',
-      };
-      explainWrong(idx, fallbackQ, q.studentAnswer || '');
-    });
-  }, [result]);
-
   // Results
   if (result) return (
     <Modal visible animationType="slide" transparent onRequestClose={onClose}>
+      <AssignmentErrorBoundary colors={colors}>
       <View style={styles.overlay}>
         <View style={[styles.sheet, styles.quizSheet]}>
           <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
@@ -573,7 +593,7 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.criteriaLabel, { color }]}>Exact Result</Text>
                     <Text style={[styles.criteriaText, { color: colors.textMuted }]}>
-                      Correct {result.perQuestion.filter((pq: any) => pq.correct).length} of {result.perQuestion.length} questions
+                      Correct {result.perQuestion.filter((pq: any) => pq?.correct).length} of {result.perQuestion.length} questions
                     </Text>
                   </View>
                 </View>
@@ -597,17 +617,17 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                 </View>
               ) : null}
               {/* ── Questions you got RIGHT ── */}
-              {result.perQuestion.filter((q: any) => q.correct).length > 0 && (
+              {result.perQuestion.filter((q: any) => q?.correct).length > 0 && (
                 <View style={{ gap: 8 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#93B0AC20', alignItems: 'center', justifyContent: 'center' }}>
                       <Feather name="check-circle" size={15} color="#93B0AC" />
                     </View>
                     <Text style={{ fontSize: 14, fontWeight: '800', color: '#93B0AC' }}>
-                      Questions You Got Right ({result.perQuestion.filter((q: any) => q.correct).length})
+                      Questions You Got Right ({result.perQuestion.filter((q: any) => q?.correct).length})
                     </Text>
                   </View>
-                  {result.perQuestion.filter((q: any) => q.correct).map((q: any, idx: number) => (
+                  {result.perQuestion.filter((q: any) => q?.correct).map((q: any, idx: number) => (
                     <View key={idx} style={[styles.qRow, { borderColor: '#93B0AC30', backgroundColor: colors.cardDark, borderLeftWidth: 3, borderLeftColor: '#93B0AC' }]}>
                       <View style={styles.qLeft}>
                         <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#93B0AC20', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -629,17 +649,17 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
               )}
 
               {/* ── Questions you got WRONG ── */}
-              {result.perQuestion.filter((q: any) => !q.correct).length > 0 && (
+              {result.perQuestion.filter((q: any) => !q?.correct).length > 0 && (
                 <View style={{ gap: 8 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#C5BD9620', alignItems: 'center', justifyContent: 'center' }}>
                       <Feather name="x-circle" size={15} color="#C5BD96" />
                     </View>
                     <Text style={{ fontSize: 14, fontWeight: '800', color: '#C5BD96' }}>
-                      Questions You Got Wrong ({result.perQuestion.filter((q: any) => !q.correct).length})
+                      Questions You Got Wrong ({result.perQuestion.filter((q: any) => !q?.correct).length})
                     </Text>
                   </View>
-                  {result.perQuestion.filter((q: any) => !q.correct).map((q: any, idx: number) => {
+                  {result.perQuestion.filter((q: any) => !q?.correct).map((q: any, idx: number) => {
                     const origIdx = result.perQuestion.indexOf(q);
                     const aiExp = aiExplanations[origIdx];
                     return (
@@ -708,6 +728,7 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
           </ScrollView>
         </View>
       </View>
+      </AssignmentErrorBoundary>
     </Modal>
   );
 
@@ -1438,27 +1459,50 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
                 </View>
               ) : null}
               {result.perQuestion.length > 0 && (
-                <View style={{ gap: 8 }}>
+                <View style={{ gap: 6 }}>
                   <Text style={styles.feedbackTitle}>Step by Step</Text>
                   {result.perQuestion.map((q: any, idx: number) => {
-                    const qc = !q.answered ? colors.textDim : q.correct ? colors.accentGreen : q.score >= 50 ? colors.accentYellow : colors.accentRed;
-                    const qi = !q.answered ? 'minus-circle' : q.correct ? 'check-circle' : q.score >= 50 ? 'alert-circle' : 'x-circle';
+                    const sc = !q.answered ? colors.textDim : q.score >= 80 ? colors.accentGreen : q.score >= 50 ? colors.accentYellow : colors.accentRed;
                     const stepColor = STEP_COLORS[q.type as StepType] || color;
+                    const isFullMarks = q.score >= 100;
                     return (
-                      <View key={idx} style={[styles.qRow, { borderColor: qc + '40', backgroundColor: qc + '08' }]}>
-                        <View style={styles.qLeft}>
-                          <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: stepColor, alignItems: 'center', justifyContent: 'center' }}>
-                            <Feather name={STEP_ICONS[q.type as StepType] as any || 'check'} size={13} color="#fff" />
+                      <View key={idx} style={{ borderRadius: 10, borderWidth: 1, borderColor: sc + '40', backgroundColor: colors.cardBg, overflow: 'hidden' }}>
+                        {/* Header row */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, backgroundColor: sc + '0A', borderBottomWidth: q.studentAnswer || q.comment ? 1 : 0, borderBottomColor: colors.borderColor }}>
+                          <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: stepColor, alignItems: 'center', justifyContent: 'center' }}>
+                            <Feather name={(STEP_ICONS[q.type as StepType] as any) || 'check'} size={11} color="#fff" />
                           </View>
-                          <View style={{ flex: 1 }}>
-                            <Text style={[styles.qNum, { color: stepColor }]}>{q.stepLabel || `Step ${idx + 1}`}</Text>
-                            <Text style={[styles.qComment, { color: colors.textMuted }]}>{q.comment}</Text>
-                            {q.studentAnswer ? <Text style={[styles.qAnswer, { color: colors.textDim }]}>{q.studentAnswer}</Text> : null}
+                          <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: colors.textMain }} numberOfLines={1}>{q.stepLabel || `Step ${idx + 1}`}</Text>
+                          <View style={{ backgroundColor: sc + '25', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
+                            <Text style={{ fontSize: 12, fontWeight: '800', color: sc }}>{q.answered ? `${q.score}%` : '--'}</Text>
                           </View>
                         </View>
-                        <View style={[styles.qScore, { backgroundColor: qc + '20' }]}>
-                          <Text style={[styles.qScoreText, { color: qc }]}>{q.answered ? `${q.score}%` : '--'}</Text>
-                        </View>
+                        {/* Body */}
+                        {(q.studentAnswer || q.comment) ? (
+                          <View style={{ padding: 10, gap: 6 }}>
+                            {q.studentAnswer ? (
+                              <View style={{ flexDirection: 'row', gap: 6 }}>
+                                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textDim, width: 60 }}>Your answer</Text>
+                                <Text style={{ flex: 1, fontSize: 11, color: colors.textMuted, lineHeight: 16 }} numberOfLines={3}>{q.studentAnswer}</Text>
+                              </View>
+                            ) : null}
+                            {q.comment ? (
+                              <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+                                <Feather name="cpu" size={10} color={sc} style={{ marginTop: 2 }} />
+                                <Text style={{ flex: 1, fontSize: 11, color: colors.textMain, lineHeight: 16 }}>{q.comment}</Text>
+                              </View>
+                            ) : null}
+                            {!isFullMarks && q.answered ? (
+                              <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start', borderTopWidth: 1, borderTopColor: colors.borderColor, paddingTop: 6 }}>
+                                <Feather name="target" size={10} color={colors.accentYellow} style={{ marginTop: 2 }} />
+                                <Text style={{ flex: 1, fontSize: 11, color: colors.accentYellow, lineHeight: 16 }}>
+                                  <Text style={{ fontWeight: '700' }}>To get 100%: </Text>
+                                  {q.correctAnswer ? `Include: ${q.correctAnswer}` : 'Review this step and add more detail next time.'}
+                                </Text>
+                              </View>
+                            ) : null}
+                          </View>
+                        ) : null}
                       </View>
                     );
                   })}
@@ -1644,8 +1688,8 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
               <View style={{ padding: 12, borderRadius: 12, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor }}>
                 <Text style={{ fontSize: 10, fontWeight: '800', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>Success Criteria</Text>
                 {criteria.map((c, ci) => (
-                  <View key={ci} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
-                    <View style={{ width: 20, height: 20, borderRadius: 4, borderWidth: 2, borderColor: colors.textDim, marginTop: 1, flexShrink: 0 }} />
+                  <View key={ci} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 6 }}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color, marginTop: 8, flexShrink: 0 }} />
                     <Text style={{ flex: 1, fontSize: 13, color: colors.textMuted, lineHeight: 20 }}>{c}</Text>
                   </View>
                 ))}
@@ -1683,22 +1727,23 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
               <Feather name="chevron-left" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingTop: 10, paddingBottom: 16 }]}>
-            <Text style={{ fontSize: 12, color: colors.textDim, lineHeight: 18, marginBottom: 8 }}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20, alignItems: 'center' }}>
+            <View style={{ width: '100%', maxWidth: 600 }}>
+            <Text style={{ fontSize: 12, color: colors.textDim, lineHeight: 18, marginBottom: 10 }}>
               Read each statement and tick if you did it. Be honest — this helps you learn!
             </Text>
             {criteria.length > 0 ? criteria.map((c, i) => {
               const checked = !!selfChecked[c];
               return (
                 <TouchableOpacity key={i} activeOpacity={0.75} onPress={() => setSelfChecked(prev => ({ ...prev, [c]: !prev[c] }))}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 10, marginBottom: 6,
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 9, borderRadius: 9, marginBottom: 6,
                     borderWidth: 1.5, borderColor: checked ? color + '60' : colors.borderColor,
                     backgroundColor: checked ? color + '08' : colors.bgDark }}>
-                  <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 2,
+                  <View style={{ width: 18, height: 18, borderRadius: 5, borderWidth: 2,
                     borderColor: checked ? color : colors.textDim,
                     backgroundColor: checked ? color : 'transparent',
                     alignItems: 'center', justifyContent: 'center' }}>
-                    {checked && <Feather name="check" size={12} color="#fff" />}
+                    {checked && <Feather name="check" size={11} color="#fff" />}
                   </View>
                   <Text style={{ flex: 1, fontSize: 13, color: colors.textMain, lineHeight: 18 }}>{c}</Text>
                 </TouchableOpacity>
@@ -1708,14 +1753,14 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
                 <Text style={{ color: colors.textDim, fontSize: 12 }}>No success criteria set for this assignment.</Text>
               </View>
             )}
-            <View style={{ height: 10 }} />
-            <TouchableOpacity style={[styles.submitBtn, { backgroundColor: color, paddingVertical: 12 }]} onPress={handleSubmit} activeOpacity={0.85}>
+            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingVertical: 11, borderRadius: 11, backgroundColor: color, marginTop: 14, maxWidth: 320, width: '100%', alignSelf: 'center' }} onPress={handleSubmit} activeOpacity={0.85}>
               <Feather name="send" size={14} color="#fff" />
-              <Text style={[styles.submitBtnText, { fontSize: 13 }]}>Submit for AI Grading</Text>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>Submit for AI Grading</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setCurrentStep(steps.length - 1)} activeOpacity={0.7} style={{ alignSelf: 'center', paddingVertical: 4 }}>
+            <TouchableOpacity onPress={() => setCurrentStep(steps.length - 1)} activeOpacity={0.7} style={{ alignSelf: 'center', paddingVertical: 8 }}>
               <Text style={{ fontSize: 11, color: colors.textDim, textDecorationLine: 'underline' }}>Go back to last step</Text>
             </TouchableOpacity>
+            </View>
           </ScrollView>
         </View>
       </View>
@@ -2762,6 +2807,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
   const [activeAssignment, setActiveAssignment] = useState<Assignment | null>(null);
   const [openingAssignmentId, setOpeningAssignmentId] = useState<string | null>(null);
   const [viewingResult, setViewingResult] = useState<Assignment | null>(null);
+  const [submittedResult, setSubmittedResult] = useState<{ assignment: Assignment; data: any } | null>(null);
   const [expandedExplain, setExpandedExplain] = useState<Record<number, { loading: boolean; steps?: string[]; correctAnswer?: string; tip?: string }>>({});
 
   // Auto-fetch explanations for all wrong answers when a completed result is opened
@@ -3224,23 +3270,147 @@ export default function AssignmentsScreen({ navigation, route }: any) {
             assignment={activeAssignment}
             colors={colors}
             onClose={() => setActiveAssignment(null)}
-            onSubmitted={(updated) => { handleSubmitted(updated); setActiveAssignment(null); }}
+            onSubmitted={(updated) => { handleSubmitted(updated); setActiveAssignment(null); setSubmittedResult({ assignment: activeAssignment!, data: updated }); }}
           />
         ) : activeAssignment && (activeAssignment.taskSteps?.length ?? 0) > 0 ? (
           <ScaffoldedModal
             assignment={activeAssignment}
             colors={colors}
             onClose={() => setActiveAssignment(null)}
-            onSubmitted={(updated) => { handleSubmitted(updated); setActiveAssignment(null); }}
+            onSubmitted={(updated) => { handleSubmitted(updated); setActiveAssignment(null); setSubmittedResult({ assignment: activeAssignment!, data: updated }); }}
           />
         ) : activeAssignment ? (
           <SubmissionModal
             assignment={activeAssignment}
             colors={colors}
             onClose={() => setActiveAssignment(null)}
-            onSubmitted={(updated) => { handleSubmitted(updated); setActiveAssignment(null); }}
+            onSubmitted={(updated) => { handleSubmitted(updated); setActiveAssignment(null); setSubmittedResult({ assignment: activeAssignment!, data: updated }); }}
           />
         ) : null}
+
+        {/* ── Submitted Result Modal (shown immediately after AI grading) ── */}
+        {submittedResult && (() => {
+          const { assignment: a, data } = submittedResult;
+          const sc = SUBJECT_COLOR[a.subject] ?? colors.primary;
+          const stamp = getStamp(data.score ?? data.score);
+          let feedbackText = ''; let wellDone = ''; let improve = ''; let pq: any[] = []; let teacherFb = '';
+          try {
+            const parsed = JSON.parse(data.aiFeedback || '{}');
+            feedbackText = parsed.text || '';
+            wellDone = parsed.wellDone || '';
+            improve = parsed.improve || '';
+            pq = Array.isArray(parsed.perQuestion) ? parsed.perQuestion : [];
+            teacherFb = parsed.teacherFeedback || '';
+          } catch {
+            feedbackText = data.aiFeedback || '';
+            pq = Array.isArray(data.perQuestion) ? data.perQuestion : [];
+          }
+          return (
+            <Modal visible animationType="slide" transparent={false} onRequestClose={() => setSubmittedResult(null)}>
+              <View style={{ flex: 1, backgroundColor: colors.bgDark }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: colors.borderColor, gap: 12 }}>
+                  <View style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: sc + '20', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="check-circle" size={20} color={sc} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textMain }}>{a.title}</Text>
+                    <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{a.subject}{a.chapter ? ` · ${a.chapter}` : ''}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setSubmittedResult(null)} activeOpacity={0.7}>
+                    <Feather name="x" size={22} color={colors.textMuted} />
+                  </TouchableOpacity>
+                </View>
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, gap: 14, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
+                  {/* Score */}
+                  <View style={{ alignItems: 'center', padding: 28, borderRadius: 20, backgroundColor: sc + '10', borderWidth: 1, borderColor: sc + '25', gap: 8 }}>
+                    <Text style={{ fontSize: 56, fontWeight: '900', color: sc, letterSpacing: -2 }}>{data.score != null ? `${data.score}%` : 'Done'}</Text>
+                    {stamp && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Feather name={stamp.icon as any} size={18} color={stamp.color} />
+                        <Text style={{ fontSize: 15, fontWeight: '700', color: stamp.color }}>{stamp.label}</Text>
+                      </View>
+                    )}
+                    <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center' }}>
+                      {data.score != null ? data.score >= 85 ? 'Excellent work!' : data.score >= 60 ? 'Good effort!' : 'Keep going!' : 'Submitted successfully'}
+                    </Text>
+                  </View>
+                  {/* Feedback */}
+                  {feedbackText ? (
+                    <View style={{ backgroundColor: colors.cardDark, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colors.borderColor, gap: 6 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8 }}>AI Feedback</Text>
+                      <Text style={{ fontSize: 14, color: colors.textMain, lineHeight: 22 }}>{feedbackText}</Text>
+                    </View>
+                  ) : null}
+                  {/* Well done / improve */}
+                  {(wellDone || improve) ? (
+                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                      {wellDone ? (
+                        <View style={{ flex: 1, backgroundColor: colors.accentGreen + '10', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.accentGreen + '25', gap: 4 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                            <Feather name="star" size={12} color={colors.accentGreen} />
+                            <Text style={{ fontSize: 10, fontWeight: '700', color: colors.accentGreen, textTransform: 'uppercase' }}>Well Done</Text>
+                          </View>
+                          <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{wellDone}</Text>
+                        </View>
+                      ) : null}
+                      {improve ? (
+                        <View style={{ flex: 1, backgroundColor: colors.accentYellow + '10', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.accentYellow + '25', gap: 4 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                            <Feather name="trending-up" size={12} color={colors.accentYellow} />
+                            <Text style={{ fontSize: 10, fontWeight: '700', color: colors.accentYellow, textTransform: 'uppercase' }}>Next Step</Text>
+                          </View>
+                          <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{improve}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  ) : null}
+                  {/* Per question breakdown */}
+                  {pq.length > 0 && (
+                    <View style={{ gap: 6 }}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.5 }}>Step by Step</Text>
+                      {pq.filter(Boolean).map((q: any, idx: number) => {
+                        const qsc = q.score >= 80 ? colors.accentGreen : q.score >= 50 ? colors.accentYellow : colors.accentRed;
+                        return (
+                          <View key={idx} style={{ borderRadius: 10, borderWidth: 1, borderColor: qsc + '40', backgroundColor: colors.cardBg, overflow: 'hidden' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, backgroundColor: qsc + '0A' }}>
+                              <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: colors.textMain }} numberOfLines={1}>{q.question || q.stepLabel || `Step ${idx + 1}`}</Text>
+                              <View style={{ backgroundColor: qsc + '25', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
+                                <Text style={{ fontSize: 12, fontWeight: '800', color: qsc }}>{q.answered !== false ? `${q.score ?? 0}%` : '--'}</Text>
+                              </View>
+                            </View>
+                            {(q.studentAnswer || q.comment) ? (
+                              <View style={{ padding: 10, gap: 5 }}>
+                                {q.studentAnswer ? <Text style={{ fontSize: 11, color: colors.textMuted, lineHeight: 16 }} numberOfLines={2}>{q.studentAnswer}</Text> : null}
+                                {q.comment ? <Text style={{ fontSize: 11, color: colors.textMain, lineHeight: 16 }}>{q.comment}</Text> : null}
+                                {(q.score ?? 0) < 100 && q.answered !== false && q.correctAnswer ? (
+                                  <Text style={{ fontSize: 11, color: colors.accentYellow, lineHeight: 16 }}><Text style={{ fontWeight: '700' }}>To get 100%: </Text>{q.correctAnswer}</Text>
+                                ) : null}
+                              </View>
+                            ) : null}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+                  {teacherFb ? (
+                    <View style={{ backgroundColor: colors.accentCyan + '0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.accentCyan + '30', gap: 4 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Feather name="user" size={13} color={colors.accentCyan} />
+                        <Text style={{ fontSize: 12, color: colors.accentCyan, fontWeight: '700' }}>Teacher Feedback</Text>
+                      </View>
+                      <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{teacherFb}</Text>
+                    </View>
+                  ) : null}
+                  <TouchableOpacity onPress={() => setSubmittedResult(null)} activeOpacity={0.85}
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14, backgroundColor: sc }}>
+                    <Feather name="check" size={16} color="#fff" />
+                    <Text style={{ fontSize: 15, fontWeight: '800', color: '#fff' }}>Done</Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            </Modal>
+          );
+        })()}
 
         {/* ── Completed Result Detail Modal ── */}
         {viewingResult && (() => {

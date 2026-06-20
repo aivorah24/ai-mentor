@@ -47,13 +47,32 @@ router.get('/new-count', async (req, res) => {
       studentGrade = uData?.grade || null;
     }
 
+    // Which teachers is this student linked to? (mirror GET / scoping)
+    const studentTeacherIds = [];
+    if (userId) {
+      const { data: tlinks } = await supabase
+        .from('teacher_student')
+        .select('teacher_id')
+        .eq('student_id', userId);
+      (tlinks || []).forEach(l => { if (l.teacher_id) studentTeacherIds.push(l.teacher_id); });
+    }
+
     // Build targeted queries for personal + class-wide separately to avoid full table scan
     const personal = userId
       ? supabase.from('assignments').select('id', { count: 'exact', head: true }).eq('student_id', userId)
       : null;
     let classWide = supabase.from('assignments').select('id', { count: 'exact', head: true }).is('student_id', null);
-    if (studentCurriculum) classWide = classWide.eq('curriculum', studentCurriculum);
+    // Mirror the GET / filter: a student only counts class-wide assignments that match
+    // their curriculum. With no curriculum recorded, they can only see untagged ones.
+    classWide = studentCurriculum
+      ? classWide.eq('curriculum', studentCurriculum)
+      : classWide.is('curriculum', null);
     if (studentGrade)      classWide = classWide.eq('grade', studentGrade);
+    // Teacher "All students" broadcasts only count for that teacher's linked students.
+    // Non-teacher broadcasts (created_by_role != 'teacher') stay curriculum-wide.
+    classWide = studentTeacherIds.length > 0
+      ? classWide.or(`created_by_role.neq.teacher,created_by_id.in.(${studentTeacherIds.join(',')})`)
+      : classWide.neq('created_by_role', 'teacher');
     if (since) {
       if (personal) personal.gt('created_at', since);
       classWide = classWide.gt('created_at', since);
@@ -115,11 +134,37 @@ router.get('/', async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
 
-  // For class-wide assignments (student_id is null), filter by BOTH curriculum AND grade
+  // Which teachers is this student linked to? A teacher's "All students" assignment
+  // must only reach the students under that teacher — not every student in the
+  // curriculum+grade across the whole school.
+  const studentTeacherIds = new Set();
+  if (userId) {
+    const { data: tlinks } = await supabase
+      .from('teacher_student')
+      .select('teacher_id')
+      .eq('student_id', userId);
+    (tlinks || []).forEach(l => { if (l.teacher_id) studentTeacherIds.add(l.teacher_id); });
+  }
+
+  // For class-wide assignments (student_id is null), filter by BOTH curriculum AND grade.
+  // Curriculum is the partition key — a class-wide assignment must NOT leak across
+  // curricula. If the assignment is stamped with a curriculum, the student's curriculum
+  // must match it (and a student with no curriculum recorded can't be verified → hidden,
+  // rather than flooded). Grade is matched the same way.
   const filtered = (allData || []).filter(a => {
-    if (a.student_id !== null) return true;
-    if (a.curriculum && studentCurriculum && a.curriculum !== studentCurriculum) return false;
-    if (a.grade && studentGrade && a.grade !== studentGrade) return false;
+    if (a.student_id !== null) return true; // personal — explicitly targeted
+    if (a.curriculum) {
+      if (!studentCurriculum) return false;          // can't verify → don't leak
+      if (a.curriculum !== studentCurriculum) return false;
+    }
+    if (a.grade) {
+      if (studentGrade && a.grade !== studentGrade) return false;
+    }
+    // Teacher "All students" broadcast: only the teacher's own linked students see it.
+    // (Non-teacher broadcasts — e.g. school/admin — stay curriculum-wide.)
+    if (a.created_by_role === 'teacher' && a.created_by_id) {
+      if (!studentTeacherIds.has(a.created_by_id)) return false;
+    }
     return true;
   });
 
@@ -1293,6 +1338,26 @@ router.post('/', async (req, res) => {
   const userId    = studentId   ? await resolveUserId(studentId)   : null;
   const creatorId = createdById ? await resolveUserId(createdById) : null;
 
+  // ── Curriculum partitioning ────────────────────────────────────────────
+  // A class-wide assignment (no specific student) reaches students by matching
+  // curriculum + grade. If the client didn't send a curriculum (e.g. teacher
+  // profile hadn't loaded yet), derive it from the creator's profile so the
+  // assignment can NEVER be stored blank and flood students of other curricula.
+  let finalCurriculum = curriculum;
+  let finalGrade      = grade;
+  if (!userId && creatorId && (!finalCurriculum || !finalGrade)) {
+    const { data: creator } = await supabase
+      .from('users')
+      .select('curriculum, grade')
+      .eq('id', creatorId)
+      .maybeSingle();
+    if (!finalCurriculum) finalCurriculum = creator?.curriculum || null;
+    if (!finalGrade)      finalGrade      = creator?.grade      || null;
+  }
+  if (!userId && !finalCurriculum) {
+    return res.status(400).json({ error: 'Class-wide assignments need a curriculum so they only reach the right students. Set your curriculum in your profile or pick a specific student.' });
+  }
+
   const { data, error } = await supabase
     .from('assignments')
     .insert({
@@ -1302,7 +1367,7 @@ router.post('/', async (req, res) => {
       student_id:       userId,
       created_by_id:    creatorId,
       created_by_role:  createdByRole,
-      grade, curriculum,
+      grade: finalGrade, curriculum: finalCurriculum,
       // Store questions as structured objects with expected answers + teacher comments
       // Format: [{ question: "...", expectedAnswer: "...", comment: "..." }] or plain strings
       questions:        (() => {
@@ -1360,7 +1425,7 @@ router.post('/', async (req, res) => {
         const searchText = [
           title || '',
           subject || '',
-          grade || '',
+          finalGrade || '',
           ...(tasks).flatMap(t => (t.questions || []).map(q => q.question || '')),
         ].join(' ').substring(0, 1000);
 
@@ -1373,8 +1438,8 @@ router.post('/', async (req, res) => {
             payload: {
               title: title || '',
               subject: subject || '',
-              grade: grade || '',
-              curriculum: curriculum || '',
+              grade: finalGrade || '',
+              curriculum: finalCurriculum || '',
               school_id: '',
               teacher_id: creatorId || '',
               source_file: interactiveQuiz?.sourceFile || '',
@@ -1409,12 +1474,29 @@ router.post('/', async (req, res) => {
     let studentIds = [];
     if (userId) {
       studentIds = [userId];
-    } else if (curriculum) {
-      const { data: classStudents } = await supabase
+    } else if (createdByRole === 'teacher' && creatorId) {
+      // Teacher "All students" broadcast → only this teacher's linked students
+      // (matching curriculum + grade), mirroring how students fetch assignments.
+      const { data: links } = await supabase
+        .from('teacher_student')
+        .select('student_id')
+        .eq('teacher_id', creatorId);
+      const linkedIds = [...new Set((links || []).map(l => l.student_id).filter(Boolean))];
+      if (linkedIds.length > 0) {
+        let q = supabase.from('users').select('id').eq('role', 'student').in('id', linkedIds);
+        if (finalCurriculum) q = q.eq('curriculum', finalCurriculum);
+        if (finalGrade)      q = q.eq('grade', finalGrade);
+        const { data: classStudents } = await q;
+        studentIds = (classStudents || []).map(s => s.id);
+      }
+    } else if (finalCurriculum) {
+      let classQuery = supabase
         .from('users')
         .select('id')
         .eq('role', 'student')
-        .eq('curriculum', curriculum);
+        .eq('curriculum', finalCurriculum);
+      if (finalGrade) classQuery = classQuery.eq('grade', finalGrade);
+      const { data: classStudents } = await classQuery;
       studentIds = (classStudents || []).map(s => s.id);
     }
 
@@ -1465,7 +1547,7 @@ router.post('/', async (req, res) => {
         start_time:   '23:59',
         end_time:     '23:59',
         type:         'deadline',
-        note:         `${subject}${chapter ? ' · ' + chapter : ''}${grade ? ' · ' + grade : ''}`,
+        note:         `${subject}${chapter ? ' · ' + chapter : ''}${finalGrade ? ' · ' + finalGrade : ''}`,
         student_id:   scheduleStudentId,
         created_by:   createdByRole || 'teacher',
         tag:          subject || null,
@@ -1901,7 +1983,14 @@ JSON: {"text":"...","wellDone":"specific strength","improve":"one specific topic
 - Exemplary (85-100): Deep thinking, well-expressed, personal connection or strong evidence
 - Accomplished (65-80): Good response, covers key points, some depth
 - Developing (40-60): Attempted, partially complete, surface-level
-- Beginning (10-30): Minimal but tried`;
+- Beginning (10-30): Minimal but genuine and on-topic
+- 0-5: Gibberish, random characters, keyboard-mashing, copy of the prompt, or completely off-topic`;
+
+        // Strict anti-gibberish directive injected into every grading prompt.
+        const STRICT_RULE = `CRITICAL GRADING INTEGRITY: Act as a real teacher validating real work. Be a strict, honest grader.
+- If the response is gibberish, random letters, keyboard-mashing (e.g. "kfjbsdfhbsd", "asdfgh"), placeholder text, or completely irrelevant/off-topic, you MUST score exactly 0 and set correct=false. Do NOT award any effort or participation points for nonsense — it misleads the teacher and student.
+- Only award real marks for genuine, relevant, on-topic responses. A response must show actual understanding of THIS task to score above 30.
+- Judge what is actually written. Never invent merit that is not there.`;
 
         // Hook/Tuning-In types (all share the same "no wrong answers" grading logic)
         const ALL_HOOK_TYPES = ['tuning_in','text_connection','social_inquiry','language_culture','artistic_exploration','digital_awareness','movement_exploration'];
@@ -1930,16 +2019,16 @@ Step: "${stepLabel}" — ${step.instructions || ''}
 ${criteriaBlock}
 ${answerDescription}
 
-This is an IB PYP inquiry opening step — there are NO wrong answers. Grade purely on quality of engagement and depth of initial thinking shared.
+This is an IB PYP inquiry opening step — a wrong FACTUAL answer is fine, but the response must be a genuine, on-topic attempt. Grade on quality of engagement and depth of initial thinking shared.
 ${IB_RUBRIC}
 Scoring guide for this step:
-- Exemplary (85-95): Detailed personal connection, genuine curiosity, real-world link, asks own questions — reward deep thinkers
+- Exemplary (85-95): Detailed personal connection, genuine curiosity, real-world link, asks own questions
 - Accomplished (65-80): Clear response, connects to topic, some personal meaning
 - Developing (40-60): Attempted, brief, surface-level but relevant
-- Beginning (10-30): Single word or one short irrelevant phrase
-- 0: Blank / no response
-IMPORTANT: A student who gives a wrong factual answer but shows deep curiosity and engagement MUST still score Exemplary or Accomplished — this is IB PYP, not a right/wrong test.
-Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"what they wrote","correct":true,"comment":"warm, encouraging IB-style feedforward — celebrate their thinking and curiosity"}`;
+- Beginning (10-30): Single short but genuine on-topic phrase
+- 0-5: Gibberish / random characters / off-topic / blank
+${STRICT_RULE}
+Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"third-person factual description of what the student actually wrote","correct":bool,"comment":"warm encouraging feedforward spoken directly to the student (use you)","teacherNote":"one concise third-person sentence for the teacher on what the student demonstrated or misunderstood"}`;
           contentParts.push({ type: 'text', text: prompt });
 
         } else if (ans.type === 'prior_knowledge') {
@@ -1948,16 +2037,16 @@ Step: "${stepLabel}" — ${step.instructions || ''}
 ${criteriaBlock}
 ${answerDescription}
 
-IB PYP Prior Knowledge activation — no wrong answers. Grade on depth of prior knowledge shared and quality of prediction.
+IB PYP Prior Knowledge activation — a wrong fact is fine, but the response must be a genuine, on-topic attempt. Grade on depth of prior knowledge shared and quality of prediction.
 ${IB_RUBRIC}
 Scoring guide:
-- Exemplary (85-95): Rich prior knowledge with specific examples + thoughtful prediction showing genuine curiosity
+- Exemplary (85-95): Rich prior knowledge with specific examples + thoughtful prediction
 - Accomplished (65-80): Good prior knowledge + reasonable prediction
 - Developing (40-60): Some prior knowledge OR a prediction, surface-level
-- Beginning (10-30): Minimal — one or two words only
-- 0: Blank
-IMPORTANT: Even incorrect prior knowledge shows the student's starting point — this is valuable in IB PYP. Reward honesty and genuine thinking.
-Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"summary of their prior knowledge","correct":true,"comment":"warm encouraging feedforward that builds on what they know and praises their curiosity"}`;
+- Beginning (10-30): Minimal but genuine and on-topic
+- 0-5: Gibberish / random characters / off-topic / blank
+${STRICT_RULE}
+Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"third-person factual summary of their prior knowledge","correct":bool,"comment":"warm encouraging feedforward spoken directly to the student (use you)","teacherNote":"one concise third-person sentence for the teacher on what the student demonstrated or misunderstood"}`;
           contentParts.push({ type: 'text', text: prompt });
 
         } else if (ALL_REFLECTION_TYPES.includes(ans.type)) {
@@ -1966,10 +2055,11 @@ Step: "${stepLabel}" — ${step.instructions || ''}
 ${criteriaBlock}
 ${answerDescription}
 
-This is an IB PYP reflection step. Grade on depth of thinking and quality of reflection — not factual correctness.
+This is an IB PYP reflection step. Grade on depth of thinking and quality of reflection — but the reflection must be genuine and on-topic.
 ${IB_RUBRIC}
-Reference the student's actual words in your feedback. Be specific and warm.
-Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"summary of their reflection","correct":true,"comment":"warm specific IB-style feedforward referencing their actual words"}`;
+Reference the student's actual words in your feedback. Be specific.
+${STRICT_RULE}
+Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"third-person factual summary of their reflection","correct":bool,"comment":"warm specific feedforward spoken directly to the student (use you), referencing their actual words","teacherNote":"one concise third-person sentence for the teacher on what the student demonstrated or misunderstood"}`;
           contentParts.push({ type: 'text', text: prompt });
 
         } else if (ALL_SECTION_TYPES.includes(ans.type)) {
@@ -1982,7 +2072,8 @@ ${answerDescription}
 Grade the quality of each section — clarity, relevance, use of vocabulary, completeness.
 ${IB_RUBRIC}
 For ${gradeLabel}: 2-4 sentences per section is excellent. Reference their actual writing in feedback.
-Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"brief summary of what they wrote","correct":bool,"comment":"specific warm feedforward mentioning each section"}`;
+${STRICT_RULE}
+Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"third-person factual summary of what they wrote","correct":bool,"comment":"specific warm feedforward spoken directly to the student (use you), mentioning each section","teacherNote":"one concise third-person sentence for the teacher on what the student demonstrated or misunderstood"}`;
           contentParts.push({ type: 'text', text: prompt });
 
         } else if (ans.type === 'brainstorm') {
@@ -1991,13 +2082,13 @@ Step: "${stepLabel}" â€” ${step.instructions || ''}
 ${criteriaBlock}
 ${answerDescription}
 
-Grade this brainstorm: Are the keywords relevant to the topic "${assignment.title}"? Do they show understanding for ${gradeLabel}?
-- Highly relevant, 4+ keywords = 80-100%
-- Mostly relevant, 2-3 keywords = 50-75%
-- Few/irrelevant keywords = 20-45%
-Be warm and encouraging for an 8-year-old.
-
-Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"list the keywords","correct":bool,"comment":"short encouraging feedback"}`;
+Grade this brainstorm: Are the keywords genuine words relevant to the topic "${assignment.title}"? Do they show understanding for ${gradeLabel}?
+- Highly relevant, 4+ real keywords = 80-100%
+- Mostly relevant, 2-3 real keywords = 50-75%
+- Few relevant real keywords = 20-45%
+- Gibberish / random characters / off-topic words = 0-5%
+${STRICT_RULE}
+Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"third-person factual list of the keywords they wrote","correct":bool,"comment":"short encouraging feedback spoken directly to the student (use you)","teacherNote":"one concise third-person sentence for the teacher on what the student demonstrated or misunderstood"}`;
           contentParts.push({ type: 'text', text: prompt });
 
         } else if (ans.type === 'problem_solving') {
@@ -2012,11 +2103,11 @@ Scoring guide:
 - All problems correct = 90-100%
 - Most correct (2 out of 3) = 65-80%
 - One correct = 35-55%
-- Attempted but all wrong = 15-30% (award effort)
-- Completely blank = 0%
-Be warm, specific, and mention which problems they got right. For wrong answers, briefly explain the correct approach.
-
-Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"summary of their answers","correct":bool,"comment":"warm specific feedback mentioning correct and incorrect problems"}`;
+- Genuine attempt but all wrong = 15-30%
+- Gibberish / random characters / no real attempt / blank = 0-5%
+${STRICT_RULE}
+Be specific, and mention which problems they got right. For wrong answers, briefly explain the correct approach.
+Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"third-person factual summary of their answers","correct":bool,"comment":"warm specific feedback spoken directly to the student (use you), mentioning correct and incorrect problems","teacherNote":"one concise third-person sentence for the teacher on what the student demonstrated or misunderstood"}`;
           contentParts.push({ type: 'text', text: prompt });
 
         } else {
@@ -2035,9 +2126,10 @@ For drawing tasks (Grade 3):
 - Effort & detail (30%): recognizable elements, multiple items drawn
 - Completeness (30%): filled the space, attempted the whole task
 - Grade 3 drawing with clear topic relevance = 60-85%
-- Be warm and specific about what you see drawn
-
-Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"describe exactly what is drawn/shown","correct":bool,"comment":"warm specific feedforward for an 8-year-old"}`;
+- A blank page, a single scribble, or an off-topic/irrelevant image = 0-10%
+- Be specific about what you actually see drawn — do NOT invent elements that are not there
+${STRICT_RULE}
+Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"third-person factual description of exactly what is drawn/shown","correct":bool,"comment":"warm specific feedforward spoken directly to the student (use you)","teacherNote":"one concise third-person sentence for the teacher on what the student demonstrated or misunderstood"}`;
 
           contentParts.push({ type: 'text', text: prompt });
           worksheetUrls.slice(0, 3).forEach(url => contentParts.push({ type: 'image_url', image_url: { url } }));
@@ -2055,19 +2147,25 @@ Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"describe e
           });
           const raw = completion.choices[0].message.content.replace(/```json[\s\S]*?```|```/g, '').trim();
           const result = JSON.parse(raw);
+          let stepScore = Math.max(0, Math.min(100, Number(result.score) || 0));
+          // Safety net: if the actual answer is gibberish/random characters, force a hard 0 —
+          // a teacher gives no marks for keyboard-mashing, even if the AI was lenient.
+          const isGibberish = isGibberishAnswer(answerDescription) || gibberishDescribed(result.studentAnswer) || gibberishDescribed(result.comment);
+          if (isGibberish) stepScore = 0;
           return {
             number: i + 1,
             stepLabel,
             type: ans.type,
             answered: !!result.answered,
-            score: Math.max(0, Math.min(100, Number(result.score) || 0)),
+            score: stepScore,
             studentAnswer: result.studentAnswer || null,
-            correct: !!result.correct,
+            correct: isGibberish ? false : !!result.correct,
             comment: result.comment || '',
+            teacherNote: result.teacherNote || '',
           };
         } catch (e) {
           console.error(`Step grading error ${i+1}:`, e.message);
-          return { number: i+1, stepLabel, type: ans.type, answered: true, score: 50, studentAnswer: null, correct: false, comment: 'Could not fully read this step.' };
+          return { number: i+1, stepLabel, type: ans.type, answered: true, score: 50, studentAnswer: null, correct: false, comment: 'Could not fully read this step.', teacherNote: '' };
         }
       });
 
@@ -2087,17 +2185,20 @@ Steps completed: ${answeredSteps.length}/${stepAnswers.length}.
 Scores: ${perQuestion.map(q => `${q.stepLabel}=${q.score}%`).join(', ')}.
 Overall: ${score}%.${selfNote}
 
-Write 2-3 warm, honest sentences of feedforward for an 8-year-old. Mention one specific thing done well and one specific next step.
-Respond ONLY as JSON: {"text":"...","wellDone":"specific strength","improve":"specific feedforward for next time","stamp":"Amazing Storyteller or Hardworking Farmer or Creative Writer or Keep Going!"}` }],
+Write:
+1. 2-3 warm sentences of feedforward for an 8-year-old student (first person "you").
+2. 1-2 professional sentences for a teacher summarising student performance (third person "the student").
+Respond ONLY as JSON: {"text":"...student-facing...","teacherSummary":"...teacher-facing third-person...","wellDone":"specific strength","improve":"specific next step","stamp":"Amazing Storyteller or Hardworking Farmer or Creative Writer or Keep Going!"}` }],
         response_format: { type: 'json_object' },
       });
       const summary = JSON.parse(summaryComp.choices[0].message.content);
 
       feedback = JSON.stringify({
-        text:        summary.text || `Great effort on ${answeredSteps.length} steps!`,
-        stamp:       summary.stamp || (score >= 85 ? 'Amazing Storyteller' : score >= 60 ? 'Hardworking Farmer' : 'Keep Going!'),
-        wellDone:    summary.wellDone || '',
-        improve:     summary.improve  || '',
+        text:           summary.text || `Great effort on ${answeredSteps.length} steps!`,
+        teacherSummary: summary.teacherSummary || '',
+        stamp:          summary.stamp || (score >= 85 ? 'Amazing Storyteller' : score >= 60 ? 'Hardworking Farmer' : 'Keep Going!'),
+        wellDone:       summary.wellDone || '',
+        improve:        summary.improve  || '',
         perQuestion,
       });
 
@@ -2457,6 +2558,30 @@ router.delete('/:id', async (req, res) => {
 
 function normalizeText(value) {
   return String(value ?? '').trim().toLowerCase();
+}
+
+// Detects keyboard-mashing / random-character answers (e.g. "kfjbsdfhbsd").
+// Looks at the student's actual words (prefers quoted segments) and flags words
+// with no vowels or a run of 5+ consonants — both hallmarks of gibberish.
+function isGibberishAnswer(text) {
+  if (!text || typeof text !== 'string') return false;
+  const quoted = [...text.matchAll(/"([^"]+)"/g)].map(m => m[1]).join(' ');
+  const target = (quoted.trim() || text).toLowerCase();
+  const words = (target.match(/[a-z]+/g) || []).filter(w => w.length >= 4);
+  if (words.length === 0) return false;
+  let gib = 0;
+  for (const w of words) {
+    const vowels = (w.match(/[aeiouy]/g) || []).length;
+    const longConsonantRun = /[bcdfghjklmnpqrstvwxz]{5,}/.test(w);
+    if (vowels === 0 || longConsonantRun) gib++;
+  }
+  return (gib / words.length) >= 0.5;
+}
+
+// Detects when the AI's own description says the answer was gibberish/irrelevant.
+function gibberishDescribed(text) {
+  if (!text || typeof text !== 'string') return false;
+  return /random (string|character|letter|word)|gibberish|nonsens|keyboard[- ]?mash|placeholder|meaningless|jumbl|not (a )?(real|actual|coherent|meaningful)|does not (make sense|relate|appear)|no (clear |discernible |real )?(meaning|relevance|word)|irrelevant (string|text|character|word)/i.test(text);
 }
 
 function stripOptionPrefix(value) {
