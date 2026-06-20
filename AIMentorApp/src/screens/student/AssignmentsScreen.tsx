@@ -549,15 +549,20 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                 <Text style={[styles.scoreNum, { color }]}>{result.score != null ? `${result.score}%` : 'Done'}</Text>
                 <Text style={[styles.scoreLabel, { color }]}>{result.score != null ? result.score >= 85 ? 'Excellent!' : result.score >= 60 ? 'Good job!' : 'Keep going!' : 'Submitted'}</Text>
               </View>
-              {stamp && (
-                <View style={[styles.stampCard, { backgroundColor: stamp.color + '15', borderColor: stamp.color + '40' }]}>
-                  <View style={[styles.stampIcon, { backgroundColor: stamp.color }]}><Feather name={stamp.icon as any} size={20} color="#fff" /></View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.stampLabel}>Stamp earned!</Text>
-                    <Text style={[styles.stampName, { color: stamp.color }]}>{result.stamp || stamp.label}</Text>
+              {stamp && (() => {
+                const stampLabel = typeof stamp === 'string' ? stamp : (stamp.label || String(stamp));
+                const stampColor = typeof stamp === 'object' && stamp.color ? stamp.color : (stampLabel.includes('Amazing') ? '#4CAF50' : stampLabel.includes('Good') ? '#2196F3' : '#FF9800');
+                const stampIcon: any = typeof stamp === 'object' && stamp.icon ? stamp.icon : (stampLabel.includes('Amazing') ? 'star' : stampLabel.includes('Good') ? 'thumbs-up' : 'zap');
+                return (
+                  <View style={[styles.stampCard, { backgroundColor: stampColor + '15', borderColor: stampColor + '40' }]}>
+                    <View style={[styles.stampIcon, { backgroundColor: stampColor }]}><Feather name={stampIcon} size={20} color="#fff" /></View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.stampLabel}>Stamp earned!</Text>
+                      <Text style={[styles.stampName, { color: stampColor }]}>{stampLabel}</Text>
+                    </View>
                   </View>
-                </View>
-              )}
+                );
+              })()}
               <View style={styles.feedbackCard}>
                 <Text style={styles.feedbackTitle}>Feedforward</Text>
                 <Text style={styles.feedbackText}>{result.feedback}</Text>

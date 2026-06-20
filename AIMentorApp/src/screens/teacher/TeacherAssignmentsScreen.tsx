@@ -1305,7 +1305,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               const due = daysUntil(a.dueDate);
               const subjectColor = SUBJECT_COLORS[a.subject] || colors.primary;
               return (
-                <TouchableOpacity key={a.id} style={[styles.card, { width: '47.5%', flexGrow: 1, minWidth: 280 }]} activeOpacity={0.85} onPress={() => setDetailAssignment(a)}>
+                <TouchableOpacity key={a.id} style={[styles.card, { width: '47.5%', minWidth: 280 }]} activeOpacity={0.85} onPress={() => setDetailAssignment(a)}>
                   <View style={[styles.cardAccent, { backgroundColor: subjectColor }]} />
                   <View style={styles.cardBody}>
                     {/* Header */}
