@@ -349,9 +349,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [assignTo, setAssignTo] = useState<'all' | 'specific'>('all');
   const [selectedStudent, setSelectedStudent] = useState<StudentItem | null>(null);
   const [studentSearch, setStudentSearch] = useState('');
-  // Grades this teacher handles — fetched authoritatively from their saved
-  // preferences (teaches[]), since user.teaches on the cached profile can be stale.
+  // Grades + curricula this teacher handles — fetched authoritatively from their
+  // saved preferences (teaches[]), since user.teaches on the cached profile can be stale.
   const [fetchedGrades, setFetchedGrades] = useState<string[]>([]);
+  const [fetchedCurricula, setFetchedCurricula] = useState<string[]>([]);
 
   const teacherEmail = user?.email || 'teacher@demo.com';
   const isIBPYP = (curriculum || teacherCurriculum || '').toLowerCase().includes('ib');
@@ -375,30 +376,42 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   // momentarily stale, so a pill is always highlighted (no effect-timing gaps).
   const effectiveGrade = gradeOptions.includes(grade) ? grade : (gradeOptions[0] || grade);
 
-  // Fetch the teacher's grades authoritatively from their saved preferences. Runs
-  // on every focus (not just mount) so a grade change in Settings is picked up
-  // instantly when the teacher returns to this screen — no manual refresh needed.
+  // Curricula this teacher handles (selectable when they teach more than one).
+  const teachesCurricula = Array.isArray(user?.teaches) && user.teaches.length > 0
+    ? [...new Set(user.teaches.map((t: any) => t.curriculum).filter(Boolean))] as string[]
+    : [];
+  const curriculumOptions = fetchedCurricula.length > 0
+    ? fetchedCurricula
+    : (teachesCurricula.length > 0 ? teachesCurricula : (teacherCurriculum ? [teacherCurriculum] : []));
+  const effectiveCurriculum = curriculumOptions.includes(curriculum)
+    ? curriculum
+    : (curriculumOptions[0] || curriculum);
+
+  // Fetch the teacher's grades + curricula authoritatively from their saved
+  // preferences. Runs on every focus (not just mount) so a change in Settings is
+  // picked up instantly when the teacher returns — no manual refresh needed.
   useFocusEffect(useCallback(() => {
     if (!teacherEmail) return;
     fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(teacherEmail)}`)
       .then(r => r.ok ? r.json() : null)
       .then(p => {
-        const g = Array.isArray(p?.teaches)
-          ? [...new Set(p.teaches.map((t: any) => t.grade).filter(Boolean))] as string[]
-          : [];
-        if (g.length > 0) {
-          setFetchedGrades(g);
-          setGrade(prev => g.includes(prev) ? prev : g[0]);
-        }
+        const teaches = Array.isArray(p?.teaches) ? p.teaches : [];
+        const g = [...new Set(teaches.map((t: any) => t.grade).filter(Boolean))] as string[];
+        const c = [...new Set(teaches.map((t: any) => t.curriculum).filter(Boolean))] as string[];
+        if (g.length > 0) { setFetchedGrades(g); setGrade(prev => g.includes(prev) ? prev : g[0]); }
+        if (c.length > 0) { setFetchedCurricula(c); setCurriculum(prev => c.includes(prev) ? prev : c[0]); }
       })
       .catch(() => {});
   }, [teacherEmail]));
 
-  // Keep the `grade` state in sync with the clamped effective grade so the publish
-  // payload and AI-generate calls always use a grade the teacher actually teaches.
+  // Keep `grade`/`curriculum` state in sync with the clamped effective values so the
+  // publish payload and AI-generate calls always use grades/curricula the teacher teaches.
   useEffect(() => {
     if (grade !== effectiveGrade) setGrade(effectiveGrade);
   }, [effectiveGrade]);
+  useEffect(() => {
+    if (effectiveCurriculum && curriculum !== effectiveCurriculum) setCurriculum(effectiveCurriculum);
+  }, [effectiveCurriculum]);
 
   const load = useCallback(async () => {
     try {
@@ -2547,9 +2560,17 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                   <Text style={styles.fieldLabel}>Curriculum</Text>
                   <View style={styles.chipRow}>
-                    <View style={[styles.chip, { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}>
-                      <Text style={[styles.chipText, { color: colors.primary }]}>{teacherCurriculum || curriculum}</Text>
-                    </View>
+                    {(curriculumOptions.length > 0 ? curriculumOptions : [teacherCurriculum || curriculum]).map((c) => (
+                      <TouchableOpacity
+                        key={c}
+                        style={[styles.chip, effectiveCurriculum === c && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
+                        onPress={() => setCurriculum(c)}
+                        activeOpacity={0.75}
+                        disabled={curriculumOptions.length <= 1}
+                      >
+                        <Text style={[styles.chipText, effectiveCurriculum === c && { color: colors.primary }]}>{c}</Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
 
                   <Text style={styles.fieldLabel}>Chapter / Topic{createMode === 'upload' && docFiles.length > 0 && chapter.trim() ? <Text style={{ fontSize: 10, color: colors.accentGreen, fontWeight: '600' }}> · auto-filled</Text> : null}</Text>
