@@ -367,7 +367,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     : fullGradeList;
   const gradeOptionsKey = gradeOptions.join('|');
 
-  // Fetch the teacher's grades authoritatively from their saved preferences.
+  // Fetch the teacher's grades authoritatively from their saved preferences, and
+  // make sure the currently-selected grade is one the teacher actually teaches.
   useEffect(() => {
     if (!teacherEmail) return;
     fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(teacherEmail)}`)
@@ -376,7 +377,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         const g = Array.isArray(p?.teaches)
           ? [...new Set(p.teaches.map((t: any) => t.grade).filter(Boolean))] as string[]
           : [];
-        if (g.length > 0) setFetchedGrades(g);
+        if (g.length > 0) {
+          setFetchedGrades(g);
+          setGrade(prev => g.includes(prev) ? prev : g[0]);
+        }
       })
       .catch(() => {});
   }, [teacherEmail]);
