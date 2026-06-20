@@ -365,7 +365,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const gradeOptions = teacherGrades.length > 0
     ? fullGradeList.filter(g => teacherGrades.includes(g))
     : fullGradeList;
-  const gradeOptionsKey = gradeOptions.join('|');
+  // Render-derived selected grade — always a valid option even if `grade` state is
+  // momentarily stale, so a pill is always highlighted (no effect-timing gaps).
+  const effectiveGrade = gradeOptions.includes(grade) ? grade : (gradeOptions[0] || grade);
 
   // Fetch the teacher's grades authoritatively from their saved preferences, and
   // make sure the currently-selected grade is one the teacher actually teaches.
@@ -385,11 +387,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       .catch(() => {});
   }, [teacherEmail]);
 
-  // Clamp the selected grade to a valid option whenever the option set changes
-  // (e.g. after grades load, or curriculum switches).
+  // Keep the `grade` state in sync with the clamped effective grade so the publish
+  // payload and AI-generate calls always use a grade the teacher actually teaches.
   useEffect(() => {
-    if (gradeOptions.length > 0 && !gradeOptions.includes(grade)) setGrade(gradeOptions[0]);
-  }, [gradeOptionsKey]);
+    if (grade !== effectiveGrade) setGrade(effectiveGrade);
+  }, [effectiveGrade]);
 
   const load = useCallback(async () => {
     try {
@@ -2527,11 +2529,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     {gradeOptions.map((g) => (
                       <TouchableOpacity
                         key={g}
-                        style={[styles.chip, grade === g && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
+                        style={[styles.chip, effectiveGrade === g && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
                         onPress={() => setGrade(g)}
                         activeOpacity={0.75}
                       >
-                        <Text style={[styles.chipText, grade === g && { color: colors.primary }]}>{g}</Text>
+                        <Text style={[styles.chipText, effectiveGrade === g && { color: colors.primary }]}>{g}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
