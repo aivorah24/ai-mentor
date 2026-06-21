@@ -179,12 +179,14 @@ router.get('/leaderboard', async (req, res) => {
 
 router.get('/by-curriculum', async (req, res) => {
   try {
-    const { curriculum } = req.query;
+    const { curriculum, school } = req.query;
     let query = supabase
       .from('users')
       .select('id, name, email, grade, curriculum, photo_url')
       .eq('role', 'student');
     if (curriculum) query = query.eq('curriculum', curriculum);
+    // School scoping: restrict to the teacher's school when provided.
+    if (school) query = query.eq('school', String(school));
     const { data, error } = await query.order('name');
     if (error) return res.status(500).json({ error: error.message });
     res.json((data || []).map(u => ({
@@ -205,10 +207,10 @@ router.get('/available-to-link', async (req, res) => {
     const teacherEmail = String(req.query.teacherEmail || '').toLowerCase().trim();
     if (!teacherEmail) return res.status(400).json({ error: 'teacherEmail required' });
 
-    // Resolve teacher record (optional — used for grade/curriculum filtering)
+    // Resolve teacher record (optional — used for grade/curriculum/school filtering)
     const { data: teacher } = await supabase
       .from('users')
-      .select('id, grade, curriculum')
+      .select('id, grade, curriculum, school')
       .eq('email', teacherEmail)
       .maybeSingle();
 
@@ -226,9 +228,10 @@ router.get('/available-to-link', async (req, res) => {
     const VALID_GRADES = ['Grade 3', 'Grade 4', 'Grade 5'];
     let gradesToShow = VALID_GRADES;
 
-    // 1. Grades passed directly from frontend (from user.teaches in auth context)
+    // 1. Grades passed directly from frontend (the teacher's actual grades). Accept
+    //    them as-is — don't drop grades outside the old pilot set (UKG, Grade 6, etc.).
     const gradesParam = req.query.grades
-      ? String(req.query.grades).split(',').map(g => decodeURIComponent(g.trim())).filter(g => VALID_GRADES.includes(g))
+      ? String(req.query.grades).split(',').map(g => decodeURIComponent(g.trim())).filter(Boolean)
       : [];
 
     if (gradesParam.length > 0) {
@@ -242,9 +245,9 @@ router.get('/available-to-link', async (req, res) => {
         .maybeSingle();
       const teaches = prefs?.data?.teaches;
       if (Array.isArray(teaches) && teaches.length > 0) {
-        const fromPrefs = teaches.map(t => t.grade).filter(g => VALID_GRADES.includes(g));
+        const fromPrefs = teaches.map(t => t.grade).filter(Boolean);
         if (fromPrefs.length > 0) gradesToShow = fromPrefs;
-      } else if (teacher?.grade && VALID_GRADES.includes(teacher.grade)) {
+      } else if (teacher?.grade) {
         // 3. Single grade from users table
         gradesToShow = [teacher.grade];
       }
@@ -257,6 +260,9 @@ router.get('/available-to-link', async (req, res) => {
       .in('grade', gradesToShow);
 
     if (teacher?.curriculum) query = query.eq('curriculum', teacher.curriculum);
+    // School scoping: a teacher can only link students from their OWN school —
+    // same curriculum + grade but a different school must not appear here.
+    if (teacher?.school) query = query.eq('school', teacher.school);
 
     const { data: candidates } = await query;
 
