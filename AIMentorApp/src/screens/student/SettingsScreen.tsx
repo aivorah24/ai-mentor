@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -34,7 +35,9 @@ import SERVER_URL from '../../config/serverUrl';
 type ModalType = 'name' | 'email' | 'password' | 'recovery' | 'delete' | 'grade' | 'location' | null;
 
 export default function SettingsScreen({ navigation, route }: any) {
-  const { user, updateUser, logout } = useAuth();
+  const { user, updateUser, logout, refreshProfile } = useAuth();
+  // Re-pull profile on focus so a parent's grade/curriculum edit reflects here.
+  useFocusEffect(useCallback(() => { refreshProfile(); }, []));
   const { stats } = useStudentData();
   const { colors, themeMode, setThemeMode } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);

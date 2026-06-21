@@ -59,6 +59,7 @@ interface AuthContextType {
   login: (user: User) => void;
   logout: () => void;
   updateUser: (fields: Partial<User>) => void;
+  refreshProfile: () => Promise<void>;
   saveProfile: (fields: { curriculum?: string; grade?: string; school?: string; location?: string }) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (name: string, email: string, password: string, role: UserRole, curriculum?: string) => Promise<void>;
@@ -79,6 +80,7 @@ const AuthContext = createContext<AuthContextType>({
   login: () => {},
   logout: () => {},
   updateUser: () => {},
+  refreshProfile: async () => {},
   saveProfile: async () => {},
   signInWithEmail: async () => {},
   signUpWithEmail: async (_n, _e, _p, _r, _c) => {},
@@ -468,6 +470,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }).catch(() => {});
       return updated;
     });
+  }
+
+  // Re-pull the authoritative profile (grade/curriculum/school/name/photo) from the
+  // server and update the session — so changes made elsewhere (e.g. a parent editing
+  // the child's grade) reflect for the logged-in user without re-login.
+  async function refreshProfile() {
+    const email = user?.email;
+    if (!email) return;
+    try {
+      const fresh = await fetchSupabaseProfile(email);
+      if (fresh._accountExists === false) return; // don't clobber on a missing/error read
+      setUser(prev => {
+        if (!prev) return prev;
+        const updated: User = {
+          ...prev,
+          grade:      fresh.grade      ?? prev.grade,
+          curriculum: fresh.curriculum ?? prev.curriculum,
+          school:     fresh.school     ?? prev.school,
+          name:       fresh.name       ?? prev.name,
+          photoUrl:   fresh.photoUrl   ?? prev.photoUrl,
+        };
+        AsyncStorage.setItem(PROFILE_KEY, JSON.stringify({
+          name: updated.name, grade: updated.grade, curriculum: updated.curriculum,
+          email: updated.email, role: updated.role, activeRole: updated.activeRole,
+          school: updated.school, location: updated.location,
+          onboardingComplete: updated.onboardingComplete, emailVerified: updated.emailVerified,
+          accountStatus: updated.accountStatus, avatarStyle: updated.avatarStyle,
+          learningStyle: updated.learningStyle, interests: updated.interests, bio: updated.bio,
+          photoUrl: updated.photoUrl, roles: updated.roles, mustChangePassword: updated.mustChangePassword,
+        })).catch(() => {});
+        return updated;
+      });
+    } catch {}
   }
 
   // Save curriculum/grade/school/location to Supabase and update local state
@@ -1020,7 +1055,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{
       user, isAuthenticated: !!user, loading,
       authError, clearAuthError,
-      login, logout, updateUser, saveProfile,
+      login, logout, updateUser, refreshProfile, saveProfile,
       signInWithEmail, signUpWithEmail, signInWithGoogle,
       demoLogin, testLogin, switchRole, addParentRoleToTeacher, addParentRoleToTeacherSSO,
     }}>
