@@ -111,14 +111,16 @@ router.get('/', async (req, res) => {
 
   const userId = await resolveUserId(studentId);
 
-  // Fetch student's curriculum, grade, and join date for filtering
+  // Fetch student's curriculum, grade, school, and join date for filtering
   let studentCurriculum = null;
   let studentGrade = null;
+  let studentSchool = null;
   let studentJoinedAt = null;
   if (userId) {
-    const { data: uData } = await supabase.from('users').select('curriculum, grade, created_at').eq('id', userId).single();
+    const { data: uData } = await supabase.from('users').select('curriculum, grade, school, created_at').eq('id', userId).single();
     studentCurriculum = uData?.curriculum || null;
     studentGrade = uData?.grade || null;
+    studentSchool = uData?.school || null;
     studentJoinedAt = uData?.created_at || null;
   }
 
@@ -146,6 +148,18 @@ router.get('/', async (req, res) => {
     (tlinks || []).forEach(l => { if (l.teacher_id) studentTeacherIds.add(l.teacher_id); });
   }
 
+  // School scoping: a class-wide assignment must not cross schools. Look up the
+  // school of each class-wide assignment's creator so we can require it to match
+  // the student's school (same curriculum but different school → not assigned).
+  const classCreatorIds = [...new Set(
+    (allData || []).filter(a => a.student_id === null && a.created_by_id).map(a => a.created_by_id)
+  )];
+  const creatorSchoolMap = {};
+  if (classCreatorIds.length > 0) {
+    const { data: creators } = await supabase.from('users').select('id, school').in('id', classCreatorIds);
+    (creators || []).forEach(c => { creatorSchoolMap[c.id] = c.school || null; });
+  }
+
   // For class-wide assignments (student_id is null), filter by BOTH curriculum AND grade.
   // Curriculum is the partition key — a class-wide assignment must NOT leak across
   // curricula. If the assignment is stamped with a curriculum, the student's curriculum
@@ -164,6 +178,11 @@ router.get('/', async (req, res) => {
     // (Non-teacher broadcasts — e.g. school/admin — stay curriculum-wide.)
     if (a.created_by_role === 'teacher' && a.created_by_id) {
       if (!studentTeacherIds.has(a.created_by_id)) return false;
+    }
+    // School scoping: same curriculum but a different school must NOT receive it.
+    if (a.created_by_id) {
+      const creatorSchool = creatorSchoolMap[a.created_by_id];
+      if (creatorSchool && studentSchool && creatorSchool !== studentSchool) return false;
     }
     return true;
   });
