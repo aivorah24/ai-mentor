@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
@@ -236,7 +237,9 @@ const FALLBACK_CURRICULUM: CurriculumData = (() => {
 // ─────────────────────────────────────────────────────────
 
 export default function DashboardScreen({ navigation, route }: any) {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
+  // Re-pull profile on focus so a parent's grade/curriculum edit reflects here without re-login.
+  useFocusEffect(useCallback(() => { refreshProfile(); }, []));
   const { stats: ctxStats, studentId } = useStudentData();
   const { colors, isDark } = useTheme();
   const { unreadAssignments, unreadCount } = useNotification();
