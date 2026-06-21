@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, Switch, Modal, ActivityIndicator,
+  TextInput, Switch, Modal, ActivityIndicator, Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius } from '../../theme';
@@ -13,7 +13,10 @@ import { useTheme } from '../../context/ThemeContext';
 import {
   updatePassword,
   EmailAuthProvider,
+  GoogleAuthProvider,
   reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  deleteUser,
 } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import SERVER_URL from '../../config/serverUrl';
@@ -79,6 +82,49 @@ export default function TeacherSettingsScreen({ navigation }: any) {
   // Feedback + sign-out confirm (replaces Alert.alert on web)
   const [feedback,       setFeedback]       = useState<{ title: string; message: string } | null>(null);
   const [signOutConfirm, setSignOutConfirm] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  // Provider-aware account deletion: password users confirm with password, Google
+  // SSO users confirm via Google popup. The server removes Supabase + Firebase Auth.
+  const isPasswordUser = (auth.currentUser?.providerData ?? []).some(p => p.providerId === 'password');
+  const isGoogleUser   = (auth.currentUser?.providerData ?? []).some(p => p.providerId === 'google.com');
+
+  async function confirmDeleteAccount() {
+    setDeleteError('');
+    if (isPasswordUser && !deletePassword) { setDeleteError('Please enter your password to confirm.'); return; }
+    setDeleteLoading(true);
+    try {
+      const firebaseUser = auth.currentUser;
+      if (firebaseUser && firebaseUser.email) {
+        if (isPasswordUser) {
+          const cred = EmailAuthProvider.credential(firebaseUser.email, deletePassword);
+          await reauthenticateWithCredential(firebaseUser, cred);
+        } else if (isGoogleUser) {
+          await reauthenticateWithPopup(firebaseUser, new GoogleAuthProvider());
+        }
+        await fetch(`${SERVER_URL}/user/delete-account`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: firebaseUser.email }),
+        });
+        try { await deleteUser(firebaseUser); } catch (_) { /* already deleted server-side */ }
+      }
+      logout();
+    } catch (e: any) {
+      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        setDeleteError('Incorrect password. Please try again.');
+      } else if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+        setDeleteError('Google confirmation was cancelled. Please try again.');
+      } else {
+        setDeleteError('Could not delete account. Please try again.');
+      }
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
 
   function openModal(type: ModalType) {
     setNewName(user?.name || '');
@@ -336,14 +382,16 @@ export default function TeacherSettingsScreen({ navigation }: any) {
               {/* ── Account Actions ── */}
               <SectionHeader icon="alert-triangle" label="Account Actions" color={colors.accentRed} styles={styles} />
               <View style={styles.card}>
-                <TouchableOpacity style={styles.dangerRow} onPress={handleSignOut} activeOpacity={0.7}>
-                  <Feather name="log-out" size={16} color={colors.accentRed} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.fieldLabel, { color: colors.accentRed }]}>Sign Out</Text>
-                    <Text style={styles.fieldSub}>You will be returned to the login screen</Text>
-                  </View>
-                  <Feather name="chevron-right" size={16} color={colors.accentRed} />
-                </TouchableOpacity>
+                <View style={[styles.actionsRow, { marginTop: 0 }]}>
+                  <TouchableOpacity style={styles.actionBtn} onPress={handleSignOut} activeOpacity={0.8}>
+                    <Feather name="log-out" size={17} color={colors.accentRed} />
+                    <Text style={[styles.actionBtnText, { color: colors.accentRed }]}>Sign Out</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionBtn} onPress={() => { setDeletePassword(''); setDeleteError(''); setDeleteModalVisible(true); }} activeOpacity={0.8}>
+                    <Feather name="trash-2" size={17} color={colors.accentRed} />
+                    <Text style={[styles.actionBtnText, { color: colors.accentRed }]}>Delete Account</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
 
@@ -554,19 +602,21 @@ export default function TeacherSettingsScreen({ navigation }: any) {
       {/* Curriculum Modal */}
       <AppModal visible={activeModal === 'curriculum'} title="Curriculum & Grade" onClose={closeModal} styles={styles} colors={colors}>
         <Text style={styles.modalFieldLabel}>Curricula you teach (select all that apply)</Text>
-        {CURRICULA.map(c => {
-          const on = editCurricula.includes(c);
-          return (
-            <TouchableOpacity
-              key={c} activeOpacity={0.8}
-              style={[styles.modalInput, { height: 46, marginBottom: 6, justifyContent: 'space-between', borderColor: on ? colors.primary : colors.borderColor, backgroundColor: on ? colors.primaryGlow : colors.bgDark }]}
-              onPress={() => setEditCurricula(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])}
-            >
-              <Text style={[styles.modalTextInput, { flex: 0, color: on ? colors.primary : colors.textMuted }]}>{c}</Text>
-              {on && <Feather name="check" size={15} color={colors.primary} />}
-            </TouchableOpacity>
-          );
-        })}
+        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+          {CURRICULA.map(c => {
+            const on = editCurricula.includes(c);
+            return (
+              <TouchableOpacity
+                key={c} activeOpacity={0.8}
+                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, borderColor: on ? colors.primary : colors.borderColor, backgroundColor: on ? colors.primaryGlow : 'transparent' }}
+                onPress={() => setEditCurricula(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])}
+              >
+                {on && <Feather name="check" size={12} color={colors.primary} />}
+                <Text style={{ fontSize: 13, color: on ? colors.primary : colors.textMuted, fontWeight: '600' }}>{c}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
         <Text style={[styles.modalFieldLabel, { marginTop: 12 }]}>Grades you teach (select all that apply)</Text>
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
           {GRADES_TEACHER.map(g => {
@@ -729,21 +779,83 @@ export default function TeacherSettingsScreen({ navigation }: any) {
         </View>
       </Modal>
 
-      {/* Feedback Modal */}
-      <Modal visible={!!feedback} transparent animationType="fade" onRequestClose={() => setFeedback(null)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalBox, { maxWidth: 360 }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{feedback?.title}</Text>
-              <TouchableOpacity onPress={() => setFeedback(null)}><Feather name="x" size={20} color={colors.textMuted} /></TouchableOpacity>
+      {/* Delete Account — provider-aware (password vs Google), plain overlay for instant close */}
+      {deleteModalVisible ? (
+        <View style={{ position: (Platform.OS === 'web' ? 'fixed' : 'absolute') as any, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl, zIndex: 9999 }}>
+          <View style={[styles.modalBox, { maxWidth: 380 }]}>
+            <View style={{ alignItems: 'center', marginBottom: 14 }}>
+              <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accentRed + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <Feather name="trash-2" size={24} color={colors.accentRed} />
+              </View>
+              <Text style={[styles.modalTitle, { textAlign: 'center' }]}>Delete Account?</Text>
+              <Text style={[styles.modalNote, { textAlign: 'center', marginBottom: 0 }]}>
+                This is permanent and cannot be undone. All your data will be lost.
+              </Text>
             </View>
-            <Text style={styles.modalNote}>{feedback?.message}</Text>
-            <TouchableOpacity style={styles.modalSaveBtn} onPress={() => setFeedback(null)}>
-              <Text style={styles.modalSaveText}>OK</Text>
-            </TouchableOpacity>
+            {isPasswordUser ? (
+              <>
+                <Text style={styles.modalFieldLabel}>Enter your password to confirm</Text>
+                <View style={styles.modalInput}>
+                  <Feather name="lock" size={15} color={colors.textDim} />
+                  <TextInput
+                    style={[styles.modalTextInput, { flex: 1 }]}
+                    value={deletePassword}
+                    onChangeText={(v) => { setDeletePassword(v); setDeleteError(''); }}
+                    placeholder="Your password" placeholderTextColor={colors.textDim}
+                    secureTextEntry autoFocus
+                  />
+                </View>
+              </>
+            ) : (
+              <View style={[styles.modalInput, { gap: 8 }]}>
+                <Feather name="shield" size={15} color={colors.textDim} />
+                <Text style={[styles.modalTextInput, { flex: 1, color: colors.textMuted }]} numberOfLines={2}>
+                  You'll confirm with Google to delete your account.
+                </Text>
+              </View>
+            )}
+            {!!deleteError && <Text style={{ fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{deleteError}</Text>}
+            <View style={[styles.modalBtns, { marginTop: 20 }]}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setDeleteModalVisible(false)} disabled={deleteLoading}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalSaveBtn, { backgroundColor: colors.accentRed }, deleteLoading && { opacity: 0.7 }]}
+                onPress={confirmDeleteAccount}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.modalSaveText}>Delete</Text>}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </Modal>
+      ) : null}
+
+      {/* Feedback dialog — a plain conditionally-rendered overlay (NOT a RN Modal).
+          The RN Modal's portal/transition left the box lingering a frame on close;
+          a plain View mounts/unmounts synchronously, so it vanishes instantly. */}
+      {feedback ? (
+        <View
+          style={{ position: (Platform.OS === 'web' ? 'fixed' : 'absolute') as any, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl, zIndex: 9999 }}
+        >
+          <View style={[styles.modalBox, { maxWidth: 360 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{feedback.title}</Text>
+              <TouchableOpacity onPress={() => setFeedback(null)}><Feather name="x" size={20} color={colors.textMuted} /></TouchableOpacity>
+            </View>
+            <Text style={styles.modalNote}>{feedback.message}</Text>
+            <View style={{ alignItems: 'center', marginTop: 4 }}>
+              <TouchableOpacity
+                onPress={() => setFeedback(null)}
+                activeOpacity={0.85}
+                style={{ backgroundColor: colors.primary, borderRadius: radius.md, paddingHorizontal: 40, paddingVertical: 11, alignItems: 'center', justifyContent: 'center', minWidth: 120 }}
+              >
+                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      ) : null}
     </ScreenLayout>
   );
 }
@@ -858,6 +970,13 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   themeLabel: { fontSize: 13, fontWeight: '600', color: c.textMuted },
 
   dangerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 2 },
+  actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, marginTop: spacing.sm },
+  actionBtn: {
+    flex: 1, flexBasis: 0, minWidth: 220, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    paddingVertical: 16, borderRadius: radius.md,
+    borderWidth: 1, borderColor: c.accentRed + '40', backgroundColor: c.accentRed + '0A',
+  },
+  actionBtnText: { fontSize: 14, fontWeight: '700' },
   versionText: { textAlign: 'center', fontSize: 12, color: c.textDim, marginTop: spacing.xl },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },

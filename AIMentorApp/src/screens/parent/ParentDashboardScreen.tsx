@@ -679,18 +679,6 @@ ${report.encouragement ? `<div class="section"><div class="section-title">Messag
             </View>
           )}
 
-          {/* AI Report Button */}
-          {selectedChild.id ? (
-            <TouchableOpacity
-              style={[styles.reportBtn, { backgroundColor: colors.primary }]}
-              onPress={generateReport}
-              activeOpacity={0.85}
-            >
-              <Feather name="file-text" size={16} color="#fff" />
-              <Text style={styles.reportBtnText}>Generate AI Performance Report</Text>
-            </TouchableOpacity>
-          ) : null}
-
           {/* Highlights & Points row */}
           <View style={styles.bottomRow}>
             {/* Highlights — positive reinforcement only */}

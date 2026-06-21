@@ -145,17 +145,18 @@ router.get('/notifications-summary', async (req, res) => {
 
     if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
 
-    // Resolve userId + curriculum/grade for this user
-    let userId = null, studentCurriculum = null, studentGrade = null, userRole = null;
+    // Resolve userId + curriculum/grade/school for this user
+    let userId = null, studentCurriculum = null, studentGrade = null, studentSchool = null, userRole = null;
     const { data: uRow } = await supabase
       .from('users')
-      .select('id, curriculum, grade, role')
+      .select('id, curriculum, grade, school, role')
       .eq('email', userEmail)
       .maybeSingle();
     if (uRow) {
       userId = studentId || uRow.id;
       studentCurriculum = uRow.curriculum || null;
       studentGrade = uRow.grade || null;
+      studentSchool = uRow.school || null;
       userRole = uRow.role || null;
     } else if (studentId && !studentId.includes('@')) {
       userId = studentId;
@@ -253,19 +254,29 @@ router.get('/notifications-summary', async (req, res) => {
     // Merge personal + class assignments, dedupe by id
     const allAssigns = [...(personalAssignRes.data || []), ...(classAssignRes.data || [])];
     const seenIds = new Set();
-    const uniqueAssigns = allAssigns.filter(a => { if (seenIds.has(a.id)) return false; seenIds.add(a.id); return true; });
+    let uniqueAssigns = allAssigns.filter(a => { if (seenIds.has(a.id)) return false; seenIds.add(a.id); return true; });
+
+    // Fetch creator names + schools in one shot
+    const creatorIds = [...new Set(uniqueAssigns.map(a => a.created_by_id).filter(Boolean))];
+    let creatorMap = {};
+    let creatorSchoolMap = {};
+    if (creatorIds.length > 0) {
+      const { data: creators } = await supabase.from('users').select('id, name, school').in('id', creatorIds);
+      (creators || []).forEach(c => { creatorMap[c.id] = c.name || 'Teacher'; creatorSchoolMap[c.id] = c.school || null; });
+    }
+
+    // School scoping: a class-wide assignment from a different school must NOT notify
+    // this student (same curriculum but different school). Personal items are explicit.
+    uniqueAssigns = uniqueAssigns.filter(a => {
+      if (a.student_id !== null) return true;
+      const cSchool = a.created_by_id ? creatorSchoolMap[a.created_by_id] : null;
+      if (cSchool && studentSchool && cSchool !== studentSchool) return false;
+      return true;
+    });
 
     const challengeRows  = challengeRes.data || [];
     const assignCount    = uniqueAssigns.length;
     const challengeCount = challengeRows.length;
-
-    // Fetch creator names in one shot
-    const creatorIds = [...new Set(uniqueAssigns.map(a => a.created_by_id).filter(Boolean))];
-    let creatorMap = {};
-    if (creatorIds.length > 0) {
-      const { data: creators } = await supabase.from('users').select('id, name').in('id', creatorIds);
-      (creators || []).forEach(c => { creatorMap[c.id] = c.name || 'Teacher'; });
-    }
 
     // Fetch challenge titles for the per-challenge notification items
     const challengeIds = [...new Set(challengeRows.map(r => r.challenge_id).filter(Boolean))];
