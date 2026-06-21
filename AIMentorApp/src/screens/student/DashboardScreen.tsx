@@ -284,6 +284,12 @@ export default function DashboardScreen({ navigation, route }: any) {
   const cardBorder  = colors.borderColor;
   const subtleBg   = colors.cardHover;
   const ringTrack  = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(139,92,246,0.08)';
+  // "Today's Goals" cards always use a light pastel gradient (even in dark theme),
+  // so their text/track use fixed light-card values regardless of the app theme.
+  const goalText      = '#16241B';
+  const goalMutedText = '#5C6F62';
+  const goalDimText   = '#9FB0A4';
+  const goalRingTrack = 'rgba(0,0,0,0.07)';
   const contentMax = isMobile ? undefined : isTablet ? 920 : 1080;
 
   // ── Data fetching (cache-first) ──────────────────────────
@@ -747,7 +753,7 @@ export default function DashboardScreen({ navigation, route }: any) {
                       return (
                         <TouchableOpacity key={g.label} style={[styles.goalCardMobile, { borderColor: cardBorder }]} onPress={() => navigation.navigate('Progress')} activeOpacity={0.8}>
                           <LinearGradient
-                            colors={isDark ? [g.color + '55', g.color + '1a', cardBg] : [g.pastel, '#FFFFFF']}
+                            colors={isDark ? [g.pastel, '#FFFFFF'] : [g.color + '24', g.pastel]}
                             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                             style={styles.goalCardGradient}
                           >
@@ -756,8 +762,8 @@ export default function DashboardScreen({ navigation, route }: any) {
                                 <Feather name={g.icon} size={15} color={g.color} />
                               </View>
                               <View style={{ flex: 1 }}>
-                                <Text style={[styles.goalTitle, { color: colors.textMain }]}>{g.label}</Text>
-                                <Text style={[styles.goalMeta, { color: colors.textMuted }]}>Target {g.target}</Text>
+                                <Text style={[styles.goalTitle, { color: goalText }]}>{g.label}</Text>
+                                <Text style={[styles.goalMeta, { color: goalMutedText }]}>Target {g.target}</Text>
                               </View>
                               <View style={[styles.goalStatusPill, { backgroundColor: g.color + '28', borderColor: g.color + '55' }]}>
                                 <Text style={[styles.goalStatusTxt, { color: g.color }]}>{pct}%</Text>
@@ -765,15 +771,15 @@ export default function DashboardScreen({ navigation, route }: any) {
                             </View>
                             <View style={styles.goalMidRow}>
                               <View style={styles.goalRingWrap}>
-                                <RingChart progress={g.pct} color={g.color} size={72} stroke={7} track={ringTrack} />
+                                <RingChart progress={g.pct} color={g.color} size={72} stroke={7} track={goalRingTrack} />
                                 <View style={styles.goalRingCenter}>
                                   <Text style={[styles.goalPct, { color: g.color }]}>{pct}%</Text>
-                                  <Text style={[styles.goalRingSub, { color: colors.textMuted }]}>{pct >= 100 ? 'Done' : 'Go'}</Text>
+                                  <Text style={[styles.goalRingSub, { color: goalMutedText }]}>{pct >= 100 ? 'Done' : 'Go'}</Text>
                                 </View>
                               </View>
                               <View style={styles.goalValueWrap}>
-                                <Text style={[styles.goalVal, { color: colors.textMain }]}>{g.val}</Text>
-                                <Text style={[styles.goalTarget, { color: colors.textDim }]}>{(g as any).caption ?? ((g as any).sub === 'total' ? 'total completed' : 'completed today')}</Text>
+                                <Text style={[styles.goalVal, { color: goalText }]}>{g.val}</Text>
+                                <Text style={[styles.goalTarget, { color: goalDimText }]}>{(g as any).caption ?? ((g as any).sub === 'total' ? 'total completed' : 'completed today')}</Text>
                                 <View style={[styles.goalMiniMeta, { backgroundColor: g.color + '25', borderColor: g.color + '50' }]}>
                                   <Feather name="target" size={10} color={g.color} />
                                   <Text style={[styles.goalMiniMetaTxt, { color: g.color }]}>{helper}</Text>
@@ -794,7 +800,7 @@ export default function DashboardScreen({ navigation, route }: any) {
                     return (
                       <TouchableOpacity key={g.label} style={[styles.goalCard, { borderColor: cardBorder }]} onPress={() => navigation.navigate('Progress')} activeOpacity={0.8}>
                         <LinearGradient
-                          colors={isDark ? [g.color + '55', g.color + '1a', cardBg] : [g.pastel, '#FFFFFF']}
+                          colors={isDark ? [g.pastel, '#FFFFFF'] : [g.color + '24', g.pastel]}
                           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                           style={styles.goalCardGradient}
                         >
@@ -804,8 +810,8 @@ export default function DashboardScreen({ navigation, route }: any) {
                               <Feather name={g.icon} size={15} color={g.color} />
                             </View>
                             <View style={{ flex: 1 }}>
-                              <Text style={[styles.goalTitle, { color: colors.textMain }]}>{g.label}</Text>
-                              <Text style={[styles.goalMeta, { color: colors.textMuted }]}>Target {g.target}</Text>
+                              <Text style={[styles.goalTitle, { color: goalText }]}>{g.label}</Text>
+                              <Text style={[styles.goalMeta, { color: goalMutedText }]}>Target {g.target}</Text>
                             </View>
                             <View style={[styles.goalStatusPill, { backgroundColor: g.color + '28', borderColor: g.color + '55' }]}>
                               <Text style={[styles.goalStatusTxt, { color: g.color }]}>{pct}%</Text>
@@ -815,16 +821,16 @@ export default function DashboardScreen({ navigation, route }: any) {
                           <View style={styles.goalMidRow}>
                             {/* Ring */}
                             <View style={styles.goalRingWrap}>
-                              <RingChart progress={g.pct} color={g.color} size={72} stroke={7} track={ringTrack} />
+                              <RingChart progress={g.pct} color={g.color} size={72} stroke={7} track={goalRingTrack} />
                               <View style={styles.goalRingCenter}>
                                 <Text style={[styles.goalPct, { color: g.color }]}>{pct}%</Text>
-                                <Text style={[styles.goalRingSub, { color: colors.textMuted }]}>{pct >= 100 ? 'Done' : 'Go'}</Text>
+                                <Text style={[styles.goalRingSub, { color: goalMutedText }]}>{pct >= 100 ? 'Done' : 'Go'}</Text>
                               </View>
                             </View>
                             {/* Value + helper — centered vertically */}
                             <View style={styles.goalValueWrap}>
-                              <Text style={[styles.goalVal, { color: colors.textMain }]}>{g.val}</Text>
-                              <Text style={[styles.goalTarget, { color: colors.textDim }]}>{(g as any).caption ?? ((g as any).sub === 'total' ? 'total completed' : 'completed today')}</Text>
+                              <Text style={[styles.goalVal, { color: goalText }]}>{g.val}</Text>
+                              <Text style={[styles.goalTarget, { color: goalDimText }]}>{(g as any).caption ?? ((g as any).sub === 'total' ? 'total completed' : 'completed today')}</Text>
                               <View style={[styles.goalMiniMeta, { backgroundColor: g.color + '25', borderColor: g.color + '50' }]}>
                                 <Feather name="target" size={10} color={g.color} />
                                 <Text style={[styles.goalMiniMetaTxt, { color: g.color }]}>{helper}</Text>
@@ -835,8 +841,8 @@ export default function DashboardScreen({ navigation, route }: any) {
                               {g.badges.map((b) => (
                                 <View key={b.label} style={styles.goalBadgeMedalWrap}>
                                   <View style={[styles.goalBadgeMedal, {
-                                    backgroundColor: b.unlocked ? (isDark ? b.color + '30' : b.bg) : (isDark ? '#ffffff08' : '#f2f2f2'),
-                                    borderColor:     b.unlocked ? b.color : (isDark ? '#ffffff14' : '#e0e0e0'),
+                                    backgroundColor: b.unlocked ? b.bg : '#f2f2f2',
+                                    borderColor:     b.unlocked ? b.color : '#e0e0e0',
                                     shadowColor:     b.unlocked ? b.color : 'transparent',
                                     shadowOffset:    { width: 0, height: 3 },
                                     shadowOpacity:   b.unlocked ? 0.45 : 0,
@@ -844,15 +850,15 @@ export default function DashboardScreen({ navigation, route }: any) {
                                     elevation:       b.unlocked ? 5 : 0,
                                   }]}>
                                     {b.unlocked && <View style={[styles.goalBadgeGlow, { backgroundColor: b.color + '18' }]} />}
-                                    <Feather name={b.icon} size={15} color={b.unlocked ? b.color : (isDark ? '#ffffff1a' : '#cccccc')} />
+                                    <Feather name={b.icon} size={15} color={b.unlocked ? b.color : '#cccccc'} />
                                     {b.unlocked && (
-                                      <View style={[styles.goalBadgeCheckDot, { backgroundColor: b.color, borderColor: isDark ? '#1a1a2e' : '#fff' }]}>
+                                      <View style={[styles.goalBadgeCheckDot, { backgroundColor: b.color, borderColor: '#fff' }]}>
                                         <Feather name="check" size={6} color="#fff" />
                                       </View>
                                     )}
                                   </View>
                                   <Text style={[styles.goalBadgeMedalLabel, {
-                                    color: b.unlocked ? b.color : (isDark ? '#ffffff22' : '#c0c0c0'),
+                                    color: b.unlocked ? b.color : '#c0c0c0',
                                     fontWeight: b.unlocked ? '700' : '400',
                                   }]} numberOfLines={1}>{b.label}</Text>
                                 </View>

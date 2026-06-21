@@ -1072,6 +1072,19 @@ router.delete('/delete-account', async (req, res) => {
     await supabase.from('user_preferences').delete().eq('user_email', emailLc);
     await supabase.from('users').delete().eq('email', emailLc);
 
+    // Also delete the Firebase Auth account via the Admin SDK so the account is
+    // fully removed regardless of sign-in provider (password OR Google SSO) — the
+    // client can't always reauthenticate (e.g. SSO users have no password).
+    try {
+      const admin = require('firebase-admin');
+      if (admin.apps && admin.apps.length) {
+        const fbUser = await admin.auth().getUserByEmail(emailLc).catch(() => null);
+        if (fbUser) await admin.auth().deleteUser(fbUser.uid);
+      }
+    } catch (fbErr) {
+      console.warn('[delete-account] firebase delete skipped:', fbErr.message);
+    }
+
     res.json({ ok: true });
   } catch (err) {
     console.error('[delete-account]', err.message);

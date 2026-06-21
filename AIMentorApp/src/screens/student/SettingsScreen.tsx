@@ -23,7 +23,9 @@ import {
   updateEmail,
   updatePassword,
   EmailAuthProvider,
+  GoogleAuthProvider,
   reauthenticateWithCredential,
+  reauthenticateWithPopup,
   deleteUser,
 } from 'firebase/auth';
 import { auth } from '../../config/firebase';
@@ -320,29 +322,42 @@ export default function SettingsScreen({ navigation, route }: any) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  // Does this account sign in with email+password, or only via Google SSO?
+  const isPasswordUser = (auth.currentUser?.providerData ?? []).some(p => p.providerId === 'password');
+  const isGoogleUser   = (auth.currentUser?.providerData ?? []).some(p => p.providerId === 'google.com');
+
   async function confirmDeleteAccount() {
     setDeleteError('');
-    if (!deletePassword) { setDeleteError('Please enter your password to confirm.'); return; }
+    // Password accounts confirm with their password; Google SSO accounts re-confirm
+    // with the Google popup (they have no password to enter).
+    if (isPasswordUser && !deletePassword) { setDeleteError('Please enter your password to confirm.'); return; }
     setDeleteLoading(true);
     try {
       const firebaseUser = auth.currentUser;
       if (firebaseUser && firebaseUser.email) {
-        // Re-authenticate first
-        const cred = EmailAuthProvider.credential(firebaseUser.email, deletePassword);
-        await reauthenticateWithCredential(firebaseUser, cred);
-        // Delete from Supabase DB
+        // Re-authenticate (required by Firebase for account deletion)
+        if (isPasswordUser) {
+          const cred = EmailAuthProvider.credential(firebaseUser.email, deletePassword);
+          await reauthenticateWithCredential(firebaseUser, cred);
+        } else if (isGoogleUser) {
+          await reauthenticateWithPopup(firebaseUser, new GoogleAuthProvider());
+        }
+        // Delete from Supabase + Firebase Auth (server uses the Admin SDK, so this
+        // works for any provider). Client deleteUser below is just a best-effort
+        // fallback and must not block the flow if the server already removed it.
         await fetch(`${SERVER_URL}/user/delete-account`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: firebaseUser.email }),
         });
-        // Delete from Firebase
-        await deleteUser(firebaseUser);
+        try { await deleteUser(firebaseUser); } catch (_) { /* already deleted server-side */ }
       }
       logout();
     } catch (e: any) {
       if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
         setDeleteError('Incorrect password. Please try again.');
+      } else if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+        setDeleteError('Google confirmation was cancelled. Please try again.');
       } else {
         setDeleteError('Could not delete account. Please try again.');
       }
@@ -707,19 +722,30 @@ export default function SettingsScreen({ navigation, route }: any) {
                 This is permanent and cannot be undone. All your progress, XP, and data will be lost.
               </Text>
             </View>
-            <Text style={styles.modalFieldLabel}>Enter your password to confirm</Text>
-            <View style={styles.modalInput}>
-              <Feather name="lock" size={15} color={colors.textDim} />
-              <TextInput
-                style={[styles.modalTextInput, { flex: 1 }]}
-                value={deletePassword}
-                onChangeText={(v) => { setDeletePassword(v); setDeleteError(''); }}
-                placeholder="Your password"
-                placeholderTextColor={colors.textDim}
-                secureTextEntry
-                autoFocus
-              />
-            </View>
+            {isPasswordUser ? (
+              <>
+                <Text style={styles.modalFieldLabel}>Enter your password to confirm</Text>
+                <View style={styles.modalInput}>
+                  <Feather name="lock" size={15} color={colors.textDim} />
+                  <TextInput
+                    style={[styles.modalTextInput, { flex: 1 }]}
+                    value={deletePassword}
+                    onChangeText={(v) => { setDeletePassword(v); setDeleteError(''); }}
+                    placeholder="Your password"
+                    placeholderTextColor={colors.textDim}
+                    secureTextEntry
+                    autoFocus
+                  />
+                </View>
+              </>
+            ) : (
+              <View style={[styles.modalInput, { gap: 8 }]}>
+                <Feather name="shield" size={15} color={colors.textDim} />
+                <Text style={[styles.modalTextInput, { flex: 1, color: colors.textMuted }]} numberOfLines={2}>
+                  You'll confirm with Google to delete your account.
+                </Text>
+              </View>
+            )}
             {!!deleteError && (
               <Text style={{ fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{deleteError}</Text>
             )}
