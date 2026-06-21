@@ -492,8 +492,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         if (matched.length > 0) {
           setStudents(matched);
         } else {
-          // Fallback: fetch all students by curriculum from server
-          const params = tc ? `?curriculum=${encodeURIComponent(tc)}` : '';
+          // Fallback: fetch students by curriculum + the teacher's school (no cross-school)
+          const qs = [];
+          if (tc) qs.push(`curriculum=${encodeURIComponent(tc)}`);
+          if (user?.school) qs.push(`school=${encodeURIComponent(user.school)}`);
+          const params = qs.length ? `?${qs.join('&')}` : '';
           fetch(`${SERVER_URL}/student/by-curriculum${params}`)
             .then(r => r.ok ? r.json() : [])
             .then((fallback: StudentItem[]) => setStudents(fallback))
