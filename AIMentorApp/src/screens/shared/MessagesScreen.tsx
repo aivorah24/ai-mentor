@@ -418,7 +418,11 @@ export default function MessagesScreen(_props: any) {
                       style={[styles.attachmentBubble, { borderColor: isMine ? 'rgba(255,255,255,0.3)' : colors.borderColor }]}
                       onPress={() => {
                         if (Platform.OS === 'web') {
-                          (window as any).open(`${SERVER_URL}${parsed.attachment!.url}`, '_blank');
+                          // New attachments are absolute Cloudinary URLs; older ones
+                          // are server-relative ("/data/uploads/...") — handle both.
+                          const u = parsed.attachment!.url;
+                          const href = /^https?:\/\//i.test(u) ? u : `${SERVER_URL}${u}`;
+                          (window as any).open(href, '_blank');
                         }
                       }}
                       activeOpacity={0.7}

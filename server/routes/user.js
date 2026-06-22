@@ -3,6 +3,7 @@ const router     = express.Router();
 const multer     = require('multer');
 const cloudinary = require('cloudinary').v2;
 const supabase   = require('../services/supabase');
+const otpStore   = require('../services/otpStore');
 const { encrypt, decrypt } = require('../utils/encryption');
 const { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendRecoveryEmailConfirmation } = require('../services/mailer');
 
@@ -645,12 +646,10 @@ router.get('/role', async (req, res) => {
   res.json({ role: data.role });
 });
 
-// In-memory OTP store: key = accountEmail, value = { otp, recoveryEmail, expiresAt }
-const recoveryOtpStore = new Map();
+// OTP codes (email verification + recovery) are stored in Supabase via
+// services/otpStore so they work across multiple Cloud Run instances.
 
 // ── Generic email-verification OTP (used to verify a child's email inline) ────
-const emailOtpStore = new Map(); // key = email, value = { otp, expiresAt }
-
 router.post('/email-otp/send', async (req, res) => {
   try {
     const email = String(req.body?.email || '').trim().toLowerCase();
@@ -659,7 +658,7 @@ router.post('/email-otp/send', async (req, res) => {
       return res.status(400).json({ error: 'Please enter a valid email address.' });
     }
     const otp = String(Math.floor(100000 + Math.random() * 900000));
-    emailOtpStore.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+    await otpStore.setOtp(email, 'email_verify', { otp });
     const { sendEmailOtpCode } = require('../services/mailer');
     await sendEmailOtpCode({ to: email, otp, name });
     res.json({ ok: true });
@@ -673,14 +672,14 @@ router.post('/email-otp/verify', async (req, res) => {
   try {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const otp = String(req.body?.otp || '').trim();
-    const stored = emailOtpStore.get(email);
+    const stored = await otpStore.getOtp(email, 'email_verify');
     if (!stored) return res.status(400).json({ error: 'No code requested. Please send a code first.' });
     if (Date.now() > stored.expiresAt) {
-      emailOtpStore.delete(email);
+      await otpStore.deleteOtp(email, 'email_verify');
       return res.status(400).json({ error: 'Code expired. Please request a new one.' });
     }
     if (stored.otp !== otp) return res.status(400).json({ error: 'Incorrect code. Please try again.' });
-    emailOtpStore.delete(email);
+    await otpStore.deleteOtp(email, 'email_verify');
     res.json({ verified: true });
   } catch (err) {
     console.error('[email-otp/verify]', err.message);
@@ -696,8 +695,10 @@ router.post('/recovery-email/send-code', async (req, res) => {
     if (!email || !recoveryEmail) return res.status(400).json({ error: 'email and recoveryEmail required' });
 
     const otp = String(Math.floor(100000 + Math.random() * 900000));
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
-    recoveryOtpStore.set(email.trim().toLowerCase(), { otp, recoveryEmail: recoveryEmail.trim().toLowerCase(), expiresAt });
+    await otpStore.setOtp(email.trim().toLowerCase(), 'recovery', {
+      otp,
+      recoveryEmail: recoveryEmail.trim().toLowerCase(),
+    });
 
     // Send OTP to the recovery email
     const { sendRecoveryOtpEmail } = require('../services/mailer');
@@ -718,10 +719,10 @@ router.patch('/recovery-email', async (req, res) => {
     if (!email || !otp) return res.status(400).json({ error: 'email and otp required' });
 
     const emailLc = email.trim().toLowerCase();
-    const stored = recoveryOtpStore.get(emailLc);
+    const stored = await otpStore.getOtp(emailLc, 'recovery');
     if (!stored) return res.status(400).json({ error: 'No pending verification. Please request a new code.' });
     if (Date.now() > stored.expiresAt) {
-      recoveryOtpStore.delete(emailLc);
+      await otpStore.deleteOtp(emailLc, 'recovery');
       return res.status(400).json({ error: 'Code expired. Please request a new one.' });
     }
     if (stored.otp !== String(otp).trim()) {
@@ -729,7 +730,7 @@ router.patch('/recovery-email', async (req, res) => {
     }
 
     // OTP valid — save recovery email
-    recoveryOtpStore.delete(emailLc);
+    await otpStore.deleteOtp(emailLc, 'recovery');
     const recoveryEmail = stored.recoveryEmail;
     await setPreferences(emailLc, { recoveryEmail });
 

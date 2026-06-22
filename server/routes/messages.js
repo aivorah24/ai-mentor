@@ -1,26 +1,24 @@
-const express  = require('express');
-const router   = express.Router();
-const supabase = require('../services/supabase');
-const multer   = require('multer');
-const path     = require('path');
-const crypto   = require('crypto');
+const express    = require('express');
+const router     = express.Router();
+const supabase   = require('../services/supabase');
+const multer     = require('multer');
+const path       = require('path');
+const cloudinary = require('cloudinary').v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // ── File upload config ──────────────────────────────────
-const UPLOADS_DIR = path.join(__dirname, '..', 'data', 'uploads');
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_TYPES = /^(pdf|png|jpg|jpeg|gif|webp)$/; // images and PDFs only (issue #45)
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const id  = crypto.randomBytes(8).toString('hex');
-    cb(null, `${id}${ext}`);
-  },
-});
-
+// Keep the file in memory so we can stream it straight to Cloudinary — Cloud Run
+// instances have ephemeral, per-instance disks, so local files aren't shared.
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: MAX_FILE_SIZE },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
@@ -676,16 +674,30 @@ router.get('/thread', async (req, res) => {
 });
 
 // ── POST /messages/upload ─────────────────────────────────
-// Upload a file attachment, returns { url, name, size, type }
-router.post('/upload', upload.single('file'), (req, res) => {
+// Upload a file attachment to Cloudinary, returns { url, name, size, type }.
+// (Stored on Cloudinary — not local disk — so attachments are reachable from
+//  any Cloud Run instance behind the load balancer.)
+router.post('/upload', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   const ext = path.extname(req.file.originalname).toLowerCase().replace('.', '');
-  res.json({
-    url:  `/data/uploads/${req.file.filename}`,
-    name: req.file.originalname,
-    size: req.file.size,
-    type: ext,
-  });
+  try {
+    const mime    = req.file.mimetype || 'application/octet-stream';
+    const dataUri = `data:${mime};base64,${req.file.buffer.toString('base64')}`;
+    const result  = await cloudinary.uploader.upload(dataUri, {
+      folder:        'ai_mentor/message_attachments',
+      public_id:     `att_${Date.now()}`,
+      resource_type: 'auto', // handles both images and PDFs
+    });
+    res.json({
+      url:  result.secure_url,
+      name: req.file.originalname,
+      size: req.file.size,
+      type: ext,
+    });
+  } catch (err) {
+    console.error('[messages/upload]', err.message);
+    res.status(500).json({ error: 'Could not upload the file. Please try again.' });
+  }
 });
 
 // ── POST /messages ────────────────────────────────────────
