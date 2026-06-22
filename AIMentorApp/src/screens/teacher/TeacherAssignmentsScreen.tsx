@@ -3476,15 +3476,23 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                               .filter(s => {
                                 const matchSearch = s.name?.toLowerCase().includes(studentSearch.toLowerCase());
                                 const matchCurriculum = !teacherCurriculum || !s.curriculum || s.curriculum === teacherCurriculum;
-                                // Only show students in the selected grade
-                                const matchGrade = !grade || s.grade === grade;
-                                return matchSearch && matchCurriculum && matchGrade;
+                                // Show ALL of the teacher's students regardless of the grade
+                                // currently selected in the form — a teacher who teaches
+                                // multiple grades must still be able to pick any student.
+                                // The grade follows the chosen student (see onPress below).
+                                return matchSearch && matchCurriculum;
                               })
                               .map(s => (
                                 <TouchableOpacity
                                   key={s.id}
                                   style={styles.studentRow}
-                                  onPress={() => { setSelectedStudent(s); setStudentSearch(''); }}
+                                  onPress={() => {
+                                    setSelectedStudent(s);
+                                    setStudentSearch('');
+                                    // Align the assignment to the chosen student's grade/curriculum
+                                    if (s.grade) setGrade(s.grade);
+                                    if (s.curriculum) setCurriculum(s.curriculum);
+                                  }}
                                   activeOpacity={0.7}
                                 >
                                   <View style={styles.studentAvatar}>
