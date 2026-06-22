@@ -190,7 +190,7 @@ router.get('/notifications-summary', async (req, res) => {
     if (isStudent && userId) {
       personalAssignQ = supabase
         .from('assignments')
-        .select('id, title, subject, type, created_at, created_by_id')
+        .select('id, title, subject, type, created_at, created_by_id, student_id')
         .eq('student_id', userId)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -198,7 +198,7 @@ router.get('/notifications-summary', async (req, res) => {
 
       classAssignQ = supabase
         .from('assignments')
-        .select('id, title, subject, type, created_at, created_by_id, created_by_role')
+        .select('id, title, subject, type, created_at, created_by_id, created_by_role, student_id')
         .is('student_id', null)
         .order('created_at', { ascending: false })
         .limit(10);
