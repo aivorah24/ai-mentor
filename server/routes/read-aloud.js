@@ -9,6 +9,7 @@ const FormDataNode = require('form-data');
 const https = require('https');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const { getCachedAudio, saveAudio } = require('../services/audioCache');
 
 // ── Cache directories ───────────────────────────────────────────────────────
 const PASSAGE_DIR = path.join(__dirname, '..', 'data', 'read-aloud', 'passages');
@@ -801,20 +802,22 @@ router.post('/tts', express.json(), async (req, res) => {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'text required' });
 
-    // Return cached if exists
-    const cached = readCachedTTS(text);
-    if (cached) return res.json(cached);
+    const { hash } = getTTSCachePaths(text);
 
-    // Generate via ElevenLabs
-    const { audioFile, timingFile, audioUrl } = getTTSCachePaths(text);
+    // Serve from persistent cache (Cloudinary in prod → absolute URL; local disk in dev)
+    const cached = await getCachedAudio(hash, AUDIO_DIR);
+    if (cached) {
+      return res.json({ audioUrl: cached.mp3Url, wordTimings: cached.timings, cached: true });
+    }
+
+    // Generate via ElevenLabs → persist to Cloudinary (timings come from ElevenLabs)
     const { buffer, wordTimings } = await generateTTS(text);
-    fs.writeFileSync(audioFile, buffer);
-    if (wordTimings) fs.writeFileSync(timingFile, JSON.stringify(wordTimings));
+    const { mp3Url } = await saveAudio(hash, AUDIO_DIR, buffer, wordTimings || undefined);
     console.log(`[read-aloud/tts] Generated ${(buffer.length / 1024).toFixed(0)}KB audio, timings=${!!wordTimings}`);
 
     res.json({
-      audioUrl,
-      wordTimings,
+      audioUrl: mp3Url,
+      wordTimings: wordTimings || null,
       cached: false,
     });
   } catch (err) {
@@ -836,17 +839,16 @@ router.post('/tts/preload', express.json(), async (req, res) => {
     const passages = SEED_PASSAGES[g] || [];
     for (const passage of passages) {
       summary.requested++;
-      const cached = readCachedTTS(passage.text);
+      const { hash } = getTTSCachePaths(passage.text);
+      const cached = await getCachedAudio(hash, AUDIO_DIR);
       if (cached) {
         summary.cached++;
         continue;
       }
 
       try {
-        const { audioFile, timingFile } = getTTSCachePaths(passage.text);
         const { buffer, wordTimings } = await generateTTS(passage.text);
-        fs.writeFileSync(audioFile, buffer);
-        if (wordTimings) fs.writeFileSync(timingFile, JSON.stringify(wordTimings));
+        await saveAudio(hash, AUDIO_DIR, buffer, wordTimings || undefined);
         summary.generated++;
       } catch (err) {
         summary.failed++;

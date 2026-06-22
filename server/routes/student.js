@@ -129,30 +129,83 @@ async function getOrCreate(studentId) {
   return data;
 }
 
-// ── GET /student/leaderboard?limit=10 ──────────────────────
-// Returns top students ranked by XP from student_stats + users tables
+// ── GET /student/leaderboard?limit=10&teacherEmail=xxx ──────
+// Returns top students ranked by XP from student_stats + users tables.
+// When teacherEmail is supplied, it becomes a *class* leaderboard scoped to
+// that teacher: only their linked students, in the same school + curriculum
+// and the grade(s) the teacher actually teaches.
 
 router.get('/leaderboard', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+    const teacherEmail = String(req.query.teacherEmail || '').toLowerCase().trim();
 
-    const { data: stats, error } = await supabase
+    // When scoped to a teacher, resolve the set of students that belong to their
+    // class. allowedUsers maps student_id → { name, grade } for those students.
+    let allowedUsers = null;
+    if (teacherEmail) {
+      const { data: teacher } = await supabase
+        .from('users')
+        .select('id, grade, curriculum, school')
+        .eq('email', teacherEmail)
+        .maybeSingle();
+
+      // Grades the teacher teaches: teaches[] (authoritative) → users.grade
+      let scopeGrades = null;
+      const { data: prefs } = await supabase
+        .from('user_preferences')
+        .select('data')
+        .eq('user_email', teacherEmail)
+        .maybeSingle();
+      const teaches = prefs?.data?.teaches;
+      if (Array.isArray(teaches) && teaches.length > 0) {
+        const g = [...new Set(teaches.map(t => t.grade).filter(Boolean))];
+        if (g.length) scopeGrades = g;
+      } else if (teacher?.grade) {
+        scopeGrades = [teacher.grade];
+      }
+
+      // Class leaderboard = every student in the teacher's school + curriculum
+      // across the grade(s) they teach (NOT only their linked students), so the
+      // board is populated like the reference rather than just a handful of links.
+      let uq = supabase
+        .from('users')
+        .select('id, name, grade')
+        .eq('role', 'student');
+      if (scopeGrades)          uq = uq.in('grade', scopeGrades);
+      if (teacher?.curriculum)  uq = uq.eq('curriculum', teacher.curriculum);
+      if (teacher?.school)      uq = uq.eq('school', teacher.school);
+
+      const { data: us } = await uq;
+      allowedUsers = {};
+      (us || []).forEach(u => { allowedUsers[u.id] = u; });
+    }
+
+    let sq = supabase
       .from('student_stats')
       .select('student_id, xp_points, level, current_streak, completed_topics')
-      .order('xp_points', { ascending: false })
-      .limit(limit);
+      .order('xp_points', { ascending: false });
+    if (allowedUsers) {
+      const allowedIds = Object.keys(allowedUsers);
+      if (allowedIds.length === 0) return res.json([]);
+      sq = sq.in('student_id', allowedIds);
+    }
+    sq = sq.limit(limit);
 
+    const { data: stats, error } = await sq;
     if (error) return res.status(500).json({ error: error.message });
     if (!stats || stats.length === 0) return res.json([]);
 
-    const ids = stats.map(s => s.student_id);
-    const { data: users } = await supabase
-      .from('users')
-      .select('id, name, grade')
-      .in('id', ids);
-
-    const userMap = {};
-    (users ?? []).forEach(u => { userMap[u.id] = u; });
+    let userMap = allowedUsers;
+    if (!userMap) {
+      const ids = stats.map(s => s.student_id);
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, name, grade')
+        .in('id', ids);
+      userMap = {};
+      (users ?? []).forEach(u => { userMap[u.id] = u; });
+    }
 
     const leaderboard = stats.map((s, i) => {
       const user = userMap[s.student_id] ?? {};

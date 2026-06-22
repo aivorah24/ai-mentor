@@ -2,8 +2,6 @@
 const router     = express.Router();
 const supabase   = require('../services/supabase');
 const Groq       = require('groq-sdk');
-const fs         = require('fs');
-const path       = require('path');
 const cloudinary = require('cloudinary').v2;
 
 cloudinary.config({
@@ -14,14 +12,8 @@ cloudinary.config({
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const MCQ_LETTER_TO_INDEX = { A: 0, B: 1, C: 2, D: 3 };
-
-const SCHEDULE_PATH = path.join(__dirname, '../data/schedule.json');
-function readSchedule() {
-  try { return JSON.parse(fs.readFileSync(SCHEDULE_PATH, 'utf8')); } catch { return []; }
-}
-function writeSchedule(data) {
-  try { fs.writeFileSync(SCHEDULE_PATH, JSON.stringify(data, null, 2)); } catch (_) {}
-}
+// NOTE: the schedule is stored in the Supabase `schedule_events` table — the old
+// local data/schedule.json helpers were removed (not shared across instances).
 
 // â”€â”€ GET /assignments?studentId=xxx â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -2496,11 +2488,9 @@ router.put('/:id/complete', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
-  // Also remove from schedule
-  try {
-    const schedule = readSchedule();
-    writeSchedule(schedule.filter(e => e.assignmentId !== id));
-  } catch (_) {}
+  // Also remove the linked calendar entry from the DB (was previously filtering a
+  // local schedule.json that never existed on Cloud Run → orphaned schedule_events).
+  try { await supabase.from('schedule_events').delete().eq('assignment_id', id); } catch (_) {}
   const { error } = await supabase.from('assignments').delete().eq('id', id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });

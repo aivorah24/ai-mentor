@@ -1456,7 +1456,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
       .then(r => r.json())
       .then(data => {
         if (!data.audioUrl) throw new Error('no audioUrl');
-        const audio = new Audio(`${SERVER_URL}${data.audioUrl}`);
+        const audio = new Audio(/^https?:\/\//i.test(data.audioUrl) ? data.audioUrl : `${SERVER_URL}${data.audioUrl}`);
         audioRef.current = audio;
         audioMetaRef.current = { words: voiceWords, timings: data.timings || null, timingProvider: data.timingProvider || 'none' };
 
@@ -1560,7 +1560,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
       .then(r => r.json())
       .then(data => {
         if (!data.audioUrl) throw new Error('no audioUrl');
-        const audio = new Audio(`${SERVER_URL}${data.audioUrl}`);
+        const audio = new Audio(/^https?:\/\//i.test(data.audioUrl) ? data.audioUrl : `${SERVER_URL}${data.audioUrl}`);
         audioRef.current = audio;
         const timings2 = data.timings || null;
         audioMetaRef.current = { words: voiceWords, timings: timings2, timingProvider: data.timingProvider || 'none' };

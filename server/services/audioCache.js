@@ -63,7 +63,11 @@ function cloudinaryAudioUrl(publicId) {
 }
 
 function cloudinaryRawUrl(publicId) {
-  return `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/raw/upload/${publicId}.json`;
+  // The raw timings asset is uploaded with public_id `<cacheKey>_timings` (no
+  // extension), so the delivery URL must NOT append `.json` — otherwise the
+  // fetch 404s and cached word-timings are silently lost (highlighting works on
+  // the first play, then disappears on every cached replay).
+  return `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/raw/upload/${publicId}`;
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

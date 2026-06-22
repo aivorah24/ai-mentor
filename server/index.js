@@ -119,6 +119,8 @@ app.use('/payment',      lazyRoute('./routes/payment'));
 app.use('/quiz',         lazyRoute('./routes/quiz'));
 app.use('/read-aloud',   lazyRoute('./routes/read-aloud'));
 app.use('/super-admin',  require('./routes/super-admin'));
+app.use('/jobs',         require('./routes/jobs'));
+require('./services/jobHandlers'); // register swappable-queue handlers (for /jobs/process)
 
 
 // Public contact / careers form submission (from the marketing landing page)
