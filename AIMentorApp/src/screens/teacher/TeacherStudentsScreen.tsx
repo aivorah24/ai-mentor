@@ -1080,9 +1080,14 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
               </Text>
             </View>
 
-            <TouchableOpacity style={[styles.modalSaveBtn, { marginTop: 16 }]} onPress={() => setCredsModal(false)}>
-              <Text style={styles.modalSaveText}>Done</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16 }}>
+              <TouchableOpacity
+                style={[styles.modalSaveBtn, { flex: 0, alignSelf: 'flex-end', height: 38, paddingHorizontal: 24 }]}
+                onPress={() => setCredsModal(false)}
+              >
+                <Text style={styles.modalSaveText}>Done</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
