@@ -384,7 +384,7 @@ export default function ReadAloudScreen() {
         return;
       }
 
-      const audioUrl = `${SERVER_URL}${data.audioUrl}`;
+      const audioUrl = /^https?:\/\//i.test(data.audioUrl) ? data.audioUrl : `${SERVER_URL}${data.audioUrl}`;
       console.log('[ReadAloud] Loading audio:', audioUrl);
       const audio = new (window as any).Audio(audioUrl);
       audio.crossOrigin = 'anonymous';
