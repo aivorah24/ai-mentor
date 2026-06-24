@@ -434,6 +434,7 @@ export default function AICoachScreen({ navigation }: any) {
 
   return (
     <ScreenLayout>
+    <View style={styles.screenWrap}>
     <View style={styles.screen}>
       <Header
         title="AI Coach"
@@ -788,11 +789,13 @@ export default function AICoachScreen({ navigation }: any) {
       </Modal>
     )}
 
+    </View>{/* screenWrap */}
     </ScreenLayout>
   );
 }
 
 const makeStyles = (c: AppColors) => StyleSheet.create({
+  screenWrap: { flex: 1, backgroundColor: c.bgDark },
   screen: { flex: 1, backgroundColor: c.bgDark },
   keyboardView: { flex: 1 },
 

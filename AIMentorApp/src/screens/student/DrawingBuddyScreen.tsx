@@ -7,7 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
 interface DrawActivity {
@@ -969,7 +969,7 @@ const s = StyleSheet.create({
   allDoneText:   { fontSize: 13, fontWeight: '600' },
 
   boardCard:     { borderRadius: radius.lg, borderWidth: 1, padding: 16, gap: 12, position: 'relative' },
-  boardTitle:    { fontSize: 15, fontWeight: '700' },
+  boardTitle:    { fontSize: 15, fontWeight: '700', fontFamily: fonts.serif },
   canvasOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10,
                    alignItems: 'center', justifyContent: 'center', borderRadius: radius.lg,
                    backgroundColor: '#00000040' },
@@ -996,7 +996,7 @@ const s = StyleSheet.create({
   feedbackCard:  { borderRadius: radius.lg, borderWidth: 1, padding: 16, gap: 10 },
   scoreRow:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 },
   scoreBadge:    { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
-  scoreText:     { fontSize: 16, fontWeight: '800' },
+  scoreText:     { fontSize: 16, fontWeight: '800', fontFamily: fonts.serif },
   feedbackLabel: { fontSize: 13, fontWeight: '600' },
   speakBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
   feedbackRow:   { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 10, borderRadius: 10, borderWidth: 1 },

@@ -12,7 +12,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -691,9 +691,11 @@ export default function LearningPathsScreen({ navigation }: any) {
   const isPYP  = /^ib.?pyp$/i.test(curriculum.trim());
   const isCBSE = !isPYP && (curriculum === 'NCERT' || curriculum === 'CBSE');
 
-  // Pre-seed static subjects for IB PYP so grid is never empty
-  const [subjects, setSubjects] = useState<SubjectData[]>(isPYP ? getIBPYPStaticSubjects(grade) : []);
-  const [loading, setLoading] = useState(!isPYP);
+  // Server (Qdrant) is the source of truth for subjects. We no longer pre-seed a
+  // stale static IB PYP list — that painted first then got swapped for the real
+  // set (different topic counts + extra subjects), which looked like a flicker.
+  const [subjects, setSubjects] = useState<SubjectData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -718,7 +720,7 @@ export default function LearningPathsScreen({ navigation }: any) {
 
   useEffect(() => {
     let cancelled = false;
-    if (!isPYP) { setLoading(true); }
+    setLoading(true);
     setError('');
 
     // For CBSE, query Qdrant with curriculum=CBSE
@@ -728,14 +730,17 @@ export default function LearningPathsScreen({ navigation }: any) {
       .then((r) => r.json())
       .then((data: { subjects: SubjectData[] }) => {
         if (cancelled) return;
-        // Only override static list if Qdrant actually returned data
         if (data.subjects && data.subjects.length > 0) {
           setSubjects(data.subjects);
+        } else if (isPYP) {
+          // Offline / empty fallback only (server is the source of truth).
+          setSubjects(getIBPYPStaticSubjects(grade));
         }
       })
       .catch(() => {
         if (cancelled) return;
-        if (!isPYP) setError('Could not load curriculum right now. Check if the server is running and try again.');
+        if (isPYP) setSubjects(getIBPYPStaticSubjects(grade));
+        else setError('Could not load curriculum right now. Check if the server is running and try again.');
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -1206,7 +1211,7 @@ const makeStyles = (c: AppColors) =>
       fontWeight: '700',
       marginBottom: 6,
     },
-    heroTitle: { fontSize: 19, fontWeight: '800', color: c.textMain, lineHeight: 24 },
+    heroTitle: { fontSize: 19, fontWeight: '800', color: c.textMain, lineHeight: 24, fontFamily: fonts.serif },
     heroSubtitle: { marginTop: 4, fontSize: 12, color: c.textMuted, lineHeight: 17 },
     heroProgress: {
       width: 72,
@@ -1280,7 +1285,7 @@ const makeStyles = (c: AppColors) =>
       justifyContent: 'center',
       marginBottom: 7,
     },
-    metricValue: { fontSize: 18, fontWeight: '800', lineHeight: 22 },
+    metricValue: { fontSize: 18, fontWeight: '800', lineHeight: 22, fontFamily: fonts.serif },
     metricLabel: { marginTop: 3, fontSize: 11, color: c.textMuted, fontWeight: '600' },
 
     continueBanner: {
@@ -1306,7 +1311,7 @@ const makeStyles = (c: AppColors) =>
     continueTopic: { fontSize: 14, fontWeight: '700' },
 
     sectionHead: { marginBottom: spacing.md },
-    sectionTitle: { fontSize: 17, color: c.textMain, fontWeight: '800' },
+    sectionTitle: { fontSize: 17, color: c.textMain, fontWeight: '800', fontFamily: fonts.serif },
     sectionSub: { marginTop: 2, fontSize: 12, color: c.textMuted },
     subjectGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: spacing.sm },
 

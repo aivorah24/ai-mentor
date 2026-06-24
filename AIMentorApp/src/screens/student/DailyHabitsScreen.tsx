@@ -11,7 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 import { useAuth } from '../../context/AuthContext';
 
@@ -290,7 +290,7 @@ const makeStyles = (c: any) => StyleSheet.create({
     flex: 1, alignItems: 'center', paddingVertical: spacing.lg,
     borderRadius: radius.xl, borderWidth: 1, gap: 4,
   },
-  statNum:   { fontSize: 22, fontWeight: '800' },
+  statNum:   { fontSize: 22, fontWeight: '800', fontFamily: fonts.serif },
   statLabel: { fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
 
   progressCard: { borderRadius: radius.xl, borderWidth: 1, padding: spacing.lg, gap: spacing.sm },

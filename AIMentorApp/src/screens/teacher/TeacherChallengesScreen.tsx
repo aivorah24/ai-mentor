@@ -43,9 +43,11 @@ const DIFF_COLOR = (d: string, c: AppColors) =>
 
 // Aligned to the Aivorah landing palette (green → gold), so cards harmonize
 // with the sage/green app chrome instead of clashing indigo/orange.
+// Exact landing.html accent tokens so cards match the marketing-site standard:
+// sage (--sage) for quizzes, gold (--gold) for school challenges.
 const CAT_COLOR: Record<string, string> = {
-  'Chapter Quiz':     '#3E9D7C', // Aivorah green/teal
-  'School Challenge': '#C2912F', // Aivorah gold/amber
+  'Chapter Quiz':     '#9FB2A4', // landing sage
+  'School Challenge': '#BAA467', // landing gold
 };
 
 function initials(name: string) {
@@ -664,11 +666,13 @@ function ChallengeCard({ ch, colors, isDark, styles, onAssign }: {
   const diffColor  = DIFF_COLOR(ch.difficulty, colors);
   const catColor   = CAT_COLOR[ch.category] ?? colors.primary;
 
-  // Light: soft category tint melting into white (the pastel look the user liked).
-  // Dark: faint tint melting into the dark card surface (no jarring white block),
-  // and we fall back to the theme's own light text instead of fixed dark text.
+  // Dark: follow the landing standard — flat near-black card surface with only a
+  // whisper-subtle neutral sheen (NO full-card colour wash, which read as muddy
+  // brown for gold challenges). Colour identity comes from the left accent bar +
+  // category badge, exactly like the Assignments cards.
+  // Light: keep the soft category tint melting into white (the pastel look).
   const cardGradient: [string, string] = isDark
-    ? [catColor + '2E', colors.cardDark]
+    ? [colors.cardHover, colors.cardDark]
     : [catColor + '22', '#FFFFFF'];
   const titleColor = isDark ? colors.textMain  : '#16241B';
   const descColor  = isDark ? colors.textMuted : '#5C6F62';

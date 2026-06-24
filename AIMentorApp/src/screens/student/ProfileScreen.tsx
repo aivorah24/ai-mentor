@@ -6,7 +6,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -415,10 +415,10 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   cameraRing:  {
     position: 'absolute', bottom: 2, right: 2,
     width: 26, height: 26, borderRadius: 13,
-    backgroundColor: c.primary, borderWidth: 2, borderColor: isDark ? '#111111' : '#F9F3F4',
+    backgroundColor: isDark ? '#1E1E1E' : '#252525', borderWidth: 2, borderColor: isDark ? '#111111' : '#F9F3F4',
     alignItems: 'center', justifyContent: 'center',
   },
-  heroName: { fontSize: 22, fontWeight: '800', color: c.textMain, letterSpacing: -0.4 },
+  heroName: { fontSize: 22, fontWeight: '800', color: c.textMain, letterSpacing: -0.4, fontFamily: fonts.serif },
   heroBio:  { fontSize: 13, color: c.textMuted, textAlign: 'center', marginTop: -4 },
   heroTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 4 },
   tag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
@@ -465,12 +465,12 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   comingSoonText:  { fontSize: 11, fontWeight: '700' },
 
   smallBtn:       { paddingHorizontal: 12, paddingVertical: 5, borderRadius: radius.sm, borderWidth: 1, borderColor: c.borderColor },
-  smallBtnActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  smallBtnActive: { borderColor: c.accentYellow + '50', backgroundColor: c.accentYellow + '15' },
   smallBtnText:   { fontSize: 12, fontWeight: '600', color: c.textDim },
 
   customInput: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    marginTop: spacing.md, backgroundColor: c.cardHover, borderWidth: 1, borderColor: c.primary,
+    marginTop: spacing.md, backgroundColor: c.cardHover, borderWidth: 1, borderColor: c.accentYellow + '50',
     borderRadius: radius.md, paddingHorizontal: spacing.lg, height: 44,
   },
   customInputText: { flex: 1, fontSize: 14, color: c.textMain },
@@ -485,13 +485,13 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   overlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   modalBox:   { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.xl, width: '100%', maxWidth: 440 },
   modalHead:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xl },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: c.textMain },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: c.textMain, fontFamily: fonts.serif },
   fieldLabel: { fontSize: 12, fontWeight: '600', color: c.textMuted, marginBottom: 6, marginTop: spacing.md },
   inputRow:   { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, height: 46, paddingHorizontal: spacing.lg },
   input:      { flex: 1, fontSize: 14, color: c.textMain },
   modalBtns:  { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl },
   cancelBtn:  { flex: 1, height: 46, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center', justifyContent: 'center' },
   cancelText: { fontSize: 14, fontWeight: '600', color: c.textMuted },
-  saveBtn:    { flex: 1, height: 46, borderRadius: radius.md, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+  saveBtn:    { flex: 1, height: 46, borderRadius: radius.md, backgroundColor: c.accentYellow, alignItems: 'center', justifyContent: 'center' },
   saveText:   { fontSize: 14, fontWeight: '700', color: 'white' },
 });

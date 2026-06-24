@@ -9,7 +9,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
 const TEAL   = '#5F8A86';
@@ -273,7 +273,7 @@ const makeStyles = (c: any) => StyleSheet.create({
     padding: spacing.lg, borderRadius: radius.xl, borderWidth: 1, borderColor: TEAL + '30',
   },
   heroIcon: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  heroTitle: { fontSize: 15, fontWeight: '800', marginBottom: 3 },
+  heroTitle: { fontSize: 15, fontWeight: '800', marginBottom: 3, fontFamily: fonts.serif },
   heroSub:   { fontSize: 12, lineHeight: 18 },
 
   premiumBar: {

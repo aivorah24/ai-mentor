@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Linking, useWindowDimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useStudentData } from '../../context/StudentDataContext';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import TopicAICoach from '../../components/common/TopicAICoach';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 
 import SERVER_URL from '../../config/serverUrl';
 
@@ -88,11 +88,12 @@ export default function VideoLessonScreen({ navigation, route }: any) {
   }
   const { colors, isDark } = useTheme();
   const sa = subjectAccent(subject);
-
-  const cardBg     = isDark ? colors.cardDark  : sa.color + '14';
-  const borderCol  = isDark ? colors.borderColor : sa.color + '40';
-  const titleColor = isDark ? colors.textMain  : '#1C2A28';
-  const mutedColor = isDark ? colors.textMuted : sa.color + 'cc';
+  const { width } = useWindowDimensions();
+  const isWide = width >= 900;
+  // Landing palette: sage primary + gold secondary (theme-aware).
+  const accent   = colors.primary;
+  const gold     = colors.accentYellow;
+  const onAccent = isDark ? '#0B140F' : '#FFFFFF';
 
   // Credit whole minutes only when the student is actively learning:
   // - video topics: while the video is playing
@@ -164,128 +165,156 @@ export default function VideoLessonScreen({ navigation, route }: any) {
         >
           {/* Back */}
           <TouchableOpacity style={s.backRow} onPress={() => goBackToTopics()}>
-            <Feather name="arrow-left" size={15} color={colors.textMuted} />
-            <Text style={[s.backText, { color: colors.textMuted }]}>Back to Topics</Text>
+            <Feather name="arrow-left" size={15} color={accent} />
+            <Text style={[s.backText, { color: accent }]}>Back to Topics</Text>
           </TouchableOpacity>
 
-          {/* Video placeholder card */}
-          <View style={[s.videoCard, { backgroundColor: cardBg, borderColor: borderCol }]}>
-            {/* Subject tag */}
-            <View style={[s.subjectTag, { backgroundColor: sa.color + '18', borderColor: sa.color + '40' }]}>
-              <Feather name={sa.icon} size={13} color={sa.color} />
-              <Text style={[s.subjectTagText, { color: sa.color }]}>{subject}</Text>
+          {/* ── Hero ── */}
+          <View style={[s.hero, isWide ? s.heroRow : s.heroCol]}>
+            {/* Owl illustration (placeholder — swap for art asset) */}
+            <View style={[s.owlWrap, { width: isWide ? 150 : '100%', minHeight: isWide ? 160 : 130, backgroundColor: accent + '14', borderColor: accent + '33' }]}>
+              <Feather name="feather" size={isWide ? 54 : 46} color={accent} />
             </View>
 
-            {/* Video player or Coming Soon */}
-            {VIDEO_MAP[topic] ? (
-              Platform.OS === 'web' ? (
-                <View style={s.videoFrame}>
-                  {/* @ts-ignore */}
-                  <video
-                    src={VIDEO_MAP[topic]}
-                    controls
-                    style={{ width: '100%', height: '100%', borderRadius: 12, backgroundColor: '#000', outline: 'none' }}
-                    controlsList="nodownload"
-                    onPlay={() => setVideoPlaying(true)}
-                    onPause={() => setVideoPlaying(false)}
-                    onEnded={() => setVideoPlaying(false)}
-                  />
-                </View>
-              ) : (
-                <TouchableOpacity
-                  style={[s.videoFrame, { backgroundColor: '#111', borderColor: sa.color + '30' }]}
-                  onPress={() => Linking.openURL(VIDEO_MAP[topic])}
-                  activeOpacity={0.85}
-                >
-                  <View style={[s.playCircle, { backgroundColor: sa.color + '30', borderColor: sa.color }]}>
-                    <Feather name="play" size={36} color={sa.color} />
-                  </View>
-                  <Text style={[s.comingSoonLabel, { color: sa.color }]}>Tap to Watch</Text>
-                </TouchableOpacity>
-              )
-            ) : (
-              <View style={[s.videoFrame, { backgroundColor: isDark ? '#111' : sa.color + '10', borderColor: sa.color + '30' }]}>
-                <View style={[s.playCircle, { backgroundColor: sa.color + '20', borderColor: sa.color + '50' }]}>
-                  <Feather name="film" size={36} color={sa.color} />
-                </View>
-                <Text style={[s.comingSoonLabel, { color: sa.color }]}>Video Lesson</Text>
-                <View style={[s.badge, { backgroundColor: sa.color + '18', borderColor: sa.color + '40' }]}>
-                  <Feather name="clock" size={11} color={sa.color} />
-                  <Text style={[s.badgeText, { color: sa.color }]}>Coming Soon</Text>
-                </View>
+            {/* Title block */}
+            <View style={s.heroText}>
+              <View style={[s.subjBadge, { backgroundColor: accent + '18', borderColor: accent + '40' }]}>
+                <Text style={[s.subjBadgeText, { color: accent }]}>{subject.toUpperCase()}</Text>
               </View>
-            )}
+              <Text style={[s.heroTitle, { color: colors.textMain }]}>{topic}</Text>
+              <Text style={[s.heroMeta, { color: colors.textMuted }]}>{grade} · {curriculum.replace('_', ' ')} · {subject}</Text>
+              <Text style={[s.heroDesc, { color: colors.textMuted }]}>
+                {hasVideo
+                  ? `Watch this engaging lesson on ${topic} and learn with Aivorah!`
+                  : `A video lesson on ${topic} is coming soon. In the meantime, start learning below!`}
+              </Text>
+            </View>
 
-            {/* Topic info */}
-            <Text style={[s.topicTitle, { color: titleColor }]}>{topic}</Text>
-            <Text style={[s.topicMeta, { color: mutedColor }]}>
-              {grade} · {curriculum.replace('_', ' ')} · {subject}
-            </Text>
-            <Text style={[s.topicDesc, { color: colors.textMuted }]}>
-              {VIDEO_MAP[topic]
-                ? `Watch this engaging lesson on ${topic} and learn with Aivorah!`
-                : `A video lesson on ${topic} is coming soon. In the meantime, start learning below!`}
-            </Text>
+            {/* Video card */}
+            <View style={[s.videoBox, { width: isWide ? 320 : '100%', minHeight: 170, backgroundColor: isDark ? colors.cardDark : '#fff', borderColor: colors.borderColor }]}>
+              {hasVideo ? (
+                Platform.OS === 'web' ? (
+                  <View style={s.videoFrame}>
+                    {/* @ts-ignore */}
+                    <video
+                      src={VIDEO_MAP[topic]}
+                      controls
+                      style={{ width: '100%', height: '100%', borderRadius: 12, backgroundColor: '#000', outline: 'none' }}
+                      controlsList="nodownload"
+                      onPlay={() => setVideoPlaying(true)}
+                      onPause={() => setVideoPlaying(false)}
+                      onEnded={() => setVideoPlaying(false)}
+                    />
+                  </View>
+                ) : (
+                  <TouchableOpacity style={s.videoComing} onPress={() => Linking.openURL(VIDEO_MAP[topic])} activeOpacity={0.85}>
+                    <View style={[s.clap, { backgroundColor: accent + '20', borderColor: accent + '50' }]}>
+                      <Feather name="play" size={28} color={accent} />
+                    </View>
+                    <Text style={[s.videoTitle, { color: colors.textMain }]}>Tap to Watch</Text>
+                  </TouchableOpacity>
+                )
+              ) : (
+                <View style={s.videoComing}>
+                  <View style={[s.clap, { backgroundColor: accent + '18', borderColor: accent + '45' }]}>
+                    <Feather name="film" size={26} color={accent} />
+                  </View>
+                  <Text style={[s.videoTitle, { color: colors.textMain }]}>Video Lesson</Text>
+                  <View style={[s.comingPill, { borderColor: accent + '50' }]}>
+                    <Feather name="clock" size={11} color={accent} />
+                    <Text style={[s.comingText, { color: accent }]}>Coming Soon</Text>
+                  </View>
+                </View>
+              )}
+            </View>
           </View>
 
-          {/* ── Content section (shown for all topics, especially when no video) ── */}
-          {!VIDEO_MAP[topic] && (
-            <View style={[s.contentCard, { backgroundColor: isDark ? colors.cardDark : sa.color + '0C', borderColor: borderCol }]}>
-              {/* What you'll learn */}
-              <View style={s.contentHeader}>
-                <View style={[s.contentIconBox, { backgroundColor: sa.color + '20' }]}>
-                  <Feather name="book-open" size={18} color={sa.color} />
-                </View>
-                <Text style={[s.contentTitle, { color: titleColor }]}>What you'll learn</Text>
-              </View>
-              <View style={{ gap: 8, marginTop: 4 }}>
-                {(WHAT_YOU_LEARN[subject] ?? WHAT_YOU_LEARN['Mathematics']).map((item, i) => (
-                  <View key={i} style={s.learnRow}>
-                    <View style={[s.learnDot, { backgroundColor: sa.color }]} />
-                    <Text style={[s.learnText, { color: colors.textMuted }]}>{item}</Text>
-                  </View>
-                ))}
-              </View>
-
-              {/* Action buttons */}
-              <View style={s.actionRow}>
-                <TouchableOpacity
-                  style={[s.actionBtn, { backgroundColor: sa.color, flex: 1 }]}
-                  onPress={() => navigation.navigate('TopicLesson', { topic, grade, subject, curriculum })}
-                  activeOpacity={0.85}
-                >
-                  <Feather name="play-circle" size={16} color="#fff" />
-                  <Text style={s.actionBtnText}>Start Learning</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[s.actionBtn, { backgroundColor: isDark ? colors.cardDark : sa.color + '15', borderWidth: 1, borderColor: sa.color + '50', flex: 1 }]}
-                  onPress={() => navigation.navigate('IBPYPQuiz', { topic, grade, subject, curriculum })}
-                  activeOpacity={0.85}
-                >
-                  <Feather name="check-square" size={16} color={sa.color} />
-                  <Text style={[s.actionBtnText, { color: sa.color }]}>Practice Quiz</Text>
-                </TouchableOpacity>
-              </View>
+          {/* ── What you'll learn ── */}
+          <View style={[s.card, { backgroundColor: isDark ? colors.cardDark : '#fff', borderColor: colors.borderColor }]}>
+            <View style={s.cardHead}>
+              <Feather name="book-open" size={18} color={accent} />
+              <Text style={[s.cardTitle, { color: colors.textMain }]}>What you'll learn</Text>
             </View>
-          )}
+            <View style={s.learnGrid}>
+              {(WHAT_YOU_LEARN[subject] ?? WHAT_YOU_LEARN['Mathematics']).map((item, i) => {
+                const icons = ['bar-chart-2', 'edit-3', 'feather', 'check-square'];
+                const c = i % 2 === 0 ? accent : gold;
+                return (
+                  <View key={i} style={[s.learnItem, { width: isWide ? '23%' : '47%' }]}>
+                    <View style={[s.learnIcon, { borderColor: c + '50' }]}>
+                      <Feather name={icons[i % icons.length] as any} size={16} color={c} />
+                    </View>
+                    <Text style={[s.learnLabel, { color: colors.textMuted }]}>{item}</Text>
+                  </View>
+                );
+              })}
+            </View>
+            <View style={[s.ctaRow, !isWide && { flexDirection: 'column' }]}>
+              <TouchableOpacity
+                style={[s.cta, { backgroundColor: accent + (isDark ? '1F' : '14'), borderColor: accent + '55' }]}
+                onPress={() => navigation.navigate('TopicLesson', { topic, grade, subject, curriculum })}
+                activeOpacity={0.85}
+              >
+                <Feather name="play-circle" size={18} color={accent} />
+                <View>
+                  <Text style={[s.ctaTitle, { color: colors.textMain }]}>Start Learning</Text>
+                  <Text style={[s.ctaSub, { color: colors.textMuted }]}>Begin your learning journey</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.cta, { backgroundColor: isDark ? colors.cardDark : '#fff', borderColor: colors.borderColor }]}
+                onPress={() => navigation.navigate('IBPYPQuiz', { topic, grade, subject, curriculum })}
+                activeOpacity={0.85}
+              >
+                <Feather name="check-square" size={18} color={gold} />
+                <View>
+                  <Text style={[s.ctaTitle, { color: colors.textMain }]}>Practice Quiz</Text>
+                  <Text style={[s.ctaSub, { color: colors.textMuted }]}>Test your understanding</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
 
-          {/* Explore other topics */}
-          <TouchableOpacity
-            style={[s.altCard, { backgroundColor: isDark ? colors.cardDark : sa.color + '0C', borderColor: borderCol }]}
-            onPress={() => goBackToTopics()}
-            activeOpacity={0.75}
-          >
-            <View style={s.altRow}>
-              <View style={[s.altIcon, { backgroundColor: sa.color + '18' }]}>
-                <Feather name="list" size={18} color={sa.color} />
+          {/* ── Explore Other Topics + Aivorah tutor (2-up grid) ── */}
+          <View style={[s.bottomGrid, !isWide && { flexDirection: 'column' }]}>
+            {/* Explore Other Topics */}
+            <TouchableOpacity
+              style={[s.card, { flex: isWide ? 1 : undefined, justifyContent: 'center', backgroundColor: isDark ? colors.cardDark : '#fff', borderColor: colors.borderColor }]}
+              onPress={() => goBackToTopics()}
+              activeOpacity={0.8}
+            >
+              <View style={s.exploreRow}>
+                <View style={[s.exploreIcon, { backgroundColor: accent + '18' }]}>
+                  <Feather name="list" size={18} color={accent} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.cardTitle, { color: colors.textMain }]}>Explore Other Topics</Text>
+                  <Text style={[s.exploreSub, { color: colors.textMuted }]}>Browse all {subject} topics in {grade}</Text>
+                </View>
+                <View style={s.viewAll}>
+                  <Text style={[s.viewAllText, { color: accent }]}>View all topics</Text>
+                  <Feather name="arrow-right" size={14} color={accent} />
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            {/* Aivorah tutor */}
+            <View style={[s.tutorFooter, { flex: isWide ? 1 : undefined, backgroundColor: isDark ? colors.cardDark : '#fff', borderColor: colors.borderColor }]}>
+              <View style={[s.tutorAvatar, { backgroundColor: accent + '22', borderColor: accent + '55' }]}>
+                <Feather name="feather" size={18} color={accent} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[s.altTitle, { color: titleColor }]}>Explore Other Topics</Text>
-                <Text style={[s.altSub, { color: colors.textMuted }]}>Browse all {subject} topics in {grade}</Text>
+                <Text style={[s.tutorName, { color: colors.textMain }]}>
+                  Hi! I'm <Text style={{ color: accent, fontWeight: '700' }}>Aivorah</Text>, your AI tutor.
+                </Text>
+                <Text style={[s.tutorMsg, { color: colors.textMuted }]}>I'll help you explore, practice, and master every concept!</Text>
               </View>
-              <Feather name="chevron-right" size={18} color={colors.textMuted} />
+              <TouchableOpacity style={[s.helpBtn, { borderColor: colors.borderColor }]} onPress={() => navigation.navigate('HelpCenter')} activeOpacity={0.8}>
+                <Feather name="message-circle" size={13} color={colors.textMain} />
+                <Text style={[s.helpText, { color: colors.textMain }]}>Need help?</Text>
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
+          </View>
         </ScrollView>
 
         {/* Floating per-topic AI Coach */}
@@ -302,41 +331,59 @@ export default function VideoLessonScreen({ navigation, route }: any) {
 }
 
 const s = StyleSheet.create({
-  content:      { padding: spacing.xl, paddingBottom: 100, gap: spacing.lg },
-  backRow:      { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  backText:     { fontSize: 13, fontWeight: '600' },
+  content:  { padding: spacing.xl, paddingBottom: 110, gap: spacing.lg },
+  backRow:  { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  backText: { fontSize: 13, fontWeight: '600' },
 
-  videoCard:    { borderRadius: radius.lg, borderWidth: 1, padding: spacing.xl, gap: spacing.md },
-  subjectTag:   { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
-  subjectTagText: { fontSize: 12, fontWeight: '700' },
+  // Hero
+  hero:      { gap: spacing.lg },
+  heroRow:   { flexDirection: 'row', alignItems: 'stretch' },
+  heroCol:   { flexDirection: 'column' },
+  owlWrap:   { alignItems: 'center', justifyContent: 'center', borderRadius: radius.lg, borderWidth: 1 },
+  heroText:  { flex: 1, justifyContent: 'center', gap: 8 },
+  subjBadge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
+  subjBadgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8 },
+  heroTitle: { fontFamily: fonts.serif, fontSize: 32, fontWeight: '700', letterSpacing: -0.6, lineHeight: 38 },
+  heroMeta:  { fontSize: 13, fontWeight: '600' },
+  heroDesc:  { fontSize: 14, lineHeight: 21, marginTop: 2 },
 
-  videoFrame:   { borderRadius: radius.md, borderWidth: 1, height: 320, alignItems: 'center', justifyContent: 'center', gap: 12, overflow: 'hidden', backgroundColor: '#000' },
-  playCircle:   { width: 80, height: 80, borderRadius: 40, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  comingSoonLabel: { fontSize: 15, fontWeight: '700' },
-  badge:        { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
-  badgeText:    { fontSize: 12, fontWeight: '700' },
+  videoBox:   { borderRadius: radius.lg, borderWidth: 1, padding: 16, alignItems: 'center', justifyContent: 'center' },
+  videoFrame: { width: '100%', height: 160, borderRadius: radius.md, overflow: 'hidden', backgroundColor: '#000' },
+  videoComing:{ alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 14 },
+  clap:       { width: 64, height: 64, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  videoTitle: { fontFamily: fonts.serif, fontSize: 18, fontWeight: '700' },
+  comingPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
+  comingText: { fontSize: 12, fontWeight: '700' },
 
-  topicTitle:   { fontSize: 20, fontWeight: '800', marginTop: 4 },
-  topicMeta:    { fontSize: 12, fontWeight: '600' },
-  topicDesc:    { fontSize: 13, lineHeight: 20 },
+  // Cards
+  card:      { borderRadius: radius.lg, borderWidth: 1, padding: spacing.xl, gap: spacing.md },
+  cardHead:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  cardTitle: { fontFamily: fonts.serif, fontSize: 18, fontWeight: '700' },
 
-  sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 4 },
+  learnGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 4 },
+  learnItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  learnIcon: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  learnLabel:{ flex: 1, fontSize: 13, lineHeight: 18 },
 
-  contentCard:    { borderRadius: radius.lg, borderWidth: 1, padding: spacing.xl, gap: spacing.md },
-  contentHeader:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  contentIconBox: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  contentTitle:   { fontSize: 16, fontWeight: '700' },
-  learnRow:       { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  learnDot:       { width: 6, height: 6, borderRadius: 3 },
-  learnText:      { fontSize: 13, flex: 1, lineHeight: 20 },
-  actionRow:      { flexDirection: 'row', gap: 10, marginTop: 4 },
-  actionBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius.md },
-  actionBtnText:  { fontSize: 13, fontWeight: '700', color: '#fff' },
+  ctaRow:    { flexDirection: 'row', gap: 12, marginTop: 6 },
+  cta:       { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 18, borderRadius: radius.md, borderWidth: 1 },
+  ctaTitle:  { fontSize: 14, fontWeight: '700' },
+  ctaSub:    { fontSize: 12, marginTop: 1 },
 
-  altCard:      { borderRadius: radius.lg, borderWidth: 1, overflow: 'hidden' },
-  altRow:       { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg },
-  altIcon:      { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  altTitle:     { fontSize: 14, fontWeight: '700' },
-  altSub:       { fontSize: 12, marginTop: 2 },
+  exploreRow:  { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  exploreIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  exploreSub:  { fontSize: 12, marginTop: 2 },
+  viewAll:     { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  viewAllText: { fontSize: 12.5, fontWeight: '600' },
 
+  // Bottom 2-up grid (Explore Other Topics + tutor)
+  bottomGrid:  { flexDirection: 'row', gap: spacing.lg, alignItems: 'stretch' },
+
+  // Tutor footer
+  tutorFooter: { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderRadius: radius.lg, padding: 16 },
+  tutorAvatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  tutorName:   { fontSize: 14, fontWeight: '600' },
+  tutorMsg:    { fontSize: 12.5, marginTop: 2 },
+  helpBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14 },
+  helpText:    { fontSize: 12.5, fontWeight: '600' },
 });

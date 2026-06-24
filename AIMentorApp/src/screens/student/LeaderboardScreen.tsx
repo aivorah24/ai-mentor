@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -213,7 +213,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   myRankIcon: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
   myRankLabel: { fontSize: 11, color: c.textMuted },
-  myRankValue: { fontSize: 18, fontWeight: '700', color: c.textMain },
+  myRankValue: { fontSize: 18, fontWeight: '700', color: c.textMain, fontFamily: fonts.serif },
   myXP: { fontSize: 20, fontWeight: '800' },
   myXPLabel: { fontSize: 10, color: c.textDim, fontWeight: '600' },
 
@@ -260,7 +260,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   leaderMeta: { fontSize: 11, color: c.textDim, marginTop: 1 },
   leaderScore: { fontSize: 15, fontWeight: '800', letterSpacing: -0.5 },
   leaderXP: { fontSize: 10, color: c.textDim, fontWeight: '600' },
-  youBadge: { backgroundColor: c.primaryGlow, borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1 },
+  youBadge: { backgroundColor: c.accentYellow + '15', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1 },
   youText: { fontSize: 9, fontWeight: '800' },
 
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: spacing.md },

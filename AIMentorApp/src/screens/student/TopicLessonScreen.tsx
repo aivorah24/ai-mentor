@@ -8,15 +8,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Platform, ScrollView, Image,
+  ActivityIndicator, Platform, ScrollView, Image, useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
 import { useStudentData } from '../../context/StudentDataContext';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import { NumberLineVisual, VennCirclesVisual, BarModelVisual, ConversionChartVisual } from '../../components/common/LessonVisuals';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
 // ── Bundled lesson data (fallback when server unavailable) ────────────────────
@@ -1181,6 +1182,12 @@ const TYPE_LABEL: Record<string, string> = {
   summary:  'Summary',
 };
 
+// Unified Aivorah lesson accent — vivid sage-green from the landing identity
+// (replaces the old per-scene blue/teal so every lesson matches the theme).
+const LESSON_GREEN = '#3FA06A';
+// Static stylized waveform bar heights for the "Listen to Aivorah" audio widget.
+const WAVE_BARS = [6, 11, 18, 9, 22, 14, 7, 16, 24, 12, 8, 19, 13, 6, 20, 10, 15, 9, 7, 12];
+
 interface LessonScene {
   id: string;
   scene_number: number;
@@ -1336,6 +1343,8 @@ function buildGenericLesson(topic: string, grade: string, subject: string): Less
 export default function TopicLessonScreen({ navigation, route }: any) {
   const { topic = 'Lesson', grade = 'Grade 4', subject = 'Mathematics', curriculum = 'IB_PYP' } = route?.params ?? {};
   const { colors, isDark } = useTheme();
+  const { width } = useWindowDimensions();
+  const isWide = width >= 900;
   const { recordStudyTime } = useStudentData();
   const studySessionStartRef = useRef<number>(Date.now());
   const trackedStudyMinutesRef = useRef(0);
@@ -1604,8 +1613,11 @@ export default function TopicLessonScreen({ navigation, route }: any) {
     );
   }
 
-  const scene   = lesson.scenes[cardIdx];
-  const accent  = scene.accent || lesson.accent || '#38bdf8';
+  const scene    = lesson.scenes[cardIdx];
+  // Landing palette: muted sage primary + gold secondary (theme-aware, not neon).
+  const accent   = colors.primary;       // landing sage
+  const gold     = colors.accentYellow;  // landing gold
+  const onAccent = isDark ? '#0B140F' : '#FFFFFF'; // readable text on the sage fill
   const icon    = TYPE_ICON[scene.type] || 'book-open';
   const label   = TYPE_LABEL[scene.type] || scene.type;
   const isLast  = cardIdx === lesson.scenes.length - 1;
@@ -1622,189 +1634,206 @@ export default function TopicLessonScreen({ navigation, route }: any) {
 
       <View style={{ flex: 1, backgroundColor: colors.bgDark }}>
 
-        {/* ── Top progress bar ── */}
-        <View style={s.topBar}>
+        {/* ── Sub bar: Back · scene pill · Lesson Progress ── */}
+        <View style={s.subBar}>
           <TouchableOpacity onPress={() => { stopAudio(); stopSpeech(); navigation.goBack(); }} style={s.backRow}>
-            <Feather name="arrow-left" size={14} color={colors.textMuted} />
+            <Feather name="arrow-left" size={15} color={colors.textMuted} />
             <Text style={[s.backText, { color: colors.textMuted }]}>Back</Text>
           </TouchableOpacity>
-          <View style={s.pillRow}>
-            <View style={[s.pill, { backgroundColor: accent + '22', borderColor: accent + '55' }]}>
-              <Feather name={icon as any} size={12} color={accent} />
-              <Text style={[s.pillText, { color: accent }]}>{cardIdx + 1} / {lesson.scenes.length}</Text>
-            </View>
+          <View style={[s.scenePill, { borderColor: accent + '66', backgroundColor: accent + '14' }]}>
+            <Text style={[s.scenePillText, { color: accent }]}>{cardIdx + 1} / {lesson.scenes.length}</Text>
           </View>
-          <View style={{ width: 60 }} />
+          <View style={s.progressLabelRow}>
+            <Text style={[s.progressLabel, { color: colors.textMuted }]}>Lesson Progress</Text>
+            <Feather name="award" size={15} color={gold} />
+          </View>
         </View>
 
-        {/* Progress track */}
+        {/* Progress track — sage → gold (landing "confidence" bar) */}
         <View style={[s.track, { backgroundColor: colors.borderColor }]}>
-          <View style={[s.fill, { width: `${pct}%` as any, backgroundColor: accent }]} />
+          <LinearGradient
+            colors={[accent, gold]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={[s.fill, { width: `${pct}%` as any }]}
+          />
         </View>
 
-        {/* ── MAIN CARD ── */}
+        {/* ── MAIN: two-column storybook ── */}
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={[s.cardWrap, { backgroundColor: colors.bgDark }]}
+          contentContainerStyle={s.main}
           showsVerticalScrollIndicator={false}
         >
-          <View style={[s.card, { backgroundColor: isDark ? colors.cardDark : '#fff', borderColor: accent + '40', shadowColor: accent }]}>
+          <View style={[s.columns, isWide ? s.columnsRow : s.columnsCol]}>
 
-            {/* Type badge */}
-            <View style={[s.badge, { backgroundColor: accent + '18', borderColor: accent + '40' }]}>
-              <Feather name={icon as any} size={14} color={accent} />
-              <Text style={[s.badgeText, { color: accent }]}>{label}</Text>
-            </View>
-
-            {/* Topic heading */}
-            <Text style={[s.cardHeading, { color: isDark ? '#fff' : '#1a2a28' }]}>{scene.subtext || topic}</Text>
-
-            {/* Big keyword words */}
-            <View style={s.wordsRow}>
-              {scene.words.map((w, i) => (
-                <View key={i} style={[s.wordChip, { backgroundColor: accent + '15', borderColor: accent + '35' }]}>
-                  <Text style={[s.wordChipText, { color: accent }]}>{w}</Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Visual: number line or Venn circles */}
-            {scene.visual?.type === 'numberline' && (
-              <NumberLineVisual
-                min={scene.visual.min ?? 0}
-                max={scene.visual.max ?? 20}
-                highlights={scene.visual.highlights ?? []}
-                answer={scene.visual.answer}
-                label={scene.visual.label}
-                accent={accent}
-              />
-            )}
-            {scene.visual?.type === 'venn' && (
-              <VennCirclesVisual
-                leftLabel={scene.visual.leftLabel ?? 'A'}
-                rightLabel={scene.visual.rightLabel ?? 'B'}
-                leftOnly={scene.visual.leftOnly ?? []}
-                rightOnly={scene.visual.rightOnly ?? []}
-                overlap={scene.visual.overlap ?? []}
-                accent={accent}
-              />
-            )}
-            {scene.visual?.type === 'barmodel' && (
-              <BarModelVisual
-                total={scene.visual.total ?? 4}
-                filled={scene.visual.filled ?? 1}
-                label={scene.visual.label}
-                accent={accent}
-              />
-            )}
-            {scene.visual?.type === 'chart' && (
-              <ConversionChartVisual
-                items={scene.visual.items ?? []}
-                factors={scene.visual.factors ?? []}
-                accent={accent}
-              />
-            )}
-
-            {/* Divider */}
-            <View style={[s.divider, { backgroundColor: accent + '30' }]} />
-
-            {/* Diagram / image — shown when scene has an imageUrl */}
-            {scene.imageUrl ? (
-              <View style={s.diagramWrap}>
-                <Image
-                  source={{ uri: scene.imageUrl.startsWith('http') ? scene.imageUrl : `${SERVER_URL}${scene.imageUrl}` }}
-                  style={s.diagramImg}
-                  resizeMode="contain"
-                />
-                {!!scene.imageCaption && (
-                  <Text style={[s.diagramCaption, { color: colors.textMuted }]}>{scene.imageCaption}</Text>
-                )}
+            {/* LEFT — text panel */}
+            <View style={[s.leftCard, isWide && s.leftCardWide, { backgroundColor: isDark ? colors.cardDark : '#fff', borderColor: colors.borderColor }]}>
+              {/* Type badge */}
+              <View style={[s.badge, { backgroundColor: accent + '18', borderColor: accent + '40' }]}>
+                <Feather name={icon as any} size={13} color={accent} />
+                <Text style={[s.badgeText, { color: accent }]}>{label}</Text>
               </View>
-            ) : null}
 
-            {/* Main lesson text — word-by-word highlight during playback */}
-            <Text style={[s.lessonText, { color: isDark ? '#e2e8f0' : '#2d3748' }]}>
-              {(scene.voice.match(/\S+/g) || []).map((w, i) => {
-                const isHighlighted = wordIndex === i;
-                return (
-                  <Text
-                    key={i}
-                    style={isHighlighted ? [s.wordHighlight, { backgroundColor: accent + '40', color: accent }] : undefined}
-                  >{w}{' '}</Text>
-                );
-              })}
-            </Text>
+              {/* Eyebrow + serif headline */}
+              <Text style={[s.eyebrow, { color: gold }]}>{grade} · {subject}</Text>
+              <Text style={[s.headline, { color: isDark ? colors.textMain : '#16241B' }]}>{scene.subtext || topic}</Text>
 
-            {/* Speaking indicator */}
-            <View style={s.speakRow}>
-              <View style={[s.avatarDot, { backgroundColor: accent }]}>
-                <Feather name="volume-2" size={13} color="#fff" />
-              </View>
-              <Text style={[s.speakLabel, { color: colors.textMuted }]}>Aivorah</Text>
-              {speaking && !paused && (
-                <View style={[s.speakingPill, { backgroundColor: accent + '20', borderColor: accent + '40' }]}>
-                  <ActivityIndicator size="small" color={accent} style={{ transform: [{ scale: 0.7 }] }} />
-                  <Text style={[s.speakingText, { color: accent }]}>Speaking…</Text>
+              {/* Key words */}
+              {scene.words && scene.words.length > 0 && (
+                <View style={s.wordsRow}>
+                  {scene.words.map((w, i) => (
+                    <View key={i} style={[s.wordChip, { backgroundColor: gold + '14', borderColor: gold + '40' }]}>
+                      <Text style={[s.wordChipText, { color: gold }]}>{w}</Text>
+                    </View>
+                  ))}
                 </View>
               )}
-              {paused && (
-                <View style={[s.speakingPill, { backgroundColor: '#f59e0b20', borderColor: '#f59e0b40' }]}>
-                  <Feather name="pause" size={11} color="#f59e0b" />
-                  <Text style={[s.speakingText, { color: '#f59e0b' }]}>Paused</Text>
-                </View>
-              )}
-            </View>
-          </View>
 
-          {/* Dot indicators */}
-          <View style={s.dotsRow}>
-            {lesson.scenes.map((_, i) => (
-              <TouchableOpacity key={i} onPress={() => { stopAudio(); stopSpeech(); setSpeaking(false); setCardIdx(i); }}>
-                <View style={[s.dot, {
-                  backgroundColor: i === cardIdx ? accent : (i < cardIdx ? accent + '60' : colors.borderColor),
-                  width: i === cardIdx ? 20 : 8,
-                }]} />
+              {/* Lesson body — word-by-word highlight during playback */}
+              <Text style={[s.lessonText, { color: isDark ? '#D7DCD6' : '#2d3748' }]}>
+                {(scene.voice.match(/\S+/g) || []).map((w, i) => {
+                  const isHighlighted = wordIndex === i;
+                  return (
+                    <Text
+                      key={i}
+                      style={isHighlighted ? [s.wordHighlight, { backgroundColor: accent + '33', color: accent }] : undefined}
+                    >{w}{' '}</Text>
+                  );
+                })}
+              </Text>
+
+              {/* Audio widget — Listen to Aivorah */}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={paused ? togglePause : (speaking ? togglePause : replayCard)}
+                style={[s.audioWidget, { backgroundColor: isDark ? '#0E0E0E' : '#F2F6EF', borderColor: colors.borderColor }]}
+              >
+                <View style={[s.audioBtn, { backgroundColor: accent }]}>
+                  <Feather name={speaking && !paused ? 'pause' : 'volume-2'} size={16} color={onAccent} />
+                </View>
+                <View>
+                  <Text style={[s.audioTitle, { color: colors.textMain }]}>
+                    {paused ? 'Paused — tap to resume' : (speaking ? 'Listen to Aivorah' : 'Replay narration')}
+                  </Text>
+                  <Text style={[s.audioSub, { color: colors.textDim }]}>Your AI Tutor</Text>
+                </View>
+                <View style={s.waveRow}>
+                  {WAVE_BARS.map((h, i) => (
+                    <View key={i} style={[s.waveBar, { height: h, backgroundColor: (speaking && !paused) ? accent : colors.borderColor }]} />
+                  ))}
+                </View>
               </TouchableOpacity>
-            ))}
+            </View>
+
+            {/* RIGHT — illustration / diagram panel */}
+            <View style={[s.rightPanel, isWide && s.rightPanelWide, { backgroundColor: isDark ? '#0E140F' : '#EEF4EA', borderColor: accent + '33', shadowColor: accent }]}>
+              {scene.imageUrl ? (
+                <>
+                  <Image
+                    source={{ uri: scene.imageUrl.startsWith('http') ? scene.imageUrl : `${SERVER_URL}${scene.imageUrl}` }}
+                    style={s.illustration}
+                    resizeMode="contain"
+                  />
+                  {!!scene.imageCaption && (
+                    <Text style={[s.illustrationCaption, { color: colors.textMuted }]}>{scene.imageCaption}</Text>
+                  )}
+                </>
+              ) : scene.visual?.type === 'numberline' ? (
+                <NumberLineVisual min={scene.visual.min ?? 0} max={scene.visual.max ?? 20} highlights={scene.visual.highlights ?? []} answer={scene.visual.answer} label={scene.visual.label} accent={accent} />
+              ) : scene.visual?.type === 'venn' ? (
+                <VennCirclesVisual leftLabel={scene.visual.leftLabel ?? 'A'} rightLabel={scene.visual.rightLabel ?? 'B'} leftOnly={scene.visual.leftOnly ?? []} rightOnly={scene.visual.rightOnly ?? []} overlap={scene.visual.overlap ?? []} accent={accent} />
+              ) : scene.visual?.type === 'barmodel' ? (
+                <BarModelVisual total={scene.visual.total ?? 4} filled={scene.visual.filled ?? 1} label={scene.visual.label} accent={accent} />
+              ) : scene.visual?.type === 'chart' ? (
+                <ConversionChartVisual items={scene.visual.items ?? []} factors={scene.visual.factors ?? []} accent={accent} />
+              ) : (
+                <View style={s.illustrationEmpty}>
+                  <View style={[s.illustrationEmptyIcon, { backgroundColor: accent + '1A', borderColor: accent + '40' }]}>
+                    <Feather name={icon as any} size={34} color={accent} />
+                  </View>
+                  <Text style={[s.illustrationEmptyText, { color: colors.textDim }]}>Illustration coming soon</Text>
+                </View>
+              )}
+            </View>
+
           </View>
         </ScrollView>
 
-        {/* ── NAVIGATION BAR ── */}
+        {/* ── Scene stepper ── */}
+        <View style={[s.stepperWrap, { borderTopColor: colors.borderColor }]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stepperRow}>
+            {lesson.scenes.map((sc, i) => {
+              const done   = i < cardIdx;
+              const active = i === cardIdx;
+              const stepLabel = sc.subtext || TYPE_LABEL[sc.type] || `Step ${i + 1}`;
+              return (
+                <TouchableOpacity
+                  key={i} style={s.step} activeOpacity={0.7}
+                  onPress={() => { stopAudio(); stopSpeech(); setSpeaking(false); setCardIdx(i); }}
+                >
+                  <View style={[s.stepNum, {
+                    backgroundColor: active ? accent : (done ? accent + '2A' : colors.cardDark),
+                    borderColor:     active ? accent : (done ? accent + '55' : colors.borderColor),
+                  }]}>
+                    {done
+                      ? <Feather name="check" size={13} color={accent} />
+                      : <Text style={[s.stepNumText, { color: active ? '#fff' : colors.textMuted }]}>{i + 1}</Text>}
+                  </View>
+                  <Feather name={(TYPE_ICON[sc.type] || 'book-open') as any} size={13} color={active ? accent : colors.textDim} />
+                  <Text numberOfLines={1} style={[s.stepLabel, { color: active ? colors.textMain : colors.textDim, fontWeight: active ? '700' : '500' }]}>{stepLabel}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* ── BOTTOM BAR: Prev · Aivorah tutor · Pause · Next ── */}
         <View style={[s.navBar, { backgroundColor: colors.cardDark, borderTopColor: colors.borderColor }]}>
           {/* Prev */}
           <TouchableOpacity
-            style={[s.navBtn, { borderColor: colors.borderColor, opacity: cardIdx === 0 ? 0.3 : 1 }]}
+            style={[s.navBtn, { borderColor: colors.borderColor, opacity: cardIdx === 0 ? 0.35 : 1 }]}
             onPress={goPrev} disabled={cardIdx === 0}
           >
             <Feather name="arrow-left" size={16} color={colors.textMain} />
             <Text style={[s.navBtnText, { color: colors.textMain }]}>Prev</Text>
           </TouchableOpacity>
 
-          {/* Spacer */}
-          <View style={{ flex: 1 }} />
+          {/* Tutor bubble (wide only) — else flexible spacer */}
+          {isWide ? (
+            <View style={[s.tutorBubble, { backgroundColor: isDark ? '#0E140F' : '#EEF4EA', borderColor: colors.borderColor }]}>
+              <View style={[s.tutorAvatar, { backgroundColor: accent + '22', borderColor: accent + '55' }]}>
+                <Feather name="feather" size={15} color={accent} />
+              </View>
+              <Text style={[s.tutorText, { color: colors.textMuted }]} numberOfLines={2}>
+                I'm <Text style={{ color: accent, fontWeight: '700' }}>Aivorah</Text>, your AI tutor. I'll guide you through this lesson!
+              </Text>
+            </View>
+          ) : (
+            <View style={{ flex: 1 }} />
+          )}
 
           {/* Pause / Resume / Replay */}
           <TouchableOpacity
-            style={[s.navBtn, { borderColor: paused ? '#10b981' : accent + '60', backgroundColor: paused ? '#10b981' + '18' : accent + '12' }]}
+            style={[s.navBtn, { borderColor: accent + '60', backgroundColor: accent + '12' }]}
             onPress={paused ? togglePause : (speaking ? togglePause : replayCard)}
           >
             <Feather
               name={speaking && !paused ? 'pause' : (paused ? 'play' : 'rotate-ccw')}
               size={16}
-              color={paused ? '#10b981' : accent}
+              color={accent}
             />
-            <Text style={[s.navBtnText, { color: paused ? '#10b981' : accent }]}>
+            <Text style={[s.navBtnText, { color: accent }]}>
               {speaking && !paused ? 'Pause' : (paused ? 'Resume' : 'Replay')}
             </Text>
           </TouchableOpacity>
 
-          {/* Next — compact */}
+          {/* Next */}
           <TouchableOpacity
-            style={[s.nextBtn, { backgroundColor: isLast ? '#10b981' : accent }]}
+            style={[s.nextBtn, { backgroundColor: accent }]}
             onPress={goNext}
           >
-            <Text style={s.nextBtnText}>{isLast ? 'Take Quiz' : 'Next'}</Text>
-            <Feather name={isLast ? 'check-circle' : 'arrow-right'} size={16} color="#fff" />
+            <Text style={[s.nextBtnText, { color: onAccent }]}>{isLast ? 'Take Quiz' : 'Next'}</Text>
+            <Feather name={isLast ? 'check-circle' : 'arrow-right'} size={16} color={onAccent} />
           </TouchableOpacity>
         </View>
       </View>
@@ -1813,50 +1842,75 @@ export default function TopicLessonScreen({ navigation, route }: any) {
 }
 
 const s = StyleSheet.create({
-  topBar:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 10, paddingBottom: 6 },
-  backRow:      { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  backText:     { fontSize: 13, fontWeight: '600' },
-  pillRow:      { flexDirection: 'row', gap: 6 },
-  pill:         { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
-  pillText:     { fontSize: 12, fontWeight: '700' },
-  track:        { height: 4, marginHorizontal: 0 },
-  fill:         { height: 4 },
+  // ── Sub bar ──
+  subBar:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingTop: 12, paddingBottom: 8 },
+  backRow:          { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  backText:         { fontSize: 14, fontWeight: '600' },
+  scenePill:        { paddingHorizontal: 16, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
+  scenePillText:    { fontSize: 13, fontWeight: '700' },
+  progressLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  progressLabel:    { fontSize: 13, fontWeight: '600' },
 
-  cardWrap:     { padding: spacing.xl, paddingBottom: 20, gap: spacing.lg, alignItems: 'stretch' },
-  card:         { borderRadius: 20, borderWidth: 1.5, padding: 24, gap: 16, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: 4 },
+  track: { height: 4 },
+  fill:  { height: 4 },
 
-  badge:        { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
-  badgeText:    { fontSize: 12, fontWeight: '700' },
+  // ── Main / columns ──
+  main:       { padding: spacing.xl, paddingBottom: spacing.md },
+  columns:    { width: '100%', maxWidth: 1200, alignSelf: 'center', gap: spacing.xl },
+  columnsRow: { flexDirection: 'row', alignItems: 'stretch' },
+  columnsCol: { flexDirection: 'column' },
 
-  cardHeading:  { fontSize: 22, fontWeight: '800', lineHeight: 30 },
+  // ── Left text panel ──
+  leftCard:     { flex: 1, borderRadius: radius.xl, borderWidth: 1, padding: 28, gap: 14, justifyContent: 'center' },
+  leftCardWide: { flexBasis: '46%', maxWidth: '50%' },
 
-  wordsRow:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  wordChip:     { borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 6 },
-  wordChipText: { fontSize: 13, fontWeight: '800', letterSpacing: 0.5 },
+  badge:     { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
+  badgeText: { fontSize: 12, fontWeight: '700' },
 
-  divider:      { height: 1.5, borderRadius: 1 },
+  eyebrow:  { fontFamily: fonts.serif, fontSize: 24, fontWeight: '700', letterSpacing: -0.3 },
+  headline: { fontFamily: fonts.serif, fontSize: 28, fontWeight: '700', lineHeight: 36, letterSpacing: -0.5 },
 
-  diagramWrap:    { marginTop: 14, marginBottom: 4, alignItems: 'center', width: '100%' },
-  diagramImg:     { width: '100%', height: 220, borderRadius: 10 },
-  diagramCaption: { fontSize: 12, textAlign: 'center', marginTop: 6, fontStyle: 'italic' },
+  wordsRow:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 },
+  wordChip:     { borderRadius: 8, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 4 },
+  wordChipText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
 
-  lessonText:     { fontSize: 17, lineHeight: 28, fontWeight: '400' },
-  wordHighlight:  { fontWeight: '700', borderRadius: 4 },
+  lessonText:    { fontSize: 16, lineHeight: 27, fontWeight: '400', marginTop: 2 },
+  wordHighlight: { fontWeight: '700', borderRadius: 4 },
 
-  speakRow:     { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
-  avatarDot:    { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  speakLabel:   { fontSize: 12, fontWeight: '700', flex: 1 },
-  speakingPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
-  speakingText: { fontSize: 11, fontWeight: '700' },
+  audioWidget: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: radius.md, borderWidth: 1, padding: 12, marginTop: 6 },
+  audioBtn:    { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  audioTitle:  { fontSize: 13, fontWeight: '700' },
+  audioSub:    { fontSize: 11, fontWeight: '500', marginTop: 1 },
+  waveRow:     { flexDirection: 'row', alignItems: 'center', gap: 2, marginLeft: 'auto', height: 26 },
+  waveBar:     { width: 2.5, borderRadius: 2 },
 
-  dotsRow:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  dot:          { height: 8, borderRadius: 4 },
+  // ── Right illustration panel ──
+  rightPanel:     { borderRadius: radius.xl, borderWidth: 1, padding: 18, alignItems: 'center', justifyContent: 'center', minHeight: 280, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 18, elevation: 4 },
+  rightPanelWide: { flexBasis: '54%', flexGrow: 1 },
+  illustration:        { width: '100%', aspectRatio: 1.3, borderRadius: radius.lg },
+  illustrationCaption: { fontSize: 12, textAlign: 'center', marginTop: 10, fontStyle: 'italic' },
+  illustrationEmpty:     { alignItems: 'center', justifyContent: 'center', gap: 14, paddingVertical: 50 },
+  illustrationEmptyIcon: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  illustrationEmptyText: { fontSize: 13, fontWeight: '500' },
 
-  navBar:       { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderTopWidth: 1 },
-  navBtn:       { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius.lg, borderWidth: 1 },
-  navBtnText:   { fontSize: 13, fontWeight: '600' },
-  nextBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 22, borderRadius: radius.lg },
-  nextBtnText:  { fontSize: 14, fontWeight: '700', color: '#fff' },
+  // ── Scene stepper ──
+  stepperWrap: { borderTopWidth: 1, paddingVertical: 10, paddingHorizontal: spacing.lg },
+  stepperRow:  { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 },
+  step:        { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 20 },
+  stepNum:     { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  stepNumText: { fontSize: 12, fontWeight: '700' },
+  stepLabel:   { fontSize: 13, maxWidth: 150 },
 
-  backBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#ef4444', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 },
+  // ── Bottom bar ──
+  navBar:      { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderTopWidth: 1 },
+  navBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius.lg, borderWidth: 1 },
+  navBtnText:  { fontSize: 13, fontWeight: '600' },
+  nextBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 24, borderRadius: radius.lg },
+  nextBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+
+  tutorBubble: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: radius.lg, borderWidth: 1, paddingVertical: 8, paddingHorizontal: 14, maxWidth: 520 },
+  tutorAvatar: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  tutorText:   { flex: 1, fontSize: 13, lineHeight: 18 },
+
+  backBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#ef4444', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 },
 });

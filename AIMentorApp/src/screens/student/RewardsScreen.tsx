@@ -7,7 +7,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useStudentData } from '../../context/StudentDataContext';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 
 // ── Palette ──────────────────────────────────────────────────
 const TEAL   = '#5F8A86';

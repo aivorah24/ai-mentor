@@ -5,7 +5,7 @@ import {
   ActivityIndicator, Modal, RefreshControl, Image, TextInput,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -715,7 +715,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   tabRow:       { flexDirection: 'row', gap: spacing.sm },
   tab:          { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.cardDark },
-  tabActive:    { backgroundColor: c.primary, borderColor: c.primary },
+  tabActive:    { backgroundColor: c.accentYellow, borderColor: c.accentYellow },
   tabText:      { fontSize: 12, fontWeight: '600', color: c.textMuted },
   tabTextActive:{ color: 'white' },
   tabBadge:     { borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1 },
@@ -762,7 +762,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   quizOverlay:  { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 16 },
   quizSheet:    { backgroundColor: c.cardDark, borderRadius: 20, width: '100%', maxWidth: 720, maxHeight: '92%', borderWidth: 1, borderColor: c.borderColor },
   quizHeader:   { flexDirection: 'row', alignItems: 'center', padding: spacing.xl, borderBottomWidth: 1, borderBottomColor: c.borderColor },
-  quizTitle:    { fontSize: 16, fontWeight: '800', color: c.textMain },
+  quizTitle:    { fontSize: 16, fontWeight: '800', color: c.textMain, fontFamily: fonts.serif },
   quizSub:      { fontSize: 12, color: c.textDim, marginTop: 2 },
   quizLoading:  { alignItems: 'center', paddingVertical: 60, gap: spacing.md },
   quizLoadingText: { fontSize: 14, color: c.textMuted },
@@ -775,7 +775,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   optionBtn:    { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 12, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark, flexBasis: '48%', flexGrow: 1 },
   optionDot:    { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: c.textDim },
   optionText:   { fontSize: 14, color: c.textMuted, flex: 1 },
-  submitQuizBtn:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: c.primary, paddingVertical: 14, borderRadius: radius.md, marginTop: spacing.md },
+  submitQuizBtn:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: c.accentYellow, paddingVertical: 14, borderRadius: radius.md, marginTop: spacing.md },
   submitQuizBtnText: { fontSize: 15, fontWeight: '700', color: 'white' },
   answerAllHint:{ fontSize: 12, color: c.textDim, textAlign: 'center', marginTop: spacing.sm },
   // Result
@@ -783,11 +783,11 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   resultCircle: { width: 120, height: 120, borderRadius: 60, borderWidth: 6, alignItems: 'center', justifyContent: 'center' },
   resultScore:  { fontSize: 32, fontWeight: '900' },
   resultLabel:  { fontSize: 12, color: c.textDim, fontWeight: '600' },
-  resultTitle:  { fontSize: 22, fontWeight: '800', color: c.textMain },
+  resultTitle:  { fontSize: 22, fontWeight: '800', color: c.textMain, fontFamily: fonts.serif },
   resultSub:    { fontSize: 14, color: c.textMuted, textAlign: 'center' },
   xpEarned:     { flexDirection: 'row', alignItems: 'center', gap: 8 },
   xpEarnedText: { fontSize: 18, fontWeight: '800' },
-  doneBtn:      { backgroundColor: c.primary, paddingHorizontal: 48, paddingVertical: 14, borderRadius: radius.md, marginTop: spacing.sm },
+  doneBtn:      { backgroundColor: c.accentYellow, paddingHorizontal: 48, paddingVertical: 14, borderRadius: radius.md, marginTop: spacing.sm },
   doneBtnText:  { fontSize: 15, fontWeight: '700', color: 'white' },
 
   // Leaderboard in result
@@ -798,10 +798,10 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   liveDot2:     { width: 6, height: 6, borderRadius: 3 },
   liveText2:    { fontSize: 10, fontWeight: '800', letterSpacing: 1 },
   scoreBandBanner: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1.5, borderRadius: radius.lg, paddingHorizontal: spacing.lg, paddingVertical: 10, marginBottom: spacing.sm, alignSelf: 'center', overflow: 'hidden' },
-  scoreBandLabel:  { fontSize: 15, fontWeight: '900', letterSpacing: -0.3 },
+  scoreBandLabel:  { fontSize: 15, fontWeight: '900', letterSpacing: -0.3, fontFamily: fonts.serif },
   scoreBandSub:    { fontSize: 11, fontWeight: '600', marginTop: 1 },
   rankBandBanner: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1.5, borderRadius: radius.lg, paddingHorizontal: spacing.lg, paddingVertical: 10, marginBottom: 4, alignSelf: 'center' },
-  rankBandLabel:  { fontSize: 15, fontWeight: '900', letterSpacing: -0.3 },
+  rankBandLabel:  { fontSize: 15, fontWeight: '900', letterSpacing: -0.3, fontFamily: fonts.serif },
   rankBandSub:    { fontSize: 11, marginTop: 2 },
   myRankBanner: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 8, alignSelf: 'center' },
   myRankText:   { fontSize: 13, fontWeight: '800' },
@@ -815,6 +815,6 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   lbXP:         { fontSize: 14, fontWeight: '800' },
   lbXPLabel:    { fontSize: 9, color: c.textDim, fontWeight: '600' },
   lbEmpty:      { fontSize: 12, color: c.textDim, textAlign: 'center', paddingVertical: spacing.md },
-  youChip:      { backgroundColor: c.primaryGlow, borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1 },
+  youChip:      { backgroundColor: c.accentYellow + '15', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1 },
   youChipText:  { fontSize: 9, fontWeight: '800' },
 });
