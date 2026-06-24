@@ -43,14 +43,10 @@ type Question = {
 
 type QuizPhase = 'loading' | 'quiz' | 'result';
 
-const SUBJECT_COLOR: Record<string, string> = {
-  Mathematics:          '#4A9E9A',
-  Science:              '#3D8A60',
-  English:              '#C85870',
-  'Social Studies':     '#A89840',
-  Arts:                 '#C87848',
-  'Physical Education': '#C84868',
-  ICT:                  '#3A9896',
+// Landing palette — sage left panel for all subjects
+const SUBJECT_ICON: Record<string, string> = {
+  Mathematics: 'hash', Science: 'zap', English: 'book-open',
+  Arts: 'feather', ICT: 'monitor',
 };
 
 export default function IBPYPQuizScreen({ navigation, route }: any) {
@@ -60,7 +56,8 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
   const { completeLesson, addXP } = useStudentData();
   const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
-  const accent = SUBJECT_COLOR[subject] || colors.primary;
+  const accent = colors.primary;         // sage — landing theme
+  const gold   = colors.accentYellow;    // gold accent
 
   const [phase, setPhase]       = useState<QuizPhase>('loading');
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -335,7 +332,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
     const passed     = pct >= 60;
     const totalTime  = Math.round((Date.now() - quizStartTimeRef.current) / 1000);
     const timeStr    = totalTime >= 60 ? `${Math.floor(totalTime / 60)}m ${totalTime % 60}s` : `${totalTime}s`;
-    const scoreColor = pct === 100 ? '#4ade80' : pct >= 70 ? '#4A9E70' : pct >= 60 ? accent : '#C85870';
+    const scoreColor = pct === 100 ? '#4ade80' : pct >= 70 ? '#4A9E70' : pct >= 60 ? gold : '#C85870';
     const trophyTier: 'gold' | 'silver' | 'bronze' = pct >= 80 ? 'gold' : pct >= 60 ? 'silver' : 'bronze';
     const message    = pct === 100 ? 'Perfect score! Outstanding work!'
       : pct >= 80 ? 'Excellent! You really understand this topic!'
@@ -515,7 +512,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
           <View style={[styles.leftPanel, { backgroundColor: accent }]}>
             <View style={styles.leftTop}>
               <View style={[styles.subjectIcon, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
-                <Feather name={subject === 'Mathematics' ? 'hash' : subject === 'Science' ? 'zap' : subject === 'English' ? 'book-open' : subject === 'Arts' ? 'feather' : subject === 'ICT' ? 'monitor' : 'globe'} size={22} color="#fff" />
+                <Feather name={(SUBJECT_ICON[subject] || 'globe') as any} size={22} color="#fff" />
               </View>
               <Text style={styles.leftSubject}>{subject}</Text>
               <Text style={styles.leftTopic} numberOfLines={3}>{topic}</Text>

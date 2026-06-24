@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Circle, G } from 'react-native-svg';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -379,7 +379,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   heroPct: { fontSize: 22, fontWeight: '800', color: c.textMain },
   heroCircleLabel: { fontSize: 9, color: c.textMuted, fontWeight: '700', letterSpacing: 0.5 },
   heroText: { alignItems: 'center', marginBottom: spacing.lg },
-  heroTitle: { fontSize: 17, fontWeight: '700', color: c.textMain, textAlign: 'center', marginBottom: 6 },
+  heroTitle: { fontSize: 17, fontWeight: '700', color: c.textMain, textAlign: 'center', marginBottom: 6, fontFamily: fonts.serif },
   heroSub: { fontSize: 12, color: c.textMuted, textAlign: 'center', lineHeight: 18 },
   xpLabel: { fontSize: 11, color: c.textMuted, fontWeight: '600' },
   xpTrack: { height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' },
@@ -407,7 +407,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderColor: c.borderColor,
   },
   periodTab: { paddingHorizontal: spacing.md, paddingVertical: 6 },
-  periodTabActive: { backgroundColor: c.primary },
+  periodTabActive: { backgroundColor: c.accentYellow },
   periodTabText: { fontSize: 12, color: c.textMuted, fontWeight: '500' },
   periodTabTextActive: { color: 'white' },
 

@@ -282,17 +282,33 @@ router.get('/lesson-content', async (req, res) => {
     if (fs.existsSync(file)) return res.json(JSON.parse(fs.readFileSync(file, 'utf8')));
   }
 
-  // 2. Fuzzy: file must contain grade identifier AND highest-scoring word overlap with topic
+  // 2. Fuzzy match — but ONLY within the same grade AND subject, scored by
+  //    WHOLE-WORD topic overlap. Substring matching used to mis-route content:
+  //    "Barter System" matched "ecoSYSTEMs" Science lessons because "system" is a
+  //    substring of "ecosystems", and the subject was ignored entirely. Now a
+  //    Science lesson can never be served for an Economics/Maths topic, and a
+  //    single coincidental substring can't hijack the match.
   const all = fs.readdirSync(dir);
+  const tokenize = (f) => f.replace(/\.json$/i, '').split(/[^a-z0-9]+/i).filter(Boolean);
+
   const gradeFiles = all.filter(f => f.includes(gradeSlugB) || f.includes(gradeSlugA));
 
-  // Score: count how many significant words from topic appear in filename
+  // Restrict to files carrying this subject's token(s). If none match the
+  // subject, we deliberately fall through to dynamic generation rather than
+  // serving a lesson from the wrong subject.
+  const subjectTokens = subjectSlug.split('_').filter(w => w.length > 2);
+  const subjectFiles = subjectTokens.length > 0
+    ? gradeFiles.filter(f => { const t = tokenize(f); return subjectTokens.some(sw => t.includes(sw)); })
+    : gradeFiles;
+
+  // Score: count how many significant WHOLE words from the topic appear in the filename
   const stopwords = new Set(['and', 'the', 'of', 'in', 'to', 'a', 'an', 'for', 'with', 'problems', 'introduction']);
   const topicWords = topicSlug.split('_').filter(w => w.length > 2 && !stopwords.has(w));
 
   let bestFile = null, bestScore = 0;
-  for (const f of gradeFiles) {
-    const score = topicWords.filter(w => f.includes(w)).length;
+  for (const f of subjectFiles) {
+    const t = tokenize(f);
+    const score = topicWords.filter(w => t.includes(w)).length;
     if (score > bestScore) { bestScore = score; bestFile = f; }
   }
 
@@ -300,28 +316,33 @@ router.get('/lesson-content', async (req, res) => {
     return res.json(JSON.parse(fs.readFileSync(path.join(dir, bestFile), 'utf8')));
   }
 
-  // No pre-built lesson file — generate dynamically using Groq
+  // No pre-built lesson file — generate dynamically using Groq, GROUNDED in the
+  // real curriculum chunks for this curriculum/grade/topic. IB PYP content lives
+  // in ai_mentor_content; NCERT in the curriculum collection. Previously this
+  // ALWAYS queried the NCERT collection, so IB PYP topics matched nothing and got
+  // generic content — now we resolve the correct collection and pull several
+  // chunks so the lesson is actually built from the IB PYP material.
   try {
-    // Look up topic description from Qdrant
-    const { client, COLLECTION } = require('../services/qdrant');
+    const { client, resolveCollection } = require('../services/qdrant');
     const curriculum = req.query.curriculum || 'CBSE';
     let topicDesc = '';
     let textbook = '';
 
     try {
-      const scroll = await client.scroll(COLLECTION, {
+      const { collection, qdrantCurriculum, qdrantGrade } = resolveCollection(curriculum, grade);
+      const scroll = await client.scroll(collection, {
         filter: { must: [
-          { key: 'curriculum', match: { value: curriculum.replace(/ /g, '_') } },
-          { key: 'grade',      match: { value: grade } },
+          { key: 'curriculum', match: { value: qdrantCurriculum } },
+          { key: 'grade',      match: { value: qdrantGrade } },
           { key: 'topic',      match: { value: topic } },
         ]},
-        limit: 1, with_payload: true, with_vector: false,
+        limit: 8, with_payload: true, with_vector: false,
       });
-      if (scroll.points.length > 0) {
-        const p = scroll.points[0].payload;
-        topicDesc = p.text || p.description || '';
-        textbook  = p.textbook || '';
-      }
+      const chunks = (scroll.points || [])
+        .map(p => (p.payload?.content || p.payload?.text || p.payload?.description || '').trim())
+        .filter(Boolean);
+      topicDesc = chunks.join('\n\n').slice(0, 4000);
+      textbook  = scroll.points?.[0]?.payload?.textbook || '';
     } catch (_) { /* Qdrant not available, proceed without */ }
 
     if (!topicDesc) {

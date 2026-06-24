@@ -24,7 +24,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -336,7 +336,7 @@ function ConfirmCloseOverlay({ visible, color, colors, onConfirm, onCancel }: {
         <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: color + '20', alignItems: 'center', justifyContent: 'center' }}>
           <Feather name="alert-triangle" size={26} color={color} />
         </View>
-        <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textMain, textAlign: 'center' }}>Close Assignment?</Text>
+        <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textMain, textAlign: 'center', fontFamily: fonts.serif }}>Close Assignment?</Text>
         <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 22 }}>
           Your progress will not be saved.{'\n'}Are you sure you want to go back?
         </Text>
@@ -371,7 +371,7 @@ function ModalTopBar({ title, subtitle, color, colors, icon, onBack }: {
           <Feather name={icon as any} size={18} color={color} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textMain }} numberOfLines={1}>{title}</Text>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textMain, fontFamily: fonts.serif }} numberOfLines={1}>{title}</Text>
           {subtitle ? <Text style={{ fontSize: 11, color, fontWeight: '600', marginTop: 1 }}>{subtitle}</Text> : null}
         </View>
       </View>
@@ -521,7 +521,7 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
       <View style={styles.overlay}>
         <View style={[styles.sheet, styles.quizSheet, { justifyContent: 'center', alignItems: 'center', paddingVertical: 80, gap: 24 }]}>
           <ActivityIndicator size="large" color={color} />
-          <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textMain, textAlign: 'center' }}>Checking your answers...</Text>
+          <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textMain, textAlign: 'center', fontFamily: fonts.serif }}>Checking your answers...</Text>
         </View>
       </View>
     </Modal>
@@ -1397,7 +1397,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
       <View style={styles.overlay}>
         <View style={[styles.sheet, { justifyContent: 'center', alignItems: 'center', paddingVertical: 80, gap: 24 }]}>
           <ActivityIndicator size="large" color={color} />
-          <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textMain, textAlign: 'center' }}>AI is grading your work...</Text>
+          <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textMain, textAlign: 'center', fontFamily: fonts.serif }}>AI is grading your work...</Text>
           <Text style={{ fontSize: 13, color: colors.textDim, textAlign: 'center', lineHeight: 22, paddingHorizontal: 32 }}>Reading your brainstorm, drawing, and writing.{'\n'}Takes about 20–40 seconds.</Text>
         </View>
       </View>
@@ -2230,7 +2230,7 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
         <View style={styles.overlay}>
           <View style={[styles.sheet, { justifyContent: 'center', alignItems: 'center', paddingVertical: 80, gap: 24 }]}>
             <ActivityIndicator size="large" color={color} />
-            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textMain, textAlign: 'center' }}>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textMain, textAlign: 'center', fontFamily: fonts.serif }}>
               AI is grading your work...
             </Text>
             <Text style={{ fontSize: 13, color: colors.textDim, textAlign: 'center', lineHeight: 22, paddingHorizontal: 32 }}>
@@ -3722,7 +3722,7 @@ const makeModalStyles = (c: AppColors) => StyleSheet.create({
   quizSheet: { flex: 1, backgroundColor: c.bgDark },
   header: { flexDirection: 'row', alignItems: 'center', padding: spacing.xl, borderBottomWidth: 1, gap: spacing.md },
   subjectDot: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 16, fontWeight: '800', color: c.textMain },
+  title: { fontSize: 16, fontWeight: '800', color: c.textMain, fontFamily: fonts.serif },
   meta: { fontSize: 12, color: c.textMuted, marginTop: 2 },
   content: { padding: spacing.xl, paddingBottom: 48, gap: spacing.xl },
   sectionLabel: { fontSize: 11, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 },
@@ -3761,12 +3761,12 @@ const makeModalStyles = (c: AppColors) => StyleSheet.create({
   resultBox: { gap: spacing.lg },
   scoreBadge: { alignItems: 'center', padding: spacing.xxl, borderRadius: radius.xl, borderWidth: 1 },
   scoreNum: { fontSize: 56, fontWeight: '900', letterSpacing: -2 },
-  scoreLabel: { fontSize: 17, fontWeight: '700', marginTop: 6 },
+  scoreLabel: { fontSize: 17, fontWeight: '700', marginTop: 6, fontFamily: fonts.serif },
 
   stampCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, borderWidth: 1 },
   stampIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   stampLabel: { fontSize: 11, color: c.textDim, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
-  stampName: { fontSize: 16, fontWeight: '800', marginTop: 2 },
+  stampName: { fontSize: 16, fontWeight: '800', marginTop: 2, fontFamily: fonts.serif },
 
   feedbackCard: { backgroundColor: c.bgDark, borderRadius: radius.lg, padding: spacing.lg, gap: 6 },
   feedbackTitle: { fontSize: 11, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.8 },
@@ -3780,7 +3780,7 @@ const makeModalStyles = (c: AppColors) => StyleSheet.create({
   questionCard: { borderWidth: 1.5, borderRadius: radius.xl, padding: spacing.xl, gap: 12 },
   qNumBadge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
   qNumBadgeText: { fontSize: 12, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
-  questionText: { fontSize: 17, fontWeight: '700', color: c.textMain, lineHeight: 26 },
+  questionText: { fontSize: 17, fontWeight: '700', color: c.textMain, lineHeight: 26, fontFamily: fonts.serif },
 
   // Review row
   qReviewRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, marginBottom: 10 },

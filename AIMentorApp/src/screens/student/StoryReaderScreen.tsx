@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../context/ThemeContext';
 import ScreenLayout from '../../components/common/ScreenLayout';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
 interface Page { pageNumber: number; text: string; sceneIcon: string; sceneColor: string; sceneLabel: string; imageUrl: string | null; }
@@ -1043,7 +1043,7 @@ const makeStyles = (c: any, isDark: boolean) => StyleSheet.create({
   bottomNav:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingVertical: 12, borderTopWidth: 1, gap: spacing.md },
   navArrow:       { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   navCenter:      { flex: 1, alignItems: 'center', gap: 2 },
-  navPageNum:     { fontSize: 18, fontWeight: '800' },
+  navPageNum:     { fontSize: 18, fontWeight: '800', fontFamily: fonts.serif },
   navPageOf:      { fontSize: 13, fontWeight: '400' },
   navSceneLabel:  { fontSize: 11, textAlign: 'center' },
   navFinish:      { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 24 },
