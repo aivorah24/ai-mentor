@@ -7,7 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
 interface Challenge {
@@ -491,7 +491,7 @@ function PerformanceSummary({ topic, results, colors, onRetry }: {
 const ps = StyleSheet.create({
   card:        { borderRadius: 18, borderWidth: 1.5, padding: 20, gap: 14 },
   headerRow:   { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  title:       { fontSize: 18, fontWeight: '900' },
+  title:       { fontSize: 18, fontWeight: '900', fontFamily: fonts.serif },
   starsRow:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
   starsLabel:  { fontSize: 14, fontWeight: '700' },
   wordGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -649,7 +649,7 @@ export default function WordWizardScreen({ route, navigation }: any) {
             <View style={s.center}>
               <Feather name="alert-circle" size={32} color={colors.accentRed} />
               <Text style={[s.hint, { color: colors.textMuted, marginTop: 8 }]}>{error}</Text>
-              <TouchableOpacity style={[s.btn, { backgroundColor: colors.primary, marginTop: 16 }]} onPress={fetchWords}>
+              <TouchableOpacity style={[s.btn, { backgroundColor: colors.accentYellow, marginTop: 16 }]} onPress={fetchWords}>
                 <Text style={s.btnText}>Try Again</Text>
               </TouchableOpacity>
             </View>

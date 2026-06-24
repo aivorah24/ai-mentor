@@ -1244,7 +1244,7 @@ function SectionHeader({ title, sub, onPress, linkLabel }: { title: string; sub?
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
       <View>
-        <Text style={{ fontSize: 17, fontWeight: '800', color: colors.textMain, letterSpacing: -0.3 }}>{title}</Text>
+        <Text style={{ fontSize: 17, fontWeight: '800', color: colors.textMain, letterSpacing: -0.3, fontFamily: fonts.serif }}>{title}</Text>
         {sub ? <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>{sub}</Text> : null}
       </View>
       {onPress && linkLabel ? (
@@ -1273,7 +1273,7 @@ const makeStyles = (c: AppColors, isMobile: boolean, isDark: boolean) => StyleSh
   // State screens
   stateCenter:   { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32 },
   stateIconWrap: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', backgroundColor: BRAND.indigo + '18' },
-  stateTitle:    { fontSize: 18, fontWeight: '700', color: c.textMain },
+  stateTitle:    { fontSize: 18, fontWeight: '700', color: c.textMain, fontFamily: fonts.serif },
   stateSub:      { fontSize: 13, color: c.textMuted, textAlign: 'center', lineHeight: 20 },
   retryBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: BRAND.violet, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 12, marginTop: 6 },
   retryText:     { fontSize: 14, fontWeight: '700', color: '#fff' },
@@ -1372,7 +1372,7 @@ const makeStyles = (c: AppColors, isMobile: boolean, isDark: boolean) => StyleSh
   },
   perfCardHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 },
   perfHeaderGradient: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 11, marginBottom: 12 },
-  perfCardTitle:   { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+  perfCardTitle:   { fontSize: 16, fontWeight: '800', letterSpacing: -0.2, fontFamily: fonts.serif },
   perfCardSub:     { fontSize: 11, marginTop: 2 },
   perfViewAll:     { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
   perfViewAllTxt:  { fontSize: 11, fontWeight: '700' },
@@ -1428,7 +1428,7 @@ const makeStyles = (c: AppColors, isMobile: boolean, isDark: boolean) => StyleSh
   clTopRow: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
   clSubPill:  { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 20, paddingHorizontal: 9, paddingVertical: 4 },
   clSubText:  { fontSize: 10, fontWeight: '800', letterSpacing: 0.3, textTransform: 'uppercase' },
-  clTopic:    { fontSize: isMobile ? 18 : 21, fontWeight: '900', letterSpacing: -0.5, lineHeight: isMobile ? 22 : 26 },
+  clTopic:    { fontSize: isMobile ? 18 : 21, fontWeight: '900', letterSpacing: -0.5, lineHeight: isMobile ? 22 : 26, fontFamily: fonts.serif },
   clUnit:     { fontSize: 12, fontStyle: 'italic' },
   clRingWrap:   { position: 'relative', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   clRingCenter: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
@@ -1458,7 +1458,7 @@ const makeStyles = (c: AppColors, isMobile: boolean, isDark: boolean) => StyleSh
   aiOnline:     { position: 'absolute', bottom: 2, right: 2, width: 12, height: 12, borderRadius: 6, backgroundColor: '#2E7D52', borderWidth: 2, borderColor: 'rgba(255,255,255,0.6)' },
   aiBannerBody: { flex: 1, gap: 2 },
   aiTag:        { fontSize: 9, fontWeight: '800', color: 'rgba(11,11,11,0.55)', letterSpacing: 1 },
-  aiTitle:      { fontSize: 17, fontWeight: '900', color: '#0B0B0B', letterSpacing: -0.3 },
+  aiTitle:      { fontSize: 17, fontWeight: '900', color: '#0B0B0B', letterSpacing: -0.3, fontFamily: fonts.serif },
   aiSub:        { fontSize: 12, color: 'rgba(11,11,11,0.72)', lineHeight: 17 },
   aiBannerCta:  { alignItems: 'center', gap: 4, flexShrink: 0 },
   aiBannerCtaTxt:{ fontSize: 11, fontWeight: '800', color: 'rgba(11,11,11,0.85)' },
@@ -1511,7 +1511,7 @@ const makeStyles = (c: AppColors, isMobile: boolean, isDark: boolean) => StyleSh
   modalOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
   notifPanel:      { borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '78%', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 30, shadowOffset: { width: 0, height: -10 } },
   notifHeaderGrad: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 18 },
-  notifTitle:      { fontSize: 18, fontWeight: '900' },
+  notifTitle:      { fontSize: 18, fontWeight: '900', fontFamily: fonts.serif },
   notifSub:        { fontSize: 12, marginTop: 2 },
   notifHeaderRight:{ flexDirection: 'row', alignItems: 'center', gap: 10 },
   markAllBtn:      { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },

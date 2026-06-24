@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, ActivityIndicator,
+  View, Text, ScrollView, TouchableOpacity, Image,
+  StyleSheet, ActivityIndicator, useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -9,7 +9,7 @@ import { useStudentData } from '../../context/StudentDataContext';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -20,7 +20,13 @@ interface TopicItem {
   topic:       string;
   unit:        string;
   description: string;
+  imageUrl?:   string; // per-topic illustration (filled by the image pipeline)
 }
+
+// Per-card accent cycle — muted landing-palette colours (sage / purple / gold /
+// teal / amber / rose), so each numbered topic card reads distinctly but stays
+// on-brand instead of using neon hues.
+const TOPIC_COLORS = ['#5F8A86', '#7E7AAD', '#B89150', '#5E8F86', '#B0894A', '#A85F77'];
 
 // ─── Subject visual config ────────────────────────────────────────────────────
 const SUBJECT_META: Record<string, { icon: any; color: string; bgFrom: string; bgTo: string }> = {
@@ -293,104 +299,98 @@ function getStaticTopics(curriculum: string, grade: string, subject: string): To
 
 // ─── Topic Card ───────────────────────────────────────────────────────────────
 function TopicCard({
-  index, t, done, subject, onModule, colors, isMobile,
+  index, t, done, subject, onModule, colors, isDark, cardWidth,
 }: {
-  index:    number;
-  t:        TopicItem;
-  done:     boolean;
-  subject:  string;
-  onModule: (route: string) => void;
-  colors:   AppColors;
-  isMobile: boolean;
+  index:     number;
+  t:         TopicItem;
+  done:      boolean;
+  subject:   string;
+  onModule:  (route: string) => void;
+  colors:    AppColors;
+  isDark:    boolean;
+  cardWidth: any;
 }) {
-  const { isDark } = useTheme();
-  const m          = meta(subject);
-  const cardColor  = done ? '#10b981' : m.color;
-  const modules    = subjectModules(subject);
-
-  // Light mode: soft pastel tint from subject color; dark mode: standard card
-  const cardBg     = isDark ? colors.cardDark : m.color + '14';
-  const borderCol  = done ? '#10b98160' : m.color + (isDark ? '35' : '45');
-  const titleColor = colors.textMain;
-  const unitColor  = isDark ? m.color : m.color;
-  const descColor  = colors.textMuted;
-  const btnBg      = (c: string) => isDark ? c + '15' : c + '20';
-  const btnBorder  = (c: string) => isDark ? c + '35' : c + '50';
+  const accent    = done ? '#3FA06A' : TOPIC_COLORS[index % TOPIC_COLORS.length];
+  const onAccent  = isDark ? '#0B140F' : '#FFFFFF';
+  const modules   = subjectModules(subject);
+  const primary   = modules.find(mod => mod.route === 'Learn5E') ?? modules[0];
+  const secondary = modules.filter(mod => mod !== primary);
+  const subjIcon  = meta(subject).icon;
+  const hasImg    = !!t.imageUrl;
+  const imgUri    = hasImg ? (t.imageUrl!.startsWith('http') ? t.imageUrl! : `${SERVER_URL}${t.imageUrl}`) : '';
 
   return (
-    <View style={[tc.card, { width: isMobile ? '100%' : '48.5%', backgroundColor: cardBg, borderColor: borderCol }]}>
-      {/* Header row */}
-      <View style={tc.topRow}>
-        <View style={[tc.badge, { backgroundColor: cardColor + '22' }]}>
-          <Text style={[tc.badgeText, { color: cardColor }]}>
-            {String(index + 1).padStart(2, '0')}
-          </Text>
+    <View style={[tc.card, { width: cardWidth, backgroundColor: isDark ? colors.cardDark : '#fff', borderColor: colors.borderColor }]}>
+      {/* Illustration banner (real image when available, else themed placeholder) */}
+      <View style={[tc.illu, { borderBottomColor: accent + '2E' }]}>
+        <LinearGradient
+          colors={[accent + (isDark ? '40' : '26'), isDark ? '#0E140F' : (accent + '10')]}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill as any}
+        />
+        {hasImg
+          ? <Image source={{ uri: imgUri }} style={StyleSheet.absoluteFillObject as any} resizeMode="cover" />
+          : <Feather name={subjIcon} size={42} color={accent} style={{ opacity: 0.92 }} />}
+        <View style={[tc.numBadge, { backgroundColor: accent }]}>
+          <Text style={[tc.numText, { color: onAccent }]}>{String(index + 1).padStart(2, '0')}</Text>
         </View>
         {done && (
-          <View style={tc.donePill}>
-            <Feather name="check-circle" size={11} color="#10b981" />
-            <Text style={tc.donePillText}>Done</Text>
+          <View style={tc.doneBadge}>
+            <Feather name="check" size={12} color="#fff" />
           </View>
         )}
       </View>
 
-      {/* Topic title */}
-      <Text style={[tc.title, { color: titleColor }]} numberOfLines={2}>
-        {t.topic}
-      </Text>
+      {/* Body */}
+      <View style={tc.body}>
+        <Text style={[tc.title, { color: colors.textMain }]} numberOfLines={2}>{t.topic}</Text>
+        {!!t.description && (
+          <Text style={[tc.desc, { color: colors.textMuted }]} numberOfLines={3}>{t.description}</Text>
+        )}
 
-      {/* Unit / TD theme — only shown for Social Studies (IB PYP transdisciplinary themes) */}
-      {!!t.unit && subject === 'Social Studies' && (
-        <Text style={[tc.unit, { color: unitColor }]} numberOfLines={1}>
-          {t.unit}
-        </Text>
-      )}
+        <TouchableOpacity
+          style={[tc.primaryBtn, { backgroundColor: accent }]}
+          activeOpacity={0.85}
+          onPress={() => onModule(primary.route)}
+        >
+          <Feather name="play-circle" size={14} color={onAccent} />
+          <Text style={[tc.primaryText, { color: onAccent }]}>Start Learning</Text>
+        </TouchableOpacity>
 
-      {/* Description */}
-      {!!t.description && (
-        <Text style={[tc.desc, { color: descColor }]} numberOfLines={2}>
-          {t.description}
-        </Text>
-      )}
-
-      {/* Action buttons */}
-      <View style={tc.actions}>
-        {modules.map(mod => (
-          <TouchableOpacity
-            key={mod.route}
-            style={[
-              tc.modBtn,
-              {
-                backgroundColor: btnBg(mod.color),
-                borderColor:     btnBorder(mod.color),
-                ...(mod.route === 'Learn5E' ? { width: '100%' } : { flex: 1 }),
-              },
-            ]}
-            onPress={() => onModule(mod.route)}
-            activeOpacity={0.75}
-          >
-            <Feather name={mod.icon} size={12} color={mod.color} />
-            <Text style={[tc.modBtnText, { color: mod.color }]}>{mod.label}</Text>
-          </TouchableOpacity>
-        ))}
+        {secondary.length > 0 && (
+          <View style={tc.secRow}>
+            {secondary.map(mod => (
+              <TouchableOpacity
+                key={mod.route}
+                style={[tc.secBtn, { borderColor: accent + '4D' }]}
+                activeOpacity={0.75}
+                onPress={() => onModule(mod.route)}
+              >
+                <Feather name={mod.icon} size={12} color={accent} />
+                <Text style={[tc.secText, { color: accent }]}>{mod.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
     </View>
   );
 }
 
 const tc = StyleSheet.create({
-  card:        { borderRadius: 16, borderWidth: 1, padding: 16, gap: 6, marginBottom: 0 },
-  topRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
-  badge:       { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8 },
-  badgeText:   { fontSize: 11, fontWeight: '800', letterSpacing: 0.4 },
-  donePill:    { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#10b981' + '20', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  donePillText:{ color: '#10b981', fontSize: 10, fontWeight: '700' },
-  title:       { fontSize: 14, fontWeight: '700', lineHeight: 20 },
-  unit:        { fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.3 },
-  desc:        { fontSize: 12, lineHeight: 17 },
-  actions:     { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  modBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8, borderWidth: 1 },
-  modBtnText:  { fontSize: 11, fontWeight: '700' },
+  card:        { borderRadius: 18, borderWidth: 1, overflow: 'hidden', marginBottom: 0 },
+  illu:        { height: 150, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1 },
+  numBadge:    { position: 'absolute', top: 12, left: 12, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  numText:     { fontSize: 12, fontWeight: '800', letterSpacing: 0.3 },
+  doneBadge:   { position: 'absolute', top: 12, right: 12, width: 24, height: 24, borderRadius: 12, backgroundColor: '#3FA06A', alignItems: 'center', justifyContent: 'center' },
+  body:        { padding: 16, gap: 8 },
+  title:       { fontFamily: fonts.serif, fontSize: 18, fontWeight: '700', lineHeight: 24, letterSpacing: -0.3 },
+  desc:        { fontSize: 12.5, lineHeight: 18 },
+  primaryBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingVertical: 11, borderRadius: 10, marginTop: 2 },
+  primaryText: { fontSize: 13, fontWeight: '700' },
+  secRow:      { flexDirection: 'row', gap: 8 },
+  secBtn:      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 9, borderRadius: 9, borderWidth: 1 },
+  secText:     { fontSize: 11.5, fontWeight: '600' },
 });
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
@@ -401,6 +401,8 @@ export default function SubjectTopicsScreen({ navigation, route }: any) {
 
   const { colors, isDark } = useTheme();
   const { isMobile }       = useResponsive();
+  const { width }          = useWindowDimensions();
+  const cardWidth          = isMobile ? '100%' : (width >= 1080 ? '31.5%' : '48.5%');
   const { stats }     = useStudentData();
   const { user }      = useAuth();
   const styles        = useMemo(() => makeStyles(colors), [colors]);
@@ -495,55 +497,36 @@ export default function SubjectTopicsScreen({ navigation, route }: any) {
           showBack={true}
           onMenuPress={() => navigation.openDrawer()}
         />
-        {/* Back to Learning Paths */}
-        <TouchableOpacity style={styles.backRow} onPress={() => navigation.navigate('LearningPaths')}>
-          <Feather name="arrow-left" size={16} color={colors.textMuted} />
-          <Text style={[styles.backText, { color: colors.textMuted }]}>My Learning Path</Text>
-        </TouchableOpacity>
 
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          {/* ── Subject hero banner ── */}
-          <LinearGradient
-            colors={[m.bgFrom, m.bgTo]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.heroBanner, {
-              borderColor: m.color + '40',
-            }]}
-          >
-            <View style={[styles.heroIcon, { backgroundColor: '#ffffff50' }]}>
-              <Feather name={m.icon} size={32} color={m.color} />
-            </View>
+          {/* ── My Learning Path header + progress ── */}
+          <View style={[styles.pathHeader, isMobile && { flexDirection: 'column', alignItems: 'stretch' }]}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.heroTitle, { color: '#1C2A28' }]}>{subject}</Text>
-              <Text style={[styles.heroSub, { color: m.color }]}>
-                {curriculum} · GRADE {grade?.replace(/\D/g, '') || grade}
-              </Text>
-              <Text style={[styles.heroProgress, { color: m.color + 'cc' }]}>
-                {doneCount}/{topics.length} topics completed
-              </Text>
+              <Text style={styles.pathTitle}>My Learning Path</Text>
+              <Text style={styles.pathSub}>Complete each topic step by step. Your progress is saved automatically.</Text>
             </View>
-            <View style={[styles.progressRing, {
-              borderColor: pct === 100 ? '#10b981' : m.color,
-              backgroundColor: m.color + '10',
-            }]}>
-              <Text style={[styles.progressPct, { color: pct === 100 ? '#10b981' : m.color }]}>
-                {pct}%
-              </Text>
+            <View style={[styles.progressCard, { borderColor: colors.borderColor }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.progressLabel, { color: colors.textMuted }]}>Your Progress</Text>
+                <Text style={[styles.progressPctText, { color: colors.textMain }]}>{pct}% Complete</Text>
+                <View style={[styles.progBarTrack, { backgroundColor: colors.borderColor }]}>
+                  <LinearGradient
+                    colors={['#3FA06A', '#BAA467']}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                    style={[styles.progBarFill, { width: `${pct}%` as any }]}
+                  />
+                </View>
+              </View>
+              <View style={[styles.owl, { backgroundColor: m.color + '22', borderColor: m.color + '55' }]}>
+                <Feather name="feather" size={22} color={m.color} />
+              </View>
             </View>
-          </LinearGradient>
-
-          {/* ── Progress bar ── */}
-          <View style={[styles.progressTrack, { backgroundColor: m.color + '25' }]}>
-            <View style={[styles.progressFill, { width: `${pct}%` as any, backgroundColor: m.color }]} />
           </View>
 
           {/* ── Topics grid ── */}
-          <Text style={styles.sectionTitle}>{topics.length} Topics to Explore</Text>
-
           {topics.length === 0 ? (
             <View style={styles.emptyBox}>
               <Feather name="inbox" size={36} color={colors.textMuted} />
@@ -562,11 +545,13 @@ export default function SubjectTopicsScreen({ navigation, route }: any) {
                   subject={subject}
                   onModule={(modRoute) => handleModule(modRoute, t, i)}
                   colors={colors}
-                  isMobile={isMobile}
+                  isDark={isDark}
+                  cardWidth={cardWidth}
                 />
               ))}
             </View>
           )}
+
         </ScrollView>
       </View>
     </ScreenLayout>
@@ -576,32 +561,32 @@ export default function SubjectTopicsScreen({ navigation, route }: any) {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const makeStyles = (c: AppColors) => StyleSheet.create({
   screen:   { flex: 1, backgroundColor: c.bgDark },
-  content:  { padding: spacing.xl, paddingBottom: 48, gap: spacing.xl },
+  content:  { padding: spacing.xl, paddingBottom: 40, gap: spacing.xl },
   dimText:  { fontSize: 13, color: c.textMuted },
   backRow:  { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: spacing.xl, paddingVertical: 8 },
   backText: { fontSize: 13, fontWeight: '500' },
 
-  heroBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 16,
-    borderRadius: 20, borderWidth: 1, padding: 20,
-  },
-  heroIcon:     { width: 60, height: 60, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  heroTitle:    { fontSize: 20, fontWeight: '800', marginBottom: 2 },
-  heroSub:      { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.4 },
-  heroProgress: { fontSize: 12, marginTop: 4 },
+  // My Learning Path header
+  pathHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.xl },
+  pathTitle:  { fontFamily: fonts.serif, fontSize: 26, fontWeight: '700', color: c.textMain, letterSpacing: -0.4 },
+  pathSub:    { fontSize: 13, color: c.textMuted, marginTop: 4, lineHeight: 19 },
 
-  progressRing: {
-    width: 56, height: 56, borderRadius: 28, borderWidth: 5,
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
-  progressPct:  { fontSize: 13, fontWeight: '800' },
+  progressCard:    { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 16, minWidth: 280 },
+  progressLabel:   { fontSize: 12, fontWeight: '600' },
+  progressPctText: { fontSize: 14, fontWeight: '700', marginTop: 1 },
+  progBarTrack:    { height: 6, borderRadius: 3, overflow: 'hidden', marginTop: 8 },
+  progBarFill:     { height: '100%', borderRadius: 3 },
+  owl:             { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
 
-  progressTrack: { height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden', marginTop: -8 },
-  progressFill:  { height: '100%', borderRadius: 3 },
-
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: c.textMain },
-
-  topicsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  topicsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, justifyContent: 'flex-start' },
 
   emptyBox: { alignItems: 'center', paddingVertical: 48 },
+
+  // Aivorah tutor footer
+  tutorFooter: { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderRadius: radius.lg, padding: 16 },
+  tutorAvatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  tutorName:   { fontSize: 14, fontWeight: '600' },
+  tutorMsg:    { fontSize: 12.5, marginTop: 2 },
+  helpBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14 },
+  helpText:    { fontSize: 12.5, fontWeight: '600' },
 });

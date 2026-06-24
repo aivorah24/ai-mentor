@@ -13,7 +13,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -703,7 +703,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   addEventBtn: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     marginTop: spacing.lg, paddingVertical: 12, paddingHorizontal: spacing.lg,
-    backgroundColor: c.primaryGlow, borderWidth: 1,
+    backgroundColor: c.accentYellow + '15', borderWidth: 1,
     borderColor: 'rgba(99,102,241,0.3)', borderRadius: radius.md,
     borderStyle: 'dashed', justifyContent: 'center',
   },
@@ -718,8 +718,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   calDayHeader:  { flex: 1, fontSize: 10, color: c.textDim, textAlign: 'center', fontWeight: '600' },
   calWeek:       { flexDirection: 'row', marginBottom: 4 },
   calDate:       { flex: 1, alignItems: 'center', paddingVertical: 4, borderRadius: 6, gap: 2 },
-  calDateToday:          { backgroundColor: c.primary },
-  calDateWeekHighlight:  { backgroundColor: c.primaryGlow },
+  calDateToday:          { backgroundColor: c.accentYellow },
+  calDateWeekHighlight:  { backgroundColor: c.accentYellow + '15' },
   calDateText:           { fontSize: 12, color: c.textMuted, fontWeight: '500' },
   calDateTextToday:      { color: 'white', fontWeight: '700' },
   calDot:        { width: 4, height: 4, borderRadius: 2 },
@@ -735,15 +735,15 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     width: '90%', maxWidth: 480, backgroundColor: c.cardDark, borderWidth: 1,
     borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.xl, gap: spacing.md,
   },
-  modalTitle:       { fontSize: 17, fontWeight: '700', color: c.textMain },
+  modalTitle:       { fontSize: 17, fontWeight: '700', color: c.textMain, fontFamily: fonts.serif },
   modalInput:       { backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, padding: spacing.md, color: c.textMain, fontSize: 14 },
   modalLabel:       { fontSize: 12, color: c.textMuted, fontWeight: '600' },
   timeChip:         { paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radius.sm, borderWidth: 1, borderColor: c.borderColor, marginRight: 6 },
-  timeChipActive:   { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  timeChipActive:   { borderColor: c.accentYellow + '50', backgroundColor: c.accentYellow + '15' },
   timeChipText:     { fontSize: 12, color: c.textMuted },
   modalBtns:        { flexDirection: 'row', gap: spacing.md },
   modalCancel:      { flex: 1, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center' },
   modalCancelText:  { fontSize: 13, fontWeight: '600', color: c.textMuted },
-  modalConfirm:     { flex: 1, paddingVertical: 12, borderRadius: radius.md, backgroundColor: c.primary, alignItems: 'center' },
+  modalConfirm:     { flex: 1, paddingVertical: 12, borderRadius: radius.md, backgroundColor: c.accentYellow, alignItems: 'center' },
   modalConfirmText: { fontSize: 13, fontWeight: '700', color: 'white' },
 });

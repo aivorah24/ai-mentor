@@ -7,7 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
 interface StoryState {
@@ -275,7 +275,7 @@ function makeStyles(colors: any) {
     progressLabel:   { fontSize: 12, marginLeft: 4 },
     startCard:       { borderRadius: radius.lg, borderWidth: 1, padding: 28, alignItems: 'center', gap: 14 },
     storyIcon:       { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
-    startTitle:      { fontSize: 18, fontWeight: '700', textAlign: 'center' },
+    startTitle:      { fontSize: 18, fontWeight: '700', textAlign: 'center', fontFamily: fonts.serif },
     startSub:        { fontSize: 14, textAlign: 'center', lineHeight: 20 },
     startBtn:        { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingVertical: 12, borderRadius: radius.md, marginTop: 8 },
     startBtnText:    { color: '#fff', fontWeight: '700', fontSize: 15 },

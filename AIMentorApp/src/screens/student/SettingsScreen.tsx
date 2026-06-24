@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -931,13 +931,13 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: c.primary,
+    backgroundColor: isDark ? '#1E1E1E' : '#252525',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: c.cardDark,
   },
-  profileName: { fontSize: 18, fontWeight: '700', color: c.textMain, marginBottom: 4 },
+  profileName: { fontSize: 18, fontWeight: '700', color: c.textMain, marginBottom: 4, fontFamily: fonts.serif },
   profileRole: { fontSize: 13, color: c.textMuted, marginBottom: 2 },
   profileEmail: { fontSize: 13, color: c.textMuted },
 
@@ -967,7 +967,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: 'rgba(99,102,241,0.35)',
-    backgroundColor: c.primaryGlow,
+    backgroundColor: c.accentYellow + '15',
   },
   changeBtnText: { fontSize: 12, fontWeight: '600', color: c.primary },
 
@@ -987,9 +987,9 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.02)',
     position: 'relative',
   },
-  themeOptionActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  themeOptionActive: { borderColor: c.accentYellow + '50', backgroundColor: c.accentYellow + '15' },
   themeLabel: { fontSize: 14, fontWeight: '600', color: c.textMuted },
-  themeCheck: { position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+  themeCheck: { position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: 10, backgroundColor: c.accentYellow, alignItems: 'center', justifyContent: 'center' },
 
   langRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' },
   langChip: {
@@ -999,7 +999,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: c.borderColor,
   },
-  langChipActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  langChipActive: { borderColor: c.accentYellow + '50', backgroundColor: c.accentYellow + '15' },
   langText: { fontSize: 11, color: c.textMuted, fontWeight: '600' },
 
   goalRow: { flexDirection: 'row', gap: 6 },
@@ -1047,7 +1047,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     maxWidth: 440,
   },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xl },
-  modalTitle: { fontSize: 17, fontWeight: '700', color: c.textMain },
+  modalTitle: { fontSize: 17, fontWeight: '700', color: c.textMain, fontFamily: fonts.serif },
   modalNote: { fontSize: 13, color: c.textMuted, lineHeight: 20, marginBottom: spacing.lg },
   modalFieldLabel: { fontSize: 12, fontWeight: '600', color: c.textMuted, marginBottom: 6, marginTop: spacing.md },
   modalInput: {
@@ -1073,7 +1073,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     justifyContent: 'center',
   },
   modalCancelText: { fontSize: 14, fontWeight: '600', color: c.textMuted },
-  modalSaveBtn: { flex: 1, height: 46, borderRadius: radius.md, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+  modalSaveBtn: { flex: 1, height: 46, borderRadius: radius.md, backgroundColor: c.accentYellow, alignItems: 'center', justifyContent: 'center' },
   modalSaveText: { fontSize: 14, fontWeight: '700', color: 'white' },
 
   editBtn: { paddingHorizontal: spacing.lg, paddingVertical: 9, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor },

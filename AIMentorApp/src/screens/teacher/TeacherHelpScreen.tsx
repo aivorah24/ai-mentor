@@ -374,8 +374,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   versionText: { fontSize: 11, color: c.textDim },
 
   // Chat
-  chatOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-  chatBox: { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, borderBottomWidth: 0, overflow: 'hidden', maxHeight: '85%' },
+  chatOverlay: { flex: 1, justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end', alignItems: Platform.OS === 'web' ? 'center' : 'stretch', backgroundColor: 'rgba(0,0,0,0.5)', padding: Platform.OS === 'web' ? 24 : 0 },
+  chatBox: { borderRadius: Platform.OS === 'web' ? 20 : undefined, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, borderBottomWidth: Platform.OS === 'web' ? 1 : 0, overflow: 'hidden', maxHeight: Platform.OS === 'web' ? 600 : ('85%' as any), ...(Platform.OS === 'web' ? { width: '100%', maxWidth: 560 } as any : {}) },
   chatHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.lg, borderBottomWidth: 1, borderBottomColor: c.borderColor },
   chatHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   chatAiOrb: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
