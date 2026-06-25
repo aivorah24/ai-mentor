@@ -57,39 +57,37 @@ export default function NotificationBanner({ onNavigate }: Props) {
   const hasChallenge = unreadChallenges > 0;
 
   let icon: string = 'bell';
-  let iconColor = colors.primary;
+  let iconColor = colors.accentYellow;
   let title = 'New notification';
   let subtitle = 'Tap to view';
   let targetScreen = msgScreen;
   let targetParams: Record<string, any> | undefined;
+  const isAivorahMsg = hasMsg && (latestNotif!.senderName === 'Aivorah' || latestNotif!.senderEmail === 'system@aivorah.com');
 
   if (hasAssign) {
-    icon = 'check-square';
-    iconColor = colors.accentBlue;
-    // Show the actual assignment title if available
+    icon = 'clipboard';
+    iconColor = colors.accentYellow;
     const latestItem = notificationItems[0];
     title = latestItem
       ? (latestItem.type === 'quiz' ? `New quiz: ${latestItem.title}` : `New assignment: ${latestItem.title}`)
       : (unreadAssignments === 1 ? 'New assignment added' : `${unreadAssignments} new assignments`);
     subtitle = latestItem ? latestItem.subtitle : 'Tap to open your assignments';
     targetScreen = assignScreen;
-    // Deep-link straight into the specific assignment (matches the bell dropdown).
     targetParams = latestItem ? { highlightId: latestItem.id } : undefined;
   } else if (hasChallenge) {
     icon = 'award';
-    iconColor = colors.accentPurple;
+    iconColor = colors.accentYellow;
     const latestChallenge = notificationItems.find(i => i.type === 'challenge');
     title = latestChallenge
       ? `New challenge: ${latestChallenge.title}`
       : (unreadChallenges === 1 ? 'New challenge assigned' : `${unreadChallenges} new challenges`);
     subtitle = latestChallenge ? latestChallenge.subtitle : 'Tap to view your challenges';
     targetScreen = challengeScreen;
-    // Deep-link straight into the specific challenge (matches the bell dropdown).
     targetParams = latestChallenge ? { highlightId: latestChallenge.id, tab: 'assigned' } : { tab: 'assigned' };
   } else if (hasMsg) {
-    icon = 'message-square';
-    iconColor = colors.primary;
-    title = `Message from ${latestNotif!.senderName}`;
+    icon = isAivorahMsg ? 'cpu' : 'message-square';
+    iconColor = colors.accentYellow;
+    title = isAivorahMsg ? 'Aivorah replied' : `Message from ${latestNotif!.senderName}`;
     subtitle = latestNotif!.preview || 'Tap to read';
     targetScreen = msgScreen;
   }
@@ -105,7 +103,7 @@ export default function NotificationBanner({ onNavigate }: Props) {
         styles.container,
         {
           backgroundColor: colors.cardDark,
-          borderColor: colors.borderColor,
+          borderColor: colors.accentYellow + '50',
           transform: [{ translateY: slideY }],
           opacity,
         },
@@ -114,14 +112,14 @@ export default function NotificationBanner({ onNavigate }: Props) {
     >
       <TouchableOpacity style={styles.inner} onPress={handleTap} activeOpacity={0.88}>
         {/* App icon area */}
-        <View style={[styles.iconWrap, { backgroundColor: iconColor }]}>
-          <Feather name={icon as any} size={20} color="#fff" />
+        <View style={[styles.iconWrap, { backgroundColor: colors.accentYellow + '20', borderWidth: 1, borderColor: colors.accentYellow + '50' }]}>
+          <Feather name={icon as any} size={20} color={colors.accentYellow} />
         </View>
 
         {/* Text */}
         <View style={styles.textWrap}>
           <View style={styles.titleRow}>
-            <Text style={[styles.appName, { color: colors.textMuted }]}>AIVORAH</Text>
+            <Text style={[styles.appName, { color: colors.accentYellow, fontWeight: '800' }]}>AIVORAH</Text>
             <Text style={[styles.timeText, { color: colors.textDim }]}>now</Text>
           </View>
           <Text style={[styles.title, { color: colors.textMain }]} numberOfLines={1}>{title}</Text>
@@ -135,7 +133,7 @@ export default function NotificationBanner({ onNavigate }: Props) {
       </TouchableOpacity>
 
       {/* Progress bar */}
-      <AutoProgressBar color={iconColor} duration={5000} onComplete={dismissToast} />
+      <AutoProgressBar color={colors.accentYellow} duration={5000} onComplete={dismissToast} />
     </Animated.View>
   );
 }

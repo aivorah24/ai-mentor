@@ -143,7 +143,7 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
                     <Feather
                       name={item.icon as any}
                       size={17}
-                      color={isActive ? colors.primary : colors.textMuted}
+                      color={isActive ? colors.accentYellow : colors.textMuted}
                     />
                     <Text style={[styles.navItemText, isActive && styles.navItemTextActive]}>
                       {item.label}
@@ -196,7 +196,7 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
                   onPress={() => setThemeMode(opt.id)}
                   activeOpacity={0.7}
                 >
-                  <Feather name={opt.icon as any} size={12} color={isActive ? colors.primary : colors.textMuted} />
+                  <Feather name={opt.icon as any} size={12} color={isActive ? colors.accentYellow : colors.textMuted} />
                   <Text style={[styles.themeOptionText, isActive && styles.themeOptionTextActive]}>{opt.label}</Text>
                 </TouchableOpacity>
               );
@@ -218,7 +218,7 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
                     onPress={() => { switchRole(r as any); setTimeout(() => { try { onNavigate(ROLE_DASH[r] ?? 'Dashboard'); } catch (_) {} }, 50); }}
                     activeOpacity={0.75}
                   >
-                    <Feather name={r === 'teacher' ? 'briefcase' : 'home'} size={12} color={isActive ? colors.primary : colors.textMuted} />
+                    <Feather name={r === 'teacher' ? 'briefcase' : 'home'} size={12} color={isActive ? colors.accentYellow : colors.textMuted} />
                     <Text style={[styles.rolePillText, isActive && styles.rolePillTextActive]}>
                       {r.charAt(0).toUpperCase() + r.slice(1)}
                     </Text>
@@ -243,7 +243,7 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
             activeOpacity={0.8}
           >
             <View style={styles.addParentHintIcon}>
-              <Feather name="home" size={11} color={colors.primary} />
+              <Feather name="home" size={11} color={colors.accentYellow} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.addParentHintTitle}>Also a parent?</Text>
@@ -254,7 +254,10 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
         )}
 
         {user && (
-          <View style={styles.userRow}>
+          <TouchableOpacity style={styles.userRow} activeOpacity={0.75} onPress={() => {
+            const profileScreen = role === 'parent' ? 'ParentProfile' : 'Profile';
+            onNavigate(profileScreen);
+          }}>
             <View style={styles.userAvatar}>
               {(user as any).photoUrl ? (
                 <Image source={{ uri: (user as any).photoUrl }} style={styles.userAvatarImg} />
@@ -291,7 +294,7 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
                 </View>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
         <TouchableOpacity style={styles.navItem} onPress={logout} activeOpacity={0.7}>
           <Feather name="log-out" size={17} color={colors.accentRed} />
@@ -349,7 +352,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: radius.sm,
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -377,19 +380,19 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     marginBottom: 2,
     position: 'relative',
   },
-  navItemActive: { backgroundColor: c.primaryGlow },
+  navItemActive: { backgroundColor: c.accentYellow + '18' },
   activeBar: {
     position: 'absolute',
     left: 0,
     top: 6,
     bottom: 6,
     width: 3,
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
     borderTopRightRadius: 4,
     borderBottomRightRadius: 4,
   },
   navItemText: { fontSize: 14, fontWeight: '500', color: c.textMuted, flex: 1 },
-  navItemTextActive: { color: c.primary },
+  navItemTextActive: { color: c.accentYellow },
   navBadge: {
     minWidth: 18, height: 18, borderRadius: 9,
     backgroundColor: c.accentRed,
@@ -455,8 +458,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingVertical: 6,
   },
   themeOptionActive: {
-    borderColor: c.primary,
-    backgroundColor: c.primaryGlow,
+    borderColor: c.accentYellow,
+    backgroundColor: c.accentYellow + '18',
   },
   themeOptionText: {
     fontSize: 11,
@@ -464,7 +467,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     color: c.textMuted,
   },
   themeOptionTextActive: {
-    color: c.primary,
+    color: c.accentYellow,
   },
   roleSwitcher: {
     marginBottom: spacing.md,
@@ -494,8 +497,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: c.cardDark,
   },
   rolePillActive: {
-    borderColor: c.primary,
-    backgroundColor: c.primaryGlow,
+    borderColor: c.accentYellow,
+    backgroundColor: c.accentYellow + '18',
   },
   rolePillText: {
     fontSize: 11,
@@ -503,7 +506,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     color: c.textMuted,
   },
   rolePillTextActive: {
-    color: c.primary,
+    color: c.accentYellow,
   },
   addParentHint: {
     flexDirection: 'row',
@@ -515,21 +518,21 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: c.primary + '50',
-    backgroundColor: c.primaryGlow,
+    borderColor: c.accentYellow + '50',
+    backgroundColor: c.accentYellow + '10',
   },
   addParentHintIcon: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: c.primary + '20',
+    backgroundColor: c.accentYellow + '20',
     alignItems: 'center',
     justifyContent: 'center',
   },
   addParentHintTitle: {
     fontSize: 11,
     fontWeight: '700',
-    color: c.primary,
+    color: c.accentYellow,
   },
   addParentHintSub: {
     fontSize: 10,
@@ -563,13 +566,13 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, borderWidth: 1,
   },
   planBadgeFree: {
-    backgroundColor: '#93B0AC18', borderColor: '#93B0AC40',
+    backgroundColor: c.accentYellow + '18', borderColor: c.accentYellow + '40',
   },
   planBadgePro: {
     backgroundColor: '#C5A56A22', borderColor: '#C5A56A55',
   },
   planBadgeText: { fontSize: 8, fontWeight: '800', letterSpacing: 0.5 },
-  planBadgeTextFree: { color: '#93B0AC' },
+  planBadgeTextFree: { color: c.accentYellow },
   planBadgeTextPro: { color: '#C5A56A' },
 
   // Home confirm modal
@@ -582,6 +585,6 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   confirmBtns: { flexDirection: 'row', gap: 10, marginTop: 8 },
   confirmCancel: { flex: 1, borderWidth: 1, borderColor: c.borderColor, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
   confirmCancelText: { fontSize: 14, fontWeight: '600', color: c.textMuted },
-  confirmGo: { flex: 1, backgroundColor: c.primary, borderRadius: 10, paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  confirmGoText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+  confirmGo: { flex: 1, backgroundColor: c.accentYellow, borderRadius: 10, paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  confirmGoText: { fontSize: 14, fontWeight: '700', color: '#0B0B0B' },
 });
