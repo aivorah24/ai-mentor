@@ -237,14 +237,14 @@ const [editingName, setEditingName] = useState(false);
 
         {/* Bell */}
         <TouchableOpacity
-          style={styles.iconBtn}
+          style={[styles.iconBtn, { borderColor: colors.accentYellow + '50', backgroundColor: colors.accentYellow + '12' }]}
           onPress={() => {
             setBellVisible(prev => !prev);
             onNotificationPress?.();
           }}
           activeOpacity={0.7}
         >
-          <Feather name="bell" size={18} color={count > 0 ? colors.primary : colors.textMuted} />
+          <Feather name="bell" size={18} color={count > 0 ? colors.accentYellow : colors.accentYellow + 'AA'} />
           {count > 0 && (
             <View style={styles.notifBadge}>
               <Text style={styles.notifCount}>{count > 9 ? '9+' : count}</Text>
@@ -258,8 +258,8 @@ const [editingName, setEditingName] = useState(false);
             <TouchableOpacity activeOpacity={1} onPress={() => {}}>
               <View style={[styles.dropdown, styles.notifPanel]}>
                 {/* Header */}
-                <View style={styles.dropdownHeader}>
-                  <Text style={styles.dropdownTitle}>Notifications</Text>
+                <View style={[styles.dropdownHeader, { borderBottomColor: colors.accentYellow + '30' }]}>
+                  <Text style={[styles.dropdownTitle, { color: colors.accentYellow }]}>Notifications</Text>
                   {count > 0 && (
                     <TouchableOpacity
                       onPress={() => {
@@ -271,7 +271,7 @@ const [editingName, setEditingName] = useState(false);
                       activeOpacity={0.7}
                       style={styles.markAllBtn}
                     >
-                      <Text style={[styles.markAllText, { color: colors.primary }]}>Mark all read</Text>
+                      <Text style={[styles.markAllText, { color: colors.accentYellow }]}>Mark all read</Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity onPress={() => setBellVisible(false)} activeOpacity={0.7}>
@@ -408,7 +408,9 @@ const [editingName, setEditingName] = useState(false);
                   </View>
                 ) : (
                   <View style={styles.noNotifState}>
-                    <Feather name="bell-off" size={28} color={colors.textDim} />
+                    <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accentYellow + '15', borderWidth: 1, borderColor: colors.accentYellow + '30', alignItems: 'center', justifyContent: 'center' }}>
+                      <Feather name="bell-off" size={24} color={colors.accentYellow} />
+                    </View>
                     <Text style={styles.noNotifText}>You're all caught up!</Text>
                     <Text style={[styles.notifPreview, { textAlign: 'center', paddingHorizontal: 16 }]}>
                       New assignments and messages will appear here
@@ -423,7 +425,7 @@ const [editingName, setEditingName] = useState(false);
         {/* Admin Panel — only for whitelisted emails */}
         {user?.email && ADMIN_EMAILS.has(user.email.toLowerCase().trim()) && (
           <TouchableOpacity
-            style={[styles.iconBtn, { borderColor: colors.primary, backgroundColor: colors.primaryGlow }]}
+            style={[styles.iconBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '18' }]}
             onPress={() => {
               const email = encodeURIComponent(user.email || '');
               if (Platform.OS === 'web') {
@@ -432,7 +434,7 @@ const [editingName, setEditingName] = useState(false);
             }}
             activeOpacity={0.7}
           >
-            <Feather name="shield" size={16} color={colors.primary} />
+            <Feather name="shield" size={16} color={colors.accentYellow} />
           </TouchableOpacity>
         )}
 
@@ -445,90 +447,94 @@ const [editingName, setEditingName] = useState(false);
           {renderAvatarCircle(36)}
         </TouchableOpacity>
 
-        {/* Profile dropdown */}
-        <Modal visible={profileVisible} transparent animationType="none" onRequestClose={() => { setProfileVisible(false); setEditingName(false); }}>
+        {/* Profile modal — redesigned */}
+        <Modal visible={profileVisible} transparent animationType="fade" onRequestClose={() => { setProfileVisible(false); setEditingName(false); }}>
           <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => { setProfileVisible(false); setEditingName(false); }}>
             <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-              <View style={[styles.dropdown, { width: 280 }]}>
-                {/* Header */}
-                <View style={styles.dropdownHeader}>
-                  <Text style={styles.dropdownTitle}>My Profile</Text>
-                  <TouchableOpacity onPress={() => { setProfileVisible(false); setEditingName(false); }} activeOpacity={0.7}>
-                    <Feather name="x" size={14} color={colors.textMuted} />
+              <View style={styles.profileModal}>
+
+                {/* Title row */}
+                <View style={styles.profileModalHeader}>
+                  <View>
+                    <Text style={styles.profileModalTitle}>
+                      <Text style={{ color: colors.textMain }}>My </Text>
+                      <Text style={{ color: colors.accentYellow }}>Profile</Text>
+                    </Text>
+                    <Text style={styles.profileModalSub}>Manage your account and preferences</Text>
+                  </View>
+                  <TouchableOpacity style={styles.profileCloseBtn} onPress={() => { setProfileVisible(false); setEditingName(false); }} activeOpacity={0.7}>
+                    <Feather name="x" size={16} color={colors.textMuted} />
                   </TouchableOpacity>
                 </View>
 
-                {/* Photo */}
-                <View style={styles.profilePhotoRow}>
-                  <TouchableOpacity style={styles.profilePhotoWrap} onPress={handlePickPhoto} activeOpacity={0.85} disabled={uploadingPhoto}>
-                    {renderAvatarCircle(64)}
+                {/* Avatar + name row */}
+                <View style={styles.profileAvatarRow}>
+                  <TouchableOpacity style={styles.profileAvatarWrap} onPress={handlePickPhoto} activeOpacity={0.85} disabled={uploadingPhoto}>
+                    <View style={styles.profileAvatarRing}>
+                      {renderAvatarCircle(80)}
+                    </View>
                     <View style={styles.profileCameraBtn}>
                       {uploadingPhoto
-                        ? <ActivityIndicator size={10} color="#fff" />
-                        : <Feather name="camera" size={10} color="#fff" />
+                        ? <ActivityIndicator size={12} color={colors.accentYellow} />
+                        : <Feather name="camera" size={12} color={colors.accentYellow} />
                       }
                     </View>
                   </TouchableOpacity>
-                  <View style={{ flex: 1 }}>
+                  <View style={{ gap: 4 }}>
                     <Text style={styles.profileName} numberOfLines={1}>{user?.name}</Text>
                     <Text style={styles.profileRole}>{user?.role}</Text>
                     {user?.curriculum && (
-                      <View style={styles.curriculumBadge}>
-                        <Text style={styles.curriculumBadgeText}>{user.curriculum}</Text>
+                      <View style={styles.premiumBadge}>
+                        <Text style={styles.premiumBadgeText}>{user.curriculum}</Text>
                       </View>
                     )}
                   </View>
                 </View>
 
-                {/* Email */}
-                <View style={styles.profileInfoRow}>
-                  <Feather name="mail" size={13} color={colors.textDim} />
-                  <Text style={styles.profileInfoText} numberOfLines={1}>{user?.email}</Text>
-                </View>
-                {user?.school && (
-                  <View style={styles.profileInfoRow}>
-                    <Feather name="home" size={13} color={colors.textDim} />
-                    <Text style={styles.profileInfoText} numberOfLines={1}>{user.school}</Text>
+                {/* Info rows */}
+                <View style={styles.profileInfoCards}>
+                  <View style={styles.profileInfoCard}>
+                    <Feather name="mail" size={15} color={colors.accentYellow} />
+                    <Text style={styles.profileInfoCardText} numberOfLines={1}>{user?.email}</Text>
                   </View>
-                )}
-                {user?.location && (
-                  <View style={styles.profileInfoRow}>
-                    <Feather name="map-pin" size={13} color={colors.textDim} />
-                    <Text style={styles.profileInfoText}>{user.location}</Text>
-                  </View>
-                )}
-
-                {/* Edit name */}
-                <View style={styles.profileEditSection}>
-                  {editingName ? (
-                    <View style={styles.nameEditRow}>
-                      <TextInput
-                        style={styles.nameInput}
-                        value={nameInput}
-                        onChangeText={setNameInput}
-                        placeholder="Enter name..."
-                        placeholderTextColor={colors.textDim}
-                        autoFocus
-                        autoCapitalize="words"
-                      />
-                      <TouchableOpacity onPress={handleSaveName} activeOpacity={0.8} style={styles.nameSaveBtn}>
-                        <Feather name="check" size={14} color="#fff" />
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => setEditingName(false)} activeOpacity={0.8}>
-                        <Feather name="x" size={14} color={colors.textMuted} />
-                      </TouchableOpacity>
+                  {(user?.location || user?.school) && (
+                    <View style={styles.profileInfoCard}>
+                      <Feather name="map-pin" size={15} color={colors.accentYellow} />
+                      <Text style={styles.profileInfoCardText} numberOfLines={1}>{user?.location || user?.school}</Text>
                     </View>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.editNameBtn}
-                      onPress={() => { setNameInput(user?.name || ''); setEditingName(true); }}
-                      activeOpacity={0.8}
-                    >
-                      <Feather name="edit-2" size={13} color={colors.primary} />
-                      <Text style={styles.editNameText}>Edit display name</Text>
-                    </TouchableOpacity>
                   )}
                 </View>
+
+                {/* Edit display name */}
+                {editingName ? (
+                  <View style={styles.nameEditRow}>
+                    <TextInput
+                      style={styles.nameInput}
+                      value={nameInput}
+                      onChangeText={setNameInput}
+                      placeholder="Enter name..."
+                      placeholderTextColor={colors.textDim}
+                      autoFocus
+                      autoCapitalize="words"
+                    />
+                    <TouchableOpacity onPress={handleSaveName} activeOpacity={0.8} style={styles.nameSaveBtn}>
+                      <Feather name="check" size={14} color="#0B0B0B" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setEditingName(false)} activeOpacity={0.8}>
+                      <Feather name="x" size={14} color={colors.textMuted} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.editNameCard}
+                    onPress={() => { setNameInput(user?.name || ''); setEditingName(true); }}
+                    activeOpacity={0.8}
+                  >
+                    <Feather name="edit-2" size={15} color={colors.accentYellow} />
+                    <Text style={styles.editNameText}>Edit display name</Text>
+                    <Feather name="chevron-right" size={15} color={colors.accentYellow} style={{ marginLeft: 'auto' as any }} />
+                  </TouchableOpacity>
+                )}
 
                 {/* Logout */}
                 <TouchableOpacity
@@ -536,9 +542,10 @@ const [editingName, setEditingName] = useState(false);
                   onPress={() => { setProfileVisible(false); logout(); }}
                   activeOpacity={0.85}
                 >
-                  <Feather name="log-out" size={16} color={colors.accentRed} />
-                  <Text style={[styles.logoutBtnText, { color: colors.accentRed }]}>Log Out</Text>
+                  <Feather name="log-out" size={16} color="#0B0B0B" />
+                  <Text style={[styles.logoutBtnText, { color: '#0B0B0B' }]}>Log Out</Text>
                 </TouchableOpacity>
+
               </View>
             </TouchableOpacity>
           </TouchableOpacity>
@@ -589,7 +596,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   notifCount: { fontSize: 9, fontWeight: '800', color: '#fff' },
   avatar: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: c.cardDark, borderWidth: 2, borderColor: c.borderColor,
+    backgroundColor: c.accentYellow + '12', borderWidth: 2, borderColor: c.accentYellow + '50',
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
 
@@ -600,7 +607,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   dropdown: {
     width: 290, backgroundColor: c.cardDark,
-    borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: radius.md, borderWidth: 1, borderColor: c.accentYellow + '35',
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 8, elevation: 20, overflow: 'hidden',
   },
@@ -635,58 +642,82 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   notifTime: { fontSize: 10, color: c.textDim, marginTop: 3 },
   notifUnreadDot: {
     width: 8, height: 8, borderRadius: 4,
-    backgroundColor: c.primary, alignSelf: 'center', flexShrink: 0, marginLeft: 4,
+    backgroundColor: c.accentYellow, alignSelf: 'center', flexShrink: 0, marginLeft: 4,
   },
   noNotifState: { alignItems: 'center', padding: spacing.xl, gap: spacing.sm },
   noNotifText: { fontSize: 14, fontWeight: '600', color: c.textMain, marginTop: 4 },
 
-  // Profile dropdown
-  profilePhotoRow: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    padding: spacing.lg, borderBottomWidth: 1, borderBottomColor: c.borderColor,
+  // Profile modal redesign
+  profileModal: {
+    width: 340, backgroundColor: c.cardDark,
+    borderRadius: 18, borderWidth: 1, borderColor: c.borderColor,
+    padding: spacing.lg, gap: spacing.md,
+    shadowColor: '#000', shadowOpacity: 0.6, shadowRadius: 24, elevation: 20,
   },
-  profilePhotoWrap: { position: 'relative', width: 64, height: 64 },
+  profileModalHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
+  },
+  profileModalTitle: { fontSize: 18, fontWeight: '800' },
+  profileModalSub: { fontSize: 11, color: c.textDim, marginTop: 2 },
+  profileCloseBtn: {
+    width: 28, height: 28, borderRadius: 14,
+    borderWidth: 1, borderColor: c.borderColor,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: c.bgDark,
+  },
+  profileAvatarRow: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.lg,
+  },
+  profileAvatarWrap: { position: 'relative', width: 72, height: 72 },
+  profileAvatarRing: {
+    width: 68, height: 68, borderRadius: 34,
+    borderWidth: 2, borderColor: c.accentYellow,
+    overflow: 'hidden', alignItems: 'center', justifyContent: 'center',
+  },
   profileCameraBtn: {
     position: 'absolute', bottom: 0, right: 0,
     width: 22, height: 22, borderRadius: 11,
-    backgroundColor: c.primary, borderWidth: 2, borderColor: c.cardDark,
+    backgroundColor: c.cardDark, borderWidth: 1.5, borderColor: c.accentYellow + '60',
     alignItems: 'center', justifyContent: 'center',
   },
-  profileName: { fontSize: 15, fontWeight: '700', color: c.textMain, marginBottom: 2 },
-  profileRole: { fontSize: 12, color: c.textMuted, textTransform: 'capitalize', marginBottom: 4 },
-  curriculumBadge: {
-    alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2,
-    borderRadius: 10, backgroundColor: c.primaryGlow, borderWidth: 1, borderColor: c.primary,
+  profileName: { fontSize: 16, fontWeight: '800', color: c.textMain },
+  profileRole: { fontSize: 12, color: c.accentYellow, textTransform: 'capitalize' },
+  premiumBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: 20, backgroundColor: c.bgDark,
+    borderWidth: 1, borderColor: c.accentYellow + '40',
   },
-  curriculumBadgeText: { fontSize: 10, fontWeight: '700', color: c.primary },
-  profileInfoRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: spacing.lg, paddingVertical: 6,
+  premiumBadgeText: { fontSize: 10, fontWeight: '600', color: c.accentYellow },
+  profileInfoCards: { gap: 6 },
+  profileInfoCard: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    backgroundColor: c.bgDark, borderRadius: 12,
+    borderWidth: 1, borderColor: c.borderColor,
+    paddingHorizontal: spacing.md, paddingVertical: 10,
   },
-  profileInfoText: { fontSize: 12, color: c.textMuted, flex: 1 },
-  profileEditSection: {
-    padding: spacing.md, borderTopWidth: 1, borderTopColor: c.borderColor, marginTop: 4,
+  profileInfoCardText: { fontSize: 12, color: c.textMain, flex: 1 },
+  editNameCard: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    backgroundColor: c.bgDark, borderRadius: 12,
+    borderWidth: 1, borderColor: c.accentYellow + '40',
+    paddingHorizontal: spacing.md, paddingVertical: 10,
   },
-  editNameBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  editNameText: { fontSize: 13, color: c.primary, fontWeight: '600' },
+  editNameText: { fontSize: 12, color: c.accentYellow, fontWeight: '600', flex: 1 },
   nameEditRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   nameInput: {
-    flex: 1, height: 36, backgroundColor: c.bgDark,
-    borderWidth: 1, borderColor: c.primary, borderRadius: radius.sm,
-    paddingHorizontal: 10, fontSize: 13, color: c.textMain,
+    flex: 1, height: 40, backgroundColor: c.bgDark,
+    borderWidth: 1, borderColor: c.accentYellow + '50', borderRadius: 12,
+    paddingHorizontal: spacing.md, fontSize: 13, color: c.textMain,
   },
   nameSaveBtn: {
-    width: 32, height: 32, borderRadius: radius.sm,
-    backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
+    width: 32, height: 32, borderRadius: 8,
+    backgroundColor: c.accentYellow, alignItems: 'center', justifyContent: 'center',
   },
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    marginTop: 16,
-    paddingVertical: 13,
-    borderRadius: 10,
-    backgroundColor: c.accentRed + '14',
-    borderWidth: 1,
-    borderColor: c.accentRed + '30',
+    paddingVertical: 12, borderRadius: 12,
+    backgroundColor: c.accentYellow,
   },
-  logoutBtnText: { fontSize: 14, fontWeight: '700' },
+  logoutBtnText: { fontSize: 13, fontWeight: '700' },
 });

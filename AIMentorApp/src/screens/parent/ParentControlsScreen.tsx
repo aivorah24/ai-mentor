@@ -86,6 +86,10 @@ export default function ParentControlsScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const toastOpacity = useRef(new Animated.Value(0)).current;
+  const isInitialLoadRef = useRef(true);
+  const skipAutoSaveRef = useRef(false);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveSettingsRef = useRef<() => void>(() => {});
 
   const showToast = useCallback(() => {
     toastOpacity.setValue(1);
@@ -150,18 +154,31 @@ export default function ParentControlsScreen({ navigation }: any) {
           });
         } else {
           // Only refresh usage — don't overwrite unsaved settings changes
+          skipAutoSaveRef.current = true;
           setCtrl(prev => ({ ...prev, todayUsageMinutes: data.todayUsageMinutes ?? prev.todayUsageMinutes, weeklyUsageMinutes: data.weeklyUsageMinutes ?? prev.weeklyUsageMinutes }));
         }
-        if (isInitial) setLoading(false);
+        if (isInitial) { setLoading(false); isInitialLoadRef.current = false; }
       })
-      .catch(() => { if (isInitial) setLoading(false); });
+      .catch(() => { if (isInitial) { setLoading(false); isInitialLoadRef.current = false; } });
   }, [selectedChild, parentEmail]);
 
   useEffect(() => {
+    isInitialLoadRef.current = true;
     fetchControls(true);
     const interval = setInterval(() => fetchControls(false), 15 * 1000);
     return () => clearInterval(interval);
   }, [fetchControls]);
+
+  // Auto-save whenever controls change (debounced 800ms), skip initial load and usage-only polls.
+  useEffect(() => {
+    if (isInitialLoadRef.current) return;
+    if (skipAutoSaveRef.current) { skipAutoSaveRef.current = false; return; }
+    if (!selectedChild || !parentEmail) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => { saveSettingsRef.current(); }, 800);
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctrl]);
 
   // Refresh usage immediately whenever the screen regains focus.
   useFocusEffect(useCallback(() => { fetchControls(false); }, [fetchControls]));
@@ -204,6 +221,7 @@ export default function ParentControlsScreen({ navigation }: any) {
     }
     setSaving(false);
   }, [selectedChild, parentEmail, ctrl]);
+  saveSettingsRef.current = saveSettings;
 
   const toggleSubject = (subject: string) => {
     const blocked = ctrl.blockedSubjects.includes(subject)
