@@ -176,7 +176,7 @@ function NotificationBannerWrapper() {
   return <NotificationBanner onNavigate={handleNavigate} />;
 }
 
-const IDLE_WARN_MS   = 15 * 60 * 1000; // 15 min idle → show warning
+const IDLE_WARN_MS   = 25 * 60 * 1000; // 25 min idle → show warning
 const IDLE_LOGOUT_MS = 2 * 60 * 1000;  // 2 min after warning → auto-logout
 const IDLE_WARN_MIN  = Math.round(IDLE_WARN_MS / 60000); // for display copy
 

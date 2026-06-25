@@ -386,6 +386,38 @@ router.patch('/read', async (req, res) => {
   }
 });
 
+router.post('/aivorah-reply', async (req, res) => {
+  try {
+    const { parentEmail, parentName, message, childName, childGrade } = req.body;
+    if (!parentEmail || !message) return res.status(400).json({ error: 'parentEmail and message required' });
+
+    const Groq = require('groq-sdk');
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const systemPrompt = `You are Aivorah, a warm and supportive AI learning companion for parents. Your role is to help ${parentName || 'this parent'} support their child${childName ? ` ${childName}` : ''}${childGrade ? ` (Grade ${childGrade})` : ''} in their learning journey. Be concise (2-4 sentences), empathetic, practical, and encouraging. Offer specific actionable advice when relevant. Never be dismissive of parental concerns. Always end with a positive, supportive note.`;
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
+      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: message }],
+      max_tokens: 300,
+    });
+    const reply = completion.choices[0]?.message?.content?.trim() || 'I am here to help! Please try again.';
+
+    const AIVORAH_EMAIL = 'system@aivorah.com';
+    await supabase.from('messages').insert({
+      sender_email:    AIVORAH_EMAIL,
+      sender_name:     'Aivorah',
+      sender_role:     'teacher',
+      recipient_email: parentEmail.toLowerCase().trim(),
+      recipient_name:  parentName || parentEmail,
+      content:         reply,
+    });
+
+    res.json({ reply });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -818,4 +850,26 @@ router.post('/cleanup-system-notifs', async (req, res) => {
   }
 });
 
+// ── DELETE /messages/:id ────────────────────────────────
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { senderEmail } = req.body;
+    if (!senderEmail) return res.status(400).json({ error: 'senderEmail required' });
+
+    const { error } = await supabase
+      .from('messages')
+      .delete()
+      .eq('id', id)
+      .eq('sender_email', senderEmail.toLowerCase().trim());
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /messages/aivorah-reply ────────────────────────
+// Parent sends a message to Aivorah; get an AI response back.
 module.exports = router;

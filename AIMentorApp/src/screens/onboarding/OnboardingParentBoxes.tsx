@@ -26,7 +26,10 @@ import {
   SelectField, COUNTRIES, INDIA_STATES, INDIA_CITIES, PhoneCodeSelect,
 } from './OnboardingSharedFields';
 
-const FOREST = '#5A8A70';
+const FOREST = '#BAA467';
+// Override imported TEAL with Aivorah gold for parent onboarding
+// eslint-disable-next-line @typescript-eslint/no-shadow
+const TEAL = '#BAA467';
 const GRADE_GROUPS = [
   { label: 'Early Years', grades: ['Nursery', 'LKG', 'UKG'] },
   { label: 'Primary', grades: ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'] },
@@ -536,7 +539,7 @@ export default function OnboardingParentBoxes() {
               <Feather name="arrow-left" size={18} color={colors.textMuted} />
               <Text style={styles.backTxt}>Back</Text>
             </TouchableOpacity>
-            <View style={styles.logoMark}><Feather name="zap" size={14} color="#fff" /></View>
+            <View style={styles.logoMark}><Feather name="zap" size={14} color="#0B0B0B" /></View>
             <Text style={styles.logoTxt}>Aivorah</Text>
           </View>
           <View style={styles.completionRow}>
@@ -852,7 +855,7 @@ export default function OnboardingParentBoxes() {
                         <TouchableOpacity
                           onPress={sendChildOtp}
                           disabled={otpSending || otpCooldown > 0}
-                          style={{ paddingHorizontal: 14, paddingVertical: 11, borderRadius: 8, backgroundColor: '#B7CBB0', opacity: (otpSending || otpCooldown > 0) ? 0.5 : 1 }}
+                          style={{ paddingHorizontal: 14, paddingVertical: 11, borderRadius: 8, backgroundColor: '#BAA467', opacity: (otpSending || otpCooldown > 0) ? 0.5 : 1 }}
                           activeOpacity={0.85}>
                           <Text style={{ fontSize: 13, fontWeight: '700', color: '#0b0b0b' }}>
                             {otpSending ? 'Sending…' : otpCooldown > 0 ? `Resend (${otpCooldown}s)` : (otpSent ? 'Resend' : 'Send Code')}
@@ -1041,7 +1044,7 @@ function useStyles(colors: any) {
     confirmTitle: { fontSize: 19, fontWeight: '800', color: colors.textMain, marginBottom: 10, textAlign: 'center' },
     confirmBody: { fontSize: 14, color: colors.textMuted, lineHeight: 21, textAlign: 'center', marginBottom: 24 },
     confirmPrimary: { width: '100%', backgroundColor: TEAL, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
-    confirmPrimaryTxt: { fontSize: 15, fontWeight: '700', color: '#fff' },
+    confirmPrimaryTxt: { fontSize: 15, fontWeight: '700', color: '#0B0B0B' },
     confirmSecondary: { width: '100%', paddingVertical: 12, alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: colors.borderColor },
     confirmSecondaryTxt: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
     logoMark: { width: 28, height: 28, borderRadius: 8, backgroundColor: TEAL, alignItems: 'center', justifyContent: 'center' },
@@ -1172,7 +1175,7 @@ function useStyles(colors: any) {
       flexDirection: 'row', alignItems: 'center', gap: 8,
       backgroundColor: TEAL, paddingHorizontal: 22, paddingVertical: 14, borderRadius: 12,
     },
-    completeTxt: { fontSize: 14, fontWeight: '800', color: '#fff' },
+    completeTxt: { fontSize: 14, fontWeight: '800', color: '#0B0B0B' },
 
     modalOverlay: {
       flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: 20,
@@ -1186,6 +1189,6 @@ function useStyles(colors: any) {
     modalBtn: {
       backgroundColor: TEAL, borderRadius: 10, paddingVertical: 14, alignItems: 'center',
     },
-    modalBtnText: { fontSize: 14, fontWeight: '800', color: '#fff' },
+    modalBtnText: { fontSize: 14, fontWeight: '800', color: '#0B0B0B' },
   });
 }

@@ -1,11 +1,11 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+﻿import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   ActivityIndicator, TextInput, RefreshControl,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -13,9 +13,9 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import SERVER_URL from '../../config/serverUrl';
 
-const GOLD = '#C5A56A';
-const GOLD_BG = '#C5A56A18';
-const GOLD_BORDER = '#C5A56A40';
+const GOLD = '#BAA467';
+const GOLD_BG = '#BAA46718';
+const GOLD_BORDER = '#BAA46740';
 
 const ICONS = [
   'check-circle','book-open','sun','moon','droplet',
@@ -333,9 +333,9 @@ export default function ParentDailyTasksScreen({ navigation }: any) {
                   activeOpacity={0.8}
                 >
                   {saving
-                    ? <ActivityIndicator color="#fff" size="small" />
+                    ? <ActivityIndicator color="#0B0B0B" size="small" />
                     : <>
-                        <Feather name="plus" size={16} color="#fff" />
+                        <Feather name="plus" size={16} color="#0B0B0B" />
                         <Text style={styles.addBtnText}>Add Task</Text>
                       </>}
                 </TouchableOpacity>
@@ -351,7 +351,7 @@ export default function ParentDailyTasksScreen({ navigation }: any) {
 const makeStyles = (c: AppColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bgDark },
   scroll: { flex: 1 },
-  content: { padding: spacing.xl, paddingBottom: 64, gap: spacing.xl },
+  content: { padding: spacing.lg, paddingBottom: 48, gap: spacing.lg },
 
   pageHeader: {
     backgroundColor: GOLD_BG,
@@ -364,12 +364,12 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: GOLD_BG, borderWidth: 1, borderColor: GOLD_BORDER,
     alignItems: 'center', justifyContent: 'center',
   },
-  pageTitle: { fontSize: 20, fontWeight: '700', color: c.textMain },
-  pageSubtitle: { fontSize: 13, color: c.textMuted, marginTop: 2 },
+  pageTitle: { fontFamily: fonts.serif, fontSize: 20, fontWeight: '700', color: c.textMain },
+  pageSubtitle: { fontFamily: fonts.serif, fontSize: 13, color: c.textMuted, marginTop: 2 },
 
   section: { gap: spacing.md },
   sectionLabel: {
-    fontSize: 11, fontWeight: '700', color: c.textDim,
+    fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: c.textDim,
     letterSpacing: 0.8, textTransform: 'uppercase',
   },
 
@@ -381,12 +381,12 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   childPillActive: { borderColor: GOLD, backgroundColor: GOLD_BG },
   pillAvatar: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  pillAvatarText: { fontSize: 15, fontWeight: '700' },
-  pillName: { fontSize: 14, fontWeight: '600', color: c.textMain },
-  pillGrade: { fontSize: 11, color: c.textMuted },
+  pillAvatarText: { fontFamily: fonts.serif, fontSize: 15, fontWeight: '700' },
+  pillName: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '600', color: c.textMain },
+  pillGrade: { fontFamily: fonts.serif, fontSize: 11, color: c.textMuted },
 
   emptyBox: { alignItems: 'center', paddingVertical: 32, gap: 10 },
-  emptyText: { fontSize: 13, color: c.textMuted, textAlign: 'center' },
+  emptyText: { fontFamily: fonts.serif, fontSize: 13, color: c.textMuted, textAlign: 'center' },
 
   taskList: {
     backgroundColor: c.cardDark, borderWidth: 1,
@@ -401,59 +401,64 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     width: 34, height: 34, borderRadius: 17,
     backgroundColor: GOLD_BG, alignItems: 'center', justifyContent: 'center',
   },
-  taskLabel: { fontSize: 14, fontWeight: '600', color: c.textMain },
-  taskCoins: { fontSize: 11, color: GOLD, marginTop: 2 },
+  taskLabel: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '600', color: c.textMain },
+  taskCoins: { fontFamily: fonts.serif, fontSize: 11, color: GOLD, marginTop: 2 },
   doneBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: c.accentGreen + '20', paddingHorizontal: 8, paddingVertical: 4,
     borderRadius: 12, marginRight: 8,
   },
-  doneBadgeText: { color: c.accentGreen, fontSize: 11, fontWeight: '700' },
+  doneBadgeText: { color: c.accentGreen, fontFamily: fonts.serif, fontSize: 11, fontWeight: '700' },
 
   formCard: {
     backgroundColor: c.cardDark, borderWidth: 1,
     borderColor: c.borderColor, borderRadius: radius.xl,
-    padding: spacing.xl, gap: spacing.lg,
+    padding: spacing.lg, gap: spacing.md,
+    maxWidth: 600, alignSelf: 'center', width: '100%',
   },
-  formHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  formTitle: { fontSize: 16, fontWeight: '700', color: c.textMain },
-  fieldLabel: { fontSize: 12, fontWeight: '600', color: c.textMuted },
+  formHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  formTitle: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700', color: c.textMain },
+  fieldLabel: { fontFamily: fonts.serif, fontSize: 11, fontWeight: '600', color: c.textMuted },
 
   input: {
     borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md,
-    padding: spacing.md, fontSize: 14, color: c.textMain, backgroundColor: c.bgDark,
+    paddingHorizontal: spacing.md, paddingVertical: 9,
+    fontFamily: fonts.serif, fontSize: 13, color: c.textMain, backgroundColor: c.bgDark,
   },
 
-  iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   iconChip: {
-    width: 40, height: 40, borderRadius: 10,
+    width: 34, height: 34, borderRadius: 8,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark,
   },
   iconChipActive: { borderColor: GOLD, backgroundColor: GOLD_BG },
-  suggestionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, marginBottom: 4 },
+  suggestionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 },
   suggestionChip: {
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
+    paddingHorizontal: 9, paddingVertical: 4, borderRadius: 20,
     backgroundColor: GOLD_BG, borderWidth: 1, borderColor: GOLD_BORDER,
   },
-  suggestionText: { fontSize: 11, color: GOLD, fontWeight: '600' },
+  suggestionText: { fontFamily: fonts.serif, fontSize: 11, color: GOLD, fontWeight: '600' },
 
-  coinsRow: { flexDirection: 'row', gap: 8 },
+  coinsRow: { flexDirection: 'row', gap: 6 },
   coinChip: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
-    paddingVertical: 10, borderRadius: radius.md,
+    paddingVertical: 8, borderRadius: radius.md,
     borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark,
   },
   coinChipActive: { borderColor: GOLD, backgroundColor: GOLD_BG },
-  coinText: { fontSize: 14, fontWeight: '700', color: c.textMuted },
+  coinText: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: c.textMuted },
 
   errorRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  errorText: { fontSize: 12, flex: 1 },
+  errorText: { fontFamily: fonts.serif, fontSize: 12, flex: 1 },
 
   addBtn: {
-    backgroundColor: GOLD, borderRadius: radius.md,
-    paddingVertical: 14, alignItems: 'center',
-    flexDirection: 'row', justifyContent: 'center', gap: 8,
+    backgroundColor: GOLD, borderRadius: 999,
+    paddingVertical: 11, alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'center', gap: 6,
   },
-  addBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  addBtnText: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700', color: '#0B0B0B' },
 });
+
+
+
