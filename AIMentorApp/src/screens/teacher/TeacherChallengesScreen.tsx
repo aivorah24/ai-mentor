@@ -665,7 +665,7 @@ function ChallengeCard({ ch, colors, isDark, styles, onAssign }: {
   onAssign: () => void;
 }) {
   const diffColor  = DIFF_COLOR(ch.difficulty, colors);
-  const catColor   = CAT_COLOR[ch.category] ?? gold;
+  const catColor   = CAT_COLOR[ch.category] ?? GOLD;
 
   // Dark: follow the landing standard — flat near-black card surface with only a
   // whisper-subtle neutral sheen (NO full-card colour wash, which read as muddy
@@ -759,8 +759,8 @@ function PodiumCard({ entry, place, colors, styles, isDark, elevated }: {
       <View style={[styles.podiumBadge, { backgroundColor: medal, borderColor: colors.cardDark }]}>
         <Text style={styles.podiumBadgeNum}>{place}</Text>
       </View>
-      <View style={[styles.podiumAvatar, { backgroundColor: gold + '22', borderColor: medal }]}>
-        <Text style={[styles.podiumInitials, { color: gold }]}>{initials(entry.name)}</Text>
+      <View style={[styles.podiumAvatar, { backgroundColor: GOLD + '22', borderColor: medal }]}>
+        <Text style={[styles.podiumInitials, { color: GOLD }]}>{initials(entry.name)}</Text>
       </View>
       <Text style={styles.podiumName} numberOfLines={1}>{entry.name}</Text>
       <Text style={styles.podiumGrade}>{entry.grade}</Text>
