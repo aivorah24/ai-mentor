@@ -82,3 +82,26 @@ server/tempassign_test.json
 "server/C\357\200\272tempassign_test.json"
 docs/
 AGENTS.md
+
+# ── Never commit these (they bloated a push & broke deploy, 2026-06-26) ──
+# Decoy build outputs — Dockerfile copies AIMentorApp/dist2 ONLY; these are unused
+server/dist2/
+server/public/dist2/
+server/public/_expo/
+# Large models / data dumps / caches — must never enter git
+server/dist2/models/
+server/data/ncert_books/
+server/data/audio/_tmp/
+server/data/read-aloud/history/
+server/data/read-aloud/lexile/
+qd*.json
+server/qd.json
+backend/**/__pycache__/
+**/__pycache__/
+# Dev probe / scratch artifacts
+AIMentorApp/readaloud_*.png
+AIMentorApp/readaloud_probe.js
+AIMentorApp/test_*.png
+AIMentorApp/test_*.js
+AIMentorApp/web/
+AIMentorApp/*.png

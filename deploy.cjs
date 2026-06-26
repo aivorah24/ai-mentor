@@ -88,6 +88,13 @@ for (const d of DECOY_DISTS) {
 }
 const staged = shOut('git diff --cached --name-only', { cwd: ROOT });
 if (!staged) die('nothing to commit (no changes staged).');
+// Guard: a huge staged set means junk (models/data/caches) leaked in and will
+// break the push on a flaky network — exactly what happened on 2026-06-26.
+const stagedFiles = staged.split('\n').filter(Boolean);
+const junk = stagedFiles.filter(f => /(^|\/)(models|ncert_books|__pycache__)\//.test(f) || /\.(png|jpg|mp3|mp4)$/i.test(f) || /^qd\d*\.json$|server\/qd\.json$/.test(f) || /^server\/(public\/)?dist2\//.test(f));
+if (junk.length) die(`refusing to commit — ${junk.length} junk/large files staged (e.g. ${junk.slice(0,3).join(', ')}). Fix .gitignore; do NOT push these.`);
+if (stagedFiles.length > 250) die(`refusing to commit — ${stagedFiles.length} files staged looks like accidental bloat. Review 'git status' before deploying.`);
+console.log(`   ${stagedFiles.length} files staged (clean).`);
 if (!staged.split('\n').some(f => f.startsWith(SERVED_DIST))) {
   console.warn(`   ⚠ note: no changes under ${SERVED_DIST} — only backend/source changed. That is fine if you changed only server code.`);
 }

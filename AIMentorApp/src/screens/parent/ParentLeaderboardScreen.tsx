@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -21,7 +21,15 @@ interface LeaderboardEntry {
   topics: number;
 }
 
-interface Child { id: string; name: string; grade?: string; }
+interface Child { id: string; name: string; grade?: string; school?: string; curriculum?: string; }
+
+type Scope = 'grade' | 'school' | 'curriculum' | 'overall';
+const TABS: { key: Scope; label: string; icon: any }[] = [
+  { key: 'grade',      label: 'Grade',      icon: 'layers' },
+  { key: 'school',     label: 'School',     icon: 'home' },
+  { key: 'curriculum', label: 'Curriculum', icon: 'book-open' },
+  { key: 'overall',    label: 'Overall',    icon: 'star' },
+];
 
 const MEDAL_COLORS = ['#f59e0b', '#94a3b8', '#cd7c2c'];
 
@@ -37,17 +45,31 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [childIds, setChildIds] = useState<Set<string>>(new Set());
-  const [childGrades, setChildGrades] = useState<string[]>([]);
+  const [children, setChildren] = useState<Child[]>([]);
+  const [selectedChildIdx, setSelectedChildIdx] = useState(0);
+  const [tab, setTab] = useState<Scope>('grade');
+
+  const childIds = useMemo(() => new Set(children.map(c => c.id)), [children]);
+  const selectedChild = children[selectedChildIdx];
 
   const fetchLeaderboard = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
-      // Scope to the parent's kid grade(s) only — don't show every grade.
-      const gradeParam = childGrades.length > 0
-        ? `&grade=${encodeURIComponent(childGrades.join(','))}`
-        : '';
-      const res = await fetch(`${SERVER_URL}/student/leaderboard?limit=20${gradeParam}`);
+      const child = children[selectedChildIdx];
+      const enc = encodeURIComponent;
+      let params = '?limit=20';
+      if (child) {
+        if (tab === 'grade') {
+          if (child.grade)  params += `&grade=${enc(child.grade)}`;
+          if (child.school) params += `&school=${enc(child.school)}`;
+        } else if (tab === 'school') {
+          if (child.school) params += `&school=${enc(child.school)}`;
+        } else if (tab === 'curriculum') {
+          if (child.curriculum) params += `&curriculum=${enc(child.curriculum)}`;
+        }
+        // 'overall' → no filters
+      }
+      const res = await fetch(`${SERVER_URL}/student/leaderboard${params}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) setLeaderboard(data);
@@ -55,52 +77,99 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
     } catch {}
     setLoading(false);
     setRefreshing(false);
-  }, [childGrades]);
+  }, [children, selectedChildIdx, tab]);
 
-  // Refresh leaderboard every time the screen gains focus (and when grades load)
-  useFocusEffect(
-    useCallback(() => {
-      fetchLeaderboard();
-    }, [fetchLeaderboard])
-  );
-
-  // Fetch children to know which rows to highlight + which grade(s) to scope to
+  // Load children (with grade/school/curriculum) once
   useEffect(() => {
     if (!user?.email) return;
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(user.email)}/children`)
       .then(r => r.ok ? r.json() : [])
-      .then((data: Child[]) => {
-        if (Array.isArray(data)) {
-          setChildIds(new Set(data.map(c => c.id)));
-          setChildGrades([...new Set(data.map(c => c.grade).filter(Boolean))]);
-        }
-      })
+      .then((data: Child[]) => { if (Array.isArray(data)) setChildren(data); })
       .catch(() => {});
   }, [user?.email]);
 
-  const myChildren = leaderboard.filter(s => childIds.has(s.id));
-  const topChild = myChildren[0] ?? null;
+  // Refetch whenever the scope (tab) or selected child changes
+  useEffect(() => { fetchLeaderboard(); }, [fetchLeaderboard]);
+  // And on screen focus
+  useFocusEffect(useCallback(() => { fetchLeaderboard(); }, [fetchLeaderboard]));
+
+  const selectedEntry = leaderboard.find(s => s.id === selectedChild?.id) ?? null;
+  const scopeLabel = tab === 'grade'      ? `${selectedChild?.grade ?? ''}${selectedChild?.school ? ' · ' + selectedChild.school : ''}`
+                   : tab === 'school'     ? (selectedChild?.school || 'Your school')
+                   : tab === 'curriculum' ? (selectedChild?.curriculum || 'Curriculum')
+                   : 'All students';
 
   return (
     <ScreenLayout>
       <View style={styles.screen}>
-        <Header title="Class Leaderboard" subtitle="Live rankings for your child's class" onMenuPress={() => navigation.openDrawer()} />
+        <Header title="Leaderboard" subtitle="See how your child ranks among their peers" onMenuPress={() => navigation.openDrawer()} />
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchLeaderboard(true)} tintColor={colors.primary} />}
         >
-          {/* Your child's rank banner */}
-          {topChild && (
+          {/* Child selector — only when more than one child */}
+          {children.length > 1 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
+              {children.map((c, i) => {
+                const active = i === selectedChildIdx;
+                return (
+                  <TouchableOpacity
+                    key={c.id}
+                    onPress={() => setSelectedChildIdx(i)}
+                    activeOpacity={0.8}
+                    style={[styles.childChip, active && { backgroundColor: colors.accentYellow + '20', borderColor: colors.accentYellow }]}
+                  >
+                    <View style={[styles.childChipAvatar, { backgroundColor: active ? colors.accentYellow + '30' : colors.primary + '20' }]}>
+                      <Text style={[styles.childChipInitials, { color: active ? colors.accentYellow : colors.primary }]}>{initials(c.name)}</Text>
+                    </View>
+                    <View>
+                      <Text style={[styles.childChipName, active && { color: colors.accentYellow }]}>{c.name.split(' ')[0]}</Text>
+                      {!!c.grade && <Text style={styles.childChipGrade}>{c.grade}</Text>}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
+
+          {/* Scope tabs */}
+          <View style={styles.tabsRow}>
+            {TABS.map(t => {
+              const active = t.key === tab;
+              return (
+                <TouchableOpacity
+                  key={t.key}
+                  onPress={() => setTab(t.key)}
+                  activeOpacity={0.8}
+                  style={[styles.tab, active && { backgroundColor: colors.accentYellow + '1A', borderColor: colors.accentYellow + '55' }]}
+                >
+                  <Feather name={t.icon} size={13} color={active ? colors.accentYellow : colors.textMuted} />
+                  <Text style={[styles.tabText, { color: active ? colors.accentYellow : colors.textMuted }]}>{t.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <Text style={styles.scopeCaption}>{scopeLabel}</Text>
+
+          {/* Selected child's rank banner */}
+          {selectedEntry && (
             <View style={[styles.myRankBanner, { borderColor: colors.accentYellow + '40', backgroundColor: colors.accentYellow + '0C' }]}>
               <Feather name="award" size={18} color={colors.accentYellow} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.myRankLabel, { color: colors.accentYellow }]}>
-                  {topChild.name} is ranked #{topChild.rank}
+                  {selectedEntry.name} is ranked #{selectedEntry.rank}
                 </Text>
-                <Text style={styles.myRankSub}>{topChild.score.toLocaleString()} XP · {topChild.streak}d streak</Text>
+                <Text style={styles.myRankSub}>{selectedEntry.score.toLocaleString()} XP · {selectedEntry.streak}d streak</Text>
               </View>
-              <Text style={[styles.myRankNum, { color: colors.accentYellow }]}>#{topChild.rank}</Text>
+              <Text style={[styles.myRankNum, { color: colors.accentYellow }]}>#{selectedEntry.rank}</Text>
+            </View>
+          )}
+          {!loading && selectedChild && !selectedEntry && (
+            <View style={[styles.myRankBanner, { borderColor: colors.borderColor, backgroundColor: colors.cardDark }]}>
+              <Feather name="award" size={18} color={colors.textDim} />
+              <Text style={[styles.myRankSub, { flex: 1 }]}>{selectedChild.name} isn't in the top 20 for this view yet — keep learning to climb up!</Text>
             </View>
           )}
 
@@ -132,7 +201,7 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
             {loading ? (
               <ActivityIndicator color={colors.primary} style={{ paddingVertical: 40 }} />
             ) : leaderboard.length === 0 ? (
-              <Text style={styles.empty}>No rankings yet.</Text>
+              <Text style={styles.empty}>No rankings in this view yet.</Text>
             ) : leaderboard.map((s, i) => {
               const medalColor = MEDAL_COLORS[s.rank - 1];
               const isChild = childIds.has(s.id);
@@ -178,6 +247,15 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
 const makeStyles = (c: AppColors) => StyleSheet.create({
   screen:         { flex: 1, backgroundColor: c.bgDark },
   content:        { padding: spacing.xl, paddingBottom: 40, gap: spacing.lg },
+  childChip:      { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, backgroundColor: c.cardDark },
+  childChipAvatar:{ width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  childChipInitials: { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700' },
+  childChipName:  { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: c.textMain },
+  childChipGrade: { fontFamily: fonts.serif, fontSize: 10, color: c.textDim },
+  tabsRow:        { flexDirection: 'row', gap: spacing.sm },
+  tab:            { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.lg, paddingVertical: 9 },
+  tabText:        { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700' },
+  scopeCaption:   { fontFamily: fonts.serif, fontSize: 12, color: c.textDim, marginTop: -spacing.sm, marginLeft: 2 },
   myRankBanner:   { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1, borderRadius: radius.xl, padding: spacing.lg },
   myRankLabel:    { fontFamily: fonts.serif, fontSize: 15, fontWeight: '700' },
   myRankSub:      { fontFamily: fonts.serif, fontSize: 12, color: c.textDim, marginTop: 2 },
@@ -204,6 +282,3 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   xpLabel:        { fontFamily: fonts.serif, fontSize: 10, color: c.textDim, fontWeight: '600' },
   empty:          { textAlign: 'center', color: c.textMuted, padding: spacing.xl, fontFamily: fonts.serif, fontSize: 13 },
 });
-
-
-
