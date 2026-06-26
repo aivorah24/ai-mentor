@@ -481,7 +481,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
           style={styles.scroll}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.accentYellow} />}
         >
           {/* Stats Row */}
           <View style={styles.statsRow}>
@@ -546,7 +546,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
 
           {/* Student List */}
           {loading ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
+            <ActivityIndicator color={colors.accentYellow} style={{ marginTop: 40 }} />
           ) : filtered.length === 0 ? (
             <View style={styles.empty}>
               <Feather name="users" size={36} color={colors.textDim} />
@@ -818,7 +818,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                 {/* Student list */}
                 {linkableLoading ? (
                   <View style={{ alignItems: 'center', paddingVertical: 20 }}>
-                    <ActivityIndicator size="small" color={colors.primary} />
+                    <ActivityIndicator size="small" color={colors.accentYellow} />
                     <Text style={{ color: colors.textDim, fontSize: 12, marginTop: 6 }}>Loading students…</Text>
                   </View>
                 ) : linkableStudents.length === 0 ? (

@@ -322,14 +322,14 @@ export default function ChallengesScreen({ navigation, route }: any) {
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchChallenges(true)} tintColor={colors.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchChallenges(true)} tintColor={colors.accentYellow} />}
         >
           {/* Stats row */}
           <View style={styles.statsRow}>
             {[
               { label: 'Total XP',    value: stats.xpPoints.toLocaleString(),            icon: 'star' as const,         color: colors.accentYellow },
               { label: 'Challenges',  value: String(stats.challengesCompleted),           icon: 'award' as const,        color: colors.accentGreen },
-              { label: 'Topics Done', value: String(stats.completedTopics?.length ?? 0), icon: 'book-open' as const,    color: colors.accentBlue },
+              { label: 'Topics Done', value: String(stats.completedTopics?.length ?? 0), icon: 'book-open' as const,    color: colors.accentYellow },
               { label: 'Streak',      value: `${stats.currentStreak}d`,                  icon: 'zap' as const,          color: colors.accentRed },
             ].map(s => (
               <View key={s.label} style={styles.statCard}>
@@ -375,7 +375,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
 
           {/* Challenge list */}
           {loading ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
+            <ActivityIndicator color={colors.accentYellow} style={{ marginTop: 40 }} />
           ) : filtered.length === 0 ? (
             <View style={styles.emptyState}>
               <Feather name="target" size={36} color={colors.textDim} />
@@ -391,8 +391,8 @@ export default function ChallengesScreen({ navigation, route }: any) {
           ) : (
             <View style={styles.grid}>
             {filtered.map(ch => {
-              const diffColor = DIFF_COLORS[ch.difficulty] ?? colors.primary;
-              const catColor  = CAT_COLORS[ch.category]   ?? colors.primary;
+              const diffColor = DIFF_COLORS[ch.difficulty] ?? colors.accentYellow;
+              const catColor  = CAT_COLORS[ch.category]   ?? colors.accentYellow;
               const rawImg = (ch as any).thumbnailUrl ?? ch.imageUrl ?? null;
               const imgUrl = rawImg ? (rawImg.startsWith('http') ? rawImg : `${SERVER_URL}${rawImg}`) : null;
               return (
@@ -455,7 +455,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
                     </View>
                   ) : (
                     <TouchableOpacity
-                      style={[styles.startBtn, { backgroundColor: ch.status === 'assigned' ? colors.accentGreen : colors.primary }]}
+                      style={[styles.startBtn, { backgroundColor: ch.status === 'assigned' ? colors.accentGreen : colors.accentYellow }]}
                       onPress={() => startChallenge(ch)}
                       activeOpacity={0.85}
                     >
@@ -504,7 +504,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
 
               {quizLoading ? (
                 <View style={styles.quizLoading}>
-                  <ActivityIndicator size="large" color={colors.primary} />
+                  <ActivityIndicator size="large" color={colors.accentYellow} />
                   <Text style={styles.quizLoadingText}>Loading questions...</Text>
                 </View>
               ) : quizResult ? (
@@ -563,7 +563,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
                     </View>
 
                     {leaderLoading ? (
-                      <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />
+                      <ActivityIndicator color={colors.accentYellow} style={{ marginVertical: 16 }} />
                     ) : leaderboard.length === 0 ? (
                       <Text style={styles.lbEmpty}>Be the first to top the leaderboard!</Text>
                     ) : (() => {
@@ -596,9 +596,9 @@ export default function ChallengesScreen({ navigation, route }: any) {
                             </View>
                           )}
                           {!band && myRank && (
-                            <View style={[styles.myRankBanner, { borderColor: colors.primary + '40', backgroundColor: colors.primary + '0C' }]}>
-                              <Feather name="trending-up" size={16} color={colors.primary} />
-                              <Text style={[styles.myRankText, { color: colors.primary }]}>You are ranked #{myRank} out of {totalStudents}</Text>
+                            <View style={[styles.myRankBanner, { borderColor: colors.accentYellow + '40', backgroundColor: colors.accentYellow + '0C' }]}>
+                              <Feather name="trending-up" size={16} color={colors.accentYellow} />
+                              <Text style={[styles.myRankText, { color: colors.accentYellow }]}>You are ranked #{myRank} out of {totalStudents}</Text>
                             </View>
                           )}
 
@@ -606,17 +606,17 @@ export default function ChallengesScreen({ navigation, route }: any) {
                           {top3.map((s, i) => {
                             const isMe = s.id === studentId;
                             return (
-                              <View key={s.id} style={[styles.lbRow, isMe && { backgroundColor: colors.primary + '0C' }]}>
+                              <View key={s.id} style={[styles.lbRow, isMe && { backgroundColor: colors.accentYellow + '0C' }]}>
                                 <View style={[styles.lbMedal, { backgroundColor: MEDAL[i] + '22' }]}>
                                   <Feather name="award" size={12} color={MEDAL[i]} />
                                 </View>
-                                <View style={[styles.lbAvatar, { backgroundColor: isMe ? colors.primary + '30' : colors.borderColor }]}>
-                                  <Text style={[styles.lbAvatarText, { color: isMe ? colors.primary : colors.textMuted }]}>{s.name.split(' ').map((p: string) => p[0]).join('').slice(0,2).toUpperCase()}</Text>
+                                <View style={[styles.lbAvatar, { backgroundColor: isMe ? colors.accentYellow + '30' : colors.borderColor }]}>
+                                  <Text style={[styles.lbAvatarText, { color: isMe ? colors.accentYellow : colors.textMuted }]}>{s.name.split(' ').map((p: string) => p[0]).join('').slice(0,2).toUpperCase()}</Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
                                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                    <Text style={[styles.lbName, isMe && { color: colors.primary }]}>{s.name.split(' ')[0]}</Text>
-                                    {isMe && <View style={styles.youChip}><Text style={[styles.youChipText, { color: colors.primary }]}>You</Text></View>}
+                                    <Text style={[styles.lbName, isMe && { color: colors.accentYellow }]}>{s.name.split(' ')[0]}</Text>
+                                    {isMe && <View style={styles.youChip}><Text style={[styles.youChipText, { color: colors.accentYellow }]}>You</Text></View>}
                                   </View>
                                   <Text style={styles.lbMeta}>{s.count} challenge{s.count !== 1 ? 's' : ''} · avg {s.avgScore}%</Text>
                                 </View>
@@ -660,13 +660,13 @@ export default function ChallengesScreen({ navigation, route }: any) {
                               key={oi}
                               style={[
                                 styles.optionBtn,
-                                answers[qi] === opt && { backgroundColor: colors.primary + '20', borderColor: colors.primary },
+                                answers[qi] === opt && { backgroundColor: colors.accentYellow + '20', borderColor: colors.accentYellow },
                               ]}
                               onPress={() => setAnswers(prev => prev.map((a, i) => i === qi ? opt : a))}
                               activeOpacity={0.75}
                             >
-                              <View style={[styles.optionDot, answers[qi] === opt && { backgroundColor: colors.primary, borderColor: colors.primary }]} />
-                              <Text style={[styles.optionText, answers[qi] === opt && { color: colors.primary, fontWeight: '600' }]}>{opt}</Text>
+                              <View style={[styles.optionDot, answers[qi] === opt && { backgroundColor: colors.accentYellow, borderColor: colors.accentYellow }]} />
+                              <Text style={[styles.optionText, answers[qi] === opt && { color: colors.accentYellow, fontWeight: '600' }]}>{opt}</Text>
                             </TouchableOpacity>
                           ))}
                         </View>

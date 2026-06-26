@@ -237,7 +237,7 @@ export default function TeacherHelpScreen({ navigation }: any) {
                 ))}
                 {chatLoading && (
                   <View style={[styles.chatBubble, styles.chatBubbleAi, { backgroundColor: colors.bgDark, borderColor: colors.borderColor }]}>
-                    <ActivityIndicator size="small" color={colors.primary} />
+                    <ActivityIndicator size="small" color={colors.accentYellow} />
                   </View>
                 )}
               </ScrollView>

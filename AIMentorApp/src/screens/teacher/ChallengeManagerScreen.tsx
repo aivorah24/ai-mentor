@@ -134,7 +134,7 @@ export default function ChallengeManagerScreen() {
 
         {/* List */}
         {loading ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
+          <ActivityIndicator color={colors.accentYellow} style={{ marginTop: 40 }} />
         ) : (
           <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
             {displayed.length === 0 ? (
@@ -564,7 +564,7 @@ function ChallengeFormModal({
             {/* Manual Tab */}
             {(tab === 'manual' || isEdit) && (
               loadingQuestions
-                ? <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+                ? <ActivityIndicator color={colors.accentYellow} style={{ marginVertical: 20 }} />
                 : <ManualQuestionsEditor questions={manualQuestions} onChange={setManualQuestions} colors={colors} />
             )}
 

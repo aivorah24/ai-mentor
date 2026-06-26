@@ -724,10 +724,10 @@ export default function WordWizardScreen({ route, navigation }: any) {
                           <Text style={[s.sectionText, { color: colors.textMain }]}>{w.example}</Text>
                         </View>
 
-                        <View style={[s.section, { backgroundColor: colors.accentBlue + '10' }]}>
+                        <View style={[s.section, { backgroundColor: colors.accentYellow + '10' }]}>
                           <View style={s.sectionLabel}>
-                            <Feather name="link" size={12} color={colors.accentBlue} />
-                            <Text style={[s.sectionLabelText, { color: colors.accentBlue }]}>In this Chapter</Text>
+                            <Feather name="link" size={12} color={colors.accentYellow} />
+                            <Text style={[s.sectionLabelText, { color: colors.accentYellow }]}>In this Chapter</Text>
                           </View>
                           <Text style={[s.sectionText, { color: colors.textMain }]}>{w.connection}</Text>
                         </View>

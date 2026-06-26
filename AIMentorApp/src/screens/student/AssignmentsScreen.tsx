@@ -224,7 +224,7 @@ function formatDueDate(iso: string) {
   const today = new Date(); today.setHours(0,0,0,0);
   const due = new Date(iso); due.setHours(0,0,0,0);
   const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
-  if (diff < 0) return { label: 'Ready to submit', colorKey: 'accentBlue' as const, isOverdue: false };
+  if (diff < 0) return { label: 'Ready to submit', colorKey: 'accentYellow' as const, isOverdue: false };
   if (diff === 0) return { label: 'Due today', colorKey: 'accentYellow' as const, isOverdue: false };
   if (diff === 1) return { label: 'Due tomorrow', colorKey: 'accentYellow' as const, isOverdue: false };
   return { label: `Due ${due.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`, colorKey: 'textMuted' as const, isOverdue: false };
@@ -707,10 +707,10 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                 </View>
               )}
               {result.teacherFeedback ? (
-                <View style={{ borderRadius: 12, padding: 14, backgroundColor: colors.accentCyan + '0E', borderWidth: 1, borderColor: colors.accentCyan + '30', gap: 6 }}>
+                <View style={{ borderRadius: 12, padding: 14, backgroundColor: colors.accentYellow + '0E', borderWidth: 1, borderColor: colors.accentYellow + '30', gap: 6 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Feather name="user" size={13} color={colors.accentCyan} />
-                    <Text style={{ fontSize: 12, color: colors.accentCyan, fontWeight: '700' }}>Teacher Feedback</Text>
+                    <Feather name="user" size={13} color={colors.accentYellow} />
+                    <Text style={{ fontSize: 12, color: colors.accentYellow, fontWeight: '700' }}>Teacher Feedback</Text>
                   </View>
                   <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{result.teacherFeedback}</Text>
                 </View>
@@ -1509,10 +1509,10 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
                 </View>
               )}
               {result.teacherFeedback ? (
-                <View style={{ borderRadius: 12, padding: 14, backgroundColor: colors.accentCyan + '0E', borderWidth: 1, borderColor: colors.accentCyan + '30', gap: 6 }}>
+                <View style={{ borderRadius: 12, padding: 14, backgroundColor: colors.accentYellow + '0E', borderWidth: 1, borderColor: colors.accentYellow + '30', gap: 6 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Feather name="user" size={13} color={colors.accentCyan} />
-                    <Text style={{ fontSize: 12, color: colors.accentCyan, fontWeight: '700' }}>Teacher Feedback</Text>
+                    <Feather name="user" size={13} color={colors.accentYellow} />
+                    <Text style={{ fontSize: 12, color: colors.accentYellow, fontWeight: '700' }}>Teacher Feedback</Text>
                   </View>
                   <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{result.teacherFeedback}</Text>
                 </View>
@@ -2331,10 +2331,10 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
                   </View>
                 )}
                 {result.teacherFeedback ? (
-                  <View style={{ borderRadius: 12, padding: 14, backgroundColor: colors.accentCyan + '0E', borderWidth: 1, borderColor: colors.accentCyan + '30', gap: 6 }}>
+                  <View style={{ borderRadius: 12, padding: 14, backgroundColor: colors.accentYellow + '0E', borderWidth: 1, borderColor: colors.accentYellow + '30', gap: 6 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Feather name="user" size={13} color={colors.accentCyan} />
-                      <Text style={{ fontSize: 12, color: colors.accentCyan, fontWeight: '700' }}>Teacher Feedback</Text>
+                      <Feather name="user" size={13} color={colors.accentYellow} />
+                      <Text style={{ fontSize: 12, color: colors.accentYellow, fontWeight: '700' }}>Teacher Feedback</Text>
                     </View>
                     <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{result.teacherFeedback}</Text>
                   </View>
@@ -3056,7 +3056,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
     return (
       <ScreenLayout>
         <View style={[styles.screen, { alignItems: 'center', justifyContent: 'center' }]}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.accentYellow} />
         </View>
       </ScreenLayout>
     );
@@ -3077,7 +3077,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
             {[
               { label: 'Pending',   value: pending,   color: colors.accentYellow, icon: 'clock' as const },
               { label: 'Completed', value: completed, color: colors.accentGreen,  icon: 'check-circle' as const },
-              { label: 'Ready',     value: overdue,   color: colors.accentBlue,   icon: 'zap' as const },
+              { label: 'Ready',     value: overdue,   color: colors.accentYellow,   icon: 'zap' as const },
             ].map((s) => (
               <View key={s.label} style={[styles.statCard, { borderTopWidth: 2, borderTopColor: s.color }]}>
                 <View>
@@ -3124,7 +3124,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
               {filtered.map((item) => {
                 const icon  = SUBJECT_ICON[item.subject] ?? 'book-open';
-                const color = SUBJECT_COLOR[item.subject] ?? colors.primary;
+                const color = SUBJECT_COLOR[item.subject] ?? colors.accentYellow;
                 const rawDue = item.status === 'completed'
                   ? { label: item.score != null ? `Score: ${item.score}%` : 'Completed', colorKey: 'textMuted' as const, isOverdue: false }
                   : formatDueDate(item.dueDate);
@@ -3135,7 +3135,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                 const dueColor = colors[due.colorKey as keyof AppColors] as string;
                 const statusColor = item.status === 'completed'
                   ? colors.accentGreen
-                  : colors.accentBlue;
+                  : colors.accentYellow;
                 const statusStyle = {
                   bg: statusColor + '16',
                   color: statusColor,
@@ -3311,7 +3311,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
         {/* ── Submitted Result Modal (shown immediately after AI grading) ── */}
         {submittedResult && (() => {
           const { assignment: a, data } = submittedResult;
-          const sc = SUBJECT_COLOR[a.subject] ?? colors.primary;
+          const sc = SUBJECT_COLOR[a.subject] ?? colors.accentYellow;
           const stamp = getStamp(data.score ?? data.score);
           let feedbackText = ''; let wellDone = ''; let improve = ''; let pq: any[] = []; let teacherFb = '';
           try {
@@ -3413,10 +3413,10 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                     </View>
                   )}
                   {teacherFb ? (
-                    <View style={{ backgroundColor: colors.accentCyan + '0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.accentCyan + '30', gap: 4 }}>
+                    <View style={{ backgroundColor: colors.accentYellow + '0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.accentYellow + '30', gap: 4 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Feather name="user" size={13} color={colors.accentCyan} />
-                        <Text style={{ fontSize: 12, color: colors.accentCyan, fontWeight: '700' }}>Teacher Feedback</Text>
+                        <Feather name="user" size={13} color={colors.accentYellow} />
+                        <Text style={{ fontSize: 12, color: colors.accentYellow, fontWeight: '700' }}>Teacher Feedback</Text>
                       </View>
                       <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{teacherFb}</Text>
                     </View>
@@ -3435,7 +3435,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
         {/* ── Completed Result Detail Modal ── */}
         {viewingResult && (() => {
           const a = viewingResult;
-          const sc = SUBJECT_COLOR[a.subject] ?? colors.primary;
+          const sc = SUBJECT_COLOR[a.subject] ?? colors.accentYellow;
           let feedbackText = ''; let stamp = ''; let wellDone = ''; let improve = ''; let pq: any[] = []; let teacherFb = '';
           try {
             const parsed = JSON.parse(a.aiFeedback || '{}');
@@ -3630,10 +3630,10 @@ export default function AssignmentsScreen({ navigation, route }: any) {
 
                   {/* Teacher feedback */}
                   {teacherFb ? (
-                    <View style={{ borderRadius: 12, padding: 14, backgroundColor: colors.accentCyan + '0E', borderWidth: 1, borderColor: colors.accentCyan + '30', gap: 6 }}>
+                    <View style={{ borderRadius: 12, padding: 14, backgroundColor: colors.accentYellow + '0E', borderWidth: 1, borderColor: colors.accentYellow + '30', gap: 6 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Feather name="user" size={13} color={colors.accentCyan} />
-                        <Text style={{ fontSize: 12, color: colors.accentCyan, fontWeight: '700' }}>Teacher Feedback</Text>
+                        <Feather name="user" size={13} color={colors.accentYellow} />
+                        <Text style={{ fontSize: 12, color: colors.accentYellow, fontWeight: '700' }}>Teacher Feedback</Text>
                       </View>
                       <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 20 }}>{teacherFb}</Text>
                     </View>
@@ -3674,7 +3674,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   statIcon: { width: 44, height: 44, borderRadius: radius.md, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   filtersScroll: { marginBottom: spacing.xxl },
   filterTab: { paddingHorizontal: spacing.lg, paddingVertical: 10, marginRight: spacing.sm, borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  filterTabActive: { borderBottomColor: c.primary },
+  filterTabActive: { borderBottomColor: c.accentYellow },
   filterText: { fontSize: 13, fontWeight: '500', color: c.textMuted },
   filterTextActive: { color: c.textMain },
   sectionHeader: { marginBottom: spacing.lg },

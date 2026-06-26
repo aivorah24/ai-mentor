@@ -53,7 +53,7 @@ export default function TimePicker({ label, value, onChange, minTime }: Props) {
       {/* @ts-ignore */}
       <View ref={containerRef} data-timepicker={label} style={{ position: 'relative' }}>
         <TouchableOpacity
-          style={[s.field, { backgroundColor: colors.cardDark, borderColor: open ? colors.primary : colors.borderColor }]}
+          style={[s.field, { backgroundColor: colors.cardDark, borderColor: open ? colors.accentYellow : colors.borderColor }]}
           onPress={() => setOpen(o => !o)}
           activeOpacity={0.8}
         >
@@ -77,15 +77,15 @@ export default function TimePicker({ label, value, onChange, minTime }: Props) {
                 return (
                   <TouchableOpacity
                     key={slot}
-                    style={[s.option, selected && { backgroundColor: colors.primary + '22' }]}
+                    style={[s.option, selected && { backgroundColor: colors.accentYellow + '22' }]}
                     onPress={() => { onChange(slot); setOpen(false); }}
                     activeOpacity={0.7}
                   >
-                    <Text style={[s.optionText, { color: selected ? colors.primary : colors.textMain },
+                    <Text style={[s.optionText, { color: selected ? colors.accentYellow : colors.textMain },
                       selected && { fontWeight: '700' }]}>
                       {to12h(slot)}
                     </Text>
-                    {selected && <Text style={{ color: colors.primary, fontSize: 12 }}>✓</Text>}
+                    {selected && <Text style={{ color: colors.accentYellow, fontSize: 12 }}>✓</Text>}
                   </TouchableOpacity>
                 );
               })}

@@ -285,7 +285,7 @@ const [editingName, setEditingName] = useState(false);
                     {/* Individual assignment notification items (Google Classroom style) */}
                     {notificationItems.map(item => {
                       const isChallenge = item.type === 'challenge';
-                      const accent = isChallenge ? colors.accentPurple : colors.accentBlue;
+                      const accent = isChallenge ? colors.accentYellow : colors.accentYellow;
                       const iconName = isChallenge ? 'award' : (item.type === 'quiz' ? 'help-circle' : 'check-square');
                       return (
                       <TouchableOpacity
@@ -333,8 +333,8 @@ const [editingName, setEditingName] = useState(false);
                           navigation.navigate(screenNames.messages);
                         }}
                       >
-                        <View style={[styles.notifIconWrap, { backgroundColor: colors.primary + '22' }]}>
-                          <Feather name="message-square" size={16} color={colors.primary} />
+                        <View style={[styles.notifIconWrap, { backgroundColor: colors.accentYellow + '22' }]}>
+                          <Feather name="message-square" size={16} color={colors.accentYellow} />
                         </View>
                         <View style={{ flex: 1 }}>
                           {latestNotif ? (
@@ -369,8 +369,8 @@ const [editingName, setEditingName] = useState(false);
                           navigation.navigate(screenNames.challenges, { tab: 'assigned' });
                         }}
                       >
-                        <View style={[styles.notifIconWrap, { backgroundColor: colors.accentPurple + '22' }]}>
-                          <Feather name="award" size={16} color={colors.accentPurple} />
+                        <View style={[styles.notifIconWrap, { backgroundColor: colors.accentYellow + '22' }]}>
+                          <Feather name="award" size={16} color={colors.accentYellow} />
                         </View>
                         <View style={{ flex: 1 }}>
                           <Text style={styles.notifItemTitle}>
@@ -393,8 +393,8 @@ const [editingName, setEditingName] = useState(false);
                           navigation.navigate(screenNames.assignments);
                         }}
                       >
-                        <View style={[styles.notifIconWrap, { backgroundColor: colors.accentBlue + '22' }]}>
-                          <Feather name="check-square" size={16} color={colors.accentBlue} />
+                        <View style={[styles.notifIconWrap, { backgroundColor: colors.accentYellow + '22' }]}>
+                          <Feather name="check-square" size={16} color={colors.accentYellow} />
                         </View>
                         <View style={{ flex: 1 }}>
                           <Text style={styles.notifItemTitle}>

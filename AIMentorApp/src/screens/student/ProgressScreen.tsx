@@ -159,7 +159,7 @@ export default function ProgressScreen({ navigation }: any) {
     return (
       <ScreenLayout>
         <View style={[styles.screen, { alignItems: 'center', justifyContent: 'center' }]}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.accentYellow} />
           <Text style={[styles.emptyText, { marginTop: 16 }]}>Loading your progress…</Text>
         </View>
       </ScreenLayout>

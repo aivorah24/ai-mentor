@@ -146,7 +146,7 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchLeaderboard(true)} tintColor={colors.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchLeaderboard(true)} tintColor={colors.accentYellow} />}
         >
           {/* Top bar: child selector + school chip */}
           <View style={styles.topBar}>
@@ -157,8 +157,8 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
                   return (
                     <TouchableOpacity key={c.id} onPress={() => setSelectedChildIdx(i)} activeOpacity={0.8}
                       style={[styles.childChip, active && { backgroundColor: gold + '20', borderColor: gold }]}>
-                      <View style={[styles.childChipAvatar, { backgroundColor: active ? gold + '30' : colors.primary + '20' }]}>
-                        <Text style={[styles.childChipInitials, { color: active ? gold : colors.primary }]}>{initials(c.name)}</Text>
+                      <View style={[styles.childChipAvatar, { backgroundColor: active ? gold + '30' : colors.accentYellow + '20' }]}>
+                        <Text style={[styles.childChipInitials, { color: active ? gold : colors.accentYellow }]}>{initials(c.name)}</Text>
                       </View>
                       <View>
                         <Text style={[styles.childChipName, active && { color: gold }]}>{c.name.split(' ')[0]}</Text>
@@ -213,7 +213,7 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
                           <Text style={styles.medalNum}>{actualRank}</Text>
                         </View>
                         <View style={[styles.podiumAvatar, { borderColor: isFirst ? gold : colors.borderColor }]}>
-                          <Text style={[styles.podiumAvatarText, { color: isFirst ? gold : colors.primary }]}>{initials(s.name)}</Text>
+                          <Text style={[styles.podiumAvatarText, { color: isFirst ? gold : colors.accentYellow }]}>{initials(s.name)}</Text>
                         </View>
                         <View style={{ flex: 1, minWidth: 0 }}>
                           <Text style={styles.podiumName} numberOfLines={1}>{s.name}</Text>
@@ -237,7 +237,7 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
                   <Text style={styles.thStreak}>Streak</Text>
                 </View>
                 {loading ? (
-                  <ActivityIndicator color={colors.primary} style={{ paddingVertical: 40 }} />
+                  <ActivityIndicator color={colors.accentYellow} style={{ paddingVertical: 40 }} />
                 ) : leaderboard.length === 0 ? (
                   <Text style={styles.empty}>No rankings in this view yet.</Text>
                 ) : leaderboard.map((s, i) => {
@@ -253,8 +253,8 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
                         </View>
                       </View>
                       <View style={[styles.thStudent, { flexDirection: 'row', alignItems: 'center', gap: spacing.sm }]}>
-                        <View style={[styles.avatar, { backgroundColor: isChild ? gold + '25' : colors.primary + '20' }]}>
-                          <Text style={[styles.avatarText, { color: isChild ? gold : colors.primary }]}>{initials(s.name)}</Text>
+                        <View style={[styles.avatar, { backgroundColor: isChild ? gold + '25' : colors.accentYellow + '20' }]}>
+                          <Text style={[styles.avatarText, { color: isChild ? gold : colors.accentYellow }]}>{initials(s.name)}</Text>
                         </View>
                         <View style={{ flex: 1, minWidth: 0 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -316,7 +316,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   podiumCard:     { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.md },
   medalBadge:     { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   medalNum:       { fontFamily: fonts.serif, fontSize: 11, fontWeight: '900', color: '#0B0B0B' },
-  podiumAvatar:   { width: 40, height: 40, borderRadius: 20, borderWidth: 2, backgroundColor: c.primary + '18', alignItems: 'center', justifyContent: 'center' },
+  podiumAvatar:   { width: 40, height: 40, borderRadius: 20, borderWidth: 2, backgroundColor: c.accentYellow + '18', alignItems: 'center', justifyContent: 'center' },
   podiumAvatarText: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700' },
   podiumName:     { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: c.textMain },
   podiumScore:    { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', marginTop: 1 },

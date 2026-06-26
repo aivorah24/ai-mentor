@@ -91,7 +91,7 @@ export default function VideoLessonScreen({ navigation, route }: any) {
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
   // Landing palette: sage primary + gold secondary (theme-aware).
-  const accent   = colors.primary;
+  const accent   = colors.accentYellow;
   const gold     = colors.accentYellow;
   const onAccent = isDark ? '#0B140F' : '#FFFFFF';
 

@@ -75,13 +75,13 @@ export default function HelpCenterScreen({ navigation }: any) {
   const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   const TOPICS = [
-    { label: 'Account & Profile', icon: 'user' as const,         color: colors.primary,       desc: 'Profile, security, preferences',  screen: 'Settings',       articles: ['How to set up your profile', 'Choosing your role (Student / Teacher / Parent)', 'Navigating the dashboard', 'Setting your learning goal'] },
+    { label: 'Account & Profile', icon: 'user' as const,         color: colors.accentYellow,       desc: 'Profile, security, preferences',  screen: 'Settings',       articles: ['How to set up your profile', 'Choosing your role (Student / Teacher / Parent)', 'Navigating the dashboard', 'Setting your learning goal'] },
     { label: 'XP & Streaks',      icon: 'award' as const,        color: colors.accentYellow,  desc: 'Points, levels, daily streaks',   screen: 'Challenges',     articles: ['How XP points are calculated', 'Understanding daily challenges', 'Maintaining your streak', 'Unlocking badges and achievements'] },
-    { label: 'Badges',            icon: 'shield' as const,       color: colors.primary,       desc: 'Achievements and milestones',     screen: 'Challenges',     articles: ['Unlocking badges and achievements', 'What achievements mean', 'How XP points are calculated', 'Understanding daily challenges'] },
+    { label: 'Badges',            icon: 'shield' as const,       color: colors.accentYellow,       desc: 'Achievements and milestones',     screen: 'Challenges',     articles: ['Unlocking badges and achievements', 'What achievements mean', 'How XP points are calculated', 'Understanding daily challenges'] },
     { label: 'Learning Paths',    icon: 'map' as const,          color: colors.accentYellow,  desc: 'Courses, levels, subjects',       screen: 'LearningPaths',  articles: ['Starting a new learning path', 'Understanding levels (locked, active, complete)', 'Switching between subjects', 'Weekly focus and milestones'] },
-    { label: 'Billing & Plans',   icon: 'credit-card' as const,  color: colors.primary,       desc: 'Subscriptions, upgrades',         screen: 'Subscription',   articles: ['How XP points are calculated', 'What the AI Coach can do', 'Getting personalized suggestions', 'AI Coach limitations'] },
+    { label: 'Billing & Plans',   icon: 'credit-card' as const,  color: colors.accentYellow,       desc: 'Subscriptions, upgrades',         screen: 'Subscription',   articles: ['How XP points are calculated', 'What the AI Coach can do', 'Getting personalized suggestions', 'AI Coach limitations'] },
     { label: 'Technical Support', icon: 'tool' as const,         color: colors.accentYellow,  desc: 'Bugs, troubleshooting',           screen: 'Profile',        articles: ['Can I use Aivorah on multiple devices?', 'Changing your email or password', 'Managing notification preferences', 'Deleting your account'] },
-    { label: 'Assignments',       icon: 'check-circle' as const, color: colors.primary,       desc: 'Submitting work, grading',        screen: 'Assignments',    articles: ['How to submit an assignment', 'Understanding due dates', 'Overdue assignment policy', 'Viewing feedback from your teacher'] },
+    { label: 'Assignments',       icon: 'check-circle' as const, color: colors.accentYellow,       desc: 'Submitting work, grading',        screen: 'Assignments',    articles: ['How to submit an assignment', 'Understanding due dates', 'Overdue assignment policy', 'Viewing feedback from your teacher'] },
     { label: 'AI Coach',          icon: 'message-circle' as const, color: colors.accentYellow, desc: 'How to use AI features',         screen: 'AICoach',        articles: ['What the AI Coach can do', 'Asking for help on a topic', 'Getting personalized suggestions', 'AI Coach limitations'] },
   ];
 
@@ -225,14 +225,14 @@ export default function HelpCenterScreen({ navigation }: any) {
               <View style={styles.supportCardInner}>
                 <Text style={styles.supportCardTitle}>Chat with Aivorah 24/7</Text>
                 <Text style={styles.supportCardSub}>Get instant answers about{'\n'}XP, streaks, badges,{'\n'}learning paths & more.</Text>
-                <View style={[styles.supportArrowBtn, { backgroundColor: colors.primary + 'CC' }]}>
+                <View style={[styles.supportArrowBtn, { backgroundColor: colors.accentYellow + 'CC' }]}>
                   <Feather name="arrow-right" size={16} color={isDark ? '#0B140F' : '#fff'} />
                 </View>
               </View>
               {/* Owl decoration */}
               <View style={styles.owlWrap}>
                 <View style={styles.owlCircle}>
-                  <Feather name="zap" size={28} color={colors.primary} />
+                  <Feather name="zap" size={28} color={colors.accentYellow} />
                 </View>
               </View>
             </TouchableOpacity>
@@ -269,13 +269,13 @@ export default function HelpCenterScreen({ navigation }: any) {
           <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
           {filteredFaqs.length === 0 && <Text style={styles.emptyText}>No FAQs match "{search}"</Text>}
           {filteredFaqs.map((faq, i) => (
-            <TouchableOpacity key={i} style={[styles.faqItem, openFaq === i && { borderColor: colors.primary + '40', backgroundColor: colors.primary + '06' }]} onPress={() => setOpenFaq(openFaq === i ? null : i)} activeOpacity={0.7}>
+            <TouchableOpacity key={i} style={[styles.faqItem, openFaq === i && { borderColor: colors.accentYellow + '40', backgroundColor: colors.accentYellow + '06' }]} onPress={() => setOpenFaq(openFaq === i ? null : i)} activeOpacity={0.7}>
               <View style={styles.faqHeader}>
-                <View style={[styles.faqNum, { backgroundColor: colors.primaryGlow }]}>
-                  <Text style={[styles.faqNumText, { color: colors.primary }]}>{String(i + 1).padStart(2, '0')}</Text>
+                <View style={[styles.faqNum, { backgroundColor: colors.accentYellow + '22' }]}>
+                  <Text style={[styles.faqNumText, { color: colors.accentYellow }]}>{String(i + 1).padStart(2, '0')}</Text>
                 </View>
                 <Text style={[styles.faqQ, { color: colors.textMain }]}>{faq.q}</Text>
-                <Feather name={openFaq === i ? 'chevron-up' : 'chevron-down'} size={16} color={openFaq === i ? colors.primary : colors.textMuted} />
+                <Feather name={openFaq === i ? 'chevron-up' : 'chevron-down'} size={16} color={openFaq === i ? colors.accentYellow : colors.textMuted} />
               </View>
               {openFaq === i && <Text style={[styles.faqA, { color: colors.textMuted }]}>{faq.a}</Text>}
             </TouchableOpacity>
@@ -315,7 +315,7 @@ export default function HelpCenterScreen({ navigation }: any) {
                         {/* Owl mascot */}
                         <View style={styles.mascotWrap}>
                           <View style={styles.mascotCircle}>
-                            <Feather name="zap" size={36} color={colors.primary} />
+                            <Feather name="zap" size={36} color={colors.accentYellow} />
                           </View>
                         </View>
                         <View style={[styles.firstMsgBubble, { backgroundColor: isDark ? '#141414' : '#fff', borderColor: colors.borderColor }]}>
@@ -336,7 +336,7 @@ export default function HelpCenterScreen({ navigation }: any) {
                         <View style={[
                           styles.msgBubble,
                           m.role === 'user'
-                            ? [styles.msgBubbleUser, { backgroundColor: colors.primary }]
+                            ? [styles.msgBubbleUser, { backgroundColor: colors.accentYellow }]
                             : [styles.msgBubbleAi, { backgroundColor: isDark ? '#141414' : '#fff', borderColor: colors.borderColor }],
                         ]}>
                           <Text style={[styles.msgText, { color: m.role === 'user' ? '#fff' : colors.textMain }]}>{m.text}</Text>
@@ -352,7 +352,7 @@ export default function HelpCenterScreen({ navigation }: any) {
                       <Feather name="zap" size={10} color={colors.accentYellow} />
                     </View>
                     <View style={[styles.msgBubble, styles.msgBubbleAi, { backgroundColor: isDark ? '#141414' : '#fff', borderColor: colors.borderColor }]}>
-                      <ActivityIndicator size="small" color={colors.primary} />
+                      <ActivityIndicator size="small" color={colors.accentYellow} />
                     </View>
                   </View>
                 )}
@@ -370,7 +370,7 @@ export default function HelpCenterScreen({ navigation }: any) {
 
               {/* Input */}
               <View style={[styles.chatInputRow, { borderTopColor: colors.borderColor, backgroundColor: isDark ? '#0B0B0B' : '#F5F3EE' }]}>
-                <Feather name="star" size={16} color={colors.primary} style={{ marginHorizontal: 4 }} />
+                <Feather name="star" size={16} color={colors.accentYellow} style={{ marginHorizontal: 4 }} />
                 <TextInput
                   style={[styles.chatTextInput, { color: colors.textMain, backgroundColor: isDark ? '#141414' : '#fff', borderColor: colors.borderColor }]}
                   placeholder="Ask about XP, streaks, badges..."
@@ -455,7 +455,7 @@ export default function HelpCenterScreen({ navigation }: any) {
                   <Feather name="x" size={20} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
-              <Text style={[styles.ticketNote, { color: colors.textMuted }]}>Submitting as: <Text style={{ color: colors.primary }}>{user?.email || 'guest'}</Text></Text>
+              <Text style={[styles.ticketNote, { color: colors.textMuted }]}>Submitting as: <Text style={{ color: colors.accentYellow }}>{user?.email || 'guest'}</Text></Text>
               <Text style={[styles.modalArticlesLabel, { color: colors.textDim }]}>Subject</Text>
               <View style={[styles.ticketInput, { borderColor: colors.borderColor, backgroundColor: colors.bgDark }]}>
                 <TextInput style={[styles.ticketTextInput, { color: colors.textMain }]} value={ticketSubject} onChangeText={setTicketSubject} placeholder="Brief summary of your issue" placeholderTextColor={colors.textDim} autoFocus />
@@ -468,7 +468,7 @@ export default function HelpCenterScreen({ navigation }: any) {
                 <TouchableOpacity style={[styles.modalCancelBtn, { borderColor: colors.borderColor }]} onPress={() => setTicketVisible(false)}>
                   <Text style={[styles.modalCancelText, { color: colors.textMuted }]}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalSaveBtn, { backgroundColor: colors.primary }]} onPress={handleSubmitTicket} disabled={ticketLoading}>
+                <TouchableOpacity style={[styles.modalSaveBtn, { backgroundColor: colors.accentYellow }]} onPress={handleSubmitTicket} disabled={ticketLoading}>
                   {ticketLoading ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.modalSaveText}>Submit Ticket</Text>}
                 </TouchableOpacity>
               </View>

@@ -989,7 +989,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
     return (
       <ScreenLayout>
         <View style={[styles.screen, { alignItems: 'center', justifyContent: 'center' }]}>
-          <ActivityIndicator color={colors.primary} size="large" />
+          <ActivityIndicator color={colors.accentYellow} size="large" />
         </View>
       </ScreenLayout>
     );
@@ -1011,7 +1011,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
           style={styles.scroll}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchStudents(); }} tintColor={colors.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchStudents(); }} tintColor={colors.accentYellow} />}
         >
 
           {/* ── AI SUGGESTED ACTION ─────────────────────── */}

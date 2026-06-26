@@ -399,8 +399,8 @@ function WatchPhase({ topic, textChunks, colors, onDone }: {
   if (videoSrc) {
     return (
       <View style={{ flex: 1, padding: spacing.xl, gap: spacing.xl }}>
-        <View style={[ph.headerCard, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}>
-          <Feather name="play-circle" size={24} color={colors.primary} />
+        <View style={[ph.headerCard, { backgroundColor: colors.accentYellow + '15', borderColor: colors.accentYellow + '30' }]}>
+          <Feather name="play-circle" size={24} color={colors.accentYellow} />
           <View style={{ flex: 1 }}>
             <Text style={[ph.headerTitle, { color: colors.textMain }]}>Ms. Zara introduces the chapter</Text>
             <Text style={[ph.headerSub, { color: colors.textMuted }]}>Watch, then we'll learn together!</Text>
@@ -409,7 +409,7 @@ function WatchPhase({ topic, textChunks, colors, onDone }: {
         <View style={[ph.videoBox, { backgroundColor: '#000', borderColor: colors.borderColor }]}>
           <VideoPlayer src={videoSrc} colors={colors} onEnded={onDone} />
         </View>
-        <TouchableOpacity style={[ph.btn, { backgroundColor: colors.primary }]} onPress={onDone}>
+        <TouchableOpacity style={[ph.btn, { backgroundColor: colors.accentYellow }]} onPress={onDone}>
           <Text style={ph.btnText}>Skip Video — Start Learning</Text>
           <Feather name="arrow-right" size={16} color="#fff" />
         </TouchableOpacity>
@@ -421,7 +421,7 @@ function WatchPhase({ topic, textChunks, colors, onDone }: {
   if (introLoading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 32 }}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={colors.accentYellow} />
         <Text style={{ color: colors.textMuted, fontSize: 15, fontWeight: '600', textAlign: 'center' }}>
           Ms. Zara is getting ready…
         </Text>
@@ -435,23 +435,23 @@ function WatchPhase({ topic, textChunks, colors, onDone }: {
   return (
     <ScrollView contentContainerStyle={{ padding: spacing.xl, gap: spacing.xl, paddingBottom: 48 }}>
       {/* Header badge */}
-      <View style={[ph.headerCard, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}>
-        <Feather name="volume-2" size={24} color={colors.primary} />
+      <View style={[ph.headerCard, { backgroundColor: colors.accentYellow + '15', borderColor: colors.accentYellow + '30' }]}>
+        <Feather name="volume-2" size={24} color={colors.accentYellow} />
         <View style={{ flex: 1 }}>
           <Text style={[ph.headerTitle, { color: colors.textMain }]}>Ms. Zara says hello!</Text>
           <Text style={[ph.headerSub, { color: colors.textMuted }]}>AI voice powered by Groq</Text>
         </View>
         {playing && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '700' }}>Speaking…</Text>
+            <ActivityIndicator size="small" color={colors.accentYellow} />
+            <Text style={{ color: colors.accentYellow, fontSize: 11, fontWeight: '700' }}>Speaking…</Text>
           </View>
         )}
       </View>
 
       {/* Visual box */}
       {visualText ? (
-        <View style={[ph.visualCard, { backgroundColor: colors.primary + '12', borderColor: colors.primary + '30' }]}>
+        <View style={[ph.visualCard, { backgroundColor: colors.accentYellow + '12', borderColor: colors.accentYellow + '30' }]}>
           <Text style={[ph.visualText, { color: colors.textMain }]}>{visualText}</Text>
           <Text style={{ color: colors.textDim, fontSize: 11, marginTop: 6 }}>Chapter preview</Text>
         </View>
@@ -460,7 +460,7 @@ function WatchPhase({ topic, textChunks, colors, onDone }: {
       {/* Ms. Zara's intro speech */}
       {introText ? (
         <View style={[ph.speechCard, { backgroundColor: colors.cardDark, borderColor: colors.borderColor }]}>
-          <View style={[ph.zaraTag, { backgroundColor: colors.primary }]}>
+          <View style={[ph.zaraTag, { backgroundColor: colors.accentYellow }]}>
             <Feather name="mic" size={12} color="#fff" />
             <Text style={ph.zaraTagText}>Ms. Zara</Text>
           </View>
@@ -468,12 +468,12 @@ function WatchPhase({ topic, textChunks, colors, onDone }: {
 
           {/* Replay button */}
           <TouchableOpacity
-            style={[ph.playBtn, { backgroundColor: playing ? colors.primary + '20' : colors.primary, borderColor: colors.primary }]}
+            style={[ph.playBtn, { backgroundColor: playing ? colors.accentYellow + '20' : colors.accentYellow, borderColor: colors.accentYellow }]}
             onPress={playIntro}
             disabled={!introText || playing}
           >
             {playing
-              ? <><ActivityIndicator size="small" color={colors.primary} /><Text style={[ph.playBtnText, { color: colors.primary }]}>Playing…</Text></>
+              ? <><ActivityIndicator size="small" color={colors.accentYellow} /><Text style={[ph.playBtnText, { color: colors.accentYellow }]}>Playing…</Text></>
               : <><Feather name="volume-2" size={16} color="#fff" /><Text style={ph.playBtnText}>Hear Ms. Zara Again</Text></>
             }
           </TouchableOpacity>
@@ -494,7 +494,7 @@ function WatchPhase({ topic, textChunks, colors, onDone }: {
         <Text style={{ color: '#ef4444', textAlign: 'center', fontSize: 13 }}>{error}</Text>
       ) : null}
 
-      <TouchableOpacity style={[ph.btn, { backgroundColor: colors.primary }]} onPress={onDone}>
+      <TouchableOpacity style={[ph.btn, { backgroundColor: colors.accentYellow }]} onPress={onDone}>
         <Text style={ph.btnText}>Start Learning!</Text>
         <Feather name="arrow-right" size={16} color="#fff" />
       </TouchableOpacity>
@@ -795,10 +795,10 @@ function LearnPhase({ topic, grade, textChunks, imageChunks, colors, onDone, cha
             {Platform.OS === 'web' && (
               <TouchableOpacity
                 onPress={toggleFullscreen}
-                style={[lp.pauseBtn, { backgroundColor: isFullscreen ? colors.primary + '25' : colors.cardDark, borderColor: isFullscreen ? colors.primary : colors.borderColor }]}
+                style={[lp.pauseBtn, { backgroundColor: isFullscreen ? colors.accentYellow + '25' : colors.cardDark, borderColor: isFullscreen ? colors.accentYellow : colors.borderColor }]}
               >
-                <Feather name={isFullscreen ? 'minimize' : 'maximize'} size={14} color={isFullscreen ? colors.primary : colors.textMuted} />
-                <Text style={{ color: isFullscreen ? colors.primary : colors.textMuted, fontSize: 11, fontWeight: '600' }}>
+                <Feather name={isFullscreen ? 'minimize' : 'maximize'} size={14} color={isFullscreen ? colors.accentYellow : colors.textMuted} />
+                <Text style={{ color: isFullscreen ? colors.accentYellow : colors.textMuted, fontSize: 11, fontWeight: '600' }}>
                   {isFullscreen ? 'Exit' : 'Full'}
                 </Text>
               </TouchableOpacity>
@@ -1319,8 +1319,8 @@ function PracticePhase({ topic, textChunks, colors, onComplete, fixedQuiz, isSci
   if (!loading && questions.length === 0) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20, padding: 32 }}>
-        <View style={[pr.badge, { backgroundColor: colors.primary + '15' }]}>
-          <Feather name="edit-3" size={40} color={colors.primary} />
+        <View style={[pr.badge, { backgroundColor: colors.accentYellow + '15' }]}>
+          <Feather name="edit-3" size={40} color={colors.accentYellow} />
         </View>
         <Text style={{ color: colors.textMain, fontSize: 22, fontWeight: '800', textAlign: 'center' }}>
           Time to Practice!
@@ -1329,7 +1329,7 @@ function PracticePhase({ topic, textChunks, colors, onComplete, fixedQuiz, isSci
           5 questions on "{topic}"{'\n'}Get one wrong? Ms. Zara will explain it to you.
         </Text>
         {error ? <Text style={{ color: '#ef4444', textAlign: 'center' }}>{error}</Text> : null}
-        <TouchableOpacity style={[pr.btn, { backgroundColor: colors.primary, paddingHorizontal: 40 }]} onPress={loadQuiz}>
+        <TouchableOpacity style={[pr.btn, { backgroundColor: colors.accentYellow, paddingHorizontal: 40 }]} onPress={loadQuiz}>
           <Feather name="play" size={18} color="#fff" />
           <Text style={pr.btnText}>Start Practice</Text>
         </TouchableOpacity>
@@ -1340,7 +1340,7 @@ function PracticePhase({ topic, textChunks, colors, onComplete, fixedQuiz, isSci
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 }}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={colors.accentYellow} />
         <Text style={{ color: colors.textMuted }}>Generating practice questions…</Text>
       </View>
     );
@@ -1492,9 +1492,9 @@ function PracticePhase({ topic, textChunks, colors, onComplete, fixedQuiz, isSci
       {questions.map((q, qi) => (
         <View key={qi} style={[pr.qCard, {
           backgroundColor: colors.cardDark,
-          borderColor: answers[qi] !== -1 ? colors.primary + '60' : colors.borderColor,
+          borderColor: answers[qi] !== -1 ? colors.accentYellow + '60' : colors.borderColor,
         }]}>
-          <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>
+          <Text style={{ color: colors.accentYellow, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>
             Question {qi + 1} of {questions.length}
           </Text>
           <Text style={{ color: colors.textMain, fontSize: 16, fontWeight: '700', lineHeight: 24, marginBottom: 14 }}>
@@ -1507,18 +1507,18 @@ function PracticePhase({ topic, textChunks, colors, onComplete, fixedQuiz, isSci
                 <TouchableOpacity
                   key={oi}
                   style={[pr.optBtn, {
-                    backgroundColor: selected ? colors.primary + '15' : colors.bgDark,
-                    borderColor:     selected ? colors.primary         : colors.borderColor,
+                    backgroundColor: selected ? colors.accentYellow + '15' : colors.bgDark,
+                    borderColor:     selected ? colors.accentYellow         : colors.borderColor,
                   }]}
                   onPress={() => setAnswers(a => a.map((v, idx) => idx === qi ? oi : v))}
                 >
                   <View style={[pr.radio, {
-                    borderColor:     selected ? colors.primary : colors.borderColor,
-                    backgroundColor: selected ? colors.primary : 'transparent',
+                    borderColor:     selected ? colors.accentYellow : colors.borderColor,
+                    backgroundColor: selected ? colors.accentYellow : 'transparent',
                   }]}>
                     {selected && <View style={pr.radioDot} />}
                   </View>
-                  <Text style={{ fontSize: 14, flex: 1, color: selected ? colors.primary : colors.textMain, fontWeight: selected ? '700' : '400' }}>
+                  <Text style={{ fontSize: 14, flex: 1, color: selected ? colors.accentYellow : colors.textMain, fontWeight: selected ? '700' : '400' }}>
                     {opt}
                   </Text>
                 </TouchableOpacity>
@@ -1530,8 +1530,8 @@ function PracticePhase({ topic, textChunks, colors, onComplete, fixedQuiz, isSci
 
       <TouchableOpacity
         style={[pr.btn, {
-          backgroundColor: allAnswered ? colors.primary : colors.cardDark,
-          borderWidth: 1, borderColor: allAnswered ? colors.primary : colors.borderColor,
+          backgroundColor: allAnswered ? colors.accentYellow : colors.cardDark,
+          borderWidth: 1, borderColor: allAnswered ? colors.accentYellow : colors.borderColor,
         }]}
         onPress={() => setSubmitted(true)}
         disabled={!allAnswered}
@@ -1591,8 +1591,8 @@ function CompletePhase({ topic, score, colors, onBack }: {
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>SCORE</Text>
         </View>
         <View style={{ flex: 1, backgroundColor: colors.cardDark, borderRadius: 16, padding: 16, alignItems: 'center', gap: 4, borderWidth: 1, borderColor: colors.borderColor }}>
-          <Feather name="zap" size={22} color={colors.primary} />
-          <Text style={{ color: colors.primary, fontSize: 22, fontWeight: '900' }}>+{xp}</Text>
+          <Feather name="zap" size={22} color={colors.accentYellow} />
+          <Text style={{ color: colors.accentYellow, fontSize: 22, fontWeight: '900' }}>+{xp}</Text>
           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>XP EARNED</Text>
         </View>
         <View style={{ flex: 1, backgroundColor: colors.cardDark, borderRadius: 16, padding: 16, alignItems: 'center', gap: 4, borderWidth: 1, borderColor: colors.borderColor }}>
@@ -1603,10 +1603,10 @@ function CompletePhase({ topic, score, colors, onBack }: {
       </View>
 
       {/* What you learned */}
-      <View style={{ backgroundColor: colors.cardDark, borderRadius: 16, padding: 18, width: '100%', gap: 10, borderWidth: 1, borderColor: colors.primary + '30' }}>
+      <View style={{ backgroundColor: colors.cardDark, borderRadius: 16, padding: 18, width: '100%', gap: 10, borderWidth: 1, borderColor: colors.accentYellow + '30' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Feather name="book-open" size={16} color={colors.primary} />
-          <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '700' }}>What you learned today</Text>
+          <Feather name="book-open" size={16} color={colors.accentYellow} />
+          <Text style={{ color: colors.accentYellow, fontSize: 13, fontWeight: '700' }}>What you learned today</Text>
         </View>
         <Text style={{ color: colors.textMain, fontSize: 14, lineHeight: 22 }}>
           You completed the chapter on <Text style={{ fontWeight: '700' }}>{topic}</Text>.{' '}
@@ -1619,7 +1619,7 @@ function CompletePhase({ topic, score, colors, onBack }: {
       {/* Action buttons */}
       <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
         <TouchableOpacity
-          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: radius.lg, backgroundColor: colors.primary }}
+          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: radius.lg, backgroundColor: colors.accentYellow }}
           onPress={onBack}
         >
           <Feather name="grid" size={16} color="#fff" />
@@ -1773,12 +1773,12 @@ export default function Learn5EScreen({ route, navigation }: any) {
               <React.Fragment key={p.key}>
                 <View style={{ alignItems: 'center', gap: 4 }}>
                   <View style={[ms.dot, {
-                    backgroundColor: isDone ? '#10b981' : isActive ? colors.primary : colors.cardDark,
-                    borderColor: isDone ? '#10b981' : isActive ? colors.primary : colors.borderColor,
+                    backgroundColor: isDone ? '#10b981' : isActive ? colors.accentYellow : colors.cardDark,
+                    borderColor: isDone ? '#10b981' : isActive ? colors.accentYellow : colors.borderColor,
                   }]}>
                     <Feather name={(isDone ? 'check' : p.icon) as any} size={12} color={isDone || isActive ? '#fff' : colors.textDim} />
                   </View>
-                  <Text style={{ fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3, color: isDone ? '#10b981' : isActive ? colors.primary : colors.textDim }}>
+                  <Text style={{ fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3, color: isDone ? '#10b981' : isActive ? colors.accentYellow : colors.textDim }}>
                     {p.label}
                   </Text>
                 </View>
@@ -1793,7 +1793,7 @@ export default function Learn5EScreen({ route, navigation }: any) {
         {/* Content */}
         {contentLoading ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator size="large" color={colors.primary} />
+            <ActivityIndicator size="large" color={colors.accentYellow} />
           </View>
         ) : (
           <>

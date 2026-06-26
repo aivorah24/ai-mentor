@@ -1117,7 +1117,7 @@ const REPORT_SUBJECT_COLORS: Record<string, string> = {
 };
 
 function ParentAIReportModal({ assignment, colors, onClose }: { assignment: Assignment; colors: AppColors; onClose: () => void }) {
-  const color = REPORT_SUBJECT_COLORS[assignment.subject] || colors.primary;
+  const color = REPORT_SUBJECT_COLORS[assignment.subject] || colors.accentYellow;
 
   let feedbackText = '';
   let stamp = '';

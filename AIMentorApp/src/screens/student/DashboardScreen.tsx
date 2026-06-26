@@ -52,26 +52,26 @@ interface CurriculumData {
 // Slightly darkened for use as text/icon on white backgrounds
 // Exact landing.html palette: SAGE (#9FB2A4) + GOLD (#BAA467) on #0B0B0B. No purple.
 const BRAND = {
-  teal:   '#9FB2A4',   // landing --sage (primary)
-  mint:   '#9FB2A4',   // sage
+  teal:   '#BAA467',   // landing --sage (primary)
+  mint:   '#BAA467',   // sage
   rose:   '#C98A8A',   // muted rose (kept for "wrong answer" semantics)
   blush:  '#C99A9A',   // mid-rose
   gold:   '#BAA467',   // landing --gold
-  slate:  '#9FB2A4',   // sage
+  slate:  '#BAA467',   // sage
   silver: '#A9B0AC',   // landing --muted
   // Accents — sage/gold family (no purples/corals)
   violet: '#BAA467',   // → gold
   coral:  '#C9A24E',   // deep gold
-  forest: '#9FB2A4',   // sage
+  forest: '#BAA467',   // sage
   // Aliases used elsewhere in code
-  indigo: '#9FB2A4',
+  indigo: '#BAA467',
   violet2: '#BAA467',  // gold
   purple: '#BAA467',   // → gold
   orange: '#C9A24E',   // deep gold
   amber:  '#BAA467',   // landing GOLD
-  green:  '#9FB2A4',   // sage
-  cyan:   '#9FB2A4',   // sage
-  blue:   '#9FB2A4',
+  green:  '#BAA467',   // sage
+  cyan:   '#BAA467',   // sage
+  blue:   '#BAA467',
   red:    '#C98A8A',   // muted rose
   pink:   '#C98A8A',
 };

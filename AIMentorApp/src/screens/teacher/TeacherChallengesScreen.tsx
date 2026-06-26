@@ -46,7 +46,7 @@ const DIFF_COLOR = (d: string, c: AppColors) =>
 // Exact landing.html accent tokens so cards match the marketing-site standard:
 // sage (--sage) for quizzes, gold (--gold) for school challenges.
 const CAT_COLOR: Record<string, string> = {
-  'Chapter Quiz':     '#9FB2A4', // landing sage
+  'Chapter Quiz':     '#BAA467', // landing sage
   'School Challenge': '#BAA467', // landing gold
 };
 
@@ -316,7 +316,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
               </ScrollView>
 
               {loading ? (
-                <ActivityIndicator color={colors.primary} style={{ paddingVertical: 32 }} />
+                <ActivityIndicator color={colors.accentYellow} style={{ paddingVertical: 32 }} />
               ) : (
                 <>
                   {/* Chapter Quizzes */}
@@ -363,7 +363,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
           ) : (
             /* Leaderboard */
             lbLoading ? (
-              <ActivityIndicator color={colors.primary} style={{ paddingVertical: 48 }} />
+              <ActivityIndicator color={colors.accentYellow} style={{ paddingVertical: 48 }} />
             ) : leaderboard.length === 0 ? (
               <View style={styles.leaderCard}>
                 <Text style={{ color: colors.textMuted, textAlign: 'center', padding: 24, fontSize: 13 }}>
