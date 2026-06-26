@@ -85,7 +85,7 @@ async function uiChecks() {
   const browser = await chromium.launch();
   try {
     for (const [profile, routes] of [
-      [STUDENT, ['/settings', '/assignments', '/schedule', '/challenges']],
+      [STUDENT, ['/settings', '/assignments', '/schedule', '/challenges', '/leaderboard']],
       [PARENT,  ['/settings', '/schedule', '/leaderboard']],
     ]) {
       const page = await browser.newPage();

@@ -27,6 +27,7 @@ type ModalType = 'name' | 'email' | 'password' | 'school' | 'curriculum' | null;
 export default function TeacherSettingsScreen({ navigation }: any) {
   const { user, updateUser, logout, switchRole } = useAuth();
   const { colors, themeMode, setThemeMode } = useTheme();
+  const gold = colors.accentYellow;
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   // Notifications
@@ -305,7 +306,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
             {/* ── Left column ── */}
             <View style={styles.col}>
               {/* ── Profile ── */}
-              <SectionHeader icon="user" label="Profile & Account" color={colors.primary} styles={styles} />
+              <SectionHeader icon="user" label="Profile & Account" color={gold} styles={styles} />
               <View style={styles.card}>
                 <View style={styles.profileRow}>
                   <View style={styles.avatarBig}>
@@ -319,7 +320,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                     <Text style={styles.profileSub}>{user?.email || ''}</Text>
                     <View style={styles.profileMeta}>
                       <View style={styles.roleBadge}>
-                        <Feather name="briefcase" size={10} color={colors.primary} />
+                        <Feather name="briefcase" size={10} color={gold} />
                         <Text style={styles.roleBadgeText}>Teacher</Text>
                       </View>
                       {user?.school ? (
@@ -353,11 +354,11 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                     </View>
                   ) : (
                     <TouchableOpacity
-                      style={[styles.changeBtn, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '40', borderWidth: 1 }]}
+                      style={[styles.changeBtn, { backgroundColor: gold + '15', borderColor: gold + '40', borderWidth: 1 }]}
                       onPress={openParentOnboarding}
                       activeOpacity={0.7}
                     >
-                      <Text style={[styles.changeBtnText, { color: colors.primary }]}>Add</Text>
+                      <Text style={[styles.changeBtnText, { color: gold }]}>Add</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -380,12 +381,12 @@ export default function TeacherSettingsScreen({ navigation }: any) {
               </View>
 
               {/* ── Account Actions ── */}
-              <SectionHeader icon="alert-triangle" label="Account Actions" color={colors.accentRed} styles={styles} />
+              <SectionHeader icon="alert-triangle" label="Account Actions" color={gold} styles={styles} />
               <View style={styles.card}>
                 <View style={[styles.actionsRow, { marginTop: 0 }]}>
                   <TouchableOpacity style={styles.actionBtn} onPress={handleSignOut} activeOpacity={0.8}>
-                    <Feather name="log-out" size={17} color={colors.accentRed} />
-                    <Text style={[styles.actionBtnText, { color: colors.accentRed }]}>Sign Out</Text>
+                    <Feather name="log-out" size={17} color={gold} />
+                    <Text style={[styles.actionBtnText, { color: gold }]}>Sign Out</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionBtn} onPress={() => { setDeletePassword(''); setDeleteError(''); setDeleteModalVisible(true); }} activeOpacity={0.8}>
                     <Feather name="trash-2" size={17} color={colors.accentRed} />
@@ -405,7 +406,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                     <Text style={styles.fieldLabel}>AI Auto-Grading</Text>
                     <Text style={styles.fieldSub}>Let AI grade assignments automatically</Text>
                   </View>
-                  <Switch value={autoGrading} onValueChange={setAutoGrading} trackColor={{ false: colors.borderColor, true: colors.primary }} thumbColor="white" />
+                  <Switch value={autoGrading} onValueChange={setAutoGrading} trackColor={{ false: colors.borderColor, true: gold }} thumbColor="white" />
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.toggleRow}>
@@ -413,7 +414,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                     <Text style={styles.fieldLabel}>Share Progress with Parents</Text>
                     <Text style={styles.fieldSub}>Parents can see their child's scores and activity</Text>
                   </View>
-                  <Switch value={shareProgress} onValueChange={setShareProgress} trackColor={{ false: colors.borderColor, true: colors.primary }} thumbColor="white" />
+                  <Switch value={shareProgress} onValueChange={setShareProgress} trackColor={{ false: colors.borderColor, true: gold }} thumbColor="white" />
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.fieldRow}>
@@ -455,7 +456,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                         <Text style={styles.fieldLabel}>{item.label}</Text>
                         <Text style={styles.fieldSub}>{item.sub}</Text>
                       </View>
-                      <Switch value={item.val} onValueChange={item.set} trackColor={{ false: colors.borderColor, true: colors.primary }} thumbColor="white" />
+                      <Switch value={item.val} onValueChange={item.set} trackColor={{ false: colors.borderColor, true: gold }} thumbColor="white" />
                     </View>
                   </View>
                 ))}
@@ -477,8 +478,8 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                       onPress={() => setThemeMode(t.id)}
                       activeOpacity={0.7}
                     >
-                      <Feather name={t.icon} size={16} color={themeMode === t.id ? colors.primary : colors.textMuted} />
-                      <Text style={[styles.themeLabel, themeMode === t.id && { color: colors.primary }]}>{t.label}</Text>
+                      <Feather name={t.icon} size={16} color={themeMode === t.id ? gold : colors.textMuted} />
+                      <Text style={[styles.themeLabel, themeMode === t.id && { color: gold }]}>{t.label}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -608,11 +609,11 @@ export default function TeacherSettingsScreen({ navigation }: any) {
             return (
               <TouchableOpacity
                 key={c} activeOpacity={0.8}
-                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, borderColor: on ? colors.primary : colors.borderColor, backgroundColor: on ? colors.primaryGlow : 'transparent' }}
+                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, borderColor: on ? gold : colors.borderColor, backgroundColor: on ? gold + '18' : 'transparent' }}
                 onPress={() => setEditCurricula(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])}
               >
-                {on && <Feather name="check" size={12} color={colors.primary} />}
-                <Text style={{ fontSize: 13, color: on ? colors.primary : colors.textMuted, fontWeight: '600' }}>{c}</Text>
+                {on && <Feather name="check" size={12} color={gold} />}
+                <Text style={{ fontSize: 13, color: on ? gold : colors.textMuted, fontWeight: '600' }}>{c}</Text>
               </TouchableOpacity>
             );
           })}
@@ -624,11 +625,11 @@ export default function TeacherSettingsScreen({ navigation }: any) {
             return (
               <TouchableOpacity
                 key={g} activeOpacity={0.8}
-                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, borderColor: on ? colors.primary : colors.borderColor, backgroundColor: on ? colors.primaryGlow : 'transparent' }}
+                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, borderColor: on ? gold : colors.borderColor, backgroundColor: on ? gold + '18' : 'transparent' }}
                 onPress={() => setEditGrades(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])}
               >
-                {on && <Feather name="check" size={12} color={colors.primary} />}
-                <Text style={{ fontSize: 13, color: on ? colors.primary : colors.textMuted, fontWeight: '600' }}>{g}</Text>
+                {on && <Feather name="check" size={12} color={gold} />}
+                <Text style={{ fontSize: 13, color: on ? gold : colors.textMuted, fontWeight: '600' }}>{g}</Text>
               </TouchableOpacity>
             );
           })}
@@ -661,8 +662,8 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                   style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 }]}
                   onPress={() => setParentStep('create')} activeOpacity={0.8}
                 >
-                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center' }}>
-                    <Feather name="user-plus" size={18} color={colors.primary} />
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: gold + '20', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="user-plus" size={18} color={gold} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.fieldLabel}>Create new student account</Text>
@@ -703,10 +704,10 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                     <Text style={styles.fieldLabel}>Grade</Text>
                     {(['Grade 3','Grade 4','Grade 5','Grade 6'] as const).map(g => (
                       <TouchableOpacity key={g} onPress={() => setChildGrade(g)} activeOpacity={0.8}
-                        style={[styles.modalTextInput, { marginTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderColor: childGrade === g ? colors.primary : colors.borderColor }]}
+                        style={[styles.modalTextInput, { marginTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderColor: childGrade === g ? gold : colors.borderColor }]}
                       >
-                        <Text style={[styles.fieldSub, { color: childGrade === g ? colors.primary : colors.textMuted }]}>{g}</Text>
-                        {childGrade === g && <Feather name="check" size={13} color={colors.primary} />}
+                        <Text style={[styles.fieldSub, { color: childGrade === g ? gold : colors.textMuted }]}>{g}</Text>
+                        {childGrade === g && <Feather name="check" size={13} color={gold} />}
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -714,10 +715,10 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                     <Text style={styles.fieldLabel}>Curriculum</Text>
                     {(['IB PYP','CBSE','ICSE','Cambridge'] as const).map(c => (
                       <TouchableOpacity key={c} onPress={() => setChildCurriculum(c)} activeOpacity={0.8}
-                        style={[styles.modalTextInput, { marginTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderColor: childCurriculum === c ? colors.primary : colors.borderColor }]}
+                        style={[styles.modalTextInput, { marginTop: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderColor: childCurriculum === c ? gold : colors.borderColor }]}
                       >
-                        <Text style={[styles.fieldSub, { color: childCurriculum === c ? colors.primary : colors.textMuted }]}>{c}</Text>
-                        {childCurriculum === c && <Feather name="check" size={13} color={colors.primary} />}
+                        <Text style={[styles.fieldSub, { color: childCurriculum === c ? gold : colors.textMuted }]}>{c}</Text>
+                        {childCurriculum === c && <Feather name="check" size={13} color={gold} />}
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -848,7 +849,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
               <TouchableOpacity
                 onPress={() => setFeedback(null)}
                 activeOpacity={0.85}
-                style={{ backgroundColor: colors.primary, borderRadius: radius.md, paddingHorizontal: 40, paddingVertical: 11, alignItems: 'center', justifyContent: 'center', minWidth: 120 }}
+                style={{ backgroundColor: gold, borderRadius: radius.md, paddingHorizontal: 40, paddingVertical: 11, alignItems: 'center', justifyContent: 'center', minWidth: 120 }}
               >
                 <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>OK</Text>
               </TouchableOpacity>
@@ -928,7 +929,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginBottom: spacing.lg },
   avatarBig: {
-    width: 64, height: 64, borderRadius: 32, backgroundColor: c.primary,
+    width: 64, height: 64, borderRadius: 32, backgroundColor: c.accentYellow,
     alignItems: 'center', justifyContent: 'center', position: 'relative',
   },
   avatarCam: {
@@ -942,10 +943,10 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   profileMeta: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
   roleBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start',
-    backgroundColor: c.primaryGlow, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
-    borderWidth: 1, borderColor: c.primary + '30',
+    backgroundColor: c.accentYellow + '18', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
+    borderWidth: 1, borderColor: c.accentYellow + '30',
   },
-  roleBadgeText: { fontSize: 11, fontWeight: '600', color: c.primary },
+  roleBadgeText: { fontSize: 11, fontWeight: '600', color: c.accentYellow },
 
   divider: { height: 1, backgroundColor: c.borderColor, marginVertical: spacing.lg },
   fieldRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md },
@@ -953,12 +954,12 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   fieldSub: { fontSize: 12, color: c.textMuted, maxWidth: 220 },
   changeBtn: {
     paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radius.sm,
-    borderWidth: 1, borderColor: c.primary + '40', backgroundColor: c.primaryGlow,
+    borderWidth: 1, borderColor: c.accentYellow + '40', backgroundColor: c.accentYellow + '18',
   },
-  changeBtnText: { fontSize: 12, fontWeight: '600', color: c.primary },
+  changeBtnText: { fontSize: 12, fontWeight: '600', color: c.accentYellow },
   toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  comingSoonBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: c.primaryGlow, borderWidth: 1, borderColor: c.primary + '30' },
-  comingSoonText: { fontSize: 11, color: c.primary, fontWeight: '600' },
+  comingSoonBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: c.accentYellow + '18', borderWidth: 1, borderColor: c.accentYellow + '30' },
+  comingSoonText: { fontSize: 11, color: c.accentYellow, fontWeight: '600' },
 
   themeRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
   themeOption: {
@@ -966,7 +967,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     gap: 8, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1,
     borderColor: c.borderColor, backgroundColor: 'rgba(255,255,255,0.02)',
   },
-  themeOptionActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  themeOptionActive: { borderColor: c.accentYellow, backgroundColor: c.accentYellow + '18' },
   themeLabel: { fontSize: 13, fontWeight: '600', color: c.textMuted },
 
   dangerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 2 },
@@ -994,6 +995,6 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   modalBtns: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl },
   modalCancelBtn: { flex: 1, height: 46, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center', justifyContent: 'center' },
   modalCancelText: { fontSize: 14, fontWeight: '600', color: c.textMuted },
-  modalSaveBtn: { flex: 1, height: 46, borderRadius: radius.md, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+  modalSaveBtn: { flex: 1, height: 46, borderRadius: radius.md, backgroundColor: c.accentYellow, alignItems: 'center', justifyContent: 'center' },
   modalSaveText: { fontSize: 14, fontWeight: '700', color: 'white' },
 });

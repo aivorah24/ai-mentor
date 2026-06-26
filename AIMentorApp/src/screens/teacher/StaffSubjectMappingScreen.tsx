@@ -153,7 +153,7 @@ function EditTeacherModal({
                   {GRADES.map(g => (
                     <TouchableOpacity
                       key={g}
-                      style={[s.chip, entry.grade === g && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                      style={[s.chip, entry.grade === g && { backgroundColor: gold, borderColor: gold }]}
                       onPress={() => setGrade(idx, g)}
                     >
                       <Text style={[s.chipTxt, { color: entry.grade === g ? '#fff' : colors.textMuted }]}>
@@ -169,7 +169,7 @@ function EditTeacherModal({
                   {CURRICULA.map(c => (
                     <TouchableOpacity
                       key={c}
-                      style={[s.chip, entry.curriculum === c && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                      style={[s.chip, entry.curriculum === c && { backgroundColor: gold, borderColor: gold }]}
                       onPress={() => setCurriculum(idx, c)}
                     >
                       <Text style={[s.chipTxt, { color: entry.curriculum === c ? '#fff' : colors.textMuted }]}>{c}</Text>
@@ -185,11 +185,11 @@ function EditTeacherModal({
                     return (
                       <TouchableOpacity
                         key={subject}
-                        style={[s.subjectChip, active && { backgroundColor: colors.primary + '22', borderColor: colors.primary }]}
+                        style={[s.subjectChip, active && { backgroundColor: gold + '22', borderColor: gold }]}
                         onPress={() => toggleSubject(idx, subject)}
                       >
-                        {active && <Feather name="check" size={11} color={colors.primary} style={{ marginRight: 4 }} />}
-                        <Text style={[s.subjectTxt, active && { color: colors.primary }]}>{subject}</Text>
+                        {active && <Feather name="check" size={11} color={gold} style={{ marginRight: 4 }} />}
+                        <Text style={[s.subjectTxt, active && { color: gold }]}>{subject}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -198,7 +198,7 @@ function EditTeacherModal({
             ))}
 
             <TouchableOpacity style={s.addEntryBtn} onPress={addEntry}>
-              <Feather name="plus" size={14} color={colors.primary} />
+              <Feather name="plus" size={14} color={gold} />
               <Text style={s.addEntryTxt}>Add Grade Entry</Text>
             </TouchableOpacity>
           </ScrollView>
@@ -214,7 +214,7 @@ function EditTeacherModal({
             <TouchableOpacity style={[s.btn, s.cancelBtn]} onPress={onClose}>
               <Text style={[s.btnTxt, { color: colors.textMain }]}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[s.btn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving}>
+            <TouchableOpacity style={[s.btn, { backgroundColor: gold }]} onPress={handleSave} disabled={saving}>
               {saving ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
@@ -234,6 +234,7 @@ function EditTeacherModal({
 // ── Main Screen ────────────────────────────────────────────────────────────────
 export default function StaffSubjectMappingScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const gold = colors.accentYellow;
   const { user } = useAuth();
   const adminEmail = user?.email || '';
   const { showToast, ToastComponent } = useToast();
@@ -341,8 +342,8 @@ export default function StaffSubjectMappingScreen({ navigation }: any) {
                     {t.teaches.length > 0 && (
                       <View style={styles.subjectTagRow}>
                         {Array.from(new Set(t.teaches.flatMap(e => e.subjects))).slice(0, 4).map(sub => (
-                          <View key={sub} style={[styles.subjectTag, { borderColor: colors.primary + '60' }]}>
-                            <Text style={[styles.subjectTagTxt, { color: colors.primary }]}>{sub}</Text>
+                          <View key={sub} style={[styles.subjectTag, { borderColor: gold + '60' }]}>
+                            <Text style={[styles.subjectTagTxt, { color: gold }]}>{sub}</Text>
                           </View>
                         ))}
                         {Array.from(new Set(t.teaches.flatMap(e => e.subjects))).length > 4 && (
@@ -358,7 +359,7 @@ export default function StaffSubjectMappingScreen({ navigation }: any) {
                   </View>
 
                   <TouchableOpacity style={styles.editBtn} onPress={() => setEditTeacher(t)}>
-                    <Feather name="edit-2" size={15} color={colors.primary} />
+                    <Feather name="edit-2" size={15} color={gold} />
                   </TouchableOpacity>
                 </View>
               );
@@ -427,11 +428,11 @@ function makeStyles(colors: AppColors) {
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: colors.primary + '22',
+      backgroundColor: gold + '22',
       alignItems: 'center',
       justifyContent: 'center',
     },
-    avatarTxt: { color: colors.primary, fontSize: 14, fontWeight: '700' },
+    avatarTxt: { color: gold, fontSize: 14, fontWeight: '700' },
     info: { flex: 1 },
     name: { color: colors.textMain, fontSize: 14, fontWeight: '600' },
     email: { color: colors.textDim, fontSize: 12, marginTop: 2 },
@@ -538,12 +539,12 @@ function makeModalStyles(colors: AppColors) {
       paddingVertical: 10,
       justifyContent: 'center',
       borderWidth: 1,
-      borderColor: colors.primary + '60',
+      borderColor: gold + '60',
       borderRadius: radius.md,
       borderStyle: 'dashed' as const,
       marginBottom: 4,
     },
-    addEntryTxt: { color: colors.primary, fontSize: 13, fontWeight: '600' },
+    addEntryTxt: { color: gold, fontSize: 13, fontWeight: '600' },
     errorRow: {
       flexDirection: 'row',
       gap: 6,

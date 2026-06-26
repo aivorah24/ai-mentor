@@ -1,13 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity, RefreshControl, useWindowDimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { spacing, radius, fonts } from '../../theme';
@@ -16,9 +8,19 @@ import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import { useTheme } from '../../context/ThemeContext';
 import { useStudentData } from '../../context/StudentDataContext';
+import { useAuth } from '../../context/AuthContext';
 import SERVER_URL from '../../config/serverUrl';
 
-const MEDAL_COLORS = ['#f59e0b', '#94a3b8', '#cd7c2c'];
+interface LeaderboardEntry { rank: number; id: string; name: string; grade: string; score: number; level: number; streak: number; topics: number; }
+
+type Scope = 'school' | 'grade' | 'curriculum' | 'overall';
+const TABS: { key: Scope; label: string; icon: any }[] = [
+  { key: 'school',     label: 'School',     icon: 'home' },
+  { key: 'grade',      label: 'Grade',      icon: 'layers' },
+  { key: 'curriculum', label: 'Curriculum', icon: 'book-open' },
+  { key: 'overall',    label: 'Overall',    icon: 'star' },
+];
+const MEDAL_COLORS = ['#E8B923', '#9BB0C9', '#CD7F32'];
 
 function initials(name: string) {
   return name.split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase();
@@ -27,169 +29,201 @@ function initials(name: string) {
 export default function LeaderboardScreen({ navigation }: any) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { stats, studentId } = useStudentData();
+  const { studentId } = useStudentData();
+  const { user } = useAuth();
+  const { width } = useWindowDimensions();
+  const wide = width >= 980;
+  const gold = colors.accentYellow;
 
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const myGrade = user?.grade;
+  const mySchool = (user as any)?.school as string | undefined;
+  const myCurriculum = user?.curriculum;
+
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [tab, setTab] = useState<Scope>('school');
 
-  const fetchLeaderboard = useCallback(async () => {
+  const fetchLeaderboard = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
-      const data = await fetch(`${SERVER_URL}/student/leaderboard?limit=20`).then(r => r.json());
+      const enc = encodeURIComponent;
+      let params = '?limit=500';
+      if (tab === 'school') { if (mySchool) params += `&school=${enc(mySchool)}`; }
+      else if (tab === 'grade') { if (myGrade) params += `&grade=${enc(myGrade)}`; if (mySchool) params += `&school=${enc(mySchool)}`; }
+      else if (tab === 'curriculum') { if (myCurriculum) params += `&curriculum=${enc(myCurriculum)}`; }
+      const data = await fetch(`${SERVER_URL}/student/leaderboard${params}`).then(r => r.json());
       if (Array.isArray(data)) setLeaderboard(data);
-    } catch { /* ignore */ } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+    } catch { /* ignore */ } finally { setLoading(false); setRefreshing(false); }
+  }, [tab, myGrade, mySchool, myCurriculum]);
 
-  // Refresh leaderboard every time the screen gains focus
-  useFocusEffect(
-    useCallback(() => {
-      fetchLeaderboard();
-    }, [fetchLeaderboard])
-  );
+  useEffect(() => { fetchLeaderboard(); }, [fetchLeaderboard]);
+  useFocusEffect(useCallback(() => { fetchLeaderboard(); }, [fetchLeaderboard]));
 
-  const myRank = leaderboard.find(s => s.id === studentId)?.rank ?? null;
+  const myEntry = leaderboard.find(s => s.id === studentId) ?? null;
+  const aboveEntry = myEntry ? leaderboard.find(e => e.rank === myEntry.rank - 1) : null;
+  const progressPct = myEntry ? (myEntry.rank === 1 ? 1 : (aboveEntry && aboveEntry.score > 0 ? Math.min(myEntry.score / aboveEntry.score, 1) : 0)) : 0;
+  const podium = !loading && leaderboard.length >= 1 ? (
+    leaderboard.length >= 3 ? [leaderboard[1], leaderboard[0], leaderboard[2]] :
+    leaderboard.length === 2 ? [null, leaderboard[0], leaderboard[1]] :
+    [null, leaderboard[0], null]
+  ) : null;
 
-  const topThree = leaderboard.slice(0, 3);
-  const rest = leaderboard.slice(3);
+  const rankCard = myEntry ? (
+    <View style={styles.rankCard}>
+      <View style={styles.trophyCircle}><Feather name="award" size={44} color={gold} /></View>
+      <Text style={styles.rankCardTitle}>You're doing great!</Text>
+      <Text style={styles.rankCardSub}>Keep up the momentum and you'll reach the top soon.</Text>
+      <View style={styles.rankCardBox}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.rankCardBoxLabel}>Your Rank</Text>
+          <Text style={[styles.rankCardBoxRank, { color: gold }]}>#{myEntry.rank}</Text>
+        </View>
+        {myEntry.rank === 1 ? (
+          <Text style={[styles.rankCardProgressTxt, { color: gold }]}>Top of the board! 🏆</Text>
+        ) : (
+          <>
+            <Text style={styles.rankCardProgressTxt}>{myEntry.score.toLocaleString()} / {aboveEntry?.score.toLocaleString() ?? '—'} XP to reach #{myEntry.rank - 1}</Text>
+            <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${Math.round(progressPct * 100)}%`, backgroundColor: gold }]} /></View>
+          </>
+        )}
+      </View>
+      <Text style={styles.rankCardFoot}>Keep learning, keep growing!</Text>
+    </View>
+  ) : !loading ? (
+    <View style={styles.rankCard}>
+      <View style={styles.trophyCircle}><Feather name="award" size={26} color={colors.textDim} /></View>
+      <Text style={styles.rankCardTitle}>Not ranked yet</Text>
+      <Text style={styles.rankCardSub}>Complete lessons to earn XP and claim your spot on the board!</Text>
+    </View>
+  ) : null;
 
   return (
     <ScreenLayout>
       <View style={styles.screen}>
-        <Header
-          title="Leaderboard"
-          subtitle="See how you rank among your classmates"
-          searchPlaceholder="Search students..."
-          onMenuPress={() => navigation.openDrawer()}
-        />
+        <Header title="Leaderboard" subtitle="See how you rank among your peers" searchPlaceholder="Search students..." onMenuPress={() => navigation.openDrawer()} />
         <ScrollView
-          style={styles.scroll}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchLeaderboard(); }} tintColor={colors.primary} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchLeaderboard(true)} tintColor={colors.primary} />}
         >
-          {/* Your rank banner */}
-          {myRank && (
-            <View style={styles.myRankCard}>
-              <View style={[styles.myRankIcon, { backgroundColor: colors.primary + '20' }]}>
-                <Feather name="award" size={20} color={colors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.myRankLabel}>Your Current Rank</Text>
-                <Text style={styles.myRankValue}>#{myRank} in Class</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={[styles.myXP, { color: colors.accentYellow }]}>{stats.xpPoints.toLocaleString()}</Text>
-                <Text style={styles.myXPLabel}>XP</Text>
-              </View>
-            </View>
-          )}
-
-          {/* Live badge */}
-          <View style={styles.liveRow}>
-            <Feather name="users" size={14} color={colors.textMuted} />
-            <Text style={styles.liveTitle}>Live Class Rankings</Text>
-            <View style={styles.liveBadge}>
+          {/* Top bar: live badge + school chip */}
+          <View style={styles.topBar}>
+            <View style={styles.liveRow}>
               <View style={[styles.liveDot, { backgroundColor: colors.accentGreen }]} />
               <Text style={[styles.liveText, { color: colors.accentGreen }]}>LIVE</Text>
+              <Text style={styles.liveTitle}>Rankings</Text>
             </View>
+            {!!mySchool && (
+              <View style={styles.schoolChip}>
+                <Feather name="home" size={13} color={gold} />
+                <Text style={styles.schoolChipText} numberOfLines={1}>{mySchool}</Text>
+              </View>
+            )}
           </View>
 
-          {loading ? (
-            <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 48 }} />
-          ) : leaderboard.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Feather name="award" size={40} color={colors.textDim} />
-              <Text style={styles.emptyText}>No rankings yet.</Text>
-              <Text style={styles.emptySubtext}>Start learning to earn XP and claim your spot!</Text>
-            </View>
-          ) : (
-            <>
-              {/* Top 3 podium */}
-              {topThree.length >= 3 && (
-                <View style={styles.podium}>
-                  {/* 2nd */}
-                  <View style={[styles.podiumItem, { marginTop: 24 }]}>
-                    <View style={[styles.podiumAvatar, { backgroundColor: MEDAL_COLORS[1] + '20', borderColor: MEDAL_COLORS[1] }]}>
-                      <Text style={[styles.podiumAvatarText, { color: MEDAL_COLORS[1] }]}>{initials(topThree[1]?.name ?? '')}</Text>
-                    </View>
-                    <Text style={styles.podiumName} numberOfLines={1}>{topThree[1]?.name?.split(' ')[0]}</Text>
-                    <Text style={[styles.podiumXP, { color: MEDAL_COLORS[1] }]}>{(topThree[1]?.score ?? 0).toLocaleString()}</Text>
-                    <View style={[styles.podiumBase, { backgroundColor: MEDAL_COLORS[1] + '30', height: 56 }]}>
-                      <Text style={[styles.podiumRank, { color: MEDAL_COLORS[1] }]}>2</Text>
-                    </View>
-                  </View>
-                  {/* 1st */}
-                  <View style={styles.podiumItem}>
-                    <View style={[styles.podiumCrown]}>
-                      <Feather name="award" size={16} color={MEDAL_COLORS[0]} />
-                    </View>
-                    <View style={[styles.podiumAvatar, { width: 64, height: 64, borderRadius: 32, backgroundColor: MEDAL_COLORS[0] + '20', borderColor: MEDAL_COLORS[0], borderWidth: 3 }]}>
-                      <Text style={[styles.podiumAvatarText, { color: MEDAL_COLORS[0], fontSize: 22 }]}>{initials(topThree[0]?.name ?? '')}</Text>
-                    </View>
-                    <Text style={styles.podiumName} numberOfLines={1}>{topThree[0]?.name?.split(' ')[0]}</Text>
-                    <Text style={[styles.podiumXP, { color: MEDAL_COLORS[0] }]}>{(topThree[0]?.score ?? 0).toLocaleString()}</Text>
-                    <View style={[styles.podiumBase, { backgroundColor: MEDAL_COLORS[0] + '30', height: 80 }]}>
-                      <Text style={[styles.podiumRank, { color: MEDAL_COLORS[0] }]}>1</Text>
-                    </View>
-                  </View>
-                  {/* 3rd */}
-                  <View style={[styles.podiumItem, { marginTop: 40 }]}>
-                    <View style={[styles.podiumAvatar, { backgroundColor: MEDAL_COLORS[2] + '20', borderColor: MEDAL_COLORS[2] }]}>
-                      <Text style={[styles.podiumAvatarText, { color: MEDAL_COLORS[2] }]}>{initials(topThree[2]?.name ?? '')}</Text>
-                    </View>
-                    <Text style={styles.podiumName} numberOfLines={1}>{topThree[2]?.name?.split(' ')[0]}</Text>
-                    <Text style={[styles.podiumXP, { color: MEDAL_COLORS[2] }]}>{(topThree[2]?.score ?? 0).toLocaleString()}</Text>
-                    <View style={[styles.podiumBase, { backgroundColor: MEDAL_COLORS[2] + '30', height: 40 }]}>
-                      <Text style={[styles.podiumRank, { color: MEDAL_COLORS[2] }]}>3</Text>
-                    </View>
-                  </View>
+          {/* Scope tabs */}
+          <View style={styles.tabsRow}>
+            {TABS.map(t => {
+              const active = t.key === tab;
+              return (
+                <TouchableOpacity key={t.key} onPress={() => setTab(t.key)} activeOpacity={0.8}
+                  style={[styles.tab, active && { backgroundColor: gold + '1A', borderColor: gold + '55' }]}>
+                  <Feather name={t.icon} size={13} color={active ? gold : colors.textMuted} />
+                  <Text style={[styles.tabText, { color: active ? gold : colors.textMuted }]}>{t.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <View style={[styles.columns, !wide && { flexDirection: 'column' }]}>
+            <View style={{ flex: 1, gap: spacing.lg }}>
+              {/* Podium */}
+              {podium && (
+                <View style={styles.podiumRow}>
+                  {podium.map((s, idx) => {
+                    if (!s) return <View key={`empty-${idx}`} style={{ flex: 1 }} />;
+                    const isFirst = idx === 1;
+                    const isMe = s.id === studentId;
+                    const medalColor = MEDAL_COLORS[s.rank - 1];
+                    const actualRank = idx === 0 ? 2 : idx === 1 ? 1 : 3;
+                    return (
+                      <View key={s.id} style={[
+                        styles.podiumCard,
+                        isFirst && { borderColor: gold, backgroundColor: gold + '12', transform: [{ translateY: -8 }] },
+                        isMe && !isFirst && { borderColor: gold + '66' },
+                      ]}>
+                        <View style={[styles.medalBadge, { backgroundColor: medalColor }]}><Text style={styles.medalNum}>{actualRank}</Text></View>
+                        <View style={[styles.podiumAvatar, { borderColor: isFirst ? gold : colors.borderColor }]}>
+                          <Text style={[styles.podiumAvatarText, { color: isFirst ? gold : colors.primary }]}>{initials(s.name)}</Text>
+                        </View>
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <Text style={styles.podiumName} numberOfLines={1}>{s.name}</Text>
+                          <Text style={[styles.podiumScore, { color: gold }]}>{s.score.toLocaleString()} <Text style={{ fontSize: 10, fontWeight: '600' }}>XP</Text></Text>
+                        </View>
+                        <Feather name="award" size={20} color={medalColor} />
+                        {isMe && <View style={[styles.youBadge, { position: 'absolute', top: 6, right: 6, backgroundColor: gold + '20', borderColor: gold + '40' }]}><Text style={[styles.youText, { color: gold }]}>You</Text></View>}
+                      </View>
+                    );
+                  })}
                 </View>
               )}
 
-              {/* Full list */}
-              <View style={styles.listCard}>
-                {leaderboard.map((s, i) => {
+              {/* Table */}
+              <View style={styles.tableCard}>
+                <View style={styles.tableHead}>
+                  <Text style={styles.thRank}>Rank</Text>
+                  <Text style={styles.thStudent}>Student</Text>
+                  {wide && <Text style={styles.thGrade}>Grade</Text>}
+                  <Text style={styles.thXp}>XP Earned</Text>
+                  <Text style={styles.thStreak}>Streak</Text>
+                </View>
+                {loading ? (
+                  <ActivityIndicator color={colors.primary} style={{ paddingVertical: 40 }} />
+                ) : leaderboard.length === 0 ? (
+                  <Text style={styles.empty}>No rankings in this view yet.</Text>
+                ) : leaderboard.map((s, i) => {
                   const medalColor = MEDAL_COLORS[s.rank - 1];
                   const isMe = s.id === studentId;
                   return (
-                    <View
-                      key={s.id}
-                      style={[
-                        styles.leaderRow,
-                        i < leaderboard.length - 1 && styles.leaderBorder,
-                        isMe && { backgroundColor: colors.primary + '0C' },
-                      ]}
-                    >
-                      <View style={[styles.rankBadge, { backgroundColor: medalColor ? medalColor + '22' : colors.borderColor }]}>
-                        {s.rank <= 3
-                          ? <Feather name="award" size={12} color={medalColor} />
-                          : <Text style={[styles.rankNum, { color: colors.textMuted }]}>{s.rank}</Text>}
-                      </View>
-                      <View style={[styles.avatar, { backgroundColor: isMe ? colors.primary + '30' : colors.primary + '14' }]}>
-                        <Text style={[styles.avatarText, { color: isMe ? colors.primary : colors.textMuted }]}>{initials(s.name)}</Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                          <Text style={[styles.leaderName, isMe && { color: colors.primary }]}>{s.name}</Text>
-                          {isMe && <View style={styles.youBadge}><Text style={[styles.youText, { color: colors.primary }]}>You</Text></View>}
+                    <View key={s.id} style={[styles.tr, i < leaderboard.length - 1 && styles.trBorder, isMe && { backgroundColor: gold + '0E' }]}>
+                      <View style={styles.thRank}>
+                        <View style={[styles.rankBadge, { backgroundColor: medalColor ? medalColor + '26' : 'transparent' }]}>
+                          {s.rank <= 3 ? <Feather name="award" size={13} color={medalColor} /> : <Text style={[styles.rankNum, { color: colors.textMuted }]}>{s.rank}</Text>}
                         </View>
-                        <Text style={styles.leaderMeta}>{s.grade} · {s.streak}d streak · {s.topics} topics</Text>
                       </View>
-                      <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={[styles.leaderScore, { color: colors.accentYellow }]}>{s.score.toLocaleString()}</Text>
-                        <Text style={styles.leaderXP}>XP</Text>
+                      <View style={[styles.thStudent, { flexDirection: 'row', alignItems: 'center', gap: spacing.sm }]}>
+                        <View style={[styles.avatar, { backgroundColor: isMe ? gold + '25' : colors.primary + '20' }]}>
+                          <Text style={[styles.avatarText, { color: isMe ? gold : colors.primary }]}>{initials(s.name)}</Text>
+                        </View>
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text style={styles.name} numberOfLines={1}>{s.name}</Text>
+                            {isMe && (<View style={[styles.youBadge, { backgroundColor: gold + '20', borderColor: gold + '40' }]}><Text style={[styles.youText, { color: gold }]}>You</Text></View>)}
+                          </View>
+                          {!wide && <Text style={styles.gradeSmall}>{s.grade}</Text>}
+                        </View>
+                      </View>
+                      {wide && <Text style={styles.thGrade}><Text style={styles.gradeCell}>{s.grade}</Text></Text>}
+                      <View style={styles.thXp}><Text style={[styles.xpCell, { color: gold }]}>{s.score.toLocaleString()} <Text style={{ fontSize: 11, fontWeight: '600' }}>XP</Text></Text></View>
+                      <View style={[styles.thStreak, { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }]}>
+                        <Feather name="wind" size={12} color={colors.accentOrange} />
+                        <Text style={styles.streakCell}>{s.streak}d</Text>
                       </View>
                     </View>
                   );
                 })}
+                {leaderboard.length > 6 && (
+                  <TouchableOpacity style={styles.viewAllBtn} activeOpacity={0.8} onPress={() => {}}>
+                    <Text style={[styles.viewAllText, { color: gold }]}>View Full Leaderboard</Text>
+                    <Feather name="arrow-right" size={14} color={gold} />
+                  </TouchableOpacity>
+                )}
               </View>
-            </>
-          )}
+            </View>
+
+            {wide ? <View style={{ width: 300 }}>{rankCard}</View> : rankCard}
+          </View>
         </ScrollView>
       </View>
     </ScreenLayout>
@@ -197,73 +231,62 @@ export default function LeaderboardScreen({ navigation }: any) {
 }
 
 const makeStyles = (c: AppColors) => StyleSheet.create({
-  screen: { flex: 1, backgroundColor: c.bgDark },
-  scroll: { flex: 1 },
-  content: { padding: spacing.xl, paddingBottom: 48, gap: spacing.xl },
+  screen:         { flex: 1, backgroundColor: c.bgDark },
+  content:        { padding: spacing.xl, paddingBottom: 40, gap: spacing.lg },
+  topBar:         { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  liveRow:        { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  liveDot:        { width: 7, height: 7, borderRadius: 4 },
+  liveText:       { fontFamily: fonts.serif, fontSize: 10, fontWeight: '800', letterSpacing: 1 },
+  liveTitle:      { fontFamily: fonts.serif, fontSize: 15, fontWeight: '700', color: c.textMain },
+  schoolChip:     { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: 9, backgroundColor: c.cardDark, maxWidth: 220 },
+  schoolChipText: { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', color: c.textMain },
+  tabsRow:        { flexDirection: 'row', gap: spacing.sm },
+  tab:            { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.lg, paddingVertical: 10 },
+  tabText:        { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700' },
+  columns:        { flexDirection: 'row', gap: spacing.lg, alignItems: 'flex-start' },
 
-  myRankCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: c.primary + '12',
-    borderWidth: 1,
-    borderColor: c.primary + '30',
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-  },
-  myRankIcon: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  myRankLabel: { fontSize: 11, color: c.textMuted },
-  myRankValue: { fontSize: 18, fontWeight: '700', color: c.textMain, fontFamily: fonts.serif },
-  myXP: { fontSize: 20, fontWeight: '800' },
-  myXPLabel: { fontSize: 10, color: c.textDim, fontWeight: '600' },
+  podiumRow:      { flexDirection: 'row', alignItems: 'stretch', gap: spacing.md, paddingTop: 10 },
+  podiumCard:     { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.md },
+  medalBadge:     { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  medalNum:       { fontFamily: fonts.serif, fontSize: 11, fontWeight: '900', color: '#0B0B0B' },
+  podiumAvatar:   { width: 40, height: 40, borderRadius: 20, borderWidth: 2, backgroundColor: c.primary + '18', alignItems: 'center', justifyContent: 'center' },
+  podiumAvatarText: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700' },
+  podiumName:     { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: c.textMain },
+  podiumScore:    { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', marginTop: 1 },
 
-  liveRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  liveTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: c.textMain },
-  liveBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  liveDot: { width: 6, height: 6, borderRadius: 3 },
-  liveText: { fontSize: 10, fontWeight: '800', letterSpacing: 1 },
+  tableCard:      { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, overflow: 'hidden' },
+  tableHead:      { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: spacing.lg, borderBottomWidth: 1, borderBottomColor: c.borderColor, backgroundColor: c.bgDark + '80' },
+  thRank:         { width: 54, fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.5 },
+  thStudent:      { flex: 1, fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.5 },
+  thGrade:        { width: 90, fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.5 },
+  thXp:           { width: 96, fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right' },
+  thStreak:       { width: 72, fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right' },
+  tr:             { flexDirection: 'row', alignItems: 'center', paddingVertical: 11, paddingHorizontal: spacing.lg },
+  trBorder:       { borderBottomWidth: 1, borderBottomColor: c.borderColor },
+  rankBadge:      { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  rankNum:        { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700' },
+  avatar:         { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  avatarText:     { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700' },
+  name:           { fontFamily: fonts.serif, fontSize: 14, fontWeight: '600', color: c.textMain, flexShrink: 1, textTransform: 'none' },
+  gradeSmall:     { fontFamily: fonts.serif, fontSize: 11, color: c.textDim, marginTop: 1, textTransform: 'none' },
+  gradeCell:      { fontFamily: fonts.serif, fontSize: 13, color: c.textMuted, fontWeight: '600', textTransform: 'none' },
+  xpCell:         { fontFamily: fonts.serif, fontSize: 15, fontWeight: '800', letterSpacing: -0.3, textTransform: 'none' },
+  streakCell:     { fontFamily: fonts.serif, fontSize: 13, color: c.textMuted, fontWeight: '700', textTransform: 'none' },
+  youBadge:       { borderWidth: 1, borderRadius: 20, paddingHorizontal: 6, paddingVertical: 2 },
+  youText:        { fontFamily: fonts.serif, fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
+  empty:          { textAlign: 'center', color: c.textMuted, padding: spacing.xl, fontFamily: fonts.serif, fontSize: 13 },
 
-  podium: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    gap: spacing.md,
-    paddingVertical: spacing.lg,
-  },
-  podiumItem: { alignItems: 'center', flex: 1, gap: 4 },
-  podiumCrown: { marginBottom: 2 },
-  podiumAvatar: {
-    width: 52, height: 52, borderRadius: 26,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2,
-  },
-  podiumAvatarText: { fontSize: 18, fontWeight: '700' },
-  podiumName: { fontSize: 12, fontWeight: '700', color: c.textMain, textAlign: 'center' },
-  podiumXP: { fontSize: 11, fontWeight: '700' },
-  podiumBase: {
-    width: '100%', borderTopLeftRadius: 8, borderTopRightRadius: 8,
-    alignItems: 'center', justifyContent: 'center', marginTop: 4,
-  },
-  podiumRank: { fontSize: 20, fontWeight: '800' },
-
-  listCard: {
-    backgroundColor: c.cardDark, borderWidth: 1,
-    borderColor: c.borderColor, borderRadius: radius.xl, overflow: 'hidden',
-  },
-  leaderRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg },
-  leaderBorder: { borderBottomWidth: 1, borderBottomColor: c.borderColor },
-  rankBadge: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  rankNum: { fontSize: 12, fontWeight: '700' },
-  avatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  avatarText: { fontSize: 13, fontWeight: '700' },
-  leaderName: { fontSize: 14, fontWeight: '600', color: c.textMain },
-  leaderMeta: { fontSize: 11, color: c.textDim, marginTop: 1 },
-  leaderScore: { fontSize: 15, fontWeight: '800', letterSpacing: -0.5 },
-  leaderXP: { fontSize: 10, color: c.textDim, fontWeight: '600' },
-  youBadge: { backgroundColor: c.accentYellow + '15', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1 },
-  youText: { fontSize: 9, fontWeight: '800' },
-
-  emptyState: { alignItems: 'center', paddingVertical: 60, gap: spacing.md },
-  emptyText: { fontSize: 16, fontWeight: '700', color: c.textMain },
-  emptySubtext: { fontSize: 13, color: c.textMuted, textAlign: 'center' },
+  rankCard:       { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.xl, alignItems: 'center', gap: 8 },
+  trophyCircle:   { width: 90, height: 90, borderRadius: 45, backgroundColor: c.accentYellow + '15', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  rankCardTitle:  { fontFamily: fonts.serif, fontSize: 16, fontWeight: '800', color: c.textMain },
+  rankCardSub:    { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted, textAlign: 'center', lineHeight: 18 },
+  rankCardBox:    { alignSelf: 'stretch', backgroundColor: c.bgDark, borderRadius: radius.lg, padding: spacing.md, gap: 8, marginTop: 8 },
+  rankCardBoxLabel:{ fontFamily: fonts.serif, fontSize: 12, color: c.textMuted, fontWeight: '600' },
+  rankCardBoxRank:{ fontFamily: fonts.serif, fontSize: 18, fontWeight: '900' },
+  rankCardProgressTxt: { fontFamily: fonts.serif, fontSize: 11, color: c.textDim },
+  progressTrack:  { height: 7, borderRadius: 4, backgroundColor: c.borderColor, overflow: 'hidden' },
+  progressFill:   { height: '100%', borderRadius: 4 },
+  rankCardFoot:   { fontFamily: fonts.serif, fontSize: 11, color: c.textDim, marginTop: 4 },
+  viewAllBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14, borderTopWidth: 1, borderTopColor: c.borderColor },
+  viewAllText:    { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700' },
 });

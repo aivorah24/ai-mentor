@@ -1,4 +1,5 @@
-﻿import React, { useMemo, useState, useEffect, useCallback } from 'react';
+﻿import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Modal,
@@ -90,6 +91,16 @@ export default function ParentChallengesScreen({ navigation }: any) {
   }, [child?.id, child?.grade]);
 
   useEffect(() => { fetchChallenges(); }, [fetchChallenges]);
+
+  // Reload on focus + poll every 30s while screen is visible
+  const challengeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useFocusEffect(useCallback(() => {
+    fetchChallenges();
+    challengeIntervalRef.current = setInterval(fetchChallenges, 30000);
+    return () => {
+      if (challengeIntervalRef.current) { clearInterval(challengeIntervalRef.current); challengeIntervalRef.current = null; }
+    };
+  }, [fetchChallenges]));
 
   // Open assign confirm modal
   function openAssign(ch: Challenge) {

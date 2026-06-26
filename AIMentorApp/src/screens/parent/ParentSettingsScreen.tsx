@@ -11,6 +11,7 @@ import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useNotification } from '../../context/NotificationContext';
 import {
   updatePassword,
   EmailAuthProvider,
@@ -27,6 +28,7 @@ type ModalType = 'name' | 'email' | 'password' | null;
 export default function ParentSettingsScreen({ navigation }: any) {
   const { user, updateUser, logout } = useAuth();
   const { colors, themeMode, setThemeMode } = useTheme();
+  const { triggerPoll } = useNotification();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   // Notifications — persisted to AsyncStorage
@@ -245,6 +247,8 @@ export default function ParentSettingsScreen({ navigation }: any) {
                           item.set(v);
                           const next = { assignmentAlerts, teacherMessages, weeklyReport, progressNudges, challengeUpdates, [item.key]: v };
                           saveNotifPrefs(next);
+                          // Trigger an immediate poll so the new pref takes effect instantly
+                          triggerPoll();
                         }}
                         trackColor={{ false: colors.borderColor, true: colors.accentYellow }}
                         thumbColor="white"

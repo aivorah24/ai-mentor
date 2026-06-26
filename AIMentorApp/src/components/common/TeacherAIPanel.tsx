@@ -16,12 +16,12 @@ import { spacing, radius } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
 const P = {
-  rose:  '#B8797E',
-  green: '#5A8A70',
-  gold:  '#8A8358',
-  peach: '#C4836A',
-  teal:  '#7AADA8',
-  slate: '#5F8A86',
+  rose:  '#BAA467',
+  green: '#BAA467',
+  gold:  '#BAA467',
+  peach: '#BAA467',
+  teal:  '#BAA467',
+  slate: '#BAA467',
 };
 
 const PANEL_WIDTH = 340;

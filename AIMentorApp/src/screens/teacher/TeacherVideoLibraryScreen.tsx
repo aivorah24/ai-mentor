@@ -50,6 +50,7 @@ const GRADES = ['All Grades', 'Grade 3', 'Grade 4', 'Grade 5'];
 
 export default function TeacherVideoLibraryScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const gold = colors.accentYellow;
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [videos, setVideos] = useState<Video[]>([]);
@@ -161,13 +162,13 @@ export default function TeacherVideoLibraryScreen({ navigation }: any) {
 
           {/* Add video button */}
           <TouchableOpacity style={styles.addBtn} onPress={() => setModalVisible(true)} activeOpacity={0.8}>
-            <Feather name="plus" size={16} color={colors.primary} />
+            <Feather name="plus" size={16} color={gold} />
             <Text style={styles.addBtnText}>Add Video for a Topic</Text>
           </TouchableOpacity>
 
           {/* Video list */}
           {loading ? (
-            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+            <ActivityIndicator size="large" color={gold} style={{ marginTop: 40 }} />
           ) : filtered.length === 0 ? (
             <View style={styles.emptyState}>
               <Feather name="film" size={36} color={colors.textDim} />
@@ -179,7 +180,7 @@ export default function TeacherVideoLibraryScreen({ navigation }: any) {
           ) : (
             filtered.map(video => {
               const sc = detectSource(video.url);
-              const scColor = SOURCE_COLORS[sc] ?? colors.primary;
+              const scColor = SOURCE_COLORS[sc] ?? gold;
               return (
                 <View key={video.id} style={styles.videoCard}>
                   {/* Color strip */}
@@ -234,7 +235,7 @@ export default function TeacherVideoLibraryScreen({ navigation }: any) {
                 <View style={styles.gradeRow}>
                   {GRADES.map(g => (
                     <TouchableOpacity key={g} style={[styles.gradeChip, newGrade === g && styles.gradeChipActive]} onPress={() => setNewGrade(g)}>
-                      <Text style={[styles.gradeChipText, newGrade === g && { color: colors.primary }]}>{g}</Text>
+                      <Text style={[styles.gradeChipText, newGrade === g && { color: gold }]}>{g}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -303,11 +304,11 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   addBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
-    paddingVertical: 14, backgroundColor: c.primaryGlow,
+    paddingVertical: 14, backgroundColor: c.accentYellow + '18',
     borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(99,102,241,0.4)',
     borderRadius: radius.lg, marginBottom: spacing.xl,
   },
-  addBtnText: { fontSize: 14, fontWeight: '600', color: c.primary },
+  addBtnText: { fontSize: 14, fontWeight: '600', color: c.accentYellow },
 
   emptyState: { alignItems: 'center', paddingVertical: 48, gap: 12 },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: c.textMain },
@@ -349,11 +350,11 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   gradeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   gradeChip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: c.borderColor },
-  gradeChipActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  gradeChipActive: { borderColor: c.accentYellow, backgroundColor: c.accentYellow + '18' },
   gradeChipText: { fontSize: 12, color: c.textMuted },
   modalBtns: { flexDirection: 'row', gap: spacing.md, marginTop: 4 },
   modalCancel: { flex: 1, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center' },
   modalCancelText: { fontSize: 13, fontWeight: '600', color: c.textMuted },
-  modalConfirm: { flex: 1, paddingVertical: 12, borderRadius: radius.md, backgroundColor: c.primary, alignItems: 'center' },
+  modalConfirm: { flex: 1, paddingVertical: 12, borderRadius: radius.md, backgroundColor: c.accentYellow, alignItems: 'center' },
   modalConfirmText: { fontSize: 13, fontWeight: '700', color: 'white' },
 });

@@ -77,7 +77,7 @@ function typeColor(type: string, colors: any): string {
     assignment: colors.accentYellow,
     break:      colors.textDim,
   };
-  return map[type] ?? colors.primary;
+  return map[type] ?? gold;
 }
 
 function dateISO(d: Date): string {
@@ -97,6 +97,7 @@ function buildWeek(base: Date): { iso: string; day: string; date: number }[] {
 
 export default function TeacherScheduleScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const gold = colors.accentYellow;
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { user } = useAuth();
 
@@ -351,7 +352,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
 
           {/* ── Grid: fixed time labels + horizontally scrollable day columns ── */}
           {loading ? (
-            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+            <ActivityIndicator size="large" color={gold} style={{ marginTop: 40 }} />
           ) : (
             <View style={{ flexDirection: 'row' }}>
               {/* FIXED LEFT: time label column (never scrolls horizontally) */}
@@ -447,13 +448,13 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                             <View style={{
                               position: 'absolute', left: 2, right: 2,
                               top: dragPreviewTeacher.top, height: Math.max(dragPreviewTeacher.height, 20),
-                              backgroundColor: colors.primary + '28',
-                              borderLeftWidth: 3, borderLeftColor: colors.primary,
+                              backgroundColor: gold + '28',
+                              borderLeftWidth: 3, borderLeftColor: gold,
                               borderRadius: 4, paddingHorizontal: 5, paddingVertical: 3,
                               zIndex: 10, // @ts-ignore
                               pointerEvents: 'none',
                             }}>
-                              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: gold }}>
                                 {dragPreviewTeacher.startT} – {dragPreviewTeacher.endT}
                               </Text>
                             </View>
@@ -565,13 +566,13 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                     style={[styles.timeChip, targetStudents === 'all' && styles.timeChipActive]}
                     onPress={() => { setTargetStudents('all'); setSelectedStudent(null); }}
                   >
-                    <Text style={[styles.timeChipText, targetStudents === 'all' && { color: colors.primary }]}>All students</Text>
+                    <Text style={[styles.timeChipText, targetStudents === 'all' && { color: gold }]}>All students</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.timeChip, targetStudents === 'specific' && styles.timeChipActive]}
                     onPress={() => setTargetStudents('specific')}
                   >
-                    <Text style={[styles.timeChipText, targetStudents === 'specific' && { color: colors.primary }]}>Specific student</Text>
+                    <Text style={[styles.timeChipText, targetStudents === 'specific' && { color: gold }]}>Specific student</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -579,7 +580,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                   <View style={styles.studentPickerBox}>
                     {selectedStudent ? (
                       <TouchableOpacity style={styles.selectedStudentChip} onPress={() => setSelectedStudent(null)} activeOpacity={0.7}>
-                        <Feather name="user" size={13} color={colors.primary} />
+                        <Feather name="user" size={13} color={gold} />
                         <Text style={styles.selectedStudentName}>{selectedStudent.name}</Text>
                         <Text style={styles.selectedStudentGrade}>{selectedStudent.grade}</Text>
                         <Feather name="x" size={13} color={colors.textDim} />
@@ -649,7 +650,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', paddingRight: spacing.xl },
   addEventBtnTop: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: c.primary, paddingHorizontal: spacing.lg,
+    backgroundColor: c.accentYellow, paddingHorizontal: spacing.lg,
     paddingVertical: 9, borderRadius: radius.lg,
   },
   addEventBtnTopText: { fontSize: 13, fontWeight: '700', color: 'white' },
@@ -718,18 +719,18 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   chipRow:      { height: 40 },
   chipRowContent: { flexDirection: 'row', alignItems: 'center', paddingBottom: 2 },
   timeChip:     { paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radius.sm, borderWidth: 1, borderColor: c.borderColor, marginRight: 6 },
-  timeChipActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  timeChipActive: { borderColor: c.accentYellow, backgroundColor: c.accentYellow + '18' },
   timeChipText: { fontSize: 12, color: c.textMuted },
   studentPickerBox: { borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, overflow: 'hidden' },
   studentSearch: { backgroundColor: 'rgba(255,255,255,0.04)', borderBottomWidth: 1, borderBottomColor: c.borderColor, padding: spacing.md, color: c.textMain, fontSize: 13 },
   studentList:  { maxHeight: 160 },
   noStudentsText: { fontSize: 12, color: c.textDim, textAlign: 'center', padding: spacing.lg },
   studentRow:   { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderBottomWidth: 1, borderBottomColor: c.borderColor + '60' },
-  studentAvatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: c.primary + '30', alignItems: 'center', justifyContent: 'center' },
-  studentAvatarText: { fontSize: 13, fontWeight: '700', color: c.primary },
+  studentAvatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: c.accentYellow + '30', alignItems: 'center', justifyContent: 'center' },
+  studentAvatarText: { fontSize: 13, fontWeight: '700', color: c.accentYellow },
   studentRowName:    { fontSize: 13, fontWeight: '600', color: c.textMain },
   studentRowGrade:   { fontSize: 11, color: c.textDim },
-  selectedStudentChip: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: spacing.md, backgroundColor: c.primary + '14' },
+  selectedStudentChip: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: spacing.md, backgroundColor: c.accentYellow + '14' },
   selectedStudentName:  { fontSize: 13, fontWeight: '600', color: c.textMain, flex: 1 },
   selectedStudentGrade: { fontSize: 11, color: c.textDim },
   errorBox:  { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.accentRed + '14', borderWidth: 1, borderColor: c.accentRed + '40', borderRadius: radius.sm, padding: spacing.md },
@@ -737,6 +738,6 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   modalBtns:        { flexDirection: 'row', gap: spacing.md },
   modalCancel:      { flex: 1, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center' },
   modalCancelText:  { fontSize: 13, fontWeight: '600', color: c.textMuted },
-  modalConfirm:     { flex: 1, paddingVertical: 12, borderRadius: radius.md, backgroundColor: c.primary, alignItems: 'center' },
+  modalConfirm:     { flex: 1, paddingVertical: 12, borderRadius: radius.md, backgroundColor: c.accentYellow, alignItems: 'center' },
   modalConfirmText: { fontSize: 13, fontWeight: '700', color: 'white' },
 });
