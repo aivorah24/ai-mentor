@@ -394,6 +394,53 @@ router.post('/mark-read', async (req, res) => {
   }
 });
 
+// POST /messages/mark-system-read
+// Marks a user's UNREAD system-notification messages (assignment/quiz/challenge
+// alerts) as read — by kind. Parents' assignment/challenge bell counts are backed
+// by these auto-generated messages, so reading/tapping a notification must persist
+// the read state server-side, otherwise the next poll re-surfaces the same alert.
+router.post('/mark-system-read', async (req, res) => {
+  try {
+    const userEmail = (req.body?.userEmail || '').trim().toLowerCase();
+    const kind      = (req.body?.kind || 'all').trim().toLowerCase(); // 'assignment' | 'challenge' | 'all'
+    if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
+
+    // Prefixes to match for this kind.
+    const prefixes = kind === 'assignment'
+      ? ['New Quiz assigned:', 'New Assignment assigned:']
+      : kind === 'challenge'
+        ? ['New Challenge assigned:']
+        : SYSTEM_NOTIF_PREFIXES;
+
+    // Fetch unread system messages for this recipient, then filter by prefix in JS
+    // (Supabase has no clean multi-prefix "starts-with" filter).
+    const { data: unread, error: fetchErr } = await supabase
+      .from('messages')
+      .select('id, content')
+      .eq('recipient_email', userEmail)
+      .is('read_at', null);
+    if (fetchErr) return res.status(500).json({ error: fetchErr.message });
+
+    const ids = (unread || [])
+      .filter(m => typeof m.content === 'string' && prefixes.some(p => m.content.trim().startsWith(p)))
+      .map(m => m.id);
+
+    if (ids.length === 0) return res.json({ success: true, markedCount: 0 });
+
+    const readAt = new Date().toISOString();
+    const { error: updErr } = await supabase
+      .from('messages')
+      .update({ read_at: readAt })
+      .in('id', ids);
+    if (updErr) return res.status(500).json({ error: updErr.message });
+
+    logNotificationDebug('Marked system notifications as read', { userEmail, kind, markedCount: ids.length });
+    res.json({ success: true, markedCount: ids.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // PATCH /messages/read?userEmail=&otherEmail=
 // Mark all messages from otherEmail -> userEmail as read
 // MUST be defined before /:id so Express does not swallow "read" as an id param
