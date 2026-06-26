@@ -645,17 +645,17 @@ export default function DrawingBuddyScreen({ route, navigation }: any) {
               </View>
 
               {/* All steps shown at once */}
-              <View style={[s.card, { backgroundColor: colors.cardDark, borderColor: colors.accentBlue + '30' }]}>
+              <View style={[s.card, { backgroundColor: colors.cardDark, borderColor: colors.accentYellow + '30' }]}>
                 <View style={s.cardHeader}>
-                  <Feather name="list" size={15} color={colors.accentBlue} />
-                  <Text style={[s.cardTitle, { color: colors.accentBlue }]}>
+                  <Feather name="list" size={15} color={colors.accentYellow} />
+                  <Text style={[s.cardTitle, { color: colors.accentYellow }]}>
                     How to draw it ({activity.steps.length} steps)
                   </Text>
                 </View>
 
                 {activity.steps.map((step, i) => (
                   <View key={i} style={s.stepRow}>
-                    <View style={[s.stepNum, { backgroundColor: colors.accentBlue }]}>
+                    <View style={[s.stepNum, { backgroundColor: colors.accentYellow }]}>
                       <Text style={s.stepNumText}>{i + 1}</Text>
                     </View>
                     <Text style={[s.stepText, { color: colors.textMain }]}>
@@ -733,8 +733,8 @@ export default function DrawingBuddyScreen({ route, navigation }: any) {
                         onPress={() => setBrushSize(b)}
                         disabled={!allStepsShown}
                         style={[s.sizeBtn, {
-                          backgroundColor: brushSize === b ? colors.accentBlue + '25' : 'transparent',
-                          borderColor:     brushSize === b ? colors.accentBlue : colors.borderColor,
+                          backgroundColor: brushSize === b ? colors.accentYellow + '25' : 'transparent',
+                          borderColor:     brushSize === b ? colors.accentYellow : colors.borderColor,
                         }]}
                       >
                         <View style={{

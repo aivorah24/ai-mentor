@@ -1172,7 +1172,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           style={styles.scroll}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.accentYellow} />}
         >
           {/* Stats Row */}
           <View style={styles.statsRow}>
@@ -1269,7 +1269,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               {/* Results */}
               <View style={{ marginTop: 10, paddingHorizontal: 16, flex: 1 }}>
                 {libraryLoading ? (
-                  <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
+                  <ActivityIndicator color={colors.accentYellow} style={{ marginTop: 32 }} />
                 ) : libraryLoaded && libraryQuizzes.length === 0 ? (
                   <View style={styles.empty}>
                     <Feather name="inbox" size={36} color={colors.textDim} />
@@ -1346,7 +1346,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
           {/* Assignment List */}
           {activeTab !== 'Quiz Library' && (loading ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
+            <ActivityIndicator color={colors.accentYellow} style={{ marginTop: 40 }} />
           ) : filtered.length === 0 ? (
             <View style={styles.empty}>
               <Feather name="check-square" size={36} color={colors.textDim} />
@@ -1476,7 +1476,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   {/* Questions list */}
                   <ScrollView contentContainerStyle={{ padding: 18, gap: 14 }} showsVerticalScrollIndicator={false}>
                     {libraryPreviewLoading ? (
-                      <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
+                      <ActivityIndicator color={colors.accentYellow} style={{ marginTop: 40 }} />
                     ) : allQuestions.length === 0 ? (
                       <Text style={{ color: colors.textDim, textAlign: 'center', marginTop: 32 }}>No questions found in this quiz.</Text>
                     ) : allQuestions.map((ques: any, idx: number) => (
@@ -2086,7 +2086,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               </View>
               {loadingSavedQuizzes ? (
                 <View style={{ padding: 40, alignItems: 'center' }}>
-                  <ActivityIndicator size="small" color={colors.primary} />
+                  <ActivityIndicator size="small" color={colors.accentYellow} />
                   <Text style={{ color: colors.textDim, marginTop: 12, fontSize: 13 }}>Loading saved quizzes...</Text>
                 </View>
               ) : savedQuizzes.length === 0 ? (
@@ -2459,7 +2459,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     disabled={uploadingDoc || extractingQuestions}
                   >
                     {uploadingDoc ? (
-                      <ActivityIndicator size="small" color={colors.primary} />
+                      <ActivityIndicator size="small" color={colors.accentYellow} />
                     ) : extractingQuestions ? (
                       <ActivityIndicator size="small" color={colors.accentYellow} />
                     ) : (
@@ -3319,7 +3319,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         disabled={generatingInteractiveQuiz}
                       >
                         {generatingInteractiveQuiz ? (
-                          <ActivityIndicator size="small" color={colors.primary} />
+                          <ActivityIndicator size="small" color={colors.accentYellow} />
                         ) : interactiveQuiz ? (
                           <Feather name="check-circle" size={22} color={colors.accentGreen} />
                         ) : (

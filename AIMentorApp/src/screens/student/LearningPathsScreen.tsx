@@ -857,8 +857,8 @@ export default function LearningPathsScreen({ navigation }: any) {
   const statCards = [
     { label: 'Topics Done', value: String(Math.min(completedSet.size, totals.totalTopics)), icon: 'check-circle' as FeatherName, color: colors.accentGreen },
     { label: 'Streak', value: `${stats.currentStreak}d`, icon: 'zap' as FeatherName, color: colors.accentYellow },
-    { label: 'Today XP', value: `+${stats.todayXP}`, icon: 'star' as FeatherName, color: colors.primary },
-    { label: 'Level', value: `Lv ${stats.level}`, icon: 'award' as FeatherName, color: colors.accentBlue },
+    { label: 'Today XP', value: `+${stats.todayXP}`, icon: 'star' as FeatherName, color: colors.accentYellow },
+    { label: 'Level', value: `Lv ${stats.level}`, icon: 'award' as FeatherName, color: colors.accentYellow },
   ];
 
   // Guard: if grade or curriculum is missing, the user's profile is incomplete.
@@ -872,7 +872,7 @@ export default function LearningPathsScreen({ navigation }: any) {
             Your profile is incomplete. Please update your grade and curriculum in Settings to see your learning paths.
           </Text>
           <TouchableOpacity
-            style={{ marginTop: 20, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.primary }}
+            style={{ marginTop: 20, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.accentYellow }}
             onPress={() => navigation.navigate('Settings')}
             activeOpacity={0.85}
           >
@@ -891,8 +891,8 @@ export default function LearningPathsScreen({ navigation }: any) {
         <View style={styles.screen}>
           <Header title="My Learning Journey" subtitle={`${isCBSE ? 'CBSE' : curriculum} - ${grade}`} onMenuPress={() => navigation.openDrawer()} />
           <View style={[styles.center, { flex: 1, paddingHorizontal: 28 }]}>
-            <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: colors.primary + '1A', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-              <Feather name="book-open" size={32} color={colors.primary} />
+            <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: colors.accentYellow + '1A', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+              <Feather name="book-open" size={32} color={colors.accentYellow} />
             </View>
             <Text style={{ fontSize: 20, fontWeight: '800', color: colors.textMain, textAlign: 'center', marginBottom: 10 }}>
               Content for {grade} is on the way
@@ -910,7 +910,7 @@ export default function LearningPathsScreen({ navigation }: any) {
     return (
       <ScreenLayout>
         <View style={[styles.screen, styles.center]}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.accentYellow} />
           <Text style={[styles.dimText, { marginTop: 16 }]}>Loading {curriculum} curriculum...</Text>
         </View>
       </ScreenLayout>
@@ -944,10 +944,10 @@ export default function LearningPathsScreen({ navigation }: any) {
           keyboardShouldPersistTaps="handled"
         >
           <LinearGradient
-            colors={[colors.primary + '35', colors.accentBlue + '20', colors.cardDark]}
+            colors={[colors.accentYellow + '35', colors.accentYellow + '20', colors.cardDark]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={[styles.heroCard, { borderColor: colors.primary + '45' }]}
+            style={[styles.heroCard, { borderColor: colors.accentYellow + '45' }]}
           >
             <View style={styles.heroTop}>
               <View style={styles.heroTitleWrap}>
@@ -955,8 +955,8 @@ export default function LearningPathsScreen({ navigation }: any) {
                 <Text style={styles.heroTitle}>{heroName}, keep the streak alive</Text>
                 <Text style={styles.heroSubtitle}>{heroSubtitle}</Text>
               </View>
-              <View style={[styles.heroProgress, { borderColor: colors.primary + '65' }]}>
-                <Text style={[styles.heroProgressValue, { color: colors.primary }]}>{totals.overallPct}%</Text>
+              <View style={[styles.heroProgress, { borderColor: colors.accentYellow + '65' }]}>
+                <Text style={[styles.heroProgressValue, { color: colors.accentYellow }]}>{totals.overallPct}%</Text>
                 <Text style={styles.heroProgressLabel}>overall</Text>
               </View>
             </View>
@@ -995,7 +995,7 @@ export default function LearningPathsScreen({ navigation }: any) {
                   <Feather name="x" size={14} color={colors.textMuted} />
                 </TouchableOpacity>
               )}
-              {searching ? <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 8 }} /> : null}
+              {searching ? <ActivityIndicator size="small" color={colors.accentYellow} style={{ marginLeft: 8 }} /> : null}
             </View>
             {!isSearching ? (
               <View style={styles.hintsRow}>
@@ -1128,7 +1128,7 @@ export default function LearningPathsScreen({ navigation }: any) {
 
                 return (
                   <TouchableOpacity
-                    style={[styles.continueBanner, { borderColor: colors.primary + '45' }]}
+                    style={[styles.continueBanner, { borderColor: colors.accentYellow + '45' }]}
                     onPress={() =>
                       navigation.navigate('SubjectTopics', {
                         subject: nextSubject.subject,
@@ -1138,14 +1138,14 @@ export default function LearningPathsScreen({ navigation }: any) {
                     }
                     activeOpacity={0.87}
                   >
-                    <View style={[styles.continueDot, { backgroundColor: colors.primary }]} />
+                    <View style={[styles.continueDot, { backgroundColor: colors.accentYellow }]} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.continueLabel}>Up next</Text>
                       <Text style={[styles.continueTopic, { color: colors.textMain }]} numberOfLines={1}>
                         {nextTopic.topic}
                       </Text>
                     </View>
-                    <Feather name="arrow-right" size={17} color={colors.primary} />
+                    <Feather name="arrow-right" size={17} color={colors.accentYellow} />
                   </TouchableOpacity>
                 );
               })()}

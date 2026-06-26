@@ -343,10 +343,10 @@ export default function TopicAICoach({
     }).catch(() => {});
   }
 
-  const fabBg     = colors.primary;
+  const fabBg     = colors.accentYellow;
   const panelBg   = colors.cardDark;
   const headerBg  = colors.sidebarDark;
-  const userBubble = colors.primary;
+  const userBubble = colors.accentYellow;
   const aiBubble  = colors.cardHover;
 
   return (
@@ -375,7 +375,7 @@ export default function TopicAICoach({
       >
         {/* Panel header */}
         <View style={[styles.panelHeader, { backgroundColor: headerBg, borderBottomColor: colors.borderColor }]}>
-          <View style={[styles.aiDot, { backgroundColor: colors.primary }]}>
+          <View style={[styles.aiDot, { backgroundColor: colors.accentYellow }]}>
             <Feather name="cpu" size={14} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
@@ -423,7 +423,7 @@ export default function TopicAICoach({
                             style={[
                               styles.bubbleText,
                               { color: colors.textMain },
-                              isStep     && { fontWeight: '700', color: colors.primary, marginTop: li > 0 ? 3 : 0 },
+                              isStep     && { fontWeight: '700', color: colors.accentYellow, marginTop: li > 0 ? 3 : 0 },
                               isAnswer   && { fontWeight: '700', color: '#4A9E70', marginTop: 3 },
                               isPractice && { fontWeight: '600', color: colors.textMuted, fontStyle: 'italic', marginTop: 3 },
                             ]}
@@ -463,11 +463,11 @@ export default function TopicAICoach({
                 {msg.role === 'ai' && (
                   <View style={styles.feedbackRow}>
                     <TouchableOpacity
-                      style={[styles.feedbackBtn, speakingIdx === i && { borderColor: colors.primary, backgroundColor: colors.primary + '22' }]}
+                      style={[styles.feedbackBtn, speakingIdx === i && { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '22' }]}
                       onPress={() => handleSpeak(i, shownText)}
                       activeOpacity={0.8}
                     >
-                      <Feather name={speakingIdx === i ? 'volume-x' : 'volume-2'} size={12} color={speakingIdx === i ? colors.primary : colors.textDim} />
+                      <Feather name={speakingIdx === i ? 'volume-x' : 'volume-2'} size={12} color={speakingIdx === i ? colors.accentYellow : colors.textDim} />
                     </TouchableOpacity>
                     {i > 0 && (
                       <>
@@ -493,7 +493,7 @@ export default function TopicAICoach({
             )})}
             {loading && messages[messages.length - 1]?.text === '' && (
               <View style={[styles.bubble, styles.bubbleAI, { backgroundColor: aiBubble, borderColor: colors.borderColor }]}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <ActivityIndicator size="small" color={colors.accentYellow} />
               </View>
             )}
           </ScrollView>
@@ -532,7 +532,7 @@ export default function TopicAICoach({
               editable={!loading}
             />
             <TouchableOpacity
-              style={[styles.sendBtn, { backgroundColor: loading ? colors.cardHover : colors.primary }]}
+              style={[styles.sendBtn, { backgroundColor: loading ? colors.cardHover : colors.accentYellow }]}
               onPress={send}
               disabled={loading}
             >

@@ -194,7 +194,7 @@ export default function ParentChallengesScreen({ navigation }: any) {
           {child && (
             <View style={styles.statsRow}>
               {loadingStats ? (
-                <ActivityIndicator size="small" color={colors.primary} />
+                <ActivityIndicator size="small" color={colors.accentYellow} />
               ) : (
                 <>
                   <View style={styles.statItem}>
@@ -240,14 +240,14 @@ export default function ParentChallengesScreen({ navigation }: any) {
               <Text style={styles.emptyText}>No child linked to your account yet.</Text>
             </View>
           ) : loadingCh ? (
-            <ActivityIndicator color={colors.primary} style={{ paddingVertical: 32 }} />
+            <ActivityIndicator color={colors.accentYellow} style={{ paddingVertical: 32 }} />
           ) : (
             <>
               {schoolChallenges.length > 0 && (
                 <>
                   <View style={styles.sectionHeader}>
-                    <View style={[styles.sectionIcon, { backgroundColor: colors.primaryGlow }]}>
-                      <Feather name="award" size={15} color={colors.primary} />
+                    <View style={[styles.sectionIcon, { backgroundColor: colors.accentYellow + "22" }]}>
+                      <Feather name="award" size={15} color={colors.accentYellow} />
                     </View>
                     <View>
                       <Text style={styles.sectionLabel}>School Challenges</Text>
@@ -311,7 +311,7 @@ export default function ParentChallengesScreen({ navigation }: any) {
 
           {/* Info note */}
           <View style={styles.infoCard}>
-            <Feather name="info" size={14} color={colors.primary} />
+            <Feather name="info" size={14} color={colors.accentYellow} />
             <Text style={styles.infoText}>
               You can assign challenges to {child?.name ?? 'your child'} directly. Teachers can also assign school and olympiad challenges from their dashboard.
             </Text>
@@ -340,7 +340,7 @@ export default function ParentChallengesScreen({ navigation }: any) {
                 <Text style={styles.confirmTitle}>Assign Challenge</Text>
                 <Text style={styles.confirmDesc}>
                   Assign <Text style={{ fontWeight: '700', color: colors.textMain }}>{assignChallenge?.title}</Text> to{' '}
-                  <Text style={{ fontWeight: '700', color: colors.primary }}>{child?.name}</Text>?
+                  <Text style={{ fontWeight: '700', color: colors.accentYellow }}>{child?.name}</Text>?
                 </Text>
 
                 <View style={styles.confirmMeta}>
@@ -355,7 +355,7 @@ export default function ParentChallengesScreen({ navigation }: any) {
                 {/* Due date picker */}
                 <View style={{ marginTop: 14 }}>
                   <Text style={[styles.confirmMetaText, { marginBottom: 8, fontWeight: '600', color: colors.textMain }]}>
-                    <Feather name="calendar" size={13} color={colors.primary} /> Due Date
+                    <Feather name="calendar" size={13} color={colors.accentYellow} /> Due Date
                   </Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                     {[
@@ -370,12 +370,12 @@ export default function ParentChallengesScreen({ navigation }: any) {
                         style={{
                           paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.md,
                           borderWidth: 1,
-                          borderColor: assignDueDate === opt.date ? colors.primary : colors.borderColor,
-                          backgroundColor: assignDueDate === opt.date ? colors.primaryGlow : 'transparent',
+                          borderColor: assignDueDate === opt.date ? colors.accentYellow : colors.borderColor,
+                          backgroundColor: assignDueDate === opt.date ? colors.accentYellow + "22" : 'transparent',
                         }}
                         activeOpacity={0.7}
                       >
-                        <Text style={{ fontFamily: fonts.serif, fontSize: 12, color: assignDueDate === opt.date ? colors.primary : colors.textMuted }}>
+                        <Text style={{ fontFamily: fonts.serif, fontSize: 12, color: assignDueDate === opt.date ? colors.accentYellow : colors.textMuted }}>
                           {opt.label}
                         </Text>
                       </TouchableOpacity>
@@ -433,11 +433,11 @@ function ChallengeCard({ ch, colors, styles, onAssign }: {
         <Text style={styles.cardTitle} numberOfLines={2}>{ch.title}</Text>
         {isAssigned && (
           <View style={[styles.assignedBadge, {
-            backgroundColor: ch.status === 'completed' ? colors.accentGreen + '20' : colors.primary + '20',
-            borderColor: ch.status === 'completed' ? colors.accentGreen + '40' : colors.primary + '40',
+            backgroundColor: ch.status === 'completed' ? colors.accentGreen + '20' : colors.accentYellow + '20',
+            borderColor: ch.status === 'completed' ? colors.accentGreen + '40' : colors.accentYellow + '40',
           }]}>
             <Text style={[styles.assignedBadgeText, {
-              color: ch.status === 'completed' ? colors.accentGreen : colors.primary,
+              color: ch.status === 'completed' ? colors.accentGreen : colors.accentYellow,
             }]}>
               {ch.status === 'completed' ? 'Done' : 'Assigned'}
             </Text>
@@ -460,7 +460,7 @@ function ChallengeCard({ ch, colors, styles, onAssign }: {
       </View>
       {!isAssigned && (
         <TouchableOpacity style={styles.assignBtn} onPress={onAssign} activeOpacity={0.8}>
-          <Feather name="plus-circle" size={13} color={colors.primary} />
+          <Feather name="plus-circle" size={13} color={colors.accentYellow} />
           <Text style={styles.assignBtnText}>Assign to Child</Text>
         </TouchableOpacity>
       )}
@@ -531,14 +531,14 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   assignBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
-    borderWidth: 1, borderColor: c.primary + '50', borderRadius: radius.md,
-    paddingHorizontal: spacing.md, paddingVertical: 7, backgroundColor: c.primaryGlow,
+    borderWidth: 1, borderColor: c.accentYellow + '50', borderRadius: radius.md,
+    paddingHorizontal: spacing.md, paddingVertical: 7, backgroundColor: c.accentYellow + "22",
   },
-  assignBtnText: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '600', color: c.primary },
+  assignBtnText: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '600', color: c.accentYellow },
 
   infoCard: {
-    flexDirection: 'row', gap: 8, backgroundColor: c.primaryGlow,
-    borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: c.primary + '30',
+    flexDirection: 'row', gap: 8, backgroundColor: c.accentYellow + "22",
+    borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: c.accentYellow + '30',
   },
   infoText: { flex: 1, fontFamily: fonts.serif, fontSize: 12, color: c.textMuted, lineHeight: 18 },
 
@@ -569,7 +569,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   cancelBtnText:  { fontFamily: fonts.serif, fontSize: 14, fontWeight: '600', color: c.textMuted },
   confirmBtn: {
-    flex: 1, backgroundColor: c.primary, borderRadius: radius.lg,
+    flex: 1, backgroundColor: c.accentYellow, borderRadius: radius.lg,
     paddingVertical: 13, alignItems: 'center',
   },
   confirmBtnDisabled: { opacity: 0.45 },
@@ -579,7 +579,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   successTitle: { fontFamily: fonts.serif, fontSize: 17, fontWeight: '800', color: c.textMain, textAlign: 'center' },
   successSub:   { fontFamily: fonts.serif, fontSize: 13, color: c.textMuted, textAlign: 'center', lineHeight: 20 },
   doneBtn: {
-    backgroundColor: c.primary, borderRadius: radius.lg,
+    backgroundColor: c.accentYellow, borderRadius: radius.lg,
     paddingVertical: 13, alignItems: 'center',
   },
   doneBtnText: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700', color: '#fff' },

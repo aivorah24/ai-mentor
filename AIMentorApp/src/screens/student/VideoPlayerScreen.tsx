@@ -55,7 +55,7 @@ function VideoEmbed({ embedUrl, title }: { embedUrl: string; title: string }) {
       onPress={() => Linking.openURL(embedUrl)}
       activeOpacity={0.8}
     >
-      <Feather name="play-circle" size={48} color={colors.primary} />
+      <Feather name="play-circle" size={48} color={colors.accentYellow} />
       <Text style={{ color: colors.textMain, fontWeight: '700', fontSize: 15 }}>{title}</Text>
       <Text style={{ color: colors.textMuted, fontSize: 12 }}>Tap to open in browser</Text>
     </TouchableOpacity>
@@ -104,7 +104,7 @@ export default function VideoPlayerScreen({ navigation, route }: any) {
         <View style={styles.content}>
           {loading ? (
             <View style={styles.center}>
-              <ActivityIndicator size="large" color={colors.primary} />
+              <ActivityIndicator size="large" color={colors.accentYellow} />
               <Text style={styles.loadingText}>Loading videos…</Text>
             </View>
           ) : videos.length === 0 ? (
@@ -116,7 +116,7 @@ export default function VideoPlayerScreen({ navigation, route }: any) {
                 Try the AI Video Lesson instead!
               </Text>
               <TouchableOpacity
-                style={[styles.aiBtn, { backgroundColor: colors.primary }]}
+                style={[styles.aiBtn, { backgroundColor: colors.accentYellow }]}
                 onPress={() => navigation.navigate('VideoLesson', { topic, grade })}
                 activeOpacity={0.8}
               >
@@ -137,8 +137,8 @@ export default function VideoPlayerScreen({ navigation, route }: any) {
                           <Text style={styles.videoTitle}>{selected.title}</Text>
                           <Text style={styles.videoMeta}>{selected.topic} · {selected.grade}</Text>
                         </View>
-                        <View style={[styles.sourceBadge, { backgroundColor: (sourceColor[selected.source] ?? colors.primary) + '18', borderColor: (sourceColor[selected.source] ?? colors.primary) + '40' }]}>
-                          <Text style={[styles.sourceBadgeText, { color: sourceColor[selected.source] ?? colors.primary }]}>{selected.source.toUpperCase()}</Text>
+                        <View style={[styles.sourceBadge, { backgroundColor: (sourceColor[selected.source] ?? colors.accentYellow) + '18', borderColor: (sourceColor[selected.source] ?? colors.accentYellow) + '40' }]}>
+                          <Text style={[styles.sourceBadgeText, { color: sourceColor[selected.source] ?? colors.accentYellow }]}>{selected.source.toUpperCase()}</Text>
                         </View>
                       </View>
                       {selected.description ? <Text style={styles.videoDesc}>{selected.description}</Text> : null}
@@ -149,12 +149,12 @@ export default function VideoPlayerScreen({ navigation, route }: any) {
                       onPress={() => navigation.navigate('VideoLesson', { topic, grade })}
                       activeOpacity={0.8}
                     >
-                      <Feather name="cpu" size={18} color={colors.accentCyan} />
+                      <Feather name="cpu" size={18} color={colors.accentYellow} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.aiCardTitle}>Want more practice?</Text>
                         <Text style={styles.aiCardSub}>Open the AI interactive lesson with quiz</Text>
                       </View>
-                      <Feather name="arrow-right" size={16} color={colors.accentCyan} />
+                      <Feather name="arrow-right" size={16} color={colors.accentYellow} />
                     </TouchableOpacity>
                   </>
                 )}
@@ -171,8 +171,8 @@ export default function VideoPlayerScreen({ navigation, route }: any) {
                       onPress={() => setSelected(v)}
                       activeOpacity={0.7}
                     >
-                      <View style={[styles.sideIcon, { backgroundColor: (sourceColor[v.source] ?? colors.primary) + '18' }]}>
-                        <Feather name="play" size={14} color={sourceColor[v.source] ?? colors.primary} />
+                      <View style={[styles.sideIcon, { backgroundColor: (sourceColor[v.source] ?? colors.accentYellow) + '18' }]}>
+                        <Feather name="play" size={14} color={sourceColor[v.source] ?? colors.accentYellow} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.sideCardTitle} numberOfLines={2}>{v.title}</Text>
@@ -230,7 +230,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
     borderRadius: radius.lg, padding: spacing.md,
   },
-  sideCardActive: { borderColor: c.accentBlue, backgroundColor: 'rgba(59,130,246,0.08)' },
+  sideCardActive: { borderColor: c.accentYellow, backgroundColor: 'rgba(186,164,103,0.08)' },
   sideIcon: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   sideCardTitle: { fontSize: 12, fontWeight: '600', color: c.textMain },
   sideCardMeta: { fontSize: 10, color: c.textMuted, marginTop: 2 },

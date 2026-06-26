@@ -73,7 +73,7 @@ function ThinkingIndicator({ colors }: { colors: AppColors }) {
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 4 }}>
       <Animated.View style={{
         width: 18, height: 18, borderRadius: 9,
-        backgroundColor: colors.primary,
+        backgroundColor: colors.accentYellow,
         opacity: shimmer,
       }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -123,7 +123,7 @@ function renderFormattedAIText(text: string, colors: AppColors) {
             )}
             <Text style={[
               { fontSize: 15, color: colors.textMain, lineHeight: 24, flex: 1 },
-              isStep && { fontWeight: '700', color: colors.primary },
+              isStep && { fontWeight: '700', color: colors.accentYellow },
               isAnswer && { fontWeight: '700', color: '#4A9E70' },
               isPractice && { fontWeight: '600', color: colors.textMuted, fontStyle: 'italic' as const },
               isOption && { color: colors.textMain },
@@ -446,7 +446,7 @@ export default function AICoachScreen({ navigation }: any) {
       {/* Free-tier usage bar — hidden during testing */}
       {false && !isPro && dailyUsage && (
         <View style={styles.usageBar}>
-          <Feather name="zap" size={12} color={limitReached ? '#C5A56A' : colors.primary} />
+          <Feather name="zap" size={12} color={limitReached ? '#C5A56A' : colors.accentYellow} />
           <Text style={[styles.usageText, { color: limitReached ? '#C5A56A' : colors.textMuted }]}>
             {limitReached
               ? 'Daily limit reached'
@@ -474,7 +474,7 @@ export default function AICoachScreen({ navigation }: any) {
           {messages.length === 1 && (
             <View style={styles.welcomeSection}>
               <View style={styles.welcomeIconWrap}>
-                <Feather name="zap" size={28} color={colors.primary} />
+                <Feather name="zap" size={28} color={colors.accentYellow} />
               </View>
               <Text style={styles.welcomeTitle}>Aivorah AI Coach</Text>
               <Text style={styles.welcomeSub}>Ask me anything about your {userGrade} curriculum</Text>
@@ -712,7 +712,7 @@ export default function AICoachScreen({ navigation }: any) {
               ref={inputRef}
               style={styles.input}
               placeholder={isListening ? 'Listening...' : 'Message Aivorah...'}
-              placeholderTextColor={isListening ? colors.primary : colors.textDim}
+              placeholderTextColor={isListening ? colors.accentYellow : colors.textDim}
               value={input}
               onChangeText={setInput}
               multiline
@@ -814,10 +814,10 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   welcomeIconWrap: {
     width: 56, height: 56, borderRadius: 28,
-    backgroundColor: c.primary + '18',
+    backgroundColor: c.accentYellow + '18',
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 16,
-    borderWidth: 1, borderColor: c.primary + '30',
+    borderWidth: 1, borderColor: c.accentYellow + '30',
   },
   welcomeTitle: {
     fontSize: 22, fontWeight: '700', color: c.textMain, marginBottom: 6,
@@ -858,7 +858,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   aiAvatar: {
     width: 26, height: 26, borderRadius: 13,
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
     alignItems: 'center', justifyContent: 'center',
   },
   aiName: {
@@ -892,7 +892,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   streamCursor: {
     width: 2, height: 18,
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
     borderRadius: 1,
     marginTop: 2,
     opacity: 0.8,
@@ -908,7 +908,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: 'transparent',
   },
   actionBtnActive: {
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
     borderRadius: 8,
   },
 
@@ -957,11 +957,11 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   micActive: {
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
   },
   sendBtn: {
     width: 34, height: 34, borderRadius: 17,
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
     alignItems: 'center', justifyContent: 'center',
   },
   sendBtnDisabled: { opacity: 0.25, backgroundColor: c.textDim },

@@ -389,7 +389,7 @@ export default function SettingsScreen({ navigation, route }: any) {
           <View style={styles.columns}>
           <View style={styles.col}>
           {/* ── Profile & Account ── */}
-          <SectionHeader icon="user" label="Profile & Account" color={colors.primary} styles={styles} />
+          <SectionHeader icon="user" label="Profile & Account" color={colors.accentYellow} styles={styles} />
           <View style={styles.card}>
             <View style={styles.profileRow}>
               <View style={styles.avatarBig}>
@@ -428,7 +428,7 @@ export default function SettingsScreen({ navigation, route }: any) {
           </View>
 
           {/* ── Appearance ── */}
-          <SectionHeader icon="moon" label="Appearance" color={colors.accentPurple} styles={styles} />
+          <SectionHeader icon="moon" label="Appearance" color={colors.accentYellow} styles={styles} />
           <View style={styles.card}>
             <Text style={styles.fieldLabel}>Theme</Text>
             <View style={styles.themeRow}>
@@ -450,8 +450,8 @@ export default function SettingsScreen({ navigation, route }: any) {
                       <Feather name="check" size={11} color="#fff" />
                     </View>
                   )}
-                  <Feather name={t.icon} size={24} color={active ? colors.primary : colors.textMuted} />
-                  <Text style={[styles.themeLabel, active && { color: colors.primary }]}>{t.label}</Text>
+                  <Feather name={t.icon} size={24} color={active ? colors.accentYellow : colors.textMuted} />
+                  <Text style={[styles.themeLabel, active && { color: colors.accentYellow }]}>{t.label}</Text>
                 </TouchableOpacity>
                 );
               })}
@@ -680,7 +680,7 @@ export default function SettingsScreen({ navigation, route }: any) {
             </View>
             {!!recoveryError && <Text style={{ fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{recoveryError}</Text>}
             <TouchableOpacity onPress={() => { setRecoveryStep('email'); setRecoveryOtp(''); setRecoveryError(''); }} style={{ marginTop: 8 }}>
-              <Text style={{ fontSize: 12, color: colors.primary }}>← Change email or resend code</Text>
+              <Text style={{ fontSize: 12, color: colors.accentYellow }}>← Change email or resend code</Text>
             </TouchableOpacity>
             <ModalButtons onCancel={closeModal} onSave={handleVerifyRecoveryOtp} loading={modalLoading} saveLabel="Verify & Save" styles={styles} />
           </>
@@ -784,12 +784,12 @@ export default function SettingsScreen({ navigation, route }: any) {
                   paddingVertical: 9,
                   borderRadius: 10,
                   borderWidth: 1.5,
-                  borderColor: active ? colors.primary : colors.borderColor,
-                  backgroundColor: active ? colors.primary + '20' : 'transparent',
+                  borderColor: active ? colors.accentYellow : colors.borderColor,
+                  backgroundColor: active ? colors.accentYellow + '20' : 'transparent',
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ color: active ? colors.primary : colors.textMuted, fontWeight: active ? '700' : '400', fontSize: 12.5 }} numberOfLines={1}>{g}</Text>
+                <Text style={{ color: active ? colors.accentYellow : colors.textMuted, fontWeight: active ? '700' : '400', fontSize: 12.5 }} numberOfLines={1}>{g}</Text>
               </TouchableOpacity>
             );
           })}
@@ -919,7 +919,7 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
     borderRadius: 34,
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 2,
-    borderColor: c.primary,
+    borderColor: c.accentYellow,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -969,7 +969,7 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(99,102,241,0.35)',
     backgroundColor: c.accentYellow + '15',
   },
-  changeBtnText: { fontSize: 12, fontWeight: '600', color: c.primary },
+  changeBtnText: { fontSize: 12, fontWeight: '600', color: c.accentYellow },
 
   toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
@@ -1021,7 +1021,7 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(99,102,241,0.2)',
   },
-  comingSoonText: { fontSize: 11, color: c.primary, fontWeight: '600' },
+  comingSoonText: { fontSize: 11, color: c.accentYellow, fontWeight: '600' },
 
   dangerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 2 },
   actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, marginTop: spacing.lg },

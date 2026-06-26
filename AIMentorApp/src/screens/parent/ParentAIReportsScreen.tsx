@@ -505,13 +505,13 @@ export default function ParentAIReportsScreen({ navigation, route }: any) {
 
           {/* Child selector */}
           {loadingChildren ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
+            <ActivityIndicator color={colors.accentYellow} style={{ marginTop: 32 }} />
           ) : children.length === 0 ? (
             <View style={styles.emptyBox}>
               <Feather name="users" size={32} color={colors.textDim} />
               <Text style={styles.emptyTitle}>No children linked</Text>
               <Text style={styles.emptyDesc}>Add a child from My Kids to generate reports.</Text>
-              <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.primary, marginTop: 12 }]} onPress={() => navigation.navigate('ParentMyKids')}>
+              <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.accentYellow, marginTop: 12 }]} onPress={() => navigation.navigate('ParentMyKids')}>
                 <Text style={styles.actionBtnText}>Go to My Kids</Text>
               </TouchableOpacity>
             </View>
@@ -529,8 +529,8 @@ export default function ParentAIReportsScreen({ navigation, route }: any) {
                         onPress={() => { setSelectedChild(child); setReportData(null); setError(''); }}
                         activeOpacity={0.8}
                       >
-                        <View style={[styles.childDot, { backgroundColor: isActive ? '#ffffff40' : colors.primary + '25' }]}>
-                          <Text style={[styles.childDotText, { color: isActive ? '#fff' : colors.primary }]}>
+                        <View style={[styles.childDot, { backgroundColor: isActive ? '#ffffff40' : colors.accentYellow + '25' }]}>
+                          <Text style={[styles.childDotText, { color: isActive ? '#fff' : colors.accentYellow }]}>
                             {child.name.charAt(0).toUpperCase()}
                           </Text>
                         </View>
@@ -545,7 +545,7 @@ export default function ParentAIReportsScreen({ navigation, route }: any) {
 
                 {selectedChild && !reportData && !loadingReport && (
                   <TouchableOpacity
-                    style={[styles.generateBtn, { backgroundColor: colors.primary }]}
+                    style={[styles.generateBtn, { backgroundColor: colors.accentYellow }]}
                     onPress={() => generateReport(selectedChild)}
                     activeOpacity={0.85}
                   >
@@ -636,7 +636,7 @@ export default function ParentAIReportsScreen({ navigation, route }: any) {
               {/* Loading */}
               {loadingReport && (
                 <View style={styles.loadingBox}>
-                  <ActivityIndicator color={colors.primary} size="large" />
+                  <ActivityIndicator color={colors.accentYellow} size="large" />
                   <Text style={styles.loadingText}>Analyzing {selectedChild?.name}'s learning data...</Text>
                   <Text style={styles.loadingSubText}>This takes a few seconds</Text>
                 </View>
@@ -659,7 +659,7 @@ export default function ParentAIReportsScreen({ navigation, route }: any) {
                   <Feather name="alert-circle" size={20} color={colors.accentRed} />
                   <Text style={styles.errorText}>{error}</Text>
                   <TouchableOpacity onPress={() => selectedChild && generateReport(selectedChild)}>
-                    <Text style={[styles.errorText, { color: colors.primary, fontWeight: '700' }]}>Try again</Text>
+                    <Text style={[styles.errorText, { color: colors.accentYellow, fontWeight: '700' }]}>Try again</Text>
                   </TouchableOpacity>
                 </View>
               )}
