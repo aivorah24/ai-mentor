@@ -137,7 +137,7 @@ async function getOrCreate(studentId) {
 
 router.get('/leaderboard', async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+    const limit = Math.min(parseInt(req.query.limit) || 50, 500);
     const teacherEmail = String(req.query.teacherEmail || '').toLowerCase().trim();
     // Parent view: scope the board relative to one child via any combination of
     // grade / school / curriculum (the leaderboard tabs):
