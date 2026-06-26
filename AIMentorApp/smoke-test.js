@@ -41,6 +41,17 @@ async function apiChecks() {
     record('Leaderboard scoped to grade', allG4, `${lb.length} rows, grades: ${[...new Set(lb.map(s => s.grade))].join(',')}`);
   } catch (e) { record('Leaderboard scoped to grade', false, e.message); }
 
+  // Leaderboard tabs: grade+school narrows further than grade alone; overall is widest
+  try {
+    const [gradeOnly, gradeSchool, overall] = await Promise.all([
+      getJSON('/student/leaderboard?limit=50&grade=Grade%204'),
+      getJSON('/student/leaderboard?limit=50&grade=Grade%204&school=TASARA'),
+      getJSON('/student/leaderboard?limit=50'),
+    ]);
+    const ok = gradeSchool.every(s => s.grade === 'Grade 4') && gradeSchool.length <= gradeOnly.length && overall.length >= gradeOnly.length;
+    record('Leaderboard tab scoping (grade+school/overall)', ok, `grade:${gradeOnly.length} grade+school:${gradeSchool.length} overall:${overall.length}`);
+  } catch (e) { record('Leaderboard tab scoping (grade+school/overall)', false, e.message); }
+
   // Lower-grade challenges exist (feedback: add LKG/UKG/Grade1/2)
   for (const [grade, curr] of [['LKG', 'CBSE'], ['UKG', 'CBSE'], ['Grade 1', 'IB PYP'], ['Grade 2', 'ICSE']]) {
     try {

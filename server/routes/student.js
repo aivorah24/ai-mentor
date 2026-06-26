@@ -139,21 +139,28 @@ router.get('/leaderboard', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 10, 50);
     const teacherEmail = String(req.query.teacherEmail || '').toLowerCase().trim();
-    // Parent view: scope the board to the parent's child grade(s) only.
-    // Accepts a comma-separated list (e.g. "Grade 4,Grade 5") for multiple kids.
+    // Parent view: scope the board relative to one child via any combination of
+    // grade / school / curriculum (the leaderboard tabs):
+    //   Grade tab      → grade + school   School tab → school
+    //   Curriculum tab → curriculum       Overall   → no filters
     const gradeFilter = String(req.query.grade || '')
       .split(',').map(s => s.trim()).filter(Boolean);
+    const schoolFilter = String(req.query.school || '').trim();
+    const curriculumFilter = String(req.query.curriculum || '').trim();
 
     // When scoped to a teacher, resolve the set of students that belong to their
     // class. allowedUsers maps student_id → { name, grade } for those students.
     let allowedUsers = null;
-    if (!teacherEmail && gradeFilter.length > 0) {
-      // Grade-scoped (parent) leaderboard: every student in the given grade(s).
-      const { data: us } = await supabase
+    if (!teacherEmail && (gradeFilter.length > 0 || schoolFilter || curriculumFilter)) {
+      // Scoped (parent) leaderboard: students matching ALL provided filters.
+      let uq = supabase
         .from('users')
-        .select('id, name, grade')
-        .eq('role', 'student')
-        .in('grade', gradeFilter);
+        .select('id, name, grade, school, curriculum')
+        .eq('role', 'student');
+      if (gradeFilter.length > 0) uq = uq.in('grade', gradeFilter);
+      if (schoolFilter)           uq = uq.eq('school', schoolFilter);
+      if (curriculumFilter)       uq = uq.eq('curriculum', curriculumFilter);
+      const { data: us } = await uq;
       allowedUsers = {};
       (us || []).forEach(u => { allowedUsers[u.id] = u; });
     }
