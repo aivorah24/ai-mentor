@@ -163,12 +163,6 @@ export default function VideoLessonScreen({ navigation, route }: any) {
           contentContainerStyle={[s.content, { backgroundColor: colors.bgDark }]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Back */}
-          <TouchableOpacity style={s.backRow} onPress={() => goBackToTopics()}>
-            <Feather name="arrow-left" size={15} color={accent} />
-            <Text style={[s.backText, { color: accent }]}>Back to Topics</Text>
-          </TouchableOpacity>
-
           {/* ── Hero ── */}
           <View style={[s.hero, isWide ? s.heroRow : s.heroCol]}>
             {/* Owl illustration (placeholder — swap for art asset) */}

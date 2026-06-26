@@ -56,7 +56,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
   const { completeLesson, addXP } = useStudentData();
   const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
-  const accent = colors.primary;         // sage — landing theme
+  const accent = colors.accentYellow;    // gold — landing theme
   const gold   = colors.accentYellow;    // gold accent
 
   const [phase, setPhase]       = useState<QuizPhase>('loading');
@@ -332,7 +332,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
     const passed     = pct >= 60;
     const totalTime  = Math.round((Date.now() - quizStartTimeRef.current) / 1000);
     const timeStr    = totalTime >= 60 ? `${Math.floor(totalTime / 60)}m ${totalTime % 60}s` : `${totalTime}s`;
-    const scoreColor = pct === 100 ? '#4ade80' : pct >= 70 ? '#4A9E70' : pct >= 60 ? gold : '#C85870';
+    const scoreColor = pct >= 60 ? gold : '#C87848';
     const trophyTier: 'gold' | 'silver' | 'bronze' = pct >= 80 ? 'gold' : pct >= 60 ? 'silver' : 'bronze';
     const message    = pct === 100 ? 'Perfect score! Outstanding work!'
       : pct >= 80 ? 'Excellent! You really understand this topic!'
@@ -345,7 +345,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
     return (
       <ScreenLayout>
         <View style={styles.screen}>
-          <Header title="Practice Results" showBack onBack={() => navigation.goBack()} onMenuPress={() => navigation.openDrawer()} />
+          <Header title="Practice Results" showBack onBack={() => navigation.navigate('SubjectTopics', { subject, grade, curriculum })} onMenuPress={() => navigation.openDrawer()} />
           <ScrollView contentContainerStyle={[styles.scrollContent]} showsVerticalScrollIndicator={false}>
           <View style={[styles.content, { alignItems: 'center', paddingTop: 32 }]}>
 
@@ -375,19 +375,14 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
             {/* action buttons */}
             <View style={styles.resultBtns}>
               <TouchableOpacity
-                style={[styles.retryBtn, { borderColor: !passed ? '#C85870' : accent, backgroundColor: !passed ? '#C8587014' : accent + '14' }]}
+                style={[styles.retryBtn, { borderColor: !passed ? '#C87848' : accent, backgroundColor: !passed ? '#C8784814' : accent + '14' }]}
                 onPress={() => fetchQuiz(true)} activeOpacity={0.8}
               >
-                <Feather name="refresh-cw" size={16} color={!passed ? '#C85870' : accent} />
-                <Text style={[styles.retryBtnText, { color: !passed ? '#C85870' : accent }]}>
+                <Feather name="refresh-cw" size={16} color={!passed ? '#C87848' : accent} />
+                <Text style={[styles.retryBtnText, { color: !passed ? '#C87848' : accent }]}>
                   {!passed ? 'Retake (New Questions)' : 'Try Again'}
                 </Text>
               </TouchableOpacity>
-              {passed && (
-                <TouchableOpacity style={[styles.doneBtn, { backgroundColor: accent }]} onPress={() => navigation.navigate('SubjectTopics', { subject, grade, curriculum })} activeOpacity={0.8}>
-                  <Text style={styles.doneBtnText}>Back to Topics</Text>
-                </TouchableOpacity>
-              )}
             </View>
 
             {/* ── What you got RIGHT ── */}
@@ -504,34 +499,35 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
   return (
     <ScreenLayout>
       <View style={styles.screen}>
-        <Header title={`${subject} Practice`} subtitle={topic} showBack onBack={() => navigation.goBack()} onMenuPress={() => navigation.openDrawer()} />
+        <Header title={`${subject} Practice`} subtitle={topic} showBack onBack={() => navigation.navigate('SubjectTopics', { subject, grade, curriculum })} onMenuPress={() => navigation.openDrawer()} />
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.twoPanel}>
 
           {/* ── LEFT PANEL: subject + progress ── */}
-          <View style={[styles.leftPanel, { backgroundColor: accent }]}>
+          <View style={[styles.leftPanel, { backgroundColor: colors.cardDark, borderRightWidth: 1, borderRightColor: colors.borderColor }]}>
             <View style={styles.leftTop}>
-              <View style={[styles.subjectIcon, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
-                <Feather name={(SUBJECT_ICON[subject] || 'globe') as any} size={22} color="#fff" />
+              <View style={[styles.subjectIcon, { backgroundColor: accent + '20', borderWidth: 1, borderColor: accent + '40' }]}>
+                <Feather name={(SUBJECT_ICON[subject] || 'globe') as any} size={22} color={accent} />
               </View>
-              <Text style={styles.leftSubject}>{subject}</Text>
-              <Text style={styles.leftTopic} numberOfLines={3}>{topic}</Text>
+              <Text style={[styles.leftSubject, { color: accent }]}>{subject}</Text>
+              <Text style={[styles.leftTopic, { color: colors.textMain }]} numberOfLines={3}>{topic}</Text>
             </View>
 
             {/* Step dots */}
             <View style={styles.stepDots}>
               {questions.map((_, i) => (
                 <View key={i} style={[styles.stepDot, {
-                  backgroundColor: i < currentQ ? 'rgba(255,255,255,0.9)' : i === currentQ ? '#fff' : 'rgba(255,255,255,0.3)',
+                  backgroundColor: i < currentQ ? accent : i === currentQ ? accent : colors.borderColor,
+                  opacity: i < currentQ ? 0.9 : i === currentQ ? 1 : 0.35,
                   width: i === currentQ ? 22 : 8,
                 }]} />
               ))}
             </View>
 
             <View style={styles.leftBottom}>
-              <Text style={styles.leftCounter}>{currentQ + 1}</Text>
-              <Text style={styles.leftOf}>of {questions.length}</Text>
-              <View style={styles.leftTypeBadge}>
+              <Text style={[styles.leftCounter, { color: colors.textMain }]}>{currentQ + 1}</Text>
+              <Text style={[styles.leftOf, { color: colors.textMuted }]}>of {questions.length}</Text>
+              <View style={[styles.leftTypeBadge, { backgroundColor: accent + '18', borderColor: accent + '40' }]}>
                 <Feather name={isFill ? 'edit-3' : 'list'} size={10} color={accent} />
                 <Text style={[styles.leftTypeTxt, { color: accent }]}>{isFill ? 'Fill Blank' : 'MCQ'}</Text>
               </View>
@@ -552,7 +548,6 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
                 const isSelected = mcqSelected === i;
                 const isCorrect  = (q.correct as number) === i;
                 const LETTERS    = ['A','B','C','D'];
-                const TEAL       = '#5F8A86';
                 const showResult = mcqDone;
 
                 let radioFill   = 'transparent';
@@ -562,13 +557,15 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
                 let leftBorder  = 'transparent';
                 let resultIcon: 'check-circle' | 'x-circle' | null = null;
 
+                const CORRECT = accent;       // gold for correct
+                const WRONG   = '#C87848';    // warm amber-red for wrong
                 if (showResult) {
-                  if (isCorrect)       { radioFill = '#4A9E70'; radioBorder = '#4A9E70'; textCol = '#4A9E70'; rowBg = isDark ? '#4A9E7012' : '#F0FFF6'; leftBorder = '#4A9E70'; resultIcon = 'check-circle'; }
-                  else if (isSelected) { radioFill = '#C84870'; radioBorder = '#C84870'; textCol = '#C84870'; rowBg = isDark ? '#C8487012' : '#FFF2F4'; leftBorder = '#C84870'; resultIcon = 'x-circle'; }
+                  if (isCorrect)       { radioFill = CORRECT; radioBorder = CORRECT; textCol = CORRECT; rowBg = accent + '12'; leftBorder = CORRECT; resultIcon = 'check-circle'; }
+                  else if (isSelected) { radioFill = WRONG; radioBorder = WRONG; textCol = WRONG; rowBg = isDark ? '#C8784812' : '#FFF6F0'; leftBorder = WRONG; resultIcon = 'x-circle'; }
                   else                 { radioBorder = isDark ? '#333' : '#DDD'; textCol = isDark ? '#444' : '#CCC'; }
                 } else if (mcqSelected === i) {
-                  radioFill = TEAL; radioBorder = TEAL; textCol = isDark ? '#9ECFCC' : '#2D6A66';
-                  rowBg = isDark ? '#5F8A8618' : '#EBF5F4'; leftBorder = TEAL;
+                  radioFill = accent; radioBorder = accent; textCol = accent;
+                  rowBg = accent + '14'; leftBorder = accent;
                 }
 
                 return (
@@ -581,16 +578,16 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
                     <View style={[styles.radioOuter, { borderColor: radioBorder }]}>
                       {radioFill !== 'transparent' && <View style={[styles.radioInner, { backgroundColor: radioFill }]} />}
                     </View>
-                    <Text style={[styles.optionLetter, { color: showResult ? (isCorrect ? '#4A9E70' : isSelected ? '#C84870' : isDark ? '#444' : '#DDD') : (isDark ? '#7ABFBB' : TEAL) }]}>{LETTERS[i]}</Text>
+                    <Text style={[styles.optionLetter, { color: showResult ? (isCorrect ? CORRECT : isSelected ? WRONG : isDark ? '#444' : '#DDD') : (mcqSelected === i ? accent : colors.textMuted) }]}>{LETTERS[i]}</Text>
                     <Text style={[styles.optionText, { color: textCol }]}>{opt}</Text>
-                    {resultIcon && <Feather name={resultIcon} size={14} color={resultIcon === 'check-circle' ? '#4A9E70' : '#C84870'} style={{ marginLeft: 'auto' as any }} />}
+                    {resultIcon && <Feather name={resultIcon} size={14} color={resultIcon === 'check-circle' ? CORRECT : WRONG} style={{ marginLeft: 'auto' as any }} />}
                   </TouchableOpacity>
                 );
               })}
 
               {/* Hint row inside card */}
               {showMcqHint && !mcqDone && (
-                <View style={[styles.hintBanner, { backgroundColor: isDark ? '#0F2624' : '#EBF5F4', borderColor: '#5F8A8660' }]}>
+                <View style={[styles.hintBanner, { backgroundColor: accent + '10', borderColor: accent + '40' }]}>
                   <Feather name="zap" size={12} color="#fff" />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.hintBannerLabel}>Aivorah's Hint</Text>
@@ -609,19 +606,19 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
           {isFill && (
             <View style={styles.fillArea}>
               {fillFeedback === 'correct' ? (
-                <View style={[styles.fillResultRow, { backgroundColor: isDark ? '#4A9E7012' : '#F0FFF6', borderColor: '#4A9E7040' }]}>
-                  <Feather name="check-circle" size={14} color="#4A9E70" />
-                  <Text style={[styles.fillCorrectText, { color: '#4A9E70' }]}>{fillInput}</Text>
+                <View style={[styles.fillResultRow, { backgroundColor: accent + '12', borderColor: accent + '40' }]}>
+                  <Feather name="check-circle" size={14} color={accent} />
+                  <Text style={[styles.fillCorrectText, { color: accent }]}>{fillInput}</Text>
                 </View>
               ) : fillFeedback === 'revealed' ? (
-                <View style={[styles.fillResultRow, { backgroundColor: isDark ? '#C8587012' : '#FFF2F4', borderColor: '#C8587040' }]}>
-                  <Feather name="info" size={14} color="#C85870" />
-                  <Text style={[styles.fillCorrectText, { color: '#C85870' }]}>Answer: {q.correct as string}</Text>
+                <View style={[styles.fillResultRow, { backgroundColor: accent + '12', borderColor: accent + '40' }]}>
+                  <Feather name="info" size={14} color={accent} />
+                  <Text style={[styles.fillCorrectText, { color: accent }]}>Answer: {q.correct as string}</Text>
                 </View>
               ) : (
                 <>
                   <TextInput
-                    style={[styles.fillInput, { borderColor: fillFeedback !== 'idle' ? '#E8A02070' : accent + '50', color: colors.textMain, backgroundColor: isDark ? colors.bgDark : '#F8FAFA' }]}
+                    style={[styles.fillInput, { borderColor: fillFeedback !== 'idle' ? accent + '70' : accent + '50', color: colors.textMain, backgroundColor: isDark ? colors.bgDark : '#F8FAFA' }]}
                     placeholder="Type your answer here..."
                     placeholderTextColor={colors.textDim}
                     value={fillInput}
@@ -633,12 +630,12 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
                   />
                   {fillFeedback === 'wrong1' && (
                     <View style={styles.nudgeRow}>
-                      <Feather name="alert-circle" size={12} color="#E8A020" />
-                      <Text style={[styles.nudgeText, { color: '#E8A020' }]}>Not quite — give it another try!</Text>
+                      <Feather name="alert-circle" size={12} color={accent} />
+                      <Text style={[styles.nudgeText, { color: accent }]}>Not quite — give it another try!</Text>
                     </View>
                   )}
                   {fillFeedback === 'wrong2' && (
-                    <View style={[styles.hintBanner, { backgroundColor: isDark ? '#0F2624' : '#EBF5F4', borderColor: '#5F8A8660' }]}>
+                    <View style={[styles.hintBanner, { backgroundColor: accent + '10', borderColor: accent + '40' }]}>
                       <Feather name="zap" size={12} color="#fff" />
                       <Text style={[styles.hintBannerText, { flex: 1 }]}>Hint: {q.hint || 'Think carefully!'}</Text>
                     </View>
@@ -666,9 +663,9 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
                 ? <ActivityIndicator color={accent} size="small" />
                 : <>
                     <Feather name={(mcqCorrect || fillFeedback === 'correct') ? 'check-circle' : 'info'} size={13}
-                      color={(mcqCorrect || fillFeedback === 'correct') ? '#4A9E70' : '#C87848'} />
+                      color={accent} />
                     <Text style={[styles.explanationText, { color: isDark ? colors.textMuted : '#666' }]}>
-                      <Text style={{ fontWeight: '700', color: (mcqCorrect || fillFeedback === 'correct') ? '#4A9E70' : '#C87848' }}>
+                      <Text style={{ fontWeight: '700', color: accent }}>
                         {(mcqCorrect || fillFeedback === 'correct') ? 'Well done! ' : 'Aivorah: '}
                       </Text>
                       {explanation}
@@ -718,14 +715,14 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   },
   leftTop: { gap: 10 },
   subjectIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  leftSubject: { fontSize: 11, fontWeight: '800', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: 0.8 },
-  leftTopic:   { fontSize: 16, fontWeight: '800', color: '#fff', lineHeight: 22 },
+  leftSubject: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8 },
+  leftTopic:   { fontSize: 16, fontWeight: '800', lineHeight: 22 },
   stepDots:    { flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap' },
   stepDot:     { height: 8, borderRadius: 4 },
   leftBottom:  { gap: 6 },
-  leftCounter: { fontSize: 42, fontWeight: '900', color: '#fff', lineHeight: 46 },
-  leftOf:      { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.65)', marginTop: -6 },
-  leftTypeBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.92)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, alignSelf: 'flex-start', marginTop: 4 },
+  leftCounter: { fontSize: 42, fontWeight: '900', lineHeight: 46 },
+  leftOf:      { fontSize: 13, fontWeight: '600', marginTop: -6 },
+  leftTypeBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, alignSelf: 'flex-start', marginTop: 4 },
   leftTypeTxt:   { fontSize: 11, fontWeight: '800' },
 
   // Right panel
@@ -777,7 +774,7 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   nextBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
   failBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, borderWidth: 1, marginTop: 12 },
-  failBannerText: { fontSize: 13, fontWeight: '700', color: '#C85870' },
+  failBannerText: { fontSize: 13, fontWeight: '700', color: '#C87848' },
   resultScore: { fontSize: 64, fontWeight: '900', marginTop: 16 },
   resultLabel: { fontSize: 18, fontWeight: '700', marginTop: 4 },
   resultMessage: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginTop: 8, maxWidth: 320 },

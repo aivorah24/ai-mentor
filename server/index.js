@@ -1,5 +1,9 @@
 require('dotenv').config();
 
+// Prefer IPv4 — some networks route IPv6/NAT64 (64:ff9b::) to Supabase and time out.
+// Without this, outbound fetch() to *.supabase.co intermittently fails with UND_ERR_CONNECT_TIMEOUT.
+try { require('dns').setDefaultResultOrder('ipv4first'); } catch (_) {}
+
 let express, cors, initCollection, getCollectionInfo;
 try {
   express = require('express');

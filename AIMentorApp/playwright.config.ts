@@ -14,7 +14,7 @@ export default defineConfig({
   reporter: [['html', { outputFolder: 'playwright-report', open: 'never' }], ['list']],
 
   use: {
-    baseURL: 'http://localhost:8081', // Expo web dev server
+    baseURL: process.env.PW_BASE_URL || 'http://localhost:8081', // override with PW_BASE_URL=https://aivorah.ai
     headless: true,
     viewport: { width: 1280, height: 800 },
     screenshot: 'only-on-failure',

@@ -38,19 +38,19 @@ const STUDENT_NAV_ITEMS = [
 ];
 
 const PARENT_NAV_ITEMS = [
-  { label: 'Dashboard', icon: 'grid', screen: 'ParentDashboard', group: 'PARENT MENU' },
-  { label: 'Profile', icon: 'user', screen: 'ParentProfile', group: 'PARENT MENU' },
-  { label: 'My Kids', icon: 'users', screen: 'ParentMyKids', group: 'PARENT MENU' },
-  { label: 'Daily Tasks', icon: 'check-square', screen: 'ParentDailyTasks', group: 'PARENT MENU' },
-  { label: 'Schedule', icon: 'calendar', screen: 'ParentSchedule', group: 'PARENT MENU' },
-  { label: 'Learning', icon: 'book-open', screen: 'ParentLearning', group: 'PARENT MENU' },
-  { label: 'Assignments', icon: 'check-square', screen: 'ParentAssignments', group: 'PARENT MENU' },
-  { label: 'Challenges', icon: 'target', screen: 'ParentChallenges', group: 'PARENT MENU' },
-  { label: 'Progress & Reports', icon: 'bar-chart-2', screen: 'ParentProgress', group: 'PARENT MENU' },
-  { label: 'Messages', icon: 'message-square', screen: 'ParentMessages', group: 'PARENT MENU' },
-  { label: 'Parental Controls', icon: 'shield', screen: 'ParentControls', group: 'CONTROLS' },
-  { label: 'Settings', icon: 'settings', screen: 'ParentSettings', group: 'SYSTEM' },
-  { label: 'Help Centre', icon: 'help-circle', screen: 'ParentHelp', group: 'SYSTEM' },
+  { label: 'Dashboard',        icon: 'grid',         screen: 'ParentDashboard',   group: 'MENU' },
+  { label: 'Profile',          icon: 'user',         screen: 'ParentProfile',     group: 'MENU' },
+  { label: 'My Kids',          icon: 'users',        screen: 'ParentMyKids',      group: 'MENU' },
+  { label: 'Daily Tasks',      icon: 'check-square', screen: 'ParentDailyTasks',  group: 'MENU' },
+  { label: 'Schedule',         icon: 'calendar',     screen: 'ParentSchedule',    group: 'MENU' },
+  { label: 'Messages',         icon: 'message-square', screen: 'ParentMessages',  group: 'MENU' },
+  { label: 'Learning',         icon: 'book-open',    screen: 'ParentLearning',    group: 'CHILDREN' },
+  { label: 'Assignments',      icon: 'check-square', screen: 'ParentAssignments', group: 'CHILDREN' },
+  { label: 'Challenges',       icon: 'target',       screen: 'ParentChallenges',  group: 'CHILDREN' },
+  { label: 'Progress',         icon: 'bar-chart-2',  screen: 'ParentProgress',    group: 'CHILDREN' },
+  { label: 'Parental Controls',icon: 'shield',       screen: 'ParentControls',    group: 'SYSTEM' },
+  { label: 'Settings',         icon: 'settings',     screen: 'ParentSettings',    group: 'SYSTEM' },
+  { label: 'Help Centre',      icon: 'help-circle',  screen: 'ParentHelp',        group: 'SYSTEM' },
 ];
 
 const TEACHER_NAV_ITEMS = [
@@ -106,7 +106,7 @@ export default function DrawerContent(props: any) {
   const isTeacher = user?.role === 'teacher';
   const isParent = user?.role === 'parent';
   const NAV_ITEMS = isSuperAdmin ? SUPER_ADMIN_NAV_ITEMS : isTeacher ? TEACHER_NAV_ITEMS : isParent ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
-  const groups = (isSuperAdmin || isTeacher) ? ['MENU', 'TEACHING DEVELOPMENT', 'SYSTEM'] : isParent ? ['PARENT MENU', 'CONTROLS', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
+  const groups = (isSuperAdmin || isTeacher) ? ['MENU', 'TEACHING DEVELOPMENT', 'SYSTEM'] : isParent ? ['MENU', 'CHILDREN', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
   const { unreadCount, unreadAssignments, unreadChallenges } = useNotification();
   const MESSAGE_SCREENS    = ['TeacherMessages', 'ParentMessages', 'Messages'];
   const ASSIGNMENT_SCREENS = ['Assignments', 'ParentAssignments'];
@@ -141,7 +141,7 @@ export default function DrawerContent(props: any) {
                     <Feather
                       name={item.icon as any}
                       size={17}
-                      color={isActive ? colors.primary : colors.textMuted}
+                      color={isActive ? colors.accentYellow : colors.textMuted}
                     />
                     <Text
                       style={[
@@ -199,7 +199,7 @@ export default function DrawerContent(props: any) {
                   onPress={() => setThemeMode(opt.id)}
                   activeOpacity={0.7}
                 >
-                  <Feather name={opt.icon as any} size={12} color={isActive ? colors.primary : colors.textMuted} />
+                  <Feather name={opt.icon as any} size={12} color={isActive ? colors.accentYellow : colors.textMuted} />
                   <Text style={[styles.themeOptionText, isActive && styles.themeOptionTextActive]}>{opt.label}</Text>
                 </TouchableOpacity>
               );
@@ -221,7 +221,7 @@ export default function DrawerContent(props: any) {
                     onPress={() => { switchRole(r as any); setTimeout(() => { try { navigation.navigate(ROLE_DASH[r] ?? 'Dashboard'); } catch (_) {} }, 50); }}
                     activeOpacity={0.75}
                   >
-                    <Feather name={r === 'teacher' ? 'briefcase' : 'home'} size={12} color={isActive ? colors.primary : colors.textMuted} />
+                    <Feather name={r === 'teacher' ? 'briefcase' : 'home'} size={12} color={isActive ? colors.accentYellow : colors.textMuted} />
                     <Text style={[styles.rolePillText, isActive && styles.rolePillTextActive]}>
                       {r.charAt(0).toUpperCase() + r.slice(1)}
                     </Text>
@@ -332,7 +332,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: radius.sm,
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -363,7 +363,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     position: 'relative',
   },
   navItemActive: {
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    backgroundColor: c.accentYellow + '12',
   },
   activeBar: {
     position: 'absolute',
@@ -371,7 +371,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     top: 6,
     bottom: 6,
     width: 3,
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
     borderTopRightRadius: 4,
     borderBottomRightRadius: 4,
   },
@@ -381,11 +381,12 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     color: c.textMuted,
   },
   navItemTextActive: {
-    color: c.primary,
+    color: c.accentYellow,
+    fontWeight: '700',
   },
   navBadge: {
     marginLeft: 'auto',
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -467,8 +468,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: c.cardDark,
   },
   rolePillActive: {
-    borderColor: c.primary,
-    backgroundColor: c.primaryGlow,
+    borderColor: c.accentYellow,
+    backgroundColor: c.accentYellow + '12',
   },
   rolePillText: {
     fontSize: 11,
@@ -476,7 +477,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     color: c.textMuted,
   },
   rolePillTextActive: {
-    color: c.primary,
+    color: c.accentYellow,
+    fontWeight: '700',
   },
   userRow: {
     flexDirection: 'row',
@@ -533,8 +535,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingVertical: 6,
   },
   themeOptionActive: {
-    borderColor: c.primary,
-    backgroundColor: c.primaryGlow,
+    borderColor: c.accentYellow,
+    backgroundColor: c.accentYellow + '12',
   },
   themeOptionText: {
     fontSize: 11,
@@ -550,10 +552,11 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   confirmBtns: { flexDirection: 'row', gap: 10, marginTop: 8 },
   confirmCancel: { flex: 1, borderWidth: 1, borderColor: c.borderColor, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
   confirmCancelText: { fontSize: 14, fontWeight: '600', color: c.textMuted },
-  confirmGo: { flex: 1, backgroundColor: c.primary, borderRadius: 10, paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  confirmGo: { flex: 1, backgroundColor: c.accentYellow, borderRadius: 10, paddingVertical: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
   confirmGoText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
   themeOptionTextActive: {
-    color: c.primary,
+    color: c.accentYellow,
+    fontWeight: '700',
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -23,11 +23,12 @@ interface ChildOption {
   grade: string;
 }
 
-export default function ParentAIReportsScreen({ navigation }: any) {
+export default function ParentAIReportsScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const parentEmail = user?.email || '';
+  const incomingChildId = route?.params?.childId;
 
   const [children, setChildren] = useState<ChildOption[]>([]);
   const [selectedChild, setSelectedChild] = useState<ChildOption | null>(null);
@@ -37,7 +38,7 @@ export default function ParentAIReportsScreen({ navigation }: any) {
   const [loadingReport, setLoadingReport] = useState(false);
   const [error, setError] = useState('');
 
-  // Load children on mount
+  // Load children on mount, then auto-generate if childId was passed
   useEffect(() => {
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
       .then(r => r.json())
@@ -45,20 +46,24 @@ export default function ParentAIReportsScreen({ navigation }: any) {
         if (Array.isArray(data) && data.length > 0) {
           const opts: ChildOption[] = data.map(c => ({ id: c.id, name: c.name, grade: c.grade }));
           setChildren(opts);
-          setSelectedChild(opts[0]);
+          const target = incomingChildId ? (opts.find(c => c.id === incomingChildId) ?? opts[0]) : opts[0];
+          setSelectedChild(target);
+          if (incomingChildId) {
+            // auto-kick report generation when navigated from dashboard
+            generateReportFor(target, parentEmail);
+          }
         }
       })
       .catch(() => {})
       .finally(() => setLoadingChildren(false));
   }, [parentEmail]);
 
-  async function generateReport(child: ChildOption) {
-    setSelectedChild(child);
+  async function generateReportFor(child: ChildOption, email: string) {
     setReportData(null);
     setError('');
     setLoadingReport(true);
     try {
-      const res = await fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children/${child.id}/ai-report`);
+      const res = await fetch(`${SERVER_URL}/parent/${encodeURIComponent(email)}/children/${child.id}/ai-report`);
       if (!res.ok) throw new Error('Failed to generate report');
       const data = await res.json();
       setReportData(data);
@@ -67,6 +72,11 @@ export default function ParentAIReportsScreen({ navigation }: any) {
     } finally {
       setLoadingReport(false);
     }
+  }
+
+  function generateReport(child: ChildOption) {
+    setSelectedChild(child);
+    generateReportFor(child, parentEmail);
   }
 
   async function downloadPDF() {
@@ -515,7 +525,7 @@ export default function ParentAIReportsScreen({ navigation }: any) {
                     return (
                       <TouchableOpacity
                         key={child.id}
-                        style={[styles.childPill, isActive && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                        style={[styles.childPill, isActive && { backgroundColor: colors.accentYellow + '18', borderColor: colors.accentYellow }]}
                         onPress={() => { setSelectedChild(child); setReportData(null); setError(''); }}
                         activeOpacity={0.8}
                       >
@@ -544,6 +554,84 @@ export default function ParentAIReportsScreen({ navigation }: any) {
                   </TouchableOpacity>
                 )}
               </View>
+
+              {/* Initial prompt — shown before any report is generated */}
+              {!loadingReport && !reportData && !error && (
+                <>
+                  {/* Hero card */}
+                  <View style={styles.heroCard}>
+                    <View style={styles.heroContent}>
+                      {/* AI badge */}
+                      <View style={styles.aiBadge}>
+                        <Feather name="zap" size={11} color={colors.accentYellow} />
+                        <Text style={styles.aiBadgeText}>AI POWERED INSIGHTS</Text>
+                      </View>
+                      <Text style={styles.heroTitle}>
+                        AI Performance{'\n'}<Text style={{ color: colors.accentYellow }}>Report</Text>
+                      </Text>
+                      <Text style={styles.heroDesc}>
+                        Get a personalised AI generated analysis of {selectedChild?.name}'s learning patterns, strengths, areas to improve, and a weekly action plan — all based on their real activity data.
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.heroBtn}
+                        onPress={() => selectedChild && generateReport(selectedChild)}
+                        activeOpacity={0.85}
+                      >
+                        <Feather name="cpu" size={15} color="#0B0B0B" />
+                        <Text style={styles.heroBtnText}>Generate Report for {selectedChild?.name}</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Feature chips row */}
+                    <View style={styles.heroFeatures}>
+                      {[
+                        { icon: 'trending-up', label: 'Learning pattern\nanalysis' },
+                        { icon: 'star',        label: 'Strengths &\nweak areas' },
+                        { icon: 'clipboard',   label: 'Weekly action\nplan for parents' },
+                        { icon: 'file-text',   label: 'Downloadable\nPDF report' },
+                      ].map(f => (
+                        <View key={f.label} style={styles.heroFeatureChip}>
+                          <View style={styles.heroFeatureIcon}>
+                            <Feather name={f.icon as any} size={16} color={colors.accentYellow} />
+                          </View>
+                          <Text style={styles.heroFeatureText}>{f.label}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+
+                  {/* What's Inside section */}
+                  <View style={styles.insideCard}>
+                    <View style={styles.insideHeader}>
+                      <Feather name="zap" size={14} color={colors.accentYellow} />
+                      <Text style={styles.insideTitle}>What's Inside Your Report</Text>
+                    </View>
+                    <View style={styles.insideGrid}>
+                      {[
+                        { num: '01', icon: 'trending-up', title: 'Learning Overview',    desc: `Time spent, consistency,\nand learning trends.` },
+                        { num: '02', icon: 'star',        title: 'Strengths',            desc: `Topics where ${selectedChild?.name?.split(' ')[0]} excels and shines.` },
+                        { num: '03', icon: 'alert-triangle', title: 'Areas to Improve', desc: 'Topics that need more\nfocus and practice.' },
+                        { num: '04', icon: 'clipboard',   title: 'Action Plan',          desc: 'Personalised recommendations\nfor the week ahead.' },
+                      ].map(card => (
+                        <View key={card.num} style={styles.insideItem}>
+                          <View style={styles.insideItemTop}>
+                            <View style={styles.insideItemIcon}>
+                              <Feather name={card.icon as any} size={18} color={colors.accentYellow} />
+                            </View>
+                            <Text style={styles.insideItemNum}>{card.num}</Text>
+                          </View>
+                          <Text style={styles.insideItemTitle}>{card.title}</Text>
+                          <Text style={styles.insideItemDesc}>{card.desc}</Text>
+                        </View>
+                      ))}
+                    </View>
+                    <View style={styles.insideFooter}>
+                      <Feather name="zap" size={12} color={colors.textDim} />
+                      <Text style={styles.insideFooterText}>Reports are AI-generated and updated with the latest learning data.</Text>
+                    </View>
+                  </View>
+                </>
+              )}
 
               {/* Loading */}
               {loadingReport && (
@@ -589,8 +677,8 @@ export default function ParentAIReportsScreen({ navigation }: any) {
                       </Text>
                     </View>
                     {Platform.OS === 'web' && (
-                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.primary, flexDirection: 'row', gap: 6 }]} onPress={downloadPDF}>
-                        <Feather name="download" size={14} color="#fff" />
+                      <TouchableOpacity style={[styles.actionBtn, { flexDirection: 'row', gap: 6 }]} onPress={downloadPDF}>
+                        <Feather name="download" size={14} color="#0F0F0F" />
                         <Text style={styles.actionBtnText}>Download PDF</Text>
                       </TouchableOpacity>
                     )}
@@ -599,19 +687,19 @@ export default function ParentAIReportsScreen({ navigation }: any) {
                   {/* Metrics strip */}
                   <View style={styles.metricsGrid}>
                     {[
-                      { icon: 'zap', label: 'Total XP', value: reportData.metrics.xp.toLocaleString(), color: colors.accentYellow },
-                      { icon: 'award', label: 'Level', value: String(reportData.metrics.level), color: colors.accentPurple },
-                      { icon: 'trending-up', label: 'Streak', value: `${reportData.metrics.currentStreak}d`, color: colors.accentGreen },
-                      { icon: 'book-open', label: 'Topics Done', value: String(reportData.metrics.topicsCompleted), color: colors.accentBlue },
-                      { icon: 'check-square', label: 'Assignments', value: String(reportData.metrics.assignmentsDone), color: colors.accentGreen },
-                      { icon: 'calendar', label: 'Active Days', value: `${reportData.metrics.activeDays}/14`, color: colors.accentBlue },
-                      ...(reportData.metrics.avgAssignmentScore != null ? [{ icon: 'percent', label: 'Avg Score', value: `${reportData.metrics.avgAssignmentScore}%`, color: colors.accentYellow }] : []),
+                      { icon: 'zap',         label: 'Total XP',    value: reportData.metrics.xp.toLocaleString() },
+                      { icon: 'award',       label: 'Level',       value: String(reportData.metrics.level) },
+                      { icon: 'trending-up', label: 'Streak',      value: `${reportData.metrics.currentStreak}d` },
+                      { icon: 'book-open',   label: 'Topics Done', value: String(reportData.metrics.topicsCompleted) },
+                      { icon: 'check-square',label: 'Assignments', value: String(reportData.metrics.assignmentsDone) },
+                      { icon: 'calendar',    label: 'Active Days', value: `${reportData.metrics.activeDays}/14` },
+                      ...(reportData.metrics.avgAssignmentScore != null ? [{ icon: 'percent', label: 'Avg Score', value: `${reportData.metrics.avgAssignmentScore}%` }] : []),
                     ].map((m: any) => (
-                      <View key={m.label} style={[styles.metricCard, { borderColor: m.color + '30' }]}>
-                        <View style={[styles.metricIcon, { backgroundColor: m.color + '15' }]}>
-                          <Feather name={m.icon} size={14} color={m.color} />
+                      <View key={m.label} style={styles.metricCard}>
+                        <View style={styles.metricIcon}>
+                          <Feather name={m.icon} size={14} color={colors.accentYellow} />
                         </View>
-                        <Text style={[styles.metricValue, { color: m.color }]}>{m.value}</Text>
+                        <Text style={styles.metricValue}>{m.value}</Text>
                         <Text style={styles.metricLabel}>{m.label}</Text>
                       </View>
                     ))}
@@ -619,22 +707,21 @@ export default function ParentAIReportsScreen({ navigation }: any) {
 
                   {/* Learning Pattern Insight */}
                   {reportData.report?.learning_pattern_insight ? (
-                    <ReportSection title="Learning Pattern" icon="activity" color={colors.accentBlue} colors={colors} styles={styles}>
+                    <ReportSection title="Learning Pattern" icon="activity" styles={styles} colors={colors}>
                       <Text style={styles.bodyText}>{reportData.report.learning_pattern_insight}</Text>
                     </ReportSection>
                   ) : null}
 
                   {/* What's Going Well */}
                   {reportData.report?.whats_going_well ? (
-                    <ReportSection title="What's Going Well" icon="star" color={colors.accentGreen} colors={colors} styles={styles}>
+                    <ReportSection title="What's Going Well" icon="star" styles={styles} colors={colors}>
                       <Text style={styles.bodyText}>{reportData.report.whats_going_well}</Text>
-                      {/* Deterministic strong topics chips */}
                       {(reportData.report.strong_topics || []).length > 0 && (
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                           {reportData.report.strong_topics.map((t: any, i: number) => (
-                            <View key={i} style={[styles.topicChip, { backgroundColor: colors.accentGreen + '15', borderColor: colors.accentGreen + '40' }]}>
-                              <Feather name="check-circle" size={11} color={colors.accentGreen} />
-                              <Text style={[styles.topicChipText, { color: colors.accentGreen }]}>{t.topic} · {t.score}%</Text>
+                            <View key={i} style={styles.topicChip}>
+                              <Feather name="check-circle" size={11} color={colors.accentYellow} />
+                              <Text style={styles.topicChipText}>{t.topic} · {t.score}%</Text>
                             </View>
                           ))}
                         </View>
@@ -644,13 +731,12 @@ export default function ParentAIReportsScreen({ navigation }: any) {
 
                   {/* Where to Focus */}
                   {reportData.report?.where_to_focus ? (
-                    <ReportSection title="Where to Focus" icon="alert-circle" color={colors.accentYellow} colors={colors} styles={styles}>
+                    <ReportSection title="Where to Focus" icon="alert-circle" styles={styles} colors={colors}>
                       <Text style={styles.bodyText}>{reportData.report.where_to_focus}</Text>
-                      {/* Deterministic weak topics chips */}
                       {(reportData.report.weak_topics || []).length > 0 && (
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                           {reportData.report.weak_topics.map((t: any, i: number) => (
-                            <View key={i} style={[styles.topicChip, { backgroundColor: colors.accentRed + '15', borderColor: colors.accentRed + '40' }]}>
+                            <View key={i} style={[styles.topicChip, styles.topicChipWeak]}>
                               <Feather name="alert-circle" size={11} color={colors.accentRed} />
                               <Text style={[styles.topicChipText, { color: colors.accentRed }]}>{t.topic} · {t.score}%</Text>
                             </View>
@@ -662,10 +748,10 @@ export default function ParentAIReportsScreen({ navigation }: any) {
 
                   {/* Subject Insights */}
                   {(reportData.report?.subject_insights || []).length > 0 ? (
-                    <ReportSection title="Subject Breakdown" icon="bar-chart-2" color={colors.accentPurple} colors={colors} styles={styles}>
+                    <ReportSection title="Subject Breakdown" icon="bar-chart-2" styles={styles} colors={colors}>
                       {reportData.report.subject_insights.map((si: any, i: number) => (
                         <View key={i} style={styles.bulletRow}>
-                          <Feather name="book-open" size={13} color={colors.accentPurple} style={{ marginTop: 3 }} />
+                          <Feather name="book-open" size={13} color={colors.accentYellow} style={{ marginTop: 3 }} />
                           <Text style={[styles.bodyText, { flex: 1 }]}>
                             <Text style={{ fontWeight: '700', color: colors.textMain }}>{si.subject}: </Text>
                             {si.insight}
@@ -677,44 +763,34 @@ export default function ParentAIReportsScreen({ navigation }: any) {
 
                   {/* Study Consistency */}
                   {reportData.report?.consistency_insight ? (
-                    <ReportSection title="Study Consistency" icon="clock" color={colors.accentBlue} colors={colors} styles={styles}>
+                    <ReportSection title="Study Consistency" icon="clock" styles={styles} colors={colors}>
                       <Text style={styles.bodyText}>{reportData.report.consistency_insight}</Text>
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                        <View style={[styles.statChip, { backgroundColor: colors.accentBlue + '15' }]}>
-                          <Text style={[styles.statChipVal, { color: colors.accentBlue }]}>{reportData.metrics.currentStreak}d</Text>
-                          <Text style={[styles.statChipLabel, { color: colors.accentBlue }]}>Streak</Text>
-                        </View>
-                        <View style={[styles.statChip, { backgroundColor: colors.accentBlue + '15' }]}>
-                          <Text style={[styles.statChipVal, { color: colors.accentBlue }]}>{reportData.metrics.activeDays}/14</Text>
-                          <Text style={[styles.statChipLabel, { color: colors.accentBlue }]}>Active Days</Text>
-                        </View>
-                        {reportData.metrics.avgDailyMinutes > 0 && (
-                          <View style={[styles.statChip, { backgroundColor: colors.accentBlue + '15' }]}>
-                            <Text style={[styles.statChipVal, { color: colors.accentBlue }]}>{reportData.metrics.avgDailyMinutes}m</Text>
-                            <Text style={[styles.statChipLabel, { color: colors.accentBlue }]}>Avg Session</Text>
+                        {[
+                          { val: `${reportData.metrics.currentStreak}d`, lbl: 'Streak' },
+                          { val: `${reportData.metrics.activeDays}/14`, lbl: 'Active Days' },
+                          ...(reportData.metrics.avgDailyMinutes > 0 ? [{ val: `${reportData.metrics.avgDailyMinutes}m`, lbl: 'Avg Session' }] : []),
+                        ].map(chip => (
+                          <View key={chip.lbl} style={styles.statChip}>
+                            <Text style={styles.statChipVal}>{chip.val}</Text>
+                            <Text style={styles.statChipLabel}>{chip.lbl}</Text>
                           </View>
-                        )}
+                        ))}
                       </View>
                     </ReportSection>
                   ) : null}
 
                   {/* Assignment Performance */}
                   {reportData.report?.assignment_insight ? (
-                    <ReportSection title="Assignment Performance" icon="check-square" color={colors.accentGreen} colors={colors} styles={styles}>
+                    <ReportSection title="Assignment Performance" icon="check-square" styles={styles} colors={colors}>
                       <Text style={styles.bodyText}>{reportData.report.assignment_insight}</Text>
                       {reportData.metrics.assignmentTrend && (
-                        <View style={[styles.trendBadge, {
-                          backgroundColor: reportData.metrics.assignmentTrend === 'improving' ? colors.accentGreen + '15'
-                            : reportData.metrics.assignmentTrend === 'declining' ? colors.accentRed + '15' : colors.accentBlue + '15',
-                        }]}>
+                        <View style={styles.trendBadge}>
                           <Feather
                             name={reportData.metrics.assignmentTrend === 'improving' ? 'trending-up' : reportData.metrics.assignmentTrend === 'declining' ? 'trending-down' : 'minus'}
-                            size={12}
-                            color={reportData.metrics.assignmentTrend === 'improving' ? colors.accentGreen : reportData.metrics.assignmentTrend === 'declining' ? colors.accentRed : colors.accentBlue}
+                            size={12} color={colors.accentYellow}
                           />
-                          <Text style={[styles.trendText, {
-                            color: reportData.metrics.assignmentTrend === 'improving' ? colors.accentGreen : reportData.metrics.assignmentTrend === 'declining' ? colors.accentRed : colors.accentBlue,
-                          }]}>Trend: {reportData.metrics.assignmentTrend}</Text>
+                          <Text style={styles.trendText}>Trend: {reportData.metrics.assignmentTrend}</Text>
                         </View>
                       )}
                     </ReportSection>
@@ -722,11 +798,11 @@ export default function ParentAIReportsScreen({ navigation }: any) {
 
                   {/* This Week Actions */}
                   {(reportData.report?.this_week_actions || []).length > 0 ? (
-                    <ReportSection title="This Week — Action Plan" icon="target" color={colors.accentBlue} colors={colors} styles={styles}>
+                    <ReportSection title="This Week — Action Plan" icon="target" styles={styles} colors={colors}>
                       {reportData.report.this_week_actions.map((s: string, i: number) => (
                         <View key={i} style={styles.bulletRow}>
-                          <View style={[styles.stepNum, { backgroundColor: colors.accentBlue + '20' }]}>
-                            <Text style={[styles.stepNumText, { color: colors.accentBlue }]}>{i + 1}</Text>
+                          <View style={styles.stepNum}>
+                            <Text style={styles.stepNumText}>{i + 1}</Text>
                           </View>
                           <Text style={[styles.bodyText, { flex: 1 }]}>{s}</Text>
                         </View>
@@ -736,10 +812,10 @@ export default function ParentAIReportsScreen({ navigation }: any) {
 
                   {/* Message to Child */}
                   {reportData.report?.message_to_child ? (
-                    <View style={[styles.encouragementCard, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
-                      <Feather name="heart" size={16} color={colors.primary} />
+                    <View style={styles.encouragementCard}>
+                      <Feather name="heart" size={16} color={colors.accentYellow} />
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.sectionLabel, { color: colors.primary, marginBottom: 4 }]}>
+                        <Text style={[styles.sectionLabel, { marginBottom: 4 }]}>
                           Share with {reportData.student.name}
                         </Text>
                         <Text style={[styles.bodyText, { fontStyle: 'italic', color: colors.textMain }]}>
@@ -768,14 +844,14 @@ export default function ParentAIReportsScreen({ navigation }: any) {
   );
 }
 
-function ReportSection({ title, icon, color, colors, styles, children }: any) {
+function ReportSection({ title, icon, colors, styles, children }: any) {
   return (
-    <View style={[styles.sectionCard, { borderColor: colors.borderColor }]}>
+    <View style={styles.sectionCard}>
       <View style={styles.sectionTitleRow}>
-        <View style={[styles.sectionIcon, { backgroundColor: color + '15' }]}>
-          <Feather name={icon} size={13} color={color} />
+        <View style={styles.sectionIcon}>
+          <Feather name={icon} size={13} color={colors.accentYellow} />
         </View>
-        <Text style={[styles.sectionTitle, { color: colors.textMain }]}>{title}</Text>
+        <Text style={styles.sectionTitle}>{title}</Text>
       </View>
       <View style={{ gap: 6 }}>{children}</View>
     </View>
@@ -786,85 +862,84 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bgDark },
   scroll: { flex: 1 },
   content: { padding: spacing.xl, paddingBottom: 48 },
+  sectionLabel: { fontSize: 11, fontWeight: '700', color: c.accentYellow, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: spacing.md },
 
-  sectionLabel: { fontSize: 12, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: spacing.md },
-
-  // Child selector row
-  childRowWrap: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
+  childRowWrap: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.xl },
   childPill: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 12, paddingVertical: 8,
-    borderRadius: 24, borderWidth: 1,
-    borderColor: c.borderColor, backgroundColor: c.cardDark,
+    paddingHorizontal: 14, paddingVertical: 9, borderRadius: 28,
+    borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.cardDark,
   },
-  childDot: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  childDotText: { fontSize: 12, fontWeight: '700' },
-  childPillName: { fontSize: 13, fontWeight: '700' },
-  childPillGrade: { fontSize: 10 },
+  childDot: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accentYellow + '18' },
+  childDotText: { fontSize: 12, fontWeight: '700', color: c.accentYellow },
+  childPillName: { fontSize: 13, fontWeight: '700', color: c.textMain },
+  childPillGrade: { fontSize: 10, color: c.textMuted },
 
-  // Generate button — compact, auto-width
   generateBtn: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 6, borderRadius: radius.lg,
-    paddingVertical: 10, paddingHorizontal: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: 16,
+    backgroundColor: c.accentYellow,
   },
-  generateBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  generateBtnText: { color: '#0B0B0B', fontWeight: '700', fontSize: 13 },
 
-  // Loading
   loadingBox: { alignItems: 'center', paddingVertical: 48, gap: 12 },
   loadingText: { fontSize: 15, fontWeight: '600', color: c.textMain },
   loadingSubText: { fontSize: 12, color: c.textMuted },
 
-  // Error
   errorBox: { alignItems: 'center', gap: 8, paddingVertical: 32 },
   errorText: { fontSize: 13, color: c.accentRed, textAlign: 'center' },
 
-  // Empty
   emptyBox: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: c.textMain },
   emptyDesc: { fontSize: 13, color: c.textMuted, textAlign: 'center' },
 
-  // Action button
-  actionBtn: { borderRadius: radius.md, paddingVertical: 10, paddingHorizontal: 16, alignItems: 'center' },
-  actionBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  actionBtn: { borderRadius: radius.md, paddingVertical: 10, paddingHorizontal: 16, alignItems: 'center', backgroundColor: c.accentYellow },
+  actionBtnText: { color: '#0B0B0B', fontWeight: '700', fontSize: 13 },
 
-  // Report container
   reportContainer: { gap: spacing.lg },
-  reportHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', backgroundColor: c.cardDark, borderRadius: radius.xl, padding: spacing.lg, borderWidth: 1, borderColor: c.borderColor },
-  reportName: { fontSize: 18, fontWeight: '700', color: c.textMain },
-  reportMeta: { fontSize: 13, color: c.textMuted, marginTop: 2 },
+  reportHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
+    backgroundColor: c.cardDark, borderRadius: radius.xl, padding: spacing.lg,
+    borderWidth: 1, borderColor: c.borderColor,
+  },
+  reportName: { fontSize: 20, fontWeight: '800', color: c.textMain, fontFamily: fonts.serif },
+  reportMeta: { fontSize: 13, color: c.accentYellow, marginTop: 3 },
   reportDate: { fontSize: 11, color: c.textDim, marginTop: 4 },
 
-  // Metrics
-  metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   metricCard: {
     flex: 1, minWidth: 90, backgroundColor: c.cardDark, borderRadius: radius.lg,
-    borderWidth: 1, padding: spacing.md, alignItems: 'center', gap: 4,
+    borderWidth: 1, borderColor: c.borderColor, padding: spacing.md,
+    alignItems: 'center', gap: 6,
   },
-  metricIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  metricValue: { fontSize: 18, fontWeight: '700' },
+  metricIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accentYellow + '18' },
+  metricValue: { fontSize: 20, fontWeight: '800', color: c.accentYellow, fontFamily: fonts.serif },
   metricLabel: { fontSize: 10, color: c.textMuted, textAlign: 'center' },
 
-  // Section cards
-  sectionCard: { backgroundColor: c.cardDark, borderRadius: radius.xl, borderWidth: 1, padding: spacing.lg, gap: spacing.md },
-  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  sectionIcon: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  sectionTitle: { fontSize: 14, fontWeight: '700' },
-  bodyText: { fontSize: 13, color: c.textMuted, lineHeight: 20 },
+  sectionCard: {
+    backgroundColor: c.cardDark, borderRadius: radius.xl,
+    borderWidth: 1, borderColor: c.borderColor, padding: spacing.lg, gap: spacing.md,
+  },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+  sectionIcon: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accentYellow + '18' },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: c.textMain, fontFamily: fonts.serif },
+  bodyText: { fontSize: 13, color: c.textMuted, lineHeight: 21 },
   bulletRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
 
-  // Encouragement
-  encouragementCard: { flexDirection: 'row', gap: 12, borderRadius: radius.xl, borderWidth: 1, padding: spacing.lg, alignItems: 'flex-start' },
+  encouragementCard: {
+    flexDirection: 'row', gap: 12, borderRadius: radius.xl,
+    borderWidth: 1, borderColor: c.accentYellow + '30',
+    backgroundColor: c.accentYellow + '08', padding: spacing.lg, alignItems: 'flex-start',
+  },
 
-  // Regen
-  regenBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: radius.lg, paddingVertical: 12, borderWidth: 1, marginTop: spacing.sm },
-  regenBtnText: { fontSize: 13, fontWeight: '600' },
+  regenBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, borderRadius: radius.lg, paddingVertical: 12,
+    borderWidth: 1, borderColor: c.borderColor, marginTop: spacing.sm,
+  },
+  regenBtnText: { fontSize: 13, fontWeight: '600', color: c.textMuted },
 
-  // Subject performance cards
-  subjectCard: { borderWidth: 1, borderRadius: radius.lg, padding: spacing.md, gap: 6, marginBottom: spacing.sm },
+  subjectCard: { borderWidth: 1, borderRadius: radius.lg, padding: spacing.md, gap: 6 },
   subjectName: { fontSize: 14, fontWeight: '700' },
   scoreBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
   scoreBadgeText: { fontSize: 12, fontWeight: '700' },
@@ -872,20 +947,89 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   topicLabel: { fontSize: 11, fontWeight: '700' },
   topicText: { fontSize: 11, flex: 1 },
 
-  // Trend badge
-  trendBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 6, alignSelf: 'flex-start', marginTop: 4 },
-  trendText: { fontSize: 12, fontWeight: '600' },
+  trendBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 6,
+    alignSelf: 'flex-start', marginTop: 4,
+    backgroundColor: c.accentYellow + '15', borderWidth: 1, borderColor: c.accentYellow + '40',
+  },
+  trendText: { fontSize: 12, fontWeight: '600', color: c.accentYellow },
 
-  // Step numbers
-  stepNum: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-  stepNumText: { fontSize: 11, fontWeight: '700' },
+  stepNum: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginTop: 1, backgroundColor: c.accentYellow + '20', borderWidth: 1, borderColor: c.accentYellow + '40' },
+  stepNumText: { fontSize: 11, fontWeight: '700', color: c.accentYellow },
 
-  // Topic chips (strong / weak)
-  topicChip: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  topicChipText: { fontSize: 11, fontWeight: '600' },
+  topicChip: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: c.accentYellow + '12', borderColor: c.accentYellow + '35' },
+  topicChipWeak: { backgroundColor: c.accentRed + '12', borderColor: c.accentRed + '35' },
+  topicChipText: { fontSize: 11, fontWeight: '600', color: c.accentYellow },
 
-  // Stat chips (streak, active days)
-  statChip: { borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 6, alignItems: 'center' },
-  statChipVal: { fontSize: 16, fontWeight: '700' },
-  statChipLabel: { fontSize: 10, marginTop: 1 },
+  statChip: { borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 8, alignItems: 'center', backgroundColor: c.accentYellow + '12', borderWidth: 1, borderColor: c.accentYellow + '30' },
+  statChipVal: { fontSize: 17, fontWeight: '800', color: c.accentYellow, fontFamily: fonts.serif },
+  statChipLabel: { fontSize: 10, marginTop: 1, color: c.textMuted },
+
+  // Hero card
+  heroCard: {
+    backgroundColor: c.cardDark, borderRadius: radius.xl, borderWidth: 1,
+    borderColor: c.borderColor, overflow: 'hidden', marginBottom: spacing.lg,
+  },
+  heroContent: { padding: spacing.xxxl, gap: spacing.lg },
+  aiBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    alignSelf: 'flex-start',
+    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
+    backgroundColor: c.accentYellow + '18', borderWidth: 1, borderColor: c.accentYellow + '35',
+  },
+  aiBadgeText: { fontSize: 10, fontWeight: '700', color: c.accentYellow, letterSpacing: 1.2 },
+  heroTitle: { fontSize: 28, fontWeight: '800', color: c.textMain, lineHeight: 36, fontFamily: fonts.serif },
+  heroDesc: { fontSize: 13, color: c.textMuted, lineHeight: 21, maxWidth: 480 },
+  heroBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
+    borderRadius: radius.xl, paddingVertical: 14, paddingHorizontal: 28,
+    backgroundColor: c.accentYellow, marginTop: 4,
+  },
+  heroBtnText: { fontSize: 14, fontWeight: '700', color: '#0B0B0B' },
+  heroFeatures: {
+    flexDirection: 'row', borderTopWidth: 1, borderColor: c.borderColor,
+  },
+  heroFeatureChip: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10,
+    padding: spacing.lg, borderRightWidth: 1, borderColor: c.borderColor,
+  },
+  heroFeatureIcon: {
+    width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: c.accentYellow + '18',
+  },
+  heroFeatureText: { fontSize: 11, color: c.textMuted, lineHeight: 16, flex: 1 },
+
+  // What's Inside card
+  insideCard: {
+    backgroundColor: c.cardDark, borderRadius: radius.xl, borderWidth: 1,
+    borderColor: c.borderColor, overflow: 'hidden',
+  },
+  insideHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    padding: spacing.xl, paddingBottom: spacing.lg,
+  },
+  insideTitle: { fontSize: 16, fontWeight: '700', color: c.textMain, fontFamily: fonts.serif },
+  insideGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: spacing.md, gap: spacing.md, paddingTop: 0 },
+  insideItem: {
+    flex: 1, minWidth: 160, backgroundColor: c.bgDark, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: c.borderColor, padding: spacing.lg, gap: 6,
+  },
+  insideItemTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  insideItemIcon: {
+    width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: c.accentYellow + '15',
+  },
+  insideItemNum: { fontSize: 22, fontWeight: '700', color: c.borderColor, fontFamily: fonts.serif },
+  insideItemTitle: { fontSize: 14, fontWeight: '700', color: c.textMain },
+  insideItemDesc: { fontSize: 11, color: c.textMuted, lineHeight: 17 },
+  insideFooter: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    padding: spacing.xl, paddingTop: spacing.sm,
+    borderTopWidth: 1, borderColor: c.borderColor,
+  },
+  insideFooterText: { fontSize: 11, color: c.textDim, flex: 1 },
 });
+
+
+

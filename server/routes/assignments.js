@@ -1500,6 +1500,41 @@ router.post('/', async (req, res) => {
     }
   } catch (_) {}
 
+  // Notify parent(s) when an assignment is created for a specific student
+  if (userId) {
+    (async () => {
+      try {
+        const { data: parents } = await supabase
+          .from('parent_children')
+          .select('parent_email')
+          .eq('child_id', userId);
+        if (parents && parents.length > 0) {
+          const { data: student } = await supabase
+            .from('users')
+            .select('name')
+            .eq('id', userId)
+            .maybeSingle();
+          const studentName = student?.name || 'your child';
+          const assignType = type === 'quiz' ? 'Quiz' : 'Assignment';
+          const dueDateStr = dueDate ? new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'TBD';
+          const msgContent = 'New ' + assignType + ' assigned: "' + title + '" (' + (subject || 'General') + ') has been assigned to ' + studentName + '. Due: ' + dueDateStr + '.';
+          for (const { parent_email } of parents) {
+            await supabase.from('messages').insert({
+              sender_email: 'system@aivorah.com',
+              sender_name: 'Aivorah',
+              sender_role: 'teacher',
+              recipient_email: parent_email,
+              recipient_name: parent_email,
+              content: msgContent,
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('[assignments] Parent notification failed (non-fatal):', e.message);
+      }
+    })();
+  }
+
   res.json(normalise(data));
 });
 

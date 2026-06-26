@@ -7,7 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -44,7 +44,7 @@ function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onMana
   const isNewStudent = (child.xpPoints ?? 0) === 0 && (child.studyTime ?? 0) === 0 && progressPct === 0;
   const hasActivity = (child.xpPoints ?? 0) > 0 || (child.studyTime ?? 0) > 0 || progressPct > 0;
   const isOnTrack = hasActivity && (child.currentStreak ?? 0) >= 1;
-  const badgeColor = !hasActivity ? colors.accentBlue : isOnTrack ? colors.accentGreen : colors.accentYellow;
+  const badgeColor = !hasActivity ? colors.accentYellow : isOnTrack ? colors.accentGreen : colors.accentYellow;
   const badgeLabel = !hasActivity ? 'Getting Started' : isOnTrack ? 'On Track' : 'Needs Attention';
 
   return (
@@ -102,29 +102,29 @@ function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onMana
       <View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
           <Text style={styles.statLabel}>Chapter Progress</Text>
-          <Text style={[styles.statLabel, { color: colors.primary }]}>{progressPct}%</Text>
+          <Text style={[styles.statLabel, { color: colors.accentYellow }]}>{progressPct}%</Text>
         </View>
         <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>
-          <View style={[styles.progressFill, { width: `${progressPct}%` as any, backgroundColor: colors.primary }]} />
+          <View style={[styles.progressFill, { width: `${progressPct}%` as any, backgroundColor: colors.accentYellow }]} />
         </View>
       </View>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <TouchableOpacity
-          style={[styles.quickBtn, { flex: 1, backgroundColor: '#B8860B18', borderColor: '#B8860B40' }]}
+          style={[styles.quickBtn, { flex: 1 }]}
           onPress={() => onManageTasks(child)}
           activeOpacity={0.7}
         >
-          <Feather name="check-square" size={14} color="#B8860B" />
-          <Text style={[styles.quickBtnText, { color: '#B8860B' }]}>Daily Tasks</Text>
+          <Feather name="check-square" size={14} color={colors.accentYellow} />
+          <Text style={[styles.quickBtnText, { color: colors.accentYellow }]}>Daily Tasks</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.quickBtn, { flex: 1, backgroundColor: '#5F8A8618', borderColor: '#5F8A8640' }]}
+          style={[styles.quickBtn, { flex: 1 }]}
           onPress={() => onViewCreds(child)}
           activeOpacity={0.7}
         >
-          <Feather name="key" size={14} color="#5F8A86" />
-          <Text style={[styles.quickBtnText, { color: '#5F8A86' }]}>Login Info</Text>
+          <Feather name="key" size={14} color={colors.accentYellow} />
+          <Text style={[styles.quickBtnText, { color: colors.accentYellow }]}>Login Info</Text>
         </TouchableOpacity>
       </View>
 
@@ -143,8 +143,8 @@ function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onMana
               : navigation.navigate(btn.screen, { childId: child.id })}
             activeOpacity={0.7}
           >
-            <Feather name={btn.icon as any} size={14} color={colors.primary} />
-            <Text style={[styles.quickBtnText, { color: colors.primary }]}>{btn.label}</Text>
+            <Feather name={btn.icon as any} size={14} color={colors.accentYellow} />
+            <Text style={[styles.quickBtnText, { color: colors.accentYellow }]}>{btn.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -583,7 +583,7 @@ export default function ParentMyKidsScreen({ navigation }: any) {
           style={styles.scroll}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchChildren(); }} tintColor={colors.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchChildren(); }} tintColor={colors.accentYellow} />}
         >
           <View style={styles.headerRow}>
             <View style={{ flex: 1 }}>
@@ -597,7 +597,7 @@ export default function ParentMyKidsScreen({ navigation }: any) {
           </View>
 
           {loading ? (
-            <ActivityIndicator color={colors.primary} style={{ paddingVertical: 48 }} />
+            <ActivityIndicator color={colors.accentYellow} style={{ paddingVertical: 48 }} />
           ) : (
             <View style={styles.cardsRow}>
               {children.map((child) => (
@@ -699,10 +699,10 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                   <TouchableOpacity
                     key={c}
                     onPress={() => setTaskCoins(c)}
-                    style={[styles.coinChip, taskCoins === c && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+                    style={[styles.coinChip, taskCoins === c && { backgroundColor: colors.accentYellow + '20', borderColor: colors.accentYellow }]}
                     activeOpacity={0.7}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: taskCoins === c ? colors.primary : colors.textMuted }}>{c}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: taskCoins === c ? colors.accentYellow : colors.textMuted }}>{c}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -747,15 +747,15 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                 style={[styles.tab, modalTab === 'create' && styles.tabActive]}
                 onPress={() => { setModalTab('create'); setCreateError(''); }}
                 activeOpacity={0.8}>
-                <Feather name="user-plus" size={14} color={modalTab === 'create' ? colors.primary : colors.textMuted} />
-                <Text style={[styles.tabText, modalTab === 'create' && { color: colors.primary, fontWeight: '700' }]}>Create New</Text>
+                <Feather name="user-plus" size={14} color={modalTab === 'create' ? colors.accentYellow : colors.textMuted} />
+                <Text style={[styles.tabText, modalTab === 'create' && { color: colors.accentYellow, fontWeight: '700' }]}>Create New</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.tab, modalTab === 'link' && styles.tabActive]}
                 onPress={() => { setModalTab('link'); setLinkError(''); }}
                 activeOpacity={0.8}>
-                <Feather name="link" size={14} color={modalTab === 'link' ? colors.primary : colors.textMuted} />
-                <Text style={[styles.tabText, modalTab === 'link' && { color: colors.primary, fontWeight: '700' }]}>Link Existing</Text>
+                <Feather name="link" size={14} color={modalTab === 'link' ? colors.accentYellow : colors.textMuted} />
+                <Text style={[styles.tabText, modalTab === 'link' && { color: colors.accentYellow, fontWeight: '700' }]}>Link Existing</Text>
               </TouchableOpacity>
             </View>
 
@@ -792,9 +792,9 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                       {CURRICULA.map(c => (
                         <TouchableOpacity key={c} onPress={() => { setNewCurriculum(c); setNewGrade(getGradesForCurriculum(c)[0]); }} activeOpacity={0.8}
                           style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
-                            backgroundColor: newCurriculum === c ? colors.primary + '20' : colors.cardDark,
-                            borderWidth: 1, borderColor: newCurriculum === c ? colors.primary : colors.borderColor }}>
-                          <Text style={{ fontSize: 12, color: newCurriculum === c ? colors.primary : colors.textMuted, fontWeight: newCurriculum === c ? '700' : '400' }}>{c}</Text>
+                            backgroundColor: newCurriculum === c ? colors.accentYellow + '20' : colors.bgDark,
+                            borderWidth: 1, borderColor: newCurriculum === c ? colors.accentYellow : colors.accentYellow + '25' }}>
+                          <Text style={{ fontSize: 12, color: newCurriculum === c ? colors.accentYellow : colors.textMuted, fontWeight: newCurriculum === c ? '700' : '400' }}>{c}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -809,9 +809,9 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                       {getGradesForCurriculum(newCurriculum).map(g => (
                         <TouchableOpacity key={g} onPress={() => setNewGrade(g)} activeOpacity={0.8}
                           style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
-                            backgroundColor: newGrade === g ? colors.primary + '20' : colors.cardDark,
-                            borderWidth: 1, borderColor: newGrade === g ? colors.primary : colors.borderColor }}>
-                          <Text style={{ fontSize: 12, color: newGrade === g ? colors.primary : colors.textMuted, fontWeight: newGrade === g ? '700' : '400' }}>{g}</Text>
+                            backgroundColor: newGrade === g ? colors.accentYellow + '20' : colors.bgDark,
+                            borderWidth: 1, borderColor: newGrade === g ? colors.accentYellow : colors.accentYellow + '25' }}>
+                          <Text style={{ fontSize: 12, color: newGrade === g ? colors.accentYellow : colors.textMuted, fontWeight: newGrade === g ? '700' : '400' }}>{g}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -1008,9 +1008,9 @@ export default function ParentMyKidsScreen({ navigation }: any) {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {CURRICULA.map(c => (
                   <TouchableOpacity key={c} onPress={() => { setEditCurriculum(c); if (!getGradesForCurriculum(c).includes(editGrade)) setEditGrade(getGradesForCurriculum(c)[0]); }} activeOpacity={0.8}
-                    style={[styles.chip, editCurriculum === c && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+                    style={[styles.chip, editCurriculum === c && { backgroundColor: colors.accentYellow + '20', borderColor: colors.accentYellow }]}
                   >
-                    <Text style={[styles.chipText, editCurriculum === c && { color: colors.primary }]}>{c}</Text>
+                    <Text style={[styles.chipText, editCurriculum === c && { color: colors.accentYellow }]}>{c}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -1019,9 +1019,9 @@ export default function ParentMyKidsScreen({ navigation }: any) {
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {getGradesForCurriculum(editCurriculum).map(g => (
                   <TouchableOpacity key={g} onPress={() => setEditGrade(g)} activeOpacity={0.8}
-                    style={[styles.chip, editGrade === g && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+                    style={[styles.chip, editGrade === g && { backgroundColor: colors.accentYellow + '20', borderColor: colors.accentYellow }]}
                   >
-                    <Text style={[styles.chipText, editGrade === g && { color: colors.primary }]}>{g}</Text>
+                    <Text style={[styles.chipText, editGrade === g && { color: colors.accentYellow }]}>{g}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -1038,7 +1038,7 @@ export default function ParentMyKidsScreen({ navigation }: any) {
               ) : null}
 
               <TouchableOpacity
-                style={[styles.linkBtn, { backgroundColor: colors.primary }, saving && { opacity: 0.6 }]}
+                style={[styles.linkBtn, saving && { opacity: 0.6 }]}
                 onPress={saveEdit} disabled={saving} activeOpacity={0.8}
               >
                 {saving
@@ -1100,7 +1100,7 @@ export default function ParentMyKidsScreen({ navigation }: any) {
 
             {viewCreds?.initialPassword && (
               <TouchableOpacity
-                style={[styles.linkBtn, { backgroundColor: resendSuccess ? colors.accentGreen : colors.primary }, resendingCreds && { opacity: 0.6 }]}
+                style={[styles.linkBtn, { backgroundColor: resendSuccess ? colors.accentGreen : colors.accentYellow }, resendingCreds && { opacity: 0.6 }]}
                 onPress={() => resendCredsEmail(viewCredsChild)}
                 disabled={resendingCreds || resendSuccess}
                 activeOpacity={0.8}
@@ -1145,15 +1145,15 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: spacing.xl, paddingBottom: 48 },
 
-  pageTitle: { fontSize: 22, fontWeight: '700', color: c.textMain, marginBottom: 6 },
+  pageTitle: { fontSize: 22, fontWeight: '700', fontFamily: fonts.serif, color: c.textMain, marginBottom: 6 },
   pageSubtitle: { fontSize: 13, color: c.textMuted },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.xl },
   addChildBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12,
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
   },
-  addChildBtnTxt: { fontSize: 14, fontWeight: '700', color: '#fff' },
+  addChildBtnTxt: { fontSize: 14, fontWeight: '700', color: '#0B0B0B' },
 
   cardsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-start' },
 
@@ -1166,7 +1166,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   childCardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   avatar: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   avatarText: { fontSize: 22, fontWeight: '700' },
-  childName: { fontSize: 16, fontWeight: '700', color: c.textMain },
+  childName: { fontSize: 16, fontWeight: '700', fontFamily: fonts.serif, color: c.textMain },
   childSub: { fontSize: 11, color: c.textMuted, marginTop: 2 },
   badge: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, flexShrink: 0 },
   badgeText: { fontSize: 11, fontWeight: '600' },
@@ -1186,8 +1186,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   quickNav: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
   quickBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: c.primaryGlow, borderWidth: 1,
-    borderColor: c.primary + '40', borderRadius: radius.md,
+    backgroundColor: c.accentYellow + '12', borderWidth: 1,
+    borderColor: c.accentYellow + '35', borderRadius: radius.md,
     paddingHorizontal: spacing.md, paddingVertical: 8,
   },
   quickBtnText: { fontSize: 12, fontWeight: '600' },
@@ -1211,40 +1211,40 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   addChildSub: { fontSize: 12, color: c.textMuted, textAlign: 'center' },
 
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   modalBox: {
     width: '100%', maxWidth: 420,
-    backgroundColor: c.cardDark, borderRadius: radius.xl,
-    borderWidth: 1, borderColor: c.borderColor, padding: spacing.xl, gap: spacing.lg,
+    backgroundColor: c.cardDark, borderRadius: 20,
+    borderWidth: 1, borderColor: c.accentYellow + '30', padding: spacing.xl, gap: spacing.lg,
   },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  modalTitle: { fontSize: 17, fontWeight: '700', color: c.textMain },
+  modalTitle: { fontSize: 17, fontWeight: '700', fontFamily: fonts.serif, color: c.textMain },
   modalDesc: { fontSize: 13, color: c.textMuted, lineHeight: 20 },
   input: {
-    borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md,
+    borderWidth: 1, borderColor: c.accentYellow + '25', borderRadius: 12,
     padding: spacing.md, fontSize: 14, color: c.textMain,
     backgroundColor: c.bgDark,
   },
   errorRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   errorText: { fontSize: 12, flex: 1 },
   linkBtn: {
-    backgroundColor: c.primary, borderRadius: radius.md,
+    backgroundColor: c.accentYellow, borderRadius: 999,
     paddingVertical: 13, paddingHorizontal: spacing.md,
     alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8,
   },
-  linkBtnText: { fontSize: 15, fontWeight: '700', color: 'white' },
-  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.cardDark },
+  linkBtnText: { fontSize: 15, fontWeight: '700', color: '#0B0B0B' },
+  chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, borderWidth: 1, borderColor: c.accentYellow + '30', backgroundColor: c.bgDark },
   chipText: { fontSize: 12, fontWeight: '600', color: c.textMuted },
 
-  // Tab switcher
-  tabRow: { flexDirection: 'row', backgroundColor: c.bgDark, borderRadius: radius.md, padding: 3, gap: 3 },
-  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 9, borderRadius: radius.sm - 2 },
-  tabActive: { backgroundColor: c.cardDark },
+  // Tab switcher — pill style matching card nav buttons
+  tabRow: { flexDirection: 'row', backgroundColor: c.bgDark, borderRadius: 999, borderWidth: 1, borderColor: c.accentYellow + '25', padding: 4, gap: 4 },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 9, borderRadius: 999 },
+  tabActive: { backgroundColor: c.accentYellow + '18', borderWidth: 1, borderColor: c.accentYellow + '50' },
   tabText: { fontSize: 13, color: c.textMuted, fontWeight: '500' },
 
   // Inline picker sections
   rowInputs: { flexDirection: 'row', gap: 10 },
-  pickerWrap: { paddingVertical: 10 },
+  pickerWrap: { paddingVertical: 10, backgroundColor: c.bgDark, borderColor: c.accentYellow + '25' },
 
   // Task modal
   taskRow: {

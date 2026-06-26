@@ -39,8 +39,8 @@ export default function SettingsScreen({ navigation, route }: any) {
   // Re-pull profile on focus so a parent's grade/curriculum edit reflects here.
   useFocusEffect(useCallback(() => { refreshProfile(); }, []));
   const { stats } = useStudentData();
-  const { colors, themeMode, setThemeMode } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, themeMode, setThemeMode, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   // Notification preferences
   const [pushNotifications, setPushNotifications] = useState(true);
@@ -896,7 +896,7 @@ function ModalButtons({ onCancel, onSave, loading, saveLabel = 'Save Changes', s
   );
 }
 
-const makeStyles = (c: AppColors) => StyleSheet.create({
+const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bgDark },
   scroll: { flex: 1 },
   content: { padding: spacing.xl, paddingBottom: 48, gap: spacing.md },

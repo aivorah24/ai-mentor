@@ -670,7 +670,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalTab, addTab === 'link' && styles.modalTabActive]}
-                onPress={() => { setAddTab('link'); setCreateError(''); setLinkError(''); setSelectedStudent(null); setLinkSearch(''); setLinkGradeFilter('All'); loadLinkableStudents(); }}
+                onPress={() => { setAddTab('link'); setCreateError(''); setLinkError(''); setSelectedStudents([]); setLinkSearch(''); setLinkGradeFilter('All'); loadLinkableStudents(); }}
                 activeOpacity={0.8}
               >
                 <Feather name="link" size={13} color={addTab === 'link' ? colors.primary : colors.textMuted} />
