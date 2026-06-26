@@ -13,14 +13,14 @@ import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import SERVER_URL from '../../config/serverUrl';
 
-// ── Aivorah pastel palette ────────────────────────────────
+// ── Aivorah gold palette ──────────────────────────────────
 const P = {
-  rose:   '#B8797E',
-  green:  '#5A8A70',
-  gold:   '#8A8358',
-  peach:  '#C4836A',
-  teal:   '#7AADA8',
-  slate:  '#5F8A86',
+  rose:   '#BAA467',
+  green:  '#BAA467',
+  gold:   '#BAA467',
+  peach:  '#BAA467',
+  teal:   '#BAA467',
+  slate:  '#BAA467',
 };
 
 type Student = {
@@ -483,6 +483,7 @@ function cleanTopicName(topic: string): string {
 // ── Main Screen ───────────────────────────────────────────
 export default function TeacherProgressScreen({ navigation }: any) {
   const { colors: c } = useTheme();
+  const gold = c.accentYellow;
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(c), [c]);
 

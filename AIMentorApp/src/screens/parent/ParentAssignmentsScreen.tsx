@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect, useCallback } from 'react';
+﻿import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
@@ -116,9 +116,10 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
 
   const child = children[selectedIdx];
 
-  useEffect(() => {
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchAssignments = useCallback(() => {
     if (!child) return;
-    setLoading(true);
     Promise.all([
       fetch(`${SERVER_URL}/assignments?studentId=${child.id}`).then(r => r.json()).catch(() => []),
       fetch(`${SERVER_URL}/student/${child.id}`).then(r => r.json()).catch(() => null),
@@ -128,6 +129,21 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [child?.id]);
+
+  useEffect(() => {
+    if (!child) return;
+    setLoading(true);
+    fetchAssignments();
+  }, [fetchAssignments]);
+
+  // Reload on focus + poll every 30s while screen is visible
+  useFocusEffect(useCallback(() => {
+    fetchAssignments();
+    intervalRef.current = setInterval(fetchAssignments, 30000);
+    return () => {
+      if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    };
+  }, [fetchAssignments]));
 
   // Load IB PYP curriculum topics for the child's grade
   useEffect(() => {
@@ -343,43 +359,36 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
               )}
             </View>
           ) : (
-            <View style={styles.assignmentGrid}>
+            <View style={styles.assignmentList}>
             {filtered.map(a => {
               const due = a.status === 'completed'
                 ? { label: a.score != null ? `Score: ${a.score}%` : 'Completed', isOverdue: false }
                 : formatDue(a.dueDate);
-              const statusLabel = a.status === 'completed' ? 'Completed' : 'Upcoming';
+              const statusLabel = a.status === 'completed' ? 'Done' : 'Upcoming';
               const statusColor = a.status === 'completed' ? colors.accentGreen : colors.accentBlue;
 
               return (
-                <TouchableOpacity key={a.id} style={styles.assignmentCard} activeOpacity={0.75} onPress={() => setDetailAssignment(a)}>
-                  <View style={styles.assignmentCardTop}>
-                    <View style={[styles.assignmentIcon, { backgroundColor: colors.accentYellow + '18' }]}>
-                      <Feather name="book-open" size={18} color={colors.accentYellow} />
-                    </View>
-                    <View style={[styles.statusPill, { backgroundColor: statusColor + '18', borderColor: statusColor + '33' }]}>
-                      <Text style={[styles.statusPillText, { color: statusColor }]}>{statusLabel}</Text>
+                <TouchableOpacity key={a.id} style={styles.assignmentRow} activeOpacity={0.75} onPress={() => setDetailAssignment(a)}>
+                  <View style={[styles.assignmentIconSm, { backgroundColor: colors.accentYellow + '18' }]}>
+                    <Feather name="book-open" size={14} color={colors.accentYellow} />
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={styles.assignmentTitle} numberOfLines={1}>{a.title}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Feather name="clock" size={10} color={colors.textDim} />
+                      <Text style={[styles.assignmentDue, { color: colors.textMuted }]}>{due.label}</Text>
+                      <View style={{ paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, backgroundColor: colors.accentYellow + '18' }}>
+                        <Text style={{ fontFamily: fonts.serif, fontSize: 9, fontWeight: '700', color: colors.accentYellow }}>
+                          {a.type === 'quiz' ? 'Quiz' : (a.taskSteps?.length ?? 0) > 0 ? 'Scaffolded' : (a.documentUrls?.length ?? 0) > 0 ? 'Worksheet' : 'Task'}
+                        </Text>
+                      </View>
+                      {a.createdBy === 'parent' && (
+                        <Text style={{ fontFamily: fonts.serif, fontSize: 9, color: colors.accentGreen, fontWeight: '600' }}>By you</Text>
+                      )}
                     </View>
                   </View>
-                  <Text style={styles.assignmentTitle} numberOfLines={2}>{a.title}</Text>
-                  <View style={styles.assignmentMeta}>
-                    <Feather name="clock" size={11} color={colors.textDim} />
-                    <Text style={[styles.assignmentDue, { color: colors.textMuted }]}>
-                      {due.label}
-                    </Text>
-                  </View>
-                  <View style={styles.assignmentMeta}>
-                    <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8, backgroundColor: colors.accentYellow + '18' }}>
-                      <Text style={{ fontFamily: fonts.serif, fontSize: 10, fontWeight: '700', color: colors.accentYellow }}>
-                        {a.type === 'quiz' ? 'Quiz' : (a.taskSteps?.length ?? 0) > 0 ? 'Scaffolded' : (a.documentUrls?.length ?? 0) > 0 ? 'Worksheet' : 'Assignment'}
-                      </Text>
-                    </View>
-                    {a.createdBy === 'parent' && (
-                      <>
-                        <Feather name="user" size={11} color={colors.accentGreen} />
-                        <Text style={[styles.assignmentTime, { color: colors.accentGreen }]}>By you</Text>
-                      </>
-                    )}
+                  <View style={[styles.statusPill, { backgroundColor: statusColor + '18', borderColor: statusColor + '33' }]}>
+                    <Text style={[styles.statusPillText, { color: statusColor }]}>{statusLabel}</Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -713,19 +722,16 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   sectionLabel: { fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: c.textDim, letterSpacing: 0.8, marginBottom: spacing.md, textTransform: 'uppercase' },
 
-  assignmentGrid: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md,
+  assignmentList: {
+    gap: 6,
   },
-  assignmentCard: {
-    width: '48.5%' as any,
+  assignmentRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
-    borderRadius: radius.lg, padding: spacing.lg,
+    borderRadius: radius.md, paddingVertical: 10, paddingHorizontal: 14,
   },
-  assignmentCardTop: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm,
-  },
-  assignmentIcon: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: c.accentYellow + '18' },
-  assignmentTitle: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '600', color: c.textMain, marginBottom: 6 },
+  assignmentIconSm: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  assignmentTitle: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '600', color: c.textMain },
   statusPill: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
   statusPillText: { fontFamily: fonts.serif, fontSize: 10, fontWeight: '600' },
   assignmentMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },

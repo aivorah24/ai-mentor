@@ -18,6 +18,7 @@ const PRIORITY_COLOR: Record<string, string> = {
 
 export default function ProjectDetailsScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const gold = colors.accentYellow;
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -45,7 +46,7 @@ export default function ProjectDetailsScreen({ navigation }: any) {
           {TABS.map(t => (
             <TouchableOpacity
               key={t}
-              style={[styles.tab, activeTab === t && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+              style={[styles.tab, activeTab === t && { backgroundColor: gold, borderColor: gold }]}
               onPress={() => setActiveTab(t)}
               activeOpacity={0.75}
             >
@@ -68,7 +69,7 @@ export default function ProjectDetailsScreen({ navigation }: any) {
             {activeTab === 'Sessions' && (
               <>
                 <View style={styles.sectionHeader}>
-                  <Feather name="clock" size={16} color={colors.primary} />
+                  <Feather name="clock" size={16} color={gold} />
                   <Text style={styles.sectionTitle}>Work Sessions</Text>
                 </View>
 
@@ -96,7 +97,7 @@ export default function ProjectDetailsScreen({ navigation }: any) {
                   </View>
                   {(data.sessionRows ?? []).map((row: any, i: number) => (
                     <View key={i} style={[styles.tableRow, i % 2 === 0 && { backgroundColor: colors.cardHover }]}>
-                      <Text style={[styles.tableCell, { flex: 2, color: colors.primary, fontWeight: '600' }]}>{row.date}</Text>
+                      <Text style={[styles.tableCell, { flex: 2, color: gold, fontWeight: '600' }]}>{row.date}</Text>
                       <Text style={[styles.tableCell, { flex: 1, color: colors.accentYellow, fontWeight: '700' }]}>{row.hours}</Text>
                       <Text style={[styles.tableCell, { flex: 3 }]} numberOfLines={2}>{row.milestone}</Text>
                     </View>
@@ -109,7 +110,7 @@ export default function ProjectDetailsScreen({ navigation }: any) {
             {activeTab === 'Readiness' && (
               <>
                 <View style={styles.sectionHeader}>
-                  <Feather name="bar-chart-2" size={16} color={colors.primary} />
+                  <Feather name="bar-chart-2" size={16} color={gold} />
                   <Text style={styles.sectionTitle}>Demo Readiness — April 10</Text>
                 </View>
 
@@ -129,11 +130,11 @@ export default function ProjectDetailsScreen({ navigation }: any) {
                 })}
 
                 {/* Overall */}
-                <View style={[styles.overallCard, { borderColor: colors.primary + '40' }]}>
+                <View style={[styles.overallCard, { borderColor: gold + '40' }]}>
                   <Text style={styles.overallLabel}>Overall Demo Readiness</Text>
-                  <Text style={[styles.overallPct, { color: colors.primary }]}>~40%</Text>
+                  <Text style={[styles.overallPct, { color: gold }]}>~40%</Text>
                   <View style={styles.barTrack}>
-                    <View style={[styles.barFill, { width: '40%', backgroundColor: colors.primary }]} />
+                    <View style={[styles.barFill, { width: '40%', backgroundColor: gold }]} />
                   </View>
                   <Text style={styles.overallSub}>~20 hours of work remaining before April 10</Text>
                 </View>
@@ -144,7 +145,7 @@ export default function ProjectDetailsScreen({ navigation }: any) {
             {activeTab === 'Pending' && (
               <>
                 <View style={styles.sectionHeader}>
-                  <Feather name="list" size={16} color={colors.primary} />
+                  <Feather name="list" size={16} color={gold} />
                   <Text style={styles.sectionTitle}>Pending for Demo</Text>
                 </View>
 
@@ -171,7 +172,7 @@ export default function ProjectDetailsScreen({ navigation }: any) {
             {activeTab === 'Client Feedback' && (
               <>
                 <View style={styles.sectionHeader}>
-                  <Feather name="message-circle" size={16} color={colors.primary} />
+                  <Feather name="message-circle" size={16} color={gold} />
                   <Text style={styles.sectionTitle}>Client Feedback (All Calls)</Text>
                 </View>
 
@@ -250,7 +251,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   hoursText:      { fontSize: 11, fontWeight: '700' },
 
   // Feedback
-  meetingDate:    { fontSize: 13, fontWeight: '800', color: c.primary, paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: c.borderColor },
+  meetingDate:    { fontSize: 13, fontWeight: '800', color: c.accentYellow, paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: c.borderColor },
   feedbackRow:    { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, paddingVertical: 6 },
   feedbackText:   { fontSize: 13, color: c.textMuted, flex: 1, lineHeight: 20 },
 });

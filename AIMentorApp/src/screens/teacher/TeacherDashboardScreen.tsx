@@ -88,6 +88,7 @@ function formatStudyTime(minutes: number) {
 export default function TeacherDashboardScreen({ navigation }: any) {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
+  const gold = colors.accentYellow;
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [students, setStudents] = useState<any[]>([]);
@@ -188,16 +189,16 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   const studentsCompletedChallenge = challStats.filter((s: any) => s.completed > 0).length;
   const topChallStudent = [...challStats].sort((a: any, b: any) => (b.avgScore || 0) - (a.avgScore || 0))[0];
 
-  // ── Enchanting Forest palette for insight tiles ─────────
+  // ── Aivorah gold palette for insight tiles ─────────
   const T = {
-    teal:   colors.primary,     // #93B0AC dark / #5F8A86 light
-    rose:   '#B8797E',          // darkened dusty rose
-    gold:   '#8A8358',          // darkened khaki gold
-    coral:  '#C47A68',          // warm coral
-    forest: '#5A8A70',          // deep forest green
-    mint:   colors.primaryHover,// #7AADA8 / #4A706D
-    blush:  '#C49098',          // mid-rose
-    slate:  '#93B0AC',          // direct palette sage
+    teal:   gold,
+    rose:   gold,
+    gold:   gold,
+    coral:  gold,
+    forest: gold,
+    mint:   gold,
+    blush:  gold,
+    slate:  gold,
   };
 
   // ── SECTION 1: Learning Path Insights ───────────────────
@@ -1027,7 +1028,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
               </View>
             </View>
             <TouchableOpacity style={styles.aiBtn} activeOpacity={0.85} onPress={() => navigation.navigate('TeacherSchedule' as any)}>
-              <Feather name="calendar" size={14} color={colors.primary} />
+              <Feather name="calendar" size={14} color={gold} />
               <Text style={styles.aiBtnText}>Schedule Session</Text>
             </TouchableOpacity>
           </View>
@@ -1037,7 +1038,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
             {/* Student Overview */}
             <TouchableOpacity style={[styles.card, styles.flex1]} activeOpacity={0.85} onPress={() => navigation.navigate('TeacherStudents' as any)}>
               <View style={styles.cardHeader}>
-                <Feather name="users" size={15} color={colors.primary} />
+                <Feather name="users" size={15} color={gold} />
                 <Text style={styles.cardTitle}>Student Overview</Text>
               </View>
               <Text style={styles.bigNumber}>{totalStudents}</Text>
@@ -1068,9 +1069,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
               {/* Donut + study time */}
               <View style={styles.donutRow}>
                 <View style={styles.donutWrap}>
-                  <DonutChart progress={avgProgress / 100} size={72} color={colors.primary} trackColor={ringTrack} />
+                  <DonutChart progress={avgProgress / 100} size={72} color={gold} trackColor={ringTrack} />
                   <View style={styles.donutCenter}>
-                    <Text style={[styles.donutPct, { color: colors.primary }]}>{avgProgress}%</Text>
+                    <Text style={[styles.donutPct, { color: gold }]}>{avgProgress}%</Text>
                   </View>
                 </View>
                 <View style={styles.donutStats}>
@@ -1084,12 +1085,12 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                 {/* Learning Path */}
                 <View style={styles.progressItem}>
                   <View style={styles.progressLabelRow}>
-                    <Feather name="map" size={11} color={colors.primary} />
+                    <Feather name="map" size={11} color={gold} />
                     <Text style={styles.progressLabel}>Learning Path</Text>
-                    <Text style={[styles.progressPct, { color: colors.primary }]}>{avgProgress}%</Text>
+                    <Text style={[styles.progressPct, { color: gold }]}>{avgProgress}%</Text>
                   </View>
                   <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>
-                    <View style={[styles.progressFill, { width: `${avgProgress}%` as any, backgroundColor: colors.primary }]} />
+                    <View style={[styles.progressFill, { width: `${avgProgress}%` as any, backgroundColor: gold }]} />
                   </View>
                 </View>
 
@@ -1108,12 +1109,12 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                 {/* Challenges */}
                 <View style={styles.progressItem}>
                   <View style={styles.progressLabelRow}>
-                    <Feather name="target" size={11} color="#C49098" />
+                    <Feather name="target" size={11} color={gold} />
                     <Text style={styles.progressLabel}>Challenges</Text>
-                    <Text style={[styles.progressPct, { color: '#C49098' }]}>{challCompletePct}%</Text>
+                    <Text style={[styles.progressPct, { color: gold }]}>{challCompletePct}%</Text>
                   </View>
                   <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>
-                    <View style={[styles.progressFill, { width: `${challCompletePct}%` as any, backgroundColor: '#C49098' }]} />
+                    <View style={[styles.progressFill, { width: `${challCompletePct}%` as any, backgroundColor: gold }]} />
                   </View>
                 </View>
               </View>
@@ -1125,7 +1126,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
             <View style={styles.insightsHeader}>
               <View style={styles.insightsHeaderLeft}>
                 <View style={styles.insightsIconWrap}>
-                  <Feather name="cpu" size={14} color={colors.primary} />
+                  <Feather name="cpu" size={14} color={gold} />
                 </View>
                 <Text style={styles.insightsTitle}>AI Teaching Insights</Text>
               </View>
@@ -1135,8 +1136,8 @@ export default function TeacherDashboardScreen({ navigation }: any) {
               {/* Column 1: Learning Path */}
               <View style={styles.insightCol}>
                 <View style={styles.colHeader}>
-                  <Feather name="map" size={11} color={colors.primary} />
-                  <Text style={[styles.colHeaderText, { color: colors.primary }]}>Learning Path</Text>
+                  <Feather name="map" size={11} color={gold} />
+                  <Text style={[styles.colHeaderText, { color: gold }]}>Learning Path</Text>
                 </View>
                 {learningPathTiles.map((tile, i) => (
                   <TouchableOpacity key={`lp-${i}`} activeOpacity={0.7}
@@ -1262,7 +1263,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   content: { padding: spacing.xl, paddingBottom: 48 },
 
   aiCard: {
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
     borderRadius: radius.xl,
     padding: spacing.xl,
     overflow: 'hidden',
@@ -1286,7 +1287,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15, shadowRadius: 4,
   },
-  aiBtnText: { fontSize: 13, fontWeight: '700', color: c.primary },
+  aiBtnText: { fontSize: 13, fontWeight: '700', color: c.accentYellow },
 
   row: { flexDirection: 'row', gap: spacing.md },
   flex1: { flex: 1 },
@@ -1343,7 +1344,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   insightsHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   insightsIconWrap: {
     width: 26, height: 26, borderRadius: 8,
-    backgroundColor: c.primaryGlow,
+    backgroundColor: c.accentYellow + '18',
     alignItems: 'center', justifyContent: 'center',
   },
   insightsTitle: { fontSize: 13, fontWeight: '700', color: c.textMain, letterSpacing: -0.2 },
@@ -1361,11 +1362,11 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: 'transparent',
   },
   filterTabActive: {
-    backgroundColor: c.primaryGlow,
-    borderColor: c.primary + '40',
+    backgroundColor: c.accentYellow + '18',
+    borderColor: c.accentYellow + '40',
   },
   filterTabText: { fontSize: 11, fontWeight: '600', color: c.textDim },
-  filterTabTextActive: { color: c.primary, fontWeight: '700' },
+  filterTabTextActive: { color: c.accentYellow, fontWeight: '700' },
 
   // Summary strip — compact horizontal stats
   summaryStrip: {
@@ -1373,8 +1374,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     marginHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.sm,
-    backgroundColor: c.primaryGlow,
-    borderWidth: 1, borderColor: c.primary + '12',
+    backgroundColor: c.accentYellow + '18',
+    borderWidth: 1, borderColor: c.accentYellow + '12',
     marginBottom: spacing.sm,
   },
   summaryItem: { flex: 1, alignItems: 'center' },
@@ -1452,7 +1453,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   modalHeader: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
-    backgroundColor: c.primaryGlow,
+    backgroundColor: c.accentYellow + '18',
     borderBottomWidth: 1, borderBottomColor: c.borderColor,
   },
   modalStat: { fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
@@ -1483,7 +1484,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: spacing.sm, paddingHorizontal: spacing.md,
   },
-  tableRowAlt: { backgroundColor: c.primaryGlow + '30' },
+  tableRowAlt: { backgroundColor: c.accentYellow + '08' },
   tableCell: {},
   tableStudentName: { fontSize: 12, fontWeight: '700', color: c.textMain },
   tableStudentGrade: { fontSize: 9, color: c.textDim, marginTop: 1 },

@@ -141,6 +141,7 @@ function lastActiveLabel(dateStr?: string) {
 
 export default function TeacherStudentsScreen({ navigation, route }: any) {
   const { colors, isDark } = useTheme();
+  const gold = colors.accentYellow;
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -472,7 +473,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
         />
         {/* Add Student button */}
         <TouchableOpacity style={styles.addBtn} onPress={openAddModal} activeOpacity={0.8}>
-          <Feather name="user-plus" size={14} color={colors.primary} />
+          <Feather name="user-plus" size={14} color={gold} />
           <Text style={styles.addBtnText}>Add Student</Text>
         </TouchableOpacity>
 
@@ -485,7 +486,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
           {/* Stats Row */}
           <View style={styles.statsRow}>
             {[
-              { label: 'Total', value: stats.total, color: colors.primary },
+              { label: 'Total', value: stats.total, color: gold },
               { label: 'On Track', value: stats.onTrack, color: colors.accentGreen },
               { label: 'Need Attention', value: stats.attention, color: colors.accentRed },
               { label: 'Avg Progress', value: `${stats.avgProgress}%`, color: colors.accentCyan },
@@ -648,8 +649,8 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
             {/* Header */}
             <View style={styles.modalHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primaryGlow, alignItems: 'center', justifyContent: 'center' }}>
-                  <Feather name="user-plus" size={16} color={colors.primary} />
+                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: gold + '18', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="user-plus" size={16} color={gold} />
                 </View>
                 <Text style={styles.modalTitle}>Add Student</Text>
               </View>
@@ -665,24 +666,24 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                 onPress={() => { setAddTab('create'); setCreateError(''); setLinkError(''); }}
                 activeOpacity={0.8}
               >
-                <Feather name="user-plus" size={13} color={addTab === 'create' ? colors.primary : colors.textMuted} />
-                <Text style={[styles.modalTabText, addTab === 'create' && { color: colors.primary }]}>Create New</Text>
+                <Feather name="user-plus" size={13} color={addTab === 'create' ? gold : colors.textMuted} />
+                <Text style={[styles.modalTabText, addTab === 'create' && { color: gold }]}>Create New</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalTab, addTab === 'link' && styles.modalTabActive]}
                 onPress={() => { setAddTab('link'); setCreateError(''); setLinkError(''); setSelectedStudents([]); setLinkSearch(''); setLinkGradeFilter('All'); loadLinkableStudents(); }}
                 activeOpacity={0.8}
               >
-                <Feather name="link" size={13} color={addTab === 'link' ? colors.primary : colors.textMuted} />
-                <Text style={[styles.modalTabText, addTab === 'link' && { color: colors.primary }]}>Link Existing</Text>
+                <Feather name="link" size={13} color={addTab === 'link' ? gold : colors.textMuted} />
+                <Text style={[styles.modalTabText, addTab === 'link' && { color: gold }]}>Link Existing</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalTab, addTab === 'bulk' && styles.modalTabActive]}
                 onPress={() => { setAddTab('bulk'); setCreateError(''); setLinkError(''); setBulkResults(null); setBulkSummary(null); setBulkError(''); }}
                 activeOpacity={0.8}
               >
-                <Feather name="upload" size={13} color={addTab === 'bulk' ? colors.primary : colors.textMuted} />
-                <Text style={[styles.modalTabText, addTab === 'bulk' && { color: colors.primary }]}>Bulk Import</Text>
+                <Feather name="upload" size={13} color={addTab === 'bulk' ? gold : colors.textMuted} />
+                <Text style={[styles.modalTabText, addTab === 'bulk' && { color: gold }]}>Bulk Import</Text>
               </TouchableOpacity>
             </View>
 
@@ -728,10 +729,10 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                       <TouchableOpacity
                         key={g} activeOpacity={0.8}
                         onPress={() => setNewGrade(g)}
-                        style={[styles.modalOption, { borderColor: newGrade === g ? colors.primary : colors.borderColor, backgroundColor: newGrade === g ? colors.primaryGlow : 'transparent' }]}
+                        style={[styles.modalOption, { borderColor: newGrade === g ? gold : colors.borderColor, backgroundColor: newGrade === g ? gold + '18' : 'transparent' }]}
                       >
-                        <Text style={{ fontSize: 12, color: newGrade === g ? colors.primary : colors.textMuted, fontWeight: '600' }}>{g}</Text>
-                        {newGrade === g && <Feather name="check" size={12} color={colors.primary} />}
+                        <Text style={{ fontSize: 12, color: newGrade === g ? gold : colors.textMuted, fontWeight: '600' }}>{g}</Text>
+                        {newGrade === g && <Feather name="check" size={12} color={gold} />}
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -742,10 +743,10 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                         key={c} activeOpacity={0.8}
                         onPress={() => setNewCurriculum(c)}
                         disabled={allowedCurricula.length <= 1}
-                        style={[styles.modalOption, { borderColor: newCurriculum === c ? colors.primary : colors.borderColor, backgroundColor: newCurriculum === c ? colors.primaryGlow : 'transparent' }]}
+                        style={[styles.modalOption, { borderColor: newCurriculum === c ? gold : colors.borderColor, backgroundColor: newCurriculum === c ? gold + '18' : 'transparent' }]}
                       >
-                        <Text style={{ fontSize: 12, color: newCurriculum === c ? colors.primary : colors.textMuted, fontWeight: '600', flex: 1 }}>{c}</Text>
-                        {newCurriculum === c && <Feather name={allowedCurricula.length <= 1 ? 'lock' : 'check'} size={11} color={colors.primary} />}
+                        <Text style={{ fontSize: 12, color: newCurriculum === c ? gold : colors.textMuted, fontWeight: '600', flex: 1 }}>{c}</Text>
+                        {newCurriculum === c && <Feather name={allowedCurricula.length <= 1 ? 'lock' : 'check'} size={11} color={gold} />}
                       </TouchableOpacity>
                     ))}
                     <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 5, lineHeight: 14 }}>
@@ -802,11 +803,11 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                         style={{
                           paddingHorizontal: 12, paddingVertical: 5,
                           borderRadius: 999, borderWidth: 1,
-                          borderColor: linkGradeFilter === g ? colors.primary : colors.borderColor,
-                          backgroundColor: linkGradeFilter === g ? colors.primaryGlow : 'transparent',
+                          borderColor: linkGradeFilter === g ? gold : colors.borderColor,
+                          backgroundColor: linkGradeFilter === g ? gold + '18' : 'transparent',
                         }}
                       >
-                        <Text style={{ fontSize: 11, fontWeight: '600', color: linkGradeFilter === g ? colors.primary : colors.textMuted }}>
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: linkGradeFilter === g ? gold : colors.textMuted }}>
                           {g}
                         </Text>
                       </TouchableOpacity>
@@ -849,17 +850,17 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                               flexDirection: 'row', alignItems: 'center', gap: 10,
                               paddingVertical: 9, paddingHorizontal: 10,
                               borderRadius: 8, marginBottom: 4,
-                              backgroundColor: isSelected ? colors.primaryGlow : (isDark ? colors.cardDark : '#F5F5F5'),
+                              backgroundColor: isSelected ? gold + '18' : (isDark ? colors.cardDark : '#F5F5F5'),
                               borderWidth: 1,
-                              borderColor: isSelected ? colors.primary : 'transparent',
+                              borderColor: isSelected ? gold : 'transparent',
                             }}
                           >
                             <View style={{
                               width: 32, height: 32, borderRadius: 16,
-                              backgroundColor: colors.primaryGlow,
+                              backgroundColor: gold + '18',
                               alignItems: 'center', justifyContent: 'center',
                             }}>
-                              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: gold }}>
                                 {(s.name || '?').split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase()}
                               </Text>
                             </View>
@@ -867,7 +868,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                               <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain }}>{s.name}</Text>
                               <Text style={{ fontSize: 11, color: colors.textDim }}>{s.email}</Text>
                             </View>
-                            {isSelected && <Feather name="check-circle" size={16} color={colors.primary} />}
+                            {isSelected && <Feather name="check-circle" size={16} color={gold} />}
                           </TouchableOpacity>
                         );
                       })}
@@ -875,9 +876,9 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                 )}
 
                 {selectedStudents.length > 0 && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 8, backgroundColor: colors.primaryGlow, flexWrap: 'wrap' }}>
-                    <Feather name="user-check" size={13} color={colors.primary} />
-                    <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 8, backgroundColor: gold + '18', flexWrap: 'wrap' }}>
+                    <Feather name="user-check" size={13} color={gold} />
+                    <Text style={{ fontSize: 12, color: gold, fontWeight: '600' }}>
                       {selectedStudents.length === 1
                         ? `Selected: ${selectedStudents[0].name}`
                         : `${selectedStudents.length} students selected: ${selectedStudents.map(s => s.name).join(', ')}`}
@@ -918,9 +919,9 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                         <Text style={styles.modalFieldLabel}>Default Grade</Text>
                         {allowedGrades.map(g => (
                           <TouchableOpacity key={g} activeOpacity={0.8} onPress={() => setBulkGrade(g)}
-                            style={[styles.modalOption, { borderColor: bulkGrade === g ? colors.primary : colors.borderColor, backgroundColor: bulkGrade === g ? colors.primaryGlow : 'transparent' }]}>
-                            <Text style={{ fontSize: 12, color: bulkGrade === g ? colors.primary : colors.textMuted, fontWeight: '600' }}>{g}</Text>
-                            {bulkGrade === g && <Feather name="check" size={12} color={colors.primary} />}
+                            style={[styles.modalOption, { borderColor: bulkGrade === g ? gold : colors.borderColor, backgroundColor: bulkGrade === g ? gold + '18' : 'transparent' }]}>
+                            <Text style={{ fontSize: 12, color: bulkGrade === g ? gold : colors.textMuted, fontWeight: '600' }}>{g}</Text>
+                            {bulkGrade === g && <Feather name="check" size={12} color={gold} />}
                           </TouchableOpacity>
                         ))}
                       </View>
@@ -931,10 +932,10 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                             key={c} activeOpacity={0.8}
                             onPress={() => setBulkCurriculum(c)}
                             disabled={allowedCurricula.length <= 1}
-                            style={[styles.modalOption, { borderColor: bulkCurriculum === c ? colors.primary : colors.borderColor, backgroundColor: bulkCurriculum === c ? colors.primaryGlow : 'transparent' }]}
+                            style={[styles.modalOption, { borderColor: bulkCurriculum === c ? gold : colors.borderColor, backgroundColor: bulkCurriculum === c ? gold + '18' : 'transparent' }]}
                           >
-                            <Text style={{ fontSize: 12, color: bulkCurriculum === c ? colors.primary : colors.textMuted, fontWeight: '600', flex: 1 }}>{c}</Text>
-                            {bulkCurriculum === c && <Feather name={allowedCurricula.length <= 1 ? 'lock' : 'check'} size={11} color={colors.primary} />}
+                            <Text style={{ fontSize: 12, color: bulkCurriculum === c ? gold : colors.textMuted, fontWeight: '600', flex: 1 }}>{c}</Text>
+                            {bulkCurriculum === c && <Feather name={allowedCurricula.length <= 1 ? 'lock' : 'check'} size={11} color={gold} />}
                           </TouchableOpacity>
                         ))}
                         <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 5, lineHeight: 14 }}>
@@ -1074,7 +1075,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
               </View>
             ))}
 
-            <View style={{ backgroundColor: colors.primaryGlow, borderRadius: 8, padding: 12, borderWidth: 1, borderColor: colors.primary + '30', marginTop: 4 }}>
+            <View style={{ backgroundColor: gold + '18', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: gold + '30', marginTop: 4 }}>
               <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
                 The student can log in immediately with these credentials. Save them now — the password cannot be retrieved later.
               </Text>
@@ -1123,9 +1124,9 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor,
     backgroundColor: c.cardDark,
   },
-  tabActive: { backgroundColor: c.primaryGlow, borderColor: c.primary },
+  tabActive: { backgroundColor: c.accentYellow + '18', borderColor: c.accentYellow },
   tabText: { fontSize: 13, fontWeight: '600', color: c.textMuted },
-  tabTextActive: { color: c.primary },
+  tabTextActive: { color: c.accentYellow },
   tabBadge: {
     backgroundColor: c.accentRed, borderRadius: 8, width: 16, height: 16,
     alignItems: 'center', justifyContent: 'center',
@@ -1178,15 +1179,15 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     marginHorizontal: spacing.xl, marginBottom: 4,
     paddingHorizontal: spacing.md, paddingVertical: 8,
     borderRadius: radius.md, borderWidth: 1,
-    borderColor: c.primary + '40', backgroundColor: c.primaryGlow,
+    borderColor: c.accentYellow + '40', backgroundColor: c.accentYellow + '18',
   },
-  addBtnText: { fontSize: 13, fontWeight: '600', color: c.primary },
+  addBtnText: { fontSize: 13, fontWeight: '600', color: c.accentYellow },
 
   // Empty state add button
   emptyAddBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12,
     paddingHorizontal: spacing.xl, paddingVertical: 12,
-    borderRadius: radius.md, backgroundColor: c.primary,
+    borderRadius: radius.md, backgroundColor: c.accentYellow,
   },
   emptyAddBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
@@ -1202,7 +1203,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingVertical: 10, borderRadius: radius.md, borderWidth: 1,
     borderColor: c.borderColor, backgroundColor: 'transparent',
   },
-  modalTabActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  modalTabActive: { borderColor: c.accentYellow, backgroundColor: c.accentYellow + '18' },
   modalTabText: { fontSize: 13, fontWeight: '600', color: c.textMuted },
   modalFieldLabel: { fontSize: 12, fontWeight: '600', color: c.textMuted, marginBottom: 4 },
   modalInput: {
@@ -1218,6 +1219,6 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   modalBtns: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },
   modalCancelBtn: { flex: 1, height: 46, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center', justifyContent: 'center' },
   modalCancelText: { fontSize: 14, fontWeight: '600', color: c.textMuted },
-  modalSaveBtn: { flex: 1, height: 46, borderRadius: radius.md, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+  modalSaveBtn: { flex: 1, height: 46, borderRadius: radius.md, backgroundColor: c.accentYellow, alignItems: 'center', justifyContent: 'center' },
   modalSaveText: { fontSize: 14, fontWeight: '700', color: 'white' },
 });

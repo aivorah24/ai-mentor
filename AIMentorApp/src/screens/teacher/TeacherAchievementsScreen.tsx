@@ -93,7 +93,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   progressLabel: { fontSize: 13, fontWeight: '700', color: c.textMain },
   progressBar: { height: 8, backgroundColor: c.borderColor, borderRadius: 4, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: c.primary, borderRadius: 4 },
+  progressFill: { height: '100%', backgroundColor: c.accentYellow, borderRadius: 4 },
   progressSub: { fontSize: 12, color: c.textMuted },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: c.textMain },
   card: {

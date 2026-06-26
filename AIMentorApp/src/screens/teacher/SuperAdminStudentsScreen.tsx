@@ -118,7 +118,7 @@ function BulkAddModal({ visible, onClose, onCreated, adminEmail, colors, styles 
               </View>
 
               <View style={styles.resultActions}>
-                <TouchableOpacity style={[styles.btn, { backgroundColor: colors.primary }]} onPress={handleCopy}>
+                <TouchableOpacity style={[styles.btn, { backgroundColor: gold }]} onPress={handleCopy}>
                   <Feather name={copied ? 'check' : 'copy'} size={14} color="#fff" />
                   <Text style={styles.btnTxt}>{copied ? 'Copied!' : 'Copy All'}</Text>
                 </TouchableOpacity>
@@ -143,7 +143,7 @@ function BulkAddModal({ visible, onClose, onCreated, adminEmail, colors, styles 
               <Text style={[styles.label, { color: colors.textMuted }]}>Grade / Class</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
                 {GRADES.map(g => (
-                  <TouchableOpacity key={g} style={[styles.chip, grade === g && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                  <TouchableOpacity key={g} style={[styles.chip, grade === g && { backgroundColor: gold, borderColor: gold }]}
                     onPress={() => setGrade(g)}>
                     <Text style={[styles.chipTxt, { color: grade === g ? '#fff' : colors.textMuted }]}>{g.replace('Grade ', '')}</Text>
                   </TouchableOpacity>
@@ -154,7 +154,7 @@ function BulkAddModal({ visible, onClose, onCreated, adminEmail, colors, styles 
               <Text style={[styles.label, { color: colors.textMuted }]}>Section</Text>
               <View style={styles.chipRow}>
                 {SECTIONS.map(s => (
-                  <TouchableOpacity key={s} style={[styles.chip, section === s && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                  <TouchableOpacity key={s} style={[styles.chip, section === s && { backgroundColor: gold, borderColor: gold }]}
                     onPress={() => setSection(s)}>
                     <Text style={[styles.chipTxt, { color: section === s ? '#fff' : colors.textMuted }]}>{s}</Text>
                   </TouchableOpacity>
@@ -165,7 +165,7 @@ function BulkAddModal({ visible, onClose, onCreated, adminEmail, colors, styles 
               <Text style={[styles.label, { color: colors.textMuted }]}>Curriculum</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
                 {CURRICULA.map(c => (
-                  <TouchableOpacity key={c} style={[styles.chip, curriculum === c && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                  <TouchableOpacity key={c} style={[styles.chip, curriculum === c && { backgroundColor: gold, borderColor: gold }]}
                     onPress={() => setCurriculum(c)}>
                     <Text style={[styles.chipTxt, { color: curriculum === c ? '#fff' : colors.textMuted }]}>{c}</Text>
                   </TouchableOpacity>
@@ -176,7 +176,7 @@ function BulkAddModal({ visible, onClose, onCreated, adminEmail, colors, styles 
               <Text style={[styles.label, { color: colors.textMuted }]}>Add Students By</Text>
               <View style={[styles.modeRow, { backgroundColor: colors.bgDark, borderColor: colors.borderColor }]}>
                 {(['count', 'names'] as const).map(m => (
-                  <TouchableOpacity key={m} style={[styles.modeBtn, mode === m && { backgroundColor: colors.primary }]}
+                  <TouchableOpacity key={m} style={[styles.modeBtn, mode === m && { backgroundColor: gold }]}
                     onPress={() => setMode(m)}>
                     <Text style={[styles.modeTxt, { color: mode === m ? '#fff' : colors.textMuted }]}>
                       {m === 'count' ? 'Count (auto-name)' : 'Enter Names'}
@@ -206,7 +206,7 @@ function BulkAddModal({ visible, onClose, onCreated, adminEmail, colors, styles 
                 </>
               )}
 
-              <TouchableOpacity style={[styles.btn, styles.btnPrimary, { backgroundColor: colors.primary }]}
+              <TouchableOpacity style={[styles.btn, styles.btnPrimary, { backgroundColor: gold }]}
                 onPress={handleCreate} disabled={loading}>
                 {loading ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="users" size={15} color="#fff" />}
                 <Text style={styles.btnTxt}>{loading ? 'Creating...' : 'Create Students'}</Text>
@@ -222,6 +222,7 @@ function BulkAddModal({ visible, onClose, onCreated, adminEmail, colors, styles 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function SuperAdminStudentsScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const gold = colors.accentYellow;
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const adminEmail = user?.email || '';
@@ -392,7 +393,7 @@ export default function SuperAdminStudentsScreen({ navigation }: any) {
           {/* Stats row */}
           <View style={styles.statsRow}>
             {[
-              { label: 'Total', val: students.length, color: colors.primary },
+              { label: 'Total', val: students.length, color: gold },
               { label: 'Unassigned', val: unassigned, color: colors.accentYellow },
               { label: 'Active Today', val: students.filter(s => daysSince(s.student_stats?.last_active_date) === 'Today').length, color: colors.accentGreen },
               { label: 'Grades', val: grades.length - 1, color: colors.accentBlue },
@@ -414,7 +415,7 @@ export default function SuperAdminStudentsScreen({ navigation }: any) {
                 placeholder="Search students..." placeholderTextColor={colors.textDim}
               />
             </View>
-            <TouchableOpacity style={[styles.addBtn, { backgroundColor: colors.primary }]} onPress={() => setShowModal(true)}>
+            <TouchableOpacity style={[styles.addBtn, { backgroundColor: gold }]} onPress={() => setShowModal(true)}>
               <Feather name="user-plus" size={15} color="#fff" />
               <Text style={styles.addBtnTxt}>Bulk Add</Text>
             </TouchableOpacity>
@@ -428,7 +429,7 @@ export default function SuperAdminStudentsScreen({ navigation }: any) {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
             <Text style={[styles.filterLabel, { color: colors.textMuted }]}>Grade:</Text>
             {grades.map(g => (
-              <TouchableOpacity key={g} style={[styles.filterChip, filterGrade === g && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+              <TouchableOpacity key={g} style={[styles.filterChip, filterGrade === g && { backgroundColor: gold, borderColor: gold }]}
                 onPress={() => setFilterGrade(g)}>
                 <Text style={[styles.filterChipTxt, { color: filterGrade === g ? '#fff' : colors.textMuted }]}>{g}</Text>
               </TouchableOpacity>
@@ -436,7 +437,7 @@ export default function SuperAdminStudentsScreen({ navigation }: any) {
             {sections.length > 1 && <>
               <Text style={[styles.filterLabel, { color: colors.textMuted, marginLeft: 8 }]}>Sec:</Text>
               {sections.map(s => (
-                <TouchableOpacity key={s} style={[styles.filterChip, filterSection === s && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                <TouchableOpacity key={s} style={[styles.filterChip, filterSection === s && { backgroundColor: gold, borderColor: gold }]}
                   onPress={() => setFilterSection(s)}>
                   <Text style={[styles.filterChipTxt, { color: filterSection === s ? '#fff' : colors.textMuted }]}>{s}</Text>
                 </TouchableOpacity>
@@ -446,14 +447,14 @@ export default function SuperAdminStudentsScreen({ navigation }: any) {
 
           {/* Assign to teacher bar (shows when students selected) */}
           {selected.size > 0 && (
-            <View style={[styles.assignBar, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '40' }]}>
-              <Text style={[styles.assignBarTxt, { color: colors.primary }]}>{selected.size} selected</Text>
+            <View style={[styles.assignBar, { backgroundColor: gold + '18', borderColor: gold + '40' }]}>
+              <Text style={[styles.assignBarTxt, { color: gold }]}>{selected.size} selected</Text>
               <TextInput
                 style={[styles.assignInput, { color: colors.textMain, backgroundColor: colors.cardDark, borderColor: colors.borderColor }]}
                 value={assignEmail} onChangeText={setAssignEmail}
                 placeholder="Teacher email to assign" placeholderTextColor={colors.textDim}
               />
-              <TouchableOpacity style={[styles.assignBtn, { backgroundColor: colors.primary }]} onPress={handleAssign} disabled={assigning}>
+              <TouchableOpacity style={[styles.assignBtn, { backgroundColor: gold }]} onPress={handleAssign} disabled={assigning}>
                 {assigning ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.assignBtnTxt}>Assign</Text>}
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setSelected(new Set())} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -464,7 +465,7 @@ export default function SuperAdminStudentsScreen({ navigation }: any) {
 
           {/* Student list */}
           {loading ? (
-            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+            <ActivityIndicator size="large" color={gold} style={{ marginTop: 40 }} />
           ) : filtered.length === 0 ? (
             <View style={[styles.emptyCard, { backgroundColor: colors.cardDark, borderColor: colors.borderColor }]}>
               <Feather name="users" size={28} color={colors.textDim} />
@@ -492,20 +493,20 @@ export default function SuperAdminStudentsScreen({ navigation }: any) {
                     key={s.id}
                     style={[styles.tableRow,
                       idx % 2 === 1 && { backgroundColor: colors.cardHover },
-                      isSelected && { backgroundColor: colors.primary + '18' },
+                      isSelected && { backgroundColor: gold + '18' },
                       idx < filtered.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.borderColor },
                     ]}
                     onPress={() => toggleSelect(s.id)}
                     activeOpacity={0.7}
                   >
                     <View style={styles.colCheck}>
-                      <View style={[styles.checkbox, { borderColor: isSelected ? colors.primary : colors.borderColor, backgroundColor: isSelected ? colors.primary : 'transparent' }]}>
+                      <View style={[styles.checkbox, { borderColor: isSelected ? gold : colors.borderColor, backgroundColor: isSelected ? gold : 'transparent' }]}>
                         {isSelected && <Feather name="check" size={10} color="#fff" />}
                       </View>
                     </View>
                     <View style={styles.colName}>
-                      <View style={[styles.avatar, { backgroundColor: colors.primary + '20' }]}>
-                        <Text style={[styles.avatarTxt, { color: colors.primary }]}>{s.name?.[0]?.toUpperCase() || '?'}</Text>
+                      <View style={[styles.avatar, { backgroundColor: gold + '20' }]}>
+                        <Text style={[styles.avatarTxt, { color: gold }]}>{s.name?.[0]?.toUpperCase() || '?'}</Text>
                       </View>
                       <View style={{ flex: 1, minWidth: 0 }}>
                         <Text style={[styles.studentName, { color: colors.textMain }]} numberOfLines={1}>{s.name}</Text>
@@ -554,9 +555,9 @@ export default function SuperAdminStudentsScreen({ navigation }: any) {
                   {Array.from(new Set(students.map(s => s.grade).filter(Boolean))).sort().map(g => (
                     <TouchableOpacity key={g} onPress={() => { setMapGrade(g); setMapTeacher(null); }}
                       style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.sm, borderWidth: 1,
-                        borderColor: mapGrade === g ? colors.primary : colors.borderColor,
-                        backgroundColor: mapGrade === g ? colors.primaryGlow : 'transparent' }}>
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: mapGrade === g ? colors.primary : colors.textMuted }}>{g}</Text>
+                        borderColor: mapGrade === g ? gold : colors.borderColor,
+                        backgroundColor: mapGrade === g ? gold + '18' : 'transparent' }}>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: mapGrade === g ? gold : colors.textMuted }}>{g}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -569,9 +570,9 @@ export default function SuperAdminStudentsScreen({ navigation }: any) {
                   {Array.from(new Set(students.filter(s => s.grade === mapGrade).map(s => s.section).filter(Boolean))).sort().map(sec => (
                     <TouchableOpacity key={sec} onPress={() => setMapSection(sec)}
                       style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.sm, borderWidth: 1,
-                        borderColor: mapSection === sec ? colors.primary : colors.borderColor,
-                        backgroundColor: mapSection === sec ? colors.primaryGlow : 'transparent' }}>
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: mapSection === sec ? colors.primary : colors.textMuted }}>Section {sec}</Text>
+                        borderColor: mapSection === sec ? gold : colors.borderColor,
+                        backgroundColor: mapSection === sec ? gold + '18' : 'transparent' }}>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: mapSection === sec ? gold : colors.textMuted }}>Section {sec}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -606,10 +607,10 @@ export default function SuperAdminStudentsScreen({ navigation }: any) {
                       return (
                         <TouchableOpacity key={t.id} onPress={() => setMapTeacher(t)}
                           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 9, borderRadius: radius.sm, marginBottom: 4,
-                            backgroundColor: isChosen ? colors.primaryGlow : 'transparent',
-                            borderWidth: 1, borderColor: isChosen ? colors.primary : colors.borderColor }}>
-                          <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center' }}>
-                            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>{t.name?.[0]?.toUpperCase() || '?'}</Text>
+                            backgroundColor: isChosen ? gold + '18' : 'transparent',
+                            borderWidth: 1, borderColor: isChosen ? gold : colors.borderColor }}>
+                          <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: gold + '20', alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: gold }}>{t.name?.[0]?.toUpperCase() || '?'}</Text>
                           </View>
                           <View style={{ flex: 1 }}>
                             <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain }}>{t.name}</Text>
@@ -618,7 +619,7 @@ export default function SuperAdminStudentsScreen({ navigation }: any) {
                               {t.teaches?.length > 0 ? ` · ${t.teaches.map((x: any) => x.subjects?.join(', ')).filter(Boolean).join(' | ')}` : ''}
                             </Text>
                           </View>
-                          {isChosen && <Feather name="check-circle" size={16} color={colors.primary} />}
+                          {isChosen && <Feather name="check-circle" size={16} color={gold} />}
                         </TouchableOpacity>
                       );
                     })}
@@ -682,7 +683,7 @@ export default function SuperAdminStudentsScreen({ navigation }: any) {
                 <TouchableOpacity
                   onPress={handleSingleAssign}
                   disabled={singleAssigning || !singleAssignEmail.trim()}
-                  style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.sm, backgroundColor: colors.primary, opacity: singleAssigning || !singleAssignEmail.trim() ? 0.5 : 1 }}
+                  style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.sm, backgroundColor: gold, opacity: singleAssigning || !singleAssignEmail.trim() ? 0.5 : 1 }}
                 >
                   {singleAssigning
                     ? <ActivityIndicator size="small" color="#fff" />

@@ -252,6 +252,7 @@ function formatDate(dateStr: string) {
 
 export default function TeacherAssignmentsScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const gold = colors.accentYellow;
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -1176,7 +1177,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           {/* Stats Row */}
           <View style={styles.statsRow}>
             {[
-              { label: 'Total', value: stats.total, color: colors.primary },
+              { label: 'Total', value: stats.total, color: gold },
               { label: 'Active', value: stats.active, color: colors.accentYellow },
               { label: 'Completed', value: stats.completed, color: colors.accentGreen },
               { label: 'Overdue', value: stats.overdue, color: colors.accentRed },
@@ -1193,16 +1194,16 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => setActiveTab('Quiz Library')}
-              style={{ marginBottom: 12, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary + '50', backgroundColor: colors.primaryGlow, flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}
+              style={{ marginBottom: 12, borderRadius: 14, borderWidth: 1.5, borderColor: gold + '50', backgroundColor: gold + '18', flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}
             >
-              <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: colors.primary + '25', alignItems: 'center', justifyContent: 'center' }}>
-                <Feather name="zap" size={18} color={colors.primary} />
+              <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: gold + '25', alignItems: 'center', justifyContent: 'center' }}>
+                <Feather name="zap" size={18} color={gold} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMain }}>Save time. Reuse a saved quiz!</Text>
                 <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>Tap to explore Quiz Library and assign in seconds.</Text>
               </View>
-              <Feather name="chevron-right" size={16} color={colors.primary} />
+              <Feather name="chevron-right" size={16} color={gold} />
             </TouchableOpacity>
           )}
 
@@ -1221,12 +1222,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               ))}
             </ScrollView>
             <TouchableOpacity
-              style={[styles.createBtn, activeTab === 'Quiz Library' ? { backgroundColor: colors.primary } : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary }]}
+              style={[styles.createBtn, activeTab === 'Quiz Library' ? { backgroundColor: gold } : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: gold }]}
               onPress={() => setActiveTab(activeTab === 'Quiz Library' ? 'All' : 'Quiz Library')}
               activeOpacity={0.85}
             >
-              <Feather name="book-open" size={15} color={activeTab === 'Quiz Library' ? '#0F0F0F' : colors.primary} />
-              <Text style={[styles.createBtnText, { color: activeTab === 'Quiz Library' ? '#0F0F0F' : colors.primary }]}>Library</Text>
+              <Feather name="book-open" size={15} color={activeTab === 'Quiz Library' ? '#0F0F0F' : gold} />
+              <Text style={[styles.createBtnText, { color: activeTab === 'Quiz Library' ? '#0F0F0F' : gold }]}>Library</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.createBtn} onPress={() => setShowModal(true)} activeOpacity={0.85}>
               <Feather name="plus" size={15} color="#fff" />
@@ -1243,11 +1244,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   {['', ...SUBJECTS].map((s) => (
                     <TouchableOpacity
                       key={s || 'all'}
-                      style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1.5, borderColor: librarySubject === s ? colors.primary : colors.borderColor, backgroundColor: librarySubject === s ? colors.primary + '20' : 'transparent' }}
+                      style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1.5, borderColor: librarySubject === s ? gold : colors.borderColor, backgroundColor: librarySubject === s ? gold + '20' : 'transparent' }}
                       onPress={() => setLibrarySubject(s)}
                       activeOpacity={0.75}
                     >
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: librarySubject === s ? colors.primary : colors.textDim }}>{s || 'All Subjects'}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: librarySubject === s ? gold : colors.textDim }}>{s || 'All Subjects'}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -1255,11 +1256,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   {['', ...ALL_GRADES].map((g) => (
                     <TouchableOpacity
                       key={g || 'all'}
-                      style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1.5, borderColor: libraryGrade === g ? colors.primary : colors.borderColor, backgroundColor: libraryGrade === g ? colors.primary + '20' : 'transparent' }}
+                      style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, borderWidth: 1.5, borderColor: libraryGrade === g ? gold : colors.borderColor, backgroundColor: libraryGrade === g ? gold + '20' : 'transparent' }}
                       onPress={() => setLibraryGrade(g)}
                       activeOpacity={0.75}
                     >
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: libraryGrade === g ? colors.primary : colors.textDim }}>{g || 'All Grades'}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: libraryGrade === g ? gold : colors.textDim }}>{g || 'All Grades'}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -1285,7 +1286,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   </View>
                 ) : (
                   libraryQuizzes.map((q) => {
-                    const subjectColor = SUBJECT_COLORS[q.subject] || colors.primary;
+                    const subjectColor = SUBJECT_COLORS[q.subject] || gold;
                     const questionCount = q.quiz_data?.tasks?.reduce((s: number, t: any) => s + (t.questions?.length || 0), 0) || 0;
                     return (
                       <TouchableOpacity key={q.id} style={[styles.card, { marginBottom: 12 }]} activeOpacity={0.85} onPress={async () => {
@@ -1356,7 +1357,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
             {filtered.map((a) => {
               const due = daysUntil(a.dueDate);
-              const subjectColor = SUBJECT_COLORS[a.subject] || colors.primary;
+              const subjectColor = SUBJECT_COLORS[a.subject] || gold;
               return (
                 <TouchableOpacity key={a.id} style={[styles.card, { width: '47.5%', minWidth: 280 }]} activeOpacity={0.85} onPress={() => setDetailAssignment(a)}>
                   <View style={[styles.cardAccent, { backgroundColor: subjectColor }]} />
@@ -1373,7 +1374,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           {a.curriculum ? <Text style={styles.subjectLabel}>{a.curriculum}</Text> : null}
                           {a.studentId === null && (
                             <View style={styles.broadcastPill}>
-                              <Feather name="users" size={9} color={colors.primary} />
+                              <Feather name="users" size={9} color={gold} />
                               <Text style={styles.broadcastText}>All students</Text>
                             </View>
                           )}
@@ -1436,7 +1437,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         {/* Quiz Library Preview Modal */}
         {libraryPreviewQuiz && (() => {
           const q = libraryPreviewQuiz;
-          const subjectColor = SUBJECT_COLORS[q.subject] || colors.primary;
+          const subjectColor = SUBJECT_COLORS[q.subject] || gold;
           const tasks: any[] = q.quiz_data?.tasks || [];
           const allQuestions: any[] = tasks.flatMap((t: any) => t.questions || []);
           return (
@@ -1514,7 +1515,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         {/* Assignment Detail Modal */}
         {detailAssignment && (() => {
           const a = detailAssignment;
-          const sc = SUBJECT_COLORS[a.subject] || colors.primary;
+          const sc = SUBJECT_COLORS[a.subject] || gold;
           const due = daysUntil(a.dueDate);
           const completedCount = detailSubmissions.filter(s => s.status === 'completed').length;
           const totalCount = detailTotalLinked || detailSubmissions.length;
@@ -1546,7 +1547,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           {a.curriculum && <View style={styles.broadcastPill}><Text style={styles.broadcastText}>{a.curriculum}</Text></View>}
                           {a.studentId === null && (
                             <View style={styles.broadcastPill}>
-                              <Feather name="users" size={9} color={colors.primary} />
+                              <Feather name="users" size={9} color={gold} />
                               <Text style={styles.broadcastText}>All students</Text>
                             </View>
                           )}
@@ -2109,12 +2110,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       }}
                       activeOpacity={0.8}
                     >
-                      <Feather name="file-text" size={20} color={colors.primary} />
+                      <Feather name="file-text" size={20} color={gold} />
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }} numberOfLines={1}>{q.title || 'Untitled Quiz'}</Text>
                         <Text style={{ fontSize: 12, color: colors.textDim, marginTop: 2 }}>{[q.subject, q.grade].filter(Boolean).join(' · ')}{q.created_at ? ` · ${new Date(q.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}</Text>
                       </View>
-                      <Feather name="chevron-right" size={16} color={colors.primary} />
+                      <Feather name="chevron-right" size={16} color={gold} />
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -2337,12 +2338,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     ]).map((s, i) => (
                       <React.Fragment key={s.num}>
                         {i > 0 && (
-                          <View style={{ flex: 1, height: 2, marginHorizontal: 8, backgroundColor: uploadStep >= s.num ? colors.primary : colors.borderColor, borderRadius: 1 }} />
+                          <View style={{ flex: 1, height: 2, marginHorizontal: 8, backgroundColor: uploadStep >= s.num ? gold : colors.borderColor, borderRadius: 1 }} />
                         )}
                         <View style={{ alignItems: 'center' }}>
                           <View style={{
                             width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
-                            backgroundColor: uploadStep >= s.num ? colors.primary : colors.bgDark,
+                            backgroundColor: uploadStep >= s.num ? gold : colors.bgDark,
                             borderWidth: uploadStep >= s.num ? 0 : 1.5,
                             borderColor: colors.borderColor,
                           }}>
@@ -2352,7 +2353,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                               <Text style={{ fontSize: 13, fontWeight: '800', color: uploadStep >= s.num ? '#fff' : colors.textDim }}>{s.num}</Text>
                             )}
                           </View>
-                          <Text style={{ fontSize: 10, fontWeight: '600', marginTop: 4, color: uploadStep === s.num ? colors.primary : colors.textDim }}>{s.label}</Text>
+                          <Text style={{ fontSize: 10, fontWeight: '600', marginTop: 4, color: uploadStep === s.num ? gold : colors.textDim }}>{s.label}</Text>
                         </View>
                       </React.Fragment>
                     ))}
@@ -2392,21 +2393,21 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                       {/* Option 2: Upload Worksheet */}
                       <TouchableOpacity
-                        style={{ padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: colors.primary + '40', backgroundColor: colors.primaryGlow, gap: 8 }}
+                        style={{ padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: gold + '40', backgroundColor: gold + '18', gap: 8 }}
                         onPress={() => { setCreateMode('upload'); setUploadStep(1); uploadScrollRef.current?.scrollTo({ y: 0, animated: false }); }}
                         activeOpacity={0.8}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center' }}>
-                            <Feather name="upload" size={20} color={colors.primary} />
+                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: gold + '20', alignItems: 'center', justifyContent: 'center' }}>
+                            <Feather name="upload" size={20} color={gold} />
                           </View>
                           <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 15, fontWeight: '800', color: colors.primary }}>Upload Worksheet (PDF / Image)</Text>
+                            <Text style={{ fontSize: 15, fontWeight: '800', color: gold }}>Upload Worksheet (PDF / Image)</Text>
                             <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
                               Extract questions from worksheet, use as-is or convert to interactive quiz
                             </Text>
                           </View>
-                          <Feather name="chevron-right" size={18} color={colors.primary} />
+                          <Feather name="chevron-right" size={18} color={gold} />
                         </View>
                       </TouchableOpacity>
                     </View>
@@ -2424,13 +2425,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
                       <View style={{ flexDirection: 'row', gap: 10 }}>
                         {docFiles.map((f, idx) => (
-                          <View key={idx} style={{ width: 140, borderRadius: 10, overflow: 'hidden', position: 'relative', borderWidth: 1.5, borderColor: colors.primary + '60' }}>
+                          <View key={idx} style={{ width: 140, borderRadius: 10, overflow: 'hidden', position: 'relative', borderWidth: 1.5, borderColor: gold + '60' }}>
                             <TouchableOpacity activeOpacity={0.8} onPress={() => f.mime.startsWith('image/') && setFullscreenImage(`data:${f.mime};base64,${f.base64}`)}>
                             {f.mime.startsWith('image/') ? (
                               <Image source={{ uri: `data:${f.mime};base64,${f.base64}` }} style={{ width: 140, height: 190 }} resizeMode="contain" />
                             ) : (
-                              <View style={{ width: 140, height: 190, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primaryGlow }}>
-                                <Feather name="file-text" size={28} color={colors.primary} />
+                              <View style={{ width: 140, height: 190, alignItems: 'center', justifyContent: 'center', backgroundColor: gold + '18' }}>
+                                <Feather name="file-text" size={28} color={gold} />
                               </View>
                             )}
                             <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingVertical: 3, backgroundColor: 'rgba(0,0,0,0.55)' }}>
@@ -2462,9 +2463,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     ) : extractingQuestions ? (
                       <ActivityIndicator size="small" color={colors.accentYellow} />
                     ) : (
-                      <Feather name="plus-circle" size={18} color={colors.primary} />
+                      <Feather name="plus-circle" size={18} color={gold} />
                     )}
-                    <Text style={[styles.uploadDocText, { color: colors.primary }]}>
+                    <Text style={[styles.uploadDocText, { color: gold }]}>
                       {uploadingDoc ? 'Uploading...' : extractingQuestions ? 'Analyzing worksheet...' : docFiles.length === 0 ? 'Upload worksheet (image, PDF or DOCX)' : 'Add another page'}
                     </Text>
                   </TouchableOpacity>
@@ -2519,11 +2520,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     {SUBJECTS.map((s) => (
                       <TouchableOpacity
                         key={s}
-                        style={[styles.chip, subject === s && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
+                        style={[styles.chip, subject === s && { backgroundColor: gold + '18', borderColor: gold }]}
                         onPress={() => setSubject(s)}
                         activeOpacity={0.75}
                       >
-                        <Text style={[styles.chipText, subject === s && { color: colors.primary }]}>{s}</Text>
+                        <Text style={[styles.chipText, subject === s && { color: gold }]}>{s}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -2552,11 +2553,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     {gradeOptions.map((g) => (
                       <TouchableOpacity
                         key={g}
-                        style={[styles.chip, effectiveGrade === g && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
+                        style={[styles.chip, effectiveGrade === g && { backgroundColor: gold + '18', borderColor: gold }]}
                         onPress={() => setGrade(g)}
                         activeOpacity={0.75}
                       >
-                        <Text style={[styles.chipText, effectiveGrade === g && { color: colors.primary }]}>{g}</Text>
+                        <Text style={[styles.chipText, effectiveGrade === g && { color: gold }]}>{g}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -2566,12 +2567,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     {(curriculumOptions.length > 0 ? curriculumOptions : [teacherCurriculum || curriculum]).map((c) => (
                       <TouchableOpacity
                         key={c}
-                        style={[styles.chip, effectiveCurriculum === c && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
+                        style={[styles.chip, effectiveCurriculum === c && { backgroundColor: gold + '18', borderColor: gold }]}
                         onPress={() => setCurriculum(c)}
                         activeOpacity={0.75}
                         disabled={curriculumOptions.length <= 1}
                       >
-                        <Text style={[styles.chipText, effectiveCurriculum === c && { color: colors.primary }]}>{c}</Text>
+                        <Text style={[styles.chipText, effectiveCurriculum === c && { color: gold }]}>{c}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -3032,8 +3033,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         activeOpacity={0.75}
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
                       >
-                        <Feather name="plus-circle" size={14} color={colors.primary} />
-                        <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>Add</Text>
+                        <Feather name="plus-circle" size={14} color={gold} />
+                        <Text style={{ fontSize: 12, color: gold, fontWeight: '600' }}>Add</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -3310,8 +3311,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       )}
                       <TouchableOpacity
                         style={{ padding: 16, borderRadius: 14, borderWidth: 1.5,
-                          borderColor: interactiveQuiz ? colors.accentGreen + '60' : colors.primary + '60',
-                          backgroundColor: interactiveQuiz ? colors.accentGreen + '10' : colors.primaryGlow,
+                          borderColor: interactiveQuiz ? colors.accentGreen + '60' : gold + '60',
+                          backgroundColor: interactiveQuiz ? colors.accentGreen + '10' : gold + '18',
                           flexDirection: 'row', alignItems: 'center', gap: 12 }}
                         onPress={generateInteractiveQuiz}
                         activeOpacity={0.8}
@@ -3322,10 +3323,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         ) : interactiveQuiz ? (
                           <Feather name="check-circle" size={22} color={colors.accentGreen} />
                         ) : (
-                          <Feather name="play-circle" size={22} color={colors.primary} />
+                          <Feather name="play-circle" size={22} color={gold} />
                         )}
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 15, fontWeight: '800', color: interactiveQuiz ? colors.accentGreen : colors.primary }}>
+                          <Text style={{ fontSize: 15, fontWeight: '800', color: interactiveQuiz ? colors.accentGreen : gold }}>
                             {generatingInteractiveQuiz ? 'Generating Interactive Quiz...' : interactiveQuiz ? 'Interactive Quiz Ready' : 'Generate Interactive Quiz'}
                           </Text>
                           <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
@@ -3333,7 +3334,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           </Text>
                         </View>
                         {!generatingInteractiveQuiz && (
-                          <Feather name={interactiveQuiz ? 'external-link' : 'chevron-right'} size={18} color={interactiveQuiz ? colors.accentGreen : colors.primary} />
+                          <Feather name={interactiveQuiz ? 'external-link' : 'chevron-right'} size={18} color={interactiveQuiz ? colors.accentGreen : gold} />
                         )}
                       </TouchableOpacity>
 
@@ -3342,7 +3343,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         <View style={{ gap: 10 }}>
                           {/* Teacher Preview - in-app editable answers/hints/solutions */}
                           <TouchableOpacity
-                            style={{ padding: 14, borderRadius: 12, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                            style={{ padding: 14, borderRadius: 12, backgroundColor: gold, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                             onPress={() => setShowInteractivePreview(true)}
                             activeOpacity={0.8}
                           >
@@ -3351,7 +3352,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           </TouchableOpacity>
                           {/* Student Preview - full interactive HTML quiz */}
                           <TouchableOpacity
-                            style={{ padding: 14, borderRadius: 12, backgroundColor: colors.primaryGlow, borderWidth: 1.5, borderColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                            style={{ padding: 14, borderRadius: 12, backgroundColor: gold + '18', borderWidth: 1.5, borderColor: gold, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                             onPress={async () => {
                               try {
                                 const res = await fetch(`${SERVER_URL}/quiz/render-preview`, {
@@ -3368,8 +3369,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                             }}
                             activeOpacity={0.8}
                           >
-                            <Feather name="eye" size={16} color={colors.primary} />
-                            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.primary }}>Student Preview</Text>
+                            <Feather name="eye" size={16} color={gold} />
+                            <Text style={{ fontSize: 14, fontWeight: '700', color: gold }}>Student Preview</Text>
                           </TouchableOpacity>
                         </View>
                       )}
@@ -3394,15 +3395,15 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         activeOpacity={0.75}
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 8 }}
                       >
-                        <Feather name="plus-circle" size={14} color={colors.primary} />
-                        <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>Add</Text>
+                        <Feather name="plus-circle" size={14} color={gold} />
+                        <Text style={{ fontSize: 12, color: gold, fontWeight: '600' }}>Add</Text>
                       </TouchableOpacity>
                     )}
                   </View>
                   {successCriteria.map((c, i) => (
                     <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <View style={{ width: 20, height: 20, borderRadius: 4, borderWidth: 1.5, borderColor: colors.primary + '60', alignItems: 'center', justifyContent: 'center' }}>
-                        <Feather name="check" size={11} color={colors.primary} />
+                      <View style={{ width: 20, height: 20, borderRadius: 4, borderWidth: 1.5, borderColor: gold + '60', alignItems: 'center', justifyContent: 'center' }}>
+                        <Feather name="check" size={11} color={gold} />
                       </View>
                       <TextInput
                         style={[styles.input, { flex: 1 }]}
@@ -3436,20 +3437,20 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   <Text style={styles.fieldLabel}>Assign to</Text>
                   <View style={styles.chipRow}>
                     <TouchableOpacity
-                      style={[styles.chip, assignTo === 'all' && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
+                      style={[styles.chip, assignTo === 'all' && { backgroundColor: gold + '18', borderColor: gold }]}
                       onPress={() => { setAssignTo('all'); setSelectedStudent(null); }}
                       activeOpacity={0.75}
                     >
-                      <Feather name="users" size={13} color={assignTo === 'all' ? colors.primary : colors.textMuted} />
-                      <Text style={[styles.chipText, assignTo === 'all' && { color: colors.primary }]}>All students</Text>
+                      <Feather name="users" size={13} color={assignTo === 'all' ? gold : colors.textMuted} />
+                      <Text style={[styles.chipText, assignTo === 'all' && { color: gold }]}>All students</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.chip, assignTo === 'specific' && { backgroundColor: colors.primaryGlow, borderColor: colors.primary }]}
+                      style={[styles.chip, assignTo === 'specific' && { backgroundColor: gold + '18', borderColor: gold }]}
                       onPress={() => setAssignTo('specific')}
                       activeOpacity={0.75}
                     >
-                      <Feather name="user" size={13} color={assignTo === 'specific' ? colors.primary : colors.textMuted} />
-                      <Text style={[styles.chipText, assignTo === 'specific' && { color: colors.primary }]}>Specific student</Text>
+                      <Feather name="user" size={13} color={assignTo === 'specific' ? gold : colors.textMuted} />
+                      <Text style={[styles.chipText, assignTo === 'specific' && { color: gold }]}>Specific student</Text>
                     </TouchableOpacity>
                   </View>
 
@@ -3457,7 +3458,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     <View style={styles.studentPickerBox}>
                       {selectedStudent ? (
                         <TouchableOpacity style={styles.selectedStudentChip} onPress={() => setSelectedStudent(null)} activeOpacity={0.7}>
-                          <Feather name="user" size={13} color={colors.primary} />
+                          <Feather name="user" size={13} color={gold} />
                           <Text style={styles.selectedStudentName}>{selectedStudent.name}</Text>
                           <Text style={styles.selectedStudentGrade}>{selectedStudent.grade}</Text>
                           <Feather name="x" size={13} color={colors.textDim} />
@@ -3513,7 +3514,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                   {assignTo === 'all' && (
                     <View style={styles.broadcastNote}>
-                      <Feather name="info" size={13} color={colors.primary} />
+                      <Feather name="info" size={13} color={gold} />
                       <Text style={styles.broadcastNoteText}>This assignment will be sent to all your students.</Text>
                     </View>
                   )}
@@ -3629,7 +3630,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     <TouchableOpacity
                       key={pi}
                       onPress={() => { setCropPageIdx(pi); setCropSelection(null); }}
-                      style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 6, backgroundColor: cropPageIdx === pi ? colors.primary : colors.bgDark, borderWidth: 1, borderColor: cropPageIdx === pi ? colors.primary : colors.borderColor }}
+                      style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 6, backgroundColor: cropPageIdx === pi ? gold : colors.bgDark, borderWidth: 1, borderColor: cropPageIdx === pi ? gold : colors.borderColor }}
                     >
                       <Text style={{ fontSize: 11, color: cropPageIdx === pi ? '#fff' : colors.textDim }}>Page {pi + 1}</Text>
                     </TouchableOpacity>
@@ -3745,7 +3746,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     }
                   }}
                   disabled={!cropSelection || Math.abs((cropSelection?.endX || 0) - (cropSelection?.startX || 0)) < 10}
-                  style={{ paddingVertical: 8, paddingHorizontal: 20, borderRadius: 8, backgroundColor: cropSelection && Math.abs(cropSelection.endX - cropSelection.startX) >= 10 ? colors.primary : colors.bgDark }}
+                  style={{ paddingVertical: 8, paddingHorizontal: 20, borderRadius: 8, backgroundColor: cropSelection && Math.abs(cropSelection.endX - cropSelection.startX) >= 10 ? gold : colors.bgDark }}
                 >
                   <Text style={{ fontSize: 12, fontWeight: '600', color: '#fff' }}>Crop & Attach</Text>
                 </TouchableOpacity>
@@ -3777,8 +3778,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     {subject} · {grade} · {curriculum} · Due: {dueDate}
                   </Text>
                   <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
-                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: type === 'quiz' ? colors.primary + '20' : colors.accentYellow + '20' }}>
-                      <Text style={{ fontSize: 10, fontWeight: '700', color: type === 'quiz' ? colors.primary : colors.accentYellow }}>
+                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: type === 'quiz' ? gold + '20' : colors.accentYellow + '20' }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: type === 'quiz' ? gold : colors.accentYellow }}>
                         {type === 'quiz' ? 'QUIZ' : 'ASSIGNMENT'}
                       </Text>
                     </View>
@@ -3809,7 +3810,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     {quizQuestions.map((q, i) => (
                       <View key={q.id || i} style={{ padding: 12, borderRadius: 12, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, gap: 8 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                          <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+                          <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: gold, alignItems: 'center', justifyContent: 'center' }}>
                             <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{i + 1}</Text>
                           </View>
                           <TextInput
@@ -3950,8 +3951,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                 {docFiles.length > 0 && (
                   <View style={{ gap: 8 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <Feather name="image" size={14} color={colors.primary} />
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primary }}>
+                      <Feather name="image" size={14} color={gold} />
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: gold }}>
                         Worksheet Pages ({docFiles.length})
                       </Text>
                     </View>
@@ -3963,7 +3964,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                               <Image source={{ uri: `data:${f.mime};base64,${f.base64}` }} style={{ width: 160, height: 220 }} resizeMode="contain" />
                             ) : (
                               <View style={{ width: 160, height: 220, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bgDark }}>
-                                <Feather name="file-text" size={32} color={colors.primary} />
+                                <Feather name="file-text" size={32} color={gold} />
                               </View>
                             )}
                             <View style={{ padding: 6, backgroundColor: colors.bgDark }}>
@@ -4040,12 +4041,12 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor,
     backgroundColor: c.cardDark,
   },
-  tabActive: { backgroundColor: c.primaryGlow, borderColor: c.primary },
+  tabActive: { backgroundColor: c.accentYellow + '18', borderColor: c.accentYellow },
   tabText: { fontSize: 13, fontWeight: '600', color: c.textMuted },
-  tabTextActive: { color: c.primary },
+  tabTextActive: { color: c.accentYellow },
   createBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: c.primary, paddingHorizontal: spacing.md, paddingVertical: 9,
+    backgroundColor: c.accentYellow, paddingHorizontal: spacing.md, paddingVertical: 9,
     borderRadius: radius.md,
   },
   createBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
@@ -4069,10 +4070,10 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   subjectLabel: { fontSize: 11, color: c.textDim, fontWeight: '600' },
   broadcastPill: {
     flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: c.primaryGlow, borderRadius: 6,
+    backgroundColor: c.accentYellow + '18', borderRadius: 6,
     paddingHorizontal: 6, paddingVertical: 2,
   },
-  broadcastText: { fontSize: 9, color: c.primary, fontWeight: '700' },
+  broadcastText: { fontSize: 9, color: c.accentYellow, fontWeight: '700' },
   cardTitle: { fontSize: 15, fontWeight: '700', color: c.textMain },
   cardChapter: { fontSize: 12, color: c.textMuted, marginTop: 2 },
 
@@ -4111,7 +4112,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   modalSaveBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 6, paddingVertical: 12, borderRadius: radius.md,
-    backgroundColor: c.primary,
+    backgroundColor: c.accentYellow,
   },
   modalSaveBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
   modalCancelBtn: {
@@ -4155,14 +4156,14 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   uploadDocText: { fontSize: 13, fontWeight: '500', color: c.textMuted, flex: 1 },
   broadcastNote: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: c.primaryGlow, borderRadius: radius.md,
-    padding: spacing.md, borderWidth: 1, borderColor: c.primary + '30',
+    backgroundColor: c.accentYellow + '18', borderRadius: radius.md,
+    padding: spacing.md, borderWidth: 1, borderColor: c.accentYellow + '30',
   },
-  broadcastNoteText: { fontSize: 12, color: c.primary, flex: 1 },
+  broadcastNoteText: { fontSize: 12, color: c.accentYellow, flex: 1 },
   errorText: { fontSize: 13, color: c.accentRed, fontWeight: '600' },
   submitBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: c.primary, padding: 16, borderRadius: radius.md, marginTop: spacing.sm,
+    backgroundColor: c.accentYellow, padding: 16, borderRadius: radius.md, marginTop: spacing.sm,
   },
   submitBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
   // Student picker
@@ -4177,15 +4178,15 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: c.borderColor + '60',
   },
   studentAvatar: {
-    width: 30, height: 30, borderRadius: 15, backgroundColor: c.primary + '30',
+    width: 30, height: 30, borderRadius: 15, backgroundColor: c.accentYellow + '30',
     alignItems: 'center', justifyContent: 'center',
   },
-  studentAvatarText:    { fontSize: 13, fontWeight: '700', color: c.primary },
+  studentAvatarText:    { fontSize: 13, fontWeight: '700', color: c.accentYellow },
   studentRowName:       { fontSize: 13, fontWeight: '600', color: c.textMain },
   studentRowGrade:      { fontSize: 11, color: c.textDim },
   selectedStudentChip: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    padding: spacing.md, backgroundColor: c.primary + '14',
+    padding: spacing.md, backgroundColor: c.accentYellow + '14',
   },
   selectedStudentName:  { fontSize: 13, fontWeight: '600', color: c.textMain, flex: 1 },
   selectedStudentGrade: { fontSize: 11, color: c.textDim },
@@ -4198,7 +4199,7 @@ const SUBJECT_COLORS_MAP: Record<string, string> = {
 };
 
 function AIReportModal({ assignment, colors, onClose }: { assignment: Assignment; colors: AppColors; onClose: () => void }) {
-  const color = SUBJECT_COLORS_MAP[assignment.subject] || colors.primary;
+  const color = SUBJECT_COLORS_MAP[assignment.subject] || gold;
 
   let feedbackText = '';
   let stamp = '';

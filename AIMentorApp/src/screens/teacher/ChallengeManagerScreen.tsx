@@ -68,6 +68,7 @@ const DIFF_COLOR = (d: string, c: AppColors) =>
 // ── Main Component ────────────────────────────────────────────────────
 export default function ChallengeManagerScreen() {
   const { colors } = useTheme();
+  const gold = colors.accentYellow;
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [challenges, setChallenges] = useState<Challenge[]>([]);
@@ -169,8 +170,8 @@ export default function ChallengeManagerScreen() {
                 </View>
                 <View style={styles.cardActions}>
                   <TouchableOpacity style={styles.actionBtn} onPress={() => { setEditTarget(c); setShowCreateModal(true); }}>
-                    <Feather name="edit-2" size={14} color={colors.primary} />
-                    <Text style={[styles.actionText, { color: colors.primary }]}>Edit</Text>
+                    <Feather name="edit-2" size={14} color={gold} />
+                    <Text style={[styles.actionText, { color: gold }]}>Edit</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.actionBtn} onPress={() => setDeleteConfirm(c)}>
                     <Feather name="trash-2" size={14} color={colors.accentRed} />
@@ -461,14 +462,14 @@ function ChallengeFormModal({
                 {TYPES.map(t => (
                   <TouchableOpacity
                     key={t}
-                    style={[s.typeCard, type === t && { borderColor: colors.primary, backgroundColor: colors.primary + '18' }]}
+                    style={[s.typeCard, type === t && { borderColor: gold, backgroundColor: gold + '18' }]}
                     onPress={() => {
                       setType(t);
                       setCategory(TYPE_LABELS[t] || t);
                     }}
                   >
-                    <Feather name={TYPE_ICONS[t] as any} size={16} color={type === t ? colors.primary : colors.textMuted} />
-                    <Text style={[s.typeCardText, type === t && { color: colors.primary, fontWeight: '700' }]}>{TYPE_LABELS[t]}</Text>
+                    <Feather name={TYPE_ICONS[t] as any} size={16} color={type === t ? gold : colors.textMuted} />
+                    <Text style={[s.typeCardText, type === t && { color: gold, fontWeight: '700' }]}>{TYPE_LABELS[t]}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -589,7 +590,7 @@ function QuestionPreviewList({ questions, onChange, colors }: { questions: Quest
       <Text style={[s.sectionLabel, { marginBottom: 8 }]}>{questions.length} Questions Generated</Text>
       {questions.map((q, i) => (
         <View key={i} style={[s.qCard, { backgroundColor: colors.cardDark }]}>
-          <Text style={[s.qNum, { color: colors.primary }]}>Q{i + 1}</Text>
+          <Text style={[s.qNum, { color: gold }]}>Q{i + 1}</Text>
           <TextInput
             style={[s.qInput, { color: colors.textMain }]}
             value={q.question}
@@ -663,7 +664,7 @@ function ManualQuestionsEditor({ questions, onChange, colors }: { questions: Que
       {questions.map((q, i) => (
         <View key={i} style={[s.qCard, { backgroundColor: colors.cardDark }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <Text style={[s.qNum, { color: colors.primary }]}>Q{i + 1}</Text>
+            <Text style={[s.qNum, { color: gold }]}>Q{i + 1}</Text>
             <TouchableOpacity onPress={() => removeQuestion(i)}>
               <Feather name="trash-2" size={14} color={colors.accentRed} />
             </TouchableOpacity>
@@ -720,8 +721,8 @@ function ManualQuestionsEditor({ questions, onChange, colors }: { questions: Que
         </View>
       ))}
       <TouchableOpacity style={s.addQBtn} onPress={addQuestion}>
-        <Feather name="plus" size={14} color={colors.primary} />
-        <Text style={[s.addQBtnText, { color: colors.primary }]}>Add Question</Text>
+        <Feather name="plus" size={14} color={gold} />
+        <Text style={[s.addQBtnText, { color: gold }]}>Add Question</Text>
       </TouchableOpacity>
     </View>
   );
@@ -777,7 +778,7 @@ function SelectPicker({ value, options, onChange, colors, labelMap }: { value: s
         <View style={{ backgroundColor: colors.cardDark, borderWidth: 1, borderColor: colors.borderColor, borderRadius: 8, marginTop: 2, zIndex: 100, position: 'absolute', top: 40, left: 0, right: 0, elevation: 20 }}>
           {options.map(opt => (
             <TouchableOpacity key={opt} style={{ paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: opt === options[options.length - 1] ? 0 : 1, borderBottomColor: colors.borderColor }} onPress={() => { onChange(opt); setOpen(false); }}>
-              <Text style={{ color: opt === value ? colors.primary : colors.textMain, fontSize: 13, fontWeight: opt === value ? '700' : '400' }}>{labelMap?.[opt] ?? opt}</Text>
+              <Text style={{ color: opt === value ? gold : colors.textMain, fontSize: 13, fontWeight: opt === value ? '700' : '400' }}>{labelMap?.[opt] ?? opt}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -793,10 +794,10 @@ function makeStyles(colors: AppColors) {
     filterRow: { maxHeight: 44, marginBottom: 12 },
     filterContent: { paddingVertical: 4, gap: 8 },
     chip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: colors.cardDark, borderWidth: 1, borderColor: colors.borderColor },
-    chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    chipActive: { backgroundColor: gold, borderColor: gold },
     chipText: { fontSize: 13, color: colors.textMuted, fontWeight: '500' },
     chipTextActive: { color: '#fff', fontWeight: '700' },
-    createBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.primary, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, alignSelf: 'flex-end', marginBottom: 14 },
+    createBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: gold, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, alignSelf: 'flex-end', marginBottom: 14 },
     createBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
     list: { flex: 1 },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
@@ -832,14 +833,14 @@ function makeModalStyles(colors: AppColors) {
     sectionLabel: { fontSize: 13, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 16, marginBottom: 4 },
     tabRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
     tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 9, borderRadius: 10, backgroundColor: colors.cardDark, borderWidth: 1, borderColor: colors.borderColor },
-    tabBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    tabBtnActive: { backgroundColor: gold, borderColor: gold },
     tabBtnText: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
     tabBtnTextActive: { color: '#fff' },
     aiBox: { marginTop: 4 },
     errorText: { color: colors.accentRed, fontSize: 12, marginBottom: 8 },
-    generateBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.primary, borderRadius: 10, paddingVertical: 11, paddingHorizontal: 28, marginTop: 4, alignSelf: 'center' as const },
+    generateBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: gold, borderRadius: 10, paddingVertical: 11, paddingHorizontal: 28, marginTop: 4, alignSelf: 'center' as const },
     generateBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-    saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 40, marginTop: 20, marginBottom: 8, alignSelf: 'center' as const },
+    saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: gold, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 40, marginTop: 20, marginBottom: 8, alignSelf: 'center' as const },
     saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
     qCard: { borderRadius: 10, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: colors.borderColor },
     qNum: { fontSize: 12, fontWeight: '700', marginBottom: 6 },
@@ -848,7 +849,7 @@ function makeModalStyles(colors: AppColors) {
     optDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 2 },
     optInput: { flex: 1, fontSize: 12 },
     explanationLabel: { fontSize: 11, fontWeight: '600', marginTop: 6, marginBottom: 2 },
-    addQBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, borderWidth: 1, borderColor: colors.primary, paddingVertical: 10, marginBottom: 4, borderStyle: 'dashed' },
+    addQBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, borderWidth: 1, borderColor: gold, paddingVertical: 10, marginBottom: 4, borderStyle: 'dashed' },
     addQBtnText: { fontWeight: '600', fontSize: 13 },
     formCard: { backgroundColor: colors.cardDark, borderRadius: 14, borderWidth: 1, borderColor: colors.borderColor, padding: 16, marginBottom: 14 },
     formCardTitle: { fontSize: 11, fontWeight: '800', color: colors.textMain, marginBottom: 14, textTransform: 'uppercase' as const, letterSpacing: 0.6 },
