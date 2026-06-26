@@ -25,9 +25,6 @@ const P = {
   slate: '#5F8A86',
 };
 
-// Primary accent for parent panel — Aivorah teal
-const ACCENT = '#7AADA8';
-
 const PANEL_WIDTH = 320;
 
 const QUICK_PROMPTS = [
@@ -177,7 +174,7 @@ Last lesson: ${selectedChild.lastLesson || 'unknown'}`
       );
       if (isBullet) return (
         <View key={i} style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: ACCENT, marginTop: 8, flexShrink: 0 }} />
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.accentYellow, marginTop: 8, flexShrink: 0 }} />
           <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 20, flex: 1 }}>{clean}</Text>
         </View>
       );
@@ -201,8 +198,8 @@ Last lesson: ${selectedChild.lastLesson || 'unknown'}`
           {/* Header */}
           <View style={{ padding: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.borderColor, gap: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={{ width: 32, height: 32, borderRadius: radius.md, backgroundColor: ACCENT + '25', alignItems: 'center', justifyContent: 'center' }}>
-                <Feather name="cpu" size={14} color={ACCENT} />
+              <View style={{ width: 32, height: 32, borderRadius: radius.md, backgroundColor: colors.accentYellow + '25', alignItems: 'center', justifyContent: 'center' }}>
+                <Feather name="cpu" size={14} color={colors.accentYellow} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMain }}>Parent Assistant</Text>
@@ -229,10 +226,10 @@ Last lesson: ${selectedChild.lastLesson || 'unknown'}`
                       style={{
                         paddingHorizontal: 10, paddingVertical: 4,
                         borderRadius: 20, borderWidth: 1,
-                        backgroundColor: i === selectedChildIdx ? ACCENT + '22' : 'transparent',
-                        borderColor: i === selectedChildIdx ? ACCENT : colors.borderColor,
+                        backgroundColor: i === selectedChildIdx ? colors.accentYellow + '22' : 'transparent',
+                        borderColor: i === selectedChildIdx ? colors.accentYellow : colors.borderColor,
                       }}>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: i === selectedChildIdx ? ACCENT : colors.textDim }}>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: i === selectedChildIdx ? colors.accentYellow : colors.textDim }}>
                         {ch.name.split(' ')[0]}
                       </Text>
                     </TouchableOpacity>
@@ -252,8 +249,8 @@ Last lesson: ${selectedChild.lastLesson || 'unknown'}`
             {messages.length === 0 ? (
               <View style={{ gap: 7, paddingTop: 4 }}>
                 {selectedChild && (
-                  <View style={{ backgroundColor: ACCENT + '12', borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: ACCENT + '30', marginBottom: 4 }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: ACCENT, marginBottom: 3 }}>{selectedChild.name}</Text>
+                  <View style={{ backgroundColor: colors.accentYellow + '12', borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.accentYellow + '30', marginBottom: 4 }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accentYellow, marginBottom: 3 }}>{selectedChild.name}</Text>
                     <Text style={{ fontSize: 10, color: colors.textDim, lineHeight: 16 }}>
                       {selectedChild.grade} · {(selectedChild.completedTopics?.length ?? 0)} topics done · {selectedChild.currentStreak ?? 0}-day streak
                     </Text>
@@ -262,8 +259,8 @@ Last lesson: ${selectedChild.lastLesson || 'unknown'}`
                 <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '600', marginBottom: 2 }}>Ask me anything</Text>
                 {QUICK_PROMPTS.map((q, i) => (
                   <TouchableOpacity key={i} onPress={() => send(q)} activeOpacity={0.75}
-                    style={{ backgroundColor: ACCENT + '10', borderWidth: 1, borderColor: ACCENT + '30', borderRadius: radius.md, padding: spacing.sm }}>
-                    <Text style={{ fontSize: 11, color: ACCENT, fontWeight: '600' }}>{q}</Text>
+                    style={{ backgroundColor: colors.accentYellow + '10', borderWidth: 1, borderColor: colors.accentYellow + '30', borderRadius: radius.md, padding: spacing.sm }}>
+                    <Text style={{ fontSize: 11, color: colors.accentYellow, fontWeight: '600' }}>{q}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -271,17 +268,17 @@ Last lesson: ${selectedChild.lastLesson || 'unknown'}`
               messages.map((msg, i) => (
                 <View key={i} style={{ alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '92%', gap: 4 }}>
                   <View style={{
-                    backgroundColor: msg.role === 'user' ? ACCENT + '22' : colors.cardDark,
+                    backgroundColor: msg.role === 'user' ? colors.accentYellow + '22' : colors.cardDark,
                     borderWidth: 1,
-                    borderColor: msg.role === 'user' ? ACCENT + '45' : colors.borderColor,
+                    borderColor: msg.role === 'user' ? colors.accentYellow + '45' : colors.borderColor,
                     borderRadius: radius.lg, padding: spacing.md, gap: 4,
                   }}>
                     {msg.role === 'ai' && (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-                        <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: ACCENT + '30', alignItems: 'center', justifyContent: 'center' }}>
-                          <Feather name="cpu" size={8} color={ACCENT} />
+                        <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.accentYellow + '30', alignItems: 'center', justifyContent: 'center' }}>
+                          <Feather name="cpu" size={8} color={colors.accentYellow} />
                         </View>
-                        <Text style={{ fontSize: 9, color: ACCENT, fontWeight: '700', letterSpacing: 0.5 }}>PARENT ASSISTANT</Text>
+                        <Text style={{ fontSize: 9, color: colors.accentYellow, fontWeight: '700', letterSpacing: 0.5 }}>PARENT ASSISTANT</Text>
                       </View>
                     )}
                     {msg.role === 'ai' ? renderAIText(msg.text) : (
@@ -293,7 +290,7 @@ Last lesson: ${selectedChild.lastLesson || 'unknown'}`
             )}
             {loading && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }}>
-                <ActivityIndicator size="small" color={ACCENT} />
+                <ActivityIndicator size="small" color={colors.accentYellow} />
                 <Text style={{ fontSize: 11, color: colors.textDim }}>Thinking...</Text>
               </View>
             )}
@@ -338,7 +335,7 @@ Last lesson: ${selectedChild.lastLesson || 'unknown'}`
                 disabled={!input.trim() || loading}
                 activeOpacity={0.8}
                 style={{
-                  backgroundColor: input.trim() && !loading ? ACCENT : colors.borderColor,
+                  backgroundColor: input.trim() && !loading ? colors.accentYellow : colors.borderColor,
                   width: 36, height: 36, borderRadius: radius.md,
                   alignItems: 'center', justifyContent: 'center',
                 }}>
@@ -362,7 +359,7 @@ Last lesson: ${selectedChild.lastLesson || 'unknown'}`
           right: open ? PANEL_WIDTH : 0,
           top: '50%' as any,
           transform: [{ translateY: -44 }],
-          backgroundColor: ACCENT,
+          backgroundColor: colors.accentYellow,
           width: 24, paddingVertical: 18,
           borderTopLeftRadius: radius.md,
           borderBottomLeftRadius: radius.md,

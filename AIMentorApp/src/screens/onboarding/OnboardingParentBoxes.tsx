@@ -20,7 +20,7 @@ import { useTheme } from '../../context/ThemeContext';
 import SERVER_URL from '../../config/serverUrl';
 import firebaseApp from '../../config/firebase';
 import { AVATAR_STYLES } from '../../constants/avatarStyles';
-import { CURRICULA, getGradesForCurriculum, TEAL, DatePickerInput } from './OnboardingScreen';
+import { CURRICULA, getGradesForCurriculum, DatePickerInput } from './OnboardingScreen';
 import {
   AutocompleteField, CardHeader, BBox, fetchCitySuggestions, locateCity, locateFull,
   SelectField, COUNTRIES, INDIA_STATES, INDIA_CITIES, PhoneCodeSelect,
@@ -266,8 +266,20 @@ export default function OnboardingParentBoxes() {
   // Onboarding can complete with no children at all; only the parent's own info
   // is mandatory. Started children must be finished before continuing.
   const requiredDone = personalDone && curriculumDone && accountDone;
-  const doneCount = [personalDone, (addingChildren ? curriculumDone && accountDone : true), avatarDone].filter(Boolean).length;
-  const completionPct = Math.round((doneCount / 3) * 100);
+
+  // Completion ring reflects ACTUAL progress on the fields the parent fills, so it
+  // starts near 0 and only reaches 100% when the profile is genuinely complete.
+  // (Previously the default avatar + "no children" always counted as done, so a
+  // blank form already showed ~67%.) Avatar always has a default, so it isn't a
+  // step; children only count once the parent starts adding one.
+  const completionSteps = [
+    fullName.trim().length >= 2,                       // name
+    city.trim().length >= 2,                           // city
+    ...(addingChildren ? [curriculumDone && accountDone] : []),  // child (only if started)
+  ];
+  const completionPct = Math.round(
+    (completionSteps.filter(Boolean).length / completionSteps.length) * 100
+  );
 
   async function handleFinish() {
     if (!requiredDone) {

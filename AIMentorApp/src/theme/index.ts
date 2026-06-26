@@ -27,32 +27,32 @@ export const darkColors = {
   accentPink: '#BAA467',    // gold
 };
 
-// Light mode derived from the same forest/gold identity (warm cream + deep green).
+// Light mode: Aivorah brand on warm cream — same gold/sage accents, inverted bg/text.
 export const lightColors = {
-  bgDark: '#F6F8F2',        // warm cream-green
+  bgDark: '#F5F3EE',        // landing --text (warm cream) used as light bg
   cardDark: '#FFFFFF',
-  cardHover: '#EEF4EA',     // pale sage hover
-  sidebarDark: '#F6F8F2',   // same as bg (unified)
-  borderColor: 'rgba(95,138,134,0.22)',  // sage border
+  cardHover: '#EDE8E2',     // slightly warmer card hover
+  sidebarDark: '#F5F3EE',
+  borderColor: 'rgba(11,11,11,0.10)',  // subtle dark border on cream
 
-  textMain: '#16241B',      // deep forest green-black
-  textMuted: '#5C6F62',     // muted forest
-  textDim: '#9FB0A4',       // light sage
+  textMain: '#0B0B0B',      // landing --bg as text (full contrast on cream)
+  textMuted: '#4A4A48',     // dark muted
+  textDim: '#8A8A86',       // dimmed
 
-  // Primary: deep sage-green — readable on cream, same family as dark
-  primary: '#3F7A5E',
-  primaryHover: '#2F6149',
-  primaryGlow: 'rgba(63,122,94,0.16)',
+  // Primary: sage — same role as dark mode (text/borders only, no fills)
+  primary: '#9FB2A4',
+  primaryHover: '#8AA396',
+  primaryGlow: 'rgba(159,178,164,0.18)',
 
-  // Accents — gold + green lead, tuned for contrast on light
-  accentBlue: '#3F7A5E',    // forest green
-  accentPurple: '#9A7B2E',  // deep gold
-  accentGreen: '#3F7A5E',   // forest green
+  // Accents — same gold/sage identity, slightly deeper for cream readability
+  accentBlue: '#9FB2A4',    // sage
+  accentPurple: '#BAA467',  // gold
+  accentGreen: '#9FB2A4',   // sage
   accentYellow: '#9A7B2E',  // deep gold (readable on cream)
   accentRed: '#B8595F',     // muted rose
-  accentCyan: '#3F7A5E',    // forest green
+  accentCyan: '#9FB2A4',    // sage
   accentOrange: '#B07A1E',  // amber-gold
-  accentPink: '#9A7B2E',    // gold
+  accentPink: '#BAA467',    // gold
 };
 
 // Default export keeps backward compat — ThemeContext overrides at runtime
@@ -77,11 +77,12 @@ export const radius = {
   xxl: 36,
 };
 
-// Landing fonts. On web these resolve to the loaded Google fonts; native falls back.
 import { Platform } from 'react-native';
+const INTER = Platform.OS === 'web' ? 'Inter, system-ui, sans-serif' : 'system';
 export const fonts = {
-  serif: Platform.OS === 'web' ? 'Fraunces, Georgia, "Times New Roman", serif' : 'serif',
-  sans: Platform.OS === 'web' ? 'Inter, system-ui, sans-serif' : undefined,
+  serif: INTER,
+  sans:  INTER,
+  brand: INTER,
 };
 
 export const typography = {

@@ -1322,7 +1322,7 @@ ABSOLUTE RULES — breaking even one makes the report invalid:
       metrics: {
         xp, level, studyTimeMinutes: studyMinutes,
         recentStudyMinutes: totalRecentMinutes,
-        activeDays, avgDailyMinutes, currentStreak: streak,
+        activeDays, activeDaysThisWeek: Math.min(activeDays, 7), avgDailyMinutes, currentStreak: streak,
         topicsCompleted: completedTopics.length, completedTopics,
         assignmentsDone, avgAssignmentScore, assignmentTrend,
         challengesCompleted, avgChallengeScore,

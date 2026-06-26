@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+﻿import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -23,14 +23,11 @@ import SERVER_URL from '../../config/serverUrl';
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const AV = {
-  coral:     '#C4836A',
-  tealLight: '#7AADA8',
-  teal:      '#5F8A86',
-  green:     '#5A8A70',
-  rose:      '#C85870',
-  purple:    '#9B7EC8',
-  cream:     '#F7F3EF',
-  sand:      '#EDE8E2',
+  coral:  '#C4836A',
+  rose:   '#C85870',
+  purple: '#9B7EC8',
+  cream:  '#F7F3EF',
+  sand:   '#EDE8E2',
 };
 
 function formatStudyTime(minutes: number) {
@@ -42,7 +39,7 @@ function formatStudyTime(minutes: number) {
 }
 
 // SVG circular progress ring (web only, fallback for native)
-function CircularProgress({ pct, size = 110, strokeWidth = 10, color = AV.teal, textColor }: any) {
+function CircularProgress({ pct, size = 110, strokeWidth = 10, color = '#BAA467', textColor }: any) {
   const tc = textColor || color;
   if (Platform.OS === 'web') {
     const r = (size - strokeWidth) / 2;
@@ -52,20 +49,20 @@ function CircularProgress({ pct, size = 110, strokeWidth = 10, color = AV.teal, 
       <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
         {/* @ts-ignore */}
         <svg width={size} height={size} style={{ position: 'absolute', top: 0, left: 0 }}>
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#2A3A38" strokeWidth={strokeWidth} />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#2A2215" strokeWidth={strokeWidth} />
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={strokeWidth}
             strokeDasharray={`${filled} ${circ}`} strokeLinecap="round"
             transform={`rotate(-90 ${size / 2} ${size / 2})`} />
         </svg>
-        <Text style={{ fontSize: 20, fontWeight: '900', color: tc }}>{pct}%</Text>
-        <Text style={{ fontSize: 9, color: '#888', fontWeight: '600', letterSpacing: 0.3 }}>Completed</Text>
+        <Text style={{ fontFamily: fonts.serif, fontSize: 20, fontWeight: '900', color: tc }}>{pct}%</Text>
+        <Text style={{ fontFamily: fonts.serif, fontSize: 9, color: '#888', fontWeight: '600', letterSpacing: 0.3 }}>Completed</Text>
       </View>
     );
   }
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center', borderRadius: size / 2, borderWidth: strokeWidth, borderColor: color }}>
-      <Text style={{ fontSize: 20, fontWeight: '900', color: tc }}>{pct}%</Text>
-      <Text style={{ fontSize: 9, color: '#888' }}>Completed</Text>
+      <Text style={{ fontFamily: fonts.serif, fontSize: 20, fontWeight: '900', color: tc }}>{pct}%</Text>
+      <Text style={{ fontFamily: fonts.serif, fontSize: 9, color: '#888' }}>Completed</Text>
     </View>
   );
 }
@@ -73,6 +70,8 @@ function CircularProgress({ pct, size = 110, strokeWidth = 10, color = AV.teal, 
 export default function ParentProgressScreen({ navigation, route }: any) {
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
+  const gold = colors.accentYellow;          // Aivorah brand gold — #BAA467
+  const goldLight = colors.accentYellow + 'BB';
   const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
   const parentEmail = user?.email || 'parent@demo.com';
 
@@ -170,15 +169,15 @@ export default function ParentProgressScreen({ navigation, route }: any) {
     const list: any[] = [];
     topics.forEach(t => {
       if (t.latestScore >= 80 && t.passed) {
-        list.push({ icon: 'check-circle', color: AV.teal,  text: `Strong in ${t.topic}`, sub: 'Excellent performance! Keep it up.' });
+        list.push({ icon: 'check-circle', color: gold,  text: `Strong in ${t.topic}`, sub: 'Excellent performance! Keep it up.' });
       } else if (t.improving) {
-        list.push({ icon: 'trending-up', color: AV.tealLight, text: `Improving in ${t.topic}`, sub: "You're getting better. Keep practicing." });
+        list.push({ icon: 'trending-up', color: goldLight, text: `Improving in ${t.topic}`, sub: "You're getting better. Keep practicing." });
       } else if (!t.passed && t.latestScore < 60) {
-        list.push({ icon: 'alert-circle', color: AV.coral, text: `Needs practice in ${t.topic}`, sub: 'Focus more on this topic to improve.' });
+        list.push({ icon: 'alert-circle', color: gold, text: `Needs practice in ${t.topic}`, sub: 'Focus more on this topic to improve.' });
       }
     });
     if ((stats?.currentStreak ?? 0) >= 2) {
-      list.push({ icon: 'activity', color: AV.green, text: 'Study consistency improving', sub: 'Great job maintaining your streak!' });
+      list.push({ icon: 'activity', color: gold, text: 'Study consistency improving', sub: 'Great job maintaining your streak!' });
     }
     return list.slice(0, 4);
   }, [topics, stats]);
@@ -192,10 +191,10 @@ export default function ParentProgressScreen({ navigation, route }: any) {
     // Derive: keyword-based topic → subject mapping
     // Colors match LearningPathsScreen SUBJECT_META exactly
     const SUBJECT_MAP: Record<string, { label: string; icon: string; color: string; gradFrom: string; gradTo: string; keywords: string[] }> = {
-      Mathematics:      { label: 'Mathematics',  icon: 'trending-up', color: '#4A9E9A', gradFrom: '#4A9E9A', gradTo: '#7AADA8', keywords: ['addition','subtraction','multiplication','division','fraction','decimal','algebra','geometry','number','calculation','percentage','ratio','currency','barter','coins','money','weight','measurement','time','data','graph','symmetry','area','perimeter'] },
-      Science:          { label: 'Science',       icon: 'zap',         color: '#5A8A70', gradFrom: '#5A8A70', gradTo: '#7AAD90', keywords: ['plant','animal','adaptation','habitat','living','force','energy','matter','light','sound','water','air','body','health','food','nutrition','environment','soil','rock','weather','electricity','magnet'] },
-      English:          { label: 'English',       icon: 'book-open',   color: '#C87848', gradFrom: '#C87848', gradTo: '#D4936A', keywords: ['reading','writing','grammar','poem','story','comprehension','vocabulary','verb','noun','adjective','adverb','sentence','paragraph','letter','punctuation','spelling','language','composition'] },
-      'Social Studies': { label: 'Social Studies', icon: 'globe',      color: '#9B7EC8', gradFrom: '#9B7EC8', gradTo: '#B09AD8', keywords: ['history','geography','community','culture','map','country','economics','trade','government','citizen','society','family','festival','tradition','heritage','resource','agriculture','industry','transport','communication','continent','climate'] },
+      Mathematics:      { label: 'Mathematics',  icon: 'trending-up', color: '#BAA467', gradFrom: '#BAA467', gradTo: '#C9B078', keywords: ['addition','subtraction','multiplication','division','fraction','decimal','algebra','geometry','number','calculation','percentage','ratio','currency','barter','coins','money','weight','measurement','time','data','graph','symmetry','area','perimeter'] },
+      Science:          { label: 'Science',       icon: 'zap',         color: '#BAA467', gradFrom: '#BAA467', gradTo: '#C9B078', keywords: ['plant','animal','adaptation','habitat','living','force','energy','matter','light','sound','water','air','body','health','food','nutrition','environment','soil','rock','weather','electricity','magnet'] },
+      English:          { label: 'English',       icon: 'book-open',   color: '#BAA467', gradFrom: '#BAA467', gradTo: '#C9B078', keywords: ['reading','writing','grammar','poem','story','comprehension','vocabulary','verb','noun','adjective','adverb','sentence','paragraph','letter','punctuation','spelling','language','composition'] },
+      'Social Studies': { label: 'Social Studies', icon: 'globe',      color: '#BAA467', gradFrom: '#BAA467', gradTo: '#C9B078', keywords: ['history','geography','community','culture','map','country','economics','trade','government','citizen','society','family','festival','tradition','heritage','resource','agriculture','industry','transport','communication','continent','climate'] },
     };
     const subjectCounts: Record<string, { total: number; completed: number }> = {};
     Object.keys(SUBJECT_MAP).forEach(s => { subjectCounts[s] = { total: 0, completed: 0 }; });
@@ -228,11 +227,11 @@ export default function ParentProgressScreen({ navigation, route }: any) {
   // Achievements derived from stats
   const achievements: any[] = useMemo(() => {
     const list: any[] = [];
-    if (completedTopics.length >= 1) list.push({ icon: 'star', color: AV.coral, label: 'First Steps', sub: `Completed ${completedTopics.length} topic${completedTopics.length !== 1 ? 's' : ''}` });
-    if ((stats?.currentStreak ?? 0) >= 2) list.push({ icon: 'activity', color: AV.teal,  label: 'Streak Starter', sub: `${stats.currentStreak} day streak` });
-    if (completedTopics.length >= 5) list.push({ icon: 'zap',  color: AV.tealLight, label: 'Quick Learner',  sub: `Completed ${completedTopics.length} topics` });
+    if (completedTopics.length >= 1) list.push({ icon: 'star', color: gold, label: 'First Steps', sub: `Completed ${completedTopics.length} topic${completedTopics.length !== 1 ? 's' : ''}` });
+    if ((stats?.currentStreak ?? 0) >= 2) list.push({ icon: 'activity', color: gold,  label: 'Streak Starter', sub: `${stats.currentStreak} day streak` });
+    if (completedTopics.length >= 5) list.push({ icon: 'zap',  color: goldLight, label: 'Quick Learner',  sub: `Completed ${completedTopics.length} topics` });
     const perfect = topics.find(t => t.latestScore === 100);
-    if (perfect) list.push({ icon: 'award', color: AV.purple,  label: 'Perfect Score',  sub: `100% in ${perfect.topic}` });
+    if (perfect) list.push({ icon: 'award', color: gold,  label: 'Perfect Score',  sub: `100% in ${perfect.topic}` });
     return list;
   }, [completedTopics, stats, topics]);
 
@@ -240,10 +239,10 @@ export default function ParentProgressScreen({ navigation, route }: any) {
   const nextSteps: any[] = useMemo(() => {
     const steps: any[] = [];
     const lastTopic = completedTopics[completedTopics.length - 1];
-    if (lastTopic) steps.push({ icon: 'book-open', color: AV.teal, label: 'Continue Learning', sub: lastTopic.replace(/_/g, ' ') });
+    if (lastTopic) steps.push({ icon: 'book-open', color: gold, label: 'Continue Learning', sub: lastTopic.replace(/_/g, ' ') });
     const weakTopic = [...topics].sort((a, b) => a.latestScore - b.latestScore).find(t => !t.passed);
-    if (weakTopic) steps.push({ icon: 'target', color: AV.coral, label: 'Practice Weak Areas', sub: weakTopic.topic });
-    steps.push({ icon: 'clipboard', color: AV.purple, label: 'Take Weekly Quiz', sub: 'Test your understanding' });
+    if (weakTopic) steps.push({ icon: 'target', color: gold, label: 'Practice Weak Areas', sub: weakTopic.topic });
+    steps.push({ icon: 'clipboard', color: gold, label: 'Take Weekly Quiz', sub: 'Test your understanding' });
     return steps.slice(0, 3);
   }, [completedTopics, topics]);
 
@@ -259,7 +258,7 @@ export default function ParentProgressScreen({ navigation, route }: any) {
           style={styles.scroll}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={AV.teal} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor='#BAA467' />}
         >
           {/* Child tabs */}
           {children.length > 1 && (
@@ -267,7 +266,7 @@ export default function ParentProgressScreen({ navigation, route }: any) {
               {children.map((c, i) => (
                 <TouchableOpacity key={c.id} onPress={() => setSelectedIdx(i)} activeOpacity={0.8} style={{ marginRight: 8 }}>
                   {selectedIdx === i
-                    ? <LinearGradient colors={[AV.coral, AV.tealLight]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.tabActive}><Text style={styles.tabTextActive}>{c.name}</Text></LinearGradient>
+                    ? <LinearGradient colors={['#BAA467', '#C9B078']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.tabActive}><Text style={styles.tabTextActive}>{c.name}</Text></LinearGradient>
                     : <View style={[styles.tab, { backgroundColor: bgCard, borderColor: borderCol }]}><Text style={[styles.tabText, { color: colors.textMuted }]}>{c.name}</Text></View>
                   }
                 </TouchableOpacity>
@@ -277,33 +276,33 @@ export default function ParentProgressScreen({ navigation, route }: any) {
 
           {loading ? (
             <View style={{ alignItems: 'center', paddingTop: 60, gap: 12 }}>
-              <ActivityIndicator color={AV.teal} size="large" />
-              <Text style={{ color: colors.textDim, fontSize: 13 }}>Loading {child?.name}'s progress...</Text>
+              <ActivityIndicator color='#BAA467' size="large" />
+              <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 13 }}>Loading {child?.name}'s progress...</Text>
             </View>
           ) : (
             <>
               {/* ── ROW 1: Hero ── */}
               <View style={[styles.card, { backgroundColor: bgCard, borderColor: borderCol, flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 14 }]}>
                 {/* Avatar + Name */}
-                <LinearGradient colors={[AV.coral, '#D4937A']} style={styles.avatarCircle}>
+                <LinearGradient colors={[gold, goldLight]} style={styles.avatarCircle}>
                   <Text style={styles.avatarLetter}>{(child?.name ?? 'S')[0]}</Text>
                 </LinearGradient>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 18, fontWeight: '900', color: colors.textMain }}>{child?.name ?? 'Student'}</Text>
-                  <Text style={{ fontSize: 12, color: AV.teal, fontWeight: '600', marginTop: 1 }}>{child?.grade ?? ''}</Text>
+                  <Text style={{ fontFamily: fonts.serif, fontSize: 18, fontWeight: '900', color: colors.textMain }}>{child?.name ?? 'Student'}</Text>
+                  <Text style={{ fontFamily: fonts.serif, fontSize: 12, color: '#BAA467', fontWeight: '600', marginTop: 1 }}>{child?.grade ?? ''}</Text>
                 </View>
                 {/* 4 stat chips */}
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {[
-                    { icon: 'zap',      val: (stats?.xpPoints ?? 0).toLocaleString(), sub: 'XP',         color: AV.coral },
-                    { icon: 'award',    val: `Lv.${stats?.level ?? 1}`,               sub: 'LEVEL',      color: AV.tealLight },
-                    { icon: 'activity', val: `${stats?.currentStreak ?? 0}`,           sub: 'DAY STREAK', color: AV.teal },
-                    { icon: 'clock',    val: formatStudyTime(stats?.studyTimeMinutes ?? 0), sub: 'STUDY TIME', color: AV.green },
+                    { icon: 'zap',      val: (stats?.xpPoints ?? 0).toLocaleString(), sub: 'XP',         color: gold },
+                    { icon: 'award',    val: `Lv.${stats?.level ?? 1}`,               sub: 'LEVEL',      color: goldLight },
+                    { icon: 'activity', val: `${stats?.currentStreak ?? 0}`,           sub: 'DAY STREAK', color: gold },
+                    { icon: 'clock',    val: formatStudyTime(stats?.studyTimeMinutes ?? 0), sub: 'STUDY TIME', color: gold },
                   ].map(item => (
                     <View key={item.sub} style={[styles.heroChip, { backgroundColor: item.color + '12', borderColor: item.color + '30' }]}>
                       <Feather name={item.icon as any} size={12} color={item.color} />
-                      <Text style={{ fontSize: 14, fontWeight: '900', color: item.color, marginTop: 2 }}>{item.val}</Text>
-                      <Text style={{ fontSize: 8, fontWeight: '700', color: item.color + '90', letterSpacing: 0.5 }}>{item.sub}</Text>
+                      <Text style={{ fontFamily: fonts.serif, fontSize: 14, fontWeight: '900', color: item.color, marginTop: 2 }}>{item.val}</Text>
+                      <Text style={{ fontFamily: fonts.serif, fontSize: 8, fontWeight: '700', color: item.color + '90', letterSpacing: 0.5 }}>{item.sub}</Text>
                     </View>
                   ))}
                 </View>
@@ -314,18 +313,18 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                 {/* Curriculum Progress */}
                 <View style={[styles.card, { flex: 4, backgroundColor: bgCard, borderColor: borderCol }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    <LinearGradient colors={[AV.teal, AV.tealLight]} style={styles.secIcon}>
-                      <Feather name="book-open" size={12} color="#fff" />
-                    </LinearGradient>
+                    <View style={[styles.secIcon, { backgroundColor: gold + '20', borderWidth: 1, borderColor: gold + '40' }]}>
+                      <Feather name="book-open" size={12} color={gold} />
+                    </View>
                     <View>
                       <Text style={[styles.cardTitle, { color: colors.textMain }]}>Curriculum Progress</Text>
-                      <Text style={{ fontSize: 10, color: colors.textDim }}>{completedTopics.length} of {totalTopics} topics completed</Text>
+                      <Text style={{ fontFamily: fonts.serif, fontSize: 10, color: colors.textDim }}>{completedTopics.length} of {totalTopics} topics completed</Text>
                     </View>
                   </View>
 
                   {/* Circular ring + milestone row */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                    <CircularProgress pct={progressPct} size={110} strokeWidth={10} color={AV.teal} />
+                    <CircularProgress pct={progressPct} size={110} strokeWidth={10} color={gold} />
                     <View style={{ flex: 1 }}>
                       {/* Milestone dots */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -333,17 +332,17 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                           const reached = progressPct >= m;
                           return (
                             <View key={m} style={{ alignItems: 'center', gap: 3 }}>
-                              <View style={[styles.mileDot, { backgroundColor: reached ? AV.teal : (isDark ? '#2A3A38' : AV.sand), borderColor: reached ? AV.teal : borderCol }]}>
+                              <View style={[styles.mileDot, { backgroundColor: reached ? gold : (isDark ? '#1E1A0E' : AV.sand), borderColor: reached ? gold : borderCol }]}>
                                 {reached && <Feather name="check" size={7} color="#fff" />}
                               </View>
-                              <Text style={{ fontSize: 8, color: reached ? AV.teal : colors.textDim }}>{m}%</Text>
+                              <Text style={{ fontFamily: fonts.serif, fontSize: 8, color: reached ? gold : colors.textDim }}>{m}%</Text>
                             </View>
                           );
                         })}
                       </View>
                       {/* Progress bar */}
-                      <View style={[styles.progressTrack, { backgroundColor: isDark ? '#2A3A38' : AV.sand }]}>
-                        <LinearGradient colors={[AV.teal, AV.tealLight]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                      <View style={[styles.progressTrack, { backgroundColor: isDark ? '#1E1A0E' : AV.sand }]}>
+                        <LinearGradient colors={['#BAA467', '#C9B078']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                           style={[styles.progressFill, { width: `${Math.max(progressPct, 2)}%` as any }]} />
                       </View>
                     </View>
@@ -353,15 +352,15 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                 {/* This Week — LeetCode heatmap style */}
                 <View style={[styles.card, { flex: 6, backgroundColor: bgCard, borderColor: borderCol }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                    <LinearGradient colors={[AV.coral, '#D4937A']} style={styles.secIcon}>
-                      <Feather name="bar-chart-2" size={12} color="#fff" />
-                    </LinearGradient>
+                    <View style={[styles.secIcon, { backgroundColor: gold + '20', borderWidth: 1, borderColor: gold + '40' }]}>
+                      <Feather name="bar-chart-2" size={12} color={gold} />
+                    </View>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.cardTitle, { color: colors.textMain }]}>This Week</Text>
-                      <Text style={{ fontSize: 10, color: colors.textDim }}>{formatStudyTime(totalWeekMins)} total</Text>
+                      <Text style={{ fontFamily: fonts.serif, fontSize: 10, color: colors.textDim }}>{formatStudyTime(totalWeekMins)} total</Text>
                     </View>
-                    <View style={[styles.goalBadge, { backgroundColor: AV.teal + '15', borderColor: AV.teal + '30' }]}>
-                      <Text style={{ fontSize: 9, fontWeight: '700', color: AV.teal }}>Goal: 2h/day</Text>
+                    <View style={[styles.goalBadge, { backgroundColor: gold + '15', borderColor: gold + '30' }]}>
+                      <Text style={{ fontFamily: fonts.serif, fontSize: 9, fontWeight: '700', color: gold }}>Goal: 2h/day</Text>
                     </View>
                   </View>
 
@@ -377,7 +376,7 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                       return (
                         // @ts-ignore
                         <svg width="100%" height="2" style={{ position: 'absolute', top: goalLineTop, left: 0, zIndex: 1 }}>
-                          <line x1="0" y1="1" x2="100%" y2="1" stroke={AV.teal} strokeWidth="1"
+                          <line x1="0" y1="1" x2="100%" y2="1" stroke={gold} strokeWidth="1"
                             strokeDasharray="5,4" opacity="0.6" />
                         </svg>
                       );
@@ -391,21 +390,21 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                         const hasData = mins > 0;
                         return (
                           <View key={day} style={styles.barWrapper}>
-                            <Text style={[styles.barTimeLabel, { color: hasData ? (met ? AV.teal : AV.coral) : 'transparent' }]}>
+                            <Text style={[styles.barTimeLabel, { color: hasData ? (met ? gold : gold) : 'transparent' }]}>
                               {formatStudyTime(mins)}
                             </Text>
-                            <View style={[styles.barTrack, { backgroundColor: isDark ? '#1E3230' : AV.sand }]}>
+                            <View style={[styles.barTrack, { backgroundColor: isDark ? '#1A1608' : AV.sand }]}>
                               {hasData ? (
                                 <LinearGradient
-                                  colors={met ? [AV.teal, AV.tealLight] : [AV.coral, '#D4937A']}
+                                  colors={met ? [gold, goldLight] : [gold, '#D4937A']}
                                   style={[styles.barFill, { height: barH }]}
                                 />
                               ) : (
-                                <View style={[styles.barFill, { height: 4, backgroundColor: isDark ? '#2A3A38' : AV.sand }]} />
+                                <View style={[styles.barFill, { height: 4, backgroundColor: isDark ? '#1E1A0E' : AV.sand }]} />
                               )}
                             </View>
                             <Text style={[styles.barDayLabel, {
-                              color: met ? AV.teal : colors.textDim,
+                              color: met ? gold : colors.textDim,
                               fontWeight: met ? '700' : '400',
                             }]}>{day}</Text>
                           </View>
@@ -422,29 +421,29 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                 {/* Subject Progress */}
                 <View style={[styles.card, { flex: 3, backgroundColor: bgCard, borderColor: borderCol }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                    <LinearGradient colors={[AV.tealLight, AV.green]} style={styles.secIcon}>
-                      <Feather name="book" size={12} color="#fff" />
-                    </LinearGradient>
+                    <View style={[styles.secIcon, { backgroundColor: gold + '20', borderWidth: 1, borderColor: gold + '40' }]}>
+                      <Feather name="book" size={12} color={gold} />
+                    </View>
                     <Text style={[styles.cardTitle, { color: colors.textMain }]}>Subject Progress</Text>
                   </View>
 
                   {subjectProgress.length === 0 ? (
                     <View style={{ alignItems: 'center', paddingVertical: 12 }}>
-                      <Text style={{ fontSize: 11, color: colors.textDim, textAlign: 'center' }}>Complete topics to see subject breakdown</Text>
+                      <Text style={{ fontFamily: fonts.serif, fontSize: 11, color: colors.textDim, textAlign: 'center' }}>Complete topics to see subject breakdown</Text>
                     </View>
                   ) : (
                     subjectProgress.map((s, i) => (
                       <View key={s.label} style={{ marginBottom: i < subjectProgress.length - 1 ? 11 : 0 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                          <LinearGradient colors={[s.gradFrom, s.gradTo]} style={styles.subjectIcon}>
-                            <Feather name={s.icon as any} size={13} color="#fff" />
-                          </LinearGradient>
-                          <Text style={{ flex: 1, fontSize: 12, fontWeight: '600', color: colors.textMain }}>{s.label}</Text>
-                          <Text style={{ fontSize: 12, fontWeight: '800', color: s.color }}>{s.pct}%</Text>
+                          <View style={[styles.subjectIcon, { backgroundColor: gold + '20', borderWidth: 1, borderColor: gold + '40' }]}>
+                            <Feather name={s.icon as any} size={13} color={gold} />
+                          </View>
+                          <Text style={{ flex: 1, fontFamily: fonts.serif, fontSize: 12, fontWeight: '600', color: colors.textMain }}>{s.label}</Text>
+                          <Text style={{ fontFamily: fonts.serif, fontSize: 12, fontWeight: '800', color: gold }}>{s.pct}%</Text>
                         </View>
-                        <View style={[styles.subjTrack, { backgroundColor: isDark ? '#2A3A38' : AV.sand, marginLeft: 38 }]}>
+                        <View style={[styles.subjTrack, { backgroundColor: isDark ? '#1E1A0E' : AV.sand, marginLeft: 38 }]}>
                           <LinearGradient
-                            colors={[s.gradFrom, s.gradTo]}
+                            colors={[gold, goldLight]}
                             start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                             style={[styles.subjFill, { width: `${Math.max(s.pct, 3)}%` as any }]}
                           />
@@ -458,13 +457,13 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                 {/* Practice Tests */}
                 <View style={[styles.card, { flex: 4, backgroundColor: bgCard, borderColor: borderCol }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                    <LinearGradient colors={[AV.green, AV.teal]} style={styles.secIcon}>
-                      <Feather name="clipboard" size={12} color="#fff" />
-                    </LinearGradient>
+                    <View style={[styles.secIcon, { backgroundColor: gold + '20', borderWidth: 1, borderColor: gold + '40' }]}>
+                      <Feather name="clipboard" size={12} color={gold} />
+                    </View>
                     <Text style={[styles.cardTitle, { flex: 1, color: colors.textMain }]}>Practice Tests</Text>
                     {topics.length > 0 && (
-                      <View style={[styles.pill, { backgroundColor: AV.teal + '15', borderColor: AV.teal + '30' }]}>
-                        <Text style={{ fontSize: 9, fontWeight: '700', color: AV.teal }}>
+                      <View style={[styles.pill, { backgroundColor: gold + '15', borderColor: gold + '30' }]}>
+                        <Text style={{ fontFamily: fonts.serif, fontSize: 9, fontWeight: '700', color: gold }}>
                           {topics.filter(t => t.passed).length} passed
                         </Text>
                       </View>
@@ -474,13 +473,13 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                   {topics.length === 0 ? (
                     <View style={{ alignItems: 'center', paddingVertical: 16 }}>
                       <Feather name="clipboard" size={20} color={colors.textDim} />
-                      <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 6 }}>No practice tests yet</Text>
+                      <Text style={{ fontFamily: fonts.serif, fontSize: 11, color: colors.textDim, marginTop: 6 }}>No practice tests yet</Text>
                     </View>
                   ) : (
                     topics.map((t: any, i: number) => {
                       const score = t.latestScore ?? 0;
                       const passed = t.passed;
-                      const scoreColor = score >= 80 ? AV.teal : score >= 60 ? AV.tealLight : AV.rose;
+                      const scoreColor = score >= 80 ? gold : score >= 60 ? goldLight : gold;
                       return (
                         <View key={t.topic} style={[
                           styles.practiceRow,
@@ -488,15 +487,15 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                           i < topics.length - 1 && { borderBottomWidth: 1 },
                         ]}>
                           <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMain }} numberOfLines={1}>{t.topic}</Text>
-                            <Text style={{ fontSize: 10, color: colors.textDim }}>
+                            <Text style={{ fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', color: colors.textMain }} numberOfLines={1}>{t.topic}</Text>
+                            <Text style={{ fontFamily: fonts.serif, fontSize: 10, color: colors.textDim }}>
                               {t.totalAttempts} attempt{t.totalAttempts !== 1 ? 's' : ''}
                               {t.totalAttempts > 1 && t.attempts?.[0]?.score != null ? ` · Best: ${t.latestScore}%` : ''}
                             </Text>
                           </View>
                           <View style={{ alignItems: 'flex-end' }}>
-                            <Text style={{ fontSize: 18, fontWeight: '900', color: scoreColor }}>{score}%</Text>
-                            <Text style={{ fontSize: 8, fontWeight: '800', color: passed ? AV.teal : AV.rose }}>{passed ? 'PASSED' : 'NOT PASSED'}</Text>
+                            <Text style={{ fontFamily: fonts.serif, fontSize: 18, fontWeight: '900', color: scoreColor }}>{score}%</Text>
+                            <Text style={{ fontFamily: fonts.serif, fontSize: 8, fontWeight: '800', color: passed ? gold : gold }}>{passed ? 'PASSED' : 'NOT PASSED'}</Text>
                           </View>
                         </View>
                       );
@@ -507,7 +506,7 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                     <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: borderCol, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <View style={{ flexDirection: 'row', gap: 4 }}>
                         <Feather name="clock" size={10} color={colors.textDim} />
-                        <Text style={{ fontSize: 10, color: colors.textDim }}>
+                        <Text style={{ fontFamily: fonts.serif, fontSize: 10, color: colors.textDim }}>
                           Practice time: {formatStudyTime(Math.round((practiceInsights?.summary?.totalPracticeTimeSeconds || 0) / 60))}
                         </Text>
                       </View>
@@ -516,28 +515,28 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                 </View>
 
                 {/* AI Insights — animated stagger */}
-                <View style={[styles.card, { flex: 4, backgroundColor: bgCard, borderColor: borderCol, borderTopWidth: 2, borderTopColor: AV.purple + '60' }]}>
+                <View style={[styles.card, { flex: 4, backgroundColor: bgCard, borderColor: borderCol, borderTopWidth: 2, borderTopColor: gold + '60' }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                    <LinearGradient colors={[AV.purple, '#B09AD8']} style={styles.secIcon}>
-                      <Feather name="cpu" size={12} color="#fff" />
-                    </LinearGradient>
+                    <View style={[styles.secIcon, { backgroundColor: gold + '20', borderWidth: 1, borderColor: gold + '40' }]}>
+                      <Feather name="cpu" size={12} color={gold} />
+                    </View>
                     <Text style={[styles.cardTitle, { flex: 1, color: colors.textMain }]}>AI Insights</Text>
                     {/* Pulsing dot */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: AV.purple + '15', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
-                      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: AV.purple }} />
-                      <Text style={{ fontSize: 9, fontWeight: '700', color: AV.purple }}>Live</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: gold + '15', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
+                      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: gold }} />
+                      <Text style={{ fontFamily: fonts.serif, fontSize: 9, fontWeight: '700', color: gold }}>Live</Text>
                     </View>
                   </View>
 
                   {insightsGenerating ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12 }}>
-                      <ActivityIndicator size="small" color={AV.purple} />
-                      <Text style={{ fontSize: 11, color: colors.textDim, fontStyle: 'italic' }}>Analysing {child?.name}'s progress...</Text>
+                      <ActivityIndicator size="small" color={gold} />
+                      <Text style={{ fontFamily: fonts.serif, fontSize: 11, color: colors.textDim, fontStyle: 'italic' }}>Analysing {child?.name}'s progress...</Text>
                     </View>
                   ) : aiInsights.length === 0 ? (
                     <View style={{ alignItems: 'center', paddingVertical: 16 }}>
                       <Feather name="cpu" size={20} color={colors.textDim} />
-                      <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 6, textAlign: 'center' }}>Take practice tests to unlock AI insights</Text>
+                      <Text style={{ fontFamily: fonts.serif, fontSize: 11, color: colors.textDim, marginTop: 6, textAlign: 'center' }}>Take practice tests to unlock AI insights</Text>
                     </View>
                   ) : (
                     aiInsights.map((ins, i) => (
@@ -553,8 +552,8 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                           <Feather name={ins.icon as any} size={12} color={ins.color} />
                         </View>
                         <View style={{ flex: 1, marginLeft: 10 }}>
-                          <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMain }} numberOfLines={1}>{ins.text}</Text>
-                          <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 1 }} numberOfLines={1}>{ins.sub}</Text>
+                          <Text style={{ fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: colors.textMain }} numberOfLines={1}>{ins.text}</Text>
+                          <Text style={{ fontFamily: fonts.serif, fontSize: 10, color: colors.textDim, marginTop: 1 }} numberOfLines={1}>{ins.sub}</Text>
                         </View>
                       </Animated.View>
                     ))
@@ -569,25 +568,25 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                 {/* Achievements — horizontal badge style (Image #9) */}
                 <View style={[styles.card, { flex: 5, backgroundColor: bgCard, borderColor: borderCol }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    <LinearGradient colors={[AV.coral, '#D4937A']} style={styles.secIcon}>
-                      <Feather name="award" size={12} color="#fff" />
-                    </LinearGradient>
+                    <View style={[styles.secIcon, { backgroundColor: gold + '20', borderWidth: 1, borderColor: gold + '40' }]}>
+                      <Feather name="award" size={12} color={gold} />
+                    </View>
                     <Text style={[styles.cardTitle, { flex: 1, color: colors.textMain }]}>Achievements</Text>
                   </View>
 
                   {achievements.length === 0 ? (
                     <View style={{ alignItems: 'center', paddingVertical: 12 }}>
-                      <Text style={{ fontSize: 11, color: colors.textDim }}>Keep learning to earn achievements!</Text>
+                      <Text style={{ fontFamily: fonts.serif, fontSize: 11, color: colors.textDim }}>Keep learning to earn achievements!</Text>
                     </View>
                   ) : (
                     <View style={{ flexDirection: 'row', gap: 8 }}>
                       {achievements.map((a, i) => (
-                        <View key={i} style={[styles.achieveBadge, { backgroundColor: isDark ? a.color + '10' : a.color + '08', borderColor: a.color + '25' }]}>
-                          <LinearGradient colors={[a.color, a.color + 'BB']} style={styles.achieveBadgeIcon}>
-                            <Feather name={a.icon as any} size={18} color="#fff" />
-                          </LinearGradient>
-                          <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textMain, marginTop: 8, textAlign: 'center' }}>{a.label}</Text>
-                          <Text style={{ fontSize: 9, color: colors.textDim, marginTop: 2, textAlign: 'center' }}>{a.sub}</Text>
+                        <View key={i} style={[styles.achieveBadge, { backgroundColor: gold + '10', borderColor: gold + '25' }]}>
+                          <View style={[styles.achieveBadgeIcon, { backgroundColor: gold + '25', borderWidth: 1, borderColor: gold + '50' }]}>
+                            <Feather name={a.icon as any} size={18} color={gold} />
+                          </View>
+                          <Text style={{ fontFamily: fonts.serif, fontSize: 11, fontWeight: '800', color: colors.textMain, marginTop: 8, textAlign: 'center' }}>{a.label}</Text>
+                          <Text style={{ fontFamily: fonts.serif, fontSize: 9, color: colors.textDim, marginTop: 2, textAlign: 'center' }}>{a.sub}</Text>
                         </View>
                       ))}
                     </View>
@@ -597,45 +596,44 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                 {/* Topics to Review — weak areas parent should know about */}
                 <View style={[styles.card, { flex: 5, backgroundColor: bgCard, borderColor: borderCol }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                    <LinearGradient colors={[AV.rose, AV.coral]} style={styles.secIcon}>
-                      <Feather name="alert-circle" size={12} color="#fff" />
-                    </LinearGradient>
+                    <View style={[styles.secIcon, { backgroundColor: gold + '20', borderWidth: 1, borderColor: gold + '40' }]}>
+                      <Feather name="alert-circle" size={12} color={gold} />
+                    </View>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.cardTitle, { color: colors.textMain }]}>Topics to Review</Text>
-                      <Text style={{ fontSize: 9, color: colors.textDim }}>Encourage your child to revisit these</Text>
+                      <Text style={{ fontFamily: fonts.serif, fontSize: 9, color: colors.textDim }}>Encourage your child to revisit these</Text>
                     </View>
                   </View>
 
                   {topics.filter(t => !t.passed).length === 0 ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 }}>
-                      <View style={[styles.insightIcon, { backgroundColor: AV.teal + '18' }]}>
-                        <Feather name="check-circle" size={14} color={AV.teal} />
+                      <View style={[styles.insightIcon, { backgroundColor: gold + '18' }]}>
+                        <Feather name="check-circle" size={14} color={gold} />
                       </View>
                       <View>
-                        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMain }}>All tests passed!</Text>
-                        <Text style={{ fontSize: 10, color: colors.textDim }}>No weak areas to report</Text>
+                        <Text style={{ fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', color: colors.textMain }}>All tests passed!</Text>
+                        <Text style={{ fontFamily: fonts.serif, fontSize: 10, color: colors.textDim }}>No weak areas to report</Text>
                       </View>
                     </View>
                   ) : (
                     topics.filter(t => !t.passed).map((t: any, i: number) => {
                       const score = t.latestScore ?? 0;
-                      const scoreColor = score >= 60 ? AV.coral : AV.rose;
                       return (
                         <View key={t.topic} style={[
                           styles.insightRow,
                           i < topics.filter((x: any) => !x.passed).length - 1 && { borderBottomWidth: 1, borderBottomColor: borderCol },
                         ]}>
-                          <View style={[styles.insightIcon, { backgroundColor: scoreColor + '18' }]}>
-                            <Feather name="alert-circle" size={12} color={scoreColor} />
+                          <View style={[styles.insightIcon, { backgroundColor: gold + '18' }]}>
+                            <Feather name="alert-circle" size={12} color={gold} />
                           </View>
                           <View style={{ flex: 1, marginLeft: 10 }}>
-                            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMain }} numberOfLines={1}>{t.topic}</Text>
-                            <Text style={{ fontSize: 10, color: colors.textDim }}>
+                            <Text style={{ fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: colors.textMain }} numberOfLines={1}>{t.topic}</Text>
+                            <Text style={{ fontFamily: fonts.serif, fontSize: 10, color: colors.textDim }}>
                               {t.totalAttempts} attempt{t.totalAttempts !== 1 ? 's' : ''} · scored {score}%
                             </Text>
                           </View>
-                          <View style={[styles.pill, { backgroundColor: scoreColor + '15', borderColor: scoreColor + '30' }]}>
-                            <Text style={{ fontSize: 9, fontWeight: '800', color: scoreColor }}>{score}%</Text>
+                          <View style={[styles.pill, { backgroundColor: gold + '15', borderColor: gold + '30' }]}>
+                            <Text style={{ fontFamily: fonts.serif, fontSize: 9, fontWeight: '800', color: gold }}>{score}%</Text>
                           </View>
                         </View>
                       );
@@ -659,20 +657,20 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   // Child tabs
   tab:         { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1 },
   tabActive:   { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 14 },
-  tabText:     { fontSize: 12, fontWeight: '600' },
-  tabTextActive: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  tabText:     { fontFamily: fonts.serif, fontSize: 12, fontWeight: '600' },
+  tabTextActive: { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', color: '#0B0B0B' },
 
   // Cards
   card: { borderRadius: radius.xl, padding: spacing.md, borderWidth: 1 },
 
   // Hero
   avatarCircle: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-  avatarLetter: { fontSize: 24, fontWeight: '900', color: '#fff' },
+  avatarLetter: { fontFamily: fonts.serif, fontSize: 24, fontWeight: '900', color: '#fff' },
   heroChip:     { alignItems: 'center', gap: 2, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1 },
 
   // Section icon
   secIcon:   { width: 26, height: 26, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
-  cardTitle: { fontSize: 13, fontWeight: '800' },
+  cardTitle: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '800' },
 
   // Curriculum progress
   mileDot:      { width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
@@ -684,10 +682,10 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   goalBadge:    { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
   barsRow:      { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 110, paddingTop: 10 },
   barWrapper:   { flex: 1, alignItems: 'center', gap: 4 },
-  barTimeLabel: { fontSize: 8, fontWeight: '700', height: 11, textAlign: 'center' },
+  barTimeLabel: { fontFamily: fonts.serif, fontSize: 8, fontWeight: '700', height: 11, textAlign: 'center' },
   barTrack:     { width: 20, height: 72, borderRadius: 10, justifyContent: 'flex-end', overflow: 'hidden' },
   barFill:      { width: '100%', borderRadius: 10 },
-  barDayLabel:  { fontSize: 9 },
+  barDayLabel:  { fontFamily: fonts.serif, fontSize: 9 },
 
   // Subject progress
   subjectIcon: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
@@ -706,3 +704,6 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   achieveBadge:     { flex: 1, alignItems: 'center', paddingVertical: 14, paddingHorizontal: 10, borderRadius: 12, borderWidth: 1 },
   achieveBadgeIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 });
+
+
+
