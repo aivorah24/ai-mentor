@@ -1,8 +1,8 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+﻿import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -21,7 +21,7 @@ interface LeaderboardEntry {
   topics: number;
 }
 
-interface Child { id: string; name: string; }
+interface Child { id: string; name: string; grade?: string; }
 
 const MEDAL_COLORS = ['#f59e0b', '#94a3b8', '#cd7c2c'];
 
@@ -38,11 +38,16 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [childIds, setChildIds] = useState<Set<string>>(new Set());
+  const [childGrades, setChildGrades] = useState<string[]>([]);
 
   const fetchLeaderboard = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
-      const res = await fetch(`${SERVER_URL}/student/leaderboard?limit=20`);
+      // Scope to the parent's kid grade(s) only — don't show every grade.
+      const gradeParam = childGrades.length > 0
+        ? `&grade=${encodeURIComponent(childGrades.join(','))}`
+        : '';
+      const res = await fetch(`${SERVER_URL}/student/leaderboard?limit=20${gradeParam}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) setLeaderboard(data);
@@ -50,22 +55,25 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
     } catch {}
     setLoading(false);
     setRefreshing(false);
-  }, []);
+  }, [childGrades]);
 
-  // Refresh leaderboard every time the screen gains focus
+  // Refresh leaderboard every time the screen gains focus (and when grades load)
   useFocusEffect(
     useCallback(() => {
       fetchLeaderboard();
     }, [fetchLeaderboard])
   );
 
-  // Fetch children to know which rows to highlight
+  // Fetch children to know which rows to highlight + which grade(s) to scope to
   useEffect(() => {
     if (!user?.email) return;
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(user.email)}/children`)
       .then(r => r.ok ? r.json() : [])
       .then((data: Child[]) => {
-        if (Array.isArray(data)) setChildIds(new Set(data.map(c => c.id)));
+        if (Array.isArray(data)) {
+          setChildIds(new Set(data.map(c => c.id)));
+          setChildGrades([...new Set(data.map(c => c.grade).filter(Boolean))]);
+        }
       })
       .catch(() => {});
   }, [user?.email]);
@@ -171,28 +179,31 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   screen:         { flex: 1, backgroundColor: c.bgDark },
   content:        { padding: spacing.xl, paddingBottom: 40, gap: spacing.lg },
   myRankBanner:   { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1, borderRadius: radius.xl, padding: spacing.lg },
-  myRankLabel:    { fontSize: 15, fontWeight: '700' },
-  myRankSub:      { fontSize: 12, color: c.textDim, marginTop: 2 },
-  myRankNum:      { fontSize: 28, fontWeight: '900' },
+  myRankLabel:    { fontFamily: fonts.serif, fontSize: 15, fontWeight: '700' },
+  myRankSub:      { fontFamily: fonts.serif, fontSize: 12, color: c.textDim, marginTop: 2 },
+  myRankNum:      { fontFamily: fonts.serif, fontSize: 28, fontWeight: '900' },
   podiumRow:      { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: spacing.md, marginBottom: spacing.sm },
   podiumItem:     { alignItems: 'center', flex: 1, gap: 4 },
   podiumAvatar:   { width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary + '20', alignItems: 'center', justifyContent: 'center' },
-  podiumAvatarText: { fontSize: 15, fontWeight: '700' },
-  podiumName:     { fontSize: 11, fontWeight: '600', color: c.textMuted, maxWidth: 70, textAlign: 'center' },
-  podiumScore:    { fontSize: 12, fontWeight: '700' },
+  podiumAvatarText: { fontFamily: fonts.serif, fontSize: 15, fontWeight: '700' },
+  podiumName:     { fontFamily: fonts.serif, fontSize: 11, fontWeight: '600', color: c.textMuted, maxWidth: 70, textAlign: 'center' },
+  podiumScore:    { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700' },
   podiumBlock:    { width: '100%', alignItems: 'center', justifyContent: 'center' },
   listCard:       { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, overflow: 'hidden' },
   row:            { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 12, paddingHorizontal: spacing.lg },
   rowBorder:      { borderBottomWidth: 1, borderBottomColor: c.borderColor },
   rankBadge:      { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  rankNum:        { fontSize: 13, fontWeight: '700' },
+  rankNum:        { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700' },
   avatar:         { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  avatarText:     { fontSize: 13, fontWeight: '700' },
-  name:           { fontSize: 14, fontWeight: '600', color: c.textMain },
-  grade:          { fontSize: 11, color: c.textDim, marginTop: 2 },
+  avatarText:     { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700' },
+  name:           { fontFamily: fonts.serif, fontSize: 14, fontWeight: '600', color: c.textMain },
+  grade:          { fontFamily: fonts.serif, fontSize: 11, color: c.textDim, marginTop: 2 },
   youBadge:       { borderWidth: 1, borderRadius: 20, paddingHorizontal: 6, paddingVertical: 2 },
-  youText:        { fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
-  score:          { fontSize: 16, fontWeight: '800', letterSpacing: -0.5 },
-  xpLabel:        { fontSize: 10, color: c.textDim, fontWeight: '600' },
-  empty:          { textAlign: 'center', color: c.textMuted, padding: spacing.xl, fontSize: 13 },
+  youText:        { fontFamily: fonts.serif, fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
+  score:          { fontFamily: fonts.serif, fontSize: 16, fontWeight: '800', letterSpacing: -0.5 },
+  xpLabel:        { fontFamily: fonts.serif, fontSize: 10, color: c.textDim, fontWeight: '600' },
+  empty:          { textAlign: 'center', color: c.textMuted, padding: spacing.xl, fontFamily: fonts.serif, fontSize: 13 },
 });
+
+
+

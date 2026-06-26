@@ -18,7 +18,7 @@ import { Feather } from '@expo/vector-icons';
 import { getAuth, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'react-native';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -28,13 +28,19 @@ import SERVER_URL from '../../config/serverUrl';
 
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-function InfoField({ label, value, styles }: { label: string; value: string; styles: any }) {
+const INFO_ICONS: Record<string, any> = {
+  'First Name': 'user', 'Last Name': 'user', 'Email Address': 'mail',
+  'Contact Number': 'phone', 'City': 'map-pin',
+};
+
+function InfoRow({ icon, label, value, styles, isLast }: { icon: string; label: string; value: string; styles: any; isLast?: boolean }) {
   return (
-    <View style={styles.infoField}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <View style={styles.infoValueBox}>
-        <Text style={styles.infoValue}>{value}</Text>
+    <View style={[styles.infoRow, !isLast && styles.infoRowBorder]}>
+      <View style={styles.infoRowLeft}>
+        <Feather name={icon as any} size={14} color="#BAA467" style={{ opacity: 0.7 }} />
+        <Text style={styles.infoLabel}>{label}</Text>
       </View>
+      <Text style={styles.infoValue}>{value}</Text>
     </View>
   );
 }
@@ -233,12 +239,13 @@ export default function ParentProfileScreen({ navigation }: any) {
         />
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-          {/* Hero */}
+          {/* ── Hero Card ── */}
           <View style={styles.heroCard}>
+            {/* Avatar + name */}
             <View style={styles.heroLeft}>
               <TouchableOpacity style={styles.heroAvatar} onPress={pickPhoto} activeOpacity={0.8}>
                 {photoUri ? (
-                  <Image source={{ uri: photoUri }} style={{ width: 72, height: 72, borderRadius: 36 }} />
+                  <Image source={{ uri: photoUri }} style={{ width: 80, height: 80, borderRadius: 40 }} />
                 ) : (
                   <Text style={styles.heroAvatarText}>{firstName[0] || 'P'}</Text>
                 )}
@@ -246,136 +253,121 @@ export default function ParentProfileScreen({ navigation }: any) {
                   <Feather name="camera" size={10} color="#fff" />
                 </View>
               </TouchableOpacity>
-              <View>
-                <Text style={styles.heroWelcome}>Welcome,</Text>
-                <Text style={styles.heroName}>{user?.name ?? 'Sarah Richardson'}</Text>
+              <View style={{ gap: 4 }}>
+                <Text style={styles.heroWelcome}>Welcome back,</Text>
+                <Text style={styles.heroName}>{user?.name ?? 'Parent'}</Text>
                 <View style={styles.heroTags}>
-                  <View style={[styles.heroTag, { backgroundColor: colors.accentGreen + '18', borderColor: colors.accentGreen + '33' }]}>
+                  <View style={styles.heroTag}>
                     <Feather name="check-circle" size={11} color={colors.accentGreen} />
                     <Text style={[styles.heroTagText, { color: colors.accentGreen }]}>Verified Account</Text>
                   </View>
-                  <View style={[styles.heroTag, { backgroundColor: colors.accentYellow + '18', borderColor: colors.accentYellow + '33' }]}>
+                  <View style={[styles.heroTag, { borderColor: colors.accentYellow + '40' }]}>
                     <Feather name="star" size={11} color={colors.accentYellow} />
                     <Text style={[styles.heroTagText, { color: colors.accentYellow }]}>Premium Member</Text>
                   </View>
                 </View>
               </View>
             </View>
+
+            {/* Quote panel */}
+            <View style={styles.heroQuote}>
+              <Text style={styles.quoteGlyph}>"</Text>
+              <Text style={styles.quoteText}>
+                Every step today,{'\n'}a <Text style={styles.quoteHighlight}>brighter</Text> tomorrow.
+              </Text>
+              <View style={styles.sparkleRow}>
+                <View style={styles.sparkleDot} /><View style={[styles.sparkleDot, { width: 4, height: 4 }]} /><View style={styles.sparkleDot} />
+              </View>
+            </View>
+
+            {/* Edit button */}
             <TouchableOpacity style={styles.editBtn} activeOpacity={0.8} onPress={openEdit}>
-              <Feather name="edit-2" size={13} color="white" />
+              <Feather name="edit-2" size={13} color="#0B0B0B" />
               <Text style={styles.editBtnText}>Edit Profile</Text>
             </TouchableOpacity>
           </View>
 
+          {/* ── Two Column ── */}
           <View style={styles.twoCol}>
             {/* Profile Info */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <Feather name="user" size={16} color={colors.primary} />
+                <Feather name="user" size={16} color={colors.accentYellow} />
                 <Text style={styles.cardTitle}>Profile Information</Text>
               </View>
-              <View style={styles.infoGrid}>
-                <InfoField label="First Name" value={firstName || '—'} styles={styles} />
-                <InfoField label="Last Name" value={lastName || '—'} styles={styles} />
-                <InfoField label="Email Address" value={email || '—'} styles={styles} />
-                <InfoField label="Contact Number" value={phone || '—'} styles={styles} />
-                <InfoField label="City" value={city || '—'} styles={styles} />
-              </View>
+              <InfoRow icon="user"     label="First Name"      value={firstName || '—'} styles={styles} />
+              <InfoRow icon="user"     label="Last Name"       value={lastName || '—'}  styles={styles} />
+              <InfoRow icon="mail"     label="Email Address"   value={email || '—'}     styles={styles} />
+              <InfoRow icon="phone"    label="Contact Number"  value={phone || '—'}     styles={styles} />
+              <InfoRow icon="map-pin"  label="City"            value={city || '—'}      styles={styles} isLast />
             </View>
 
             {/* Activity Overview */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <Feather name="activity" size={16} color={colors.accentGreen} />
+                <Feather name="activity" size={16} color={colors.accentYellow} />
                 <Text style={styles.cardTitle}>Activity Overview</Text>
-                <View style={styles.weekBadge}><Text style={styles.weekBadgeText}>This Week</Text></View>
-              </View>
-              <View style={styles.overviewStats}>
-                <View style={styles.overviewStat}>
-                  <Text style={[styles.overviewValue, { color: colors.primary }]}>{Math.round((activeDays / 7) * 100)}%</Text>
-                  <Text style={styles.overviewLabel}>ACTIVE DAYS</Text>
-                </View>
-                <View style={styles.overviewStat}>
-                  <Text style={[styles.overviewValue, { color: colors.textMain }]}>{totalStudyDisplay}</Text>
-                  <Text style={styles.overviewLabel}>TOTAL LEARNING</Text>
-                </View>
-                <View style={styles.overviewStat}>
-                  <Text style={[styles.overviewValue, { color: colors.accentGreen }]}>{children.length} kids</Text>
-                  <Text style={styles.overviewLabel}>LINKED</Text>
+                <View style={styles.weekBadge}>
+                  <Text style={styles.weekBadgeText}>This Week</Text>
                 </View>
               </View>
-              <Text style={styles.chartLabel}>Day-wise Time Spent</Text>
-              <View style={styles.miniChart}>
-                {WEEK_DAYS.map((d, i) => {
-                  const h = Math.max(4, Math.min(weeklyActivity[i] / FULL_BAR_MINUTES, 1) * 64);
-                  const isToday = i === todayIdx;
-                  return (
-                    <View key={d} style={styles.miniBarWrap}>
-                      <View style={styles.miniBarTrack}>
-                        <View style={[styles.miniBarFill, { height: h, backgroundColor: isToday ? colors.primary : colors.textDim + '40' }]} />
-                      </View>
-                      <Text style={[styles.miniBarLabel, isToday && { color: colors.primary, fontWeight: '700' }]}>{d}</Text>
-                    </View>
-                  );
-                })}
+
+              {/* Stats row */}
+              <View style={styles.statsGrid}>
+                <View style={styles.statCell}>
+                  <Text style={[styles.statBig, { color: colors.accentYellow }]}>{activeDays}<Text style={{ fontSize: 14, fontWeight: '600' }}>/7</Text></Text>
+                  <Text style={styles.statSmallLabel}>ACTIVE DAYS</Text>
+                </View>
+                <View style={styles.statDividerV} />
+                <View style={styles.statCell}>
+                  <Text style={styles.statBig}>{totalStudyDisplay}</Text>
+                  <Text style={styles.statSmallLabel}>TOTAL LEARNING TIME</Text>
+                </View>
+                <View style={styles.statDividerV} />
+                <View style={styles.statCell}>
+                  <Text style={[styles.statBig, { color: colors.accentYellow }]}>{children.length} kids</Text>
+                  <Text style={styles.statSmallLabel}>LINKED</Text>
+                </View>
               </View>
+
             </View>
           </View>
 
-          {/* Security */}
+          {/* ── Security & Account ── */}
           <View style={[styles.card, { marginTop: spacing.lg }]}>
-            <View style={styles.cardHeader}>
-              <Feather name="lock" size={16} color={colors.accentRed} />
-              <Text style={styles.cardTitle}>Security & Account</Text>
+            <View style={styles.secHeader}>
+              <View style={styles.cardHeader}>
+                <Feather name="lock" size={16} color={colors.accentYellow} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardTitle}>Security & Account</Text>
+                  <Text style={styles.secSub}>Keep your account secure</Text>
+                </View>
+              </View>
               <TouchableOpacity style={styles.changePassBtn} onPress={openPassModal}>
+                <Feather name="lock" size={12} color={colors.accentYellow} />
                 <Text style={styles.changePassText}>Change Password</Text>
               </TouchableOpacity>
             </View>
-            <View style={[styles.securityRow, { opacity: 0.5 }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.secTitle}>Two-Factor Authentication</Text>
-                <Text style={styles.secSub}>Coming soon</Text>
-              </View>
-              <View style={[styles.comingSoonBadge, { backgroundColor: '#F59E0B22' }]}>
-                <Text style={[styles.comingSoonText, { color: '#F59E0B' }]}>Soon</Text>
-              </View>
-            </View>
-          </View>
 
-          {/* Linked Children */}
-          <View style={[styles.card, { marginTop: spacing.lg }]}>
-            <View style={styles.cardHeader}>
-              <Feather name="users" size={16} color={colors.accentBlue} />
-              <Text style={styles.cardTitle}>Linked Children</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('ParentMyKids')}>
-                <Text style={[styles.changePassText, { color: colors.accentGreen }]}>+ Add Child</Text>
-              </TouchableOpacity>
+            <View style={styles.secTilesRow}>
+              {[
+                { icon: 'user',   title: 'Personal Information',  sub: 'Update your personal details',  action: openEdit },
+                { icon: 'bell',   title: 'Notification Settings', sub: 'Manage your alerts & emails',   action: () => navigation.navigate('ParentSettings') },
+                { icon: 'shield', title: 'Privacy & Security',    sub: 'Control your data & privacy',   action: () => navigation.navigate('ParentSettings') },
+                { icon: 'award',  title: 'Subscription',          sub: 'View your plan & billing',      action: () => navigation.navigate('ParentSubscription') },
+              ].map((tile) => (
+                <TouchableOpacity key={tile.title} style={styles.secTile} activeOpacity={0.75} onPress={tile.action}>
+                  <View style={styles.secTileIcon}>
+                    <Feather name={tile.icon as any} size={16} color={colors.accentYellow} />
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={styles.secTileTitle}>{tile.title}</Text>
+                    <Text style={styles.secTileSub}>{tile.sub}</Text>
+                  </View>
+                  <Feather name="chevron-right" size={16} color={colors.textDim} />
+                </TouchableOpacity>
+              ))}
             </View>
-            {childrenLoading ? (
-              <ActivityIndicator color={colors.primary} style={{ paddingVertical: 16 }} />
-            ) : children.length === 0 ? (
-              <View style={{ paddingVertical: 16, alignItems: 'center' }}>
-                <Text style={{ fontSize: 13, color: colors.textMuted }}>No children linked yet.</Text>
-              </View>
-            ) : (
-              <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator={false} nestedScrollEnabled>
-                {children.map(ch => {
-                  const isOnTrack = (ch.currentStreak ?? 0) >= 3;
-                  const statusLabel = isOnTrack ? 'Active' : 'Needs Attention';
-                  const dotColor = isOnTrack ? colors.accentGreen : colors.accentYellow;
-                  return (
-                    <View key={ch.id} style={styles.childRow}>
-                      <View style={[styles.childDot, { backgroundColor: dotColor }]} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.childRowName}>{ch.name}</Text>
-                        <Text style={styles.childRowGrade}>{ch.grade} · {ch.xpPoints ?? 0} XP</Text>
-                      </View>
-                      <Text style={[styles.childStatus, { color: dotColor }]}>{statusLabel}</Text>
-                    </View>
-                  );
-                })}
-              </ScrollView>
-            )}
           </View>
 
         </ScrollView>
@@ -457,92 +449,134 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: spacing.xl, paddingBottom: 48 },
 
+  // ── Hero ──
   heroCard: {
-    backgroundColor: c.cardDark,
-    borderWidth: 1,
-    borderColor: c.borderColor,
-    borderRadius: radius.xl,
-    padding: spacing.xl,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
+    backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: radius.xl, padding: spacing.xl,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginBottom: spacing.lg, gap: 16, flexWrap: 'wrap',
   },
-  heroLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.xl },
+  heroLeft: { flexDirection: 'row', alignItems: 'center', gap: 18, flexShrink: 1 },
   heroAvatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: c.primary + '30',
-    borderWidth: 3,
-    borderColor: c.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 88, height: 88, borderRadius: 44,
+    backgroundColor: c.accentYellow + '18', borderWidth: 3, borderColor: c.accentYellow,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  heroAvatarText: { fontSize: 28, fontWeight: '700', color: c.primary },
-  avatarEditBadge: { position: 'absolute', bottom: 0, right: 0, width: 22, height: 22, borderRadius: 11, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: c.cardDark },
-  heroWelcome: { fontSize: 13, color: c.textMuted },
-  heroName: { fontSize: 22, fontWeight: '700', color: c.textMain, marginBottom: 8 },
-  heroTags: { flexDirection: 'row', gap: spacing.sm },
-  heroTag: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
-  heroTagText: { fontSize: 10, fontWeight: '600' },
-  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.primary, paddingHorizontal: spacing.lg, paddingVertical: 10, borderRadius: radius.md },
-  editBtnText: { fontSize: 13, fontWeight: '700', color: 'white' },
+  heroAvatarText: { fontSize: 32, fontWeight: '700', fontFamily: fonts.serif, color: c.accentYellow },
+  avatarEditBadge: {
+    position: 'absolute', bottom: 2, right: 2, width: 24, height: 24, borderRadius: 12,
+    backgroundColor: c.accentYellow, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: c.cardDark,
+  },
+  heroWelcome: { fontSize: 13, fontFamily: fonts.sans, color: c.textMuted },
+  heroName: { fontSize: 26, fontWeight: '700', fontFamily: fonts.serif, color: c.textMain },
+  heroTags: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 4 },
+  heroTag: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: c.accentGreen + '40', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+  heroTagText: { fontSize: 11, fontWeight: '600', fontFamily: fonts.sans },
 
+  // Quote panel
+  heroQuote: {
+    flex: 1, minWidth: 180, backgroundColor: c.cardDark, borderRadius: 14,
+    borderWidth: 1, borderColor: c.accentYellow + '30',
+    padding: 18, gap: 4, justifyContent: 'center',
+  },
+  quoteGlyph: { fontSize: 28, color: c.accentYellow, lineHeight: 28, fontFamily: fonts.serif },
+  quoteText: { fontSize: 15, color: c.textMain, lineHeight: 22, fontFamily: fonts.serif },
+  quoteHighlight: { color: c.accentYellow, fontWeight: '700', fontFamily: fonts.serif },
+  sparkleRow: { flexDirection: 'row', gap: 6, marginTop: 6, alignItems: 'center' },
+  sparkleDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: c.accentYellow + '70' },
+
+  editBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    backgroundColor: c.accentYellow, paddingHorizontal: 18, paddingVertical: 12,
+    borderRadius: 999, flexShrink: 0,
+  },
+  editBtnText: { fontSize: 14, fontWeight: '700', fontFamily: fonts.sans, color: '#0B0B0B' },
+
+  // ── Two-col layout ──
   twoCol: { flexDirection: 'row', gap: spacing.lg, flexWrap: 'wrap' },
   card: {
-    flex: 1,
-    minWidth: 280,
-    backgroundColor: c.cardDark,
-    borderWidth: 1,
-    borderColor: c.borderColor,
-    borderRadius: radius.xl,
-    padding: spacing.xl,
-    overflow: 'hidden',
+    flex: 1, minWidth: 280,
+    backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: radius.xl, padding: spacing.xl, overflow: 'hidden',
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.xl },
-  cardTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: c.textMain },
-  weekBadge: { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
-  weekBadgeText: { fontSize: 10, fontWeight: '600', color: c.textMuted },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.lg },
+  cardTitle: { flex: 1, fontSize: 16, fontWeight: '700', fontFamily: fonts.serif, color: c.textMain },
+  weekBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4,
+  },
+  weekBadgeText: { fontSize: 11, fontWeight: '600', fontFamily: fonts.sans, color: c.textMuted },
 
-  infoGrid: { gap: spacing.md },
-  infoField: {},
-  infoLabel: { fontSize: 11, color: c.textMuted, marginBottom: 4 },
-  infoValueBox: { backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: 10 },
-  infoValue: { fontSize: 14, color: c.textMain },
+  // Profile info rows
+  infoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 12 },
+  infoRowBorder: { borderBottomWidth: 1, borderBottomColor: c.borderColor },
+  infoRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, width: 140, flexShrink: 0 },
+  infoLabel: { fontSize: 13, fontFamily: fonts.sans, color: c.textMuted },
+  infoValue: { flex: 1, fontSize: 14, fontFamily: fonts.sans, color: c.textMain, fontWeight: '500' },
 
-  overviewStats: { flexDirection: 'row', marginBottom: spacing.xl },
-  overviewStat: { flex: 1 },
-  overviewValue: { fontSize: 22, fontWeight: '700' },
-  overviewLabel: { fontSize: 9, color: c.textDim, fontWeight: '700', letterSpacing: 0.5, marginTop: 2 },
-  chartLabel: { fontSize: 11, color: c.textMuted, marginBottom: spacing.md },
-  miniChart: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 80 },
-  miniBarWrap: { flex: 1, alignItems: 'center', gap: 4 },
-  miniBarTrack: { width: 18, height: 64, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 9, justifyContent: 'flex-end', overflow: 'hidden' },
-  miniBarFill: { width: '100%', borderRadius: 9 },
-  miniBarLabel: { fontSize: 9, color: c.textDim },
+  // Stats grid in activity
+  statsGrid: {
+    flexDirection: 'row', borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: radius.lg, overflow: 'hidden', marginBottom: spacing.lg,
+  },
+  statCell: { flex: 1, padding: 14, alignItems: 'center', gap: 4 },
+  statDividerV: { width: 1, backgroundColor: c.borderColor },
+  statBig: { fontSize: 22, fontWeight: '800', fontFamily: fonts.serif, color: c.textMain },
+  statSmallLabel: { fontSize: 9, fontFamily: fonts.sans, color: c.textDim, fontWeight: '700', letterSpacing: 0.6, textAlign: 'center' },
 
-  changePassBtn: { backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 5 },
-  changePassText: { fontSize: 11, fontWeight: '600', color: c.textMuted },
-  securityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
-  comingSoonBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
-  comingSoonText: { fontSize: 11, fontWeight: '600' },
-  secTitle: { fontSize: 14, fontWeight: '600', color: c.textMain },
-  secSub: { fontSize: 11, color: c.textMuted, marginTop: 2 },
+  chartLabel: { fontSize: 12, fontFamily: fonts.sans, color: c.textMuted, marginBottom: 12 },
+  miniChart: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 130 },
+  miniBarWrap: { flex: 1, alignItems: 'center', gap: 6 },
+  miniBarTrack: { width: 22, height: 100, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 11, justifyContent: 'flex-end', overflow: 'hidden' },
+  miniBarFill: { width: '100%', borderRadius: 11 },
+  miniBarLabel: { fontSize: 10, fontFamily: fonts.sans, color: c.textDim },
 
-  childRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, borderTopWidth: 1, borderTopColor: c.borderColor, flexShrink: 0 },
+  // Security section
+  secHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: spacing.lg },
+  secSub: { fontSize: 11, fontFamily: fonts.sans, color: c.textMuted, marginTop: 2 },
+  changePassBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    borderWidth: 1, borderColor: c.accentYellow + '50', borderRadius: 999,
+    paddingHorizontal: 14, paddingVertical: 8, marginTop: 4,
+  },
+  changePassText: { fontSize: 12, fontWeight: '600', fontFamily: fonts.sans, color: c.accentYellow },
+
+  secTilesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  secTile: {
+    flex: 1, minWidth: 180, flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: 14, padding: 14,
+  },
+  secTileIcon: {
+    width: 38, height: 38, borderRadius: 10,
+    backgroundColor: c.accentYellow + '15', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  secTileTitle: { fontSize: 13, fontWeight: '700', fontFamily: fonts.sans, color: c.textMain },
+  secTileSub: { fontSize: 11, fontFamily: fonts.sans, color: c.textMuted },
+
+  // Children list
+  childRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 10, borderTopWidth: 1, borderTopColor: c.borderColor },
   childDot: { width: 8, height: 8, borderRadius: 4 },
-  childRowName: { fontSize: 13, fontWeight: '600', color: c.textMain },
-  childRowGrade: { fontSize: 11, color: c.textMuted },
-  childStatus: { fontSize: 11, fontWeight: '600' },
+  childRowName: { fontSize: 13, fontWeight: '600', fontFamily: fonts.sans, color: c.textMain },
+  childRowGrade: { fontSize: 11, fontFamily: fonts.sans, color: c.textMuted },
+  childStatus: { fontSize: 11, fontWeight: '600', fontFamily: fonts.sans },
 
-  // Edit modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  modalCard: { width: '100%', maxWidth: 440, backgroundColor: c.cardDark, borderRadius: radius.xl, borderWidth: 1, borderColor: c.borderColor, padding: spacing.xl, gap: spacing.md },
+  // Modals
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalCard: {
+    width: '100%', maxWidth: 440,
+    backgroundColor: c.cardDark, borderRadius: 20, borderWidth: 1,
+    borderColor: c.accentYellow + '30', padding: spacing.xl, gap: spacing.md,
+  },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  modalTitle: { fontSize: 17, fontWeight: '700', color: c.textMain },
-  modalLabel: { fontSize: 11, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
-  modalInput: { height: 46, backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, paddingHorizontal: spacing.md, fontSize: 14, color: c.textMain },
-  saveBtn: { backgroundColor: c.primary, borderRadius: radius.md, paddingVertical: 14, alignItems: 'center', marginTop: spacing.sm },
-  saveBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  modalTitle: { fontSize: 17, fontWeight: '700', fontFamily: fonts.serif, color: c.textMain },
+  modalLabel: { fontSize: 11, fontWeight: '700', fontFamily: fonts.sans, color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  modalInput: {
+    height: 46, backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.accentYellow + '25',
+    borderRadius: 12, paddingHorizontal: spacing.md, fontSize: 14, fontFamily: fonts.sans, color: c.textMain,
+  },
+  saveBtn: { backgroundColor: c.accentYellow, borderRadius: 999, paddingVertical: 14, alignItems: 'center', marginTop: spacing.sm },
+  saveBtnText: { fontSize: 15, fontWeight: '700', fontFamily: fonts.sans, color: '#0B0B0B' },
 });

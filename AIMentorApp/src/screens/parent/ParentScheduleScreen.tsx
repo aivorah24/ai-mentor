@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+﻿import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
@@ -13,7 +13,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -263,8 +263,25 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
   function prevWeek() { const d = new Date(weekBase); d.setDate(d.getDate() - 7); setWeekBase(d); }
   function nextWeek() { const d = new Date(weekBase); d.setDate(d.getDate() + 7); setWeekBase(d); }
 
+  const horizScrollRef = useRef<ScrollView>(null);
+
+  // Scroll horizontally to show today's column (0-indexed day of week, Mon=0)
+  function scrollToToday(cw: number) {
+    const dow = today.getDay(); // 0=Sun
+    const todayCol = (dow + 6) % 7; // Mon=0 … Sun=6
+    horizScrollRef.current?.scrollTo({ x: todayCol * cw, animated: true });
+  }
+
   const { width: screenWidth } = useWindowDimensions();
   const colWidth = Math.max(DAY_COL_WIDTH, Math.floor((screenWidth - TIME_LABEL_WIDTH) / 7));
+
+  // Auto-scroll to today on mount and when weekBase changes to current week
+  useEffect(() => {
+    const weekIsos = week.map(d => d.iso);
+    if (weekIsos.includes(todayISO)) {
+      setTimeout(() => scrollToToday(colWidth), 300);
+    }
+  }, [weekBase, colWidth]);
   const gridHeight = TIMES.length * HOUR_HEIGHT;
   const totalGridWidth = TIME_LABEL_WIDTH + colWidth * 7;
 
@@ -290,7 +307,7 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                   onPress={() => setSelectedChildIdx(i)}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.childTabName, { color: selectedChildIdx === i ? colors.primary : colors.textMuted }]}>{c.name}</Text>
+                  <Text style={[styles.childTabName, { color: selectedChildIdx === i ? colors.accentYellow : colors.textMuted }]}>{c.name}</Text>
                   <Text style={styles.childTabGrade}>{c.grade}</Text>
                 </TouchableOpacity>
               ))}
@@ -302,7 +319,7 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
             <TouchableOpacity style={styles.navArrow} onPress={prevWeek}>
               <Feather name="chevron-left" size={18} color={colors.textMuted} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.todayBtn} onPress={() => setWeekBase(today)}>
+            <TouchableOpacity style={styles.todayBtn} onPress={() => { setWeekBase(today); setTimeout(() => scrollToToday(colWidth), 100); }}>
               <Text style={styles.todayBtnText}>Today</Text>
             </TouchableOpacity>
             <Text style={styles.weekLabel}>
@@ -316,12 +333,23 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
           <View style={styles.mainLayout}>
             {/* ── Left: Week Calendar Grid ── */}
             <View style={styles.calendarContainer}>
-              {/* Scrollable: header + time grid together so columns stay aligned */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={{ width: totalGridWidth }}>
+              {/* Sticky time label column + scrollable day columns */}
+              <View style={{ flexDirection: 'row' }}>
+                {/* Time labels — sticky, outside horizontal scroll */}
+                <View style={{ width: TIME_LABEL_WIDTH }}>
+                  {/* Spacer matching day header height */}
+                  <View style={{ height: 56 }} />
+                  {TIMES.map((t) => (
+                    <View key={t} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 4 }}>
+                      <Text style={styles.timeLabel}>{t}</Text>
+                    </View>
+                  ))}
+                </View>
+
+              <ScrollView ref={horizScrollRef} horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
+                <View style={{ width: colWidth * 7 }}>
                   {/* Day header row — inside scroll */}
-                  <View style={styles.dayHeaderRow}>
-                    <View style={{ width: TIME_LABEL_WIDTH }} />
+                  <View style={[styles.dayHeaderRow, { marginLeft: 0 }]}>
                     {week.map((d) => {
                       const isToday = d.iso === todayISO;
                       const hasDot  = eventDates.has(d.iso);
@@ -331,27 +359,18 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                           <View style={[styles.dayHeaderCircle, isToday && styles.dayHeaderCircleToday]}>
                             <Text style={[styles.dayHeaderDate, isToday && styles.dayHeaderDateToday]}>{d.date}</Text>
                           </View>
-                          {hasDot && <View style={[styles.dayDot, isToday && { backgroundColor: colors.primary }]} />}
+                          {hasDot && <View style={[styles.dayDot, isToday && { backgroundColor: colors.accentYellow }]} />}
                         </View>
                       );
                     })}
                   </View>
                   {loading ? (
                     <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                      <ActivityIndicator size="small" color={colors.primary} />
+                      <ActivityIndicator size="small" color={colors.accentYellow} />
                       <Text style={styles.emptyText}>Loading schedule…</Text>
                     </View>
                   ) : (
                     <View style={{ flexDirection: 'row' }}>
-                      {/* Time label column */}
-                      <View style={{ width: TIME_LABEL_WIDTH }}>
-                        {TIMES.map((t) => (
-                          <View key={t} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 4 }}>
-                            <Text style={styles.timeLabel}>{t}</Text>
-                          </View>
-                        ))}
-                      </View>
-
                       {/* Day columns */}
                       {week.map((d) => {
                         const dayEvents = (eventsMap[d.iso] ?? []).filter(
@@ -411,13 +430,13 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                               <View style={{
                                 position: 'absolute', left: 2, right: 2,
                                 top: dragPreview.top, height: Math.max(dragPreview.height, 20),
-                                backgroundColor: colors.primary + '28',
-                                borderLeftWidth: 3, borderLeftColor: colors.primary,
+                                backgroundColor: colors.accentYellow + '28',
+                                borderLeftWidth: 3, borderLeftColor: colors.accentYellow,
                                 borderRadius: 4, paddingHorizontal: 5, paddingVertical: 3,
                                 zIndex: 10, // @ts-ignore
                                 pointerEvents: 'none',
                               }}>
-                                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>
+                                <Text style={{ fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: colors.accentYellow }}>
                                   {dragPreview.startT} – {dragPreview.endT}
                                 </Text>
                               </View>
@@ -462,10 +481,11 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                   )}
                 </View>
               </ScrollView>
+              </View>{/* end sticky row wrapper */}
 
               {/* Add event button */}
               <TouchableOpacity style={styles.addEventBtn} onPress={() => { setModalDate(todayISO); setNewStartTime('09:00'); setNewEndTime('10:00'); setModalVisible(true); }} activeOpacity={0.8}>
-                <Feather name="plus" size={16} color={colors.primary} />
+                <Feather name="plus" size={16} color={colors.accentYellow} />
                 <Text style={styles.addEventText}>Add Event for {child?.name ?? 'Child'}</Text>
               </TouchableOpacity>
             </View>
@@ -501,10 +521,10 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                           key={di}
                           style={[styles.calDate, isToday && styles.calDateToday, isWeekDay && !isToday && styles.calDateWeekHighlight]}
                         >
-                          <Text style={[styles.calDateText, isToday && styles.calDateTextToday, isWeekDay && !isToday && { color: colors.primary }]}>
+                          <Text style={[styles.calDateText, isToday && styles.calDateTextToday, isWeekDay && !isToday && { color: colors.accentYellow }]}>
                             {date}
                           </Text>
-                          {hasDot && <View style={[styles.calDot, { backgroundColor: isToday ? 'white' : colors.primary }]} />}
+                          {hasDot && <View style={[styles.calDot, { backgroundColor: isToday ? 'white' : colors.accentYellow }]} />}
                         </View>
                       );
                     })}
@@ -608,9 +628,9 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   // Child selector
   childRow:        { flexDirection: 'row', marginBottom: spacing.lg },
   childTab:        { alignItems: 'center', marginRight: spacing.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.lg, borderRadius: radius.lg, borderWidth: 1, borderColor: 'transparent' },
-  childTabActive:  { borderColor: c.primary, backgroundColor: c.primaryGlow },
-  childTabName:    { fontSize: 14, fontWeight: '700' },
-  childTabGrade:   { fontSize: 10, color: c.textDim, marginTop: 2 },
+  childTabActive:  { borderColor: c.accentYellow, backgroundColor: c.accentYellow + '18' },
+  childTabName:    { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700' },
+  childTabGrade:   { fontFamily: fonts.serif, fontSize: 10, color: c.textDim, marginTop: 2 },
 
   // Week nav
   weekNavBar: {
@@ -620,8 +640,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   navArrow:     { padding: spacing.sm },
   todayBtn:     { paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.sm, borderWidth: 1, borderColor: c.borderColor },
-  todayBtnText: { fontSize: 12, fontWeight: '600', color: c.textMuted },
-  weekLabel:    { flex: 1, fontSize: 13, fontWeight: '700', color: c.textMain, textAlign: 'center' },
+  todayBtnText: { fontFamily: fonts.serif, fontSize: 12, fontWeight: '600', color: c.textMuted },
+  weekLabel:    { flex: 1, fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: c.textMain, textAlign: 'center' },
 
   // Layout
   mainLayout:        { flexDirection: 'row', gap: spacing.xl },
@@ -631,18 +651,18 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   // Day header
   dayHeaderRow:         { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: c.borderColor, marginBottom: 0 },
   dayHeader:            { alignItems: 'center', paddingVertical: spacing.sm, gap: 2 },
-  dayHeaderLabel:       { fontSize: 10, fontWeight: '700', color: c.textDim, letterSpacing: 0.5 },
+  dayHeaderLabel:       { fontFamily: fonts.serif, fontSize: 10, fontWeight: '700', color: c.textDim, letterSpacing: 0.5 },
   dayHeaderLabelToday:  { color: c.accentBlue },
   dayHeaderCircle:      { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  dayHeaderCircleToday: { backgroundColor: c.accentBlue },
-  dayHeaderDate:        { fontSize: 14, fontWeight: '700', color: c.textMuted },
+  dayHeaderCircleToday: { backgroundColor: c.accentYellow },
+  dayHeaderDate:        { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700', color: c.textMuted },
   dayHeaderDateToday:   { color: 'white' },
   dayDot:               { width: 4, height: 4, borderRadius: 2, backgroundColor: c.textDim },
 
   // Grid
   dayCol:   { position: 'relative', borderLeftWidth: 1, borderLeftColor: c.borderColor + '50' },
   hourCell: { position: 'absolute', left: 0, right: 0, height: HOUR_HEIGHT, borderTopWidth: 1, borderTopColor: c.borderColor + '40' },
-  timeLabel: { fontSize: 10, color: c.textDim, fontWeight: '600', textAlign: 'right', paddingRight: 6 },
+  timeLabel: { fontFamily: fonts.serif, fontSize: 10, color: c.textDim, fontWeight: '600', textAlign: 'right', paddingRight: 6 },
 
   // Events
   eventBlock: {
@@ -651,38 +671,38 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingHorizontal: 5, paddingVertical: 3,
     overflow: 'hidden',
   },
-  eventTitle: { fontSize: 11, fontWeight: '600', color: '#ffffff' },
-  eventTime:  { fontSize: 10, color: 'rgba(255,255,255,0.8)' },
+  eventTitle: { fontFamily: fonts.serif, fontSize: 11, fontWeight: '600', color: '#ffffff' },
+  eventTime:  { fontFamily: fonts.serif, fontSize: 10, color: 'rgba(255,255,255,0.8)' },
   deleteBtn:  { position: 'absolute', top: 3, right: 3 },
 
   addEventBtn: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     marginTop: spacing.lg, paddingVertical: 12, paddingHorizontal: spacing.lg,
-    backgroundColor: c.primaryGlow, borderWidth: 1,
-    borderColor: 'rgba(99,102,241,0.3)', borderRadius: radius.md,
+    backgroundColor: c.accentYellow + '18', borderWidth: 1,
+    borderColor: c.accentYellow + '40', borderRadius: radius.md,
     borderStyle: 'dashed', justifyContent: 'center',
   },
-  addEventText: { fontSize: 13, fontWeight: '600', color: c.primary },
-  emptyText:    { fontSize: 12, color: c.textMuted, marginTop: 8 },
+  addEventText: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '600', color: c.accentYellow },
+  emptyText:    { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted, marginTop: 8 },
 
   // Sidebar
   sideCard:      { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.lg, padding: spacing.lg },
   calHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
-  calMonth:      { fontSize: 13, fontWeight: '700', color: c.textMain },
+  calMonth:      { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: c.textMain },
   calDayHeaders: { flexDirection: 'row', marginBottom: spacing.sm },
-  calDayHeader:  { flex: 1, fontSize: 10, color: c.textDim, textAlign: 'center', fontWeight: '600' },
+  calDayHeader:  { flex: 1, fontFamily: fonts.serif, fontSize: 10, color: c.textDim, textAlign: 'center', fontWeight: '600' },
   calWeek:       { flexDirection: 'row', marginBottom: 4 },
   calDate:       { flex: 1, alignItems: 'center', paddingVertical: 4, borderRadius: 6, gap: 2 },
-  calDateToday:         { backgroundColor: c.accentBlue },
-  calDateWeekHighlight: { backgroundColor: c.primaryGlow },
-  calDateText:          { fontSize: 12, color: c.textMuted, fontWeight: '500' },
+  calDateToday:         { backgroundColor: c.accentYellow },
+  calDateWeekHighlight: { backgroundColor: c.accentYellow + '18' },
+  calDateText:          { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted, fontWeight: '500' },
   calDateTextToday:     { color: 'white', fontWeight: '700' },
   calDot:        { width: 4, height: 4, borderRadius: 2 },
-  sideTitle:     { fontSize: 14, fontWeight: '700', color: c.textMain, marginBottom: spacing.lg },
+  sideTitle:     { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700', color: c.textMain, marginBottom: spacing.lg },
   deadlineItem:  { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
   deadlineIcon:  { width: 32, height: 32, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
-  deadlineTitle: { fontSize: 12, fontWeight: '600', color: c.textMain },
-  deadlineDue:   { fontSize: 11 },
+  deadlineTitle: { fontFamily: fonts.serif, fontSize: 12, fontWeight: '600', color: c.textMain },
+  deadlineDue:   { fontFamily: fonts.serif, fontSize: 11 },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', alignItems: 'center', justifyContent: 'center' },
@@ -691,16 +711,19 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderColor: c.borderColor, borderRadius: radius.xl,
     padding: spacing.xxl, gap: spacing.lg,
   },
-  modalTitle:       { fontSize: 17, fontWeight: '700', color: c.textMain },
-  modalSubtitle:    { fontSize: 12, color: c.textMuted, marginTop: -spacing.sm },
-  modalInput:       { backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, padding: spacing.md, color: c.textMain, fontSize: 14 },
-  modalLabel:       { fontSize: 12, color: c.textMuted, fontWeight: '600' },
+  modalTitle:       { fontFamily: fonts.serif, fontSize: 17, fontWeight: '700', color: c.textMain },
+  modalSubtitle:    { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted, marginTop: -spacing.sm },
+  modalInput:       { backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, padding: spacing.md, color: c.textMain, fontFamily: fonts.serif, fontSize: 14 },
+  modalLabel:       { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted, fontWeight: '600' },
   timeChip:         { paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radius.sm, borderWidth: 1, borderColor: c.borderColor, marginRight: 6 },
   timeChipActive:   { borderColor: c.primary, backgroundColor: c.primaryGlow },
-  timeChipText:     { fontSize: 12, color: c.textMuted },
+  timeChipText:     { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted },
   modalBtns:        { flexDirection: 'row', gap: spacing.md },
   modalCancel:      { flex: 1, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center' },
-  modalCancelText:  { fontSize: 13, fontWeight: '600', color: c.textMuted },
-  modalConfirm:     { flex: 1, paddingVertical: 12, borderRadius: radius.md, backgroundColor: c.primary, alignItems: 'center' },
-  modalConfirmText: { fontSize: 13, fontWeight: '700', color: 'white' },
+  modalCancelText:  { fontFamily: fonts.serif, fontSize: 13, fontWeight: '600', color: c.textMuted },
+  modalConfirm:     { flex: 1, paddingVertical: 12, borderRadius: radius.md, backgroundColor: c.accentYellow, alignItems: 'center' },
+  modalConfirmText: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: '#0B0B0B' },
 });
+
+
+

@@ -53,18 +53,45 @@ export default function ScreenLayout({ children }: ScreenLayoutProps) {
   const isStudent = user?.role === 'student';
 
   const [controls, setControls] = useState<StudentControls | null>(null);
-  // Break enforcer: track continuous session time
-  const [breakActive, setBreakActive] = useState(false);
-  const [breakSecondsLeft, setBreakSecondsLeft] = useState(0);
-  // Persist across screen remounts using sessionStorage
+
+  // ── Break enforcer helpers (localStorage so refresh-safe) ──────────────
+  const todayKey = () => new Date().toISOString().split('T')[0];
+  const LS_THRESHOLD = 'aivorah_lastBreakThreshold';
+  const LS_BREAK     = 'aivorah_breakEndsAt'; // epoch ms when current break ends
+
   const getLastBreakThreshold = () => {
-    try { return parseInt(sessionStorage.getItem('lastBreakThreshold') ?? '-1', 10); } catch { return -1; }
+    try {
+      const raw = localStorage.getItem(LS_THRESHOLD);
+      if (!raw) return -1;
+      const { date, value } = JSON.parse(raw);
+      return date === todayKey() ? (value as number) : -1;
+    } catch { return -1; }
   };
-  const setLastBreakThreshold = (v: number) => {
-    try { sessionStorage.setItem('lastBreakThreshold', String(v)); } catch {}
+  const saveLastBreakThreshold = (v: number) => {
+    try { localStorage.setItem(LS_THRESHOLD, JSON.stringify({ date: todayKey(), value: v })); } catch {}
   };
+  const getBreakEndsAt = (): number => {
+    try { return parseInt(localStorage.getItem(LS_BREAK) ?? '0', 10); } catch { return 0; }
+  };
+  const saveBreakEndsAt = (endsAt: number) => {
+    try { localStorage.setItem(LS_BREAK, String(endsAt)); } catch {}
+  };
+  const clearBreakEndsAt = () => {
+    try { localStorage.removeItem(LS_BREAK); } catch {}
+  };
+
+  // On mount, restore a break that was active before a refresh
+  const restoredSecsLeft = (() => {
+    const endsAt = getBreakEndsAt();
+    if (!endsAt) return 0;
+    const secsLeft = Math.round((endsAt - Date.now()) / 1000);
+    return secsLeft > 0 ? secsLeft : 0;
+  })();
+
+  const [breakActive, setBreakActive] = useState(restoredSecsLeft > 0);
+  const [breakSecondsLeft, setBreakSecondsLeft] = useState(restoredSecsLeft);
   const lastBreakThresholdRef = useRef<number>(getLastBreakThreshold());
-const breakTimerRef = useRef<any>(null);
+  const breakTimerRef = useRef<any>(null);
   const controlsIntervalRef = useRef<any>(null);
 
   // 1-min heartbeat: track screen time. Singleton across ALL ScreenLayout
@@ -125,12 +152,13 @@ const breakTimerRef = useRef<any>(null);
     const interval = cfg.intervalMinutes ?? 25;
     const usedMin = controls.usedMinutes ?? 0;
     const threshold = Math.floor(usedMin / interval) * interval;
-    // Only fire if this is a new threshold we haven't served yet
     if (threshold > 0 && usedMin >= threshold && threshold !== lastBreakThresholdRef.current) {
       lastBreakThresholdRef.current = threshold;
-      setLastBreakThreshold(threshold);
+      saveLastBreakThreshold(threshold);
+      const durationSecs = (cfg.breakDurationMinutes ?? 5) * 60;
+      saveBreakEndsAt(Date.now() + durationSecs * 1000);
       setBreakActive(true);
-      setBreakSecondsLeft((cfg.breakDurationMinutes ?? 5) * 60);
+      setBreakSecondsLeft(durationSecs);
     }
   }, [controls?.usedMinutes, controls?.breakEnforcer?.enabled, breakActive]);
 
@@ -141,6 +169,7 @@ const breakTimerRef = useRef<any>(null);
       setBreakSecondsLeft(prev => {
         if (prev <= 1) {
           clearInterval(tick);
+          clearBreakEndsAt();
           setBreakActive(false);
           return 0;
         }

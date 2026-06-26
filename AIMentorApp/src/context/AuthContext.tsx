@@ -529,8 +529,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
-    await signOut(auth);
+    // Clear local state + cache FIRST so logout works even if signOut() hangs
+    // on a flaky network (otherwise setUser(null) would never run).
     setUser(null);
+    await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
+    await signOut(auth).catch(() => {});
   }
 
   async function signInWithEmail(email: string, password: string) {

@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   TextInput, Switch, Modal, Alert, ActivityIndicator, Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -28,12 +29,33 @@ export default function ParentSettingsScreen({ navigation }: any) {
   const { colors, themeMode, setThemeMode } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  // Notifications
+  // Notifications — persisted to AsyncStorage
+  const NOTIF_KEY = `notifPrefs_${user?.email ?? 'guest'}`;
   const [assignmentAlerts, setAssignmentAlerts]   = useState(true);
   const [teacherMessages,  setTeacherMessages]    = useState(true);
   const [weeklyReport,     setWeeklyReport]       = useState(true);
   const [progressNudges,   setProgressNudges]     = useState(true);
-  const [challengeUpdates, setChallengeUpdates]   = useState(false);
+  const [challengeUpdates, setChallengeUpdates]   = useState(true);
+
+  // Load saved prefs on mount
+  useEffect(() => {
+    AsyncStorage.getItem(NOTIF_KEY).then(raw => {
+      if (!raw) return;
+      try {
+        const p = JSON.parse(raw);
+        if (p.assignmentAlerts   != null) setAssignmentAlerts(p.assignmentAlerts);
+        if (p.teacherMessages    != null) setTeacherMessages(p.teacherMessages);
+        if (p.weeklyReport       != null) setWeeklyReport(p.weeklyReport);
+        if (p.progressNudges     != null) setProgressNudges(p.progressNudges);
+        if (p.challengeUpdates   != null) setChallengeUpdates(p.challengeUpdates);
+      } catch {}
+    }).catch(() => {});
+  }, [NOTIF_KEY]);
+
+  // Save prefs whenever any toggle changes
+  const saveNotifPrefs = useCallback((prefs: object) => {
+    AsyncStorage.setItem(NOTIF_KEY, JSON.stringify(prefs)).catch(() => {});
+  }, [NOTIF_KEY]);
 
   // Delete account (provider-aware: password vs Google SSO)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -129,6 +151,13 @@ export default function ParentSettingsScreen({ navigation }: any) {
   }
 
   function handleSignOut() {
+    // Alert.alert is a no-op on React Native Web — use window.confirm there.
+    if (Platform.OS === 'web') {
+      if (typeof window === 'undefined' || window.confirm('Are you sure you want to sign out?')) {
+        logout();
+      }
+      return;
+    }
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign Out', style: 'destructive', onPress: () => logout() },
@@ -149,7 +178,7 @@ export default function ParentSettingsScreen({ navigation }: any) {
             {/* ── Left column ── */}
             <View style={styles.col}>
               {/* ── Profile ── */}
-              <SectionHeader icon="user" label="Profile & Account" color={colors.primary} styles={styles} />
+              <SectionHeader icon="user" label="Profile & Account" color={colors.accentYellow} styles={styles} />
               <View style={styles.card}>
                 <View style={styles.profileRow}>
                   <View style={styles.avatarBig}>
@@ -197,11 +226,11 @@ export default function ParentSettingsScreen({ navigation }: any) {
               <SectionHeader icon="bell" label="Notifications" color={colors.accentYellow} styles={styles} />
               <View style={styles.card}>
                 {[
-                  { label: 'Assignment Alerts', sub: "New assignments for your child", val: assignmentAlerts, set: setAssignmentAlerts },
-                  { label: 'Teacher Messages', sub: 'New messages from teachers', val: teacherMessages, set: setTeacherMessages },
-                  { label: 'Weekly Progress Report', sub: "Summary of your child's week", val: weeklyReport, set: setWeeklyReport },
-                  { label: 'AI Progress Nudges', sub: 'Tips when your child needs attention', val: progressNudges, set: setProgressNudges },
-                  { label: 'Challenge Updates', sub: 'New challenges and rankings', val: challengeUpdates, set: setChallengeUpdates },
+                  { key: 'assignmentAlerts', label: 'Assignment Alerts', sub: "New assignments for your child", val: assignmentAlerts, set: setAssignmentAlerts },
+                  { key: 'teacherMessages',  label: 'Teacher Messages', sub: 'New messages from teachers', val: teacherMessages, set: setTeacherMessages },
+                  { key: 'weeklyReport',     label: 'Weekly Progress Report', sub: "Summary of your child's week", val: weeklyReport, set: setWeeklyReport },
+                  { key: 'progressNudges',   label: 'AI Progress Nudges', sub: 'Tips when your child needs attention', val: progressNudges, set: setProgressNudges },
+                  { key: 'challengeUpdates', label: 'Challenge Updates', sub: 'New challenges and rankings', val: challengeUpdates, set: setChallengeUpdates },
                 ].map((item, i) => (
                   <View key={item.label}>
                     {i > 0 && <View style={styles.divider} />}
@@ -212,8 +241,12 @@ export default function ParentSettingsScreen({ navigation }: any) {
                       </View>
                       <Switch
                         value={item.val}
-                        onValueChange={item.set}
-                        trackColor={{ false: colors.borderColor, true: colors.primary }}
+                        onValueChange={v => {
+                          item.set(v);
+                          const next = { assignmentAlerts, teacherMessages, weeklyReport, progressNudges, challengeUpdates, [item.key]: v };
+                          saveNotifPrefs(next);
+                        }}
+                        trackColor={{ false: colors.borderColor, true: colors.accentYellow }}
                         thumbColor="white"
                       />
                     </View>
@@ -237,8 +270,8 @@ export default function ParentSettingsScreen({ navigation }: any) {
                       onPress={() => setThemeMode(t.id)}
                       activeOpacity={0.7}
                     >
-                      <Feather name={t.icon} size={16} color={themeMode === t.id ? colors.primary : colors.textMuted} />
-                      <Text style={[styles.themeLabel, themeMode === t.id && { color: colors.primary }]}>{t.label}</Text>
+                      <Feather name={t.icon} size={16} color={themeMode === t.id ? colors.accentYellow : colors.textMuted} />
+                      <Text style={[styles.themeLabel, themeMode === t.id && { color: colors.accentYellow }]}>{t.label}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -393,7 +426,7 @@ export default function ParentSettingsScreen({ navigation }: any) {
                 </Text>
               </View>
             )}
-            {!!deleteError && <Text style={{ fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{deleteError}</Text>}
+            {!!deleteError && <Text style={{ fontFamily: fonts.serif, fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{deleteError}</Text>}
             <View style={[styles.modalBtns, { marginTop: 20 }]}>
               <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setDeleteModalVisible(false)} disabled={deleteLoading}>
                 <Text style={styles.modalCancelText}>Cancel</Text>
@@ -475,13 +508,13 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   col: { flex: 1, flexBasis: 0, minWidth: 340, gap: spacing.md },
 
   sectionLabelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md, marginBottom: spacing.sm },
-  sectionLabel: { fontSize: 13, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  sectionLabel: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
 
   card: { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.xl },
 
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginBottom: spacing.lg },
   avatarBig: {
-    width: 64, height: 64, borderRadius: 32, backgroundColor: c.primary,
+    width: 64, height: 64, borderRadius: 32, backgroundColor: c.accentYellow,
     alignItems: 'center', justifyContent: 'center', position: 'relative',
   },
   avatarCam: {
@@ -489,24 +522,24 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: c.cardDark, alignItems: 'center', justifyContent: 'center',
     borderWidth: 2, borderColor: c.borderColor,
   },
-  avatarInitial: { fontSize: 24, fontWeight: '800', color: '#fff' },
-  profileName: { fontSize: 16, fontWeight: '700', color: c.textMain, marginBottom: 2 },
-  profileSub: { fontSize: 12, color: c.textMuted },
-  roleBadge: { marginTop: 6, alignSelf: 'flex-start', backgroundColor: c.primaryGlow, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  roleBadgeText: { fontSize: 11, fontWeight: '600', color: c.primary },
+  avatarInitial: { fontFamily: fonts.serif, fontSize: 24, fontWeight: '800', color: '#fff' },
+  profileName: { fontFamily: fonts.serif, fontSize: 16, fontWeight: '700', color: c.textMain, marginBottom: 2 },
+  profileSub: { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted },
+  roleBadge: { marginTop: 6, alignSelf: 'flex-start', backgroundColor: c.accentYellow + '18', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+  roleBadgeText: { fontFamily: fonts.serif, fontSize: 11, fontWeight: '600', color: c.accentYellow },
 
   divider: { height: 1, backgroundColor: c.borderColor, marginVertical: spacing.lg },
   fieldRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md },
-  fieldLabel: { fontSize: 14, fontWeight: '600', color: c.textMain, marginBottom: 2 },
-  fieldSub: { fontSize: 12, color: c.textMuted, maxWidth: 200 },
+  fieldLabel: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '600', color: c.textMain, marginBottom: 2 },
+  fieldSub: { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted, maxWidth: 200 },
   changeBtn: {
     paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radius.sm,
-    borderWidth: 1, borderColor: c.primary + '40', backgroundColor: c.primaryGlow,
+    borderWidth: 1, borderColor: c.accentYellow + '40', backgroundColor: c.accentYellow + '18',
   },
-  changeBtnText: { fontSize: 12, fontWeight: '600', color: c.primary },
+  changeBtnText: { fontFamily: fonts.serif, fontSize: 12, fontWeight: '600', color: c.accentYellow },
   toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  comingSoonBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: c.primaryGlow, borderWidth: 1, borderColor: c.primary + '30' },
-  comingSoonText: { fontSize: 11, color: c.primary, fontWeight: '600' },
+  comingSoonBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: c.accentYellow + '18', borderWidth: 1, borderColor: c.accentYellow + '30' },
+  comingSoonText: { fontFamily: fonts.serif, fontSize: 11, color: c.accentYellow, fontWeight: '600' },
 
   themeRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
   themeOption: {
@@ -514,8 +547,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     gap: 8, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1,
     borderColor: c.borderColor, backgroundColor: 'rgba(255,255,255,0.02)',
   },
-  themeOptionActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
-  themeLabel: { fontSize: 13, fontWeight: '600', color: c.textMuted },
+  themeOptionActive: { borderColor: c.accentYellow, backgroundColor: c.accentYellow + '18' },
+  themeLabel: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '600', color: c.textMuted },
 
   dangerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 2 },
   actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, marginTop: spacing.sm },
@@ -524,24 +557,27 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingVertical: 16, borderRadius: radius.md,
     borderWidth: 1, borderColor: c.accentRed + '40', backgroundColor: c.accentRed + '0A',
   },
-  actionBtnText: { fontSize: 14, fontWeight: '700' },
-  versionText: { textAlign: 'center', fontSize: 12, color: c.textDim, marginTop: spacing.xl },
+  actionBtnText: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700' },
+  versionText: { textAlign: 'center', fontFamily: fonts.serif, fontSize: 12, color: c.textDim, marginTop: spacing.xl },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   modalBox: { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.xl, width: '100%', maxWidth: 440 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xl },
-  modalTitle: { fontSize: 17, fontWeight: '700', color: c.textMain },
-  modalNote: { fontSize: 13, color: c.textMuted, lineHeight: 20, marginBottom: spacing.lg },
-  modalFieldLabel: { fontSize: 12, fontWeight: '600', color: c.textMuted, marginBottom: 6, marginTop: spacing.md },
+  modalTitle: { fontFamily: fonts.serif, fontSize: 17, fontWeight: '700', color: c.textMain },
+  modalNote: { fontFamily: fonts.serif, fontSize: 13, color: c.textMuted, lineHeight: 20, marginBottom: spacing.lg },
+  modalFieldLabel: { fontFamily: fonts.serif, fontSize: 12, fontWeight: '600', color: c.textMuted, marginBottom: 6, marginTop: spacing.md },
   modalInput: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor,
     borderRadius: radius.md, height: 46, paddingHorizontal: spacing.lg,
   },
-  modalTextInput: { flex: 1, fontSize: 14, color: c.textMain },
+  modalTextInput: { flex: 1, fontFamily: fonts.serif, fontSize: 14, color: c.textMain },
   modalBtns: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl },
   modalCancelBtn: { flex: 1, height: 46, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center', justifyContent: 'center' },
-  modalCancelText: { fontSize: 14, fontWeight: '600', color: c.textMuted },
-  modalSaveBtn: { flex: 1, height: 46, borderRadius: radius.md, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
-  modalSaveText: { fontSize: 14, fontWeight: '700', color: 'white' },
+  modalCancelText: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '600', color: c.textMuted },
+  modalSaveBtn: { flex: 1, height: 46, borderRadius: radius.md, backgroundColor: c.accentYellow, alignItems: 'center', justifyContent: 'center' },
+  modalSaveText: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700', color: '#0B0B0B' },
 });
+
+
+

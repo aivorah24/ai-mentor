@@ -132,9 +132,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       try {
         since = await AsyncStorage.getItem(`assignmentSeenAt_v2_${user.email}`);
         if (!since) {
-          const startOfToday = new Date();
-          startOfToday.setHours(0, 0, 0, 0);
-          since = startOfToday.toISOString();
+          // Default to 7 days ago so past-week assignments are visible on first load
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          since = sevenDaysAgo.toISOString();
           await AsyncStorage.setItem(`assignmentSeenAt_v2_${user.email}`, since);
         }
       } catch (_) {}
@@ -176,12 +177,22 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         markReadCutoff.current = null;
       }
 
+      // Read parent notification preferences (if set)
+      let notifPrefs: Record<string, boolean> = {};
+      try {
+        const raw = await AsyncStorage.getItem(`notifPrefs_${user.email}`);
+        if (raw) notifPrefs = JSON.parse(raw);
+      } catch {}
+      const allowAssign    = notifPrefs.assignmentAlerts   !== false;
+      const allowMsg       = notifPrefs.teacherMessages     !== false;
+      const allowChallenge = notifPrefs.challengeUpdates    !== false;
+
       // Only chime/toast when a count goes UP *after* the baseline is set.
       // The first poll after mount/refresh just records the baseline silently.
       const baseline = hasBaselineRef.current;
-      const newMsg       = baseline && !markReadInFlight.current && msgCount       > prevMsgRef.current;
-      const newAssign    = baseline && !markReadInFlight.current && assignCount    > prevAssignRef.current;
-      const newChallenge = baseline && !markReadInFlight.current && challengeCount > prevChallengeRef.current;
+      const newMsg       = baseline && allowMsg       && !markReadInFlight.current && msgCount       > prevMsgRef.current;
+      const newAssign    = baseline && allowAssign    && !markReadInFlight.current && assignCount    > prevAssignRef.current;
+      const newChallenge = baseline && allowChallenge && !markReadInFlight.current && challengeCount > prevChallengeRef.current;
 
       if (newMsg || newAssign || newChallenge) {
         playNotificationSound();
@@ -196,9 +207,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       prevChallengeRef.current = challengeCount;
       hasBaselineRef.current   = true;
 
-      setUnreadCount(msgCount);
-      setUnreadAssignments(assignCount);
-      setUnreadChallenges(challengeCount);
+      setUnreadCount(allowMsg ? msgCount : 0);
+      setUnreadAssignments(allowAssign ? assignCount : 0);
+      setUnreadChallenges(allowChallenge ? challengeCount : 0);
       setLatestNotif(msgCount > 0 ? latest : null);
       setNotificationItems(items);
       if (msgCount === 0 && assignCount === 0 && challengeCount === 0) setToastVisible(false);

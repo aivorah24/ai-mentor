@@ -238,8 +238,9 @@ router.get('/notifications-summary', async (req, res) => {
       challengeQ      || Promise.resolve({ data: [] }),
     ]);
 
-    // Real chat messages only (no system messages — students have no Messages section)
-    const allMsgs  = (msgRes.data || []).filter(m => !isSystemNotification(m.content));
+    // Split incoming messages: real chat vs system notifications (assignment/challenge alerts)
+    const rawMsgs = msgRes.data || [];
+    const allMsgs = rawMsgs.filter(m => !isSystemNotification(m.content));
     const msgCount = allMsgs.length;
     const latest   = allMsgs[0] ? {
       id:          allMsgs[0].id,
@@ -249,7 +250,19 @@ router.get('/notifications-summary', async (req, res) => {
       createdAt:   allMsgs[0].created_at,
     } : null;
 
-    // Merge personal + class assignments, dedupe by id
+    // For parents: system-prefix messages in their inbox are assignment/challenge alerts
+    // inserted by the assignments route when a teacher assigns to their child.
+    const isParent = userRole === 'parent';
+    const parentSystemMsgs = isParent ? rawMsgs.filter(m => isSystemNotification(m.content)) : [];
+    const parentAssignMsgs = parentSystemMsgs.filter(m =>
+      m.content.trim().startsWith('New Assignment assigned:') ||
+      m.content.trim().startsWith('New Quiz assigned:')
+    );
+    const parentChallengeMsgs = parentSystemMsgs.filter(m =>
+      m.content.trim().startsWith('New Challenge assigned:')
+    );
+
+    // Merge personal + class assignments (students only), dedupe by id
     const allAssigns = [...(personalAssignRes.data || []), ...(classAssignRes.data || [])];
     const seenIds = new Set();
     let uniqueAssigns = allAssigns.filter(a => { if (seenIds.has(a.id)) return false; seenIds.add(a.id); return true; });
@@ -273,8 +286,8 @@ router.get('/notifications-summary', async (req, res) => {
     });
 
     const challengeRows  = challengeRes.data || [];
-    const assignCount    = uniqueAssigns.length;
-    const challengeCount = challengeRows.length;
+    const assignCount    = isParent ? parentAssignMsgs.length : uniqueAssigns.length;
+    const challengeCount = isParent ? parentChallengeMsgs.length : challengeRows.length;
 
     // Fetch challenge titles for the per-challenge notification items
     const challengeIds = [...new Set(challengeRows.map(r => r.challenge_id).filter(Boolean))];
@@ -284,24 +297,47 @@ router.get('/notifications-summary', async (req, res) => {
       (chs || []).forEach(c => { challengeMap[c.id] = c; });
     }
 
-    // Build Google Classroom-style notification items — assignments + challenges,
-    // each carrying the id its screen needs to open the exact item.
-    const assignmentItems = uniqueAssigns.map(a => ({
-      id:         a.id,
-      type:       a.type === 'quiz' ? 'quiz' : 'assignment',
-      title:      a.title || 'New Assignment',
-      subtitle:   [a.subject, creatorMap[a.created_by_id]].filter(Boolean).join(' · '),
-      senderName: creatorMap[a.created_by_id] || 'Teacher',
-      createdAt:  a.created_at,
-    }));
-    const challengeItems = challengeRows.map(r => ({
-      id:         r.challenge_id,                       // ChallengesScreen matches challenge.id
-      type:       'challenge',
-      title:      challengeMap[r.challenge_id]?.title || 'New Challenge',
-      subtitle:   [challengeMap[r.challenge_id]?.subject, 'Challenge'].filter(Boolean).join(' · '),
-      senderName: r.assigned_by_role === 'parent' ? 'Your parent' : 'Your teacher',
-      createdAt:  r.created_at,
-    }));
+    // Build notification items
+    let assignmentItems = [];
+    if (isParent) {
+      // Parent: build items from system messages
+      assignmentItems = parentAssignMsgs.map(m => {
+        const titleMatch = m.content.match(/^New (?:Assignment|Quiz) assigned: "([^"]+)"/);
+        const subjectMatch = m.content.match(/\(([^)]+)\)/);
+        return {
+          id:         m.id,
+          type:       m.content.startsWith('New Quiz') ? 'quiz' : 'assignment',
+          title:      titleMatch ? titleMatch[1] : 'New Assignment',
+          subtitle:   subjectMatch ? subjectMatch[1] : '',
+          senderName: m.sender_name || 'Aivorah',
+          createdAt:  m.created_at,
+        };
+      });
+    } else {
+      assignmentItems = uniqueAssigns.map(a => ({
+        id:         a.id,
+        type:       a.type === 'quiz' ? 'quiz' : 'assignment',
+        title:      a.title || 'New Assignment',
+        subtitle:   [a.subject, creatorMap[a.created_by_id]].filter(Boolean).join(' · '),
+        senderName: creatorMap[a.created_by_id] || 'Teacher',
+        createdAt:  a.created_at,
+      }));
+    }
+
+    const challengeItems = isParent
+      ? parentChallengeMsgs.map(m => ({
+          id: m.id, type: 'challenge',
+          title: 'New Challenge', subtitle: '',
+          senderName: m.sender_name || 'Aivorah', createdAt: m.created_at,
+        }))
+      : challengeRows.map(r => ({
+          id:         r.challenge_id,
+          type:       'challenge',
+          title:      challengeMap[r.challenge_id]?.title || 'New Challenge',
+          subtitle:   [challengeMap[r.challenge_id]?.subject, 'Challenge'].filter(Boolean).join(' · '),
+          senderName: r.assigned_by_role === 'parent' ? 'Your parent' : 'Your teacher',
+          createdAt:  r.created_at,
+        }));
 
     const notificationItems = [...assignmentItems, ...challengeItems]
       .sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0))

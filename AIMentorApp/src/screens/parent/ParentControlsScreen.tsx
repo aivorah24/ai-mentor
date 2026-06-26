@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import Svg, { Circle } from 'react-native-svg';
 import {
@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -286,7 +287,7 @@ export default function ParentControlsScreen({ navigation }: any) {
       <ScreenLayout>
         <Header title="Parental Controls" subtitle="Manage your child's app usage" />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.accentYellow} />
         </View>
       </ScreenLayout>
     );
@@ -303,14 +304,14 @@ export default function ParentControlsScreen({ navigation }: any) {
             {children.map(c => (
               <TouchableOpacity
                 key={c.id}
-                style={[s.childChip, selectedChild?.id === c.id && { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+                style={[s.childChip, selectedChild?.id === c.id && { backgroundColor: colors.accentYellow + '20', borderColor: colors.accentYellow }]}
                 onPress={() => setSelectedChild(c)}
                 activeOpacity={0.7}
               >
-                <View style={[s.avatar, { backgroundColor: selectedChild?.id === c.id ? colors.primary : colors.textDim + '30' }]}>
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>{(c.name || 'S')[0].toUpperCase()}</Text>
+                <View style={[s.avatar, { backgroundColor: selectedChild?.id === c.id ? colors.accentYellow : colors.textDim + '30' }]}>
+                  <Text style={{ color: '#fff', fontWeight: '700', fontFamily: fonts.serif, fontSize: 13 }}>{(c.name || 'S')[0].toUpperCase()}</Text>
                 </View>
-                <Text style={{ color: selectedChild?.id === c.id ? colors.primary : colors.textMain, fontWeight: '600', fontSize: 13 }}>
+                <Text style={{ color: selectedChild?.id === c.id ? colors.accentYellow : colors.textMain, fontWeight: '600', fontFamily: fonts.serif, fontSize: 13 }}>
                   {c.name}
                 </Text>
               </TouchableOpacity>
@@ -322,7 +323,7 @@ export default function ParentControlsScreen({ navigation }: any) {
           <>
             {/* ── Usage Overview ── */}
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ color: colors.textDim, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>
+              <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>
                 USAGE OVERVIEW — {selectedChild.name.toUpperCase()}
               </Text>
               <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -336,7 +337,7 @@ export default function ParentControlsScreen({ navigation }: any) {
                   const dash = circ * (pct / 100);
                   return (
                     <LinearGradient colors={['#93B0AC12', '#C3DCD808']} style={[s.usageHalf, { borderColor: color + '30' }]}>
-                      <Text style={{ color: colors.textDim, fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 10 }}>TODAY</Text>
+                      <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 10 }}>TODAY</Text>
                       <View style={{ alignItems: 'center', marginBottom: 10 }}>
                         <Svg width="72" height="72" viewBox="0 0 72 72">
                           <Circle cx="36" cy="36" r={r} fill="none" stroke={color + '22'} strokeWidth="6" />
@@ -345,12 +346,12 @@ export default function ParentControlsScreen({ navigation }: any) {
                             transform="rotate(-90 36 36)" />
                         </Svg>
                         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-                          <Text style={{ color, fontWeight: '800', fontSize: 15 }}>{formatMinutes(used)}</Text>
-                          <Text style={{ color: colors.textDim, fontSize: 9 }}>used</Text>
+                          <Text style={{ color, fontWeight: '800', fontFamily: fonts.serif, fontSize: 15 }}>{formatMinutes(used)}</Text>
+                          <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 9 }}>used</Text>
                         </View>
                       </View>
-                      <Text style={{ color: colors.textMain, fontWeight: '700', fontSize: 13, textAlign: 'center' }}>{pct}%</Text>
-                      <Text style={{ color: colors.textDim, fontSize: 11, textAlign: 'center', marginTop: 2 }}>
+                      <Text style={{ color: colors.textMain, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, textAlign: 'center' }}>{pct}%</Text>
+                      <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 11, textAlign: 'center', marginTop: 2 }}>
                         {ctrl.isEnabled ? `of ${formatMinutes(limit)}` : 'no limit'}
                       </Text>
                     </LinearGradient>
@@ -367,7 +368,7 @@ export default function ParentControlsScreen({ navigation }: any) {
                   const dash = circ * (pct / 100);
                   return (
                     <LinearGradient colors={['#C5BD9612', '#EEE8B408']} style={[s.usageHalf, { borderColor: color + '30' }]}>
-                      <Text style={{ color: colors.textDim, fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 10 }}>THIS WEEK</Text>
+                      <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 10 }}>THIS WEEK</Text>
                       <View style={{ alignItems: 'center', marginBottom: 10 }}>
                         <Svg width="72" height="72" viewBox="0 0 72 72">
                           <Circle cx="36" cy="36" r={r} fill="none" stroke={color + '22'} strokeWidth="6" />
@@ -376,14 +377,14 @@ export default function ParentControlsScreen({ navigation }: any) {
                             transform="rotate(-90 36 36)" />
                         </Svg>
                         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-                          <Text style={{ color, fontWeight: '800', fontSize: 13 }}>{formatMinutes(used)}</Text>
-                          <Text style={{ color: colors.textDim, fontSize: 9 }}>used</Text>
+                          <Text style={{ color, fontWeight: '800', fontFamily: fonts.serif, fontSize: 13 }}>{formatMinutes(used)}</Text>
+                          <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 9 }}>used</Text>
                         </View>
                       </View>
-                      <Text style={{ color: colors.textMain, fontWeight: '700', fontSize: 13, textAlign: 'center' }}>
+                      <Text style={{ color: colors.textMain, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, textAlign: 'center' }}>
                         {ctrl.weeklyCapEnabled ? `${pct}%` : formatMinutes(used)}
                       </Text>
-                      <Text style={{ color: colors.textDim, fontSize: 11, textAlign: 'center', marginTop: 2 }}>
+                      <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 11, textAlign: 'center', marginTop: 2 }}>
                         {ctrl.weeklyCapEnabled ? `of ${formatMinutes(ctrl.weeklyCapMinutes)}` : 'this week'}
                       </Text>
                     </LinearGradient>
@@ -398,19 +399,19 @@ export default function ParentControlsScreen({ navigation }: any) {
                 <View style={s.row}>
                   <Text style={[s.rowLabel, { color: colors.textMain, fontSize: 13 }]}>Enable</Text>
                   <Switch value={ctrl.isEnabled} onValueChange={v => set({ isEnabled: v })}
-                    trackColor={{ false: colors.textDim + '30', true: colors.primary + '50' }}
-                    thumbColor={ctrl.isEnabled ? colors.primary : colors.textDim} />
+                    trackColor={{ false: colors.textDim + '30', true: colors.accentYellow + '50' }}
+                    thumbColor={ctrl.isEnabled ? colors.accentYellow : colors.textDim} />
                 </View>
                 {ctrl.isEnabled && (
                   <>
                     <Text style={[s.fieldLabel, { color: colors.textDim }]}>Limit</Text>
-                    <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.primary, backgroundColor: colors.primary + '10' }]}
+                    <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
                       onPress={() => setPickerMode('daily')} activeOpacity={0.7}>
-                      <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.dailyLimitMinutes)}</Text>
-                      <Feather name="chevron-down" size={13} color={colors.primary} />
+                      <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.dailyLimitMinutes)}</Text>
+                      <Feather name="chevron-down" size={13} color={colors.accentYellow} />
                     </TouchableOpacity>
                     <View style={[s.row, { marginTop: 10 }]}>
-                      <Text style={{ color: colors.textDim, fontSize: 12, flex: 1 }}>Lock on limit</Text>
+                      <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 12, flex: 1 }}>Lock on limit</Text>
                       <Switch value={ctrl.lockWhenReached} onValueChange={v => set({ lockWhenReached: v })}
                         trackColor={{ false: colors.textDim + '30', true: '#EFD1D450' }}
                         thumbColor={ctrl.lockWhenReached ? '#EFD1D4' : colors.textDim} />
@@ -423,16 +424,16 @@ export default function ParentControlsScreen({ navigation }: any) {
                 <View style={s.row}>
                   <Text style={[s.rowLabel, { color: colors.textMain, fontSize: 13 }]}>Enable</Text>
                   <Switch value={ctrl.weeklyCapEnabled} onValueChange={v => set({ weeklyCapEnabled: v })}
-                    trackColor={{ false: colors.textDim + '30', true: colors.primary + '50' }}
-                    thumbColor={ctrl.weeklyCapEnabled ? colors.primary : colors.textDim} />
+                    trackColor={{ false: colors.textDim + '30', true: colors.accentYellow + '50' }}
+                    thumbColor={ctrl.weeklyCapEnabled ? colors.accentYellow : colors.textDim} />
                 </View>
                 {ctrl.weeklyCapEnabled && (
                   <>
                     <Text style={[s.fieldLabel, { color: colors.textDim }]}>Weekly limit</Text>
-                    <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.primary, backgroundColor: colors.primary + '10' }]}
+                    <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
                       onPress={() => setPickerMode('weekly')} activeOpacity={0.7}>
-                      <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.weeklyCapMinutes)}</Text>
-                      <Feather name="chevron-down" size={13} color={colors.primary} />
+                      <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.weeklyCapMinutes)}</Text>
+                      <Feather name="chevron-down" size={13} color={colors.accentYellow} />
                     </TouchableOpacity>
                   </>
                 )}
@@ -445,25 +446,25 @@ export default function ParentControlsScreen({ navigation }: any) {
                 <View style={s.row}>
                   <Text style={[s.rowLabel, { color: colors.textMain, fontSize: 13 }]}>Enable</Text>
                   <Switch value={ctrl.allowedHoursEnabled} onValueChange={v => set({ allowedHoursEnabled: v })}
-                    trackColor={{ false: colors.textDim + '30', true: colors.primary + '50' }}
-                    thumbColor={ctrl.allowedHoursEnabled ? colors.primary : colors.textDim} />
+                    trackColor={{ false: colors.textDim + '30', true: colors.accentYellow + '50' }}
+                    thumbColor={ctrl.allowedHoursEnabled ? colors.accentYellow : colors.textDim} />
                 </View>
                 {ctrl.allowedHoursEnabled && (
                   <View style={{ gap: 6, marginTop: 4 }}>
                     <View>
                       <Text style={[s.fieldLabel, { color: colors.textDim }]}>From</Text>
-                      <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.primary, backgroundColor: colors.primary + '10' }]}
+                      <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
                         onPress={() => setPickerMode('startHour')} activeOpacity={0.7}>
-                        <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13, flex: 1 }}>{formatHour(ctrl.allowedHoursStart)}</Text>
-                        <Feather name="chevron-down" size={13} color={colors.primary} />
+                        <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatHour(ctrl.allowedHoursStart)}</Text>
+                        <Feather name="chevron-down" size={13} color={colors.accentYellow} />
                       </TouchableOpacity>
                     </View>
                     <View>
                       <Text style={[s.fieldLabel, { color: colors.textDim }]}>To</Text>
-                      <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.primary, backgroundColor: colors.primary + '10' }]}
+                      <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
                         onPress={() => setPickerMode('endHour')} activeOpacity={0.7}>
-                        <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13, flex: 1 }}>{formatHour(ctrl.allowedHoursEnd)}</Text>
-                        <Feather name="chevron-down" size={13} color={colors.primary} />
+                        <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatHour(ctrl.allowedHoursEnd)}</Text>
+                        <Feather name="chevron-down" size={13} color={colors.accentYellow} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -474,25 +475,25 @@ export default function ParentControlsScreen({ navigation }: any) {
                 <View style={s.row}>
                   <Text style={[s.rowLabel, { color: colors.textMain, fontSize: 13 }]}>Enable</Text>
                   <Switch value={ctrl.breakEnforcerEnabled} onValueChange={v => set({ breakEnforcerEnabled: v })}
-                    trackColor={{ false: colors.textDim + '30', true: colors.primary + '50' }}
-                    thumbColor={ctrl.breakEnforcerEnabled ? colors.primary : colors.textDim} />
+                    trackColor={{ false: colors.textDim + '30', true: colors.accentYellow + '50' }}
+                    thumbColor={ctrl.breakEnforcerEnabled ? colors.accentYellow : colors.textDim} />
                 </View>
                 {ctrl.breakEnforcerEnabled && (
                   <View style={{ gap: 6, marginTop: 4 }}>
                     <View>
                       <Text style={[s.fieldLabel, { color: colors.textDim }]}>Break every</Text>
-                      <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.primary, backgroundColor: colors.primary + '10' }]}
+                      <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
                         onPress={() => setPickerMode('breakInterval')} activeOpacity={0.7}>
-                        <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.breakIntervalMinutes)}</Text>
-                        <Feather name="chevron-down" size={13} color={colors.primary} />
+                        <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.breakIntervalMinutes)}</Text>
+                        <Feather name="chevron-down" size={13} color={colors.accentYellow} />
                       </TouchableOpacity>
                     </View>
                     <View>
                       <Text style={[s.fieldLabel, { color: colors.textDim }]}>Break lasts</Text>
-                      <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.primary, backgroundColor: colors.primary + '10' }]}
+                      <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
                         onPress={() => setPickerMode('breakDuration')} activeOpacity={0.7}>
-                        <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.breakDurationMinutes)}</Text>
-                        <Feather name="chevron-down" size={13} color={colors.primary} />
+                        <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.breakDurationMinutes)}</Text>
+                        <Feather name="chevron-down" size={13} color={colors.accentYellow} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -505,13 +506,13 @@ export default function ParentControlsScreen({ navigation }: any) {
               <View style={[s.row, { marginBottom: ctrl.subjectFilterEnabled ? 14 : 0 }]}>
                 <View style={{ flex: 1 }}>
                   <Text style={[s.rowLabel, { color: colors.textMain }]}>Block specific subjects</Text>
-                  <Text style={{ color: colors.textDim, fontSize: 12, marginTop: 2 }}>
+                  <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 12, marginTop: 2 }}>
                     Blocked subjects are locked on the student's app
                   </Text>
                 </View>
                 <Switch value={ctrl.subjectFilterEnabled} onValueChange={v => set({ subjectFilterEnabled: v })}
-                  trackColor={{ false: colors.textDim + '30', true: colors.primary + '50' }}
-                  thumbColor={ctrl.subjectFilterEnabled ? colors.primary : colors.textDim} />
+                  trackColor={{ false: colors.textDim + '30', true: colors.accentYellow + '50' }}
+                  thumbColor={ctrl.subjectFilterEnabled ? colors.accentYellow : colors.textDim} />
               </View>
               {ctrl.subjectFilterEnabled && (
                 <>
@@ -523,14 +524,14 @@ export default function ParentControlsScreen({ navigation }: any) {
                         <TouchableOpacity
                           key={subject}
                           style={[s.subjectChip, {
-                            backgroundColor: blocked ? '#EFD1D420' : colors.primary + '15',
-                            borderColor: blocked ? '#EFD1D480' : colors.primary + '60',
+                            backgroundColor: blocked ? '#EFD1D420' : colors.accentYellow + '15',
+                            borderColor: blocked ? '#EFD1D480' : colors.accentYellow + '60',
                           }]}
                           onPress={() => toggleSubject(subject)}
                           activeOpacity={0.7}
                         >
-                          <Feather name={blocked ? 'lock' : 'unlock'} size={12} color={blocked ? '#EFD1D4' : colors.primary} />
-                          <Text style={{ color: blocked ? '#EFD1D4' : colors.primary, fontSize: 12, fontWeight: '600' }}>
+                          <Feather name={blocked ? 'lock' : 'unlock'} size={12} color={blocked ? '#EFD1D4' : colors.accentYellow} />
+                          <Text style={{ color: blocked ? '#EFD1D4' : colors.accentYellow, fontFamily: fonts.serif, fontSize: 12, fontWeight: '600' }}>
                             {subject}
                           </Text>
                         </TouchableOpacity>
@@ -538,7 +539,7 @@ export default function ParentControlsScreen({ navigation }: any) {
                     })}
                   </View>
                   {ctrl.blockedSubjects.length > 0 && (
-                    <Text style={{ color: '#EFD1D4', fontSize: 11, marginTop: 10 }}>
+                    <Text style={{ color: '#EFD1D4', fontFamily: fonts.serif, fontSize: 11, marginTop: 10 }}>
                       {ctrl.blockedSubjects.length} subject{ctrl.blockedSubjects.length > 1 ? 's' : ''} blocked
                     </Text>
                   )}
@@ -549,19 +550,19 @@ export default function ParentControlsScreen({ navigation }: any) {
             {/* Toast */}
             <Animated.View style={[s.toast, { opacity: toastOpacity }]}>
               <Feather name="check-circle" size={15} color="#fff" />
-              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Settings saved</Text>
+              <Text style={{ color: '#fff', fontFamily: fonts.serif, fontSize: 13, fontWeight: '600' }}>Settings saved</Text>
             </Animated.View>
 
             {/* Save button */}
             <TouchableOpacity
-              style={[s.saveBtn, { backgroundColor: colors.primary }]}
+              style={[s.saveBtn, { backgroundColor: colors.accentYellow }]}
               onPress={saveSettings}
               activeOpacity={0.7}
               disabled={saving}
             >
               {saving
-                ? <ActivityIndicator size="small" color="#fff" />
-                : <><Feather name="check" size={15} color="#fff" /><Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Save All Settings</Text></>
+                ? <ActivityIndicator size="small" color="#0B0B0B" />
+                : <><Feather name="check" size={15} color="#0B0B0B" /><Text style={{ color: '#0B0B0B', fontWeight: '700', fontFamily: fonts.serif, fontSize: 13 }}>Save All Settings</Text></>
               }
             </TouchableOpacity>
           </>
@@ -570,7 +571,7 @@ export default function ParentControlsScreen({ navigation }: any) {
         {children.length === 0 && (
           <View style={{ alignItems: 'center', gap: 12, marginTop: 60 }}>
             <Feather name="users" size={40} color={colors.textDim} />
-            <Text style={{ color: colors.textDim, fontSize: 14, textAlign: 'center' }}>
+            <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 14, textAlign: 'center' }}>
               No children linked yet. Add a child from the dashboard to manage controls.
             </Text>
           </View>
@@ -594,14 +595,14 @@ export default function ParentControlsScreen({ navigation }: any) {
               showsVerticalScrollIndicator={false}
               renderItem={({ item: val }) => (
                 <TouchableOpacity
-                  style={[s.pickerOption, { borderBottomColor: colors.borderColor + '40' }, pickerValue === val && { backgroundColor: colors.primary + '18' }]}
+                  style={[s.pickerOption, { borderBottomColor: colors.borderColor + '40' }, pickerValue === val && { backgroundColor: colors.accentYellow + '18' }]}
                   onPress={() => handlePickerSelect(val)}
                   activeOpacity={0.7}
                 >
-                  <Text style={{ color: pickerValue === val ? colors.primary : colors.textMain, fontWeight: pickerValue === val ? '700' : '500', fontSize: 15 }}>
+                  <Text style={{ color: pickerValue === val ? colors.accentYellow : colors.textMain, fontWeight: pickerValue === val ? '700' : '500', fontFamily: fonts.serif, fontSize: 15 }}>
                     {formatPickerItem(val)}
                   </Text>
-                  {pickerValue === val && <Feather name="check" size={16} color={colors.primary} />}
+                  {pickerValue === val && <Feather name="check" size={16} color={colors.accentYellow} />}
                 </TouchableOpacity>
               )}
             />
@@ -635,23 +636,26 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   usageCard: { padding: 20, borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: c.borderColor },
   usageHalf: { flex: 1, padding: 14, borderRadius: 16, borderWidth: 1, alignItems: 'center' },
   iconCircle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  cardTitle: { fontSize: 15, fontWeight: '700' },
+  cardTitle: { fontFamily: fonts.serif, fontSize: 15, fontWeight: '700' },
   progressBarBg: { height: 8, borderRadius: 4, backgroundColor: isDark ? '#ffffff12' : '#00000012', overflow: 'hidden' },
   progressBarFill: { height: '100%', borderRadius: 4 },
   card: { padding: 18, borderRadius: 16, marginBottom: 14, borderWidth: 1 },
   cardRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
   halfCard: { flex: 1, padding: 12, marginBottom: 0 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  rowLabel: { fontWeight: '600', fontSize: 14 },
-  fieldLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 8 },
+  rowLabel: { fontWeight: '600', fontFamily: fonts.serif, fontSize: 14 },
+  fieldLabel: { fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 8 },
   pickerBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 10, borderWidth: 1.5, marginBottom: 4 },
   divider: { borderTopWidth: 1, marginBottom: 0 },
   subjectChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
-  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 24, borderRadius: 10, marginTop: 4, alignSelf: 'center' },
-  toast: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', backgroundColor: c.primary, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, marginBottom: 8 },
+  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 24, borderRadius: 999, marginTop: 4, alignSelf: 'center' },
+  toast: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', backgroundColor: c.accentYellow, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, marginBottom: 8 },
   // Modal
   modalOverlay: { flex: 1, backgroundColor: '#00000060', justifyContent: 'center', alignItems: 'center' },
   pickerModal: { width: 280, borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
   pickerHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1 },
   pickerOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1 },
 });
+
+
+

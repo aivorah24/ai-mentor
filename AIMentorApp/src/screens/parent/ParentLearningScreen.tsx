@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+﻿import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
@@ -101,8 +101,8 @@ function StatsBanner({ report, colors, isDark }: { report: ChildReport | null; c
     <View style={[bannerStyles.card, { backgroundColor: bg, borderColor: colors.borderColor }]}>
       {items.map((item, i) => (
         <View key={item.label} style={[bannerStyles.item, i > 0 && { borderLeftWidth: 1, borderLeftColor: colors.borderColor }]}>
-          <View style={[bannerStyles.iconBox, { backgroundColor: colors.primary + '18' }]}>
-            <Feather name={item.icon as any} size={14} color={colors.primary} />
+          <View style={[bannerStyles.iconBox, { backgroundColor: colors.accentYellow + '18' }]}>
+            <Feather name={item.icon as any} size={14} color={colors.accentYellow} />
           </View>
           <Text style={[bannerStyles.value, { color: colors.textMain }]}>{item.value}</Text>
           <Text style={[bannerStyles.label, { color: colors.textMuted }]}>{item.label}</Text>
@@ -121,8 +121,8 @@ const bannerStyles = StyleSheet.create({
   },
   item:    { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 4 },
   iconBox: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  value:   { fontSize: 15, fontWeight: '800' },
-  label:   { fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.4 },
+  value:   { fontFamily: fonts.serif, fontSize: 15, fontWeight: '800' },
+  label:   { fontFamily: fonts.serif, fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.4 },
 });
 
 // ── Topic Row — shown inside expanded subject card ────────────────────────────
@@ -184,13 +184,13 @@ function TopicRow({
 const topicRowStyles = StyleSheet.create({
   row:       { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 10, paddingHorizontal: 14 },
   info:      { flex: 1, gap: 4 },
-  name:      { fontSize: 13, fontWeight: '600' },
+  name:      { fontFamily: fonts.serif, fontSize: 13, fontWeight: '600' },
   metaRow:   { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
-  status:    { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
+  status:    { fontFamily: fonts.serif, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
   chip:      { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  chipText:  { fontSize: 10, fontWeight: '600' },
+  chipText:  { fontFamily: fonts.serif, fontSize: 10, fontWeight: '600' },
   scoreBadge:{ borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  scoreText: { fontSize: 11, fontWeight: '800' },
+  scoreText: { fontFamily: fonts.serif, fontSize: 11, fontWeight: '800' },
 });
 
 // ── Subject Card — expandable ─────────────────────────────────────────────────
@@ -272,7 +272,7 @@ function SubjectCard({
 
         {isExpanded && topics.length === 0 && (
           <View style={[cardStyles.topicList, { backgroundColor: '#ffffffcc', paddingVertical: 16, alignItems: 'center' }]}>
-            <Text style={{ color: '#6A8A86', fontSize: 12 }}>Topic details loading…</Text>
+            <Text style={{ color: '#6A8A86', fontFamily: fonts.serif, fontSize: 12 }}>Topic details loading…</Text>
           </View>
         )}
       </LinearGradient>
@@ -285,11 +285,11 @@ const cardStyles = StyleSheet.create({
   gradient:    { borderRadius: 16 },
   header:      { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   iconWrap:    { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  subjectName: { fontSize: 16, fontWeight: '800', color: '#1C2A28' },
-  subjectMeta: { fontSize: 11, fontWeight: '600', color: '#3A5A56', marginTop: 2 },
+  subjectName: { fontFamily: fonts.serif, fontSize: 16, fontWeight: '800', color: '#1C2A28' },
+  subjectMeta: { fontFamily: fonts.serif, fontSize: 11, fontWeight: '600', color: '#3A5A56', marginTop: 2 },
   rightCol:    { alignItems: 'center', gap: 2 },
   pctPill:     { borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
-  pctText:     { fontSize: 11, fontWeight: '800' },
+  pctText:     { fontFamily: fonts.serif, fontSize: 11, fontWeight: '800' },
   track:       { marginHorizontal: 14, marginBottom: 14, height: 5, borderRadius: 999, overflow: 'hidden' },
   fill:        { height: '100%', borderRadius: 999 },
   topicList:   { marginHorizontal: 8, marginBottom: 8, borderRadius: 12, overflow: 'hidden' },
@@ -415,7 +415,7 @@ export default function ParentLearningScreen({ navigation, route }: any) {
           style={styles.scroll}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.accentYellow} />}
         >
           {/* Child Selector */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.childRow}>
@@ -426,7 +426,7 @@ export default function ParentLearningScreen({ navigation, route }: any) {
                 onPress={() => setSelectedIdx(i)}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.childTabName, { color: selectedIdx === i ? colors.primary : colors.textMuted }]}>{c.name}</Text>
+                <Text style={[styles.childTabName, { color: selectedIdx === i ? colors.accentYellow : colors.textMuted }]}>{c.name}</Text>
                 <Text style={styles.childTabGrade}>{c.grade}</Text>
               </TouchableOpacity>
             ))}
@@ -438,25 +438,25 @@ export default function ParentLearningScreen({ navigation, route }: any) {
           {/* Curriculum summary card */}
           <View style={styles.summaryCard}>
             <View style={styles.summaryHeader}>
-              <View style={[styles.summaryIcon, { backgroundColor: colors.primary + '20' }]}>
-                <Feather name="book-open" size={22} color={colors.primary} />
+              <View style={[styles.summaryIcon, { backgroundColor: colors.accentYellow + '20' }]}>
+                <Feather name="book-open" size={22} color={colors.accentYellow} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.summaryTitle}>{curriculumLabel}</Text>
                 <Text style={styles.summaryGrade}>{childGrade}</Text>
               </View>
-              <View style={[styles.pctBadge, { backgroundColor: overallPct >= 50 ? colors.accentGreen + '20' : colors.primary + '20' }]}>
-                <Text style={[styles.pctText, { color: overallPct >= 50 ? colors.accentGreen : colors.primary }]}>{overallPct}%</Text>
+              <View style={[styles.pctBadge, { backgroundColor: overallPct >= 50 ? colors.accentGreen + '20' : colors.accentYellow + '20' }]}>
+                <Text style={[styles.pctText, { color: overallPct >= 50 ? colors.accentGreen : colors.accentYellow }]}>{overallPct}%</Text>
               </View>
             </View>
             <Text style={styles.progressLabel}>{doneItems} of {totalItems} topics done</Text>
             <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>
-              <View style={[styles.progressFill, { width: `${overallPct}%`, backgroundColor: colors.primary }]} />
+              <View style={[styles.progressFill, { width: `${overallPct}%`, backgroundColor: colors.accentYellow }]} />
             </View>
           </View>
 
           {loading ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
+            <ActivityIndicator color={colors.accentYellow} style={{ marginTop: 20 }} />
           ) : (
             <>
               <Text style={styles.sectionTitle}>Subjects Overview</Text>
@@ -501,9 +501,9 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingVertical: spacing.sm, paddingHorizontal: spacing.lg,
     borderRadius: radius.lg, borderWidth: 1, borderColor: 'transparent',
   },
-  childTabActive: { borderColor: c.primary, backgroundColor: c.primaryGlow },
-  childTabName:   { fontSize: 14, fontWeight: '700' },
-  childTabGrade:  { fontSize: 10, color: c.textDim, marginTop: 2 },
+  childTabActive: { borderColor: c.accentYellow, backgroundColor: c.accentYellow + '18' },
+  childTabName:   { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700' },
+  childTabGrade:  { fontFamily: fonts.serif, fontSize: 10, color: c.textDim, marginTop: 2 },
 
   summaryCard: {
     backgroundColor: c.cardDark, borderWidth: 1,
@@ -511,20 +511,23 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   summaryHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.sm },
   summaryIcon:   { width: 48, height: 48, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  summaryTitle:  { fontSize: 16, fontWeight: '700', color: c.textMain },
-  summaryGrade:  { fontSize: 12, color: c.textMuted, marginTop: 2 },
+  summaryTitle:  { fontFamily: fonts.serif, fontSize: 16, fontWeight: '700', color: c.textMain },
+  summaryGrade:  { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted, marginTop: 2 },
   pctBadge:      { width: 52, height: 52, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  pctText:       { fontSize: 16, fontWeight: '800' },
-  progressLabel: { fontSize: 12, color: c.textDim },
+  pctText:       { fontFamily: fonts.serif, fontSize: 16, fontWeight: '800' },
+  progressLabel: { fontFamily: fonts.serif, fontSize: 12, color: c.textDim },
   progressTrack: { height: 8, borderRadius: 4, overflow: 'hidden' },
   progressFill:  { height: '100%', borderRadius: 4 },
 
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: c.textMain },
-  sectionHint:  { fontSize: 12, color: c.textMuted, marginTop: -spacing.sm },
+  sectionTitle: { fontFamily: fonts.serif, fontSize: 15, fontWeight: '700', color: c.textMain },
+  sectionHint:  { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted, marginTop: -spacing.sm },
 
   emptyCard: {
     backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
     borderRadius: radius.xl, padding: spacing.xxl, alignItems: 'center', gap: spacing.md,
   },
-  emptyText: { fontSize: 13, color: c.textMuted, textAlign: 'center', lineHeight: 20 },
+  emptyText: { fontFamily: fonts.serif, fontSize: 13, color: c.textMuted, textAlign: 'center', lineHeight: 20 },
 });
+
+
+

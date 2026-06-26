@@ -9,7 +9,7 @@ const navigationRef = createNavigationContainerRef<any>();
 // normal in-app navigation to the previous screen (no popup).
 const HOME_ROUTES = new Set(['Dashboard', 'TeacherDashboard', 'ParentDashboard']);
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, View, ActivityIndicator, Platform, Text, TouchableOpacity, Modal } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Platform, Text, TextInput, TouchableOpacity, Modal } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Feather } from '@expo/vector-icons';
 import { applyActionCode } from 'firebase/auth';
@@ -18,6 +18,25 @@ import { applyActionCode } from 'firebase/auth';
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
   document.title = 'Aivorah';
 }
+
+// ── Aivorah global font: Plus Jakarta Sans ──
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  // App font — same as landing page for brand consistency
+  const fontLink = document.createElement('link');
+  fontLink.rel = 'stylesheet';
+  fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap';
+  document.head.appendChild(fontLink);
+
+  // Feather icon font — loaded via CSS so icons always render on web
+  const iconStyle = document.createElement('style');
+  iconStyle.textContent = `@font-face{font-family:'Feather';src:url('https://cdn.jsdelivr.net/npm/@expo/vector-icons@14/build/vendor/react-native-vector-icons/Fonts/Feather.ttf') format('truetype');font-display:block;}`;
+  document.head.appendChild(iconStyle);
+}
+
+// @ts-ignore
+Text.defaultProps = { ...(Text.defaultProps ?? {}), style: [{ fontFamily: "Inter, system-ui, sans-serif" }, (Text.defaultProps as any)?.style] };
+// @ts-ignore
+TextInput.defaultProps = { ...(TextInput.defaultProps ?? {}), style: [{ fontFamily: "Inter, system-ui, sans-serif" }, (TextInput.defaultProps as any)?.style] };
 import AppNavigator from './src/navigation/AppNavigator';
 import TeacherNavigator from './src/navigation/TeacherNavigator';
 import SuperAdminNavigator from './src/navigation/SuperAdminNavigator';
@@ -180,15 +199,28 @@ const IDLE_WARN_MS   = 25 * 60 * 1000; // 25 min idle → show warning
 const IDLE_LOGOUT_MS = 2 * 60 * 1000;  // 2 min after warning → auto-logout
 const IDLE_WARN_MIN  = Math.round(IDLE_WARN_MS / 60000); // for display copy
 
+const IDLE_LS_KEY = 'aivorah_idleWarnEndsAt'; // epoch ms when the 2-min countdown ends
+
 function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const { colors: c } = useTheme();
-  const [showWarning, setShowWarning] = useState(false);
-  const [countdown, setCountdown] = useState(60);
+
+  // Restore inactivity warning across page refresh
+  const restoredIdleSecs = (() => {
+    try {
+      const endsAt = parseInt(localStorage.getItem(IDLE_LS_KEY) ?? '0', 10);
+      if (!endsAt) return 0;
+      const secs = Math.round((endsAt - Date.now()) / 1000);
+      return secs > 0 ? secs : 0;
+    } catch { return 0; }
+  })();
+
+  const [showWarning, setShowWarning] = useState(restoredIdleSecs > 0);
+  const [countdown, setCountdown] = useState(restoredIdleSecs > 0 ? restoredIdleSecs : Math.round(IDLE_LOGOUT_MS / 1000));
 
   // Use refs so event handlers never go stale
   const lastActivityRef = useRef(Date.now());
-  const showWarningRef  = useRef(false);
+  const showWarningRef  = useRef(restoredIdleSecs > 0);
   const userRef         = useRef(user);
   const logoutRef       = useRef(logout);
   const tickerRef       = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -196,6 +228,22 @@ function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { userRef.current = user; }, [user]);
   useEffect(() => { logoutRef.current = logout; }, [logout]);
+
+  // If warning was persisted before refresh, resume the countdown from remaining secs
+  useEffect(() => {
+    if (!restoredIdleSecs) return;
+    let secs = restoredIdleSecs;
+    countdownRef.current = setInterval(() => {
+      secs -= 1;
+      setCountdown(secs);
+      if (secs <= 0) {
+        clearInterval(countdownRef.current!);
+        doLogout();
+      }
+    }, 1000);
+    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Only arm the idle-logout once the student is actually inside the app.
   // During onboarding / email-verification / set-password the user is reading,
@@ -212,6 +260,7 @@ function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
   const doLogout = useCallback(() => {
     if (tickerRef.current)    clearInterval(tickerRef.current);
     if (countdownRef.current) clearInterval(countdownRef.current);
+    try { localStorage.removeItem(IDLE_LS_KEY); } catch {}
     showWarningRef.current = false;
     setShowWarning(false);
     // Notify parent (fire and forget)
@@ -227,6 +276,7 @@ function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
   }, []);
 
   const onStillHere = () => {
+    try { localStorage.removeItem(IDLE_LS_KEY); } catch {}
     showWarningRef.current = false;
     setShowWarning(false);
     if (countdownRef.current) clearInterval(countdownRef.current);
@@ -242,8 +292,9 @@ function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
       const idle = Date.now() - lastActivityRef.current;
 
       if (!showWarningRef.current && idle >= IDLE_WARN_MS) {
-        // Show warning + start countdown
+        // Show warning + start countdown; persist so refresh restores it
         showWarningRef.current = true;
+        try { localStorage.setItem(IDLE_LS_KEY, String(Date.now() + IDLE_LOGOUT_MS)); } catch {}
         setShowWarning(true);
         setCountdown(Math.round(IDLE_LOGOUT_MS / 1000));
 

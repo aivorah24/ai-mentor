@@ -1505,6 +1505,12 @@ export default function TopicLessonScreen({ navigation, route }: any) {
   // Cleanup on unmount
   useEffect(() => () => { stopAudio(); stopSpeech(); }, []);
 
+  // Stop audio when navigating away (blur handles stack navigation without unmount)
+  useEffect(() => {
+    const unsub = navigation.addListener('blur', () => { stopAudio(); stopSpeech(); setSpeaking(false); setPaused(false); });
+    return unsub;
+  }, [navigation]);
+
   // Count whole minutes spent in this reading lesson and sync to student stats.
   useEffect(() => {
     function flushWholeMinutes() {
@@ -1634,12 +1640,8 @@ export default function TopicLessonScreen({ navigation, route }: any) {
 
       <View style={{ flex: 1, backgroundColor: colors.bgDark }}>
 
-        {/* ── Sub bar: Back · scene pill · Lesson Progress ── */}
+        {/* ── Sub bar: scene pill · Lesson Progress ── */}
         <View style={s.subBar}>
-          <TouchableOpacity onPress={() => { stopAudio(); stopSpeech(); navigation.goBack(); }} style={s.backRow}>
-            <Feather name="arrow-left" size={15} color={colors.textMuted} />
-            <Text style={[s.backText, { color: colors.textMuted }]}>Back</Text>
-          </TouchableOpacity>
           <View style={[s.scenePill, { borderColor: accent + '66', backgroundColor: accent + '14' }]}>
             <Text style={[s.scenePillText, { color: accent }]}>{cardIdx + 1} / {lesson.scenes.length}</Text>
           </View>
