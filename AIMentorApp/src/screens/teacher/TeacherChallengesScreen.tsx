@@ -65,6 +65,7 @@ const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 // ── Component ─────────────────────────────────────────────────────
 export default function TeacherChallengesScreen({ navigation }: any) {
   const { colors, isDark } = useTheme();
+  const gold = colors.accentYellow;
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { user } = useAuth();
 
@@ -285,14 +286,14 @@ export default function TeacherChallengesScreen({ navigation }: any) {
               style={[styles.toggleBtn, activeTab === 'challenges' && styles.toggleActive]}
               onPress={() => setActiveTab('challenges')} activeOpacity={0.8}
             >
-              <Feather name="target" size={14} color={activeTab === 'challenges' ? colors.primary : colors.textMuted} />
+              <Feather name="target" size={14} color={activeTab === 'challenges' ? gold : colors.textMuted} />
               <Text style={[styles.toggleText, activeTab === 'challenges' && styles.toggleTextActive]}>Challenges</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toggleBtn, activeTab === 'leaderboard' && styles.toggleActive]}
               onPress={() => setActiveTab('leaderboard')} activeOpacity={0.8}
             >
-              <Feather name="award" size={14} color={activeTab === 'leaderboard' ? colors.primary : colors.textMuted} />
+              <Feather name="award" size={14} color={activeTab === 'leaderboard' ? gold : colors.textMuted} />
               <Text style={[styles.toggleText, activeTab === 'leaderboard' && styles.toggleTextActive]}>Leaderboard</Text>
             </TouchableOpacity>
           </View>
@@ -373,7 +374,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
               <View style={styles.lbWrap}>
                 {/* Stat cards */}
                 <View style={styles.statRow}>
-                  <StatCard styles={styles} icon="users"    tint={colors.primary}   value={String(leaderboard.length)} label="Students" />
+                  <StatCard styles={styles} icon="users"    tint={gold}   value={String(leaderboard.length)} label="Students" />
                   <StatCard styles={styles} icon="zap"      tint={GOLD}             value={String(challenges.length)} label="Active Challenges" />
                   <StatCard styles={styles} icon="star"     tint={GOLD}             value={totalXP.toLocaleString()} label="Total XP Earned" />
                   <StatCard styles={styles} icon="calendar" tint={colors.textMuted} value={String(daysLeft)} label="Days Left" />
@@ -440,8 +441,8 @@ export default function TeacherChallengesScreen({ navigation }: any) {
                                   <View style={styles.rankPill}><Text style={styles.rankPillText}>{s.rank}</Text></View>
                                 </View>
                                 <View style={styles.cellStudent}>
-                                  <View style={[styles.tableAvatar, { backgroundColor: colors.primary + '20' }]}>
-                                    <Text style={[styles.tableInitials, { color: colors.primary }]}>{initials(s.name)}</Text>
+                                  <View style={[styles.tableAvatar, { backgroundColor: gold + '20' }]}>
+                                    <Text style={[styles.tableInitials, { color: gold }]}>{initials(s.name)}</Text>
                                   </View>
                                   <View style={{ flex: 1 }}>
                                     <Text style={styles.tableName} numberOfLines={1}>{s.name}</Text>
@@ -467,7 +468,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
                           {rest.length > 5 && (
                             <TouchableOpacity style={styles.viewFullBtn} onPress={() => setLbExpanded(v => !v)} activeOpacity={0.7}>
                               <Text style={styles.viewFullText}>{lbExpanded ? 'Show Less' : 'View Full Leaderboard'}</Text>
-                              <Feather name={lbExpanded ? 'chevron-up' : 'chevron-right'} size={15} color={colors.primary} />
+                              <Feather name={lbExpanded ? 'chevron-up' : 'chevron-right'} size={15} color={gold} />
                             </TouchableOpacity>
                           )}
                         </>
@@ -552,7 +553,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
 
                 {selectedStudent ? (
                   <TouchableOpacity style={styles.selectedChip} onPress={() => setSelectedStudent(null)} activeOpacity={0.7}>
-                    <Feather name="user" size={13} color={colors.primary} />
+                    <Feather name="user" size={13} color={gold} />
                     <Text style={styles.selectedChipName}>{selectedStudent.name}</Text>
                     <Text style={styles.selectedChipGrade}>{selectedStudent.grade}</Text>
                     <View style={{ flex: 1 }} />
@@ -596,7 +597,7 @@ export default function TeacherChallengesScreen({ navigation }: any) {
                 {/* Due date picker */}
                 <View style={{ marginTop: 14 }}>
                   <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain, marginBottom: 8 }}>
-                    <Feather name="calendar" size={13} color={colors.primary} /> Due Date
+                    <Feather name="calendar" size={13} color={gold} /> Due Date
                   </Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                     {[
@@ -611,12 +612,12 @@ export default function TeacherChallengesScreen({ navigation }: any) {
                         style={{
                           paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.md,
                           borderWidth: 1,
-                          borderColor: assignDueDate === opt.date ? colors.primary : colors.borderColor,
-                          backgroundColor: assignDueDate === opt.date ? colors.primaryGlow : 'transparent',
+                          borderColor: assignDueDate === opt.date ? gold : colors.borderColor,
+                          backgroundColor: assignDueDate === opt.date ? gold + '18' : 'transparent',
                         }}
                         activeOpacity={0.7}
                       >
-                        <Text style={{ fontSize: 12, color: assignDueDate === opt.date ? colors.primary : colors.textMuted }}>
+                        <Text style={{ fontSize: 12, color: assignDueDate === opt.date ? gold : colors.textMuted }}>
                           {opt.label}
                         </Text>
                       </TouchableOpacity>
@@ -664,7 +665,7 @@ function ChallengeCard({ ch, colors, isDark, styles, onAssign }: {
   onAssign: () => void;
 }) {
   const diffColor  = DIFF_COLOR(ch.difficulty, colors);
-  const catColor   = CAT_COLOR[ch.category] ?? colors.primary;
+  const catColor   = CAT_COLOR[ch.category] ?? gold;
 
   // Dark: follow the landing standard — flat near-black card surface with only a
   // whisper-subtle neutral sheen (NO full-card colour wash, which read as muddy
@@ -758,8 +759,8 @@ function PodiumCard({ entry, place, colors, styles, isDark, elevated }: {
       <View style={[styles.podiumBadge, { backgroundColor: medal, borderColor: colors.cardDark }]}>
         <Text style={styles.podiumBadgeNum}>{place}</Text>
       </View>
-      <View style={[styles.podiumAvatar, { backgroundColor: colors.primary + '22', borderColor: medal }]}>
-        <Text style={[styles.podiumInitials, { color: colors.primary }]}>{initials(entry.name)}</Text>
+      <View style={[styles.podiumAvatar, { backgroundColor: gold + '22', borderColor: medal }]}>
+        <Text style={[styles.podiumInitials, { color: gold }]}>{initials(entry.name)}</Text>
       </View>
       <Text style={styles.podiumName} numberOfLines={1}>{entry.name}</Text>
       <Text style={styles.podiumGrade}>{entry.grade}</Text>
@@ -816,15 +817,15 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, overflow: 'hidden',
   },
   toggleBtn:       { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingVertical: 11 },
-  toggleActive:    { backgroundColor: c.primaryGlow },
+  toggleActive:    { backgroundColor: c.accentYellow + '18' },
   toggleText:      { fontSize: 14, fontWeight: '600', color: c.textMuted },
-  toggleTextActive:{ color: c.primary },
+  toggleTextActive:{ color: c.accentYellow },
 
   // Grade chips
   gradeChip:         { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.cardDark },
-  gradeChipActive:   { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  gradeChipActive:   { borderColor: c.accentYellow, backgroundColor: c.accentYellow + '18' },
   gradeChipText:     { fontSize: 13, fontWeight: '600', color: c.textMuted },
-  gradeChipTextActive:{ color: c.primary },
+  gradeChipTextActive:{ color: c.accentYellow },
 
   sectionTitle: { fontSize: 15, fontWeight: '700', color: c.textMain },
   sectionSub:   { fontSize: 12, color: c.textDim, marginTop: -spacing.sm },
@@ -857,10 +858,10 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   assignRowBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
-    borderWidth: 1, borderColor: c.primary + '50', borderRadius: radius.md,
-    paddingHorizontal: spacing.md, paddingVertical: 7, backgroundColor: c.primaryGlow,
+    borderWidth: 1, borderColor: c.accentYellow + '50', borderRadius: radius.md,
+    paddingHorizontal: spacing.md, paddingVertical: 7, backgroundColor: c.accentYellow + '18',
   },
-  assignRowBtnText: { fontSize: 13, fontWeight: '600', color: c.primary },
+  assignRowBtnText: { fontSize: 13, fontWeight: '600', color: c.accentYellow },
 
   // Leaderboard
   leaderCard: {
@@ -946,7 +947,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   cellXPUnit:    { fontSize: 10, fontWeight: '700', color: c.textDim },
   changeText:    { fontSize: 12, fontWeight: '700' },
   viewFullBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14, borderTopWidth: 1, borderTopColor: c.borderColor },
-  viewFullText:  { fontSize: 13, fontWeight: '700', color: c.primary },
+  viewFullText:  { fontSize: 13, fontWeight: '700', color: c.accentYellow },
 
   sideCard:      { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.lg, gap: 6 },
   yourRankNum:   { fontSize: 30, fontWeight: '900', color: GOLD, marginTop: 2 },
@@ -990,25 +991,25 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   studentAvatar: {
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: c.primary + '20', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: c.accentYellow + '20', alignItems: 'center', justifyContent: 'center',
   },
-  studentAvatarText: { fontSize: 12, fontWeight: '800', color: c.primary },
+  studentAvatarText: { fontSize: 12, fontWeight: '800', color: c.accentYellow },
   studentName:    { fontSize: 14, fontWeight: '600', color: c.textMain },
   studentGrade:   { fontSize: 11, color: c.textDim },
   noStudents:     { padding: spacing.lg, fontSize: 13, color: c.textDim, textAlign: 'center' },
 
   selectedChip: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    borderWidth: 1, borderColor: c.primary + '50', borderRadius: radius.md,
+    borderWidth: 1, borderColor: c.accentYellow + '50', borderRadius: radius.md,
     paddingHorizontal: spacing.md, paddingVertical: 11,
-    backgroundColor: c.primaryGlow,
+    backgroundColor: c.accentYellow + '18',
   },
-  selectedChipName:  { fontSize: 14, fontWeight: '600', color: c.primary, flex: 1 },
-  selectedChipGrade: { fontSize: 11, color: c.primary + 'aa' },
+  selectedChipName:  { fontSize: 14, fontWeight: '600', color: c.accentYellow, flex: 1 },
+  selectedChipGrade: { fontSize: 11, color: c.accentYellow + 'aa' },
 
   assignBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: c.primary, borderRadius: radius.lg, paddingVertical: 14,
+    backgroundColor: c.accentYellow, borderRadius: radius.lg, paddingVertical: 14,
   },
   assignBtnDisabled: { opacity: 0.45 },
   assignBtnText:     { fontSize: 15, fontWeight: '700', color: '#fff' },
@@ -1027,7 +1028,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   errorText:    { fontSize: 13, fontWeight: '600', flex: 1 },
 
   doneBtn: {
-    backgroundColor: c.primary, borderRadius: radius.lg,
+    backgroundColor: c.accentYellow, borderRadius: radius.lg,
     paddingVertical: 14, alignItems: 'center',
   },
   doneBtnText:  { fontSize: 15, fontWeight: '700', color: '#fff' },

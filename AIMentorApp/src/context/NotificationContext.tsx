@@ -35,6 +35,7 @@ interface NotificationState {
   clearUnreadAssignments: () => Promise<void>;
   clearUnreadChallenges: () => Promise<void>;
   refresh: () => Promise<void>;
+  triggerPoll: () => void;
 }
 
 const NotificationContext = createContext<NotificationState>({
@@ -49,6 +50,7 @@ const NotificationContext = createContext<NotificationState>({
   clearUnreadAssignments: async () => {},
   clearUnreadChallenges: async () => {},
   refresh: async () => {},
+  triggerPoll: () => {},
 });
 
 const POLL_INTERVAL_MS  = 15000; // 15s — one combined request, less stress
@@ -301,11 +303,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     await poll({ reason: 'manual-refresh', allowDuringMarkRead: true });
   }, [poll]);
 
+  // Trigger an immediate poll (e.g. after pref changes in Settings)
+  const triggerPoll = useCallback(() => {
+    void poll({ reason: 'prefs-changed', allowDuringMarkRead: false });
+  }, [poll]);
+
   return (
     <NotificationContext.Provider value={{
       unreadCount, unreadAssignments, unreadChallenges,
       latestNotif, notificationItems, toastVisible,
-      dismissToast, clearUnread, clearUnreadAssignments, clearUnreadChallenges, refresh,
+      dismissToast, clearUnread, clearUnreadAssignments, clearUnreadChallenges, refresh, triggerPoll,
     }}>
       {children}
     </NotificationContext.Provider>

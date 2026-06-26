@@ -28,6 +28,7 @@ interface ChildData {
   currentStreak: number;
   studyTimeMinutes: number;
   assignmentsDone: number;
+  challengesCompleted: number;
   lastLesson?: string;
 }
 
@@ -44,7 +45,7 @@ const WEEK_DAYS_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const EMPTY_CHILD: ChildData = {
   id: '', name: '', grade: '', status: 'needs_attention',
   xpPoints: 0, completedTopics: [], currentStreak: 0,
-  studyTimeMinutes: 0, assignmentsDone: 0,
+  studyTimeMinutes: 0, assignmentsDone: 0, challengesCompleted: 0,
 };
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -286,6 +287,7 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
             currentStreak: c.currentStreak ?? 0,
             studyTimeMinutes: c.studyTimeMinutes ?? 0,
             assignmentsDone: c.assignmentsDone ?? 0,
+            challengesCompleted: c.challengesCompleted ?? 0,
             lastLesson: c.lastLesson || '',
           }));
           setChildren(mapped);
@@ -321,7 +323,7 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
             curriculum: c.curriculum ?? '', totalTopics: c.totalTopics ?? 0, school: c.school ?? '',
             status: (() => { const h = (c.xpPoints ?? 0) > 0 || (c.studyTimeMinutes ?? 0) > 0 || (c.completedTopics?.length ?? 0) > 0; if (!h) return 'getting_started'; return (c.currentStreak ?? 0) >= 1 ? 'on_track' : 'needs_attention'; })(),
             xpPoints: c.xpPoints ?? 0, completedTopics: c.completedTopics ?? [],
-            currentStreak: c.currentStreak ?? 0, studyTimeMinutes: c.studyTimeMinutes ?? 0, assignmentsDone: c.assignmentsDone ?? 0, lastLesson: c.lastLesson || '',
+            currentStreak: c.currentStreak ?? 0, studyTimeMinutes: c.studyTimeMinutes ?? 0, assignmentsDone: c.assignmentsDone ?? 0, challengesCompleted: c.challengesCompleted ?? 0, lastLesson: c.lastLesson || '',
           }));
           setChildren(mapped);
           setSelectedChild(prev => mapped.find(ch => ch.id === prev.id) ?? mapped[0]);
@@ -612,6 +614,20 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
                     )}
                   </View>
                 </View>
+
+                {/* Challenges Done */}
+                {child.challengesCompleted > 0 && (
+                  <View style={s.statCard}>
+                    <View style={[s.statIconWrap, { backgroundColor: colors.accentYellow + '18' }]}>
+                      <Feather name="award" size={16} color={colors.accentYellow} />
+                    </View>
+                    <View style={s.statInfo}>
+                      <Text style={s.statLabel}>Challenges Done</Text>
+                      <Text style={s.statValue}>{child.challengesCompleted}</Text>
+                      <Text style={s.statSub}>Completed</Text>
+                    </View>
+                  </View>
+                )}
               </View>
 
               {/* ── Row 3: Activity Overview ── */}

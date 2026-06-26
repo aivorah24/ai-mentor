@@ -99,12 +99,16 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
     ? (selectedEntry.rank === 1 ? 1 : (aboveEntry && aboveEntry.score > 0 ? Math.min(selectedEntry.score / aboveEntry.score, 1) : 0))
     : 0;
 
-  const podium = !loading && leaderboard.length >= 3 ? [leaderboard[1], leaderboard[0], leaderboard[2]] : null;
+  const podium = !loading && leaderboard.length >= 1 ? (
+    leaderboard.length >= 3 ? [leaderboard[1], leaderboard[0], leaderboard[2]] :
+    leaderboard.length === 2 ? [null, leaderboard[0], leaderboard[1]] :
+    [null, leaderboard[0], null]
+  ) : null;
 
   // ── Right-side "Your Rank" card ─────────────────────────────────────────────
   const rankCard = selectedEntry ? (
     <View style={styles.rankCard}>
-      <View style={styles.trophyCircle}><Feather name="award" size={26} color={gold} /></View>
+      <View style={styles.trophyCircle}><Feather name="award" size={44} color={gold} /></View>
       <Text style={styles.rankCardTitle}>You're doing great!</Text>
       <Text style={styles.rankCardSub}>Keep the momentum and {selectedChild?.name?.split(' ')[0]} will climb higher.</Text>
       <View style={styles.rankCardBox}>
@@ -129,7 +133,7 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
     </View>
   ) : !loading && selectedChild ? (
     <View style={styles.rankCard}>
-      <View style={styles.trophyCircle}><Feather name="award" size={26} color={colors.textDim} /></View>
+      <View style={styles.trophyCircle}><Feather name="award" size={44} color={colors.textDim} /></View>
       <Text style={styles.rankCardTitle}>Not ranked yet</Text>
       <Text style={styles.rankCardSub}>{selectedChild.name?.split(' ')[0]} isn't on this board yet — completing lessons earns XP to appear here.</Text>
     </View>
@@ -194,9 +198,11 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
               {podium && (
                 <View style={styles.podiumRow}>
                   {podium.map((s, idx) => {
+                    if (!s) return <View key={`empty-${idx}`} style={{ flex: 1 }} />;
                     const isFirst = idx === 1;
                     const isChild = childIds.has(s.id);
-                    const medalColor = MEDAL_COLORS[s.rank - 1];
+                    const actualRank = idx === 0 ? 2 : idx === 1 ? 1 : 3;
+                    const medalColor = MEDAL_COLORS[actualRank - 1];
                     return (
                       <View key={s.id} style={[
                         styles.podiumCard,
@@ -204,16 +210,17 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
                         isChild && !isFirst && { borderColor: gold + '66' },
                       ]}>
                         <View style={[styles.medalBadge, { backgroundColor: medalColor }]}>
-                          <Text style={styles.medalNum}>{s.rank}</Text>
+                          <Text style={styles.medalNum}>{actualRank}</Text>
                         </View>
                         <View style={[styles.podiumAvatar, { borderColor: isFirst ? gold : colors.borderColor }]}>
                           <Text style={[styles.podiumAvatarText, { color: isFirst ? gold : colors.primary }]}>{initials(s.name)}</Text>
                         </View>
                         <View style={{ flex: 1, minWidth: 0 }}>
                           <Text style={styles.podiumName} numberOfLines={1}>{s.name}</Text>
-                          <Text style={[styles.podiumScore, { color: gold }]}>{s.score.toLocaleString()} XP</Text>
+                          <Text style={[styles.podiumScore, { color: gold }]}>{s.score.toLocaleString()} <Text style={{ fontSize: 10, fontWeight: '600' }}>XP</Text></Text>
                         </View>
                         <Feather name="award" size={20} color={medalColor} />
+                        {isChild && <View style={[styles.youBadge, { position: 'absolute', top: 6, right: 6, backgroundColor: gold + '20', borderColor: gold + '40' }]}><Text style={[styles.youText, { color: gold }]}>Child</Text></View>}
                       </View>
                     );
                   })}
@@ -262,14 +269,20 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
                         </View>
                       </View>
                       {wide && <Text style={styles.thGrade}><Text style={styles.gradeCell}>{s.grade}</Text></Text>}
-                      <View style={styles.thXp}><Text style={[styles.xpCell, { color: gold }]}>{s.score.toLocaleString()}</Text></View>
+                      <View style={styles.thXp}><Text style={[styles.xpCell, { color: gold }]}>{s.score.toLocaleString()} <Text style={{ fontSize: 11, fontWeight: '600' }}>XP</Text></Text></View>
                       <View style={[styles.thStreak, { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }]}>
-                        <Feather name="zap" size={12} color={colors.accentOrange} />
+                        <Feather name="wind" size={12} color={colors.accentOrange} />
                         <Text style={styles.streakCell}>{s.streak}d</Text>
                       </View>
                     </View>
                   );
                 })}
+                {leaderboard.length > 6 && (
+                  <TouchableOpacity style={styles.viewAllBtn} activeOpacity={0.8} onPress={() => {}}>
+                    <Text style={[styles.viewAllText, { color: gold }]}>View Full Leaderboard</Text>
+                    <Feather name="arrow-right" size={14} color={gold} />
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 
@@ -322,18 +335,18 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   rankNum:        { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700' },
   avatar:         { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   avatarText:     { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700' },
-  name:           { fontFamily: fonts.serif, fontSize: 14, fontWeight: '600', color: c.textMain, flexShrink: 1 },
-  gradeSmall:     { fontFamily: fonts.serif, fontSize: 11, color: c.textDim, marginTop: 1 },
-  gradeCell:      { fontFamily: fonts.serif, fontSize: 13, color: c.textMuted, fontWeight: '600' },
-  xpCell:         { fontFamily: fonts.serif, fontSize: 15, fontWeight: '800', letterSpacing: -0.3 },
-  streakCell:     { fontFamily: fonts.serif, fontSize: 13, color: c.textMuted, fontWeight: '700' },
+  name:           { fontFamily: fonts.serif, fontSize: 14, fontWeight: '600', color: c.textMain, flexShrink: 1, textTransform: 'none' },
+  gradeSmall:     { fontFamily: fonts.serif, fontSize: 11, color: c.textDim, marginTop: 1, textTransform: 'none' },
+  gradeCell:      { fontFamily: fonts.serif, fontSize: 13, color: c.textMuted, fontWeight: '600', textTransform: 'none' },
+  xpCell:         { fontFamily: fonts.serif, fontSize: 15, fontWeight: '800', letterSpacing: -0.3, textTransform: 'none' },
+  streakCell:     { fontFamily: fonts.serif, fontSize: 13, color: c.textMuted, fontWeight: '700', textTransform: 'none' },
   youBadge:       { borderWidth: 1, borderRadius: 20, paddingHorizontal: 6, paddingVertical: 2 },
   youText:        { fontFamily: fonts.serif, fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
   empty:          { textAlign: 'center', color: c.textMuted, padding: spacing.xl, fontFamily: fonts.serif, fontSize: 13 },
 
   // Right rank card
   rankCard:       { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.xl, alignItems: 'center', gap: 8 },
-  trophyCircle:   { width: 56, height: 56, borderRadius: 28, backgroundColor: c.accentYellow + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  trophyCircle:   { width: 90, height: 90, borderRadius: 45, backgroundColor: c.accentYellow + '15', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   rankCardTitle:  { fontFamily: fonts.serif, fontSize: 16, fontWeight: '800', color: c.textMain },
   rankCardSub:    { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted, textAlign: 'center', lineHeight: 18 },
   rankCardBox:    { alignSelf: 'stretch', backgroundColor: c.bgDark, borderRadius: radius.lg, padding: spacing.md, gap: 8, marginTop: 8 },
@@ -343,4 +356,6 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   progressTrack:  { height: 7, borderRadius: 4, backgroundColor: c.borderColor, overflow: 'hidden' },
   progressFill:   { height: '100%', borderRadius: 4 },
   rankCardFoot:   { fontFamily: fonts.serif, fontSize: 11, color: c.textDim, marginTop: 4 },
+  viewAllBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14, borderTopWidth: 1, borderTopColor: c.borderColor },
+  viewAllText:    { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700' },
 });

@@ -17,6 +17,7 @@ const COMING_SOON_PATHS = [
 
 export default function TeacherLearningPathsScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const gold = colors.accentYellow;
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
@@ -32,7 +33,7 @@ export default function TeacherLearningPathsScreen({ navigation }: any) {
           {/* Coming Soon Hero */}
           <View style={styles.heroBanner}>
             <View style={styles.heroIconWrap}>
-              <Feather name="book-open" size={32} color={colors.primary} />
+              <Feather name="book-open" size={32} color={gold} />
             </View>
             <Text style={styles.heroTitle}>Coming Soon</Text>
             <Text style={styles.heroSub}>
@@ -51,7 +52,7 @@ export default function TeacherLearningPathsScreen({ navigation }: any) {
             {COMING_SOON_PATHS.map((p, i) => (
               <View key={i} style={styles.pathCard}>
                 <View style={styles.pathIconWrap}>
-                  <Feather name={p.icon as any} size={18} color={colors.primary} />
+                  <Feather name={p.icon as any} size={18} color={gold} />
                 </View>
                 <View style={styles.pathInfo}>
                   <Text style={styles.pathLabel}>{p.label}</Text>
@@ -94,9 +95,9 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   heroIconWrap: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: c.primaryGlow,
+    backgroundColor: c.accentYellow + '18',
     borderWidth: 1,
-    borderColor: c.primary + '40',
+    borderColor: c.accentYellow + '40',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
@@ -130,7 +131,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   pathIconWrap: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: c.primaryGlow,
+    backgroundColor: c.accentYellow + '18',
     alignItems: 'center', justifyContent: 'center',
     flexShrink: 0,
   },
