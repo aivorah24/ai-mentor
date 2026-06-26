@@ -75,14 +75,14 @@ interface ScheduleEvent {
 
 function typeColor(type: string, colors: any): string {
   const map: Record<string, string> = {
-    study:      colors.accentBlue,
+    study:      colors.accentYellow,
     lesson:     colors.accentGreen,
-    challenge:  colors.accentPurple,
+    challenge:  colors.accentYellow,
     deadline:   colors.accentRed,
     assignment: colors.accentYellow,
     break:      colors.textDim,
   };
-  return map[type] ?? colors.primary;
+  return map[type] ?? colors.accentYellow;
 }
 
 function toTitleCase(str: string) {
@@ -398,7 +398,7 @@ export default function ScheduleScreen({ navigation }: any) {
             <View style={styles.calendarContainer}>
               {loading ? (
                 <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                  <ActivityIndicator size="small" color={colors.primary} />
+                  <ActivityIndicator size="small" color={colors.accentYellow} />
                   <Text style={styles.emptyText}>Loading schedule…</Text>
                 </View>
               ) : (
@@ -427,7 +427,7 @@ export default function ScheduleScreen({ navigation }: any) {
                               <View style={[styles.dayHeaderCircle, isToday && styles.dayHeaderCircleToday]}>
                                 <Text style={[styles.dayHeaderDate, isToday && styles.dayHeaderDateToday]}>{d.date}</Text>
                               </View>
-                              {hasDot && <View style={[styles.dayDot, isToday && { backgroundColor: colors.primary }]} />}
+                              {hasDot && <View style={[styles.dayDot, isToday && { backgroundColor: colors.accentYellow }]} />}
                             </View>
                           );
                         })}
@@ -454,14 +454,14 @@ export default function ScheduleScreen({ navigation }: any) {
                                 <View style={{
                                   position: 'absolute', left: 2, right: 2,
                                   top: dragPreview.top, height: Math.max(dragPreview.height, 20),
-                                  backgroundColor: colors.primary + '28',
-                                  borderLeftWidth: 3, borderLeftColor: colors.primary,
+                                  backgroundColor: colors.accentYellow + '28',
+                                  borderLeftWidth: 3, borderLeftColor: colors.accentYellow,
                                   borderRadius: 4, paddingHorizontal: 5, paddingVertical: 3,
                                   zIndex: 10,
                                   // @ts-ignore
                                   pointerEvents: 'none',
                                 }}>
-                                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accentYellow }}>
                                     {dragPreview.startT} – {dragPreview.endT}
                                   </Text>
                                 </View>
@@ -506,7 +506,7 @@ export default function ScheduleScreen({ navigation }: any) {
 
               {/* Add event button */}
               <TouchableOpacity style={styles.addEventBtn} onPress={() => { setModalDate(todayISO); setNewStartTime('09:00'); setNewEndTime('10:00'); setModalVisible(true); }} activeOpacity={0.8}>
-                <Feather name="plus" size={16} color={colors.primary} />
+                <Feather name="plus" size={16} color={colors.accentYellow} />
                 <Text style={styles.addEventText}>Add Event</Text>
               </TouchableOpacity>
             </View>
@@ -542,10 +542,10 @@ export default function ScheduleScreen({ navigation }: any) {
                           key={di}
                           style={[styles.calDate, isToday && styles.calDateToday, isWeekDay && !isToday && styles.calDateWeekHighlight]}
                         >
-                          <Text style={[styles.calDateText, isToday && styles.calDateTextToday, isWeekDay && !isToday && { color: colors.primary }]}>
+                          <Text style={[styles.calDateText, isToday && styles.calDateTextToday, isWeekDay && !isToday && { color: colors.accentYellow }]}>
                             {date}
                           </Text>
-                          {hasDot && <View style={[styles.calDot, { backgroundColor: isToday ? 'white' : colors.primary }]} />}
+                          {hasDot && <View style={[styles.calDot, { backgroundColor: isToday ? 'white' : colors.accentYellow }]} />}
                         </View>
                       );
                     })}
@@ -671,12 +671,12 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     alignItems: 'center', paddingVertical: spacing.sm, gap: 2,
   },
   dayHeaderLabel: { fontSize: 10, fontWeight: '700', color: c.textDim, letterSpacing: 0.5 },
-  dayHeaderLabelToday: { color: c.primary },
+  dayHeaderLabelToday: { color: c.accentYellow },
   dayHeaderCircle: {
     width: 28, height: 28, borderRadius: 14,
     alignItems: 'center', justifyContent: 'center',
   },
-  dayHeaderCircleToday: { backgroundColor: c.primary },
+  dayHeaderCircleToday: { backgroundColor: c.accentYellow },
   dayHeaderDate:      { fontSize: 14, fontWeight: '700', color: c.textMuted },
   dayHeaderDateToday: { color: 'white' },
   dayDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: c.textDim },
@@ -707,7 +707,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderColor: 'rgba(99,102,241,0.3)', borderRadius: radius.md,
     borderStyle: 'dashed', justifyContent: 'center',
   },
-  addEventText: { fontSize: 13, fontWeight: '600', color: c.primary },
+  addEventText: { fontSize: 13, fontWeight: '600', color: c.accentYellow },
   emptyText:    { fontSize: 12, color: c.textMuted, marginTop: 8 },
 
   // Sidebar

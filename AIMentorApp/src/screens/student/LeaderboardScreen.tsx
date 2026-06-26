@@ -105,7 +105,7 @@ export default function LeaderboardScreen({ navigation }: any) {
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchLeaderboard(true)} tintColor={colors.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchLeaderboard(true)} tintColor={colors.accentYellow} />}
         >
           {/* Top bar: live badge + school chip */}
           <View style={styles.topBar}>
@@ -155,7 +155,7 @@ export default function LeaderboardScreen({ navigation }: any) {
                       ]}>
                         <View style={[styles.medalBadge, { backgroundColor: medalColor }]}><Text style={styles.medalNum}>{actualRank}</Text></View>
                         <View style={[styles.podiumAvatar, { borderColor: isFirst ? gold : colors.borderColor }]}>
-                          <Text style={[styles.podiumAvatarText, { color: isFirst ? gold : colors.primary }]}>{initials(s.name)}</Text>
+                          <Text style={[styles.podiumAvatarText, { color: isFirst ? gold : colors.accentYellow }]}>{initials(s.name)}</Text>
                         </View>
                         <View style={{ flex: 1, minWidth: 0 }}>
                           <Text style={styles.podiumName} numberOfLines={1}>{s.name}</Text>
@@ -179,7 +179,7 @@ export default function LeaderboardScreen({ navigation }: any) {
                   <Text style={styles.thStreak}>Streak</Text>
                 </View>
                 {loading ? (
-                  <ActivityIndicator color={colors.primary} style={{ paddingVertical: 40 }} />
+                  <ActivityIndicator color={colors.accentYellow} style={{ paddingVertical: 40 }} />
                 ) : leaderboard.length === 0 ? (
                   <Text style={styles.empty}>No rankings in this view yet.</Text>
                 ) : leaderboard.map((s, i) => {
@@ -193,8 +193,8 @@ export default function LeaderboardScreen({ navigation }: any) {
                         </View>
                       </View>
                       <View style={[styles.thStudent, { flexDirection: 'row', alignItems: 'center', gap: spacing.sm }]}>
-                        <View style={[styles.avatar, { backgroundColor: isMe ? gold + '25' : colors.primary + '20' }]}>
-                          <Text style={[styles.avatarText, { color: isMe ? gold : colors.primary }]}>{initials(s.name)}</Text>
+                        <View style={[styles.avatar, { backgroundColor: isMe ? gold + '25' : colors.accentYellow + '20' }]}>
+                          <Text style={[styles.avatarText, { color: isMe ? gold : colors.accentYellow }]}>{initials(s.name)}</Text>
                         </View>
                         <View style={{ flex: 1, minWidth: 0 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -207,7 +207,7 @@ export default function LeaderboardScreen({ navigation }: any) {
                       {wide && <Text style={styles.thGrade}><Text style={styles.gradeCell}>{s.grade}</Text></Text>}
                       <View style={styles.thXp}><Text style={[styles.xpCell, { color: gold }]}>{s.score.toLocaleString()} <Text style={{ fontSize: 11, fontWeight: '600' }}>XP</Text></Text></View>
                       <View style={[styles.thStreak, { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }]}>
-                        <Feather name="wind" size={12} color={colors.accentOrange} />
+                        <Feather name="wind" size={12} color={colors.accentYellow} />
                         <Text style={styles.streakCell}>{s.streak}d</Text>
                       </View>
                     </View>
@@ -249,7 +249,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   podiumCard:     { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.md },
   medalBadge:     { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   medalNum:       { fontFamily: fonts.serif, fontSize: 11, fontWeight: '900', color: '#0B0B0B' },
-  podiumAvatar:   { width: 40, height: 40, borderRadius: 20, borderWidth: 2, backgroundColor: c.primary + '18', alignItems: 'center', justifyContent: 'center' },
+  podiumAvatar:   { width: 40, height: 40, borderRadius: 20, borderWidth: 2, backgroundColor: c.accentYellow + '18', alignItems: 'center', justifyContent: 'center' },
   podiumAvatarText: { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700' },
   podiumName:     { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: c.textMain },
   podiumScore:    { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', marginTop: 1 },

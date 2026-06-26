@@ -332,7 +332,7 @@ export default function ParentControlsScreen({ navigation }: any) {
                   const used = ctrl.todayUsageMinutes;
                   const limit = ctrl.isEnabled ? ctrl.dailyLimitMinutes : 0;
                   const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
-                  const color = pct >= 90 ? '#EFD1D4' : pct >= 70 ? '#C5BD96' : colors.primary;
+                  const color = pct >= 90 ? '#EFD1D4' : pct >= 70 ? '#C5BD96' : colors.accentYellow;
                   const r = 28; const circ = 2 * Math.PI * r;
                   const dash = circ * (pct / 100);
                   return (

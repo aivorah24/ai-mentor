@@ -1344,8 +1344,8 @@ export default function LandingScreen() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
           <View style={{ backgroundColor: c.cardDark, borderRadius: 20, borderWidth: 1, borderColor: c.borderColor, padding: 32, width: '100%', maxWidth: 420, alignItems: 'center', gap: 16 }}>
             {/* Icon */}
-            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: c.primary + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.primary + '40' }}>
-              <Feather name="users" size={26} color={c.primary} />
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: c.accentYellow + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.accentYellow + '40' }}>
+              <Feather name="users" size={26} color={c.accentYellow} />
             </View>
             {/* Title */}
             <Text style={{ fontSize: 22, fontWeight: '800', color: c.textMain, textAlign: 'center', letterSpacing: 0 }}>
@@ -1354,7 +1354,7 @@ export default function LandingScreen() {
             {/* Body */}
             <Text style={{ fontSize: 14, color: c.textMuted, textAlign: 'center', lineHeight: 22 }}>
               This email is already registered as a{' '}
-              <Text style={{ color: c.primary, fontWeight: '700' }}>Teacher</Text>.
+              <Text style={{ color: c.accentYellow, fontWeight: '700' }}>Teacher</Text>.
               {'\n\n'}
               Would you like to add a{' '}
               <Text style={{ color: c.accentGreen, fontWeight: '700' }}>Parent</Text>
@@ -1362,7 +1362,7 @@ export default function LandingScreen() {
             </Text>
             {/* Yes button */}
             <TouchableOpacity
-              style={{ backgroundColor: c.primary, borderRadius: 12, paddingVertical: 15, width: '100%', alignItems: 'center', opacity: addingParentRole ? 0.6 : 1, marginTop: 4 }}
+              style={{ backgroundColor: c.accentYellow, borderRadius: 12, paddingVertical: 15, width: '100%', alignItems: 'center', opacity: addingParentRole ? 0.6 : 1, marginTop: 4 }}
               disabled={addingParentRole}
               activeOpacity={0.85}
               onPress={async () => {

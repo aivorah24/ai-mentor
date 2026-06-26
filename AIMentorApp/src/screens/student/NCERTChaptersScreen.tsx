@@ -136,7 +136,7 @@ function ChapterCard({
   isDone: boolean;
   isScience?: boolean;
 }) {
-  const unitColor = isDone ? '#10b981' : (UNIT_COLORS[ch.unit] ?? colors.primary);
+  const unitColor = isDone ? '#10b981' : (UNIT_COLORS[ch.unit] ?? colors.accentYellow);
   // Science: Drawing Buddy + Word Wizard (no Math Helper). Math: full module set.
   const mods = isScience
     ? { math: false, drawing: true, words: true }
@@ -274,7 +274,7 @@ export default function NCERTChaptersScreen({ navigation, route }: any) {
         <View style={[s.screen, { backgroundColor: colors.bgDark }]}>
           <Header title={subject} subtitle="Loading chapters..." showBack={true} onMenuPress={() => navigation.openDrawer()} />
           <View style={s.center}>
-            <ActivityIndicator size="large" color={colors.primary} />
+            <ActivityIndicator size="large" color={colors.accentYellow} />
             <Text style={[s.dimText, { color: colors.textMuted, marginTop: 12 }]}>Loading chapters...</Text>
           </View>
         </View>
@@ -312,9 +312,9 @@ export default function NCERTChaptersScreen({ navigation, route }: any) {
 
           {/* Profile pill — shows curriculum+grade, no picker needed */}
           {profileSet ? (
-            <View style={[s.profilePill, { backgroundColor: colors.primaryGlow, borderColor: colors.primary + '30' }]}>
-              <Feather name="book-open" size={14} color={colors.primary} />
-              <Text style={[s.profilePillText, { color: colors.primary }]}>
+            <View style={[s.profilePill, { backgroundColor: colors.accentYellow + '22', borderColor: colors.accentYellow + '30' }]}>
+              <Feather name="book-open" size={14} color={colors.accentYellow} />
+              <Text style={[s.profilePillText, { color: colors.accentYellow }]}>
                 {selectedCurriculum} · {selectedGrade}
               </Text>
               <View style={{ flex: 1 }} />

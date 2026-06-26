@@ -95,7 +95,7 @@ function typeColor(type: string, colors: any): string {
     assignment: colors.accentYellow,
     break:      colors.textDim,
   };
-  return map[type] ?? colors.primary;
+  return map[type] ?? colors.accentYellow;
 }
 
 function toTitleCase(str: string) {
@@ -716,7 +716,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   modalInput:       { backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, padding: spacing.md, color: c.textMain, fontFamily: fonts.serif, fontSize: 14 },
   modalLabel:       { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted, fontWeight: '600' },
   timeChip:         { paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radius.sm, borderWidth: 1, borderColor: c.borderColor, marginRight: 6 },
-  timeChipActive:   { borderColor: c.primary, backgroundColor: c.primaryGlow },
+  timeChipActive:   { borderColor: c.accentYellow, backgroundColor: c.accentYellow + "22" },
   timeChipText:     { fontFamily: fonts.serif, fontSize: 12, color: c.textMuted },
   modalBtns:        { flexDirection: 'row', gap: spacing.md },
   modalCancel:      { flex: 1, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center' },

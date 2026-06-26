@@ -112,9 +112,9 @@ export default function AIStorytellerScreen({ route, navigation }: any) {
 
           {/* Label */}
           <View style={s.row}>
-            <View style={[s.badge, { backgroundColor: colors.accentPurple + '20' }]}>
-              <Feather name="book-open" size={13} color={colors.accentPurple} />
-              <Text style={[s.badgeText, { color: colors.accentPurple }]}>Story Time</Text>
+            <View style={[s.badge, { backgroundColor: colors.accentYellow + '20' }]}>
+              <Feather name="book-open" size={13} color={colors.accentYellow} />
+              <Text style={[s.badgeText, { color: colors.accentYellow }]}>Story Time</Text>
             </View>
             <Text style={[s.chapterLabel, { color: colors.textMuted }]}>{topic}</Text>
           </View>
@@ -129,7 +129,7 @@ export default function AIStorytellerScreen({ route, navigation }: any) {
                     s.dot,
                     {
                       backgroundColor: i <= partCount
-                        ? colors.accentPurple
+                        ? colors.accentYellow
                         : colors.borderColor,
                     },
                   ]}
@@ -143,9 +143,9 @@ export default function AIStorytellerScreen({ route, navigation }: any) {
 
           {/* Start screen */}
           {!story && !loading && (
-            <View style={[s.startCard, { backgroundColor: colors.cardDark, borderColor: colors.accentPurple + '40' }]}>
-              <View style={[s.storyIcon, { backgroundColor: colors.accentPurple + '20' }]}>
-                <Feather name="book-open" size={40} color={colors.accentPurple} />
+            <View style={[s.startCard, { backgroundColor: colors.cardDark, borderColor: colors.accentYellow + '40' }]}>
+              <View style={[s.storyIcon, { backgroundColor: colors.accentYellow + '20' }]}>
+                <Feather name="book-open" size={40} color={colors.accentYellow} />
               </View>
               <Text style={[s.startTitle, { color: colors.textMain }]}>
                 A story about {topic}!
@@ -154,7 +154,7 @@ export default function AIStorytellerScreen({ route, navigation }: any) {
                 Go on an adventure where maths saves the day. You choose what happens next!
               </Text>
               <TouchableOpacity
-                style={[s.startBtn, { backgroundColor: colors.accentPurple }]}
+                style={[s.startBtn, { backgroundColor: colors.accentYellow }]}
                 onPress={startStory}
               >
                 <Feather name="play" size={16} color="#fff" />
@@ -165,7 +165,7 @@ export default function AIStorytellerScreen({ route, navigation }: any) {
 
           {loading && (
             <View style={s.center}>
-              <ActivityIndicator size="large" color={colors.accentPurple} />
+              <ActivityIndicator size="large" color={colors.accentYellow} />
               <Text style={[s.hint, { color: colors.textMuted, marginTop: 12 }]}>
                 Writing the next part of the story…
               </Text>
@@ -182,10 +182,10 @@ export default function AIStorytellerScreen({ route, navigation }: any) {
           {story && !loading && (
             <>
               {/* Story segment */}
-              <View style={[s.storyCard, { backgroundColor: colors.cardDark, borderColor: colors.accentPurple + '30' }]}>
+              <View style={[s.storyCard, { backgroundColor: colors.cardDark, borderColor: colors.accentYellow + '30' }]}>
                 <View style={s.cardHeader}>
-                  <Feather name="feather" size={16} color={colors.accentPurple} />
-                  <Text style={[s.cardTitle, { color: colors.accentPurple }]}>
+                  <Feather name="feather" size={16} color={colors.accentYellow} />
+                  <Text style={[s.cardTitle, { color: colors.accentYellow }]}>
                     {story.isEnd ? 'The End' : `Part ${partCount}`}
                   </Text>
                   <TouchableOpacity
@@ -211,11 +211,11 @@ export default function AIStorytellerScreen({ route, navigation }: any) {
                   {story.choices.map((choice, i) => (
                     <TouchableOpacity
                       key={i}
-                      style={[s.choiceBtn, { backgroundColor: colors.cardDark, borderColor: colors.accentPurple + '50' }]}
+                      style={[s.choiceBtn, { backgroundColor: colors.cardDark, borderColor: colors.accentYellow + '50' }]}
                       onPress={() => makeChoice(choice)}
                       activeOpacity={0.75}
                     >
-                      <View style={[s.choiceLetter, { backgroundColor: colors.accentPurple }]}>
+                      <View style={[s.choiceLetter, { backgroundColor: colors.accentYellow }]}>
                         <Text style={s.choiceLetterText}>{String.fromCharCode(65 + i)}</Text>
                       </View>
                       <Text style={[s.choiceText, { color: colors.textMain }]}>
@@ -237,7 +237,7 @@ export default function AIStorytellerScreen({ route, navigation }: any) {
                   </Text>
                   <View style={s.endBtns}>
                     <TouchableOpacity
-                      style={[s.btn, { backgroundColor: colors.accentPurple, flex: 1 }]}
+                      style={[s.btn, { backgroundColor: colors.accentYellow, flex: 1 }]}
                       onPress={startStory}
                     >
                       <Feather name="refresh-cw" size={14} color="#fff" />

@@ -1621,7 +1621,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
 
   const scene    = lesson.scenes[cardIdx];
   // Landing palette: muted sage primary + gold secondary (theme-aware, not neon).
-  const accent   = colors.primary;       // landing sage
+  const accent   = colors.accentYellow;       // landing sage
   const gold     = colors.accentYellow;  // landing gold
   const onAccent = isDark ? '#0B140F' : '#FFFFFF'; // readable text on the sage fill
   const icon    = TYPE_ICON[scene.type] || 'book-open';

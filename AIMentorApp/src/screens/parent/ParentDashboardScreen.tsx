@@ -88,7 +88,7 @@ function ChildCard({
   colors: AppColors; s: any;
 }) {
   const isOnTrack = child.status === 'on_track';
-  const badgeColor = isOnTrack ? colors.accentYellow : colors.primary;
+  const badgeColor = isOnTrack ? colors.accentYellow : colors.accentYellow;
   const badgeLabel = isOnTrack ? 'On Track' : child.status === 'getting_started' ? 'Getting Started' : 'Keep Going';
 
   return (
@@ -689,11 +689,11 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
                     )}
                     {child.assignmentsDone > 0 && (
                       <View style={s.highlightRow}>
-                        <View style={[s.highlightIcon, { backgroundColor: colors.primary + '20' }]}>
-                          <Feather name="check-circle" size={14} color={colors.primary} />
+                        <View style={[s.highlightIcon, { backgroundColor: colors.accentYellow + '20' }]}>
+                          <Feather name="check-circle" size={14} color={colors.accentYellow} />
                         </View>
                         <View style={{ flex: 1 }}>
-                          <Text style={[s.highlightTitle, { color: colors.primary }]}>AI Recommendation</Text>
+                          <Text style={[s.highlightTitle, { color: colors.accentYellow }]}>AI Recommendation</Text>
                           <Text style={s.highlightDesc}>Practice and revise topics tomorrow.</Text>
                         </View>
                       </View>
@@ -758,13 +758,13 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
                     )}
                     {child.assignmentsDone > 0 && (
                       <View style={s.moodRow}>
-                        <Feather name="check-circle" size={12} color={colors.primary} />
+                        <Feather name="check-circle" size={12} color={colors.accentYellow} />
                         <Text style={s.moodText}>{child.assignmentsDone} assignment{child.assignmentsDone > 1 ? 's' : ''} completed</Text>
                       </View>
                     )}
                     {child.completedTopics.length > 0 && (
                       <View style={s.moodRow}>
-                        <Feather name="book-open" size={12} color={colors.primary} />
+                        <Feather name="book-open" size={12} color={colors.accentYellow} />
                         <Text style={s.moodText}>{child.completedTopics.length} topic{child.completedTopics.length > 1 ? 's' : ''} explored</Text>
                       </View>
                     )}
@@ -911,7 +911,7 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
                   <View style={s.reportSection}>
                     <Text style={s.reportSectionTitle}>Recommendations</Text>
                     {reportData.report.recommendations.map((str: string, i: number) => (
-                      <View key={i} style={s.reportListItem}><Feather name="star" size={13} color={colors.primary} style={{ marginTop: 2 }} /><Text style={[s.reportBody, { flex: 1 }]}>{str}</Text></View>
+                      <View key={i} style={s.reportListItem}><Feather name="star" size={13} color={colors.accentYellow} style={{ marginTop: 2 }} /><Text style={[s.reportBody, { flex: 1 }]}>{str}</Text></View>
                     ))}
                   </View>
                 ) : null}

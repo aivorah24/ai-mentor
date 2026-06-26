@@ -1654,19 +1654,19 @@ export default function ReadAloudScreen() {
   const renderCalibrationPrompt = () => (
     <View style={{ alignItems: 'center', paddingTop: 40, paddingHorizontal: 20 }}>
       <LinearGradient colors={['#93B0AC28', '#C3DCD818']} style={{ borderRadius: 20, padding: 32, alignItems: 'center', width: '100%', maxWidth: 500 }}>
-        <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-          <Feather name="bar-chart-2" size={32} color={colors.primary} />
+        <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.accentYellow + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <Feather name="bar-chart-2" size={32} color={colors.accentYellow} />
         </View>
         <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, textAlign: 'center', marginBottom: 8 }}>Reading Level Check</Text>
         <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
           Let's find the right reading level for you! Read a short passage aloud and we'll set your Lexile level.
         </Text>
         {studentLexile != null && (
-          <View style={{ backgroundColor: colors.primary + '18', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 8, marginBottom: 16 }}>
-            <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '700' }}>Current Lexile: {studentLexile}L</Text>
+          <View style={{ backgroundColor: colors.accentYellow + '18', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 8, marginBottom: 16 }}>
+            <Text style={{ fontSize: 13, color: colors.accentYellow, fontWeight: '700' }}>Current Lexile: {studentLexile}L</Text>
           </View>
         )}
-        <TouchableOpacity onPress={startCalibration} style={{ backgroundColor: colors.primary, borderRadius: 14, paddingHorizontal: 32, paddingVertical: 14, marginBottom: 12 }}>
+        <TouchableOpacity onPress={startCalibration} style={{ backgroundColor: colors.accentYellow, borderRadius: 14, paddingHorizontal: 32, paddingVertical: 14, marginBottom: 12 }}>
           <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Start Reading Test</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => { setNeedsCalibration(false); setStudentLexile(400); }} style={{ paddingVertical: 8 }}>
@@ -1682,16 +1682,16 @@ export default function ReadAloudScreen() {
       {/* Hero */}
       <LinearGradient colors={['#93B0AC18', '#C3DCD810']} style={s.heroCard}>
         <View style={s.heroIconCircle}>
-          <Feather name="mic" size={28} color={colors.primary} />
+          <Feather name="mic" size={28} color={colors.accentYellow} />
         </View>
         <Text style={[s.heroTitle, { color: colors.textMain }]}>Read Aloud</Text>
         <Text style={[s.heroSub, { color: colors.textMuted }]}>
           Pick a story, listen or read it aloud, and see how you do!
         </Text>
         {studentLexile != null && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, backgroundColor: colors.primary + '18', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 5 }}>
-            <Feather name="bar-chart-2" size={14} color={colors.primary} />
-            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primary, marginLeft: 6 }}>Lexile {studentLexile}L</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, backgroundColor: colors.accentYellow + '18', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 5 }}>
+            <Feather name="bar-chart-2" size={14} color={colors.accentYellow} />
+            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.accentYellow, marginLeft: 6 }}>Lexile {studentLexile}L</Text>
           </View>
         )}
       </LinearGradient>
@@ -1706,14 +1706,14 @@ export default function ReadAloudScreen() {
               key={f}
               style={[
                 s.filterTab,
-                active && { backgroundColor: lm?.bg || colors.primary + '18', borderColor: lm?.border || colors.primary + '40' },
+                active && { backgroundColor: lm?.bg || colors.accentYellow + '18', borderColor: lm?.border || colors.accentYellow + '40' },
               ]}
               onPress={() => setDiffFilter(f)}
               activeOpacity={0.7}
             >
               <Text style={[
                 s.filterTabText,
-                { color: active ? (lm?.text || colors.primary) : colors.textDim },
+                { color: active ? (lm?.text || colors.accentYellow) : colors.textDim },
               ]}>
                 {f === 'all' ? 'All' : LEVEL_META[f].label}
               </Text>
@@ -1757,16 +1757,16 @@ export default function ReadAloudScreen() {
 
       {/* Surprise Me */}
       <TouchableOpacity
-        style={[s.surpriseBtn, { borderColor: colors.primary + '40' }]}
+        style={[s.surpriseBtn, { borderColor: colors.accentYellow + '40' }]}
         onPress={() => loadPassage()}
         disabled={loadingPassage}
         activeOpacity={0.7}
       >
         {loadingPassage
-          ? <ActivityIndicator size="small" color={colors.primary} />
+          ? <ActivityIndicator size="small" color={colors.accentYellow} />
           : <>
-              <Feather name="shuffle" size={16} color={colors.primary} />
-              <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 14 }}>Surprise Me!</Text>
+              <Feather name="shuffle" size={16} color={colors.accentYellow} />
+              <Text style={{ color: colors.accentYellow, fontWeight: '600', fontSize: 14 }}>Surprise Me!</Text>
             </>
         }
       </TouchableOpacity>
@@ -1840,7 +1840,7 @@ export default function ReadAloudScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[s.actionBtn, s.primaryBtn, { backgroundColor: colors.primary, opacity: voskStatus === 'loading' ? 0.6 : 1 }]}
+            style={[s.actionBtn, s.primaryBtn, { backgroundColor: colors.accentYellow, opacity: voskStatus === 'loading' ? 0.6 : 1 }]}
             onPress={startCountdown}
             activeOpacity={0.7}
             disabled={voskStatus === 'loading'}
@@ -1868,7 +1868,7 @@ export default function ReadAloudScreen() {
   const renderCountdown = () => (
     <View style={[s.countdownOverlay, { backgroundColor: colors.bgDark }]}>
       <View style={s.countdownCircle}>
-        <Text style={[s.countdownNum, { color: colors.primary }]}>{countdownNum > 0 ? countdownNum : 'Go!'}</Text>
+        <Text style={[s.countdownNum, { color: colors.accentYellow }]}>{countdownNum > 0 ? countdownNum : 'Go!'}</Text>
       </View>
       <Text style={[s.countdownHint, { color: colors.textMuted }]}>Get ready to read...</Text>
     </View>
@@ -1895,7 +1895,7 @@ export default function ReadAloudScreen() {
                   style={s.liveWordSlot}
                   onLayout={(e) => { wordYRef.current[i] = e.nativeEvent.layout.y; }}
                 >
-                  {isCurrent ? <View style={[s.liveCaret, { backgroundColor: colors.primary }]} /> : null}
+                  {isCurrent ? <View style={[s.liveCaret, { backgroundColor: colors.accentYellow }]} /> : null}
                   <Text
                     style={[
                       s.liveWord,
@@ -1905,12 +1905,12 @@ export default function ReadAloudScreen() {
                              : status === 'skipped' ? '#C5BD96'
                              : isCurrent ? colors.textMain
                              : colors.textMain + 'CC',
-                        backgroundColor: isCurrent ? colors.primary + '18'
+                        backgroundColor: isCurrent ? colors.accentYellow + '18'
                              : status === 'correct' ? '#93B0AC10'
                              : status === 'misread' ? '#EFD1D414'
                              : status === 'skipped' ? '#C5BD9614'
                              : 'transparent',
-                        borderColor: isCurrent ? colors.primary + '70' : 'transparent',
+                        borderColor: isCurrent ? colors.accentYellow + '70' : 'transparent',
                         fontWeight: isCurrent || status === 'correct' ? '800' : '500',
                         textDecorationLine: status === 'misread' ? 'underline' : 'none',
                       },
@@ -1935,7 +1935,7 @@ export default function ReadAloudScreen() {
                   width: 3,
                   height: isPaused ? 3 : h,
                   borderRadius: 2,
-                  backgroundColor: isPaused ? colors.textDim : colors.primary,
+                  backgroundColor: isPaused ? colors.textDim : colors.accentYellow,
                   opacity: isPaused ? 0.4 : 0.7 + (h / 40) * 0.3,
                 }}
               />
@@ -1944,7 +1944,7 @@ export default function ReadAloudScreen() {
 
           {/* Timer */}
           <Text style={{
-            color: isPaused ? colors.textDim : colors.primary,
+            color: isPaused ? colors.textDim : colors.accentYellow,
             fontWeight: '700', fontSize: 22,
             fontVariant: ['tabular-nums'],
             marginVertical: 8,
@@ -1981,7 +1981,7 @@ export default function ReadAloudScreen() {
             {/* Done */}
             <TouchableOpacity
               onPress={stopReading}
-              style={[s.recordingDoneBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
+              style={[s.recordingDoneBtn, { backgroundColor: colors.accentYellow, borderColor: colors.accentYellow }]}
               activeOpacity={0.7}
             >
               <Feather name="check" size={18} color="#fff" />
@@ -2012,8 +2012,8 @@ export default function ReadAloudScreen() {
         {/* Preview controls bar at bottom */}
         <View style={[s.recordingBar, { backgroundColor: colors.cardDark, borderTopColor: colors.borderColor + '30' }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <Feather name="check-circle" size={16} color={colors.primary} />
-            <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 15 }}>Recording Complete</Text>
+            <Feather name="check-circle" size={16} color={colors.accentYellow} />
+            <Text style={{ color: colors.accentYellow, fontWeight: '700', fontSize: 15 }}>Recording Complete</Text>
           </View>
           <Text style={{ color: colors.textDim, fontSize: 12, marginBottom: 14 }}>
             Duration: {timeStr} — Listen back or submit for analysis
@@ -2046,7 +2046,7 @@ export default function ReadAloudScreen() {
             {/* Submit */}
             <TouchableOpacity
               onPress={submitRecording}
-              style={[s.previewSubmitBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
+              style={[s.previewSubmitBtn, { backgroundColor: colors.accentYellow, borderColor: colors.accentYellow }]}
               activeOpacity={0.7}
             >
               <Feather name="send" size={16} color="#fff" />
@@ -2061,10 +2061,10 @@ export default function ReadAloudScreen() {
   // ── Render: Analysing Phase ───────────────────────────────────────
   const renderAnalysingPhase = () => (
     <View style={[s.readingContainer, { justifyContent: 'center', alignItems: 'center', gap: 20 }]}>
-      <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primary + '15', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: colors.accentYellow + '15', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color={colors.accentYellow} />
       </View>
-      <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 18 }}>Analysing your reading...</Text>
+      <Text style={{ color: colors.accentYellow, fontWeight: '700', fontSize: 18 }}>Analysing your reading...</Text>
       <Text style={{ color: colors.textDim, fontSize: 13, textAlign: 'center', paddingHorizontal: 40 }}>
         Our AI is listening to your recording and checking each word
       </Text>
@@ -2117,9 +2117,9 @@ export default function ReadAloudScreen() {
               </View>
             )}
             {(result as any)?.lexile != null && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary + '15', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 6 }}>
-                <Feather name="bar-chart-2" size={14} color={colors.primary} />
-                <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13, marginLeft: 6 }}>Lexile {(result as any).lexile}L</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.accentYellow + '15', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 6 }}>
+                <Feather name="bar-chart-2" size={14} color={colors.accentYellow} />
+                <Text style={{ color: colors.accentYellow, fontWeight: '700', fontSize: 13, marginLeft: 6 }}>Lexile {(result as any).lexile}L</Text>
                 {(result as any)?.lexileChange !== 0 && (
                   <Text style={{ color: (result as any).lexileChange > 0 ? '#93B0AC' : '#EFD1D4', fontWeight: '700', fontSize: 12, marginLeft: 4 }}>
                     {(result as any).lexileChange > 0 ? '+' : ''}{(result as any).lexileChange}
@@ -2133,8 +2133,8 @@ export default function ReadAloudScreen() {
         {/* AI Feedback */}
         {result?.feedback ? (
           <View style={[s.feedbackCard, { borderColor: colors.borderColor + '30' }]}>
-            <View style={[s.feedbackIconCircle, { backgroundColor: colors.primary + '15' }]}>
-              <Feather name="message-circle" size={14} color={colors.primary} />
+            <View style={[s.feedbackIconCircle, { backgroundColor: colors.accentYellow + '15' }]}>
+              <Feather name="message-circle" size={14} color={colors.accentYellow} />
             </View>
             <Text style={[s.feedbackText, { color: colors.textMain }]}>{result.feedback}</Text>
           </View>
@@ -2192,11 +2192,11 @@ export default function ReadAloudScreen() {
             onPress={tryAgain}
             activeOpacity={0.7}
           >
-            <Feather name="rotate-ccw" size={16} color={colors.primary} />
-            <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 14 }}>Try Again</Text>
+            <Feather name="rotate-ccw" size={16} color={colors.accentYellow} />
+            <Text style={{ color: colors.accentYellow, fontWeight: '600', fontSize: 14 }}>Try Again</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[s.actionBtn, s.primaryBtn, { backgroundColor: colors.primary }]}
+            style={[s.actionBtn, s.primaryBtn, { backgroundColor: colors.accentYellow }]}
             onPress={() => setPhase('pick')}
             activeOpacity={0.7}
           >
@@ -2255,7 +2255,7 @@ function makeStyles(c: AppColors, isDark: boolean) {
     },
     heroIconCircle: {
       width: 56, height: 56, borderRadius: 28,
-      backgroundColor: c.primary + '18',
+      backgroundColor: c.accentYellow + '18',
       alignItems: 'center', justifyContent: 'center',
     },
     heroTitle: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
@@ -2308,7 +2308,7 @@ function makeStyles(c: AppColors, isDark: boolean) {
     surpriseBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
       gap: 8, padding: 14, borderRadius: 14, borderWidth: 1,
-      backgroundColor: c.primary + '08',
+      backgroundColor: c.accentYellow + '08',
       marginTop: 4,
     },
 
@@ -2343,8 +2343,8 @@ function makeStyles(c: AppColors, isDark: boolean) {
     },
     countdownCircle: {
       width: 140, height: 140, borderRadius: 70,
-      backgroundColor: c.primary + '15',
-      borderWidth: 3, borderColor: c.primary + '40',
+      backgroundColor: c.accentYellow + '15',
+      borderWidth: 3, borderColor: c.accentYellow + '40',
       alignItems: 'center', justifyContent: 'center',
     },
     countdownNum: { fontSize: 56, fontWeight: '900' },

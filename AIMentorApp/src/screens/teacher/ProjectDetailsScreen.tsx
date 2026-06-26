@@ -56,7 +56,7 @@ export default function ProjectDetailsScreen({ navigation }: any) {
         </ScrollView>
 
         {loading ? (
-          <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 60 }} />
+          <ActivityIndicator color={colors.accentYellow} size="large" style={{ marginTop: 60 }} />
         ) : !data ? (
           <View style={styles.empty}>
             <Feather name="alert-circle" size={32} color={colors.accentRed} />

@@ -245,7 +245,7 @@ export default function DrawerContent(props: any) {
             activeOpacity={0.8}
           >
             <View style={styles.addParentHintIcon}>
-              <Feather name="home" size={11} color={colors.primary} />
+              <Feather name="home" size={11} color={colors.accentYellow} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.addParentHintTitle}>Also a parent?</Text>
@@ -419,21 +419,21 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: c.primary + '50',
-    backgroundColor: c.primaryGlow,
+    borderColor: c.accentYellow + '50',
+    backgroundColor: c.accentYellow + "22",
   },
   addParentHintIcon: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: c.primary + '20',
+    backgroundColor: c.accentYellow + '20',
     alignItems: 'center',
     justifyContent: 'center',
   },
   addParentHintTitle: {
     fontSize: 11,
     fontWeight: '700',
-    color: c.primary,
+    color: c.accentYellow,
   },
   addParentHintSub: {
     fontSize: 10,

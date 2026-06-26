@@ -68,11 +68,11 @@ export default function DatePicker({ value, onChange, placeholder = 'Select a da
     // @ts-ignore — data attr for web outside-click
     <View data-datepicker={uid} style={{ position: 'relative', zIndex: open ? 1000 : 1 }}>
       <TouchableOpacity
-        style={[s.field, { backgroundColor: colors.cardDark, borderColor: open ? colors.primary : colors.borderColor }]}
+        style={[s.field, { backgroundColor: colors.cardDark, borderColor: open ? colors.accentYellow : colors.borderColor }]}
         onPress={() => setOpen(o => !o)}
         activeOpacity={0.8}
       >
-        <Feather name="calendar" size={15} color={colors.primary} style={{ marginRight: 8 }} />
+        <Feather name="calendar" size={15} color={colors.accentYellow} style={{ marginRight: 8 }} />
         <Text style={[s.fieldText, { color: value ? colors.textMain : colors.textDim, flex: 1 }]}>
           {value ? formatDisplay(value) : placeholder}
         </Text>
@@ -123,13 +123,13 @@ export default function DatePicker({ value, onChange, placeholder = 'Select a da
                 >
                   <View style={[
                     s.dayPill,
-                    isToday && !isSelected && { borderWidth: 1.5, borderColor: colors.primary },
-                    isSelected && { backgroundColor: colors.primary },
+                    isToday && !isSelected && { borderWidth: 1.5, borderColor: colors.accentYellow },
+                    isSelected && { backgroundColor: colors.accentYellow },
                   ]}>
                     <Text style={[
                       s.dayText,
                       { color: disabled ? colors.textDim : colors.textMain },
-                      isToday && !isSelected && { color: colors.primary, fontWeight: '700' },
+                      isToday && !isSelected && { color: colors.accentYellow, fontWeight: '700' },
                       isSelected && { color: '#fff', fontWeight: '700' },
                       disabled && { opacity: 0.35 },
                     ]}>{d}</Text>
@@ -145,7 +145,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select a da
               <Text style={[s.footerBtn, { color: colors.textMuted }]}>Clear</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => { onChange(todayKey); setOpen(false); }} activeOpacity={0.7}>
-              <Text style={[s.footerBtn, { color: colors.primary }]}>Today</Text>
+              <Text style={[s.footerBtn, { color: colors.accentYellow }]}>Today</Text>
             </TouchableOpacity>
           </View>
         </View>

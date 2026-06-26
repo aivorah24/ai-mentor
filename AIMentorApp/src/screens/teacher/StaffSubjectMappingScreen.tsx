@@ -295,7 +295,7 @@ export default function StaffSubjectMappingScreen({ navigation }: any) {
 
         {loading ? (
           <View style={styles.center}>
-            <ActivityIndicator color={colors.primary} />
+            <ActivityIndicator color={colors.accentYellow} />
           </View>
         ) : (
           <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

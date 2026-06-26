@@ -140,7 +140,7 @@ export default function ProfileScreen({ navigation }: any) {
 
             {/* Edit button top-right */}
             <TouchableOpacity style={styles.editCornerBtn} onPress={() => setEditVisible(true)}>
-              <Feather name="edit-2" size={13} color={colors.primary} />
+              <Feather name="edit-2" size={13} color={colors.accentYellow} />
               <Text style={styles.editCornerText}>Edit</Text>
             </TouchableOpacity>
 
@@ -162,13 +162,13 @@ export default function ProfileScreen({ navigation }: any) {
 
             {/* Tags */}
             <View style={styles.heroTags}>
-              <View style={[styles.tag, { backgroundColor: colors.primary + '22', borderColor: colors.primary + '55' }]}>
-                <Feather name="book-open" size={10} color={colors.primary} />
-                <Text style={[styles.tagText, { color: colors.primary }]}>{user?.grade || 'Grade 3'}</Text>
+              <View style={[styles.tag, { backgroundColor: colors.accentYellow + '22', borderColor: colors.accentYellow + '55' }]}>
+                <Feather name="book-open" size={10} color={colors.accentYellow} />
+                <Text style={[styles.tagText, { color: colors.accentYellow }]}>{user?.grade || 'Grade 3'}</Text>
               </View>
-              <View style={[styles.tag, { backgroundColor: colors.accentBlue + '22', borderColor: colors.accentBlue + '55' }]}>
-                <Feather name="globe" size={10} color={colors.accentBlue} />
-                <Text style={[styles.tagText, { color: colors.accentBlue }]}>{user?.curriculum || 'IB PYP'}</Text>
+              <View style={[styles.tag, { backgroundColor: colors.accentYellow + '22', borderColor: colors.accentYellow + '55' }]}>
+                <Feather name="globe" size={10} color={colors.accentYellow} />
+                <Text style={[styles.tagText, { color: colors.accentYellow }]}>{user?.curriculum || 'IB PYP'}</Text>
               </View>
               {user?.location && (
                 <View style={[styles.tag, { backgroundColor: colors.accentGreen + '22', borderColor: colors.accentGreen + '55' }]}>
@@ -185,8 +185,8 @@ export default function ProfileScreen({ navigation }: any) {
                 onPress={() => navigation.navigate('Subscription')}
                 activeOpacity={0.7}
               >
-                <Feather name={(user as any)?.isPro ? 'sun' : 'feather'} size={10} color={(user as any)?.isPro ? '#C5A56A' : colors.primary} />
-                <Text style={[styles.tagText, { color: (user as any)?.isPro ? '#C5A56A' : colors.primary }]}>
+                <Feather name={(user as any)?.isPro ? 'sun' : 'feather'} size={10} color={(user as any)?.isPro ? '#C5A56A' : colors.accentYellow} />
+                <Text style={[styles.tagText, { color: (user as any)?.isPro ? '#C5A56A' : colors.accentYellow }]}>
                   {(user as any)?.isPro ? 'Pro Plan' : 'Free Plan'}
                 </Text>
               </TouchableOpacity>
@@ -195,19 +195,19 @@ export default function ProfileScreen({ navigation }: any) {
 
           {/* ── CHOOSE YOUR LOOK ── */}
           <View style={styles.card}>
-            <SectionHead icon="user" iconBg={isDark ? 'rgba(147,176,172,0.18)' : 'rgba(195,220,216,0.35)'} iconColor={colors.primary} title="Choose Your Look" sub="Pick an avatar style" />
+            <SectionHead icon="user" iconBg={isDark ? 'rgba(147,176,172,0.18)' : 'rgba(195,220,216,0.35)'} iconColor={colors.accentYellow} title="Choose Your Look" sub="Pick an avatar style" />
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {AVATARS.map(av => {
                 const active = selAvatar === av.id;
                 return (
                   <TouchableOpacity key={av.id} onPress={() => handleSelectAvatar(av.id)} style={styles.avOption} activeOpacity={0.8}>
-                    <View style={[styles.avRing, active && { borderColor: colors.primary }]}>
+                    <View style={[styles.avRing, active && { borderColor: colors.accentYellow }]}>
                       <LinearGradient colors={av.gradient} style={styles.avCircle}>
                         <Feather name={av.icon as any} size={26} color="white" />
                       </LinearGradient>
-                      {active && <View style={[styles.avCheck, { backgroundColor: colors.primary }]}><Feather name="check" size={9} color="white" /></View>}
+                      {active && <View style={[styles.avCheck, { backgroundColor: colors.accentYellow }]}><Feather name="check" size={9} color="white" /></View>}
                     </View>
-                    <Text style={[styles.avLabel, active && { color: colors.primary, fontWeight: '700' }]}>{av.label}</Text>
+                    <Text style={[styles.avLabel, active && { color: colors.accentYellow, fontWeight: '700' }]}>{av.label}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -262,10 +262,10 @@ export default function ProfileScreen({ navigation }: any) {
           {/* ── LEARNING BUDDY ── */}
           <View style={[styles.card, { overflow: 'hidden' }]}>
             <View style={styles.cardHeadRow}>
-              <SectionHead icon="smile" iconBg={isDark ? 'rgba(195,220,216,0.15)' : 'rgba(195,220,216,0.40)'} iconColor={colors.accentCyan} title="Learning Buddy" sub="Who inspires your learning?" />
-              <View style={[styles.comingSoonBadge, { backgroundColor: colors.accentCyan + '18', borderColor: colors.accentCyan + '40' }]}>
-                <Feather name="clock" size={11} color={colors.accentCyan} />
-                <Text style={[styles.comingSoonText, { color: colors.accentCyan }]}>Coming Soon</Text>
+              <SectionHead icon="smile" iconBg={isDark ? 'rgba(195,220,216,0.15)' : 'rgba(195,220,216,0.40)'} iconColor={colors.accentYellow} title="Learning Buddy" sub="Who inspires your learning?" />
+              <View style={[styles.comingSoonBadge, { backgroundColor: colors.accentYellow + '18', borderColor: colors.accentYellow + '40' }]}>
+                <Feather name="clock" size={11} color={colors.accentYellow} />
+                <Text style={[styles.comingSoonText, { color: colors.accentYellow }]}>Coming Soon</Text>
               </View>
             </View>
             {/* Content dimmed — not interactive */}
@@ -408,9 +408,9 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
     borderRadius: radius.sm, borderWidth: 1, borderColor: isDark ? 'rgba(147,176,172,0.4)' : 'rgba(95,138,134,0.4)',
     backgroundColor: isDark ? 'rgba(147,176,172,0.12)' : 'rgba(195,220,216,0.3)',
   },
-  editCornerText: { fontSize: 11, fontWeight: '700', color: c.primary },
+  editCornerText: { fontSize: 11, fontWeight: '700', color: c.accentYellow },
   avatarWrap:  { position: 'relative', marginBottom: 4 },
-  avatarPhoto: { width: 96, height: 96, borderRadius: 48, borderWidth: 3, borderColor: c.primary },
+  avatarPhoto: { width: 96, height: 96, borderRadius: 48, borderWidth: 3, borderColor: c.accentYellow },
   avatarGrad:  { width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center' },
   cameraRing:  {
     position: 'absolute', bottom: 2, right: 2,
