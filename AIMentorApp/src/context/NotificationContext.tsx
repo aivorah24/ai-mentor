@@ -283,6 +283,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       await AsyncStorage.setItem(`assignmentSeenAt_v2_${user.email}`, new Date().toISOString());
       setUnreadAssignments(0);
       prevAssignRef.current = 0;
+      // Parents' assignment alerts are backed by unread system messages — the local
+      // "seen" timestamp alone doesn't stop them recurring, so persist read state.
+      await fetch(`${SERVER_URL}/messages/mark-system-read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail: user.email, kind: 'assignment' }),
+      }).catch(() => {});
     } catch (err) {
       if (__DEV__) console.warn('[NotifCtx] clearUnreadAssignments failed:', err);
     }
@@ -294,6 +301,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       await AsyncStorage.setItem(`challengeSeenAt_v2_${user.email}`, new Date().toISOString());
       setUnreadChallenges(0);
       prevChallengeRef.current = 0;
+      // Same as assignments: persist parent challenge-alert read state server-side.
+      await fetch(`${SERVER_URL}/messages/mark-system-read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail: user.email, kind: 'challenge' }),
+      }).catch(() => {});
     } catch (err) {
       if (__DEV__) console.warn('[NotifCtx] clearUnreadChallenges failed:', err);
     }
