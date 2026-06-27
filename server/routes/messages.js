@@ -49,9 +49,16 @@ const SYSTEM_NOTIF_PREFIXES = [
   'New Assignment assigned:',
   'New Challenge assigned:',
 ];
+// Strip an optional "[Child Name] " prefix that assignment/challenge notifications
+// now carry, so categorization still works (otherwise these auto-messages leak into
+// the real-chat count and never appear as proper assignment/challenge notifications).
+function stripChildPrefix(content) {
+  return String(content || '').trim().replace(/^\[[^\]]*\]\s*/, '');
+}
 function isSystemNotification(content) {
   if (typeof content !== 'string') return false;
-  return SYSTEM_NOTIF_PREFIXES.some(p => content.trim().startsWith(p));
+  const c = stripChildPrefix(content);
+  return SYSTEM_NOTIF_PREFIXES.some(p => c.startsWith(p));
 }
 
 function toMessagePreview(content) {
@@ -254,12 +261,12 @@ router.get('/notifications-summary', async (req, res) => {
     // inserted by the assignments route when a teacher assigns to their child.
     const isParent = userRole === 'parent';
     const parentSystemMsgs = isParent ? rawMsgs.filter(m => isSystemNotification(m.content)) : [];
-    const parentAssignMsgs = parentSystemMsgs.filter(m =>
-      m.content.trim().startsWith('New Assignment assigned:') ||
-      m.content.trim().startsWith('New Quiz assigned:')
-    );
+    const parentAssignMsgs = parentSystemMsgs.filter(m => {
+      const c = stripChildPrefix(m.content);
+      return c.startsWith('New Assignment assigned:') || c.startsWith('New Quiz assigned:');
+    });
     const parentChallengeMsgs = parentSystemMsgs.filter(m =>
-      m.content.trim().startsWith('New Challenge assigned:')
+      stripChildPrefix(m.content).startsWith('New Challenge assigned:')
     );
 
     // Merge personal + class assignments (students only), dedupe by id
@@ -302,11 +309,12 @@ router.get('/notifications-summary', async (req, res) => {
     if (isParent) {
       // Parent: build items from system messages
       assignmentItems = parentAssignMsgs.map(m => {
-        const titleMatch = m.content.match(/^New (?:Assignment|Quiz) assigned: "([^"]+)"/);
-        const subjectMatch = m.content.match(/\(([^)]+)\)/);
+        const c = stripChildPrefix(m.content);
+        const titleMatch = c.match(/^New (?:Assignment|Quiz) assigned: "([^"]+)"/);
+        const subjectMatch = c.match(/\(([^)]+)\)/);
         return {
           id:         m.id,
-          type:       m.content.startsWith('New Quiz') ? 'quiz' : 'assignment',
+          type:       c.startsWith('New Quiz') ? 'quiz' : 'assignment',
           title:      titleMatch ? titleMatch[1] : 'New Assignment',
           subtitle:   subjectMatch ? subjectMatch[1] : '',
           senderName: m.sender_name || 'Aivorah',
@@ -422,7 +430,7 @@ router.post('/mark-system-read', async (req, res) => {
     if (fetchErr) return res.status(500).json({ error: fetchErr.message });
 
     const ids = (unread || [])
-      .filter(m => typeof m.content === 'string' && prefixes.some(p => m.content.trim().startsWith(p)))
+      .filter(m => typeof m.content === 'string' && prefixes.some(p => stripChildPrefix(m.content).startsWith(p)))
       .map(m => m.id);
 
     if (ids.length === 0) return res.json({ success: true, markedCount: 0 });
