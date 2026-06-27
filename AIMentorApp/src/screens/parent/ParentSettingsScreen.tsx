@@ -256,10 +256,10 @@ export default function ParentSettingsScreen({ navigation }: any) {
                 {[
                   { key: 'assignmentAlerts', label: 'Assignment Alerts', sub: "New assignments for your child", val: assignmentAlerts, set: setAssignmentAlerts },
                   { key: 'teacherMessages',  label: 'Teacher Messages', sub: 'New messages from teachers', val: teacherMessages, set: setTeacherMessages },
-                  { key: 'weeklyReport',     label: 'Weekly Progress Report', sub: "Summary of your child's week", val: weeklyReport, set: setWeeklyReport },
-                  { key: 'progressNudges',   label: 'AI Progress Nudges', sub: 'Tips when your child needs attention', val: progressNudges, set: setProgressNudges },
+                  { key: 'weeklyReport',     label: 'Weekly Progress Report', sub: "Summary of your child's week", soon: true },
+                  { key: 'progressNudges',   label: 'AI Progress Nudges', sub: 'Tips when your child needs attention', soon: true },
                   { key: 'challengeUpdates', label: 'Challenge Updates', sub: 'New challenges and rankings', val: challengeUpdates, set: setChallengeUpdates },
-                ].map((item, i) => (
+                ].map((item: any, i) => (
                   <View key={item.label}>
                     {i > 0 && <View style={styles.divider} />}
                     <View style={styles.toggleRow}>
@@ -267,22 +267,30 @@ export default function ParentSettingsScreen({ navigation }: any) {
                         <Text style={styles.fieldLabel}>{item.label}</Text>
                         <Text style={styles.fieldSub}>{item.sub}</Text>
                       </View>
+                      {item.soon ? (
+                        <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: colors.accentYellow + '18' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: colors.accentYellow }}>Soon</Text>
+                        </View>
+                      ) : (
                       <Switch
                         value={item.val}
                         onValueChange={v => {
                           item.set(v);
                           const next = { assignmentAlerts, teacherMessages, weeklyReport, progressNudges, challengeUpdates, [item.key]: v };
                           saveNotifPrefs(next);
-                          // Trigger an immediate poll so the new pref takes effect instantly
-                          triggerPoll();
-                          // Turning ON dismisses the backlog from the OFF period so it
-                          // doesn't replay — only new notifications appear.
+                          // Turning ON dismisses the OFF-period backlog so it doesn't replay.
+                          // clearUnread* marks the system messages read AND re-polls afterward,
+                          // so we must NOT also triggerPoll() concurrently (that race counted the
+                          // still-unread messages and re-surfaced them). For every other case,
+                          // poll immediately so the pref takes effect instantly.
                           if (v && item.key === 'assignmentAlerts') clearUnreadAssignments();
-                          if (v && item.key === 'challengeUpdates') clearUnreadChallenges();
+                          else if (v && item.key === 'challengeUpdates') clearUnreadChallenges();
+                          else triggerPoll();
                         }}
                         trackColor={{ false: colors.borderColor, true: colors.accentYellow }}
                         thumbColor="white"
                       />
+                      )}
                     </View>
                   </View>
                 ))}
