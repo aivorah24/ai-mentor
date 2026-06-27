@@ -515,10 +515,10 @@ export default function TeacherSettingsScreen({ navigation }: any) {
               <View style={styles.card}>
                 {[
                   { key: 'teacherMessages',  label: 'Parent Messages', sub: 'New messages from parents', val: parentMessages, set: setParentMessages },
-                  { key: 'weeklyReport',     label: 'Weekly Class Report', sub: 'Summary of class activity each week', val: weeklyReport, set: setWeeklyReport },
-                  { key: 'aiInsights',       label: 'AI Class Insights', sub: 'Smart suggestions for your class', val: aiInsights, set: setAiInsights },
+                  { key: 'weeklyReport',     label: 'Weekly Class Report', sub: 'Summary of class activity each week', soon: true },
+                  { key: 'aiInsights',       label: 'AI Class Insights', sub: 'Smart suggestions for your class', soon: true },
                   { key: 'challengeUpdates', label: 'Challenge Activity', sub: 'Student challenge completions and rankings', val: challengeAlerts, set: setChallengeAlerts },
-                ].map((item, i) => (
+                ].map((item: any, i) => (
                   <View key={item.label}>
                     {i > 0 && <View style={styles.divider} />}
                     <View style={styles.toggleRow}>
@@ -526,6 +526,11 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                         <Text style={styles.fieldLabel}>{item.label}</Text>
                         <Text style={styles.fieldSub}>{item.sub}</Text>
                       </View>
+                      {item.soon ? (
+                        <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: gold + '18' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: gold }}>Soon</Text>
+                        </View>
+                      ) : (
                       <Switch
                         value={item.val}
                         onValueChange={(v) => {
@@ -537,6 +542,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                         trackColor={{ false: colors.borderColor, true: gold }}
                         thumbColor="white"
                       />
+                      )}
                     </View>
                   </View>
                 ))}

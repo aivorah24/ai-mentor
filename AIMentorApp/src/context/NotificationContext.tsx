@@ -299,15 +299,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       prevAssignRef.current = 0;
       // Parents' assignment alerts are backed by unread system messages — the local
       // "seen" timestamp alone doesn't stop them recurring, so persist read state.
+      // AWAIT this so the re-poll below sees the messages already marked read
+      // (otherwise the backlog re-appears when turning the toggle back on).
       await fetch(`${SERVER_URL}/messages/mark-system-read`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userEmail: user.email, kind: 'assignment' }),
       }).catch(() => {});
+      // Re-poll AFTER the backlog is dismissed so the authoritative count is 0.
+      await poll({ reason: 'post-clear-assignments', allowDuringMarkRead: true });
     } catch (err) {
       if (__DEV__) console.warn('[NotifCtx] clearUnreadAssignments failed:', err);
     }
-  }, [user?.email]);
+  }, [user?.email, poll]);
 
   const clearUnreadChallenges = useCallback(async () => {
     if (!user?.email) return;
@@ -315,16 +319,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       await AsyncStorage.setItem(`challengeSeenAt_v2_${user.email}`, new Date().toISOString());
       setUnreadChallenges(0);
       prevChallengeRef.current = 0;
-      // Same as assignments: persist parent challenge-alert read state server-side.
+      // Same as assignments: persist parent challenge-alert read state server-side, then
+      // re-poll so the dismissed backlog doesn't re-appear on the next cycle.
       await fetch(`${SERVER_URL}/messages/mark-system-read`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userEmail: user.email, kind: 'challenge' }),
       }).catch(() => {});
+      await poll({ reason: 'post-clear-challenges', allowDuringMarkRead: true });
     } catch (err) {
       if (__DEV__) console.warn('[NotifCtx] clearUnreadChallenges failed:', err);
     }
-  }, [user?.email]);
+  }, [user?.email, poll]);
 
   const refresh = useCallback(async () => {
     await poll({ reason: 'manual-refresh', allowDuringMarkRead: true });
