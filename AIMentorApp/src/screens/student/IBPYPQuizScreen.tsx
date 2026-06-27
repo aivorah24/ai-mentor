@@ -332,7 +332,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
     const passed     = pct >= 60;
     const totalTime  = Math.round((Date.now() - quizStartTimeRef.current) / 1000);
     const timeStr    = totalTime >= 60 ? `${Math.floor(totalTime / 60)}m ${totalTime % 60}s` : `${totalTime}s`;
-    const scoreColor = pct >= 60 ? gold : '#C87848';
+    const scoreColor = pct >= 60 ? gold : '#C98A8A';
     const trophyTier: 'gold' | 'silver' | 'bronze' = pct >= 80 ? 'gold' : pct >= 60 ? 'silver' : 'bronze';
     const message    = pct === 100 ? 'Perfect score! Outstanding work!'
       : pct >= 80 ? 'Excellent! You really understand this topic!'
@@ -375,11 +375,11 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
             {/* action buttons */}
             <View style={styles.resultBtns}>
               <TouchableOpacity
-                style={[styles.retryBtn, { borderColor: !passed ? '#C87848' : accent, backgroundColor: !passed ? '#C8784814' : accent + '14' }]}
+                style={[styles.retryBtn, { borderColor: !passed ? '#C98A8A' : accent, backgroundColor: !passed ? '#C98A8A14' : accent + '14' }]}
                 onPress={() => fetchQuiz(true)} activeOpacity={0.8}
               >
-                <Feather name="refresh-cw" size={16} color={!passed ? '#C87848' : accent} />
-                <Text style={[styles.retryBtnText, { color: !passed ? '#C87848' : accent }]}>
+                <Feather name="refresh-cw" size={16} color={!passed ? '#C98A8A' : accent} />
+                <Text style={[styles.retryBtnText, { color: !passed ? '#C98A8A' : accent }]}>
                   {!passed ? 'Retake (New Questions)' : 'Try Again'}
                 </Text>
               </TouchableOpacity>
@@ -389,28 +389,28 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
             {correctQs.length > 0 && (
               <View style={styles.reviewSection}>
                 <View style={styles.reviewSectionHeader}>
-                  <View style={[styles.reviewSectionIcon, { backgroundColor: '#93B0AC20' }]}>
-                    <Feather name="check-circle" size={16} color="#93B0AC" />
+                  <View style={[styles.reviewSectionIcon, { backgroundColor: '#9FB2A420' }]}>
+                    <Feather name="check-circle" size={16} color="#9FB2A4" />
                   </View>
-                  <Text style={[styles.reviewSectionTitle, { color: '#93B0AC' }]}>
+                  <Text style={[styles.reviewSectionTitle, { color: '#9FB2A4' }]}>
                     Questions You Got Right ({correctQs.length})
                   </Text>
                 </View>
                 {correctQs.map((r, i) => (
                   <View key={i} style={[styles.reviewCard, {
                     backgroundColor: colors.cardDark,
-                    borderColor: '#93B0AC30',
-                    borderLeftColor: '#93B0AC',
+                    borderColor: '#9FB2A430',
+                    borderLeftColor: '#9FB2A4',
                   }]}>
                     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-                      <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#93B0AC20', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                        <Feather name="check" size={13} color="#93B0AC" />
+                      <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#9FB2A420', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                        <Feather name="check" size={13} color="#9FB2A4" />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMain, lineHeight: 22 }}>{r.question}</Text>
                         <View style={[styles.reviewAnswerRow, { backgroundColor: colors.bgDark, borderRadius: 8, marginTop: 10 }]}>
-                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#93B0AC', width: 90, letterSpacing: 0.3 }}>Your answer</Text>
-                          <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#93B0AC' }}>{r.studentAnswer}</Text>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#9FB2A4', width: 90, letterSpacing: 0.3 }}>Your answer</Text>
+                          <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#9FB2A4' }}>{r.studentAnswer}</Text>
                         </View>
                       </View>
                     </View>
@@ -449,8 +449,8 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
                       {/* your answer vs correct answer */}
                       <View style={{ gap: 7, marginBottom: 14, marginLeft: 36 }}>
                         <View style={[styles.reviewAnswerRow, { backgroundColor: colors.bgDark, borderRadius: 8 }]}>
-                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#C4836A', width: 100, letterSpacing: 0.3 }}>Your answer</Text>
-                          <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: '#C4836A' }}>{r.studentAnswer || '—'}</Text>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#C9A24E', width: 100, letterSpacing: 0.3 }}>Your answer</Text>
+                          <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: '#C9A24E' }}>{r.studentAnswer || '—'}</Text>
                         </View>
                         <View style={[styles.reviewAnswerRow, { backgroundColor: colors.bgDark, borderRadius: 8 }]}>
                           <Text style={{ fontSize: 11, fontWeight: '800', color: '#C5BD96', width: 100, letterSpacing: 0.3 }}>Correct answer</Text>
@@ -558,10 +558,10 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
                 let resultIcon: 'check-circle' | 'x-circle' | null = null;
 
                 const CORRECT = accent;       // gold for correct
-                const WRONG   = '#C87848';    // warm amber-red for wrong
+                const WRONG   = '#C98A8A';    // warm amber-red for wrong
                 if (showResult) {
                   if (isCorrect)       { radioFill = CORRECT; radioBorder = CORRECT; textCol = CORRECT; rowBg = accent + '12'; leftBorder = CORRECT; resultIcon = 'check-circle'; }
-                  else if (isSelected) { radioFill = WRONG; radioBorder = WRONG; textCol = WRONG; rowBg = isDark ? '#C8784812' : '#FFF6F0'; leftBorder = WRONG; resultIcon = 'x-circle'; }
+                  else if (isSelected) { radioFill = WRONG; radioBorder = WRONG; textCol = WRONG; rowBg = isDark ? '#C98A8A12' : '#FFF6F0'; leftBorder = WRONG; resultIcon = 'x-circle'; }
                   else                 { radioBorder = isDark ? '#333' : '#DDD'; textCol = isDark ? '#444' : '#CCC'; }
                 } else if (mcqSelected === i) {
                   radioFill = accent; radioBorder = accent; textCol = accent;
@@ -774,7 +774,7 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   nextBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
   failBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, borderWidth: 1, marginTop: 12 },
-  failBannerText: { fontSize: 13, fontWeight: '700', color: '#C87848' },
+  failBannerText: { fontSize: 13, fontWeight: '700', color: '#C98A8A' },
   resultScore: { fontSize: 64, fontWeight: '900', marginTop: 16 },
   resultLabel: { fontSize: 18, fontWeight: '700', marginTop: 4 },
   resultMessage: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginTop: 8, maxWidth: 320 },

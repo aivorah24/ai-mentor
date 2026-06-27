@@ -96,7 +96,7 @@ const SUPER_ADMIN_NAV_ITEMS = [
 const ROLE_DASH: Record<string, string> = { super_admin: 'TeacherDashboard', teacher: 'TeacherDashboard', parent: 'ParentDashboard', student: 'Dashboard' };
 
 export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
-  const { logout, user, switchRole, updateUser } = useAuth();
+  const { logout, user, switchRole, updateUser, beginAddParentProfile } = useAuth();
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
   const pendingReturn = getPendingReturnRole();
   const isDualRole = (user?.roles?.length ?? 0) > 1 || Boolean(pendingReturn);
@@ -234,11 +234,10 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
           <TouchableOpacity
             style={styles.addParentHint}
             onPress={() => {
-              // Store return role in module-level variable (immune to onAuthStateChanged resets)
-              setPendingReturnRole('teacher');
-              const mergedRoles = Array.from(new Set([...(user?.roles || [user?.role || 'teacher']), 'parent']));
-              updateUser({ role: 'parent', roles: mergedRoles as any, onboardingComplete: false } as any);
-              onNavigate('Onboarding');
+              // Start add-parent flow IN MEMORY only — no premature persistence.
+              // Backing out leaves no half-created parent profile. The top-level
+              // onboarding gate renders the parent steps from in-memory state.
+              beginAddParentProfile();
             }}
             activeOpacity={0.8}
           >

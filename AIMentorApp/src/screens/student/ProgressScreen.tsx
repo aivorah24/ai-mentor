@@ -66,16 +66,16 @@ function RingProgress({ progress, color, size = 90, strokeWidth = 8 }: {
 // ── Subject config ────────────────────────────────────────────
 
 const SUBJECT_CONFIG: Record<string, { color: string; icon: React.ComponentProps<typeof Feather>['name'] }> = {
-  Mathematics:          { color: '#5F8A86', icon: 'trending-up'  },
-  Science:              { color: '#5A8A70', icon: 'zap'          },
-  English:              { color: '#B8797E', icon: 'book-open'    },
+  Mathematics:          { color: '#9FB2A4', icon: 'trending-up'  },
+  Science:              { color: '#7E9A86', icon: 'zap'          },
+  English:              { color: '#C9A24E', icon: 'book-open'    },
   'Social Studies':     { color: '#8A8358', icon: 'globe'        },
-  Arts:                 { color: '#C4836A', icon: 'feather'      },
-  'Physical Education': { color: '#B8595F', icon: 'activity'     },
-  ICT:                  { color: '#7AADA8', icon: 'monitor'      },
+  Arts:                 { color: '#C9A24E', icon: 'feather'      },
+  'Physical Education': { color: '#9FB2A4', icon: 'activity'     },
+  ICT:                  { color: '#BAA467', icon: 'monitor'      },
 };
 
-function subjectColor(s: string) { return SUBJECT_CONFIG[s]?.color ?? '#5F8A86'; }
+function subjectColor(s: string) { return SUBJECT_CONFIG[s]?.color ?? '#9FB2A4'; }
 function subjectIcon(s: string): React.ComponentProps<typeof Feather>['name'] { return SUBJECT_CONFIG[s]?.icon ?? 'book-open'; }
 
 // ── Main Screen ───────────────────────────────────────────────
@@ -142,13 +142,13 @@ export default function ProgressScreen({ navigation }: any) {
   const achievements = useMemo(() => {
     const list: { label: string; icon: React.ComponentProps<typeof Feather>['name']; color: string; unlocked: boolean }[] = [
       { label: `${stats.currentStreak}-Day Streak`, icon: 'zap',         color: '#8A8358', unlocked: stats.currentStreak >= 1 },
-      { label: 'First Topic',     icon: 'book-open',   color: '#5F8A86', unlocked: completedSet.size >= 1 },
-      { label: '5 Topics Done',   icon: 'award',       color: '#7AADA8', unlocked: completedSet.size >= 5 },
-      { label: '10 Topics Done',  icon: 'star',        color: '#5A8A70', unlocked: completedSet.size >= 10 },
+      { label: 'First Topic',     icon: 'book-open',   color: '#9FB2A4', unlocked: completedSet.size >= 1 },
+      { label: '5 Topics Done',   icon: 'award',       color: '#BAA467', unlocked: completedSet.size >= 5 },
+      { label: '10 Topics Done',  icon: 'star',        color: '#7E9A86', unlocked: completedSet.size >= 10 },
       { label: '500 XP',          icon: 'trending-up', color: '#8A8358', unlocked: stats.xpPoints >= 500 },
-      { label: '1 Hour Studied',  icon: 'clock',       color: '#5F8A86', unlocked: stats.studyTimeMinutes >= 60 },
-      { label: 'Level 2+',        icon: 'shield',      color: '#C4836A', unlocked: stats.level >= 2 },
-      { label: 'Challenge Done',  icon: 'target',      color: '#B8797E', unlocked: stats.challengesCompleted >= 1 },
+      { label: '1 Hour Studied',  icon: 'clock',       color: '#9FB2A4', unlocked: stats.studyTimeMinutes >= 60 },
+      { label: 'Level 2+',        icon: 'shield',      color: '#C9A24E', unlocked: stats.level >= 2 },
+      { label: 'Challenge Done',  icon: 'target',      color: '#C9A24E', unlocked: stats.challengesCompleted >= 1 },
     ];
     return list;
   }, [stats, completedSet, colors]);
@@ -181,7 +181,7 @@ export default function ProgressScreen({ navigation }: any) {
           <View style={styles.heroBanner}>
             <View style={{ alignItems: 'center', marginBottom: spacing.lg }}>
               <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
-                <RingProgress progress={overallPct / 100} color="#5F8A86" size={100} strokeWidth={9} />
+                <RingProgress progress={overallPct / 100} color="#9FB2A4" size={100} strokeWidth={9} />
                 <View style={StyleSheet.absoluteFill as any} pointerEvents="none">
                   <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={styles.heroPct}>{overallPct}%</Text>
@@ -216,11 +216,11 @@ export default function ProgressScreen({ navigation }: any) {
             </View>
             <View style={styles.heroStats}>
               {[
-                { val: formatStudyTime(stats.studyTimeMinutes), label: 'Study Time',   color: '#7AADA8' },
+                { val: formatStudyTime(stats.studyTimeMinutes), label: 'Study Time',   color: '#BAA467' },
                 { val: stats.xpPoints.toLocaleString(),          label: 'XP Points',   color: '#8A8358' },
-                { val: String(stats.currentStreak),              label: 'Day Streak',  color: '#5A8A70' },
-                { val: String(completedSet.size),                label: 'Topics Done', color: '#C4836A' },
-                { val: String(Math.floor(stats.xpPoints / 100)), label: 'Credits',     color: '#5F8A86' },
+                { val: String(stats.currentStreak),              label: 'Day Streak',  color: '#7E9A86' },
+                { val: String(completedSet.size),                label: 'Topics Done', color: '#C9A24E' },
+                { val: String(Math.floor(stats.xpPoints / 100)), label: 'Credits',     color: '#9FB2A4' },
               ].map((s) => (
                 <View key={s.label} style={styles.heroStat}>
                   <Text style={[styles.heroStatVal, { color: s.color }]}>{s.val}</Text>
@@ -254,17 +254,17 @@ export default function ProgressScreen({ navigation }: any) {
                   const isToday = d.date === new Date().toISOString().split('T')[0];
                   return (
                     <View key={d.date} style={styles.barItem}>
-                      <Text style={[styles.barMinute, isToday && { color: '#5F8A86' }]}>
+                      <Text style={[styles.barMinute, isToday && { color: '#9FB2A4' }]}>
                         {d.studyMinutes > 0 ? `${d.studyMinutes}m` : ''}
                       </Text>
                       <View style={styles.barWrapper}>
                         <View style={[
                           styles.bar,
-                          { height: `${Math.max(heightPct, 6)}%` as any, backgroundColor: isToday ? '#5F8A86' : 'rgba(255,255,255,0.12)' },
+                          { height: `${Math.max(heightPct, 6)}%` as any, backgroundColor: isToday ? '#9FB2A4' : colors.borderColor },
                           isToday && styles.barActive,
                         ]} />
                       </View>
-                      <Text style={[styles.barLabel, isToday && { color: '#5F8A86', fontWeight: '700' }]}>{d.day}</Text>
+                      <Text style={[styles.barLabel, isToday && { color: '#9FB2A4', fontWeight: '700' }]}>{d.day}</Text>
                     </View>
                   );
                 })}
@@ -273,9 +273,9 @@ export default function ProgressScreen({ navigation }: any) {
             {/* Weekly totals */}
             <View style={styles.weekTotals}>
               {[
-                { label: 'Total Study', val: formatStudyTime(weeklyDays.reduce((s, d) => s + d.studyMinutes, 0)), color: '#7AADA8' },
+                { label: 'Total Study', val: formatStudyTime(weeklyDays.reduce((s, d) => s + d.studyMinutes, 0)), color: '#BAA467' },
                 { label: 'XP Earned',   val: `+${weeklyDays.reduce((s, d) => s + d.xp, 0)}`,                      color: '#8A8358' },
-                { label: 'Topics',       val: String(weeklyDays.reduce((s, d) => s + d.topicsCompleted, 0)),       color: '#5A8A70' },
+                { label: 'Topics',       val: String(weeklyDays.reduce((s, d) => s + d.topicsCompleted, 0)),       color: '#7E9A86' },
               ].map(s => (
                 <View key={s.label} style={styles.weekTotal}>
                   <Text style={[styles.weekTotalVal, { color: s.color }]}>{s.val}</Text>
@@ -318,13 +318,13 @@ export default function ProgressScreen({ navigation }: any) {
               <View style={styles.cardHeader}>
                 <Text style={styles.sectionTitle}>Completed Topics</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('LearningPaths')} activeOpacity={0.7}>
-                  <Text style={[styles.seeAll, { color: '#5F8A86' }]}>See all →</Text>
+                  <Text style={[styles.seeAll, { color: '#9FB2A4' }]}>See all →</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.topicsList}>
                 {[...completedSet].slice(0, 6).map(topic => (
                   <View key={topic} style={styles.topicChip}>
-                    <Feather name="check-circle" size={13} color="#5A8A70" />
+                    <Feather name="check-circle" size={13} color="#7E9A86" />
                     <Text style={styles.topicChipText} numberOfLines={1}>{topic}</Text>
                   </View>
                 ))}
@@ -419,7 +419,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   barMinute: { fontSize: 9, color: c.textDim, fontWeight: '600', height: 14 },
   barWrapper: { flex: 1, width: '100%', justifyContent: 'flex-end' },
   bar: { width: '100%', borderRadius: 4, minHeight: 4 },
-  barActive: { shadowColor: '#5F8A86', shadowOffset: { width: 0, height: 0 }, shadowRadius: 8, shadowOpacity: 0.5 },
+  barActive: { shadowColor: '#9FB2A4', shadowOffset: { width: 0, height: 0 }, shadowRadius: 8, shadowOpacity: 0.5 },
   barLabel: { fontSize: 10, color: c.textMuted },
 
   weekTotals: { flexDirection: 'row', justifyContent: 'space-around', borderTopWidth: 1, borderTopColor: c.borderColor, paddingTop: spacing.lg },
@@ -462,7 +462,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingVertical: 6,
     maxWidth: 200,
   },
-  topicChipText: { fontSize: 12, fontWeight: '600', color: '#5A8A70' },
+  topicChipText: { fontSize: 12, fontWeight: '600', color: '#7E9A86' },
 
   achieveGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: 20 },
   achieveCard: {

@@ -82,13 +82,13 @@ function getPageMoodProfile(page: { sceneIcon?: string; sceneLabel?: string; sce
 
 function getPastelGradient(c: string): [string, string] {
   const map: Record<string, [string, string]> = {
-    '#7c3aed': ['#9B8FC0', '#7BA8A4'], '#4f46e5': ['#8FA0C0', '#7BA8A4'],
-    '#0ea5e9': ['#7EA8C0', '#82A896'], '#6366f1': ['#9B8FC0', '#7EA8C0'],
-    '#ea580c': ['#C0A07E', '#7BA8A4'], '#dc2626': ['#C08898', '#9B8FC0'],
-    '#16a34a': ['#82A896', '#7BA8A4'], '#0891b2': ['#7EA8C0', '#82A896'],
-    '#10b981': ['#82A896', '#7EA8C0'], '#f59e0b': ['#C0A07E', '#82A896'],
+    '#7c3aed': ['#C5BD96', '#9FB2A4'], '#4f46e5': ['#BAA467', '#9FB2A4'],
+    '#0ea5e9': ['#9FB2A4', '#C5BD96'], '#6366f1': ['#C5BD96', '#BAA467'],
+    '#ea580c': ['#C0A07E', '#9FB2A4'], '#dc2626': ['#C5BD96', '#BAA467'],
+    '#16a34a': ['#9FB2A4', '#C5BD96'], '#0891b2': ['#9FB2A4', '#C5BD96'],
+    '#10b981': ['#9FB2A4', '#C5BD96'], '#f59e0b': ['#C0A07E', '#9FB2A4'],
   };
-  return map[c] ?? ['#7BA8A4', '#82A896'];
+  return map[c] ?? ['#9FB2A4', '#C5BD96'];
 }
 
 function splitSentences(text: string): string[] {

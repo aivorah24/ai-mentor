@@ -15,9 +15,9 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const BRAND    = '#5F8A86';
-const BRAND20  = '#5F8A8620';
-const BRAND40  = '#5F8A8640';
+const BRAND    = '#BAA467';
+const BRAND20  = '#BAA46720';
+const BRAND40  = '#BAA46740';
 const OFF      = '#0F1A19';
 
 const GRADES    = ['Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9'];

@@ -92,7 +92,7 @@ const ROLE_DASH: Record<string, string> = { super_admin: 'ChallengeManager', tea
 export default function DrawerContent(props: any) {
   const { state, navigation } = props;
   const currentRoute = state.routes[state.index]?.name;
-  const { logout, user, switchRole, updateUser } = useAuth();
+  const { logout, user, switchRole, updateUser, beginAddParentProfile } = useAuth();
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
   const pendingReturn = getPendingReturnRole();
   const isDualRole = (user?.roles?.length ?? 0) > 1 || Boolean(pendingReturn);
@@ -237,10 +237,11 @@ export default function DrawerContent(props: any) {
           <TouchableOpacity
             style={styles.addParentHint}
             onPress={() => {
-              setPendingReturnRole('teacher');
-              const mergedRoles = Array.from(new Set([...(user?.roles || [user?.role || 'teacher']), 'parent']));
-              updateUser({ role: 'parent', roles: mergedRoles as any, onboardingComplete: false } as any);
-              navigation.navigate('Onboarding');
+              // Start the add-parent flow IN MEMORY only — nothing is persisted
+              // until parent onboarding completes, so backing out leaves no
+              // half-created parent profile. The top-level onboarding gate renders
+              // the parent steps once onboardingComplete flips false in memory.
+              beginAddParentProfile();
             }}
             activeOpacity={0.8}
           >

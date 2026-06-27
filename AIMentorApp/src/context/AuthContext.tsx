@@ -69,6 +69,8 @@ interface AuthContextType {
   switchRole: (newRole: UserRole) => void;
   addParentRoleToTeacher: (email: string, password: string) => Promise<void>;
   addParentRoleToTeacherSSO: (email: string) => Promise<void>;
+  beginAddParentProfile: () => void;
+  cancelAddParentProfile: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -90,6 +92,8 @@ const AuthContext = createContext<AuthContextType>({
   switchRole: () => {},
   addParentRoleToTeacher: async () => {},
   addParentRoleToTeacherSSO: async () => {},
+  beginAddParentProfile: () => {},
+  cancelAddParentProfile: () => {},
 });
 
 // Fetch full profile from Supabase (includes curriculum, grade, location, onboardingComplete)
@@ -938,6 +942,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }
 
+  // ── Teacher → add Parent profile (deferred persistence) ───────────────────
+  // Starting the flow only flips IN-MEMORY state so the onboarding gate shows the
+  // parent steps. Nothing is written to AsyncStorage/DB here — the parent role is
+  // persisted ONLY when parent onboarding completes (OnboardingScreen). So if the
+  // user backs out, no half-created parent profile is left behind.
+  function beginAddParentProfile() {
+    // Only pendingReturnRole + in-memory state (mirrors the original working path,
+    // minus the premature persistence). Completion persists the parent role.
+    _pendingReturnRole = 'teacher';
+    setUser(prev => prev ? { ...prev, role: 'parent', onboardingComplete: false } : prev);
+  }
+
+  // Cancel the add-parent flow (in-app Back or browser Back) — restore the teacher
+  // profile entirely from memory. Because beginAddParentProfile never persisted
+  // anything, AsyncStorage/DB still hold the clean teacher state; we just re-sync
+  // the in-memory user so the app routes straight back to the teacher dashboard.
+  function cancelAddParentProfile() {
+    _pendingReturnRole = undefined;
+    setUser(prev => {
+      if (!prev) return prev;
+      const roles = (prev.roles || []).filter(r => r !== 'parent');
+      return {
+        ...prev,
+        role: 'teacher',
+        activeRole: 'teacher',
+        roles: roles.length > 0 ? roles : ['teacher'],
+        onboardingComplete: true,
+      };
+    });
+  }
+
   // Quick-login for test accounts — TEST_USERS data always wins over Supabase
   async function testLogin(email: string) {
     const S = 'Hyderabad International School';
@@ -1084,6 +1119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login, logout, updateUser, refreshProfile, saveProfile,
       signInWithEmail, signUpWithEmail, signInWithGoogle,
       demoLogin, testLogin, switchRole, addParentRoleToTeacher, addParentRoleToTeacherSSO,
+      beginAddParentProfile, cancelAddParentProfile,
     }}>
       {children}
     </AuthContext.Provider>

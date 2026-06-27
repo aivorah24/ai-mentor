@@ -26,8 +26,8 @@ interface WorldData {
   date: string;
 }
 
-const TEAL  = '#5F8A86';
-const ROSE  = '#B8797E';
+const TEAL  = '#BAA467';
+const ROSE  = '#BAA467';
 
 export default function WorldAndYouScreen({ navigation }: any) {
   const { colors, isDark } = useTheme();

@@ -261,9 +261,16 @@ export default function TeacherChallengesScreen({ navigation }: any) {
     }
   }
 
-  const filteredStudents = students.filter(s =>
-    s.name.toLowerCase().includes(studentSearch.toLowerCase())
-  );
+  // Normalise grade labels so "Grade 4", "grade 4", and "4" all compare equal.
+  const normGrade = (g?: string) => (g ?? '').toLowerCase().replace(/grade/g, '').replace(/\s+/g, '').trim();
+
+  // Only students in the SAME grade as the challenge may be assigned it — a Grade 4
+  // challenge must never be assignable to a Grade 6 student (and vice-versa).
+  const filteredStudents = students.filter(s => {
+    const matchesName  = s.name.toLowerCase().includes(studentSearch.toLowerCase());
+    const matchesGrade = !assignChallenge?.grade || normGrade(s.grade) === normGrade(assignChallenge.grade);
+    return matchesName && matchesGrade;
+  });
 
   // Group challenges by category
   const chapterQuizzes   = challenges.filter(c => c.type === 'chapter_quiz');
@@ -571,7 +578,11 @@ export default function TeacherChallengesScreen({ navigation }: any) {
                     <ScrollView style={styles.studentList} nestedScrollEnabled>
                       {filteredStudents.length === 0 ? (
                         <Text style={styles.noStudents}>
-                          {students.length === 0 ? 'No students linked to your account.' : 'No matching students.'}
+                          {students.length === 0
+                            ? 'No students linked to your account.'
+                            : studentSearch
+                              ? 'No matching students.'
+                              : `No ${assignChallenge?.grade || 'matching'} students linked to your account.`}
                         </Text>
                       ) : filteredStudents.map(s => (
                         <TouchableOpacity

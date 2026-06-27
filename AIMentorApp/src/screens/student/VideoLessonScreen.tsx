@@ -32,17 +32,17 @@ const VIDEO_MAP: Record<string, string> = {
 
 // Subject accent colors — Enchanting Forest palette
 const SUBJECT_ACCENT: Record<string, { color: string; icon: any }> = {
-  'Mathematics':          { color: '#5F8A86', icon: 'trending-up' },
-  'Science':              { color: '#5A8A70', icon: 'zap'         },
-  'English':              { color: '#B8797E', icon: 'book-open'   },
+  'Mathematics':          { color: '#9FB2A4', icon: 'trending-up' },
+  'Science':              { color: '#7E9A86', icon: 'zap'         },
+  'English':              { color: '#C9A24E', icon: 'book-open'   },
   'Social Studies':       { color: '#8A8358', icon: 'globe'       },
-  'Arts':                 { color: '#C4836A', icon: 'feather'     },
-  'Physical Education':   { color: '#e99da2', icon: 'activity'    },
-  'ICT':                  { color: '#7AADA8', icon: 'monitor'     },
+  'Arts':                 { color: '#C9A24E', icon: 'feather'     },
+  'Physical Education':   { color: '#9FB2A4', icon: 'activity'    },
+  'ICT':                  { color: '#BAA467', icon: 'monitor'     },
 };
 
 function subjectAccent(subject: string) {
-  return SUBJECT_ACCENT[subject] ?? { color: '#5F8A86', icon: 'book' };
+  return SUBJECT_ACCENT[subject] ?? { color: '#9FB2A4', icon: 'book' };
 }
 
 const SUBJECT_TOPIC_HINTS: Array<{ subject: string; hints: string[] }> = [

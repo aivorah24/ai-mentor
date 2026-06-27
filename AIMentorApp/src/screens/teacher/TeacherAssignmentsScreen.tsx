@@ -2371,23 +2371,23 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                       {/* Option 1: AI Assignment */}
                       <TouchableOpacity
-                        style={{ padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: '#7AADA840', backgroundColor: '#7AADA808', gap: 8 }}
+                        style={{ padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: '#BAA46740', backgroundColor: '#BAA46708', gap: 8 }}
                         onPress={() => { setCreateMode('ai'); setType('assignment'); }}
                         activeOpacity={0.8}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#7AADA820', alignItems: 'center', justifyContent: 'center' }}>
-                            <Feather name="cpu" size={20} color="#7AADA8" />
+                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#BAA46720', alignItems: 'center', justifyContent: 'center' }}>
+                            <Feather name="cpu" size={20} color="#BAA467" />
                           </View>
                           <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 15, fontWeight: '800', color: '#7AADA8' }}>
+                            <Text style={{ fontSize: 15, fontWeight: '800', color: '#BAA467' }}>
                               {isIBPYP ? 'Generate IB PYP Assignment' : 'Generate AI Assignment'}
                             </Text>
                             <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
                               AI creates Purpose, Learning Outcomes, Task Steps, Word Bank, and Stamps
                             </Text>
                           </View>
-                          <Feather name="chevron-right" size={18} color="#7AADA8" />
+                          <Feather name="chevron-right" size={18} color="#BAA467" />
                         </View>
                       </TouchableOpacity>
 
@@ -2489,13 +2489,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         <TouchableOpacity key={val}
                           style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
                             paddingVertical: 10, borderRadius: 10, borderWidth: 1.5,
-                            borderColor: type === val ? '#5F8A86' : colors.borderColor,
-                            backgroundColor: type === val ? '#5F8A8618' : 'transparent' }}
+                            borderColor: type === val ? '#BAA467' : colors.borderColor,
+                            backgroundColor: type === val ? '#BAA46718' : 'transparent' }}
                           onPress={() => setType(val)}
                           activeOpacity={0.75}
                         >
-                          <Feather name={icon as any} size={14} color={type === val ? '#5F8A86' : colors.textMuted} />
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: type === val ? '#5F8A86' : colors.textMuted }}>{label}</Text>
+                          <Feather name={icon as any} size={14} color={type === val ? '#BAA467' : colors.textMuted} />
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: type === val ? '#BAA467' : colors.textMuted }}>{label}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -2537,18 +2537,18 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         {LANGUAGES.map((lang) => (
                           <TouchableOpacity
                             key={lang}
-                            style={[styles.chip, selectedLanguage === lang && { backgroundColor: '#7AADA820', borderColor: '#7AADA8' }]}
+                            style={[styles.chip, selectedLanguage === lang && { backgroundColor: '#BAA46720', borderColor: '#BAA467' }]}
                             onPress={() => setSelectedLanguage(lang)}
                             activeOpacity={0.75}
                           >
-                            <Text style={[styles.chipText, selectedLanguage === lang && { color: '#7AADA8' }]}>{lang}</Text>
+                            <Text style={[styles.chipText, selectedLanguage === lang && { color: '#BAA467' }]}>{lang}</Text>
                           </TouchableOpacity>
                         ))}
                       </View>
                     </>
                   )}
 
-                  <Text style={styles.fieldLabel}>Grade {isIBPYP && <Text style={{ color: '#7AADA8', fontSize: 10, fontWeight: '600' }}> · IB PYP (3–5)</Text>}</Text>
+                  <Text style={styles.fieldLabel}>Grade {isIBPYP && <Text style={{ color: '#BAA467', fontSize: 10, fontWeight: '600' }}> · IB PYP (3–5)</Text>}</Text>
                   <View style={styles.chipRow}>
                     {gradeOptions.map((g) => (
                       <TouchableOpacity
@@ -2602,10 +2602,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                   {/* ── Quiz Generator (AI mode, type === quiz) ── */}
                   {createMode === 'ai' && type === 'quiz' && (
-                    <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#5F8A8640', backgroundColor: '#5F8A8608', gap: 12 }}>
+                    <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#BAA46740', backgroundColor: '#BAA46708', gap: 12 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <Feather name="check-square" size={16} color="#5F8A86" />
-                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#5F8A86' }}>Quiz Generator</Text>
+                        <Feather name="check-square" size={16} color="#BAA467" />
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#BAA467' }}>Quiz Generator</Text>
                       </View>
 
                       {/* Question Type */}
@@ -2616,13 +2616,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                             <TouchableOpacity key={val}
                               style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
                                 paddingVertical: 9, borderRadius: 10, borderWidth: 1.5,
-                                borderColor: quizType === val ? '#5F8A86' : colors.borderColor,
-                                backgroundColor: quizType === val ? '#5F8A8618' : 'transparent' }}
+                                borderColor: quizType === val ? '#BAA467' : colors.borderColor,
+                                backgroundColor: quizType === val ? '#BAA46718' : 'transparent' }}
                               onPress={() => setQuizType(val)}
                               activeOpacity={0.75}
                             >
-                              <Feather name={icon as any} size={12} color={quizType === val ? '#5F8A86' : colors.textMuted} />
-                              <Text style={{ fontSize: 12, fontWeight: '700', color: quizType === val ? '#5F8A86' : colors.textMuted }}>{label}</Text>
+                              <Feather name={icon as any} size={12} color={quizType === val ? '#BAA467' : colors.textMuted} />
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: quizType === val ? '#BAA467' : colors.textMuted }}>{label}</Text>
                             </TouchableOpacity>
                           ))}
                         </View>
@@ -2635,12 +2635,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           {(['easy','medium','hard'] as const).map(d => (
                             <TouchableOpacity key={d}
                               style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
-                                borderColor: quizDifficulty === d ? '#5F8A86' : colors.borderColor,
-                                backgroundColor: quizDifficulty === d ? '#5F8A8618' : 'transparent' }}
+                                borderColor: quizDifficulty === d ? '#BAA467' : colors.borderColor,
+                                backgroundColor: quizDifficulty === d ? '#BAA46718' : 'transparent' }}
                               onPress={() => setQuizDifficulty(d)}
                               activeOpacity={0.75}
                             >
-                              <Text style={{ fontSize: 12, fontWeight: '700', color: quizDifficulty === d ? '#5F8A86' : colors.textMuted, textTransform: 'capitalize' }}>{d}</Text>
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: quizDifficulty === d ? '#BAA467' : colors.textMuted, textTransform: 'capitalize' }}>{d}</Text>
                             </TouchableOpacity>
                           ))}
                         </View>
@@ -2653,12 +2653,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           {[3, 5, 8, 10].map(n => (
                             <TouchableOpacity key={n}
                               style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10, borderWidth: 1.5,
-                                borderColor: quizCount === n ? '#5F8A86' : colors.borderColor,
-                                backgroundColor: quizCount === n ? '#5F8A8618' : 'transparent' }}
+                                borderColor: quizCount === n ? '#BAA467' : colors.borderColor,
+                                backgroundColor: quizCount === n ? '#BAA46718' : 'transparent' }}
                               onPress={() => setQuizCount(n)}
                               activeOpacity={0.75}
                             >
-                              <Text style={{ fontSize: 13, fontWeight: '800', color: quizCount === n ? '#5F8A86' : colors.textMuted }}>{n}</Text>
+                              <Text style={{ fontSize: 13, fontWeight: '800', color: quizCount === n ? '#BAA467' : colors.textMuted }}>{n}</Text>
                             </TouchableOpacity>
                           ))}
                         </View>
@@ -2673,7 +2673,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       )}
                       <TouchableOpacity
                         style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-                          padding: 14, borderRadius: 12, backgroundColor: generatingQuiz ? colors.borderColor : '#5F8A86' }}
+                          padding: 14, borderRadius: 12, backgroundColor: generatingQuiz ? colors.borderColor : '#BAA467' }}
                         onPress={generateQuiz}
                         activeOpacity={0.85}
                         disabled={generatingQuiz}
@@ -2689,10 +2689,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   )}
 
                   {/* ── AI Assignment Generator (only in AI mode, type === assignment) ── */}
-                  {createMode === 'ai' && type === 'assignment' && <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#7AADA840', backgroundColor: '#7AADA808', gap: 10 }}>
+                  {createMode === 'ai' && type === 'assignment' && <View style={{ padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: '#BAA46740', backgroundColor: '#BAA46708', gap: 10 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <Feather name="cpu" size={16} color="#7AADA8" />
-                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#7AADA8' }}>
+                      <Feather name="cpu" size={16} color="#BAA467" />
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: '#BAA467' }}>
                         {isIBPYP ? 'Generate IB PYP Assignment' : `Generate ${curriculum || 'AI'} Assignment`}
                       </Text>
                     </View>
@@ -2719,7 +2719,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     )}
                     <TouchableOpacity
                       style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-                        padding: 14, borderRadius: 12, backgroundColor: generatingIB ? colors.borderColor : '#7AADA8' }}
+                        padding: 14, borderRadius: 12, backgroundColor: generatingIB ? colors.borderColor : '#BAA467' }}
                       onPress={generateIBAssignment}
                       activeOpacity={0.85}
                       disabled={generatingIB}
@@ -2738,14 +2738,14 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     {!!ibPurpose && (
                       <View style={{ gap: 8, marginTop: 4 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                          <Feather name="check-circle" size={14} color="#7AADA8" />
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#7AADA8' }}>
+                          <Feather name="check-circle" size={14} color="#BAA467" />
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#BAA467' }}>
                             {isIBPYP ? 'IB PYP Assignment Generated' : `${curriculum || 'AI'} Assignment Generated`}
                           </Text>
                         </View>
 
-                        <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#7AADA830' }}>
-                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#7AADA8', marginBottom: 4 }}>PURPOSE / CENTRAL IDEA</Text>
+                        <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#BAA46730' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#BAA467', marginBottom: 4 }}>PURPOSE / CENTRAL IDEA</Text>
                           <TextInput
                             style={{ fontSize: 12, color: colors.textMain, lineHeight: 18 }}
                             value={ibCentralIdea || ibPurpose}
@@ -2790,11 +2790,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         )}
 
                         {ibLearningOutcomes.filter(l => l.trim()).length > 0 && (
-                          <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#7AADA830' }}>
-                            <Text style={{ fontSize: 11, fontWeight: '700', color: '#7AADA8', marginBottom: 6 }}>LEARNING OUTCOMES</Text>
+                          <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#BAA46730' }}>
+                            <Text style={{ fontSize: 11, fontWeight: '700', color: '#BAA467', marginBottom: 6 }}>LEARNING OUTCOMES</Text>
                             {ibLearningOutcomes.map((lo, i) => (
                               <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 4 }}>
-                                <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#7AADA8', marginTop: 7, flexShrink: 0 }} />
+                                <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#BAA467', marginTop: 7, flexShrink: 0 }} />
                                 <TextInput
                                   style={{ flex: 1, fontSize: 12, color: colors.textMain, lineHeight: 18 }}
                                   value={lo}
@@ -2808,21 +2808,21 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                             ))}
                             <TouchableOpacity onPress={() => setIbLearningOutcomes(prev => [...prev, ''])} activeOpacity={0.75}
                               style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                              <Feather name="plus-circle" size={12} color="#7AADA8" />
-                              <Text style={{ fontSize: 11, color: '#7AADA8', fontWeight: '600' }}>Add outcome</Text>
+                              <Feather name="plus-circle" size={12} color="#BAA467" />
+                              <Text style={{ fontSize: 11, color: '#BAA467', fontWeight: '600' }}>Add outcome</Text>
                             </TouchableOpacity>
                           </View>
                         )}
 
                         {ibWordBank.length > 0 && (
-                          <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#7AADA830' }}>
-                            <Text style={{ fontSize: 11, fontWeight: '700', color: '#7AADA8', marginBottom: 6 }}>WORD BANK</Text>
+                          <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#BAA46730' }}>
+                            <Text style={{ fontSize: 11, fontWeight: '700', color: '#BAA467', marginBottom: 6 }}>WORD BANK</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                               {ibWordBank.map((w, i) => (
-                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: '#7AADA818', borderWidth: 1, borderColor: '#7AADA840' }}>
-                                  <Text style={{ fontSize: 12, color: '#7AADA8', fontWeight: '600' }}>{w}</Text>
+                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: '#BAA46718', borderWidth: 1, borderColor: '#BAA46740' }}>
+                                  <Text style={{ fontSize: 12, color: '#BAA467', fontWeight: '600' }}>{w}</Text>
                                   <TouchableOpacity onPress={() => setIbWordBank(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.7}>
-                                    <Feather name="x" size={10} color="#7AADA8" />
+                                    <Feather name="x" size={10} color="#BAA467" />
                                   </TouchableOpacity>
                                 </View>
                               ))}
@@ -2841,8 +2841,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         )}
 
                         {ibStamps.length > 0 && (
-                          <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#7AADA830' }}>
-                            <Text style={{ fontSize: 11, fontWeight: '700', color: '#7AADA8', marginBottom: 6 }}>STAMPS / BADGES</Text>
+                          <View style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#BAA46730' }}>
+                            <Text style={{ fontSize: 11, fontWeight: '700', color: '#BAA467', marginBottom: 6 }}>STAMPS / BADGES</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                               {ibStamps.map((s, i) => (
                                 <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: '#8A835818', borderWidth: 1, borderColor: '#8A835840' }}>
@@ -3065,7 +3065,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     <View key={q.id || i} style={{ padding: 12, borderRadius: 12, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, gap: 8 }}>
                       {/* Question text */}
                       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#5F8A86', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#BAA467', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
                           <Text style={{ fontSize: 11, fontWeight: '800', color: '#fff' }}>{i + 1}</Text>
                         </View>
                         <TextInput
@@ -3152,13 +3152,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       ) : null}
                       {ibWordBank.length > 0 ? (
                         <View style={{ gap: 4 }}>
-                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#7AADA8' }}>WORD BANK</Text>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#BAA467' }}>WORD BANK</Text>
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                             {ibWordBank.map((w, i) => (
-                              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: '#7AADA818', borderWidth: 1, borderColor: '#7AADA840' }}>
-                                <Text style={{ fontSize: 12, color: '#7AADA8', fontWeight: '600' }}>{w}</Text>
+                              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, backgroundColor: '#BAA46718', borderWidth: 1, borderColor: '#BAA46740' }}>
+                                <Text style={{ fontSize: 12, color: '#BAA467', fontWeight: '600' }}>{w}</Text>
                                 <TouchableOpacity onPress={() => setIbWordBank(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.7}>
-                                  <Feather name="x" size={10} color="#7AADA8" />
+                                  <Feather name="x" size={10} color="#BAA467" />
                                 </TouchableOpacity>
                               </View>
                             ))}
@@ -3875,7 +3875,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                 {/* Task steps preview (AI assignment) */}
                 {type === 'assignment' && taskSteps.length > 0 && (
                   <View style={{ gap: 10 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#7AADA8' }}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#BAA467' }}>
                       Task Steps ({taskSteps.length})
                     </Text>
                     {taskSteps.map((step, idx) => (

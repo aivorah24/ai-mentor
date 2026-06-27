@@ -91,9 +91,9 @@ const PASTEL = {
 };
 
 const SUBJECT_COLORS: Record<string, string> = {
-  Mathematics: '#5F8A86',   // teal
-  Science: '#5A8A70',       // forest green
-  'Social Studies': '#8A8358', // gold
+  Mathematics: '#BAA467',   // gold
+  Science: '#BAA467',       // gold
+  'Social Studies': '#BAA467', // gold
 };
 const SUBJECT_ICONS: Record<string, React.ComponentProps<typeof Feather>['name']> = {
   Mathematics: 'hash', Science: 'zap', 'Social Studies': 'globe',
@@ -954,12 +954,12 @@ export default function DashboardScreen({ navigation, route }: any) {
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.barScroll} contentContainerStyle={{ gap: 16, paddingVertical: 4, paddingRight: 6 }}>
                     {barTopics.map((t, i) => {
                       const barColors = [
-                        ['#5F8A86', '#93B0AC'],
-                        ['#B8797E', '#EFD1D4'],
-                        ['#8A8358', '#C5BD96'],
-                        ['#5A8A70', '#93B0AC'],
-                        ['#9B7FD4', '#C3DCD8'],
-                        ['#7AADA8', '#C3DCD8'],
+                        ['#BAA467', '#C5BD96'],
+                        ['#BAA467', '#C5BD96'],
+                        ['#BAA467', '#C5BD96'],
+                        ['#BAA467', '#C5BD96'],
+                        ['#BAA467', '#C5BD96'],
+                        ['#BAA467', '#C5BD96'],
                       ];
                       const [c1, c2] = barColors[i % barColors.length];
                       return (
@@ -1449,7 +1449,7 @@ const makeStyles = (c: AppColors, isMobile: boolean, isDark: boolean) => StyleSh
   // ── AI banner ─────────────────────────────────────────
   aiBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, borderRadius: 22, overflow: 'hidden', position: 'relative',
-    shadowColor: '#5F8A86', shadowOpacity: isDark ? 0.5 : 0.3, shadowRadius: 24, shadowOffset: { width: 0, height: 8 },
+    shadowColor: '#BAA467', shadowOpacity: isDark ? 0.5 : 0.3, shadowRadius: 24, shadowOffset: { width: 0, height: 8 },
   },
   aiGlow:       { position: 'absolute', right: -50, top: -50, width: 170, height: 170, borderRadius: 85, backgroundColor: 'rgba(11,11,11,0.04)' },
   aiAvatarWrap: { position: 'relative', flexShrink: 0 },

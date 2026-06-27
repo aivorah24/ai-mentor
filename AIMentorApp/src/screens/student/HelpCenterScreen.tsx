@@ -503,7 +503,7 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   // Support cards
   supportRow: { flexDirection: 'row', gap: spacing.md },
   supportCard: { flex: 1, borderRadius: radius.xl, padding: spacing.xl, overflow: 'hidden', minHeight: 180 },
-  supportCardChat: { backgroundColor: isDark ? '#141414' : '#1C1C1C', borderWidth: 1, borderColor: c.accentYellow + '30' },
+  supportCardChat: { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.accentYellow + '30' },
   supportCardTicket: { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, alignItems: 'flex-start', justifyContent: 'space-between' },
   supportCardInner: { flex: 1, gap: 8, zIndex: 1 },
   supportCardTitle: { fontSize: 16, fontWeight: '800', color: c.textMain, fontFamily: fonts.serif },

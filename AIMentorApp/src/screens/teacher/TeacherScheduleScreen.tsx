@@ -312,6 +312,25 @@ export default function TeacherScheduleScreen({ navigation }: any) {
   const colWidth = Math.max(DAY_COL_WIDTH, Math.floor((screenWidth - TIME_LABEL_WIDTH) / 7));
   const totalGridWidth = TIME_LABEL_WIDTH + colWidth * 7;
 
+  // Horizontal scroll to today's column (matches Parent/Student schedule behaviour).
+  const hScrollRef = useRef<ScrollView>(null);
+  function scrollToTodayColumn(base: Date) {
+    const todayIdx = buildWeek(base).findIndex(d => d.iso === dateISO(base));
+    if (todayIdx >= 0) {
+      const scrollX = Math.max(0, todayIdx * colWidth - colWidth);
+      setTimeout(() => hScrollRef.current?.scrollTo({ x: scrollX, animated: true }), 120);
+    }
+  }
+  function goToday() {
+    const now = new Date();
+    setWeekBase(now);
+    scrollToTodayColumn(now);
+  }
+  // Auto-scroll to today whenever the current week is in view.
+  useEffect(() => {
+    if (week.some(d => d.iso === todayISO)) scrollToTodayColumn(weekBase);
+  }, [weekBase, colWidth]);
+
   return (
     <ScreenLayout>
       <View style={styles.screen}>
@@ -339,7 +358,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
             <TouchableOpacity style={styles.navArrow} onPress={() => { const d = new Date(weekBase); d.setDate(d.getDate() - 7); setWeekBase(d); }}>
               <Feather name="chevron-left" size={18} color={colors.textMuted} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.todayBtn} onPress={() => setWeekBase(today)}>
+            <TouchableOpacity style={styles.todayBtn} onPress={goToday}>
               <Text style={styles.todayBtnText}>Today</Text>
             </TouchableOpacity>
             <Text style={styles.weekLabel}>
@@ -367,7 +386,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
               </View>
 
               {/* SCROLLABLE RIGHT: day headers + columns */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
+              <ScrollView ref={hScrollRef} horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
                 <View style={{ width: colWidth * 7 }}>
                   {/* Day header row */}
                   <View style={styles.dayHeaderRow}>
@@ -682,9 +701,9 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   dayHeader:            { alignItems: 'center', paddingVertical: spacing.sm, gap: 2 },
   dayHeaderLabel:       { fontSize: 10, fontWeight: '700', color: c.textDim, letterSpacing: 0.5 },
-  dayHeaderLabelToday:  { color: c.accentGreen },
+  dayHeaderLabelToday:  { color: c.accentYellow },
   dayHeaderCircle:      { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  dayHeaderCircleToday: { backgroundColor: c.accentGreen },
+  dayHeaderCircleToday: { backgroundColor: c.accentYellow },
   dayHeaderDate:        { fontSize: 14, fontWeight: '700', color: c.textMuted },
   dayHeaderDateToday:   { color: 'white' },
 

@@ -17,6 +17,7 @@ import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
+import DatePicker from '../../components/common/DatePicker';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -501,28 +502,14 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
                     </View>
                   )}
 
-                  {/* Due Date */}
+                  {/* Due Date — themed gold calendar (matches the app theme) */}
                   <Text style={styles.fieldLabel}>Due Date *</Text>
-                  {Platform.OS === 'web' ? (
-                    <View style={[styles.input, { justifyContent: 'center' }]}>
-                      <input
-                        type="date"
-                        value={dueDate}
-                        onChange={(e: any) => setDueDate(e.target.value)}
-                        onClick={(e: any) => { try { e.target.showPicker?.(); } catch (_) {} }}
-                        style={{ border: 'none', outline: 'none', background: 'transparent', width: '100%', fontFamily: fonts.serif, fontSize: 14, color: colors.textMain, fontFamily: 'inherit', cursor: 'pointer' }}
-                      />
-                    </View>
-                  ) : (
-                    <TextInput
-                      style={[styles.input, formError && !dueDate.trim() && { borderColor: colors.accentRed }]}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={colors.textDim}
-                      value={dueDate}
-                      onChangeText={t => { setDueDate(t); if (t.trim()) setFormError(''); }}
-                      keyboardType="numeric"
-                    />
-                  )}
+                  <DatePicker
+                    value={dueDate}
+                    onChange={t => { setDueDate(t); if (t.trim()) setFormError(''); }}
+                    placeholder="Select a due date"
+                    minDate={new Date().toISOString().split('T')[0]}
+                  />
 
                   {/* Type */}
                   <Text style={styles.fieldLabel}>Type</Text>
@@ -744,10 +731,13 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   emptyAddText: { fontFamily: fonts.serif, fontSize: 13, color: c.accentYellow, fontWeight: '600' },
 
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  // Centered, width-capped modal — compact like the Teacher Assignment modal
+  // (was a full-width bottom sheet that sprawled across desktop).
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: spacing.lg },
   modalSheet: {
-    backgroundColor: c.cardDark, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    backgroundColor: c.cardDark, borderRadius: 24,
     maxHeight: '90%', borderWidth: 1, borderColor: c.borderColor,
+    width: '100%', maxWidth: 560, alignSelf: 'center',
   },
   modalHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

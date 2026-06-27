@@ -20,22 +20,22 @@ const AVATARS = AVATAR_STYLES;
 
 // ── Learning styles — palette colors ─────────────────────────────────────────
 const LEARNING_STYLES = [
-  { id: 'visual',    label: 'Visual',    desc: 'I learn best through diagrams & images',  icon: 'eye'      as const, color: '#5F8A86' },
-  { id: 'auditory',  label: 'Auditory',  desc: 'I learn best by listening & discussing',  icon: 'volume-2' as const, color: '#93B0AC' },
-  { id: 'reading',   label: 'Reading',   desc: 'I learn best through reading & writing',  icon: 'book'     as const, color: '#8A8358' },
-  { id: 'handson',   label: 'Hands-On', desc: 'I learn best by doing & experimenting',   icon: 'tool'     as const, color: '#B8797E' },
+  { id: 'visual',    label: 'Visual',    desc: 'I learn best through diagrams & images',  icon: 'eye'      as const, color: '#9FB2A4' },
+  { id: 'auditory',  label: 'Auditory',  desc: 'I learn best by listening & discussing',  icon: 'volume-2' as const, color: '#B2C2B7' },
+  { id: 'reading',   label: 'Reading',   desc: 'I learn best through reading & writing',  icon: 'book'     as const, color: '#BAA467' },
+  { id: 'handson',   label: 'Hands-On', desc: 'I learn best by doing & experimenting',   icon: 'tool'     as const, color: '#C9A24E' },
 ];
 
 // ── Subject interests — Enchanting Forest palette ─────────────────────────────
 const SUBJECT_OPTIONS = [
-  { id: 'maths',   label: 'Mathematics', color: '#5F8A86' },  // slate teal
-  { id: 'science', label: 'Science',     color: '#5A8A70' },  // forest green
-  { id: 'english', label: 'English',     color: '#8A8358' },  // khaki gold
-  { id: 'art',     label: 'Art',         color: '#B8797E' },  // muted rose
-  { id: 'music',   label: 'Music',       color: '#93B0AC' },  // sage
-  { id: 'coding',  label: 'Coding',      color: '#7AADA8' },  // mint teal
-  { id: 'history', label: 'History',     color: '#C49098' },  // blush
-  { id: 'sports',  label: 'Sports',      color: '#9A9898' },  // silver
+  { id: 'maths',   label: 'Mathematics', color: '#9FB2A4' },  // sage
+  { id: 'science', label: 'Science',     color: '#7E9A86' },  // deep sage
+  { id: 'english', label: 'English',     color: '#BAA467' },  // gold
+  { id: 'art',     label: 'Art',         color: '#C9A24E' },  // deep gold
+  { id: 'music',   label: 'Music',       color: '#B2C2B7' },  // light sage
+  { id: 'coding',  label: 'Coding',      color: '#9A7B2E' },  // amber gold
+  { id: 'history', label: 'History',     color: '#C9A24E' },  // deep gold
+  { id: 'sports',  label: 'Sports',      color: '#9FB2A4' },  // sage
 ];
 
 const CARTOON_OPTIONS = ['Naruto', 'Doraemon', 'Shinchan', 'Spider-Man', 'Iron Man', 'Custom...'];
@@ -136,7 +136,7 @@ export default function ProfileScreen({ navigation }: any) {
 
           {/* ── HERO ── */}
           <View style={styles.heroCard}>
-            <LinearGradient colors={isDark ? ['#111111','#1C2420','#152220'] : ['#F9F3F4','#EFD1D4','#C3DCD8']} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.heroBg} />
+            <LinearGradient colors={isDark ? ['#111111','#1C2420','#152220'] : ['#F5F1E6','#E6DEBC','#C3DCD8']} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.heroBg} />
 
             {/* Edit button top-right */}
             <TouchableOpacity style={styles.editCornerBtn} onPress={() => setEditVisible(true)}>

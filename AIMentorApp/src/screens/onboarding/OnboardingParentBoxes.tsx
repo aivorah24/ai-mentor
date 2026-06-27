@@ -77,7 +77,10 @@ function IndiaFlagIcon() {
 }
 
 export default function OnboardingParentBoxes() {
-  const { user, updateUser, logout } = useAuth();
+  const { user, updateUser, logout, cancelAddParentProfile } = useAuth();
+  // Teacher adding a parent profile → Back returns to the teacher dashboard
+  // (no sign-out, nothing persisted), instead of the "leave home" sign-out modal.
+  const isAddingParent = getPendingReturnRole() === 'teacher';
   const { colors } = useTheme();
   const styles = useStyles(colors);
 
@@ -97,6 +100,20 @@ export default function OnboardingParentBoxes() {
   const [stateProv, setStateProv] = useState((user as any)?.state || '');
   const [country, setCountry] = useState((user as any)?.country || 'India');
   const [avatarStyle, setAvatarStyle] = useState('default');
+
+  // Web: trap the browser Back button while a teacher adds a parent profile, so it
+  // returns to the teacher dashboard in ONE tap instead of overshooting (one tap did
+  // nothing, two taps reached the verify/landing page).
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !isAddingParent || typeof window === 'undefined') return;
+    window.history.pushState(null, '', window.location.href);
+    const onPop = () => {
+      window.history.pushState(null, '', window.location.href);
+      cancelAddParentProfile();
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [isAddingParent]);
 
   // Pre-fill from teacher profile when a teacher is adding a parent profile
   useEffect(() => {
@@ -543,10 +560,10 @@ export default function OnboardingParentBoxes() {
         <View style={styles.topbar}>
           <View style={styles.logoRow}>
             <TouchableOpacity
-              onPress={() => setShowLeaveConfirm(true)}
+              onPress={() => { if (isAddingParent) cancelAddParentProfile(); else setShowLeaveConfirm(true); }}
               style={styles.backBtn}
               activeOpacity={0.7}
-              accessibilityLabel="Back to home page"
+              accessibilityLabel={isAddingParent ? 'Back to teacher dashboard' : 'Back to home page'}
             >
               <Feather name="arrow-left" size={18} color={colors.textMuted} />
               <Text style={styles.backTxt}>Back</Text>

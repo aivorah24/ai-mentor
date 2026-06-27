@@ -8,7 +8,7 @@ class AssignmentErrorBoundary extends Component<{children: React.ReactNode; colo
       return (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: this.props.colors?.textMain || '#fff', textAlign: 'center' }}>Something went wrong</Text>
-          <TouchableOpacity onPress={() => this.setState({ hasError: false })} style={{ backgroundColor: '#5F8A86', borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
+          <TouchableOpacity onPress={() => this.setState({ hasError: false })} style={{ backgroundColor: '#BAA467', borderRadius: 10, paddingHorizontal: 24, paddingVertical: 10 }}>
             <Text style={{ color: '#fff', fontWeight: '700' }}>Try again</Text>
           </TouchableOpacity>
         </View>
@@ -116,36 +116,36 @@ const STEP_COLORS: Record<StepType, string> = {
   // Core
   brainstorm:           '#C5BD96',  // khaki gold
   drawing:              '#D4A898',  // warm peach
-  structured_writing:   '#93B0AC',  // slate teal
+  structured_writing:   '#9FB2A4',  // slate teal
   problem_solving:      '#C3DCD8',  // sage mint
   // Maths
-  tuning_in:            '#D8C4E8',  // soft lavender
-  math_reflection:      '#B8D4C8',  // forest mint
+  tuning_in:            '#C5BD96',  // gold cream
+  math_reflection:      '#C3DCD8',  // sage mint
   // Science
   prior_knowledge:      '#EBD5B8',  // warm sand
   // English
-  text_connection:      '#EAD4D8',  // dusty rose
-  reading_comprehension:'#D8C4E8',  // soft lavender
+  text_connection:      '#E2D4B8',  // gold sand
+  reading_comprehension:'#C5BD96',  // gold cream
   writing_reflection:   '#C5BD96',  // khaki gold
   // Language Acquisition
   language_culture:     '#D4C4A8',  // linen
-  language_practice:    '#B8CCD4',  // powder blue
+  language_practice:    '#C3DCD8',  // sage mint
   communication:        '#C8D4A8',  // sage green
   // Social Studies
   social_inquiry:       '#D8C8A8',  // wheat
-  research_notes:       '#B8C8D8',  // sky blue
+  research_notes:       '#C5BD96',  // gold cream
   social_synthesis:     '#C4D0C4',  // silver sage
   // Visual Arts
-  artistic_exploration: '#E8D4C4',  // blush
-  art_creation:         '#D4A898',  // warm peach (same as drawing)
-  artistic_reflection:  '#DCC8D4',  // mauve
+  artistic_exploration: '#E2D4B8',  // gold sand
+  art_creation:         '#D4C4A8',  // linen
+  artistic_reflection:  '#D4C4A8',  // linen
   // ICT
-  digital_awareness:    '#C4D4E0',  // mist blue
-  tech_skill_practice:  '#B8D8D0',  // aqua mint
-  digital_citizenship:  '#C0CCD8',  // steel blue
+  digital_awareness:    '#C5BD96',  // gold cream
+  tech_skill_practice:  '#C3DCD8',  // sage mint
+  digital_citizenship:  '#C4D0C4',  // silver sage
   // PE
   movement_exploration: '#C8D8B8',  // fern
-  skill_practice:       '#B8D4BC',  // pale green
+  skill_practice:       '#C3DCD8',  // sage mint
   physical_reflection:  '#D0D8C0',  // sage
 };
 const STEP_TEXT_COLORS: Record<StepType, string> = {
@@ -153,26 +153,26 @@ const STEP_TEXT_COLORS: Record<StepType, string> = {
   drawing:              '#8C5A49',
   structured_writing:   '#3D6B66',
   problem_solving:      '#3D7A74',
-  tuning_in:            '#6B4A8A',
-  math_reflection:      '#2D6B54',
+  tuning_in:            '#8A7E4A',
+  math_reflection:      '#3D7A74',
   prior_knowledge:      '#8A6030',
-  text_connection:      '#8A4A54',
-  reading_comprehension:'#6B4A8A',
+  text_connection:      '#7A6040',
+  reading_comprehension:'#8A7E4A',
   writing_reflection:   '#8A7E4A',
   language_culture:     '#7A6040',
-  language_practice:    '#3A6070',
+  language_practice:    '#3D7A74',
   communication:        '#4A6A30',
   social_inquiry:       '#7A6030',
-  research_notes:       '#3A5A7A',
+  research_notes:       '#8A7E4A',
   social_synthesis:     '#4A6050',
-  artistic_exploration: '#8A5A40',
-  art_creation:         '#8C5A49',
-  artistic_reflection:  '#7A4A6A',
-  digital_awareness:    '#3A5A70',
-  tech_skill_practice:  '#2A6A60',
-  digital_citizenship:  '#3A5060',
+  artistic_exploration: '#7A6040',
+  art_creation:         '#7A6040',
+  artistic_reflection:  '#7A6040',
+  digital_awareness:    '#8A7E4A',
+  tech_skill_practice:  '#3D7A74',
+  digital_citizenship:  '#4A6050',
   movement_exploration: '#3A6040',
-  skill_practice:       '#2A6040',
+  skill_practice:       '#3D7A74',
   physical_reflection:  '#4A6030',
 };
 const STEP_ICONS: Record<StepType, string> = {
@@ -210,13 +210,13 @@ const SUBJECT_ICON: Record<string, string> = {
   ICT: 'monitor', 'Physical Education': 'activity',
 };
 const SUBJECT_COLOR: Record<string, string> = {
-  Mathematics:           '#93B0AC',  // slate teal
+  Mathematics:           '#9FB2A4',  // sage
   Science:               '#C3DCD8',  // sage mint
-  English:               '#EFD1D4',  // dusty rose
+  English:               '#E2D4B8',  // gold sand
   'Social Studies':      '#C5BD96',  // khaki gold
-  'Language Acquisition':'#D4A898',  // warm peach
-  'Visual Arts':         '#DCC8D4',  // mauve
-  ICT:                   '#C4D4E0',  // mist blue
+  'Language Acquisition':'#D4C4A8',  // linen
+  'Visual Arts':         '#D4C4A8',  // linen
+  ICT:                   '#C5BD96',  // gold cream
   'Physical Education':  '#C8D8B8',  // fern
 };
 
@@ -234,7 +234,7 @@ function formatDueDate(iso: string) {
 const STAMPS = [
   { id: 'amazing',    label: 'Amazing Storyteller', icon: 'star',         color: '#f59e0b', min: 80 },
   { id: 'hardworking',label: 'Hardworking Farmer',  icon: 'award',        color: '#10b981', min: 60 },
-  { id: 'keepgoing',  label: 'Keep Going!',          icon: 'trending-up',  color: '#6366f1', min: 0  },
+  { id: 'keepgoing',  label: 'Keep Going!',          icon: 'trending-up',  color: '#BAA467', min: 0  },
 ];
 function getStamp(score: number | null) {
   if (score == null) return STAMPS[2];
@@ -388,7 +388,7 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
   const { isDark } = useTheme();
   const styles = useMemo(() => makeModalStyles(colors), [colors]);
   const { studentId } = useStudentData();
-  const color = SUBJECT_COLOR[assignment.subject] ?? '#6366f1';
+  const color = SUBJECT_COLOR[assignment.subject] ?? '#BAA467';
   const questions = assignment.quizQuestions || [];
 
   const [currentQ,       setCurrentQ]      = useState(0);
@@ -620,25 +620,25 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
               {result.perQuestion.filter((q: any) => q?.correct).length > 0 && (
                 <View style={{ gap: 8 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#93B0AC20', alignItems: 'center', justifyContent: 'center' }}>
-                      <Feather name="check-circle" size={15} color="#93B0AC" />
+                    <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#9FB2A420', alignItems: 'center', justifyContent: 'center' }}>
+                      <Feather name="check-circle" size={15} color="#9FB2A4" />
                     </View>
-                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#93B0AC' }}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#9FB2A4' }}>
                       Questions You Got Right ({result.perQuestion.filter((q: any) => q?.correct).length})
                     </Text>
                   </View>
                   {result.perQuestion.filter((q: any) => q?.correct).map((q: any, idx: number) => (
-                    <View key={idx} style={[styles.qRow, { borderColor: '#93B0AC30', backgroundColor: colors.cardDark, borderLeftWidth: 3, borderLeftColor: '#93B0AC' }]}>
+                    <View key={idx} style={[styles.qRow, { borderColor: '#9FB2A430', backgroundColor: colors.cardDark, borderLeftWidth: 3, borderLeftColor: '#9FB2A4' }]}>
                       <View style={styles.qLeft}>
-                        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#93B0AC20', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Feather name="check" size={13} color="#93B0AC" />
+                        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: '#9FB2A420', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Feather name="check" size={13} color="#9FB2A4" />
                         </View>
                         <View style={{ flex: 1 }}>
                           <Text style={styles.qText}>{q.question}</Text>
                           {q.studentAnswer ? (
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, padding: 8, borderRadius: 8, backgroundColor: colors.bgDark }}>
-                              <Text style={{ fontSize: 11, fontWeight: '800', color: '#93B0AC', width: 90, letterSpacing: 0.3 }}>Your answer</Text>
-                              <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#93B0AC' }}>{q.studentAnswer}</Text>
+                              <Text style={{ fontSize: 11, fontWeight: '800', color: '#9FB2A4', width: 90, letterSpacing: 0.3 }}>Your answer</Text>
+                              <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#9FB2A4' }}>{q.studentAnswer}</Text>
                             </View>
                           ) : null}
                         </View>
@@ -672,8 +672,8 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                             <Text style={styles.qText}>{q.question}</Text>
                             {q.studentAnswer ? (
                               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 8, backgroundColor: colors.bgDark }}>
-                                <Text style={{ fontSize: 11, fontWeight: '800', color: '#C4836A', width: 100, letterSpacing: 0.3 }}>Your answer</Text>
-                                <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: '#C4836A' }}>{q.studentAnswer}</Text>
+                                <Text style={{ fontSize: 11, fontWeight: '800', color: '#C9A24E', width: 100, letterSpacing: 0.3 }}>Your answer</Text>
+                                <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: '#C9A24E' }}>{q.studentAnswer}</Text>
                               </View>
                             ) : null}
                             {q.correctAnswer ? (
@@ -933,8 +933,8 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
 
               if (isRevealed) return (
                 <View style={{ gap: 8 }}>
-                  <View style={{ padding: 14, borderRadius: 12, borderWidth: 1.5, borderColor: '#C8587050', backgroundColor: '#C8587010', gap: 6 }}>
-                    <Text style={{ fontSize: 12, color: '#C85870', fontWeight: '700' }}>Answer revealed</Text>
+                  <View style={{ padding: 14, borderRadius: 12, borderWidth: 1.5, borderColor: '#C98A8A50', backgroundColor: '#C98A8A10', gap: 6 }}>
+                    <Text style={{ fontSize: 12, color: '#C98A8A', fontWeight: '700' }}>Answer revealed</Text>
                     <Text style={{ fontSize: 14, color: colors.textMain, fontWeight: '600' }}>{q.correct}</Text>
                     {q.explanation ? <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 20, marginTop: 2 }}>{q.explanation}</Text> : null}
                   </View>
@@ -945,7 +945,7 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                 <View style={{ gap: 10, width: '100%' }}>
                   {/* Question with blank highlighted */}
                   <TextInput
-                    style={{ borderWidth: 1.5, borderColor: fb ? '#C8587060' : color + '60', borderRadius: 12,
+                    style={{ borderWidth: 1.5, borderColor: fb ? '#C98A8A60' : color + '60', borderRadius: 12,
                       padding: 14, fontSize: 15, color: colors.textMain, backgroundColor: colors.bgDark, width: '100%' }}
                     placeholder="Type your answer here..."
                     placeholderTextColor={colors.textDim}
@@ -1145,7 +1145,7 @@ function WebDrawingCanvas({ onCapture, color }: { onCapture: (b64: string, mime:
             <TouchableOpacity key={c} onPress={() => { setPenColor(c); setEraser(false); }} activeOpacity={0.8}
               style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c, margin: 3,
                 borderWidth: (!eraser && penColor === c) ? 3 : 1,
-                borderColor: (!eraser && penColor === c) ? '#6366f1' : '#d1d5db' }} />
+                borderColor: (!eraser && penColor === c) ? '#BAA467' : '#d1d5db' }} />
           ))}
         </View>
 
@@ -1156,7 +1156,7 @@ function WebDrawingCanvas({ onCapture, color }: { onCapture: (b64: string, mime:
             <TouchableOpacity key={sz} onPress={() => { setPenSize(sz); setEraser(false); }} activeOpacity={0.8}
               style={{ width: 40, height: 40, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginRight: 6,
                 backgroundColor: (!eraser && penSize === sz) ? '#ede9fe' : '#f8fafc',
-                borderWidth: 1, borderColor: (!eraser && penSize === sz) ? '#7c3aed' : '#e2e8f0' }}>
+                borderWidth: 1, borderColor: (!eraser && penSize === sz) ? '#BAA467' : '#e2e8f0' }}>
               <View style={{ width: sz, height: sz, borderRadius: Math.round(sz / 2), backgroundColor: penColor }} />
             </TouchableOpacity>
           ))}
@@ -1303,7 +1303,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
   const { studentId } = useStudentData();
   const steps     = assignment.taskSteps || [];
   const criteria  = assignment.successCriteria || [];
-  const color     = SUBJECT_COLOR[assignment.subject] ?? '#6366f1';
+  const color     = SUBJECT_COLOR[assignment.subject] ?? '#BAA467';
 
   const [stepAnswers, setStepAnswers] = useState<StepAnswer[]>(() =>
     steps.map(s => ({
@@ -1566,9 +1566,9 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
               {assignment.learnerProfile ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5,
                   paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
-                  backgroundColor: '#EFD1D412', borderWidth: 1, borderColor: '#EFD1D450' }}>
-                  <Feather name="user" size={11} color="#8C5A49" />
-                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#8C5A49' }}>Learner Profile </Text>
+                  backgroundColor: '#E2D4B812', borderWidth: 1, borderColor: '#E2D4B850' }}>
+                  <Feather name="user" size={11} color="#8A6030" />
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#8A6030' }}>Learner Profile </Text>
                   <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMain }}>{assignment.learnerProfile}</Text>
                 </View>
               ) : null}
@@ -1584,7 +1584,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
               {assignment.keyConcept ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5,
                   paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
-                  backgroundColor: '#93B0AC12', borderWidth: 1, borderColor: '#93B0AC50' }}>
+                  backgroundColor: '#9FB2A412', borderWidth: 1, borderColor: '#9FB2A450' }}>
                   <Feather name="layers" size={11} color="#3D6B66" />
                   <Text style={{ fontSize: 10, fontWeight: '800', color: '#3D6B66' }}>Key Concept </Text>
                   <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMain }}>{assignment.keyConcept}</Text>
@@ -1769,7 +1769,7 @@ function ScaffoldedModal({ assignment, colors, onClose, onSubmitted }: {
 
   // ── Step UI ──
   if (!step) return null;
-  const stepColor = STEP_COLORS[step.type as StepType] ?? '#6366f1';
+  const stepColor = STEP_COLORS[step.type as StepType] ?? '#BAA467';
   return (
     <Modal visible animationType="slide" transparent onRequestClose={() => setShowConfirm(true)}>
       <View style={styles.overlay}>
@@ -2112,7 +2112,7 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
 }) {
   const styles = useMemo(() => makeModalStyles(colors), [colors]);
   const { studentId } = useStudentData();
-  const color = SUBJECT_COLOR[assignment.subject] ?? '#6366f1';
+  const color = SUBJECT_COLOR[assignment.subject] ?? '#BAA467';
 
   // Pages = worksheet images uploaded by teacher
   const pages: string[] = (assignment.documentUrls?.length ?? 0) > 0
@@ -3512,25 +3512,25 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                   {pq.filter((q: any) => q.correct).length > 0 && (
                     <View style={{ gap: 8 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#93B0AC20', alignItems: 'center', justifyContent: 'center' }}>
-                          <Feather name="check-circle" size={15} color="#93B0AC" />
+                        <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#9FB2A420', alignItems: 'center', justifyContent: 'center' }}>
+                          <Feather name="check-circle" size={15} color="#9FB2A4" />
                         </View>
-                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#93B0AC' }}>
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#9FB2A4' }}>
                           Questions You Got Right ({pq.filter((q: any) => q.correct).length})
                         </Text>
                       </View>
                       {pq.filter((q: any) => q.correct).map((q: any, i: number) => (
-                        <View key={i} style={{ padding: 14, borderRadius: 12, borderWidth: 1, borderLeftWidth: 3, borderColor: '#93B0AC30', borderLeftColor: '#93B0AC', backgroundColor: colors.cardDark, gap: 8 }}>
+                        <View key={i} style={{ padding: 14, borderRadius: 12, borderWidth: 1, borderLeftWidth: 3, borderColor: '#9FB2A430', borderLeftColor: '#9FB2A4', backgroundColor: colors.cardDark, gap: 8 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                            <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#93B0AC20', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                              <Feather name="check" size={12} color="#93B0AC" />
+                            <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#9FB2A420', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                              <Feather name="check" size={12} color="#9FB2A4" />
                             </View>
                             <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: colors.textMain, lineHeight: 20 }}>{q.question}</Text>
                           </View>
                           {q.studentAnswer ? (
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, borderRadius: 8, backgroundColor: colors.bgDark, marginLeft: 32 }}>
-                              <Text style={{ fontSize: 11, fontWeight: '800', color: '#93B0AC', width: 90 }}>Your answer</Text>
-                              <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: '#93B0AC' }}>{q.studentAnswer}</Text>
+                              <Text style={{ fontSize: 11, fontWeight: '800', color: '#9FB2A4', width: 90 }}>Your answer</Text>
+                              <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: '#9FB2A4' }}>{q.studentAnswer}</Text>
                             </View>
                           ) : null}
                         </View>
@@ -3576,8 +3576,8 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                             <View style={{ gap: 6, marginLeft: 32 }}>
                               {q.studentAnswer ? (
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, borderRadius: 8, backgroundColor: colors.bgDark }}>
-                                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#C4836A', width: 100 }}>Your answer</Text>
-                                  <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: '#C4836A' }}>{q.studentAnswer}</Text>
+                                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#C9A24E', width: 100 }}>Your answer</Text>
+                                  <Text style={{ flex: 1, fontSize: 13, fontWeight: '600', color: '#C9A24E' }}>{q.studentAnswer}</Text>
                                 </View>
                               ) : null}
                               {(q.correctAnswer || (q.comment && q.comment.includes('correct answer'))) ? (
@@ -3603,13 +3603,13 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                                   {exp.steps.map((step: string, si: number) => (
                                     <View key={si} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
                                       <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.bgDark, alignItems: 'center', justifyContent: 'center' }}>
-                                        <Text style={{ fontSize: 10, fontWeight: '800', color: '#7AADA8' }}>{si + 1}</Text>
+                                        <Text style={{ fontSize: 10, fontWeight: '800', color: '#9FB2A4' }}>{si + 1}</Text>
                                       </View>
                                       <Text style={{ flex: 1, fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{step.replace(/^Step \d+:\s*/i, '')}</Text>
                                     </View>
                                   ))}
                                   {exp.tip ? (
-                                    <Text style={{ fontSize: 12, color: '#7AADA8', fontStyle: 'italic', lineHeight: 18 }}>{exp.tip}</Text>
+                                    <Text style={{ fontSize: 12, color: '#9FB2A4', fontStyle: 'italic', lineHeight: 18 }}>{exp.tip}</Text>
                                   ) : null}
                                 </View>
                               ) : (
