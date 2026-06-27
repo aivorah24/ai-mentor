@@ -119,9 +119,10 @@ export default function ProfileScreen({ navigation }: any) {
     if (result.canceled || !result.assets?.[0]) return;
     setUploading(true);
     try {
-      const res  = await fetch(`${SERVER_URL}/user/upload-photo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ base64: result.assets[0].base64, mimeType: result.assets[0].mimeType ?? 'image/jpeg' }) });
+      const res  = await fetch(`${SERVER_URL}/user/upload-photo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userEmail: user?.email, base64: result.assets[0].base64, mimeType: result.assets[0].mimeType ?? 'image/jpeg' }) });
       const data = await res.json();
-      if (data.url) { setPhotoUrl(data.url); updateUser({ photoUrl: data.url } as any); }
+      const url = data.photoUrl || data.url;
+      if (url) { setPhotoUrl(url); updateUser({ photoUrl: url } as any); }
     } catch { Alert.alert('Upload failed', 'Could not upload photo. Please try again.'); }
     finally { setUploading(false); }
   }
