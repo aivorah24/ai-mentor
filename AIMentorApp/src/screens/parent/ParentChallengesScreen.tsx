@@ -68,16 +68,18 @@ export default function ParentChallengesScreen({ navigation }: any) {
 
   const child = children[selectedIdx] ?? null;
 
-  // Fetch child stats
-  useEffect(() => {
-    if (!child) return;
-    setLoadingStats(true);
+  // Fetch child stats (XP / challenges-Done / streak)
+  const fetchStats = useCallback((showSpinner = false) => {
+    if (!child?.id) return;
+    if (showSpinner) setLoadingStats(true);
     fetch(`${SERVER_URL}/student/${child.id}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => setChildStats(data))
       .catch(() => {})
-      .finally(() => setLoadingStats(false));
+      .finally(() => { if (showSpinner) setLoadingStats(false); });
   }, [child?.id]);
+
+  useEffect(() => { fetchStats(true); }, [child?.id]);
 
   // Fetch challenges for child's grade
   const fetchChallenges = useCallback(() => {
@@ -96,11 +98,12 @@ export default function ParentChallengesScreen({ navigation }: any) {
   const challengeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useFocusEffect(useCallback(() => {
     fetchChallenges();
-    challengeIntervalRef.current = setInterval(fetchChallenges, 30000);
+    fetchStats();
+    challengeIntervalRef.current = setInterval(() => { fetchChallenges(); fetchStats(); }, 30000);
     return () => {
       if (challengeIntervalRef.current) { clearInterval(challengeIntervalRef.current); challengeIntervalRef.current = null; }
     };
-  }, [fetchChallenges]));
+  }, [fetchChallenges, fetchStats]));
 
   // Open assign confirm modal
   function openAssign(ch: Challenge) {
@@ -150,8 +153,9 @@ export default function ParentChallengesScreen({ navigation }: any) {
         return;
       }
       setAssignSuccess(`"${assignChallenge.title}" assigned to ${child.name}!`);
-      // Refresh challenges to update status
+      // Refresh challenges + stats to update status
       fetchChallenges();
+      fetchStats();
     } catch {
       setAssignError('Network error. Please try again.');
     } finally {

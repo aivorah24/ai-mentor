@@ -393,7 +393,20 @@ router.get('/:id', async (req, res) => {
     const grade       = userRow?.grade ?? '';
     const totalTopics = await fetchTotalTopicsFromQdrant(curriculum, grade);
 
-    res.json({ ...normalise(record), totalTopics });
+    // Compute challenges-completed LIVE from challenge_assignments so the count is
+    // always accurate (the student_stats counter isn't reliably incremented on
+    // completion — caused the parent "0 Done" even after the child completed some).
+    const { count: completedChallenges } = await supabase
+      .from('challenge_assignments')
+      .select('id', { head: true, count: 'exact' })
+      .eq('student_id', id)
+      .eq('status', 'completed');
+
+    res.json({
+      ...normalise(record),
+      totalTopics,
+      challengesCompleted: Number.isFinite(completedChallenges) ? Number(completedChallenges) : (normalise(record).challengesCompleted ?? 0),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
