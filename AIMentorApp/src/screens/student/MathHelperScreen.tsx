@@ -23,19 +23,19 @@ type Phase = 'attempt' | 'wrong' | 'correct';
 
 // Aivorah pastel accents per subject
 const SUBJECT_ACCENT: Record<string, string> = {
-  Mathematics: '#4A9E9A',
-  Science: '#3D8A60',
-  English: '#C85870',
-  'Social Studies': '#A89840',
-  Arts: '#C87848',
-  'Physical Education': '#C84868',
-  ICT: '#3A9896',
+  Mathematics: '#BAA467',
+  Science: '#BAA467',
+  English: '#BAA467',
+  'Social Studies': '#BAA467',
+  Arts: '#BAA467',
+  'Physical Education': '#BAA467',
+  ICT: '#BAA467',
 };
 
 export default function MathHelperScreen({ route, navigation }: any) {
   const { colors } = useTheme();
   const { topic, chapterId, unit, subject = 'Mathematics', grade = 'Grade 3', curriculum = 'IB PYP' } = route.params ?? {};
-  const accent = SUBJECT_ACCENT[subject] || '#4A9E9A';
+  const accent = SUBJECT_ACCENT[subject] || '#BAA467';
 
   const [loading,       setLoading]       = useState(false);
   const [result,        setResult]        = useState<MathResult | null>(null);

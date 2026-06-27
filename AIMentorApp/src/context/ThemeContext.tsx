@@ -6,7 +6,7 @@ export type ThemeMode = 'dark' | 'light' | 'auto';
 
 const THEME_KEY = '@ai_mentor_theme';
 const THEME_VERSION_KEY = '@ai_mentor_theme_v';
-const THEME_VERSION = '3'; // bump to force reset to light default
+const THEME_VERSION = '4'; // bump to force reset to light default
 
 interface ThemeContextType {
   themeMode: ThemeMode;
@@ -16,10 +16,10 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  themeMode: 'dark',
+  themeMode: 'light',
   setThemeMode: () => {},
-  colors: darkColors,
-  isDark: true,
+  colors: lightColors,
+  isDark: false,
 });
 
 // Auto mode: time-based — Light 6AM–6PM, Dark 6PM–6AM
@@ -42,14 +42,25 @@ function useSystemDark(): boolean {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemIsDark = useSystemDark();
-  const [themeMode, setThemeModeState] = useState<ThemeMode>('dark');
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
 
   useEffect(() => {
-    AsyncStorage.getItem(THEME_KEY).then((saved) => {
-      if (saved === 'dark' || saved === 'light' || saved === 'auto') {
-        setThemeModeState(saved);
-      }
-    }).catch(() => {});
+    (async () => {
+      try {
+        const ver = await AsyncStorage.getItem(THEME_VERSION_KEY);
+        if (ver !== THEME_VERSION) {
+          // One-time reset to the new light default
+          await AsyncStorage.setItem(THEME_VERSION_KEY, THEME_VERSION);
+          await AsyncStorage.setItem(THEME_KEY, 'light');
+          setThemeModeState('light');
+          return;
+        }
+        const saved = await AsyncStorage.getItem(THEME_KEY);
+        if (saved === 'dark' || saved === 'light' || saved === 'auto') {
+          setThemeModeState(saved);
+        }
+      } catch {}
+    })();
   }, []);
 
   function setThemeMode(mode: ThemeMode) {

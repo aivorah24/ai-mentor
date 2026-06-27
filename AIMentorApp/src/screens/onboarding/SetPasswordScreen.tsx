@@ -19,7 +19,7 @@ import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
-const TEAL = '#5F8A86';
+const TEAL = '#BAA467';
 
 export default function SetPasswordScreen() {
   const { user, updateUser, logout } = useAuth();
@@ -82,7 +82,7 @@ export default function SetPasswordScreen() {
   })();
 
   const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'][strength];
-  const strengthColor = ['', '#ef4444', '#f59e0b', '#3b82f6', '#22c55e', '#16a34a'][strength];
+  const strengthColor = ['', '#C98A8A', '#C9A24E', '#BAA467', '#9FB2A4', '#7E9A86'][strength];
 
   async function handleSetPassword() {
     setError('');
@@ -131,7 +131,7 @@ export default function SetPasswordScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <LinearGradient
-        colors={isDark ? ['#0F1A19', '#162421', '#1A2E2C'] : ['#EAF3F2', '#F4F9F8', '#FFFFFF']}
+        colors={isDark ? ['#0B0B0B', '#141414', '#1C1A12'] : ['#F5F1E6', '#FAF7F0', '#FFFFFF']}
         style={{ flex: 1 }}
       >
         {/* Top bar — back navigation (signs out to the login/landing screen) */}
@@ -334,12 +334,18 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   hint: { fontSize: 11, color: c.textDim },
   inputRow: {
     flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md,
-    backgroundColor: isDark ? c.bgDark : '#F8FAFA',
+    minHeight: 50,
+    borderWidth: 1.5, borderColor: c.borderColor, borderRadius: radius.md,
+    backgroundColor: isDark ? c.bgDark : '#FBF9F3',
     paddingHorizontal: 14,
   },
-  input: { flex: 1, fontSize: 14, color: c.textMain, paddingVertical: 13 },
-  eyeBtn: { padding: 4 },
+  input: {
+    flex: 1, fontSize: 15, color: c.textMain,
+    paddingVertical: Platform.OS === 'web' ? 0 : 12,
+    height: '100%', textAlignVertical: 'center',
+    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none', outlineWidth: 0 } as any) : null),
+  },
+  eyeBtn: { padding: 6, marginLeft: 4 },
   errorBox: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8,
     backgroundColor: c.accentRed + '12', borderWidth: 1, borderColor: c.accentRed + '30',

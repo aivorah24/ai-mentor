@@ -149,7 +149,10 @@ export default function ScheduleScreen({ navigation }: any) {
 
   const fetchEvents = useCallback(async () => {
     if (!studentId) return;
-    setLoading(true);
+    // Show the full-screen spinner ONLY for the very first load. Every later fetch
+    // (week navigation, 30s poll, focus) keeps the grid mounted — otherwise the grid
+    // unmounts and the horizontal scroll resets back to Monday each time.
+    if (!firstLoadDoneRef.current) setLoading(true);
     try {
       // Fetch all 7 days of the week in parallel + deadlines + month dots
       const weekDates = week.map(d => d.iso);
@@ -177,7 +180,7 @@ export default function ScheduleScreen({ navigation }: any) {
         setEventDates(new Set(m.dates ?? []));
       }
     } catch {}
-    setLoading(false);
+    if (!firstLoadDoneRef.current) { setLoading(false); firstLoadDoneRef.current = true; }
   }, [studentId, week, calYear, calMonth]);
 
   useEffect(() => {
@@ -275,20 +278,37 @@ export default function ScheduleScreen({ navigation }: any) {
 
   function prevWeek() { const d = new Date(weekBase); d.setDate(d.getDate() - 7); setWeekBase(d); }
   function nextWeek() { const d = new Date(weekBase); d.setDate(d.getDate() + 7); setWeekBase(d); }
+  // Horizontal-scroll the day-grid so today's column is at the left edge —
+  // mirrors the Parent schedule's working "Today" behaviour exactly.
+  function scrollToToday(cw: number) {
+    const dow = today.getDay();          // 0=Sun
+    const todayCol = (dow + 6) % 7;      // Mon=0 … Sun=6
+    hScrollRef.current?.scrollTo({ x: todayCol * cw, animated: true });
+  }
   function goToday() {
-    setWeekBase(new Date());
-    setCalYear(new Date().getFullYear());
-    setCalMonth(new Date().getMonth() + 1);
+    const now = new Date();
+    setWeekBase(now);
+    setCalYear(now.getFullYear());
+    setCalMonth(now.getMonth() + 1);
+    setTimeout(() => scrollToToday(colWidth), 100);
     scrollToCurrentTime();
   }
 
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  // Comfortable column width (matches the Parent schedule). The grid shows a few
+  // days at a readable width and scrolls horizontally; the auto-scroll-to-today
+  // keeps today's column in view.
   const colWidth = Math.max(DAY_COL_WIDTH, Math.floor((screenWidth - TIME_LABEL_WIDTH) / 7));
   const gridHeight = TIMES.length * HOUR_HEIGHT;
   const totalGridWidth = TIME_LABEL_WIDTH + colWidth * 7;
 
   const hScrollRef = useRef<ScrollView>(null);
   const vScrollRef = useRef<ScrollView>(null);
+  // Guards the one-time auto-scroll-to-today after the grid first lays out.
+  const didInitialScrollRef = useRef(false);
+  // True once the first events load completes — gates the full-screen spinner so it
+  // never reappears (and never resets the scroll) on background refreshes.
+  const firstLoadDoneRef = useRef(false);
 
   // ── Drag-to-create ────────────────────────────────────────────────────────
   const [dragPreview, setDragPreview] = useState<{ dayIso: string; top: number; height: number; startT: string; endT: string } | null>(null);
@@ -354,12 +374,11 @@ export default function ScheduleScreen({ navigation }: any) {
     setTimeout(() => vScrollRef.current?.scrollTo({ y: timeOffsetY, animated }), 200);
   }
 
+  // Auto-scroll to today whenever the current week is in view (mount + week change),
+  // exactly like the Parent schedule.
   useEffect(() => {
-    const todayIdx = week.findIndex(d => d.iso === todayISO);
-    // Horizontal: scroll to today's column (no TIME_LABEL_WIDTH offset — fixed column is outside the scroll)
-    if (todayIdx >= 0) {
-      const scrollX = Math.max(0, todayIdx * colWidth - colWidth);
-      setTimeout(() => hScrollRef.current?.scrollTo({ x: scrollX, animated: true }), 100);
+    if (week.some(d => d.iso === todayISO)) {
+      setTimeout(() => scrollToToday(colWidth), 300);
     }
     // Vertical: scroll outer page ScrollView to current time
     scrollToCurrentTime();
@@ -414,7 +433,20 @@ export default function ScheduleScreen({ navigation }: any) {
                   </View>
 
                   {/* SCROLLABLE RIGHT: day headers + columns */}
-                  <ScrollView ref={hScrollRef} horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
+                  <ScrollView
+                    ref={hScrollRef}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={{ flex: 1 }}
+                    // Scroll to today once the grid content has actually laid out — the
+                    // effect alone can fire before the (loading-gated) ScrollView mounts.
+                    onContentSizeChange={() => {
+                      if (!didInitialScrollRef.current && week.some(d => d.iso === todayISO)) {
+                        didInitialScrollRef.current = true;
+                        scrollToToday(colWidth);
+                      }
+                    }}
+                  >
                     <View style={{ width: colWidth * 7 }}>
                       {/* Day header row */}
                       <View style={styles.dayHeaderRow}>

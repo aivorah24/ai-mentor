@@ -26,67 +26,67 @@ interface TopicItem {
 // Per-card accent cycle — muted landing-palette colours (sage / purple / gold /
 // teal / amber / rose), so each numbered topic card reads distinctly but stays
 // on-brand instead of using neon hues.
-const TOPIC_COLORS = ['#5F8A86', '#7E7AAD', '#B89150', '#5E8F86', '#B0894A', '#A85F77'];
+const TOPIC_COLORS = ['#9FB2A4', '#BAA467', '#7E9A86', '#9A7B2E', '#B2C2B7', '#C9A24E'];
 
 // ─── Subject visual config ────────────────────────────────────────────────────
 const SUBJECT_META: Record<string, { icon: any; color: string; bgFrom: string; bgTo: string }> = {
-  'Mathematics':        { icon: 'trending-up', color: '#4A9E9A', bgFrom: '#B8DDD8', bgTo: '#C8EAE6' },
-  'Science':            { icon: 'zap',         color: '#4A9E70', bgFrom: '#B0D8C0', bgTo: '#C4E8D4' },
-  'EVS':                { icon: 'sun',         color: '#8A9E4A', bgFrom: '#D0D8A0', bgTo: '#DEE8B8' },
-  'Social Studies':     { icon: 'globe',       color: '#A89840', bgFrom: '#E0D898', bgTo: '#EEE8B4' },
-  'English':            { icon: 'book-open',   color: '#C85870', bgFrom: '#F0C8D0', bgTo: '#F8D8E0' },
-  'Arts':               { icon: 'feather',     color: '#C87848', bgFrom: '#F0C8A8', bgTo: '#F8D8BC' },
-  'Physical Education': { icon: 'activity',    color: '#C84868', bgFrom: '#F0B8C8', bgTo: '#F8CCD8' },
-  'ICT':                { icon: 'monitor',     color: '#3A9896', bgFrom: '#A8D8D8', bgTo: '#BCE8E8' },
+  'Mathematics':        { icon: 'trending-up', color: '#7E9A86', bgFrom: '#D6DFD4', bgTo: '#E4EAE0' },
+  'Science':            { icon: 'zap',         color: '#7E9A86', bgFrom: '#D2DECF', bgTo: '#E2EAE0' },
+  'EVS':                { icon: 'sun',         color: '#9A7B2E', bgFrom: '#E6DFC2', bgTo: '#EFE9D2' },
+  'Social Studies':     { icon: 'globe',       color: '#9A7B2E', bgFrom: '#E6DEBE', bgTo: '#EFE9CE' },
+  'English':            { icon: 'book-open',   color: '#BAA467', bgFrom: '#E8E0CA', bgTo: '#F1ECDA' },
+  'Arts':               { icon: 'feather',     color: '#C9A24E', bgFrom: '#ECE1C6', bgTo: '#F4ECD6' },
+  'Physical Education': { icon: 'activity',    color: '#9FB2A4', bgFrom: '#D9E1D7', bgTo: '#E7ECE3' },
+  'ICT':                { icon: 'monitor',     color: '#9FB2A4', bgFrom: '#D6DFD4', bgTo: '#E4EAE0' },
 };
 function meta(subject: string) {
-  return SUBJECT_META[subject] ?? { icon: 'book', color: '#5F8A86', bgFrom: '#B8DDD8', bgTo: '#C8EAE6' };
+  return SUBJECT_META[subject] ?? { icon: 'book', color: '#9FB2A4', bgFrom: '#B8DDD8', bgTo: '#C8EAE6' };
 }
 
 // ─── Module buttons per subject ───────────────────────────────────────────────
 const SUBJECT_MODULES: Record<string, Array<{ label: string; icon: any; color: string; route: string }>> = {
   'Mathematics': [
-    { label: 'Start Learning', icon: 'play-circle', color: '#5F8A86', route: 'Learn5E'      },
-    { label: 'Practice Test',  icon: 'check-square', color: '#4A9E9A', route: 'IBPYPQuiz'  },
-    { label: 'Math Helper',    icon: 'hash',         color: '#7AADA8', route: 'MathHelper'  },
+    { label: 'Start Learning', icon: 'play-circle', color: '#9FB2A4', route: 'Learn5E'      },
+    { label: 'Practice Test',  icon: 'check-square', color: '#BAA467', route: 'IBPYPQuiz'  },
+    { label: 'Math Helper',    icon: 'hash',         color: '#BAA467', route: 'MathHelper'  },
   ],
   'Science': [
-    { label: 'Start Learning', icon: 'play-circle',  color: '#5A8A70', route: 'Learn5E'      },
-    { label: 'Practice Test',  icon: 'check-square', color: '#3D8A60', route: 'IBPYPQuiz'   },
-    { label: 'Drawing Buddy',  icon: 'edit-3',       color: '#B8797E', route: 'DrawingBuddy' },
+    { label: 'Start Learning', icon: 'play-circle',  color: '#7E9A86', route: 'Learn5E'      },
+    { label: 'Practice Test',  icon: 'check-square', color: '#BAA467', route: 'IBPYPQuiz'   },
+    { label: 'Drawing Buddy',  icon: 'edit-3',       color: '#C9A24E', route: 'DrawingBuddy' },
   ],
   'EVS': [
-    { label: 'Start Learning', icon: 'play-circle',  color: '#8A9E4A', route: 'Learn5E'      },
-    { label: 'Practice Test',  icon: 'check-square', color: '#6A8A3A', route: 'IBPYPQuiz'   },
+    { label: 'Start Learning', icon: 'play-circle',  color: '#9FB2A4', route: 'Learn5E'      },
+    { label: 'Practice Test',  icon: 'check-square', color: '#BAA467', route: 'IBPYPQuiz'   },
   ],
   'English': [
-    { label: 'Start Learning', icon: 'play-circle',  color: '#B8797E', route: 'Learn5E'   },
-    { label: 'Practice Test',  icon: 'check-square', color: '#C85870', route: 'IBPYPQuiz' },
+    { label: 'Start Learning', icon: 'play-circle',  color: '#C9A24E', route: 'Learn5E'   },
+    { label: 'Practice Test',  icon: 'check-square', color: '#BAA467', route: 'IBPYPQuiz' },
     { label: 'Word Wizard',    icon: 'book',         color: '#8A8358', route: 'WordWizard' },
   ],
   'Social Studies': [
     { label: 'Start Learning', icon: 'play-circle',  color: '#8A8358', route: 'Learn5E'   },
-    { label: 'Practice Test',  icon: 'check-square', color: '#A89840', route: 'IBPYPQuiz' },
-    { label: 'Word Wizard',    icon: 'book',         color: '#B8797E', route: 'WordWizard' },
+    { label: 'Practice Test',  icon: 'check-square', color: '#BAA467', route: 'IBPYPQuiz' },
+    { label: 'Word Wizard',    icon: 'book',         color: '#C9A24E', route: 'WordWizard' },
   ],
   'Arts': [
-    { label: 'Start Learning', icon: 'play-circle',  color: '#C4836A', route: 'Learn5E'      },
-    { label: 'Practice Test',  icon: 'check-square', color: '#C87848', route: 'IBPYPQuiz'   },
-    { label: 'Drawing Buddy',  icon: 'edit-3',       color: '#B8797E', route: 'DrawingBuddy' },
+    { label: 'Start Learning', icon: 'play-circle',  color: '#9FB2A4', route: 'Learn5E'      },
+    { label: 'Practice Test',  icon: 'check-square', color: '#BAA467', route: 'IBPYPQuiz'   },
+    { label: 'Drawing Buddy',  icon: 'edit-3',       color: '#C9A24E', route: 'DrawingBuddy' },
   ],
   'Physical Education': [
-    { label: 'Start Learning', icon: 'play-circle',  color: '#B8595F', route: 'Learn5E'   },
-    { label: 'Practice Test',  icon: 'check-square', color: '#C84868', route: 'IBPYPQuiz' },
+    { label: 'Start Learning', icon: 'play-circle',  color: '#9FB2A4', route: 'Learn5E'   },
+    { label: 'Practice Test',  icon: 'check-square', color: '#BAA467', route: 'IBPYPQuiz' },
   ],
   'ICT': [
-    { label: 'Start Learning', icon: 'play-circle',  color: '#7AADA8', route: 'Learn5E'   },
-    { label: 'Practice Test',  icon: 'check-square', color: '#3A9896', route: 'IBPYPQuiz' },
+    { label: 'Start Learning', icon: 'play-circle',  color: '#BAA467', route: 'Learn5E'   },
+    { label: 'Practice Test',  icon: 'check-square', color: '#BAA467', route: 'IBPYPQuiz' },
   ],
 };
 function subjectModules(subject: string) {
   return SUBJECT_MODULES[subject] ?? [
-    { label: 'Start Learning', icon: 'play-circle',  color: '#5F8A86', route: 'Learn5E'   },
-    { label: 'Practice Test',  icon: 'check-square', color: '#4A9E9A', route: 'IBPYPQuiz' },
+    { label: 'Start Learning', icon: 'play-circle',  color: '#9FB2A4', route: 'Learn5E'   },
+    { label: 'Practice Test',  icon: 'check-square', color: '#BAA467', route: 'IBPYPQuiz' },
   ];
 }
 

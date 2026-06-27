@@ -11,11 +11,11 @@ import ScreenLayout from '../../components/common/ScreenLayout';
 import { spacing, radius } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
-const TEAL   = '#5F8A86';
-const FOREST = '#5A8A70';
+const TEAL   = '#9FB2A4';  // sage
+const FOREST = '#7E9A86';  // deep sage
 const AMBER  = '#C5A56A';
-const ROSE   = '#EFD1D4';
-const SAGE   = '#93B0AC';
+const ROSE   = '#E3D7B0';  // soft gold
+const SAGE   = '#B2C2B7';
 
 /* ── Plan definitions ───────────────────────────────────────────── */
 
@@ -177,7 +177,7 @@ export default function SubscriptionScreen({ navigation }: any) {
           contact: '9876543210',
         },
         theme: {
-          color: '#93B0AC', // Aivorah primary teal
+          color: '#BAA467', // Aivorah gold
         },
         handler: async (response: any) => {
           // 3. Verify payment on backend
@@ -352,7 +352,7 @@ const makeStyles = (c: any, isWide: boolean) => StyleSheet.create({
   },
   brandLogoMark: {
     width: 44, height: 44, borderRadius: 12,
-    backgroundColor: '#93B0AC',
+    backgroundColor: '#BAA467',
     alignItems: 'center', justifyContent: 'center',
   },
   brandTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },

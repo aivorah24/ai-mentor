@@ -15,8 +15,8 @@ import { spacing, radius, fonts } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 import { useAuth } from '../../context/AuthContext';
 
-const TEAL   = '#5F8A86';
-const GOLD   = '#C0A07E';
+const TEAL   = '#9FB2A4';  // sage
+const GOLD   = '#BAA467';
 const SAGE   = '#82A896';
 const AMBER  = '#C5A56A';   // warm pastel gold — premium
 

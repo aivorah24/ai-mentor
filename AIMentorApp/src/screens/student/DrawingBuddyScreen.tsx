@@ -88,7 +88,7 @@ function drawPrimitives(ctx: any, shapes: Primitive[], cx: number, cy: number, a
 }
 
 // ── Guide templates — dotted outlines for common objects ─────────────────────
-function drawGuide(ctx: any, targetShape: string, W: number, H: number, accent = '#4A9E9A', guideShapes?: Primitive[]) {
+function drawGuide(ctx: any, targetShape: string, W: number, H: number, accent = '#BAA467', guideShapes?: Primitive[]) {
   const cx = W / 2, cy = H / 2;
 
   // Prefer server-provided primitives if available
@@ -230,20 +230,20 @@ function StarsDisplay({ stars, max = 3 }: { stars: number; max?: number }) {
 
 // Aivorah pastel accents per subject
 const SUBJECT_ACCENT: Record<string, string> = {
-  Mathematics: '#4A9E9A',
-  Science: '#3D8A60',
-  English: '#C85870',
-  'Social Studies': '#A89840',
-  Arts: '#C87848',
-  'Physical Education': '#C84868',
-  ICT: '#3A9896',
+  Mathematics: '#BAA467',
+  Science: '#BAA467',
+  English: '#BAA467',
+  'Social Studies': '#BAA467',
+  Arts: '#BAA467',
+  'Physical Education': '#BAA467',
+  ICT: '#BAA467',
 };
 
 export default function DrawingBuddyScreen({ route, navigation }: any) {
   const { colors } = useTheme();
   const { topic, chapterId, unit, subject = 'Science', grade = 'Grade 3', curriculum = 'IB PYP' } = route.params ?? {};
   const isScience = subject === 'Science';
-  const accent = SUBJECT_ACCENT[subject] || '#3D8A60';
+  const accent = SUBJECT_ACCENT[subject] || '#BAA467';
 
   const [loading,          setLoading]          = useState(false);
   const [activity,         setActivity]         = useState<DrawActivity | null>(null);
@@ -627,9 +627,9 @@ export default function DrawingBuddyScreen({ route, navigation }: any) {
             <>
               {/* Improve focus banner */}
               {improveFocus && (
-                <View style={[s.improveBanner, { backgroundColor: '#6366f115', borderColor: '#6366f130' }]}>
-                  <Feather name="target" size={14} color="#6366f1" />
-                  <Text style={[s.improveBannerText, { color: '#6366f1' }]}>
+                <View style={[s.improveBanner, { backgroundColor: '#BAA46715', borderColor: '#BAA46730' }]}>
+                  <Feather name="target" size={14} color="#BAA467" />
+                  <Text style={[s.improveBannerText, { color: '#BAA467' }]}>
                     Focus: {improveFocus}
                   </Text>
                 </View>
@@ -674,7 +674,7 @@ export default function DrawingBuddyScreen({ route, navigation }: any) {
 
               {/* Drawing board — web only */}
               {Platform.OS === 'web' && (
-                <View style={[s.boardCard, { backgroundColor: colors.cardDark, borderColor: '#ec489930',
+                <View style={[s.boardCard, { backgroundColor: colors.cardDark, borderColor: '#BAA46730',
                   opacity: allStepsShown ? 1 : 0.5 }]}>
                   {!allStepsShown && (
                     <View style={[s.canvasOverlay]}>
@@ -695,12 +695,12 @@ export default function DrawingBuddyScreen({ route, navigation }: any) {
                         onPress={() => setTool(t.key)}
                         disabled={!allStepsShown}
                         style={[s.toolBtn, {
-                          backgroundColor: tool === t.key ? '#ec4899' + '25' : 'transparent',
-                          borderColor:     tool === t.key ? '#ec4899' : colors.borderColor,
+                          backgroundColor: tool === t.key ? '#BAA467' + '25' : 'transparent',
+                          borderColor:     tool === t.key ? '#BAA467' : colors.borderColor,
                         }]}
                       >
-                        <Feather name={t.icon as any} size={13} color={tool === t.key ? '#ec4899' : colors.textMuted} />
-                        <Text style={[s.toolBtnText, { color: tool === t.key ? '#ec4899' : colors.textMuted }]}>
+                        <Feather name={t.icon as any} size={13} color={tool === t.key ? '#BAA467' : colors.textMuted} />
+                        <Text style={[s.toolBtnText, { color: tool === t.key ? '#BAA467' : colors.textMuted }]}>
                           {t.label}
                         </Text>
                       </TouchableOpacity>
@@ -765,7 +765,7 @@ export default function DrawingBuddyScreen({ route, navigation }: any) {
                       touchAction: 'none',
                       width: '100%',
                       maxWidth: 720,
-                      border: '1px solid #ec489930',
+                      border: '1px solid #BAA46730',
                       pointerEvents: allStepsShown ? 'auto' : 'none',
                     } as any}
                     onMouseDown={onMouseDown}
@@ -781,21 +781,21 @@ export default function DrawingBuddyScreen({ route, navigation }: any) {
                   <TouchableOpacity
                     onPress={toggleGuide}
                     style={[s.guideBtn, {
-                      backgroundColor: showGuide ? '#6366f125' : '#6366f110',
-                      borderColor: showGuide ? '#6366f1' : '#6366f140',
+                      backgroundColor: showGuide ? '#BAA46725' : '#BAA46710',
+                      borderColor: showGuide ? '#BAA467' : '#BAA46740',
                       borderWidth: showGuide ? 2 : 1,
                     }]}
                   >
-                    <Feather name="map" size={14} color="#6366f1" />
-                    <Text style={{ color: '#6366f1', fontSize: 13, fontWeight: '700' }}>
+                    <Feather name="map" size={14} color="#BAA467" />
+                    <Text style={{ color: '#BAA467', fontSize: 13, fontWeight: '700' }}>
                       {showGuide ? 'Hide Guide' : 'Show Dotted Guide'}
                     </Text>
                   </TouchableOpacity>
 
                   {!showGuide && !feedback && (
-                    <View style={[s.drawHint, { backgroundColor: '#6366f110', borderColor: '#6366f130' }]}>
-                      <Feather name="arrow-down" size={13} color="#6366f1" />
-                      <Text style={{ color: '#6366f1', fontSize: 12, fontWeight: '600' }}>
+                    <View style={[s.drawHint, { backgroundColor: '#BAA46710', borderColor: '#BAA46730' }]}>
+                      <Feather name="arrow-down" size={13} color="#BAA467" />
+                      <Text style={{ color: '#BAA467', fontSize: 12, fontWeight: '600' }}>
                         Draw below, then tap Get Feedback at the bottom!
                       </Text>
                     </View>
@@ -823,7 +823,7 @@ export default function DrawingBuddyScreen({ route, navigation }: any) {
 
               {/* AI Feedback result */}
               {feedback && (
-                <View style={[s.feedbackCard, { backgroundColor: colors.cardDark, borderColor: '#6366f130' }]}>
+                <View style={[s.feedbackCard, { backgroundColor: colors.cardDark, borderColor: '#BAA46730' }]}>
                   {/* Score + Stars */}
                   <View style={s.scoreRow}>
                     <View style={[s.scoreBadge, { backgroundColor: scoreColor(feedback.score) + '20' }]}>
@@ -835,10 +835,10 @@ export default function DrawingBuddyScreen({ route, navigation }: any) {
                     <View style={{ flex: 1 }} />
                     <TouchableOpacity
                       onPress={() => speakFeedback(feedback.spokenText)}
-                      style={[s.speakBtn, { backgroundColor: '#6366f120', borderColor: '#6366f140' }]}
+                      style={[s.speakBtn, { backgroundColor: '#BAA46720', borderColor: '#BAA46740' }]}
                     >
-                      <Feather name={speakingFeedback ? 'volume-2' : 'play'} size={13} color="#6366f1" />
-                      <Text style={{ color: '#6366f1', fontSize: 11, fontWeight: '700' }}>
+                      <Feather name={speakingFeedback ? 'volume-2' : 'play'} size={13} color="#BAA467" />
+                      <Text style={{ color: '#BAA467', fontSize: 11, fontWeight: '700' }}>
                         {speakingFeedback ? 'Speaking…' : 'Replay'}
                       </Text>
                     </TouchableOpacity>
@@ -854,8 +854,8 @@ export default function DrawingBuddyScreen({ route, navigation }: any) {
                     <Feather name="arrow-up-circle" size={15} color="#f59e0b" />
                     <Text style={[s.feedbackText, { color: colors.textMain }]}>{feedback.suggestion}</Text>
                   </View>
-                  <View style={[s.feedbackRow, { borderColor: '#6366f125', backgroundColor: '#6366f108' }]}>
-                    <Feather name="award" size={15} color="#6366f1" />
+                  <View style={[s.feedbackRow, { borderColor: '#BAA46725', backgroundColor: '#BAA46708' }]}>
+                    <Feather name="award" size={15} color="#BAA467" />
                     <Text style={[s.feedbackText, { color: colors.textMain, fontWeight: '700' }]}>{feedback.encouragement}</Text>
                   </View>
 
@@ -1008,6 +1008,6 @@ const s = StyleSheet.create({
 
   actionRow:     { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   btn:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 13, borderRadius: radius.lg, paddingHorizontal: 14 },
-  btnOutline:    { borderWidth: 1, borderColor: '#ec489940', backgroundColor: '#ec489912' },
+  btnOutline:    { borderWidth: 1, borderColor: '#BAA46740', backgroundColor: '#BAA46712' },
   btnText:       { color: '#fff', fontWeight: '700', fontSize: 14 },
 });
