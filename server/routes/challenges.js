@@ -221,9 +221,40 @@ router.post('/assign', async (req, res) => {
     } catch (_) {}
   }
 
-  // Challenge reminders are delivered via the notification bell (which reads the
-  // challenge_assignments table directly) — NOT as chat messages. No "Aivorah"
-  // thread is created, keeping the Messages tab for real conversations only.
+  // Student challenge reminders come from the challenge_assignments table directly.
+  // PARENTS, however, see challenge notifications from a system message (the bell
+  // reads "New Challenge assigned:" messages for parents) — so we must create one,
+  // exactly like the assignments route does. Without this, parents never got a
+  // challenge notification even with "Challenge Updates" enabled.
+  (async () => {
+    try {
+      const { data: parents } = await supabase
+        .from('parent_children')
+        .select('parent_email')
+        .eq('child_id', studentId);
+      if (parents && parents.length > 0) {
+        const { data: student } = await supabase
+          .from('users').select('name').eq('id', studentId).maybeSingle();
+        const studentName = student?.name || 'your child';
+        const dueDateStr = dueDate ? new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'TBD';
+        const msgContent = 'New Challenge assigned: "' + (challenge.title || 'Challenge') + '"'
+          + (challenge.subject ? ' (' + challenge.subject + ')' : '')
+          + ' has been assigned to ' + studentName + '. Due: ' + dueDateStr + '.';
+        for (const { parent_email } of parents) {
+          await supabase.from('messages').insert({
+            sender_email:   'system@aivorah.com',
+            sender_name:    'Aivorah',
+            sender_role:    'teacher',
+            recipient_email: parent_email,
+            recipient_name:  parent_email,
+            content:        msgContent,
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('[challenges] Parent notification failed (non-fatal):', e.message);
+    }
+  })();
 
   res.json({ ...data, assignmentId: data.id });
 });

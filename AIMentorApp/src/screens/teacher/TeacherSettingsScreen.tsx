@@ -1,8 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, Switch, Modal, ActivityIndicator, Platform,
+  TextInput, Switch, Modal, ActivityIndicator, Platform, Image, Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
@@ -10,6 +12,7 @@ import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useNotification } from '../../context/NotificationContext';
 import {
   updatePassword,
   EmailAuthProvider,
@@ -36,15 +39,72 @@ type ModalType = 'name' | 'email' | 'password' | 'school' | 'curriculum' | null;
 export default function TeacherSettingsScreen({ navigation }: any) {
   const { user, updateUser, logout, switchRole } = useAuth();
   const { colors, themeMode, setThemeMode } = useTheme();
+  const { triggerPoll } = useNotification();
   const gold = colors.accentYellow;
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  // Notifications
-  const [submissionAlerts,  setSubmissionAlerts]  = useState(true);
-  const [parentMessages,    setParentMessages]    = useState(true);
+  // Notifications — persisted to AsyncStorage under the SAME key/keys the
+  // notification bell reads (notifPrefs_<email>: assignmentAlerts / teacherMessages /
+  // challengeUpdates). Previously these toggles only changed local state, so turning
+  // "Parent Messages" off had no effect and the bell still notified.
+  const NOTIF_KEY = `notifPrefs_${user?.email ?? 'guest'}`;
+  const [submissionAlerts,  setSubmissionAlerts]  = useState(true);   // assignmentAlerts
+  const [parentMessages,    setParentMessages]    = useState(true);   // teacherMessages
   const [weeklyReport,      setWeeklyReport]      = useState(true);
   const [aiInsights,        setAiInsights]        = useState(true);
-  const [challengeAlerts,   setChallengeAlerts]   = useState(false);
+  const [challengeAlerts,   setChallengeAlerts]   = useState(false);  // challengeUpdates
+
+  useEffect(() => {
+    AsyncStorage.getItem(NOTIF_KEY).then(raw => {
+      if (!raw) return;
+      try {
+        const p = JSON.parse(raw);
+        if (p.assignmentAlerts != null) setSubmissionAlerts(p.assignmentAlerts);
+        if (p.teacherMessages  != null) setParentMessages(p.teacherMessages);
+        if (p.challengeUpdates != null) setChallengeAlerts(p.challengeUpdates);
+        if (p.weeklyReport     != null) setWeeklyReport(p.weeklyReport);
+        if (p.aiInsights       != null) setAiInsights(p.aiInsights);
+      } catch {}
+    }).catch(() => {});
+  }, [NOTIF_KEY]);
+
+  // Persist all current notification prefs (mapping teacher labels → bell keys) and
+  // poll immediately so the change takes effect without waiting for the next cycle.
+  const saveNotifPrefs = useCallback((override: Record<string, boolean>) => {
+    const prefs = {
+      assignmentAlerts: submissionAlerts,
+      teacherMessages:  parentMessages,
+      challengeUpdates: challengeAlerts,
+      weeklyReport,
+      aiInsights,
+      ...override,
+    };
+    AsyncStorage.setItem(NOTIF_KEY, JSON.stringify(prefs)).catch(() => {});
+    triggerPoll();
+  }, [NOTIF_KEY, submissionAlerts, parentMessages, challengeAlerts, weeklyReport, aiInsights, triggerPoll]);
+
+  // Profile photo — same upload flow as the student profile (shared for all roles).
+  const [photoUrl,  setPhotoUrl]  = useState<string | null>((user as any)?.photoUrl ?? null);
+  const [uploading, setUploading] = useState(false);
+  async function handlePickPhoto() {
+    if (!user?.email) return;
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Allow access to your photo library.'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.7, base64: true });
+    if (result.canceled || !result.assets?.[0]) return;
+    setUploading(true);
+    try {
+      const res = await fetch(`${SERVER_URL}/user/upload-photo`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail: user.email, base64: result.assets[0].base64, mimeType: result.assets[0].mimeType ?? 'image/jpeg' }),
+      });
+      const data = await res.json();
+      const url = data.photoUrl || data.url;
+      if (url) { setPhotoUrl(url); updateUser({ photoUrl: url } as any); }
+      else Alert.alert('Upload failed', data.error || 'Could not upload photo.');
+    } catch { Alert.alert('Upload failed', 'Could not upload photo. Please try again.'); }
+    finally { setUploading(false); }
+  }
 
   // Teaching prefs
   const [autoGrading,       setAutoGrading]       = useState(true);
@@ -318,12 +378,14 @@ export default function TeacherSettingsScreen({ navigation }: any) {
               <SectionHeader icon="user" label="Profile & Account" color={gold} styles={styles} />
               <View style={styles.card}>
                 <View style={styles.profileRow}>
-                  <View style={styles.avatarBig}>
-                    <Text style={styles.avatarInitial}>{user?.name ? user.name[0].toUpperCase() : 'T'}</Text>
+                  <TouchableOpacity style={styles.avatarBig} onPress={handlePickPhoto} activeOpacity={0.85}>
+                    {photoUrl
+                      ? <Image source={{ uri: photoUrl }} style={{ width: '100%', height: '100%', borderRadius: 32 }} />
+                      : <Text style={styles.avatarInitial}>{user?.name ? user.name[0].toUpperCase() : 'T'}</Text>}
                     <View style={styles.avatarCam}>
-                      <Feather name="camera" size={11} color="white" />
+                      {uploading ? <ActivityIndicator size="small" color={colors.accentYellow} /> : <Feather name="camera" size={11} color={colors.accentYellow} />}
                     </View>
-                  </View>
+                  </TouchableOpacity>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.profileName}>{user?.name || 'Teacher'}</Text>
                     <Text style={styles.profileSub}>{user?.email || ''}</Text>
@@ -452,11 +514,11 @@ export default function TeacherSettingsScreen({ navigation }: any) {
               <SectionHeader icon="bell" label="Notifications" color={colors.accentYellow} styles={styles} />
               <View style={styles.card}>
                 {[
-                  { label: 'Assignment Submissions', sub: 'When a student submits work', val: submissionAlerts, set: setSubmissionAlerts },
-                  { label: 'Parent Messages', sub: 'New messages from parents', val: parentMessages, set: setParentMessages },
-                  { label: 'Weekly Class Report', sub: 'Summary of class activity each week', val: weeklyReport, set: setWeeklyReport },
-                  { label: 'AI Class Insights', sub: 'Smart suggestions for your class', val: aiInsights, set: setAiInsights },
-                  { label: 'Challenge Activity', sub: 'Student challenge completions and rankings', val: challengeAlerts, set: setChallengeAlerts },
+                  { key: 'assignmentAlerts', label: 'Assignment Submissions', sub: 'When a student submits work', val: submissionAlerts, set: setSubmissionAlerts },
+                  { key: 'teacherMessages',  label: 'Parent Messages', sub: 'New messages from parents', val: parentMessages, set: setParentMessages },
+                  { key: 'weeklyReport',     label: 'Weekly Class Report', sub: 'Summary of class activity each week', val: weeklyReport, set: setWeeklyReport },
+                  { key: 'aiInsights',       label: 'AI Class Insights', sub: 'Smart suggestions for your class', val: aiInsights, set: setAiInsights },
+                  { key: 'challengeUpdates', label: 'Challenge Activity', sub: 'Student challenge completions and rankings', val: challengeAlerts, set: setChallengeAlerts },
                 ].map((item, i) => (
                   <View key={item.label}>
                     {i > 0 && <View style={styles.divider} />}
@@ -465,7 +527,12 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                         <Text style={styles.fieldLabel}>{item.label}</Text>
                         <Text style={styles.fieldSub}>{item.sub}</Text>
                       </View>
-                      <Switch value={item.val} onValueChange={item.set} trackColor={{ false: colors.borderColor, true: gold }} thumbColor="white" />
+                      <Switch
+                        value={item.val}
+                        onValueChange={(v) => { item.set(v); saveNotifPrefs({ [item.key]: v }); }}
+                        trackColor={{ false: colors.borderColor, true: gold }}
+                        thumbColor="white"
+                      />
                     </View>
                   </View>
                 ))}
@@ -958,7 +1025,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   avatarCam: {
     position: 'absolute', bottom: 0, right: 0, width: 22, height: 22, borderRadius: 11,
     backgroundColor: c.cardDark, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: c.borderColor,
+    borderWidth: 2, borderColor: c.accentYellow,
   },
   avatarInitial: { fontSize: 24, fontWeight: '800', color: '#fff' },
   profileName: { fontSize: 16, fontWeight: '700', color: c.textMain, marginBottom: 2 },
