@@ -142,8 +142,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }
       } catch (_) {}
 
+      // Separate "seen" baseline for challenges so turning Challenge Updates ON
+      // dismisses only the challenge backlog (and assignments their own).
+      let challengeSince: string | null = null;
+      try { challengeSince = await AsyncStorage.getItem(`challengeSeenAt_v2_${user.email}`); } catch (_) {}
+
       const params = new URLSearchParams({ userEmail: user.email });
       if (since) params.set('since', since);
+      if (challengeSince) params.set('challengeSince', challengeSince);
 
       let res: Response;
       try {
@@ -213,7 +219,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setUnreadAssignments(allowAssign ? assignCount : 0);
       setUnreadChallenges(allowChallenge ? challengeCount : 0);
       setLatestNotif(msgCount > 0 ? latest : null);
-      setNotificationItems(items);
+      // Respect the user's notification preferences for the bell dropdown items too —
+      // when Assignment Alerts / Challenge Updates are OFF, those items must NOT appear
+      // in the bell at all (not just have a zeroed badge count).
+      const filteredItems = items.filter(it => {
+        if ((it.type === 'assignment' || it.type === 'quiz') && !allowAssign) return false;
+        if (it.type === 'challenge' && !allowChallenge) return false;
+        return true;
+      });
+      setNotificationItems(filteredItems);
       if (msgCount === 0 && assignCount === 0 && challengeCount === 0) setToastVisible(false);
 
       if (__DEV__) console.debug(`[NotifCtx] poll(${reason}) → msg:${msgCount} assign:${assignCount} challenge:${challengeCount}`);

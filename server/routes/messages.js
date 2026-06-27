@@ -147,6 +147,8 @@ router.get('/notifications-summary', async (req, res) => {
     const userEmail  = (req.query.userEmail  || '').trim().toLowerCase();
     const studentId  = (req.query.studentId  || '').trim();
     const since      = req.query.since || null;
+    // Challenges can have their own "seen" baseline (separate toggle); fall back to `since`.
+    const challengeSince = req.query.challengeSince || since;
 
     if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
 
@@ -235,7 +237,7 @@ router.get('/notifications-summary', async (req, res) => {
         .neq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(10);
-      if (since) challengeQ = challengeQ.gt('created_at', since);
+      if (challengeSince) challengeQ = challengeQ.gt('created_at', challengeSince);
     }
 
     const [msgRes, personalAssignRes, classAssignRes, challengeRes] = await Promise.all([

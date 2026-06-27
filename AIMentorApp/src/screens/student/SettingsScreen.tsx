@@ -11,7 +11,9 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius, fonts } from '../../theme';
@@ -38,7 +40,29 @@ type ModalType = 'name' | 'email' | 'password' | 'recovery' | 'delete' | 'grade'
 
 export default function SettingsScreen({ navigation, route }: any) {
   const { user, updateUser, logout, refreshProfile } = useAuth();
-  const { triggerPoll } = useNotification();
+  const { triggerPoll, clearUnreadAssignments, clearUnreadChallenges } = useNotification();
+  // Profile photo — same upload flow as the student profile/teacher/parent (shared).
+  const [photoUrl,  setPhotoUrl]  = useState<string | null>((user as any)?.photoUrl ?? null);
+  const [uploading, setUploading] = useState(false);
+  async function handlePickPhoto() {
+    if (!user?.email) return;
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Allow access to your photo library.'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.7, base64: true });
+    if (result.canceled || !result.assets?.[0]) return;
+    setUploading(true);
+    try {
+      const res = await fetch(`${SERVER_URL}/user/upload-photo`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail: user.email, base64: result.assets[0].base64, mimeType: result.assets[0].mimeType ?? 'image/jpeg' }),
+      });
+      const data = await res.json();
+      const url = data.photoUrl || data.url;
+      if (url) { setPhotoUrl(url); updateUser({ photoUrl: url } as any); }
+      else Alert.alert('Upload failed', data.error || 'Could not upload photo.');
+    } catch { Alert.alert('Upload failed', 'Could not upload photo. Please try again.'); }
+    finally { setUploading(false); }
+  }
   // Re-pull profile on focus so a parent's grade/curriculum edit reflects here.
   useFocusEffect(useCallback(() => { refreshProfile(); }, []));
   const { stats } = useStudentData();
@@ -420,12 +444,14 @@ export default function SettingsScreen({ navigation, route }: any) {
           <SectionHeader icon="user" label="Profile & Account" color={colors.accentYellow} styles={styles} />
           <View style={styles.card}>
             <View style={styles.profileRow}>
-              <View style={styles.avatarBig}>
-                <Feather name="user" size={30} color={colors.textMuted} />
+              <TouchableOpacity style={styles.avatarBig} onPress={handlePickPhoto} activeOpacity={0.85}>
+                {photoUrl
+                  ? <Image source={{ uri: photoUrl }} style={{ width: '100%', height: '100%', borderRadius: 32 }} />
+                  : <Feather name="user" size={30} color={colors.textMuted} />}
                 <View style={styles.avatarCam}>
-                  <Feather name="camera" size={11} color="white" />
+                  {uploading ? <ActivityIndicator size="small" color={colors.accentYellow} /> : <Feather name="camera" size={11} color={colors.accentYellow} />}
                 </View>
-              </View>
+              </TouchableOpacity>
               <View style={{ flex: 1 }}>
                 <Text style={styles.profileName}>{user?.name || 'User'}</Text>
                 <Text style={styles.profileRole}>
@@ -540,7 +566,14 @@ export default function SettingsScreen({ navigation, route }: any) {
                   {item.key ? (
                     <Switch
                       value={item.val}
-                      onValueChange={(v) => { item.set(v); saveNotifPref(item.key, v); }}
+                      onValueChange={(v) => {
+                        item.set(v);
+                        saveNotifPref(item.key, v);
+                        // Turning ON dismisses the backlog that piled up while OFF, so
+                        // those notifications don't replay — only new ones appear.
+                        if (v && item.key === 'assignmentAlerts') clearUnreadAssignments();
+                        if (v && item.key === 'challengeUpdates') clearUnreadChallenges();
+                      }}
                       trackColor={{ false: colors.borderColor, true: colors.accentYellow }}
                       thumbColor="white"
                     />

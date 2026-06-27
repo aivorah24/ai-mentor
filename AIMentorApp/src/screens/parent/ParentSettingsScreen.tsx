@@ -29,7 +29,7 @@ type ModalType = 'name' | 'email' | 'password' | null;
 export default function ParentSettingsScreen({ navigation }: any) {
   const { user, updateUser, logout } = useAuth();
   const { colors, themeMode, setThemeMode } = useTheme();
-  const { triggerPoll } = useNotification();
+  const { triggerPoll, clearUnreadAssignments, clearUnreadChallenges } = useNotification();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   // Notifications — persisted to AsyncStorage
@@ -275,6 +275,10 @@ export default function ParentSettingsScreen({ navigation }: any) {
                           saveNotifPrefs(next);
                           // Trigger an immediate poll so the new pref takes effect instantly
                           triggerPoll();
+                          // Turning ON dismisses the backlog from the OFF period so it
+                          // doesn't replay — only new notifications appear.
+                          if (v && item.key === 'assignmentAlerts') clearUnreadAssignments();
+                          if (v && item.key === 'challengeUpdates') clearUnreadChallenges();
                         }}
                         trackColor={{ false: colors.borderColor, true: colors.accentYellow }}
                         thumbColor="white"
