@@ -20,6 +20,7 @@ import ScreenLayout from '../../components/common/ScreenLayout';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useIsFocused } from '@react-navigation/native';
 import SERVER_URL from '../../config/serverUrl';
 
 interface Contact {
@@ -119,6 +120,7 @@ export default function MessagesScreen(_props: any) {
   const { colors } = useTheme();
   const { user } = useAuth();
   const { refresh } = useNotification();
+  const isFocused = useIsFocused();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const userEmail = (user?.email || '').toLowerCase();
@@ -220,13 +222,24 @@ export default function MessagesScreen(_props: any) {
 
   useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current);
-    if (activeConvo) {
+    // Only auto-mark the open conversation read while the Messages screen is the
+    // FOCUSED route. Without this, the screen stays mounted after navigating away
+    // (React Navigation keeps tab/drawer screens alive) and its loop silently marks
+    // new messages "seen" in the background — so the bell never notifies. We also
+    // require the browser tab to be visible+focused (web), so a background tab won't
+    // mark messages read either.
+    if (activeConvo && isFocused) {
       pollRef.current = setInterval(() => {
-        loadThread(activeConvo.otherEmail, true); // marks read + reloads conversations inside
+        const tabActive = Platform.OS !== 'web'
+          || (typeof document !== 'undefined' && document.visibilityState === 'visible'
+              && (typeof document.hasFocus !== 'function' || document.hasFocus()));
+        // When the conversation is genuinely being viewed → mark read; otherwise just
+        // refresh the thread without marking read (so the bell can still notify).
+        loadThread(activeConvo.otherEmail, tabActive);
       }, 5000);
     }
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [activeConvo]);
+  }, [activeConvo, isFocused]);
 
   const openConversation = (convo: Conversation) => {
     // Optimistically clear the badge on this conversation immediately
