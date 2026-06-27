@@ -39,7 +39,7 @@ type ModalType = 'name' | 'email' | 'password' | 'school' | 'curriculum' | null;
 export default function TeacherSettingsScreen({ navigation }: any) {
   const { user, updateUser, logout, switchRole } = useAuth();
   const { colors, themeMode, setThemeMode } = useTheme();
-  const { triggerPoll } = useNotification();
+  const { triggerPoll, clearUnreadAssignments, clearUnreadChallenges } = useNotification();
   const gold = colors.accentYellow;
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -514,7 +514,6 @@ export default function TeacherSettingsScreen({ navigation }: any) {
               <SectionHeader icon="bell" label="Notifications" color={colors.accentYellow} styles={styles} />
               <View style={styles.card}>
                 {[
-                  { key: 'assignmentAlerts', label: 'Assignment Submissions', sub: 'When a student submits work', val: submissionAlerts, set: setSubmissionAlerts },
                   { key: 'teacherMessages',  label: 'Parent Messages', sub: 'New messages from parents', val: parentMessages, set: setParentMessages },
                   { key: 'weeklyReport',     label: 'Weekly Class Report', sub: 'Summary of class activity each week', val: weeklyReport, set: setWeeklyReport },
                   { key: 'aiInsights',       label: 'AI Class Insights', sub: 'Smart suggestions for your class', val: aiInsights, set: setAiInsights },
@@ -529,7 +528,12 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                       </View>
                       <Switch
                         value={item.val}
-                        onValueChange={(v) => { item.set(v); saveNotifPrefs({ [item.key]: v }); }}
+                        onValueChange={(v) => {
+                          item.set(v);
+                          saveNotifPrefs({ [item.key]: v });
+                          // Turning ON dismisses the OFF-period backlog so it doesn't replay.
+                          if (v && item.key === 'challengeUpdates') clearUnreadChallenges();
+                        }}
                         trackColor={{ false: colors.borderColor, true: gold }}
                         thumbColor="white"
                       />
