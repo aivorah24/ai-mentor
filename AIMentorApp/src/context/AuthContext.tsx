@@ -269,17 +269,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           let recheck: Partial<User> & { _syncOk?: boolean; _accountExists?: boolean } = {};
           try { recheck = await fetchSupabaseProfile(email); } catch {}
           if (recheck._syncOk === true && recheck._accountExists === false) {
-            // Confirmed missing — genuine deletion. Sign out cleanly to Landing.
-            console.log('[Auth] Account confirmed missing in DB — signing out to Landing:', email);
-            await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
-            await AsyncStorage.removeItem(PENDING_VERIFY_KEY).catch(() => {});
-            await signOut(auth).catch(() => {});
-            setUser(null);
-            setLoading(false);
-            return;
+            // Row STILL missing. But if a sign-up / sign-in is in progress (or this
+            // email is a fresh pending-verification signup), the row simply hasn't
+            // finished writing yet — common on a cold/slow server during beta. In
+            // that window we must NOT bounce the user to Landing; keep the session
+            // so they land on "Check your inbox" instead of a blank screen.
+            const pendingVerify = await AsyncStorage.getItem(PENDING_VERIFY_KEY).catch(() => null);
+            const freshSignupInFlight = _authActionInProgress || pendingVerify === email;
+            if (!freshSignupInFlight) {
+              // Confirmed missing & no signup in flight — genuine deletion. Sign out cleanly to Landing.
+              console.log('[Auth] Account confirmed missing in DB — signing out to Landing:', email);
+              await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
+              await AsyncStorage.removeItem(PENDING_VERIFY_KEY).catch(() => {});
+              await signOut(auth).catch(() => {});
+              setUser(null);
+              setLoading(false);
+              return;
+            }
+            console.log('[Auth] DB row not landed yet but signup in flight — keeping session for verification:', email);
           }
           // Account exists now (the signup row landed) — adopt the fresh data.
-          if (recheck._syncOk === true) supaProfile = recheck;
+          if (recheck._syncOk === true && recheck._accountExists !== false) supaProfile = recheck;
         }
 
         const allowParentActivated = supaProfile.accountStatus === 'active';
@@ -410,11 +420,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const isDemoOrTest = user?.email?.endsWith('@demo.com') || user?.email?.endsWith('@test.ai') || user?.email?.endsWith('@aivorah.ai');
     if (!user?.email || isDemoOrTest) return;
+    // Never auto-sign-out a user who is still pending email verification — their
+    // DB row may legitimately be mid-creation (slow/cold server), and a missing
+    // row here would wrongly bounce them off "Check your inbox" to Landing.
+    // VerifyEmailScreen runs its own check-verified polling to advance them.
+    if (user?.emailVerified === false) return;
     const email = user.email;
     const interval = setInterval(async () => {
       try {
         const profile = await fetchSupabaseProfile(email);
         if (profile._syncOk === true && profile._accountExists === false) {
+          // A fresh signup/sign-in still settling must not be treated as deleted.
+          const pendingVerify = await AsyncStorage.getItem(PENDING_VERIFY_KEY).catch(() => null);
+          if (_authActionInProgress || pendingVerify === email) return;
           clearInterval(interval);
           await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
           await signOut(auth).catch(() => {});
@@ -423,7 +441,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {}
     }, 30_000);
     return () => clearInterval(interval);
-  }, [user?.email]);
+  }, [user?.email, user?.emailVerified]);
 
   function login(userData: User) {
     setUser(userData);
@@ -652,6 +670,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: `${name}|${role}` });
+
+      // Mark this email as pending verification BEFORE the network syncs — this
+      // survives multiple onAuthStateChanged fires and guarantees the user lands
+      // on "Check your inbox" even if the DB row write is slow (cold server).
+      await AsyncStorage.setItem(PENDING_VERIFY_KEY, email).catch(() => {});
 
       // Sync to Supabase so the account exists before onAuthStateChanged fires
       await fetch(`${SERVER_URL}/user/sync`, {
