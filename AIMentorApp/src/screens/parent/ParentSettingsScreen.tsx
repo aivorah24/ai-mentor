@@ -186,7 +186,7 @@ export default function ParentSettingsScreen({ navigation }: any) {
                   <View style={styles.avatarBig}>
                     <Text style={styles.avatarInitial}>{user?.name ? user.name[0].toUpperCase() : 'P'}</Text>
                     <View style={styles.avatarCam}>
-                      <Feather name="camera" size={11} color="white" />
+                      <Feather name="camera" size={11} color={colors.accentYellow} />
                     </View>
                   </View>
                   <View style={{ flex: 1 }}>
@@ -524,7 +524,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   avatarCam: {
     position: 'absolute', bottom: 0, right: 0, width: 22, height: 22, borderRadius: 11,
     backgroundColor: c.cardDark, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: c.borderColor,
+    borderWidth: 2, borderColor: c.accentYellow,
   },
   avatarInitial: { fontFamily: fonts.serif, fontSize: 24, fontWeight: '800', color: '#fff' },
   profileName: { fontFamily: fonts.serif, fontSize: 16, fontWeight: '700', color: c.textMain, marginBottom: 2 },

@@ -22,6 +22,15 @@ import { auth } from '../../config/firebase';
 import SERVER_URL from '../../config/serverUrl';
 import { GRADES_TEACHER, CURRICULA } from '../onboarding/OnboardingScreen';
 
+// Grade levels — mirrors the student onboarding grade selector so the teacher's
+// "Grades you teach" picker groups grades by level instead of a flat list.
+const GRADE_GROUPS = [
+  { label: 'Early Years',   grades: ['Nursery', 'LKG', 'UKG'] },
+  { label: 'Primary',       grades: ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'] },
+  { label: 'Middle School', grades: ['Grade 6', 'Grade 7', 'Grade 8'] },
+  { label: 'Senior School', grades: ['Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'] },
+];
+
 type ModalType = 'name' | 'email' | 'password' | 'school' | 'curriculum' | null;
 
 export default function TeacherSettingsScreen({ navigation }: any) {
@@ -619,18 +628,32 @@ export default function TeacherSettingsScreen({ navigation }: any) {
           })}
         </View>
         <Text style={[styles.modalFieldLabel, { marginTop: 12 }]}>Grades you teach (select all that apply)</Text>
-        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-          {GRADES_TEACHER.map(g => {
-            const on = editGrades.includes(g);
+        <View style={{ gap: 12, marginBottom: 4 }}>
+          {GRADE_GROUPS.map(group => {
+            const available = group.grades.filter(g => GRADES_TEACHER.includes(g));
+            if (available.length === 0) return null;
             return (
-              <TouchableOpacity
-                key={g} activeOpacity={0.8}
-                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, borderColor: on ? gold : colors.borderColor, backgroundColor: on ? gold + '18' : 'transparent' }}
-                onPress={() => setEditGrades(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])}
-              >
-                {on && <Feather name="check" size={12} color={gold} />}
-                <Text style={{ fontSize: 13, color: on ? gold : colors.textMuted, fontWeight: '600' }}>{g}</Text>
-              </TouchableOpacity>
+              <View key={group.label} style={{ gap: 7 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                  <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: gold }} />
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.5 }}>{group.label}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                  {available.map(g => {
+                    const on = editGrades.includes(g);
+                    return (
+                      <TouchableOpacity
+                        key={g} activeOpacity={0.8}
+                        style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, borderColor: on ? gold : colors.borderColor, backgroundColor: on ? gold + '18' : 'transparent' }}
+                        onPress={() => setEditGrades(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])}
+                      >
+                        {on && <Feather name="check" size={12} color={gold} />}
+                        <Text style={{ fontSize: 13, color: on ? gold : colors.textMuted, fontWeight: '600' }}>{g}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
             );
           })}
         </View>
