@@ -27,7 +27,7 @@ import { Feather } from '@expo/vector-icons';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, signOut, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import firebaseApp from '../../config/firebase';
-const TEAL = '#5F8A86'; // same value as OnboardingScreen — kept local to avoid circular import
+const TEAL = '#BAA467'; // same value as OnboardingScreen — kept local to avoid circular import
 
 export function usePhoneOtpVerification(mobile: string, setMobile: (v: string) => void, mobileCode = '+91') {
   const [mobileVerified, setMobileVerified] = useState(false);

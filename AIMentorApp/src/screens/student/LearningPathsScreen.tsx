@@ -35,39 +35,39 @@ type SubjectMeta = {
 const SUBJECT_META: Record<string, SubjectMeta> = {
   // Light pastels — same soft palette for both dark & light modes
   Mathematics:          { icon: 'trending-up',
-    accentDark: '#4A9E9A', bgFromDark: '#B8DDD8', bgToDark: '#C8EAE6',
-    accentLight: '#4A9E9A', bgFromLight: '#B8DDD8', bgToLight: '#C8EAE6' },
+    accentDark: '#BAA467', bgFromDark: '#D8CFA8', bgToDark: '#E6DEBC',
+    accentLight: '#BAA467', bgFromLight: '#D8CFA8', bgToLight: '#E6DEBC' },
   Science:              { icon: 'zap',
-    accentDark: '#4A9E70', bgFromDark: '#B0D8C0', bgToDark: '#C4E8D4',
-    accentLight: '#4A9E70', bgFromLight: '#B0D8C0', bgToLight: '#C4E8D4' },
+    accentDark: '#9FB2A4', bgFromDark: '#C8DCCC', bgToDark: '#D8E8DC',
+    accentLight: '#9FB2A4', bgFromLight: '#C8DCCC', bgToLight: '#D8E8DC' },
   EVS:                  { icon: 'sun',
-    accentDark: '#8A9E4A', bgFromDark: '#D0D8A0', bgToDark: '#DEE8B8',
-    accentLight: '#8A9E4A', bgFromLight: '#D0D8A0', bgToLight: '#DEE8B8' },
+    accentDark: '#9FB2A4', bgFromDark: '#C8DCCC', bgToDark: '#D8E8DC',
+    accentLight: '#9FB2A4', bgFromLight: '#C8DCCC', bgToLight: '#D8E8DC' },
   'Social Studies':     { icon: 'globe',
-    accentDark: '#A89840', bgFromDark: '#E0D898', bgToDark: '#EEE8B4',
-    accentLight: '#A89840', bgFromLight: '#E0D898', bgToLight: '#EEE8B4' },
+    accentDark: '#BAA467', bgFromDark: '#E0D898', bgToDark: '#EEE8B4',
+    accentLight: '#BAA467', bgFromLight: '#E0D898', bgToLight: '#EEE8B4' },
   English:              { icon: 'book-open',
-    accentDark: '#C85870', bgFromDark: '#F0C8D0', bgToDark: '#F8D8E0',
-    accentLight: '#C85870', bgFromLight: '#F0C8D0', bgToLight: '#F8D8E0' },
+    accentDark: '#C9A24E', bgFromDark: '#E4D4A8', bgToDark: '#F0E2BC',
+    accentLight: '#C9A24E', bgFromLight: '#E4D4A8', bgToLight: '#F0E2BC' },
   Arts:                 { icon: 'feather',
-    accentDark: '#C87848', bgFromDark: '#F0C8A8', bgToDark: '#F8D8BC',
-    accentLight: '#C87848', bgFromLight: '#F0C8A8', bgToLight: '#F8D8BC' },
+    accentDark: '#C9A24E', bgFromDark: '#E4D4A8', bgToDark: '#F0E2BC',
+    accentLight: '#C9A24E', bgFromLight: '#E4D4A8', bgToLight: '#F0E2BC' },
   'Physical Education': { icon: 'activity',
-    accentDark: '#C84868', bgFromDark: '#F0B8C8', bgToDark: '#F8CCd8',
-    accentLight: '#C84868', bgFromLight: '#F0B8C8', bgToLight: '#F8CCD8' },
+    accentDark: '#9FB2A4', bgFromDark: '#C8DCCC', bgToDark: '#D8E8DC',
+    accentLight: '#9FB2A4', bgFromLight: '#C8DCCC', bgToLight: '#D8E8DC' },
   ICT:                  { icon: 'monitor',
-    accentDark: '#3A9896', bgFromDark: '#A8D8D8', bgToDark: '#BCE8E8',
-    accentLight: '#3A9896', bgFromLight: '#A8D8D8', bgToLight: '#BCE8E8' },
+    accentDark: '#BAA467', bgFromDark: '#D8CFA8', bgToDark: '#E6DEBC',
+    accentLight: '#BAA467', bgFromLight: '#D8CFA8', bgToLight: '#E6DEBC' },
   'Economics & Trade':  { icon: 'dollar-sign',
-    accentDark: '#7A6E3A', bgFromDark: '#D8CC88', bgToDark: '#E8DCA0',
-    accentLight: '#7A6E3A', bgFromLight: '#D8CC88', bgToLight: '#E8DCA0' },
+    accentDark: '#C9A24E', bgFromDark: '#D8CC88', bgToDark: '#E8DCA0',
+    accentLight: '#C9A24E', bgFromLight: '#D8CC88', bgToLight: '#E8DCA0' },
 };
 
 function subjectMeta(subject: string): SubjectMeta {
   return SUBJECT_META[subject] ?? {
     icon: 'book',
-    accentDark: '#C3DCD8',  bgFromDark: '#1E3A38',  bgToDark: '#2A5250',
-    accentLight: '#3A7A76', bgFromLight: '#D8EEEC', bgToLight: '#C3DCD8',
+    accentDark: '#BAA467',  bgFromDark: '#3A3520',  bgToDark: '#4A4228',
+    accentLight: '#9A7B2E', bgFromLight: '#E6DEBC', bgToLight: '#D8CFA8',
   };
 }
 
@@ -95,10 +95,10 @@ interface SearchResult {
 }
 
 const NCERT_SUBJECTS = [
-  { subject: 'Mathematics', icon: 'trending-up' as const, color: '#6366f1', available: true },
-  { subject: 'Science', icon: 'zap' as const, color: '#10b981', available: true },
-  { subject: 'English', icon: 'book-open' as const, color: '#8b5cf6', available: false },
-  { subject: 'Social Studies', icon: 'globe' as const, color: '#f59e0b', available: false },
+  { subject: 'Mathematics', icon: 'trending-up' as const, color: '#BAA467', available: true },
+  { subject: 'Science', icon: 'zap' as const, color: '#9FB2A4', available: true },
+  { subject: 'English', icon: 'book-open' as const, color: '#C9A24E', available: false },
+  { subject: 'Social Studies', icon: 'globe' as const, color: '#C9A24E', available: false },
 ];
 
 type CurriculumTopic = {

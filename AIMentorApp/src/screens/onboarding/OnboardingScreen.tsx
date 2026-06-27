@@ -222,8 +222,8 @@ export const LEARNING_STYLES: { id: string; label: string; icon: string; desc: s
   { id: 'auditory', label: 'Auditory', icon: 'headphones', desc: 'I learn best by listening' },
 ];
 
-export const TEAL = '#5F8A86';
-const FOREST = '#5A8A70';
+export const TEAL = '#BAA467';
+const FOREST = '#BAA467';
 
 function generateStudentId(name: string) {
   const initials = name
@@ -275,7 +275,10 @@ function getSteps(role: string) {
 }
 
 export default function OnboardingScreen() {
-  const { user, updateUser, saveProfile, logout } = useAuth();
+  const { user, updateUser, saveProfile, logout, cancelAddParentProfile } = useAuth();
+  // True when a teacher is adding a parent profile — back/exit returns to the
+  // teacher dashboard (not sign-out), and nothing parent-related is persisted.
+  const isAddingParent = getPendingReturnRole() === 'teacher';
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
@@ -743,17 +746,36 @@ export default function OnboardingScreen() {
     // Handle Android hardware back button
     const backAction = () => {
       if (step > 0) { setStep(s => s - 1); return true; }
+      // Teacher adding a parent profile → return to the teacher dashboard cleanly
+      // (no sign-out, no half-created parent), since nothing was persisted.
+      if (isAddingParent) { cancelAddParentProfile(); return true; }
       showExitConfirm();
       return true;
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
-  }, [step, logout]);
+  }, [step, logout, isAddingParent]);
 
+  // Web: trap the BROWSER Back button while adding a parent profile so it returns
+  // to the teacher dashboard in one tap instead of overshooting to the landing page.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !isAddingParent || typeof window === 'undefined') return;
+    // Push a sentinel state so the first Back press pops THIS instead of leaving.
+    window.history.pushState(null, '', window.location.href);
+    const onPop = () => {
+      // Re-arm the trap (in case the user keeps pressing) and cancel cleanly.
+      window.history.pushState(null, '', window.location.href);
+      cancelAddParentProfile();
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [isAddingParent]);
 
   function handleBack() {
     if (step > 0) {
       setStep(s => s - 1);
+    } else if (isAddingParent) {
+      cancelAddParentProfile();
     } else {
       showExitConfirm();
     }
@@ -1184,8 +1206,8 @@ export default function OnboardingScreen() {
                       </View>
                     ))}
                     {cred.verificationRequired && (
-                      <View style={{ backgroundColor: '#5F8A8612', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: '#5F8A8630', gap: 4 }}>
-                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#5F8A86' }}>Your child can log in right away.</Text>
+                      <View style={{ backgroundColor: '#BAA46712', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: '#BAA46730', gap: 4 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#BAA467' }}>Your child can log in right away.</Text>
                         <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
                           A verification link was sent to <Text style={{ fontWeight: '700', color: colors.textMain }}>{cred.loginId}</Text>. You (the parent) can open that inbox and click the link — this enables "Forgot Password" if your child ever needs it.
                         </Text>

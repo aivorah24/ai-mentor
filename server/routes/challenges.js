@@ -161,6 +161,22 @@ router.post('/assign', async (req, res) => {
   const challengeCheck = await getChallengeById(challengeId);
   if (!challengeCheck) return res.status(404).json({ error: 'Challenge not found' });
 
+  // Grade guard: a challenge may only be assigned to a student in the SAME grade.
+  // Prevents a Grade 4 challenge landing on a Grade 6 student (client filter bypass).
+  if (challengeCheck.grade) {
+    const normGrade = (g) => String(g || '').toLowerCase().replace(/grade/g, '').replace(/\s+/g, '').trim();
+    const { data: stu } = await supabase
+      .from('users')
+      .select('grade')
+      .eq('id', studentId)
+      .maybeSingle();
+    if (stu && stu.grade && normGrade(stu.grade) !== normGrade(challengeCheck.grade)) {
+      return res.status(400).json({
+        error: `This challenge is for ${challengeCheck.grade}, but the student is in ${stu.grade}.`,
+      });
+    }
+  }
+
   // Return existing if already assigned
   const { data: existing } = await supabase
     .from('challenge_assignments')

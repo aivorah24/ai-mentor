@@ -10,10 +10,10 @@ import Header from '../../components/common/Header';
 import { spacing, radius, fonts } from '../../theme';
 
 // ── Palette ──────────────────────────────────────────────────
-const TEAL   = '#5F8A86';
-const GOLD   = '#8A8358';
-const ROSE   = '#B8797E';
-const GREEN  = '#5A8A70';
+const TEAL   = '#9FB2A4';  // sage
+const GOLD   = '#BAA467';  // gold
+const ROSE   = '#C9A24E';  // deep gold
+const GREEN  = '#7E9A86';  // deep sage
 
 // ── Merchandise catalogue ─────────────────────────────────────
 const MERCH = [

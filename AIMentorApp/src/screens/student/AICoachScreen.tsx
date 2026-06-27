@@ -649,29 +649,29 @@ export default function AICoachScreen({ navigation }: any) {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.upgradePlanCard, { borderColor: '#EFD1D4' + '30' }]}
+                  style={[styles.upgradePlanCard, { borderColor: '#C9A24E' + '30' }]}
                   onPress={() => navigation.navigate('Subscription')}
                   activeOpacity={0.85}
                 >
-                  <Text style={[styles.upgradePlanName, { color: '#EFD1D4' }]}>Max</Text>
+                  <Text style={[styles.upgradePlanName, { color: '#C9A24E' }]}>Max</Text>
                   <Text style={[styles.upgradePlanPrice, { color: colors.textMain }]}>
                     {'\u20B9'}999<Text style={[styles.upgradePlanPeriod, { color: colors.textDim }]}>/mo</Text>
                   </Text>
                   <View style={styles.upgradePlanFeatures}>
                     <View style={styles.upgradePlanFeatureRow}>
-                      <Feather name="check" size={12} color="#EFD1D4" />
+                      <Feather name="check" size={12} color="#C9A24E" />
                       <Text style={[styles.upgradePlanFeatureText, { color: colors.textMuted }]}>Everything in Pro</Text>
                     </View>
                     <View style={styles.upgradePlanFeatureRow}>
-                      <Feather name="check" size={12} color="#EFD1D4" />
+                      <Feather name="check" size={12} color="#C9A24E" />
                       <Text style={[styles.upgradePlanFeatureText, { color: colors.textMuted }]}>Up to 3 child profiles</Text>
                     </View>
                     <View style={styles.upgradePlanFeatureRow}>
-                      <Feather name="check" size={12} color="#EFD1D4" />
+                      <Feather name="check" size={12} color="#C9A24E" />
                       <Text style={[styles.upgradePlanFeatureText, { color: colors.textMuted }]}>Priority responses</Text>
                     </View>
                   </View>
-                  <View style={[styles.upgradePlanCta, { backgroundColor: '#EFD1D4' }]}>
+                  <View style={[styles.upgradePlanCta, { backgroundColor: '#C9A24E' }]}>
                     <Text style={styles.upgradePlanCtaText}>Upgrade to Max</Text>
                   </View>
                 </TouchableOpacity>

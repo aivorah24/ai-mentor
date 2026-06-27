@@ -12,8 +12,8 @@ import ScreenLayout from '../../components/common/ScreenLayout';
 import { spacing, radius, fonts } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
-const TEAL   = '#5F8A86';
-const FOREST = '#5A8A70';
+const TEAL   = '#9FB2A4';  // sage
+const FOREST = '#7E9A86';  // deep sage
 const AMBER  = '#C5A56A';  // warm pastel gold — premium
 
 // Premium gating temporarily OFF — flip to true to re-enable the lock + upgrade banner later.
@@ -32,16 +32,16 @@ interface StoryMeta {
 }
 
 const PASTEL_GRAD: Record<string, [string, string]> = {
-  '#7c3aed': ['#9B8FC0', '#7BA8A4'],
-  '#4f46e5': ['#8FA0C0', '#7BA8A4'],
-  '#0ea5e9': ['#7EA8C0', '#82A896'],
-  '#6366f1': ['#9B8FC0', '#7EA8C0'],
-  '#ea580c': ['#C0A07E', '#7BA8A4'],
-  '#dc2626': ['#C08898', '#9B8FC0'],
-  '#16a34a': ['#82A896', '#7BA8A4'],
-  '#0891b2': ['#7EA8C0', '#82A896'],
-  '#10b981': ['#82A896', '#7EA8C0'],
-  '#f59e0b': ['#C0A07E', '#82A896'],
+  '#7c3aed': ['#C5BD96', '#9FB2A4'],
+  '#4f46e5': ['#BAA467', '#9FB2A4'],
+  '#0ea5e9': ['#9FB2A4', '#C5BD96'],
+  '#6366f1': ['#C5BD96', '#BAA467'],
+  '#ea580c': ['#C0A07E', '#9FB2A4'],
+  '#dc2626': ['#C5BD96', '#BAA467'],
+  '#16a34a': ['#9FB2A4', '#C5BD96'],
+  '#0891b2': ['#9FB2A4', '#C5BD96'],
+  '#10b981': ['#9FB2A4', '#C5BD96'],
+  '#f59e0b': ['#C0A07E', '#9FB2A4'],
 };
 
 const COLLECTION_PASTEL: Record<string, string> = {
@@ -174,7 +174,7 @@ export default function BhagavathaStoriesScreen({ navigation }: any) {
 
                 <View style={isWide ? styles.grid : styles.list}>
                 {items.map(story => {
-                  const grad   = PASTEL_GRAD[story.coverColor] ?? ['#7BA8A4', '#82A896'];
+                  const grad   = PASTEL_GRAD[story.coverColor] ?? ['#9FB2A4', '#C5BD96'];
                   const locked = isLocked(story.id);
                   return (
                     <TouchableOpacity

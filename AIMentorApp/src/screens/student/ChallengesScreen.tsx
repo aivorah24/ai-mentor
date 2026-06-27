@@ -25,7 +25,7 @@ const DIFF_COLORS: Record<string, string> = {
 };
 
 const CAT_COLORS: Record<string, string> = {
-  'Chapter Quiz':    '#6366f1',
+  'Chapter Quiz':    '#BAA467',
   'School Challenge':'#f59e0b',
 };
 
@@ -414,9 +414,9 @@ export default function ChallengesScreen({ navigation, route }: any) {
                       const s = ch.score!;
                       let cfg: { label: string; emoji: string; bg: string; border: string; text: string } | null = null;
                       if (s >= 80)      cfg = { label: 'Top 1%',  emoji: '🥇', bg: '#fbbf24', border: '#f59e0b', text: '#78350f' };
-                      else if (s >= 60) cfg = { label: 'Top 5%',  emoji: '🥈', bg: '#c084fc', border: '#a855f7', text: '#3b0764' };
-                      else if (s >= 40) cfg = { label: 'Top 10%', emoji: '🥉', bg: '#34d399', border: '#059669', text: '#022c22' };
-                      else if (s >= 20) cfg = { label: 'Top 25%', emoji: '⭐', bg: '#60a5fa', border: '#2563eb', text: '#1e3a5f' };
+                      else if (s >= 60) cfg = { label: 'Top 5%',  emoji: '🥈', bg: '#D8CFA8', border: '#BAA467', text: '#4A4228' };
+                      else if (s >= 40) cfg = { label: 'Top 10%', emoji: '🥉', bg: '#C5BD96', border: '#9A7B2E', text: '#3A3520' };
+                      else if (s >= 20) cfg = { label: 'Top 25%', emoji: '⭐', bg: '#C8DCCC', border: '#9FB2A4', text: '#2A3530' };
                       if (!cfg) return null;
                       const isGold = s >= 95;
                       return (
@@ -531,9 +531,9 @@ export default function ChallengesScreen({ navigation, route }: any) {
                     let band: { label: string; emoji: string; bg: string; border: string; labelColor: string; sub: string } | null = null;
                     if (s === 100)    band = { label: 'Perfect!',  emoji: '🌟', bg: '#bbf7d0', border: '#4ade80', labelColor: '#14532d', sub: 'Incredible! A flawless perfect score!' };
                     else if (s >= 80) band = { label: 'Top 1%',   emoji: '🥇', bg: '#bbf7d0', border: '#4ade80', labelColor: '#14532d', sub: 'Exceptional! You are among the best!' };
-                    else if (s >= 60) band = { label: 'Top 5%',   emoji: '🥈', bg: '#d8b4fe', border: '#a855f7', labelColor: '#3b0764', sub: 'Outstanding result! Keep it up!' };
-                    else if (s >= 40) band = { label: 'Top 10%',  emoji: '🥉', bg: '#a7f3d0', border: '#059669', labelColor: '#022c22', sub: 'Great performance! Well done!' };
-                    else if (s >= 20) band = { label: 'Top 25%',  emoji: '⭐', bg: '#bfdbfe', border: '#2563eb', labelColor: '#1e3a5f', sub: 'Good effort! Keep practising!' };
+                    else if (s >= 60) band = { label: 'Top 5%',   emoji: '🥈', bg: '#E6DEBC', border: '#BAA467', labelColor: '#4A4228', sub: 'Outstanding result! Keep it up!' };
+                    else if (s >= 40) band = { label: 'Top 10%',  emoji: '🥉', bg: '#E0D8B8', border: '#9A7B2E', labelColor: '#3A3520', sub: 'Great performance! Well done!' };
+                    else if (s >= 20) band = { label: 'Top 25%',  emoji: '⭐', bg: '#D8E4DC', border: '#9FB2A4', labelColor: '#2A3530', sub: 'Good effort! Keep practising!' };
                     if (!band) return null;
                     return (
                       <View style={[styles.scoreBandBanner, { backgroundColor: band.bg, borderColor: band.border }]}>
@@ -577,10 +577,10 @@ export default function ChallengesScreen({ navigation, route }: any) {
                       let band: { label: string; color: string; icon: string } | null = null;
                       if (myRank && totalStudents > 0) {
                         const pct = (myRank / totalStudents) * 100;
-                        if (pct <= 3)       band = { label: 'Top 3%',  color: '#f59e0b', icon: 'award' };
-                        else if (pct <= 5)  band = { label: 'Top 5%',  color: '#a78bfa', icon: 'trending-up' };
-                        else if (pct <= 10) band = { label: 'Top 10%', color: '#34d399', icon: 'trending-up' };
-                        else if (pct <= 25) band = { label: 'Top 25%', color: '#60a5fa', icon: 'trending-up' };
+                        if (pct <= 3)       band = { label: 'Top 3%',  color: '#C9A24E', icon: 'award' };
+                        else if (pct <= 5)  band = { label: 'Top 5%',  color: '#BAA467', icon: 'trending-up' };
+                        else if (pct <= 10) band = { label: 'Top 10%', color: '#9A7B2E', icon: 'trending-up' };
+                        else if (pct <= 25) band = { label: 'Top 25%', color: '#9FB2A4', icon: 'trending-up' };
                       }
 
                       return (

@@ -134,19 +134,19 @@ function buildWordBoundaries(words: string[]): number[] {
 
 // ── Level + topic colors ────────────────────────────────────────────────
 const LEVEL_META: Record<string, { bg: string; text: string; label: string; border: string }> = {
-  easy:   { bg: '#93B0AC20', text: '#93B0AC', label: 'Easy',   border: '#93B0AC40' },
+  easy:   { bg: '#9FB2A420', text: '#9FB2A4', label: 'Easy',   border: '#9FB2A440' },
   medium: { bg: '#C5BD9620', text: '#C5BD96', label: 'Medium', border: '#C5BD9640' },
-  hard:   { bg: '#EFD1D420', text: '#EFD1D4', label: 'Hard',   border: '#EFD1D440' },
+  hard:   { bg: '#C98A8A20', text: '#C98A8A', label: 'Hard',   border: '#C98A8A40' },
 };
 
 const RESULT_META: Record<string, { ring: string; label: string; icon: string }> = {
-  excellent:        { ring: '#93B0AC', label: 'Excellent!',       icon: 'star' },
+  excellent:        { ring: '#9FB2A4', label: 'Excellent!',       icon: 'star' },
   good:             { ring: '#C3DCD8', label: 'Good Job!',        icon: 'thumbs-up' },
   developing:       { ring: '#C5BD96', label: 'Keep Going!',      icon: 'trending-up' },
-  'needs-practice': { ring: '#EFD1D4', label: 'Keep Practising!', icon: 'heart' },
+  'needs-practice': { ring: '#C98A8A', label: 'Keep Practising!', icon: 'heart' },
 };
 
-const DEFAULT_GRADIENT: [string, string] = ['#93B0AC', '#C3DCD8'];
+const DEFAULT_GRADIENT: [string, string] = ['#9FB2A4', '#C3DCD8'];
 
 // ═══════════════════════════════════════════════════════════════════════
 export default function ReadAloudScreen() {
@@ -1653,7 +1653,7 @@ export default function ReadAloudScreen() {
 
   const renderCalibrationPrompt = () => (
     <View style={{ alignItems: 'center', paddingTop: 40, paddingHorizontal: 20 }}>
-      <LinearGradient colors={['#93B0AC28', '#C3DCD818']} style={{ borderRadius: 20, padding: 32, alignItems: 'center', width: '100%', maxWidth: 500 }}>
+      <LinearGradient colors={['#9FB2A428', '#C3DCD818']} style={{ borderRadius: 20, padding: 32, alignItems: 'center', width: '100%', maxWidth: 500 }}>
         <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.accentYellow + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
           <Feather name="bar-chart-2" size={32} color={colors.accentYellow} />
         </View>
@@ -1680,7 +1680,7 @@ export default function ReadAloudScreen() {
   const renderPickPhase = () => (
     <View style={s.pickContainer}>
       {/* Hero */}
-      <LinearGradient colors={['#93B0AC18', '#C3DCD810']} style={s.heroCard}>
+      <LinearGradient colors={['#9FB2A418', '#C3DCD810']} style={s.heroCard}>
         <View style={s.heroIconCircle}>
           <Feather name="mic" size={28} color={colors.accentYellow} />
         </View>
@@ -1900,14 +1900,14 @@ export default function ReadAloudScreen() {
                     style={[
                       s.liveWord,
                       {
-                        color: status === 'correct' ? '#93B0AC'
-                             : status === 'misread' ? '#EFD1D4'
+                        color: status === 'correct' ? '#9FB2A4'
+                             : status === 'misread' ? '#C98A8A'
                              : status === 'skipped' ? '#C5BD96'
                              : isCurrent ? colors.textMain
                              : colors.textMain + 'CC',
                         backgroundColor: isCurrent ? colors.accentYellow + '18'
-                             : status === 'correct' ? '#93B0AC10'
-                             : status === 'misread' ? '#EFD1D414'
+                             : status === 'correct' ? '#9FB2A410'
+                             : status === 'misread' ? '#C98A8A14'
                              : status === 'skipped' ? '#C5BD9614'
                              : 'transparent',
                         borderColor: isCurrent ? colors.accentYellow + '70' : 'transparent',
@@ -2086,12 +2086,12 @@ export default function ReadAloudScreen() {
 
           <View style={s.statsRow}>
             <View style={s.statItem}>
-              <Feather name="check-circle" size={16} color="#93B0AC" />
+              <Feather name="check-circle" size={16} color="#9FB2A4" />
               <Text style={[s.statNum, { color: colors.textMain }]}>{result?.correct ?? 0}</Text>
               <Text style={[s.statLabel, { color: colors.textDim }]}>Correct</Text>
             </View>
             <View style={s.statItem}>
-              <Feather name="x-circle" size={16} color="#EFD1D4" />
+              <Feather name="x-circle" size={16} color="#C98A8A" />
               <Text style={[s.statNum, { color: colors.textMain }]}>{result?.misread ?? 0}</Text>
               <Text style={[s.statLabel, { color: colors.textDim }]}>Misread</Text>
             </View>
@@ -2121,7 +2121,7 @@ export default function ReadAloudScreen() {
                 <Feather name="bar-chart-2" size={14} color={colors.accentYellow} />
                 <Text style={{ color: colors.accentYellow, fontWeight: '700', fontSize: 13, marginLeft: 6 }}>Lexile {(result as any).lexile}L</Text>
                 {(result as any)?.lexileChange !== 0 && (
-                  <Text style={{ color: (result as any).lexileChange > 0 ? '#93B0AC' : '#EFD1D4', fontWeight: '700', fontSize: 12, marginLeft: 4 }}>
+                  <Text style={{ color: (result as any).lexileChange > 0 ? '#9FB2A4' : '#C98A8A', fontWeight: '700', fontSize: 12, marginLeft: 4 }}>
                     {(result as any).lexileChange > 0 ? '+' : ''}{(result as any).lexileChange}
                   </Text>
                 )}
@@ -2150,8 +2150,8 @@ export default function ReadAloudScreen() {
                 <Text
                   key={i}
                   style={{
-                    color: status === 'correct' ? '#93B0AC'
-                         : status === 'misread' ? '#EFD1D4'
+                    color: status === 'correct' ? '#9FB2A4'
+                         : status === 'misread' ? '#C98A8A'
                          : status === 'skipped' ? '#C5BD96'
                          : colors.textDim,
                     fontWeight: status !== 'pending' ? '600' : '400',
@@ -2173,8 +2173,8 @@ export default function ReadAloudScreen() {
             <Text style={[s.sectionTitle, { color: colors.textDim }]}>Words to Practice</Text>
             {result.errors.slice(0, 10).map((e, i) => (
               <View key={i} style={[s.errorRow, { borderColor: colors.borderColor + '20' }]}>
-                <View style={[s.errorBadge, { backgroundColor: e.type === 'misread' ? '#EFD1D420' : '#C5BD9620' }]}>
-                  <Text style={{ fontSize: 10, color: e.type === 'misread' ? '#EFD1D4' : '#C5BD96', fontWeight: '700' }}>
+                <View style={[s.errorBadge, { backgroundColor: e.type === 'misread' ? '#C98A8A20' : '#C5BD9620' }]}>
+                  <Text style={{ fontSize: 10, color: e.type === 'misread' ? '#C98A8A' : '#C5BD96', fontWeight: '700' }}>
                     {e.type === 'misread' ? 'Misread' : 'Skipped'}
                   </Text>
                 </View>

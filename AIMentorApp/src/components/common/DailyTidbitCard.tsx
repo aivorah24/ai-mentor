@@ -182,8 +182,8 @@ export default function DailyTidbitCard({ grade, studentId }: Props) {
   }
 
   // ── Theme tokens ─────────────────────────────────────────────────
-  const teal        = '#5F8A86';
-  const rose        = '#B8797E';
+  const teal        = '#BAA467';
+  const rose        = '#BAA467';
   const cardBg      = isDark ? colors.cardDark  : '#F0F7F6';
   const borderCol   = isDark ? colors.borderColor : teal + '25';
   const activeTab   = tab === 'gk' ? teal : rose;

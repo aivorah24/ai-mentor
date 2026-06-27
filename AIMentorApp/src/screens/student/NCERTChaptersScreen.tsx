@@ -56,23 +56,23 @@ const UNIT_ICONS: Record<string, string> = {
 
 const UNIT_COLORS: Record<string, string> = {
   // Mathematics
-  Numbers: '#6366f1',
-  'Addition & Subtraction': '#10b981',
-  Measurement: '#f59e0b',
-  Geometry: '#3b82f6',
-  'Weight & Mass': '#8b5cf6',
-  Time: '#06b6d4',
-  'Multiplication & Division': '#ec4899',
-  Patterns: '#f97316',
-  Capacity: '#14b8a6',
-  'Division & Fractions': '#a855f7',
-  'Data Handling': '#22c55e',
-  Money: '#eab308',
+  Numbers: '#BAA467',
+  'Addition & Subtraction': '#9FB2A4',
+  Measurement: '#C9A24E',
+  Geometry: '#BAA467',
+  'Weight & Mass': '#9FB2A4',
+  Time: '#C9A24E',
+  'Multiplication & Division': '#BAA467',
+  Patterns: '#9FB2A4',
+  Capacity: '#C9A24E',
+  'Division & Fractions': '#BAA467',
+  'Data Handling': '#9FB2A4',
+  Money: '#C9A24E',
   // Science (EVS)
-  'Unit 1 — Our Families and Communities': '#f59e0b',
-  'Unit 2 — Living Together': '#10b981',
-  'Unit 3 — Gifts of Nature': '#06b6d4',
-  'Unit 4 — Things Around Us': '#8b5cf6',
+  'Unit 1 — Our Families and Communities': '#C9A24E',
+  'Unit 2 — Living Together': '#9FB2A4',
+  'Unit 3 — Gifts of Nature': '#BAA467',
+  'Unit 4 — Things Around Us': '#9FB2A4',
 };
 
 // math: true  = calculation-heavy chapters (step-by-step solving needed)
@@ -95,10 +95,10 @@ const CHAPTER_MODULES: Record<number, { math: boolean; drawing: boolean; words: 
 };
 
 const MODULE_DEFS = {
-  learn: { label: 'Start Learning', icon: 'zap', color: '#6366f1', route: 'Learn5E' },
-  math: { label: 'Math Helper', icon: 'hash', color: '#10b981', route: 'MathHelper' },
-  words: { label: 'Word Wizard', icon: 'book', color: '#f59e0b', route: 'WordWizard' },
-  draw: { label: 'Drawing Buddy', icon: 'edit-3', color: '#ec4899', route: 'DrawingBuddy' },
+  learn: { label: 'Start Learning', icon: 'zap', color: '#BAA467', route: 'Learn5E' },
+  math: { label: 'Math Helper', icon: 'hash', color: '#9FB2A4', route: 'MathHelper' },
+  words: { label: 'Word Wizard', icon: 'book', color: '#C9A24E', route: 'WordWizard' },
+  draw: { label: 'Drawing Buddy', icon: 'edit-3', color: '#BAA467', route: 'DrawingBuddy' },
 };
 
 // CBSE follows the NCERT syllabus, so it's the single NCERT-syllabus option (#157).
@@ -109,16 +109,16 @@ const CURRICULUM_META: Record<
   CurriculumKey,
   { accent: string; icon: string; sub: string; status: string }
 > = {
-  NCERT: { accent: '#6366f1', icon: 'book-open', sub: 'National Curriculum', status: 'Active' },
-  IB: { accent: '#10b981', icon: 'globe', sub: 'International Baccalaureate', status: 'Coming Soon' },
-  CBSE: { accent: '#6366f1', icon: 'book-open', sub: 'NCERT syllabus', status: 'Active' },
-  IGCSE: { accent: '#06b6d4', icon: 'award', sub: 'Cambridge Track', status: 'Coming Soon' },
+  NCERT: { accent: '#BAA467', icon: 'book-open', sub: 'National Curriculum', status: 'Active' },
+  IB: { accent: '#9FB2A4', icon: 'globe', sub: 'International Baccalaureate', status: 'Coming Soon' },
+  CBSE: { accent: '#BAA467', icon: 'book-open', sub: 'NCERT syllabus', status: 'Active' },
+  IGCSE: { accent: '#9FB2A4', icon: 'award', sub: 'Cambridge Track', status: 'Coming Soon' },
 };
 
 const GRADE_META: Record<GradeKey, { accent: string; icon: string }> = {
-  'Grade 3': { accent: '#6366f1', icon: 'book' },
-  'Grade 4': { accent: '#10b981', icon: 'compass' },
-  'Grade 5': { accent: '#f59e0b', icon: 'trending-up' },
+  'Grade 3': { accent: '#BAA467', icon: 'book' },
+  'Grade 4': { accent: '#9FB2A4', icon: 'compass' },
+  'Grade 5': { accent: '#C9A24E', icon: 'trending-up' },
 };
 
 function ChapterCard({

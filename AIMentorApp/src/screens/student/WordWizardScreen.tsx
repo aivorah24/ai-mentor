@@ -25,8 +25,8 @@ interface WordEntry {
 }
 interface WordResult { word: string; stars: number; correct: boolean; }
 
-const CARD_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6'];
-const STAR_COLOR  = '#f59e0b';
+const CARD_COLORS = ['#BAA467', '#9FB2A4', '#C9A24E', '#B2C2B7'];
+const STAR_COLOR  = '#C9A24E';
 
 // ── Audio helpers ─────────────────────────────────────────────────────────────
 let _audio: any = null;
@@ -297,10 +297,10 @@ function WordChallenge({ word, meaning, challenge, accent, colors, onResult }: {
           </View>
 
           <View style={[wc.explainBox, {
-            backgroundColor: stars > 0 ? '#10b98112' : '#8b5cf612',
-            borderColor:     stars > 0 ? '#10b98140' : '#8b5cf640',
+            backgroundColor: stars > 0 ? '#10b98112' : '#BAA46712',
+            borderColor:     stars > 0 ? '#10b98140' : '#BAA46740',
           }]}>
-            <Feather name={stars > 0 ? 'award' : 'info'} size={16} color={stars > 0 ? '#10b981' : '#8b5cf6'} />
+            <Feather name={stars > 0 ? 'award' : 'info'} size={16} color={stars > 0 ? '#10b981' : '#BAA467'} />
             <View style={{ flex: 1, gap: 6 }}>
               <Text style={[wc.explainText, { color: colors.textMain }]}>
                 {speaking ? 'Ms. Zara is explaining…' : aiExplain}
@@ -310,8 +310,8 @@ function WordChallenge({ word, meaning, challenge, accent, colors, onResult }: {
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' }}
                   onPress={async () => { setSpeaking(true); await speak(aiExplain); setSpeaking(false); }}
                 >
-                  <Feather name="volume-2" size={12} color={stars > 0 ? '#10b981' : '#8b5cf6'} />
-                  <Text style={{ color: stars > 0 ? '#10b981' : '#8b5cf6', fontSize: 11, fontWeight: '700' }}>Hear again</Text>
+                  <Feather name="volume-2" size={12} color={stars > 0 ? '#10b981' : '#BAA467'} />
+                  <Text style={{ color: stars > 0 ? '#10b981' : '#BAA467', fontSize: 11, fontWeight: '700' }}>Hear again</Text>
                 </TouchableOpacity>
               )}
             </View>

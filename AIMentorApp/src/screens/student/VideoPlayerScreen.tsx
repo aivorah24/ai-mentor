@@ -86,10 +86,10 @@ export default function VideoPlayerScreen({ navigation, route }: any) {
   }, [topic, grade]);
 
   const sourceColor: Record<string, string> = {
-    vyond:   '#7c3aed',
+    vyond:   '#BAA467',
     youtube: '#ef4444',
-    vimeo:   '#1ab7ea',
-    custom:  '#6366f1',
+    vimeo:   '#9FB2A4',
+    custom:  '#BAA467',
   };
 
   return (
@@ -218,7 +218,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   aiCard: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.lg,
-    backgroundColor: c.accentCyan + '10', borderWidth: 1, borderColor: c.accentCyan + '25',
+    backgroundColor: c.accentYellow + '10', borderWidth: 1, borderColor: c.accentYellow + '25',
     borderRadius: radius.lg, padding: spacing.lg,
   },
   aiCardTitle: { fontSize: 13, fontWeight: '700', color: c.textMain },
