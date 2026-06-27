@@ -12,6 +12,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
@@ -20,6 +21,7 @@ import ScreenLayout from '../../components/common/ScreenLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentData, formatLevel } from '../../context/StudentDataContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useNotification } from '../../context/NotificationContext';
 import {
   updateEmail,
   updatePassword,
@@ -36,6 +38,7 @@ type ModalType = 'name' | 'email' | 'password' | 'recovery' | 'delete' | 'grade'
 
 export default function SettingsScreen({ navigation, route }: any) {
   const { user, updateUser, logout, refreshProfile } = useAuth();
+  const { triggerPoll } = useNotification();
   // Re-pull profile on focus so a parent's grade/curriculum edit reflects here.
   useFocusEffect(useCallback(() => { refreshProfile(); }, []));
   const { stats } = useStudentData();
@@ -85,16 +88,41 @@ export default function SettingsScreen({ navigation, route }: any) {
         if (prefs.recoveryEmail) setRecoverySaved(prefs.recoveryEmail);
         notifLoaded.current = true;
       }).catch(() => { notifLoaded.current = true; });
+    // Bell prefs live in AsyncStorage — load them so the toggles reflect what the
+    // notification bell actually uses (these win over the server copy for gating).
+    AsyncStorage.getItem(`notifPrefs_${user.email}`).then(raw => {
+      if (!raw) return;
+      try {
+        const p = JSON.parse(raw);
+        if (p.assignmentAlerts !== undefined) setAssignmentAlerts(p.assignmentAlerts);
+        if (p.challengeUpdates !== undefined) setChallengeUpdates(p.challengeUpdates);
+      } catch {}
+    }).catch(() => {});
   }, [user?.email]);
 
   // Save notification preference to server whenever it changes (after initial load)
   function saveNotifPref(key: string, value: boolean) {
-    if (!user?.email || !notifLoaded.current) return;
-    fetch(`${SERVER_URL}/user/preferences`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: user.email, [key]: value }),
-    }).catch(() => {});
+    if (!user?.email) return;
+    // Persist to the server profile…
+    if (notifLoaded.current) {
+      fetch(`${SERVER_URL}/user/preferences`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, [key]: value }),
+      }).catch(() => {});
+    }
+    // …AND to the AsyncStorage key the notification bell reads, then poll so the
+    // toggle actually turns bell notifications on/off (same as parent settings).
+    (async () => {
+      try {
+        const NK = `notifPrefs_${user.email}`;
+        const raw = await AsyncStorage.getItem(NK);
+        const prefs = raw ? JSON.parse(raw) : {};
+        prefs[key] = value;
+        await AsyncStorage.setItem(NK, JSON.stringify(prefs));
+        triggerPoll();
+      } catch {}
+    })();
   }
 
   // Modal state
@@ -495,12 +523,12 @@ export default function SettingsScreen({ navigation, route }: any) {
           <SectionHeader icon="bell" label="Notifications" color={colors.accentYellow} styles={styles} />
           <View style={styles.card}>
             {[
-              { icon: 'bell', label: 'Assignment Alerts', sub: 'Due date reminders' },
-              { icon: 'bar-chart-2', label: 'Challenge Updates', sub: 'New challenges and leaderboard changes' },
+              { icon: 'bell', label: 'Assignment Alerts', sub: 'Due date reminders', key: 'assignmentAlerts', val: assignmentAlerts, set: setAssignmentAlerts },
+              { icon: 'bar-chart-2', label: 'Challenge Updates', sub: 'New challenges and leaderboard changes', key: 'challengeUpdates', val: challengeUpdates, set: setChallengeUpdates },
               { icon: 'file-text', label: 'Weekly Report', sub: 'Progress summary every week' },
               { icon: 'zap', label: 'AI Suggestions', sub: 'Personalised learning tips from AI' },
               { icon: 'send', label: 'Push Notifications', sub: 'Real-time alerts on your device' },
-            ].map((item, i) => (
+            ].map((item: any, i) => (
               <View key={item.label}>
                 {i > 0 && <View style={styles.rowDivider} />}
                 <View style={styles.iconRow}>
@@ -509,7 +537,16 @@ export default function SettingsScreen({ navigation, route }: any) {
                     <Text style={styles.fieldLabel}>{item.label}</Text>
                     <Text style={styles.fieldSub}>{item.sub}</Text>
                   </View>
-                  <View style={styles.comingSoonBadge}><Text style={styles.comingSoonText}>Soon</Text></View>
+                  {item.key ? (
+                    <Switch
+                      value={item.val}
+                      onValueChange={(v) => { item.set(v); saveNotifPref(item.key, v); }}
+                      trackColor={{ false: colors.borderColor, true: colors.accentYellow }}
+                      thumbColor="white"
+                    />
+                  ) : (
+                    <View style={styles.comingSoonBadge}><Text style={styles.comingSoonText}>Soon</Text></View>
+                  )}
                 </View>
               </View>
             ))}

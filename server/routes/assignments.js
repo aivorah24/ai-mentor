@@ -1500,40 +1500,54 @@ router.post('/', async (req, res) => {
     }
   } catch (_) {}
 
-  // Notify parent(s) when an assignment is created for a specific student
-  if (userId) {
-    (async () => {
-      try {
+  // Notify parent(s) when an assignment is created.
+  (async () => {
+    try {
+      const assignType = type === 'quiz' ? 'Quiz' : 'Assignment';
+      const dueDateStr = dueDate ? new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'TBD';
+      const notifyParentsOf = async (childId, childName) => {
         const { data: parents } = await supabase
           .from('parent_children')
           .select('parent_email')
-          .eq('child_id', userId);
-        if (parents && parents.length > 0) {
-          const { data: student } = await supabase
-            .from('users')
-            .select('name')
-            .eq('id', userId)
-            .maybeSingle();
-          const studentName = student?.name || 'your child';
-          const assignType = type === 'quiz' ? 'Quiz' : 'Assignment';
-          const dueDateStr = dueDate ? new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'TBD';
-          const msgContent = 'New ' + assignType + ' assigned: "' + title + '" (' + (subject || 'General') + ') has been assigned to ' + studentName + '. Due: ' + dueDateStr + '.';
-          for (const { parent_email } of parents) {
-            await supabase.from('messages').insert({
-              sender_email: 'system@aivorah.com',
-              sender_name: 'Aivorah',
-              sender_role: 'teacher',
-              recipient_email: parent_email,
-              recipient_name: parent_email,
-              content: msgContent,
-            });
-          }
+          .eq('child_id', childId);
+        if (!parents || parents.length === 0) return;
+        const msgContent = 'New ' + assignType + ' assigned: "' + title + '" (' + (subject || 'General') + ') has been assigned to ' + (childName || 'your child') + '. Due: ' + dueDateStr + '.';
+        for (const { parent_email } of parents) {
+          await supabase.from('messages').insert({
+            sender_email:    'system@aivorah.com',
+            sender_name:     'Aivorah',
+            sender_role:     'teacher',
+            recipient_email: parent_email,
+            recipient_name:  parent_email,
+            content:         msgContent,
+          });
         }
-      } catch (e) {
-        console.warn('[assignments] Parent notification failed (non-fatal):', e.message);
+      };
+
+      if (userId) {
+        // Specific student
+        const { data: student } = await supabase.from('users').select('name').eq('id', userId).maybeSingle();
+        await notifyParentsOf(userId, student?.name || 'your child');
+      } else if (creatorId && finalGrade) {
+        // Class-wide (assigned to "All Students") → notify parents of THIS teacher's
+        // students in the target grade/curriculum. Without this, assigning to the
+        // whole class notified no parents at all.
+        const norm = (g) => String(g || '').toLowerCase().replace(/grade/g, '').replace(/\s+/g, '').trim();
+        const { data: links } = await supabase.from('teacher_student').select('student_id').eq('teacher_id', creatorId);
+        const studentIds = [...new Set((links || []).map(l => l.student_id).filter(Boolean))];
+        if (studentIds.length > 0) {
+          const { data: studs } = await supabase.from('users').select('id, name, grade, curriculum').in('id', studentIds);
+          const targets = (studs || []).filter(s =>
+            norm(s.grade) === norm(finalGrade) &&
+            (!finalCurriculum || !s.curriculum || s.curriculum === finalCurriculum)
+          );
+          for (const s of targets) await notifyParentsOf(s.id, s.name);
+        }
       }
-    })();
-  }
+    } catch (e) {
+      console.warn('[assignments] Parent notification failed (non-fatal):', e.message);
+    }
+  })();
 
   res.json(normalise(data));
 });
