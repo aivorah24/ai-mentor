@@ -68,6 +68,18 @@ function lazyRoute(modPath) {
 const path = require('path');
 const app = express();
 app.use(cors());
+
+// Allow Firebase's Google sign-in popup to keep its window.opener link.
+// Without this, the browser's default/edge COOP severs the opener relationship,
+// so Firebase can't poll the popup's window.closed and wrongly throws
+// auth/popup-closed-by-user ("Google sign-in was cancelled") even when the user
+// completed sign-in. 'same-origin-allow-popups' keeps the page isolated while
+// still permitting popups it opens to talk back. (Beta SSO flakiness fix.)
+app.use((req, res, next) => {
+  res.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  next();
+});
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true })); // for the founder demo-confirm form POST
 // Serve saved page images and scene images
