@@ -631,9 +631,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(newUser)).catch(() => {});
 
       // Sync to Supabase — only send role if Supabase didn't have one yet (avoid overwriting signup role)
+      // IMPORTANT: never write `name`/`school` back from a login. The DB is the source of
+      // truth for the editable display name; `name` here can fall back to the Firebase
+      // displayName (set at signup, never updated on rename), so writing it on every login
+      // silently reverts any rename — which then shows the old name in teacher/parent views.
+      // Only echo the DB's own name back (harmless self-heal); only set school if missing.
       fetch(`${SERVER_URL}/user/sync`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, ...(profile.role ? {} : { role: resolvedRole }), school: newUser.school }),
+        body: JSON.stringify({
+          email,
+          ...(profile.name ? { name: profile.name } : {}),
+          ...(profile.role ? {} : { role: resolvedRole }),
+          ...(profile.school ? {} : { school: newUser.school }),
+        }),
       }).catch(() => {});
     } catch (error: any) {
       console.error('Firebase Signin Error:', error.code, error.message);
@@ -855,9 +865,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.error('[google-sso] send-verification network error:', err.message);
           }
         } else {
+          // Returning verified user — don't overwrite the DB display name with the
+          // Google displayName (which ignores in-app renames). Echo the DB name instead.
           fetch(`${SERVER_URL}/user/sync`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, role: effectiveRole }),
+            body: JSON.stringify({ email, ...(profile.name ? { name: profile.name } : { name }), role: effectiveRole }),
           }).catch(() => {});
         }
       } catch (error: any) {

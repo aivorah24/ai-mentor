@@ -149,6 +149,7 @@ router.get('/notifications-summary', async (req, res) => {
     const since      = req.query.since || null;
     // Challenges can have their own "seen" baseline (separate toggle); fall back to `since`.
     const challengeSince = req.query.challengeSince || since;
+    const eventSince     = req.query.eventSince || since;
 
     if (!userEmail) return res.status(400).json({ error: 'userEmail required' });
 
@@ -240,11 +241,26 @@ router.get('/notifications-summary', async (req, res) => {
       if (challengeSince) challengeQ = challengeQ.gt('created_at', challengeSince);
     }
 
-    const [msgRes, personalAssignRes, classAssignRes, challengeRes] = await Promise.all([
+    // 4. New schedule events created FOR this student by a teacher or parent.
+    //    Matches both specific (student_id = userId) and class-wide (student_id = 'all') events.
+    let eventQ = null;
+    if (isStudent && userId) {
+      eventQ = supabase
+        .from('schedule_events')
+        .select('id, title, event_date, type, created_by, created_at, note')
+        .or(`student_id.eq.${userId},student_id.eq.all`)
+        .in('created_by', ['teacher', 'parent'])
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (eventSince) eventQ = eventQ.gt('created_at', eventSince);
+    }
+
+    const [msgRes, personalAssignRes, classAssignRes, challengeRes, eventRes] = await Promise.all([
       msgQ,
       personalAssignQ || Promise.resolve({ data: [] }),
       classAssignQ    || Promise.resolve({ data: [] }),
       challengeQ      || Promise.resolve({ data: [] }),
+      eventQ          || Promise.resolve({ data: [] }),
     ]);
 
     // Split incoming messages: real chat vs system notifications (assignment/challenge alerts)
@@ -349,11 +365,23 @@ router.get('/notifications-summary', async (req, res) => {
           createdAt:  r.created_at,
         }));
 
-    const notificationItems = [...assignmentItems, ...challengeItems]
+    // Schedule events created for the student by a teacher/parent (students only).
+    const eventRows = eventRes.data || [];
+    const eventCount = eventRows.length;
+    const eventItems = eventRows.map(e => ({
+      id:         'evt_' + e.id,
+      type:       'event',
+      title:      e.title || 'New Event',
+      subtitle:   [e.event_date, e.note].filter(Boolean).join(' · '),
+      senderName: e.created_by === 'parent' ? 'Your parent' : 'Your teacher',
+      createdAt:  e.created_at,
+    }));
+
+    const notificationItems = [...assignmentItems, ...challengeItems, ...eventItems]
       .sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0))
       .slice(0, 10);
 
-    res.json({ messages: msgCount, assignments: assignCount, challenges: challengeCount, latest, notificationItems });
+    res.json({ messages: msgCount, assignments: assignCount, challenges: challengeCount, events: eventCount, latest, notificationItems });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

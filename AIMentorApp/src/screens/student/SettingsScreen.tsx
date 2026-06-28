@@ -203,9 +203,18 @@ export default function SettingsScreen({ navigation, route }: any) {
   }
 
   async function handleSaveName() {
-    if (!newName.trim()) { setNameError('Please enter a name.'); return; }
-    updateUser({ name: newName.trim() });
+    const trimmed = newName.trim();
+    if (!trimmed) { setNameError('Please enter a name.'); return; }
+    updateUser({ name: trimmed });
     closeModal();
+    // Persist to the users table so teacher & parent views (which read users.name) update.
+    try {
+      await fetch(`${SERVER_URL}/user/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user?.email, name: trimmed }),
+      });
+    } catch {}
   }
 
   async function handleChangeEmail() {

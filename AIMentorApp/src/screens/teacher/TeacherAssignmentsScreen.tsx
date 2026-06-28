@@ -492,19 +492,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           ? data.filter(s => !s.curriculum || s.curriculum === tc)
           : data;
 
-        if (matched.length > 0) {
-          setStudents(matched);
-        } else {
-          // Fallback: fetch students by curriculum + the teacher's school (no cross-school)
-          const qs = [];
-          if (tc) qs.push(`curriculum=${encodeURIComponent(tc)}`);
-          if (user?.school) qs.push(`school=${encodeURIComponent(user.school)}`);
-          const params = qs.length ? `?${qs.join('&')}` : '';
-          fetch(`${SERVER_URL}/student/by-curriculum${params}`)
-            .then(r => r.ok ? r.json() : [])
-            .then((fallback: StudentItem[]) => setStudents(fallback))
-            .catch(() => setStudents(matched));
-        }
+        // Only show students actually linked to this teacher — no fallback
+        // to by-curriculum, which would show students from other classes.
+        setStudents(matched);
       })
       .catch(() => {});
   }, [teacherEmail, user?.curriculum, user?.school]));
@@ -3508,6 +3498,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                   <Feather name="chevron-right" size={14} color={colors.textDim} />
                                 </TouchableOpacity>
                               ))}
+                            {students.length === 0 && (
+                              <View style={{ alignItems: 'center', paddingVertical: 32, paddingHorizontal: 16 }}>
+                                <Feather name="users" size={32} color={colors.textDim} style={{ marginBottom: 10 }} />
+                                <Text style={{ color: colors.textMain, fontSize: 14, fontWeight: '600', textAlign: 'center', marginBottom: 6 }}>No students linked yet</Text>
+                                <Text style={{ color: colors.textMuted, fontSize: 12, textAlign: 'center' }}>Go to the Students tab to add students to your class before creating assignments.</Text>
+                              </View>
+                            )}
                           </ScrollView>
                         </>
                       )}

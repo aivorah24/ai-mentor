@@ -38,13 +38,35 @@ router.get('/teacher', async (req, res) => {
   const { date, email } = req.query;
   if (!date) return res.status(400).json({ error: 'date required' });
   try {
-    // 1. All schedule events on this date (teacher + parent created)
+    // Resolve THIS teacher and the students they teach, so the schedule only shows
+    // events for the teacher's OWN class — not every event in the system (which is
+    // why unrelated students'/parents' events were leaking into the teacher schedule).
+    let teacherId = null;
+    let teacherStudentIds = new Set();
+    if (email) {
+      const { data: tRow } = await supabase.from('users').select('id').eq('email', String(email).toLowerCase().trim()).maybeSingle();
+      teacherId = tRow?.id || null;
+      if (teacherId) {
+        const { data: links } = await supabase.from('teacher_student').select('student_id').eq('teacher_id', teacherId);
+        teacherStudentIds = new Set((links || []).map(l => l.student_id).filter(Boolean));
+      }
+    }
+
     const { data, error } = await supabase
       .from('schedule_events')
       .select('*')
       .eq('event_date', date);
     if (error) throw error;
-    const manualEvents = (data ?? []).map(mapRow);
+    let manualEvents = (data ?? []).map(mapRow);
+    // Scope to the teacher's own class: events for a student they teach, class-wide
+    // ('all') events, or events the teacher themselves created. (No email → no scope.)
+    // Teacher's schedule only shows events the teacher created — never events a
+    // student or parent self-scheduled (even for a student in the teacher's class).
+    if (email && teacherId) {
+      manualEvents = manualEvents.filter(e =>
+        e.createdBy === teacherId || e.createdBy === 'teacher'
+      );
+    }
 
     // Resolve student names for non-'all' events
     const studentIds = [...new Set(manualEvents.filter(e => e.studentId && e.studentId !== 'all').map(e => e.studentId))];
@@ -107,6 +129,8 @@ router.get('/teacher', async (req, res) => {
 
       challengeEvents = (chalAssignments || [])
         .filter(a => !existingIds.has(a.id))
+        // Only the teacher's own students' challenge deadlines (when scoped by email).
+        .filter(a => !email || !teacherId || teacherStudentIds.has(a.student_id))
         .map(a => {
           const ch = challenges.find(c => c.id === a.challenge_id);
           return {
@@ -303,7 +327,7 @@ router.get('/upcoming', async (req, res) => {
 
 // ── POST /schedule ───────────────────────────────────────────
 router.post('/', async (req, res) => {
-  const { title, date, startTime, endTime, type = 'study', note, studentId, createdBy, tag, assignmentId } = req.body;
+  const { title, date, startTime, endTime, type = 'study', note, studentId, createdBy, tag, assignmentId, creatorEmail } = req.body;
   if (!title || !date || !startTime || !studentId) {
     return res.status(400).json({ error: 'title, date, startTime, studentId required' });
   }
@@ -327,6 +351,56 @@ router.post('/', async (req, res) => {
       .single();
     if (error) throw error;
     res.json(mapRow(data));
+
+    // Fire-and-forget notifications for events scheduled by teacher or parent.
+    // For specific student: the student sees it via notifications-summary (schedule_events query);
+    // parents get a message card in their inbox.
+    // For 'all': only the teacher's own linked students (scoped by creatorEmail) are notified.
+    const actorRole = String(createdBy || '').toLowerCase();
+    const isTeacher = actorRole === 'teacher';
+    const isParent  = actorRole === 'parent';
+    if ((isTeacher || isParent) && studentId) {
+      (async () => {
+        try {
+          const creatorLabel = isParent ? 'Your parent' : 'Your teacher';
+          const msgContent = `${creatorLabel} scheduled "${title}" on ${date}${startTime ? ' at ' + startTime : ''}.`;
+
+          // Students get bell-only notifications (via notifications-summary schedule_events query).
+          // Parents get a rich card message in their inbox.
+          const notifyParents = async (childId, childName) => {
+            const { data: parents } = await supabase.from('parent_children').select('parent_email').eq('child_id', childId);
+            // Rich card format: parseable by MessagesScreen renderScheduleCard
+            // Format: "SCHEDULE_CARD|childName|title|date|startTime|type"
+            const cardContent = `SCHEDULE_CARD|${childName || 'Your child'}|${title}|${date}|${startTime || ''}|${type}`;
+            for (const { parent_email } of parents || []) {
+              await supabase.from('messages').insert({
+                sender_email:    'system@aivorah.com',
+                sender_name:     'Aivorah',
+                sender_role:     'teacher',
+                recipient_email: parent_email,
+                recipient_name:  parent_email,
+                content:         cardContent,
+              });
+            }
+          };
+
+          if (studentId !== 'all') {
+            const { data: stu } = await supabase.from('users').select('id,name').eq('id', studentId).maybeSingle();
+            await notifyParents(studentId, stu?.name || 'Your child');
+          } else if (isTeacher && creatorEmail) {
+            const { data: tRow } = await supabase.from('users').select('id').eq('email', creatorEmail.toLowerCase().trim()).maybeSingle();
+            if (tRow?.id) {
+              const { data: links } = await supabase.from('teacher_student').select('student_id').eq('teacher_id', tRow.id);
+              const sIds = (links || []).map(l => l.student_id).filter(Boolean);
+              if (sIds.length > 0) {
+                const { data: studs } = await supabase.from('users').select('id,name').in('id', sIds);
+                for (const s of studs || []) await notifyParents(s.id, s.name);
+              }
+            }
+          }
+        } catch (_) {}
+      })();
+    }
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

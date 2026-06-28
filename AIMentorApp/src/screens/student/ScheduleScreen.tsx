@@ -19,6 +19,7 @@ import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import { useTheme } from '../../context/ThemeContext';
 import { useStudentData } from '../../context/StudentDataContext';
+import { useNotification } from '../../context/NotificationContext';
 
 import SERVER_URL from '../../config/serverUrl';
 import TimePicker from '../../components/common/TimePicker';
@@ -73,16 +74,17 @@ interface ScheduleEvent {
   assignmentId?: string | null;
 }
 
-function typeColor(type: string, colors: any): string {
-  const map: Record<string, string> = {
-    study:      colors.accentYellow,
-    lesson:     colors.accentGreen,
-    challenge:  colors.accentYellow,
-    deadline:   colors.accentRed,
-    assignment: colors.accentYellow,
-    break:      colors.textDim,
+// Returns [accent, pastelfill, textColor] — same palette as teacher schedule
+function typeColors(type: string): [string, string, string] {
+  const map: Record<string, [string, string, string]> = {
+    lesson:     ['#9C844A', '#F5EDDA', '#6B5A30'],
+    study:      ['#4A7EA5', '#DAE9F5', '#2D5470'],
+    challenge:  ['#6B5BA8', '#E8E4F5', '#3F3270'],
+    deadline:   ['#B84A3A', '#F5DDD9', '#7A2A1E'],
+    assignment: ['#3A8A6A', '#D9F0E8', '#1E5A40'],
+    break:      ['#7A7A7A', '#EBEBEB', '#4A4A4A'],
   };
-  return map[type] ?? colors.accentYellow;
+  return map[type] ?? ['#9C844A', '#F5EDDA', '#6B5A30'];
 }
 
 function toTitleCase(str: string) {
@@ -119,6 +121,7 @@ function buildMonthCalendar(year: number, month: number) {
 
 export default function ScheduleScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { clearUnreadEvents } = useNotification();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { studentId } = useStudentData();
 
@@ -189,7 +192,7 @@ export default function ScheduleScreen({ navigation }: any) {
     return () => clearInterval(interval);
   }, [fetchEvents]);
 
-  useFocusEffect(useCallback(() => { fetchEvents(); }, [fetchEvents]));
+  useFocusEffect(useCallback(() => { fetchEvents(); clearUnreadEvents(); }, [fetchEvents, clearUnreadEvents]));
 
   // Browser notifications
   const notifiedRef = useRef<Set<string>>(new Set());
@@ -469,7 +472,7 @@ export default function ScheduleScreen({ navigation }: any) {
                       <View style={{ flexDirection: 'row' }}>
                         {week.map((d, colIdx) => {
                           const dayEvents = (eventsMap[d.iso] ?? []).filter(
-                            e => e.type !== 'deadline' && e.type !== 'challenge' && e.startTime !== '23:59'
+                            e => e.startTime !== '23:59'
                           );
                           return (
                             <View
@@ -502,11 +505,11 @@ export default function ScheduleScreen({ navigation }: any) {
                               {dayEvents.map(event => {
                                 const top = calcEventTop(event.startTime);
                                 const height = calcEventHeight(event.startTime, event.endTime);
-                                const color = typeColor(event.type, colors);
+                                const [accent, fill, textCol] = typeColors(event.type);
                                 return (
                                   <TouchableOpacity
                                     key={event.id}
-                                    style={[styles.eventBlock, { top, height, backgroundColor: color + '20', borderLeftColor: color }]}
+                                    style={[styles.eventBlock, { top, height, backgroundColor: fill, borderLeftColor: accent, borderLeftWidth: 4 }]}
                                     activeOpacity={0.82}
                                     onPress={() => {
                                       const t = event.type;
@@ -515,14 +518,14 @@ export default function ScheduleScreen({ navigation }: any) {
                                       else if (t === 'lesson' || t === 'study') navigation.navigate('LearningPaths' as any);
                                     }}
                                   >
-                                    <Text style={styles.eventTitle} numberOfLines={1}>{toTitleCase(event.title)}</Text>
-                                    <Text style={styles.eventTime}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</Text>
+                                    <Text style={[styles.eventTitle, { color: textCol }]} numberOfLines={1}>{toTitleCase(event.title)}</Text>
+                                    <Text style={[styles.eventTime, { color: accent }]}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</Text>
                                     <TouchableOpacity
                                       style={styles.deleteBtn}
                                       onPress={() => removeEvent(event.id, d.iso)}
                                       hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                                     >
-                                      <Feather name="x" size={10} color={colors.textDim} />
+                                      <Feather name="x" size={10} color={accent} />
                                     </TouchableOpacity>
                                   </TouchableOpacity>
                                 );
@@ -635,8 +638,8 @@ export default function ScheduleScreen({ navigation }: any) {
               <Text style={styles.modalLabel}>Type:</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {['study','lesson','challenge','deadline','assignment','break'].map(t => (
-                  <TouchableOpacity key={t} style={[styles.timeChip, newType === t && { borderColor: typeColor(t, colors), backgroundColor: typeColor(t, colors) + '18' }]} onPress={() => setNewType(t)}>
-                    <Text style={[styles.timeChipText, newType === t && { color: typeColor(t, colors) }]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
+                  <TouchableOpacity key={t} style={[styles.timeChip, newType === t && { borderColor: typeColors(t)[0], backgroundColor: typeColors(t)[1] }]} onPress={() => setNewType(t)}>
+                    <Text style={[styles.timeChipText, newType === t && { color: typeColors(t)[2], fontWeight: '700' }]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
