@@ -68,16 +68,17 @@ interface StudentItem {
   grade: string;
 }
 
-function typeColor(type: string, colors: any): string {
-  const map: Record<string, string> = {
-    lesson:     colors.accentGreen,
-    study:      colors.accentBlue,
-    challenge:  colors.accentPurple,
-    deadline:   colors.accentRed,
-    assignment: colors.accentYellow,
-    break:      colors.textDim,
+// Returns [accentColor, pastelfill, textColor]
+function typeColors(type: string): [string, string, string] {
+  const map: Record<string, [string, string, string]> = {
+    lesson:     ['#9C844A', '#F5EDDA', '#6B5A30'],  // gold accent / warm cream fill / dark gold text
+    study:      ['#4A7EA5', '#DAE9F5', '#2D5470'],  // blue accent / sky fill / dark blue text
+    challenge:  ['#6B5BA8', '#E8E4F5', '#3F3270'],  // purple accent / lavender fill / dark purple text
+    deadline:   ['#B84A3A', '#F5DDD9', '#7A2A1E'],  // red accent / rose fill / dark red text
+    assignment: ['#3A8A6A', '#D9F0E8', '#1E5A40'],  // green accent / mint fill / dark green text
+    break:      ['#7A7A7A', '#EBEBEB', '#4A4A4A'],  // grey accent / light grey fill / dark grey text
   };
-  return map[type] ?? gold;
+  return map[type] ?? ['#9C844A', '#F5EDDA', '#6B5A30'];
 }
 
 function dateISO(d: Date): string {
@@ -104,6 +105,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
   const today = useMemo(() => new Date(), []);
   const todayISO = useMemo(() => dateISO(today), [today]);
   const [weekBase, setWeekBase] = useState(today);
+  const [nowTime, setNowTime] = useState(new Date());
   const week = useMemo(() => buildWeek(weekBase), [weekBase]);
 
   // Events stored per day
@@ -201,7 +203,9 @@ export default function TeacherScheduleScreen({ navigation }: any) {
   }, []);
 
   const fetchEvents = useCallback(async () => {
-    setLoading(true);
+    // Only show the full-page spinner on the very first load.
+    // All subsequent fetches (week change, focus, poll) run silently in background.
+    if (!firstLoadDoneRef.current) setLoading(true);
     try {
       const email = user?.email ? `&email=${encodeURIComponent(user.email)}` : '';
       const weekDates = week.map(d => d.iso);
@@ -218,7 +222,10 @@ export default function TeacherScheduleScreen({ navigation }: any) {
       }
       setEventsMap(map);
     } catch {}
-    setLoading(false);
+    if (!firstLoadDoneRef.current) {
+      firstLoadDoneRef.current = true;
+      setLoading(false);
+    }
   }, [week, user?.email]);
 
   useEffect(() => {
@@ -229,14 +236,49 @@ export default function TeacherScheduleScreen({ navigation }: any) {
 
   useFocusEffect(useCallback(() => { fetchEvents(); }, [fetchEvents]));
 
-  // Fetch students linked to this teacher
+  // Tick every minute: update current-time line + fire 10-min event reminders.
+  const notifiedEventsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setNowTime(now);
+      // Check today's events for any starting in the next 10 minutes (±1 min window)
+      const todayEvs = eventsMap[dateISO(now)] ?? [];
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      todayEvs.forEach(ev => {
+        if (ev.type === 'deadline') return;
+        const [h, m] = (ev.startTime || '').split(':').map(Number);
+        const evMins = h * 60 + m;
+        const diff = evMins - nowMins;
+        if (diff >= 9 && diff <= 11 && !notifiedEventsRef.current.has(ev.id)) {
+          notifiedEventsRef.current.add(ev.id);
+          if (Platform.OS === 'web' && 'Notification' in window) {
+            const show = () => new window.Notification(`Starting in 10 min: ${ev.title}`, {
+              body: `${ev.startTime} — ${ev.type}`,
+              icon: '/favicon.ico',
+            });
+            if ((window.Notification as any).permission === 'granted') {
+              show();
+            } else if ((window.Notification as any).permission !== 'denied') {
+              (window.Notification as any).requestPermission().then((p: string) => { if (p === 'granted') show(); });
+            }
+          }
+        }
+      });
+    };
+    tick();
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, [eventsMap]);
+
+  // Re-fetch students on every focus so removing a student is reflected immediately
+  useFocusEffect(useCallback(() => {
     if (!user?.email) return;
     fetch(`${SERVER_URL}/student/by-teacher/${encodeURIComponent(user.email)}`)
       .then(r => r.ok ? r.json() : [])
       .then((data: StudentItem[]) => setStudents(data))
       .catch(() => {});
-  }, [user?.email]);
+  }, [user?.email]));
 
   function openModal(presetDate?: string, presetTime?: string) {
     setModalDate(presetDate ?? todayISO);
@@ -267,7 +309,8 @@ export default function TeacherScheduleScreen({ navigation }: any) {
           type:      newType,
           note:      newNote,
           studentId: assignTo,
-          createdBy: 'teacher',
+          createdBy:    'teacher',
+          creatorEmail: user?.email || '',
         }),
       });
       if (res.ok) {
@@ -312,24 +355,27 @@ export default function TeacherScheduleScreen({ navigation }: any) {
   const colWidth = Math.max(DAY_COL_WIDTH, Math.floor((screenWidth - TIME_LABEL_WIDTH) / 7));
   const totalGridWidth = TIME_LABEL_WIDTH + colWidth * 7;
 
-  // Horizontal scroll to today's column (matches Parent/Student schedule behaviour).
+  // Horizontal scroll to today's column.
   const hScrollRef = useRef<ScrollView>(null);
-  function scrollToTodayColumn(base: Date) {
-    const todayIdx = buildWeek(base).findIndex(d => d.iso === dateISO(base));
-    if (todayIdx >= 0) {
-      const scrollX = Math.max(0, todayIdx * colWidth - colWidth);
-      setTimeout(() => hScrollRef.current?.scrollTo({ x: scrollX, animated: true }), 120);
-    }
+  const firstLoadDoneRef = useRef(false);
+
+  function scrollToTodayCol(base: Date, cw: number) {
+    const dow = base.getDay();          // 0=Sun
+    const todayCol = (dow + 6) % 7;    // Mon=0 … Sun=6
+    hScrollRef.current?.scrollTo({ x: todayCol * cw, animated: true });
   }
+
   function goToday() {
     const now = new Date();
-    setWeekBase(now);
-    scrollToTodayColumn(now);
+    const alreadyOnThisWeek = week.some(d => d.iso === todayISO);
+    if (alreadyOnThisWeek) {
+      // Already on the correct week — just scroll, no state change, no re-fetch.
+      scrollToTodayCol(now, colWidth);
+    } else {
+      setWeekBase(now);
+      // Scroll fires via onContentSizeChange after the new week's grid renders.
+    }
   }
-  // Auto-scroll to today whenever the current week is in view.
-  useEffect(() => {
-    if (week.some(d => d.iso === todayISO)) scrollToTodayColumn(weekBase);
-  }, [weekBase, colWidth]);
 
   return (
     <ScreenLayout>
@@ -386,7 +432,22 @@ export default function TeacherScheduleScreen({ navigation }: any) {
               </View>
 
               {/* SCROLLABLE RIGHT: day headers + columns */}
-              <ScrollView ref={hScrollRef} horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
+              <ScrollView
+                ref={hScrollRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ flex: 1 }}
+                onContentSizeChange={() => {
+                  // Auto-scroll to today's column whenever the grid re-renders
+                  // with today's week (first load or after navigating back via Today btn).
+                  if (week.some(d => d.iso === todayISO)) {
+                    if (!firstLoadDoneRef.current) {
+                      firstLoadDoneRef.current = true;
+                      scrollToTodayCol(weekBase, colWidth);
+                    }
+                  }
+                }}
+              >
                 <View style={{ width: colWidth * 7 }}>
                   {/* Day header row */}
                   <View style={styles.dayHeaderRow}>
@@ -407,7 +468,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                   <View style={{ flexDirection: 'row' }}>
                     {week.map((d) => {
                       const dayEvents = (eventsMap[d.iso] ?? []).filter(
-                        e => e.type !== 'deadline' && e.startTime !== '23:59'
+                        e => e.startTime !== '23:59'
                       );
                       return (
                         <View
@@ -462,6 +523,19 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                               activeOpacity={0.3}
                             />
                           ))}
+                          {/* Current-time red indicator line (today's column only) */}
+                          {d.iso === todayISO && (() => {
+                            const nowH = nowTime.getHours();
+                            const nowM = nowTime.getMinutes();
+                            if (nowH < TIMELINE_START_HOUR || nowH > 22) return null;
+                            const topPx = (nowH - TIMELINE_START_HOUR) * HOUR_HEIGHT + (nowM / 60) * HOUR_HEIGHT;
+                            return (
+                              <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: topPx, zIndex: 10 }}>
+                                <View style={{ position: 'absolute', left: -6, top: -4, width: 8, height: 8, borderRadius: 4, backgroundColor: '#E53935' }} />
+                                <View style={{ height: 2, backgroundColor: '#E53935', opacity: 0.85 }} />
+                              </View>
+                            );
+                          })()}
                           {/* Drag-to-create preview */}
                           {dragPreviewTeacher?.dayIso === d.iso && dragPreviewTeacher.height > 8 && (
                             <View style={{
@@ -482,7 +556,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                           {dayEvents.map(event => {
                             const origTop = calcEventTop(event.startTime);
                             const height  = calcEventHeight(event.startTime, event.endTime);
-                            const color   = typeColor(event.type, colors);
+                            const [accent, fill, textCol] = typeColors(event.type);
                             const [sh, sm] = event.startTime.split(':').map(Number);
                             const [eh, em] = (event.endTime || event.startTime).split(':').map(Number);
                             const durationMins = Math.max(30, (eh * 60 + em) - (sh * 60 + sm));
@@ -505,25 +579,25 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                                 style={{
                                   position: 'absolute', left: 2, right: 2,
                                   top: origTop, height,
-                                  backgroundColor: color + '25',
-                                  borderLeft: `3px solid ${color}`,
+                                  backgroundColor: fill,
+                                  borderLeft: `4px solid ${accent}`,
                                   borderRadius: 4,
-                                  paddingLeft: 5, paddingRight: 5, paddingTop: 3, paddingBottom: 3,
+                                  paddingLeft: 6, paddingRight: 5, paddingTop: 3, paddingBottom: 3,
                                   overflow: 'hidden',
                                   cursor: 'grab',
                                   userSelect: 'none',
                                   zIndex: 2,
                                 }}
                               >
-                                <div style={{ fontSize: 11, fontWeight: 700, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.title}</div>
-                                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)' }}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</div>
-                                <div style={{ fontSize: 10, fontWeight: 600, color, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{studentLabel}</div>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: textCol, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.title}</div>
+                                <div style={{ fontSize: 10, color: accent }}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</div>
+                                <div style={{ fontSize: 10, fontWeight: 600, color: textCol, opacity: 0.8, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{studentLabel}</div>
                                 <div
                                   data-delbtn="1"
                                   onClick={() => removeEvent(event.id, d.iso)}
                                   style={{ position: 'absolute', top: 3, right: 3, cursor: 'pointer', padding: 2 }}
                                 >
-                                  <Feather name="x" size={10} color="rgba(255,255,255,0.6)" />
+                                  <Feather name="x" size={10} color={accent} />
                                 </div>
                               </div>
                             );
@@ -561,8 +635,8 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                 <Text style={styles.modalLabel}>Type:</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chipRowContent}>
                   {['lesson','study','challenge','deadline','assignment','break'].map(t => (
-                    <TouchableOpacity key={t} style={[styles.timeChip, newType === t && { borderColor: typeColor(t, colors), backgroundColor: typeColor(t, colors) + '18' }]} onPress={() => setNewType(t)}>
-                      <Text style={[styles.timeChipText, newType === t && { color: typeColor(t, colors) }]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
+                    <TouchableOpacity key={t} style={[styles.timeChip, newType === t && { borderColor: typeColors(t)[0], backgroundColor: typeColors(t)[1] }]} onPress={() => setNewType(t)}>
+                      <Text style={[styles.timeChipText, newType === t && { color: typeColors(t)[2], fontWeight: '700' }]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -615,7 +689,17 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                         />
                         <ScrollView style={styles.studentList} nestedScrollEnabled showsVerticalScrollIndicator={false}>
                           {filteredStudents.length === 0 ? (
-                            <Text style={styles.noStudentsText}>No students found</Text>
+                            <View style={{ alignItems: 'center', paddingVertical: 24, paddingHorizontal: 12 }}>
+                              <Feather name="users" size={28} color={colors.textDim} style={{ marginBottom: 8 }} />
+                              <Text style={{ color: colors.textMain, fontSize: 13, fontWeight: '600', textAlign: 'center', marginBottom: 4 }}>
+                                {students.length === 0 ? 'No students linked yet' : 'No matching students'}
+                              </Text>
+                              {students.length === 0 && (
+                                <Text style={{ color: colors.textMuted, fontSize: 12, textAlign: 'center' }}>
+                                  Go to the Students tab to add students to your class.
+                                </Text>
+                              )}
+                            </View>
                           ) : (
                             filteredStudents.map(s => (
                               <TouchableOpacity

@@ -146,9 +146,18 @@ export default function ParentSettingsScreen({ navigation }: any) {
   function closeModal() { setActiveModal(null); setModalLoading(false); }
 
   async function handleSaveName() {
-    if (!newName.trim()) { Alert.alert('Required', 'Please enter a name.'); return; }
-    updateUser({ name: newName.trim() });
+    const trimmed = newName.trim();
+    if (!trimmed) { Alert.alert('Required', 'Please enter a name.'); return; }
+    updateUser({ name: trimmed });
     closeModal();
+    // Persist to the users table so it survives refresh and shows everywhere.
+    try {
+      await fetch(`${SERVER_URL}/user/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user?.email, name: trimmed }),
+      });
+    } catch {}
     Alert.alert('Updated', 'Your display name has been updated.');
   }
 

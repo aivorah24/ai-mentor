@@ -510,6 +510,84 @@ export default function MessagesScreen(_props: any) {
     );
   };
 
+  // ── Schedule event notification card ─────────────────
+  const renderScheduleCard = (item: Message, index: number) => {
+    // Format: "SCHEDULE_CARD|childName|title|date|startTime|type"
+    const parts = item.content.split('|');
+    const childName = parts[1] || '';
+    const evTitle   = parts[2] || 'Event';
+    const evDate    = parts[3] || '';
+    const evTime    = parts[4] || '';
+    const evType    = parts[5] || 'lesson';
+
+    const typeLabel: Record<string, string> = {
+      lesson: 'Lesson', study: 'Study Session', challenge: 'Challenge',
+      deadline: 'Deadline', assignment: 'Assignment', break: 'Break',
+    };
+    const typeIcon: Record<string, any> = {
+      lesson: 'book-open', study: 'edit', challenge: 'award',
+      deadline: 'alert-circle', assignment: 'clipboard', break: 'coffee',
+    };
+    const formattedDate = evDate ? new Date(evDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    const tip = `${childName ? `Check ${childName}'s schedule` : 'Check the schedule'} to stay updated!`;
+
+    const prev = index > 0 ? messages[index - 1] : null;
+    const showDateDivider = !prev || !sameDay(new Date(prev.created_at), new Date(item.created_at));
+
+    return (
+      <>
+        {showDateDivider && (
+          <View style={styles.dateDividerRow}>
+            <View style={styles.dateDividerLine} />
+            <View style={styles.dateDividerPill}>
+              <Text style={styles.dateDividerPillText}>{formatDateDivider(item.created_at)}</Text>
+            </View>
+            <View style={styles.dateDividerLine} />
+          </View>
+        )}
+        <View style={styles.assignmentCard}>
+          <View style={styles.assignmentCardHeader}>
+            <View style={styles.assignmentAvatarWrap}>
+              <Feather name="calendar" size={20} color={colors.accentYellow} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={styles.assignmentSender}>AIVORAH</Text>
+                <View style={styles.assignmentAIBadge}><Text style={styles.assignmentAIBadgeText}>AI</Text></View>
+                <Text style={styles.assignmentTime}>{formatTime(item.created_at)}</Text>
+              </View>
+              <Text style={styles.assignmentHeadline}>New event has been scheduled!</Text>
+            </View>
+          </View>
+          <View style={styles.assignmentDetail}>
+            <View style={styles.assignmentDetailIcon}>
+              <Feather name={typeIcon[evType] || 'calendar'} size={18} color={colors.accentYellow} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.assignmentTitle} numberOfLines={2}>{evTitle}</Text>
+              <Text style={styles.assignmentSubject}>{typeLabel[evType] || evType}</Text>
+            </View>
+            {(formattedDate || evTime) ? (
+              <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Feather name="calendar" size={12} color={colors.textDim} />
+                  <Text style={styles.assignmentDueLabel}>Scheduled</Text>
+                </View>
+                <Text style={styles.assignmentDueDate}>{formattedDate}</Text>
+                {evTime ? <Text style={[styles.assignmentDueDate, { fontSize: 11 }]}>{evTime}</Text> : null}
+              </View>
+            ) : null}
+          </View>
+          <View style={styles.assignmentTip}>
+            <Feather name="zap" size={12} color={colors.accentYellow} />
+            <Text style={styles.assignmentTipText}>{tip}</Text>
+          </View>
+        </View>
+        <Text style={styles.assignmentDayLabel}>{new Date(item.created_at).toLocaleDateString('en-IN', { weekday: 'short' })}</Text>
+      </>
+    );
+  };
+
   // ── Assignment notification card ──────────────────────
   const renderAssignmentCard = (item: Message, index: number) => {
     // Parse: [ChildName] New Assignment assigned: "TITLE" (Subject). Due: DD Mon.
@@ -592,6 +670,11 @@ export default function MessagesScreen(_props: any) {
     // Auto-Logout messages from Aivorah get a special card
     if (!isMine && item.content.includes('[Auto-Logout]')) {
       return renderAutoLogoutCard(item, index);
+    }
+
+    // Schedule event notification card
+    if (!isMine && item.content.startsWith('SCHEDULE_CARD|')) {
+      return renderScheduleCard(item, index);
     }
 
     // Assignment notification messages get a card

@@ -223,7 +223,26 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
     }
   }, [user, isDemo]);
 
-  useEffect(() => { load(); }, [load]);
+  // Initial load + auto-refresh every 15s so a student's name/profile edit shows
+  // up here on its own (no manual refresh).
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, 15 * 1000);
+    return () => clearInterval(interval);
+  }, [load]);
+
+  // Reload the student list on focus and when the browser tab becomes visible.
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const onVisible = () => { if (document.visibilityState === 'visible') load(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [load]);
 
   // Fetch the teacher's grades + curricula authoritatively from saved preferences —
   // on every focus, so a change in Settings shows up here instantly (no refresh).

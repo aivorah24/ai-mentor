@@ -105,3 +105,11 @@ AIMentorApp/test_*.png
 AIMentorApp/test_*.js
 AIMentorApp/web/
 AIMentorApp/*.png
+
+# Large model archives (runtime-extracted, never commit)
+server/public/models/
+*.tar.gz
+
+# Backups (may contain secrets)
+*.bak
+.env*.bak

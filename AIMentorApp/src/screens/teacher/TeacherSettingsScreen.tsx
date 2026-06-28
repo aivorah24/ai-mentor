@@ -710,7 +710,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
 
       {/* Curriculum Modal */}
       <AppModal visible={activeModal === 'curriculum'} title="Curriculum & Grade" onClose={closeModal} styles={styles} colors={colors}>
-        <Text style={styles.modalFieldLabel}>Curricula you teach (select all that apply)</Text>
+        <Text style={styles.modalFieldLabel}>Curriculum you teach</Text>
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
           {CURRICULA.map(c => {
             const on = editCurricula.includes(c);
@@ -718,16 +718,14 @@ export default function TeacherSettingsScreen({ navigation }: any) {
               <TouchableOpacity
                 key={c} activeOpacity={0.8}
                 style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, borderColor: on ? gold : colors.borderColor, backgroundColor: on ? gold + '18' : 'transparent' }}
-                onPress={() => setEditCurricula(prev => {
-                  const next = prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c];
-                  // Drop any selected grades that are no longer valid for the new
-                  // curriculum set (e.g. removing IB MYP clears Grades 6–10).
-                  const allowed = next.length > 0
-                    ? new Set(next.flatMap(cc => getGradesForCurriculum(cc)))
-                    : new Set(GRADES_TEACHER);
+                onPress={() => {
+                  // A teacher handles exactly ONE curriculum — single-select (radio).
+                  setEditCurricula([c]);
+                  // Drop any selected grades not valid for the chosen curriculum
+                  // (e.g. switching to IB MYP clears Grades 1–5).
+                  const allowed = new Set(getGradesForCurriculum(c));
                   setEditGrades(g => g.filter(x => allowed.has(x)));
-                  return next;
-                })}
+                }}
               >
                 {on && <Feather name="check" size={12} color={gold} />}
                 <Text style={{ fontSize: 13, color: on ? gold : colors.textMuted, fontWeight: '600' }}>{c}</Text>

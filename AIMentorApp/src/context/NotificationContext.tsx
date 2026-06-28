@@ -16,7 +16,7 @@ interface LatestNotif {
 
 export interface NotifItem {
   id: string;
-  type: 'assignment' | 'quiz' | 'challenge' | 'message';
+  type: 'assignment' | 'quiz' | 'challenge' | 'message' | 'event';
   title: string;
   subtitle: string;
   senderName: string;
@@ -27,6 +27,7 @@ interface NotificationState {
   unreadCount: number;
   unreadAssignments: number;
   unreadChallenges: number;
+  unreadEvents: number;
   latestNotif: LatestNotif | null;
   notificationItems: NotifItem[];
   toastVisible: boolean;
@@ -34,6 +35,7 @@ interface NotificationState {
   clearUnread: () => Promise<void>;
   clearUnreadAssignments: () => Promise<void>;
   clearUnreadChallenges: () => Promise<void>;
+  clearUnreadEvents: () => Promise<void>;
   refresh: () => Promise<void>;
   triggerPoll: () => void;
 }
@@ -42,6 +44,7 @@ const NotificationContext = createContext<NotificationState>({
   unreadCount: 0,
   unreadAssignments: 0,
   unreadChallenges: 0,
+  unreadEvents: 0,
   latestNotif: null,
   notificationItems: [],
   toastVisible: false,
@@ -49,6 +52,7 @@ const NotificationContext = createContext<NotificationState>({
   clearUnread: async () => {},
   clearUnreadAssignments: async () => {},
   clearUnreadChallenges: async () => {},
+  clearUnreadEvents: async () => {},
   refresh: async () => {},
   triggerPoll: () => {},
 });
@@ -104,6 +108,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [unreadCount,       setUnreadCount]       = useState(0);
   const [unreadAssignments, setUnreadAssignments] = useState(0);
   const [unreadChallenges,  setUnreadChallenges]  = useState(0);
+  const [unreadEvents,      setUnreadEvents]      = useState(0);
   const [latestNotif,       setLatestNotif]       = useState<LatestNotif | null>(null);
   const [notificationItems, setNotificationItems] = useState<NotifItem[]>([]);
   const [toastVisible,      setToastVisible]      = useState(false);
@@ -111,6 +116,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const prevMsgRef       = useRef(0);
   const prevAssignRef    = useRef(0);
   const prevChallengeRef = useRef(0);
+  const prevEventRef     = useRef(0);
   // False until the first poll after mount/login completes. The first poll only
   // records the current counts as a baseline — it must NOT chime/toast, otherwise
   // every page refresh re-alerts for notifications that already existed.
@@ -123,7 +129,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const markReadCutoff   = useRef<number | null>(null);
 
   const poll = useCallback(
-    async ({ reason = 'interval', allowDuringMarkRead = false }: { reason?: string; allowDuringMarkRead?: boolean } = {}) => {
+    async ({ reason = 'interval', allowDuringMarkRead = false, silent = false }: { reason?: string; allowDuringMarkRead?: boolean; silent?: boolean } = {}) => {
       if (!user?.email) return;
       if (markReadInFlight.current && !allowDuringMarkRead) return;
 
@@ -147,9 +153,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       let challengeSince: string | null = null;
       try { challengeSince = await AsyncStorage.getItem(`challengeSeenAt_v2_${user.email}`); } catch (_) {}
 
+      // Separate "seen" baseline for schedule events.
+      let eventSince: string | null = null;
+      try { eventSince = await AsyncStorage.getItem(`eventSeenAt_v2_${user.email}`); } catch (_) {}
+
       const params = new URLSearchParams({ userEmail: user.email });
       if (since) params.set('since', since);
       if (challengeSince) params.set('challengeSince', challengeSince);
+      if (eventSince) params.set('eventSince', eventSince);
 
       let res: Response;
       try {
@@ -169,6 +180,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const msgCount     = typeof data.messages    === 'number' && data.messages    >= 0 ? Math.floor(data.messages)    : 0;
       const assignCount  = typeof data.assignments === 'number' && data.assignments >= 0 ? Math.floor(data.assignments) : 0;
       const challengeCount = typeof data.challenges === 'number' && data.challenges >= 0 ? Math.floor(data.challenges) : 0;
+      const eventCount   = typeof data.events      === 'number' && data.events      >= 0 ? Math.floor(data.events)      : 0;
       const latest       = normalizeLatest(data.latest);
       const items: NotifItem[] = Array.isArray(data.notificationItems) ? data.notificationItems : [];
 
@@ -201,8 +213,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const newMsg       = baseline && allowMsg       && !markReadInFlight.current && msgCount       > prevMsgRef.current;
       const newAssign    = baseline && allowAssign    && !markReadInFlight.current && assignCount    > prevAssignRef.current;
       const newChallenge = baseline && allowChallenge && !markReadInFlight.current && challengeCount > prevChallengeRef.current;
+      const newEvent     = baseline && allowAssign    && !markReadInFlight.current && eventCount     > prevEventRef.current;
 
-      if (newMsg || newAssign || newChallenge) {
+      if (!silent && (newMsg || newAssign || newChallenge || newEvent)) {
         playNotificationSound();
         if (newMsg && latest) setLatestNotif(latest);
         setToastVisible(true);
@@ -213,17 +226,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       prevMsgRef.current       = msgCount;
       prevAssignRef.current    = assignCount;
       prevChallengeRef.current = challengeCount;
+      prevEventRef.current     = eventCount;
       hasBaselineRef.current   = true;
 
       setUnreadCount(allowMsg ? msgCount : 0);
       setUnreadAssignments(allowAssign ? assignCount : 0);
       setUnreadChallenges(allowChallenge ? challengeCount : 0);
+      setUnreadEvents(allowAssign ? eventCount : 0);
       setLatestNotif(msgCount > 0 ? latest : null);
       // Respect the user's notification preferences for the bell dropdown items too —
       // when Assignment Alerts / Challenge Updates are OFF, those items must NOT appear
       // in the bell at all (not just have a zeroed badge count).
       const filteredItems = items.filter(it => {
-        if ((it.type === 'assignment' || it.type === 'quiz') && !allowAssign) return false;
+        if ((it.type === 'assignment' || it.type === 'quiz' || it.type === 'event') && !allowAssign) return false;
         if (it.type === 'challenge' && !allowChallenge) return false;
         return true;
       });
@@ -237,9 +252,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     if (!user?.email) {
-      setUnreadCount(0); setUnreadAssignments(0); setUnreadChallenges(0);
+      setUnreadCount(0); setUnreadAssignments(0); setUnreadChallenges(0); setUnreadEvents(0);
       setLatestNotif(null); setToastVisible(false);
-      prevMsgRef.current = 0; prevAssignRef.current = 0; prevChallengeRef.current = 0;
+      prevMsgRef.current = 0; prevAssignRef.current = 0; prevChallengeRef.current = 0; prevEventRef.current = 0;
       staleGuardUntil.current = 0; markReadCutoff.current = null;
       hasBaselineRef.current = false;
       return;
@@ -288,7 +303,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       markReadInFlight.current = false;
       if (!ok) { staleGuardUntil.current = 0; markReadCutoff.current = null; }
     }
-    await poll({ reason: 'post-mark-read', allowDuringMarkRead: true });
+    await poll({ reason: 'post-mark-read', allowDuringMarkRead: true, silent: true });
   }, [poll, user?.email]);
 
   const clearUnreadAssignments = useCallback(async () => {
@@ -307,7 +322,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         body: JSON.stringify({ userEmail: user.email, kind: 'assignment' }),
       }).catch(() => {});
       // Re-poll AFTER the backlog is dismissed so the authoritative count is 0.
-      await poll({ reason: 'post-clear-assignments', allowDuringMarkRead: true });
+      await poll({ reason: 'post-clear-assignments', allowDuringMarkRead: true, silent: true });
     } catch (err) {
       if (__DEV__) console.warn('[NotifCtx] clearUnreadAssignments failed:', err);
     }
@@ -326,9 +341,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userEmail: user.email, kind: 'challenge' }),
       }).catch(() => {});
-      await poll({ reason: 'post-clear-challenges', allowDuringMarkRead: true });
+      await poll({ reason: 'post-clear-challenges', allowDuringMarkRead: true, silent: true });
     } catch (err) {
       if (__DEV__) console.warn('[NotifCtx] clearUnreadChallenges failed:', err);
+    }
+  }, [user?.email, poll]);
+
+  const clearUnreadEvents = useCallback(async () => {
+    if (!user?.email) return;
+    try {
+      await AsyncStorage.setItem(`eventSeenAt_v2_${user.email}`, new Date().toISOString());
+      setUnreadEvents(0);
+      prevEventRef.current = 0;
+      await poll({ reason: 'post-clear-events', allowDuringMarkRead: true, silent: true });
+    } catch (err) {
+      if (__DEV__) console.warn('[NotifCtx] clearUnreadEvents failed:', err);
     }
   }, [user?.email, poll]);
 
@@ -343,9 +370,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   return (
     <NotificationContext.Provider value={{
-      unreadCount, unreadAssignments, unreadChallenges,
+      unreadCount, unreadAssignments, unreadChallenges, unreadEvents,
       latestNotif, notificationItems, toastVisible,
-      dismissToast, clearUnread, clearUnreadAssignments, clearUnreadChallenges, refresh, triggerPoll,
+      dismissToast, clearUnread, clearUnreadAssignments, clearUnreadChallenges, clearUnreadEvents, refresh, triggerPoll,
     }}>
       {children}
     </NotificationContext.Provider>

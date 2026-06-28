@@ -1,4 +1,5 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -117,7 +118,27 @@ export default function TeacherDashboardScreen({ navigation }: any) {
     }
   };
 
-  useEffect(() => { fetchStudents(); }, [user?.email]);
+  // Initial fetch + auto-refresh every 15s so a student's name/profile edit
+  // (made elsewhere) reflects here automatically — no manual refresh needed.
+  useEffect(() => {
+    fetchStudents();
+    const interval = setInterval(fetchStudents, 15 * 1000);
+    return () => clearInterval(interval);
+  }, [user?.email]);
+
+  // Also refetch immediately whenever this screen regains focus or the browser
+  // tab becomes visible again (covers switching tabs back to the teacher view).
+  useFocusEffect(useCallback(() => { fetchStudents(); }, [user?.email]));
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchStudents(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [user?.email]);
 
   // ── Computed stats ──────────────────────────────────────
   const today = todayISO();
