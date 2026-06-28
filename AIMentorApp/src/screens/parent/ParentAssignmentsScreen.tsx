@@ -101,12 +101,14 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
   const [curriculumTopics, setCurriculumTopics] = useState<{subject: string; topic: string; grade: string}[]>([]);
   const [showTopicPicker, setShowTopicPicker] = useState(false);
 
-  useEffect(() => {
+  // Refresh the children list on every focus so a newly added child appears in the
+  // assign picker instantly (no manual refresh needed).
+  useFocusEffect(useCallback(() => {
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data) && data.length > 0) setChildren(data); })
       .catch(() => {});
-  }, [parentEmail]);
+  }, [parentEmail]));
 
   // Mark assignments as seen only when this screen is actually focused (viewed),
   // not on mount, and not during the post-refresh grace period — otherwise a page
@@ -122,7 +124,7 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
   const fetchAssignments = useCallback(() => {
     if (!child) return;
     Promise.all([
-      fetch(`${SERVER_URL}/assignments?studentId=${child.id}`).then(r => r.json()).catch(() => []),
+      fetch(`${SERVER_URL}/assignments?studentId=${child.id}&viewerRole=parent`).then(r => r.json()).catch(() => []),
       fetch(`${SERVER_URL}/student/${child.id}`).then(r => r.json()).catch(() => null),
     ]).then(([assignData, statsData]) => {
       if (Array.isArray(assignData)) setAssignments(assignData);
@@ -363,7 +365,7 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
             <View style={styles.assignmentList}>
             {filtered.map(a => {
               const due = a.status === 'completed'
-                ? { label: a.score != null ? `Score: ${a.score}%` : 'Completed', isOverdue: false }
+                ? { label: (a as any).scoreHidden ? 'Score hidden by teacher' : (a.score != null ? `Score: ${a.score}%` : 'Completed'), isOverdue: false }
                 : formatDue(a.dueDate);
               const statusLabel = a.status === 'completed' ? 'Done' : 'Upcoming';
               const statusColor = a.status === 'completed' ? colors.accentGreen : colors.accentBlue;
@@ -859,6 +861,14 @@ function AssignmentDetailModal({ assignment, colors, childName, onClose }: { ass
                 <View style={{ flex: 1, padding: 16, borderRadius: 14, backgroundColor: colors.accentYellow + '18', borderWidth: 1, borderColor: colors.accentYellow + '30', alignItems: 'center' }}>
                   <Text style={{ fontFamily: fonts.serif, fontSize: 36, fontWeight: '900', color: colors.accentYellow, letterSpacing: -1 }}>{a.score}%</Text>
                   <Text style={{ fontFamily: fonts.serif, fontSize: 12, fontWeight: '600', color: colors.accentYellow, marginTop: 2 }}>Score</Text>
+                </View>
+              )}
+              {isCompleted && (a as any).scoreHidden && (
+                <View style={{ flex: 1, padding: 16, borderRadius: 14, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="lock" size={20} color={colors.textMuted} />
+                  <Text style={{ fontFamily: fonts.serif, fontSize: 11, color: colors.textMuted, marginTop: 6, textAlign: 'center', lineHeight: 15 }}>
+                    Score hidden — the teacher has turned off progress sharing.
+                  </Text>
                 </View>
               )}
               {isCompleted && feedback.stamp && (

@@ -97,14 +97,15 @@ export default function TeacherChallengesScreen({ navigation }: any) {
   const [assignSuccess, setAssignSuccess] = useState('');
   const [assignDueDate, setAssignDueDate] = useState('');
 
-  // Fetch students linked to this teacher
-  useEffect(() => {
+  // Fetch students linked to this teacher — on EVERY focus so a newly added student
+  // appears in the assign picker instantly (no manual refresh needed).
+  useFocusEffect(useCallback(() => {
     if (!user?.email) return;
     fetch(`${SERVER_URL}/student/by-teacher/${encodeURIComponent(user.email)}`)
       .then(r => r.ok ? r.json() : [])
       .then(data => { if (Array.isArray(data)) setStudents(data); })
       .catch(() => {});
-  }, [user?.email]);
+  }, [user?.email]));
 
   // Fetch the teacher's grades authoritatively from saved preferences — on every
   // focus, so a grade change in Settings is reflected instantly (no refresh).
