@@ -438,6 +438,9 @@ router.patch('/preferences', async (req, res) => {
       weeklyReport,
       assignmentAlerts,
       challengeUpdates,
+      // Teacher enforced settings
+      autoGrading,
+      shareProgress,
       // Additional onboarding fields (previously dropped)
       gender,
       dob,
@@ -474,6 +477,9 @@ router.patch('/preferences', async (req, res) => {
     if (weeklyReport != null) patch.weeklyReport = Boolean(weeklyReport);
     if (assignmentAlerts != null) patch.assignmentAlerts = Boolean(assignmentAlerts);
     if (challengeUpdates != null) patch.challengeUpdates = Boolean(challengeUpdates);
+    // Teacher enforced settings (read server-side to gate grading & parent score sharing)
+    if (autoGrading != null)  patch.autoGrading  = Boolean(autoGrading);
+    if (shareProgress != null) patch.shareProgress = Boolean(shareProgress);
 
     // Additional onboarding fields — store in the preferences jsonb so nothing is dropped.
     if (gender != null)  patch.gender  = String(gender);

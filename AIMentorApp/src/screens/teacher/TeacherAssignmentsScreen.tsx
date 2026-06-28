@@ -479,7 +479,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       .finally(() => setLoadingSubmissions(false));
   }, [detailAssignment?.id]);
 
-  useEffect(() => {
+  // Re-fetch the student list on EVERY focus (not just mount) so a student the
+  // teacher just added shows up in the assign picker instantly — no manual refresh.
+  useFocusEffect(useCallback(() => {
     if (!teacherEmail) return;
     fetch(`${SERVER_URL}/student/by-teacher/${encodeURIComponent(teacherEmail)}`)
       .then(r => r.ok ? r.json() : [])
@@ -505,7 +507,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         }
       })
       .catch(() => {});
-  }, [teacherEmail]);
+  }, [teacherEmail, user?.curriculum, user?.school]));
 
   const filtered = assignments.filter(a => {
     if (activeTab === 'Active') return a.status === 'pending';
@@ -3477,11 +3479,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                               .filter(s => {
                                 const matchSearch = s.name?.toLowerCase().includes(studentSearch.toLowerCase());
                                 const matchCurriculum = !teacherCurriculum || !s.curriculum || s.curriculum === teacherCurriculum;
-                                // Show ALL of the teacher's students regardless of the grade
-                                // currently selected in the form — a teacher who teaches
-                                // multiple grades must still be able to pick any student.
-                                // The grade follows the chosen student (see onPress below).
-                                return matchSearch && matchCurriculum;
+                                // Show ONLY students in the grade currently selected in the
+                                // form — picking "Grade 3" must not surface Grade 5 students.
+                                const normG = (g?: string) => (g ?? '').toLowerCase().replace(/grade/g, '').replace(/\s+/g, '').trim();
+                                const matchGrade = !grade || normG(s.grade) === normG(grade);
+                                return matchSearch && matchCurriculum && matchGrade;
                               })
                               .map(s => (
                                 <TouchableOpacity

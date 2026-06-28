@@ -370,10 +370,12 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   async function loadLinkableStudents() {
     setLinkableLoading(true);
     try {
-      // Only send grades param when we actually know the teacher's grades (from auth context)
-      // If unknown, backend will resolve from user_preferences
-      const url = teacherGrades.length > 0
-        ? `${SERVER_URL}/student/available-to-link?teacherEmail=${encodeURIComponent(user?.email || '')}&grades=${teacherGrades.map(g => encodeURIComponent(g)).join(',')}`
+      // Use the AUTHORITATIVE grades the teacher teaches (allowedGrades = freshly
+      // fetched preferences), not the possibly-stale cached user.teaches — otherwise
+      // a teacher who teaches Grade 3 + Grade 5 only saw Grade 3 students to link.
+      const gradesToUse = allowedGrades.length > 0 ? allowedGrades : teacherGrades;
+      const url = gradesToUse.length > 0
+        ? `${SERVER_URL}/student/available-to-link?teacherEmail=${encodeURIComponent(user?.email || '')}&grades=${gradesToUse.map(g => encodeURIComponent(g)).join(',')}`
         : `${SERVER_URL}/student/available-to-link?teacherEmail=${encodeURIComponent(user?.email || '')}`;
       const res = await fetch(url);
       if (res.ok) { const data = await res.json(); setLinkableStudents(data); }
@@ -792,10 +794,12 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                   ) : null}
                 </View>
 
-                {/* Grade filter pills — derived from actual data returned */}
-                {!linkableLoading && linkableStudents.length > 0 && (
+                {/* Grade filter pills — show EVERY grade the teacher teaches (so a
+                    Grade 3 + Grade 5 teacher gets both chips), unioned with any grades
+                    actually present in the returned students. */}
+                {!linkableLoading && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
-                    {['All', ...Array.from(new Set(linkableStudents.map(s => s.grade).filter(Boolean))).sort()].map(g => (
+                    {['All', ...Array.from(new Set([...allowedGrades, ...linkableStudents.map(s => s.grade)].filter(Boolean))).sort()].map(g => (
                       <TouchableOpacity
                         key={g}
                         onPress={() => setLinkGradeFilter(g)}

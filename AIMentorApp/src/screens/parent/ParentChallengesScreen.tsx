@@ -57,14 +57,14 @@ export default function ParentChallengesScreen({ navigation }: any) {
   const [assignSuccess, setAssignSuccess]     = useState('');
   const [assignDueDate, setAssignDueDate]     = useState('');
 
-  // Fetch children
-  useEffect(() => {
+  // Fetch children on every focus so a newly added child appears instantly.
+  useFocusEffect(useCallback(() => {
     if (!user?.email) return;
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(user.email)}/children`)
       .then(r => r.ok ? r.json() : [])
       .then(data => { if (Array.isArray(data) && data.length > 0) setChildren(data); })
       .catch(() => {});
-  }, [user?.email]);
+  }, [user?.email]));
 
   const child = children[selectedIdx] ?? null;
 
