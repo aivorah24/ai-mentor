@@ -86,16 +86,16 @@ function buildMonthCalendar(year: number, month: number) {
   return weeks;
 }
 
-function typeColor(type: string, colors: any): string {
-  const map: Record<string, string> = {
-    study:      colors.accentBlue,
-    lesson:     colors.accentGreen,
-    challenge:  colors.accentPurple,
-    deadline:   colors.accentRed,
-    assignment: colors.accentYellow,
-    break:      colors.textDim,
+function typeColors(type: string): [string, string, string] {
+  const map: Record<string, [string, string, string]> = {
+    lesson:     ['#9C844A', '#F5EDDA', '#6B5A30'],
+    study:      ['#4A7EA5', '#DAE9F5', '#2D5470'],
+    challenge:  ['#6B5BA8', '#E8E4F5', '#3F3270'],
+    deadline:   ['#B84A3A', '#F5DDD9', '#7A2A1E'],
+    assignment: ['#3A8A6A', '#D9F0E8', '#1E5A40'],
+    break:      ['#7A7A7A', '#EBEBEB', '#4A4A4A'],
   };
-  return map[type] ?? colors.accentYellow;
+  return map[type] ?? ['#9C844A', '#F5EDDA', '#6B5A30'];
 }
 
 function toTitleCase(str: string) {
@@ -235,7 +235,8 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
           type:      newType,
           note:      newNote,
           studentId: child.id,
-          createdBy: 'parent',
+          createdBy:    'parent',
+          creatorEmail: user?.email || '',
         }),
       });
       if (res.ok) {
@@ -374,7 +375,7 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                       {/* Day columns */}
                       {week.map((d) => {
                         const dayEvents = (eventsMap[d.iso] ?? []).filter(
-                          e => e.type !== 'deadline' && e.startTime !== '23:59'
+                          e => e.startTime !== '23:59'
                         );
                         return (
                           <View
@@ -445,14 +446,15 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                             {dayEvents.map(event => {
                               const top    = calcEventTop(event.startTime);
                               const height = calcEventHeight(event.startTime, event.endTime);
-                              const color  = typeColor(event.type, colors);
+                              const [accent, fill, textCol] = typeColors(event.type);
                               return (
                                 <TouchableOpacity
                                   key={event.id}
                                   style={[styles.eventBlock, {
                                     top, height,
-                                    backgroundColor: color + '20',
-                                    borderLeftColor: color,
+                                    backgroundColor: fill,
+                                    borderLeftColor: accent,
+                                    borderLeftWidth: 4,
                                   }]}
                                   activeOpacity={0.82}
                                   onPress={() => {
@@ -462,8 +464,8 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                                     else if (t === 'lesson' || t === 'study') navigation.navigate('ParentLearning' as any);
                                   }}
                                 >
-                                  <Text style={styles.eventTitle} numberOfLines={1}>{toTitleCase(event.title)}</Text>
-                                  <Text style={styles.eventTime}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</Text>
+                                  <Text style={[styles.eventTitle, { color: textCol }]} numberOfLines={1}>{toTitleCase(event.title)}</Text>
+                                  <Text style={[styles.eventTime, { color: accent }]}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</Text>
                                   <TouchableOpacity
                                     style={styles.deleteBtn}
                                     onPress={() => removeEvent(event.id, d.iso)}
@@ -585,10 +587,10 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                 {['study','lesson','challenge','deadline','assignment','break'].map(t => (
                   <TouchableOpacity
                     key={t}
-                    style={[styles.timeChip, newType === t && { borderColor: typeColor(t, colors), backgroundColor: typeColor(t, colors) + '18' }]}
+                    style={[styles.timeChip, newType === t && { borderColor: typeColors(t)[0], backgroundColor: typeColors(t)[1] }]}
                     onPress={() => setNewType(t)}
                   >
-                    <Text style={[styles.timeChipText, newType === t && { color: typeColor(t, colors) }]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
+                    <Text style={[styles.timeChipText, newType === t && { color: typeColors(t)[2], fontWeight: '700' }]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>

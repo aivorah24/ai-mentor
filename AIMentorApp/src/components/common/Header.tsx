@@ -89,11 +89,13 @@ export default function Header({
     unreadCount,
     unreadAssignments,
     unreadChallenges,
+    unreadEvents,
     latestNotif,
     notificationItems,
     clearUnread,
     clearUnreadAssignments,
     clearUnreadChallenges,
+    clearUnreadEvents,
   } = useNotification();
 
   // Resolve screen names based on user role
@@ -102,6 +104,7 @@ export default function Header({
     assignments: role === 'teacher' ? 'TeacherAssignments' : role === 'parent' ? 'ParentAssignments' : 'Assignments',
     messages:    role === 'teacher' ? 'TeacherMessages'    : role === 'parent' ? 'ParentMessages'    : 'Messages',
     challenges:  role === 'teacher' ? 'TeacherChallenges'  : role === 'parent' ? 'ParentChallenges'  : 'Challenges',
+    schedule:    role === 'teacher' ? 'TeacherSchedule'    : role === 'parent' ? 'ParentSchedule'    : 'Schedule',
   }), [role]);
 
   const [bellVisible, setBellVisible] = useState(false);
@@ -112,7 +115,7 @@ const [editingName, setEditingName] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Bell count: real-time messages + real-time assignments + challenges.
-  const count = unreadCount + unreadAssignments + unreadChallenges;
+  const count = unreadCount + unreadAssignments + unreadChallenges + unreadEvents;
   const avatarStyle = (user as any)?.avatarStyle;
   const photoUrl = (user as any)?.photoUrl;
 
@@ -285,8 +288,9 @@ const [editingName, setEditingName] = useState(false);
                     {/* Individual assignment notification items (Google Classroom style) */}
                     {notificationItems.map(item => {
                       const isChallenge = item.type === 'challenge';
-                      const accent = isChallenge ? colors.accentYellow : colors.accentYellow;
-                      const iconName = isChallenge ? 'award' : (item.type === 'quiz' ? 'help-circle' : 'check-square');
+                      const isEvent = item.type === 'event';
+                      const accent = colors.accentYellow;
+                      const iconName = isChallenge ? 'award' : isEvent ? 'calendar' : (item.type === 'quiz' ? 'help-circle' : 'check-square');
                       return (
                       <TouchableOpacity
                         key={item.id}
@@ -299,6 +303,9 @@ const [editingName, setEditingName] = useState(false);
                           if (isChallenge) {
                             void clearUnreadChallenges();
                             navigation.navigate(screenNames.challenges, { highlightId: item.id, tab: 'assigned' });
+                          } else if (isEvent) {
+                            void clearUnreadEvents();
+                            navigation.navigate(screenNames.schedule);
                           } else {
                             void clearUnreadAssignments();
                             navigation.navigate(screenNames.assignments, { highlightId: item.id });

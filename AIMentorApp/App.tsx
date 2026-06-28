@@ -31,6 +31,13 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   const iconStyle = document.createElement('style');
   iconStyle.textContent = `@font-face{font-family:'Feather';src:url('https://cdn.jsdelivr.net/npm/@expo/vector-icons@14/build/vendor/react-native-vector-icons/Fonts/Feather.ttf') format('truetype');font-display:block;}`;
   document.head.appendChild(iconStyle);
+
+  // Disable the browser's automatic scroll-anchoring. Screens refresh data on a
+  // timer (15s) and a study-time heartbeat re-renders content above the fold;
+  // scroll-anchoring reacts by nudging the page up while the user scrolls down.
+  const scrollAnchorFix = document.createElement('style');
+  scrollAnchorFix.textContent = `* { overflow-anchor: none !important; }`;
+  document.head.appendChild(scrollAnchorFix);
 }
 
 // @ts-ignore

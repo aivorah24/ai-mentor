@@ -84,15 +84,25 @@ export default function ProfileScreen({ navigation }: any) {
     if (!editName.trim()) { setSaveProfileError('Please enter your name.'); return; }
     setSaveProfileLoading(true);
     try {
-      const body: Record<string, any> = { email: user?.email, name: editName.trim() };
-      if (editGrade.trim())    body.grade    = editGrade.trim();
-      if (editLocation.trim()) body.location = editLocation.trim();
-      if (editBio.trim())      body.bio      = editBio.trim();
-      await fetch(`${SERVER_URL}/user/preferences`, {
+      // name / grade / location live in the `users` table — they MUST go to
+      // /user/profile so teacher & parent views (which read users.name) update.
+      // (Previously this hit /user/preferences, so the name never persisted.)
+      const profileBody: Record<string, any> = { email: user?.email, name: editName.trim() };
+      if (editGrade.trim())    profileBody.grade    = editGrade.trim();
+      if (editLocation.trim()) profileBody.location = editLocation.trim();
+      await fetch(`${SERVER_URL}/user/profile`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify(profileBody),
       });
+      // bio is a soft preference, not a users column → keep it in preferences.
+      if (editBio.trim()) {
+        await fetch(`${SERVER_URL}/user/preferences`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: user?.email, bio: editBio.trim() }),
+        });
+      }
       updateUser({
         name: editName.trim(),
         grade: editGrade.trim() || user?.grade,
