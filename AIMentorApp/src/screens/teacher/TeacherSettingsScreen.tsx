@@ -23,7 +23,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import SERVER_URL from '../../config/serverUrl';
-import { GRADES_TEACHER, CURRICULA } from '../onboarding/OnboardingScreen';
+import { GRADES_TEACHER, CURRICULA, getGradesForCurriculum } from '../onboarding/OnboardingScreen';
 
 // Grade levels — mirrors the student onboarding grade selector so the teacher's
 // "Grades you teach" picker groups grades by level instead of a flat list.
@@ -82,6 +82,28 @@ export default function TeacherSettingsScreen({ navigation }: any) {
     AsyncStorage.setItem(NOTIF_KEY, JSON.stringify(prefs)).catch(() => {});
     triggerPoll();
   }, [NOTIF_KEY, submissionAlerts, parentMessages, challengeAlerts, weeklyReport, aiInsights, triggerPoll]);
+
+  // Teaching prefs that are ENFORCED server-side (AI Auto-Grading, Share Progress) —
+  // load from the server profile and PATCH on every toggle so the change takes effect.
+  useEffect(() => {
+    if (!user?.email) return;
+    fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(user.email)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(p => {
+        if (!p) return;
+        if (p.autoGrading != null)  setAutoGrading(p.autoGrading);
+        if (p.shareProgress != null) setShareProgress(p.shareProgress);
+      })
+      .catch(() => {});
+  }, [user?.email]);
+  function saveTeacherPref(key: 'autoGrading' | 'shareProgress', value: boolean) {
+    if (!user?.email) return;
+    fetch(`${SERVER_URL}/user/preferences`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email, [key]: value }),
+    }).catch(() => {});
+  }
 
   // Profile photo — same upload flow as the student profile (shared for all roles).
   const [photoUrl,  setPhotoUrl]  = useState<string | null>((user as any)?.photoUrl ?? null);
@@ -477,7 +499,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                     <Text style={styles.fieldLabel}>AI Auto-Grading</Text>
                     <Text style={styles.fieldSub}>Let AI grade assignments automatically</Text>
                   </View>
-                  <Switch value={autoGrading} onValueChange={setAutoGrading} trackColor={{ false: colors.borderColor, true: gold }} thumbColor="white" />
+                  <Switch value={autoGrading} onValueChange={(v) => { setAutoGrading(v); saveTeacherPref('autoGrading', v); }} trackColor={{ false: colors.borderColor, true: gold }} thumbColor="white" />
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.toggleRow}>
@@ -485,7 +507,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                     <Text style={styles.fieldLabel}>Share Progress with Parents</Text>
                     <Text style={styles.fieldSub}>Parents can see their child's scores and activity</Text>
                   </View>
-                  <Switch value={shareProgress} onValueChange={setShareProgress} trackColor={{ false: colors.borderColor, true: gold }} thumbColor="white" />
+                  <Switch value={shareProgress} onValueChange={(v) => { setShareProgress(v); saveTeacherPref('shareProgress', v); }} trackColor={{ false: colors.borderColor, true: gold }} thumbColor="white" />
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.fieldRow}>
@@ -696,7 +718,16 @@ export default function TeacherSettingsScreen({ navigation }: any) {
               <TouchableOpacity
                 key={c} activeOpacity={0.8}
                 style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, borderColor: on ? gold : colors.borderColor, backgroundColor: on ? gold + '18' : 'transparent' }}
-                onPress={() => setEditCurricula(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])}
+                onPress={() => setEditCurricula(prev => {
+                  const next = prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c];
+                  // Drop any selected grades that are no longer valid for the new
+                  // curriculum set (e.g. removing IB MYP clears Grades 6–10).
+                  const allowed = next.length > 0
+                    ? new Set(next.flatMap(cc => getGradesForCurriculum(cc)))
+                    : new Set(GRADES_TEACHER);
+                  setEditGrades(g => g.filter(x => allowed.has(x)));
+                  return next;
+                })}
               >
                 {on && <Feather name="check" size={12} color={gold} />}
                 <Text style={{ fontSize: 13, color: on ? gold : colors.textMuted, fontWeight: '600' }}>{c}</Text>
@@ -706,8 +737,15 @@ export default function TeacherSettingsScreen({ navigation }: any) {
         </View>
         <Text style={[styles.modalFieldLabel, { marginTop: 12 }]}>Grades you teach (select all that apply)</Text>
         <View style={{ gap: 12, marginBottom: 4 }}>
-          {GRADE_GROUPS.map(group => {
-            const available = group.grades.filter(g => GRADES_TEACHER.includes(g));
+          {(() => {
+            // Only show grades valid for the selected curricula (union) — exactly like
+            // teacher onboarding: IB PYP → Grades 1–5, IB MYP → 6–10, IB DP → 11–12, etc.
+            // No curriculum selected yet → show all grades.
+            const allowed = editCurricula.length > 0
+              ? new Set(editCurricula.flatMap(c => getGradesForCurriculum(c)))
+              : new Set(GRADES_TEACHER);
+            return GRADE_GROUPS.map(group => {
+            const available = group.grades.filter(g => allowed.has(g));
             if (available.length === 0) return null;
             return (
               <View key={group.label} style={{ gap: 7 }}>
@@ -732,7 +770,8 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                 </View>
               </View>
             );
-          })}
+          });
+          })()}
         </View>
         {modalError ? <Text style={{ color: colors.accentRed, fontSize: 13, marginTop: 8 }}>{modalError}</Text> : null}
         <ModalButtons onCancel={closeModal} onSave={handleSaveCurriculum} loading={modalLoading} saveLabel="Save" styles={styles} />

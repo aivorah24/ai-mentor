@@ -12,6 +12,26 @@ cloudinary.config({
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const MCQ_LETTER_TO_INDEX = { A: 0, B: 1, C: 2, D: 3 };
+
+// Read a teacher's setting from user_preferences.data by the teacher's user id.
+// Used to ENFORCE teacher settings server-side (AI Auto-Grading, Share Progress).
+// Defaults to `def` (true) so existing behaviour is unchanged unless explicitly off.
+async function teacherSetting(teacherId, key, def = true) {
+  try {
+    if (!teacherId) return def;
+    let email = null;
+    if (typeof teacherId === 'string' && teacherId.includes('@')) {
+      email = teacherId.toLowerCase().trim();
+    } else {
+      const { data: u } = await supabase.from('users').select('email').eq('id', teacherId).maybeSingle();
+      email = u?.email ? u.email.toLowerCase().trim() : null;
+    }
+    if (!email) return def;
+    const { data: p } = await supabase.from('user_preferences').select('data').eq('user_email', email).maybeSingle();
+    const v = p?.data?.[key];
+    return v === undefined || v === null ? def : v;
+  } catch { return def; }
+}
 // NOTE: the schedule is stored in the Supabase `schedule_events` table — the old
 // local data/schedule.json helpers were removed (not shared across instances).
 
@@ -83,7 +103,7 @@ router.get('/new-count', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
-  const { studentId, teacherId } = req.query;
+  const { studentId, teacherId, viewerRole } = req.query;
 
   if (teacherId) {
     const creatorId = await resolveUserId(teacherId);
@@ -201,6 +221,25 @@ router.get('/', async (req, res) => {
     }
     return norm;
   });
+
+  // ── ENFORCE: Share Progress with Parents (teacher setting) ───────────────────
+  // When a PARENT is viewing, hide the score/grade for assignments whose creating
+  // teacher turned OFF "Share Progress" — the activity stays visible, only the score
+  // is redacted with a reason. Students viewing their own work are NOT affected.
+  if (viewerRole === 'parent') {
+    const creatorIds = [...new Set(filtered.map(a => a.created_by_id).filter(Boolean))];
+    const shareMap = {};
+    await Promise.all(creatorIds.map(async cid => { shareMap[cid] = await teacherSetting(cid, 'shareProgress', true); }));
+    result.forEach((norm, idx) => {
+      const cid = filtered[idx].created_by_id;
+      if (cid && shareMap[cid] === false && norm.score != null) {
+        norm.score = null;
+        norm.scoreHidden = true;
+        norm.scoreHiddenReason = "Hidden — your child's teacher has turned off progress sharing.";
+      }
+    });
+  }
+
   res.json(result);
 });
 
@@ -1691,6 +1730,25 @@ router.post('/:id/submit', async (req, res) => {
     .single();
 
   if (fetchErr || !assignment) return res.status(404).json({ error: 'Assignment not found' });
+
+  // ── ENFORCE: AI Auto-Grading (teacher setting) ───────────────────────────────
+  // If the creating teacher turned OFF "AI Auto-Grading", the submission is saved
+  // for manual review — NO AI score — instead of being auto-graded.
+  const autoGradeOn = await teacherSetting(assignment.created_by_id, 'autoGrading', true);
+  if (!autoGradeOn) {
+    const studentUid = await resolveUserId(studentId);
+    const submissionText = Array.isArray(answers) && answers.length
+      ? answers.filter(Boolean).join('\n')
+      : (Array.isArray(quizAnswers) ? quizAnswers.map((a, i) => `Q${i + 1}: ${a}`).join('\n') : '');
+    await supabase.from('assignment_submissions').upsert({
+      assignment_id: id, student_id: studentUid,
+      status: 'submitted', score: null,
+      submission_text: submissionText || null,
+      ai_feedback: JSON.stringify({ text: 'Submitted. Your teacher will review and grade this.', awaitingReview: true }),
+      completed_at: new Date().toISOString(),
+    }, { onConflict: 'assignment_id,student_id' });
+    return res.json({ awaitingReview: true, score: null, feedback: 'Submitted. Your teacher will review and grade this assignment.' });
+  }
 
   const questions = assignment.questions || [];
   let score = null;
