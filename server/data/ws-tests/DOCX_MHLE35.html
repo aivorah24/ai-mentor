@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Primary Years Programme - Mathematics MHLE - 35 - Aivorah</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, 'Segoe UI', Roboto, 'Noto Sans Telugu', 'Noto Sans Devanagari', Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
+
+    /* ── Header — Aivorah Enchanted Forest ── */
+    .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 28px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); }
+    .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 4px; }
+    .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; }
+    .header-meta { font-size: 13px; color: #5A6B69; margin-top: 4px; }
+
+    /* ── Score Badge ── */
+    .score { position: fixed; top: 20px; right: 24px; width: 76px; height: 76px; border-radius: 50%;
+             background: linear-gradient(135deg, #93B0AC, #7AADA8); color: #0F0F0F;
+             display: flex; flex-direction: column; align-items: center; justify-content: center;
+             box-shadow: 0 4px 20px rgba(147,176,172,0.3); z-index: 100; }
+    .score-num { font-size: 22px; font-weight: 800; line-height: 1; }
+    .score-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 2px; }
+
+    /* ── Progress ── */
+    .progress-wrap { padding: 20px 0 4px; }
+    .progress-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5A6B69; margin-bottom: 8px; }
+    .progress-bar { background: #252525; border-radius: 6px; height: 12px; overflow: hidden; border: 1px solid rgba(195,220,216,0.08); }
+    .progress-fill { background: linear-gradient(90deg, #93B0AC, #C3DCD8); height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+    .progress-pct { text-align: right; font-size: 12px; color: #93B0AC; font-weight: 600; margin-top: 4px; }
+
+    /* ── Container ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px 60px; }
+
+    /* ── Concepts ── */
+    .concepts-row { display: flex; gap: 16px; margin: 24px 0; flex-wrap: wrap; }
+    .concept-card { flex: 1; min-width: 220px; padding: 20px; border-radius: 12px; color: #F0EEEC; }
+    .concept-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #A8B5B3; line-height: 1.5; }
+    .concept-unit { margin-top: 8px; font-size: 12px; color: #5A6B69; }
+    .concept-icon { font-size: 20px; margin-bottom: 6px; }
+
+    /* ── Question cards ── */
+    .q-card { background: #1C1C1C; padding: 20px 24px; border-radius: 10px; margin: 14px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid rgba(195,220,216,0.12); }
+    .q-text { font-size: 15px; color: #F0EEEC; margin-bottom: 14px; line-height: 1.6; }
+    .q-text strong { color: #C3DCD8; }
+
+    /* ── Input row ── */
+    .q-input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .q-label { font-weight: 700; font-size: 14px; color: #A8B5B3; }
+    .q-input { width: 130px; padding: 10px 12px; border: 2px solid rgba(195,220,216,0.25); border-radius: 8px;
+               font-size: 16px; text-align: center; transition: border-color 0.2s; background: #252525; color: #F0EEEC; }
+    .q-input:focus { border-color: #93B0AC; outline: none; box-shadow: 0 0 0 3px rgba(147,176,172,0.2); }
+    .q-unit { font-size: 14px; color: #A8B5B3; font-weight: 500; }
+
+    /* ── MCQ ── */
+    .mcq-opt { display: block; margin: 8px 0; padding: 10px 14px; border-radius: 8px;
+               border: 1.5px solid rgba(195,220,216,0.15); cursor: pointer; font-size: 14px; color: #F0EEEC; transition: all 0.2s; }
+    .mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .mcq-opt input { margin-right: 8px; }
+
+    /* ── Buttons ── */
+    .btn-check { background: #93B0AC; color: #0F0F0F; border: none; padding: 10px 24px; border-radius: 8px;
+                 font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+    .btn-check:hover { background: #7AADA8; transform: translateY(-1px); }
+    .btn-hint { background: #C5BD96; color: #0F0F0F; border: none; padding: 10px 20px; border-radius: 8px;
+                font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .btn-hint:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-show { background: #93B0AC; color: #0F0F0F; border: none; padding: 8px 18px; border-radius: 6px;
+                font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 10px; }
+    .btn-show:hover { background: #7AADA8; }
+
+    /* ── Feedback boxes ── */
+    .hint-box { margin-top: 12px; padding: 14px 16px; background: rgba(197,189,150,0.1); border-radius: 8px;
+                border-left: 4px solid #C5BD96; color: #C5BD96; font-size: 14px; line-height: 1.5; }
+    .result-box { margin-top: 8px; font-size: 14px; min-height: 6px; }
+    .solution-box { margin-top: 12px; padding: 16px 18px; background: rgba(147,176,172,0.1); border-radius: 8px;
+                    border-left: 4px solid #93B0AC; color: #93B0AC; font-size: 14px; line-height: 1.7; }
+
+    /* ── Activity boxes ── */
+    .activity-box { background: linear-gradient(135deg, rgba(147,176,172,0.08), rgba(197,189,150,0.08)) !important;
+                    border-color: rgba(147,176,172,0.25) !important; }
+
+    /* ── Language worksheet layout (Telugu, Hindi, etc.) ── */
+    .lang-q-row { padding: 16px 20px 12px; margin: 6px 0; border-bottom: 1px solid rgba(195,220,216,0.08); }
+    .lang-q-left { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+    .lang-q-num { font-size: 15px; color: #93B0AC; font-weight: 700; flex-shrink: 0; min-width: 28px; }
+    .lang-q-text { font-size: 16px; color: #F0EEEC; line-height: 1.8; }
+    .lang-q-text strong { color: #C3DCD8; }
+    .lang-example { margin: 4px 0 10px 38px; padding: 8px 14px; background: rgba(195,220,216,0.05);
+                    border-left: 3px solid rgba(195,220,216,0.3); border-radius: 0 6px 6px 0;
+                    font-size: 14px; color: #A8B5B3; font-style: italic; }
+    .lang-q-answer { display: flex; align-items: center; gap: 12px; margin-left: 38px; flex-wrap: wrap; }
+    .lang-input { flex: 1; max-width: 280px; padding: 8px 4px; font-size: 16px; color: #F0EEEC;
+                  background: transparent; border: none; border-bottom: 2px dotted rgba(195,220,216,0.35);
+                  outline: none; font-family: inherit; transition: border-color 0.2s; }
+    .lang-input:focus { border-bottom-color: #93B0AC; border-bottom-style: solid; }
+    .lang-input::placeholder { color: transparent; }
+    .lang-q-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .lang-btn-check { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(147,176,172,0.4);
+                      background: transparent; color: #93B0AC; font-size: 14px; cursor: pointer;
+                      display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-check:hover { background: rgba(147,176,172,0.15); border-color: #93B0AC; }
+    .lang-btn-hint { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(197,189,150,0.4);
+                     background: transparent; color: #C5BD96; font-size: 14px; font-weight: 700; cursor: pointer;
+                     display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-hint:hover { background: rgba(197,189,150,0.1); border-color: #C5BD96; }
+    .lang-result { margin: 4px 0 0 38px; font-size: 14px; min-height: 4px; }
+    .lang-mcq-opts { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px 38px; align-items: center; }
+    .lang-mcq-opt { font-size: 14px; color: #F0EEEC; cursor: pointer; padding: 6px 12px;
+                    border: 1px solid rgba(195,220,216,0.2); border-radius: 6px; transition: all 0.2s; }
+    .lang-mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .lang-mcq-opt input { margin-right: 6px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .header { padding: 20px; }
+      .header h1 { font-size: 20px; }
+      .container { padding: 0 14px 40px; }
+      .q-card { padding: 16px; }
+      .lang-q-row { padding: 12px 14px 10px; }
+      .lang-q-answer { margin-left: 28px; }
+      .lang-result { margin-left: 28px; }
+      .lang-example { margin-left: 28px; }
+      .score { width: 60px; height: 60px; top: 14px; right: 14px; }
+      .score-num { font-size: 18px; }
+      .concepts-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-sub">THE SHRI RAM ACADEMY &middot; PYP 4</div>
+    <h1>Primary Years Programme - Mathematics MHLE - 35</h1>
+    <div class="header-meta">Subject: Mathematics &nbsp;|&nbsp; Powered by Aivorah</div>
+  </div>
+
+  <div class="score" id="score-badge">
+    <span class="score-num" id="score-num">0/27</span>
+    <span class="score-label">Score</span>
+  </div>
+
+  <div class="container">
+    <div class="progress-wrap">
+      <div class="progress-title">Quiz Progress</div>
+      <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+      <div class="progress-pct" id="pp">0% complete</div>
+    </div>
+
+    <div class="concepts-row">
+        <div class="concept-card" style="background:#93B0AC18;border:1px solid #93B0AC40">
+          <div class="concept-icon" style="color:#93B0AC">&#128218;</div>
+          <h3 style="color:#93B0AC">Decimals</h3>
+          <p>Numbers that have a whole number part and a fractional part separated by a decimal point. For example, 0.76 is a decimal number.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#C5BD9618;border:1px solid #C5BD9640">
+          <div class="concept-icon" style="color:#C5BD96">&#189;</div>
+          <h3 style="color:#C5BD96">Fractions</h3>
+          <p>A part of a whole number, written as one number over another, like 3/4.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#D4A89818;border:1px solid #D4A89840">
+          <div class="concept-icon" style="color:#D4A898">&#128218;</div>
+          <h3 style="color:#D4A898">Time Conversion</h3>
+          <p>Changing time from one format to another, such as from 24-hour clock to 12-hour clock or hours to minutes.</p>
+          <p class="concept-unit">Measured in<br><strong style="color:#C3DCD8">hours, minutes</strong></p>
+        </div>
+        <div class="concept-card" style="background:#C3DCD818;border:1px solid #C3DCD840">
+          <div class="concept-icon" style="color:#C3DCD8">&#128218;</div>
+          <h3 style="color:#C3DCD8">Addition and Subtraction of Decimals</h3>
+          <p>Adding or subtracting numbers with decimal points by aligning the decimal points correctly.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#EFD1D418;border:1px solid #EFD1D440">
+          <div class="concept-icon" style="color:#EFD1D4">&#128218;</div>
+          <h3 style="color:#EFD1D4">Multiplication of Decimals</h3>
+          <p>Multiplying numbers with decimal points, counting the total number of decimal places in the factors to place the decimal in the product.</p>
+          
+        </div></div>
+    <div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:6px;font-weight:700;">&#128221; Note</h3>
+      <p style="font-size:14px;color:#A8B5B3;line-height:1.5;">Purpose: To apply the conceptual understanding of decimals in solving problems.</p>
+    </div>
+    <div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:8px;font-weight:700;">&#127919; Success Criteria</h3>
+      <ul style="margin:0;padding-left:20px;"><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can model and solve addition, subtraction, and multiplication of decimals.</li><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can read and write time using both digital and analogue clocks on 12-hour and 24-hour formats.</li></ul>
+    </div>
+    
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 1 &middot; Express the given decimals as fractions.</h2>
+      <table class="ws-table" style="width:100%;border-collapse:collapse;border:1px solid rgba(195,220,216,0.2);border-radius:8px;overflow:hidden;"><tr><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q1-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">a)</strong> Express <strong>0.76</strong> as a fraction.</span><input type="text" id="q1-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q1')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q1')">Hint</button></div><div id="q1-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Count the number of decimal places. 0.76 has two decimal places, so the denominator is 100.</div><div id="q1-result" class="result-box" style="margin:0 14px;"></div><div id="q1-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 0.76 = 76 ÷ 100 = 76/100. Simplify by dividing numerator and denominator by 4: 19/25.</div><button id="q1-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q1')">Show Answer</button></td><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q3-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">c)</strong> Express <strong>1.3</strong> as a fraction.</span><input type="text" id="q3-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q3')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q3')">Hint</button></div><div id="q3-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Count the number of decimal places. 1.3 has one decimal place, so the denominator is 10.</div><div id="q3-result" class="result-box" style="margin:0 14px;"></div><div id="q3-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 1.3 = 13 ÷ 10 = 13/10 or 1 3/10.</div><button id="q3-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q3')">Show Answer</button></td></tr><tr><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q2-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">b)</strong> Express <strong>0.05</strong> as a fraction.</span><input type="text" id="q2-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q2')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q2')">Hint</button></div><div id="q2-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Count the number of decimal places. 0.05 has two decimal places, so the denominator is 100.</div><div id="q2-result" class="result-box" style="margin:0 14px;"></div><div id="q2-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 0.05 = 5 ÷ 100 = 5/100. Simplify by dividing numerator and denominator by 5: 1/20.</div><button id="q2-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q2')">Show Answer</button></td><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q4-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">d)</strong> Express <strong>2.8</strong> as a fraction.</span><input type="text" id="q4-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q4')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q4')">Hint</button></div><div id="q4-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Count the number of decimal places. 2.8 has one decimal place, so the denominator is 10.</div><div id="q4-result" class="result-box" style="margin:0 14px;"></div><div id="q4-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 2.8 = 28 ÷ 10 = 28/10. Simplify by dividing numerator and denominator by 2: 14/5 or 2 4/5.</div><button id="q4-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q4')">Show Answer</button></td></tr><tr><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"></td><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q5-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">e)</strong> Express <strong>6.44</strong> as a fraction.</span><input type="text" id="q5-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q5')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q5')">Hint</button></div><div id="q5-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Count the number of decimal places. 6.44 has two decimal places, so the denominator is 100.</div><div id="q5-result" class="result-box" style="margin:0 14px;"></div><div id="q5-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 6.44 = 644 ÷ 100 = 644/100. Simplify by dividing numerator and denominator by 4: 161/25 or 6 11/25.</div><button id="q5-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q5')">Show Answer</button></td></tr></table></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 2 &middot; Build a decimal pyramid.</h2>
+      <div style="text-align:center;margin:0 0 16px;"><img src="data:image/png;base64,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" alt="Three decimal pyramids where each pair of blocks totals the block above them. Missing decimals must be filled in using addition and subtraction." style="max-width:320px;max-height:300px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div><div class="q-card" id="q6-card">
+        <p class="q-text"><strong>1)</strong> Find the missing decimal at the top of the first pyramid.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q6-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q6')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q6')">Hint</button>
+        </div>
+        <div id="q6-hint" class="hint-box" style="display:none">Add the two bottom blocks: 3.3 + 1.2 = 4.5. Then add the next block: 4.5 + 0.1 = 4.6.</div>
+        <div id="q6-result" class="result-box"></div>
+        <div id="q6-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The bottom row is 3.3, 1.2, and 0.1. The middle block is 3.3 + 1.2 = 4.5. The top block is 4.5 + 0.1 = 4.6.
+          
+        </div>
+        <button id="q6-show" class="btn-show" style="display:none" onclick="toggleSolution('q6')">Show Answer</button>
+      </div><div class="q-card" id="q7-card">
+        <p class="q-text"><strong>2)</strong> Find the missing decimal at the top of the second pyramid.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q7-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q7')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q7')">Hint</button>
+        </div>
+        <div id="q7-hint" class="hint-box" style="display:none">Add the two bottom blocks: 2.3 + 1.2 = 3.5. Then add the next block: 3.5 + 4.2 = 7.7.</div>
+        <div id="q7-result" class="result-box"></div>
+        <div id="q7-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The bottom row is 2.3, 1.2, and 4.2. The middle block is 2.3 + 1.2 = 3.5. The top block is 3.5 + 4.2 = 7.7.
+          
+        </div>
+        <button id="q7-show" class="btn-show" style="display:none" onclick="toggleSolution('q7')">Show Answer</button>
+      </div><div class="q-card" id="q8-card">
+        <p class="q-text"><strong>3)</strong> Find the missing decimal at the top of the third pyramid.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q8-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q8')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q8')">Hint</button>
+        </div>
+        <div id="q8-hint" class="hint-box" style="display:none">Add the two bottom blocks: 4.7 + 3.6 = 8.3. Then add the next block: 8.3 + 2.9 = 11.2.</div>
+        <div id="q8-result" class="result-box"></div>
+        <div id="q8-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The bottom row is 4.7, 3.6, and 2.9. The middle block is 3.6 + 2.9 = 6.5. The top block is 4.7 + 6.5 = 11.2.
+          
+        </div>
+        <button id="q8-show" class="btn-show" style="display:none" onclick="toggleSolution('q8')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 3 &middot; Conversion of time (12 hour - 24 hour format)</h2>
+      <div class="ws-table-wrap" style="overflow-x:auto;margin:8px 0 14px;"><div style="font-weight:700;color:#C3DCD8;margin-bottom:8px;">Time Conversion Table</div><table style="width:100%;border-collapse:collapse;"><tr><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">Time in Words</th><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">24 Hour Clock</th><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">12 Hour Clock</th><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">Analogue</th></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">seven o'clock in the evening</td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q9-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q10-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;"></td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q11-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q12-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;"></td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q13-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q14-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;"></td></tr></table><div style="margin-top:12px;display:flex;gap:10px;align-items:center;"><button class="btn-check" onclick="checkTable([&quot;q9&quot;,&quot;q10&quot;,&quot;q11&quot;,&quot;q12&quot;,&quot;q13&quot;,&quot;q14&quot;])">Check table</button><span id="q9-tableresult" style="font-size:13px;"></span></div></div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 4 &middot; Conversion of time.</h2>
+      <table class="ws-table" style="width:100%;border-collapse:collapse;border:1px solid rgba(195,220,216,0.2);border-radius:8px;overflow:hidden;"><tr><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q15-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">a)</strong> Change <strong>16 hrs</strong> into minutes.</span><input type="text" id="q15-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><span style="font-size:13px;color:#A8B5B3;">minutes</span><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q15')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q15')">Hint</button></div><div id="q15-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">1 hour = 60 minutes. Multiply 16 by 60.</div><div id="q15-result" class="result-box" style="margin:0 14px;"></div><div id="q15-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 16 hours × 60 minutes/hour = 960 minutes.</div><button id="q15-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q15')">Show Answer</button></td><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q17-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">c)</strong> Change <strong>460 min</strong> into hours and minutes.</span><input type="text" id="q17-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><span style="font-size:13px;color:#A8B5B3;">hours and minutes</span><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q17')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q17')">Hint</button></div><div id="q17-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Divide 460 by 60 to get hours. The remainder is minutes.</div><div id="q17-result" class="result-box" style="margin:0 14px;"></div><div id="q17-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 460 ÷ 60 = 7 hours remainder 40 minutes. So, 460 minutes = 7 hours 40 minutes.</div><button id="q17-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q17')">Show Answer</button></td></tr><tr><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q16-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">b)</strong> Change <strong>3 hrs 30 minutes</strong> into minutes.</span><input type="text" id="q16-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><span style="font-size:13px;color:#A8B5B3;">minutes</span><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q16')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q16')">Hint</button></div><div id="q16-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Convert hours to minutes: 3 hours = 180 minutes. Add 30 minutes.</div><div id="q16-result" class="result-box" style="margin:0 14px;"></div><div id="q16-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 3 hours = 3 × 60 = 180 minutes. 180 + 30 = 210 minutes.</div><button id="q16-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q16')">Show Answer</button></td><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q18-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">d)</strong> Change <strong>90 min</strong> into hours and minutes.</span><input type="text" id="q18-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><span style="font-size:13px;color:#A8B5B3;">hours and minutes</span><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q18')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q18')">Hint</button></div><div id="q18-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Divide 90 by 60 to get hours. The remainder is minutes.</div><div id="q18-result" class="result-box" style="margin:0 14px;"></div><div id="q18-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 90 ÷ 60 = 1 hour remainder 30 minutes. So, 90 minutes = 1 hour 30 minutes.</div><button id="q18-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q18')">Show Answer</button></td></tr></table></div>
+    <div class="task-block" style="border-left:5px solid #C5BD96; background:rgba(197,189,150,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(197,189,150,0.15);color:#C5BD96;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">COULD DO</span>
+      <h2 style="font-size:18px;color:#C5BD96;margin:6px 0 18px;font-weight:700;">Task 5 &middot; Decimals in real life. Solve the following.</h2>
+      <div class="q-card" id="q19-card">
+        <p class="q-text"><strong>1a)</strong> You have Rs. 695. You buy a book for Rs. 123.55 and a crayon box for Rs. 169.75. How much did you spend in total?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q19-input" class="q-input" placeholder="?">
+          <span class="q-unit">Rs.</span>
+          <button class="btn-check" onclick="checkAnswer('q19')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q19')">Hint</button>
+        </div>
+        <div id="q19-hint" class="hint-box" style="display:none">Add the cost of the book and the crayon box.</div>
+        <div id="q19-result" class="result-box"></div>
+        <div id="q19-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>123.55 + 169.75 = 293.30. Total spent is Rs. 293.30.
+          
+        </div>
+        <button id="q19-show" class="btn-show" style="display:none" onclick="toggleSolution('q19')">Show Answer</button>
+      </div><div class="q-card" id="q20-card">
+        <p class="q-text"><strong>1b)</strong> How much money is left with you?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q20-input" class="q-input" placeholder="?">
+          <span class="q-unit">Rs.</span>
+          <button class="btn-check" onclick="checkAnswer('q20')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q20')">Hint</button>
+        </div>
+        <div id="q20-hint" class="hint-box" style="display:none">Subtract the total spent from the total money you have.</div>
+        <div id="q20-result" class="result-box"></div>
+        <div id="q20-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>695.00 - 293.30 = 401.70. Money left is Rs. 401.70.
+          
+        </div>
+        <button id="q20-show" class="btn-show" style="display:none" onclick="toggleSolution('q20')">Show Answer</button>
+      </div><div class="q-card" id="q21-card">
+        <p class="q-text"><strong>2)</strong> A garden has an irregular shape with sides measuring <strong>19.2 m</strong>, <strong>18.3 m</strong>, <strong>14.9 m</strong>, and <strong>24.4 m</strong>. What is the total length of its boundary? Express the total length in centimetres.</p>
+        <div class="q-input-row">
+          <span class="q-label">Side =</span>
+          <input type="text" id="q21-input" class="q-input" placeholder="?">
+          <span class="q-unit">cm</span>
+          <button class="btn-check" onclick="checkAnswer('q21')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q21')">Hint</button>
+        </div>
+        <div id="q21-hint" class="hint-box" style="display:none">Add all the side lengths in metres, then convert to centimetres by multiplying by 100.</div>
+        <div id="q21-result" class="result-box"></div>
+        <div id="q21-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>19.2 + 18.3 + 14.9 + 24.4 = <strong>76.8 m</strong>etres. 76.8 × 100 = <strong>7680 cm</strong>.
+          
+        </div>
+        <button id="q21-show" class="btn-show" style="display:none" onclick="toggleSolution('q21')">Show Answer</button>
+      </div><div class="q-card" id="q22-card">
+        <p class="q-text"><strong>3)</strong> The cost of <strong>1 kg</strong> rice is Rs. 58.25. If a family needs 30 kgs, how much money will they spend?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q22-input" class="q-input" placeholder="?">
+          <span class="q-unit">Rs.</span>
+          <button class="btn-check" onclick="checkAnswer('q22')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q22')">Hint</button>
+        </div>
+        <div id="q22-hint" class="hint-box" style="display:none">Multiply the cost per kg by the number of kgs needed.</div>
+        <div id="q22-result" class="result-box"></div>
+        <div id="q22-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>58.25 × 30 = 1747.50. Total cost is Rs. 1747.50.
+          
+        </div>
+        <button id="q22-show" class="btn-show" style="display:none" onclick="toggleSolution('q22')">Show Answer</button>
+      </div><div class="q-card" id="q23-card">
+        <p class="q-text"><strong>4)</strong> Subtract 135.00 from the sum of 76.30 and 44.85.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q23-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q23')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q23')">Hint</button>
+        </div>
+        <div id="q23-hint" class="hint-box" style="display:none">First add 76.30 and 44.85, then subtract 135.00.</div>
+        <div id="q23-result" class="result-box"></div>
+        <div id="q23-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>76.30 + 44.85 = 121.15. 121.15 - 135.00 = -13.85.
+          
+        </div>
+        <button id="q23-show" class="btn-show" style="display:none" onclick="toggleSolution('q23')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #EFD1D4; background:rgba(239,209,212,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(239,209,212,0.15);color:#EFD1D4;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">ENRICHMENT</span>
+      <h2 style="font-size:18px;color:#EFD1D4;margin:6px 0 18px;font-weight:700;">Enrichment Task: Sorting by digit value.</h2>
+      <div class="ws-table-wrap" style="overflow-x:auto;margin:8px 0 14px;"><div style="font-weight:700;color:#C3DCD8;margin-bottom:8px;">Carroll Diagram for Decimal Sorting</div><table style="width:100%;border-collapse:collapse;"><tr><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;"></th><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">7 in the hundredths place</th><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">Not 7 in the hundredths place</th></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">5 in the tenths place</td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q24-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q25-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Not 5 in the tenths place</td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q26-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q27-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td></tr></table><div style="margin-top:12px;display:flex;gap:10px;align-items:center;"><button class="btn-check" onclick="checkTable([&quot;q24&quot;,&quot;q25&quot;,&quot;q26&quot;,&quot;q27&quot;])">Check table</button><span id="q24-tableresult" style="font-size:13px;"></span></div></div></div>
+  </div>
+
+  <script>
+    let sc = 0;
+    const tot = 27;
+    const done = new Set();
+    const answers = {"q1":{"answer":"76/100 or 19/25","isNum":false,"range":null},"q2":{"answer":"5/100 or 1/20","isNum":false,"range":null},"q3":{"answer":"13/10 or 1 3/10","isNum":false,"range":null},"q4":{"answer":"28/10 or 14/5 or 2 4/5","isNum":false,"range":null},"q5":{"answer":"644/100 or 161/25 or 6 11/25","isNum":false,"range":null},"q6":{"answer":4.6,"isNum":true,"range":null},"q7":{"answer":7.7,"isNum":true,"range":null},"q8":{"answer":11.2,"isNum":true,"range":null},"q9":{"answer":"19:00","isNum":false,"range":null},"q10":{"answer":"7:00 p.m.","isNum":false,"range":null},"q11":{"answer":"23:00","isNum":false,"range":null},"q12":{"answer":"11:00 p.m.","isNum":false,"range":null},"q13":{"answer":"14:15","isNum":false,"range":null},"q14":{"answer":"2:15 p.m.","isNum":false,"range":null},"q15":{"answer":960,"isNum":true,"range":null},"q16":{"answer":210,"isNum":true,"range":null},"q17":{"answer":"7 hours 40 minutes","isNum":false,"range":null},"q18":{"answer":"1 hour 30 minutes","isNum":false,"range":null},"q19":{"answer":293.3,"isNum":true,"range":null},"q20":{"answer":401.7,"isNum":true,"range":null},"q21":{"answer":7680,"isNum":true,"range":null},"q22":{"answer":1747.5,"isNum":true,"range":null},"q23":{"answer":-13.85,"isNum":true,"range":null},"q24":{"answer":"0.57, 0.53","isNum":false,"range":null},"q25":{"answer":"0.52, 0.58, 0.55, 0.50","isNum":false,"range":null},"q26":{"answer":"0.37, 0.07, 0.97, 0.67","isNum":false,"range":null},"q27":{"answer":"0.24, 0.16, 0.91, 0.47, 0.62","isNum":false,"range":null}};
+    const studentAnswers = {}; // { qId: { answer, correct, timeSpent } }
+    const questionStartTimes = {}; // { qId: timestamp }
+
+    // Track when each question becomes visible / gets focus
+    document.addEventListener('focusin', function(e) {
+      const inp = e.target.closest('input');
+      if (inp && inp.id && inp.id.endsWith('-input')) {
+        const qId = inp.id.replace('-input', '');
+        if (!questionStartTimes[qId]) questionStartTimes[qId] = Date.now();
+      }
+    });
+
+    function up() {
+      document.getElementById('score-num').textContent = sc + '/' + tot;
+      const pct = Math.round((done.size / tot) * 100);
+      document.getElementById('pf').style.width = pct + '%';
+      document.getElementById('pp').textContent = pct + '% complete';
+      // Build per-question answer list
+      const answersArr = Object.entries(studentAnswers).map(([qId, data]) => ({
+        qId, answer: data.answer, correct: data.correct,
+        timeSpent: data.timeSpent || 0,
+        question: data.question || ''
+      }));
+      // Report score + answers to parent window (for student assignment iframe)
+      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot, answers: answersArr }, '*'); } catch(e) {}
+    }
+
+    function checkAnswer(id) {
+      const a = answers[id];
+      if (!a) return;
+      const inp = document.getElementById(id + '-input');
+      const val = inp.value.trim();
+      if (!val) { inp.style.borderColor = '#C5BD96'; return; }
+      const r = document.getElementById(id + '-result');
+      let ok = false;
+      if (a.isNum) {
+        const v = parseFloat(val);
+        if (isNaN(v)) { inp.style.borderColor = '#C5BD96'; return; }
+        ok = a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01;
+      } else {
+        ok = val.replace(/\s+/g,'').toLowerCase() === String(a.answer).replace(/\s+/g,'').toLowerCase();
+      }
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      const qEl = document.getElementById(id + '-card');
+      const qText = qEl ? qEl.querySelector('.q-label, strong')?.textContent || '' : '';
+      studentAnswers[id] = { answer: val, correct: ok, timeSpent: elapsed, question: qText };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        inp.style.borderColor = '#93B0AC';
+        inp.style.background = 'rgba(147,176,172,0.1)';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        inp.style.borderColor = '#EFD1D4';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkMCQ(id) {
+      const a = answers[id];
+      if (!a) return;
+      const sel = document.querySelector('input[name="' + id + '"]:checked');
+      if (!sel) return;
+      const r = document.getElementById(id + '-result');
+      const ok = sel.value === a.correctLetter;
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: sel.value, correct: ok, timeSpent: elapsed, question: '' };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkVenn(id) {
+      const a = answers[id];
+      if (!a || !a.venn) return;
+      function normItems(s) {
+        return String(s || '').replace(/\band\b/gi, ',').split(/[,;\n]/)
+          .map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean).sort();
+      }
+      function setEq(x, y) {
+        if (x.length !== y.length) return false;
+        for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+        return true;
+      }
+      var regions = ['left', 'center', 'right'];
+      var allOk = true, anyFilled = false, snapshot = [];
+      regions.forEach(function(rg) {
+        var inp = document.getElementById(id + '-' + rg);
+        if (!inp) return;
+        var val = normItems(inp.value);
+        if (val.length) anyFilled = true;
+        var correct = normItems((a.answers[rg] || []).join(','));
+        var ok = setEq(val, correct);
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (!ok) allOk = false;
+        snapshot.push(rg + ': ' + inp.value.trim());
+      });
+      if (!anyFilled) return;
+      var r = document.getElementById(id + '-result');
+      var elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: snapshot.join(' | '), correct: allOk, timeSpent: elapsed, question: 'Venn diagram' };
+      if (allOk) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct! Every region is right.</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite — green boxes are right, pink need another look.</span>';
+        var sh = document.getElementById(id + '-show');
+        if (sh) sh.style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkTable(ids) {
+      var right = 0, filled = 0;
+      ids.forEach(function(id) {
+        var a = answers[id];
+        var inp = document.getElementById(id + '-input');
+        if (!a || !inp) return;
+        var val = inp.value.trim();
+        if (!val) return;
+        filled++;
+        var ok;
+        if (a.isNum) {
+          var v = parseFloat(val);
+          ok = !isNaN(v) && (a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01);
+        } else {
+          ok = val.replace(/\s+/g, '').toLowerCase() === String(a.answer).replace(/\s+/g, '').toLowerCase();
+        }
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (ok && !done.has(id)) { sc++; done.add(id); }
+        studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'table cell' };
+        if (ok) right++;
+      });
+      var rEl = document.getElementById(ids[0] + '-tableresult');
+      if (rEl) {
+        if (!filled) rEl.innerHTML = '<span style="color:#C5BD96;">Fill in the cells, then check.</span>';
+        else if (right === ids.length) rEl.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; All correct!</span>';
+        else rEl.innerHTML = '<span style="color:#EFD1D4;font-weight:700">' + right + '/' + ids.length + ' correct — green cells are right.</span>';
+      }
+      up();
+    }
+
+    function toggleHint(id) {
+      const el = document.getElementById(id + '-hint');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleSolution(id) {
+      const el = document.getElementById(id + '-solution');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+    // ── Indic language input support ──
+    // Students type English phonetically (e.g. "muggulu") → auto-converts to Telugu/Hindi
+    // Uses Google Input Tools REST API for transliteration with dropdown suggestions
+    
+    // ── French accent palette ──
+    // Floating toolbar with accented characters students can click to insert
+    
+  </script>
+</body>
+</html>

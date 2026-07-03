@@ -1,8 +1,10 @@
 ﻿const express    = require('express');
 const router     = express.Router();
 const supabase   = require('../services/supabase');
+const { sendPush } = require('../services/push');
 const Groq       = require('groq-sdk');
 const cloudinary = require('cloudinary').v2;
+const { renderQuizHTML } = require('./quiz');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -1408,6 +1410,20 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Class-wide assignments need a curriculum so they only reach the right students. Set your curriculum in your profile or pick a specific student.' });
   }
 
+  // Render the interactive quiz HTML SERVER-SIDE at publish time. The client's
+  // _previewHTML snapshot can be stale (old app bundle, or fetched before server
+  // fixes were deployed) — trusting it freezes old bugs into the assignment.
+  let finalQuizHtml = interactiveQuizHtml || null;
+  if (interactiveQuiz && interactiveQuiz.tasks) {
+    try {
+      // Deep-copy: renderQuizHTML mutates the quiz (normalizers add flags/options)
+      finalQuizHtml = renderQuizHTML(JSON.parse(JSON.stringify(interactiveQuiz)));
+      console.log(`[assignments] interactive quiz HTML rendered server-side (${Math.round(finalQuizHtml.length / 1024)}KB)`);
+    } catch (e) {
+      console.log('[assignments] server-side quiz render failed, falling back to client HTML:', e.message);
+    }
+  }
+
   const { data, error } = await supabase
     .from('assignments')
     .insert({
@@ -1446,12 +1462,31 @@ router.post('/', async (req, res) => {
       atl_skill:        atlSkill || null,
       key_concept:      keyConcept || null,
       interactive_quiz: interactiveQuiz || null,
-      interactive_quiz_html: interactiveQuizHtml || null,
+      interactive_quiz_html: finalQuizHtml,
     })
     .select()
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
+
+  // Push-notify the targeted student + their parent on mobile (non-blocking).
+  if (userId) {
+    (async () => {
+      try {
+        const { data: stu } = await supabase.from('users').select('email').eq('id', userId).maybeSingle();
+        const { data: links } = await supabase.from('parent_children').select('parent_email').eq('child_id', userId);
+        const emails = [stu?.email, ...((links ?? []).map(l => l.parent_email))].filter(Boolean);
+        if (emails.length) {
+          const label = type === 'quiz' ? 'quiz' : type === 'challenge' ? 'challenge' : 'assignment';
+          await sendPush(emails, {
+            title: `New ${label}: ${title}`,
+            body: dueDate ? `Due ${new Date(dueDate).toLocaleDateString()}` : 'Tap to view',
+            data: { type: 'assignment', assignmentId: data.id },
+          });
+        }
+      } catch (_) { /* push is best-effort */ }
+    })();
+  }
 
   // Auto-save interactive quiz to Qdrant for reuse by other teachers
   if (interactiveQuiz && (interactiveQuiz.tasks || interactiveQuiz.questions)) {

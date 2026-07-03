@@ -226,16 +226,17 @@ const ALL_GRADES = ['Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grad
 const IB_GRADES  = ['Grade 3', 'Grade 4', 'Grade 5'];
 const LANGUAGES = ['Telugu', 'Hindi', 'Tamil', 'Kannada', 'French', 'Spanish', 'Mandarin', 'Arabic'];
 const TYPES = ['assignment', 'quiz'];
-// Enchanting Forest palette
+// Aivorah gold — matches the gold theme applied across teacher/parent/student screens
+const AIVORAH_GOLD = '#BAA467';
 const SUBJECT_COLORS: Record<string, string> = {
-  Mathematics:    '#5F8A86',
-  Science:        '#5A8A70',
-  English:        '#B8797E',
-  'Social Studies': '#8A8358',
-  'Language Acquisition': '#7AADA8',
-  'Visual Arts':          '#9A7A8A',
-  'ICT':                  '#6A8AA0',
-  'Physical Education':   '#6A8A6A',
+  Mathematics:    AIVORAH_GOLD,
+  Science:        AIVORAH_GOLD,
+  English:        AIVORAH_GOLD,
+  'Social Studies': AIVORAH_GOLD,
+  'Language Acquisition': AIVORAH_GOLD,
+  'Visual Arts':          AIVORAH_GOLD,
+  'ICT':                  AIVORAH_GOLD,
+  'Physical Education':   AIVORAH_GOLD,
 };
 
 function daysUntil(dateStr: string) {
@@ -460,6 +461,20 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       return () => window.removeEventListener('popstate', onPop);
     }
   }, [showInteractivePreview, studentPreviewHtml]);
+
+  // Warn before a refresh/tab-close silently discards an in-progress AI-generated quiz —
+  // it only lives in memory until "Approve & Save" is pressed, so a stray F5 loses it
+  // with no way to recover (there's no draft id to reload it from).
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    if (!(showInteractivePreview && interactiveQuiz)) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [showInteractivePreview, interactiveQuiz]);
 
   // Keep curriculum + grade in sync when user profile loads after initial render
   useEffect(() => {
@@ -1277,11 +1292,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </TouchableOpacity>
                   </View>
                 ) : (
-                  libraryQuizzes.map((q) => {
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                  {libraryQuizzes.map((q) => {
                     const subjectColor = SUBJECT_COLORS[q.subject] || gold;
                     const questionCount = q.quiz_data?.tasks?.reduce((s: number, t: any) => s + (t.questions?.length || 0), 0) || 0;
                     return (
-                      <TouchableOpacity key={q.id} style={[styles.card, { marginBottom: 12 }]} activeOpacity={0.85} onPress={async () => {
+                      <TouchableOpacity key={q.id} style={[styles.card, { width: '47.5%', minWidth: 280 }]} activeOpacity={0.85} onPress={async () => {
                           setLibraryPreviewQuiz(q);
                           setLibraryPreviewLoading(true);
                           try {
@@ -1330,7 +1346,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         </View>
                       </TouchableOpacity>
                     );
-                  })
+                  })}
+                  </View>
                 )}
               </View>
             </View>
@@ -2144,7 +2161,27 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: (interactiveQuiz as any)._editMode ? '#C5BD96' : '#1c2129' }}
-                    onPress={() => setInteractiveQuiz({ ...interactiveQuiz, _editMode: true })}
+                    onPress={async () => {
+                      // Edit Answers must show the same shape Preview does (e.g. a riddle
+                      // task collapsed into a No./Riddle/Answer table) — that transform only
+                      // happens server-side, so fetch it once and cache it on the quiz object.
+                      if ((interactiveQuiz as any)._normalized) {
+                        setInteractiveQuiz({ ...interactiveQuiz, _editMode: true });
+                        return;
+                      }
+                      const { _previewHTML, _editMode, _normalized, ...cleanQ } = interactiveQuiz as any;
+                      try {
+                        const res = await fetch(`${SERVER_URL}/quiz/normalize`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ quiz: cleanQ }),
+                        });
+                        const data = await res.json();
+                        setInteractiveQuiz({ ...(data.quiz || cleanQ), _previewHTML, _editMode: true, _normalized: true });
+                      } catch {
+                        setInteractiveQuiz({ ...interactiveQuiz, _editMode: true, _normalized: true });
+                      }
+                    }}
                   >
                     <Text style={{ fontSize: 13, fontWeight: '700', color: (interactiveQuiz as any)._editMode ? '#0f1117' : '#8b949e' }}>Edit Answers</Text>
                   </TouchableOpacity>
@@ -2235,42 +2272,126 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
               {/* Edit Mode — editable answer/hint/solution fields */}
               {(interactiveQuiz as any)._editMode && (
-                <ScrollView style={{ flex: 1, padding: 16 }}>
+                <ScrollView style={{ flex: 1, backgroundColor: '#0B0B0B' }} contentContainerStyle={{ alignItems: 'center', padding: 16 }}>
+                  {/* Preview's HTML caps content at 960px and centers it (.container { max-width:
+                      960px; margin:0 auto }) — without this, inputs with flex:1 stretch edge to
+                      edge across the whole modal instead of staying a readable card width. */}
+                  <View style={{ width: '100%', maxWidth: 960 }}>
                   {interactiveQuiz.tasks?.map((task: any, ti: number) => {
-                    const tierColor = task.tier === 'MUST DO' ? '#4caf50' : task.tier === 'COULD DO' ? '#ff9800' : '#e91e63';
-                    const tierBg = task.tier === 'MUST DO' ? '#f0faf0' : task.tier === 'COULD DO' ? '#fffaf0' : '#fef0f5';
+                    // Same dark worksheet palette Preview's server-rendered HTML uses, so both
+                    // tabs look like one continuous surface instead of two different apps.
+                    const tierPalette: Record<string, { border: string; bg: string; label: string; labelBg: string }> = {
+                      'MUST DO':   { border: '#93B0AC', bg: 'rgba(147,176,172,0.08)', label: '#93B0AC', labelBg: 'rgba(147,176,172,0.15)' },
+                      'COULD DO':  { border: '#C9A24E', bg: 'rgba(201,162,78,0.08)',  label: '#C9A24E', labelBg: 'rgba(201,162,78,0.15)' },
+                      'ENRICHMENT':{ border: '#C98A8A', bg: 'rgba(201,138,138,0.08)', label: '#C98A8A', labelBg: 'rgba(201,138,138,0.15)' },
+                    };
+                    const tp = tierPalette[task.tier] || tierPalette['MUST DO'];
+                    const tableRows: any[] = task.table?.rows || [];
                     return (
-                      <View key={ti} style={{ marginBottom: 20, borderLeftWidth: 5, borderLeftColor: tierColor, borderRadius: 12, backgroundColor: tierBg, padding: 18 }}>
-                        <View style={{ backgroundColor: tierColor + '18', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 3, borderRadius: 4, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 11, fontWeight: '800', color: tierColor, textTransform: 'uppercase', letterSpacing: 1.5 }}>{task.tier}</Text>
+                      <View key={ti} style={{ marginBottom: 20, borderLeftWidth: 5, borderLeftColor: tp.border, borderRadius: 12, backgroundColor: tp.bg, padding: 18 }}>
+                        <View style={{ backgroundColor: tp.labelBg, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 3, borderRadius: 4, marginBottom: 6 }}>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: tp.label, textTransform: 'uppercase', letterSpacing: 1.5 }}>{task.tier}</Text>
                         </View>
-                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#222', marginBottom: 4 }}>{(task.title || '').replace(/\*\*/g, '')}</Text>
+                        <Text style={{ fontSize: 16, fontWeight: '700', color: tp.label, marginBottom: 4 }}>{(task.title || '').replace(/\*\*/g, '')}</Text>
+                        {(() => {
+                          // Only show a task-level image when the task genuinely needs one as a
+                          // diagram (sharedImage / diagramFill / a question flagged hasImage with
+                          // no extracted crop) — matching exactly what Preview shows. A reading
+                          // passage task also carries task.pageImageUrl (the raw scanned page,
+                          // kept around only as an internal fallback source), but Preview never
+                          // displays that scan for a plain text task, so Edit Answers shouldn't either.
+                          const anyQuestionNeedsImage = (task.questions || []).some((q: any) => q.hasImage && !q.imageUrl);
+                          const taskDiagramUrl = task.diagramFillImageUrl
+                            || (task.sharedImage && (task.questions?.[0]?.imageUrl || task.pageImageUrl))
+                            || (anyQuestionNeedsImage && task.pageImageUrl);
+                          if (taskDiagramUrl) {
+                            return (
+                              <View style={{ marginBottom: 12, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(195,220,216,0.2)', backgroundColor: '#fff', padding: 8 }}>
+                                <Image source={{ uri: taskDiagramUrl.startsWith('http') || taskDiagramUrl.startsWith('data:') ? taskDiagramUrl : `${SERVER_URL}${taskDiagramUrl}` }} style={{ width: '100%', height: 200, resizeMode: 'contain' }} />
+                              </View>
+                            );
+                          }
+                          if (Array.isArray(task.pyramids) && task.pyramids.length) {
+                            return (
+                              <View style={{ marginBottom: 12, backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: 'rgba(195,220,216,0.18)', borderRadius: 8, padding: 10 }}>
+                                <Text style={{ fontSize: 12, color: '#A8B5B3' }}>Diagram: number pyramid — see Preview tab to view the rendered diagram.</Text>
+                              </View>
+                            );
+                          }
+                          if (task.chart && Array.isArray(task.chart.bars) && task.chart.bars.length) {
+                            return (
+                              <View style={{ marginBottom: 12, backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: 'rgba(195,220,216,0.18)', borderRadius: 8, padding: 10 }}>
+                                <Text style={{ fontSize: 12, color: '#A8B5B3' }}>Diagram: bar chart — see Preview tab to view the rendered diagram.</Text>
+                              </View>
+                            );
+                          }
+                          return null;
+                        })()}
+                        {task.passage && (
+                          <View style={{ marginBottom: 12, padding: 12, backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: 'rgba(195,220,216,0.2)', borderRadius: 8 }}>
+                            <Text style={{ fontSize: 13, color: '#D8E8E6', lineHeight: 20 }}>{task.passage}</Text>
+                          </View>
+                        )}
+
+                        {/* Riddle/word-bank tasks collapse into a No./Riddle/Answer table — same
+                            layout as the source worksheet and as Preview's rendered table. */}
+                        {tableRows.length > 0 && (
+                          <View style={{ borderWidth: 1, borderColor: 'rgba(195,220,216,0.18)', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
+                            <View style={{ flexDirection: 'row', backgroundColor: 'rgba(147,176,172,0.14)' }}>
+                              {(task.table.headers || ['No.', 'Riddle', 'Answer']).map((h: string, hi: number) => (
+                                <Text key={hi} style={{ flex: hi === 0 ? 0.15 : hi === 1 ? 0.55 : 0.3, fontSize: 12, fontWeight: '700', color: '#D8E8E6', padding: 10, textAlign: hi === 1 ? 'left' : 'center' }}>{h}</Text>
+                              ))}
+                            </View>
+                            {tableRows.map((row: any[], ri: number) => (
+                              <View key={ri} style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: 'rgba(195,220,216,0.12)' }}>
+                                <Text style={{ flex: 0.15, fontSize: 13, color: '#A8B5B3', padding: 10, textAlign: 'center' }}>{row[0]?.text}</Text>
+                                <Text style={{ flex: 0.55, fontSize: 13, color: '#F0EEEC', padding: 10 }}>{row[1]?.text}</Text>
+                                <View style={{ flex: 0.3, padding: 8 }}>
+                                  <TextInput
+                                    style={{ borderWidth: 1.5, borderColor: 'rgba(195,220,216,0.25)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#F0EEEC', backgroundColor: '#252525' }}
+                                    value={String(row[2]?.answer ?? '')}
+                                    onChangeText={(val) => {
+                                      const u = { ...interactiveQuiz };
+                                      u.tasks[ti].table.rows[ri][2].answer = val;
+                                      u._previewHTML = null;
+                                      setInteractiveQuiz(u);
+                                    }}
+                                    placeholder="?"
+                                    placeholderTextColor="#6E736B"
+                                  />
+                                </View>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+
                         {task.questions?.map((q: any, qi: number) => (
-                          <View key={qi} style={{ backgroundColor: '#fff', padding: 16, borderRadius: 10, marginTop: 12, borderWidth: 1, borderColor: '#e8eaed' }}>
-                            <Text style={{ fontSize: 14, fontWeight: '600', color: '#222', marginBottom: 10, lineHeight: 22 }}>{q.id ? `${q.id})` : `Q${qi+1}.`} {(q.question || '').replace(/\*\*(.+?)\*\*/g, '$1')}</Text>
+                          <View key={qi} style={{ backgroundColor: '#1C1C1C', padding: 16, borderRadius: 10, marginTop: 12, borderWidth: 1, borderColor: 'rgba(195,220,216,0.12)' }}>
+                            <Text style={{ fontSize: 14, fontWeight: '600', color: '#F0EEEC', marginBottom: 10, lineHeight: 22 }}>{q.id ? `${q.id})` : `Q${qi+1}.`} {(q.question || '').replace(/\*\*(.+?)\*\*/g, '$1')}</Text>
                             {q.imageUrl && (
-                              <View style={{ marginBottom: 12, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: '#e0e0e0', backgroundColor: '#fafafa', padding: 8 }}>
+                              <View style={{ marginBottom: 12, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(195,220,216,0.2)', backgroundColor: '#fff', padding: 8 }}>
                                 <Image source={{ uri: q.imageUrl.startsWith('http') ? q.imageUrl : `${SERVER_URL}${q.imageUrl}` }} style={{ width: '100%', height: 160, resizeMode: 'contain' }} />
                               </View>
                             )}
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10, backgroundColor: '#f0faf0', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#4caf5030' }}>
-                              <Text style={{ fontSize: 13, fontWeight: '700', color: '#2e7d32' }}>Answer:</Text>
-                              <TextInput style={{ flex: 1, borderWidth: 1.5, borderColor: '#4caf5050', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 14, color: '#1a1a2e', backgroundColor: '#fff', fontWeight: '600' }} value={String(q.answer ?? '')} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].answer = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Answer" placeholderTextColor="#999" />
-                              {q.unit && <Text style={{ fontSize: 13, color: '#555', fontWeight: '500' }}>{q.unit}</Text>}
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10, backgroundColor: 'rgba(147,176,172,0.10)', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(147,176,172,0.3)' }}>
+                              <Text style={{ fontSize: 13, fontWeight: '700', color: '#93B0AC' }}>{/^-?\d+(\.\d+)?$/.test(String(q.answer ?? '').trim()) || q.type === 'numeric' ? 'Answer =' : 'Answer:'}</Text>
+                              <TextInput style={{ flex: 1, borderWidth: 1.5, borderColor: 'rgba(195,220,216,0.25)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 14, color: '#F0EEEC', backgroundColor: '#252525', fontWeight: '600' }} value={String(q.answer ?? '')} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].answer = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Answer" placeholderTextColor="#6E736B" />
+                              {q.unit && <Text style={{ fontSize: 13, color: '#A8B5B3', fontWeight: '500' }}>{q.unit}</Text>}
                             </View>
-                            <View style={{ marginBottom: 10, backgroundColor: '#fff8e1', padding: 10, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: '#ffc107' }}>
-                              <Text style={{ fontSize: 11, fontWeight: '700', color: '#f57f17', marginBottom: 4 }}>Hint:</Text>
-                              <TextInput style={{ borderWidth: 1, borderColor: '#ffc10730', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#5d4037', backgroundColor: '#fff' }} value={q.hint || ''} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].hint = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Hint" placeholderTextColor="#999" multiline />
+                            <View style={{ marginBottom: 10, backgroundColor: 'rgba(197,189,150,0.10)', padding: 10, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: '#C5BD96' }}>
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: '#C5BD96', marginBottom: 4 }}>Hint:</Text>
+                              <TextInput style={{ borderWidth: 1, borderColor: 'rgba(197,189,150,0.3)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#D8E8E6', backgroundColor: '#252525' }} value={q.hint || ''} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].hint = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Hint" placeholderTextColor="#6E736B" multiline />
                             </View>
-                            <View style={{ backgroundColor: '#e8f5e9', padding: 10, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: '#4caf50' }}>
-                              <Text style={{ fontSize: 11, fontWeight: '700', color: '#1b5e20', marginBottom: 4 }}>Solution:</Text>
-                              <TextInput style={{ borderWidth: 1, borderColor: '#4caf5030', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#1b5e20', backgroundColor: '#fff' }} value={q.solution || ''} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].solution = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Solution" placeholderTextColor="#999" multiline numberOfLines={3} />
+                            <View style={{ backgroundColor: 'rgba(147,176,172,0.10)', padding: 10, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: '#93B0AC' }}>
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: '#93B0AC', marginBottom: 4 }}>Solution:</Text>
+                              <TextInput style={{ borderWidth: 1, borderColor: 'rgba(147,176,172,0.3)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#D8E8E6', backgroundColor: '#252525' }} value={q.solution || ''} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].solution = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Solution" placeholderTextColor="#6E736B" multiline numberOfLines={3} />
                             </View>
                           </View>
                         ))}
                       </View>
                     );
                   })}
+                  </View>
                   <View style={{ height: 40 }} />
                 </ScrollView>
               )}
@@ -2363,23 +2484,23 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                       {/* Option 1: AI Assignment */}
                       <TouchableOpacity
-                        style={{ padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: '#BAA46740', backgroundColor: '#BAA46708', gap: 8 }}
+                        style={{ padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: gold + '40', backgroundColor: gold + '18', gap: 8 }}
                         onPress={() => { setCreateMode('ai'); setType('assignment'); }}
                         activeOpacity={0.8}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#BAA46720', alignItems: 'center', justifyContent: 'center' }}>
-                            <Feather name="cpu" size={20} color="#BAA467" />
+                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: gold + '20', alignItems: 'center', justifyContent: 'center' }}>
+                            <Feather name="cpu" size={20} color={gold} />
                           </View>
                           <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 15, fontWeight: '800', color: '#BAA467' }}>
+                            <Text style={{ fontSize: 15, fontWeight: '800', color: gold }}>
                               {isIBPYP ? 'Generate IB PYP Assignment' : 'Generate AI Assignment'}
                             </Text>
                             <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
                               AI creates Purpose, Learning Outcomes, Task Steps, Word Bank, and Stamps
                             </Text>
                           </View>
-                          <Feather name="chevron-right" size={18} color="#BAA467" />
+                          <Feather name="chevron-right" size={18} color={gold} />
                         </View>
                       </TouchableOpacity>
 
@@ -2464,9 +2585,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
                   {/* Auto-filled indicator */}
                   {docFiles.length > 0 && !extractingQuestions && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, backgroundColor: colors.accentGreen + '10', borderWidth: 1, borderColor: colors.accentGreen + '30' }}>
-                      <Feather name="cpu" size={12} color={colors.accentGreen} />
-                      <Text style={{ fontSize: 11, color: colors.accentGreen, fontWeight: '600' }}>Details auto-filled from worksheet — review and edit below</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, backgroundColor: gold + '18', borderWidth: 1, borderColor: gold + '40' }}>
+                      <Feather name="cpu" size={12} color={gold} />
+                      <Text style={{ fontSize: 11, color: gold, fontWeight: '600' }}>Details auto-filled from worksheet — review and edit below</Text>
                     </View>
                   )}
 
@@ -4193,12 +4314,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
 // ── AI Report Modal (teacher view) ────────────────────────────────────────────
 
-const SUBJECT_COLORS_MAP: Record<string, string> = {
-  Mathematics: '#818CF8', Science: '#34D399', English: '#FBBF24', 'Social Studies': '#22D3EE',
-};
-
 function AIReportModal({ assignment, colors, onClose }: { assignment: Assignment; colors: AppColors; onClose: () => void }) {
-  const color = SUBJECT_COLORS_MAP[assignment.subject] || gold;
+  const color = colors.accentYellow;
 
   let feedbackText = '';
   let stamp = '';

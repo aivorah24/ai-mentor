@@ -113,3 +113,6 @@ server/public/models/
 # Backups (may contain secrets)
 *.bak
 .env*.bak
+
+# Per-generation quiz crops/pages (temp; quiz HTML embeds images as base64)
+server/data/images/quiz/

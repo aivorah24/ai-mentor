@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
   Modal,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -105,7 +106,15 @@ export default function DrawerContent(props: any) {
   const isSuperAdmin = user?.role === 'super_admin';
   const isTeacher = user?.role === 'teacher';
   const isParent = user?.role === 'parent';
-  const NAV_ITEMS = isSuperAdmin ? SUPER_ADMIN_NAV_ITEMS : isTeacher ? TEACHER_NAV_ITEMS : isParent ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
+  const NAV_ITEMS_BASE = isSuperAdmin ? SUPER_ADMIN_NAV_ITEMS : isTeacher ? TEACHER_NAV_ITEMS : isParent ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
+
+  // ── Mobile app = focused teacher/parent companion ──────────────────────────
+  // On native (the mobile app) show only the founder-approved modules. Web keeps
+  // the full menu untouched. (Other screens stay registered for deep navigation.)
+  const MOBILE_TEACHER_SCREENS = ['TeacherDashboard', 'TeacherStudents', 'TeacherAssignments', 'TeacherSchedule', 'TeacherProgress', 'TeacherMessages', 'TeacherSettings', 'TeacherHelp'];
+  const MOBILE_PARENT_SCREENS  = ['ParentDashboard', 'ParentMyKids', 'ParentDailyTasks', 'ParentSchedule', 'ParentProgress', 'ParentMessages', 'ParentControls', 'ParentSettings', 'ParentHelp'];
+  const mobileAllow = Platform.OS !== 'web' ? (isTeacher ? MOBILE_TEACHER_SCREENS : isParent ? MOBILE_PARENT_SCREENS : null) : null;
+  const NAV_ITEMS = mobileAllow ? NAV_ITEMS_BASE.filter((i) => mobileAllow.includes(i.screen)) : NAV_ITEMS_BASE;
   const groups = (isSuperAdmin || isTeacher) ? ['MENU', 'TEACHING DEVELOPMENT', 'SYSTEM'] : isParent ? ['MENU', 'CHILDREN', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
   const { unreadCount, unreadAssignments, unreadChallenges } = useNotification();
   const MESSAGE_SCREENS    = ['TeacherMessages', 'ParentMessages', 'Messages'];

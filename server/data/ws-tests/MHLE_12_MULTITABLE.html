@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Handling Practice - Aivorah</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, 'Segoe UI', Roboto, 'Noto Sans Telugu', 'Noto Sans Devanagari', Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
+
+    /* ── Header — Aivorah Enchanted Forest ── */
+    .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 28px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); }
+    .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 4px; }
+    .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; }
+    .header-meta { font-size: 13px; color: #5A6B69; margin-top: 4px; }
+
+    /* ── Score Badge ── */
+    .score { position: fixed; top: 20px; right: 24px; width: 76px; height: 76px; border-radius: 50%;
+             background: linear-gradient(135deg, #93B0AC, #7AADA8); color: #0F0F0F;
+             display: flex; flex-direction: column; align-items: center; justify-content: center;
+             box-shadow: 0 4px 20px rgba(147,176,172,0.3); z-index: 100; }
+    .score-num { font-size: 22px; font-weight: 800; line-height: 1; }
+    .score-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 2px; }
+
+    /* ── Progress ── */
+    .progress-wrap { padding: 20px 0 4px; }
+    .progress-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5A6B69; margin-bottom: 8px; }
+    .progress-bar { background: #252525; border-radius: 6px; height: 12px; overflow: hidden; border: 1px solid rgba(195,220,216,0.08); }
+    .progress-fill { background: linear-gradient(90deg, #93B0AC, #C3DCD8); height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+    .progress-pct { text-align: right; font-size: 12px; color: #93B0AC; font-weight: 600; margin-top: 4px; }
+
+    /* ── Container ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px 60px; }
+
+    /* ── Concepts ── */
+    .concepts-row { display: flex; gap: 16px; margin: 24px 0; flex-wrap: wrap; }
+    .concept-card { flex: 1; min-width: 220px; padding: 20px; border-radius: 12px; color: #F0EEEC; }
+    .concept-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #A8B5B3; line-height: 1.5; }
+    .concept-unit { margin-top: 8px; font-size: 12px; color: #5A6B69; }
+    .concept-icon { font-size: 20px; margin-bottom: 6px; }
+
+    /* ── Question cards ── */
+    .q-card { background: #1C1C1C; padding: 20px 24px; border-radius: 10px; margin: 14px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid rgba(195,220,216,0.12); }
+    .q-text { font-size: 15px; color: #F0EEEC; margin-bottom: 14px; line-height: 1.6; }
+    .q-text strong { color: #C3DCD8; }
+
+    /* ── Input row ── */
+    .q-input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .q-label { font-weight: 700; font-size: 14px; color: #A8B5B3; }
+    .q-input { width: 130px; padding: 10px 12px; border: 2px solid rgba(195,220,216,0.25); border-radius: 8px;
+               font-size: 16px; text-align: center; transition: border-color 0.2s; background: #252525; color: #F0EEEC; }
+    .q-input:focus { border-color: #93B0AC; outline: none; box-shadow: 0 0 0 3px rgba(147,176,172,0.2); }
+    .q-unit { font-size: 14px; color: #A8B5B3; font-weight: 500; }
+
+    /* ── MCQ ── */
+    .mcq-opt { display: block; margin: 8px 0; padding: 10px 14px; border-radius: 8px;
+               border: 1.5px solid rgba(195,220,216,0.15); cursor: pointer; font-size: 14px; color: #F0EEEC; transition: all 0.2s; }
+    .mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .mcq-opt input { margin-right: 8px; }
+
+    /* ── Buttons ── */
+    .btn-check { background: #93B0AC; color: #0F0F0F; border: none; padding: 10px 24px; border-radius: 8px;
+                 font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+    .btn-check:hover { background: #7AADA8; transform: translateY(-1px); }
+    .btn-hint { background: #C5BD96; color: #0F0F0F; border: none; padding: 10px 20px; border-radius: 8px;
+                font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .btn-hint:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-show { background: #93B0AC; color: #0F0F0F; border: none; padding: 8px 18px; border-radius: 6px;
+                font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 10px; }
+    .btn-show:hover { background: #7AADA8; }
+
+    /* ── Feedback boxes ── */
+    .hint-box { margin-top: 12px; padding: 14px 16px; background: rgba(197,189,150,0.1); border-radius: 8px;
+                border-left: 4px solid #C5BD96; color: #C5BD96; font-size: 14px; line-height: 1.5; }
+    .result-box { margin-top: 8px; font-size: 14px; min-height: 6px; }
+    .solution-box { margin-top: 12px; padding: 16px 18px; background: rgba(147,176,172,0.1); border-radius: 8px;
+                    border-left: 4px solid #93B0AC; color: #93B0AC; font-size: 14px; line-height: 1.7; }
+
+    /* ── Activity boxes ── */
+    .activity-box { background: linear-gradient(135deg, rgba(147,176,172,0.08), rgba(197,189,150,0.08)) !important;
+                    border-color: rgba(147,176,172,0.25) !important; }
+
+    /* ── Language worksheet layout (Telugu, Hindi, etc.) ── */
+    .lang-q-row { padding: 16px 20px 12px; margin: 6px 0; border-bottom: 1px solid rgba(195,220,216,0.08); }
+    .lang-q-left { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+    .lang-q-num { font-size: 15px; color: #93B0AC; font-weight: 700; flex-shrink: 0; min-width: 28px; }
+    .lang-q-text { font-size: 16px; color: #F0EEEC; line-height: 1.8; }
+    .lang-q-text strong { color: #C3DCD8; }
+    .lang-example { margin: 4px 0 10px 38px; padding: 8px 14px; background: rgba(195,220,216,0.05);
+                    border-left: 3px solid rgba(195,220,216,0.3); border-radius: 0 6px 6px 0;
+                    font-size: 14px; color: #A8B5B3; font-style: italic; }
+    .lang-q-answer { display: flex; align-items: center; gap: 12px; margin-left: 38px; flex-wrap: wrap; }
+    .lang-input { flex: 1; max-width: 280px; padding: 8px 4px; font-size: 16px; color: #F0EEEC;
+                  background: transparent; border: none; border-bottom: 2px dotted rgba(195,220,216,0.35);
+                  outline: none; font-family: inherit; transition: border-color 0.2s; }
+    .lang-input:focus { border-bottom-color: #93B0AC; border-bottom-style: solid; }
+    .lang-input::placeholder { color: transparent; }
+    .lang-q-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .lang-btn-check { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(147,176,172,0.4);
+                      background: transparent; color: #93B0AC; font-size: 14px; cursor: pointer;
+                      display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-check:hover { background: rgba(147,176,172,0.15); border-color: #93B0AC; }
+    .lang-btn-hint { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(197,189,150,0.4);
+                     background: transparent; color: #C5BD96; font-size: 14px; font-weight: 700; cursor: pointer;
+                     display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-hint:hover { background: rgba(197,189,150,0.1); border-color: #C5BD96; }
+    .lang-result { margin: 4px 0 0 38px; font-size: 14px; min-height: 4px; }
+    .lang-mcq-opts { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px 38px; align-items: center; }
+    .lang-mcq-opt { font-size: 14px; color: #F0EEEC; cursor: pointer; padding: 6px 12px;
+                    border: 1px solid rgba(195,220,216,0.2); border-radius: 6px; transition: all 0.2s; }
+    .lang-mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .lang-mcq-opt input { margin-right: 6px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .header { padding: 20px; }
+      .header h1 { font-size: 20px; }
+      .container { padding: 0 14px 40px; }
+      .q-card { padding: 16px; }
+      .lang-q-row { padding: 12px 14px 10px; }
+      .lang-q-answer { margin-left: 28px; }
+      .lang-result { margin-left: 28px; }
+      .lang-example { margin-left: 28px; }
+      .score { width: 60px; height: 60px; top: 14px; right: 14px; }
+      .score-num { font-size: 18px; }
+      .concepts-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-sub">The Shri Ram Academy &middot; PYP 4</div>
+    <h1>Data Handling Practice</h1>
+    <div class="header-meta">Subject: Mathematics &nbsp;|&nbsp; Powered by Aivorah</div>
+  </div>
+
+  <div class="score" id="score-badge">
+    <span class="score-num" id="score-num">0/15</span>
+    <span class="score-label">Score</span>
+  </div>
+
+  <div class="container">
+    <div class="progress-wrap">
+      <div class="progress-title">Quiz Progress</div>
+      <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+      <div class="progress-pct" id="pp">0% complete</div>
+    </div>
+
+    <div class="concepts-row">
+        <div class="concept-card" style="background:#93B0AC18;border:1px solid #93B0AC40">
+          <div class="concept-icon" style="color:#93B0AC">&#128202;</div>
+          <h3 style="color:#93B0AC">Data Handling</h3>
+          <p>Collecting, organizing, representing, and interpreting information using graphs and diagrams.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#C5BD9618;border:1px solid #C5BD9640">
+          <div class="concept-icon" style="color:#C5BD96">&#128200;</div>
+          <h3 style="color:#C5BD96">Bar Graph</h3>
+          <p>A graph that uses bars to show and compare data.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#D4A89818;border:1px solid #D4A89840">
+          <div class="concept-icon" style="color:#D4A898">&#128218;</div>
+          <h3 style="color:#D4A898">Venn Diagram</h3>
+          <p>A diagram with overlapping circles used to show relationships between groups.</p>
+          
+        </div></div>
+    <div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:6px;font-weight:700;">&#128221; Note</h3>
+      <p style="font-size:14px;color:#A8B5B3;line-height:1.5;">Purpose: To practice using data handling to solve problems.
+Learning Outcome: Understand that data can be collected, organized, represented and interpreted using bar graph and Venn-diagram.</p>
+    </div>
+    <div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:8px;font-weight:700;">&#127919; Success Criteria</h3>
+      <ul style="margin:0;padding-left:20px;"><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can read and interpret data from a bar graph.</li><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can calculate sums and compare values using bar graph data.</li><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can complete a Venn diagram to show shared and unique attributes.</li><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can organize raw data into a frequency table and draw a bar graph.</li></ul>
+    </div>
+    
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 1 &middot; Bar Graph Interpretation</h2>
+      <div style="text-align:center;margin:4px 0 18px;">
+    <div style="font-size:14px;font-weight:700;color:#C3DCD8;margin-bottom:8px;">Number of Votes</div>
+    <svg viewBox="0 0 640 360" style="width:100%;max-width:640px;height:auto;background:rgba(255,255,255,0.03);border-radius:10px;"><line x1="48" y1="306" x2="620" y2="306" stroke="rgba(195,220,216,0.18)" stroke-width="1"></line><text x="40" y="310" text-anchor="end" fill="#A8B5B3" font-size="11" font-family="Arial">0</text><line x1="48" y1="278.4" x2="620" y2="278.4" stroke="rgba(195,220,216,0.18)" stroke-width="1"></line><text x="40" y="282.4" text-anchor="end" fill="#A8B5B3" font-size="11" font-family="Arial">2</text><line x1="48" y1="250.8" x2="620" y2="250.8" stroke="rgba(195,220,216,0.18)" stroke-width="1"></line><text x="40" y="254.8" text-anchor="end" fill="#A8B5B3" font-size="11" font-family="Arial">4</text><line x1="48" y1="223.2" x2="620" y2="223.2" stroke="rgba(195,220,216,0.18)" stroke-width="1"></line><text x="40" y="227.2" text-anchor="end" fill="#A8B5B3" font-size="11" font-family="Arial">6</text><line x1="48" y1="195.6" x2="620" y2="195.6" stroke="rgba(195,220,216,0.18)" stroke-width="1"></line><text x="40" y="199.6" text-anchor="end" fill="#A8B5B3" font-size="11" font-family="Arial">8</text><line x1="48" y1="168" x2="620" y2="168" stroke="rgba(195,220,216,0.18)" stroke-width="1"></line><text x="40" y="172" text-anchor="end" fill="#A8B5B3" font-size="11" font-family="Arial">10</text><line x1="48" y1="140.4" x2="620" y2="140.4" stroke="rgba(195,220,216,0.18)" stroke-width="1"></line><text x="40" y="144.4" text-anchor="end" fill="#A8B5B3" font-size="11" font-family="Arial">12</text><line x1="48" y1="112.80000000000001" x2="620" y2="112.80000000000001" stroke="rgba(195,220,216,0.18)" stroke-width="1"></line><text x="40" y="116.80000000000001" text-anchor="end" fill="#A8B5B3" font-size="11" font-family="Arial">14</text><line x1="48" y1="85.19999999999999" x2="620" y2="85.19999999999999" stroke="rgba(195,220,216,0.18)" stroke-width="1"></line><text x="40" y="89.19999999999999" text-anchor="end" fill="#A8B5B3" font-size="11" font-family="Arial">16</text><line x1="48" y1="57.599999999999994" x2="620" y2="57.599999999999994" stroke="rgba(195,220,216,0.18)" stroke-width="1"></line><text x="40" y="61.599999999999994" text-anchor="end" fill="#A8B5B3" font-size="11" font-family="Arial">18</text><line x1="48" y1="30" x2="620" y2="30" stroke="rgba(195,220,216,0.18)" stroke-width="1"></line><text x="40" y="34" text-anchor="end" fill="#A8B5B3" font-size="11" font-family="Arial">20</text><line x1="48" y1="30" x2="48" y2="306" stroke="#93B0AC" stroke-width="1.5"></line><line x1="48" y1="306" x2="620" y2="306" stroke="#93B0AC" stroke-width="1.5"></line><rect x="67.06666666666666" y="85.19999999999999" width="57.199999999999996" height="220.8" rx="4" fill="#93B0AC"></rect><text x="95.66666666666666" y="79.19999999999999" text-anchor="middle" fill="#F0EEEC" font-size="12" font-weight="700" font-family="Arial">16</text><text x="95.66666666666666" y="324" text-anchor="middle" fill="#D8E8E6" font-size="11" font-family="Arial">football</text><rect x="162.39999999999998" y="195.6" width="57.199999999999996" height="110.4" rx="4" fill="#C5BD96"></rect><text x="190.99999999999997" y="189.6" text-anchor="middle" fill="#F0EEEC" font-size="12" font-weight="700" font-family="Arial">8</text><text x="190.99999999999997" y="324" text-anchor="middle" fill="#D8E8E6" font-size="11" font-family="Arial">tennis</text><rect x="257.7333333333333" y="168" width="57.199999999999996" height="138" rx="4" fill="#D4A898"></rect><text x="286.3333333333333" y="162" text-anchor="middle" fill="#F0EEEC" font-size="12" font-weight="700" font-family="Arial">10</text><text x="286.3333333333333" y="324" text-anchor="middle" fill="#D8E8E6" font-size="11" font-family="Arial">rugby</text><rect x="353.06666666666666" y="223.2" width="57.199999999999996" height="82.80000000000001" rx="4" fill="#7AADA8"></rect><text x="381.6666666666667" y="217.2" text-anchor="middle" fill="#F0EEEC" font-size="12" font-weight="700" font-family="Arial">6</text><text x="381.6666666666667" y="324" text-anchor="middle" fill="#D8E8E6" font-size="11" font-family="Arial">cricket</text><rect x="448.4" y="140.4" width="57.199999999999996" height="165.6" rx="4" fill="#EFD1D4"></rect><text x="477" y="134.4" text-anchor="middle" fill="#F0EEEC" font-size="12" font-weight="700" font-family="Arial">12</text><text x="477" y="324" text-anchor="middle" fill="#D8E8E6" font-size="11" font-family="Arial">hockey</text><rect x="543.7333333333332" y="112.80000000000001" width="57.199999999999996" height="193.2" rx="4" fill="#C3DCD8"></rect><text x="572.3333333333333" y="106.80000000000001" text-anchor="middle" fill="#F0EEEC" font-size="12" font-weight="700" font-family="Arial">14</text><text x="572.3333333333333" y="324" text-anchor="middle" fill="#D8E8E6" font-size="11" font-family="Arial">badminton</text><text x="14" y="168" transform="rotate(-90 14 168)" text-anchor="middle" fill="#A8B5B3" font-size="11" font-family="Arial">Number of Votes</text><text x="334" y="354" text-anchor="middle" fill="#A8B5B3" font-size="11" font-family="Arial">Sport</text></svg>
+  </div><div class="q-card" id="q1-card">
+        <p class="q-text"><strong>1)</strong> The scale on Y-axis is ____.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q1-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q1')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q1')">Hint</button>
+        </div>
+        <div id="q1-hint" class="hint-box" style="display:none">Look at the numbers on the Y-axis and see the difference between each step.</div>
+        <div id="q1-result" class="result-box"></div>
+        <div id="q1-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The Y-axis numbers increase by 2 each time (0, 2, 4, 6, ...). So the scale is 2.
+          
+        </div>
+        <button id="q1-show" class="btn-show" style="display:none" onclick="toggleSolution('q1')">Show Answer</button>
+      </div><div class="q-card" id="q2-card">
+        <p class="q-text"><strong>2)</strong> The sum of votes for football and tennis is equal to the sum of votes for ______ and ______ sports.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q2-input" class="q-input" placeholder="e.g. hockey, ...">
+          
+          <button class="btn-check" onclick="checkAnswer('q2')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q2')">Hint</button>
+        </div>
+        <div id="q2-hint" class="hint-box" style="display:none">Add the votes for football and tennis. Then find two sports whose votes add up to the same total.</div>
+        <div id="q2-result" class="result-box"></div>
+        <div id="q2-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Football (16) + Tennis (8) = 24. Hockey (12) + Badminton (14) = 26 — incorrect. Rugby (10) + Hockey (12) = 22 — incorrect. Hockey (12) + Cricket (6) = 18 — incorrect. Badminton (14) + Hockey (12) = 26 — incorrect. Recheck: Football (16) + Tennis (8) = 24. Rugby (10) + Badminton (14) = 24. So the answer is rugby and badminton.
+          
+        </div>
+        <button id="q2-show" class="btn-show" style="display:none" onclick="toggleSolution('q2')">Show Answer</button>
+      </div><div class="q-card" id="q3-card">
+        <p class="q-text"><strong>3)</strong> Imagine the number of votes for rugby <strong>doubles</strong>. Using the given scale, what will be its new height? Will it reach closer to the football bar or the hockey bar? Justify your reasoning.</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q3-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q3')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q3')">Hint</button>
+          </div>
+        </div>
+        <div id="q3-hint" class="hint-box" style="display:none">Double the rugby votes. Then compare the new value to football and hockey votes.</div>
+        <div id="q3-result" class="result-box"></div>
+        <div id="q3-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Rugby currently has 10 votes. Doubling it gives 20 votes. Football has 16 votes, hockey has 12 votes. 20 is closer to 16 (football) than to 12 (hockey).
+          
+        </div>
+        <button id="q3-show" class="btn-show" style="display:none" onclick="toggleSolution('q3')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 2 &middot; Venn Diagram Completion</h2>
+      <div class="q-card" id="q4-card">
+        <p class="q-text"><strong>1)</strong> Using the information, complete the following Venn diagram to compare the nutrients in Almonds and Spinach.</p>
+        <p style="font-size:12px;color:#A8B5B3;margin:2px 0 0;">Type items separated by commas — shared items go in the middle.</p>
+        <div class="venn-wrap" style="position:relative;width:100%;max-width:580px;height:340px;margin:12px auto 8px;">
+          <svg viewBox="0 0 580 340" style="position:absolute;inset:0;width:100%;height:100%;">
+            <ellipse cx="210" cy="185" rx="165" ry="140" fill="rgba(147,176,172,0.12)" stroke="#93B0AC" stroke-width="2.5"></ellipse>
+            <ellipse cx="370" cy="185" rx="165" ry="140" fill="rgba(197,189,150,0.12)" stroke="#C5BD96" stroke-width="2.5"></ellipse>
+            <text x="150" y="34" text-anchor="middle" fill="#93B0AC" font-size="17" font-weight="700" font-family="Arial">Almond</text>
+            <text x="430" y="34" text-anchor="middle" fill="#C5BD96" font-size="17" font-weight="700" font-family="Arial">Spinach</text>
+          </svg>
+          <textarea id="q4-left" class="venn-input" placeholder="Almond only" style="position:absolute;box-sizing:border-box;resize:none;border:1.5px dashed rgba(195,220,216,0.5);border-radius:8px;background:rgba(255,255,255,0.06);color:#F0EEEC;font-size:13px;font-family:inherit;padding:6px 8px;text-align:center;left:2%;top:34%;width:26%;height:120px;"></textarea>
+          <textarea id="q4-center" class="venn-input" placeholder="Both" style="position:absolute;box-sizing:border-box;resize:none;border:1.5px dashed rgba(195,220,216,0.5);border-radius:8px;background:rgba(255,255,255,0.06);color:#F0EEEC;font-size:13px;font-family:inherit;padding:6px 8px;text-align:center;left:38%;top:40%;width:24%;height:110px;"></textarea>
+          <textarea id="q4-right" class="venn-input" placeholder="Spinach only" style="position:absolute;box-sizing:border-box;resize:none;border:1.5px dashed rgba(195,220,216,0.5);border-radius:8px;background:rgba(255,255,255,0.06);color:#F0EEEC;font-size:13px;font-family:inherit;padding:6px 8px;text-align:center;right:2%;top:34%;width:26%;height:120px;"></textarea>
+        </div>
+        <div class="q-actions" style="display:flex;gap:10px;margin-top:10px;">
+          <button class="btn-check" onclick="checkVenn('q4')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q4')">Hint</button>
+        </div>
+        <div id="q4-hint" class="hint-box" style="display:none">Look at the nutrients listed for each food. Put shared nutrients in the middle and unique ones in their own circle.</div>
+        <div id="q4-result" class="result-box"></div>
+        <div id="q4-solution" class="solution-box" style="display:none"><strong>&#9989; Solution</strong><br>Almond contains Protein, Healthy Fats, Vitamin E, Magnesium, and Fibre.<br>Spinach contains Iron, Vitamin K, Vitamin A, Calcium, and Fibre.<br>Fibre is common to both, so it goes in the center.<br>The rest go in their respective circles.</div>
+        <button id="q4-show" class="btn-show" style="display:none" onclick="toggleSolution('q4')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #C5BD96; background:rgba(197,189,150,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(197,189,150,0.15);color:#C5BD96;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">COULD DO</span>
+      <h2 style="font-size:18px;color:#C5BD96;margin:6px 0 18px;font-weight:700;">Task: Organizing and Representing Data</h2>
+      <div class="ws-table-wrap" style="overflow-x:auto;margin:8px 0 14px;"><div style="font-weight:700;color:#C3DCD8;margin-bottom:8px;">Raw survey data of favourite chips flavour</div><table style="width:100%;border-collapse:collapse;"><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Chutney</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Cheese</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Chutney</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Salt and Vinegar</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Cheese</td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Chilli</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Spring Onion</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Cheese</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Spring Onion</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Chutney</td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Chilli</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Spring Onion</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Spring Onion</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Salt and Vinegar</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Chilli</td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Chilli</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Salt and Vinegar</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Cheese</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Spring Onion</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Spring Onion</td></tr></table></div><div class="ws-table-wrap" style="overflow-x:auto;margin:8px 0 14px;"><div style="font-weight:700;color:#C3DCD8;margin-bottom:8px;">Frequency table of favourite chips flavour</div><table style="width:100%;border-collapse:collapse;"><tr><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">Favourite flavour of chips</th><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">Tally marks</th><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">Frequency</th></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Chutney</td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q5-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q6-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Spring Onion</td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q7-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q8-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Salt and Vinegar</td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q9-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q10-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Cheese</td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q11-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q12-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Chilli</td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q13-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q14-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td></tr></table><div style="margin-top:12px;display:flex;gap:10px;align-items:center;"><button class="btn-check" onclick="checkTable([&quot;q5&quot;,&quot;q6&quot;,&quot;q7&quot;,&quot;q8&quot;,&quot;q9&quot;,&quot;q10&quot;,&quot;q11&quot;,&quot;q12&quot;,&quot;q13&quot;,&quot;q14&quot;])">Check table</button><span id="q5-tableresult" style="font-size:13px;"></span></div></div></div>
+    <div class="task-block" style="border-left:5px solid #EFD1D4; background:rgba(239,209,212,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(239,209,212,0.15);color:#EFD1D4;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">ENRICHMENT</span>
+      <h2 style="font-size:18px;color:#EFD1D4;margin:6px 0 18px;font-weight:700;">Enrichment Task: Venn Diagram for Multiples</h2>
+      <div class="q-card" id="q15-card">
+        <p class="q-text"><strong>1)</strong> Choose any two times tables. Write the first 15 multiples of each. Then, use a Venn diagram to sort them: put the multiples of the first number in the left circle, the multiples of the second number in the right circle, and the common multiples in the middle.</p>
+        <p style="font-size:12px;color:#A8B5B3;margin:2px 0 0;">Type items separated by commas — shared items go in the middle.</p>
+        <div class="venn-wrap" style="position:relative;width:100%;max-width:580px;height:340px;margin:12px auto 8px;">
+          <svg viewBox="0 0 580 340" style="position:absolute;inset:0;width:100%;height:100%;">
+            <ellipse cx="210" cy="185" rx="165" ry="140" fill="rgba(147,176,172,0.12)" stroke="#93B0AC" stroke-width="2.5"></ellipse>
+            <ellipse cx="370" cy="185" rx="165" ry="140" fill="rgba(197,189,150,0.12)" stroke="#C5BD96" stroke-width="2.5"></ellipse>
+            <text x="150" y="34" text-anchor="middle" fill="#93B0AC" font-size="17" font-weight="700" font-family="Arial">Multiples of ___</text>
+            <text x="430" y="34" text-anchor="middle" fill="#C5BD96" font-size="17" font-weight="700" font-family="Arial">Multiples of ___</text>
+          </svg>
+          <textarea id="q15-left" class="venn-input" placeholder="Multiples of ___ only" style="position:absolute;box-sizing:border-box;resize:none;border:1.5px dashed rgba(195,220,216,0.5);border-radius:8px;background:rgba(255,255,255,0.06);color:#F0EEEC;font-size:13px;font-family:inherit;padding:6px 8px;text-align:center;left:2%;top:34%;width:26%;height:120px;"></textarea>
+          <textarea id="q15-center" class="venn-input" placeholder="Both" style="position:absolute;box-sizing:border-box;resize:none;border:1.5px dashed rgba(195,220,216,0.5);border-radius:8px;background:rgba(255,255,255,0.06);color:#F0EEEC;font-size:13px;font-family:inherit;padding:6px 8px;text-align:center;left:38%;top:40%;width:24%;height:110px;"></textarea>
+          <textarea id="q15-right" class="venn-input" placeholder="Multiples of ___ only" style="position:absolute;box-sizing:border-box;resize:none;border:1.5px dashed rgba(195,220,216,0.5);border-radius:8px;background:rgba(255,255,255,0.06);color:#F0EEEC;font-size:13px;font-family:inherit;padding:6px 8px;text-align:center;right:2%;top:34%;width:26%;height:120px;"></textarea>
+        </div>
+        <div class="q-actions" style="display:flex;gap:10px;margin-top:10px;">
+          <button class="btn-check" onclick="checkVenn('q15')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q15')">Hint</button>
+        </div>
+        <div id="q15-hint" class="hint-box" style="display:none">Example: For 2 and 3, multiples of 2: 2,4,6,... multiples of 3: 3,6,9,... Common multiples: 6,12,...</div>
+        <div id="q15-result" class="result-box"></div>
+        <div id="q15-solution" class="solution-box" style="display:none"><strong>&#9989; Solution</strong><br>Choose two numbers (e.g., 2 and 3).<br>List the first 15 multiples of each.<br>Put unique multiples in their own circle and shared multiples in the center.</div>
+        <button id="q15-show" class="btn-show" style="display:none" onclick="toggleSolution('q15')">Show Answer</button>
+      </div></div>
+  </div>
+
+  <script>
+    let sc = 0;
+    const tot = 15;
+    const done = new Set();
+    const answers = {"q1":{"answer":2,"isNum":true,"range":null},"q2":{"answer":"hockey, badminton","isNum":false,"range":null},"q3":{"answer":"The new height will be 20 votes. It will reach closer to the football bar.","isNum":false,"range":null},"q4":{"venn":true,"answers":{"left":["Protein","Healthy Fats","Vitamin E","Magnesium"],"center":["Fibre"],"right":["Iron","Vitamin K","Vitamin A","Calcium"]}},"q5":{"answer":"||||","isNum":false,"range":null},"q6":{"answer":"4","isNum":true,"range":null},"q7":{"answer":"|||| ||","isNum":false,"range":null},"q8":{"answer":"6","isNum":true,"range":null},"q9":{"answer":"|||","isNum":false,"range":null},"q10":{"answer":"3","isNum":true,"range":null},"q11":{"answer":"||||","isNum":false,"range":null},"q12":{"answer":"4","isNum":true,"range":null},"q13":{"answer":"||||","isNum":false,"range":null},"q14":{"answer":"4","isNum":true,"range":null},"q15":{"venn":true,"answers":{"left":[],"center":[],"right":[]}}};
+    const studentAnswers = {}; // { qId: { answer, correct, timeSpent } }
+    const questionStartTimes = {}; // { qId: timestamp }
+
+    // Track when each question becomes visible / gets focus
+    document.addEventListener('focusin', function(e) {
+      const inp = e.target.closest('input');
+      if (inp && inp.id && inp.id.endsWith('-input')) {
+        const qId = inp.id.replace('-input', '');
+        if (!questionStartTimes[qId]) questionStartTimes[qId] = Date.now();
+      }
+    });
+
+    function up() {
+      document.getElementById('score-num').textContent = sc + '/' + tot;
+      const pct = Math.round((done.size / tot) * 100);
+      document.getElementById('pf').style.width = pct + '%';
+      document.getElementById('pp').textContent = pct + '% complete';
+      // Build per-question answer list
+      const answersArr = Object.entries(studentAnswers).map(([qId, data]) => ({
+        qId, answer: data.answer, correct: data.correct,
+        timeSpent: data.timeSpent || 0,
+        question: data.question || ''
+      }));
+      // Report score + answers to parent window (for student assignment iframe)
+      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot, answers: answersArr }, '*'); } catch(e) {}
+    }
+
+    function checkAnswer(id) {
+      const a = answers[id];
+      if (!a) return;
+      const inp = document.getElementById(id + '-input');
+      const val = inp.value.trim();
+      if (!val) { inp.style.borderColor = '#C5BD96'; return; }
+      const r = document.getElementById(id + '-result');
+      let ok = false;
+      if (a.isNum) {
+        const v = parseFloat(val);
+        if (isNaN(v)) { inp.style.borderColor = '#C5BD96'; return; }
+        ok = a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01;
+      } else {
+        ok = val.replace(/\s+/g,'').toLowerCase() === String(a.answer).replace(/\s+/g,'').toLowerCase();
+      }
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      const qEl = document.getElementById(id + '-card');
+      const qText = qEl ? qEl.querySelector('.q-label, strong')?.textContent || '' : '';
+      studentAnswers[id] = { answer: val, correct: ok, timeSpent: elapsed, question: qText };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        inp.style.borderColor = '#93B0AC';
+        inp.style.background = 'rgba(147,176,172,0.1)';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        inp.style.borderColor = '#EFD1D4';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkMCQ(id) {
+      const a = answers[id];
+      if (!a) return;
+      const sel = document.querySelector('input[name="' + id + '"]:checked');
+      if (!sel) return;
+      const r = document.getElementById(id + '-result');
+      const ok = sel.value === a.correctLetter;
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: sel.value, correct: ok, timeSpent: elapsed, question: '' };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkVenn(id) {
+      const a = answers[id];
+      if (!a || !a.venn) return;
+      function normItems(s) {
+        return String(s || '').replace(/\band\b/gi, ',').split(/[,;\n]/)
+          .map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean).sort();
+      }
+      function setEq(x, y) {
+        if (x.length !== y.length) return false;
+        for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+        return true;
+      }
+      var regions = ['left', 'center', 'right'];
+      var allOk = true, anyFilled = false, snapshot = [];
+      regions.forEach(function(rg) {
+        var inp = document.getElementById(id + '-' + rg);
+        if (!inp) return;
+        var val = normItems(inp.value);
+        if (val.length) anyFilled = true;
+        var correct = normItems((a.answers[rg] || []).join(','));
+        var ok = setEq(val, correct);
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (!ok) allOk = false;
+        snapshot.push(rg + ': ' + inp.value.trim());
+      });
+      if (!anyFilled) return;
+      var r = document.getElementById(id + '-result');
+      var elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: snapshot.join(' | '), correct: allOk, timeSpent: elapsed, question: 'Venn diagram' };
+      if (allOk) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct! Every region is right.</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite — green boxes are right, pink need another look.</span>';
+        var sh = document.getElementById(id + '-show');
+        if (sh) sh.style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkTable(ids) {
+      var right = 0, filled = 0;
+      ids.forEach(function(id) {
+        var a = answers[id];
+        var inp = document.getElementById(id + '-input');
+        if (!a || !inp) return;
+        var val = inp.value.trim();
+        if (!val) return;
+        filled++;
+        var ok;
+        if (a.isNum) {
+          var v = parseFloat(val);
+          ok = !isNaN(v) && (a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01);
+        } else {
+          ok = val.replace(/\s+/g, '').toLowerCase() === String(a.answer).replace(/\s+/g, '').toLowerCase();
+        }
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (ok && !done.has(id)) { sc++; done.add(id); }
+        studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'table cell' };
+        if (ok) right++;
+      });
+      var rEl = document.getElementById(ids[0] + '-tableresult');
+      if (rEl) {
+        if (!filled) rEl.innerHTML = '<span style="color:#C5BD96;">Fill in the cells, then check.</span>';
+        else if (right === ids.length) rEl.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; All correct!</span>';
+        else rEl.innerHTML = '<span style="color:#EFD1D4;font-weight:700">' + right + '/' + ids.length + ' correct — green cells are right.</span>';
+      }
+      up();
+    }
+
+    function toggleHint(id) {
+      const el = document.getElementById(id + '-hint');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleSolution(id) {
+      const el = document.getElementById(id + '-solution');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+    // ── Indic language input support ──
+    // Students type English phonetically (e.g. "muggulu") → auto-converts to Telugu/Hindi
+    // Uses Google Input Tools REST API for transliteration with dropdown suggestions
+    
+    // ── French accent palette ──
+    // Floating toolbar with accented characters students can click to insert
+    
+  </script>
+</body>
+</html>

@@ -8,6 +8,7 @@ export const darkColors = {
   borderColor: 'rgba(245,243,238,0.14)',  // landing --line-strong
 
   textMain: '#F5F3EE',      // landing --text
+  textHeading: '#F5F3EE',   // headings (same as text in dark mode)
   textMuted: '#A9B0AC',     // landing --muted
   textDim: '#6E736B',
 
@@ -36,6 +37,7 @@ export const lightColors = {
   borderColor: 'rgba(11,11,11,0.10)',  // subtle dark border on cream
 
   textMain: '#0B0B0B',      // landing --bg as text (full contrast on cream)
+  textHeading: '#524738',   // headings: warm brown (clearly softer than black)
   textMuted: '#4A4A48',     // dark muted
   textDim: '#8A8A86',       // dimmed
 

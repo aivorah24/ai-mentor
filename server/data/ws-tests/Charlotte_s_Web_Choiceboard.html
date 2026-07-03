@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Charlotte's Web Choice Board - Chapters 1-15 - Aivorah</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, 'Segoe UI', Roboto, 'Noto Sans Telugu', 'Noto Sans Devanagari', Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
+
+    /* ── Header — Aivorah Enchanted Forest ── */
+    .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 28px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); }
+    .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 4px; }
+    .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; }
+    .header-meta { font-size: 13px; color: #5A6B69; margin-top: 4px; }
+
+    /* ── Score Badge ── */
+    .score { position: fixed; top: 20px; right: 24px; width: 76px; height: 76px; border-radius: 50%;
+             background: linear-gradient(135deg, #93B0AC, #7AADA8); color: #0F0F0F;
+             display: flex; flex-direction: column; align-items: center; justify-content: center;
+             box-shadow: 0 4px 20px rgba(147,176,172,0.3); z-index: 100; }
+    .score-num { font-size: 22px; font-weight: 800; line-height: 1; }
+    .score-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 2px; }
+
+    /* ── Progress ── */
+    .progress-wrap { padding: 20px 0 4px; }
+    .progress-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5A6B69; margin-bottom: 8px; }
+    .progress-bar { background: #252525; border-radius: 6px; height: 12px; overflow: hidden; border: 1px solid rgba(195,220,216,0.08); }
+    .progress-fill { background: linear-gradient(90deg, #93B0AC, #C3DCD8); height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+    .progress-pct { text-align: right; font-size: 12px; color: #93B0AC; font-weight: 600; margin-top: 4px; }
+
+    /* ── Container ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px 60px; }
+
+    /* ── Concepts ── */
+    .concepts-row { display: flex; gap: 16px; margin: 24px 0; flex-wrap: wrap; }
+    .concept-card { flex: 1; min-width: 220px; padding: 20px; border-radius: 12px; color: #F0EEEC; }
+    .concept-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #A8B5B3; line-height: 1.5; }
+    .concept-unit { margin-top: 8px; font-size: 12px; color: #5A6B69; }
+    .concept-icon { font-size: 20px; margin-bottom: 6px; }
+
+    /* ── Question cards ── */
+    .q-card { background: #1C1C1C; padding: 20px 24px; border-radius: 10px; margin: 14px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid rgba(195,220,216,0.12); }
+    .q-text { font-size: 15px; color: #F0EEEC; margin-bottom: 14px; line-height: 1.6; }
+    .q-text strong { color: #C3DCD8; }
+
+    /* ── Input row ── */
+    .q-input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .q-label { font-weight: 700; font-size: 14px; color: #A8B5B3; }
+    .q-input { width: 130px; padding: 10px 12px; border: 2px solid rgba(195,220,216,0.25); border-radius: 8px;
+               font-size: 16px; text-align: center; transition: border-color 0.2s; background: #252525; color: #F0EEEC; }
+    .q-input:focus { border-color: #93B0AC; outline: none; box-shadow: 0 0 0 3px rgba(147,176,172,0.2); }
+    .q-unit { font-size: 14px; color: #A8B5B3; font-weight: 500; }
+
+    /* ── MCQ ── */
+    .mcq-opt { display: block; margin: 8px 0; padding: 10px 14px; border-radius: 8px;
+               border: 1.5px solid rgba(195,220,216,0.15); cursor: pointer; font-size: 14px; color: #F0EEEC; transition: all 0.2s; }
+    .mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .mcq-opt input { margin-right: 8px; }
+
+    /* ── Buttons ── */
+    .btn-check { background: #93B0AC; color: #0F0F0F; border: none; padding: 10px 24px; border-radius: 8px;
+                 font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+    .btn-check:hover { background: #7AADA8; transform: translateY(-1px); }
+    .btn-hint { background: #C5BD96; color: #0F0F0F; border: none; padding: 10px 20px; border-radius: 8px;
+                font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .btn-hint:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-show { background: #93B0AC; color: #0F0F0F; border: none; padding: 8px 18px; border-radius: 6px;
+                font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 10px; }
+    .btn-show:hover { background: #7AADA8; }
+
+    /* ── Feedback boxes ── */
+    .hint-box { margin-top: 12px; padding: 14px 16px; background: rgba(197,189,150,0.1); border-radius: 8px;
+                border-left: 4px solid #C5BD96; color: #C5BD96; font-size: 14px; line-height: 1.5; }
+    .result-box { margin-top: 8px; font-size: 14px; min-height: 6px; }
+    .solution-box { margin-top: 12px; padding: 16px 18px; background: rgba(147,176,172,0.1); border-radius: 8px;
+                    border-left: 4px solid #93B0AC; color: #93B0AC; font-size: 14px; line-height: 1.7; }
+
+    /* ── Activity boxes ── */
+    .activity-box { background: linear-gradient(135deg, rgba(147,176,172,0.08), rgba(197,189,150,0.08)) !important;
+                    border-color: rgba(147,176,172,0.25) !important; }
+
+    /* ── Language worksheet layout (Telugu, Hindi, etc.) ── */
+    .lang-q-row { padding: 16px 20px 12px; margin: 6px 0; border-bottom: 1px solid rgba(195,220,216,0.08); }
+    .lang-q-left { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+    .lang-q-num { font-size: 15px; color: #93B0AC; font-weight: 700; flex-shrink: 0; min-width: 28px; }
+    .lang-q-text { font-size: 16px; color: #F0EEEC; line-height: 1.8; }
+    .lang-q-text strong { color: #C3DCD8; }
+    .lang-example { margin: 4px 0 10px 38px; padding: 8px 14px; background: rgba(195,220,216,0.05);
+                    border-left: 3px solid rgba(195,220,216,0.3); border-radius: 0 6px 6px 0;
+                    font-size: 14px; color: #A8B5B3; font-style: italic; }
+    .lang-q-answer { display: flex; align-items: center; gap: 12px; margin-left: 38px; flex-wrap: wrap; }
+    .lang-input { flex: 1; max-width: 280px; padding: 8px 4px; font-size: 16px; color: #F0EEEC;
+                  background: transparent; border: none; border-bottom: 2px dotted rgba(195,220,216,0.35);
+                  outline: none; font-family: inherit; transition: border-color 0.2s; }
+    .lang-input:focus { border-bottom-color: #93B0AC; border-bottom-style: solid; }
+    .lang-input::placeholder { color: transparent; }
+    .lang-q-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .lang-btn-check { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(147,176,172,0.4);
+                      background: transparent; color: #93B0AC; font-size: 14px; cursor: pointer;
+                      display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-check:hover { background: rgba(147,176,172,0.15); border-color: #93B0AC; }
+    .lang-btn-hint { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(197,189,150,0.4);
+                     background: transparent; color: #C5BD96; font-size: 14px; font-weight: 700; cursor: pointer;
+                     display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-hint:hover { background: rgba(197,189,150,0.1); border-color: #C5BD96; }
+    .lang-result { margin: 4px 0 0 38px; font-size: 14px; min-height: 4px; }
+    .lang-mcq-opts { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px 38px; align-items: center; }
+    .lang-mcq-opt { font-size: 14px; color: #F0EEEC; cursor: pointer; padding: 6px 12px;
+                    border: 1px solid rgba(195,220,216,0.2); border-radius: 6px; transition: all 0.2s; }
+    .lang-mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .lang-mcq-opt input { margin-right: 6px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .header { padding: 20px; }
+      .header h1 { font-size: 20px; }
+      .container { padding: 0 14px 40px; }
+      .q-card { padding: 16px; }
+      .lang-q-row { padding: 12px 14px 10px; }
+      .lang-q-answer { margin-left: 28px; }
+      .lang-result { margin-left: 28px; }
+      .lang-example { margin-left: 28px; }
+      .score { width: 60px; height: 60px; top: 14px; right: 14px; }
+      .score-num { font-size: 18px; }
+      .concepts-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-sub">THE SHRI RAM ACADEMY &middot; PYP 4</div>
+    <h1>Charlotte's Web Choice Board - Chapters 1-15</h1>
+    <div class="header-meta">Subject: English Language Arts &nbsp;|&nbsp; Powered by Aivorah</div>
+  </div>
+
+  <div class="score" id="score-badge">
+    <span class="score-num" id="score-num">0/6</span>
+    <span class="score-label">Score</span>
+  </div>
+
+  <div class="container">
+    <div class="progress-wrap">
+      <div class="progress-title">Quiz Progress</div>
+      <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+      <div class="progress-pct" id="pp">0% complete</div>
+    </div>
+
+    
+    <div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:6px;font-weight:700;">&#128221; Note</h3>
+      <p style="font-size:14px;color:#A8B5B3;line-height:1.5;">After reading Chapters 1-15 of Charlotte's Web, select and complete 4 out of the 6 tasks from the choice board that best show your understanding of the text.</p>
+    </div>
+    
+    
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Character Inside-Out</h2>
+      <div style="margin:0 0 16px;padding:12px 16px;background:rgba(195,220,216,0.06);border:1px dashed rgba(195,220,216,0.25);border-radius:8px;font-size:13px;color:#A8B5B3;text-align:center;font-style:italic;">📐 Stylized clipboard icon</div><div class="q-card" id="q1-card">
+        <p class="q-text"><strong>1)</strong> Choose Wilbur, Fern, or Charlotte and draw the outline of their character. Inside the outline, write their feelings and thoughts. Outside the outline, write their actions and behaviour from Chapters 1-15.</p>
+        <div class="activity-box" style="margin:12px 0;padding:18px 20px;background:linear-gradient(135deg,rgba(147,176,172,0.08),rgba(197,189,150,0.08));border-radius:12px;border:1px solid rgba(147,176,172,0.25)">
+          <p style="font-size:13px;color:#A8B5B3;margin:0 0 12px;line-height:1.5">This is a hands-on activity. Try it on paper!</p>
+        </div>
+        <div class="q-actions" style="display:flex;gap:10px;margin-top:10px">
+          <button class="btn-show" style="display:inline-block" onclick="toggleSolution('q1'); if(!done.has('q1')){sc++;done.add('q1');up();}">Show Answer</button>
+          <button class="btn-hint" onclick="toggleHint('q1')">Hint</button>
+        </div>
+        <div id="q1-hint" class="hint-box" style="display:none">Consider the key events and challenges each character faces in Chapters 1-15. How do they react emotionally and physically to these events? What are their key thoughts and visible actions?</div>
+        <div id="q1-result" class="result-box"></div>
+        <div id="q1-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>A complete submission would include a drawn outline of either Wilbur, Fern, or Charlotte. Inside the outline, there would be specific feelings (e.g., Wilbur: fear, joy, loneliness; Fern: curiosity, empathy, concern; Charlotte: wisdom, responsibility, protective love) and thoughts (e.g., Wilbur: 'Will I be saved?', 'I love Fern'; Fern: 'Wilbur is special', 'I want to protect him'; Charlotte: 'I must save Wilbur'). Outside the outline, there would be actions and behaviors (e.g., Wilbur: eating slops, trying to spin a web, being scared; Fern: visiting the barn daily, observing animals quietly; Charlotte: spinning webs, talking to Wilbur, planning to save him) clearly linked to Chapters 1-15.
+          
+        </div>
+        <button id="q1-show" class="btn-show" style="display:none" onclick="toggleSolution('q1')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Comic Strip</h2>
+      <div style="margin:0 0 16px;padding:12px 16px;background:rgba(195,220,216,0.06);border:1px dashed rgba(195,220,216,0.25);border-radius:8px;font-size:13px;color:#A8B5B3;text-align:center;font-style:italic;">📐 Stylized clipboard icon</div><div class="q-card" id="q2-card">
+        <p class="q-text"><strong>1)</strong> Create a 6-8 panel comic strip showing one of the following scenes from Chapters 1-15: Wilbur meeting Charlotte, The barn animals talking, Charlotte's plan to save Wilbur, or choose one of your own significant scenes. Add speech bubbles and captions.</p>
+        <div class="activity-box" style="margin:12px 0;padding:18px 20px;background:linear-gradient(135deg,rgba(147,176,172,0.08),rgba(197,189,150,0.08));border-radius:12px;border:1px solid rgba(147,176,172,0.25)">
+          <p style="font-size:13px;color:#A8B5B3;margin:0 0 12px;line-height:1.5">This is a hands-on activity. Try it on paper!</p>
+        </div>
+        <div class="q-actions" style="display:flex;gap:10px;margin-top:10px">
+          <button class="btn-show" style="display:inline-block" onclick="toggleSolution('q2'); if(!done.has('q2')){sc++;done.add('q2');up();}">Show Answer</button>
+          <button class="btn-hint" onclick="toggleHint('q2')">Hint</button>
+        </div>
+        <div id="q2-hint" class="hint-box" style="display:none">Focus on key dialogue and actions within your chosen scene. Use speech bubbles for what characters say and captions for narration or setting details. Remember to use 6-8 panels for a clear sequence.</div>
+        <div id="q2-result" class="result-box"></div>
+        <div id="q2-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>A complete submission would be a 6-8 panel comic strip illustrating a chosen scene from Chapters 1-15 (e.g., Wilbur's arrival and Charlotte's introduction, animals discussing Wilbur's fate, or Charlotte's first web-writing idea). The comic strip should include appropriate speech bubbles for character dialogue and captions to describe setting or actions, effectively conveying the narrative of the chosen scene.
+          
+        </div>
+        <button id="q2-show" class="btn-show" style="display:none" onclick="toggleSolution('q2')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Vocabulary Collector</h2>
+      <div style="margin:0 0 16px;padding:12px 16px;background:rgba(195,220,216,0.06);border:1px dashed rgba(195,220,216,0.25);border-radius:8px;font-size:13px;color:#A8B5B3;text-align:center;font-style:italic;">📐 Stylized clipboard icon</div><div class="q-card" id="q3-card">
+        <p class="q-text"><strong>1)</strong> Select 2 interesting words from each of Chapters 1-15 of Charlotte's Web. For each selected word, provide its meaning in your own words and use it in a sentence from the story OR your own sentence.</p><div style="margin:8px 0 12px;padding:10px 14px;background:rgba(195,220,216,0.07);border-left:3px solid rgba(195,220,216,0.4);border-radius:0 8px 8px 0;font-size:13px;color:#A8B5B3;font-style:italic;">Chapter 1: 'runt' - Meaning: The smallest or weakest of a litter. Sentence: Wilbur was a runt, and Fern saved him from being killed.</div>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q3-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q3')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q3')">Hint</button>
+          </div>
+        </div>
+        <div id="q3-hint" class="hint-box" style="display:none">As you read Chapters 1-15, pay attention to unfamiliar or vivid words. Choose words that help you understand the story better. For the meaning, try to explain it simply. For the sentence, you can quote directly or create one that shows you understand the word's use.</div>
+        <div id="q3-result" class="result-box"></div>
+        <div id="q3-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>A complete submission would include a list of words (at least 2 per chapter from 1-15, totaling 30 words), each with a clear meaning explained in the student's own words, and a sentence demonstrating proper usage. The sentence can either be a direct quote from the book or an original sentence that accurately reflects the word's meaning within the context of the story or a new context.
+          
+        </div>
+        <button id="q3-show" class="btn-show" style="display:none" onclick="toggleSolution('q3')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Book-to-Life Connection</h2>
+      <div style="margin:0 0 16px;padding:12px 16px;background:rgba(195,220,216,0.06);border:1px dashed rgba(195,220,216,0.25);border-radius:8px;font-size:13px;color:#A8B5B3;text-align:center;font-style:italic;">📐 Stylized clipboard icon</div><div class="q-card" id="q4-card">
+        <p class="q-text"><strong>1)</strong> Make a personal connection to the story by describing: (1) A time you helped a friend, and (2) A time you felt scared yet supported. For both connections, explain how it relates to events or characters in Charlotte's Web, using specific story evidences from Chapters 1-15.</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q4-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q4')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q4')">Hint</button>
+          </div>
+        </div>
+        <div id="q4-hint" class="hint-box" style="display:none">Think about instances in the story where characters show friendship (e.g., Charlotte helping Wilbur) or experience fear and receive support (e.g., Wilbur being scared but comforted by Charlotte/Fern). Connect these to your own experiences, using details from the book to show the parallel.</div>
+        <div id="q4-result" class="result-box"></div>
+        <div id="q4-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>A complete submission would describe a personal experience of helping a friend, clearly linking it to an event or character interaction in Charlotte's Web (e.g., Fern saving Wilbur, Charlotte saving Wilbur). It would also describe a personal experience of feeling scared but supported, connecting it to a specific moment in the book (e.g., Wilbur's fear of being butchered, Fern's comfort). Both connections must be supported by 'story evidences' - specific examples or details from Chapters 1-15.
+          
+        </div>
+        <button id="q4-show" class="btn-show" style="display:none" onclick="toggleSolution('q4')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Point of View Switch</h2>
+      <div style="margin:0 0 16px;padding:12px 16px;background:rgba(195,220,216,0.06);border:1px dashed rgba(195,220,216,0.25);border-radius:8px;font-size:13px;color:#A8B5B3;text-align:center;font-style:italic;">📐 Stylized clipboard icon</div><div class="q-card" id="q5-card">
+        <p class="q-text"><strong>1)</strong> Rewrite a short scene from Chapters 1-15 of Charlotte's Web from a different character's perspective. Choose either: Fern watching Wilbur at the barn OR Templeton observing Charlotte's plan. Write 1-2 paragraphs.</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q5-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q5')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q5')">Hint</button>
+          </div>
+        </div>
+        <div id="q5-hint" class="hint-box" style="display:none">When rewriting, consider what your chosen character (Fern or Templeton) would notice, feel, and think during the scene. How would their unique personality, motivations, and knowledge shape their description of events? Focus on their internal monologue and sensory details from their perspective.</div>
+        <div id="q5-result" class="result-box"></div>
+        <div id="q5-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>A complete submission would be 1-2 paragraphs rewriting a chosen scene (Fern watching Wilbur OR Templeton observing Charlotte's plan) from the chosen character's perspective. The writing should clearly reflect the character's voice, thoughts, feelings, and observations, showing an understanding of their personality and role in the story as presented in Chapters 1-15. For example, Templeton's perspective might be more cynical or self-interested, while Fern's might be more innocent and observant.
+          
+        </div>
+        <button id="q5-show" class="btn-show" style="display:none" onclick="toggleSolution('q5')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Barnyard Newspaper</h2>
+      <div style="margin:0 0 16px;padding:12px 16px;background:rgba(195,220,216,0.06);border:1px dashed rgba(195,220,216,0.25);border-radius:8px;font-size:13px;color:#A8B5B3;text-align:center;font-style:italic;">📐 Stylized clipboard icon</div><div class="q-card" id="q6-card">
+        <p class="q-text"><strong>1)</strong> Create a newspaper page titled 'The Barnyard Bugle' (or similar) related to Chapters 1-15 of Charlotte's Web. Your newspaper page should include: a headline about Wilbur, one short news report, one opinion column written by an animal character, and an illustration or advertisement (Templeton-approved).</p>
+        <div class="activity-box" style="margin:12px 0;padding:18px 20px;background:linear-gradient(135deg,rgba(147,176,172,0.08),rgba(197,189,150,0.08));border-radius:12px;border:1px solid rgba(147,176,172,0.25)">
+          <p style="font-size:13px;color:#A8B5B3;margin:0 0 12px;line-height:1.5">This is a hands-on activity. Try it on paper!</p>
+        </div>
+        <div class="q-actions" style="display:flex;gap:10px;margin-top:10px">
+          <button class="btn-show" style="display:inline-block" onclick="toggleSolution('q6'); if(!done.has('q6')){sc++;done.add('q6');up();}">Show Answer</button>
+          <button class="btn-hint" onclick="toggleHint('q6')">Hint</button>
+        </div>
+        <div id="q6-hint" class="hint-box" style="display:none">Imagine you are an editor for a newspaper read by barn animals. What's the most important news about Wilbur? What would an animal like Templeton, the Goose, or the Sheep write about? How can you make your illustration or ad fit the barnyard theme?</div>
+        <div id="q6-result" class="result-box"></div>
+        <div id="q6-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>A complete submission would be a creative newspaper page (can be drawn or digitally created) including a catchy headline related to Wilbur from Chapters 1-15 (e.g., 'Remarkable Pig Discovered!'), a short news report detailing an event, an opinion column written from the perspective of an animal character (e.g., Templeton's cynical view on humans, the Goose's ramblings), and an illustration or advertisement relevant to the barnyard theme or story events (e.g., an ad for slops, a picture of Wilbur).
+          
+        </div>
+        <button id="q6-show" class="btn-show" style="display:none" onclick="toggleSolution('q6')">Show Answer</button>
+      </div></div>
+  </div>
+
+  <script>
+    let sc = 0;
+    const tot = 6;
+    const done = new Set();
+    const answers = {"q1":{"answer":"A drawing of a chosen character with relevant feelings/thoughts inside and actions/behaviors outside, based on Chapters 1-15.","isNum":false,"activity":true},"q2":{"answer":"A 6-8 panel comic strip illustrating a chosen scene from Chapters 1-15 with speech bubbles and captions.","isNum":false,"activity":true},"q3":{"answer":"A list of 2 words per chapter (Chapters 1-15), each with a meaning in own words and a context-appropriate sentence.","isNum":false,"range":null},"q4":{"answer":"Personal experiences of helping a friend and feeling scared yet supported, explicitly linked to Charlotte's Web with story evidence from Chapters 1-15.","isNum":false,"range":null},"q5":{"answer":"1-2 paragraphs rewriting a chosen scene (Fern watching Wilbur OR Templeton observing Charlotte's plan) from the selected character's perspective.","isNum":false,"range":null},"q6":{"answer":"","isNum":false,"activity":true}};
+    const studentAnswers = {}; // { qId: { answer, correct, timeSpent } }
+    const questionStartTimes = {}; // { qId: timestamp }
+
+    // Track when each question becomes visible / gets focus
+    document.addEventListener('focusin', function(e) {
+      const inp = e.target.closest('input');
+      if (inp && inp.id && inp.id.endsWith('-input')) {
+        const qId = inp.id.replace('-input', '');
+        if (!questionStartTimes[qId]) questionStartTimes[qId] = Date.now();
+      }
+    });
+
+    function up() {
+      document.getElementById('score-num').textContent = sc + '/' + tot;
+      const pct = Math.round((done.size / tot) * 100);
+      document.getElementById('pf').style.width = pct + '%';
+      document.getElementById('pp').textContent = pct + '% complete';
+      // Build per-question answer list
+      const answersArr = Object.entries(studentAnswers).map(([qId, data]) => ({
+        qId, answer: data.answer, correct: data.correct,
+        timeSpent: data.timeSpent || 0,
+        question: data.question || ''
+      }));
+      // Report score + answers to parent window (for student assignment iframe)
+      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot, answers: answersArr }, '*'); } catch(e) {}
+    }
+
+    function checkAnswer(id) {
+      const a = answers[id];
+      if (!a) return;
+      const inp = document.getElementById(id + '-input');
+      const val = inp.value.trim();
+      if (!val) { inp.style.borderColor = '#C5BD96'; return; }
+      const r = document.getElementById(id + '-result');
+      let ok = false;
+      if (a.isNum) {
+        const v = parseFloat(val);
+        if (isNaN(v)) { inp.style.borderColor = '#C5BD96'; return; }
+        ok = a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01;
+      } else {
+        ok = val.replace(/\s+/g,'').toLowerCase() === String(a.answer).replace(/\s+/g,'').toLowerCase();
+      }
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      const qEl = document.getElementById(id + '-card');
+      const qText = qEl ? qEl.querySelector('.q-label, strong')?.textContent || '' : '';
+      studentAnswers[id] = { answer: val, correct: ok, timeSpent: elapsed, question: qText };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        inp.style.borderColor = '#93B0AC';
+        inp.style.background = 'rgba(147,176,172,0.1)';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        inp.style.borderColor = '#EFD1D4';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkMCQ(id) {
+      const a = answers[id];
+      if (!a) return;
+      const sel = document.querySelector('input[name="' + id + '"]:checked');
+      if (!sel) return;
+      const r = document.getElementById(id + '-result');
+      const ok = sel.value === a.correctLetter;
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: sel.value, correct: ok, timeSpent: elapsed, question: '' };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkVenn(id) {
+      const a = answers[id];
+      if (!a || !a.venn) return;
+      function normItems(s) {
+        return String(s || '').replace(/\band\b/gi, ',').split(/[,;\n]/)
+          .map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean).sort();
+      }
+      function setEq(x, y) {
+        if (x.length !== y.length) return false;
+        for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+        return true;
+      }
+      var regions = ['left', 'center', 'right'];
+      var allOk = true, anyFilled = false, snapshot = [];
+      regions.forEach(function(rg) {
+        var inp = document.getElementById(id + '-' + rg);
+        if (!inp) return;
+        var val = normItems(inp.value);
+        if (val.length) anyFilled = true;
+        var correct = normItems((a.answers[rg] || []).join(','));
+        var ok = setEq(val, correct);
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (!ok) allOk = false;
+        snapshot.push(rg + ': ' + inp.value.trim());
+      });
+      if (!anyFilled) return;
+      var r = document.getElementById(id + '-result');
+      var elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: snapshot.join(' | '), correct: allOk, timeSpent: elapsed, question: 'Venn diagram' };
+      if (allOk) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct! Every region is right.</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite — green boxes are right, pink need another look.</span>';
+        var sh = document.getElementById(id + '-show');
+        if (sh) sh.style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function toggleHint(id) {
+      const el = document.getElementById(id + '-hint');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleSolution(id) {
+      const el = document.getElementById(id + '-solution');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+    // ── Indic language input support ──
+    // Students type English phonetically (e.g. "muggulu") → auto-converts to Telugu/Hindi
+    // Uses Google Input Tools REST API for transliteration with dropdown suggestions
+    
+    // ── French accent palette ──
+    // Floating toolbar with accented characters students can click to insert
+    
+  </script>
+</body>
+</html>

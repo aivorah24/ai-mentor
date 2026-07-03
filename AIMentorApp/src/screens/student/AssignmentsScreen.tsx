@@ -3224,18 +3224,20 @@ export default function AssignmentsScreen({ navigation, route }: any) {
           const html = activeAssignment.interactiveQuizHtml;
           return (
             <Modal visible animationType="slide" transparent={false} onRequestClose={() => setActiveAssignment(null)}>
-              <View style={{ flex: 1, backgroundColor: colors.background }}>
+              {/* The quiz HTML inside the iframe is always dark-themed — pin the modal
+                  chrome to the same dark palette so light mode doesn't show a white bar */}
+              <View style={{ flex: 1, backgroundColor: '#0F0F0F' }}>
                 {/* Header bar */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(195,220,216,0.15)', backgroundColor: '#141414' }}>
                   <TouchableOpacity onPress={() => setActiveAssignment(null)} style={{ marginRight: 12 }}>
-                    <Feather name="arrow-left" size={22} color={colors.text} />
+                    <Feather name="arrow-left" size={22} color="#F0EEEC" />
                   </TouchableOpacity>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700' }}>{activeAssignment.title}</Text>
-                    <Text style={{ color: colors.subText, fontSize: 12, marginTop: 2 }}>Interactive Quiz</Text>
+                    <Text style={{ color: '#F0EEEC', fontSize: 16, fontWeight: '700' }}>{activeAssignment.title}</Text>
+                    <Text style={{ color: '#93B0AC', fontSize: 12, marginTop: 2 }}>Interactive Quiz</Text>
                   </View>
-                  <TouchableOpacity onPress={() => setActiveAssignment(null)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}>
-                    <Feather name="x" size={18} color={colors.text} />
+                  <TouchableOpacity onPress={() => setActiveAssignment(null)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#1C1C1C', borderWidth: 1, borderColor: 'rgba(195,220,216,0.25)', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="x" size={18} color="#F0EEEC" />
                   </TouchableOpacity>
                 </View>
                 {/* Quiz iframe */}

@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PYP 2 Mathematics Home Learning Engagement - Aivorah</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, 'Segoe UI', Roboto, 'Noto Sans Telugu', 'Noto Sans Devanagari', Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
+
+    /* ── Header — Aivorah Enchanted Forest ── */
+    .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 28px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); }
+    .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 4px; }
+    .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; }
+    .header-meta { font-size: 13px; color: #5A6B69; margin-top: 4px; }
+
+    /* ── Score Badge ── */
+    .score { position: fixed; top: 20px; right: 24px; width: 76px; height: 76px; border-radius: 50%;
+             background: linear-gradient(135deg, #93B0AC, #7AADA8); color: #0F0F0F;
+             display: flex; flex-direction: column; align-items: center; justify-content: center;
+             box-shadow: 0 4px 20px rgba(147,176,172,0.3); z-index: 100; }
+    .score-num { font-size: 22px; font-weight: 800; line-height: 1; }
+    .score-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 2px; }
+
+    /* ── Progress ── */
+    .progress-wrap { padding: 20px 0 4px; }
+    .progress-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5A6B69; margin-bottom: 8px; }
+    .progress-bar { background: #252525; border-radius: 6px; height: 12px; overflow: hidden; border: 1px solid rgba(195,220,216,0.08); }
+    .progress-fill { background: linear-gradient(90deg, #93B0AC, #C3DCD8); height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+    .progress-pct { text-align: right; font-size: 12px; color: #93B0AC; font-weight: 600; margin-top: 4px; }
+
+    /* ── Container ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px 60px; }
+
+    /* ── Concepts ── */
+    .concepts-row { display: flex; gap: 16px; margin: 24px 0; flex-wrap: wrap; }
+    .concept-card { flex: 1; min-width: 220px; padding: 20px; border-radius: 12px; color: #F0EEEC; }
+    .concept-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #A8B5B3; line-height: 1.5; }
+    .concept-unit { margin-top: 8px; font-size: 12px; color: #5A6B69; }
+    .concept-icon { font-size: 20px; margin-bottom: 6px; }
+
+    /* ── Question cards ── */
+    .q-card { background: #1C1C1C; padding: 20px 24px; border-radius: 10px; margin: 14px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid rgba(195,220,216,0.12); }
+    .q-text { font-size: 15px; color: #F0EEEC; margin-bottom: 14px; line-height: 1.6; }
+    .q-text strong { color: #C3DCD8; }
+
+    /* ── Input row ── */
+    .q-input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .q-label { font-weight: 700; font-size: 14px; color: #A8B5B3; }
+    .q-input { width: 130px; padding: 10px 12px; border: 2px solid rgba(195,220,216,0.25); border-radius: 8px;
+               font-size: 16px; text-align: center; transition: border-color 0.2s; background: #252525; color: #F0EEEC; }
+    .q-input:focus { border-color: #93B0AC; outline: none; box-shadow: 0 0 0 3px rgba(147,176,172,0.2); }
+    .q-unit { font-size: 14px; color: #A8B5B3; font-weight: 500; }
+
+    /* ── MCQ ── */
+    .mcq-opt { display: block; margin: 8px 0; padding: 10px 14px; border-radius: 8px;
+               border: 1.5px solid rgba(195,220,216,0.15); cursor: pointer; font-size: 14px; color: #F0EEEC; transition: all 0.2s; }
+    .mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .mcq-opt input { margin-right: 8px; }
+
+    /* ── Buttons ── */
+    .btn-check { background: #93B0AC; color: #0F0F0F; border: none; padding: 10px 24px; border-radius: 8px;
+                 font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+    .btn-check:hover { background: #7AADA8; transform: translateY(-1px); }
+    .btn-hint { background: #C5BD96; color: #0F0F0F; border: none; padding: 10px 20px; border-radius: 8px;
+                font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .btn-hint:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-show { background: #93B0AC; color: #0F0F0F; border: none; padding: 8px 18px; border-radius: 6px;
+                font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 10px; }
+    .btn-show:hover { background: #7AADA8; }
+
+    /* ── Feedback boxes ── */
+    .hint-box { margin-top: 12px; padding: 14px 16px; background: rgba(197,189,150,0.1); border-radius: 8px;
+                border-left: 4px solid #C5BD96; color: #C5BD96; font-size: 14px; line-height: 1.5; }
+    .result-box { margin-top: 8px; font-size: 14px; min-height: 6px; }
+    .solution-box { margin-top: 12px; padding: 16px 18px; background: rgba(147,176,172,0.1); border-radius: 8px;
+                    border-left: 4px solid #93B0AC; color: #93B0AC; font-size: 14px; line-height: 1.7; }
+
+    /* ── Activity boxes ── */
+    .activity-box { background: linear-gradient(135deg, rgba(147,176,172,0.08), rgba(197,189,150,0.08)) !important;
+                    border-color: rgba(147,176,172,0.25) !important; }
+
+    /* ── Language worksheet layout (Telugu, Hindi, etc.) ── */
+    .lang-q-row { padding: 16px 20px 12px; margin: 6px 0; border-bottom: 1px solid rgba(195,220,216,0.08); }
+    .lang-q-left { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+    .lang-q-num { font-size: 15px; color: #93B0AC; font-weight: 700; flex-shrink: 0; min-width: 28px; }
+    .lang-q-text { font-size: 16px; color: #F0EEEC; line-height: 1.8; }
+    .lang-q-text strong { color: #C3DCD8; }
+    .lang-example { margin: 4px 0 10px 38px; padding: 8px 14px; background: rgba(195,220,216,0.05);
+                    border-left: 3px solid rgba(195,220,216,0.3); border-radius: 0 6px 6px 0;
+                    font-size: 14px; color: #A8B5B3; font-style: italic; }
+    .lang-q-answer { display: flex; align-items: center; gap: 12px; margin-left: 38px; flex-wrap: wrap; }
+    .lang-input { flex: 1; max-width: 280px; padding: 8px 4px; font-size: 16px; color: #F0EEEC;
+                  background: transparent; border: none; border-bottom: 2px dotted rgba(195,220,216,0.35);
+                  outline: none; font-family: inherit; transition: border-color 0.2s; }
+    .lang-input:focus { border-bottom-color: #93B0AC; border-bottom-style: solid; }
+    .lang-input::placeholder { color: transparent; }
+    .lang-q-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .lang-btn-check { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(147,176,172,0.4);
+                      background: transparent; color: #93B0AC; font-size: 14px; cursor: pointer;
+                      display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-check:hover { background: rgba(147,176,172,0.15); border-color: #93B0AC; }
+    .lang-btn-hint { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(197,189,150,0.4);
+                     background: transparent; color: #C5BD96; font-size: 14px; font-weight: 700; cursor: pointer;
+                     display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-hint:hover { background: rgba(197,189,150,0.1); border-color: #C5BD96; }
+    .lang-result { margin: 4px 0 0 38px; font-size: 14px; min-height: 4px; }
+    .lang-mcq-opts { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px 38px; align-items: center; }
+    .lang-mcq-opt { font-size: 14px; color: #F0EEEC; cursor: pointer; padding: 6px 12px;
+                    border: 1px solid rgba(195,220,216,0.2); border-radius: 6px; transition: all 0.2s; }
+    .lang-mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .lang-mcq-opt input { margin-right: 6px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .header { padding: 20px; }
+      .header h1 { font-size: 20px; }
+      .container { padding: 0 14px 40px; }
+      .q-card { padding: 16px; }
+      .lang-q-row { padding: 12px 14px 10px; }
+      .lang-q-answer { margin-left: 28px; }
+      .lang-result { margin-left: 28px; }
+      .lang-example { margin-left: 28px; }
+      .score { width: 60px; height: 60px; top: 14px; right: 14px; }
+      .score-num { font-size: 18px; }
+      .concepts-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-sub">THE SHRI RAM ACADEMY &middot; PYP 2</div>
+    <h1>PYP 2 Mathematics Home Learning Engagement</h1>
+    <div class="header-meta">Subject: Mathematics &nbsp;|&nbsp; Powered by Aivorah</div>
+  </div>
+
+  <div class="score" id="score-badge">
+    <span class="score-num" id="score-num">0/23</span>
+    <span class="score-label">Score</span>
+  </div>
+
+  <div class="container">
+    <div class="progress-wrap">
+      <div class="progress-title">Quiz Progress</div>
+      <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+      <div class="progress-pct" id="pp">0% complete</div>
+    </div>
+
+    <div class="concepts-row">
+        <div class="concept-card" style="background:#93B0AC18;border:1px solid #93B0AC40">
+          <div class="concept-icon" style="color:#93B0AC">&#128218;</div>
+          <h3 style="color:#93B0AC">Addition</h3>
+          <p>Combining two or more numbers to find their total sum.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#C5BD9618;border:1px solid #C5BD9640">
+          <div class="concept-icon" style="color:#C5BD96">&#128218;</div>
+          <h3 style="color:#C5BD96">Subtraction</h3>
+          <p>Taking one number away from another to find the difference.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#D4A89818;border:1px solid #D4A89840">
+          <div class="concept-icon" style="color:#D4A898">&#128218;</div>
+          <h3 style="color:#D4A898">Regrouping</h3>
+          <p>Exchanging values between place values (e.g., trading 1 ten for 10 ones) in addition or subtraction.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#C3DCD818;border:1px solid #C3DCD840">
+          <div class="concept-icon" style="color:#C3DCD8">&#128218;</div>
+          <h3 style="color:#C3DCD8">Word Problems</h3>
+          <p>Mathematical problems presented in a story format, requiring reading comprehension to identify operations.</p>
+          
+        </div></div>
+    <div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:6px;font-weight:700;">&#128221; Note</h3>
+      <p style="font-size:14px;color:#A8B5B3;line-height:1.5;">Purpose: To practice the concepts of addition and subtraction.
+
+Learning Outcome:
+• Model addition and subtraction of whole numbers up to 999 with and without regrouping.
+• Select and use appropriate operations to solve word problems based on teacher-provided answer statements.
+
+Instructions:
+The Home Learning Engagement has been divided into three levels:
+• Must Do: These are essential engagements which you need to complete.
+• Could Do: These engagements are optional but recommended.
+• Enrichment Task: These are bonus engagements to explore your interests further.</p>
+    </div>
+    
+    
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 1 &middot; Solve each problem and use the code below to complete the blanks and discover the secret message.</h2>
+      <div style="text-align:center;margin:0 0 16px;"><img src="data:image/png;base64,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" alt="Decorative images including a snowflake, gingerbread house, snowman, and Christmas garland." style="max-width:320px;max-height:300px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div><div class="q-card" id="q1-card">
+        <p class="q-text"><strong>a)</strong> Solve the addition problem:
+
+  326
++ 419
+-----
+
+What is the answer? (Code: 745 - M)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q1-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q1')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q1')">Hint</button>
+        </div>
+        <div id="q1-hint" class="hint-box" style="display:none">Add the numbers column by column, starting from the ones place.</div>
+        <div id="q1-result" class="result-box"></div>
+        <div id="q1-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>326 + 419
+Ones place: 6 + 9 = 15. Write down 5, carry over 1 to the tens place.
+Tens place: 1 (carry-over) + 2 + 1 = 4.
+Hundreds place: 3 + 4 = 7.
+Result: 745.
+          
+        </div>
+        <button id="q1-show" class="btn-show" style="display:none" onclick="toggleSolution('q1')">Show Answer</button>
+      </div><div class="q-card" id="q2-card">
+        <p class="q-text"><strong>b)</strong> Solve the addition problem:
+
+  317
++ 258
+-----
+
+What is the answer? (Note: This result, 575, does not have a letter code in the provided list.)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q2-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q2')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q2')">Hint</button>
+        </div>
+        <div id="q2-hint" class="hint-box" style="display:none">Add the numbers column by column, starting from the ones place. Remember to regroup if the sum is 10 or more.</div>
+        <div id="q2-result" class="result-box"></div>
+        <div id="q2-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>317 + 258
+Ones place: 7 + 8 = 15. Write down 5, carry over 1 to the tens place.
+Tens place: 1 (carry-over) + 1 + 5 = 7.
+Hundreds place: 3 + 2 = 5.
+Result: 575.
+          
+        </div>
+        <button id="q2-show" class="btn-show" style="display:none" onclick="toggleSolution('q2')">Show Answer</button>
+      </div><div class="q-card" id="q3-card">
+        <p class="q-text"><strong>c)</strong> Solve the addition problem:
+
+  628
++ 794
+-----
+
+What is the answer? (Code: 1422 - R)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q3-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q3')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q3')">Hint</button>
+        </div>
+        <div id="q3-hint" class="hint-box" style="display:none">Add the numbers column by column, starting from the ones place. Remember to regroup.</div>
+        <div id="q3-result" class="result-box"></div>
+        <div id="q3-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>628 + 794
+Ones place: 8 + 4 = 12. Write down 2, carry over 1 to the tens place.
+Tens place: 1 (carry-over) + 2 + 9 = 12. Write down 2, carry over 1 to the hundreds place.
+Hundreds place: 1 (carry-over) + 6 + 7 = 14.
+Result: 1422.
+          
+        </div>
+        <button id="q3-show" class="btn-show" style="display:none" onclick="toggleSolution('q3')">Show Answer</button>
+      </div><div class="q-card" id="q4-card">
+        <p class="q-text"><strong>d)</strong> Solve the subtraction problem:
+
+  900
+- 278
+-----
+
+What is the answer? (Code: 622 - R)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q4-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q4')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q4')">Hint</button>
+        </div>
+        <div id="q4-hint" class="hint-box" style="display:none">Subtract the numbers column by column, starting from the ones place. Remember to regroup (borrow) when a digit is smaller than the one being subtracted from it.</div>
+        <div id="q4-result" class="result-box"></div>
+        <div id="q4-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>900 - 278
+Ones place: 0 - 8. Borrow from tens. Tens is 0, so borrow from hundreds. 9 becomes 8, first 0 becomes 10 (then 9 for next borrow), last 0 becomes 10.
+10 - 8 = 2.
+Tens place: 9 - 7 = 2.
+Hundreds place: 8 - 2 = 6.
+Result: 622.
+          
+        </div>
+        <button id="q4-show" class="btn-show" style="display:none" onclick="toggleSolution('q4')">Show Answer</button>
+      </div><div class="q-card" id="q5-card">
+        <p class="q-text"><strong>e)</strong> Solve the addition problem:
+
+  569
++ 650
+-----
+
+What is the answer? (Code: 1219 - Y)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q5-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q5')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q5')">Hint</button>
+        </div>
+        <div id="q5-hint" class="hint-box" style="display:none">Add the numbers column by column, starting from the ones place. Remember to regroup.</div>
+        <div id="q5-result" class="result-box"></div>
+        <div id="q5-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>569 + 650
+Ones place: 9 + 0 = 9.
+Tens place: 6 + 5 = 11. Write down 1, carry over 1 to the hundreds place.
+Hundreds place: 1 (carry-over) + 5 + 6 = 12.
+Result: 1219.
+          
+        </div>
+        <button id="q5-show" class="btn-show" style="display:none" onclick="toggleSolution('q5')">Show Answer</button>
+      </div><div class="q-card" id="q6-card">
+        <p class="q-text"><strong>f)</strong> Solve the subtraction problem:
+
+  713
+- 286
+-----
+
+What is the answer? (Code: 427 - X)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q6-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q6')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q6')">Hint</button>
+        </div>
+        <div id="q6-hint" class="hint-box" style="display:none">Subtract the numbers column by column, starting from the ones place. Remember to regroup (borrow).</div>
+        <div id="q6-result" class="result-box"></div>
+        <div id="q6-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>713 - 286
+Ones place: 3 - 6. Borrow from tens. 1 becomes 0, 3 becomes 13. 13 - 6 = 7.
+Tens place: 0 - 8. Borrow from hundreds. 7 becomes 6, 0 becomes 10. 10 - 8 = 2.
+Hundreds place: 6 - 2 = 4.
+Result: 427.
+          
+        </div>
+        <button id="q6-show" class="btn-show" style="display:none" onclick="toggleSolution('q6')">Show Answer</button>
+      </div><div class="q-card" id="q7-card">
+        <p class="q-text"><strong>g)</strong> Solve the subtraction problem:
+
+  487
+- 133
+-----
+
+What is the answer? (Note: This result, 354, does not have a letter code in the provided list.)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q7-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q7')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q7')">Hint</button>
+        </div>
+        <div id="q7-hint" class="hint-box" style="display:none">Subtract the numbers column by column, starting from the ones place. No regrouping is needed here.</div>
+        <div id="q7-result" class="result-box"></div>
+        <div id="q7-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>487 - 133
+Ones place: 7 - 3 = 4.
+Tens place: 8 - 3 = 5.
+Hundreds place: 4 - 1 = 3.
+Result: 354.
+          
+        </div>
+        <button id="q7-show" class="btn-show" style="display:none" onclick="toggleSolution('q7')">Show Answer</button>
+      </div><div class="q-card" id="q8-card">
+        <p class="q-text"><strong>h)</strong> Solve the subtraction problem:
+
+  760
+- 325
+-----
+
+What is the answer? (Code: 435 - A)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q8-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q8')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q8')">Hint</button>
+        </div>
+        <div id="q8-hint" class="hint-box" style="display:none">Subtract the numbers column by column, starting from the ones place. Remember to regroup if necessary.</div>
+        <div id="q8-result" class="result-box"></div>
+        <div id="q8-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>760 - 325
+Ones place: 0 - 5. Borrow from tens. 6 becomes 5, 0 becomes 10. 10 - 5 = 5.
+Tens place: 5 - 2 = 3.
+Hundreds place: 7 - 3 = 4.
+Result: 435.
+          
+        </div>
+        <button id="q8-show" class="btn-show" style="display:none" onclick="toggleSolution('q8')">Show Answer</button>
+      </div><div class="q-card" id="q9-card">
+        <p class="q-text"><strong>i)</strong> Solve the subtraction problem:
+
+  672
+- 339
+-----
+
+What is the answer? (Code: 333 - S)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q9-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q9')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q9')">Hint</button>
+        </div>
+        <div id="q9-hint" class="hint-box" style="display:none">Subtract the numbers column by column, starting from the ones place. Remember to regroup if necessary.</div>
+        <div id="q9-result" class="result-box"></div>
+        <div id="q9-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>672 - 339
+Ones place: 2 - 9. Borrow from tens. 7 becomes 6, 2 becomes 12. 12 - 9 = 3.
+Tens place: 6 - 3 = 3.
+Hundreds place: 6 - 3 = 3.
+Result: 333.
+          
+        </div>
+        <button id="q9-show" class="btn-show" style="display:none" onclick="toggleSolution('q9')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 2 &middot; Solve the following word problems using the appropriate number operation.</h2>
+      <div class="q-card" id="q10-card">
+        <p class="q-text"><strong>a)</strong> There are <strong>507</strong> crows in the field. A loud sound scares <strong>224</strong> of them away. How many crows are left?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q10-input" class="q-input" placeholder="?">
+          <span class="q-unit">crows</span>
+          <button class="btn-check" onclick="checkAnswer('q10')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q10')">Hint</button>
+        </div>
+        <div id="q10-hint" class="hint-box" style="display:none">When some items are 'scared away' or 'left', it usually means you need to subtract.</div>
+        <div id="q10-result" class="result-box"></div>
+        <div id="q10-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Total crows = 507
+Crows scared away = 224
+Crows left = Total crows - Crows scared away = 507 - 224
+   507
+-  224
+------
+   283
+There are 283 crows left.
+          
+        </div>
+        <button id="q10-show" class="btn-show" style="display:none" onclick="toggleSolution('q10')">Show Answer</button>
+      </div><div class="q-card" id="q11-card">
+        <p class="q-text"><strong>b)</strong> A market sells <strong>476</strong> apples in one week and <strong>348</strong> apples in the next week. How many apples have been sold in total?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q11-input" class="q-input" placeholder="?">
+          <span class="q-unit">apples</span>
+          <button class="btn-check" onclick="checkAnswer('q11')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q11')">Hint</button>
+        </div>
+        <div id="q11-hint" class="hint-box" style="display:none">The phrase 'in total' indicates an addition operation.</div>
+        <div id="q11-result" class="result-box"></div>
+        <div id="q11-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Apples sold in first week = 476
+Apples sold in next week = 348
+Total apples sold = Apples in first week + Apples in next week = 476 + 348
+   476
++  348
+------
+   824
+824 apples have been sold in total.
+          
+        </div>
+        <button id="q11-show" class="btn-show" style="display:none" onclick="toggleSolution('q11')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #C5BD96; background:rgba(197,189,150,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(197,189,150,0.15);color:#C5BD96;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">COULD DO</span>
+      <h2 style="font-size:18px;color:#C5BD96;margin:6px 0 18px;font-weight:700;">Task 3 &middot; Work out these 2 step addition and subtraction word problems.</h2>
+      <div class="q-card" id="q12-card">
+        <p class="q-text"><strong>a)</strong> Leena has a collection of <strong>673</strong> books. She gives <strong>126</strong> books to Meena and <strong>258</strong> books to Teena. How many books are left with her now?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q12-input" class="q-input" placeholder="?">
+          <span class="q-unit">books</span>
+          <button class="btn-check" onclick="checkAnswer('q12')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q12')">Hint</button>
+        </div>
+        <div id="q12-hint" class="hint-box" style="display:none">First, find out the total number of books Leena gave away. Then, subtract that total from her initial collection.</div>
+        <div id="q12-result" class="result-box"></div>
+        <div id="q12-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Total books Leena has = 673
+Books given to Meena = 126
+Books given to Teena = 258
+<br>Step 1: Calculate total books given away:
+126 + 258 = 384 books
+<br>Step 2: Calculate books left with Leena:
+673 - 384 = 289 books
+There are 289 books left with her now.
+          
+        </div>
+        <button id="q12-show" class="btn-show" style="display:none" onclick="toggleSolution('q12')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #C5BD96; background:rgba(197,189,150,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(197,189,150,0.15);color:#C5BD96;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">COULD DO</span>
+      <h2 style="font-size:18px;color:#C5BD96;margin:6px 0 18px;font-weight:700;">Task 4 &middot; Identify the mistake. Write the correct working and explain the mistake.</h2>
+      <div class="q-card" id="q13-card">
+        <p class="q-text"><strong>a)</strong> Identify the mistake in the following subtraction. Write the correct working and explain the mistake.
+
+203
+- 57
+-----
+373
+</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q13-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q13')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q13')">Hint</button>
+          </div>
+        </div>
+        <div id="q13-hint" class="hint-box" style="display:none">Carefully review the regrouping process (borrowing) in subtraction, especially when a digit in the top number is smaller than the corresponding digit in the bottom number.</div>
+        <div id="q13-result" class="result-box"></div>
+        <div id="q13-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The mistake is in the calculation as regrouping was not applied correctly.
+Correct Working:
+
+  1 9 13
+  2 0 3
+-   5 7
+-------
+  1 4 6
+
+
+Explanation of the Mistake:
+1.  In the ones place, <strong>3 - 7</strong> cannot be 3. You need to regroup from the tens place. Since the tens place is 0, you must regroup from the hundreds place. The 2 (hundreds) becomes 1. The 0 (tens) becomes 10. Then, you regroup from the tens place to the ones place. The 10 (tens) becomes 9, and the 3 (ones) becomes 13.
+2.  Now, in the ones place: <strong>13 - 7 = 6</strong>.
+3.  In the tens place: <strong>9 - 5 = 4</strong>.
+4.  In the hundreds place: <strong>1 - 0 = 1</strong>.
+
+The student's answer of 373 indicates they did not regroup. For example, in the ones place, they might have incorrectly done 7-3=4 and then written 3. In the tens place, 0-5 would not be 7. They seem to have subtracted 5 from 10 (from 20) and added it to the hundreds, or just subtracted incorrectly without following place value and borrowing rules.
+          
+        </div>
+        <button id="q13-show" class="btn-show" style="display:none" onclick="toggleSolution('q13')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #EFD1D4; background:rgba(239,209,212,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(239,209,212,0.15);color:#EFD1D4;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">ENRICHMENT</span>
+      <h2 style="font-size:18px;color:#EFD1D4;margin:6px 0 18px;font-weight:700;">Task 5 &middot; Create your own word problem using three-digit numbers that involves addition or subtraction with regrouping and solve it. Use the space provided below.</h2>
+      <div class="q-card" id="q14-card">
+        <p class="q-text"><strong>a)</strong> Create your own word problem using three-digit numbers that involves addition or subtraction with regrouping and solve it. Use the space provided below.</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q14-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q14')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q14')">Hint</button>
+          </div>
+        </div>
+        <div id="q14-hint" class="hint-box" style="display:none">Think of a simple scenario involving 'total' (addition) or 'remaining/difference' (subtraction). Ensure your numbers require regrouping in at least one column.</div>
+        <div id="q14-result" class="result-box"></div>
+        <div id="q14-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Student's own creative word problem and solution. Example:
+Problem: 'Sarah had 524 stickers. She gave 187 stickers to her friend. How many stickers does Sarah have left?'
+Solution:
+Stickers left = 524 - 187
+
+   5 11 14
+   5 2 4
+-  1 8 7
+---------
+   3 3 7
+
+Sarah has 337 stickers left.
+          
+        </div>
+        <button id="q14-show" class="btn-show" style="display:none" onclick="toggleSolution('q14')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #EFD1D4; background:rgba(239,209,212,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(239,209,212,0.15);color:#EFD1D4;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">ENRICHMENT</span>
+      <h2 style="font-size:18px;color:#EFD1D4;margin:6px 0 18px;font-weight:700;">Task 6 &middot; Solve the following problem.</h2>
+      <div style="text-align:center;margin:0 0 16px;"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAzcAAADUCAYAAACh6d1rAAAACXBIWXMAAAsTAAALEwEAmpwYAAAgAElEQVR4nO2dB5RVVZaGnenpCc70OKGnZ5ye1jbnnHPGrIiiYs4ZMWFOrWIWtc05YM6YA6gYUDGgYkDECIKogBgwEM6s7ywP6/J4VfUKX9133+X71joL6lW9G8+5Z/9777PvbGEm+eyzz8Jss80W2+yzzz6zmxEREREREYn89NNP0zQG7fvvvw/tYbYwkyhuRERERESknihuRERERESkFChuRERERESkFChuRERERESkFChuRERERESkFChuRERERESkFChuRERERESkFChuRERERESkFChuRERERESkFChuRERERESkFChuRERERESkFChuRERERESkFChuRERERESkFChuRERERESkFBRC3NBOOukkm9fAPmAfsA/YB+wD9gH7gH3APmAfCDN7DY4//vhiiBub18A+YB+wD9gH7AP2AfuAfcA+YB+YrY7XIDdxM3ny5DDHHHPYge3A9gH7gH3APmAfsA/YB+wD9gH7QKj3NZhzzjnbrVFmWtzAs88+G0455RRDj4Ye7QP2AfuAfcA+YB+wD9gH7AP2gVCva9CrV6/w0ksv5StuREREREREioLiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESoHiRkRERERESkHpxE2/fv3ClVdeGU455ZRw7733hmbnk08+CTfeeGPo1atXGD16dF23/dprr8VrdeaZZ4YiMXny5HD33XeH888/Pzz44IONPpzS89hjj4WLLroo3HLLLWFWZvz48eG2224LZ599dnj11VdD2fjqq6/iPT7rrLPCkCFD6rrt559/Plx22WXh4osvrut2RURECiNunnnmmbDWWmvV1OoJhvpss80W26677tqu7yIiWjvOzTbbrN3HM3jw4LDzzjuH5ZZbLiy66KLxuNZYY40wdOjQmr4/ceLEsOOOO8bvsa16MmrUqHhMc8wxRyga999/fzznAw88MBSJt99+O/aFBx54oG7bPOyww8K2224bGsWgQYPCP/zDP4Qtt9xyus832WSTcPLJJ7drW99//328PoilevPKK6/EbePA6ChRffrpp8d+d9VVV4WyMWnSpHDcccfF87v11lvruu0PP/ww/O///m9YaKGF6rbNPfbYI+y33351256IiMwadJi4IWrCJLr55puHp556KgqNJDouueSSaKD88Y9/jD/Xm9/97nczJW6OOOKIacdYre2yyy7t2h7n/Y//+I+hZ8+e04k+tvXII4/UvJ3bb789fqcjvMkHHHBAvF7tBePv6aefrssxnHPOOVWF27/8y7+E/fffPxSJF154Id6LK664om7bXG+99cKf/vSn0EgWWWSROFYrr/8222zTru1MmDAhXp8ePXpM9zmi4a233vpVx/jEE0/Ebd98883h1/Ltt9+Gk046KXz++efTff7++++XVtwA46wjxA0gjmdG3BDtGThw4AyfL7744mH55Zev09GJiMisQoeJm3vuuSdOoh999FH8+cQTT5wmEjAQ4eqrr+4QcfP73/9+psTNnnvuGf7whz/EY8XwSW3rrbeO28Nz3B4P9pxzzhk22GCDGX539NFHhxdffLHd17IjxM3BBx88U+IGYUrq36/l559/Dn/7t38brrvuuhl+9+///u+FEzdlZYkllphB3NSLJHjuuOOOUBSIVnFMb7755nSf87wqs7ghHa2jxA3PyZkRNzx/evfuXffjERGRWZMOEzdffvlleO6556b9XE3cfPPNNzG6kc0JJx1p9913j+kn22+/fTjjjDPCDz/8MIOx371795gmltLF/vrXv077/X/9139NJ26IlmTFCjn11eAY2X81j+TKK6/crvO//vrr4zH07du3pr9nPc0111wTjY7K873vvvtaFDekSWEY3HTTTdM84x988EG8rpx3YsSIEfGz7PUGPOx46KulsLDehevKd7MgzDge0kbSNr/44otpv//pp5/imhmiG/SD1mCNA9s66qijpm2LfgH/+Z//GSNL8NJLL4ULL7ywxXVH48aN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Eie0rbfe2pd4Sovi5owzzgjLLbdc2HPPPcNBBx2UW8MB5Es8ZVbkiy++CPfee2+48MILc2/YQ6+88kqYMmVKoy+DNADFTUn46aefwrfffhu++eab3NvEiRMbffpSEB5++OGwwQYbxHTFbbbZJpeGqGF/PXr0CKNHj270JZACwrPxkUceCccee2w4+uijc28DBw4M3333XaMvg0iuTJo0KYwdOzY+l/NuY8aMcczNwihuRKRujBgxIgqcvBuG64svvqjQlqpMnjw5jBs3Lnz00UcNaRMmTIjHICIiHY/ips4QyXj55ZfD/fffn3t77rnnwqhRo+p9SiIiItLEmR2IbGyEZ599Nvc2bNiwXB1POBMGDx7ckHOlETWSxqK4qTOffPJJOP300+MiujzzunfYYYfQs2fPmP4gMitBTjUpP6yraERj3+Z1SyVTp06NBt2HH34Yjbs8W6poOXTo0Nz3/dVXX9kZCgZRy2uuuSam73bp0iW3lGHaZpttFnr37p3rekj6fvfu3cMWW2yR67my1nTjjTcOTzzxRG7nKtVR3NSZ9957L5Zk3mmnncLNN9+cW9tuu+3iwCJFR2RW4ocffojR0uuuuy5cffXVubdBgwbFNR0ilesNhgwZEnbddde4LixPI2vNNdcMq6++eth0001zXfvWuXPn0KdPHztCARf243Rddtllw2677RYOOOCA3Noqq6wSK6p+8MEHuZ0v8wH2UKdOncJ+++2X27l269YtLLbYYuHOO+/M7VylOoqbDhI3PEjy5MQTT1TcyCwJnmIqYc0777xhxRVXjCVA82oLLLBAOO2006zSJjPw888/hxdeeCEalBtuuGGu4oa2zjrrhI022ii3/VGxcIkllghnnXWWvaGA4ob7su2224aRI0fmum+qWTZC3OBUyLsUNFVrGeuKm8ajuKkzihuRxokbxl+ekH6quJG2xE2/fv1i1ai8GinKGJRPPfVUbvukoMfOO++suCkgipt8UNwUB8VNnVHciOSL4kaKLm5IXcyTY445Jhx33HHR2MoL1vfsscceipsCorjJB8VNcVDc1BnFjUi+KG6kiChupCgobvJBcVMcFDd1RnEjki+KGykiihspCoqbfFDcFAfFTZ1R3Ijki+JGiojiRoqC4iYfFDfFQXFTZxQ3IvmiuJEioriRoqC4yQfFTXFQ3NQZxY1IvihupIgobqQoKG7yQXFTHBQ3dUZxI5IvihspIoobKQqKm3xQ3BQHxU2dUdyI5IviRoqI4kaKguImHxQ3xUFxU2cUNyL5oriRIqK4kaKguMkHxU1xUNzUGcWNSL4obqSIKG6kKChu8kFxUxwUN3VGcSOSL4obKSKKGykKipt8UNwUB8VNnVHciOSL4kaKiOJGioLiJh8UN8VBcVNnFDci+aK4kSKiuJGioLjJB8VNcVDc1BnFjUi+KG6kiChupCg0s7j57rvv4lhqDy+//HLYddddwyWXXNLu7/4aFDfFQXFTwdixY8PTTz8drrrqqnDSSSeFm2++Obzyyivhm2++KZW4+fHHH8P7778fbr311nDxxRfHds8994RPPvkkTJo0qcOPV6ReKG6kI5k4cWL4+uuvY8PQqhXFjRSFZhQ3U6dODZ9++mm0ad5+++3w/fff1/xdxY0objK8++674cwzzwxbbLFFWGeddcI222wTNthgg7D11luHu+++OwqfMoibL7/8Mtx7771h9913D+uuu25YddVVY+NcDz300PDqq6/mcswiTGAYjYybN954I7z++uvhrbfeihPwTz/9VNMFUtxIR0C/xNnz1FNPhTvuuCO2Rx99NIwYMSI6h9pCcSNFodnEzZQpU8L48ePj95Zaaqlw7LHHhqFDh9b8fcWNKG5+4YcffohRGox9HgBXX3116Nu3bxQNSy65ZOjRo0cYMmRIKcTNxx9/HC666KLQtWvXcNppp4Urrrgi/PWvf43iZumllw5XXnllfLCIdCSTJ08OY8aMiRHDffbZJ/bHzp07h+233z6cffbZ4Z133qlpO4obqTcYV9dff33YaKONwoILLhjmn3/+MN9888X/b7755jH9hP7bGoobKQrNJm6wP5gDGG9rrLFGePzxx2t2doHiRhQ3v4CRhSBZaaWVwvnnnz/Nq4w3mcG18847h5deeqkU4mbcuHHhxRdfDI888kh86AGeyOOPPz6Km1NPPTV6J0U6EiKhTGALL7xwWGaZZUKXLl2iwF500UXjZ927d2/TgATFjdSbYcOGRWFDRPuwww4LN9xwQ3QAEdVH5Gy88cbh22+/bXUbihspCs0kbkg/Y2nAIossEpZffvnwxBNPxLGGPVYrihuZrahRlM8++yymiVVr/I6/qbe4OeOMM8KKK64Y19rwM54CUhH47KijjqopLNoM4qYa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IoobKQqKm3xQ3BQHxU2dUdyI5IviRoqI4kaKguImHxQ3xUFx00HiZq+99gqPPPJIbm3XXXf1PTcyS6K4kSKiuJGioLjJB8VNcVDc1JmPPvoovlCzS5cuYZ999smt8QLP7t27h2eeeabepyRSaBQ3UkQUN1IkcXPGGWeEtddeO1x00UWhT58+ubUtttiiIS/x5IWlOJl5MXRe58rL21dccUXfc1MAFDd15uuvv45vsb7llltyb0888UQYMWJEvU9JpGnEzdVXXx0efvjh3BovbDvttNMcd9KquDn55JPDtddem1vDqNthhx3CKaeckts+GYPrr79+OOuss+wNBWPcuHHhuuuuC9ttt13Yb7/9wkEHHZRb23777cOFF14YRo4cmdv5vvPOO+Hwww8PO++8c67nStYOju3+/fvndq5SHcWNiDQ148ePD5dddllYa621YhSzR48eubWNN944XHzxxWHUqFGNvgxSMCZNmhTeeuutsPvuu4d99903HHzwwbk10pS7du0a9thjj9z2uf/++4du3bqFm266qdGXXir48ccfw9tvvx3uv//+0Ldv39zb4MGDw3fffZfbfRk7dmwYMGBAQ86V9umnn9oHG8xsRZkEbM17DaZMmdLoLiSzMD/88ENMQ8Azec011+TeBg0aFL799ttGXwYpGDwXMbL69esXHnrooVwbY4F0nLvvvjv3fbPuVEQkzOri5g9/+EOp2oILLhgWWGCBhh9HHm3ppZcO559/fqO7kIiISFPy+eefl7ax3mfMmDG57pP9sd9GnO/333+vw7cAFELckCffUe3SSy+NrSP3UdmuvPLK2PLcJ43UnEsuuSTXfd56660x5Cwtw8Nu+PDhYejQoaVv7777bsx3bsS+8Rg3Yr+ss5OZg0XGZW8ff/xx+PDDD0u/Txrr31hrJO3jt7/9bWnbnHPOGX7/+9/nus855pgjzDXXXA05X9YXIXKksRRC3BC676j25ZdfxtaR+yjCPtN+8VbkuU/WO0ycOLHRXajQvPHGG2GnnXYKG2ywQa5to402igve89wn1XhWX3313M+Vtskmm4ROnTrlvl9KscvM8Zvf/Kb0DSNr9tlnz3Wff/zjH8Pvfve73M/1sMMOi6JK2kdHFxtiHRTOyJtvvjn3Qkepklie++R8b7zxxoYUdsLhRaq0NJZCiBuRspcH7927dywRnmc75phjwrHHHpvrPo8++uhYpSbvc6UdddRR4YQTTsh9v6+++mqju1jT0rNnz1waRjeL+ilJm9c+UzvkkENy3++hhx4ax2He58piapxe0j5wEnZ0S87IvBuV2mh577dR50vxhqlTpzoEGoziRqSDoejChAkTGvKgnVUmsrTvRuz3p59+cgzNJKNHj86lUc2OUrR57S/bPvvss7j/PPfJ/vLeJ43n3OTJkx0PItJQFDciIiIiIlIKFDciIiIiIlIKFDciIiIiIlIKFDciIiIiIlIKFDciIiIiIlIKFDciIiIiIlIKFDciIiIiIlIKFDciIiIiIlIKFDciIiIiIlIKFDciIiIiIlIKFDdt8P3334cff/wxTJkyJZ87EkL44osvwscffxwmTJjQ4ftl++PGjQsjR44Mw4YNCyNGjAgTJ07s0H2KiIhIcfnhhx/C+++/H5555pnw6KOPxta/f/8wfPjwMGnSpA7d99SpU6Pd9dZbb4X33nsvfPfddyEPRo8eHV5++eXQr1+/eL5PPfVUvAbSfChuWhhYDGwG1d133x2efPLJMHbs2A6/GQgNBM31118fevXqFQYNGtRhQoOHEyLqhRdeCNdee20499xzw7HHHhvOOeec0Ldv3/Dhhx+Gn3/+uUP2LcWGvvHggw+G3r17hwEDBoTx48d3yH7oX0wcffr0Cdddd90M7ZZbbglPP/10+Prrr+OYrDdsl4mM/VxyySXhoosuCnfccUcU+B09eYuIFNmpi91z4oknhm7duoXOnTuHzTffPGy66abh5JNPDkOGDIk2UkfB3ID91bNnz3D++edHe6SjQbRdccUVYa+99gpdunQJW221VejatWs46aSTwiuvvKI9FJqL/weNVKHKs1DrYQAAAABJRU5ErkJggg==" alt="A box containing digits [3, 5, 2, 4, 1, 0] and a cartoon fox character with a thought bubble." style="max-width:320px;max-height:300px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div><div class="q-card" id="q15-card">
+        <p class="q-text"><strong>a)</strong> Make two 3-digit numbers from the numbers below [3, 5, 2, 4, 1, 0]. Use each number once. What are the two 3-digit numbers that give the greatest answer when you subtract them? Also, consider the fox's question: 'Which two digits can you subtract to get the greatest hundred?'</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q15-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q15')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q15')">Hint</button>
+          </div>
+        </div>
+        <div id="q15-hint" class="hint-box" style="display:none">To maximize a subtraction result (A - B), make A as large as possible and B as small as possible using the given digits. For the fox's question, consider the largest possible difference between any two digits.</div>
+        <div id="q15-result" class="result-box"></div>
+        <div id="q15-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>1.  To get the greatest answer from subtracting two 3-digit numbers (A - B), 'A' must be the largest possible 3-digit number, and 'B' must be the smallest possible 3-digit number, using each digit from [3, 5, 2, 4, 1, 0] exactly once.
+    Largest 3-digit number (A) from {5,4,3,2,1,0}: Arrange the largest three digits in descending order: 543.
+    Remaining digits: {2,1,0}.
+    Smallest 3-digit number (B) from {2,1,0}: Arrange the smallest available digits (ensuring the hundreds digit is not zero) in ascending order: 102.
+    Subtract: 543 - 102 = 441.
+    The greatest answer is 441.
+
+2.  For the fox's question, 'Which two digits can you subtract to get the greatest hundred?': This is ambiguous. If it refers to the largest possible difference between any two single digits from the given set, it would be 5 - 0 = 5. If it refers to achieving the largest possible hundreds digit in the result of a subtraction, like in the previous problem where the hundreds digits 5 and 1 resulted in 4 in the hundreds place of the answer (441). Given the context of elementary math, 5-0=5 is the most straightforward interpretation for 'greatest difference'.
+          
+        </div>
+        <button id="q15-show" class="btn-show" style="display:none" onclick="toggleSolution('q15')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #EFD1D4; background:rgba(239,209,212,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(239,209,212,0.15);color:#EFD1D4;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">ENRICHMENT</span>
+      <h2 style="font-size:18px;color:#EFD1D4;margin:6px 0 18px;font-weight:700;">Task 7 &middot; Calculate the missing digits in these calculations.</h2>
+      <table class="ws-table" style="width:100%;border-collapse:collapse;border:1px solid rgba(195,220,216,0.2);border-radius:8px;overflow:hidden;"><tr><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q16-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">a)</strong> Find the missing digits:
+
+  9 [  ] 6
+- 8 [  ] 3
+----------
+  1   6  2
+
+(Note: The printed result in the worksheet (162) is inconsistent with standard subtraction of the fixed units digits (6-3=3). The solution assumes the result's units digit should be 3 for consistency.)</span><input type="text" id="q16-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q16')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q16')">Hint</button></div><div id="q16-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Work column by column. The units column (6-3) suggests a different units digit in the result than printed. If 6-3=3, then work upwards from there.</div><div id="q16-result" class="result-box" style="margin:0 14px;"></div><div id="q16-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> Let the missing digits be A and B.
+
+  9 A 6
+- 8 B 3
+----------
+  1 6 2 (Worksheet result)
+
+1.  <strong>Units place:</strong> 6 - 3 = 3. The worksheet shows 2 in the units place of the result. To proceed with a solvable problem using standard subtraction, we assume the result's units digit should be 3.
+    So, the correct result should be 163.
+2.  <strong>Hundreds place:</strong> 9 - 8 = 1. This matches the result's hundreds digit.
+3.  <strong>Tens place:</strong> A - B = 6.
+    We need to find two digits A and B (0-9) such that their difference is 6. Multiple solutions exist (e.g., 6-0, 7-1, 8-2, 9-3).
+    To provide a unique and common answer for such problems, we often pick the smallest possible values: A=6, B=0.
+
+Therefore, the missing digits are <strong>6</strong> and <strong>0</strong>. The calculation becomes 966 - 803 = 163.</div><button id="q16-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q16')">Show Answer</button></td><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q18-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">b)</strong> Find the missing digits:
+
+  [  ] 7 5
+-   [  ] 3
+----------
+  6   7  0
+
+(Note: The printed result in the worksheet (670) is inconsistent with standard subtraction of the fixed units digits (5-3=2). The solution assumes the result's units digit should be 2 for consistency.)</span><input type="text" id="q18-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q18')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q18')">Hint</button></div><div id="q18-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Work column by column. The units column (5-3) suggests a different units digit in the result than printed. If 5-3=2, then work upwards from there.</div><div id="q18-result" class="result-box" style="margin:0 14px;"></div><div id="q18-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> Let the missing digits be A and B.
+
+  A 7 5
+-   B 3
+----------
+  6 7 0 (Worksheet result)
+
+1.  <strong>Units place:</strong> 5 - 3 = 2. The worksheet shows 0 in the units place of the result. To proceed with a solvable problem using standard subtraction, we assume the result's units digit should be 2.
+    So, the correct result should be 672.
+2.  <strong>Tens place:</strong> 7 - B = 7. This implies B = 0.
+3.  <strong>Hundreds place:</strong> A - 0 = 6 (assuming the tens digit B is part of a 2-digit number being subtracted, so no hundreds digit from B). This implies A = 6.
+
+Therefore, the missing digits are <strong>6</strong> and <strong>0</strong>. The calculation becomes 675 - 03 = 672.</div><button id="q18-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q18')">Show Answer</button></td></tr><tr><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q17-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">c)</strong> Find the missing digits:
+
+  [  ] 8 9
+-   [  ] 2
+----------
+  2   6  4
+
+(Note: The printed result in the worksheet (264) is inconsistent with standard subtraction of the fixed units digits (9-2=7). The solution assumes the result's units digit should be 7 for consistency.)</span><input type="text" id="q17-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q17')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q17')">Hint</button></div><div id="q17-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Work column by column. The units column (9-2) suggests a different units digit in the result than printed. If 9-2=7, then work upwards from there.</div><div id="q17-result" class="result-box" style="margin:0 14px;"></div><div id="q17-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> Let the missing digits be A and B.
+
+  A 8 9
+-   B 2
+----------
+  2 6 4 (Worksheet result)
+
+1.  <strong>Units place:</strong> 9 - 2 = 7. The worksheet shows 4 in the units place of the result. To proceed with a solvable problem using standard subtraction, we assume the result's units digit should be 7.
+    So, the correct result should be 267.
+2.  <strong>Tens place:</strong> 8 - B = 6. This implies B = 2.
+3.  <strong>Hundreds place:</strong> A - 0 = 2 (assuming B2 is a 2-digit number, so no hundreds digit from it). This implies A = 2.
+
+Therefore, the missing digits are <strong>2</strong> and <strong>2</strong>. The calculation becomes 289 - 22 = 267.</div><button id="q17-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q17')">Show Answer</button></td><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q19-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">d)</strong> Find the missing digits:
+
+  6 [  ] 9
+-     [  ]
+----------
+  2   4  0
+
+(Note: This problem is fundamentally inconsistent as a standard subtraction problem, as the hundreds digit '6' in the top number minus an implied '0' hundreds digit from a single-digit subtrahend cannot result in '2'. The solution provides values for the blanks that would make the units and tens columns consistent with the result, while acknowledging the hundreds column inconsistency.)</span><input type="text" id="q19-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q19')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q19')">Hint</button></div><div id="q19-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">Work from the units column first to find one missing digit. Then move to the tens column. Be aware of potential inconsistencies in the hundreds column based on the visual layout.</div><div id="q19-result" class="result-box" style="margin:0 14px;"></div><div id="q19-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> Let the missing digits be A and B.
+
+  6 A 9
+-   B
+----------
+  2 4 0 (Worksheet result)
+
+1.  <strong>Units place:</strong> 9 - B = 0. This implies B = 9.
+2.  <strong>Tens place:</strong> A - 0 = 4 (assuming a single-digit subtrahend 'B' contributes 0 to the tens place). This implies A = 4.
+3.  <strong>Hundreds place:</strong> 6 - 0 = 2 (assuming a single-digit subtrahend 'B' contributes 0 to the hundreds place). This simplifies to 6 = 2, which is a contradiction. The problem as written with '6' in the hundreds place of the top number and '2' in the hundreds place of the result is inconsistent for a single-digit subtrahend. If we were to calculate 649 - 9, the result would be 640, not 240.
+
+Therefore, if we focus on making the units and tens places consistent, the missing digits are <strong>4</strong> (for A) and <strong>9</strong> (for B), but the hundreds place of the problem is inconsistent with the provided result.</div><button id="q19-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q19')">Show Answer</button></td></tr></table></div>
+    <div class="task-block" style="border-left:5px solid #EFD1D4; background:rgba(239,209,212,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(239,209,212,0.15);color:#EFD1D4;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">ENRICHMENT</span>
+      <h2 style="font-size:18px;color:#EFD1D4;margin:6px 0 18px;font-weight:700;">Task 8 &middot; Can you create a secret code using 3-digit addition and subtraction problems with regrouping for your friend to solve?</h2>
+      <div class="q-card" id="q20-card">
+        <p class="q-text"><strong>a)</strong> Can you create a secret code using 3-digit addition and subtraction problems with regrouping for your friend to solve?</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q20-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q20')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q20')">Hint</button>
+          </div>
+        </div>
+        <div id="q20-hint" class="hint-box" style="display:none">Choose a short word or phrase for your secret message. Assign a 3-digit number (that will be the answer to a problem) to each letter. Then, create a 3-digit addition or subtraction problem with regrouping for each of those numbers.</div>
+        <div id="q20-result" class="result-box"></div>
+        <div id="q20-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Student's own creative secret code and problems. Example:
+<strong>Secret Word:</strong> FUN
+
+<strong>Code:</strong>
+1. 789 - S
+2. 543 - U
+3. 210 - N
+
+<strong>Problems:</strong>
+1. 432 + 357 = ? (<br><strong>Answer:</strong> 789)
+2. 900 - 357 = ? (<br><strong>Answer:</strong> 543)
+3. 105 + 105 = ? (<br><strong>Answer:</strong> 210)
+
+This would spell out 'SUN' if the first problem was 432+357=789 (S). If the word is FUN, then I need different answers.
+
+Let's try again for FUN:
+<strong>Code:</strong>
+678 = F
+234 = U
+901 = N
+
+<strong>Problems:</strong>
+1. 345 + 333 = ? (<br><strong>Answer:</strong> 678)
+2. 500 - 266 = ? (<br><strong>Answer:</strong> 234)
+3. 450 + 451 = ? (<br><strong>Answer:</strong> 901)
+
+Friend's solution would be F U N.
+          
+        </div>
+        <button id="q20-show" class="btn-show" style="display:none" onclick="toggleSolution('q20')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">REFLECTION</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Reflection Time:</h2>
+      <div class="q-card" id="q21-card">
+        <p class="q-text"><strong>a)</strong> Which ATL skill did you practice or strengthen while completing these questions? Explain how.</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q21-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q21')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q21')">Hint</button>
+          </div>
+        </div>
+        <div id="q21-hint" class="hint-box" style="display:none">Think about how you approached the problems. Did you organize information, think critically, communicate ideas, or manage your time?</div>
+        <div id="q21-result" class="result-box"></div>
+        <div id="q21-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Student's own reflection. Example: 'I strengthened my <strong>Self-management skills</strong>, specifically <strong>organization</strong>. I broke down the multi-step problems into smaller parts, and I double-checked my work to ensure accuracy for the secret message. This helped me to complete the tasks efficiently and correctly.'
+          
+        </div>
+        <button id="q21-show" class="btn-show" style="display:none" onclick="toggleSolution('q21')">Show Answer</button>
+      </div><div class="q-card" id="q22-card">
+        <p class="q-text"><strong>b)</strong> I practiced/developed ______ skill by ______.</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q22-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q22')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q22')">Hint</button>
+          </div>
+        </div>
+        <div id="q22-hint" class="hint-box" style="display:none">Reflect on a specific skill from the ATL categories (Communication, Social, Self-management, Research, Thinking) and a concrete example from the worksheet.</div>
+        <div id="q22-result" class="result-box"></div>
+        <div id="q22-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Student's own reflection. Example: 'I practiced/developed <strong>thinking</strong> skill by <strong>analyzing the numbers and operations required for each problem, especially for the multi-step word problems where I had to decide the order of operations.</strong>'
+          
+        </div>
+        <button id="q22-show" class="btn-show" style="display:none" onclick="toggleSolution('q22')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">FEEDBACK</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Feedback to feedforward</h2>
+      <div class="q-card" id="q23-card">
+        <p class="q-text"><strong>a)</strong> Feedback to feedforward</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q23-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q23')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q23')">Hint</button>
+          </div>
+        </div>
+        <div id="q23-hint" class="hint-box" style="display:none">Think about what worked well, what was challenging, and what you would like to do differently or learn next time.</div>
+        <div id="q23-result" class="result-box"></div>
+        <div id="q23-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>This section is for teacher/parent feedback and does not require a pre-filled answer or solution from the AI.
+          
+        </div>
+        <button id="q23-show" class="btn-show" style="display:none" onclick="toggleSolution('q23')">Show Answer</button>
+      </div></div>
+  </div>
+
+  <script>
+    let sc = 0;
+    const tot = 23;
+    const done = new Set();
+    const answers = {"q1":{"answer":745,"isNum":true,"range":null},"q2":{"answer":575,"isNum":true,"range":null},"q3":{"answer":1422,"isNum":true,"range":null},"q4":{"answer":622,"isNum":true,"range":null},"q5":{"answer":1219,"isNum":true,"range":null},"q6":{"answer":427,"isNum":true,"range":null},"q7":{"answer":354,"isNum":true,"range":null},"q8":{"answer":435,"isNum":true,"range":null},"q9":{"answer":333,"isNum":true,"range":null},"q10":{"answer":283,"isNum":true,"range":null},"q11":{"answer":824,"isNum":true,"range":null},"q12":{"answer":289,"isNum":true,"range":null},"q13":{"answer":"The mistake is in the subtraction calculation. The student did not use regrouping correctly.\n\nCorrect Working:\n\n  ¹9¹3\n  203\n-  57\n-----\n  146\n\n\nExplanation of the Mistake:\n1.  **Ones Place:** The student incorrectly subtracted 7 from 3 to get 3. The correct step is to regroup from the tens place. Since the tens place is 0, regroup from the hundreds place. The 2 in the hundreds place becomes 1, the 0 in the tens place becomes 10 (then 9 after lending to ones), and the 3 in the ones place becomes 13. So, 13 - 7 = 6.\n2.  **Tens Place:** The student incorrectly subtracted 5 from 0 to get 7. After regrouping, the tens digit was 9. So, 9 - 5 = 4.\n3.  **Hundreds Place:** The student incorrectly subtracted 0 from 2 to get 3. After regrouping, the hundreds digit was 1. So, 1 - 0 = 1.\n\nThe student likely subtracted the smaller digit from the larger digit in each column without proper regrouping.","isNum":false,"range":null},"q14":{"answer":"Word Problem: 'A baker made 458 cookies on Monday. On Tuesday, she made 375 more cookies. How many cookies did she make in total over the two days?'\n\nSolution:\nTotal cookies = Cookies on Monday + Cookies on Tuesday\nTotal cookies = 458 + 375\n\n   458\n+  375\n-------\n   833\n\nShe made 833 cookies in total.","isNum":false,"range":null},"q15":{"answer":"To get the greatest answer when subtracting two 3-digit numbers (A - B), we need to make A as large as possible and B as small as possible using the given digits [3, 5, 2, 4, 1, 0] exactly once.\n\n1.  **Form the largest 3-digit number (A):** Use the largest available digits for the hundreds, tens, and ones places in descending order: 5, 4, 3. So, A = 543.\n2.  **Form the smallest 3-digit number (B) from the remaining digits:** The remaining digits are [2, 1, 0]. Use the smallest non-zero digit for the hundreds place, then the next smallest for the tens, then the smallest for the ones: 1, 0, 2. So, B = 102.\n3.  **Subtract the numbers:** 543 - 102 = 441.\n\nTherefore, the two 3-digit numbers are **543** and **102**, and their greatest difference is **441**.\n\nRegarding the fox's question, 'Which two digits can you subtract to get the greatest hundred?':\nIf 'greatest hundred' refers to the largest possible difference between any two single digits from the given set [3, 5, 2, 4, 1, 0], then the largest digit is 5 and the smallest is 0. So, 5 - 0 = 5. This would mean 5 'tens' or 'units', not 'hundreds' directly. Given it's PYP 2, it most likely implies the digits that create the largest difference in the hundreds column for subtraction. In 543 - 102 = 441, the hundreds digits are 5 and 1, and their difference is 4. If the question implies the single largest digit difference possible, it's 5 - 0 = 5.","isNum":false,"range":null},"q16":{"answer":"6, 0","isNum":false,"range":null},"q17":{"answer":"2, 2","isNum":false,"range":null},"q18":{"answer":"6, 0","isNum":false,"range":null},"q19":{"answer":"4, 9","isNum":false,"range":null},"q20":{"answer":"Yes, I can! Here's an example:\n\n**Code:**\n521 = H\n345 = E\n600 = L\n150 = O\n\n**Problems:**\n1.  256 + 265 = ?\n2.  700 - 100 = ?\n3.  423 - 78 = ?\n4.  876 - 355 = ?\n\n**Solution (for my friend to solve):**\n1.  256 + 265 = 521 (H)\n2.  700 - 100 = 600 (L)\n3.  423 - 78 = 345 (E)\n4.  876 - 355 = 521 (H)\n\n**Secret Message: H E L H** (Note: A good secret message would have unique answers for unique letters, but for a short example, repeated letters are fine.)","isNum":false,"range":null},"q21":{"answer":"I practiced my **Thinking Skills**, specifically my **calculation and problem-solving skills**. While solving the addition and subtraction problems, I had to carefully perform calculations, especially with regrouping, and analyze word problems to choose the correct operation. For the missing digit problems, I had to use **critical thinking** to identify patterns and work backward, even when there were inconsistencies in the problems themselves.","isNum":false,"range":null},"q22":{"answer":"I practiced/developed **communication** skill by **explaining the mistake in Task 4, which required me to clearly articulate the mathematical error and the correct procedure in words.**","isNum":false,"range":null},"q23":{"answer":"The student demonstrated a good understanding of 3-digit addition and subtraction with regrouping. For future tasks, encourage the student to articulate their problem-solving steps more explicitly in word problems. The exercises involving identifying mistakes and creating problems were well-attempted, showing good conceptual grasp. It would be beneficial to provide similar practice with consistently solvable missing digit problems.","isNum":false,"range":null}};
+    const studentAnswers = {}; // { qId: { answer, correct, timeSpent } }
+    const questionStartTimes = {}; // { qId: timestamp }
+
+    // Track when each question becomes visible / gets focus
+    document.addEventListener('focusin', function(e) {
+      const inp = e.target.closest('input');
+      if (inp && inp.id && inp.id.endsWith('-input')) {
+        const qId = inp.id.replace('-input', '');
+        if (!questionStartTimes[qId]) questionStartTimes[qId] = Date.now();
+      }
+    });
+
+    function up() {
+      document.getElementById('score-num').textContent = sc + '/' + tot;
+      const pct = Math.round((done.size / tot) * 100);
+      document.getElementById('pf').style.width = pct + '%';
+      document.getElementById('pp').textContent = pct + '% complete';
+      // Build per-question answer list
+      const answersArr = Object.entries(studentAnswers).map(([qId, data]) => ({
+        qId, answer: data.answer, correct: data.correct,
+        timeSpent: data.timeSpent || 0,
+        question: data.question || ''
+      }));
+      // Report score + answers to parent window (for student assignment iframe)
+      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot, answers: answersArr }, '*'); } catch(e) {}
+    }
+
+    function checkAnswer(id) {
+      const a = answers[id];
+      if (!a) return;
+      const inp = document.getElementById(id + '-input');
+      const val = inp.value.trim();
+      if (!val) { inp.style.borderColor = '#C5BD96'; return; }
+      const r = document.getElementById(id + '-result');
+      let ok = false;
+      if (a.isNum) {
+        const v = parseFloat(val);
+        if (isNaN(v)) { inp.style.borderColor = '#C5BD96'; return; }
+        ok = a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01;
+      } else {
+        ok = val.replace(/\s+/g,'').toLowerCase() === String(a.answer).replace(/\s+/g,'').toLowerCase();
+      }
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      const qEl = document.getElementById(id + '-card');
+      const qText = qEl ? qEl.querySelector('.q-label, strong')?.textContent || '' : '';
+      studentAnswers[id] = { answer: val, correct: ok, timeSpent: elapsed, question: qText };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        inp.style.borderColor = '#93B0AC';
+        inp.style.background = 'rgba(147,176,172,0.1)';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        inp.style.borderColor = '#EFD1D4';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkMCQ(id) {
+      const a = answers[id];
+      if (!a) return;
+      const sel = document.querySelector('input[name="' + id + '"]:checked');
+      if (!sel) return;
+      const r = document.getElementById(id + '-result');
+      const ok = sel.value === a.correctLetter;
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: sel.value, correct: ok, timeSpent: elapsed, question: '' };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkVenn(id) {
+      const a = answers[id];
+      if (!a || !a.venn) return;
+      function normItems(s) {
+        return String(s || '').replace(/\band\b/gi, ',').split(/[,;\n]/)
+          .map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean).sort();
+      }
+      function setEq(x, y) {
+        if (x.length !== y.length) return false;
+        for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+        return true;
+      }
+      var regions = ['left', 'center', 'right'];
+      var allOk = true, anyFilled = false, snapshot = [];
+      regions.forEach(function(rg) {
+        var inp = document.getElementById(id + '-' + rg);
+        if (!inp) return;
+        var val = normItems(inp.value);
+        if (val.length) anyFilled = true;
+        var correct = normItems((a.answers[rg] || []).join(','));
+        var ok = setEq(val, correct);
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (!ok) allOk = false;
+        snapshot.push(rg + ': ' + inp.value.trim());
+      });
+      if (!anyFilled) return;
+      var r = document.getElementById(id + '-result');
+      var elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: snapshot.join(' | '), correct: allOk, timeSpent: elapsed, question: 'Venn diagram' };
+      if (allOk) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct! Every region is right.</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite — green boxes are right, pink need another look.</span>';
+        var sh = document.getElementById(id + '-show');
+        if (sh) sh.style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkTable(ids) {
+      var right = 0, filled = 0;
+      ids.forEach(function(id) {
+        var a = answers[id];
+        var inp = document.getElementById(id + '-input');
+        if (!a || !inp) return;
+        var val = inp.value.trim();
+        if (!val) return;
+        filled++;
+        var ok;
+        if (a.isNum) {
+          var v = parseFloat(val);
+          ok = !isNaN(v) && (a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01);
+        } else {
+          ok = val.replace(/\s+/g, '').toLowerCase() === String(a.answer).replace(/\s+/g, '').toLowerCase();
+        }
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (ok && !done.has(id)) { sc++; done.add(id); }
+        studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'table cell' };
+        if (ok) right++;
+      });
+      var rEl = document.getElementById(ids[0] + '-tableresult');
+      if (rEl) {
+        if (!filled) rEl.innerHTML = '<span style="color:#C5BD96;">Fill in the cells, then check.</span>';
+        else if (right === ids.length) rEl.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; All correct!</span>';
+        else rEl.innerHTML = '<span style="color:#EFD1D4;font-weight:700">' + right + '/' + ids.length + ' correct — green cells are right.</span>';
+      }
+      up();
+    }
+
+    function toggleHint(id) {
+      const el = document.getElementById(id + '-hint');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleSolution(id) {
+      const el = document.getElementById(id + '-solution');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+    // ── Indic language input support ──
+    // Students type English phonetically (e.g. "muggulu") → auto-converts to Telugu/Hindi
+    // Uses Google Input Tools REST API for transliteration with dropdown suggestions
+    
+    // ── French accent palette ──
+    // Floating toolbar with accented characters students can click to insert
+    
+  </script>
+</body>
+</html>
