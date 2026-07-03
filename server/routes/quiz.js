@@ -1,5 +1,5 @@
 /**
- * quiz.js — PDF-to-Interactive-Quiz generation via Gemini Vision (primary) + Pixtral (fallback)
+ * quiz.js — PDF-to-Interactive-Quiz generation via Gemini Vision (primary) + Qwen 2.5-VL-72B / Pixtral (fallbacks)
  *
  * POST /quiz/generate       — Upload PDF, send to Gemini Vision directly
  * POST /quiz/generate-image — Upload worksheet image, send to Gemini Vision
@@ -19,7 +19,7 @@ const { v4: uuidv4 } = require('uuid');
 const { client, COLLECTION } = require('../services/qdrant');
 const { embed } = require('../services/embeddings');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { extractDiagrams, extractDiagramsFromImage, matchDiagramsToQuestions, ocrFullPDF, ocrRegion } = require('../services/diagram-extractor');
+const { extractDiagrams, extractDiagramsFromImage, matchDiagramsToQuestions, ocrFullPDF, ocrRegion, analyzeRegionContent } = require('../services/diagram-extractor');
 
 // ── Python Layout Detection Microservice (ML-based, replaces heuristic OpenCV) ──
 const LAYOUT_SERVICE_URL = process.env.LAYOUT_SERVICE_URL || 'http://localhost:5050';
@@ -36,7 +36,12 @@ async function callLayoutService(fileBuffer, quizId, { filename = 'file.pdf', mi
 
     const url = `${LAYOUT_SERVICE_URL}/crop?quiz_id=${quizId}&types=${types}&conf=${conf}&padding=${padding}`;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000); // 120s timeout (model cold-load can take 30-60s)
+    // layout_service.py now eagerly warms the model at startup and serializes all
+    // inference calls (see _inference_lock there), so a request should normally finish in
+    // a few seconds — the old failure mode (many minutes) was cold-load + concurrent
+    // requests fighting over CPU, both fixed on the Python side now. 45s leaves headroom
+    // for a large multi-page PDF while still failing fast if the service is genuinely down.
+    const timeout = setTimeout(() => controller.abort(), 45000);
     const res = await fetch(url, { method: 'POST', body: form, signal: controller.signal });
     clearTimeout(timeout);
 
@@ -106,11 +111,12 @@ async function extractDiagramsWithoutML(fileBuffer, quizId, { filename = 'file.p
  * Convert Python layout service result to the same format as diagram-extractor.js
  * so matchDiagramsToQuestions() works unchanged.
  */
-function layoutResultToDiagramFormat(layoutResult) {
+async function layoutResultToDiagramFormat(layoutResult) {
   if (!layoutResult || !layoutResult.pages) return null;
 
   const diagrams = [];
   const fullPageImages = [];
+  const serverRoot = path.resolve(__dirname, '..');
 
   for (const page of layoutResult.pages) {
     fullPageImages.push({ pageNum: page.pageNum, imageUrl: page.fullPageUrl });
@@ -120,13 +126,31 @@ function layoutResultToDiagramFormat(layoutResult) {
       // TABLE crops contain question text/rows — showing them as images
       // duplicates the interactive inputs below. Skip them.
       if (crop.type === 'figure') {
+        // Safety net: the ML model sometimes mislabels a letters/words table as "figure"
+        // (confirmed case — a grid of large Telugu letters classified as figure got
+        // matched to a "match the picture" question instead of the real picture).
+        // Re-check with analyzeRegionContent, whose colored-pixel-fraction + middle-band
+        // grid-ruling checks were validated against 3 runs of real crops from this exact
+        // failure (18/18 correct: all pictures kept, all mislabeled tables excluded).
+        let contentType = 'diagram';
+        try {
+          const cropBuf = fs.readFileSync(path.join(serverRoot, crop.imageUrl));
+          if (await analyzeRegionContent(cropBuf) === 'text') {
+            // Keep the crop but tag it 'text': matchDiagramsToQuestions skips text crops
+            // (so it can't land on a picture question), while verifyDiagramAssignments can
+            // still hand it to a task that genuinely IS about a letters/words table
+            // (e.g. "Write words using the letters from the table").
+            console.log(`[quiz] ML labeled "${crop.filename}" as figure but it reads as a text/letters table — excluding from picture matching`);
+            contentType = 'text';
+          }
+        } catch { /* if the re-check itself fails, trust the ML label */ }
         diagrams.push({
           id: crop.filename,
           pageNum: page.pageNum,
           imageUrl: crop.imageUrl,
           bbox: { x: crop.bbox.x1, y: crop.bbox.y1, w: crop.bbox.width, h: crop.bbox.height },
           area: crop.bbox.width * crop.bbox.height,
-          contentType: 'diagram',
+          contentType,
           confidence: crop.confidence,
         });
       }
@@ -206,6 +230,72 @@ async function extractSubfiguresFromTables(quiz, tableCrops, quizId) {
   }
 }
 
+/**
+ * Detect blank answer regions (boxes, cells, underlines) on a diagram image via the
+ * Python layout service's OpenCV detector. Returns normalized (0..1) coordinates
+ * relative to the supplied image — used to overlay input fields on ANY diagram
+ * (pyramid, clock, number line, labeled figure) without a per-type renderer.
+ */
+async function detectBlanksInImage(fileBuffer, quizId, { filename = 'diagram.png', mime = 'image/png' } = {}) {
+  try {
+    const form = new FormData();
+    form.set('file', new Blob([fileBuffer], { type: mime }), filename);
+    const url = `${LAYOUT_SERVICE_URL}/detect-blanks?quiz_id=${quizId}&debug=0`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    const res = await fetch(url, { method: 'POST', body: form, signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`detect-blanks ${res.status}`);
+    const j = await res.json();
+    const page = (j.pages || [])[0];
+    if (!page) return null;
+    console.log(`[quiz] detect-blanks: ${page.blankCount} blanks found on diagram`);
+    return { blanks: page.blanks || [], width: page.width, height: page.height };
+  } catch (err) {
+    console.log('[quiz] detect-blanks failed:', err.message);
+    return null;
+  }
+}
+
+/**
+ * Crop an image tightly around a set of normalized (0..1) blank regions, with padding
+ * so surrounding diagram lines and already-filled values stay visible. Returns a new
+ * buffer + the blanks re-normalized to the CROPPED image (so overlay % positions stay
+ * correct). This is what keeps the diagram-fill overlay scoped to just its own task
+ * instead of showing the whole worksheet page.
+ */
+async function cropToBlanks(buffer, blanks, srcWidth, srcHeight) {
+  const sharp = require('sharp');
+  if (!blanks.length) return null;
+
+  let minX = 1, minY = 1, maxX = 0, maxY = 0;
+  for (const b of blanks) {
+    minX = Math.min(minX, b.x); minY = Math.min(minY, b.y);
+    maxX = Math.max(maxX, b.x + b.w); maxY = Math.max(maxY, b.y + b.h);
+  }
+  // Generous padding so diagram outlines / already-filled adjacent values stay in frame,
+  // but NOT the whole page (task headings above/below stay excluded).
+  const padX = Math.max(0.03, (maxX - minX) * 0.22);
+  const padY = Math.max(0.03, (maxY - minY) * 0.35);
+  const cx0 = Math.max(0, minX - padX), cy0 = Math.max(0, minY - padY);
+  const cx1 = Math.min(1, maxX + padX), cy1 = Math.min(1, maxY + padY);
+
+  const left = Math.round(cx0 * srcWidth), top = Math.round(cy0 * srcHeight);
+  const width = Math.max(1, Math.round((cx1 - cx0) * srcWidth));
+  const height = Math.max(1, Math.round((cy1 - cy0) * srcHeight));
+
+  const cropped = await sharp(buffer).extract({ left, top, width, height }).png().toBuffer();
+
+  const reNormalized = blanks.map(b => ({
+    ...b,
+    x: ((b.x * srcWidth) - left) / width,
+    y: ((b.y * srcHeight) - top) / height,
+    w: (b.w * srcWidth) / width,
+    h: (b.h * srcHeight) / height,
+  }));
+  return { buffer: cropped, blanks: reNormalized };
+}
+
 // Gemini Vision (primary engine — free, excellent vision)
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
@@ -218,6 +308,11 @@ if (!fs.existsSync(QUIZ_IMG_DIR)) fs.mkdirSync(QUIZ_IMG_DIR, { recursive: true }
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
+
+// Hugging Face router — serves the Qwen vision fallback (first fallback after Gemini)
+const HF_TOKEN = process.env.HF_TOKEN;
+// Qwen3-VL-235B: current best open-source document/OCR vision model (successor to 2.5-VL-72B)
+const QWEN_VISION_MODEL = process.env.QWEN_VISION_MODEL || 'Qwen/Qwen3-VL-235B-A22B-Instruct';
 
 // Groq (third fallback — generous free tier: 30 req/min)
 const Groq = require('groq-sdk');
@@ -317,6 +412,39 @@ async function mistralOCR(pdfBuffer) {
   return res.json();
 }
 
+// Strip markdown fences + defend against LLMs occasionally adding JS-style "// comments"
+// inside JSON (invalid JSON, but common enough from vision models annotating arrays like
+// blankAnswers) — removes // comments only when outside of quoted strings.
+function cleanLLMJson(raw) {
+  let s = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  // Fallback engines (Pixtral/Groq) often wrap the JSON in prose — "Here is the JSON
+  // quiz replica...\n\n{...}" — which fence-stripping alone doesn't remove and which
+  // 500'd whole generations. The quiz payload is always a single object, so slice to
+  // the outermost braces to drop any leading/trailing chatter.
+  const first = s.indexOf('{');
+  const last = s.lastIndexOf('}');
+  if (first !== -1 && last > first) s = s.slice(first, last + 1);
+  s = s.replace(/"answer":\s*(\d+\/\d+)/g, '"answer": "$1"');
+  let out = '', inStr = false, esc = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) {
+      out += c;
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') { inStr = true; out += c; continue; }
+    if (c === '/' && s[i + 1] === '/') {
+      while (i < s.length && s[i] !== '\n') i++;
+      continue;
+    }
+    out += c;
+  }
+  return out;
+}
+
 // ── Save OCR images to disk, return URL map ───────────────────────────────
 function saveOCRImages(ocrResult, quizId) {
   const imageMap = {}; // { "image_id_in_markdown": "/data/images/quiz/xxx.jpg" }
@@ -341,17 +469,104 @@ function saveOCRImages(ocrResult, quizId) {
 
 
 
+/**
+ * For every task with a "diagramFill" instruction, run OpenCV blank-detection on that
+ * task's diagram image and pair each detected blank (reading-order) with Gemini's
+ * blankAnswers (also reading-order). Stores task.diagramFillBlanks for the renderer.
+ * This is the general mechanism that makes ANY diagram (pyramid, clock, number line,
+ * labeled figure) interactive without a bespoke renderer per shape.
+ */
+async function resolveDiagramFills(quiz, quizId) {
+  const serverRoot = path.resolve(__dirname, '..');
+  for (const task of (quiz.tasks || [])) {
+    if (!task.diagramFill || !Array.isArray(task.diagramFill.blankAnswers) || !task.diagramFill.blankAnswers.length) continue;
+
+    // Find the image already assigned to this task's diagram (shared crop, per-question
+    // crop, or the full worksheet page as a last resort).
+    const imgUrl = (task.questions || []).find(q => q.imageUrl)?.imageUrl || task.pageImageUrl;
+    if (!imgUrl) { console.log(`[quiz] diagramFill: no image found for task "${(task.title || '').slice(0, 30)}" — skipping overlay`); continue; }
+
+    let buf;
+    try {
+      if (imgUrl.startsWith('data:')) {
+        buf = Buffer.from(imgUrl.split(',')[1], 'base64');
+      } else {
+        buf = fs.readFileSync(path.join(serverRoot, imgUrl));
+      }
+    } catch (e) { console.log('[quiz] diagramFill: could not read image', e.message); continue; }
+
+    const detected = await detectBlanksInImage(buf, `${quizId}_df${task.title ? task.title.length : 0}`, { filename: 'diagram.png', mime: 'image/png' });
+    if (!detected || !detected.blanks.length) { console.log(`[quiz] diagramFill: no blanks detected for "${(task.title || '').slice(0, 30)}"`); continue; }
+
+    // Crop TIGHTLY to just this diagram (bounding box of its blanks + padding) so the
+    // student sees only this task's picture — not the whole worksheet page, and not
+    // another task's content bleeding in.
+    let finalBuf = buf, finalBlanks = detected.blanks;
+    try {
+      const cropped = await cropToBlanks(buf, detected.blanks, detected.width, detected.height);
+      if (cropped) { finalBuf = cropped.buffer; finalBlanks = cropped.blanks; }
+    } catch (e) { console.log('[quiz] diagramFill: crop failed, using full image:', e.message); }
+
+    const answers = task.diagramFill.blankAnswers;
+    const n = Math.min(finalBlanks.length, answers.length);
+    if (finalBlanks.length !== answers.length) {
+      console.log(`[quiz] diagramFill: blank/answer count mismatch (${finalBlanks.length} boxes vs ${answers.length} answers) — pairing first ${n}`);
+    }
+    task.diagramFillBlanks = finalBlanks.slice(0, n).map((b, i) => ({ ...b, answer: answers[i] }));
+
+    // Save the cropped image and point the renderer at it (instead of the original page/crop)
+    const cropFname = `${quizId}_${(task.title || 'diagram').replace(/[^\w]+/g, '_').slice(0, 30)}_fill.png`;
+    fs.writeFileSync(path.join(QUIZ_IMG_DIR, cropFname), finalBuf);
+    task.diagramFillImageUrl = `/data/images/quiz/${cropFname}`;
+    console.log(`[quiz] diagramFill: "${(task.title || '').slice(0, 30)}" → ${task.diagramFillBlanks.length} interactive blanks placed (cropped image)`);
+  }
+}
+
+// ── Retry wrapper: exponential backoff on Gemini 429 (rate limit) / 503 (overloaded) ──
+async function geminiRetry(fn, { tries = 4, base = 1500 } = {}) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const msg = String((e && e.message) || e);
+      const is429 = /429|too many requests|quota|resource_exhausted|rate.?limit/i.test(msg);
+      const is503 = /503|overloaded|unavailable/i.test(msg);
+      lastErr = e;
+      // DAILY quota exhaustion can't recover in a minute — retrying just delays the
+      // fallback chain by ~2 min per call. Fail fast so Qwen/Pixtral take over.
+      if (is429 && /PerDay|per.?day|daily/i.test(msg)) {
+        console.log('[quiz] Gemini DAILY quota exhausted — failing fast to fallback engines');
+        throw e;
+      }
+      if ((!is429 && !is503) || i === tries - 1) throw e;
+      // Honor server-suggested retry delay if present, else exponential backoff + jitter
+      const suggested = msg.match(/retry.?after[^\d]*(\d+)/i) || msg.match(/retryDelay[":\s]+(\d+)/i);
+      const wait = suggested ? parseInt(suggested[1], 10) * 1000
+        : base * Math.pow(2, i) + Math.floor(Math.random() * 600);
+      console.log(`[quiz] Gemini ${is429 ? '429 rate-limit' : '503 overloaded'} — retry ${i + 1}/${tries - 1} in ${wait}ms`);
+      await new Promise(r => setTimeout(r, wait));
+    }
+  }
+  throw lastErr;
+}
+
+// Generate content on a Gemini model with automatic 429/503 retry.
+async function geminiGenerate(model, content) {
+  const result = await geminiRetry(() => model.generateContent(content));
+  return result.response.text();
+}
+
 // ── Gemini Vision — primary engine (free, excellent accuracy) ────────────────
 async function callGeminiVision(parts, { grade, subject, school } = {}) {
   if (!genAI) throw new Error('GEMINI_API_KEY not configured');
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
   const prompt = buildQuizVisionPrompt({ grade, subject, school });
 
-  const result = await model.generateContent([
+  return geminiGenerate(model, [
     ...parts,
     { text: prompt },
   ]);
-  return result.response.text();
 }
 
 // Helper: build Gemini parts from PDF buffer (sends PDF directly)
@@ -364,6 +579,53 @@ function geminiImageParts(imageBuffers) {
   return imageBuffers.map(({ buffer, mime }) => ({
     inlineData: { mimeType: mime || 'image/png', data: buffer.toString('base64') },
   }));
+}
+
+// Downscale + cap page images so vision fallbacks don't 413 / exceed image limits.
+// Pixtral allows ≤8 images; Groq has a hard request-size limit — big full-res PNGs blow it.
+async function prepVisionImages(imageBuffers, { max = 8, width = 1400 } = {}) {
+  const sharp = require('sharp');
+  const sliced = imageBuffers.slice(0, max);
+  const out = [];
+  for (const img of sliced) {
+    try {
+      const buffer = await sharp(img.buffer)
+        .resize({ width, withoutEnlargement: true })
+        .jpeg({ quality: 72 })
+        .toBuffer();
+      out.push({ buffer, mime: 'image/jpeg' });
+    } catch {
+      out.push(img); // fall back to original if resize fails
+    }
+  }
+  return out;
+}
+
+// Convert a Word .docx → PDF (mammoth: docx→HTML preserves tables/images; puppeteer: HTML→PDF).
+// This lets Word worksheets flow through the SAME vision pipeline as PDFs, so tables/graphs
+// are detected and rendered interactively instead of flattened to text.
+async function docxToPdf(buffer) {
+  const mammoth = require('mammoth');
+  const puppeteer = require('puppeteer');
+  const { value: bodyHtml } = await mammoth.convertToHtml({ buffer });
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+    @page { size: A4; margin: 16mm; }
+    body { font-family: 'Times New Roman', Georgia, serif; font-size: 13pt; color:#000; line-height:1.55; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    td, th { border: 1px solid #000; padding: 6px 10px; text-align: left; vertical-align: top; }
+    img { max-width: 100%; height: auto; }
+    h1,h2,h3 { margin: 12px 0 6px; }
+    p { margin: 6px 0; }
+  </style></head><body>${bodyHtml}</body></html>`;
+  const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdf = await page.pdf({ format: 'A4', printBackground: true });
+    return Buffer.from(pdf);
+  } finally {
+    await browser.close();
+  }
 }
 
 // ── Pixtral Vision — fallback engine ───────────────────────────────────────
@@ -389,6 +651,233 @@ async function callPixtralVision(imageBuffers, { grade, subject, school } = {}) 
   return result;
 }
 
+// ── Qwen 2.5-VL-72B Vision — first fallback after Gemini (via HF router) ───
+async function callQwenVision(imageBuffers, { grade, subject, school } = {}) {
+  if (!HF_TOKEN) throw new Error('HF_TOKEN not configured');
+
+  const imageBlocks = imageBuffers.map(({ buffer, mime }) => ({
+    type: 'image_url',
+    image_url: { url: `data:${mime || 'image/png'};base64,${buffer.toString('base64')}` },
+  }));
+
+  const prompt = buildQuizVisionPrompt({ grade, subject, school });
+
+  // Qwen on the free HF router is slow (~1-3 min) — abort so the chain can move on to Pixtral
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 240000);
+  try {
+    const res = await fetch('https://router.huggingface.co/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: QWEN_VISION_MODEL,
+        messages: [{ role: 'user', content: [...imageBlocks, { type: 'text', text: prompt }] }],
+        max_tokens: 8192,
+        temperature: 0.3,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`HF router ${res.status}: ${body.slice(0, 200)}`);
+    }
+    const json = await res.json();
+    return json.choices?.[0]?.message?.content || '';
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// SEMANTIC CROP VERIFICATION — caption every figure crop with a vision LLM
+// (Gemini primary → Qwen fallback) and check the caption actually matches the
+// question the crop was assigned to. CV decides WHERE the pictures are; this
+// decides WHAT they are. Rules:
+//   • Only intervene when captions give a confident signal (fail open).
+//   • A question with no confident crop keeps its heuristic image — unless that
+//     crop was claimed by another question, in which case it is DROPPED:
+//     no image beats the wrong image.
+// ═════════════════════════════════════════════════════════════════════════
+
+function cropCaptionPrompt(n) {
+  return `These are ${n} cropped regions from a school worksheet, in order. For each one, describe the main content in 3-8 simple English words (e.g. "a clay pot", "a swan swimming", "table of Telugu letters", "bar graph of sports", "L-shaped polygon diagram"). Reply with ONLY a JSON array of ${n} strings in the same order. No markdown, no explanations.`;
+}
+
+function parseCaptionArray(raw, n) {
+  let s = String(raw || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  const first = s.indexOf('[');
+  const last = s.lastIndexOf(']');
+  if (first === -1 || last <= first) return null;
+  try {
+    const arr = JSON.parse(s.slice(first, last + 1));
+    if (!Array.isArray(arr) || arr.length !== n) return null;
+    return arr.map(x => String(x || ''));
+  } catch { return null; }
+}
+
+async function captionCropsGemini(crops) {
+  if (!genAI) throw new Error('GEMINI_API_KEY not configured');
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const raw = await geminiGenerate(model, [
+    ...geminiImageParts(crops),
+    { text: cropCaptionPrompt(crops.length) },
+  ]);
+  return parseCaptionArray(raw, crops.length);
+}
+
+async function captionCropsQwen(crops) {
+  if (!HF_TOKEN) throw new Error('HF_TOKEN not configured');
+  const imageBlocks = crops.map(({ buffer, mime }) => ({
+    type: 'image_url',
+    image_url: { url: `data:${mime || 'image/png'};base64,${buffer.toString('base64')}` },
+  }));
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 90000);
+  try {
+    const res = await fetch('https://router.huggingface.co/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: QWEN_VISION_MODEL,
+        messages: [{ role: 'user', content: [...imageBlocks, { type: 'text', text: cropCaptionPrompt(crops.length) }] }],
+        max_tokens: 1024,
+        temperature: 0.1,
+      }),
+    });
+    if (!res.ok) throw new Error(`HF router ${res.status}`);
+    const json = await res.json();
+    return parseCaptionArray(json.choices?.[0]?.message?.content || '', crops.length);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const CAPTION_STOPWORDS = new Set(['the', 'and', 'with', 'for', 'its', 'has', 'this', 'that', 'from', 'are',
+  'picture', 'image', 'images', 'photo', 'drawing', 'illustration', 'cartoon', 'clip', 'art', 'diagram',
+  'showing', 'shows', 'object', 'item', 'worksheet', 'correct', 'match', 'matching', 'word', 'telugu',
+  'hindi', 'english', 'simple', 'small', 'large', 'colorful', 'white', 'background']);
+
+function captionTokens(s) {
+  return new Set(String(s || '').toLowerCase().replace(/[^a-z0-9ఀ-౿ऀ-ॿ\s]/g, ' ')
+    .split(/\s+/).filter(w => w.length >= 3 && !CAPTION_STOPWORDS.has(w)));
+}
+
+function captionOverlap(a, b) {
+  if (!a.size || !b.size) return 0;
+  let hits = 0;
+  for (const w of a) {
+    if (b.has(w)) { hits++; continue; }
+    for (const v of b) {
+      if ((w.length >= 4 && v.includes(w)) || (v.length >= 4 && w.includes(v))) { hits += 0.5; break; }
+    }
+  }
+  return hits / Math.min(a.size, b.size);
+}
+
+async function verifyDiagramAssignments(diagramExtraction, quiz) {
+  try {
+    // Include 'text' crops too: they can't be claimed by picture questions (captions like
+    // "table of Telugu letters" won't match them), but a letters-table TASK can claim one.
+    const diagrams = ((diagramExtraction && diagramExtraction.diagrams) || []).filter(d => d.imageUrl);
+    if (!diagrams.length) return;
+    const serverRoot = path.join(__dirname, '..');
+    const crops = [];
+    for (const d of diagrams.slice(0, 12)) {
+      const p = path.join(serverRoot, d.imageUrl);
+      if (fs.existsSync(p)) crops.push({ diagram: d, buffer: fs.readFileSync(p), mime: 'image/png' });
+    }
+    if (!crops.length) return;
+
+    // Units = things that own an image: one per hasImage question, one per sharedImage task
+    const units = [];
+    for (const task of (quiz.tasks || [])) {
+      const qs = task.questions || [];
+      if (!qs.length) continue;
+      if (task.sharedImage || (qs[0] && qs[0]._sharedImage)) {
+        // Includes sharedImage tasks that ended up with NO crop (e.g. their table crop was
+        // excluded from picture matching) — a confident caption can still attach one here.
+        units.push({ type: 'shared', task, qs, desc: `${task.sharedImageDescription || ''} ${task.title || ''}`, current: qs[0].imageUrl });
+      } else {
+        for (const q of qs) {
+          if (q.imageUrl || q.hasImage) {
+            units.push({ type: 'q', q, desc: `${q.diagramDescription || ''} ${q.question || ''}`, current: q.imageUrl });
+          }
+        }
+      }
+    }
+    if (!units.length) return;
+
+    let captions = null;
+    try { captions = await captionCropsGemini(crops); }
+    catch (e) { console.log('[verify] Gemini captioning failed:', e.message); }
+    if (!captions) {
+      try { captions = await captionCropsQwen(crops); console.log('[verify] Captions via Qwen fallback'); }
+      catch (e) { console.log('[verify] Qwen captioning failed:', e.message); }
+    }
+    if (!captions) { console.log('[verify] No captions available — keeping heuristic image matching'); return; }
+    crops.forEach((c, i) => {
+      c.caption = captions[i];
+      console.log(`[verify] ${c.diagram.imageUrl.split('/').pop()} = "${c.caption}"`);
+    });
+
+    const capTok = crops.map(c => captionTokens(c.caption));
+    const pairs = [];
+    units.forEach((u, ui) => {
+      const uTok = captionTokens(u.desc);
+      crops.forEach((c, ci) => pairs.push({ ui, ci, s: captionOverlap(capTok[ci], uTok) }));
+    });
+
+    const THRESH = 0.34;
+    if (!pairs.some(p => p.s >= THRESH)) {
+      console.log('[verify] Captions gave no confident signal — keeping heuristic image matching');
+      return;
+    }
+
+    // Greedy unique assignment, best similarity first
+    pairs.sort((a, b) => b.s - a.s);
+    const uAssigned = new Map();
+    const cAssigned = new Set();
+    for (const p of pairs) {
+      if (p.s < THRESH) break;
+      if (uAssigned.has(p.ui) || cAssigned.has(p.ci)) continue;
+      uAssigned.set(p.ui, p.ci);
+      cAssigned.add(p.ci);
+    }
+
+    const setImage = (u, url, bbox) => {
+      if (u.type === 'shared') { for (const q of u.qs) { q.imageUrl = url; q.diagramBbox = bbox; q._sharedImage = true; } }
+      else { u.q.imageUrl = url; u.q.diagramBbox = bbox; }
+    };
+    const dropImage = (u) => {
+      if (u.type === 'shared') { for (const q of u.qs) { q.imageUrl = null; q._sharedImage = false; } }
+      else { u.q.imageUrl = null; }
+    };
+
+    units.forEach((u, ui) => {
+      const ci = uAssigned.get(ui);
+      const label = u.type === 'shared' ? `task "${String(u.task.title || '').slice(0, 30)}"` : `Q(${u.q.id})`;
+      if (ci !== undefined) {
+        const d = crops[ci].diagram;
+        if (u.current !== d.imageUrl) {
+          console.log(`[verify] REASSIGNED ${label}: ${String(u.current || 'none').split('/').pop()} → ${d.imageUrl.split('/').pop()} ("${crops[ci].caption}")`);
+        }
+        setImage(u, d.imageUrl, d.bbox);
+      } else if (u.current) {
+        // No confident crop for this unit. Drop its image only if another unit
+        // confidently claimed the same crop — otherwise keep the heuristic match.
+        const claimedElsewhere = [...uAssigned.entries()].some(([oui, oci]) => oui !== ui && crops[oci].diagram.imageUrl === u.current);
+        if (claimedElsewhere) {
+          console.log(`[verify] DROPPED wrong image from ${label} (${String(u.current).split('/').pop()} belongs to another question)`);
+          dropImage(u);
+        }
+      }
+    });
+  } catch (err) {
+    console.log('[verify] Verification skipped:', err.message);
+  }
+}
+
 // ── Shared quiz vision prompt (used by both Claude and Pixtral) ────────────
 function buildQuizVisionPrompt({ grade, subject, school } = {}) {
   return `You are an expert quiz generator for ${grade || 'IB PYP Grade 4'} ${subject || 'Mathematics'}.
@@ -406,6 +895,12 @@ STEP 3: Generate quiz JSON that is a PERFECT REPLICA of the worksheet.
 RULES:
 1. Each Task from the worksheet = one task in JSON. Keep EXACT task title and instructions.
 2. Label questions EXACTLY as worksheet does (a, b, c, d, e — NOT q1, q2).
+2b. NEVER collapse multiple numbered/lettered items under one instruction into a single
+    question. If one instruction covers several sentences/blanks/rows (e.g. "d1) ... d2) ...
+    d3) ... d4) ..." or 4 separate sentences each needing its own circled word and blank),
+    emit ONE question per item, each with its own id (d1, d2, d3, d4) and its own answer/
+    hint/solution — never merge them into a single answer field. Count the actual items in
+    the worksheet and make sure your output has that same count of questions for that task.
 3. Use the EXACT SAME NUMBERS from the worksheet. Do NOT substitute different numbers.
 4. Every question MUST have a correct "answer" field. YOU MUST SOLVE each problem. Think step by step, compute the answer, and write the final result. NEVER write "Not provided in the text" or "N/A" — you are the solver, not just an extractor.
 5. Pay careful attention to UNITS.
@@ -428,6 +923,8 @@ RULES:
       This ensures ALL visual elements from the worksheet are preserved, not just math diagrams.
 9. Do NOT generate SVG, HTML diagrams, or diagramHTML. The server handles all image rendering separately.
 10. For questions that reference a graph/chart/image: READ the visual data from the image to compute the answer. For example, if a bar graph shows football=16, tennis=8 and the Y-axis goes 0,2,4,6... then the scale is 2.
+11. MATCH-THE-FOLLOWING TASKS (e.g. "match the word to the picture", "match the following", "జతపరచండి"): emit ONE question per item to match. Set "type": "mcq" and "options": an array of ALL candidate words/phrases from the matching column (the full pool — the SAME list for every question in that task, in a different order per question), and "answer": the correct word for that item. Do NOT emit matching items as free-text fill-in questions — the student must pick from the pool, not type it.
+12. COUNT THE ANSWER SPACES. If a task provides N blank lines / boxes / spaces for the student to write answers (e.g. 6 blank lines next to a letters table), generate EXACTLY N questions — one per blank line. Count the physical blank lines in the image before writing the questions. Never collapse them into fewer questions.
 
 LAYOUT EXTRACTION (CRITICAL — replicate the worksheet's visual layout):
 - Look at how questions are arranged: single column, two columns side-by-side, grid, etc.
@@ -485,12 +982,123 @@ NOTE on layout:
 - The "hasImage" on questions refers to per-question diagrams. The "hasDiagram" on columnGroups refers to shared diagrams above a group of questions (like conversion arrows).
 - ALWAYS include layout — it is used to render the quiz in the same visual format as the worksheet.
 
+NUMBER PYRAMID HANDLING (use this INSTEAD of diagramFill/sharedImage when the diagram is a
+number pyramid — a triangle of stacked boxes where each pair of adjacent blocks sums to the
+block above them). Add a "pyramids" ARRAY to the TASK (one entry per pyramid shown):
+"pyramids": [
+  {
+    "label": "1.",
+    "rows": [ [null], [null, null], ["3.3", "1.2", "0.1"] ]
+  }
+]
+- "rows" goes TOP to BOTTOM, each row left to right, exactly matching the worksheet layout.
+- A cell is the STRING of the printed value (e.g. "3.3") if given, or JSON null if that
+  block is BLANK for the student to fill in.
+- SOLVE every null cell (each pair of adjacent blocks sums to the block above them) and
+  provide a "solved" array of the SAME shape with every cell filled with its true value:
+  "solved": [ ["4.5"], ["3.4", "1.1"], ["3.3", "1.2", "0.1"] ]  (example only — solve for real)
+- Do NOT set sharedImage/diagramFill for a task fully described by "pyramids", and do NOT
+  create separate questions for it — "pyramids" + "solved" fully replaces both.
+
+DIAGRAM-FILL HANDLING (use this for any OTHER diagram not covered above — clocks, number
+lines, labeled figures, and ANY diagram type where the student writes answers directly ONTO
+the picture, not in separate boxes):
+If a task shows a diagram with MULTIPLE blank spots to fill in (e.g. a number pyramid with
+empty blocks, a clock-conversion table with empty cells, a labeled diagram with blank labels,
+a number line with missing values), do NOT reduce it to one or two simplified questions.
+Instead add a "diagramFill" object to the TASK:
+"diagramFill": {
+  "blankAnswers": ["3.3", "1.2", "0.1", "4.5", "1.4", "5.9"]
+}
+- List the correct answer for EVERY SINGLE blank in the diagram, in the exact order a person
+  reading the image top-to-bottom, then left-to-right within each row, would fill them in.
+  Example: a pyramid with a blank top block, then a blank in row 2, then a blank in row 3
+  (middle), then a blank bottom-row cell needs 4 entries in that exact order — not just
+  "the top value". Count every empty box/cell you can see and solve every one of them.
+- Still set "sharedImage": true and "sharedImageDescription" on the task as usual so the
+  diagram picture is captured — diagramFill ADDS to that, it doesn't replace it.
+- Do NOT also create separate questions asking about individual blanks in this diagram —
+  diagramFill.blankAnswers covers all of them; the questions array should only contain
+  OTHER questions in the task that are not part of filling the diagram itself (if any).
+
+GRAPH / CHART HANDLING (CRITICAL — never reduce a graph to a text note):
+If a task shows a BAR GRAPH / COLUMN CHART that students read to answer questions, add a "chart" object to the TASK (not the question), and READ THE EXACT VALUES from the image:
+"chart": {
+  "type": "bar",
+  "title": "Number of Votes",
+  "xLabel": "Sport",
+  "yLabel": "Number of Votes",
+  "yMax": 20,
+  "yStep": 2,
+  "bars": [
+    { "label": "football", "value": 16 },
+    { "label": "tennis",   "value": 8 },
+    { "label": "rugby",    "value": 6 },
+    { "label": "cricket",  "value": 4 },
+    { "label": "hockey",   "value": 12 },
+    { "label": "badminton","value": 10 }
+  ]
+}
+- Read every bar's height precisely using the y-axis scale. yMax = top of the axis, yStep = gap between gridlines.
+- The questions below the graph stay as normal numeric/text/long questions — the chart is the shared visual they refer to.
+
+TABLE HANDLING (CRITICAL — never split a table into separate one-line questions, never drop a table):
+Capture EVERY table in a task inside a "tables" ARRAY on the TASK (a task can have more than one table — e.g. a raw data grid AND a tally/frequency table). Keep each grid intact:
+"tables": [
+  {
+    "title": "Survey data",
+    "headers": [],
+    "rows": [
+      [ { "text": "Chutney" }, { "text": "Cheese" }, { "text": "Chutney" }, { "text": "Salt and Vinegar" }, { "text": "Cheese" } ],
+      [ { "text": "Chilli" },  { "text": "Spring Onion" }, { "text": "Cheese" }, { "text": "Spring Onion" }, { "text": "Chutney" } ]
+    ]
+  },
+  {
+    "title": "",
+    "headers": ["Favourite flavour of chips", "Tally marks", "Frequency"],
+    "rows": [
+      [ { "text": "Chutney" },      { "input": true, "answer": "6" }, { "input": true, "answer": "6" } ],
+      [ { "text": "Spring Onion" }, { "input": true, "answer": "6" }, { "input": true, "answer": "6" } ]
+    ]
+  }
+]
+- Each cell is either { "text": "given content" } OR { "input": true, "answer": "correct value" } for a blank the student fills.
+- READ-ONLY tables (raw data grids, reference tables with NO blanks) MUST still be captured — use all { "text": ... } cells. NEVER drop them or turn them into a paragraph. "headers" may be [] if the grid has no header row.
+- SOLVE every blank cell yourself and put the value in "answer" (e.g. count the tallies → frequency).
+- Do NOT also emit table cells as separate questions — the tables replace them.
+
 QUESTION TYPES:
 - "numeric" — number answer (integer or decimal)
 - "text" — text answers, fractions like "14/25", comparisons like "<", mixed like "1 km 800 m"
 - "long" — open-ended written response (sentences/paragraphs). Use textarea, NO "Answer =" label.
 - "mcq" — multiple choice (include "options" array with {label, correct} objects)
 - "activity" — drawing, colouring, pasting, constructing tasks (NO typed answer — student does it on paper)
+- "venn" — a Venn diagram the student must FILL IN (two overlapping circles). Use this WHENEVER the worksheet shows a Venn diagram / two overlapping circles to be completed. DO NOT convert a Venn into a plain text box.
+
+VENN DIAGRAM QUESTIONS (CRITICAL — never flatten a Venn into a single text box):
+If the worksheet contains a Venn diagram to complete, output ONE question with "type":"venn" and this exact shape:
+{
+  "id": "1",
+  "type": "venn",
+  "question": "Complete the Venn diagram to compare the nutrients in Almonds and Spinach.",
+  "leftLabel": "Almond",
+  "rightLabel": "Spinach",
+  "regions": [
+    { "id": "left",   "placeholder": "Almond only" },
+    { "id": "center", "placeholder": "Both (common)" },
+    { "id": "right",  "placeholder": "Spinach only" }
+  ],
+  "answers": {
+    "left":   ["Protein", "Healthy Fats", "Vitamin E", "Magnesium"],
+    "center": ["Fibre"],
+    "right":  ["Iron", "Vitamin K", "Vitamin A", "Calcium"]
+  },
+  "hint": "Items shared by BOTH go in the overlapping middle; unique items go in their own circle.",
+  "solution": "Almond only: Protein, Healthy Fats, Vitamin E, Magnesium. Both: Fibre. Spinach only: Iron, Vitamin K, Vitamin A, Calcium."
+}
+- "left"/"right" answers = items that belong ONLY to that circle. "center" = items in BOTH.
+- YOU MUST solve it: read the source text, compute which items are shared vs unique, and fill all three answer arrays. Never leave them empty.
+- Set "leftLabel"/"rightLabel" to the two circle labels from the worksheet.
 
 PASSAGE & EXAMPLE EXTRACTION (CRITICAL):
 - If a task has a reading passage, story, or paragraph that students must read before answering, include it as "passage" on the task object. Preserve the FULL text exactly.
@@ -520,7 +1128,7 @@ NOTES & SUCCESS CRITERIA:
 - If the worksheet includes "Success Criteria", "Learning Goals", "I can..." statements, or rubric, extract them into a top-level "successCriteria" array of strings.
 - Example: "notes": "Dear Parents, please help your child with these activities...", "successCriteria": ["I can convert between units of measurement", "I can solve word problems involving fractions"]
 
-Return ONLY valid JSON, no markdown fences, no extra text.`;
+Return ONLY valid JSON, no markdown fences, no extra text, and NO // or /* */ comments anywhere in the JSON (comments make it invalid and unparseable).`;
 }
 
 // ── Validation: check LLM output against OCR ground truth ───────────────────
@@ -567,10 +1175,32 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
 
     const { grade, subject, school } = req.body;
     const quizId = uuidv4().slice(0, 8);
+    // ?engine=qwen (etc.) skips Gemini so the fallback chain starts at that engine —
+    // used for benchmarking engines against each other on the same worksheet.
+    const forceEngine = String(req.query.engine || req.body.engine || '').toLowerCase();
+    const skipGemini = forceEngine && forceEngine !== 'gemini';
+    if (skipGemini) console.log(`[quiz] engine=${forceEngine} — skipping Gemini primary`);
+
+    // ── Word document? Convert .docx → PDF so it uses the SAME vision pipeline ──
+    const origName = (req.file.originalname || '').toLowerCase();
+    const isDocx = origName.endsWith('.docx')
+      || req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    if (isDocx) {
+      try {
+        console.log('[quiz] Word .docx detected — converting to PDF (mammoth + puppeteer)...');
+        const pdfBuf = await docxToPdf(req.file.buffer);
+        req.file.buffer = pdfBuf;
+        req.file.mimetype = 'application/pdf';
+        console.log(`[quiz] docx→pdf OK: ${(pdfBuf.length / 1024).toFixed(0)}KB`);
+      } catch (e) {
+        console.log('[quiz] docx→pdf failed:', e.message);
+        return res.status(400).json({ error: 'Could not read this Word document. Please export it to PDF and upload that.' });
+      }
+    }
 
     // Guard: reject PDFs > 4MB to prevent OOM on Cloud Run (2GB)
     if (req.file.buffer.length > 4 * 1024 * 1024) {
-      return res.status(400).json({ error: 'PDF too large (max 4MB). Please upload a smaller worksheet.' });
+      return res.status(400).json({ error: 'File too large (max 4MB). Please upload a smaller worksheet.' });
     }
 
     let result;
@@ -606,7 +1236,7 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
     );
 
     // C) Gemini Vision — generate structured quiz JSON (LLM, primary)
-    if (genAI) {
+    if (genAI && !skipGemini) {
       parallelTasks.push(
         callGeminiVision([geminiPdfPart(req.file.buffer)], { grade, subject, school })
           .then(r => ({ type: 'gemini', result: r }))
@@ -614,7 +1244,7 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
       );
     }
 
-    console.log(`[quiz] Running ${parallelTasks.length} tasks in parallel: Tesseract OCR + ML Layout${genAI ? ' + Gemini' : ''}...`);
+    console.log(`[quiz] Running ${parallelTasks.length} tasks in parallel: Tesseract OCR + ML Layout${genAI && !skipGemini ? ' + Gemini' : ''}...`);
     const parallelResults = await Promise.all(parallelTasks);
 
     let ocrText = null;
@@ -627,13 +1257,18 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
 
     // Convert ML layout result to diagram format (or fall back to heuristic OpenCV)
     if (layoutMLResult) {
-      diagramExtraction = layoutResultToDiagramFormat(layoutMLResult);
+      diagramExtraction = await layoutResultToDiagramFormat(layoutMLResult);
       console.log(`[quiz] ML Layout: ${diagramExtraction?.diagrams?.length || 0} figures/tables detected`);
     }
     if (!diagramExtraction) {
       console.log('[quiz] ML Layout unavailable, falling back to heuristic OpenCV...');
       try {
-        const opencvResult = await extractDiagrams(req.file.buffer, quizId, { scale: 1.5, doOCR: false });
+        // minArea lowered from the 15000px² default — small worksheet clipart (e.g. a
+        // "match the picture to the word" row of individual small images, ~140x70px each)
+        // was being filtered out entirely, causing those pictures to never get attached to
+        // any question at all. 6000px² still excludes true noise (small icons/bullets) while
+        // keeping legitimate small diagram crops.
+        const opencvResult = await extractDiagrams(req.file.buffer, quizId, { scale: 1.5, doOCR: false, minArea: 6000 });
         diagramExtraction = opencvResult;
         console.log(`[quiz] OpenCV fallback: ${opencvResult.diagrams.length} diagrams`);
       } catch (err) {
@@ -648,7 +1283,7 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
     // Vision LLMs see the actual layout, tables, diagrams — far more accurate
     // than sending flat OCR text where structure is lost.
     //
-    // Priority: Gemini Vision → Pixtral Vision → Groq Vision → OCR text fallback
+    // Priority: Gemini Vision → Qwen 2.5-VL-72B → Pixtral Vision → Groq Vision → OCR text fallback
     // ══════════════════════════════════════════════════════════════════════
     if (!result) {
       // Collect page images from ML layout result or convert PDF ourselves
@@ -684,26 +1319,38 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
       const hasPageImages = pageImageBuffers.length > 0;
       console.log(`[quiz] Gemini unavailable — fallback with ${hasPageImages ? pageImageBuffers.length + ' page images (VISION)' : 'OCR text only'}...`);
 
-      // FALLBACK 1: Pixtral Vision (sees images → understands layout)
+      // FALLBACK 1: Qwen 2.5-VL-72B (HF router — strong vision, slow on free tier). Cap ≤8, downscale.
+      if (!result && HF_TOKEN && hasPageImages) {
+        try {
+          const qwImgs = await prepVisionImages(pageImageBuffers, { max: 8, width: 1500 });
+          console.log(`[quiz] Trying Qwen 2.5-VL-72B with ${qwImgs.length} page image(s)...`);
+          result = await callQwenVision(qwImgs, { grade, subject, school });
+          if (result) { usedEngine = 'qwen'; console.log(`[quiz] Qwen Vision returned ${result.length} chars`); }
+        } catch (e) { console.log('[quiz] Qwen Vision failed:', e.message); }
+      }
+
+      // FALLBACK 2: Pixtral Vision (sees images → understands layout). Cap ≤8, downscale.
       if (!result && MISTRAL_API_KEY && hasPageImages) {
         try {
-          console.log('[quiz] Trying Pixtral Vision with page images...');
-          result = await callPixtralVision(pageImageBuffers, { grade, subject, school });
+          const pxImgs = await prepVisionImages(pageImageBuffers, { max: 8, width: 1500 });
+          console.log(`[quiz] Trying Pixtral Vision with ${pxImgs.length} page image(s)...`);
+          result = await callPixtralVision(pxImgs, { grade, subject, school });
           if (result) { usedEngine = 'pixtral'; console.log(`[quiz] Pixtral Vision returned ${result.length} chars`); }
         } catch (e) { console.log('[quiz] Pixtral Vision failed:', e.message); }
       }
 
-      // FALLBACK 2: Groq Vision (llama-4-scout sees images)
+      // FALLBACK 3: Groq Vision (llama-4-scout). Hard request-size limit → fewer/smaller images.
       if (!result && groq && hasPageImages) {
         try {
-          console.log('[quiz] Trying Groq Vision (llama-4-scout) with page images...');
+          const gqImgs = await prepVisionImages(pageImageBuffers, { max: 4, width: 1100 });
+          console.log(`[quiz] Trying Groq Vision (llama-4-scout) with ${gqImgs.length} page image(s)...`);
           const visionPrompt = buildQuizVisionPrompt({ grade, subject, school });
-          result = await callGroq(visionPrompt, { vision: true, imageBuffers: pageImageBuffers });
+          result = await callGroq(visionPrompt, { vision: true, imageBuffers: gqImgs });
           if (result) { usedEngine = 'groq'; console.log(`[quiz] Groq Vision returned ${result.length} chars`); }
         } catch (e) { console.log('[quiz] Groq Vision failed:', e.message); }
       }
 
-      // FALLBACK 3: OCR text + LLM (last resort — text only, may miss layout)
+      // FALLBACK 4: OCR text + LLM (last resort — text only, may miss layout)
       if (!result && ocrText && ocrText.fullText.length >= 20) {
         console.log('[quiz] Vision fallbacks exhausted — using OCR text (layout may be incomplete)...');
         usedVision = false; // text-only LLM cannot reliably provide diagramPosition
@@ -751,9 +1398,7 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
     // Parse JSON response
     let quiz;
     try {
-      let cleaned = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-      cleaned = cleaned.replace(/"answer":\s*(\d+\/\d+)/g, '"answer": "$1"');
-      quiz = JSON.parse(cleaned);
+      quiz = JSON.parse(cleanLLMJson(result));
     } catch {
       return res.status(500).json({ error: 'AI returned invalid JSON', raw: result });
     }
@@ -775,7 +1420,7 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
       let retryResult = null;
       // Retry: Gemini → Mistral → Groq
       if (genAI) {
-        try { const m = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' }); retryResult = (await m.generateContent([{ text: retryPrompt }])).response.text(); }
+        try { const m = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' }); retryResult = await geminiGenerate(m, [{ text: retryPrompt }]); }
         catch (e) { /* skip */ }
       }
       if (!retryResult && MISTRAL_API_KEY) {
@@ -789,9 +1434,7 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
 
       if (retryResult) {
         try {
-          let cleaned = retryResult.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-          cleaned = cleaned.replace(/"answer":\s*(\d+\/\d+)/g, '"answer": "$1"');
-          const retryQuiz = JSON.parse(cleaned);
+          const retryQuiz = JSON.parse(cleanLLMJson(retryResult));
           if ((retryQuiz.tasks || []).length > (quiz.tasks || []).length) {
             console.log(`[quiz] Retry: ${retryQuiz.tasks.length} tasks (was ${quiz.tasks.length}) — using retry ✓`);
             quiz = retryQuiz;
@@ -818,6 +1461,7 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
       console.log(`[quiz] Matching ${diagramExtraction.diagrams.length} figure crops to questions...`);
       matchDiagramsToQuestions(diagramExtraction, quiz);
       quiz.fullPageImages = diagramExtraction.fullPageImages;
+      await verifyDiagramAssignments(diagramExtraction, quiz);
     }
 
     // ── Extract sub-figures from table crops (diagrams embedded inside tables) ──
@@ -864,6 +1508,10 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
         }
       }
     }
+
+    // ── Diagram-fill: detect blanks on any diagram (pyramid/clock/number-line/etc.)
+    //    and pair them with Gemini's answers so students can write directly on it ──
+    await resolveDiagramFills(quiz, quizId);
 
     // ── Post-process: auto-detect MCQ questions the LLM missed ──
     autoDetectMCQ(quiz);
@@ -943,7 +1591,7 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
 
     // Convert ML layout result to diagram format (or fall back to heuristic OpenCV)
     if (layoutMLResult) {
-      diagramExtraction = layoutResultToDiagramFormat(layoutMLResult);
+      diagramExtraction = await layoutResultToDiagramFormat(layoutMLResult);
       console.log(`[quiz] ML Layout: ${diagramExtraction?.diagrams?.length || 0} figures/tables detected`);
     }
     if (!diagramExtraction) {
@@ -982,8 +1630,7 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
           console.log('[quiz] Using Gemini text-only for OCR text structuring...');
           usedVision = false; // text-only cannot reliably provide diagramPosition
           const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-          const r = await model.generateContent([{ text: prompt }]);
-          result = r.response.text();
+          result = await geminiGenerate(model, [{ text: prompt }]);
           console.log(`[quiz] Gemini text returned ${result.length} chars`);
         } catch (err) {
           console.log('[quiz] Gemini text failed:', err.message);
@@ -1000,6 +1647,19 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
           console.log(`[quiz] Gemini Vision returned ${result.length} chars`);
         } catch (err) {
           console.log('[quiz] Gemini Vision failed:', err.message);
+        }
+      }
+
+      // FALLBACK: Qwen 2.5-VL-72B Vision
+      if (!result && HF_TOKEN) {
+        try {
+          console.log('[quiz] Falling back to Qwen 2.5-VL-72B...');
+          usedVision = true;
+          result = await callQwenVision([{ buffer: req.file.buffer, mime }], { grade, subject, school });
+          if (result) usedEngine = 'qwen';
+          console.log(`[quiz] Qwen returned ${result.length} chars`);
+        } catch (err) {
+          console.log('[quiz] Qwen failed:', err.message);
         }
       }
 
@@ -1039,6 +1699,15 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
           console.log('[quiz] Gemini Vision failed:', err.message);
         }
       }
+      if (!result && HF_TOKEN) {
+        try {
+          console.log('[quiz] Falling back to Qwen 2.5-VL-72B...');
+          result = await callQwenVision([{ buffer: req.file.buffer, mime }], { grade, subject, school });
+          if (result) usedEngine = 'qwen';
+        } catch (err) {
+          console.log('[quiz] Qwen failed:', err.message);
+        }
+      }
       if (!result && MISTRAL_API_KEY) {
         try {
           result = await callPixtralVision([{ buffer: req.file.buffer, mime }], { grade, subject, school });
@@ -1065,8 +1734,7 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
 
     let quiz;
     try {
-      const cleaned = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-      quiz = JSON.parse(cleaned);
+      quiz = JSON.parse(cleanLLMJson(result));
     } catch {
       return res.status(500).json({ error: 'AI returned invalid JSON', raw: result });
     }
@@ -1084,7 +1752,11 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
       console.log(`[quiz] Matching ${diagramExtraction.diagrams.length} OpenCV diagram crops to questions...`);
       matchDiagramsToQuestions(diagramExtraction, quiz);
       quiz.fullPageImages = diagramExtraction.fullPageImages;
+      await verifyDiagramAssignments(diagramExtraction, quiz);
     }
+
+    // ── Diagram-fill: detect blanks on any diagram and pair with Gemini's answers ──
+    await resolveDiagramFills(quiz, quizId);
 
     // ── Post-process: auto-detect MCQ questions the LLM missed ──
     autoDetectMCQ(quiz);
@@ -1482,6 +2154,26 @@ router.post('/render-preview', express.json({ limit: '5mb' }), (req, res) => {
   }
 });
 
+// ── POST /quiz/normalize — Accept quiz JSON, return it with the same structural
+// normalization Preview applies (riddle/word-bank → table, grid → table, charts,
+// venn) but as JSON, not HTML. Lets the Edit Answers screen show the exact same
+// shape (e.g. a No./Riddle/Answer table) instead of drifting from Preview. ──
+router.post('/normalize', express.json({ limit: '5mb' }), (req, res) => {
+  try {
+    const quiz = req.body.quiz || req.body;
+    if (!quiz || !quiz.tasks) return res.status(400).json({ error: 'No quiz data provided' });
+    normalizeVennQuestions(quiz);
+    normalizeCharts(quiz);
+    normalizeRiddleTables(quiz);
+    normalizeLetterGridTables(quiz);
+    normalizeTables(quiz);
+    normalizeMatchingTasks(quiz);
+    res.json({ quiz });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── GET /quiz/test-preview — Render last generated quiz as HTML (for testing) ──
 // ?name=mhle-32 | ?name=mhle-31 | ?name=mhle-12  (default: test-quiz.json)
 router.get('/test-preview', (req, res) => {
@@ -1497,6 +2189,27 @@ router.get('/test-preview', (req, res) => {
     res.send(html);
   } catch (err) {
     res.status(500).send('Error: ' + err.message);
+  }
+});
+
+// ── GET /quiz/transliterate — server-side proxy for Google Input Tools ─────
+// The quiz HTML used to call inputtools.google.com directly from the browser,
+// which fails CORS in the student iframe — so Telugu/Hindi typing silently
+// broke. Proxying through our server removes the browser CORS problem.
+// NOTE: must be declared BEFORE router.get('/:id') or ':id' swallows it.
+router.get('/transliterate', async (req, res) => {
+  try {
+    const text = String(req.query.text || '').slice(0, 60);
+    const lang = /^[a-z]{2}$/.test(String(req.query.lang)) ? req.query.lang : 'te';
+    if (!text) return res.json({ suggestions: [] });
+    const url = 'https://inputtools.google.com/request?text=' + encodeURIComponent(text)
+      + '&itc=transliteration_en_' + lang + '&num=5&cp=0&cs=1&ie=utf-8&oe=utf-8';
+    const r = await fetch(url);
+    const data = await r.json();
+    const suggestions = (data && data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1]) ? data[1][0][1] : [];
+    res.json({ suggestions });
+  } catch (err) {
+    res.json({ suggestions: [] });
   }
 });
 
@@ -1875,6 +2588,54 @@ function autoDetectMCQ(quiz) {
   }
 }
 
+// ── Normalize "match the following" tasks → per-item MCQ with shared word bank ──
+// Worksheets like "Match the correct word to the pictures" arrive as one question
+// per picture with a free-text answer (the word to match). Typing the word defeats
+// the point of a matching task, so pool every answer in the task into a word bank
+// and render each item as options to pick from.
+function normalizeMatchingTasks(quiz) {
+  (quiz.tasks || []).forEach((task, ti) => {
+    const qs = task.questions || [];
+    if (qs.length < 2) return;
+    const taskText = `${task.title || ''} ${task.description || ''} ${task.instructions || ''}`;
+    const looksMatching = /\bmatch(ing)?\b/i.test(taskText) || /జతపరచ/.test(taskText)
+      || qs.filter(q => /^match\b/i.test(q.question || '')).length >= 2;
+    if (!looksMatching) return;
+
+    // Word bank = every answer in the task (a matching column is one shared pool)
+    const bank = [...new Set(qs.map(q => String(q.answer ?? '').trim()).filter(Boolean))];
+    if (bank.length < 2) return;
+
+    let matched = 0;
+    qs.forEach((q, qi) => {
+      if (q.type === 'venn' || q.type === 'activity') return;
+      // Genuine MCQ with a flagged correct option — leave untouched
+      if (q.type === 'mcq' && Array.isArray(q.options) && q.options.some(o => o && o.correct)) { matched++; return; }
+      const ans = String(q.answer ?? '').trim();
+      if (!ans || !bank.includes(ans)) return;
+      matched++;
+      // Deterministic seeded shuffle: stable across re-renders, but the correct
+      // word's position varies per question (bank is in question order, so a
+      // plain rotation would park every correct answer in slot A)
+      const shuffled = bank.slice();
+      let s = ((ti + 1) * 2654435761 + (qi + 1) * 40503) >>> 0;
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        const j = s % (i + 1);
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      q.type = 'mcq';
+      q.options = shuffled.map(label => ({ label, correct: label === ans }));
+    });
+    if (matched >= 2) {
+      // Flags consumed by renderQuizHTML to draw the drag & drop matching UI
+      task._matchTask = true;
+      task._wordBank = bank;
+    }
+    console.log(`[match-detect] Task ${ti + 1} "${String(task.title || '').slice(0, 50)}" → matching (${bank.length}-word bank, ${matched} items)`);
+  });
+}
+
 // ── Post-process quiz: build SVGs from shapeData ──────────────────────────
 function buildQuizDiagrams(quiz) {
   for (const task of (quiz.tasks || [])) {
@@ -2173,14 +2934,310 @@ Return ONLY valid JSON, no markdown fences.`;
     { text: prompt },
   ];
 
-  const result = await model.generateContent(parts);
+  const result = await geminiRetry(() => model.generateContent(parts));
   let text = result.response.text().trim();
   // Strip markdown fences if present
   text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
   return JSON.parse(text);
 }
 
+// ── Venn helpers ────────────────────────────────────────────────────────────
+// Split a free-text list ("Protein, Healthy Fats and Vitamin E") into clean items.
+function splitVennItems(s) {
+  return String(s || '')
+    .replace(/\band\b/gi, ',')
+    .split(/[,;\n]/)
+    .map(x => x.replace(/^[\s.\-•*]+|[\s.\-•*]+$/g, '').trim())
+    .filter(x => x && x.length <= 40 && !/^\d+$/.test(x));
+}
+
+// Normalize any task that contains a Venn diagram into ONE structured `venn` question.
+// Handles both the new structured schema (q.answers) and older/plain outputs where the
+// LLM flattened the Venn into a single text box (parses regions from the solution text).
+function normalizeVennQuestions(quiz) {
+  for (const task of (quiz.tasks || [])) {
+    const qs = task.questions || [];
+    const explicit = qs.find(q => q.type === 'venn');
+    const blob = [task.title, task.sharedImageDescription, ...qs.map(q => q.question || '')].join(' ');
+    const isVenn = !!explicit || /venn\s*diagram|overlapping circles/i.test(blob);
+    if (!isVenn) continue;
+
+    const src = explicit || qs[0] || {};
+
+    // ── Labels for the two circles ──
+    let leftLabel = src.leftLabel, rightLabel = src.rightLabel;
+    if (!leftLabel || !rightLabel) {
+      // Prefer quoted labels ("...labeled 'Almond' and 'Spinach'"); fall back to unquoted words.
+      let m = blob.match(/['"]([A-Za-z][\w ]{0,18}?)['"]\s*(?:and|,|&)\s*['"]([A-Za-z][\w ]{0,18}?)['"]/)
+           || (task.title || '').match(/between\s+(?:adding\s+)?([A-Za-z]+)\s+(?:or|and)\s+([A-Za-z]+)/i)
+           || blob.match(/compare\s+(?:the\s+[\w ]+?\s+in\s+)?([A-Za-z]+)\s+and\s+([A-Za-z]+)/i);
+      if (m) { leftLabel = leftLabel || m[1].trim(); rightLabel = rightLabel || m[2].trim(); }
+    }
+    leftLabel = leftLabel || 'Group A';
+    rightLabel = rightLabel || 'Group B';
+
+    // ── Answers for the three regions ──
+    let answers = src.answers;
+    const hasAns = answers && (answers.left?.length || answers.center?.length || answers.right?.length);
+    if (!hasAns) {
+      const sol = qs.map(q => q.solution || '').join('  ') + '  ' + blob;
+      const lBase = leftLabel.replace(/s$/i, '');
+      const rBase = rightLabel.replace(/s$/i, '');
+      const grab = (re) => { const m = sol.match(re); return m ? splitVennItems(m[1]) : []; };
+      const center = grab(/(?:common|both|shared|overlap(?:ping)?)[^:]*:\s*([^.\n]+)/i);
+      const left = grab(new RegExp('(?:unique to (?:the\\s+)?' + lBase + 's?|' + lBase + 's?\\s*only)[^:]*:\\s*([^.\\n]+)', 'i'));
+      const right = grab(new RegExp('(?:unique to (?:the\\s+)?' + rBase + 's?|' + rBase + 's?\\s*only)[^:]*:\\s*([^.\\n]+)', 'i'));
+      answers = { left, center, right };
+    }
+
+    const vennQ = {
+      id: src.id || '1',
+      type: 'venn',
+      question: src.question || `Complete the Venn diagram to compare ${leftLabel} and ${rightLabel}.`,
+      leftLabel, rightLabel,
+      answers: { left: answers.left || [], center: answers.center || [], right: answers.right || [] },
+      hint: src.hint || 'Items shared by BOTH go in the overlapping middle; unique items go in their own circle.',
+      solution: src.solution || `${leftLabel} only: ${(answers.left || []).join(', ')}. Both: ${(answers.center || []).join(', ')}. ${rightLabel} only: ${(answers.right || []).join(', ')}.`,
+    };
+
+    // Replace the task's questions with the single structured Venn, force single-column,
+    // and drop the stray "blank Venn diagram" description note.
+    task.questions = [vennQ];
+    task.layout = { type: 'single-column', columns: 1 };
+    task.sharedImage = false;
+    delete task.sharedImageDescription;
+  }
+}
+
+// ── Riddle/word-bank table helper ────────────────────────────────────────────
+// The original worksheet is a No. | Riddle | Answer table (each row a one-line
+// clue, answer picked from a word bank above). If the LLM split that into a
+// stack of separate question cards, rebuild it as a real table (task.table) so
+// the render matches the source layout: numbered rows, riddle text, and a
+// single input box per row — instead of one big card per riddle.
+function normalizeRiddleTables(quiz) {
+  for (const task of (quiz.tasks || [])) {
+    if (task.table && Array.isArray(task.table.rows) && task.table.rows.length) continue;
+    if (Array.isArray(task.tables) && task.tables.length) continue;
+    const qs = task.questions || [];
+    if (qs.length < 3) continue;
+
+    const blob = [task.title, task.passage, task.sharedImageDescription].join(' ').toLowerCase();
+    const looksLikeRiddleSet = /riddle|word bank/i.test(blob);
+    const iAmCount = qs.filter(q => /^i\s+am\b/i.test(String(q.question || '').trim())).length;
+    const shortTextAnswers = qs.filter(q => q.type !== 'numeric' && String(q.answer || '').trim().split(/\s+/).length <= 4).length;
+    if (!(looksLikeRiddleSet || iAmCount >= Math.ceil(qs.length * 0.6))) continue;
+    if (shortTextAnswers < qs.length) continue; // every row must be a short pick-the-word answer
+
+    task.table = {
+      headers: ['No.', 'Riddle', 'Answer'],
+      rows: qs.map((q, i) => [
+        { text: q.id || String(i + 1) },
+        { text: (q.question || '').replace(/\*\*(.+?)\*\*/g, '$1') },
+        { input: true, answer: q.answer, _qtype: 'text' },
+      ]),
+    };
+    task.questions = [];
+    task._tableFromQuestions = true;
+  }
+}
+
+// ── Letter-grid table helper ─────────────────────────────────────────────────
+// The source worksheet shows a row of given letters with ONE blank row beneath
+// (add a vowel-sign/dheergham to each letter and write it). The LLM sometimes
+// explodes this into a stack of near-identical "Add 'X' to 'Y' and write."
+// questions (one per letter) instead of the single table it visually is. Detect
+// that repeated phrasing regardless of exact wording and collapse it back into
+// a table (or several, chunked to match the source's per-row grouping), the
+// same way normalizeRiddleTables does for riddle sets.
+function normalizeLetterGridTables(quiz) {
+  const ADD_PATTERN = /^add\s+['"‘’“”]?(.+?)['"‘’“”]?\s+to\s+['"‘’“”]?(.+?)['"‘’“”]?\s+and\s+write\.?$/i;
+  for (const task of (quiz.tasks || [])) {
+    if (task.table && Array.isArray(task.table.rows) && task.table.rows.length) continue;
+    if (Array.isArray(task.tables) && task.tables.length) continue;
+    const qs = task.questions || [];
+    if (qs.length < 5) continue;
+
+    const parsed = qs.map(q => {
+      const m = String(q.question || '').trim().match(ADD_PATTERN);
+      return m ? { mark: m[1].trim(), letter: m[2].trim(), answer: q.answer } : null;
+    });
+    if (parsed.some(p => !p)) continue; // every question must match the pattern
+    const marks = new Set(parsed.map(p => p.mark));
+    if (marks.size > 1) continue; // should be the same symbol added throughout
+
+    const mark = parsed[0].mark;
+    const CHUNK = 10; // mirrors the ~10 letters-per-row grouping in the source worksheet
+    const tables = [];
+    for (let i = 0; i < parsed.length; i += CHUNK) {
+      const chunk = parsed.slice(i, i + CHUNK);
+      tables.push({
+        headers: ['Letter', ...chunk.map(c => c.letter)],
+        rows: [[
+          { text: mark },
+          ...chunk.map(c => ({ input: true, answer: c.answer, _qtype: 'text' })),
+        ]],
+      });
+    }
+    task.tables = tables;
+    task.questions = [];
+    task._tableFromQuestions = true;
+  }
+}
+
+// ── Table helpers ────────────────────────────────────────────────────────────
+// Rebuild task.table from questions the LLM split apart, e.g.
+// "Complete the Tally marks for Chutney", "Complete the Frequency for Chutney", ...
+function normalizeTables(quiz) {
+  for (const task of (quiz.tasks || [])) {
+    if (Array.isArray(task.tables) && task.tables.length) continue;
+    if (task.table && Array.isArray(task.table.rows) && task.table.rows.length) continue;
+    const qs = task.questions || [];
+    if (qs.length < 2) continue;
+
+    const parsed = [];
+    for (const q of qs) {
+      const m = String(q.question || '').match(/complete\s+the\s+(.+?)\s+for\s+(.+?)[:.\s]*$/i);
+      if (m) parsed.push({ col: m[1].trim(), row: m[2].trim(), answer: q.answer, type: q.type });
+    }
+    // Need at least 2 columns × 2 rows worth of grid signal
+    if (parsed.length < 3) continue;
+
+    const cols = [];
+    const rows = [];
+    for (const p of parsed) {
+      if (!cols.includes(p.col)) cols.push(p.col);
+      if (!rows.includes(p.row)) rows.push(p.row);
+    }
+    if (cols.length < 1 || rows.length < 2) continue;
+
+    const blob = [task.title, task.passage, task.sharedImageDescription].join(' ');
+    const hdrMatch = blob.match(/(favourite[\w ]*|item|name|word|category)[^\n.:]{0,20}/i);
+    const firstHeader = hdrMatch ? hdrMatch[0].trim() : 'Item';
+
+    const find = (col, row) => parsed.find(p => p.col === col && p.row === row);
+    task.table = {
+      headers: [firstHeader, ...cols],
+      rows: rows.map(r => [
+        { text: r },
+        ...cols.map(c => {
+          const p = find(c, r);
+          return { input: true, answer: p ? p.answer : '', _qtype: (p && p.type) || 'text' };
+        }),
+      ]),
+    };
+    task._tableFromQuestions = true;
+  }
+}
+
+// ── Bar-graph helpers ───────────────────────────────────────────────────────
+// Build task.chart from a text description when the LLM didn't emit structured bars.
+function normalizeCharts(quiz) {
+  for (const task of (quiz.tasks || [])) {
+    if (task.chart && Array.isArray(task.chart.bars) && task.chart.bars.length) continue;
+    const blob = [task.title, task.sharedImageDescription, ...(task.questions || []).map(q => q.question || '')].join('  ');
+    if (!/bar\s*graph|column\s*chart|bar\s*chart/i.test(blob)) continue;
+
+    // Parse "football has 16 votes, tennis has 8, ..." → bars
+    const bars = [];
+    const re = /([A-Za-z][A-Za-z ]{1,24}?)\s+(?:has|=|:|scored|got)\s+(\d+)/gi;
+    let m;
+    while ((m = re.exec(blob)) !== null) {
+      const label = m[1].trim().replace(/^(and|the)\s+/i, '');
+      const value = parseInt(m[2], 10);
+      if (label && !isNaN(value) && label.length <= 24) bars.push({ label, value });
+    }
+    if (bars.length < 2) continue;
+
+    const yMaxMatch = blob.match(/(?:from\s*0\s*to|0\s*(?:to|-|–)\s*)(\d+)/i);
+    const maxVal = Math.max(...bars.map(b => b.value));
+    const yMax = yMaxMatch ? parseInt(yMaxMatch[1], 10) : Math.ceil(maxVal / 2) * 2;
+    const titleMatch = blob.match(/titled\s*['"]([^'"]+)['"]/i) || blob.match(/graph\s+(?:titled\s+)?['"]?([A-Z][\w ]{2,30})['"]?/);
+    task.chart = {
+      type: 'bar',
+      title: titleMatch ? titleMatch[1].trim() : 'Bar Graph',
+      yMax, yStep: yMax >= 20 ? 2 : Math.max(1, Math.round(yMax / 10)),
+      bars,
+    };
+    task.sharedImage = false;
+    delete task.sharedImageDescription;
+  }
+}
+
+// Render a structured bar chart as inline SVG (no external image needed).
+function renderBarChart(chart) {
+  const bars = chart.bars || [];
+  if (!bars.length) return '';
+  const yMax = chart.yMax || Math.max(...bars.map(b => b.value));
+  const yStep = chart.yStep || Math.max(1, Math.round(yMax / 10));
+  const W = 640, H = 360, padL = 48, padR = 20, padT = 30, padB = 54;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const bw = plotW / bars.length;
+  const barW = Math.min(64, bw * 0.6);
+  const y = v => padT + plotH - (v / yMax) * plotH;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:640px;height:auto;background:rgba(255,255,255,0.03);border-radius:10px;">`;
+  // gridlines + y labels
+  for (let v = 0; v <= yMax; v += yStep) {
+    const yy = y(v);
+    svg += `<line x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}" stroke="rgba(195,220,216,0.18)" stroke-width="1"></line>`;
+    svg += `<text x="${padL - 8}" y="${yy + 4}" text-anchor="end" fill="#A8B5B3" font-size="11" font-family="Arial">${v}</text>`;
+  }
+  // axes
+  svg += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="#93B0AC" stroke-width="1.5"></line>`;
+  svg += `<line x1="${padL}" y1="${padT + plotH}" x2="${W - padR}" y2="${padT + plotH}" stroke="#93B0AC" stroke-width="1.5"></line>`;
+  // bars
+  const palette = ['#93B0AC', '#C5BD96', '#D4A898', '#7AADA8', '#EFD1D4', '#C3DCD8'];
+  bars.forEach((b, i) => {
+    const cx = padL + bw * i + bw / 2;
+    const x = cx - barW / 2;
+    const yy = y(b.value);
+    const h = padT + plotH - yy;
+    svg += `<rect x="${x}" y="${yy}" width="${barW}" height="${h}" rx="4" fill="${palette[i % palette.length]}"></rect>`;
+    svg += `<text x="${cx}" y="${yy - 6}" text-anchor="middle" fill="#F0EEEC" font-size="12" font-weight="700" font-family="Arial">${b.value}</text>`;
+    svg += `<text x="${cx}" y="${padT + plotH + 18}" text-anchor="middle" fill="#D8E8E6" font-size="11" font-family="Arial">${String(b.label).slice(0, 12)}</text>`;
+  });
+  if (chart.yLabel) svg += `<text x="14" y="${padT + plotH / 2}" transform="rotate(-90 14 ${padT + plotH / 2})" text-anchor="middle" fill="#A8B5B3" font-size="11" font-family="Arial">${chart.yLabel}</text>`;
+  if (chart.xLabel) svg += `<text x="${padL + plotW / 2}" y="${H - 6}" text-anchor="middle" fill="#A8B5B3" font-size="11" font-family="Arial">${chart.xLabel}</text>`;
+  svg += `</svg>`;
+
+  return `<div style="text-align:center;margin:4px 0 18px;">
+    ${chart.title ? `<div style="font-size:14px;font-weight:700;color:#C3DCD8;margin-bottom:8px;">${chart.title}</div>` : ''}
+    ${svg}
+  </div>`;
+}
+
+// When a task is rendered structurally (chart / table / venn), drop any cropped
+// worksheet images for that task so we don't show the same visual twice.
+function stripImagesForStructuredTasks(quiz) {
+  for (const task of (quiz.tasks || [])) {
+    const hasChart = task.chart && Array.isArray(task.chart.bars) && task.chart.bars.length;
+    const hasTable = (task.table && Array.isArray(task.table.rows) && task.table.rows.length)
+      || (Array.isArray(task.tables) && task.tables.some(t => Array.isArray(t.rows) && t.rows.length));
+    const hasVenn = (task.questions || []).some(q => q.type === 'venn');
+    const hasDiagramFill = task.diagramFillBlanks && task.diagramFillBlanks.length;
+    if (!hasChart && !hasTable && !hasVenn) continue;
+    if (hasDiagramFill) continue; // diagram-fill owns its own image (task.diagramFillImageUrl) — leave it alone
+    task.sharedImage = false;
+    delete task.sharedImageDescription;
+    delete task.pageImageUrl;
+    for (const q of (task.questions || [])) {
+      q.hasImage = false;
+      delete q.imageUrl;
+      delete q.diagramDescription;
+      q._sharedImage = false;
+    }
+  }
+}
+
 function renderQuizHTML(quiz) {
+  normalizeVennQuestions(quiz);
+  normalizeCharts(quiz);
+  normalizeRiddleTables(quiz);
+  normalizeLetterGridTables(quiz);
+  normalizeTables(quiz);
+  normalizeMatchingTasks(quiz);
+  stripImagesForStructuredTasks(quiz);
   // Helper: convert relative image URL to base64 data URI so HTML works standalone
   const serverRoot = path.resolve(__dirname, '..');
   function embedImage(relUrl) {
@@ -2298,6 +3355,10 @@ function renderQuizHTML(quiz) {
     if (uLower.includes('km') && uLower.includes('m')) return 'Distance =';
     // Open-ended / language questions — no label
     if (/\b(write|describe|explain|identify|correct|find the error|use.*word|sentence|passage|paragraph)\b/i.test(qLower)) return null;
+    // Non-numeric answers (riddles, word-bank picks, vocabulary) aren't a math equation —
+    // "=" reads oddly for a word answer, so use a plain colon label instead.
+    const isNumericAnswer = /^-?\d+(\.\d+)?$/.test(String(q.answer || '').trim());
+    if (q.type !== 'numeric' && !isNumericAnswer) return 'Answer:';
     return 'Answer =';
   }
 
@@ -2346,6 +3407,10 @@ function renderQuizHTML(quiz) {
   function registerQuestion(q) {
     qNum++;
     const qId = `q${qNum}`;
+    if (q.type === 'venn') {
+      answersMap[qId] = { venn: true, answers: q.answers || { left: [], center: [], right: [] } };
+      return qId;
+    }
     const ansRaw = q.answer;
     const isActivity = q.type === 'activity' || (q.type === 'text' && /\b(draw|sketch|create|construct|design|colour|color|paste|cut)\b/i.test(q.question));
     const isFraction = typeof ansRaw === 'string' && /^\d+\/\d+$/.test(ansRaw);
@@ -2365,8 +3430,182 @@ function renderQuizHTML(quiz) {
     return qId;
   }
 
+  // ── Helper: render a number pyramid as clean CSS boxes (redrawn, not the scanned image) ──
+  function renderPyramid(pyramid) {
+    const rows = pyramid.rows || [];
+    const solved = pyramid.solved || rows;
+    const BOX = 64, GAP = 4;
+    let inner = '';
+    const nRows = rows.length;
+    rows.forEach((row, r) => {
+      const rowW = row.length * BOX + (row.length - 1) * GAP;
+      const totalW = nRows * BOX + (nRows - 1) * GAP;
+      const rowLeft = (totalW - rowW) / 2;
+      const top = r * BOX;
+      row.forEach((cell, c) => {
+        const left = rowLeft + c * (BOX + GAP);
+        const given = cell !== null && cell !== undefined && String(cell).trim() !== '';
+        const trueVal = (solved[r] && solved[r][c] !== undefined) ? solved[r][c] : cell;
+        if (given) {
+          inner += `<div style="position:absolute;left:${left}px;top:${top}px;width:${BOX}px;height:${BOX}px;border:1.5px solid rgba(195,220,216,0.4);border-radius:6px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#F0EEEC;box-sizing:border-box;">${fmt(String(cell))}</div>`;
+        } else {
+          const qId = registerQuestion({ type: 'numeric', answer: trueVal });
+          inner += `<input type="text" id="${qId}-input" class="q-input"${inputLangAttr} placeholder="?"
+            style="position:absolute;left:${left}px;top:${top}px;width:${BOX}px;height:${BOX}px;
+            border:1.5px dashed rgba(195,220,216,0.5);border-radius:6px;background:rgba(255,255,255,0.06);
+            color:#F0EEEC;font-size:14px;font-weight:700;text-align:center;box-sizing:border-box;font-family:inherit;">`;
+        }
+      });
+    });
+    const totalW = nRows * BOX + (nRows - 1) * GAP;
+    const totalH = nRows * BOX;
+    return `<div style="display:inline-block;text-align:left;margin:6px 22px 18px 0;vertical-align:top;">
+      ${pyramid.label ? `<div style="font-size:14px;font-weight:700;color:#C3DCD8;margin-bottom:6px;">${fmt(pyramid.label)}</div>` : ''}
+      <div style="position:relative;width:${totalW}px;height:${totalH}px;">${inner}</div>
+    </div>`;
+  }
+
+  // ── Helper: wrap a diagram render (pyramid/diagramFill/etc.) in the same bordered
+  // dark "q-card" look used by the Venn diagram, so every diagram task feels consistent. ──
+  function renderDiagramCard({ label, instructions, innerHtml, checkIds, groupResultId }) {
+    return `<div class="q-card">
+      ${label ? `<p class="q-text"><strong>${fmt(label)}</strong></p>` : ''}
+      ${instructions ? `<p style="font-size:12px;color:#A8B5B3;margin:2px 0 12px;">${fmt(instructions)}</p>` : ''}
+      ${innerHtml}
+      ${checkIds && checkIds.length ? `<div class="q-actions" style="display:flex;gap:10px;align-items:center;margin-top:12px;">
+        <button class="btn-check" onclick="checkGroup(${JSON.stringify(checkIds).replace(/"/g, '&quot;')})">Check all</button>
+        <span id="${groupResultId}" style="font-size:13px;"></span>
+      </div>` : ''}
+    </div>`;
+  }
+
+  // ── Helper: render a fill-in table (registers each blank cell for scoring) ──
+  function renderTaskTable(table) {
+    const ids = [];
+    let h = '<div class="ws-table-wrap" style="overflow-x:auto;margin:8px 0 14px;">';
+    if (table.title) h += `<div style="font-weight:700;color:#C3DCD8;margin-bottom:8px;">${fmt(String(table.title))}</div>`;
+    h += '<table style="width:100%;border-collapse:collapse;">';
+    if (Array.isArray(table.headers) && table.headers.length) {
+      h += '<tr>' + table.headers.map(x =>
+        `<th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">${fmt(String(x))}</th>`
+      ).join('') + '</tr>';
+    }
+    for (const row of (table.rows || [])) {
+      h += '<tr>';
+      for (const cell of (row || [])) {
+        if (cell && cell.input) {
+          const isNumAns = /^\d+(\.\d+)?$/.test(String(cell.answer || '').trim());
+          const qId = registerQuestion({ type: cell._qtype || (isNumAns ? 'numeric' : 'text'), answer: cell.answer });
+          ids.push(qId);
+          h += `<td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;">`
+            + `<input type="text" id="${qId}-input" class="q-input"${inputLangAttr} style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td>`;
+        } else {
+          h += `<td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">${fmt(String((cell && cell.text) || ''))}</td>`;
+        }
+      }
+      h += '</tr>';
+    }
+    h += '</table>';
+    if (ids.length) {
+      h += `<div style="margin-top:12px;display:flex;gap:10px;align-items:center;">`
+        + `<button class="btn-check" onclick="checkTable(${JSON.stringify(ids).replace(/"/g, "&quot;")})">Check table</button>`
+        + `<span id="${ids[0]}-tableresult" style="font-size:13px;"></span></div>`;
+    }
+    h += '</div>';
+    return h;
+  }
+
+  // ── Helper: render a match-the-following task as drag & drop (word chips → picture slots) ──
+  function renderMatchingTask(task) {
+    const questions = task.questions || [];
+    const matchQs = questions.filter(q => q.type === 'mcq' && Array.isArray(q.options) && q.options.length >= 2);
+    const rest = questions.filter(q => !matchQs.includes(q));
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+    const qIds = matchQs.map(q => registerQuestion(q));
+    const bankId = `${qIds[0]}-bank`;
+
+    // Bank chips shuffled deterministically so their order never mirrors the picture order
+    const bankWords = (task._wordBank && task._wordBank.length)
+      ? task._wordBank.slice()
+      : [...new Set(matchQs.map(q => String(q.answer ?? '').trim()).filter(Boolean))];
+    let s = (bankWords.length * 2246822519 + qIds.length * 40503) >>> 0;
+    for (let i = bankWords.length - 1; i > 0; i--) {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      const j = s % (i + 1);
+      [bankWords[i], bankWords[j]] = [bankWords[j], bankWords[i]];
+    }
+
+    let h = `<p style="font-size:13px;color:#A8B5B3;margin:0 0 10px;">Drag each word onto its matching picture &mdash; or tap a word, then tap a picture&rsquo;s box.</p>`;
+    h += `<div class="match-bank" id="${bankId}">` + bankWords.map(w =>
+      `<span class="match-chip" draggable="true" data-word="${esc(w)}" data-bank="${bankId}" ondragstart="mDragStart(event)" onclick="mChipClick(this)">${fmt(w)}</span>`).join('') + `</div>`;
+
+    h += `<div class="match-grid">`;
+    matchQs.forEach((q, i) => {
+      const qId = qIds[i];
+      h += `<div class="match-card" id="${qId}-card">`;
+      if (q.id) h += `<div class="match-card-label">${esc(q.id)})</div>`;
+      if (q.imageUrl) {
+        h += `<div class="match-img"><img src="${embedImage(q.imageUrl)}" alt="${esc(q.diagramDescription || 'Picture to match')}"></div>`;
+      } else {
+        // No cropped picture — fall back to the question text as the thing to match
+        h += `<div class="match-img match-img-text">${fmt(q.question || '')}</div>`;
+      }
+      h += `<div class="match-slot" id="${qId}-slot" ondragover="event.preventDefault()" ondrop="mDrop(event,'${qId}-slot')" onclick="mSlotClick(this)"><span class="match-slot-ph">Drop word here</span></div>`;
+      h += `<div id="${qId}-result" class="lang-result"></div>`;
+      h += `<div id="${qId}-solution" class="solution-box" style="display:none;font-size:12px;"><strong>&#9989;</strong> ${fmt(String(q.answer ?? ''))}</div>`;
+      h += `<button id="${qId}-show" class="btn-show" style="display:none;font-size:11px;" onclick="toggleSolution('${qId}')">Show Answer</button>`;
+      h += `</div>`;
+    });
+    h += `</div>`;
+
+    h += `<div style="display:flex;gap:10px;align-items:center;margin-top:14px;">
+      <button class="btn-check" onclick="checkMatches(${JSON.stringify(qIds).replace(/"/g, '&quot;')})">Check matches</button>
+      <span id="${qIds[0]}-matchresult" style="font-size:13px;"></span>
+    </div>`;
+
+    // Any non-matching questions in the same task render normally below
+    for (const q of rest) {
+      const qId = registerQuestion(q);
+      h += renderQuestionCell(q, qId, false);
+    }
+    return h;
+  }
+
   // ── Helper: render a single question cell (for table or card layout) ──
   function renderQuestionCell(q, qId, isTableCell = false) {
+    // ── VENN DIAGRAM: interactive two-circle diagram with three fillable regions ──
+    if (q.type === 'venn') {
+      const leftLabel = q.leftLabel || 'Group A';
+      const rightLabel = q.rightLabel || 'Group B';
+      const baseTaStyle = 'position:absolute;box-sizing:border-box;resize:none;border:1.5px dashed rgba(195,220,216,0.5);border-radius:8px;background:rgba(255,255,255,0.06);color:#F0EEEC;font-size:13px;font-family:inherit;padding:6px 8px;text-align:center;';
+      const ta = (rid, ph, pos) =>
+        `<textarea id="${qId}-${rid}" class="venn-input" placeholder="${ph}" style="${baseTaStyle}${pos}"></textarea>`;
+      const solutionText = (q.solution || '').replace(/\. /g, '.<br>');
+      return `<div class="q-card" id="${qId}-card">
+        <p class="q-text"><strong>${q.id ? q.id + ')' : 'Q' + qNum + '.'}</strong> ${fmtQuestion(q.question)}</p>
+        <p style="font-size:12px;color:#A8B5B3;margin:2px 0 0;">Type items separated by commas — shared items go in the middle.</p>
+        <div class="venn-wrap" style="position:relative;width:100%;max-width:580px;height:340px;margin:12px auto 8px;">
+          <svg viewBox="0 0 580 340" style="position:absolute;inset:0;width:100%;height:100%;">
+            <ellipse cx="210" cy="185" rx="165" ry="140" fill="rgba(147,176,172,0.12)" stroke="#93B0AC" stroke-width="2.5"></ellipse>
+            <ellipse cx="370" cy="185" rx="165" ry="140" fill="rgba(197,189,150,0.12)" stroke="#C5BD96" stroke-width="2.5"></ellipse>
+            <text x="150" y="34" text-anchor="middle" fill="#93B0AC" font-size="17" font-weight="700" font-family="Arial">${leftLabel}</text>
+            <text x="430" y="34" text-anchor="middle" fill="#C5BD96" font-size="17" font-weight="700" font-family="Arial">${rightLabel}</text>
+          </svg>
+          ${ta('left', leftLabel + ' only', 'left:2%;top:34%;width:26%;height:120px;')}
+          ${ta('center', 'Both', 'left:38%;top:40%;width:24%;height:110px;')}
+          ${ta('right', rightLabel + ' only', 'right:2%;top:34%;width:26%;height:120px;')}
+        </div>
+        <div class="q-actions" style="display:flex;gap:10px;margin-top:10px;">
+          <button class="btn-check" onclick="checkVenn('${qId}')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('${qId}')">Hint</button>
+        </div>
+        <div id="${qId}-hint" class="hint-box" style="display:none">${fmt(q.hint || '')}</div>
+        <div id="${qId}-result" class="result-box"></div>
+        <div id="${qId}-solution" class="solution-box" style="display:none"><strong>&#9989; Solution</strong><br>${fmt(solutionText)}</div>
+        <button id="${qId}-show" class="btn-show" style="display:none" onclick="toggleSolution('${qId}')">Show Answer</button>
+      </div>`;
+    }
     const qLabel = q.id && /^[a-z0-9]/i.test(q.id) && q.id.length <= 3 ? `${q.id})` : `Q${qNum}.`;
     const skipUnits = ['comparison', 'symbol', 'n/a', 'none', 'fraction', 'text', 'yes/no', 'explanation', 'activity'];
     const displayUnit = q.unit && !skipUnits.includes((q.unit || '').toLowerCase()) ? q.unit : '';
@@ -2415,6 +3654,14 @@ function renderQuizHTML(quiz) {
       html += `<span class="lang-q-num">(${q.id || qNum})</span>`;
       html += `<span class="lang-q-text">${fmtQuestion(q.question)}</span>`;
       html += `</div>`;
+
+      // This branch never rendered q.imageUrl at all — a picture-matching language
+      // task (e.g. "match the picture to the Telugu word") would silently drop its
+      // image even though it was correctly attached to the question data. The
+      // math/science branch below already does this; language worksheets need it too.
+      if (q.imageUrl && !q._sharedImage) {
+        html += `<div class="q-image" style="margin:6px 0 10px 38px;text-align:left"><img src="${embedImage(q.imageUrl)}" alt="${q.diagramDescription || 'Worksheet picture'}" style="max-width:200px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:6px;"></div>`;
+      }
 
       if (q.example) {
         html += `<div class="lang-example">${fmt(q.example)}</div>`;
@@ -2532,9 +3779,64 @@ function renderQuizHTML(quiz) {
       <h2 style="font-size:18px;color:${s.label};margin:6px 0 18px;font-weight:700;">${taskTitle}</h2>
       ${task.passage ? `<div style="margin:0 0 20px;padding:16px 20px;background:rgba(255,255,255,0.04);border:1px solid rgba(195,220,216,0.2);border-radius:10px;font-size:14px;color:#D8E8E6;line-height:1.8;">${fmt(task.passage)}</div>` : ''}`;
 
+    // ── MATCH-THE-FOLLOWING: drag & drop words onto pictures (replaces per-question rendering) ──
+    if (task._matchTask) {
+      tasksHTML += renderMatchingTask(task);
+      tasksHTML += `</div>`;
+      continue;
+    }
+
+    // ── BAR GRAPH / CHART: render structured chart as inline SVG (all questions refer to it) ──
+    if (task.chart && Array.isArray(task.chart.bars) && task.chart.bars.length) {
+      tasksHTML += renderBarChart(task.chart);
+    }
+
+    // ── NUMBER PYRAMIDS: redrawn as clean CSS boxes (not the scanned image), wrapped in
+    //    the same bordered q-card look as the Venn diagram for visual consistency. ──
+    if (Array.isArray(task.pyramids) && task.pyramids.length) {
+      const pyramidQIdsBefore = qNum;
+      const pyramidsHtml = task.pyramids.map(p => renderPyramid(p)).join('');
+      const pyramidIds = [];
+      for (let i = pyramidQIdsBefore + 1; i <= qNum; i++) pyramidIds.push(`q${i}`);
+      tasksHTML += renderDiagramCard({
+        instructions: 'Fill in each blank so every pair of adjacent blocks sums to the block above it.',
+        innerHtml: `<div>${pyramidsHtml}</div>`,
+        checkIds: pyramidIds,
+        groupResultId: pyramidIds[0] ? `${pyramidIds[0]}-groupresult` : ''
+      });
+    }
+
+    // ── DIAGRAM-FILL OVERLAY: worksheet image + input fields placed directly on each
+    //    detected blank (pyramid blocks, clock cells, number-line ticks, labeled figures —
+    //    ANY diagram, without a bespoke renderer per shape). The image never changes; only
+    //    the inputs are positioned by percentage, so it's responsive. ──
+    if (task.diagramFillBlanks && task.diagramFillBlanks.length && task.diagramFillImageUrl) {
+      const dfIds = task.diagramFillBlanks.map(b => registerQuestion({ type: /^-?\d+(\.\d+)?$/.test(String(b.answer).trim()) ? 'numeric' : 'text', answer: b.answer }));
+      const inputsHtml = task.diagramFillBlanks.map((b, i) => {
+        const left = (b.x * 100).toFixed(2), top = (b.y * 100).toFixed(2);
+        const w = (b.w * 100).toFixed(2), h = (b.h * 100).toFixed(2);
+        return `<input type="text" id="${dfIds[i]}-input" class="q-input df-input"${inputLangAttr}
+          style="position:absolute;left:${left}%;top:${top}%;width:${w}%;height:${h}%;box-sizing:border-box;
+          padding:2px 4px;font-size:13px;text-align:center;border:1.5px dashed rgba(195,220,216,0.5);
+          border-radius:6px;background:rgba(28,28,28,0.82);color:#F0EEEC;font-weight:700;font-family:inherit;">`;
+      }).join('');
+      tasksHTML += renderDiagramCard({
+        instructions: 'Write your answers directly on the diagram below.',
+        innerHtml: `<div class="diagram-fill-wrap" style="position:relative;display:inline-block;max-width:100%;background:#fff;border-radius:8px;border:1px solid rgba(195,220,216,0.2);padding:10px;">
+          <img src="${embedImage(task.diagramFillImageUrl)}" alt="${task.sharedImageDescription || 'Worksheet diagram'}" style="display:block;max-width:100%;height:auto;border-radius:4px;">
+          ${inputsHtml}
+        </div>`,
+        checkIds: dfIds,
+        groupResultId: dfIds[0] ? `${dfIds[0]}-groupresult` : ''
+      });
+    } else
     // ── SHARED IMAGE: show one diagram for the entire task (all questions reference it) ──
     if (task.sharedImage) {
-      const sharedUrl = (questions[0] && questions[0].imageUrl) || task.pageImageUrl;
+      // Only ever show a real cropped diagram (questions[0].imageUrl) — never task.pageImageUrl,
+      // which is the entire scanned worksheet page (other tasks, header info, etc.). Showing the
+      // whole page instead of the specific diagram is confusing and wrong for every worksheet,
+      // not just this one — if no crop was extracted, fall through to the text-description path.
+      const sharedUrl = questions[0] && questions[0].imageUrl;
       if (sharedUrl) {
         tasksHTML += `<div style="text-align:center;margin:0 0 16px;"><img src="${embedImage(sharedUrl)}" alt="${task.sharedImageDescription || 'Worksheet diagram'}" style="max-width:320px;max-height:300px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div>`;
       } else if (task.sharedImageDescription) {
@@ -2630,12 +3932,31 @@ function renderQuizHTML(quiz) {
       }
     }
 
-    // ── PAGE IMAGE FALLBACK: show worksheet page when individual crops are missing ──
+    // ── Missing-crop fallback: never dump the raw scanned worksheet page here — it contains
+    // every other task, headers, and unrelated content on that page, not just this diagram.
+    // (This was the exact bug: a question flagged hasImage with no extracted crop was falling
+    // back to task.pageImageUrl, the full page.) Show a plain note instead, for every worksheet.
     const anyQuestionNeedsImage = questions.some(q => q.hasImage && !q.imageUrl);
     if (anyQuestionNeedsImage && task.pageImageUrl) {
-      tasksHTML += `<div style="text-align:center;margin:0 0 16px;"><img src="${embedImage(task.pageImageUrl)}" alt="Worksheet reference" style="max-width:100%;max-height:500px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div>`;
+      tasksHTML += `<div style="margin:0 0 16px;padding:10px 14px;background:rgba(195,220,216,0.06);border:1px dashed rgba(195,220,216,0.25);border-radius:8px;font-size:12px;color:#A8B5B3;">Diagram for this task could not be auto-cropped from the worksheet.</div>`;
     }
 
+    // ── TABLES (one or more per task: data grids + fill-in tally/frequency) ──
+    const taskTables = (Array.isArray(task.tables) && task.tables.length)
+      ? task.tables
+      : (task.table && Array.isArray(task.table.rows) && task.table.rows.length ? [task.table] : []);
+    const hasInputTable = taskTables.some(t => (t.rows || []).some(r => (r || []).some(c => c && c.input)));
+
+    if (taskTables.length) {
+      for (const tbl of taskTables) {
+        if (tbl && Array.isArray(tbl.rows) && tbl.rows.length) tasksHTML += renderTaskTable(tbl);
+      }
+    }
+
+    // If an interactive (input) table represents the questions, skip re-rendering them.
+    if (hasInputTable) {
+      // questions are covered by the fill-in table above
+    } else
     // ── TWO-COLUMN TABLE LAYOUT (matches worksheet) ──
     if (layout.type === 'two-column' && layout.columnGroups && layout.columnGroups.length >= 2) {
       const colGroups = layout.columnGroups;
@@ -2822,6 +4143,26 @@ function renderQuizHTML(quiz) {
                       background: transparent; color: #93B0AC; font-size: 14px; cursor: pointer;
                       display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     .lang-btn-check:hover { background: rgba(147,176,172,0.15); border-color: #93B0AC; }
+    /* Match-the-following drag & drop */
+    .match-bank { display:flex; flex-wrap:wrap; gap:10px; padding:14px; margin:4px 0 18px; background:rgba(147,176,172,0.07);
+      border:1.5px dashed rgba(147,176,172,0.35); border-radius:10px; min-height:52px; }
+    .match-chip { display:inline-block; padding:8px 18px; background:#2A2F2E; color:#F0EEEC; border:1.5px solid rgba(147,176,172,0.5);
+      border-radius:24px; font-size:15px; font-weight:600; cursor:grab; user-select:none; transition:transform .12s, box-shadow .12s, border-color .12s; }
+    .match-chip:hover { transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,0.35); border-color:#93B0AC; }
+    .match-chip.sel { outline:2px solid #C5BD96; background:rgba(197,189,150,0.15); }
+    .match-grid { display:flex; flex-wrap:wrap; gap:16px; }
+    .match-card { flex:1 1 170px; max-width:220px; background:rgba(255,255,255,0.03); border:1px solid rgba(195,220,216,0.18);
+      border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; align-items:center; }
+    .match-card-label { align-self:flex-start; font-size:12px; font-weight:700; color:#93B0AC; }
+    .match-img { background:#fff; border-radius:8px; padding:6px; width:100%; text-align:center; }
+    .match-img img { max-width:100%; max-height:130px; border-radius:4px; }
+    .match-img-text { background:rgba(255,255,255,0.05); color:#F0EEEC; font-size:13px; padding:12px; }
+    .match-slot { width:100%; min-height:46px; border:1.5px dashed rgba(195,220,216,0.45); border-radius:10px; display:flex;
+      align-items:center; justify-content:center; padding:4px; cursor:pointer; transition:border-color .15s, background .15s; }
+    .match-slot-ph { font-size:12px; color:#7c8a88; pointer-events:none; }
+    .match-slot.filled .match-slot-ph { display:none; }
+    .match-slot.m-ok { border-style:solid; border-color:#93B0AC; background:rgba(147,176,172,0.12); }
+    .match-slot.m-bad { border-style:solid; border-color:#EFD1D4; background:rgba(239,209,212,0.08); }
     .lang-btn-hint { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(197,189,150,0.4);
                      background: transparent; color: #C5BD96; font-size: 14px; font-weight: 700; cursor: pointer;
                      display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
@@ -2967,6 +4308,180 @@ function renderQuizHTML(quiz) {
       up();
     }
 
+    // ── Drag & drop matching ──
+    let mDragChip = null, mSelChip = null;
+    function mDragStart(e) {
+      mDragChip = e.target;
+      try { e.dataTransfer.setData('text/plain', e.target.dataset.word); } catch (err) {}
+    }
+    function mDrop(e, slotId) {
+      e.preventDefault();
+      const slot = document.getElementById(slotId);
+      if (mDragChip) mPlace(slot, mDragChip);
+      mDragChip = null;
+    }
+    function mChipClick(chip) {
+      // Chip sitting in a slot → send it back to the bank
+      if (chip.parentElement.classList.contains('match-slot')) { mReturn(chip); return; }
+      if (mSelChip === chip) { chip.classList.remove('sel'); mSelChip = null; return; }
+      if (mSelChip) mSelChip.classList.remove('sel');
+      mSelChip = chip; chip.classList.add('sel');
+    }
+    function mSlotClick(slot) {
+      if (!slot.classList.contains('match-slot')) slot = slot.closest('.match-slot');
+      if (!slot) return;
+      if (mSelChip) { mSelChip.classList.remove('sel'); mPlace(slot, mSelChip); mSelChip = null; }
+    }
+    function mPlace(slot, chip) {
+      if (!slot || !chip) return;
+      const existing = slot.querySelector('.match-chip');
+      if (existing) mReturn(existing);
+      slot.appendChild(chip);
+      slot.classList.add('filled');
+      slot.classList.remove('m-ok', 'm-bad');
+    }
+    function mReturn(chip) {
+      const slot = chip.parentElement;
+      const bank = document.getElementById(chip.dataset.bank);
+      if (bank) bank.appendChild(chip);
+      if (slot && slot.classList) slot.classList.remove('filled', 'm-ok', 'm-bad');
+    }
+    function checkMatches(ids) {
+      let allOk = true, placed = 0;
+      ids.forEach(function(id) {
+        const a = answers[id];
+        const slot = document.getElementById(id + '-slot');
+        const r = document.getElementById(id + '-result');
+        const chip = slot ? slot.querySelector('.match-chip') : null;
+        if (!a || !slot) return;
+        if (!chip) { allOk = false; if (r) r.innerHTML = '<span style="color:#C5BD96;font-size:12px;">Place a word</span>'; return; }
+        placed++;
+        const val = chip.dataset.word;
+        const ok = String(val).replace(/\\s+/g, '').toLowerCase() === String(a.answer).replace(/\\s+/g, '').toLowerCase();
+        studentAnswers[id] = { answer: val, correct: ok, timeSpent: 0, question: '' };
+        if (ok) {
+          slot.classList.add('m-ok'); slot.classList.remove('m-bad');
+          if (r) r.innerHTML = '<span style="color:#93B0AC;font-weight:700;font-size:12px;">&#10004; Correct!</span>';
+          if (!done.has(id)) { sc++; done.add(id); }
+          const sol = document.getElementById(id + '-solution');
+          if (sol) sol.style.display = 'block';
+        } else {
+          allOk = false;
+          slot.classList.add('m-bad'); slot.classList.remove('m-ok');
+          if (r) r.innerHTML = '<span style="color:#EFD1D4;font-size:12px;">Try again</span>';
+          const sh = document.getElementById(id + '-show');
+          if (sh) sh.style.display = 'inline-block';
+        }
+      });
+      const sum = document.getElementById(ids[0] + '-matchresult');
+      if (sum) sum.innerHTML = (allOk && placed === ids.length) ? '<span style="color:#93B0AC;font-weight:700">&#10004; All matched!</span>' : '';
+      up();
+    }
+
+    function checkVenn(id) {
+      const a = answers[id];
+      if (!a || !a.venn) return;
+      function normItems(s) {
+        return String(s || '').replace(/\\band\\b/gi, ',').split(/[,;\\n]/)
+          .map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean).sort();
+      }
+      function setEq(x, y) {
+        if (x.length !== y.length) return false;
+        for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+        return true;
+      }
+      var regions = ['left', 'center', 'right'];
+      var allOk = true, anyFilled = false, snapshot = [];
+      regions.forEach(function(rg) {
+        var inp = document.getElementById(id + '-' + rg);
+        if (!inp) return;
+        var val = normItems(inp.value);
+        if (val.length) anyFilled = true;
+        var correct = normItems((a.answers[rg] || []).join(','));
+        var ok = setEq(val, correct);
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (!ok) allOk = false;
+        snapshot.push(rg + ': ' + inp.value.trim());
+      });
+      if (!anyFilled) return;
+      var r = document.getElementById(id + '-result');
+      var elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: snapshot.join(' | '), correct: allOk, timeSpent: elapsed, question: 'Venn diagram' };
+      if (allOk) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct! Every region is right.</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite — green boxes are right, pink need another look.</span>';
+        var sh = document.getElementById(id + '-show');
+        if (sh) sh.style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkGroup(ids) {
+      var right = 0, filled = 0;
+      ids.forEach(function(id) {
+        var a = answers[id];
+        var inp = document.getElementById(id + '-input');
+        if (!a || !inp) return;
+        var val = inp.value.trim();
+        if (!val) return;
+        filled++;
+        var ok;
+        if (a.isNum) {
+          var v = parseFloat(val);
+          ok = !isNaN(v) && (a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01);
+        } else {
+          ok = val.replace(/\\s+/g, '').toLowerCase() === String(a.answer).replace(/\\s+/g, '').toLowerCase();
+        }
+        inp.style.borderColor = ok ? '#4a9d6e' : '#c9605f';
+        inp.style.background = ok ? 'rgba(74,157,110,0.14)' : 'rgba(201,96,95,0.10)';
+        if (ok && !done.has(id)) { sc++; done.add(id); }
+        studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'diagram blank' };
+        if (ok) right++;
+      });
+      var rEl = document.getElementById(ids[0] + '-groupresult');
+      if (rEl) {
+        if (!filled) rEl.innerHTML = '<span style="color:#C5BD96;">Fill in the blanks, then check.</span>';
+        else if (right === ids.length) rEl.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; All correct!</span>';
+        else rEl.innerHTML = '<span style="color:#EFD1D4;font-weight:700">' + right + '/' + ids.length + ' correct — keep trying!</span>';
+      }
+      up();
+    }
+
+    function checkTable(ids) {
+      var right = 0, filled = 0;
+      ids.forEach(function(id) {
+        var a = answers[id];
+        var inp = document.getElementById(id + '-input');
+        if (!a || !inp) return;
+        var val = inp.value.trim();
+        if (!val) return;
+        filled++;
+        var ok;
+        if (a.isNum) {
+          var v = parseFloat(val);
+          ok = !isNaN(v) && (a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01);
+        } else {
+          ok = val.replace(/\\s+/g, '').toLowerCase() === String(a.answer).replace(/\\s+/g, '').toLowerCase();
+        }
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (ok && !done.has(id)) { sc++; done.add(id); }
+        studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'table cell' };
+        if (ok) right++;
+      });
+      var rEl = document.getElementById(ids[0] + '-tableresult');
+      if (rEl) {
+        if (!filled) rEl.innerHTML = '<span style="color:#C5BD96;">Fill in the cells, then check.</span>';
+        else if (right === ids.length) rEl.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; All correct!</span>';
+        else rEl.innerHTML = '<span style="color:#EFD1D4;font-weight:700">' + right + '/' + ids.length + ' correct — green cells are right.</span>';
+      }
+      up();
+    }
+
     function toggleHint(id) {
       const el = document.getElementById(id + '-hint');
       el.style.display = el.style.display === 'none' ? 'block' : 'none';
@@ -2987,17 +4502,24 @@ function renderQuizHTML(quiz) {
       const LANG_NAME = '${hasTeluguScript ? 'Telugu' : 'Hindi'}';
       let enabled = true;
 
-      // Transliterate via Google Input Tools REST API
+      // Transliterate via OUR server proxy (direct inputtools.google.com calls
+      // fail CORS inside the student iframe — the dropdown silently never showed).
+      // The student app shows this page in a blob: iframe where RELATIVE urls
+      // cannot resolve — derive the server origin from the embedding page.
+      const API_BASE = (function() {
+        try {
+          if (location.protocol === 'http:' || location.protocol === 'https:') return '';
+          if (location.ancestorOrigins && location.ancestorOrigins.length) return location.ancestorOrigins[0];
+          if (document.referrer) return new URL(document.referrer).origin;
+        } catch (e) {}
+        return '';
+      })();
       async function transliterate(word) {
         if (!word || word.length < 1) return [];
         try {
-          const url = 'https://inputtools.google.com/request?text=' +
-            encodeURIComponent(word) + '&itc=' + IME + '&num=5&cp=0&cs=1&ie=utf-8&oe=utf-8';
-          const res = await fetch(url);
+          const res = await fetch(API_BASE + '/quiz/transliterate?text=' + encodeURIComponent(word) + '&lang=' + LANG);
           const data = await res.json();
-          if (data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1]) {
-            return data[1][0][1]; // array of suggestions
-          }
+          return (data && data.suggestions) || [];
         } catch(e) { console.warn('Transliteration failed:', e); }
         return [];
       }
@@ -3032,10 +4554,13 @@ function renderQuizHTML(quiz) {
           };
           dropdown.appendChild(opt);
         });
-        // Position near the input
+        // Position near the input. getBoundingClientRect is VIEWPORT-relative but the
+        // dropdown is position:absolute (DOCUMENT-relative) — without adding the scroll
+        // offset it renders thousands of px above the input once the quiz is scrolled,
+        // i.e. invisible. This is why "Telugu typing didn't work" on lower questions.
         var rect = input.getBoundingClientRect();
-        dropdown.style.left = rect.left + 'px';
-        dropdown.style.top = (rect.bottom + 4) + 'px';
+        dropdown.style.left = (rect.left + window.scrollX) + 'px';
+        dropdown.style.top = (rect.bottom + window.scrollY + 4) + 'px';
         dropdown.style.display = 'block';
       }
 
@@ -3184,3 +4709,5 @@ function renderQuizHTML(quiz) {
 }
 
 module.exports = router;
+module.exports.renderQuizHTML = renderQuizHTML;
+module.exports.normalizeVennQuestions = normalizeVennQuestions;

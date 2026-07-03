@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PYP 4 Vocabulary Building 28 - Aivorah</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, 'Segoe UI', Roboto, 'Noto Sans Telugu', 'Noto Sans Devanagari', Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
+
+    /* ── Header — Aivorah Enchanted Forest ── */
+    .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 28px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); }
+    .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 4px; }
+    .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; }
+    .header-meta { font-size: 13px; color: #5A6B69; margin-top: 4px; }
+
+    /* ── Score Badge ── */
+    .score { position: fixed; top: 20px; right: 24px; width: 76px; height: 76px; border-radius: 50%;
+             background: linear-gradient(135deg, #93B0AC, #7AADA8); color: #0F0F0F;
+             display: flex; flex-direction: column; align-items: center; justify-content: center;
+             box-shadow: 0 4px 20px rgba(147,176,172,0.3); z-index: 100; }
+    .score-num { font-size: 22px; font-weight: 800; line-height: 1; }
+    .score-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 2px; }
+
+    /* ── Progress ── */
+    .progress-wrap { padding: 20px 0 4px; }
+    .progress-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5A6B69; margin-bottom: 8px; }
+    .progress-bar { background: #252525; border-radius: 6px; height: 12px; overflow: hidden; border: 1px solid rgba(195,220,216,0.08); }
+    .progress-fill { background: linear-gradient(90deg, #93B0AC, #C3DCD8); height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+    .progress-pct { text-align: right; font-size: 12px; color: #93B0AC; font-weight: 600; margin-top: 4px; }
+
+    /* ── Container ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px 60px; }
+
+    /* ── Concepts ── */
+    .concepts-row { display: flex; gap: 16px; margin: 24px 0; flex-wrap: wrap; }
+    .concept-card { flex: 1; min-width: 220px; padding: 20px; border-radius: 12px; color: #F0EEEC; }
+    .concept-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #A8B5B3; line-height: 1.5; }
+    .concept-unit { margin-top: 8px; font-size: 12px; color: #5A6B69; }
+    .concept-icon { font-size: 20px; margin-bottom: 6px; }
+
+    /* ── Question cards ── */
+    .q-card { background: #1C1C1C; padding: 20px 24px; border-radius: 10px; margin: 14px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid rgba(195,220,216,0.12); }
+    .q-text { font-size: 15px; color: #F0EEEC; margin-bottom: 14px; line-height: 1.6; }
+    .q-text strong { color: #C3DCD8; }
+
+    /* ── Input row ── */
+    .q-input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .q-label { font-weight: 700; font-size: 14px; color: #A8B5B3; }
+    .q-input { width: 130px; padding: 10px 12px; border: 2px solid rgba(195,220,216,0.25); border-radius: 8px;
+               font-size: 16px; text-align: center; transition: border-color 0.2s; background: #252525; color: #F0EEEC; }
+    .q-input:focus { border-color: #93B0AC; outline: none; box-shadow: 0 0 0 3px rgba(147,176,172,0.2); }
+    .q-unit { font-size: 14px; color: #A8B5B3; font-weight: 500; }
+
+    /* ── MCQ ── */
+    .mcq-opt { display: block; margin: 8px 0; padding: 10px 14px; border-radius: 8px;
+               border: 1.5px solid rgba(195,220,216,0.15); cursor: pointer; font-size: 14px; color: #F0EEEC; transition: all 0.2s; }
+    .mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .mcq-opt input { margin-right: 8px; }
+
+    /* ── Buttons ── */
+    .btn-check { background: #93B0AC; color: #0F0F0F; border: none; padding: 10px 24px; border-radius: 8px;
+                 font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+    .btn-check:hover { background: #7AADA8; transform: translateY(-1px); }
+    .btn-hint { background: #C5BD96; color: #0F0F0F; border: none; padding: 10px 20px; border-radius: 8px;
+                font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .btn-hint:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-show { background: #93B0AC; color: #0F0F0F; border: none; padding: 8px 18px; border-radius: 6px;
+                font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 10px; }
+    .btn-show:hover { background: #7AADA8; }
+
+    /* ── Feedback boxes ── */
+    .hint-box { margin-top: 12px; padding: 14px 16px; background: rgba(197,189,150,0.1); border-radius: 8px;
+                border-left: 4px solid #C5BD96; color: #C5BD96; font-size: 14px; line-height: 1.5; }
+    .result-box { margin-top: 8px; font-size: 14px; min-height: 6px; }
+    .solution-box { margin-top: 12px; padding: 16px 18px; background: rgba(147,176,172,0.1); border-radius: 8px;
+                    border-left: 4px solid #93B0AC; color: #93B0AC; font-size: 14px; line-height: 1.7; }
+
+    /* ── Activity boxes ── */
+    .activity-box { background: linear-gradient(135deg, rgba(147,176,172,0.08), rgba(197,189,150,0.08)) !important;
+                    border-color: rgba(147,176,172,0.25) !important; }
+
+    /* ── Language worksheet layout (Telugu, Hindi, etc.) ── */
+    .lang-q-row { padding: 16px 20px 12px; margin: 6px 0; border-bottom: 1px solid rgba(195,220,216,0.08); }
+    .lang-q-left { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+    .lang-q-num { font-size: 15px; color: #93B0AC; font-weight: 700; flex-shrink: 0; min-width: 28px; }
+    .lang-q-text { font-size: 16px; color: #F0EEEC; line-height: 1.8; }
+    .lang-q-text strong { color: #C3DCD8; }
+    .lang-example { margin: 4px 0 10px 38px; padding: 8px 14px; background: rgba(195,220,216,0.05);
+                    border-left: 3px solid rgba(195,220,216,0.3); border-radius: 0 6px 6px 0;
+                    font-size: 14px; color: #A8B5B3; font-style: italic; }
+    .lang-q-answer { display: flex; align-items: center; gap: 12px; margin-left: 38px; flex-wrap: wrap; }
+    .lang-input { flex: 1; max-width: 280px; padding: 8px 4px; font-size: 16px; color: #F0EEEC;
+                  background: transparent; border: none; border-bottom: 2px dotted rgba(195,220,216,0.35);
+                  outline: none; font-family: inherit; transition: border-color 0.2s; }
+    .lang-input:focus { border-bottom-color: #93B0AC; border-bottom-style: solid; }
+    .lang-input::placeholder { color: transparent; }
+    .lang-q-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .lang-btn-check { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(147,176,172,0.4);
+                      background: transparent; color: #93B0AC; font-size: 14px; cursor: pointer;
+                      display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-check:hover { background: rgba(147,176,172,0.15); border-color: #93B0AC; }
+    .lang-btn-hint { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(197,189,150,0.4);
+                     background: transparent; color: #C5BD96; font-size: 14px; font-weight: 700; cursor: pointer;
+                     display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-hint:hover { background: rgba(197,189,150,0.1); border-color: #C5BD96; }
+    .lang-result { margin: 4px 0 0 38px; font-size: 14px; min-height: 4px; }
+    .lang-mcq-opts { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px 38px; align-items: center; }
+    .lang-mcq-opt { font-size: 14px; color: #F0EEEC; cursor: pointer; padding: 6px 12px;
+                    border: 1px solid rgba(195,220,216,0.2); border-radius: 6px; transition: all 0.2s; }
+    .lang-mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .lang-mcq-opt input { margin-right: 6px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .header { padding: 20px; }
+      .header h1 { font-size: 20px; }
+      .container { padding: 0 14px 40px; }
+      .q-card { padding: 16px; }
+      .lang-q-row { padding: 12px 14px 10px; }
+      .lang-q-answer { margin-left: 28px; }
+      .lang-result { margin-left: 28px; }
+      .lang-example { margin-left: 28px; }
+      .score { width: 60px; height: 60px; top: 14px; right: 14px; }
+      .score-num { font-size: 18px; }
+      .concepts-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-sub">THE SHRI RAM ACADEMY &middot; PYP 4</div>
+    <h1>PYP 4 Vocabulary Building 28</h1>
+    <div class="header-meta">Subject: Language &nbsp;|&nbsp; Powered by Aivorah</div>
+  </div>
+
+  <div class="score" id="score-badge">
+    <span class="score-num" id="score-num">0/22</span>
+    <span class="score-label">Score</span>
+  </div>
+
+  <div class="container">
+    <div class="progress-wrap">
+      <div class="progress-title">Quiz Progress</div>
+      <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+      <div class="progress-pct" id="pp">0% complete</div>
+    </div>
+
+    <div class="concepts-row">
+        <div class="concept-card" style="background:#93B0AC18;border:1px solid #93B0AC40">
+          <div class="concept-icon" style="color:#93B0AC">&#128218;</div>
+          <h3 style="color:#93B0AC">Vocabulary Building</h3>
+          <p>Learning new words and their meanings to improve language skills.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#C5BD9618;border:1px solid #C5BD9640">
+          <div class="concept-icon" style="color:#C5BD96">&#128218;</div>
+          <h3 style="color:#C5BD96">Economic Terms</h3>
+          <p>Words related to how goods and services are produced, bought, and sold.</p>
+          
+        </div></div>
+    <div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:6px;font-weight:700;">&#128221; Note</h3>
+      <p style="font-size:14px;color:#A8B5B3;line-height:1.5;">This worksheet focuses on building vocabulary related to economic concepts. Learners will use basic spell check tools to identify and correct spelling errors in their writing.</p>
+    </div>
+    <div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:8px;font-weight:700;">&#127919; Success Criteria</h3>
+      <ul style="margin:0;padding-left:20px;"><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can understand new words and solve the riddles and correct errors carefully.</li><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can use vocabulary words correctly in my sentences to show my understanding.</li><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can share my ideas clearly, organise my thoughts, and give examples to support my answers.</li><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can complete my work independently, neatly, and with effort and responsibility.</li></ul>
+    </div>
+    
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 1 &middot; Read each riddle carefully. Choose the correct answer from the word bank above.</h2>
+      <div class="q-card" id="q1-card">
+        <p class="q-text"><strong>1)</strong> I am a place where people come to buy and sell many things.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q1-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q1')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q1')">Hint</button>
+        </div>
+        <div id="q1-hint" class="hint-box" style="display:none">Think of a place like a shopping area or bazaar.</div>
+        <div id="q1-result" class="result-box"></div>
+        <div id="q1-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The correct word is 'market' because it is a place where buying and selling occur.
+          
+        </div>
+        <button id="q1-show" class="btn-show" style="display:none" onclick="toggleSolution('q1')">Show Answer</button>
+      </div><div class="q-card" id="q2-card">
+        <p class="q-text"><strong>2)</strong> I am a person who buys things from shops or markets.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q2-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q2')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q2')">Hint</button>
+        </div>
+        <div id="q2-hint" class="hint-box" style="display:none">This person purchases goods or services.</div>
+        <div id="q2-result" class="result-box"></div>
+        <div id="q2-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The correct word is 'buyer' because a buyer is someone who purchases items.
+          
+        </div>
+        <button id="q2-show" class="btn-show" style="display:none" onclick="toggleSolution('q2')">Show Answer</button>
+      </div><div class="q-card" id="q3-card">
+        <p class="q-text"><strong>3)</strong> I am the person who sells goods to others.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q3-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q3')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q3')">Hint</button>
+        </div>
+        <div id="q3-hint" class="hint-box" style="display:none">This person offers goods or services for sale.</div>
+        <div id="q3-result" class="result-box"></div>
+        <div id="q3-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The correct word is 'seller' because a seller is someone who sells items.
+          
+        </div>
+        <button id="q3-show" class="btn-show" style="display:none" onclick="toggleSolution('q3')">Show Answer</button>
+      </div><div class="q-card" id="q4-card">
+        <p class="q-text"><strong>4)</strong> I am the process of making goods using materials and effort.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q4-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q4')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q4')">Hint</button>
+        </div>
+        <div id="q4-hint" class="hint-box" style="display:none">This involves creating items from raw materials.</div>
+        <div id="q4-result" class="result-box"></div>
+        <div id="q4-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The correct word is 'production' because it refers to the process of making goods.
+          
+        </div>
+        <button id="q4-show" class="btn-show" style="display:none" onclick="toggleSolution('q4')">Show Answer</button>
+      </div><div class="q-card" id="q5-card">
+        <p class="q-text"><strong>5)</strong> I am what happens when people use or buy goods and services.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q5-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q5')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q5')">Hint</button>
+        </div>
+        <div id="q5-hint" class="hint-box" style="display:none">This is the act of using or purchasing goods and services.</div>
+        <div id="q5-result" class="result-box"></div>
+        <div id="q5-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The correct word is 'consumption' because it refers to the use of goods and services.
+          
+        </div>
+        <button id="q5-show" class="btn-show" style="display:none" onclick="toggleSolution('q5')">Show Answer</button>
+      </div><div class="q-card" id="q6-card">
+        <p class="q-text"><strong>6)</strong> I am things like water, soil, and minerals that help us make products.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q6-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q6')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q6')">Hint</button>
+        </div>
+        <div id="q6-hint" class="hint-box" style="display:none">These are natural materials used to produce goods.</div>
+        <div id="q6-result" class="result-box"></div>
+        <div id="q6-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The correct word is 'resources' because they are inputs used in production.
+          
+        </div>
+        <button id="q6-show" class="btn-show" style="display:none" onclick="toggleSolution('q6')">Show Answer</button>
+      </div><div class="q-card" id="q7-card">
+        <p class="q-text"><strong>7)</strong> I am items you can touch and buy, like books, toys, or fruits.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q7-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q7')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q7')">Hint</button>
+        </div>
+        <div id="q7-hint" class="hint-box" style="display:none">These are physical items that can be purchased.</div>
+        <div id="q7-result" class="result-box"></div>
+        <div id="q7-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The correct word is 'goods' because they are tangible items for sale.
+          
+        </div>
+        <button id="q7-show" class="btn-show" style="display:none" onclick="toggleSolution('q7')">Show Answer</button>
+      </div><div class="q-card" id="q8-card">
+        <p class="q-text"><strong>8)</strong> I am something you cannot touch but can use, like teaching or transport.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q8-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q8')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q8')">Hint</button>
+        </div>
+        <div id="q8-hint" class="hint-box" style="display:none">These are activities provided by others for a fee.</div>
+        <div id="q8-result" class="result-box"></div>
+        <div id="q8-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The correct word is 'services' because they are intangible activities provided to consumers.
+          
+        </div>
+        <button id="q8-show" class="btn-show" style="display:none" onclick="toggleSolution('q8')">Show Answer</button>
+      </div><div class="q-card" id="q9-card">
+        <p class="q-text"><strong>9)</strong> I am the buying and selling of goods between people or countries.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q9-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q9')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q9')">Hint</button>
+        </div>
+        <div id="q9-hint" class="hint-box" style="display:none">This involves exchanging goods and services.</div>
+        <div id="q9-result" class="result-box"></div>
+        <div id="q9-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The correct word is 'trade' because it refers to the exchange of goods and services.
+          
+        </div>
+        <button id="q9-show" class="btn-show" style="display:none" onclick="toggleSolution('q9')">Show Answer</button>
+      </div><div class="q-card" id="q10-card">
+        <p class="q-text"><strong>10)</strong> I am a system that shows how people produce, buy, and sell things in a place.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q10-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q10')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q10')">Hint</button>
+        </div>
+        <div id="q10-hint" class="hint-box" style="display:none">This is the overall system of production and consumption in a region.</div>
+        <div id="q10-result" class="result-box"></div>
+        <div id="q10-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The correct word is 'economy' because it refers to the system of production, distribution, and consumption.
+          
+        </div>
+        <button id="q10-show" class="btn-show" style="display:none" onclick="toggleSolution('q10')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 2 &middot; Word Sorting Challenge: Build the Economy!</h2>
+      <div class="q-card" id="q11-card">
+        <p class="q-text"><strong>a)</strong> Sort the words into the category: People (Who is involved?)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q11-input" class="q-input" placeholder="e.g. buyer, ...">
+          
+          <button class="btn-check" onclick="checkAnswer('q11')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q11')">Hint</button>
+        </div>
+        <div id="q11-hint" class="hint-box" style="display:none">Think about who participates in buying and selling.</div>
+        <div id="q11-result" class="result-box"></div>
+        <div id="q11-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The words 'buyer' and 'seller' belong to the 'People' category because they are individuals involved in economic activities.
+          
+        </div>
+        <button id="q11-show" class="btn-show" style="display:none" onclick="toggleSolution('q11')">Show Answer</button>
+      </div><div class="q-card" id="q12-card">
+        <p class="q-text"><strong>b)</strong> Sort the words into the category: Actions (What is happening?)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q12-input" class="q-input" placeholder="e.g. production, ...">
+          
+          <button class="btn-check" onclick="checkAnswer('q12')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q12')">Hint</button>
+        </div>
+        <div id="q12-hint" class="hint-box" style="display:none">Think about the processes or actions in an economy.</div>
+        <div id="q12-result" class="result-box"></div>
+        <div id="q12-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The words 'production', 'consumption', and 'trade' belong to the 'Actions' category because they describe economic activities.
+          
+        </div>
+        <button id="q12-show" class="btn-show" style="display:none" onclick="toggleSolution('q12')">Show Answer</button>
+      </div><div class="q-card" id="q13-card">
+        <p class="q-text"><strong>c)</strong> Sort the words into the category: Places / Systems (Where does it happen?)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q13-input" class="q-input" placeholder="e.g. market, ...">
+          
+          <button class="btn-check" onclick="checkAnswer('q13')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q13')">Hint</button>
+        </div>
+        <div id="q13-hint" class="hint-box" style="display:none">Think about locations or systems where economic activities occur.</div>
+        <div id="q13-result" class="result-box"></div>
+        <div id="q13-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The words 'market' and 'economy' belong to the 'Places / Systems' category because they describe where or how economic activities take place.
+          
+        </div>
+        <button id="q13-show" class="btn-show" style="display:none" onclick="toggleSolution('q13')">Show Answer</button>
+      </div><div class="q-card" id="q14-card">
+        <p class="q-text"><strong>d)</strong> Sort the words into the category: Things (What is used or exchanged?)</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q14-input" class="q-input" placeholder="e.g. resources, ...">
+          
+          <button class="btn-check" onclick="checkAnswer('q14')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q14')">Hint</button>
+        </div>
+        <div id="q14-hint" class="hint-box" style="display:none">Think about items or materials involved in economic activities.</div>
+        <div id="q14-result" class="result-box"></div>
+        <div id="q14-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The words 'resources', 'goods', and 'services' belong to the 'Things' category because they describe what is used or exchanged in an economy.
+          
+        </div>
+        <button id="q14-show" class="btn-show" style="display:none" onclick="toggleSolution('q14')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 3 &middot; Error Detective Alert - Read & Detect Errors</h2>
+      <div style="margin:0 0 20px;padding:16px 20px;background:rgba(255,255,255,0.04);border:1px solid rgba(195,220,216,0.2);border-radius:10px;font-size:14px;color:#D8E8E6;line-height:1.8;">In a small town, there was a busy buyer where people came every day. Farmers were involved in consumption, growing crops using natural goods like water and soil. Customers visited the town for production, buying things they needed. A seller would choose items carefully, while a market tried to offer the best price. This exchange of goods and services kept the town’s trade active and growing.</div><div class="q-card" id="q15-card">
+        <p class="q-text"><strong>a)</strong> Identify and correct the incorrect word: buyer</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q15-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q15')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q15')">Hint</button>
+          </div>
+        </div>
+        <div id="q15-hint" class="hint-box" style="display:none">Think about where people come to buy and sell things.</div>
+        <div id="q15-result" class="result-box"></div>
+        <div id="q15-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The incorrect word is 'buyer'. The correct word is 'market' because a market is a place where buying and selling occur.
+          
+        </div>
+        <button id="q15-show" class="btn-show" style="display:none" onclick="toggleSolution('q15')">Show Answer</button>
+      </div><div class="q-card" id="q16-card">
+        <p class="q-text"><strong>b)</strong> Identify and correct the incorrect word: consumption</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q16-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q16')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q16')">Hint</button>
+          </div>
+        </div>
+        <div id="q16-hint" class="hint-box" style="display:none">Think about what farmers do when they grow crops.</div>
+        <div id="q16-result" class="result-box"></div>
+        <div id="q16-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The incorrect word is 'consumption'. The correct word is 'production' because farmers produce crops.
+          
+        </div>
+        <button id="q16-show" class="btn-show" style="display:none" onclick="toggleSolution('q16')">Show Answer</button>
+      </div><div class="q-card" id="q17-card">
+        <p class="q-text"><strong>c)</strong> Identify and correct the incorrect word: goods</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q17-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q17')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q17')">Hint</button>
+          </div>
+        </div>
+        <div id="q17-hint" class="hint-box" style="display:none">Think about what water and soil are called in economic terms.</div>
+        <div id="q17-result" class="result-box"></div>
+        <div id="q17-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The incorrect word is 'goods'. The correct word is 'resources' because water and soil are natural resources.
+          
+        </div>
+        <button id="q17-show" class="btn-show" style="display:none" onclick="toggleSolution('q17')">Show Answer</button>
+      </div><div class="q-card" id="q18-card">
+        <p class="q-text"><strong>d)</strong> Identify and correct the incorrect word: production</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q18-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q18')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q18')">Hint</button>
+          </div>
+        </div>
+        <div id="q18-hint" class="hint-box" style="display:none">Think about what customers do when they buy things.</div>
+        <div id="q18-result" class="result-box"></div>
+        <div id="q18-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The incorrect word is 'production'. The correct word is 'consumption' because customers consume goods and services.
+          
+        </div>
+        <button id="q18-show" class="btn-show" style="display:none" onclick="toggleSolution('q18')">Show Answer</button>
+      </div><div class="q-card" id="q19-card">
+        <p class="q-text"><strong>e)</strong> Identify and correct the incorrect word: market</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q19-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q19')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q19')">Hint</button>
+          </div>
+        </div>
+        <div id="q19-hint" class="hint-box" style="display:none">Think about who chooses items carefully in a market.</div>
+        <div id="q19-result" class="result-box"></div>
+        <div id="q19-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The incorrect word is 'market'. The correct word is 'seller' because a seller chooses items to sell.
+          
+        </div>
+        <button id="q19-show" class="btn-show" style="display:none" onclick="toggleSolution('q19')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #C5BD96; background:rgba(197,189,150,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(197,189,150,0.15);color:#C5BD96;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">COULD DO</span>
+      <h2 style="font-size:18px;color:#C5BD96;margin:6px 0 18px;font-weight:700;">Task 4 &middot; Word to Sentence Challenge!</h2>
+      <div class="q-card" id="q20-card">
+        <p class="q-text"><strong>a)</strong> Use two or more words from the word bank in one sentence. Example: The buyer went to the market to purchase goods from the seller.</p><div style="margin:8px 0 12px;padding:10px 14px;background:rgba(195,220,216,0.07);border-left:3px solid rgba(195,220,216,0.4);border-radius:0 8px 8px 0;font-size:13px;color:#A8B5B3;font-style:italic;">The buyer went to the market to purchase goods from the seller.</div>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q20-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q20')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q20')">Hint</button>
+          </div>
+        </div>
+        <div id="q20-hint" class="hint-box" style="display:none">Use words like 'trade', 'services', or 'resources' in your sentence.</div>
+        <div id="q20-result" class="result-box"></div>
+        <div id="q20-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Example answer: The seller offered goods and services at the market, which helped the local economy grow.
+          
+        </div>
+        <button id="q20-show" class="btn-show" style="display:none" onclick="toggleSolution('q20')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #C5BD96; background:rgba(197,189,150,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(197,189,150,0.15);color:#C5BD96;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">COULD DO</span>
+      <h2 style="font-size:18px;color:#C5BD96;margin:6px 0 18px;font-weight:700;">Task 5 &middot; Reflect & think!</h2>
+      <div class="q-card" id="q21-card">
+        <p class="q-text"><strong>1)</strong> Why is it important to use the correct economic terms in a sentence?</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q21-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q21')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q21')">Hint</button>
+          </div>
+        </div>
+        <div id="q21-hint" class="hint-box" style="display:none">Think about how using the right words helps others understand your ideas clearly.</div>
+        <div id="q21-result" class="result-box"></div>
+        <div id="q21-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Using the correct economic terms ensures clarity and accuracy in communication. It helps others understand the specific concepts being discussed, such as production, trade, or consumption.
+          
+        </div>
+        <button id="q21-show" class="btn-show" style="display:none" onclick="toggleSolution('q21')">Show Answer</button>
+      </div><div class="q-card" id="q22-card">
+        <p class="q-text"><strong>2)</strong> How does the corrected passage better explain how a market works?</p>
+        <div class="q-input-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <textarea id="q22-input" class="q-input" rows="3" placeholder="Write your answer here..." style="width:100%;min-height:80px;resize:vertical;font-size:14px;padding:10px;border-radius:8px;border:1.5px solid rgba(195,220,216,0.3);background:rgba(255,255,255,0.05);color:#F0EEEC;font-family:inherit;"></textarea>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-check" onclick="checkAnswer('q22')">Check</button>
+            <button class="btn-hint" onclick="toggleHint('q22')">Hint</button>
+          </div>
+        </div>
+        <div id="q22-hint" class="hint-box" style="display:none">Compare the incorrect and corrected versions of the passage to see which one makes more sense.</div>
+        <div id="q22-result" class="result-box"></div>
+        <div id="q22-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>The corrected passage uses accurate economic terms, such as 'market', 'production', and 'consumption', which clearly explain the roles of buyers, sellers, and the flow of goods and services. This makes the explanation of how a market works more precise and understandable.
+          
+        </div>
+        <button id="q22-show" class="btn-show" style="display:none" onclick="toggleSolution('q22')">Show Answer</button>
+      </div></div>
+  </div>
+
+  <script>
+    let sc = 0;
+    const tot = 22;
+    const done = new Set();
+    const answers = {"q1":{"answer":"market","isNum":false,"range":null},"q2":{"answer":"buyer","isNum":false,"range":null},"q3":{"answer":"seller","isNum":false,"range":null},"q4":{"answer":"production","isNum":false,"range":null},"q5":{"answer":"consumption","isNum":false,"range":null},"q6":{"answer":"resources","isNum":false,"range":null},"q7":{"answer":"goods","isNum":false,"range":null},"q8":{"answer":"services","isNum":false,"range":null},"q9":{"answer":"trade","isNum":false,"range":null},"q10":{"answer":"economy","isNum":false,"range":null},"q11":{"answer":"buyer, seller","isNum":false,"range":null},"q12":{"answer":"production, consumption, trade","isNum":false,"range":null},"q13":{"answer":"market, economy","isNum":false,"range":null},"q14":{"answer":"resources, goods, services","isNum":false,"range":null},"q15":{"answer":"market","isNum":false,"range":null},"q16":{"answer":"production","isNum":false,"range":null},"q17":{"answer":"resources","isNum":false,"range":null},"q18":{"answer":"consumption","isNum":false,"range":null},"q19":{"answer":"seller","isNum":false,"range":null},"q20":{"isNum":false,"range":null},"q21":{"isNum":false,"range":null},"q22":{"isNum":false,"range":null}};
+    const studentAnswers = {}; // { qId: { answer, correct, timeSpent } }
+    const questionStartTimes = {}; // { qId: timestamp }
+
+    // Track when each question becomes visible / gets focus
+    document.addEventListener('focusin', function(e) {
+      const inp = e.target.closest('input');
+      if (inp && inp.id && inp.id.endsWith('-input')) {
+        const qId = inp.id.replace('-input', '');
+        if (!questionStartTimes[qId]) questionStartTimes[qId] = Date.now();
+      }
+    });
+
+    function up() {
+      document.getElementById('score-num').textContent = sc + '/' + tot;
+      const pct = Math.round((done.size / tot) * 100);
+      document.getElementById('pf').style.width = pct + '%';
+      document.getElementById('pp').textContent = pct + '% complete';
+      // Build per-question answer list
+      const answersArr = Object.entries(studentAnswers).map(([qId, data]) => ({
+        qId, answer: data.answer, correct: data.correct,
+        timeSpent: data.timeSpent || 0,
+        question: data.question || ''
+      }));
+      // Report score + answers to parent window (for student assignment iframe)
+      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot, answers: answersArr }, '*'); } catch(e) {}
+    }
+
+    function checkAnswer(id) {
+      const a = answers[id];
+      if (!a) return;
+      const inp = document.getElementById(id + '-input');
+      const val = inp.value.trim();
+      if (!val) { inp.style.borderColor = '#C5BD96'; return; }
+      const r = document.getElementById(id + '-result');
+      let ok = false;
+      if (a.isNum) {
+        const v = parseFloat(val);
+        if (isNaN(v)) { inp.style.borderColor = '#C5BD96'; return; }
+        ok = a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01;
+      } else {
+        ok = val.replace(/\s+/g,'').toLowerCase() === String(a.answer).replace(/\s+/g,'').toLowerCase();
+      }
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      const qEl = document.getElementById(id + '-card');
+      const qText = qEl ? qEl.querySelector('.q-label, strong')?.textContent || '' : '';
+      studentAnswers[id] = { answer: val, correct: ok, timeSpent: elapsed, question: qText };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        inp.style.borderColor = '#93B0AC';
+        inp.style.background = 'rgba(147,176,172,0.1)';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        inp.style.borderColor = '#EFD1D4';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkMCQ(id) {
+      const a = answers[id];
+      if (!a) return;
+      const sel = document.querySelector('input[name="' + id + '"]:checked');
+      if (!sel) return;
+      const r = document.getElementById(id + '-result');
+      const ok = sel.value === a.correctLetter;
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: sel.value, correct: ok, timeSpent: elapsed, question: '' };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkVenn(id) {
+      const a = answers[id];
+      if (!a || !a.venn) return;
+      function normItems(s) {
+        return String(s || '').replace(/\band\b/gi, ',').split(/[,;\n]/)
+          .map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean).sort();
+      }
+      function setEq(x, y) {
+        if (x.length !== y.length) return false;
+        for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+        return true;
+      }
+      var regions = ['left', 'center', 'right'];
+      var allOk = true, anyFilled = false, snapshot = [];
+      regions.forEach(function(rg) {
+        var inp = document.getElementById(id + '-' + rg);
+        if (!inp) return;
+        var val = normItems(inp.value);
+        if (val.length) anyFilled = true;
+        var correct = normItems((a.answers[rg] || []).join(','));
+        var ok = setEq(val, correct);
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (!ok) allOk = false;
+        snapshot.push(rg + ': ' + inp.value.trim());
+      });
+      if (!anyFilled) return;
+      var r = document.getElementById(id + '-result');
+      var elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: snapshot.join(' | '), correct: allOk, timeSpent: elapsed, question: 'Venn diagram' };
+      if (allOk) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct! Every region is right.</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite — green boxes are right, pink need another look.</span>';
+        var sh = document.getElementById(id + '-show');
+        if (sh) sh.style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkTable(ids) {
+      var right = 0, filled = 0;
+      ids.forEach(function(id) {
+        var a = answers[id];
+        var inp = document.getElementById(id + '-input');
+        if (!a || !inp) return;
+        var val = inp.value.trim();
+        if (!val) return;
+        filled++;
+        var ok;
+        if (a.isNum) {
+          var v = parseFloat(val);
+          ok = !isNaN(v) && (a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01);
+        } else {
+          ok = val.replace(/\s+/g, '').toLowerCase() === String(a.answer).replace(/\s+/g, '').toLowerCase();
+        }
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (ok && !done.has(id)) { sc++; done.add(id); }
+        studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'table cell' };
+        if (ok) right++;
+      });
+      var rEl = document.getElementById(ids[0] + '-tableresult');
+      if (rEl) {
+        if (!filled) rEl.innerHTML = '<span style="color:#C5BD96;">Fill in the cells, then check.</span>';
+        else if (right === ids.length) rEl.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; All correct!</span>';
+        else rEl.innerHTML = '<span style="color:#EFD1D4;font-weight:700">' + right + '/' + ids.length + ' correct — green cells are right.</span>';
+      }
+      up();
+    }
+
+    function toggleHint(id) {
+      const el = document.getElementById(id + '-hint');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleSolution(id) {
+      const el = document.getElementById(id + '-solution');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+    // ── Indic language input support ──
+    // Students type English phonetically (e.g. "muggulu") → auto-converts to Telugu/Hindi
+    // Uses Google Input Tools REST API for transliteration with dropdown suggestions
+    
+    // ── French accent palette ──
+    // Floating toolbar with accented characters students can click to insert
+    
+  </script>
+</body>
+</html>

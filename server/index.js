@@ -222,6 +222,22 @@ module.exports = app;
 
 // Always start the server (Cloud Run runs node index.js directly)
 const PORT = process.env.PORT || 3006;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Aivorah server running on http://localhost:${PORT}`);
+});
+// Quiz generation with fallback chains (Gemini retries → Qwen → Pixtral) can exceed
+// Node's default 5-min request timeout, which kills the connection AFTER the quiz was
+// successfully generated. Allow up to 10 minutes end-to-end.
+server.requestTimeout = 600000;
+server.headersTimeout = 610000;
+server.setTimeout(600000);
+
+// The server died silently (exit 255, no log) during a quiz upload — make any future
+// crash leave a reason in the log instead of vanishing.
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] uncaughtException:', err && err.stack || err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[FATAL] unhandledRejection:', reason && reason.stack || reason);
 });

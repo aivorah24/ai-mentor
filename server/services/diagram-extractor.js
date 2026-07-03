@@ -410,6 +410,28 @@ async function analyzeRegionContent(croppedBuffer) {
   const grayBuf = await sharp(croppedBuffer).grayscale().raw().toBuffer();
   const totalPixels = w * h;
 
+  // Color check: a real picture/photo (pot, swan, fish, etc.) has clearly-colored pixels;
+  // a printed text table (letters, words) is pure black ink on white paper — near zero.
+  // Measure the FRACTION of strongly-colored pixels, not average saturation: a small
+  // colored clipart on a big white background averages close to zero even though the
+  // object itself is vividly colored (this exact averaging mistake previously made real
+  // pictures classify as 'text' and get dropped).
+  try {
+    const { data: rgbBuf, info } = await sharp(croppedBuffer).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    const channels = info.channels; // 3 for RGB
+    if (channels >= 3) {
+      let colored = 0, satCount = 0;
+      const step = 4; // sample every 4th pixel for speed
+      for (let i = 0; i + channels <= rgbBuf.length; i += channels * step) {
+        const r = rgbBuf[i], g = rgbBuf[i + 1], b = rgbBuf[i + 2];
+        if (Math.max(r, g, b) - Math.min(r, g, b) > 40) colored++;
+        satCount++;
+      }
+      const colorFrac = satCount ? colored / satCount : 0;
+      if (colorFrac > 0.02) return 'diagram'; // >2% strongly-colored pixels — a real picture
+    }
+  } catch { /* fall through to grayscale heuristics */ }
+
   // Step 1: Remove border lines (top/bottom/left/right edge rows that are mostly dark)
   // This prevents table borders from inflating dark pixel counts
   const isBorderRow = (y) => {
@@ -452,26 +474,50 @@ async function analyzeRegionContent(croppedBuffer) {
   const innerDarkRatio = innerDark / innerArea;
 
   // Step 3: Detect long straight lines (table grid lines inside the crop)
-  // Count rows/columns that are mostly dark (these are internal grid lines)
+  // Count rows/columns that are mostly dark (these are internal grid lines), and
+  // separately count rulings in the MIDDLE band of the crop. The distinction matters:
+  // a picture drawn inside a box frame has rulings only at its edges, while a real
+  // table (letters/words grid) has cell-divider rulings crossing the middle. Counting
+  // ALL internal rulings previously misclassified every framed picture as a table
+  // (the frame's top/bottom lines counted as "2 internal rulings"), which dropped
+  // real pictures — hence the middle-band restriction.
+  const midY0 = top + innerH * 0.15, midY1 = bottom - innerH * 0.15;
+  const midX0 = left + innerW * 0.15, midX1 = right - innerW * 0.15;
   let gridLinePixels = 0;
+  let midGridRows = 0;
   for (let y = top; y <= bottom; y++) {
     let rowDark = 0;
     for (let x = left; x <= right; x++) {
       if (grayBuf[y * w + x] < 100) rowDark++;
     }
-    if (rowDark / innerW > 0.6) gridLinePixels += rowDark;
+    if (rowDark / innerW > 0.6) {
+      gridLinePixels += rowDark;
+      if (y >= midY0 && y <= midY1) midGridRows++;
+    }
   }
+  let midGridCols = 0;
   for (let x = left; x <= right; x++) {
     let colDark = 0;
     for (let y = top; y <= bottom; y++) {
       if (grayBuf[y * w + x] < 100) colDark++;
     }
-    if (colDark / innerH > 0.6) gridLinePixels += colDark;
+    if (colDark / innerH > 0.6) {
+      gridLinePixels += colDark;
+      if (x >= midX0 && x <= midX1) midGridCols++;
+    }
   }
 
   // Dark pixels that aren't grid lines
   const contentDark = Math.max(0, innerDark - gridLinePixels);
   const contentDarkRatio = contentDark / innerArea;
+
+  // Middle-band rulings mean actual table cells (a letters/words grid), not a picture
+  // frame. Classify as text immediately rather than falling through to the OCR density
+  // tiebreaker below — that tiebreaker assumes "few characters = a diagram with a couple
+  // of short labels," which is wrong for a table of large, sparse letters (e.g. Telugu
+  // characters) — exactly the bug that let a letters-table crop get matched to a
+  // "match the picture" task instead of the real picture.
+  if (midGridRows >= 1 && midGridCols >= 1) return 'text';
 
   // Step 4: Count "thick" dark regions (blobs) — diagrams have larger continuous dark areas
   // Sample the center region and count connected dark pixel clusters
@@ -803,6 +849,36 @@ function matchDiagramsToQuestions(extractionResult, quiz) {
     const available = figures.filter(f => !f._matched);
     if (available.length === 0) continue;
 
+    // "Match the picture" style tasks have several questions, each with its OWN picture,
+    // but the LLM sometimes flags them sharedImage:true anyway — which used to propagate
+    // ONE figure to all questions (every question showed the same swan). If the page has
+    // at least as many unmatched figures as this task has questions, per-question pictures
+    // are almost certainly the right interpretation; a genuinely shared diagram ("observe
+    // the picture, answer Q1-4") has fewer figures than questions.
+    const qCount = (task.questions || []).length;
+    const distinctPositions = new Set((task.questions || []).map(q => q.diagramPosition).filter(Boolean)).size;
+    if (qCount >= 2 && available.length >= qCount && (qCount >= 3 || distinctPositions >= 2)) {
+      task.sharedImage = false;
+      if (available.length === qCount) {
+        // Exact count match: pair by ORDER (figures top-to-bottom ↔ questions in worksheet
+        // order). This is deterministic and mirrors the physical layout, unlike the
+        // position-label greedy below, which ties when several questions share the same
+        // label (e.g. three pictures all marked "middle-left") and then picks arbitrarily.
+        const byY = [...available].sort((a, b) => (a.bbox.y - b.bbox.y) || (a.bbox.x - b.bbox.x));
+        (task.questions || []).forEach((q, i) => {
+          q.imageUrl = byY[i].imageUrl;
+          q.diagramBbox = byY[i].bbox;
+          byY[i]._matched = true;
+        });
+        console.log(`[diagram] sharedImage demoted → order-paired ${qCount} figures to ${qCount} questions (task "${(task.title || '').substring(0, 30)}")`);
+      } else {
+        // More figures than questions: let the per-question matching in Step 3/4 sort it out.
+        for (const q of (task.questions || [])) q.hasImage = true;
+        console.log(`[diagram] sharedImage demoted → per-question matching (${qCount} questions, ${available.length} figures)`);
+      }
+      continue;
+    }
+
     // Use sharedImagePosition to find the best matching figure
     const target = task.sharedImagePosition ? positionToRankTarget(task.sharedImagePosition) : null;
     let bestFig = available[0]; // default: first available
@@ -894,6 +970,22 @@ function matchDiagramsToQuestions(extractionResult, quiz) {
         yRank: yMeaningful && n > 1 ? yIdx / (n - 1) : 0.5,
         xRank: xMeaningful && n > 1 ? xIdx / (n - 1) : 0.5,
       });
+    }
+
+    // Exact count match: pair by ORDER (figures top-to-bottom ↔ questions in worksheet
+    // order) instead of position-label greedy. The LLM often labels several stacked
+    // pictures with the SAME position (e.g. three of five all "middle-left"), and the
+    // greedy tie-break then shuffles them; order-pairing is deterministic and mirrors
+    // the physical layout when counts line up 1:1.
+    if (unmatched.length === allImgQuestions.length) {
+      const byYOrder = [...unmatched].sort((a, b) => (a.bbox.y - b.bbox.y) || (a.bbox.x - b.bbox.x));
+      allImgQuestions.forEach((q, i) => {
+        q.imageUrl = byYOrder[i].imageUrl;
+        q.diagramBbox = byYOrder[i].bbox;
+        byYOrder[i]._matched = true;
+        console.log(`[diagram] Order-paired: figure #${i} → Q(${q.id})`);
+      });
+      return;
     }
 
     // Greedy matching: for each question (sorted by y-rank target), find best figure

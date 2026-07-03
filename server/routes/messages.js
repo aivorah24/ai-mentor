@@ -1,6 +1,7 @@
 const express    = require('express');
 const router     = express.Router();
 const supabase   = require('../services/supabase');
+const { sendPush } = require('../services/push');
 const multer     = require('multer');
 const path       = require('path');
 const cloudinary = require('cloudinary').v2;
@@ -894,6 +895,15 @@ router.post('/', async (req, res) => {
       .single();
 
     if (error) return res.status(500).json({ error: error.message });
+
+    // Push-notify the recipient on their mobile device (no-op if not registered).
+    const preview = (content || '').trim() || (attachmentName ? `Sent a file: ${attachmentName}` : 'New message');
+    sendPush(insertData.recipient_email, {
+      title: `Message from ${insertData.sender_name}`,
+      body: preview.slice(0, 140),
+      data: { type: 'message', senderEmail: insertData.sender_email },
+    }).catch(() => {});
+
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });

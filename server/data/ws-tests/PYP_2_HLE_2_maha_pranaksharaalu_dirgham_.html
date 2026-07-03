@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Language Acquisition - Telugu Practice Task Sheet - Aivorah</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, 'Segoe UI', Roboto, 'Noto Sans Telugu', 'Noto Sans Devanagari', Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
+
+    /* ── Header — Aivorah Enchanted Forest ── */
+    .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 28px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); }
+    .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 4px; }
+    .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; }
+    .header-meta { font-size: 13px; color: #5A6B69; margin-top: 4px; }
+
+    /* ── Score Badge ── */
+    .score { position: fixed; top: 20px; right: 24px; width: 76px; height: 76px; border-radius: 50%;
+             background: linear-gradient(135deg, #93B0AC, #7AADA8); color: #0F0F0F;
+             display: flex; flex-direction: column; align-items: center; justify-content: center;
+             box-shadow: 0 4px 20px rgba(147,176,172,0.3); z-index: 100; }
+    .score-num { font-size: 22px; font-weight: 800; line-height: 1; }
+    .score-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 2px; }
+
+    /* ── Progress ── */
+    .progress-wrap { padding: 20px 0 4px; }
+    .progress-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5A6B69; margin-bottom: 8px; }
+    .progress-bar { background: #252525; border-radius: 6px; height: 12px; overflow: hidden; border: 1px solid rgba(195,220,216,0.08); }
+    .progress-fill { background: linear-gradient(90deg, #93B0AC, #C3DCD8); height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+    .progress-pct { text-align: right; font-size: 12px; color: #93B0AC; font-weight: 600; margin-top: 4px; }
+
+    /* ── Container ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px 60px; }
+
+    /* ── Concepts ── */
+    .concepts-row { display: flex; gap: 16px; margin: 24px 0; flex-wrap: wrap; }
+    .concept-card { flex: 1; min-width: 220px; padding: 20px; border-radius: 12px; color: #F0EEEC; }
+    .concept-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #A8B5B3; line-height: 1.5; }
+    .concept-unit { margin-top: 8px; font-size: 12px; color: #5A6B69; }
+    .concept-icon { font-size: 20px; margin-bottom: 6px; }
+
+    /* ── Question cards ── */
+    .q-card { background: #1C1C1C; padding: 20px 24px; border-radius: 10px; margin: 14px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid rgba(195,220,216,0.12); }
+    .q-text { font-size: 15px; color: #F0EEEC; margin-bottom: 14px; line-height: 1.6; }
+    .q-text strong { color: #C3DCD8; }
+
+    /* ── Input row ── */
+    .q-input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .q-label { font-weight: 700; font-size: 14px; color: #A8B5B3; }
+    .q-input { width: 130px; padding: 10px 12px; border: 2px solid rgba(195,220,216,0.25); border-radius: 8px;
+               font-size: 16px; text-align: center; transition: border-color 0.2s; background: #252525; color: #F0EEEC; }
+    .q-input:focus { border-color: #93B0AC; outline: none; box-shadow: 0 0 0 3px rgba(147,176,172,0.2); }
+    .q-unit { font-size: 14px; color: #A8B5B3; font-weight: 500; }
+
+    /* ── MCQ ── */
+    .mcq-opt { display: block; margin: 8px 0; padding: 10px 14px; border-radius: 8px;
+               border: 1.5px solid rgba(195,220,216,0.15); cursor: pointer; font-size: 14px; color: #F0EEEC; transition: all 0.2s; }
+    .mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .mcq-opt input { margin-right: 8px; }
+
+    /* ── Buttons ── */
+    .btn-check { background: #93B0AC; color: #0F0F0F; border: none; padding: 10px 24px; border-radius: 8px;
+                 font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+    .btn-check:hover { background: #7AADA8; transform: translateY(-1px); }
+    .btn-hint { background: #C5BD96; color: #0F0F0F; border: none; padding: 10px 20px; border-radius: 8px;
+                font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .btn-hint:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-show { background: #93B0AC; color: #0F0F0F; border: none; padding: 8px 18px; border-radius: 6px;
+                font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 10px; }
+    .btn-show:hover { background: #7AADA8; }
+
+    /* ── Feedback boxes ── */
+    .hint-box { margin-top: 12px; padding: 14px 16px; background: rgba(197,189,150,0.1); border-radius: 8px;
+                border-left: 4px solid #C5BD96; color: #C5BD96; font-size: 14px; line-height: 1.5; }
+    .result-box { margin-top: 8px; font-size: 14px; min-height: 6px; }
+    .solution-box { margin-top: 12px; padding: 16px 18px; background: rgba(147,176,172,0.1); border-radius: 8px;
+                    border-left: 4px solid #93B0AC; color: #93B0AC; font-size: 14px; line-height: 1.7; }
+
+    /* ── Activity boxes ── */
+    .activity-box { background: linear-gradient(135deg, rgba(147,176,172,0.08), rgba(197,189,150,0.08)) !important;
+                    border-color: rgba(147,176,172,0.25) !important; }
+
+    /* ── Language worksheet layout (Telugu, Hindi, etc.) ── */
+    .lang-q-row { padding: 16px 20px 12px; margin: 6px 0; border-bottom: 1px solid rgba(195,220,216,0.08); }
+    .lang-q-left { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+    .lang-q-num { font-size: 15px; color: #93B0AC; font-weight: 700; flex-shrink: 0; min-width: 28px; }
+    .lang-q-text { font-size: 16px; color: #F0EEEC; line-height: 1.8; }
+    .lang-q-text strong { color: #C3DCD8; }
+    .lang-example { margin: 4px 0 10px 38px; padding: 8px 14px; background: rgba(195,220,216,0.05);
+                    border-left: 3px solid rgba(195,220,216,0.3); border-radius: 0 6px 6px 0;
+                    font-size: 14px; color: #A8B5B3; font-style: italic; }
+    .lang-q-answer { display: flex; align-items: center; gap: 12px; margin-left: 38px; flex-wrap: wrap; }
+    .lang-input { flex: 1; max-width: 280px; padding: 8px 4px; font-size: 16px; color: #F0EEEC;
+                  background: transparent; border: none; border-bottom: 2px dotted rgba(195,220,216,0.35);
+                  outline: none; font-family: inherit; transition: border-color 0.2s; }
+    .lang-input:focus { border-bottom-color: #93B0AC; border-bottom-style: solid; }
+    .lang-input::placeholder { color: transparent; }
+    .lang-q-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .lang-btn-check { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(147,176,172,0.4);
+                      background: transparent; color: #93B0AC; font-size: 14px; cursor: pointer;
+                      display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-check:hover { background: rgba(147,176,172,0.15); border-color: #93B0AC; }
+    .lang-btn-hint { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(197,189,150,0.4);
+                     background: transparent; color: #C5BD96; font-size: 14px; font-weight: 700; cursor: pointer;
+                     display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-hint:hover { background: rgba(197,189,150,0.1); border-color: #C5BD96; }
+    .lang-result { margin: 4px 0 0 38px; font-size: 14px; min-height: 4px; }
+    .lang-mcq-opts { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px 38px; align-items: center; }
+    .lang-mcq-opt { font-size: 14px; color: #F0EEEC; cursor: pointer; padding: 6px 12px;
+                    border: 1px solid rgba(195,220,216,0.2); border-radius: 6px; transition: all 0.2s; }
+    .lang-mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .lang-mcq-opt input { margin-right: 6px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .header { padding: 20px; }
+      .header h1 { font-size: 20px; }
+      .container { padding: 0 14px 40px; }
+      .q-card { padding: 16px; }
+      .lang-q-row { padding: 12px 14px 10px; }
+      .lang-q-answer { margin-left: 28px; }
+      .lang-result { margin-left: 28px; }
+      .lang-example { margin-left: 28px; }
+      .score { width: 60px; height: 60px; top: 14px; right: 14px; }
+      .score-num { font-size: 18px; }
+      .concepts-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-sub">The Shri Ram Academy &middot; PYP 2</div>
+    <h1>Language Acquisition - Telugu Practice Task Sheet</h1>
+    <div class="header-meta">Subject: Language Acquisition - Telugu &nbsp;|&nbsp; Powered by Aivorah</div>
+  </div>
+
+  <div class="score" id="score-badge">
+    <span class="score-num" id="score-num">0/41</span>
+    <span class="score-label">Score</span>
+  </div>
+
+  <div class="container">
+    <div class="progress-wrap">
+      <div class="progress-title">Quiz Progress</div>
+      <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+      <div class="progress-pct" id="pp">0% complete</div>
+    </div>
+
+    <div class="concepts-row">
+        <div class="concept-card" style="background:#93B0AC18;border:1px solid #93B0AC40">
+          <div class="concept-icon" style="color:#93B0AC">&#128218;</div>
+          <h3 style="color:#93B0AC">Language Acquisition</h3>
+          <p>Learning to read and write letters and words accurately in Telugu.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#C5BD9618;border:1px solid #C5BD9640">
+          <div class="concept-icon" style="color:#C5BD96">&#128218;</div>
+          <h3 style="color:#C5BD96">Communication Skills</h3>
+          <p>Developing the ability to match words with pictures and construct sentences.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#D4A89818;border:1px solid #D4A89840">
+          <div class="concept-icon" style="color:#D4A898">&#128218;</div>
+          <h3 style="color:#D4A898">Thinking Skills</h3>
+          <p>Using letters to form words and understanding word meanings through visual cues.</p>
+          
+        </div></div>
+    <div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:6px;font-weight:700;">&#128221; Note</h3>
+      <p style="font-size:14px;color:#A8B5B3;line-height:1.5;">This worksheet focuses on practicing Telugu language skills, including matching words to pictures, forming words from letters, adding vowel signs, and identifying specific words in sentences.</p>
+    </div>
+    <div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:8px;font-weight:700;">&#127919; Success Criteria</h3>
+      <ul style="margin:0;padding-left:20px;"><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can match the correct Telugu word to the given picture.</li><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can write words using given Telugu letters.</li><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can add the vowel sign 'ఒ' to given letters and write the new letters.</li><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">I can read sentences and identify 'దీర్ఘం' (long vowel) words.</li></ul>
+    </div>
+    
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">ఇ. చిత్రాలకు సరైన పదాన్ని జతపరచండి.</h2>
+      <div style="text-align:center;margin:0 0 16px;"><img src="data:image/png;base64,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" alt="Pictures of a pot, hat, swan, fish, and temple cart with corresponding Telugu words." style="max-width:320px;max-height:300px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div><div class="lang-q-row" id="q1-card"><div class="lang-q-left"><span class="lang-q-num">(a)</span><span class="lang-q-text">Match the picture of the pot to the correct Telugu word.</span></div><div class="lang-q-answer"><input type="text" id="q1-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q1')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q1')">?</button></div></div>
+        <div id="q1-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Look at the word next to the pot picture.</div>
+        <div id="q1-result" class="lang-result"></div>
+        <div id="q1-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The picture of the pot corresponds to the word 'కుండ'.</div>
+        <button id="q1-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q1')">Show Answer</button>
+      </div><div class="lang-q-row" id="q2-card"><div class="lang-q-left"><span class="lang-q-num">(b)</span><span class="lang-q-text">Match the picture of the hat to the correct Telugu word.</span></div><div class="lang-q-answer"><input type="text" id="q2-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q2')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q2')">?</button></div></div>
+        <div id="q2-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Look at the word next to the hat picture.</div>
+        <div id="q2-result" class="lang-result"></div>
+        <div id="q2-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The picture of the hat corresponds to the word 'టోపీ'.</div>
+        <button id="q2-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q2')">Show Answer</button>
+      </div><div class="lang-q-row" id="q3-card"><div class="lang-q-left"><span class="lang-q-num">(c)</span><span class="lang-q-text">Match the picture of the swan to the correct Telugu word.</span></div><div class="lang-q-answer"><input type="text" id="q3-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q3')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q3')">?</button></div></div>
+        <div id="q3-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Look at the word next to the swan picture.</div>
+        <div id="q3-result" class="lang-result"></div>
+        <div id="q3-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The picture of the swan corresponds to the word 'హంస'.</div>
+        <button id="q3-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q3')">Show Answer</button>
+      </div><div class="lang-q-row" id="q4-card"><div class="lang-q-left"><span class="lang-q-num">(d)</span><span class="lang-q-text">Match the picture of the fish to the correct Telugu word.</span></div><div class="lang-q-answer"><input type="text" id="q4-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q4')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q4')">?</button></div></div>
+        <div id="q4-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Look at the word next to the fish picture.</div>
+        <div id="q4-result" class="lang-result"></div>
+        <div id="q4-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The picture of the fish corresponds to the word 'చేప'.</div>
+        <button id="q4-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q4')">Show Answer</button>
+      </div><div class="lang-q-row" id="q5-card"><div class="lang-q-left"><span class="lang-q-num">(e)</span><span class="lang-q-text">Match the picture of the temple cart to the correct Telugu word.</span></div><div class="lang-q-answer"><input type="text" id="q5-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q5')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q5')">?</button></div></div>
+        <div id="q5-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Look at the word next to the temple cart picture.</div>
+        <div id="q5-result" class="lang-result"></div>
+        <div id="q5-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The picture of the temple cart corresponds to the word 'తేరు'.</div>
+        <button id="q5-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q5')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">ఈ. పట్టికలోని అక్షరాలతో పదాలు రాయండి.</h2>
+      <div class="lang-q-row" id="q6-card"><div class="lang-q-left"><span class="lang-q-num">(f)</span><span class="lang-q-text">Write a word using the letter 'సో'.</span></div><div class="lang-q-answer"><input type="text" id="q6-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q6')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q6')">?</button></div></div>
+        <div id="q6-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Think of a simple word starting with 'సో'. Example: 'సోమవారం'.</div>
+        <div id="q6-result" class="lang-result"></div>
+        <div id="q6-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> Possible answer: 'సోమవారం'. Use the letter 'సో' to form a meaningful word.</div>
+        <button id="q6-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q6')">Show Answer</button>
+      </div><div class="lang-q-row" id="q7-card"><div class="lang-q-left"><span class="lang-q-num">(g)</span><span class="lang-q-text">Write a word using the letter 'ఓ'.</span></div><div class="lang-q-answer"><input type="text" id="q7-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q7')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q7')">?</button></div></div>
+        <div id="q7-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Think of a simple word starting with 'ఓ'. Example: 'ఓడ'.</div>
+        <div id="q7-result" class="lang-result"></div>
+        <div id="q7-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> Possible answer: 'ఓడ'. Use the letter 'ఓ' to form a meaningful word.</div>
+        <button id="q7-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q7')">Show Answer</button>
+      </div><div class="lang-q-row" id="q8-card"><div class="lang-q-left"><span class="lang-q-num">(h)</span><span class="lang-q-text">Write a word using the letter 'రా'.</span></div><div class="lang-q-answer"><input type="text" id="q8-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q8')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q8')">?</button></div></div>
+        <div id="q8-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Think of a simple word starting with 'రా'. Example: 'రాముడు'.</div>
+        <div id="q8-result" class="lang-result"></div>
+        <div id="q8-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> Possible answer: 'రాముడు'. Use the letter 'రా' to form a meaningful word.</div>
+        <button id="q8-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q8')">Show Answer</button>
+      </div><div class="lang-q-row" id="q9-card"><div class="lang-q-left"><span class="lang-q-num">(i)</span><span class="lang-q-text">Write a word using the letter 'మో'.</span></div><div class="lang-q-answer"><input type="text" id="q9-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q9')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q9')">?</button></div></div>
+        <div id="q9-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Think of a simple word starting with 'మో'. Example: 'మోసము'.</div>
+        <div id="q9-result" class="lang-result"></div>
+        <div id="q9-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> Possible answer: 'మోసము'. Use the letter 'మో' to form a meaningful word.</div>
+        <button id="q9-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q9')">Show Answer</button>
+      </div><div class="lang-q-row" id="q10-card"><div class="lang-q-left"><span class="lang-q-num">(j)</span><span class="lang-q-text">Write a word using the letter 'పూ'.</span></div><div class="lang-q-answer"><input type="text" id="q10-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q10')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q10')">?</button></div></div>
+        <div id="q10-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Think of a simple word starting with 'పూ'. Example: 'పూలు'.</div>
+        <div id="q10-result" class="lang-result"></div>
+        <div id="q10-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> Possible answer: 'పూలు'. Use the letter 'పూ' to form a meaningful word.</div>
+        <button id="q10-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q10')">Show Answer</button>
+      </div><div class="lang-q-row" id="q11-card"><div class="lang-q-left"><span class="lang-q-num">(k)</span><span class="lang-q-text">Write a word using the letter 'తో'.</span></div><div class="lang-q-answer"><input type="text" id="q11-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q11')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q11')">?</button></div></div>
+        <div id="q11-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Think of a simple word starting with 'తో'. Example: 'తోట'.</div>
+        <div id="q11-result" class="lang-result"></div>
+        <div id="q11-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> Possible answer: 'తోట'. Use the letter 'తో' to form a meaningful word.</div>
+        <button id="q11-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q11')">Show Answer</button>
+      </div><div class="lang-q-row" id="q12-card"><div class="lang-q-left"><span class="lang-q-num">(l)</span><span class="lang-q-text">Write a word using the letter 'పి'.</span></div><div class="lang-q-answer"><input type="text" id="q12-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q12')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q12')">?</button></div></div>
+        <div id="q12-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Think of a simple word starting with 'పి'. Example: 'పిల్లి'.</div>
+        <div id="q12-result" class="lang-result"></div>
+        <div id="q12-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> Possible answer: 'పిల్లి'. Use the letter 'పి' to form a meaningful word.</div>
+        <button id="q12-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q12')">Show Answer</button>
+      </div><div class="lang-q-row" id="q13-card"><div class="lang-q-left"><span class="lang-q-num">(m)</span><span class="lang-q-text">Write a word using the letter 'వ'.</span></div><div class="lang-q-answer"><input type="text" id="q13-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q13')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q13')">?</button></div></div>
+        <div id="q13-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Think of a simple word starting with 'వ'. Example: 'వర్షం'.</div>
+        <div id="q13-result" class="lang-result"></div>
+        <div id="q13-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> Possible answer: 'వర్షం'. Use the letter 'వ' to form a meaningful word.</div>
+        <button id="q13-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q13')">Show Answer</button>
+      </div><div class="lang-q-row" id="q14-card"><div class="lang-q-left"><span class="lang-q-num">(n)</span><span class="lang-q-text">Write a word using the letter 'సో'.</span></div><div class="lang-q-answer"><input type="text" id="q14-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q14')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q14')">?</button></div></div>
+        <div id="q14-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Think of another word using 'సో'. Example: 'సొరచేప'.</div>
+        <div id="q14-result" class="lang-result"></div>
+        <div id="q14-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> Possible answer: 'సొరచేప'. Use the letter 'సో' to form another meaningful word.</div>
+        <button id="q14-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q14')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">ఉ. ఇచ్చిన అక్షరాలకు 'ఒ' దీర్ఘం చేర్చి రాయండి.</h2>
+      <div class="lang-q-row" id="q15-card"><div class="lang-q-left"><span class="lang-q-num">(o1)</span><span class="lang-q-text">Add 'ఒ' to క and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q15-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q15')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q15')">?</button></div></div>
+        <div id="q15-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'క'.</div>
+        <div id="q15-result" class="lang-result"></div>
+        <div id="q15-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'క' with the vowel sign 'ో' becomes 'కో'.</div>
+        <button id="q15-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q15')">Show Answer</button>
+      </div><div class="lang-q-row" id="q16-card"><div class="lang-q-left"><span class="lang-q-num">(o2)</span><span class="lang-q-text">Add 'ఒ' to గ and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q16-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q16')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q16')">?</button></div></div>
+        <div id="q16-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'గ'.</div>
+        <div id="q16-result" class="lang-result"></div>
+        <div id="q16-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'గ' with the vowel sign 'ో' becomes 'గో'.</div>
+        <button id="q16-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q16')">Show Answer</button>
+      </div><div class="lang-q-row" id="q17-card"><div class="lang-q-left"><span class="lang-q-num">(o3)</span><span class="lang-q-text">Add 'ఒ' to చ and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q17-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q17')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q17')">?</button></div></div>
+        <div id="q17-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'చ'.</div>
+        <div id="q17-result" class="lang-result"></div>
+        <div id="q17-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'చ' with the vowel sign 'ో' becomes 'చో'.</div>
+        <button id="q17-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q17')">Show Answer</button>
+      </div><div class="lang-q-row" id="q18-card"><div class="lang-q-left"><span class="lang-q-num">(o4)</span><span class="lang-q-text">Add 'ఒ' to జ and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q18-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q18')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q18')">?</button></div></div>
+        <div id="q18-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'జ'.</div>
+        <div id="q18-result" class="lang-result"></div>
+        <div id="q18-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'జ' with the vowel sign 'ో' becomes 'జో'.</div>
+        <button id="q18-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q18')">Show Answer</button>
+      </div><div class="lang-q-row" id="q19-card"><div class="lang-q-left"><span class="lang-q-num">(o5)</span><span class="lang-q-text">Add 'ఒ' to ట and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q19-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q19')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q19')">?</button></div></div>
+        <div id="q19-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'ట'.</div>
+        <div id="q19-result" class="lang-result"></div>
+        <div id="q19-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'ట' with the vowel sign 'ో' becomes 'టో'.</div>
+        <button id="q19-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q19')">Show Answer</button>
+      </div><div class="lang-q-row" id="q20-card"><div class="lang-q-left"><span class="lang-q-num">(o6)</span><span class="lang-q-text">Add 'ఒ' to డ and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q20-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q20')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q20')">?</button></div></div>
+        <div id="q20-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'డ'.</div>
+        <div id="q20-result" class="lang-result"></div>
+        <div id="q20-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'డ' with the vowel sign 'ో' becomes 'డో'.</div>
+        <button id="q20-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q20')">Show Answer</button>
+      </div><div class="lang-q-row" id="q21-card"><div class="lang-q-left"><span class="lang-q-num">(o7)</span><span class="lang-q-text">Add 'ఒ' to ణ and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q21-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q21')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q21')">?</button></div></div>
+        <div id="q21-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'ణ'.</div>
+        <div id="q21-result" class="lang-result"></div>
+        <div id="q21-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'ణ' with the vowel sign 'ో' becomes 'ణో'.</div>
+        <button id="q21-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q21')">Show Answer</button>
+      </div><div class="lang-q-row" id="q22-card"><div class="lang-q-left"><span class="lang-q-num">(o8)</span><span class="lang-q-text">Add 'ఒ' to త and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q22-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q22')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q22')">?</button></div></div>
+        <div id="q22-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'త'.</div>
+        <div id="q22-result" class="lang-result"></div>
+        <div id="q22-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'త' with the vowel sign 'ో' becomes 'తో'.</div>
+        <button id="q22-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q22')">Show Answer</button>
+      </div><div class="lang-q-row" id="q23-card"><div class="lang-q-left"><span class="lang-q-num">(o9)</span><span class="lang-q-text">Add 'ఒ' to ద and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q23-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q23')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q23')">?</button></div></div>
+        <div id="q23-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'ద'.</div>
+        <div id="q23-result" class="lang-result"></div>
+        <div id="q23-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'ద' with the vowel sign 'ో' becomes 'దో'.</div>
+        <button id="q23-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q23')">Show Answer</button>
+      </div><div class="lang-q-row" id="q24-card"><div class="lang-q-left"><span class="lang-q-num">(o10)</span><span class="lang-q-text">Add 'ఒ' to న and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q24-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q24')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q24')">?</button></div></div>
+        <div id="q24-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'న'.</div>
+        <div id="q24-result" class="lang-result"></div>
+        <div id="q24-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'న' with the vowel sign 'ో' becomes 'నో'.</div>
+        <button id="q24-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q24')">Show Answer</button>
+      </div><div class="lang-q-row" id="q25-card"><div class="lang-q-left"><span class="lang-q-num">(p1)</span><span class="lang-q-text">Add 'ఒ' to బ and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q25-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q25')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q25')">?</button></div></div>
+        <div id="q25-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'బ'.</div>
+        <div id="q25-result" class="lang-result"></div>
+        <div id="q25-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'బ' with the vowel sign 'ో' becomes 'బో'.</div>
+        <button id="q25-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q25')">Show Answer</button>
+      </div><div class="lang-q-row" id="q26-card"><div class="lang-q-left"><span class="lang-q-num">(p2)</span><span class="lang-q-text">Add 'ఒ' to మ and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q26-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q26')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q26')">?</button></div></div>
+        <div id="q26-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'మ'.</div>
+        <div id="q26-result" class="lang-result"></div>
+        <div id="q26-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'మ' with the vowel sign 'ో' becomes 'మో'.</div>
+        <button id="q26-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q26')">Show Answer</button>
+      </div><div class="lang-q-row" id="q27-card"><div class="lang-q-left"><span class="lang-q-num">(p3)</span><span class="lang-q-text">Add 'ఒ' to య and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q27-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q27')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q27')">?</button></div></div>
+        <div id="q27-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'య'.</div>
+        <div id="q27-result" class="lang-result"></div>
+        <div id="q27-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'య' with the vowel sign 'ో' becomes 'యో'.</div>
+        <button id="q27-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q27')">Show Answer</button>
+      </div><div class="lang-q-row" id="q28-card"><div class="lang-q-left"><span class="lang-q-num">(p4)</span><span class="lang-q-text">Add 'ఒ' to ర and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q28-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q28')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q28')">?</button></div></div>
+        <div id="q28-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'ర'.</div>
+        <div id="q28-result" class="lang-result"></div>
+        <div id="q28-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'ర' with the vowel sign 'ో' becomes 'రో'.</div>
+        <button id="q28-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q28')">Show Answer</button>
+      </div><div class="lang-q-row" id="q29-card"><div class="lang-q-left"><span class="lang-q-num">(p5)</span><span class="lang-q-text">Add 'ఒ' to ల and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q29-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q29')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q29')">?</button></div></div>
+        <div id="q29-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'ల'.</div>
+        <div id="q29-result" class="lang-result"></div>
+        <div id="q29-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'ల' with the vowel sign 'ో' becomes 'లో'.</div>
+        <button id="q29-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q29')">Show Answer</button>
+      </div><div class="lang-q-row" id="q30-card"><div class="lang-q-left"><span class="lang-q-num">(p6)</span><span class="lang-q-text">Add 'ఒ' to వ and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q30-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q30')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q30')">?</button></div></div>
+        <div id="q30-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'వ'.</div>
+        <div id="q30-result" class="lang-result"></div>
+        <div id="q30-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'వ' with the vowel sign 'ో' becomes 'వో'.</div>
+        <button id="q30-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q30')">Show Answer</button>
+      </div><div class="lang-q-row" id="q31-card"><div class="lang-q-left"><span class="lang-q-num">(p7)</span><span class="lang-q-text">Add 'ఒ' to శ and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q31-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q31')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q31')">?</button></div></div>
+        <div id="q31-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'శ'.</div>
+        <div id="q31-result" class="lang-result"></div>
+        <div id="q31-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'శ' with the vowel sign 'ో' becomes 'శో'.</div>
+        <button id="q31-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q31')">Show Answer</button>
+      </div><div class="lang-q-row" id="q32-card"><div class="lang-q-left"><span class="lang-q-num">(p8)</span><span class="lang-q-text">Add 'ఒ' to ష and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q32-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q32')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q32')">?</button></div></div>
+        <div id="q32-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'ష'.</div>
+        <div id="q32-result" class="lang-result"></div>
+        <div id="q32-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'ష' with the vowel sign 'ో' becomes 'షో'.</div>
+        <button id="q32-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q32')">Show Answer</button>
+      </div><div class="lang-q-row" id="q33-card"><div class="lang-q-left"><span class="lang-q-num">(p9)</span><span class="lang-q-text">Add 'ఒ' to స and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q33-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q33')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q33')">?</button></div></div>
+        <div id="q33-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'స'.</div>
+        <div id="q33-result" class="lang-result"></div>
+        <div id="q33-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'స' with the vowel sign 'ో' becomes 'సో'.</div>
+        <button id="q33-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q33')">Show Answer</button>
+      </div><div class="lang-q-row" id="q34-card"><div class="lang-q-left"><span class="lang-q-num">(p10)</span><span class="lang-q-text">Add 'ఒ' to హ and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q34-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q34')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q34')">?</button></div></div>
+        <div id="q34-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'హ'.</div>
+        <div id="q34-result" class="lang-result"></div>
+        <div id="q34-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'హ' with the vowel sign 'ో' becomes 'హో'.</div>
+        <button id="q34-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q34')">Show Answer</button>
+      </div><div class="lang-q-row" id="q35-card"><div class="lang-q-left"><span class="lang-q-num">(q1)</span><span class="lang-q-text">Add 'ఒ' to ళ and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q35-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q35')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q35')">?</button></div></div>
+        <div id="q35-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'ళ'.</div>
+        <div id="q35-result" class="lang-result"></div>
+        <div id="q35-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'ళ' with the vowel sign 'ో' becomes 'ళో'.</div>
+        <button id="q35-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q35')">Show Answer</button>
+      </div><div class="lang-q-row" id="q36-card"><div class="lang-q-left"><span class="lang-q-num">(q2)</span><span class="lang-q-text">Add 'ఒ' to క్ష and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q36-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q36')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q36')">?</button></div></div>
+        <div id="q36-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'క్ష'.</div>
+        <div id="q36-result" class="lang-result"></div>
+        <div id="q36-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'క్ష' with the vowel sign 'ో' becomes 'క్షో'.</div>
+        <button id="q36-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q36')">Show Answer</button>
+      </div><div class="lang-q-row" id="q37-card"><div class="lang-q-left"><span class="lang-q-num">(q3)</span><span class="lang-q-text">Add 'ఒ' to ఱ and write the new letter.</span></div><div class="lang-q-answer"><input type="text" id="q37-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q37')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q37')">?</button></div></div>
+        <div id="q37-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Add the vowel sign 'ో' to 'ఱ'.</div>
+        <div id="q37-result" class="lang-result"></div>
+        <div id="q37-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The letter 'ఱ' with the vowel sign 'ో' becomes 'ఱో'.</div>
+        <button id="q37-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q37')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">ఊ. కింది వాక్యాలు చదవండి. దీర్ఘాక్షర పదాలను 'O' చుట్టి, రాయండి.</h2>
+      <div class="lang-q-row" id="q38-card"><div class="lang-q-left"><span class="lang-q-num">(r)</span><span class="lang-q-text">Read the sentence and circle the 'దీర్ఘం' word: మాట కాని మాట తమాట.</span></div><div class="lang-q-answer"><input type="text" id="q38-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q38')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q38')">?</button></div></div>
+        <div id="q38-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Look for words with long vowels (దీర్ఘాక్షరాలు).</div>
+        <div id="q38-result" class="lang-result"></div>
+        <div id="q38-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The word 'మాట' contains a long vowel 'ా'. Circle 'మాట' and write it in the blank.</div>
+        <button id="q38-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q38')">Show Answer</button>
+      </div><div class="lang-q-row" id="q39-card"><div class="lang-q-left"><span class="lang-q-num">(s)</span><span class="lang-q-text">Read the sentence and circle the 'దీర్ఘం' word: కాయ గాని కాయ తపాకాయ.</span></div><div class="lang-q-answer"><input type="text" id="q39-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q39')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q39')">?</button></div></div>
+        <div id="q39-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Look for words with long vowels (దీర్ఘాక్షరాలు).</div>
+        <div id="q39-result" class="lang-result"></div>
+        <div id="q39-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The words 'కాయ' and 'తపాకాయ' contain long vowels 'ా'. Circle both and write them in the blanks.</div>
+        <button id="q39-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q39')">Show Answer</button>
+      </div><div class="lang-q-row" id="q40-card"><div class="lang-q-left"><span class="lang-q-num">(t)</span><span class="lang-q-text">Read the sentence and circle the 'దీర్ఘం' word: కారు గాని కారు సఫారీカー.</span></div><div class="lang-q-answer"><input type="text" id="q40-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q40')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q40')">?</button></div></div>
+        <div id="q40-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Look for words with long vowels (దీర్ఘాక్షరాలు).</div>
+        <div id="q40-result" class="lang-result"></div>
+        <div id="q40-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The words 'కారు' and 'సఫారీカー' contain long vowels 'ా' and 'ీ'. Circle both and write them in the blanks.</div>
+        <button id="q40-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q40')">Show Answer</button>
+      </div><div class="lang-q-row" id="q41-card"><div class="lang-q-left"><span class="lang-q-num">(u)</span><span class="lang-q-text">Read the sentence and circle the 'దీర్ఘం' word: నారం కాని నారం వానరం.</span></div><div class="lang-q-answer"><input type="text" id="q41-input" class="lang-input" lang="te" placeholder=""><div class="lang-q-actions"><button class="lang-btn-check" onclick="checkAnswer('q41')">&#10003;</button><button class="lang-btn-hint" onclick="toggleHint('q41')">?</button></div></div>
+        <div id="q41-hint" class="hint-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;">Look for words with long vowels (దీర్ఘాక్షరాలు).</div>
+        <div id="q41-result" class="lang-result"></div>
+        <div id="q41-solution" class="solution-box" style="display:none;margin:4px 0 4px 36px;font-size:13px;"><strong>&#9989;</strong> The words 'నారం' and 'వానరం' contain long vowels 'ా'. Circle both and write them in the blanks.</div>
+        <button id="q41-show" class="btn-show" style="display:none;margin:4px 36px;font-size:11px;" onclick="toggleSolution('q41')">Show Answer</button>
+      </div></div>
+  </div>
+
+  <script>
+    let sc = 0;
+    const tot = 41;
+    const done = new Set();
+    const answers = {"q1":{"answer":"కుండ","isNum":false,"range":null},"q2":{"answer":"టోపీ","isNum":false,"range":null},"q3":{"answer":"హంస","isNum":false,"range":null},"q4":{"answer":"చేప","isNum":false,"range":null},"q5":{"answer":"తేరు","isNum":false,"range":null},"q6":{"answer":"","isNum":false,"range":null},"q7":{"answer":"","isNum":false,"range":null},"q8":{"answer":"","isNum":false,"range":null},"q9":{"answer":"","isNum":false,"range":null},"q10":{"answer":"","isNum":false,"range":null},"q11":{"answer":"","isNum":false,"range":null},"q12":{"answer":"","isNum":false,"range":null},"q13":{"answer":"","isNum":false,"range":null},"q14":{"answer":"","isNum":false,"range":null},"q15":{"answer":"కో","isNum":false,"range":null},"q16":{"answer":"గో","isNum":false,"range":null},"q17":{"answer":"చో","isNum":false,"range":null},"q18":{"answer":"జో","isNum":false,"range":null},"q19":{"answer":"టో","isNum":false,"range":null},"q20":{"answer":"డో","isNum":false,"range":null},"q21":{"answer":"ణో","isNum":false,"range":null},"q22":{"answer":"తో","isNum":false,"range":null},"q23":{"answer":"దో","isNum":false,"range":null},"q24":{"answer":"నో","isNum":false,"range":null},"q25":{"answer":"బో","isNum":false,"range":null},"q26":{"answer":"మో","isNum":false,"range":null},"q27":{"answer":"యో","isNum":false,"range":null},"q28":{"answer":"రో","isNum":false,"range":null},"q29":{"answer":"లో","isNum":false,"range":null},"q30":{"answer":"వో","isNum":false,"range":null},"q31":{"answer":"శో","isNum":false,"range":null},"q32":{"answer":"షో","isNum":false,"range":null},"q33":{"answer":"సో","isNum":false,"range":null},"q34":{"answer":"హో","isNum":false,"range":null},"q35":{"answer":"ళో","isNum":false,"range":null},"q36":{"answer":"క్షో","isNum":false,"range":null},"q37":{"answer":"ఱో","isNum":false,"range":null},"q38":{"answer":"మాట","isNum":false,"range":null},"q39":{"answer":"కాయ, తపాకాయ","isNum":false,"range":null},"q40":{"answer":"కారు, సఫారీカー","isNum":false,"range":null},"q41":{"answer":"నారం, వానరం","isNum":false,"range":null}};
+    const studentAnswers = {}; // { qId: { answer, correct, timeSpent } }
+    const questionStartTimes = {}; // { qId: timestamp }
+
+    // Track when each question becomes visible / gets focus
+    document.addEventListener('focusin', function(e) {
+      const inp = e.target.closest('input');
+      if (inp && inp.id && inp.id.endsWith('-input')) {
+        const qId = inp.id.replace('-input', '');
+        if (!questionStartTimes[qId]) questionStartTimes[qId] = Date.now();
+      }
+    });
+
+    function up() {
+      document.getElementById('score-num').textContent = sc + '/' + tot;
+      const pct = Math.round((done.size / tot) * 100);
+      document.getElementById('pf').style.width = pct + '%';
+      document.getElementById('pp').textContent = pct + '% complete';
+      // Build per-question answer list
+      const answersArr = Object.entries(studentAnswers).map(([qId, data]) => ({
+        qId, answer: data.answer, correct: data.correct,
+        timeSpent: data.timeSpent || 0,
+        question: data.question || ''
+      }));
+      // Report score + answers to parent window (for student assignment iframe)
+      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot, answers: answersArr }, '*'); } catch(e) {}
+    }
+
+    function checkAnswer(id) {
+      const a = answers[id];
+      if (!a) return;
+      const inp = document.getElementById(id + '-input');
+      const val = inp.value.trim();
+      if (!val) { inp.style.borderColor = '#C5BD96'; return; }
+      const r = document.getElementById(id + '-result');
+      let ok = false;
+      if (a.isNum) {
+        const v = parseFloat(val);
+        if (isNaN(v)) { inp.style.borderColor = '#C5BD96'; return; }
+        ok = a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01;
+      } else {
+        ok = val.replace(/\s+/g,'').toLowerCase() === String(a.answer).replace(/\s+/g,'').toLowerCase();
+      }
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      const qEl = document.getElementById(id + '-card');
+      const qText = qEl ? qEl.querySelector('.q-label, strong')?.textContent || '' : '';
+      studentAnswers[id] = { answer: val, correct: ok, timeSpent: elapsed, question: qText };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        inp.style.borderColor = '#93B0AC';
+        inp.style.background = 'rgba(147,176,172,0.1)';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        inp.style.borderColor = '#EFD1D4';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkMCQ(id) {
+      const a = answers[id];
+      if (!a) return;
+      const sel = document.querySelector('input[name="' + id + '"]:checked');
+      if (!sel) return;
+      const r = document.getElementById(id + '-result');
+      const ok = sel.value === a.correctLetter;
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: sel.value, correct: ok, timeSpent: elapsed, question: '' };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkVenn(id) {
+      const a = answers[id];
+      if (!a || !a.venn) return;
+      function normItems(s) {
+        return String(s || '').replace(/\band\b/gi, ',').split(/[,;\n]/)
+          .map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean).sort();
+      }
+      function setEq(x, y) {
+        if (x.length !== y.length) return false;
+        for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+        return true;
+      }
+      var regions = ['left', 'center', 'right'];
+      var allOk = true, anyFilled = false, snapshot = [];
+      regions.forEach(function(rg) {
+        var inp = document.getElementById(id + '-' + rg);
+        if (!inp) return;
+        var val = normItems(inp.value);
+        if (val.length) anyFilled = true;
+        var correct = normItems((a.answers[rg] || []).join(','));
+        var ok = setEq(val, correct);
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (!ok) allOk = false;
+        snapshot.push(rg + ': ' + inp.value.trim());
+      });
+      if (!anyFilled) return;
+      var r = document.getElementById(id + '-result');
+      var elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: snapshot.join(' | '), correct: allOk, timeSpent: elapsed, question: 'Venn diagram' };
+      if (allOk) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct! Every region is right.</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite — green boxes are right, pink need another look.</span>';
+        var sh = document.getElementById(id + '-show');
+        if (sh) sh.style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkTable(ids) {
+      var right = 0, filled = 0;
+      ids.forEach(function(id) {
+        var a = answers[id];
+        var inp = document.getElementById(id + '-input');
+        if (!a || !inp) return;
+        var val = inp.value.trim();
+        if (!val) return;
+        filled++;
+        var ok;
+        if (a.isNum) {
+          var v = parseFloat(val);
+          ok = !isNaN(v) && (a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01);
+        } else {
+          ok = val.replace(/\s+/g, '').toLowerCase() === String(a.answer).replace(/\s+/g, '').toLowerCase();
+        }
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (ok && !done.has(id)) { sc++; done.add(id); }
+        studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'table cell' };
+        if (ok) right++;
+      });
+      var rEl = document.getElementById(ids[0] + '-tableresult');
+      if (rEl) {
+        if (!filled) rEl.innerHTML = '<span style="color:#C5BD96;">Fill in the cells, then check.</span>';
+        else if (right === ids.length) rEl.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; All correct!</span>';
+        else rEl.innerHTML = '<span style="color:#EFD1D4;font-weight:700">' + right + '/' + ids.length + ' correct — green cells are right.</span>';
+      }
+      up();
+    }
+
+    function toggleHint(id) {
+      const el = document.getElementById(id + '-hint');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleSolution(id) {
+      const el = document.getElementById(id + '-solution');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+    // ── Indic language input support ──
+    // Students type English phonetically (e.g. "muggulu") → auto-converts to Telugu/Hindi
+    // Uses Google Input Tools REST API for transliteration with dropdown suggestions
+    
+    (function() {
+      const LANG = 'te';
+      const IME = 'transliteration_en_' + LANG;
+      const LANG_LABEL = 'తె';
+      const LANG_NAME = 'Telugu';
+      let enabled = true;
+
+      // Transliterate via Google Input Tools REST API
+      async function transliterate(word) {
+        if (!word || word.length < 1) return [];
+        try {
+          const url = 'https://inputtools.google.com/request?text=' +
+            encodeURIComponent(word) + '&itc=' + IME + '&num=5&cp=0&cs=1&ie=utf-8&oe=utf-8';
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1]) {
+            return data[1][0][1]; // array of suggestions
+          }
+        } catch(e) { console.warn('Transliteration failed:', e); }
+        return [];
+      }
+
+      // Suggestion dropdown
+      let dropdown = document.createElement('div');
+      dropdown.id = 'translit-dropdown';
+      dropdown.style.cssText = 'position:absolute;z-index:9999;background:#1C1C1C;border:1px solid rgba(147,176,172,0.4);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.5);display:none;overflow:hidden;min-width:120px;';
+      document.body.appendChild(dropdown);
+
+      let activeInput = null;
+      let currentWord = '';
+      let wordStart = 0;
+
+      function hideDropdown() { dropdown.style.display = 'none'; dropdown.innerHTML = ''; }
+
+      function showDropdown(suggestions, input) {
+        if (!suggestions.length) { hideDropdown(); return; }
+        dropdown.innerHTML = '';
+        suggestions.forEach(function(s, i) {
+          var opt = document.createElement('div');
+          opt.textContent = s;
+          opt.style.cssText = 'padding:8px 14px;font-size:15px;color:#F0EEEC;cursor:pointer;border-bottom:1px solid rgba(195,220,216,0.08);';
+          if (i === 0) opt.style.background = 'rgba(147,176,172,0.15)';
+          opt.onmouseenter = function() {
+            dropdown.querySelectorAll('div').forEach(function(d) { d.style.background = 'transparent'; });
+            opt.style.background = 'rgba(147,176,172,0.15)';
+          };
+          opt.onmousedown = function(e) {
+            e.preventDefault();
+            applySelection(s, input);
+          };
+          dropdown.appendChild(opt);
+        });
+        // Position near the input
+        var rect = input.getBoundingClientRect();
+        dropdown.style.left = rect.left + 'px';
+        dropdown.style.top = (rect.bottom + 4) + 'px';
+        dropdown.style.display = 'block';
+      }
+
+      function applySelection(text, input) {
+        var val = input.value;
+        input.value = val.substring(0, wordStart) + text + val.substring(wordStart + currentWord.length);
+        currentWord = '';
+        hideDropdown();
+        input.focus();
+      }
+
+      // Extract current English word being typed
+      function getCurrentWord(input) {
+        var val = input.value;
+        var pos = input.selectionStart || val.length;
+        var before = val.substring(0, pos);
+        var match = before.match(/[a-zA-Z]+$/);
+        if (match) {
+          wordStart = pos - match[0].length;
+          return match[0];
+        }
+        return '';
+      }
+
+      // Debounce
+      let debounceTimer = null;
+
+      function onInput(e) {
+        if (!enabled) return;
+        var input = e.target;
+        activeInput = input;
+        currentWord = getCurrentWord(input);
+        if (currentWord.length >= 2) {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(async function() {
+            var suggestions = await transliterate(currentWord);
+            showDropdown(suggestions, input);
+          }, 200);
+        } else {
+          hideDropdown();
+        }
+      }
+
+      function onKeydown(e) {
+        if (!enabled) return;
+        if (dropdown.style.display === 'none') return;
+        var items = dropdown.querySelectorAll('div');
+        var active = dropdown.querySelector('div[style*="rgba(147,176,172,0.15)"]');
+        var idx = Array.from(items).indexOf(active);
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          items.forEach(function(d) { d.style.background = 'transparent'; });
+          var next = (idx + 1) % items.length;
+          items[next].style.background = 'rgba(147,176,172,0.15)';
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          items.forEach(function(d) { d.style.background = 'transparent'; });
+          var prev = (idx - 1 + items.length) % items.length;
+          items[prev].style.background = 'rgba(147,176,172,0.15)';
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          if (active) {
+            e.preventDefault();
+            applySelection(active.textContent + (e.key === ' ' ? ' ' : ''), activeInput);
+          }
+        } else if (e.key === 'Escape') {
+          hideDropdown();
+        }
+      }
+
+      // Attach to all quiz inputs
+      document.querySelectorAll('.lang-input, .q-input').forEach(function(inp) {
+        inp.setAttribute('lang', LANG);
+        inp.addEventListener('input', onInput);
+        inp.addEventListener('keydown', onKeydown);
+        inp.addEventListener('blur', function() { setTimeout(hideDropdown, 200); });
+      });
+
+      // Toggle indicator (fixed bottom-left)
+      var indicator = document.createElement('div');
+      indicator.id = 'lang-indicator';
+      indicator.innerHTML = '<span class="lang-ind-icon">' + LANG_LABEL + '</span><span class="lang-ind-text">' + LANG_NAME + ' ON</span>';
+      indicator.style.cssText = 'position:fixed;bottom:20px;left:20px;background:#1C1C1C;color:#93B0AC;padding:8px 16px;border-radius:20px;border:1px solid rgba(147,176,172,0.3);z-index:999;display:flex;align-items:center;gap:8px;font-family:inherit;box-shadow:0 2px 12px rgba(0,0,0,0.4);cursor:pointer;user-select:none;transition:all 0.2s;';
+      indicator.onclick = function() {
+        enabled = !enabled;
+        indicator.querySelector('.lang-ind-text').textContent = enabled ? LANG_NAME + ' ON' : 'English';
+        indicator.querySelector('.lang-ind-icon').textContent = enabled ? LANG_LABEL : 'EN';
+        indicator.style.borderColor = enabled ? 'rgba(147,176,172,0.3)' : 'rgba(197,189,150,0.3)';
+        if (!enabled) hideDropdown();
+      };
+      document.body.appendChild(indicator);
+
+      // Style for indicator
+      var style = document.createElement('style');
+      style.textContent = '.lang-ind-icon{font-size:14px;font-weight:800;} .lang-ind-text{font-size:11px;opacity:0.7;} #lang-indicator:hover{transform:scale(1.05);border-color:#93B0AC!important;}';
+      document.head.appendChild(style);
+    })();
+    
+    // ── French accent palette ──
+    // Floating toolbar with accented characters students can click to insert
+    
+  </script>
+</body>
+</html>
