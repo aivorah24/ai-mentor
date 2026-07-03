@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decimals and Time Conversion Worksheet - Aivorah</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, 'Segoe UI', Roboto, 'Noto Sans Telugu', 'Noto Sans Devanagari', Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
+
+    /* ── Header — Aivorah Enchanted Forest ── */
+    .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 28px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); }
+    .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 4px; }
+    .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; }
+    .header-meta { font-size: 13px; color: #5A6B69; margin-top: 4px; }
+
+    /* ── Score Badge ── */
+    .score { position: fixed; top: 20px; right: 24px; width: 76px; height: 76px; border-radius: 50%;
+             background: linear-gradient(135deg, #93B0AC, #7AADA8); color: #0F0F0F;
+             display: flex; flex-direction: column; align-items: center; justify-content: center;
+             box-shadow: 0 4px 20px rgba(147,176,172,0.3); z-index: 100; }
+    .score-num { font-size: 22px; font-weight: 800; line-height: 1; }
+    .score-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 2px; }
+
+    /* ── Progress ── */
+    .progress-wrap { padding: 20px 0 4px; }
+    .progress-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5A6B69; margin-bottom: 8px; }
+    .progress-bar { background: #252525; border-radius: 6px; height: 12px; overflow: hidden; border: 1px solid rgba(195,220,216,0.08); }
+    .progress-fill { background: linear-gradient(90deg, #93B0AC, #C3DCD8); height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+    .progress-pct { text-align: right; font-size: 12px; color: #93B0AC; font-weight: 600; margin-top: 4px; }
+
+    /* ── Container ── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px 60px; }
+
+    /* ── Concepts ── */
+    .concepts-row { display: flex; gap: 16px; margin: 24px 0; flex-wrap: wrap; }
+    .concept-card { flex: 1; min-width: 220px; padding: 20px; border-radius: 12px; color: #F0EEEC; }
+    .concept-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #A8B5B3; line-height: 1.5; }
+    .concept-unit { margin-top: 8px; font-size: 12px; color: #5A6B69; }
+    .concept-icon { font-size: 20px; margin-bottom: 6px; }
+
+    /* ── Question cards ── */
+    .q-card { background: #1C1C1C; padding: 20px 24px; border-radius: 10px; margin: 14px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid rgba(195,220,216,0.12); }
+    .q-text { font-size: 15px; color: #F0EEEC; margin-bottom: 14px; line-height: 1.6; }
+    .q-text strong { color: #C3DCD8; }
+
+    /* ── Input row ── */
+    .q-input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .q-label { font-weight: 700; font-size: 14px; color: #A8B5B3; }
+    .q-input { width: 130px; padding: 10px 12px; border: 2px solid rgba(195,220,216,0.25); border-radius: 8px;
+               font-size: 16px; text-align: center; transition: border-color 0.2s; background: #252525; color: #F0EEEC; }
+    .q-input:focus { border-color: #93B0AC; outline: none; box-shadow: 0 0 0 3px rgba(147,176,172,0.2); }
+    .q-unit { font-size: 14px; color: #A8B5B3; font-weight: 500; }
+
+    /* ── MCQ ── */
+    .mcq-opt { display: block; margin: 8px 0; padding: 10px 14px; border-radius: 8px;
+               border: 1.5px solid rgba(195,220,216,0.15); cursor: pointer; font-size: 14px; color: #F0EEEC; transition: all 0.2s; }
+    .mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .mcq-opt input { margin-right: 8px; }
+
+    /* ── Buttons ── */
+    .btn-check { background: #93B0AC; color: #0F0F0F; border: none; padding: 10px 24px; border-radius: 8px;
+                 font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+    .btn-check:hover { background: #7AADA8; transform: translateY(-1px); }
+    .btn-hint { background: #C5BD96; color: #0F0F0F; border: none; padding: 10px 20px; border-radius: 8px;
+                font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .btn-hint:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-show { background: #93B0AC; color: #0F0F0F; border: none; padding: 8px 18px; border-radius: 6px;
+                font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 10px; }
+    .btn-show:hover { background: #7AADA8; }
+
+    /* ── Feedback boxes ── */
+    .hint-box { margin-top: 12px; padding: 14px 16px; background: rgba(197,189,150,0.1); border-radius: 8px;
+                border-left: 4px solid #C5BD96; color: #C5BD96; font-size: 14px; line-height: 1.5; }
+    .result-box { margin-top: 8px; font-size: 14px; min-height: 6px; }
+    .solution-box { margin-top: 12px; padding: 16px 18px; background: rgba(147,176,172,0.1); border-radius: 8px;
+                    border-left: 4px solid #93B0AC; color: #93B0AC; font-size: 14px; line-height: 1.7; }
+
+    /* ── Activity boxes ── */
+    .activity-box { background: linear-gradient(135deg, rgba(147,176,172,0.08), rgba(197,189,150,0.08)) !important;
+                    border-color: rgba(147,176,172,0.25) !important; }
+
+    /* ── Language worksheet layout (Telugu, Hindi, etc.) ── */
+    .lang-q-row { padding: 16px 20px 12px; margin: 6px 0; border-bottom: 1px solid rgba(195,220,216,0.08); }
+    .lang-q-left { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+    .lang-q-num { font-size: 15px; color: #93B0AC; font-weight: 700; flex-shrink: 0; min-width: 28px; }
+    .lang-q-text { font-size: 16px; color: #F0EEEC; line-height: 1.8; }
+    .lang-q-text strong { color: #C3DCD8; }
+    .lang-example { margin: 4px 0 10px 38px; padding: 8px 14px; background: rgba(195,220,216,0.05);
+                    border-left: 3px solid rgba(195,220,216,0.3); border-radius: 0 6px 6px 0;
+                    font-size: 14px; color: #A8B5B3; font-style: italic; }
+    .lang-q-answer { display: flex; align-items: center; gap: 12px; margin-left: 38px; flex-wrap: wrap; }
+    .lang-input { flex: 1; max-width: 280px; padding: 8px 4px; font-size: 16px; color: #F0EEEC;
+                  background: transparent; border: none; border-bottom: 2px dotted rgba(195,220,216,0.35);
+                  outline: none; font-family: inherit; transition: border-color 0.2s; }
+    .lang-input:focus { border-bottom-color: #93B0AC; border-bottom-style: solid; }
+    .lang-input::placeholder { color: transparent; }
+    .lang-q-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .lang-btn-check { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(147,176,172,0.4);
+                      background: transparent; color: #93B0AC; font-size: 14px; cursor: pointer;
+                      display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-check:hover { background: rgba(147,176,172,0.15); border-color: #93B0AC; }
+    .lang-btn-hint { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(197,189,150,0.4);
+                     background: transparent; color: #C5BD96; font-size: 14px; font-weight: 700; cursor: pointer;
+                     display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .lang-btn-hint:hover { background: rgba(197,189,150,0.1); border-color: #C5BD96; }
+    .lang-result { margin: 4px 0 0 38px; font-size: 14px; min-height: 4px; }
+    .lang-mcq-opts { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px 38px; align-items: center; }
+    .lang-mcq-opt { font-size: 14px; color: #F0EEEC; cursor: pointer; padding: 6px 12px;
+                    border: 1px solid rgba(195,220,216,0.2); border-radius: 6px; transition: all 0.2s; }
+    .lang-mcq-opt:hover { background: rgba(147,176,172,0.1); border-color: #93B0AC; }
+    .lang-mcq-opt input { margin-right: 6px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .header { padding: 20px; }
+      .header h1 { font-size: 20px; }
+      .container { padding: 0 14px 40px; }
+      .q-card { padding: 16px; }
+      .lang-q-row { padding: 12px 14px 10px; }
+      .lang-q-answer { margin-left: 28px; }
+      .lang-result { margin-left: 28px; }
+      .lang-example { margin-left: 28px; }
+      .score { width: 60px; height: 60px; top: 14px; right: 14px; }
+      .score-num { font-size: 18px; }
+      .concepts-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-sub">THE SHRI RAM ACADEMY &middot; PYP 4</div>
+    <h1>Decimals and Time Conversion Worksheet</h1>
+    <div class="header-meta">Subject: Mathematics &nbsp;|&nbsp; Powered by Aivorah</div>
+  </div>
+
+  <div class="score" id="score-badge">
+    <span class="score-num" id="score-num">0/32</span>
+    <span class="score-label">Score</span>
+  </div>
+
+  <div class="container">
+    <div class="progress-wrap">
+      <div class="progress-title">Quiz Progress</div>
+      <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+      <div class="progress-pct" id="pp">0% complete</div>
+    </div>
+
+    <div class="concepts-row">
+        <div class="concept-card" style="background:#93B0AC18;border:1px solid #93B0AC40">
+          <div class="concept-icon" style="color:#93B0AC">&#128218;</div>
+          <h3 style="color:#93B0AC">Decimals</h3>
+          <p>Numbers that have a whole number part and a fractional part, separated by a decimal point.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#C5BD9618;border:1px solid #C5BD9640">
+          <div class="concept-icon" style="color:#C5BD96">&#189;</div>
+          <h3 style="color:#C5BD96">Fractions</h3>
+          <p>A number representing part of a whole, written as numerator over denominator.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#D4A89818;border:1px solid #D4A89840">
+          <div class="concept-icon" style="color:#D4A898">&#128218;</div>
+          <h3 style="color:#D4A898">Time Conversion</h3>
+          <p>Changing time values between different units (e.g., hours to minutes) or formats (e.g., 12-hour to 24-hour).</p>
+          
+        </div>
+        <div class="concept-card" style="background:#C3DCD818;border:1px solid #C3DCD840">
+          <div class="concept-icon" style="color:#C3DCD8">&#128218;</div>
+          <h3 style="color:#C3DCD8">Decimal Addition</h3>
+          <p>Adding numbers with decimal points, aligning the decimal points before summing.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#EFD1D418;border:1px solid #EFD1D440">
+          <div class="concept-icon" style="color:#EFD1D4">&#128218;</div>
+          <h3 style="color:#EFD1D4">Decimal Subtraction</h3>
+          <p>Subtracting numbers with decimal points, aligning the decimal points before subtracting.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#7AADA818;border:1px solid #7AADA840">
+          <div class="concept-icon" style="color:#7AADA8">&#128218;</div>
+          <h3 style="color:#7AADA8">Decimal Multiplication</h3>
+          <p>Multiplying numbers with decimal points, then placing the decimal point in the product based on the total number of decimal places in the factors.</p>
+          
+        </div>
+        <div class="concept-card" style="background:#93B0AC18;border:1px solid #93B0AC40">
+          <div class="concept-icon" style="color:#93B0AC">&#9997;</div>
+          <h3 style="color:#93B0AC">Perimeter</h3>
+          <p>The total distance around the outside of a two-dimensional shape.</p>
+          <p class="concept-unit">Measured in<br><strong style="color:#C3DCD8">m, cm</strong></p>
+        </div>
+        <div class="concept-card" style="background:#C5BD9618;border:1px solid #C5BD9640">
+          <div class="concept-icon" style="color:#C5BD96">&#128218;</div>
+          <h3 style="color:#C5BD96">Carroll Diagram</h3>
+          <p>A table used to sort data according to two or more characteristics.</p>
+          
+        </div></div>
+    <div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:6px;font-weight:700;">&#128221; Note</h3>
+      <p style="font-size:14px;color:#A8B5B3;line-height:1.5;">Purpose: To apply the conceptual understanding of decimals in solving problems.</p>
+    </div>
+    <div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#93B0AC;margin-bottom:8px;font-weight:700;">&#127919; Success Criteria</h3>
+      <ul style="margin:0;padding-left:20px;"><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">model and solve addition, subtraction and multiplication of decimals.</li><li style="font-size:14px;color:#A8B5B3;margin:4px 0;">read and write time using both digital and analogue clocks on 12-hour and 24-hour formats.</li></ul>
+    </div>
+    
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 1 &middot; Express the given decimals as fractions.</h2>
+      <div class="q-card" id="q1-card">
+        <p class="q-text"><strong>a)</strong> a) 0.76</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q1-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q1')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q1')">Hint</button>
+        </div>
+        <div id="q1-hint" class="hint-box" style="display:none">Decimals with two places after the point are expressed over 100. Simplify the fraction.</div>
+        <div id="q1-result" class="result-box"></div>
+        <div id="q1-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>0.76 = 76/100. Divide both the numerator and denominator by their greatest common divisor, which is 4. 76 ÷ 4 = 19, 100 ÷ 4 = 25. So, 76/100 = 19/25.
+          
+        </div>
+        <button id="q1-show" class="btn-show" style="display:none" onclick="toggleSolution('q1')">Show Answer</button>
+      </div><div class="q-card" id="q2-card">
+        <p class="q-text"><strong>b)</strong> b)0.05</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q2-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q2')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q2')">Hint</button>
+        </div>
+        <div id="q2-hint" class="hint-box" style="display:none">Decimals with two places after the point are expressed over 100. Simplify the fraction.</div>
+        <div id="q2-result" class="result-box"></div>
+        <div id="q2-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>0.05 = 5/100. Divide both the numerator and denominator by their greatest common divisor, which is 5. 5 ÷ 5 = 1, 100 ÷ 5 = 20. So, 5/100 = 1/20.
+          
+        </div>
+        <button id="q2-show" class="btn-show" style="display:none" onclick="toggleSolution('q2')">Show Answer</button>
+      </div><div class="q-card" id="q3-card">
+        <p class="q-text"><strong>c)</strong> c)1.3</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q3-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q3')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q3')">Hint</button>
+        </div>
+        <div id="q3-hint" class="hint-box" style="display:none">Decimals with one place after the point are expressed over 10. Convert mixed number to an improper fraction.</div>
+        <div id="q3-result" class="result-box"></div>
+        <div id="q3-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>1.3 is equivalent to 1 and 3/10. To express as an improper fraction: (1 × 10 + 3) / 10 = 13/10.
+          
+        </div>
+        <button id="q3-show" class="btn-show" style="display:none" onclick="toggleSolution('q3')">Show Answer</button>
+      </div><div class="q-card" id="q4-card">
+        <p class="q-text"><strong>d)</strong> d)2.8</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q4-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q4')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q4')">Hint</button>
+        </div>
+        <div id="q4-hint" class="hint-box" style="display:none">Decimals with one place after the point are expressed over 10. Simplify the improper fraction.</div>
+        <div id="q4-result" class="result-box"></div>
+        <div id="q4-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>2.8 is equivalent to 2 and 8/10. To express as an improper fraction: (2 × 10 + 8) / 10 = 28/10. Divide both the numerator and denominator by their greatest common divisor, which is 2. 28 ÷ 2 = 14, 10 ÷ 2 = 5. So, 28/10 = 14/5.
+          
+        </div>
+        <button id="q4-show" class="btn-show" style="display:none" onclick="toggleSolution('q4')">Show Answer</button>
+      </div><div class="q-card" id="q5-card">
+        <p class="q-text"><strong>e)</strong> e)6.44</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q5-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q5')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q5')">Hint</button>
+        </div>
+        <div id="q5-hint" class="hint-box" style="display:none">Decimals with two places after the point are expressed over 100. Simplify the improper fraction.</div>
+        <div id="q5-result" class="result-box"></div>
+        <div id="q5-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>6.44 is equivalent to 6 and 44/100. To express as an improper fraction: (6 × 100 + 44) / 100 = 644/100. Divide both the numerator and denominator by their greatest common divisor, which is 4. 644 ÷ 4 = 161, 100 ÷ 4 = 25. So, 644/100 = 161/25.
+          
+        </div>
+        <button id="q5-show" class="btn-show" style="display:none" onclick="toggleSolution('q5')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 2 &middot; Build a decimal pyramid.</h2>
+      <div><div style="display:inline-block;text-align:left;margin:6px 22px 18px 0;vertical-align:top;">
+      <div style="font-size:14px;font-weight:700;color:#C3DCD8;margin-bottom:6px;">1.</div>
+      <div style="position:relative;width:200px;height:192px;background:#fff;border-radius:6px;padding:6px;box-sizing:content-box;"><input type="text" id="q6-input" class="q-input" placeholder="?"
+            style="position:absolute;left:68px;top:0px;width:64px;height:64px;border:2px solid #93B0AC;
+            border-radius:2px;background:rgba(147,176,172,0.10);color:#0B0B0B;font-size:14px;font-weight:700;
+            text-align:center;box-sizing:border-box;font-family:inherit;"><input type="text" id="q7-input" class="q-input" placeholder="?"
+            style="position:absolute;left:34px;top:64px;width:64px;height:64px;border:2px solid #93B0AC;
+            border-radius:2px;background:rgba(147,176,172,0.10);color:#0B0B0B;font-size:14px;font-weight:700;
+            text-align:center;box-sizing:border-box;font-family:inherit;"><input type="text" id="q8-input" class="q-input" placeholder="?"
+            style="position:absolute;left:102px;top:64px;width:64px;height:64px;border:2px solid #93B0AC;
+            border-radius:2px;background:rgba(147,176,172,0.10);color:#0B0B0B;font-size:14px;font-weight:700;
+            text-align:center;box-sizing:border-box;font-family:inherit;"><div style="position:absolute;left:0px;top:128px;width:64px;height:64px;border:2px solid #333;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#111;box-sizing:border-box;">3.3</div><div style="position:absolute;left:68px;top:128px;width:64px;height:64px;border:2px solid #333;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#111;box-sizing:border-box;">1.2</div><div style="position:absolute;left:136px;top:128px;width:64px;height:64px;border:2px solid #333;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#111;box-sizing:border-box;">0.1</div></div>
+    </div><div style="display:inline-block;text-align:left;margin:6px 22px 18px 0;vertical-align:top;">
+      <div style="font-size:14px;font-weight:700;color:#C3DCD8;margin-bottom:6px;">2.</div>
+      <div style="position:relative;width:200px;height:192px;background:#fff;border-radius:6px;padding:6px;box-sizing:content-box;"><input type="text" id="q9-input" class="q-input" placeholder="?"
+            style="position:absolute;left:68px;top:0px;width:64px;height:64px;border:2px solid #93B0AC;
+            border-radius:2px;background:rgba(147,176,172,0.10);color:#0B0B0B;font-size:14px;font-weight:700;
+            text-align:center;box-sizing:border-box;font-family:inherit;"><input type="text" id="q10-input" class="q-input" placeholder="?"
+            style="position:absolute;left:34px;top:64px;width:64px;height:64px;border:2px solid #93B0AC;
+            border-radius:2px;background:rgba(147,176,172,0.10);color:#0B0B0B;font-size:14px;font-weight:700;
+            text-align:center;box-sizing:border-box;font-family:inherit;"><input type="text" id="q11-input" class="q-input" placeholder="?"
+            style="position:absolute;left:102px;top:64px;width:64px;height:64px;border:2px solid #93B0AC;
+            border-radius:2px;background:rgba(147,176,172,0.10);color:#0B0B0B;font-size:14px;font-weight:700;
+            text-align:center;box-sizing:border-box;font-family:inherit;"><div style="position:absolute;left:0px;top:128px;width:64px;height:64px;border:2px solid #333;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#111;box-sizing:border-box;">2.3</div><div style="position:absolute;left:68px;top:128px;width:64px;height:64px;border:2px solid #333;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#111;box-sizing:border-box;">1.2</div><div style="position:absolute;left:136px;top:128px;width:64px;height:64px;border:2px solid #333;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#111;box-sizing:border-box;">4.2</div></div>
+    </div><div style="display:inline-block;text-align:left;margin:6px 22px 18px 0;vertical-align:top;">
+      <div style="font-size:14px;font-weight:700;color:#C3DCD8;margin-bottom:6px;">3.</div>
+      <div style="position:relative;width:200px;height:192px;background:#fff;border-radius:6px;padding:6px;box-sizing:content-box;"><input type="text" id="q12-input" class="q-input" placeholder="?"
+            style="position:absolute;left:68px;top:0px;width:64px;height:64px;border:2px solid #93B0AC;
+            border-radius:2px;background:rgba(147,176,172,0.10);color:#0B0B0B;font-size:14px;font-weight:700;
+            text-align:center;box-sizing:border-box;font-family:inherit;"><input type="text" id="q13-input" class="q-input" placeholder="?"
+            style="position:absolute;left:34px;top:64px;width:64px;height:64px;border:2px solid #93B0AC;
+            border-radius:2px;background:rgba(147,176,172,0.10);color:#0B0B0B;font-size:14px;font-weight:700;
+            text-align:center;box-sizing:border-box;font-family:inherit;"><div style="position:absolute;left:102px;top:64px;width:64px;height:64px;border:2px solid #333;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#111;box-sizing:border-box;">4.7</div><div style="position:absolute;left:0px;top:128px;width:64px;height:64px;border:2px solid #333;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#111;box-sizing:border-box;">3.6</div><input type="text" id="q14-input" class="q-input" placeholder="?"
+            style="position:absolute;left:68px;top:128px;width:64px;height:64px;border:2px solid #93B0AC;
+            border-radius:2px;background:rgba(147,176,172,0.10);color:#0B0B0B;font-size:14px;font-weight:700;
+            text-align:center;box-sizing:border-box;font-family:inherit;"><input type="text" id="q15-input" class="q-input" placeholder="?"
+            style="position:absolute;left:136px;top:128px;width:64px;height:64px;border:2px solid #93B0AC;
+            border-radius:2px;background:rgba(147,176,172,0.10);color:#0B0B0B;font-size:14px;font-weight:700;
+            text-align:center;box-sizing:border-box;font-family:inherit;"></div>
+    </div></div><div style="display:flex;gap:10px;align-items:center;clear:both;margin-top:4px;">
+          <button class="btn-check" onclick="checkGroup([&quot;q6&quot;,&quot;q7&quot;,&quot;q8&quot;,&quot;q9&quot;,&quot;q10&quot;,&quot;q11&quot;,&quot;q12&quot;,&quot;q13&quot;,&quot;q14&quot;,&quot;q15&quot;])">Check all</button>
+          <span id="q6-groupresult" style="font-size:13px;"></span>
+        </div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 3 &middot; Conversion of time. (12 hour -24 hour format)</h2>
+      <div class="ws-table-wrap" style="overflow-x:auto;margin:8px 0 14px;"><table style="width:100%;border-collapse:collapse;"><tr><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">Time in Words</th><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">24 Hour Clock</th><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">12 Hour Clock</th><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">Analogi</th></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">seven o'clock in the evening</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">19:00</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">7:00p.m.</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Analogue clock showing 7:00</td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q16-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q17-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">11:00a.m.</td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Analogue clock showing 11:00</td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q18-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">14:15</td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q19-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Analogue clock showing 2:15</td></tr></table><div style="margin-top:12px;display:flex;gap:10px;align-items:center;"><button class="btn-check" onclick="checkTable([&quot;q16&quot;,&quot;q17&quot;,&quot;q18&quot;,&quot;q19&quot;])">Check table</button><span id="q16-tableresult" style="font-size:13px;"></span></div></div></div>
+    <div class="task-block" style="border-left:5px solid #93B0AC; background:rgba(147,176,172,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(147,176,172,0.15);color:#93B0AC;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">MUST DO</span>
+      <h2 style="font-size:18px;color:#93B0AC;margin:6px 0 18px;font-weight:700;">Task 4 &middot; Conversion of time.</h2>
+      <table class="ws-table" style="width:100%;border-collapse:collapse;border:1px solid rgba(195,220,216,0.2);border-radius:8px;overflow:hidden;"><tr><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q20-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">a)</strong> a) 16 hrs. =  minutes</span><input type="text" id="q20-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><span style="font-size:13px;color:#A8B5B3;">minutes</span><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q20')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q20')">Hint</button></div><div id="q20-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">To convert hours to minutes, multiply the number of hours by 60.</div><div id="q20-result" class="result-box" style="margin:0 14px;"></div><div id="q20-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 1 hour = 60 minutes. So, 16 hours × 60 minutes/hour = 960 minutes.</div><button id="q20-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q20')">Show Answer</button></td><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q22-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">c)</strong> c)460 min =  hours  minutes</span><input type="text" id="q22-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q22')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q22')">Hint</button></div><div id="q22-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">To convert minutes to hours and minutes, divide the total minutes by 60. The quotient is the number of hours, and the remainder is the number of minutes.</div><div id="q22-result" class="result-box" style="margin:0 14px;"></div><div id="q22-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 460 minutes ÷ 60 minutes/hour = 7 with a remainder of 40. So, 460 minutes is 7 hours and 40 minutes.</div><button id="q22-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q22')">Show Answer</button></td></tr><tr><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q21-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">b)</strong> b)3hrs 30minutes =  minutes</span><input type="text" id="q21-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><span style="font-size:13px;color:#A8B5B3;">minutes</span><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q21')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q21')">Hint</button></div><div id="q21-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">First, convert the hours to minutes. Then, add the remaining minutes.</div><div id="q21-result" class="result-box" style="margin:0 14px;"></div><div id="q21-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 3 hours = 3 × 60 = 180 minutes. Add the 30 minutes: 180 + 30 = 210 minutes.</div><button id="q21-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q21')">Show Answer</button></td><td style="width:50%;vertical-align:top;border:1px solid rgba(195,220,216,0.15);"><div class="ws-cell" id="q23-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">d)</strong> d)90 min =  hours  minutes</span><input type="text" id="q23-input" class="q-input" style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?"><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkAnswer('q23')">&#10003;</button><button class="btn-hint" style="padding:6px 14px;font-size:12px;" onclick="toggleHint('q23')">Hint</button></div><div id="q23-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">To convert minutes to hours and minutes, divide the total minutes by 60. The quotient is the number of hours, and the remainder is the number of minutes.</div><div id="q23-result" class="result-box" style="margin:0 14px;"></div><div id="q23-solution" class="solution-box" style="display:none;margin:0 14px;font-size:13px;"><strong>&#9989;</strong> 90 minutes ÷ 60 minutes/hour = 1 with a remainder of 30. So, 90 minutes is 1 hour and 30 minutes.</div><button id="q23-show" class="btn-show" style="display:none;margin:4px 14px;font-size:11px;" onclick="toggleSolution('q23')">Show Answer</button></td></tr></table></div>
+    <div class="task-block" style="border-left:5px solid #C5BD96; background:rgba(197,189,150,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(197,189,150,0.15);color:#C5BD96;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">COULD DO</span>
+      <h2 style="font-size:18px;color:#C5BD96;margin:6px 0 18px;font-weight:700;">Task 5 &middot; Solve the following.</h2>
+      <div class="q-card" id="q24-card">
+        <p class="q-text"><strong>1a)</strong> 1. You have Rs. <strong>695</strong>. You buy a book for <strong>Rs.123.55</strong> and a crayon box for <strong>169.75</strong>.
+1. How much did you spend in total?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q24-input" class="q-input" placeholder="?">
+          <span class="q-unit">Rs.</span>
+          <button class="btn-check" onclick="checkAnswer('q24')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q24')">Hint</button>
+        </div>
+        <div id="q24-hint" class="hint-box" style="display:none">Add the cost of the book and the crayon box to find the total amount spent.</div>
+        <div id="q24-result" class="result-box"></div>
+        <div id="q24-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Cost of book = Rs.123.55. Cost of crayon box = Rs.169.75. Total spent = 123.55 + 169.75 = Rs.293.30.
+          
+        </div>
+        <button id="q24-show" class="btn-show" style="display:none" onclick="toggleSolution('q24')">Show Answer</button>
+      </div><div class="q-card" id="q25-card">
+        <p class="q-text"><strong>1b)</strong> b)How much money is left with you?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q25-input" class="q-input" placeholder="?">
+          <span class="q-unit">Rs.</span>
+          <button class="btn-check" onclick="checkAnswer('q25')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q25')">Hint</button>
+        </div>
+        <div id="q25-hint" class="hint-box" style="display:none">Subtract the total amount spent (calculated in part a) from the initial money you had.</div>
+        <div id="q25-result" class="result-box"></div>
+        <div id="q25-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Initial money = Rs.695.00. Total spent = Rs.293.30. Money left = 695.00 - 293.30 = Rs.401.70.
+          
+        </div>
+        <button id="q25-show" class="btn-show" style="display:none" onclick="toggleSolution('q25')">Show Answer</button>
+      </div><div class="q-card" id="q26-card">
+        <p class="q-text"><strong>2)</strong> 2) A garden has an irregular shape with sides measuring <strong><strong>19.2 m</strong></strong>, <strong><strong>18.3 m</strong></strong>, <strong><strong>14.9 m</strong></strong>, and <strong><strong>24.4 m</strong></strong>. What is the total length of its boundary? Express the total length in centimetres.</p>
+        <div class="q-input-row">
+          <span class="q-label">Side =</span>
+          <input type="text" id="q26-input" class="q-input" placeholder="?">
+          <span class="q-unit">cm</span>
+          <button class="btn-check" onclick="checkAnswer('q26')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q26')">Hint</button>
+        </div>
+        <div id="q26-hint" class="hint-box" style="display:none">First, add all the side lengths in meters to find the perimeter. Then convert the total meters to centimeters (1 m = 100 cm).</div>
+        <div id="q26-result" class="result-box"></div>
+        <div id="q26-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Total length in meters = 19.2 + 18.3 + 14.9 + 24.4 = <strong>76.8 m</strong>. To convert to centimeters, multiply by 100: 76.8 × 100 = <strong>7680 cm</strong>.
+          
+        </div>
+        <button id="q26-show" class="btn-show" style="display:none" onclick="toggleSolution('q26')">Show Answer</button>
+      </div><div class="q-card" id="q27-card">
+        <p class="q-text"><strong>3)</strong> 3) The cost of <strong><strong>1 kg</strong></strong> rice is <strong>Rs.58.25</strong>. If a family needs <strong>30 kgs</strong>, how much money will they spend?</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q27-input" class="q-input" placeholder="?">
+          <span class="q-unit">Rs.</span>
+          <button class="btn-check" onclick="checkAnswer('q27')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q27')">Hint</button>
+        </div>
+        <div id="q27-hint" class="hint-box" style="display:none">Multiply the cost per kg by the total number of kgs needed.</div>
+        <div id="q27-result" class="result-box"></div>
+        <div id="q27-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Cost of 1 kg rice = Rs.58.25. Quantity needed = 30 kgs. Total money spent = 58.25 × 30 = Rs.1747.50.
+          
+        </div>
+        <button id="q27-show" class="btn-show" style="display:none" onclick="toggleSolution('q27')">Show Answer</button>
+      </div><div class="q-card" id="q28-card">
+        <p class="q-text"><strong>4)</strong> 4) Subtract <strong>135.00</strong> from the sum of <strong>76.30</strong> and <strong>44.85</strong>.</p>
+        <div class="q-input-row">
+          <span class="q-label">Answer =</span>
+          <input type="text" id="q28-input" class="q-input" placeholder="?">
+          
+          <button class="btn-check" onclick="checkAnswer('q28')">Check</button>
+          <button class="btn-hint" onclick="toggleHint('q28')">Hint</button>
+        </div>
+        <div id="q28-hint" class="hint-box" style="display:none">First, find the sum of 76.30 and 44.85. Then, subtract 135.00 from that sum.</div>
+        <div id="q28-result" class="result-box"></div>
+        <div id="q28-solution" class="solution-box" style="display:none">
+          <strong>&#9989; Solution</strong><br>Sum of 76.30 and 44.85 = 76.30 + 44.85 = 121.15. Subtract 135.00 from the sum: 121.15 - 135.00 = -13.85.
+          
+        </div>
+        <button id="q28-show" class="btn-show" style="display:none" onclick="toggleSolution('q28')">Show Answer</button>
+      </div></div>
+    <div class="task-block" style="border-left:5px solid #EFD1D4; background:rgba(239,209,212,0.08); border-radius:12px; padding:20px 24px; margin:28px 0;">
+      <span class="tier-badge" style="display:inline-block;background:rgba(239,209,212,0.15);color:#EFD1D4;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">ENRICHMENT</span>
+      <h2 style="font-size:18px;color:#EFD1D4;margin:6px 0 18px;font-weight:700;">Enrichment Task: Sorting by digit value.</h2>
+      <div class="ws-table-wrap" style="overflow-x:auto;margin:8px 0 14px;"><div style="font-weight:700;color:#C3DCD8;margin-bottom:8px;">Carroll Diagram</div><table style="width:100%;border-collapse:collapse;"><tr><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;"></th><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">7 in the hundredths place</th><th style="border:1px solid rgba(195,220,216,0.28);padding:10px 12px;background:rgba(147,176,172,0.14);color:#D8E8E6;font-size:13px;font-weight:700;text-align:center;">Not 7 in the hundredths place</th></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">5 in the tenths place</td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q29-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q30-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td></tr><tr><td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">Not 5 in the tenths place</td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q31-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td><td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;"><input type="text" id="q32-input" class="q-input" style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td></tr></table><div style="margin-top:12px;display:flex;gap:10px;align-items:center;"><button class="btn-check" onclick="checkTable([&quot;q29&quot;,&quot;q30&quot;,&quot;q31&quot;,&quot;q32&quot;])">Check table</button><span id="q29-tableresult" style="font-size:13px;"></span></div></div></div>
+  </div>
+
+  <script>
+    let sc = 0;
+    const tot = 32;
+    const done = new Set();
+    const answers = {"q1":{"answer":"19/25","isNum":false,"range":null},"q2":{"answer":"1/20","isNum":false,"range":null},"q3":{"answer":"13/10","isNum":false,"range":null},"q4":{"answer":"14/5","isNum":false,"range":null},"q5":{"answer":"161/25","isNum":false,"range":null},"q6":{"answer":"5.8","isNum":true,"range":null},"q7":{"answer":"4.5","isNum":true,"range":null},"q8":{"answer":"1.3","isNum":true,"range":null},"q9":{"answer":"8.9","isNum":true,"range":null},"q10":{"answer":"3.5","isNum":true,"range":null},"q11":{"answer":"5.4","isNum":true,"range":null},"q12":{"answer":"9.4","isNum":true,"range":null},"q13":{"answer":"4.7","isNum":true,"range":null},"q14":{"answer":"1.1","isNum":true,"range":null},"q15":{"answer":"3.6","isNum":true,"range":null},"q16":{"answer":"eleven o'clock in the morning","isNum":false,"range":null},"q17":{"answer":"11:00","isNum":false,"range":null},"q18":{"answer":"two fifteen in the afternoon","isNum":false,"range":null},"q19":{"answer":"2:15p.m.","isNum":false,"range":null},"q20":{"answer":960,"isNum":true,"range":null},"q21":{"answer":210,"isNum":true,"range":null},"q22":{"answer":"7 hours 40 minutes","isNum":false,"range":null},"q23":{"answer":"1 hour 30 minutes","isNum":false,"range":null},"q24":{"answer":293.3,"isNum":true,"range":null},"q25":{"answer":401.7,"isNum":true,"range":null},"q26":{"answer":7680,"isNum":true,"range":null},"q27":{"answer":1747.5,"isNum":true,"range":null},"q28":{"answer":-13.85,"isNum":true,"range":null},"q29":{"answer":"","isNum":false,"range":null},"q30":{"answer":"0.52, 0.53, 0.58, 0.55, 0.50","isNum":false,"range":null},"q31":{"answer":"0.47","isNum":true,"range":null},"q32":{"answer":"0.35, 0.24, 0.16, 0.91, 0.62","isNum":false,"range":null}};
+    const studentAnswers = {}; // { qId: { answer, correct, timeSpent } }
+    const questionStartTimes = {}; // { qId: timestamp }
+
+    // Track when each question becomes visible / gets focus
+    document.addEventListener('focusin', function(e) {
+      const inp = e.target.closest('input');
+      if (inp && inp.id && inp.id.endsWith('-input')) {
+        const qId = inp.id.replace('-input', '');
+        if (!questionStartTimes[qId]) questionStartTimes[qId] = Date.now();
+      }
+    });
+
+    function up() {
+      document.getElementById('score-num').textContent = sc + '/' + tot;
+      const pct = Math.round((done.size / tot) * 100);
+      document.getElementById('pf').style.width = pct + '%';
+      document.getElementById('pp').textContent = pct + '% complete';
+      // Build per-question answer list
+      const answersArr = Object.entries(studentAnswers).map(([qId, data]) => ({
+        qId, answer: data.answer, correct: data.correct,
+        timeSpent: data.timeSpent || 0,
+        question: data.question || ''
+      }));
+      // Report score + answers to parent window (for student assignment iframe)
+      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot, answers: answersArr }, '*'); } catch(e) {}
+    }
+
+    function checkAnswer(id) {
+      const a = answers[id];
+      if (!a) return;
+      const inp = document.getElementById(id + '-input');
+      const val = inp.value.trim();
+      if (!val) { inp.style.borderColor = '#C5BD96'; return; }
+      const r = document.getElementById(id + '-result');
+      let ok = false;
+      if (a.isNum) {
+        const v = parseFloat(val);
+        if (isNaN(v)) { inp.style.borderColor = '#C5BD96'; return; }
+        ok = a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01;
+      } else {
+        ok = val.replace(/\s+/g,'').toLowerCase() === String(a.answer).replace(/\s+/g,'').toLowerCase();
+      }
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      const qEl = document.getElementById(id + '-card');
+      const qText = qEl ? qEl.querySelector('.q-label, strong')?.textContent || '' : '';
+      studentAnswers[id] = { answer: val, correct: ok, timeSpent: elapsed, question: qText };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        inp.style.borderColor = '#93B0AC';
+        inp.style.background = 'rgba(147,176,172,0.1)';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        inp.style.borderColor = '#EFD1D4';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkMCQ(id) {
+      const a = answers[id];
+      if (!a) return;
+      const sel = document.querySelector('input[name="' + id + '"]:checked');
+      if (!sel) return;
+      const r = document.getElementById(id + '-result');
+      const ok = sel.value === a.correctLetter;
+      // Track student answer + time
+      const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: sel.value, correct: ok, timeSpent: elapsed, question: '' };
+      if (ok) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkVenn(id) {
+      const a = answers[id];
+      if (!a || !a.venn) return;
+      function normItems(s) {
+        return String(s || '').replace(/\band\b/gi, ',').split(/[,;\n]/)
+          .map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean).sort();
+      }
+      function setEq(x, y) {
+        if (x.length !== y.length) return false;
+        for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+        return true;
+      }
+      var regions = ['left', 'center', 'right'];
+      var allOk = true, anyFilled = false, snapshot = [];
+      regions.forEach(function(rg) {
+        var inp = document.getElementById(id + '-' + rg);
+        if (!inp) return;
+        var val = normItems(inp.value);
+        if (val.length) anyFilled = true;
+        var correct = normItems((a.answers[rg] || []).join(','));
+        var ok = setEq(val, correct);
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (!ok) allOk = false;
+        snapshot.push(rg + ': ' + inp.value.trim());
+      });
+      if (!anyFilled) return;
+      var r = document.getElementById(id + '-result');
+      var elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: snapshot.join(' | '), correct: allOk, timeSpent: elapsed, question: 'Venn diagram' };
+      if (allOk) {
+        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct! Every region is right.</span>';
+        if (!done.has(id)) { sc++; done.add(id); }
+        document.getElementById(id + '-solution').style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite — green boxes are right, pink need another look.</span>';
+        var sh = document.getElementById(id + '-show');
+        if (sh) sh.style.display = 'inline-block';
+      }
+      up();
+    }
+
+    function checkGroup(ids) {
+      var right = 0, filled = 0;
+      ids.forEach(function(id) {
+        var a = answers[id];
+        var inp = document.getElementById(id + '-input');
+        if (!a || !inp) return;
+        var val = inp.value.trim();
+        if (!val) return;
+        filled++;
+        var ok;
+        if (a.isNum) {
+          var v = parseFloat(val);
+          ok = !isNaN(v) && (a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01);
+        } else {
+          ok = val.replace(/\s+/g, '').toLowerCase() === String(a.answer).replace(/\s+/g, '').toLowerCase();
+        }
+        inp.style.borderColor = ok ? '#4a9d6e' : '#c9605f';
+        inp.style.background = ok ? 'rgba(74,157,110,0.14)' : 'rgba(201,96,95,0.10)';
+        if (ok && !done.has(id)) { sc++; done.add(id); }
+        studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'diagram blank' };
+        if (ok) right++;
+      });
+      var rEl = document.getElementById(ids[0] + '-groupresult');
+      if (rEl) {
+        if (!filled) rEl.innerHTML = '<span style="color:#C5BD96;">Fill in the blanks, then check.</span>';
+        else if (right === ids.length) rEl.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; All correct!</span>';
+        else rEl.innerHTML = '<span style="color:#EFD1D4;font-weight:700">' + right + '/' + ids.length + ' correct — keep trying!</span>';
+      }
+      up();
+    }
+
+    function checkTable(ids) {
+      var right = 0, filled = 0;
+      ids.forEach(function(id) {
+        var a = answers[id];
+        var inp = document.getElementById(id + '-input');
+        if (!a || !inp) return;
+        var val = inp.value.trim();
+        if (!val) return;
+        filled++;
+        var ok;
+        if (a.isNum) {
+          var v = parseFloat(val);
+          ok = !isNaN(v) && (a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01);
+        } else {
+          ok = val.replace(/\s+/g, '').toLowerCase() === String(a.answer).replace(/\s+/g, '').toLowerCase();
+        }
+        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
+        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        if (ok && !done.has(id)) { sc++; done.add(id); }
+        studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'table cell' };
+        if (ok) right++;
+      });
+      var rEl = document.getElementById(ids[0] + '-tableresult');
+      if (rEl) {
+        if (!filled) rEl.innerHTML = '<span style="color:#C5BD96;">Fill in the cells, then check.</span>';
+        else if (right === ids.length) rEl.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; All correct!</span>';
+        else rEl.innerHTML = '<span style="color:#EFD1D4;font-weight:700">' + right + '/' + ids.length + ' correct — green cells are right.</span>';
+      }
+      up();
+    }
+
+    function toggleHint(id) {
+      const el = document.getElementById(id + '-hint');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleSolution(id) {
+      const el = document.getElementById(id + '-solution');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+    // ── Indic language input support ──
+    // Students type English phonetically (e.g. "muggulu") → auto-converts to Telugu/Hindi
+    // Uses Google Input Tools REST API for transliteration with dropdown suggestions
+    
+    // ── French accent palette ──
+    // Floating toolbar with accented characters students can click to insert
+    
+  </script>
+</body>
+</html>

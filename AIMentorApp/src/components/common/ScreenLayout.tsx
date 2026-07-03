@@ -13,6 +13,7 @@ import SERVER_URL from '../../config/serverUrl';
 
 interface ScreenLayoutProps {
   children: React.ReactNode;
+  hideAIPanel?: boolean;
 }
 
 interface StudentControls {
@@ -41,7 +42,7 @@ function formatHour(h: number) {
 let _heartbeatInterval: any = null;
 let _heartbeatRefCount = 0;
 
-export default function ScreenLayout({ children }: ScreenLayoutProps) {
+export default function ScreenLayout({ children, hideAIPanel }: ScreenLayoutProps) {
   const { showPermanentSidebar } = useResponsive();
   const navigation = useNavigation<any>();
   const route = useRoute();
@@ -270,8 +271,8 @@ export default function ScreenLayout({ children }: ScreenLayoutProps) {
     <View style={styles.desktopContainer}>
       <Sidebar currentScreen={route.name} onNavigate={(screen) => navigation.navigate(screen as any)} />
       <View style={styles.contentWrapper}>{content}</View>
-      {isTeacher && <TeacherAIPanel />}
-      {isParent && <ParentAIPanel />}
+      {isTeacher && !hideAIPanel && <TeacherAIPanel />}
+      {isParent && !hideAIPanel && <ParentAIPanel />}
       {fullscreenLock}
     </View>
   );

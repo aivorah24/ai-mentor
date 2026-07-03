@@ -1,0 +1,34 @@
+{
+  "name": "meet-ai-assistants",
+  "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+  "scenes": [
+    {
+      "image": "images/meet-ai/01-title.png",
+      "narration": "Welcome to Aivorah's teacher courses. In the next two minutes, you'll meet the four AI tools that can save you hours every week, and learn which one to reach for."
+    },
+    {
+      "image": "images/meet-ai/02-hook.png",
+      "narration": "You don't need to learn every AI tool out there. You just need the right one for the job. Almost everything a teacher needs is covered by four."
+    },
+    {
+      "image": "images/meet-ai/03-chatgpt.png",
+      "narration": "First, ChatGPT, your all-rounder. It's brilliant for lesson ideas, worksheets, quizzes, and rewriting anything in seconds. If you only try one, start here."
+    },
+    {
+      "image": "images/meet-ai/04-claude.png",
+      "narration": "Next, Claude. It shines with long documents and thoughtful writing. Paste an entire chapter and get a summary, or turn rough notes into warm, careful feedback."
+    },
+    {
+      "image": "images/meet-ai/05-gemini.png",
+      "narration": "Then there's Gemini. If your school uses Google, it works right inside Docs, Slides, Gmail and Classroom, drafting a deck or a parent email without ever leaving the app you already use."
+    },
+    {
+      "image": "images/meet-ai/06-perplexity.png",
+      "narration": "And Perplexity. Unlike the others, it shows you the sources behind every answer. Perfect when accuracy matters, like facts, dates, and science."
+    },
+    {
+      "image": "images/meet-ai/07-outro.png",
+      "narration": "Here's your one task: pick a single tool and use it this week. Mastering one beats dabbling in four. That's it, you've met your AI assistants."
+    }
+  ]
+}

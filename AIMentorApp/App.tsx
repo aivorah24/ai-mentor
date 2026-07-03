@@ -45,6 +45,10 @@ Text.defaultProps = { ...(Text.defaultProps ?? {}), style: [{ fontFamily: "Inter
 // @ts-ignore
 TextInput.defaultProps = { ...(TextInput.defaultProps ?? {}), style: [{ fontFamily: "Inter, system-ui, sans-serif" }, (TextInput.defaultProps as any)?.style] };
 import AppNavigator from './src/navigation/AppNavigator';
+import { registerPushToken, configureForegroundHandler } from './src/services/pushNotifications';
+
+// Configure how push notifications appear while the app is open (native only).
+configureForegroundHandler();
 import TeacherNavigator from './src/navigation/TeacherNavigator';
 import SuperAdminNavigator from './src/navigation/SuperAdminNavigator';
 import ParentNavigator from './src/navigation/ParentNavigator';
@@ -473,6 +477,15 @@ function RootNavigator() {
   const { isAuthenticated, loading, user } = useAuth();
   const { colors: c } = useTheme();
   const [verifyDone, setVerifyDone] = useState(false);
+
+  // Mobile push notifications — register this device for the logged-in user.
+  // No-op on web. (Teacher/parent get alerts for new assignments, messages, etc.)
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    if (isAuthenticated && user?.email) {
+      registerPushToken(user.email);
+    }
+  }, [isAuthenticated, user?.email]);
 
   const isWebAdminPath =
     Platform.OS === 'web' &&

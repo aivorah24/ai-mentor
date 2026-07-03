@@ -1099,4 +1099,24 @@ router.delete('/delete-account', async (req, res) => {
   }
 });
 
+// ── POST /user/push-token ──────────────────────────────────────────────────
+// Mobile app registers its Expo push token here so the server can notify this
+// user. Tokens are kept in user_preferences.data.expoPushTokens (deduped array).
+router.post('/push-token', async (req, res) => {
+  try {
+    const { email, token } = req.body ?? {};
+    if (!email || !token) return res.status(400).json({ error: 'email and token required' });
+    if (!String(token).startsWith('ExponentPushToken')) {
+      return res.status(400).json({ error: 'invalid expo push token' });
+    }
+    const existing = await getPreferences(email);
+    const current = Array.isArray(existing?.expoPushTokens) ? existing.expoPushTokens : [];
+    const merged = [...new Set([...current, String(token)])].slice(-10); // cap stored devices
+    await setPreferences(email, { expoPushTokens: merged, updatedAt: new Date().toISOString() });
+    res.json({ ok: true, devices: merged.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

@@ -18,12 +18,52 @@ import json
 import time
 import base64
 import traceback
+import threading
 from io import BytesIO
 from pathlib import Path
+
+# ── Disable Ultralytics' anonymous analytics sync BEFORE importing doclayout_yolo ──
+# `import doclayout_yolo` pulls in ultralytics, which — unless its settings file already
+# says sync:false — makes a network call as part of import/first-use. On a machine with
+# no internet access (or a flaky one), that call blocks until it times out, which measured
+# ~10 minutes here. That 10-minute stall was the entire cause of "picture crop not
+# appearing" and "generation taking forever" — the model itself loads in ~0.2s once the
+# import finally completes. Writing sync:false (and disabling every other phone-home
+# integration) into Ultralytics' settings file here, before the import line below,  makes
+# this fix self-contained: it works on a fresh machine/deploy with no manual setup step.
+try:
+    import yaml
+    _ultra_settings_path = os.path.join(
+        os.environ.get('APPDATA') or os.path.expanduser('~/.config'),
+        'Ultralytics', 'settings.yaml'
+    )
+    os.makedirs(os.path.dirname(_ultra_settings_path), exist_ok=True)
+    _ultra_settings = {}
+    if os.path.exists(_ultra_settings_path):
+        with open(_ultra_settings_path, 'r') as f:
+            _ultra_settings = yaml.safe_load(f) or {}
+    _offline_overrides = {
+        'sync': False, 'clearml': False, 'comet': False, 'dvc': False, 'hub': False,
+        'mlflow': False, 'neptune': False, 'raytune': False, 'tensorboard': False, 'wandb': False,
+    }
+    if any(_ultra_settings.get(k) is not v for k, v in _offline_overrides.items()):
+        _ultra_settings.update(_offline_overrides)
+        with open(_ultra_settings_path, 'w') as f:
+            yaml.safe_dump(_ultra_settings, f)
+        print('[layout] Disabled Ultralytics analytics sync (offline-safe)')
+except Exception as e:
+    print(f'[layout] Could not pre-configure Ultralytics offline settings ({e}) — import may hang without internet')
 
 import fitz  # PyMuPDF
 from PIL import Image
 from flask import Flask, request, jsonify
+
+# Serializes all YOLO inference calls. This is CPU-bound model inference — running two
+# requests "concurrently" on a CPU-only machine doesn't parallelize, it just makes both
+# requests fight over the same cores and take far longer than running one after another.
+# Without this lock, a burst of overlapping requests (e.g. several quiz generations at
+# once) could each individually stall for many minutes instead of queuing predictably.
+_inference_lock = threading.Lock()
 
 # ── Config ───────────────────────────────────────────────────────────────────
 PORT = int(os.environ.get('LAYOUT_PORT', 5050))
@@ -109,7 +149,9 @@ def detect_page_layout(model, pil_image, conf=CONF_THRESHOLD, imgsz=IMG_SIZE):
     import numpy as np
     img_np = np.array(pil_image)
 
-    results = model.predict(img_np, imgsz=imgsz, conf=conf, verbose=False)
+    # Serialize inference — see _inference_lock definition for why.
+    with _inference_lock:
+        results = model.predict(img_np, imgsz=imgsz, conf=conf, verbose=False)
 
     regions = []
     for r in results:
@@ -621,14 +663,241 @@ def extract_subfigures():
     })
 
 
+# ── Blank-region detection (OpenCV) ──────────────────────────────────────────
+# Finds every place a student writes an answer: empty boxes, empty table cells,
+# and underline/fill-in blanks. Returns precise NORMALIZED coordinates (0..1) so
+# the frontend can overlay input fields on top of the worksheet image — this is
+# what makes ANY layout (pyramid, clock, table, number line) interactive.
+def detect_blanks_in_image(pil_image, min_box_frac=0.012, max_box_frac=0.9,
+                           empty_thresh=0.045, detect_lines=True):
+    import numpy as np
+    import cv2
+
+    rgb = np.array(pil_image.convert('RGB'))
+    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    H, W = gray.shape
+
+    # Ink mask: dark pixels -> 255
+    ink = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV)[1]
+
+    blanks = []
+
+    # ── Pass 1: boxed cells / blocks (tables, pyramid blocks, answer boxes) ──
+    hlen = max(12, W // 35)
+    vlen = max(12, H // 45)
+    h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (hlen, 1))
+    v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, vlen))
+    horizontal = cv2.dilate(cv2.erode(ink, h_kernel), h_kernel)
+    vertical = cv2.dilate(cv2.erode(ink, v_kernel), v_kernel)
+    grid = cv2.add(horizontal, vertical)
+    grid = cv2.dilate(grid, np.ones((3, 3), np.uint8), iterations=1)
+
+    contours, hierarchy = cv2.findContours(grid, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    min_w, min_h = W * min_box_frac * 1.4, H * min_box_frac
+
+    def is_cell_empty(inner):
+        """A cell is empty only if it has near-zero ink AND no real text glyphs.
+        Raw ink density alone misfires on large cells with brief text (e.g. '19:00'),
+        so we also count connected components (letter/digit strokes) as the deciding signal."""
+        if inner.size == 0:
+            return False, 0.0, 0
+        density = float(inner.mean()) / 255.0
+        n_labels, _, stats, _ = cv2.connectedComponentsWithStats((inner > 0).astype(np.uint8), connectivity=8)
+        # component 0 is background; count "real" ink blobs (filters 1-2px noise specks)
+        components = sum(1 for s in stats[1:] if s[cv2.CC_STAT_AREA] >= 3)
+        if components >= 3:
+            return False, density, components   # clearly has text (3+ strokes/glyph parts)
+        if components == 0:
+            return True, density, components    # nothing at all
+        return density <= empty_thresh, density, components  # 1-2 marks: fall back to density
+
+    raw_boxes = []
+    for i, c in enumerate(contours):
+        # inner cells (holes) have a parent in CCOMP hierarchy
+        parent = hierarchy[0][i][3]
+        if parent == -1:
+            continue
+        x, y, cw, ch = cv2.boundingRect(c)
+        if cw < min_w or ch < min_h:
+            continue
+        if cw > W * max_box_frac and ch > H * max_box_frac:
+            continue
+        ar = cw / float(ch)
+        if ar < 0.15 or ar > 25:
+            continue
+        # Emptiness check, shrunk inward to avoid the border lines themselves
+        mx = int(cw * 0.14) + 3
+        my = int(ch * 0.14) + 3
+        inner = ink[y + my:y + ch - my, x + mx:x + cw - mx]
+        empty, density, _ = is_cell_empty(inner)
+        if empty:
+            raw_boxes.append({'type': 'box', 'x': x, 'y': y, 'w': cw, 'h': ch, 'density': round(density, 3)})
+
+    # ── Split merged/borderless blank rows using the vertical-line mask ──
+    # Some table rows have no internal column dividers drawn for the blank row itself
+    # (Word often renders it as one wide cell). If vertical divider ink crosses that
+    # row's height (even without forming a closed box), split at those x-positions —
+    # this recovers the true per-column cells (e.g. Time/24hr/12hr/Clock) generically.
+    wide_frac = 0.35
+    for b in raw_boxes:
+        if b['w'] < W * wide_frac:
+            blanks.append(b)
+            continue
+        y0, y1 = b['y'], b['y'] + b['h']
+        col_mask = vertical[y0:y1, b['x']:b['x'] + b['w']]
+        if col_mask.size == 0:
+            blanks.append(b)
+            continue
+        col_presence = (col_mask > 0).mean(axis=0)  # fraction of row-height covered, per x
+        xs = np.where(col_presence > 0.55)[0]
+        # cluster consecutive x's into divider positions
+        dividers = []
+        if len(xs):
+            run = [xs[0]]
+            for xv in xs[1:]:
+                if xv - run[-1] <= 3:
+                    run.append(xv)
+                else:
+                    dividers.append(int(np.mean(run))); run = [xv]
+            dividers.append(int(np.mean(run)))
+        # drop dividers too close to the box's own edges
+        dividers = [d for d in dividers if 6 < d < b['w'] - 6]
+        if len(dividers) >= 1:
+            edges = [0] + dividers + [b['w']]
+            for k in range(len(edges) - 1):
+                sx, ex = edges[k], edges[k + 1]
+                sub_w = ex - sx
+                if sub_w < min_w:
+                    continue
+                sub = {'type': 'box', 'x': b['x'] + sx, 'y': b['y'], 'w': sub_w, 'h': b['h'], 'density': b['density']}
+                blanks.append(sub)
+        else:
+            blanks.append(b)
+
+    # ── Pass 2: underline / fill-in blanks (a horizontal rule with space above) ──
+    if detect_lines:
+        line_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(30, W // 18), 1))
+        only_h = cv2.dilate(cv2.erode(ink, line_kernel), line_kernel)
+        lc, _ = cv2.findContours(only_h, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        box_rects = [(b['x'], b['y'], b['w'], b['h']) for b in blanks]
+        for c in lc:
+            x, y, lw, lh = cv2.boundingRect(c)
+            if lw < W * 0.05 or lh > max(4, H // 200):  # must be long & thin
+                continue
+            # skip lines that belong to a detected box (table borders)
+            inside_box = any(x >= bx - 5 and x + lw <= bx + bw + 5 and by - 5 <= y <= by + bh + 5
+                             for (bx, by, bw, bh) in box_rects)
+            if inside_box:
+                continue
+            # region above the line should be mostly empty (writing space)
+            band_h = max(18, int(lh * 6), H // 45)
+            top = max(0, y - band_h)
+            above = ink[top:y, x:x + lw]
+            if above.size == 0:
+                continue
+            if float(above.mean()) / 255.0 <= empty_thresh * 2.2:
+                blanks.append({'type': 'line', 'x': x, 'y': top, 'w': lw, 'h': y - top, 'density': 0.0})
+
+    # ── Dedupe: drop boxes fully containing other boxes (keep innermost cells) ──
+    def contains(a, b):
+        return (a['x'] <= b['x'] + 2 and a['y'] <= b['y'] + 2 and
+                a['x'] + a['w'] >= b['x'] + b['w'] - 2 and a['y'] + a['h'] >= b['y'] + b['h'] - 2 and
+                (a['w'] * a['h']) > (b['w'] * b['h']) * 1.15)
+    kept = []
+    for b in blanks:
+        if any(contains(b, other) for other in blanks if other is not b):
+            continue  # b is an outer container of a smaller cell -> drop
+        kept.append(b)
+
+    # Sort reading order (top-to-bottom, then left-to-right, row-banded)
+    kept.sort(key=lambda b: (round(b['y'] / max(1, H * 0.03)), b['x']))
+
+    # Normalize
+    out = []
+    for b in kept:
+        out.append({
+            'type': b['type'],
+            'x': round(b['x'] / W, 4), 'y': round(b['y'] / H, 4),
+            'w': round(b['w'] / W, 4), 'h': round(b['h'] / H, 4),
+            'density': b['density'],
+        })
+    return out, (W, H)
+
+
+@app.route('/detect-blanks', methods=['POST'])
+def detect_blanks():
+    """
+    Detect blank answer regions (boxes, table cells, underlines) on a worksheet.
+
+    Accepts: multipart file (field 'file') — PDF or image.
+    Query: quiz_id (optional, for debug image naming), debug=1 to save annotated image.
+    Returns: { pages: [{ pageNum, width, height, imageUrl, blanks: [{type,x,y,w,h}] }] }
+             coordinates are normalized 0..1 (relative to the page image).
+    """
+    import cv2
+    import numpy as np
+    start = time.time()
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    quiz_id = request.args.get('quiz_id') or request.form.get('quiz_id') or 'blanks'
+    debug = request.args.get('debug', '1') != '0'
+    file = request.files['file']
+    data = file.read()
+    is_pdf = (file.filename or '').lower().endswith('.pdf') or data[:4] == b'%PDF'
+
+    pages_src = pdf_to_images(data) if is_pdf else load_image(data)
+
+    pages_out = []
+    for pg in pages_src:
+        img = pg['image']
+        blanks, (W, Hh) = detect_blanks_in_image(img)
+
+        # Save the full page image so the frontend can overlay on it
+        page_fname = f'{quiz_id}_page{pg["pageNum"]}.png'
+        img.save(os.path.join(CROP_DIR, page_fname), 'PNG')
+        page_url = f'/data/images/quiz/{page_fname}'
+
+        debug_url = None
+        if debug:
+            dbg = np.array(img.convert('RGB')).copy()
+            for b in blanks:
+                x, y = int(b['x'] * W), int(b['y'] * Hh)
+                w, h = int(b['w'] * W), int(b['h'] * Hh)
+                color = (0, 170, 90) if b['type'] == 'box' else (200, 90, 200)
+                cv2.rectangle(dbg, (x, y), (x + w, y + h), color, 3)
+            dbg_fname = f'{quiz_id}_blanks_p{pg["pageNum"]}.png'
+            Image.fromarray(dbg).save(os.path.join(CROP_DIR, dbg_fname), 'PNG')
+            debug_url = f'/data/images/quiz/{dbg_fname}'
+
+        pages_out.append({
+            'pageNum': pg['pageNum'], 'width': W, 'height': Hh,
+            'imageUrl': page_url, 'debugUrl': debug_url,
+            'blanks': blanks, 'blankCount': len(blanks),
+        })
+        print(f'[layout] /detect-blanks page {pg["pageNum"]}: {len(blanks)} blanks')
+
+    return jsonify({'pages': pages_out, 'timing_ms': round((time.time() - start) * 1000)})
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     print(f'[layout] Aivorah Layout Detection Service')
     print(f'[layout] Port: {PORT} | DPI: {DPI} | Conf: {CONF_THRESHOLD} | ImgSize: {IMG_SIZE}')
     print(f'[layout] Crop dir: {os.path.abspath(CROP_DIR)}')
 
-    # Lazy-load model on first detection request (not on startup)
-    # This lets the server respond to /health and /extract-subfigures immediately
-    print('[layout] Ready! (ML model will load on first /detect or /crop request)')
+    # Eagerly warm the model in a background thread so the FIRST real /detect or /crop
+    # request never pays the cold-load cost (previously: whichever quiz generation
+    # happened to be first would stall for minutes waiting on model load). Runs in a
+    # thread rather than blocking here so /health responds immediately either way.
+    def _warm_model():
+        t0 = time.time()
+        try:
+            get_model()
+            print(f'[layout] Warm-up complete in {time.time() - t0:.1f}s — model ready for requests')
+        except Exception as e:
+            print(f'[layout] Warm-up failed ({e}) — will retry lazily on first request')
+    threading.Thread(target=_warm_model, daemon=True).start()
+    print('[layout] Ready! (warming ML model in background)')
 
     app.run(host='0.0.0.0', port=PORT, debug=False, threaded=True)
