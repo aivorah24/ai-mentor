@@ -175,6 +175,23 @@ function markAuthAction() {
   setTimeout(() => { _authActionInProgress = false; }, 3000);
 }
 
+// Retry a Firebase auth call once on a transient network hiccup (e.g. Chrome's
+// ERR_NETWORK_IO_SUSPENDED after a brief connectivity blip / tab suspend).
+// Real failures (wrong password, user-not-found, etc.) still throw immediately —
+// only the browser-level "network-request-failed" code gets a single retry so a
+// momentary blip self-heals instead of showing the user a raw error.
+async function withNetworkRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err: any) {
+    if (err?.code === 'auth/network-request-failed') {
+      await new Promise(r => setTimeout(r, 1200));
+      return await fn();
+    }
+    throw err;
+  }
+}
+
 // AsyncStorage key — persists across multiple onAuthStateChanged fires (module flag gets cleared too early)
 const PENDING_VERIFY_KEY = 'aivorah_pending_verify_email';
 
@@ -577,7 +594,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signInWithEmail(email: string, password: string) {
     markAuthAction();
     try {
-      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const cred = await withNetworkRetry(() => signInWithEmailAndPassword(auth, email, password));
 
       // Fetch full profile first — needed to detect parent-activated student accounts
       const [profile, savedRaw] = await Promise.all([
@@ -698,7 +715,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     _pendingRole = role; _pendingRoleSet = true;
     markAuthAction();
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const cred = await withNetworkRetry(() => createUserWithEmailAndPassword(auth, email, password));
       await updateProfile(cred.user, { displayName: `${name}|${role}` });
 
       // Mark this email as pending verification BEFORE the network syncs — this
@@ -790,7 +807,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (Platform.OS === 'web') {
       try {
         const provider = new GoogleAuthProvider();
-        const cred = await signInWithPopup(auth, provider);
+        const cred = await withNetworkRetry(() => signInWithPopup(auth, provider));
         const name  = cred.user.displayName || cred.user.email?.split('@')[0] || 'User';
         const email = cred.user.email || '';
         const [profile, savedRaw] = await Promise.all([
