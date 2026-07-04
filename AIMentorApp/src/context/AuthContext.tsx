@@ -163,6 +163,13 @@ let _isAddingRole = false; // true when an existing user is adding a second role
 let _authActionInProgress = false;
 function markAuthAction() {
   _authActionInProgress = true;
+  // Tag this browser TAB session as having an explicit login/signup. RootNavigator
+  // uses it to tell a live signup flow (continue into onboarding, survives F5)
+  // apart from a STALE half-registered session restored days later — which must
+  // show the landing page, not trap the visitor in the setup screen.
+  try {
+    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('aivorah_auth_this_session', '1');
+  } catch {}
   // Keep the guard active a few seconds past the function returning so the
   // post-action onAuthStateChanged cycle (incl. its network fetch) completes.
   setTimeout(() => { _authActionInProgress = false; }, 3000);
@@ -554,6 +561,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear local state + cache FIRST so logout works even if signOut() hangs
     // on a flaky network (otherwise setUser(null) would never run).
     setUser(null);
+    try { if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem('aivorah_auth_this_session'); } catch {}
     await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
     await signOut(auth).catch(() => {});
   }
