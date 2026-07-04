@@ -192,8 +192,10 @@ export function StudentDataProvider({ children }: { children: ReactNode }) {
     }).catch(() => {});
   }, [stats, loaded, studentId]);
 
-  // Study time is tracked only in VideoLessonScreen (via recordStudyTime),
-  // not globally here, so it reflects actual learning time.
+  // Study time is recorded only by screens where real learning happens —
+  // TopicLessonScreen / VideoLessonScreen / Learn5EScreen, ChallengesScreen (while
+  // a challenge quiz is open), and AssignmentsScreen (while an assignment is open) —
+  // never globally, so it reflects actual learning time, not "the app was open".
 
   function recordStudyTime(mins: number) {
     setStats(prev => ({

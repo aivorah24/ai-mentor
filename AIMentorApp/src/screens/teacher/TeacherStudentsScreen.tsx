@@ -156,6 +156,13 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   const initialTab = route?.params?.initialTab || 'All';
   const [activeTab, setActiveTab] = useState(initialTab);
 
+  // Re-apply the requested tab whenever navigation passes a new initialTab — the
+  // screen instance can be reused (not remounted) when re-navigating from the
+  // dashboard, so a useState initializer alone would only apply on first mount.
+  useEffect(() => {
+    if (route?.params?.initialTab) setActiveTab(route.params.initialTab);
+  }, [route?.params?.initialTab]);
+
   // Add student modal
   const [addModal,    setAddModal]    = useState(false);
   const [addTab,      setAddTab]      = useState<'create' | 'link' | 'bulk'>('create');
