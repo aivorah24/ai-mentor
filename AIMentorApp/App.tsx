@@ -474,9 +474,29 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
 }
 
 function RootNavigator() {
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading, user, logout } = useAuth();
   const { colors: c } = useTheme();
   const [verifyDone, setVerifyDone] = useState(false);
+
+  // ── Stale half-registered session guard (founder-reported routing bug) ──
+  // Someone who started a signup, closed the browser, and comes back days later
+  // must land on the LANDING PAGE — not be trapped in the setup/verify screens.
+  // sessionStorage 'aivorah_auth_this_session' is set only by an explicit
+  // login/signup in this tab (survives F5, dies with the tab), so a genuine
+  // signup flow still moves into onboarding normally.
+  const staleIncompleteSession =
+    Platform.OS === 'web' &&
+    !loading && isAuthenticated &&
+    user?.onboardingComplete === false &&
+    !(user?.email?.endsWith('@demo.com') || user?.email?.endsWith('@test.ai')) &&
+    (typeof sessionStorage === 'undefined' || sessionStorage.getItem('aivorah_auth_this_session') !== '1');
+
+  useEffect(() => {
+    if (staleIncompleteSession) {
+      console.log('[Auth] Stale half-registered session — signing out, showing LandingScreen');
+      logout();
+    }
+  }, [staleIncompleteSession]);
 
   // Mobile push notifications — register this device for the logged-in user.
   // No-op on web. (Teacher/parent get alerts for new assignments, messages, etc.)
@@ -530,6 +550,15 @@ function RootNavigator() {
   if (!isAuthenticated) {
     console.log('[Auth] Not authenticated, showing LandingScreen');
     // Reset URL to root so browser doesn't show /leaderboard, /dashboard etc.
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.pathname !== '/') {
+      window.history.replaceState(null, '', '/');
+    }
+    return <LandingScreen />;
+  }
+
+  // Stale half-registered session: show the landing page immediately while the
+  // useEffect above signs the account out in the background.
+  if (staleIncompleteSession) {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.pathname !== '/') {
       window.history.replaceState(null, '', '/');
     }
