@@ -461,7 +461,10 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
         // navigated" — the popup then only appears on the NEXT idle Back.
         if (Math.abs(popAt - lastNavTsRef.current) < 400) return;
         const name = navigationRef.isReady() ? navigationRef.getCurrentRoute()?.name : undefined;
-        const onHome = name ? HOME_ROUTES.has(name) : isHomeRef.current;
+        // No route name = a STANDALONE screen outside the navigator (e.g. the
+        // Onboarding setup page). Back there is always an exit attempt → confirm,
+        // same as on the Dashboard.
+        const onHome = name ? HOME_ROUTES.has(name) : true;
         if (!onHome) return;                                   // deep screen → let RN handle back
         window.history.pushState({ __aivorahGuard: true }, ''); // on home, idle → confirm exit
         setShowConfirm(true);
