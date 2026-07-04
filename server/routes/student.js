@@ -654,6 +654,47 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
       topicsCache[key] = await fetchTotalTopicsFromQdrant(curriculum, grade);
     }));
 
+    // ── Per-student Assignments + Challenges completion (for the composite score used
+    // by "needs attention" — a student should only be flagged when they're behind
+    // across ALL activity streams, not just one, e.g. skipping Learning Path while
+    // being highly active on assignments/challenges shouldn't trigger a flag alone).
+    const { data: subs } = await supabase
+      .from('assignment_submissions')
+      .select('student_id, assignment_id')
+      .in('student_id', studentIds);
+    const submittedMap = {};
+    (subs ?? []).forEach(sub => { submittedMap[sub.student_id] = (submittedMap[sub.student_id] || 0) + 1; });
+
+    const { data: teacherAssignments } = await supabase
+      .from('assignments')
+      .select('id, student_id, grade, curriculum')
+      .eq('created_by_id', teacherId ?? rawId);
+    const assignedCountMap = {};
+    studentIds.forEach(id => { assignedCountMap[id] = 0; });
+    (teacherAssignments ?? []).forEach(a => {
+      if (a.student_id) {
+        if (assignedCountMap[a.student_id] !== undefined) assignedCountMap[a.student_id] += 1;
+      } else {
+        uniqueLinks.forEach(l => {
+          const info = l.users ?? {};
+          const gradeMatch = !a.grade || info.grade === a.grade;
+          const curriculumMatch = !a.curriculum || info.curriculum === a.curriculum;
+          if (gradeMatch && curriculumMatch) assignedCountMap[l.student_id] += 1;
+        });
+      }
+    });
+
+    const { data: challengeAssigns } = await supabase
+      .from('challenge_assignments')
+      .select('student_id, status')
+      .in('student_id', studentIds);
+    const challengeMap = {};
+    (challengeAssigns ?? []).forEach(c => {
+      if (!challengeMap[c.student_id]) challengeMap[c.student_id] = { assigned: 0, completed: 0 };
+      challengeMap[c.student_id].assigned += 1;
+      if (c.status === 'completed') challengeMap[c.student_id].completed += 1;
+    });
+
     const students = await Promise.all(uniqueLinks.map(async link => {
       const s = statsMap[link.student_id] ?? {};
       const user = link.users ?? {};
@@ -670,6 +711,35 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
       const progressPct = totalTopics > 0
         ? Math.min(100, Math.round((topicsCount / totalTopics) * 100))
         : 0;
+
+      // Per-student Assignments % and Challenges % — same volumetric completion-rate
+      // logic as the class-wide insights endpoint (completed ÷ assigned), so a student
+      // who's actively submitting isn't penalized just for a 0-populated denominator.
+      const assignedCount  = assignedCountMap[link.student_id] || 0;
+      const submittedCount = submittedMap[link.student_id] || 0;
+      const assignPct = assignedCount > 0 ? Math.round((submittedCount / assignedCount) * 100) : 0;
+
+      const chall = challengeMap[link.student_id] || { assigned: 0, completed: 0 };
+      const challPct = chall.assigned > 0 ? Math.round((chall.completed / chall.assigned) * 100) : 0;
+
+      // Composite = average across all 3 activity streams — only include a stream in
+      // the average if it actually has data to judge (matches the same guard used for
+      // Learning Path), so an unused feature doesn't drag down a genuinely active student.
+      const streamPcts = [];
+      if (totalTopics > 0) streamPcts.push(progressPct);
+      if (assignedCount > 0) streamPcts.push(assignPct);
+      if (chall.assigned > 0) streamPcts.push(challPct);
+      const compositePct = streamPcts.length > 0
+        ? Math.round(streamPcts.reduce((a, b) => a + b, 0) / streamPcts.length)
+        : 0;
+
+      // Deterministic "needs attention" — flags a student only when they're behind
+      // across their overall engagement (composite of Learning Path + Assignments +
+      // Challenges), not just one single stream, plus genuine inactivity signals.
+      const daysInactive = s.last_active_date
+        ? Math.floor((Date.now() - new Date(s.last_active_date).getTime()) / 86400000)
+        : Infinity;
+      const needsAttention = (streamPcts.length > 0 && compositePct < 20) || daysInactive >= 3 || (s.current_streak ?? 0) === 0;
 
       return {
         id:             link.student_id,
@@ -688,7 +758,7 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
         progressPct,
         assignmentsDone: s.assignments_done ?? 0,
         lastActive:     s.last_active_date,
-        needsAttention: false, // deprecated — AI prompt computes status from real metrics
+        needsAttention,
         photoUrl:       user.photo_url ?? null,
       };
     }));
@@ -728,13 +798,42 @@ router.get('/by-teacher/:teacherId/insights', async (req, res) => {
       .select('student_id, challenge_id, status, score, xp_awarded, created_at')
       .in('student_id', studentIds);
 
-    // Get student names
+    // Get student names + grade/curriculum (grade/curriculum needed to resolve how many
+    // students each class-wide "All students" assignment broadcast actually reaches)
     const { data: users } = await supabase
       .from('users')
-      .select('id, name')
+      .select('id, name, grade, curriculum')
       .in('id', studentIds);
     const nameMap = {};
-    (users || []).forEach(u => { nameMap[u.id] = u.name; });
+    const studentInfoMap = {};
+    (users || []).forEach(u => {
+      nameMap[u.id] = u.name;
+      studentInfoMap[u.id] = { grade: u.grade || null, curriculum: u.curriculum || null };
+    });
+
+    // Fetch this teacher's own assignments (personal + class-wide broadcasts) to compute
+    // a true "total assigned" count — mirrors the visibility logic in GET /assignments:
+    // personal assignments reach exactly 1 student; broadcasts reach every linked student
+    // whose grade+curriculum matches the assignment.
+    const { data: teacherAssignments } = await supabase
+      .from('assignments')
+      .select('id, student_id, grade, curriculum')
+      .eq('created_by_id', teacherId ?? rawId);
+
+    let totalAssignmentsAssigned = 0;
+    (teacherAssignments || []).forEach(a => {
+      if (a.student_id) {
+        if (studentIds.includes(a.student_id)) totalAssignmentsAssigned += 1;
+      } else {
+        totalAssignmentsAssigned += studentIds.filter(id => {
+          const info = studentInfoMap[id];
+          if (!info) return false;
+          const gradeMatch = !a.grade || info.grade === a.grade;
+          const curriculumMatch = !a.curriculum || info.curriculum === a.curriculum;
+          return gradeMatch && curriculumMatch;
+        }).length;
+      }
+    });
 
     // Aggregate assignment stats per student
     const assignMap = {};
@@ -787,6 +886,7 @@ router.get('/by-teacher/:teacherId/insights', async (req, res) => {
       challenges: challengeStats,
       totals: {
         totalSubmissions,
+        totalAssignmentsAssigned,
         classAvgScore,
         totalChallengesAssigned,
         totalChallengesCompleted,

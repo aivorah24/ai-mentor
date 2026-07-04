@@ -2806,12 +2806,26 @@ export default function AssignmentsScreen({ navigation, route }: any) {
   const [activeFilter, setActiveFilter] = useState('All');
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { studentId } = useStudentData();
+  const { studentId, recordStudyTime } = useStudentData();
   const { clearUnreadAssignments } = useNotification();
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeAssignment, setActiveAssignment] = useState<Assignment | null>(null);
+
+  // Real "Study Time" for time spent actually working an assignment (any type:
+  // quiz modal, scaffolded, submission, or the interactive-quiz iframe) — timed
+  // for the whole session an assignment is open, flushed when it closes.
+  const assignmentSessionStartRef = useRef<number>(0);
+  useEffect(() => {
+    if (!activeAssignment) return;
+    assignmentSessionStartRef.current = Date.now();
+    return () => {
+      const elapsedMinutes = Math.floor((Date.now() - assignmentSessionStartRef.current) / 60000);
+      if (elapsedMinutes > 0) recordStudyTime(elapsedMinutes);
+      assignmentSessionStartRef.current = 0;
+    };
+  }, [activeAssignment]);
   const [openingAssignmentId, setOpeningAssignmentId] = useState<string | null>(null);
   const [viewingResult, setViewingResult] = useState<Assignment | null>(null);
   const [submittedResult, setSubmittedResult] = useState<{ assignment: Assignment; data: any } | null>(null);
