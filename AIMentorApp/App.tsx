@@ -480,27 +480,32 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
       {showConfirm && (
         <Modal transparent animationType="fade" visible onRequestClose={() => setShowConfirm(false)}>
           <View style={idleStyles.overlay}>
-            <View style={[idleStyles.box, { backgroundColor: c.cardDark, borderColor: c.borderColor }]}>
-              <View style={[idleStyles.iconWrap, { backgroundColor: c.primary + '22' }]}>
-                <Feather name="log-out" size={24} color={c.primary} />
+            {/* Aivorah brand look (landing palette: near-black + sage + gold, Fraunces serif) */}
+            <View style={[idleStyles.box, { backgroundColor: '#141414', borderColor: 'rgba(245,243,238,0.14)', borderWidth: 1 }]}>
+              <View style={[idleStyles.iconWrap, { backgroundColor: 'rgba(186,164,103,0.16)', borderWidth: 1, borderColor: 'rgba(186,164,103,0.35)' }]}>
+                <Feather name="log-out" size={24} color="#BAA467" />
               </View>
-              <Text style={[idleStyles.title, { color: c.textMain }]}>Return to the home page?</Text>
-              <Text style={[idleStyles.body, { color: c.textMuted }]}>
+              <Text style={[idleStyles.title, {
+                color: '#F5F3EE',
+                fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : 'Georgia',
+                fontWeight: '600',
+              }]}>Return to the home page?</Text>
+              <Text style={[idleStyles.body, { color: '#A9B0AC' }]}>
                 You'll be signed out and taken back to the Aivorah home page.
               </Text>
               <TouchableOpacity
-                style={[idleStyles.btn, { backgroundColor: c.primary }]}
+                style={[idleStyles.btn, { backgroundColor: '#BAA467' }]}
                 activeOpacity={0.85}
                 onPress={() => { setShowConfirm(false); logout(); }}
               >
-                <Text style={idleStyles.btnText}>Yes, go to home page</Text>
+                <Text style={[idleStyles.btnText, { color: '#141414' }]}>Yes, go to home page</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[idleStyles.logoutBtn, { borderColor: c.borderColor }]}
+                style={[idleStyles.logoutBtn, { borderColor: 'rgba(245,243,238,0.2)' }]}
                 activeOpacity={0.7}
                 onPress={() => setShowConfirm(false)}
               >
-                <Text style={[idleStyles.logoutBtnText, { color: c.textMuted }]}>Stay here</Text>
+                <Text style={[idleStyles.logoutBtnText, { color: '#A9B0AC' }]}>Stay here</Text>
               </TouchableOpacity>
             </View>
           </View>
