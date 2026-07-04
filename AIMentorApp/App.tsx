@@ -395,7 +395,8 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
   const { colors: c } = useTheme();
   const [showConfirm, setShowConfirm] = useState(false);
   const isHomeRef = useRef(false);      // is the CURRENT route a role-home screen?
-  const lastNavTsRef = useRef(0);       // when did the last in-app navigation happen?
+  const lastNavTsRef = useRef(0);       // when did the route last CHANGE (not just re-emit)?
+  const lastRouteNameRef = useRef<string | undefined>(undefined);
   const active =
     Platform.OS === 'web' &&
     !!user &&
@@ -412,7 +413,14 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
     const update = () => {
       const name = navigationRef.isReady() ? navigationRef.getCurrentRoute()?.name : undefined;
       isHomeRef.current = !!name && HOME_ROUTES.has(name);
-      lastNavTsRef.current = Date.now();
+      // Only count it as a "navigation" when the ROUTE actually changed — RN also
+      // emits state events for same-route pops (e.g. Back pressed while idle on
+      // Dashboard), and those must NOT look like navigation or the exit confirm
+      // would never fire.
+      if (name && name !== lastRouteNameRef.current) {
+        lastRouteNameRef.current = name;
+        lastNavTsRef.current = Date.now();
+      }
     };
     let unsub: (() => void) | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -446,9 +454,12 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
       // the old timing check unreliable (Back on Dashboard silently no-op'd).
       const popAt = Date.now();
       setTimeout(() => {
-        // If RN navigated as part of THIS pop (its state event fired after the
-        // pop started), it was a real back between screens → no popup.
-        if (lastNavTsRef.current >= popAt) return;
+        // If RN navigated as part of THIS pop, it was a real back between
+        // screens (e.g. Profile → Dashboard) → no popup. RN's state event can
+        // fire just BEFORE or just AFTER our handler depending on listener
+        // order, so treat any nav within ±400ms of the pop as "this pop
+        // navigated" — the popup then only appears on the NEXT idle Back.
+        if (Math.abs(popAt - lastNavTsRef.current) < 400) return;
         const name = navigationRef.isReady() ? navigationRef.getCurrentRoute()?.name : undefined;
         const onHome = name ? HOME_ROUTES.has(name) : isHomeRef.current;
         if (!onHome) return;                                   // deep screen → let RN handle back
