@@ -392,7 +392,20 @@ const idleStyles = StyleSheet.create({
 // ─────────────────────────────────────────────────────────
 function WebBackGuard({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
-  const { colors: c } = useTheme();
+  const { colors: c, isDark } = useTheme();
+  // Aivorah brand palette for the exit dialog, themed: dark mode = landing's
+  // near-black + gold; light mode = warm cream + the same gold accents.
+  const dlg = isDark ? {
+    box: '#141414', line: 'rgba(245,243,238,0.14)',
+    title: '#F5F3EE', body: '#A9B0AC',
+    stayLine: 'rgba(245,243,238,0.2)', stayText: '#A9B0AC',
+    iconBg: 'rgba(186,164,103,0.16)', iconLine: 'rgba(186,164,103,0.35)',
+  } : {
+    box: '#FAF7F0', line: 'rgba(28,26,18,0.12)',
+    title: '#1C1A12', body: '#6B7069',
+    stayLine: 'rgba(28,26,18,0.18)', stayText: '#6B7069',
+    iconBg: 'rgba(186,164,103,0.14)', iconLine: 'rgba(186,164,103,0.4)',
+  };
   const [showConfirm, setShowConfirm] = useState(false);
   const isHomeRef = useRef(false);      // is the CURRENT route a role-home screen?
   const lastNavTsRef = useRef(0);       // when did the route last CHANGE (not just re-emit)?
@@ -480,17 +493,17 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
       {showConfirm && (
         <Modal transparent animationType="fade" visible onRequestClose={() => setShowConfirm(false)}>
           <View style={idleStyles.overlay}>
-            {/* Aivorah brand look (landing palette: near-black + sage + gold, Fraunces serif) */}
-            <View style={[idleStyles.box, { backgroundColor: '#141414', borderColor: 'rgba(245,243,238,0.14)', borderWidth: 1 }]}>
-              <View style={[idleStyles.iconWrap, { backgroundColor: 'rgba(186,164,103,0.16)', borderWidth: 1, borderColor: 'rgba(186,164,103,0.35)' }]}>
+            {/* Aivorah brand look, theme-aware: near-black+gold in dark, warm cream+gold in light */}
+            <View style={[idleStyles.box, { backgroundColor: dlg.box, borderColor: dlg.line, borderWidth: 1 }]}>
+              <View style={[idleStyles.iconWrap, { backgroundColor: dlg.iconBg, borderWidth: 1, borderColor: dlg.iconLine }]}>
                 <Feather name="log-out" size={24} color="#BAA467" />
               </View>
               <Text style={[idleStyles.title, {
-                color: '#F5F3EE',
+                color: dlg.title,
                 fontFamily: Platform.OS === 'web' ? '"Fraunces", Georgia, serif' : 'Georgia',
                 fontWeight: '600',
               }]}>Return to the home page?</Text>
-              <Text style={[idleStyles.body, { color: '#A9B0AC' }]}>
+              <Text style={[idleStyles.body, { color: dlg.body }]}>
                 You'll be signed out and taken back to the Aivorah home page.
               </Text>
               <TouchableOpacity
@@ -501,11 +514,11 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
                 <Text style={[idleStyles.btnText, { color: '#141414' }]}>Yes, go to home page</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[idleStyles.logoutBtn, { borderColor: 'rgba(245,243,238,0.2)' }]}
+                style={[idleStyles.logoutBtn, { borderColor: dlg.stayLine }]}
                 activeOpacity={0.7}
                 onPress={() => setShowConfirm(false)}
               >
-                <Text style={[idleStyles.logoutBtnText, { color: '#A9B0AC' }]}>Stay here</Text>
+                <Text style={[idleStyles.logoutBtnText, { color: dlg.stayText }]}>Stay here</Text>
               </TouchableOpacity>
             </View>
           </View>
