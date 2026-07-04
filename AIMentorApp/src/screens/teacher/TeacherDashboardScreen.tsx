@@ -83,6 +83,14 @@ function formatStudyTime(minutes: number) {
   return `${h}h ${m}m`;
 }
 
+// Median resists skew from one outlier student (e.g. one 23h grinder pulling up everyone else's "average")
+function median(values: number[]) {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 !== 0 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+}
+
 // ─────────────────────────────────────────────────────────
 // Main Screen
 // ─────────────────────────────────────────────────────────
@@ -149,18 +157,29 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   const avgProgress = totalStudents > 0
     ? Math.round(students.reduce((sum, s) => sum + (s.progressPct || 0), 0) / totalStudents)
     : 0;
-  const avgStudyMins = totalStudents > 0
-    ? Math.round(students.reduce((sum, s) => sum + (s.studyTime || 0), 0) / totalStudents)
+  const studyTimes = students.map(s => s.studyTime || 0);
+  const medianStudyMins = median(studyTimes);
+  const minStudyMins = studyTimes.length > 0 ? Math.min(...studyTimes) : 0;
+  const maxStudyMins = studyTimes.length > 0 ? Math.max(...studyTimes) : 0;
+
+  // Assignment & Challenge completion rates — true volumetric rate (completed ÷ assigned
+  // across the whole class), not "% of students who did at least one" which reads as a
+  // participation rate rather than a completion rate.
+  const ins = insights || { assignments: [], challenges: [], totals: {} };
+  const totalAssignmentsAssigned = ins.totals?.totalAssignmentsAssigned || 0;
+  const totalAssignmentsSubmitted = ins.totals?.totalSubmissions || 0;
+  const assignSubmitPct = totalAssignmentsAssigned > 0
+    ? Math.round((totalAssignmentsSubmitted / totalAssignmentsAssigned) * 100)
     : 0;
 
-  // Assignment & Challenge completion rates (from insights endpoint)
-  const ins = insights || { assignments: [], challenges: [], totals: {} };
-  const assignSubmitPct = totalStudents > 0
-    ? Math.round((ins.assignments.filter((s: any) => s.submitted > 0).length / totalStudents) * 100)
+  const totalChallengesAssigned = ins.totals?.totalChallengesAssigned || 0;
+  const totalChallengesCompleted = ins.totals?.totalChallengesCompleted || 0;
+  const challCompletePct = totalChallengesAssigned > 0
+    ? Math.round((totalChallengesCompleted / totalChallengesAssigned) * 100)
     : 0;
-  const challCompletePct = totalStudents > 0
-    ? Math.round((ins.challenges.filter((s: any) => s.completed > 0).length / totalStudents) * 100)
-    : 0;
+  // Overall class progress = equal-weight average across all 3 tracked activity streams,
+  // not just Learning Path — matches industry-standard composite progress rings.
+  const classProgressPct = Math.round((avgProgress + assignSubmitPct + challCompletePct) / 3);
 
   // ── Dynamic curriculum label from real student data ────
   const curriculumLabel = (() => {
@@ -268,7 +287,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
       icon: 'clock', color: T.teal,
       stat: formatStudyTime(totalStudyMins),
       label: 'Study Time',
-      title: totalStudyMins > 0 ? `${formatStudyTime(avgStudyMins)} avg per student` : 'No Study Yet',
+      title: totalStudyMins > 0 ? `${formatStudyTime(medianStudyMins)} median per student` : 'No Study Yet',
       body: totalStudyMins > 0
         ? `${formatStudyTime(totalStudyMins)} total across ${totalStudents} student${totalStudents !== 1 ? 's' : ''}.`
         : 'Study time appears once students start learning.',
@@ -387,7 +406,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
 
   const aiActionBody = allNeedsAttention.length > 0
     ? `${needsAttentionStudents[0]?.name?.split(' ')[0] || 'A student'} and others have low progress or streak. Schedule a review session or send an encouraging message.`
-    : `Average study time is ${formatStudyTime(avgStudyMins)} per student. Assign chapter quizzes to boost engagement.`;
+    : `Median study time is ${formatStudyTime(medianStudyMins)} per student. Assign chapter quizzes to boost engagement.`;
 
   // ── Insight filter tab ──────────────────────────────────
   const [insightFilter, setInsightFilter] = useState<'learning' | 'assignments' | 'challenges'>('learning');
@@ -1068,12 +1087,12 @@ export default function TeacherDashboardScreen({ navigation }: any) {
               <View style={styles.overviewDivider} />
               <View style={styles.overviewRow}>
                 <TouchableOpacity style={styles.overviewStat} activeOpacity={0.7}
-                  onPress={() => navigation.navigate('TeacherStudents' as any, { initialTab: 'Active Today' })}>
+                  onPress={(e) => { e.stopPropagation(); navigation.navigate('TeacherStudents' as any, { initialTab: 'Active Today' }); }}>
                   <Text style={[styles.overviewVal, { color: colors.accentGreen }]}>{activeToday}</Text>
                   <Text style={styles.overviewKey}>Active Today</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.overviewStat, { borderLeftWidth: 1, borderLeftColor: colors.borderColor }]} activeOpacity={0.7}
-                  onPress={() => navigation.navigate('TeacherStudents' as any, { initialTab: 'Needs Attention' })}>
+                  onPress={(e) => { e.stopPropagation(); navigation.navigate('TeacherStudents' as any, { initialTab: 'Needs Attention' }); }}>
                   <Text style={[styles.overviewVal, { color: colors.accentRed }]}>{allNeedsAttention.length}</Text>
                   <Text style={styles.overviewKey}>Need Attention</Text>
                 </TouchableOpacity>
@@ -1090,16 +1109,33 @@ export default function TeacherDashboardScreen({ navigation }: any) {
               {/* Donut + study time */}
               <View style={styles.donutRow}>
                 <View style={styles.donutWrap}>
-                  <DonutChart progress={avgProgress / 100} size={72} color={gold} trackColor={ringTrack} />
+                  <DonutChart progress={classProgressPct / 100} size={72} color={gold} trackColor={ringTrack} />
                   <View style={styles.donutCenter}>
-                    <Text style={[styles.donutPct, { color: gold }]}>{avgProgress}%</Text>
+                    <Text style={[styles.donutPct, { color: gold }]}>{classProgressPct}%</Text>
                   </View>
                 </View>
                 <View style={styles.donutStats}>
-                  <Text style={styles.donutStatVal}>{formatStudyTime(avgStudyMins)}</Text>
-                  <Text style={styles.donutStatLabel}>Avg. Study Time</Text>
+                  <Text style={styles.donutStatVal}>{formatStudyTime(medianStudyMins)}</Text>
+                  <Text style={styles.donutStatLabel}>Typical Study Time</Text>
                 </View>
               </View>
+
+              {totalStudents > 1 && (
+                <View style={{ flexDirection: 'row', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.borderColor }}>
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: colors.accentRed }}>{formatStudyTime(minStudyMins)}</Text>
+                    <Text style={{ fontSize: 9, color: colors.textDim, fontWeight: '600', marginTop: 1 }}>Lowest</Text>
+                  </View>
+                  <View style={{ flex: 1, alignItems: 'center', borderLeftWidth: 1, borderRightWidth: 1, borderColor: colors.borderColor }}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: gold }}>{formatStudyTime(medianStudyMins)}</Text>
+                    <Text style={{ fontSize: 9, color: colors.textDim, fontWeight: '600', marginTop: 1 }}>Typical</Text>
+                  </View>
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: colors.accentGreen }}>{formatStudyTime(maxStudyMins)}</Text>
+                    <Text style={{ fontSize: 9, color: colors.textDim, fontWeight: '600', marginTop: 1 }}>Highest</Text>
+                  </View>
+                </View>
+              )}
 
               {/* 3 progress bars */}
               <View style={styles.progressBars}>
@@ -1120,7 +1156,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                   <View style={styles.progressLabelRow}>
                     <Feather name="edit-3" size={11} color="#8A8358" />
                     <Text style={styles.progressLabel}>Assignments</Text>
-                    <Text style={[styles.progressPct, { color: '#8A8358' }]}>{assignSubmitPct}%</Text>
+                    <Text style={[styles.progressPct, { color: '#8A8358' }]}>
+                      {totalAssignmentsSubmitted}/{totalAssignmentsAssigned} · {assignSubmitPct}%
+                    </Text>
                   </View>
                   <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>
                     <View style={[styles.progressFill, { width: `${assignSubmitPct}%` as any, backgroundColor: '#8A8358' }]} />
@@ -1132,7 +1170,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                   <View style={styles.progressLabelRow}>
                     <Feather name="target" size={11} color={gold} />
                     <Text style={styles.progressLabel}>Challenges</Text>
-                    <Text style={[styles.progressPct, { color: gold }]}>{challCompletePct}%</Text>
+                    <Text style={[styles.progressPct, { color: gold }]}>
+                      {totalChallengesCompleted}/{totalChallengesAssigned} · {challCompletePct}%
+                    </Text>
                   </View>
                   <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>
                     <View style={[styles.progressFill, { width: `${challCompletePct}%` as any, backgroundColor: gold }]} />

@@ -67,7 +67,11 @@ export default function ChallengesScreen({ navigation, route }: any) {
   const initialTab = route?.params?.tab;
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { stats, studentId, addXP } = useStudentData();
+  const { stats, studentId, addXP, recordStudyTime } = useStudentData();
+  // Time actually spent attempting a challenge quiz — counted as real "Study Time",
+  // same pattern as TopicLessonScreen (flush whole minutes, not "screen was open").
+  const challengeSessionStartRef = React.useRef<number>(0);
+  const trackedChallengeMinutesRef = React.useRef(0);
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState(initialTab === 'assigned' ? 'Assigned' : 'Available');
@@ -167,12 +171,24 @@ export default function ChallengesScreen({ navigation, route }: any) {
     completed:  challenges.filter(c => c.status === 'completed').length,
   }), [challenges]);
 
+  function flushChallengeStudyTime() {
+    if (!challengeSessionStartRef.current) return;
+    const elapsedWholeMinutes = Math.floor((Date.now() - challengeSessionStartRef.current) / 60000);
+    const delta = elapsedWholeMinutes - trackedChallengeMinutesRef.current;
+    if (delta > 0) {
+      recordStudyTime(delta);
+      trackedChallengeMinutesRef.current += delta;
+    }
+  }
+
   async function startChallenge(ch: Challenge) {
     setActiveChallenge(ch);
     setQuizResult(null);
     setAnswers([]);
     setQuizLoading(true);
     setQuizVisible(true);
+    challengeSessionStartRef.current = Date.now();
+    trackedChallengeMinutesRef.current = 0;
 
     try {
       // Auto-assign if not yet assigned
@@ -303,6 +319,8 @@ export default function ChallengesScreen({ navigation, route }: any) {
   }
 
   function closeQuiz() {
+    flushChallengeStudyTime();
+    challengeSessionStartRef.current = 0;
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setTimeLeft(null);
     setQuizVisible(false);
@@ -311,6 +329,16 @@ export default function ChallengesScreen({ navigation, route }: any) {
     setAnswers([]);
     setQuizResult(null);
   }
+
+  // Flush on submit too (closeQuiz isn't always called right after — the result
+  // screen can stay open a while before the student dismisses it).
+  useEffect(() => {
+    if (quizResult) flushChallengeStudyTime();
+  }, [quizResult]);
+
+  // Safety net: flush if the component unmounts while a challenge is still active
+  // (e.g. student navigates away without tapping close).
+  useEffect(() => () => flushChallengeStudyTime(), []);
 
   const allAnswered = answers.length > 0 && answers.every(a => a !== null && a.trim().length > 0);
 

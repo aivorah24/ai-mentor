@@ -35,13 +35,6 @@ function formatHour(h: number) {
   return `${h - 12}:00 PM`;
 }
 
-// Module-level singleton so the study-time heartbeat runs ONCE for the whole app.
-// The drawer navigator keeps every visited screen mounted, and each screen wraps
-// its own <ScreenLayout>. Without this guard, every mounted instance would run its
-// own 1-min heartbeat and multiply the logged study time (e.g. 2.5h shown as ~7h).
-let _heartbeatInterval: any = null;
-let _heartbeatRefCount = 0;
-
 export default function ScreenLayout({ children, hideAIPanel }: ScreenLayoutProps) {
   const { showPermanentSidebar } = useResponsive();
   const navigation = useNavigation<any>();
@@ -95,42 +88,14 @@ export default function ScreenLayout({ children, hideAIPanel }: ScreenLayoutProp
   const breakTimerRef = useRef<any>(null);
   const controlsIntervalRef = useRef<any>(null);
 
-  // 1-min heartbeat: track screen time. Singleton across ALL ScreenLayout
-  // instances (see module-level guard above) so study time is counted once
-  // per minute, not once per mounted screen.
-  useEffect(() => {
-    if (!isStudent || !user?.email) return;
-    const email = user.email;
-    const tick = async () => {
-      try {
-        const syncRes = await fetch(`${SERVER_URL}/user/sync`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, role: 'student' }),
-        });
-        if (!syncRes.ok) return;
-        const { id } = await syncRes.json();
-        if (!id) return;
-        fetch(`${SERVER_URL}/student/${id}/study-time`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ minutes: 1 }),
-        }).catch(() => {});
-      } catch {}
-    };
-    _heartbeatRefCount++;
-    if (!_heartbeatInterval) {
-      _heartbeatInterval = setInterval(tick, 60 * 1000);
-    }
-    return () => {
-      _heartbeatRefCount--;
-      if (_heartbeatRefCount <= 0 && _heartbeatInterval) {
-        clearInterval(_heartbeatInterval);
-        _heartbeatInterval = null;
-        _heartbeatRefCount = 0;
-      }
-    };
-  }, [isStudent, user?.email]);
+  // "Study Time" must reflect real learning activity (Learning Paths, Challenges,
+  // Assignments) — NOT "the app was open". This used to run a 1-min heartbeat on
+  // EVERY screen (Dashboard, Profile, Settings...), so a student who simply left a
+  // tab open racked up hours of "Study Time" while completing 0 topics (reported:
+  // 28h53m logged, 0% progress). Removed — study time is now recorded only by the
+  // screens where real learning happens: TopicLessonScreen / VideoLessonScreen /
+  // Learn5EScreen (via recordStudyTime), plus ChallengesScreen and the Assignments
+  // quiz, each timing only their own active session.
 
   // Fetch controls every 15s
   useEffect(() => {
