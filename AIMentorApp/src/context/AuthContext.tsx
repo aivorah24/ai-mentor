@@ -431,27 +431,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const isDemoOrTest = user?.email?.endsWith('@demo.com') || user?.email?.endsWith('@test.ai') || user?.email?.endsWith('@aivorah.ai');
     if (!user?.email || isDemoOrTest) return;
-    // Never auto-sign-out a user who is still pending email verification — their
-    // DB row may legitimately be mid-creation (slow/cold server), and a missing
-    // row here would wrongly bounce them off "Check your inbox" to Landing.
-    // VerifyEmailScreen runs its own check-verified polling to advance them.
-    if (user?.emailVerified === false) return;
+    // NOTE: this watchdog also runs for users parked on "Check your inbox".
+    // Fresh signups there are protected by the guards below (PENDING_VERIFY_KEY
+    // is set at signup start and only cleared once verified, and
+    // _authActionInProgress covers the settling window) — but an account that
+    // was DELETED server-side must be signed out to Landing even from the
+    // verification screen, otherwise a stale session sits there forever.
     const email = user.email;
-    const interval = setInterval(async () => {
+    let stopped = false;
+    const tick = async (interval?: ReturnType<typeof setInterval>) => {
       try {
         const profile = await fetchSupabaseProfile(email);
         if (profile._syncOk === true && profile._accountExists === false) {
           // A fresh signup/sign-in still settling must not be treated as deleted.
           const pendingVerify = await AsyncStorage.getItem(PENDING_VERIFY_KEY).catch(() => null);
           if (_authActionInProgress || pendingVerify === email) return;
-          clearInterval(interval);
+          if (stopped) return;
+          stopped = true;
+          if (interval) clearInterval(interval);
           await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
           await signOut(auth).catch(() => {});
           setUser(null);
         }
       } catch {}
-    }, 30_000);
-    return () => clearInterval(interval);
+    };
+    const interval = setInterval(() => tick(interval), 30_000);
+    // Also check once shortly after mount so a deleted account is bounced to
+    // Landing within seconds, not after the first 30s interval.
+    const kick = setTimeout(() => tick(interval), 4_000);
+    return () => { stopped = true; clearInterval(interval); clearTimeout(kick); };
   }, [user?.email, user?.emailVerified]);
 
   function login(userData: User) {
