@@ -403,6 +403,10 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
     user.mustChangePassword !== true;
 
   // Track current-route home-ness + the timestamp of the last navigation.
+  // The nav container is often NOT ready yet when this mounts (restored session
+  // lands straight on Dashboard) — if we only attached the listener when ready,
+  // it would never attach and Back on Dashboard would silently do nothing.
+  // Retry until the container is ready.
   useEffect(() => {
     if (!active) return;
     const update = () => {
@@ -410,9 +414,18 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
       isHomeRef.current = !!name && HOME_ROUTES.has(name);
       lastNavTsRef.current = Date.now();
     };
-    update();
-    const unsub = navigationRef.isReady() ? navigationRef.addListener('state', update) : undefined;
-    return () => { if (unsub) unsub(); };
+    let unsub: (() => void) | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const attach = () => {
+      if (navigationRef.isReady()) {
+        update();
+        unsub = navigationRef.addListener('state', update);
+      } else {
+        timer = setTimeout(attach, 250);
+      }
+    };
+    attach();
+    return () => { if (unsub) unsub(); if (timer) clearTimeout(timer); };
   }, [active]);
 
   // ── Back-button handling (mobile-style "exit from home" confirm) ────────────
@@ -428,10 +441,20 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
     if (!active || typeof window === 'undefined') return;
     window.history.pushState({ __aivorahGuard: true }, '');
     const onPop = () => {
-      if (Date.now() - lastNavTsRef.current < 250) return;    // a nav just settled → back-arrival, no popup
-      if (!isHomeRef.current) return;                          // deep screen → let RN handle back
-      window.history.pushState({ __aivorahGuard: true }, ''); // on home, idle → confirm exit
-      setShowConfirm(true);
+      // Decide AFTER React Navigation has processed this pop — listener order
+      // between RN's popstate handler and ours is not guaranteed, which made
+      // the old timing check unreliable (Back on Dashboard silently no-op'd).
+      const popAt = Date.now();
+      setTimeout(() => {
+        // If RN navigated as part of THIS pop (its state event fired after the
+        // pop started), it was a real back between screens → no popup.
+        if (lastNavTsRef.current >= popAt) return;
+        const name = navigationRef.isReady() ? navigationRef.getCurrentRoute()?.name : undefined;
+        const onHome = name ? HOME_ROUTES.has(name) : isHomeRef.current;
+        if (!onHome) return;                                   // deep screen → let RN handle back
+        window.history.pushState({ __aivorahGuard: true }, ''); // on home, idle → confirm exit
+        setShowConfirm(true);
+      }, 120);
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
