@@ -148,11 +148,30 @@ router.post('/sync', async (req, res) => {
         .eq('email', patch.email)
         .maybeSingle());
     } else {
+      // Detect whether this upsert CREATES the row (fresh signup for this email)
+      const { data: existingRow } = await supabase
+        .from('users').select('id').eq('email', patch.email).maybeSingle();
+
       ({ data, error } = await supabase
         .from('users')
         .upsert(patch, { onConflict: 'email' })
         .select('id, name, email, role, grade, school, curriculum, location, phone, onboarding_complete, photo_url')
         .single());
+
+      // Fresh signup + leftover user_preferences from a previously DELETED account:
+      // its accountStatus 'active' makes the app treat the new signup as already
+      // verified and silently skip "Check your inbox" (founder-reported). Reset the
+      // verification state so every re-registered email verifies like a new user.
+      if (!existingRow && !error) {
+        const { data: pref } = await supabase
+          .from('user_preferences').select('data').eq('user_email', patch.email).maybeSingle();
+        if (pref?.data?.accountStatus === 'active') {
+          await supabase.from('user_preferences').update({
+            data: { ...pref.data, accountStatus: 'pending_verification', verifyToken: null, verifyTokenExpiry: null },
+          }).eq('user_email', patch.email);
+          console.log('[/user/sync] reset stale verified state for re-registered email:', patch.email);
+        }
+      }
     }
 
     if (error) {
