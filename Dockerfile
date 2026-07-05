@@ -11,7 +11,7 @@ ENV PORT=8080
 # Without this, server/python/layout_service.py has nowhere to run in production,
 # so every image-crop/table-detect call silently fails over to the crude
 # "whole page" fallback (worksheet images render uncropped/misplaced in prod).
-RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip build-essential \
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip python3-dev build-essential \
     && rm -rf /var/lib/apt/lists/*
 COPY server/python/requirements.txt ./server/python/requirements.txt
 RUN pip3 install --no-cache-dir --break-system-packages -r server/python/requirements.txt
