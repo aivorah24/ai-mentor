@@ -59,6 +59,7 @@ function stripChildPrefix(content) {
 function isSystemNotification(content) {
   if (typeof content !== 'string') return false;
   const c = stripChildPrefix(content);
+  if (c.startsWith('SCHEDULE_CARD|')) return true; // schedule-event card sent to parents
   return SYSTEM_NOTIF_PREFIXES.some(p => c.startsWith(p));
 }
 
@@ -287,6 +288,9 @@ router.get('/notifications-summary', async (req, res) => {
     const parentChallengeMsgs = parentSystemMsgs.filter(m =>
       stripChildPrefix(m.content).startsWith('New Challenge assigned:')
     );
+    const parentEventMsgs = parentSystemMsgs.filter(m =>
+      stripChildPrefix(m.content).startsWith('SCHEDULE_CARD|')
+    );
 
     // Merge personal + class assignments (students only), dedupe by id
     const allAssigns = [...(personalAssignRes.data || []), ...(classAssignRes.data || [])];
@@ -366,17 +370,33 @@ router.get('/notifications-summary', async (req, res) => {
           createdAt:  r.created_at,
         }));
 
-    // Schedule events created for the student by a teacher/parent (students only).
+    // Schedule events created for the student by a teacher/parent — students see
+    // these via the schedule_events query above; parents get a rich message card
+    // (SCHEDULE_CARD|childName|title|date|startTime|type) parsed into the same
+    // notification item shape here.
     const eventRows = eventRes.data || [];
-    const eventCount = eventRows.length;
-    const eventItems = eventRows.map(e => ({
-      id:         'evt_' + e.id,
-      type:       'event',
-      title:      e.title || 'New Event',
-      subtitle:   [e.event_date, e.note].filter(Boolean).join(' · '),
-      senderName: e.created_by === 'parent' ? 'Your parent' : 'Your teacher',
-      createdAt:  e.created_at,
-    }));
+    const eventCount = isParent ? parentEventMsgs.length : eventRows.length;
+    const eventItems = isParent
+      ? parentEventMsgs.map(m => {
+          const c = stripChildPrefix(m.content);
+          const [, childName, title, date, startTime] = c.split('|');
+          return {
+            id:         'evt_' + m.id,
+            type:       'event',
+            title:      title || 'New Event',
+            subtitle:   [date, startTime, childName ? `for ${childName}` : ''].filter(Boolean).join(' · '),
+            senderName: m.sender_name || 'Aivorah',
+            createdAt:  m.created_at,
+          };
+        })
+      : eventRows.map(e => ({
+          id:         'evt_' + e.id,
+          type:       'event',
+          title:      e.title || 'New Event',
+          subtitle:   [e.event_date, e.note].filter(Boolean).join(' · '),
+          senderName: e.created_by === 'parent' ? 'Your parent' : 'Your teacher',
+          createdAt:  e.created_at,
+        }));
 
     const notificationItems = [...assignmentItems, ...challengeItems, ...eventItems]
       .sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0))
@@ -622,7 +642,15 @@ router.get('/contacts', async (req, res) => {
 
     if (meErr || !me) return res.status(404).json({ error: 'User not found' });
 
-    if (me.role === 'parent') {
+    // Dual-role accounts (roles: ['teacher','parent']) store a single base `role`
+    // in the users table that may not match which profile is currently active
+    // (e.g. teacheraivorah@gmail.com is stored as role='parent' but is actively
+    // used as a teacher). The client knows its own active role — prefer that
+    // over the raw DB column so contacts resolve for the profile actually in use.
+    const requestedRole = (req.query.role || '').trim().toLowerCase();
+    const effectiveRole = (requestedRole === 'teacher' || requestedRole === 'parent') ? requestedRole : me.role;
+
+    if (effectiveRole === 'parent') {
       // 1. Get parent's children
       const { data: links } = await supabase
         .from('parent_children')
@@ -670,7 +698,7 @@ router.get('/contacts', async (req, res) => {
       return res.json(contacts);
     }
 
-    if (me.role === 'teacher') {
+    if (effectiveRole === 'teacher') {
       // 1. Get students this teacher is assigned to via teacher_student table
       const { data: tsLinks } = await supabase
         .from('teacher_student')
@@ -725,6 +753,34 @@ router.get('/contacts', async (req, res) => {
       return res.json(contacts);
     }
 
+    if (effectiveRole === 'student') {
+      // Students can message their own linked parent(s) — this branch was
+      // previously missing entirely, so it silently fell through to the
+      // empty-contacts response below regardless of whether a parent existed.
+      const { data: parentLinks } = await supabase
+        .from('parent_children')
+        .select('parent_email')
+        .eq('child_id', me.id);
+
+      if (!parentLinks || parentLinks.length === 0) return res.json([]);
+
+      const parentEmails = [...new Set(parentLinks.map(p => p.parent_email))];
+      const { data: parents } = await supabase
+        .from('users')
+        .select('id, name, email')
+        .in('email', parentEmails);
+
+      const contacts = (parents || []).map(p => ({
+        id:      p.id,
+        name:    p.name || p.email,
+        email:   p.email,
+        role:    'parent',
+        context: 'Your parent',
+      }));
+
+      return res.json(contacts);
+    }
+
     res.json([]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -757,14 +813,18 @@ router.get('/conversations', async (req, res) => {
       ).filter(e => e && e !== userEmail)
     )];
 
-    // Batch-lookup roles from users table
+    // Batch-lookup roles + current names from users table — the message row's
+    // own sender_name/recipient_name is a snapshot taken when that message was
+    // sent, so it can be blank/stale (e.g. account had no name yet). Always
+    // prefer the live name over that snapshot.
     const roleMap = {};
+    const nameMap = {};
     if (otherEmails.length > 0) {
       const { data: users } = await supabase
         .from('users')
-        .select('email, role')
+        .select('email, role, name')
         .in('email', otherEmails);
-      (users ?? []).forEach(u => { roleMap[u.email] = u.role; });
+      (users ?? []).forEach(u => { roleMap[u.email] = u.role; if (u.name) nameMap[u.email] = u.name; });
     }
 
     // Group into threads — keyed by the other person's email
@@ -784,7 +844,7 @@ router.get('/conversations', async (req, res) => {
       if (!threadMap[otherEmail]) {
         threadMap[otherEmail] = {
           otherEmail,
-          otherName:  otherName || otherEmail,
+          otherName:  nameMap[otherEmail] || otherName || otherEmail,
           otherRole,
           lastMessage: msg.content,
           lastMessageAt: msg.created_at,

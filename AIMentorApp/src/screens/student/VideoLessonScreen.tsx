@@ -95,10 +95,12 @@ export default function VideoLessonScreen({ navigation, route }: any) {
   const gold     = colors.accentYellow;
   const onAccent = isDark ? '#0B140F' : '#FFFFFF';
 
-  // Credit whole minutes only when the student is actively learning:
-  // - video topics: while the video is playing
-  // - non-video topics: while the lesson screen is open and readable
+  // Credit whole minutes only while a video is actually playing. This screen
+  // has no video for `hasVideo === false` topics — it's just a launcher menu
+  // (Start Learning / Practice Quiz buttons), so it never earns study time;
+  // real time is tracked by TopicLessonScreen/Learn5EScreen once opened.
   useEffect(() => {
+    if (!hasVideo) return;
     let activeSession = false;
 
     function flushWholeMinutes() {
@@ -106,7 +108,7 @@ export default function VideoLessonScreen({ navigation, route }: any) {
       const elapsedWholeMinutes = Math.floor((Date.now() - studySessionStartRef.current) / 60000);
       const delta = elapsedWholeMinutes - trackedStudyMinutesRef.current;
       if (delta > 0) {
-        recordStudyTime(delta);
+        recordStudyTime(delta, 'learningPath', subject);
         trackedStudyMinutesRef.current += delta;
       }
     }
@@ -125,27 +127,14 @@ export default function VideoLessonScreen({ navigation, route }: any) {
       trackedStudyMinutesRef.current = 0;
     }
 
-    let unsubFocus: (() => void) | undefined;
-    let unsubBlur: (() => void) | undefined;
-
-    if (hasVideo) {
-      if (videoPlaying) startSession();
-      unsubFocus = navigation.addListener('focus', () => {
-        if (videoPlaying) startSession();
-      });
-      unsubBlur = navigation.addListener('blur', stopSession);
-    } else {
-      unsubFocus = navigation.addListener('focus', startSession);
-      unsubBlur = navigation.addListener('blur', stopSession);
-      startSession();
-    }
+    if (videoPlaying) startSession(); else stopSession();
+    const unsubBlur = navigation.addListener('blur', stopSession);
 
     const interval = setInterval(flushWholeMinutes, 15000);
     return () => {
       clearInterval(interval);
       stopSession();
-      unsubFocus?.();
-      unsubBlur?.();
+      unsubBlur();
     };
   }, [hasVideo, navigation, recordStudyTime, videoPlaying]);
 
@@ -317,7 +306,7 @@ export default function VideoLessonScreen({ navigation, route }: any) {
           subject={subject}
           grade={grade}
           curriculum={curriculum}
-          onMessageSent={() => recordStudyTime(1)}
+          onMessageSent={() => recordStudyTime(1, 'learningPath', subject)}
         />
       </View>
     </ScreenLayout>

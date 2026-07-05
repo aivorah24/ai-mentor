@@ -5,7 +5,7 @@ import {
   Modal, TextInput, ActivityIndicator, useWindowDimensions, Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { spacing, radius } from '../../theme';
+import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -38,7 +38,10 @@ function calcEventHeight(startTime: string, endTime?: string): number {
   const [eh, em] = endTime.split(':').map(Number);
   const durationMins = (eh * 60 + em) - (sh * 60 + sm);
   if (durationMins <= 0) return HOUR_HEIGHT;
-  return Math.max((durationMins / 60) * HOUR_HEIGHT, 28);
+  // Minimum tall enough to fit all 3 lines (title, time, student) without
+  // clipping — a 30-min slot at HOUR_HEIGHT scale was too short and cut off
+  // the bottom line.
+  return Math.max((durationMins / 60) * HOUR_HEIGHT, 46);
 }
 
 function calcEndTime(startTime: string, duration: string): string {
@@ -72,7 +75,7 @@ interface StudentItem {
 function typeColors(type: string): [string, string, string] {
   const map: Record<string, [string, string, string]> = {
     lesson:     ['#9C844A', '#F5EDDA', '#6B5A30'],  // gold accent / warm cream fill / dark gold text
-    study:      ['#4A7EA5', '#DAE9F5', '#2D5470'],  // blue accent / sky fill / dark blue text
+    study:      ['#C9A24E', '#FBF3DA', '#7A5C1E'],  // amber-gold accent / pale gold fill / dark amber text (Aivorah theme)
     challenge:  ['#6B5BA8', '#E8E4F5', '#3F3270'],  // purple accent / lavender fill / dark purple text
     deadline:   ['#B84A3A', '#F5DDD9', '#7A2A1E'],  // red accent / rose fill / dark red text
     assignment: ['#3A8A6A', '#D9F0E8', '#1E5A40'],  // green accent / mint fill / dark green text
@@ -477,7 +480,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                           // @ts-ignore
                           onMouseDown={(e: any) => {
                             if (e.button !== 0) return;
-                            if ((e.target as HTMLElement).closest('[data-delbtn],[data-event]')) return;
+                            if ((e.target as HTMLElement).closest('[data-delbtn],[data-eid]')) return;
                             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                             const startY = e.clientY - rect.top;
                             const gh = gridHeight;
@@ -587,11 +590,12 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                                   cursor: 'grab',
                                   userSelect: 'none',
                                   zIndex: 2,
+                                  fontFamily: fonts.sans,
                                 }}
                               >
-                                <div style={{ fontSize: 11, fontWeight: 700, color: textCol, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.title}</div>
-                                <div style={{ fontSize: 10, color: accent }}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</div>
-                                <div style={{ fontSize: 10, fontWeight: 600, color: textCol, opacity: 0.8, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{studentLabel}</div>
+                                <div style={{ fontFamily: fonts.sans, fontSize: 11, fontWeight: 700, color: textCol, lineHeight: '13px', whiteSpace: 'normal', wordBreak: 'break-word' }}>{event.title}</div>
+                                <div style={{ fontFamily: fonts.sans, fontSize: 10, color: accent, lineHeight: '13px' }}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</div>
+                                <div style={{ fontFamily: fonts.sans, fontSize: 10, fontWeight: 600, color: textCol, opacity: 0.8, marginTop: 1, lineHeight: '13px', whiteSpace: 'normal', wordBreak: 'break-word' }}>{studentLabel}</div>
                                 <div
                                   data-delbtn="1"
                                   onClick={() => removeEvent(event.id, d.iso)}

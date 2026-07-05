@@ -104,6 +104,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [insights, setInsights] = useState<any>({ assignments: [], challenges: [], totals: {} });
+  const [activityFeed, setActivityFeed] = useState<any[]>([]);
 
   const firstName = user?.name?.split(' ')[0] || 'Teacher';
   const ringTrack = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
@@ -111,13 +112,15 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   const fetchStudents = async () => {
     try {
       const teacherEmail = user?.email || 'teacher@demo.com';
-      const [studRes, insRes] = await Promise.all([
+      const [studRes, insRes, actRes] = await Promise.all([
         fetch(`${SERVER_URL}/student/by-teacher/${encodeURIComponent(teacherEmail)}`),
         fetch(`${SERVER_URL}/student/by-teacher/${encodeURIComponent(teacherEmail)}/insights`),
+        fetch(`${SERVER_URL}/student/recent-activity/by-teacher/${encodeURIComponent(teacherEmail)}`),
       ]);
       const data = await studRes.json();
       if (Array.isArray(data)) setStudents(data);
       try { const ins = await insRes.json(); setInsights(ins); } catch {}
+      try { const act = await actRes.json(); if (Array.isArray(act)) setActivityFeed(act); } catch {}
     } catch {
       // keep previous data
     } finally {
@@ -126,11 +129,11 @@ export default function TeacherDashboardScreen({ navigation }: any) {
     }
   };
 
-  // Initial fetch + auto-refresh every 15s so a student's name/profile edit
-  // (made elsewhere) reflects here automatically — no manual refresh needed.
+  // Initial fetch + auto-refresh every 5s so Learning Path study time (and
+  // any other student stat) stays current without a manual refresh.
   useEffect(() => {
     fetchStudents();
-    const interval = setInterval(fetchStudents, 15 * 1000);
+    const interval = setInterval(fetchStudents, 5 * 1000);
     return () => clearInterval(interval);
   }, [user?.email]);
 
@@ -157,10 +160,32 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   const avgProgress = totalStudents > 0
     ? Math.round(students.reduce((sum, s) => sum + (s.progressPct || 0), 0) / totalStudents)
     : 0;
-  const studyTimes = students.map(s => s.studyTime || 0);
+  // Learning Path Insights tile shows Learning Path time specifically (not
+  // Challenges/Assignments time), so it uses learningPathTime, not the
+  // combined studyTime.
+  const studyTimes = students.map(s => s.learningPathTime || 0);
   const medianStudyMins = median(studyTimes);
-  const minStudyMins = studyTimes.length > 0 ? Math.min(...studyTimes) : 0;
-  const maxStudyMins = studyTimes.length > 0 ? Math.max(...studyTimes) : 0;
+  // Class Progress donut ("Typical Study Time" + Lowest/Typical/Highest) is
+  // an overall metric — combine time spent across all 3 streams per student
+  // (not just Learning Path) so it reflects total engagement.
+  const combinedStudyTimes = students.map(s => (s.learningPathTime || 0) + (s.assignmentTime || 0) + (s.challengeTime || 0));
+  const medianCombinedMins = median(combinedStudyTimes);
+  const minCombinedMins = combinedStudyTimes.length > 0 ? Math.min(...combinedStudyTimes) : 0;
+  const maxCombinedMins = combinedStudyTimes.length > 0 ? Math.max(...combinedStudyTimes) : 0;
+  // Per-stream typical time, shown next to each Class Progress bar so time
+  // spent isn't only reported as one combined "Typical Study Time" figure.
+  const medianAssignmentMins = median(students.map(s => s.assignmentTime || 0));
+  const medianChallengeMins = median(students.map(s => s.challengeTime || 0));
+
+  // Class-wide per-subject time (Today + overall Total) — e.g. Mathematics: 12m
+  // today / 84m total — for the subject(s) this teacher is actually scoped to,
+  // shown directly on the dashboard card instead of only inside the Leaderboard.
+  const dashboardSubjectColumns = [...new Set(students.flatMap((s: any) => s.scopedSubjects || []))] as string[];
+  const subjectTimeSummary = dashboardSubjectColumns.map(subj => ({
+    subject: subj,
+    today: students.reduce((sum, s) => sum + ((s.subjectTimeToday || {})[subj] || 0), 0),
+    total: students.reduce((sum, s) => sum + ((s.subjectTime || {})[subj] || 0), 0),
+  }));
 
   // Assignment & Challenge completion rates — true volumetric rate (completed ÷ assigned
   // across the whole class), not "% of students who did at least one" which reads as a
@@ -200,7 +225,6 @@ export default function TeacherDashboardScreen({ navigation }: any) {
     const days = Math.floor((Date.now() - new Date(s.lastActive).getTime()) / 86400000);
     return days >= 3;
   });
-  const streakAtRisk = students.filter(s => (s.currentStreak || 0) === 1);
   const topStudent = [...students].sort((a, b) => (b.progressPct || 0) - (a.progressPct || 0))[0];
   const pendingAssignments = students.reduce((sum, s) => sum + ((s.assignmentsDone || 0) === 0 ? 1 : 0), 0);
 
@@ -209,8 +233,8 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   students.forEach(s => (s.completedTopics || []).forEach((t: string) => { topicCounts[t] = (topicCounts[t] || 0) + 1; }));
   const hardestTopic = Object.entries(topicCounts).sort((a, b) => a[1] - b[1])[0];
 
-  // Avg study time per student (for insight tile)
-  const totalStudyMins = students.reduce((sum, s) => sum + (s.studyTime || 0), 0);
+  // Avg study time per student (for insight tile) — Learning Path only
+  const totalStudyMins = students.reduce((sum, s) => sum + (s.learningPathTime || 0), 0);
 
   // ── Insight tile type ─────────────────────────────────────
   type InsightTile = { icon: any; color: string; stat: string; label: string; title: string; body: string; screen: string; params?: Record<string, any> };
@@ -223,6 +247,19 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   const studentsWithSubmissions = assignStats.filter((s: any) => s.submitted > 0).length;
   const studentsWithNoSubmissions = totalStudents - studentsWithSubmissions;
   const classAvgScore = totals.classAvgScore;
+
+  // Class-wide per-subject Assignment breakdown — e.g. Mathematics: 1/3 submitted,
+  // English: 2/2 submitted — scoped to the subject(s) this teacher actually teaches,
+  // same source as the Learning Path subject scoping.
+  const assignSubjectColumns = [...new Set(assignStats.flatMap((s: any) => s.scopedSubjects || []))] as string[];
+  const assignSubjectSummary = assignSubjectColumns.map(subj => ({
+    subject: subj,
+    assigned: assignStats.reduce((sum: number, s: any) => sum + ((s.bySubject || {})[subj]?.assigned || 0), 0),
+    submitted: assignStats.reduce((sum: number, s: any) => sum + ((s.bySubject || {})[subj]?.submitted || 0), 0),
+  }));
+  const assignSubjectSummaryText = assignSubjectSummary.length > 0
+    ? assignSubjectSummary.map(x => `${x.subject}: ${x.submitted}/${x.assigned} submitted`).join('  ·  ')
+    : '';
   const topAssignStudent = [...assignStats].sort((a: any, b: any) => (b.avgScore || 0) - (a.avgScore || 0))[0];
 
   const studentsWithChallenges = challStats.filter((s: any) => s.assigned > 0).length;
@@ -245,12 +282,10 @@ export default function TeacherDashboardScreen({ navigation }: any) {
   const learningPathTiles: InsightTile[] = [
     {
       icon: 'book-open', color: T.rose,
-      stat: hardestTopic ? `${totalStudents - hardestTopic[1]}` : `${allNeedsAttention.length}`,
+      stat: `${allNeedsAttention.length}`,
       label: 'Struggling',
-      title: hardestTopic ? `Stuck on "${hardestTopic[0]}"` : 'Need Support',
-      body: hardestTopic
-        ? `${totalStudents - hardestTopic[1]} haven't completed this topic yet.`
-        : `${allNeedsAttention.length} student${allNeedsAttention.length !== 1 ? 's' : ''} need focused review.`,
+      title: 'Need Support',
+      body: `${allNeedsAttention.length} student${allNeedsAttention.length !== 1 ? 's' : ''} need focused review.`,
       screen: 'TeacherStudents', params: { initialTab: 'Needs Attention' },
     },
     {
@@ -272,16 +307,6 @@ export default function TeacherDashboardScreen({ navigation }: any) {
         ? `${inactiveStudents.slice(0, 2).map(s => s.name?.split(' ')[0]).join(', ')}${inactiveStudents.length > 2 ? ` +${inactiveStudents.length - 2}` : ''} — nudge them back.`
         : 'Great engagement this week!',
       screen: 'TeacherStudents', params: { initialTab: 'Inactive' },
-    },
-    {
-      icon: 'zap', color: T.coral,
-      stat: `${streakAtRisk.length}`,
-      label: 'Streak Risk',
-      title: streakAtRisk.length > 0 ? 'At Risk Today' : 'Streaks Safe',
-      body: streakAtRisk.length > 0
-        ? `${streakAtRisk.slice(0, 2).map(s => s.name?.split(' ')[0]).join(', ')} on 1-day streak.`
-        : 'No streaks at risk today.',
-      screen: 'TeacherStudents', params: { initialTab: 'Streak Risk' },
     },
     {
       icon: 'clock', color: T.teal,
@@ -342,10 +367,10 @@ export default function TeacherDashboardScreen({ navigation }: any) {
       stat: `${studentsWithChallenges}/${totalStudents}`,
       label: 'Attempted',
       title: studentsWithChallenges > 0
-        ? `${studentsWithChallenges} Participating`
+        ? `${studentsWithChallenges} of ${totalStudents} Students Have Challenges`
         : 'No Challenges Yet',
       body: studentsWithChallenges > 0
-        ? `${totals.totalChallengesAssigned || 0} total challenges assigned.`
+        ? `${totals.totalChallengesAssigned || 0} challenges assigned in total across those ${studentsWithChallenges} student${studentsWithChallenges !== 1 ? 's' : ''}.`
         : 'Assign challenges to test their skills.',
       screen: 'TeacherStudents',
     },
@@ -375,28 +400,36 @@ export default function TeacherDashboardScreen({ navigation }: any) {
     },
   ];
 
-  // Combined flat array for modal index lookup (Learning Path 0-4, Assignments 5-7, Challenges 8-10)
+  // Combined flat array for modal index lookup (Learning Path 0-3, Assignments 4-6, Challenges 7-9)
   const aiInsightTiles: InsightTile[] = [...learningPathTiles, ...assignmentTiles, ...challengeTiles];
 
-  // ── Recent activity: students sorted by last active ────
-  const recentStudents = [...students]
-    .sort((a, b) => (b.lastActive || '').localeCompare(a.lastActive || ''))
-    .slice(0, 4)
-    .map(s => {
-      const isToday = s.lastActive === today;
-      const isYesterday = s.lastActive === (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })();
-      const timeLabel = isToday ? 'Today' : isYesterday ? 'Yesterday' : s.lastActive || 'Never';
-      return {
-        initials: (s.name || '??').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase(),
-        name: s.name || 'Unknown',
-        action: s.completedTopics?.length > 0
-          ? `Completed ${s.completedTopics.length} chapter${s.completedTopics.length > 1 ? 's' : ''}`
-          : `${formatStudyTime(s.studyTime || 0)} total study time`,
-        score: s.progressPct ? `${s.progressPct}%` : null,
-        time: timeLabel,
-        scoreGood: (s.progressPct || 0) >= 50,
-      };
-    });
+  // ── Recent activity: live event feed (topic/assignment/challenge completions),
+  // not a static "Xh total study time" snapshot — shows what students are
+  // actually doing, as it happens.
+  function formatRelativeTime(iso: string): string {
+    const then = new Date(iso).getTime();
+    const diffMs = Date.now() - then;
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days}d ago`;
+    return new Date(iso).toISOString().split('T')[0];
+  }
+  const ACTIVITY_ICON: Record<string, any> = { topic: 'book-open', assignment: 'edit-3', challenge: 'target' };
+  const recentStudents = activityFeed.slice(0, 3).map((ev, i) => ({
+    id: `${ev.studentId}-${i}`,
+    initials: (ev.name || '??').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase(),
+    name: ev.name || 'Unknown',
+    action: ev.text,
+    prefix: ev.prefix, title: ev.title, suffix: ev.suffix,
+    icon: ACTIVITY_ICON[ev.type] || 'activity',
+    time: formatRelativeTime(ev.timestamp),
+    studentId: ev.studentId,
+  }));
 
   const aiActionTitle = allNeedsAttention.length > 0
     ? `Review struggling students (${allNeedsAttention.length} flagged)`
@@ -405,8 +438,8 @@ export default function TeacherDashboardScreen({ navigation }: any) {
       : 'Set up your first assignment to get started';
 
   const aiActionBody = allNeedsAttention.length > 0
-    ? `${needsAttentionStudents[0]?.name?.split(' ')[0] || 'A student'} and others have low progress or streak. Schedule a review session or send an encouraging message.`
-    : `Median study time is ${formatStudyTime(medianStudyMins)} per student. Assign chapter quizzes to boost engagement.`;
+    ? `${needsAttentionStudents[0]?.name?.split(' ')[0] || 'A student'} and others have low progress. Schedule dedicated study hours or assign a practice task to support them.`
+    : `Median study time is ${formatStudyTime(medianStudyMins)} per student. Assign a chapter task or quiz to keep them engaged.`;
 
   // ── Insight filter tab ──────────────────────────────────
   const [insightFilter, setInsightFilter] = useState<'learning' | 'assignments' | 'challenges'>('learning');
@@ -431,10 +464,8 @@ export default function TeacherDashboardScreen({ navigation }: any) {
 
     switch (tileIndex) {
 
-      case 0: { // Struggling — per-student topic breakdown
-        const topic = hardestTopic ? hardestTopic[0] : '';
-        const stuck = students
-          .filter(s => !topic || !(s.completedTopics || []).includes(topic))
+      case 0: { // Struggling — same population as the outer tile (needsAttention)
+        const stuck = [...allNeedsAttention]
           .sort((a, b) => (a.progressPct || 0) - (b.progressPct || 0));
         return (
           <>
@@ -444,34 +475,39 @@ export default function TeacherDashboardScreen({ navigation }: any) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.modalStat, { color: tile.color }]}>{stuck.length} Students</Text>
-                <Text style={styles.modalHeading}>
-                  {topic ? 'Not yet completed: "' + topic + '"' : 'Struggling Students'}
-                </Text>
+                <Text style={styles.modalHeading}>Need Support</Text>
               </View>
               <TouchableOpacity onPress={() => setInsightModal(null)} style={styles.modalClose}>
                 <Feather name="x" size={20} color={colors.textDim} />
               </TouchableOpacity>
             </View>
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableCol, { flex: 3 }]}>Student</Text>
-              <Text style={[styles.tableCol, { flex: 2 }]}>Topics Done</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Streak</Text>
+              <Text style={[styles.tableCol, { flex: 2.4 }]}>Student</Text>
+              <Text style={[styles.tableCol, { flex: 1.3 }]}>Topics Done</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>Streak</Text>
               <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Progress</Text>
             </View>
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
               {stuck.length === 0 ? (
                 <View style={styles.modalEmpty}>
                   <Feather name="check-circle" size={28} color="#5A8A70" />
-                  <Text style={styles.modalEmptyText}>All students have completed this topic!</Text>
+                  <Text style={styles.modalEmptyText}>No students need support right now!</Text>
                 </View>
               ) : stuck.map((s, i) => {
-                const doneCount = (s.completedTopics || []).length;
+                // "Topics Done" must only count the teacher's own subjects (Mathematics,
+                // English) — other subjects (PE, Art, ...) are handled by other staff and
+                // shouldn't inflate this count. Falls back to the raw count only when this
+                // teacher has no subject scoping configured at all.
+                const scopedSubjectsForCount: string[] = s.scopedSubjects || [];
+                const doneCount = scopedSubjectsForCount.length > 0
+                  ? (s.completedTopicsDetailed || []).filter((d: any) => scopedSubjectsForCount.includes(d.subject)).length
+                  : (s.completedTopics || []).length;
                 const pct = s.progressPct || 0;
                 const pctColor = pct < 20 ? '#B8797E' : '#8A8358';
                 const streak = s.currentStreak || 0;
                 return (
                   <View key={s.id || String(i)} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
-                    <View style={[styles.tableCell, { flex: 3, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                    <View style={[styles.tableCell, { flex: 2.4, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
                       <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
                         <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name || '?')}</Text>
                       </View>
@@ -480,7 +516,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                         <Text style={styles.tableStudentGrade}>{s.grade || '—'}</Text>
                       </View>
                     </View>
-                    <View style={[styles.tableCell, { flex: 2 }]}>
+                    <View style={[styles.tableCell, { flex: 1.3, alignItems: 'flex-start' }]}>
                       <Text style={[styles.tableChip, doneCount === 0
                         ? { color: '#B8797E', borderColor: '#B8797E40', backgroundColor: '#B8797E10' }
                         : { color: '#5A8A70', borderColor: '#5A8A7040', backgroundColor: '#5A8A7010' }
@@ -488,7 +524,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                         {doneCount === 0 ? 'None yet' : doneCount + ' topics done'}
                       </Text>
                     </View>
-                    <Text style={[styles.tableCell, { flex: 1, color: streak === 0 ? '#B8797E' : colors.textDim, fontSize: 12, fontWeight: '700' }]}>
+                    <Text style={[styles.tableCell, { flex: 1, textAlign: 'center', color: streak === 0 ? '#B8797E' : colors.textDim, fontSize: 12, fontWeight: '700' }]}>
                       {streak}d
                     </Text>
                     <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
@@ -506,6 +542,10 @@ export default function TeacherDashboardScreen({ navigation }: any) {
 
       case 1: { // Top Performers — leaderboard table
         const ranked = [...students].sort((a, b) => (b.progressPct || 0) - (a.progressPct || 0));
+        // One column per subject this teacher is scoped to (e.g. Mathematics, English),
+        // each showing Today + Total separately — clearer for real per-subject analysis
+        // than cramming both subjects' numbers as sub-text under one combined column.
+        const subjectColumns = [...new Set(ranked.flatMap((s: any) => s.scopedSubjects || []))] as string[];
         return (
           <>
             <View style={styles.modalHeader}>
@@ -520,33 +560,112 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                 <Feather name="x" size={20} color={colors.textDim} />
               </TouchableOpacity>
             </View>
+            {/* Learning Path only, scoped to the subject(s) this teacher handles */}
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableCol, { width: 32 }]}>#</Text>
-              <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Topics</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Streak</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Study</Text>
-              <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Progress</Text>
+              <View style={{ width: 32, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={styles.tableCol}>#</Text>
+              </View>
+              <View style={{ flex: 2, justifyContent: 'center' }}>
+                <Text style={styles.tableCol}>Student</Text>
+              </View>
+              <View style={{ flex: 2, justifyContent: 'center' }}>
+                <Text style={styles.tableCol}>Topics (by subject)</Text>
+              </View>
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={styles.tableCol}>Streak</Text>
+              </View>
+              {subjectColumns.length > 0 ? (
+                subjectColumns.map(subj => (
+                  <View key={subj} style={{ flex: 1.2, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={styles.tableCol}>{subj}</Text>
+                  </View>
+                ))
+              ) : (
+                <>
+                  <View style={{ flex: 1, justifyContent: 'center' }}>
+                    <Text style={styles.tableCol}>Today</Text>
+                  </View>
+                  <View style={{ flex: 1, justifyContent: 'center' }}>
+                    <Text style={styles.tableCol}>Total</Text>
+                  </View>
+                </>
+              )}
+              <View style={{ flex: 1, alignItems: 'flex-end', justifyContent: 'center' }}>
+                <Text style={styles.tableCol}>Progress</Text>
+              </View>
             </View>
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
               {ranked.map((s, i) => {
                 const medal = i === 0 ? '#C5BD96' : i === 1 ? '#7AADA8' : i === 2 ? '#C4836A' : colors.textDim;
+                // Group this student's completed topics by subject, e.g. "Mathematics: 2, English: 1".
+                // Always show every subject this teacher is scoped to (even at 0 done) so
+                // monitoring is complete at a glance, not just whichever subjects happen to
+                // have a completion — that's the whole point of per-subject tracking.
+                const bySubject: Record<string, number> = {};
+                (s.scopedSubjects || []).forEach((subj: string) => { bySubject[subj] = 0; });
+                (s.completedTopicsDetailed || []).forEach((d: any) => {
+                  if (d.subject) bySubject[d.subject] = (bySubject[d.subject] || 0) + 1;
+                });
+                const subjectEntries = Object.entries(bySubject);
+                // "N done" must match the sum of the scoped-subject breakdown below it —
+                // not the raw completedTopics count, which also includes topics from
+                // subjects outside this teacher's scope (e.g. Physical Education).
+                const scopedDoneCount = subjectEntries.length > 0
+                  ? subjectEntries.reduce((sum, [, count]) => sum + count, 0)
+                  : (s.completedTopics || []).length;
                 return (
                   <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
-                    <Text style={[styles.tableCell, { width: 32, fontWeight: '800', color: medal, fontSize: 14 }]}>{i + 1}</Text>
-                    <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                    <View style={{ width: 32, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={[styles.tableCell, { fontWeight: '800', color: medal, fontSize: 14 }]}>{i + 1}</Text>
+                    </View>
+                    <View style={{ flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
                         <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name)}</Text>
                       </View>
-                      <View>
+                      <View style={{ justifyContent: 'center' }}>
                         <Text style={styles.tableStudentName}>{s.name.split(' ')[0]}</Text>
                         <Text style={styles.tableStudentGrade}>{s.grade}</Text>
                       </View>
                     </View>
-                    <Text style={[styles.tableCell, { flex: 1, color: colors.textMuted, fontSize: 12 }]}>{(s.completedTopics || []).length}</Text>
-                    <Text style={[styles.tableCell, { flex: 1, color: colors.textMuted, fontSize: 12 }]}>{s.currentStreak || 0}d</Text>
-                    <Text style={[styles.tableCell, { flex: 1, color: colors.textMuted, fontSize: 12 }]}>{formatStudyTime(s.studyTime || 0)}</Text>
-                    <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
+                    <View style={{ flex: 2, justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMain }}>{scopedDoneCount} done</Text>
+                      {subjectEntries.length > 0 && (
+                        <Text style={{ fontSize: 10, color: colors.textDim, marginTop: 2 }} numberOfLines={2}>
+                          {subjectEntries.map(([subj, count]) => `${subj}: ${count}`).join('  ·  ')}
+                        </Text>
+                      )}
+                    </View>
+                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={[styles.tableCell, { color: colors.textMuted, fontSize: 12 }]}>{s.currentStreak || 0}d</Text>
+                    </View>
+                    {subjectColumns.length > 0 ? (
+                      subjectColumns.map(subj => {
+                        const todayMins = (s.subjectTimeToday || {})[subj] || 0;
+                        const totalMins = (s.subjectTime || {})[subj] || 0;
+                        return (
+                          <View key={subj} style={{ flex: 1.2, alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMain, textAlign: 'center' }}>
+                              {formatStudyTime(todayMins)}
+                            </Text>
+                            {totalMins > 0 && (
+                              <Text style={{ fontSize: 9, color: colors.textDim, marginTop: 1, textAlign: 'center' }}>
+                                of {formatStudyTime(totalMins)} total
+                              </Text>
+                            )}
+                          </View>
+                        );
+                      })
+                    ) : (
+                      <>
+                        <View style={{ flex: 1, justifyContent: 'center' }}>
+                          <Text style={[styles.tableCell, { color: colors.textMuted, fontSize: 12 }]}>{formatStudyTime(s.learningPathTimeToday || 0)}</Text>
+                        </View>
+                        <View style={{ flex: 1, justifyContent: 'center' }}>
+                          <Text style={[styles.tableCell, { color: colors.textMuted, fontSize: 12 }]}>{formatStudyTime(s.learningPathTime || 0)}</Text>
+                        </View>
+                      </>
+                    )}
+                    <View style={{ flex: 1, alignItems: 'flex-end', justifyContent: 'center' }}>
                       <View style={[styles.pctPill, { backgroundColor: tile.color + '18', borderColor: tile.color + '40' }]}>
                         <Text style={[styles.pctPillText, { color: tile.color }]}>{s.progressPct || 0}%</Text>
                       </View>
@@ -579,8 +698,8 @@ export default function TeacherDashboardScreen({ navigation }: any) {
             </View>
             <View style={styles.tableHeader}>
               <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Last Seen</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Topics</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>Last Seen</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>Topics</Text>
               <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Progress</Text>
             </View>
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
@@ -598,12 +717,12 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                         <Text style={styles.tableStudentGrade}>{s.grade}</Text>
                       </View>
                     </View>
-                    <View style={[styles.tableCell, { flex: 1 }]}>
-                      <Text style={[styles.tableChip, { color: urgency, borderColor: urgency + '40', backgroundColor: urgency + '10' }]}>
+                    <View style={[styles.tableCell, { flex: 1, alignItems: 'center' }]}>
+                      <Text style={[styles.tableChip, { alignSelf: 'center', color: urgency, borderColor: urgency + '40', backgroundColor: urgency + '10' }]}>
                         {days === 999 ? 'Never' : `${days}d ago`}
                       </Text>
                     </View>
-                    <Text style={[styles.tableCell, { flex: 1, color: colors.textMuted, fontSize: 12 }]}>{(s.completedTopics || []).length} done</Text>
+                    <Text style={[styles.tableCell, { flex: 1, textAlign: 'center', color: colors.textMuted, fontSize: 12 }]}>{(s.completedTopics || []).length} done</Text>
                     <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
                       <View style={[styles.pctPill, { backgroundColor: urgency + '18', borderColor: urgency + '40' }]}>
                         <Text style={[styles.pctPillText, { color: urgency }]}>{s.progressPct || 0}%</Text>
@@ -617,61 +736,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
         );
       }
 
-      case 3: { // Streak Risk
-        const atRisk = students.filter(s => (s.currentStreak || 0) === 1);
-        return (
-          <>
-            <View style={styles.modalHeader}>
-              <View style={[styles.tileIconWrap, { backgroundColor: tile.color + '25' }]}>
-                <Feather name={tile.icon} size={16} color={tile.color} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.modalStat, { color: tile.color }]}>{atRisk.length} Students</Text>
-                <Text style={styles.modalHeading}>Streaks That Reset Tonight</Text>
-              </View>
-              <TouchableOpacity onPress={() => setInsightModal(null)} style={styles.modalClose}>
-                <Feather name="x" size={20} color={colors.textDim} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Streak</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Study Time</Text>
-              <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Progress</Text>
-            </View>
-            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
-              {atRisk.map((s, i) => (
-                <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
-                  <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
-                    <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
-                      <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name)}</Text>
-                    </View>
-                    <View>
-                      <Text style={styles.tableStudentName}>{s.name.split(' ')[0]}</Text>
-                      <Text style={styles.tableStudentGrade}>{s.grade}</Text>
-                    </View>
-                  </View>
-                  <View style={[styles.tableCell, { flex: 1 }]}>
-                    <Text style={[styles.tableChip, { color: tile.color, borderColor: tile.color + '40', backgroundColor: tile.color + '10' }]}>
-                      1-day streak
-                    </Text>
-                  </View>
-                  <Text style={[styles.tableCell, { flex: 1, color: colors.textMuted, fontSize: 12 }]}>{formatStudyTime(s.studyTime || 0)}</Text>
-                  <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
-                    <View style={[styles.pctPill, { backgroundColor: tile.color + '18', borderColor: tile.color + '40' }]}>
-                      <Text style={[styles.pctPillText, { color: tile.color }]}>{s.progressPct || 0}%</Text>
-                    </View>
-                  </View>
-                </View>
-              ))}
-            </ScrollView>
-          </>
-        );
-      }
-
-      case 4: { // Study Time — per-student breakdown
-        const ranked = [...students].sort((a, b) => (b.studyTime || 0) - (a.studyTime || 0));
-        const maxMins = Math.max(...ranked.map(s => s.studyTime || 0), 1);
+      case 3: { // Study Time — per-student breakdown (Learning Path only)
+        const ranked = [...students].sort((a, b) => (b.learningPathTime || 0) - (a.learningPathTime || 0));
+        const maxMins = Math.max(...ranked.map(s => s.learningPathTime || 0), 1);
         return (
           <>
             <View style={styles.modalHeader}>
@@ -701,9 +768,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                     <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
                   </View>
                   <View style={[styles.tableCell, { flex: 2, gap: 3 }]}>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMain }}>{formatStudyTime(s.studyTime || 0)}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMain }}>{formatStudyTime(s.learningPathTime || 0)}</Text>
                     <View style={[styles.progressTrack, { backgroundColor: colors.borderColor }]}>
-                      <View style={[styles.progressFill, { width: `${Math.round(((s.studyTime || 0) / maxMins) * 100)}%` as any, backgroundColor: tile.color }]} />
+                      <View style={[styles.progressFill, { width: `${Math.round(((s.learningPathTime || 0) / maxMins) * 100)}%` as any, backgroundColor: tile.color }]} />
                     </View>
                   </View>
                   <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
@@ -719,8 +786,12 @@ export default function TeacherDashboardScreen({ navigation }: any) {
       }
 
       // ── Assignment Insight Modals (indices 5-7) ─────────
-      case 5: { // Pending — students with no submissions
+      case 4: { // Pending — students with no submissions
         const noSubs = (assignStats as any[]).filter((s: any) => s.submitted === 0);
+        // One Assigned/Submitted pair per subject this teacher teaches (Mathematics,
+        // English, ...), plus a Total column — same clear-breakdown approach as the
+        // Learning Path Leaderboard, so nothing is a single ambiguous combined number.
+        const pendingSubjectCols = [...new Set(noSubs.flatMap((s: any) => s.scopedSubjects || []))] as string[];
         return (
           <>
             <View style={styles.modalHeader}>
@@ -736,8 +807,11 @@ export default function TeacherDashboardScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
-              <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Submitted</Text>
+              <Text style={[styles.tableCol, { flex: 1.6 }]}>Student</Text>
+              {pendingSubjectCols.map(subj => (
+                <Text key={subj} style={[styles.tableCol, { flex: 1.3, textAlign: 'center' }]}>{subj}</Text>
+              ))}
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>Total</Text>
             </View>
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
               {noSubs.length === 0 ? (
@@ -747,13 +821,32 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                 </View>
               ) : noSubs.map((s: any, i: number) => (
                 <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
-                  <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                  <View style={[styles.tableCell, { flex: 1.6, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
                     <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
                       <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name || '?')}</Text>
                     </View>
                     <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
                   </View>
-                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'right', color: '#B8797E', fontSize: 12, fontWeight: '700' }]}>0</Text>
+                  {pendingSubjectCols.map(subj => {
+                    const bySubj = (s.bySubject || {})[subj] || { assigned: 0, submitted: 0 };
+                    return (
+                      <View key={subj} style={[styles.tableCell, { flex: 1.3, alignItems: 'center' }]}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMain }}>{bySubj.submitted}/{bySubj.assigned}</Text>
+                      </View>
+                    );
+                  })}
+                  {(() => {
+                    // Total must equal the sum of the subject columns shown — not the raw
+                    // assigned/submitted count, which can include legacy assignments from
+                    // before subject-tagging existed and would otherwise not add up visibly.
+                    const totalAssigned = pendingSubjectCols.reduce((sum, subj) => sum + ((s.bySubject || {})[subj]?.assigned || 0), 0);
+                    const totalSubmitted = pendingSubjectCols.reduce((sum, subj) => sum + ((s.bySubject || {})[subj]?.submitted || 0), 0);
+                    return (
+                      <View style={[styles.tableCell, { flex: 1, alignItems: 'center' }]}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#B8797E' }}>{totalSubmitted}/{totalAssigned}</Text>
+                      </View>
+                    );
+                  })()}
                 </View>
               ))}
             </ScrollView>
@@ -761,7 +854,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
         );
       }
 
-      case 6: { // Avg Score — all students ranked by assignment avg score
+      case 5: { // Avg Score — all students ranked by assignment avg score
         const ranked = [...(assignStats as any[])].filter((s: any) => s.avgScore != null).sort((a: any, b: any) => b.avgScore - a.avgScore);
         return (
           <>
@@ -778,9 +871,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableCol, { width: 32 }]}>#</Text>
+              <Text style={[styles.tableCol, { width: 32, textAlign: 'center' }]}>#</Text>
               <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Submitted</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>Submitted</Text>
               <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Avg Score</Text>
             </View>
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
@@ -793,14 +886,14 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                 const scoreColor = s.avgScore >= 70 ? '#5A8A70' : s.avgScore >= 40 ? '#8A8358' : '#B8797E';
                 return (
                   <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
-                    <Text style={[styles.tableCell, { width: 32, fontWeight: '800', color: i < 3 ? tile.color : colors.textDim, fontSize: 14 }]}>{i + 1}</Text>
+                    <Text style={[styles.tableCell, { width: 32, textAlign: 'center', fontWeight: '800', color: i < 3 ? tile.color : colors.textDim, fontSize: 14 }]}>{i + 1}</Text>
                     <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
                       <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
                         <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name || '?')}</Text>
                       </View>
                       <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
                     </View>
-                    <Text style={[styles.tableCell, { flex: 1, color: colors.textMuted, fontSize: 12 }]}>{s.submitted}</Text>
+                    <Text style={[styles.tableCell, { flex: 1, textAlign: 'center', color: colors.textMuted, fontSize: 12 }]}>{s.submitted}</Text>
                     <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
                       <View style={[styles.pctPill, { backgroundColor: scoreColor + '18', borderColor: scoreColor + '40' }]}>
                         <Text style={[styles.pctPillText, { color: scoreColor }]}>{s.avgScore}%</Text>
@@ -814,8 +907,10 @@ export default function TeacherDashboardScreen({ navigation }: any) {
         );
       }
 
-      case 7: { // Submitted — all students with submission counts
+      case 6: { // Submitted — all students with submission counts, broken down per subject
         const ranked = [...(assignStats as any[])].sort((a: any, b: any) => b.submitted - a.submitted);
+        const submittedSubjectCols = [...new Set(ranked.flatMap((s: any) => s.scopedSubjects || []))] as string[];
+        const timeById: Record<string, number> = Object.fromEntries(students.map((st: any) => [st.id, st.assignmentTime || 0]));
         return (
           <>
             <View style={styles.modalHeader}>
@@ -831,20 +926,50 @@ export default function TeacherDashboardScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Submitted</Text>
+              <Text style={[styles.tableCol, { flex: 1.4 }]}>Student</Text>
+              {submittedSubjectCols.map(subj => (
+                <Text key={subj} style={[styles.tableCol, { flex: 1.1, textAlign: 'center' }]}>{subj}</Text>
+              ))}
+              <Text style={[styles.tableCol, { flex: 0.9, textAlign: 'center' }]}>Total</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>Time Spent</Text>
               <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Avg Score</Text>
             </View>
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
               {ranked.map((s: any, i: number) => (
                 <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
-                  <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                  <View style={[styles.tableCell, { flex: 1.4, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
                     <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
                       <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name || '?')}</Text>
                     </View>
                     <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
                   </View>
-                  <Text style={[styles.tableCell, { flex: 1, color: s.submitted > 0 ? '#5A8A70' : '#B8797E', fontSize: 12, fontWeight: '700' }]}>{s.submitted}</Text>
+                  {submittedSubjectCols.map(subj => {
+                    const bySubj = (s.bySubject || {})[subj] || { assigned: 0, submitted: 0 };
+                    return (
+                      <View key={subj} style={[styles.tableCell, { flex: 1.1, alignItems: 'center' }]}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: bySubj.submitted > 0 ? '#5A8A70' : colors.textMain }}>
+                          {bySubj.submitted}/{bySubj.assigned}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                  {(() => {
+                    // Total = sum of the subject columns shown, so it can never contradict
+                    // what's visible (raw s.assigned/s.submitted can include untagged legacy
+                    // assignments that don't belong to any displayed subject column).
+                    const totalAssigned = submittedSubjectCols.reduce((sum, subj) => sum + ((s.bySubject || {})[subj]?.assigned || 0), 0);
+                    const totalSubmitted = submittedSubjectCols.reduce((sum, subj) => sum + ((s.bySubject || {})[subj]?.submitted || 0), 0);
+                    return (
+                      <View style={[styles.tableCell, { flex: 0.9, alignItems: 'center' }]}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: totalSubmitted > 0 ? '#5A8A70' : '#B8797E' }}>
+                          {totalSubmitted}/{totalAssigned}
+                        </Text>
+                      </View>
+                    );
+                  })()}
+                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'center', color: colors.textMuted, fontSize: 12 }]}>
+                    {formatStudyTime(timeById[s.id] || 0)}
+                  </Text>
                   <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
                     {s.avgScore != null ? (
                       <View style={[styles.pctPill, { backgroundColor: tile.color + '18', borderColor: tile.color + '40' }]}>
@@ -862,8 +987,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
       }
 
       // ── Challenge Insight Modals (indices 8-10) ─────────
-      case 8: { // Attempted — students with challenges
+      case 7: { // Attempted — students with challenges
         const withCh = (challStats as any[]).filter((s: any) => s.assigned > 0);
+        const challTimeById: Record<string, number> = Object.fromEntries(students.map((st: any) => [st.id, st.challengeTime || 0]));
         return (
           <>
             <View style={styles.modalHeader}>
@@ -880,8 +1006,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
             </View>
             <View style={styles.tableHeader}>
               <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Assigned</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Done</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>Assigned</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>Done</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>Time Spent</Text>
               <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Avg Score</Text>
             </View>
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
@@ -898,8 +1025,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                     </View>
                     <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
                   </View>
-                  <Text style={[styles.tableCell, { flex: 1, color: colors.textMuted, fontSize: 12 }]}>{s.assigned}</Text>
-                  <Text style={[styles.tableCell, { flex: 1, color: s.completed > 0 ? '#5A8A70' : '#B8797E', fontSize: 12, fontWeight: '700' }]}>{s.completed}</Text>
+                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'center', color: colors.textMuted, fontSize: 12 }]}>{s.assigned}</Text>
+                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'center', color: s.completed > 0 ? '#5A8A70' : '#B8797E', fontSize: 12, fontWeight: '700' }]}>{s.completed}</Text>
+                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'center', color: colors.textMuted, fontSize: 12 }]}>{formatStudyTime(challTimeById[s.id] || 0)}</Text>
                   <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
                     {s.avgScore != null ? (
                       <View style={[styles.pctPill, { backgroundColor: tile.color + '18', borderColor: tile.color + '40' }]}>
@@ -916,8 +1044,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
         );
       }
 
-      case 9: { // Completed — students who finished challenges
+      case 8: { // Completed — students who finished challenges
         const done = (challStats as any[]).filter((s: any) => s.completed > 0).sort((a: any, b: any) => b.completed - a.completed);
+        const challTimeById: Record<string, number> = Object.fromEntries(students.map((st: any) => [st.id, st.challengeTime || 0]));
         return (
           <>
             <View style={styles.modalHeader}>
@@ -934,7 +1063,8 @@ export default function TeacherDashboardScreen({ navigation }: any) {
             </View>
             <View style={styles.tableHeader}>
               <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Completed</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>Completed</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>Time Spent</Text>
               <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Avg Score</Text>
             </View>
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
@@ -951,7 +1081,10 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                     </View>
                     <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
                   </View>
-                  <Text style={[styles.tableCell, { flex: 1, color: '#5A8A70', fontSize: 12, fontWeight: '700' }]}>{s.completed}</Text>
+                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'center', color: '#5A8A70', fontSize: 12, fontWeight: '700' }]}>{s.completed}</Text>
+                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'center', color: colors.textMuted, fontSize: 12 }]}>
+                    {formatStudyTime(challTimeById[s.id] || 0)}
+                  </Text>
                   <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
                     {s.avgScore != null ? (
                       <View style={[styles.pctPill, { backgroundColor: tile.color + '18', borderColor: tile.color + '40' }]}>
@@ -968,7 +1101,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
         );
       }
 
-      case 10: { // Top Scorer — challenge leaderboard
+      case 9: { // Top Scorer — challenge leaderboard
         const ranked = [...(challStats as any[])].filter((s: any) => s.avgScore != null).sort((a: any, b: any) => b.avgScore - a.avgScore);
         return (
           <>
@@ -985,9 +1118,9 @@ export default function TeacherDashboardScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableCol, { width: 32 }]}>#</Text>
+              <Text style={[styles.tableCol, { width: 32, textAlign: 'center' }]}>#</Text>
               <Text style={[styles.tableCol, { flex: 2 }]}>Student</Text>
-              <Text style={[styles.tableCol, { flex: 1 }]}>Done</Text>
+              <Text style={[styles.tableCol, { flex: 1, textAlign: 'center' }]}>Done</Text>
               <Text style={[styles.tableCol, { flex: 1, textAlign: 'right' }]}>Avg Score</Text>
             </View>
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
@@ -1000,14 +1133,14 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                 const medal = i === 0 ? '#C5BD96' : i === 1 ? '#7AADA8' : i === 2 ? '#C4836A' : colors.textDim;
                 return (
                   <View key={s.id || i} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
-                    <Text style={[styles.tableCell, { width: 32, fontWeight: '800', color: medal, fontSize: 14 }]}>{i + 1}</Text>
+                    <Text style={[styles.tableCell, { width: 32, fontWeight: '800', color: medal, fontSize: 14, textAlign: 'center' }]}>{i + 1}</Text>
                     <View style={[styles.tableCell, { flex: 2, flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
                       <View style={[styles.modalAvatar, { backgroundColor: tile.color + '20', width: 30, height: 30, borderRadius: 15 }]}>
                         <Text style={[styles.modalAvatarText, { color: tile.color, fontSize: 10 }]}>{initials(s.name || '?')}</Text>
                       </View>
                       <Text style={styles.tableStudentName}>{(s.name || 'Unknown').split(' ')[0]}</Text>
                     </View>
-                    <Text style={[styles.tableCell, { flex: 1, color: colors.textMuted, fontSize: 12 }]}>{s.completed || 0}</Text>
+                    <Text style={[styles.tableCell, { flex: 1, textAlign: 'center', color: colors.textMuted, fontSize: 12 }]}>{s.completed || 0}</Text>
                     <View style={[styles.tableCell, { flex: 1, alignItems: 'flex-end' }]}>
                       <View style={[styles.pctPill, { backgroundColor: tile.color + '18', borderColor: tile.color + '40' }]}>
                         <Text style={[styles.pctPillText, { color: tile.color }]}>{s.avgScore}%</Text>
@@ -1067,10 +1200,31 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                 <Text style={styles.aiSub}>{aiActionBody}</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.aiBtn} activeOpacity={0.85} onPress={() => navigation.navigate('TeacherSchedule' as any)}>
-              <Feather name="calendar" size={14} color={gold} />
-              <Text style={styles.aiBtnText}>Schedule Session</Text>
-            </TouchableOpacity>
+            <View style={styles.aiBtnRow}>
+              {allNeedsAttention.length > 0 ? (
+                <>
+                  <TouchableOpacity style={styles.aiBtn} activeOpacity={0.85} onPress={() => navigation.navigate('TeacherSchedule' as any)}>
+                    <Feather name="calendar" size={14} color={gold} />
+                    <Text style={styles.aiBtnText}>Schedule Study Hour</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.aiBtn, { backgroundColor: 'rgba(255,255,255,0.18)', borderWidth: 1, borderColor: '#fff' }]} 
+                    activeOpacity={0.85} 
+                    onPress={() => navigation.navigate('TeacherAssignments' as any)}
+                  >
+                    <Feather name="plus-circle" size={14} color="white" />
+                    <Text style={[styles.aiBtnText, { color: 'white' }]}>Assign Practice Task</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <TouchableOpacity style={styles.aiBtn} activeOpacity={0.85} onPress={() => navigation.navigate('TeacherAssignments' as any)}>
+                  <Feather name="plus-circle" size={14} color={gold} />
+                  <Text style={styles.aiBtnText}>
+                    {avgProgress > 0 ? 'Assign Task / Quiz' : 'Create First Assignment'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {/* ── ROW 1: Student Overview + Class Progress ─── */}
@@ -1097,6 +1251,44 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                   <Text style={styles.overviewKey}>Need Attention</Text>
                 </TouchableOpacity>
               </View>
+
+              <View style={[styles.overviewDivider, { marginTop: spacing.md, marginBottom: spacing.md }]} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm }}>
+                <Text style={styles.cardTitle}>Recent Activity</Text>
+                <Feather name="clock" size={12} color={colors.textDim} />
+              </View>
+              {recentStudents.length === 0 ? (
+                <Text style={[styles.overviewLabel, { textAlign: 'center', marginVertical: spacing.sm }]}>
+                  No recent activity
+                </Text>
+              ) : (
+                <View style={{ gap: spacing.xs }}>
+                  {recentStudents.map((item, i) => (
+                    <TouchableOpacity key={item.id} activeOpacity={0.7}
+                      style={[styles.actRowCompact, i < recentStudents.length - 1 && styles.actBorderCompact]}
+                      onPress={(e) => { e.stopPropagation(); navigation.navigate('TeacherProgress' as any, { studentId: item.studentId }); }}>
+                      <View style={[styles.actAvatarCompact, { backgroundColor: gold + '15' }]}>
+                        <Feather name={item.icon} size={13} color={gold} />
+                      </View>
+                      <View style={styles.actInfoCompact}>
+                        <Text style={styles.actNameCompact} numberOfLines={1}>{item.name}</Text>
+                        <Text style={styles.actActionCompact} numberOfLines={1}>
+                          {item.title ? (
+                            <>
+                              {item.prefix}
+                              <Text style={{ fontWeight: '700', color: colors.textMain }}>{item.title}</Text>
+                              {item.suffix}
+                            </>
+                          ) : item.action}
+                        </Text>
+                      </View>
+                      <View style={styles.actRightCompact}>
+                        <Text style={styles.actTimeCompact}>{item.time}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </TouchableOpacity>
 
             {/* Class Progress — Learning Path + Assignments + Challenges */}
@@ -1115,7 +1307,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
                   </View>
                 </View>
                 <View style={styles.donutStats}>
-                  <Text style={styles.donutStatVal}>{formatStudyTime(medianStudyMins)}</Text>
+                  <Text style={styles.donutStatVal}>{formatStudyTime(medianCombinedMins)}</Text>
                   <Text style={styles.donutStatLabel}>Typical Study Time</Text>
                 </View>
               </View>
@@ -1123,15 +1315,15 @@ export default function TeacherDashboardScreen({ navigation }: any) {
               {totalStudents > 1 && (
                 <View style={{ flexDirection: 'row', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.borderColor }}>
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 13, fontWeight: '800', color: colors.accentRed }}>{formatStudyTime(minStudyMins)}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: colors.accentRed }}>{formatStudyTime(minCombinedMins)}</Text>
                     <Text style={{ fontSize: 9, color: colors.textDim, fontWeight: '600', marginTop: 1 }}>Lowest</Text>
                   </View>
                   <View style={{ flex: 1, alignItems: 'center', borderLeftWidth: 1, borderRightWidth: 1, borderColor: colors.borderColor }}>
-                    <Text style={{ fontSize: 13, fontWeight: '800', color: gold }}>{formatStudyTime(medianStudyMins)}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: gold }}>{formatStudyTime(medianCombinedMins)}</Text>
                     <Text style={{ fontSize: 9, color: colors.textDim, fontWeight: '600', marginTop: 1 }}>Typical</Text>
                   </View>
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 13, fontWeight: '800', color: colors.accentGreen }}>{formatStudyTime(maxStudyMins)}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: colors.accentGreen }}>{formatStudyTime(maxCombinedMins)}</Text>
                     <Text style={{ fontSize: 9, color: colors.textDim, fontWeight: '600', marginTop: 1 }}>Highest</Text>
                   </View>
                 </View>
@@ -1269,36 +1461,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
           </View>
 
 
-          {/* ── RECENT ACTIVITY ──────────────────────────── */}
-          <Text style={[styles.sectionTitle, { marginBottom: spacing.md }]}>Recent Activity</Text>
-          {recentStudents.length === 0 ? (
-            <View style={[styles.activityCard, { padding: spacing.xl, alignItems: 'center' }]}>
-              <Feather name="clock" size={24} color={colors.textDim} />
-              <Text style={[styles.actAction, { marginTop: 8 }]}>No activity yet — students haven't started yet</Text>
-            </View>
-          ) : (
-            <View style={styles.activityCard}>
-              {recentStudents.map((item, i) => (
-                <View key={i} style={[styles.actRow, i < recentStudents.length - 1 && styles.actBorder]}>
-                  <View style={[styles.actAvatar, { backgroundColor: item.scoreGood ? colors.accentGreen + '20' : colors.accentRed + '20' }]}>
-                    <Text style={[styles.actInitials, { color: item.scoreGood ? colors.accentGreen : colors.accentRed }]}>{item.initials}</Text>
-                  </View>
-                  <View style={styles.actInfo}>
-                    <Text style={styles.actName}>{item.name}</Text>
-                    <Text style={styles.actAction}>{item.action}</Text>
-                  </View>
-                  <View style={styles.actRight}>
-                    {item.score && (
-                      <View style={[styles.scorePill, { backgroundColor: colors.accentGreen + '18' }]}>
-                        <Text style={[styles.scoreText, { color: colors.accentGreen }]}>{item.score}</Text>
-                      </View>
-                    )}
-                    <Text style={styles.actTime}>{item.time}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
+          {/* Recent Activity has been moved to the Student Overview card */}
 
         </ScrollView>
       </View>
@@ -1306,7 +1469,7 @@ export default function TeacherDashboardScreen({ navigation }: any) {
       {/* ── Insight Detail Modal ───────────────────────── */}
       <Modal visible={!!insightModal} transparent animationType="fade" onRequestClose={() => setInsightModal(null)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
+          <View style={[styles.modalSheet, [1, 4, 6].includes(insightModal?.tileIndex as number) && { maxWidth: 720 }]}>
             {insightModal && renderInsightModalContent(insightModal.tileIndex)}
           </View>
         </View>
@@ -1340,6 +1503,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   aiTag: { fontSize: 10, fontWeight: '800', color: 'rgba(255,255,255,0.8)', letterSpacing: 0.9, marginBottom: 4 },
   aiTitle: { fontSize: 16, fontWeight: '700', color: '#fff', marginBottom: 5, letterSpacing: -0.2 },
   aiSub: { fontSize: 13, color: 'rgba(255,255,255,0.78)', lineHeight: 19 },
+  aiBtnRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
   aiBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: '#fff', alignSelf: 'flex-start',
@@ -1385,6 +1549,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   progressPct: { fontSize: 11, fontWeight: '800' },
   progressTrack: { height: 5, borderRadius: 3, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 3 },
+  progressTimeLabel: { fontSize: 9, fontWeight: '600', color: c.textDim },
 
   insightRow: { flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.md, alignItems: 'flex-start' },
   insightBorder: { borderBottomWidth: 1, borderBottomColor: c.borderColor },
@@ -1500,6 +1665,18 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   scoreText: { fontSize: 11, fontWeight: '700' },
   actTime: { fontSize: 11, color: c.textDim },
 
+  actRowCompact: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 6 },
+  actBorderCompact: { borderBottomWidth: 1, borderBottomColor: c.borderColor + '40' },
+  actAvatarCompact: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  actInitialsCompact: { fontSize: 10, fontWeight: '800' },
+  actInfoCompact: { flex: 1 },
+  actNameCompact: { fontSize: 12, fontWeight: '600', color: c.textMain },
+  actActionCompact: { fontSize: 10, color: c.textMuted, marginTop: 1 },
+  actRightCompact: { alignItems: 'flex-end', gap: 2 },
+  scorePillCompact: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 },
+  scoreTextCompact: { fontSize: 9, fontWeight: '700' },
+  actTimeCompact: { fontSize: 9, color: c.textDim },
+
   // Modal — centered, Enchanting Forest themed
   modalOverlay: {
     flex: 1, justifyContent: 'center', alignItems: 'center',
@@ -1508,12 +1685,12 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   modalSheet: {
     backgroundColor: c.cardDark, borderRadius: radius.lg,
     borderWidth: 1, borderColor: c.borderColor,
-    maxHeight: '70%', width: '100%', maxWidth: 520,
+    maxHeight: '70%', width: '100%', maxWidth: 440,
     overflow: 'hidden',
   },
   modalHeader: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
     backgroundColor: c.accentYellow + '18',
     borderBottomWidth: 1, borderBottomColor: c.borderColor,
   },
@@ -1523,7 +1700,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     padding: 4, borderRadius: 8,
     backgroundColor: c.borderColor + '40',
   },
-  modalScroll: { paddingHorizontal: spacing.md },
+  modalScroll: { paddingHorizontal: 0 },
   modalEmpty: { alignItems: 'center', gap: 8, paddingVertical: 28 },
   modalEmptyText: { fontSize: 12, color: c.textDim, textAlign: 'center' },
   modalAvatar: {
@@ -1543,7 +1720,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   tableCol: { fontSize: 9, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.4 },
   tableRow: {
     flexDirection: 'row', alignItems: 'center',
-    paddingVertical: spacing.sm, paddingHorizontal: spacing.md,
+    paddingVertical: 6, paddingHorizontal: spacing.md,
   },
   tableRowAlt: { backgroundColor: c.accentYellow + '08' },
   tableCell: {},

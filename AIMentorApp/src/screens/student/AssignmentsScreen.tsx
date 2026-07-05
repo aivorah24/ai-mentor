@@ -2822,7 +2822,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
     assignmentSessionStartRef.current = Date.now();
     return () => {
       const elapsedMinutes = Math.floor((Date.now() - assignmentSessionStartRef.current) / 60000);
-      if (elapsedMinutes > 0) recordStudyTime(elapsedMinutes);
+      if (elapsedMinutes > 0) recordStudyTime(elapsedMinutes, 'assignment');
       assignmentSessionStartRef.current = 0;
     };
   }, [activeAssignment]);

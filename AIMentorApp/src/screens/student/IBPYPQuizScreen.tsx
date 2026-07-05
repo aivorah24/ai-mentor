@@ -21,6 +21,7 @@ import TrophyIcon from '../../components/common/TrophyIcon';
 import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
+import { computeCappedQuizMinutes } from '../../services/studyTime';
 
 // Play a sound effect (web only)
 function playSound(name: 'gold' | 'silver' | 'bronze') {
@@ -53,7 +54,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
   const { topic, grade = 'Grade 3', subject = 'Mathematics', curriculum = 'IB PYP' } = route?.params ?? {};
   const { colors, isDark } = useTheme();
   const { user }           = useAuth();
-  const { completeLesson, addXP } = useStudentData();
+  const { completeLesson, addXP, recordStudyTime } = useStudentData();
   const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   const accent = colors.accentYellow;    // gold — landing theme
@@ -186,8 +187,17 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
       }).catch(() => {});
     }
 
-    if (pct >= 60) completeLesson(topic);
+    if (pct >= 60) completeLesson(topic, subject, grade, curriculum);
     addXP(pct >= 80 ? 100 : pct >= 60 ? 60 : 30);
+
+    // Quiz time is real learning time too — a student who skips straight to the
+    // quiz (no lesson-reading session beforehand) was getting 0 study time
+    // recorded even though they spent real minutes on it. Use the SUM of
+    // per-question times (each capped), not raw quiz-start-to-now wall-clock
+    // time — a question left open/backgrounded for hours must not leak that
+    // idle gap into recorded study time.
+    const quizMinutes = computeCappedQuizMinutes(perQuestionResultsRef.current);
+    if (quizMinutes > 0) recordStudyTime(quizMinutes, 'learningPath', subject);
 
     // Sound effect based on score tier
     playSound(pct >= 80 ? 'gold' : pct >= 60 ? 'silver' : 'bronze');

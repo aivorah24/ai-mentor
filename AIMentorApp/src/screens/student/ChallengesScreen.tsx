@@ -176,7 +176,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
     const elapsedWholeMinutes = Math.floor((Date.now() - challengeSessionStartRef.current) / 60000);
     const delta = elapsedWholeMinutes - trackedChallengeMinutesRef.current;
     if (delta > 0) {
-      recordStudyTime(delta);
+      recordStudyTime(delta, 'challenge');
       trackedChallengeMinutesRef.current += delta;
     }
   }
