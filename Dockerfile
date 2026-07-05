@@ -7,6 +7,15 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV NODE_ENV=production
 ENV PORT=8080
 
+# ── Python 3 + the ML layout/crop microservice's deps ──
+# Without this, server/python/layout_service.py has nowhere to run in production,
+# so every image-crop/table-detect call silently fails over to the crude
+# "whole page" fallback (worksheet images render uncropped/misplaced in prod).
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip build-essential \
+    && rm -rf /var/lib/apt/lists/*
+COPY server/python/requirements.txt ./server/python/requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages -r server/python/requirements.txt
+
 # ── Install Node.js server dependencies ──
 COPY server/package*.json ./server/
 RUN cd server && npm ci --omit=dev
@@ -33,5 +42,9 @@ RUN chmod +x /app/start.sh
 
 EXPOSE 8080
 
-WORKDIR /app/server
-CMD ["node", "index.js"]
+# start.sh launches the Python layout service in the background, then Node in
+# the foreground (Cloud Run health checks hit Node's port). Node's default
+# LAYOUT_SERVICE_URL of http://localhost:5050 reaches it since both processes
+# share this one container.
+WORKDIR /app
+CMD ["/app/start.sh"]

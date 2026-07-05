@@ -11,4 +11,5 @@ PY_PID=$!
 sleep 1
 
 echo "[start] Launching Node.js server on port ${PORT:-8080}..."
+cd /app/server
 exec node index.js

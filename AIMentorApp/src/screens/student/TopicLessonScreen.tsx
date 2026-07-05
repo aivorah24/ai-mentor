@@ -1348,6 +1348,9 @@ export default function TopicLessonScreen({ navigation, route }: any) {
   const { recordStudyTime } = useStudentData();
   const studySessionStartRef = useRef<number>(Date.now());
   const trackedStudyMinutesRef = useRef(0);
+  const lastActivityRef = useRef<number>(Date.now());
+  const isFocusedRef = useRef(true);
+  function markActive() { lastActivityRef.current = Date.now(); }
 
   const [lesson, setLesson]         = useState<Lesson | null>(null);
   const [loading, setLoading]       = useState(true);
@@ -1451,6 +1454,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
     if (!lesson) return;
     const scene = lesson.scenes[cardIdx];
     if (!scene) return;
+    markActive();
     setPaused(false);
     setWordIndex(-1);
     stopAudio();
@@ -1475,8 +1479,9 @@ export default function TopicLessonScreen({ navigation, route }: any) {
           // pre-warm: highlight word 0 immediately
           setWordIndex(0);
         };
-        audio.onplay  = () => { setSpeaking(true); startHighlightLoop(audio, voiceWords, timings); };
+        audio.onplay  = () => { setSpeaking(true); markActive(); startHighlightLoop(audio, voiceWords, timings); };
         audio.onpause = () => { cancelHighlightLoop(); };
+        audio.ontimeupdate = () => { markActive(); };
         audio.onended = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
         audio.onerror = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
         audio.play().catch(() => { setSpeaking(false); });
@@ -1507,17 +1512,36 @@ export default function TopicLessonScreen({ navigation, route }: any) {
 
   // Stop audio when navigating away (blur handles stack navigation without unmount)
   useEffect(() => {
-    const unsub = navigation.addListener('blur', () => { stopAudio(); stopSpeech(); setSpeaking(false); setPaused(false); });
-    return unsub;
+    const unsubBlur = navigation.addListener('blur', () => {
+      stopAudio(); stopSpeech(); setSpeaking(false); setPaused(false);
+      isFocusedRef.current = false;
+    });
+    const unsubFocus = navigation.addListener('focus', () => {
+      isFocusedRef.current = true;
+      markActive();
+    });
+    return () => { unsubBlur(); unsubFocus(); };
   }, [navigation]);
 
-  // Count whole minutes spent in this reading lesson and sync to student stats.
+  // Count whole minutes spent in this reading lesson and sync to student stats —
+  // only while the screen is focused AND the learner has interacted (scrolled,
+  // turned a page, or is mid-narration) in the last IDLE_MS. A tab left open in
+  // the background, or a static screen nobody is touching, earns nothing.
   useEffect(() => {
+    const IDLE_MS = 45 * 1000;
     function flushWholeMinutes() {
+      const idleFor = Date.now() - lastActivityRef.current;
+      if (!isFocusedRef.current || idleFor > IDLE_MS) {
+        // Not actively engaged — push the session start forward so the idle
+        // gap is never retroactively credited once activity resumes.
+        studySessionStartRef.current = Date.now();
+        trackedStudyMinutesRef.current = 0;
+        return;
+      }
       const elapsedWholeMinutes = Math.floor((Date.now() - studySessionStartRef.current) / 60000);
       const delta = elapsedWholeMinutes - trackedStudyMinutesRef.current;
       if (delta > 0) {
-        recordStudyTime(delta);
+        recordStudyTime(delta, 'learningPath', subject);
         trackedStudyMinutesRef.current += delta;
       }
     }
@@ -1665,6 +1689,9 @@ export default function TopicLessonScreen({ navigation, route }: any) {
           style={{ flex: 1 }}
           contentContainerStyle={s.main}
           showsVerticalScrollIndicator={false}
+          onScroll={markActive}
+          onTouchStart={markActive}
+          scrollEventThrottle={4000}
         >
           <View style={[s.columns, isWide ? s.columnsRow : s.columnsCol]}>
 

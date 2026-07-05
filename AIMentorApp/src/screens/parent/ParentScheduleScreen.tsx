@@ -48,7 +48,8 @@ function calcEventHeight(startTime: string, endTime?: string): number {
   const [eh, em] = endTime.split(':').map(Number);
   const durationMins = (eh * 60 + em) - (sh * 60 + sm);
   if (durationMins <= 0) return HOUR_HEIGHT;
-  return Math.max((durationMins / 60) * HOUR_HEIGHT, 28);
+  // Tall enough for a title that wraps to 2 lines plus the time line.
+  return Math.max((durationMins / 60) * HOUR_HEIGHT, 40);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -89,7 +90,7 @@ function buildMonthCalendar(year: number, month: number) {
 function typeColors(type: string): [string, string, string] {
   const map: Record<string, [string, string, string]> = {
     lesson:     ['#9C844A', '#F5EDDA', '#6B5A30'],
-    study:      ['#4A7EA5', '#DAE9F5', '#2D5470'],
+    study:      ['#C9A24E', '#FBF3DA', '#7A5C1E'],  // amber-gold, matches Aivorah theme
     challenge:  ['#6B5BA8', '#E8E4F5', '#3F3270'],
     deadline:   ['#B84A3A', '#F5DDD9', '#7A2A1E'],
     assignment: ['#3A8A6A', '#D9F0E8', '#1E5A40'],
@@ -140,6 +141,9 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
   const [deadlines, setDeadlines] = useState<ScheduleEvent[]>([]);
   const [eventDates, setEventDates] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+
+  // Event detail modal — shows the full title/time/note when tapping an event block
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
   // Add event modal
   const [dragPreview, setDragPreview] = useState<{ dayIso: string; top: number; height: number; startT: string; endT: string } | null>(null);
@@ -457,18 +461,19 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                                     borderLeftWidth: 4,
                                   }]}
                                   activeOpacity={0.82}
-                                  onPress={() => {
-                                    const t = event.type;
-                                    if (t === 'assignment' || t === 'deadline') navigation.navigate('ParentAssignments' as any, { highlightId: event.assignmentId || event.id } as any);
-                                    else if (t === 'challenge') navigation.navigate('ParentChallenges' as any, { highlightId: event.assignmentId || event.id } as any);
-                                    else if (t === 'lesson' || t === 'study') navigation.navigate('ParentLearning' as any);
-                                  }}
+                                  onPress={() => setSelectedEvent({ ...event, accent, fill, textCol })}
+                                  // @ts-ignore — stop the day column's drag-to-create mousedown handler
+                                  // from also firing (it bubbles from this chip otherwise), which was
+                                  // opening the Add Event modal on top of/behind this tap.
+                                  onMouseDown={(e: any) => e.stopPropagation?.()}
                                 >
-                                  <Text style={[styles.eventTitle, { color: textCol }]} numberOfLines={1}>{toTitleCase(event.title)}</Text>
+                                  <Text style={[styles.eventTitle, { color: textCol }]}>{toTitleCase(event.title)}</Text>
                                   <Text style={[styles.eventTime, { color: accent }]}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</Text>
                                   <TouchableOpacity
                                     style={styles.deleteBtn}
                                     onPress={() => removeEvent(event.id, d.iso)}
+                                    // @ts-ignore
+                                    onMouseDown={(e: any) => e.stopPropagation?.()}
                                     hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                                   >
                                     <Feather name="x" size={10} color={colors.textDim} />
@@ -615,6 +620,36 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
               </View>
             </View>
           </View>
+        </Modal>
+
+        {/* ── Event Detail Modal — full title/time/note, tapped from a block ── */}
+        <Modal visible={!!selectedEvent} transparent animationType="fade" onRequestClose={() => setSelectedEvent(null)}>
+          <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setSelectedEvent(null)}>
+            <TouchableOpacity activeOpacity={1} onPress={() => {}} style={[styles.modal, { borderLeftWidth: 4, borderLeftColor: selectedEvent?.accent || colors.accentYellow }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <Text style={[styles.modalTitle, { flex: 1 }]}>{selectedEvent ? toTitleCase(selectedEvent.title) : ''}</Text>
+                <TouchableOpacity onPress={() => setSelectedEvent(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Feather name="x" size={18} color={colors.textDim} />
+                </TouchableOpacity>
+              </View>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: selectedEvent?.accent || colors.accentYellow, marginTop: 4 }}>
+                {selectedEvent?.startTime}{selectedEvent?.endTime ? ` – ${selectedEvent.endTime}` : ''}
+              </Text>
+              {selectedEvent?.note ? (
+                <View style={{ marginTop: 12, backgroundColor: colors.bgDark, borderRadius: radius.md, padding: 12, borderWidth: 1, borderColor: colors.borderColor }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Note from the teacher</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 19 }}>{selectedEvent.note}</Text>
+                </View>
+              ) : (
+                <Text style={{ fontSize: 12, color: colors.textDim, marginTop: 12, fontStyle: 'italic' }}>No note added for this event.</Text>
+              )}
+              <View style={[styles.modalBtns, { justifyContent: 'center' }]}>
+                <TouchableOpacity style={[styles.modalConfirm, { flex: 0, paddingHorizontal: 32 }]} onPress={() => setSelectedEvent(null)}>
+                  <Text style={styles.modalConfirmText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </Modal>
       </View>
     </ScreenLayout>
