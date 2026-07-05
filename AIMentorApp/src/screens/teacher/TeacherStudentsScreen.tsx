@@ -197,6 +197,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   const [bulkResults,      setBulkResults]      = useState<any[] | null>(null);
   const [bulkSummary,      setBulkSummary]      = useState<any | null>(null);
   const [bulkError,        setBulkError]        = useState('');
+  const bulkFileRef = useRef<File | null>(null); // kept so mismatch-confirmation can resubmit the same CSV
   const fileInputRef = useRef<any>(null);
 
   const isDemo = DEMO_EMAILS.has(user?.email?.toLowerCase() || '');
@@ -287,13 +288,21 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
     setAddModal(true);
   }
 
-  async function handleBulkImport(file: File) {
+  // confirmedMismatches: rowKey ("Name|Grade|Curriculum") → true, for rows the
+  // teacher explicitly approved after being warned they're outside the
+  // grades/curricula they teach. Omitted on the first pass, so any such row
+  // comes back as 'needs_confirmation' instead of being silently imported.
+  async function handleBulkImport(file: File, confirmedMismatches: Record<string, boolean> = {}) {
+    bulkFileRef.current = file;
     setBulkImporting(true); setBulkError(''); setBulkResults(null); setBulkSummary(null);
     try {
       const formData = new FormData();
       formData.append('csv', file, file.name);
       formData.append('defaultGrade', bulkGrade);
       formData.append('defaultCurriculum', bulkCurriculum);
+      if (Object.keys(confirmedMismatches).length > 0) {
+        formData.append('confirmedMismatches', JSON.stringify(confirmedMismatches));
+      }
 
       const res = await fetch(
         `${SERVER_URL}/teacher/${encodeURIComponent(user?.email || '')}/students/bulk-import`,
@@ -309,6 +318,18 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
     } finally {
       setBulkImporting(false);
     }
+  }
+
+  // Re-submits the same CSV, approving every currently-flagged mismatch row so
+  // they get imported on this pass (already-created rows are skipped server-side
+  // as duplicates, so nothing gets double-created).
+  function confirmAndImportMismatches() {
+    if (!bulkFileRef.current || !bulkResults) return;
+    const confirmMap: Record<string, boolean> = {};
+    bulkResults.filter(r => r.status === 'needs_confirmation').forEach(r => {
+      confirmMap[`${r.name}|${r.grade}|${r.curriculum}`] = true;
+    });
+    handleBulkImport(bulkFileRef.current, confirmMap);
   }
 
   function downloadTemplate() {
@@ -1021,13 +1042,16 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                   /* Results view */
                   <>
                     {bulkSummary && (
-                      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
+                      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                         {[
                           { label: 'Created', value: bulkSummary.created, color: colors.accentGreen },
                           { label: 'Skipped', value: bulkSummary.skipped, color: colors.accentYellow },
                           { label: 'Errors', value: bulkSummary.errors, color: colors.accentRed },
+                          ...(bulkSummary.needsConfirmation > 0
+                            ? [{ label: 'Needs Review', value: bulkSummary.needsConfirmation, color: '#B8797E' }]
+                            : []),
                         ].map(s => (
-                          <View key={s.label} style={{ flex: 1, backgroundColor: s.color + '15', borderWidth: 1, borderColor: s.color + '30', borderRadius: 8, padding: 10, alignItems: 'center' }}>
+                          <View key={s.label} style={{ flex: 1, minWidth: 70, backgroundColor: s.color + '15', borderWidth: 1, borderColor: s.color + '30', borderRadius: 8, padding: 10, alignItems: 'center' }}>
                             <Text style={{ fontSize: 20, fontWeight: '800', color: s.color }}>{s.value}</Text>
                             <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>{s.label}</Text>
                           </View>
@@ -1035,24 +1059,41 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                       </View>
                     )}
 
+                    {bulkSummary?.needsConfirmation > 0 && (
+                      <View style={{ backgroundColor: '#B8797E15', borderWidth: 1, borderColor: '#B8797E40', borderRadius: 10, padding: 10, gap: 6 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#B8797E' }}>
+                          {bulkSummary.needsConfirmation} student{bulkSummary.needsConfirmation !== 1 ? 's' : ''} are from a grade/curriculum you don't teach
+                        </Text>
+                        <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                          They were NOT imported yet. Review the rows below marked "Needs Review", then confirm if you still want to add them.
+                        </Text>
+                      </View>
+                    )}
+
                     <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
-                      {bulkResults.map((r: any, idx: number) => (
-                        <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.borderColor }}>
-                          <Feather
-                            name={r.status === 'created' ? 'check-circle' : r.status === 'skipped' ? 'skip-forward' : 'x-circle'}
-                            size={14}
-                            color={r.status === 'created' ? colors.accentGreen : r.status === 'skipped' ? colors.accentYellow : colors.accentRed}
-                          />
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain }}>{r.name}</Text>
-                            <Text style={{ fontSize: 11, color: colors.textMuted }} numberOfLines={1}>{r.email}</Text>
-                            {r.error ? <Text style={{ fontSize: 11, color: colors.accentRed }}>{r.error}</Text> : null}
+                      {bulkResults.map((r: any, idx: number) => {
+                        const iconName = r.status === 'created' ? 'check-circle'
+                          : r.status === 'needs_confirmation' ? 'alert-triangle'
+                          : r.status === 'skipped' ? 'skip-forward' : 'x-circle';
+                        const iconColor = r.status === 'created' ? colors.accentGreen
+                          : r.status === 'needs_confirmation' ? '#B8797E'
+                          : r.status === 'skipped' ? colors.accentYellow : colors.accentRed;
+                        return (
+                          <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.borderColor }}>
+                            <Feather name={iconName as any} size={14} color={iconColor} />
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain }}>{r.name}</Text>
+                              <Text style={{ fontSize: 11, color: colors.textMuted }} numberOfLines={1}>
+                                {r.status === 'needs_confirmation' ? `${r.grade} · ${r.curriculum}` : r.email}
+                              </Text>
+                              {r.error ? <Text style={{ fontSize: 11, color: iconColor }}>{r.error}</Text> : null}
+                            </View>
+                            {r.status === 'created' && r.password ? (
+                              <Text style={{ fontSize: 11, color: colors.textDim, fontFamily: 'monospace' }}>{r.password}</Text>
+                            ) : null}
                           </View>
-                          {r.status === 'created' && r.password ? (
-                            <Text style={{ fontSize: 11, color: colors.textDim, fontFamily: 'monospace' }}>{r.password}</Text>
-                          ) : null}
-                        </View>
-                      ))}
+                        );
+                      })}
                     </ScrollView>
 
                     <Text style={[styles.modalNote, { marginTop: 4 }]}>
@@ -1060,12 +1101,24 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                     </Text>
 
                     <View style={styles.modalBtns}>
-                      <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setBulkResults(null); setBulkSummary(null); setBulkError(''); }}>
+                      <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setBulkResults(null); setBulkSummary(null); setBulkError(''); bulkFileRef.current = null; }}>
                         <Text style={styles.modalCancelText}>Import More</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.modalSaveBtn} onPress={() => setAddModal(false)}>
-                        <Text style={styles.modalSaveText}>Done</Text>
-                      </TouchableOpacity>
+                      {bulkSummary?.needsConfirmation > 0 ? (
+                        <TouchableOpacity
+                          style={[styles.modalSaveBtn, bulkImporting && { opacity: 0.6 }]}
+                          onPress={confirmAndImportMismatches}
+                          disabled={bulkImporting}
+                        >
+                          {bulkImporting
+                            ? <><ActivityIndicator color="white" size="small" /><Text style={styles.modalSaveText}>Importing...</Text></>
+                            : <Text style={styles.modalSaveText}>Confirm & Import Anyway</Text>}
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity style={styles.modalSaveBtn} onPress={() => setAddModal(false)}>
+                          <Text style={styles.modalSaveText}>Done</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </>
                 )}

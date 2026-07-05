@@ -280,8 +280,21 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
     if (!req.file) return res.status(400).json({ error: 'No CSV file uploaded.' });
 
     const cleanTeacherEmail = String(teacherEmail).toLowerCase().trim();
-    const { data: teacher } = await supabase.from('users').select('id').eq('email', cleanTeacherEmail).maybeSingle();
+    const { data: teacher } = await supabase.from('users').select('id, school').eq('email', cleanTeacherEmail).maybeSingle();
     if (!teacher) return res.status(404).json({ error: 'Teacher account not found.' });
+
+    // Which grade+curriculum combos this teacher actually handles (Staff Subject
+    // Mapping) — a CSV row outside this set is flagged for the teacher to
+    // confirm rather than silently linked to the wrong class.
+    const { data: teacherPrefs } = await supabase
+      .from('user_preferences').select('data').eq('user_email', cleanTeacherEmail).maybeSingle();
+    const teacherTeaches = teacherPrefs?.data?.teaches || [];
+    const normKey = (g, c) => `${String(g || '').trim().toLowerCase()}|${String(c || '').trim().toLowerCase()}`;
+    const teacherGradeCurriculumSet = new Set(teacherTeaches.map(t => normKey(t.grade, t.curriculum)));
+    // Explicit per-row confirmation from the client after reviewing mismatches —
+    // { "RowName|Grade|Curriculum": true } — only these mismatched rows proceed.
+    let confirmedMismatches = {};
+    try { confirmedMismatches = JSON.parse(req.body?.confirmedMismatches || '{}'); } catch {}
 
     const csvText = req.file.buffer.toString('utf-8');
     const rows = parseCSV(csvText);
@@ -311,6 +324,28 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
       const curriculum  = curriculumIdx >= 0 && row[curriculumIdx]?.trim() ? row[curriculumIdx].trim() : defaultCurriculum;
       const school      = schoolIdx >= 0 ? (row[schoolIdx]?.trim() || '') : '';
       const studentEmail = emailRaw ? emailRaw.toLowerCase() : generateStudentLoginId(cleanName);
+
+      // Flag rows outside the grades/curricula this teacher actually teaches —
+      // only proceed if the client already confirmed this exact row (after
+      // showing the teacher a "this student is a different grade, import
+      // anyway?" prompt). Skip DB writes entirely for unconfirmed mismatches.
+      const rowKey = `${cleanName}|${grade}|${curriculum}`;
+      const gradeCurriculumMismatch = teacherGradeCurriculumSet.size > 0 && !teacherGradeCurriculumSet.has(normKey(grade, curriculum));
+      const schoolMismatch = Boolean(school) && Boolean(teacher.school)
+        && school.trim().toLowerCase() !== teacher.school.trim().toLowerCase();
+      if ((gradeCurriculumMismatch || schoolMismatch) && !confirmedMismatches[rowKey]) {
+        const reason = gradeCurriculumMismatch && schoolMismatch
+          ? `${grade} · ${curriculum} · ${school} doesn't match your classes or school`
+          : gradeCurriculumMismatch
+            ? `${grade} · ${curriculum} isn't a class you teach`
+            : `"${school}" doesn't match your school ("${teacher.school}")`;
+        results.push({
+          name: cleanName, email: studentEmail, grade, curriculum, school,
+          status: 'needs_confirmation',
+          error: `${reason} — confirm to import anyway.`,
+        });
+        continue;
+      }
 
       try {
         // Skip duplicates
@@ -364,8 +399,9 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
     const created = results.filter(r => r.status === 'created').length;
     const skipped = results.filter(r => r.status === 'skipped').length;
     const errors  = results.filter(r => r.status === 'error').length;
+    const needsConfirmation = results.filter(r => r.status === 'needs_confirmation').length;
 
-    res.json({ success: true, summary: { created, skipped, errors, total: results.length }, results });
+    res.json({ success: true, summary: { created, skipped, errors, needsConfirmation, total: results.length }, results });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

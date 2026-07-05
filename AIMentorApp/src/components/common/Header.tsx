@@ -490,11 +490,18 @@ const [editingName, setEditingName] = useState(false);
                   <View style={{ gap: 4 }}>
                     <Text style={styles.profileName} numberOfLines={1}>{user?.name}</Text>
                     <Text style={styles.profileRole}>{user?.role}</Text>
-                    {user?.curriculum && (
-                      <View style={styles.premiumBadge}>
-                        <Text style={styles.premiumBadgeText}>{user.curriculum}</Text>
-                      </View>
-                    )}
+                    <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+                      {user?.role === 'student' && user?.grade && (
+                        <View style={styles.premiumBadge}>
+                          <Text style={styles.premiumBadgeText}>{user.grade}</Text>
+                        </View>
+                      )}
+                      {user?.curriculum && (
+                        <View style={styles.premiumBadge}>
+                          <Text style={styles.premiumBadgeText}>{user.curriculum}</Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
                 </View>
 
@@ -511,6 +518,31 @@ const [editingName, setEditingName] = useState(false);
                     </View>
                   )}
                 </View>
+
+                {/* Teaching assignments — grades + subjects (teacher only) */}
+                {user?.role === 'teacher' && Array.isArray(user?.teaches) && user.teaches.length > 0 && (
+                  <View style={styles.profileTeachSection}>
+                    <Text style={styles.profileTeachHeading}>Teaching</Text>
+                    <View style={styles.profileTeachCards}>
+                      {user.teaches.map((t: any, i: number) => (
+                        <View key={i} style={styles.profileTeachCard}>
+                          <Text style={styles.profileTeachGrade}>{t.grade}{t.curriculum ? ` · ${t.curriculum}` : ''}</Text>
+                          {Array.isArray(t.subjects) && t.subjects.length > 0 ? (
+                            <View style={styles.profileTeachChipRow}>
+                              {t.subjects.map((sub: string, si: number) => (
+                                <View key={si} style={styles.profileTeachChip}>
+                                  <Text style={styles.profileTeachChipText}>{sub}</Text>
+                                </View>
+                              ))}
+                            </View>
+                          ) : (
+                            <Text style={styles.profileTeachNoSubjects}>No subjects assigned yet</Text>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
 
                 {/* Edit display name */}
                 {editingName ? (
@@ -704,6 +736,22 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingHorizontal: spacing.md, paddingVertical: 10,
   },
   profileInfoCardText: { fontSize: 12, color: c.textMain, flex: 1 },
+  profileTeachSection: { gap: 6 },
+  profileTeachHeading: { fontSize: 11, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.5 },
+  profileTeachCards: { gap: 6 },
+  profileTeachCard: {
+    backgroundColor: c.bgDark, borderRadius: 12,
+    borderWidth: 1, borderColor: c.borderColor,
+    paddingHorizontal: spacing.md, paddingVertical: 10, gap: 6,
+  },
+  profileTeachGrade: { fontSize: 12, fontWeight: '700', color: c.textMain },
+  profileTeachChipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  profileTeachChip: {
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20,
+    backgroundColor: c.accentYellow + '18', borderWidth: 1, borderColor: c.accentYellow + '40',
+  },
+  profileTeachChipText: { fontSize: 10, fontWeight: '600', color: c.accentYellow },
+  profileTeachNoSubjects: { fontSize: 11, color: c.textDim, fontStyle: 'italic' },
   editNameCard: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     backgroundColor: c.bgDark, borderRadius: 12,

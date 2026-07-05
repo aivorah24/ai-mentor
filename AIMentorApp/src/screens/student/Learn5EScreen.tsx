@@ -522,9 +522,10 @@ const ph = StyleSheet.create({
 });
 
 // ── PHASE 2: LEARN — Continuous auto-play journey ────────────────────────────
-function LearnPhase({ topic, grade, textChunks, imageChunks, colors, onDone, character = 'zara', isScience = false }: {
+function LearnPhase({ topic, grade, textChunks, imageChunks, colors, onDone, character = 'zara', isScience = false, onActivity }: {
   topic: string; grade: string; textChunks: TextChunk[]; imageChunks: ImageChunk[];
   colors: AppColors; onDone: (quiz?: QuizQ[]) => void; character?: CharacterKey; isScience?: boolean;
+  onActivity?: () => void;
 }) {
   const [loading, setLoading]         = useState(false);
   const [scenes, setScenes]           = useState<Scene[]>([]);
@@ -627,6 +628,7 @@ function LearnPhase({ topic, grade, textChunks, imageChunks, colors, onDone, cha
 
       // 1. Speak via Web Speech API (instant — no network latency)
       setTtsLoading(false); setIsPlaying(true);
+      onActivity?.();
       if (!cancelled) {
         await speakText(text);
       }
@@ -684,11 +686,13 @@ function LearnPhase({ topic, grade, textChunks, imageChunks, colors, onDone, cha
   }
 
   function manualPrev() {
+    onActivity?.();
     if (sceneIdx === 0) return;
     setAutoProgress(0);
     setSceneIdx(i => Math.max(0, i - 1)); // useEffect cleanup cancels current, restart fires
   }
   function manualNext() {
+    onActivity?.();
     setAutoProgress(0);
     // If this scene has an unseen checkpoint, show it before advancing
     const currentScene = scenesRef.current[sceneIdxRef.current];
@@ -700,6 +704,7 @@ function LearnPhase({ topic, grade, textChunks, imageChunks, colors, onDone, cha
     else onDone(lessonQuizRef.quiz.length ? lessonQuizRef.quiz : undefined);
   }
   function togglePause() {
+    onActivity?.();
     const resuming = paused;
     setPaused(!paused);
     if (resuming) {
@@ -1236,9 +1241,9 @@ const cp = StyleSheet.create({
 });
 
 // ── PHASE 3: PRACTICE (adaptive quiz) ───────────────────────────────────────
-function PracticePhase({ topic, textChunks, colors, onComplete, fixedQuiz, isScience }: {
+function PracticePhase({ topic, textChunks, colors, onComplete, fixedQuiz, isScience, onActivity }: {
   topic: string; textChunks: TextChunk[]; colors: AppColors; onComplete: (score: number) => void;
-  fixedQuiz?: QuizQ[]; isScience?: boolean;
+  fixedQuiz?: QuizQ[]; isScience?: boolean; onActivity?: () => void;
 }) {
   const [loading, setLoading]           = useState(false);
   const [questions, setQuestions]       = useState<QuizQ[]>([]);
@@ -1488,7 +1493,13 @@ function PracticePhase({ topic, textChunks, colors, onComplete, fixedQuiz, isSci
 
   // Quiz view
   return (
-    <ScrollView contentContainerStyle={{ gap: spacing.lg, padding: spacing.xl, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      contentContainerStyle={{ gap: spacing.lg, padding: spacing.xl, paddingBottom: 48 }}
+      showsVerticalScrollIndicator={false}
+      onScroll={onActivity}
+      onTouchStart={onActivity}
+      scrollEventThrottle={4000}
+    >
       {questions.map((q, qi) => (
         <View key={qi} style={[pr.qCard, {
           backgroundColor: colors.cardDark,
@@ -1510,7 +1521,7 @@ function PracticePhase({ topic, textChunks, colors, onComplete, fixedQuiz, isSci
                     backgroundColor: selected ? colors.accentYellow + '15' : colors.bgDark,
                     borderColor:     selected ? colors.accentYellow         : colors.borderColor,
                   }]}
-                  onPress={() => setAnswers(a => a.map((v, idx) => idx === qi ? oi : v))}
+                  onPress={() => { onActivity?.(); setAnswers(a => a.map((v, idx) => idx === qi ? oi : v)); }}
                 >
                   <View style={[pr.radio, {
                     borderColor:     selected ? colors.accentYellow : colors.borderColor,
@@ -1638,6 +1649,9 @@ export default function Learn5EScreen({ route, navigation }: any) {
   const { completeLesson, recordStudyTime } = useStudentData();
   const studySessionStartRef = useRef<number | null>(null);
   const trackedStudyMinutesRef = useRef(0);
+  const lastActivityRef = useRef<number>(Date.now());
+  const isFocusedRef = useRef(true);
+  function markActive() { lastActivityRef.current = Date.now(); }
 
   const [phase, setPhase]         = useState<Phase>('select');
   const [character, setCharacter] = useState<CharacterKey>('zara');
@@ -1665,16 +1679,24 @@ export default function Learn5EScreen({ route, navigation }: any) {
     return () => handler.remove();
   }, [phase]);
 
-  // Stop audio when screen loses focus (drawer nav keeps screens mounted)
+  // Stop audio when screen loses focus (drawer nav keeps screens mounted).
+  // Also pauses study-time accrual — a lesson left open in the background
+  // (e.g. student switched to the dashboard) must not keep earning minutes.
   useEffect(() => {
     const unsubBlur = navigation.addListener('blur', () => {
+      isFocusedRef.current = false;
       stopCurrentAudio();
       if (Platform.OS === 'web' && (window as any).speechSynthesis) {
         try { (window as any).speechSynthesis.cancel(); } catch {}
       }
     });
+    const unsubFocus = navigation.addListener('focus', () => {
+      isFocusedRef.current = true;
+      markActive();
+    });
     return () => {
       unsubBlur();
+      unsubFocus();
       stopCurrentAudio();
       if (Platform.OS === 'web' && (window as any).speechSynthesis) {
         try { (window as any).speechSynthesis.cancel(); } catch {}
@@ -1707,14 +1729,24 @@ export default function Learn5EScreen({ route, navigation }: any) {
       .catch(() => setContentLoading(false));
   }, [topic, isScience]);
 
-  // Track real study time while the learner is actively in Learn/Practice phases.
+  // Track real study time while the learner is actively in Learn/Practice phases —
+  // only counted while the screen is focused AND the learner has interacted
+  // (scrolled, tapped, or audio is narrating) in the last IDLE_MS. A background
+  // tab or an untouched static screen must not accrue minutes.
+  const IDLE_MS = 45 * 1000;
   useEffect(() => {
     function flushWholeMinutes() {
       if (studySessionStartRef.current == null) return;
+      const idleFor = Date.now() - lastActivityRef.current;
+      if (!isFocusedRef.current || idleFor > IDLE_MS) {
+        studySessionStartRef.current = Date.now();
+        trackedStudyMinutesRef.current = 0;
+        return;
+      }
       const elapsedWholeMinutes = Math.floor((Date.now() - studySessionStartRef.current) / 60000);
       const delta = elapsedWholeMinutes - trackedStudyMinutesRef.current;
       if (delta > 0) {
-        recordStudyTime(delta);
+        recordStudyTime(delta, 'learningPath', subject);
         trackedStudyMinutesRef.current += delta;
       }
     }
@@ -1730,6 +1762,7 @@ export default function Learn5EScreen({ route, navigation }: any) {
     if (studySessionStartRef.current == null) {
       studySessionStartRef.current = Date.now();
       trackedStudyMinutesRef.current = 0;
+      markActive();
     }
 
     const interval = setInterval(flushWholeMinutes, 15000);
@@ -1807,8 +1840,8 @@ export default function Learn5EScreen({ route, navigation }: any) {
                 }}
               />
             )}
-            {phase === 'learn'    && <LearnPhase topic={topic} grade={GRADE} textChunks={textChunks} imageChunks={imageChunks} colors={colors} character={character} isScience={isScience} onDone={(quiz) => { if (quiz?.length) setLessonQuiz(quiz); setPhase('practice'); }} />}
-            {phase === 'practice' && <PracticePhase topic={topic} textChunks={textChunks} colors={colors} fixedQuiz={lessonQuiz} isScience={isScience} onComplete={(s) => { setFinalScore(s); completeLesson(topic); setPhase('complete'); }} />}
+            {phase === 'learn'    && <LearnPhase topic={topic} grade={GRADE} textChunks={textChunks} imageChunks={imageChunks} colors={colors} character={character} isScience={isScience} onActivity={markActive} onDone={(quiz) => { if (quiz?.length) setLessonQuiz(quiz); setPhase('practice'); }} />}
+            {phase === 'practice' && <PracticePhase topic={topic} textChunks={textChunks} colors={colors} fixedQuiz={lessonQuiz} isScience={isScience} onActivity={markActive} onComplete={(s) => { setFinalScore(s); completeLesson(topic, subject, GRADE, 'NCERT'); setPhase('complete'); }} />}
             {phase === 'complete' && <CompletePhase topic={topic} score={finalScore} colors={colors} onBack={() => navigation.goBack()} />}
           </>
         )}

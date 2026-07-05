@@ -211,7 +211,7 @@ export default function MessagesScreen(_props: any) {
   const loadContacts = async () => {
     setLoadingContacts(true);
     try {
-      const res = await fetch(`${SERVER_URL}/messages/contacts?userEmail=${encodeURIComponent(userEmail)}`);
+      const res = await fetch(`${SERVER_URL}/messages/contacts?userEmail=${encodeURIComponent(userEmail)}&role=${encodeURIComponent(userRole)}`);
       const data = await res.json();
       if (Array.isArray(data)) setContacts(data);
     } catch {}

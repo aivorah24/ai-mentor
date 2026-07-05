@@ -573,6 +573,73 @@ def extract_subfigures_from_table(pil_image):
     return keep
 
 
+def extract_icon_column(pil_image):
+    """
+    Find a vertical stack of small square-ish icons (e.g. a picture-matching
+    worksheet: fruit/animal/object icons stacked in one column, one per row/word).
+    The wide-diagram detector above only looks at the top half and requires a
+    wide aspect ratio, so it misses this shape entirely — every icon fell
+    through to the single "shared full-page" fallback, showing the same
+    uncropped page for every matching option instead of one icon each.
+    """
+    import numpy as np
+    import cv2
+
+    img_np = np.array(pil_image.convert('L'))
+    h, w = img_np.shape
+    total_area = w * h
+
+    _, binary = cv2.threshold(img_np, 150, 255, cv2.THRESH_BINARY_INV)
+    contours, _ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    icons = []
+    for cnt in contours:
+        x, y, cw, ch = cv2.boundingRect(cnt)
+        area = cw * ch
+        ratio = area / total_area
+        # Small, roughly square-ish icon — not a full diagram, not a text line
+        if ratio < 0.002 or ratio > 0.06:
+            continue
+        aspect = cw / max(ch, 1)
+        if aspect < 0.4 or aspect > 2.5:
+            continue
+        if cw < 20 or ch < 20:
+            continue
+        icons.append({'x1': x, 'y1': y, 'x2': x + cw, 'y2': y + ch, 'width': cw, 'height': ch, 'area': area})
+
+    if len(icons) < 2:
+        return []
+
+    # Dedupe nested/overlapping contours (same icon detected at multiple contour levels)
+    icons.sort(key=lambda b: b['area'], reverse=True)
+    keep = []
+    for c in icons:
+        overlaps = False
+        for k in keep:
+            ix1, iy1 = max(c['x1'], k['x1']), max(c['y1'], k['y1'])
+            ix2, iy2 = min(c['x2'], k['x2']), min(c['y2'], k['y2'])
+            if ix1 < ix2 and iy1 < iy2:
+                inter = (ix2 - ix1) * (iy2 - iy1)
+                if inter / min(c['area'], k['area']) > 0.4:
+                    overlaps = True
+                    break
+        if not overlaps:
+            keep.append(c)
+
+    if len(keep) < 2:
+        return []
+
+    # Must form a column: centers roughly share the same x, spread down the page
+    centers_x = [(k['x1'] + k['x2']) / 2 for k in keep]
+    mean_x = sum(centers_x) / len(centers_x)
+    max_dev = max(abs(cx - mean_x) for cx in centers_x)
+    if max_dev > w * 0.18:
+        return []  # not aligned into one column — bail rather than guess
+
+    keep.sort(key=lambda b: b['y1'])
+    return keep
+
+
 @app.route('/extract-subfigures', methods=['POST'])
 def extract_subfigures():
     """
@@ -603,9 +670,14 @@ def extract_subfigures():
     file_bytes = file.read()
     pil_img = Image.open(BytesIO(file_bytes)).convert('RGB')
 
-    # Detect sub-figure boxes
+    # Detect sub-figure boxes — wide top-half diagrams first (arrow charts, etc.),
+    # then a vertical icon-column pattern (picture-matching worksheets) if that
+    # finds nothing, so both worksheet shapes get real per-item crops instead of
+    # falling through to the single "shared whole page" fallback.
     try:
         subfigures = extract_subfigures_from_table(pil_img)
+        if not subfigures:
+            subfigures = extract_icon_column(pil_img)
     except Exception as e:
         # If cv2 not available, try simple top-half split
         print(f'[layout] cv2 subfigure detection failed: {e}, using heuristic split')

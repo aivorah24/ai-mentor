@@ -30,6 +30,9 @@ const DEMO_IDS: Record<string, string> = {
 
 export interface StudentStats {
   studyTimeMinutes:    number;
+  learningPathMinutes: number;
+  assignmentTimeMinutes: number;
+  challengeTimeMinutes:  number;
   topicsExplored:      number;
   xpPoints:            number;
   level:               number;
@@ -49,10 +52,10 @@ interface StudentDataContextType {
   studentId:         string;
   addXP:             (xp: number) => void;
   exploreTopic:      () => void;
-  completeLesson:    (topic: string) => void;
+  completeLesson:    (topic: string, subject?: string, grade?: string, curriculum?: string) => void;
   completeChallenge: () => void;
   completeAssignment:() => void;
-  recordStudyTime:   (minutes: number) => void;
+  recordStudyTime:   (minutes: number, source?: 'learningPath' | 'assignment' | 'challenge' | 'other', subject?: string) => void;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -61,6 +64,9 @@ interface StudentDataContextType {
 
 const ZERO_STATS: StudentStats = {
   studyTimeMinutes:    0,
+  learningPathMinutes: 0,
+  assignmentTimeMinutes: 0,
+  challengeTimeMinutes:  0,
   topicsExplored:      0,
   xpPoints:            0,
   level:               1,
@@ -196,11 +202,17 @@ export function StudentDataProvider({ children }: { children: ReactNode }) {
   // TopicLessonScreen / VideoLessonScreen / Learn5EScreen, ChallengesScreen (while
   // a challenge quiz is open), and AssignmentsScreen (while an assignment is open) —
   // never globally, so it reflects actual learning time, not "the app was open".
+  // The source tag additionally counts toward the matching per-stream minutes
+  // (learningPath / assignment / challenge), which the teacher dashboard uses
+  // to report time spent per activity stream, not just an aggregate total.
 
-  function recordStudyTime(mins: number) {
+  function recordStudyTime(mins: number, source: 'learningPath' | 'assignment' | 'challenge' | 'other' = 'other', subject?: string) {
     setStats(prev => ({
       ...prev,
       studyTimeMinutes:    prev.studyTimeMinutes    + mins,
+      learningPathMinutes: prev.learningPathMinutes + (source === 'learningPath' ? mins : 0),
+      assignmentTimeMinutes: prev.assignmentTimeMinutes + (source === 'assignment' ? mins : 0),
+      challengeTimeMinutes:  prev.challengeTimeMinutes  + (source === 'challenge'  ? mins : 0),
       todayStudyMinutes:   prev.todayStudyMinutes   + mins,
       lastActiveDate:      todayISO(),
     }));
@@ -208,7 +220,7 @@ export function StudentDataProvider({ children }: { children: ReactNode }) {
     fetch(`${SERVER_URL}/student/${studentId}/study-time`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ minutes: mins }),
+      body:    JSON.stringify({ minutes: mins, source, subject }),
     }).catch(() => {});
   }
 
@@ -226,12 +238,12 @@ export function StudentDataProvider({ children }: { children: ReactNode }) {
     addXP(25);
   }
 
-  function completeLesson(topic: string) {
+  function completeLesson(topic: string, subject?: string, grade?: string, curriculum?: string) {
     // Call server to record completion
     fetch(`${SERVER_URL}/student/${studentId}/complete-lesson`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ topic }),
+      body:    JSON.stringify({ topic, subject, grade, curriculum }),
     })
       .then(r => r.json())
       .then(data => setStats(prev => ({ ...prev, ...data })))
