@@ -12,6 +12,7 @@ ENV PORT=8080
 # so every image-crop/table-detect call silently fails over to the crude
 # "whole page" fallback (worksheet images render uncropped/misplaced in prod).
 RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip python3-dev build-essential \
+    libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 libxcb1 \
     && rm -rf /var/lib/apt/lists/*
 COPY server/python/requirements.txt ./server/python/requirements.txt
 RUN pip3 install --no-cache-dir --break-system-packages -r server/python/requirements.txt
