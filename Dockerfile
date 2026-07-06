@@ -24,6 +24,15 @@ RUN cd server && npm ci --omit=dev
 # Copy server code
 COPY server/ ./server/
 
+# ── Pre-download the DocLayout-YOLO model at build time ──
+# server/python/models/ is gitignored (39MB, not committed), so without this the
+# service falls back to downloading it lazily on the first live request — which
+# was crashing (HF_TOKEN env var has a stray BOM character huggingface_hub can't
+# ascii-encode into a request header). Downloading here, before Node's runtime
+# env vars (incl. HF_TOKEN) are even set, sidesteps that entirely and means the
+# very first crop request in production doesn't have to wait on a cold download.
+RUN python3 -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='juliozhao/DocLayout-YOLO-DocStructBench', filename='doclayout_yolo_docstructbench_imgsz1024.pt', cache_dir='/app/server/python/models')"
+
 # Copy pre-built frontend (built locally via: npx expo export --platform web --output-dir dist2)
 # server/index.js serves from path.join(__dirname, '../AIMentorApp/dist2')
 COPY AIMentorApp/dist2/_expo        ./AIMentorApp/dist2/_expo
