@@ -130,7 +130,6 @@ router.post('/sync', async (req, res) => {
     // (fetchSupabaseProfile calls this with only email, and we must not overwrite a real name)
     const patch = { email: email.toLowerCase().trim() };
     if (name)       patch.name       = name;
-    if (role)       patch.role       = role;
     if (grade)      patch.grade      = grade;
     if (school)     patch.school     = school?.trim();
     if (curriculum) patch.curriculum = curriculum;
@@ -150,7 +149,21 @@ router.post('/sync', async (req, res) => {
     } else {
       // Detect whether this upsert CREATES the row (fresh signup for this email)
       const { data: existingRow } = await supabase
-        .from('users').select('id').eq('email', patch.email).maybeSingle();
+        .from('users').select('id, role').eq('email', patch.email).maybeSingle();
+
+      // Only set role on first signup (no existing row / no role yet) or when it
+      // matches the existing role. This endpoint runs on EVERY login — blindly
+      // writing whatever role the client happened to send silently flipped real
+      // teacher/parent accounts to the wrong role whenever any call passed a
+      // different one (e.g. opening a differently-roled screen with the same
+      // login). An intentional role change goes through /user/add-role instead.
+      if (role) {
+        if (!existingRow || !existingRow.role || existingRow.role === role) {
+          patch.role = role;
+        } else {
+          console.warn(`[/user/sync] Ignored role change for ${patch.email}: existing="${existingRow.role}" incoming="${role}"`);
+        }
+      }
 
       ({ data, error } = await supabase
         .from('users')
