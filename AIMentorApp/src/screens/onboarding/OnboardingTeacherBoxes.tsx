@@ -5,7 +5,7 @@
  * Everything is visible and editable at once; "Complete Setup" saves
  * the profile and finishes onboarding.
  */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
   StyleSheet, Platform, Modal,
@@ -41,6 +41,21 @@ export default function OnboardingTeacherBoxes() {
   const [saveError, setSaveError] = useState('');
   const [locating, setLocating] = useState(false);
   const cityBBoxCache = useRef<Map<string, BBox | null>>(new Map());
+
+  // Web: trap the browser Back button for the whole teacher onboarding flow (#171 —
+  // previously this screen had no back-button handling at all, so pressing browser
+  // Back silently navigated away with no confirmation). Routes through the same
+  // "Return to home page?" confirm the in-page back button already uses.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    window.history.pushState(null, '', window.location.href);
+    const onPop = () => {
+      window.history.pushState(null, '', window.location.href);
+      setShowLeaveConfirm(true);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   // Form state
   const [fullName, setFullName] = useState(user?.name || '');
@@ -194,6 +209,9 @@ export default function OnboardingTeacherBoxes() {
             </TouchableOpacity>
             <View style={styles.logoMark}><Feather name="zap" size={14} color="#fff" /></View>
             <Text style={styles.logoTxt}>Aivorah</Text>
+            <View style={[styles.roleBadge, styles.roleBadgeTeacher]}>
+              <Text style={[styles.roleBadgeText, styles.roleBadgeTextTeacher]}>Teacher</Text>
+            </View>
           </View>
           <View style={styles.completionRow}>
             <Text style={styles.completionLbl}>Profile Completion</Text>
@@ -204,6 +222,11 @@ export default function OnboardingTeacherBoxes() {
         </View>
 
         <View style={styles.greetWrap}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <View style={{ backgroundColor: TEAL + '18', borderColor: TEAL + '40', borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 }}>
+              <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' }}>Teacher Onboarding</Text>
+            </View>
+          </View>
           <Text style={styles.greetMain}>Welcome — let's set up your teaching profile</Text>
           <Text style={styles.greetSub}>Fill in each box so we can tailor your class view and content recommendations.</Text>
         </View>
@@ -509,6 +532,27 @@ function useStyles(colors: any) {
     confirmSecondaryTxt: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
     logoMark: { width: 28, height: 28, borderRadius: 8, backgroundColor: TEAL, alignItems: 'center', justifyContent: 'center' },
     logoTxt: { fontSize: 16, fontWeight: '800', color: colors.textMain },
+    roleBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 2.5,
+      borderRadius: 12,
+      borderWidth: 1,
+      alignSelf: 'center',
+      marginLeft: 4,
+    },
+    roleBadgeTeacher: {
+      backgroundColor: TEAL + '18',
+      borderColor: TEAL + '40',
+    },
+    roleBadgeText: {
+      fontSize: 9,
+      fontWeight: '800',
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+    },
+    roleBadgeTextTeacher: {
+      color: TEAL,
+    },
     completionRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     completionLbl: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
     completionRing: {

@@ -247,6 +247,45 @@ function daysUntil(dateStr: string) {
   return { label: `Due in ${days}d`, overdue: false };
 }
 
+function getAnsweredQuizHtml(originalHtml: string, submission: any) {
+  if (!originalHtml) return '';
+  const answersJson = JSON.stringify(submission.studentAnswers || {});
+  const perQuestionJson = JSON.stringify(submission.perQuestion || []);
+  const scriptToInject = `
+    <script>
+      window.addEventListener('load', function() {
+        const answers = ${answersJson};
+        const pq = ${perQuestionJson};
+        for (const [qId, ans] of Object.entries(answers)) {
+          const inputEl = document.getElementById(qId + '-input') || document.getElementById(qId);
+          if (inputEl) {
+            inputEl.value = ans;
+            inputEl.disabled = true;
+            const qNum = parseInt(qId.replace('q', ''));
+            const qInfo = pq.find(x => x.number === qNum || x.number === qId);
+            if (qInfo) {
+              const correct = qInfo.correct ?? (qInfo.score >= 70);
+              inputEl.style.borderColor = correct ? '#8bc34a' : '#e57373';
+              inputEl.style.backgroundColor = correct ? 'rgba(139,195,74,0.1)' : 'rgba(229,115,115,0.1)';
+            }
+          }
+          const radios = document.getElementsByName(qId);
+          if (radios.length > 0) {
+            for (const radio of radios) {
+              if (radio.value === ans) {
+                radio.checked = true;
+              }
+              radio.disabled = true;
+            }
+          }
+        }
+        document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+      });
+    </script>
+  `;
+  return originalHtml.replace('</body>', scriptToInject + '</body>');
+}
+
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
@@ -304,8 +343,43 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [interactiveQuiz, setInteractiveQuiz] = useState<any>(null);
   const [generatingInteractiveQuiz, setGeneratingInteractiveQuiz] = useState(false);
   const [showInteractivePreview, setShowInteractivePreview] = useState(false);
-  // Creation mode: 'choose' (initial), 'ai' (IB PYP AI), 'upload' (PDF/Image worksheet)
-  const [createMode, setCreateMode] = useState<'choose' | 'ai' | 'upload'>('choose');
+  // When set, the Preview/Edit Answers modal below is editing a BULK item
+  // (not the single-worksheet interactiveQuiz) — reusing the exact same,
+  // already-built modal instead of duplicating an edit-answers UI per item.
+  const [editingBulkItemId, setEditingBulkItemId] = useState<string | null>(null);
+  function closeInteractivePreviewModal() {
+    if (editingBulkItemId && interactiveQuiz) {
+      const { _previewHTML, _editMode, _normalized, ...cleanQ } = interactiveQuiz as any;
+      updateBulkItem(editingBulkItemId, { quiz: cleanQ, quizHtml: _previewHTML || '' });
+      setEditingBulkItemId(null);
+    }
+    setShowInteractivePreview(false);
+  }
+  // Creation mode: 'choose' (initial), 'ai' (IB PYP AI), 'upload' (PDF/Image worksheet),
+  // 'bulk' (several separate worksheets → one assignment each, published together)
+  const [createMode, setCreateMode] = useState<'choose' | 'ai' | 'upload' | 'bulk'>('choose');
+  // Bulk upload is a 3-PHASE batch flow (industry-standard shape for bulk
+  // import: review all → process all → finalize all — not a repeated
+  // single-item wizard): 'classify' (preview + edit subject/grade/title for
+  // ALL worksheets at once) → 'generate' (quiz generated + previewable for
+  // ALL worksheets) → 'assign' (choose assign-to per worksheet, one Publish
+  // All action). Every worksheet is a BulkItem tracked independently.
+  type BulkItem = {
+    id: string; name: string; mime: string; base64: string;
+    pages: { name: string; base64: string; mime: string }[];
+    status: 'extracting' | 'ready' | 'error'; error?: string;
+    title: string; subject: string; grade: string; curriculum: string; chapter: string; language: string;
+    quiz: any | null; quizHtml: string; quizStatus: 'idle' | 'generating' | 'done' | 'error'; quizError?: string;
+    assignTo: 'all' | 'specific'; selectedStudentId: string | null;
+    publishStatus: 'idle' | 'publishing' | 'done' | 'error'; publishError?: string;
+  };
+  const [bulkPhase, setBulkPhase] = useState<'pick' | 'classify' | 'generate' | 'assign'>('pick');
+  const [bulkItems, setBulkItems] = useState<BulkItem[]>([]);
+  const [bulkDueDate, setBulkDueDate] = useState('');
+
+  function updateBulkItem(id: string, patch: Partial<BulkItem>) {
+    setBulkItems(prev => prev.map(it => it.id === id ? { ...it, ...patch } : it));
+  }
   // Upload wizard step: 1=Upload & Classify, 2=Generate & Review, 3=Assign & Publish
   const [uploadStep, setUploadStep] = useState<1 | 2 | 3>(1);
   const uploadScrollRef = React.useRef<ScrollView>(null);
@@ -333,7 +407,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
   // IB PYP fields
-  const [selectedLanguage, setSelectedLanguage] = useState('Telugu');
+  // No hardcoded default — an arbitrary starting language (e.g. always "Telugu")
+  // looked auto-filled to the teacher even when the worksheet was actually
+  // English and extraction correctly declined to guess a language for it.
+  const [selectedLanguage, setSelectedLanguage] = useState('');
   const [unitOfInquiry, setUnitOfInquiry] = useState('');
   const [ibPurpose, setIbPurpose] = useState('');
   const [ibLearningOutcomes, setIbLearningOutcomes] = useState<string[]>(['']);
@@ -371,9 +448,17 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   // list so e.g. UKG sorts before Grade 4). Don't intersect with ALL_GRADES — that
   // list only spans Grade 3–9 and would drop Nursery/LKG/UKG/Grade 1-2/10-12.
   const orderedTeacherGrades = GRADES_TEACHER.filter(g => teacherGrades.includes(g));
-  const gradeOptions = teacherGrades.length > 0
+  const baseGradeOptions = teacherGrades.length > 0
     ? (orderedTeacherGrades.length > 0 ? orderedTeacherGrades : teacherGrades)
     : fullGradeList;
+  // The worksheet's own auto-extracted grade must always be selectable, even if
+  // it falls outside the teacher's configured teaching grades — restricting the
+  // list to only "grades this teacher teaches" was silently hiding the real
+  // extracted grade (e.g. a Grade 4 worksheet) and defaulting to gradeOptions[0]
+  // instead, which showed the WRONG grade with no way to pick the right one.
+  const gradeOptions = (grade && !baseGradeOptions.includes(grade))
+    ? [...baseGradeOptions, grade]
+    : baseGradeOptions;
   // Render-derived selected grade — always a valid option even if `grade` state is
   // momentarily stale, so a pill is always highlighted (no effect-timing gaps).
   const effectiveGrade = gradeOptions.includes(grade) ? grade : (gradeOptions[0] || grade);
@@ -382,9 +467,14 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const teachesCurricula = Array.isArray(user?.teaches) && user.teaches.length > 0
     ? [...new Set(user.teaches.map((t: any) => t.curriculum).filter(Boolean))] as string[]
     : [];
-  const curriculumOptions = fetchedCurricula.length > 0
+  const baseCurriculumOptions = fetchedCurricula.length > 0
     ? fetchedCurricula
     : (teachesCurricula.length > 0 ? teachesCurricula : (teacherCurriculum ? [teacherCurriculum] : []));
+  // Same fix as gradeOptions above — the worksheet's own extracted curriculum
+  // must always be selectable, never silently overridden by a restricted list.
+  const curriculumOptions = (curriculum && !baseCurriculumOptions.includes(curriculum))
+    ? [...baseCurriculumOptions, curriculum]
+    : baseCurriculumOptions;
   const effectiveCurriculum = curriculumOptions.includes(curriculum)
     ? curriculum
     : (curriculumOptions[0] || curriculum);
@@ -400,8 +490,15 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         const teaches = Array.isArray(p?.teaches) ? p.teaches : [];
         const g = [...new Set(teaches.map((t: any) => t.grade).filter(Boolean))] as string[];
         const c = [...new Set(teaches.map((t: any) => t.curriculum).filter(Boolean))] as string[];
-        if (g.length > 0) { setFetchedGrades(g); setGrade(prev => g.includes(prev) ? prev : g[0]); }
-        if (c.length > 0) { setFetchedCurricula(c); setCurriculum(prev => c.includes(prev) ? prev : c[0]); }
+        // Only populate the option list here — do NOT force-reset grade/curriculum
+        // to the teacher's default. This effect used to unconditionally stomp
+        // grade/curriculum back to the teacher's own teaching list on every
+        // screen focus, silently overwriting a worksheet's correctly auto-filled
+        // grade (e.g. Grade 4) just because that teacher normally teaches
+        // Grade 3/5 — the worksheet's real extracted grade must never be
+        // silently overridden like that.
+        if (g.length > 0) setFetchedGrades(g);
+        if (c.length > 0) setFetchedCurricula(c);
       })
       .catch(() => {});
   }, [teacherEmail]));
@@ -435,6 +532,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       const params = new URLSearchParams();
       if (librarySubject) params.set('subject', librarySubject);
       if (libraryGrade) params.set('grade', libraryGrade);
+      if (user?.id) params.set('teacherId', user.id);
       const res = await fetch(`${SERVER_URL}/quiz/list?${params.toString()}`);
       const d = await res.json();
       setLibraryQuizzes(d.quizzes || []);
@@ -622,8 +720,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       if (res.ok) {
         const created = JSON.parse(responseText);
         setAssignments(prev => [created, ...prev]);
-        setShowModal(false);
         setShowPreview(false);
+        setShowModal(false);
         resetForm();
       } else {
         let errMsg = 'Failed to create';
@@ -665,20 +763,43 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       console.log('[upload] Files before PDF conversion:', fileDataArr.map(f => `${f.name} (${f.mime})`));
       const expanded: typeof fileDataArr = [];
       for (const fd of fileDataArr) {
-        if (fd.mime === 'application/pdf') {
+        let workingFd = fd;
+        // Word .docx has no native page-image preview — convert to PDF server-side
+        // first (mammoth+puppeteer), then feed it through the SAME pdfToImages
+        // pipeline PDFs already use, so the upload thumbnail shows the real page
+        // instead of a generic file icon.
+        if (fd.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+          try {
+            console.log('[upload] Converting DOCX to PDF:', fd.name);
+            const dRes = await fetch(`${SERVER_URL}/assignments/docx-to-pdf`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fileBase64: fd.base64 }),
+            });
+            const dData = await dRes.json();
+            if (dRes.ok && dData.pdfBase64) {
+              workingFd = { name: fd.name.replace(/\.docx$/i, '.pdf'), base64: dData.pdfBase64, mime: 'application/pdf' };
+            } else {
+              console.log('[upload] DOCX to PDF conversion failed, sending as-is:', dData.error);
+            }
+          } catch (e) {
+            console.log('[upload] DOCX to PDF conversion request failed, sending as-is');
+          }
+        }
+        if (workingFd.mime === 'application/pdf') {
           // Save original PDF for interactive quiz generation (which needs full PDF, not single-page images)
-          originalPdfRef.current = { name: fd.name, base64: fd.base64, mime: fd.mime };
-          console.log('[upload] Converting PDF to images:', fd.name);
-          const pageImages = await pdfToImages(fd.base64);
+          originalPdfRef.current = { name: workingFd.name, base64: workingFd.base64, mime: workingFd.mime };
+          console.log('[upload] Converting PDF to images:', workingFd.name);
+          const pageImages = await pdfToImages(workingFd.base64);
           console.log('[upload] PDF converted to', pageImages.length, 'images');
           if (pageImages.length > 0) {
             expanded.push(...pageImages);
           } else {
             console.log('[upload] PDF conversion failed, sending as PDF');
-            expanded.push(fd); // Fallback: send PDF as-is
+            expanded.push(workingFd); // Fallback: send PDF as-is
           }
         } else {
-          expanded.push(fd);
+          expanded.push(workingFd);
         }
       }
       fileDataArr = expanded;
@@ -720,19 +841,43 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
             ),
           });
           const eData = await eRes.json();
+          console.log('[extract] response ok:', eRes.ok, 'data:', JSON.stringify(eData).slice(0, 500));
+          if (!eRes.ok) {
+            setFormError(`Auto-fill failed: ${eData.error || 'unknown error'}. You can still fill in Subject/Grade/Chapter manually below.`);
+          }
           if (eRes.ok) {
             if (eData.title && !title.trim()) setTitle(eData.title);
             // Use chapter if available, otherwise fall back to title as chapter/topic
             const chapterVal = eData.chapter || eData.title || '';
             if (chapterVal) setChapter(prev => prev || chapterVal);
             if (eData.subject) {
-              const matchSubj = SUBJECTS.find(s => s.toLowerCase().includes(eData.subject.toLowerCase()) || eData.subject.toLowerCase().includes(s.toLowerCase()));
-              if (matchSubj) setSubject(matchSubj);
+              const extractedSubj = String(eData.subject).trim();
+              const matchSubj = SUBJECTS.find(s => s.toLowerCase().includes(extractedSubj.toLowerCase()) || extractedSubj.toLowerCase().includes(s.toLowerCase()));
+              // Never silently drop the worksheet's real extracted subject just
+              // because it doesn't fuzzy-match one of the fixed subject labels —
+              // fall back to the literal extracted text rather than leaving
+              // whatever subject was previously selected (stale/wrong-looking).
+              setSubject(matchSubj || extractedSubj);
+            }
+            // Specific language (Telugu/Hindi/etc.) is a separate field from subject —
+            // a Language Acquisition worksheet must set the actual detected language,
+            // not just leave whatever language was previously selected in the form.
+            if (eData.language) {
+              const matchLang = LANGUAGES.find(l => l.toLowerCase() === String(eData.language).toLowerCase());
+              if (matchLang) setSelectedLanguage(matchLang);
             }
             if (eData.grade) {
-              const gradeStr = String(eData.grade).replace(/[^0-9]/g, '');
-              const matchGrade = gradeOptions.find(g => g.includes(gradeStr));
+              const rawGrade = String(eData.grade).trim();
+              const gradeStr = rawGrade.replace(/[^0-9]/g, '');
+              // gradeOptions at this exact moment still reflects the OLD grade
+              // (state hasn't updated yet), so searching only within it can never
+              // find a grade this teacher doesn't normally teach (e.g. Grade 4
+              // when they teach Grade 3/5) — it would silently no-op. Always fall
+              // back to the worksheet's own literal extracted grade instead.
+              const matchGrade = gradeOptions.find(g => (gradeStr && g.includes(gradeStr)) || g.toLowerCase() === rawGrade.toLowerCase());
               if (matchGrade) setGrade(matchGrade);
+              else if (gradeStr) setGrade(`Grade ${gradeStr}`);
+              else setGrade(rawGrade);
             }
             // Purpose and learning outcomes no longer auto-fill Note — teacher writes their own notes
             // if (eData.purpose) setNote(prev => prev || eData.purpose);
@@ -758,11 +903,184 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               setExtractedQuestions(prev => [...prev, ...mappedQuestions]);
             }
           }
-        } catch {/* silent */}
+        } catch (extractErr: any) {
+          // Was previously silent — a network failure or unexpected server error here
+          // would leave every field at default with zero indication of why, exactly
+          // matching reports of "nothing got auto-filled." Now visible + logged.
+          console.log('[extract] request failed:', extractErr?.message || extractErr);
+          setFormError(`Auto-fill failed: ${extractErr?.message || 'network error'}. You can still fill in Subject/Grade/Chapter manually below.`);
+        }
         finally { setExtractingQuestions(false); }
       }
     };
     input.click();
+  }
+
+  // ── Bulk upload: PHASE 1 — pick files, extract+classify ALL of them ───────
+  // Files are read and extracted sequentially (not Promise.all) — deliberately,
+  // so N worksheets don't all hit the AI vision endpoint in the same instant
+  // and trip a rate limit. Each becomes a BulkItem the teacher can see and
+  // correct (title/subject/grade) before moving to the next phase.
+  function pickBulkDocs() {
+    if (typeof document === 'undefined') return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    input.multiple = true;
+    input.onchange = async (e: any) => {
+      const files: File[] = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+      const readFile = (f: File): Promise<{ name: string; base64: string; mime: string }> =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const result = ev.target?.result as string;
+            resolve({ name: f.name, base64: result.split(',')[1], mime: f.type });
+          };
+          reader.readAsDataURL(f);
+        });
+      const picked = await Promise.all(files.map(readFile));
+
+      const initialItems: BulkItem[] = picked.map((f, i) => ({
+        id: `${Date.now()}-${i}`, name: f.name, mime: f.mime, base64: f.base64,
+        pages: [], status: 'extracting',
+        title: '', subject: 'Mathematics', grade: effectiveGrade, curriculum: effectiveCurriculum, chapter: '', language: '',
+        quiz: null, quizHtml: '', quizStatus: 'idle',
+        assignTo: 'all', selectedStudentId: null,
+        publishStatus: 'idle',
+      }));
+      setBulkItems(initialItems);
+      setBulkPhase('classify');
+
+      for (const item of initialItems) {
+        try {
+          let working: { name: string; base64: string; mime: string } = { name: item.name, base64: item.base64, mime: item.mime };
+          if (working.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            const dRes = await fetch(`${SERVER_URL}/assignments/docx-to-pdf`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fileBase64: working.base64 }),
+            });
+            const dData = await dRes.json();
+            if (dRes.ok && dData.pdfBase64) working = { name: working.name.replace(/\.docx$/i, '.pdf'), base64: dData.pdfBase64, mime: 'application/pdf' };
+          }
+          const pages = working.mime === 'application/pdf' ? await pdfToImages(working.base64) : [working];
+          const pageFiles = pages.length > 0 ? pages : [working];
+          const fileList = pageFiles.map(p => ({ base64: p.base64, mimeType: p.mime }));
+
+          const eRes = await fetch(`${SERVER_URL}/assignments/extract-questions`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(fileList.length === 1 ? { fileBase64: fileList[0].base64, mimeType: fileList[0].mimeType } : { files: fileList }),
+          });
+          const eData = await eRes.json();
+          if (!eRes.ok) throw new Error(eData.error || 'Extraction failed');
+
+          const extractedSubj = eData.subject
+            ? (SUBJECTS.find(s => s.toLowerCase().includes(String(eData.subject).toLowerCase()) || String(eData.subject).toLowerCase().includes(s.toLowerCase())) || String(eData.subject))
+            : 'Mathematics';
+          const rawGrade = eData.grade ? String(eData.grade).trim() : '';
+          const gradeStr = rawGrade.replace(/[^0-9]/g, '');
+          const resolvedGrade = rawGrade ? (gradeOptions.find(g => (gradeStr && g.includes(gradeStr)) || g.toLowerCase() === rawGrade.toLowerCase()) || (gradeStr ? `Grade ${gradeStr}` : rawGrade)) : effectiveGrade;
+          const resolvedTitle = eData.title || eData.chapter || item.name.replace(/\.[^.]+$/, '');
+          const matchLang = eData.language ? LANGUAGES.find(l => l.toLowerCase() === String(eData.language).toLowerCase()) : undefined;
+
+          updateBulkItem(item.id, {
+            // name MUST be updated alongside mime/base64 when docx→pdf converts —
+            // the server's /quiz/generate re-detects "is this a docx?" from the
+            // FILENAME extension, not just the mimetype. Leaving the old ".docx"
+            // name here made it re-attempt a docx→pdf conversion on bytes that
+            // were ALREADY a PDF, which mammoth can't parse, producing
+            // "Could not read this Word document" even though the file was fine.
+            name: working.name, mime: working.mime, base64: working.base64,
+            pages: pageFiles, status: 'ready',
+            title: resolvedTitle, chapter: eData.chapter || resolvedTitle,
+            subject: extractedSubj, grade: resolvedGrade, language: matchLang || '',
+          });
+        } catch (err: any) {
+          updateBulkItem(item.id, { status: 'error', error: err.message || 'Extraction failed' });
+        }
+      }
+    };
+    input.click();
+  }
+
+  // Generates (or re-generates) the quiz for ONE bulk item. Pulled out of
+  // generateAllBulkQuizzes so a single failed worksheet (e.g. a one-off "AI
+  // returned invalid JSON" — a known occasional flakiness in the underlying
+  // vision pipeline, not specific to bulk upload) can be retried on its own
+  // without re-running the whole batch.
+  async function generateOneBulkQuiz(item: BulkItem) {
+    updateBulkItem(item.id, { quizStatus: 'generating', quizError: undefined });
+    try {
+      const isImage = item.mime.startsWith('image/');
+      const formData = new FormData();
+      const byteChars = atob(item.base64);
+      const byteArray = new Uint8Array(byteChars.length);
+      for (let b = 0; b < byteChars.length; b++) byteArray[b] = byteChars.charCodeAt(b);
+      const blob = new Blob([byteArray], { type: item.mime });
+      formData.append(isImage ? 'image' : 'pdf', blob, item.name);
+      formData.append('grade', item.grade || 'Grade 3');
+      formData.append('subject', item.subject || 'Mathematics');
+      formData.append('school', user?.school || '');
+      const qRes = await fetch(`${SERVER_URL}${isImage ? '/quiz/generate-image' : '/quiz/generate'}`, { method: 'POST', body: formData });
+      const qData = await qRes.json();
+      if (!qRes.ok || !qData.quiz) throw new Error(qData.error || 'Quiz generation failed');
+
+      // Force school/curriculum to the teacher's REAL account values on the
+      // STORED quiz object itself — never trust quiz.school as returned by the
+      // AI. It's asked to echo back the passed school name, but can instead
+      // read a school name/logo physically PRINTED on the worksheet page and
+      // put THAT there instead, which silently breaks the branding lookup
+      // (exact-name match) on every later re-fetch (e.g. re-opening Preview).
+      const brandedQuiz = { ...qData.quiz, school: user?.school || '', curriculum: item.curriculum || effectiveCurriculum };
+      let previewHTML = '';
+      try {
+        const pRes = await fetch(`${SERVER_URL}/quiz/render-preview`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quiz: brandedQuiz }) });
+        if (pRes.ok) previewHTML = await pRes.text();
+      } catch {}
+      updateBulkItem(item.id, { quiz: brandedQuiz, quizHtml: previewHTML, quizStatus: 'done' });
+    } catch (err: any) {
+      updateBulkItem(item.id, { quizStatus: 'error', quizError: err.message || 'Failed' });
+    }
+  }
+
+  // ── PHASE 2 — generate the interactive quiz for every ready item ──────────
+  async function generateAllBulkQuizzes() {
+    setBulkPhase('generate');
+    const items = bulkItems.filter(it => it.status === 'ready');
+    for (const item of items) {
+      await generateOneBulkQuiz(item);
+    }
+  }
+
+  // ── PHASE 3 — publish every item that has a generated quiz ────────────────
+  async function publishAllBulkItems() {
+    const items = bulkItems.filter(it => it.quizStatus === 'done');
+    for (const item of items) {
+      updateBulkItem(item.id, { publishStatus: 'publishing' });
+      try {
+        const cRes = await fetch(`${SERVER_URL}/assignments`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: item.title, subject: item.subject, chapter: item.chapter,
+            dueDate: bulkDueDate || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+            type: 'assignment',
+            studentId: item.assignTo === 'specific' ? item.selectedStudentId : null,
+            createdById: teacherEmail, createdByRole: 'teacher',
+            grade: item.grade, curriculum: item.curriculum,
+            interactiveQuiz: item.quiz, interactiveQuizHtml: item.quizHtml || null,
+            language: item.subject === 'Language Acquisition' ? item.language : null,
+            documentUrls: [],
+          }),
+        });
+        if (!cRes.ok) { const cErr = await cRes.json().catch(() => ({})); throw new Error(cErr.error || 'Publish failed'); }
+        const created = await cRes.json();
+        setAssignments(prev => [created, ...prev]);
+        updateBulkItem(item.id, { publishStatus: 'done' });
+      } catch (err: any) {
+        updateBulkItem(item.id, { publishStatus: 'error', publishError: err.message || 'Failed' });
+      }
+    }
+    load();
   }
 
   function resetForm() {
@@ -774,9 +1092,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     setAssignTo('all'); setSelectedStudent(null); setStudentSearch('');
     setExtractingQuestions(false); setExtractedQuestions([]); setShowPreview(false); setCreateMode('choose');
     setInteractiveQuiz(null); setGeneratingInteractiveQuiz(false); setShowInteractivePreview(false); setUploadStep(1); setShowReuseQuizModal(false); setSavedQuizzes([]);
-    setSelectedLanguage('Telugu'); setUnitOfInquiry(''); setIbPurpose('');
+    setSelectedLanguage(''); setUnitOfInquiry(''); setIbPurpose('');
     setIbLearningOutcomes(['']); setIbWordBank([]); setIbStamps([]);
     setIbCentralIdea(''); setIbLinesOfInquiry([]); setIbLearnerProfile(''); setIbAtlSkill(''); setIbKeyConcept('');
+    setBulkPhase('pick'); setBulkItems([]); setBulkDueDate('');
   }
 
   // Generate interactive quiz via Mistral (PDF/image → structured quiz with answers, hints, solutions)
@@ -802,7 +1121,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       formData.append(fieldName, blob, file.name || (isImage ? 'worksheet.jpg' : 'worksheet.pdf'));
       formData.append('grade', grade || 'PYP 4');
       formData.append('subject', subject || 'Mathematics');
-      formData.append('school', '');
+      formData.append('school', user?.school || '');
 
       const res = await fetch(`${SERVER_URL}${endpoint}`, {
         method: 'POST',
@@ -810,10 +1129,18 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       });
       const data = await res.json();
       if (res.ok && data.quiz) {
-        // Auto-fetch the server-rendered HTML preview
-        const quizData = { ...data.quiz, _editMode: false };
+        // Force school/curriculum to the teacher's REAL account values, always —
+        // never trust whatever the AI put in quiz.school. The vision prompt asks
+        // the AI to echo back the passed school name, but it can instead read
+        // whatever school name/logo is physically PRINTED on the worksheet page
+        // (e.g. a photocopied packet from a different school) and put THAT in
+        // quiz.school. Since branding lookup (fetchBranding) does an exact-name
+        // match against branding_logos, that mismatch silently returned no logo
+        // on every SUBSEQUENT re-fetch (e.g. re-clicking the Preview tab), which
+        // reads school/curriculum from this stored object, not from account state.
+        const quizData = { ...data.quiz, school: user?.school || '', curriculum: effectiveCurriculum, _editMode: false };
         try {
-          const previewRes = await fetch(`${SERVER_URL}/quiz/render-preview`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quiz: data.quiz }) });
+          const previewRes = await fetch(`${SERVER_URL}/quiz/render-preview`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quiz: quizData }) });
           if (previewRes.ok) quizData._previewHTML = await previewRes.text();
         } catch {}
         setInteractiveQuiz(quizData);
@@ -1620,8 +1947,27 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           </View>
                         ) : null}
 
-                        {/* Worksheet pages */}
-                        {(a.documentUrls?.length ?? 0) > 0 && (
+                        {/* Showcase Interactive Quiz (generated from worksheet) instead of scanned worksheet preview */}
+                        {(a as any).interactiveQuizHtml ? (
+                          <View style={{ gap: 8, backgroundColor: sc + '08', borderRadius: radius.md, padding: 16, borderWidth: 1, borderColor: sc + '30' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Feather name="eye" size={14} color={sc} />
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: sc, textTransform: 'uppercase', letterSpacing: 0.8 }}>Interactive Quiz Preview</Text>
+                            </View>
+                            <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
+                              This assignment uses an interactive quiz generated from the uploaded worksheet.
+                            </Text>
+                            <TouchableOpacity
+                              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: sc, borderRadius: radius.md, paddingVertical: 10, marginTop: 4 }}
+                              onPress={() => setStudentPreviewHtml((a as any).interactiveQuizHtml)}
+                              activeOpacity={0.85}
+                            >
+                              <Feather name="play" size={12} color="#fff" style={{ marginLeft: 2 }} />
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: '#fff' }}>Open Interactive Preview</Text>
+                            </TouchableOpacity>
+                          </View>
+                        ) : (a.documentUrls?.length ?? 0) > 0 ? (
+                          /* Original scanned worksheet pages fallback */
                           <View style={{ gap: 8 }}>
                             <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Worksheet Pages ({a.documentUrls!.length})</Text>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -1639,44 +1985,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                               </View>
                             </ScrollView>
                           </View>
-                        )}
-
-                        {/* Questions summary in overview */}
-                        {allQs.length > 0 && (
-                          <View style={{ gap: 8 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Questions ({allQs.length})</Text>
-                              <TouchableOpacity onPress={() => setDetailTab('questions')} activeOpacity={0.7}>
-                                <Text style={{ fontSize: 11, color: sc, fontWeight: '600' }}>View all</Text>
-                              </TouchableOpacity>
-                            </View>
-                            {allQs.slice(0, 5).map((q: any, i: number) => {
-                              const qText = typeof q === 'string' ? q : (q.question || q.label || '');
-                              const expectedAns = typeof q === 'object' && q.expectedAnswer ? q.expectedAnswer : null;
-                              return (
-                                <View key={i} style={{ backgroundColor: colors.cardDark, borderRadius: radius.md, padding: 12, borderWidth: 1, borderColor: colors.borderColor, gap: 4 }}>
-                                  <View style={{ flexDirection: 'row', gap: 8 }}>
-                                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: sc + '20', alignItems: 'center', justifyContent: 'center' }}>
-                                      <Text style={{ fontSize: 10, fontWeight: '800', color: sc }}>{i + 1}</Text>
-                                    </View>
-                                    <Text style={{ fontSize: 12, color: colors.textMain, flex: 1, lineHeight: 18 }}>{qText}</Text>
-                                  </View>
-                                  {expectedAns ? (
-                                    <View style={{ flexDirection: 'row', gap: 6, marginLeft: 30, alignItems: 'flex-start' }}>
-                                      <Feather name="check-circle" size={11} color={colors.accentGreen} style={{ marginTop: 2 }} />
-                                      <Text style={{ fontSize: 11, color: colors.accentGreen, flex: 1 }}>Expected: {expectedAns}</Text>
-                                    </View>
-                                  ) : null}
-                                </View>
-                              );
-                            })}
-                            {allQs.length > 5 && (
-                              <TouchableOpacity onPress={() => setDetailTab('questions')} activeOpacity={0.7} style={{ alignSelf: 'center', paddingVertical: 4 }}>
-                                <Text style={{ fontSize: 12, color: sc, fontWeight: '600' }}>+{allQs.length - 5} more questions</Text>
-                              </TouchableOpacity>
-                            )}
-                          </View>
-                        )}
+                        ) : null}
 
                         {/* Success criteria */}
                         {(a.successCriteria?.length ?? 0) > 0 && (
@@ -1779,11 +2088,38 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                         <Feather name={isExpanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textDim} />
                                       </View>
                                     </View>
-                                    {sub.completedAt && (
-                                      <Text style={{ fontSize: 11, color: colors.textDim, marginLeft: 40 }}>Submitted {formatDate(sub.completedAt)}</Text>
-                                    )}
+                                    {sub.completedAt ? (
+                                      <View style={{ marginLeft: 40, marginTop: 4, gap: 4 }}>
+                                        <Text style={{ fontSize: 11, color: colors.textDim }}>Submitted {formatDate(sub.completedAt)}</Text>
+                                        {pq.length > 0 ? (
+                                          <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap', marginTop: 2 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                              <Feather name="clock" size={11} color={colors.textDim} />
+                                              <Text style={{ fontSize: 11, color: colors.textDim }}>
+                                                {(() => {
+                                                  const totalTime = pq.reduce((acc, curr) => acc + (curr.timeSpent || 0), 0);
+                                                  return totalTime >= 60 ? `${Math.floor(totalTime / 60)}m ${totalTime % 60}s` : `${totalTime}s`;
+                                                })()}
+                                              </Text>
+                                            </View>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                              <Feather name="zap" size={11} color={colors.accentYellow} />
+                                              <Text style={{ fontSize: 11, color: colors.textDim }}>
+                                                1st Go: {pq.filter(x => x.firstGo).length}/{pq.length}
+                                              </Text>
+                                            </View>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                              <Feather name="refresh-cw" size={11} color={colors.textDim} />
+                                              <Text style={{ fontSize: 11, color: colors.textDim }}>
+                                                Avg Att: {(pq.reduce((acc, curr) => acc + (curr.attempts || 1), 0) / pq.length).toFixed(1)}
+                                              </Text>
+                                            </View>
+                                          </View>
+                                        ) : null}
+                                      </View>
+                                    ) : null}
                                   </TouchableOpacity>
-
+ 
                                   {/* Expanded: per-question answers + feedback */}
                                   {isExpanded && (
                                     <View style={{ borderTopWidth: 1, borderTopColor: colors.borderColor, padding: 14, gap: 12 }}>
@@ -1792,22 +2128,50 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                         <View style={{ gap: 10 }}>
                                           <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Question-by-Question</Text>
                                           {pq.map((q: any, qi: number) => {
-                                            const qScore = q.score ?? 0;
+                                            // Interactive-quiz submissions (server/routes/quiz.js) store `answer` +
+                                            // `correct` (boolean); AI-graded task submissions store `score` (0-100)
+                                            // + `studentAnswer` directly. Support both shapes — this screen was only
+                                            // reading the second shape, so quiz-type submissions always showed a
+                                            // blank answer and a hardcoded 0%.
+                                            const qScore = q.score ?? (q.correct === true ? 100 : q.correct === false ? 0 : 0);
+                                            const studentAnswerText = q.studentAnswer ?? q.answer ?? '';
                                             const scoreColor = qScore >= 70 ? colors.accentGreen : qScore >= 40 ? colors.accentYellow : colors.accentRed;
                                             return (
                                               <View key={qi} style={{ backgroundColor: colors.bgDark, borderRadius: 10, padding: 12, gap: 6, borderLeftWidth: 3, borderLeftColor: scoreColor }}>
                                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                                   <Text style={{ fontSize: 12, color: colors.textMain, fontWeight: '700', flex: 1 }}>Q{q.number || qi + 1}. {q.question || q.stepLabel || ''}</Text>
-                                                  <View style={{ backgroundColor: scoreColor + '20', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, marginLeft: 8 }}>
-                                                    <Text style={{ fontSize: 11, fontWeight: '800', color: scoreColor }}>{qScore}%</Text>
+                                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 }}>
+                                                    {q.timeSpent > 0 ? (
+                                                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                                                        <Feather name="clock" size={10} color={colors.textDim} />
+                                                        <Text style={{ fontSize: 10, color: colors.textDim, fontWeight: '600' }}>
+                                                          {q.timeSpent >= 60 ? `${Math.floor(q.timeSpent / 60)}m ${q.timeSpent % 60}s` : `${q.timeSpent}s`}
+                                                        </Text>
+                                                      </View>
+                                                    ) : null}
+                                                    <View style={{ backgroundColor: scoreColor + '20', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
+                                                      <Text style={{ fontSize: 11, fontWeight: '800', color: scoreColor }}>{qScore}%</Text>
+                                                    </View>
                                                   </View>
                                                 </View>
-                                                {q.studentAnswer ? (
+                                                {studentAnswerText ? (
                                                   <View style={{ gap: 2 }}>
                                                     <Text style={{ fontSize: 10, color: colors.textDim, fontWeight: '600' }}>What the student did:</Text>
-                                                    <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18, backgroundColor: colors.cardDark, borderRadius: 6, padding: 8 }}>{q.studentAnswer}</Text>
+                                                    <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18, backgroundColor: colors.cardDark, borderRadius: 6, padding: 8 }}>{studentAnswerText}</Text>
                                                   </View>
                                                 ) : null}
+                                                <View style={{ flexDirection: 'row', gap: 12, marginTop: 4 }}>
+                                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                                    <Feather name="refresh-cw" size={10} color={colors.textDim} />
+                                                    <Text style={{ fontSize: 10, color: colors.textDim, fontWeight: '600' }}>Attempts: {q.attempts || 1}</Text>
+                                                  </View>
+                                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                                    <Feather name={q.firstGo ? 'zap' : 'alert-circle'} size={10} color={q.firstGo ? colors.accentYellow : colors.textDim} />
+                                                    <Text style={{ fontSize: 10, color: q.firstGo ? colors.accentYellow : colors.textDim, fontWeight: '600' }}>
+                                                      {q.firstGo ? 'Answered on 1st go' : 'Needed multiple attempts'}
+                                                    </Text>
+                                                  </View>
+                                                </View>
                                                 {(q.teacherNote || q.comment) ? (
                                                   <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
                                                     <Feather name="clipboard" size={11} color={colors.accentCyan} style={{ marginTop: 2 }} />
@@ -1819,6 +2183,19 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                               </View>
                                             );
                                           })}
+                                          {done && (a as any).interactiveQuizHtml ? (
+                                            <TouchableOpacity
+                                              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.accentCyan + '15', borderRadius: radius.md, paddingVertical: 10, borderWidth: 1, borderColor: colors.accentCyan + '40', marginTop: 8 }}
+                                              onPress={() => {
+                                                const answeredHtml = getAnsweredQuizHtml((a as any).interactiveQuizHtml, sub);
+                                                setStudentPreviewHtml(answeredHtml);
+                                              }}
+                                              activeOpacity={0.8}
+                                            >
+                                              <Feather name="eye" size={14} color={colors.accentCyan} />
+                                              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.accentCyan }}>View Student's Answered Sheet</Text>
+                                            </TouchableOpacity>
+                                          ) : null}
                                         </View>
                                       ) : done ? (
                                         <View style={{ alignItems: 'center', paddingVertical: 12, gap: 4 }}>
@@ -1921,7 +2298,31 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                             </ScrollView>
                           </View>
                         )}
-                        {allQs.length === 0 && (a.documentUrls?.length ?? 0) === 0 ? (
+                        {/* Interactive-quiz assignments (PDF → quiz pipeline) don't populate
+                            quizQuestions/questions/taskSteps at all — the actual questions
+                            live inside interactiveQuizHtml. Without this branch, the tab
+                            always fell through to "No questions added." even though a real
+                            quiz clearly exists (teacher can see it render for students). */}
+                        {(a as any).interactiveQuizHtml ? (
+                          <View style={{ gap: 12 }}>
+                            <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Generated Interactive Quiz</Text>
+                            {Platform.OS === 'web' ? (
+                              <iframe
+                                srcDoc={(a as any).interactiveQuizHtml}
+                                style={{ width: '100%', height: 650, border: 'none', borderRadius: 8, backgroundColor: '#1C1C1C' }}
+                              />
+                            ) : (
+                              <TouchableOpacity
+                                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: sc, borderRadius: radius.md, paddingVertical: 12 }}
+                                onPress={() => setStudentPreviewHtml((a as any).interactiveQuizHtml)}
+                                activeOpacity={0.85}
+                              >
+                                <Feather name="eye" size={16} color="#fff" />
+                                <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>View Full Interactive Quiz</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        ) : allQs.length === 0 && (a.documentUrls?.length ?? 0) === 0 ? (
                           <View style={{ alignItems: 'center', paddingVertical: 32, gap: 8 }}>
                             <Feather name="help-circle" size={32} color={colors.textDim} />
                             <Text style={{ fontSize: 14, color: colors.textMuted }}>No questions added.</Text>
@@ -2039,7 +2440,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         {/* Fullscreen Image Viewer */}
         {fullscreenImage && (
           <Modal visible transparent animationType="fade" onRequestClose={() => setFullscreenImage(null)}>
-            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' }}>
+            {/* On React Native Web, flex:1 alone doesn't reliably stretch the Modal's
+                own portal container to the full viewport — it can leave gaps with the
+                page behind it peeking through. Force explicit fullscreen coverage. */}
+            <View style={[
+              { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center', zIndex: 999 },
+              Platform.OS === 'web' ? ({ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh' } as any) : null,
+            ]}>
               <TouchableOpacity
                 onPress={() => setFullscreenImage(null)}
                 style={{ position: 'absolute', top: 40, right: 20, zIndex: 10, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}
@@ -2055,11 +2462,16 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           </Modal>
         )}
 
-        {/* Student Preview Overlay — inline iframe */}
+        {/* Student Preview Overlay — inline iframe.
+            The worksheet HTML itself is always dark-themed (self-contained
+            "Enchanted Forest" template, independent of the app's light/dark
+            toggle) — this header bar must match that fixed dark look too,
+            not follow colors.bgCard, or it renders as a jarring white bar
+            in light mode sitting directly above dark worksheet content. */}
         {studentPreviewHtml && (
           <Modal visible transparent animationType="slide" onRequestClose={() => setStudentPreviewHtml(null)}>
-            <View style={{ flex: 1, backgroundColor: colors.bgDark }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.borderColor, backgroundColor: colors.bgCard }}>
+            <View style={{ flex: 1, backgroundColor: '#1C1C1C' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(195,220,216,0.15)', backgroundColor: '#1C1C1C' }}>
                 <Text style={{ fontSize: 16, fontWeight: '800', color: '#fff' }}>Student Preview</Text>
                 <TouchableOpacity
                   onPress={() => setStudentPreviewHtml(null)}
@@ -2133,9 +2545,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           </View>
         </Modal>
 
-        {/* Interactive Quiz Preview Modal — unified server-rendered HTML + edit mode */}
+        {/* Interactive Quiz Preview Modal — unified server-rendered HTML + edit mode.
+            Also reused for bulk-upload items (see editingBulkItemId) so the SAME
+            Preview/Edit Answers screen works for both flows, not a duplicate. */}
         {showInteractivePreview && interactiveQuiz && (
-          <Modal visible transparent={false} animationType="slide" onRequestClose={() => setShowInteractivePreview(false)}>
+          <Modal visible transparent={false} animationType="slide" onRequestClose={closeInteractivePreviewModal}>
             <View style={{ flex: 1, backgroundColor: '#0f1117', position: 'relative' } as any}>
               {/* Top bar with tabs */}
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, paddingHorizontal: 16, backgroundColor: '#161b22', borderBottomWidth: 1, borderBottomColor: '#30363d' }}>
@@ -2189,7 +2603,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                 <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
                   <TouchableOpacity
                     style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: '#2e7d32', flexDirection: 'row', gap: 6, alignItems: 'center' }}
-                    onPress={() => { setShowInteractivePreview(false); Alert.alert('Saved', 'Interactive quiz is ready for publishing.'); }}
+                    onPress={() => { closeInteractivePreviewModal(); Alert.alert('Saved', 'Interactive quiz is ready for publishing.'); }}
                   >
                     <Feather name="check-circle" size={14} color="#fff" />
                     <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>Approve & Save</Text>
@@ -2219,7 +2633,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     <Feather name="external-link" size={14} color="#fff" />
                     <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>Open in Tab</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setShowInteractivePreview(false)} activeOpacity={0.75}>
+                  <TouchableOpacity onPress={closeInteractivePreviewModal} activeOpacity={0.75}>
                     <Feather name="x" size={22} color="#8b949e" />
                   </TouchableOpacity>
                 </View>
@@ -2269,18 +2683,17 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   </TouchableOpacity>
                 </View>
               )}
-
-              {/* Edit Mode — editable answer/hint/solution fields */}
+{/* Edit Mode — editable answer/hint/solution fields */}
               {(interactiveQuiz as any)._editMode && (
                 <ScrollView style={{ flex: 1, backgroundColor: '#0B0B0B' }} contentContainerStyle={{ alignItems: 'center', padding: 16 }}>
                   {/* Preview's HTML caps content at 960px and centers it (.container { max-width:
                       960px; margin:0 auto }) — without this, inputs with flex:1 stretch edge to
                       edge across the whole modal instead of staying a readable card width. */}
                   <View style={{ width: '100%', maxWidth: 960 }}>
-                  {interactiveQuiz.tasks?.map((task: any, ti: number) => {
-                    // Same dark worksheet palette Preview's server-rendered HTML uses, so both
-                    // tabs look like one continuous surface instead of two different apps.
-                    const tierPalette: Record<string, { border: string; bg: string; label: string; labelBg: string }> = {
+                  {(() => {
+                    let globalQNum = 0;
+                    return interactiveQuiz.tasks?.map((task: any, ti: number) => {
+                      const tierPalette: Record<string, { border: string; bg: string; label: string; labelBg: string }> = {
                       'MUST DO':   { border: '#93B0AC', bg: 'rgba(147,176,172,0.08)', label: '#93B0AC', labelBg: 'rgba(147,176,172,0.15)' },
                       'COULD DO':  { border: '#C9A24E', bg: 'rgba(201,162,78,0.08)',  label: '#C9A24E', labelBg: 'rgba(201,162,78,0.15)' },
                       'ENRICHMENT':{ border: '#C98A8A', bg: 'rgba(201,138,138,0.08)', label: '#C98A8A', labelBg: 'rgba(201,138,138,0.15)' },
@@ -2365,10 +2778,19 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           </View>
                         )}
 
-                        {task.questions?.map((q: any, qi: number) => (
-                          <View key={qi} style={{ backgroundColor: '#1C1C1C', padding: 16, borderRadius: 10, marginTop: 12, borderWidth: 1, borderColor: 'rgba(195,220,216,0.12)' }}>
-                            <Text style={{ fontSize: 14, fontWeight: '600', color: '#F0EEEC', marginBottom: 10, lineHeight: 22 }}>{q.id ? `${q.id})` : `Q${qi+1}.`} {(q.question || '').replace(/\*\*(.+?)\*\*/g, '$1')}</Text>
-                            {q.imageUrl && (
+                        {task.questions?.map((q: any, qi: number) => {
+                          globalQNum++;
+                          const questionLabel = q.id ? `${q.id})` : `Q${globalQNum}.`;
+                          return (
+                            <View key={qi} style={{ backgroundColor: '#1C1C1C', padding: 16, borderRadius: 10, marginTop: 12, borderWidth: 1, borderColor: 'rgba(195,220,216,0.12)' }}>
+                              <Text style={{ fontSize: 14, fontWeight: '600', color: '#F0EEEC', marginBottom: 10, lineHeight: 22 }}>{questionLabel} {(q.question || '').replace(/\*\*(.+?)\*\*/g, '$1')}</Text>
+                            {/* Skip the raw scanned-page crop when this task already has a
+                                structured chart — Preview shows the chart ONCE at the top of
+                                the task (see renderBarChart in quiz.js), not the unstyled raw
+                                scan repeated under every question referring to it. Showing
+                                both was the source of the "why doesn't Edit Answers look like
+                                Preview" mismatch. */}
+                            {q.imageUrl && !(task.chart && Array.isArray(task.chart.bars) && task.chart.bars.length) && (
                               <View style={{ marginBottom: 12, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(195,220,216,0.2)', backgroundColor: '#fff', padding: 8 }}>
                                 <Image source={{ uri: q.imageUrl.startsWith('http') ? q.imageUrl : `${SERVER_URL}${q.imageUrl}` }} style={{ width: '100%', height: 160, resizeMode: 'contain' }} />
                               </View>
@@ -2386,11 +2808,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                               <Text style={{ fontSize: 11, fontWeight: '700', color: '#93B0AC', marginBottom: 4 }}>Solution:</Text>
                               <TextInput style={{ borderWidth: 1, borderColor: 'rgba(147,176,172,0.3)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#D8E8E6', backgroundColor: '#252525' }} value={q.solution || ''} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].solution = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Solution" placeholderTextColor="#6E736B" multiline numberOfLines={3} />
                             </View>
-                          </View>
-                        ))}
+                            </View>
+                          );
+                        })}
                       </View>
                     );
-                  })}
+                  });
+                  })()}
                   </View>
                   <View style={{ height: 40 }} />
                 </ScrollView>
@@ -2421,6 +2845,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           setUploadStep((uploadStep - 1) as 1 | 2 | 3);
                           setFormError('');
                           uploadScrollRef.current?.scrollTo({ y: 0, animated: true });
+                        } else if (createMode === 'bulk' && bulkPhase === 'generate') {
+                          setBulkPhase('classify');
+                        } else if (createMode === 'bulk' && bulkPhase === 'assign') {
+                          setBulkPhase('generate');
                         } else {
                           setCreateMode('choose');
                         }
@@ -2431,6 +2859,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     <Text style={styles.modalTitle}>
                       {createMode === 'choose' ? 'Create Assignment'
                         : createMode === 'ai' ? 'AI Assignment'
+                        : createMode === 'bulk' ? 'Bulk Upload'
                         : uploadStep === 1 ? 'Upload & Classify'
                         : uploadStep === 2 ? 'Generate Quiz'
                         : 'Assign & Publish'}
@@ -2523,6 +2952,268 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           <Feather name="chevron-right" size={18} color={gold} />
                         </View>
                       </TouchableOpacity>
+
+                      {/* Option 3: Bulk Upload — several separate worksheets at once */}
+                      <TouchableOpacity
+                        style={{ padding: 16, borderRadius: 14, borderWidth: 1.5, borderColor: gold + '40', backgroundColor: gold + '18', gap: 8 }}
+                        onPress={() => { setCreateMode('bulk'); setBulkPhase('pick'); setBulkItems([]); }}
+                        activeOpacity={0.8}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: gold + '20', alignItems: 'center', justifyContent: 'center' }}>
+                            <Feather name="layers" size={20} color={gold} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 15, fontWeight: '800', color: gold }}>Bulk Upload (Multiple Worksheets)</Text>
+                            <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 2 }}>
+                              Upload several separate worksheets at once — each becomes its own assignment
+                            </Text>
+                          </View>
+                          <Feather name="chevron-right" size={18} color={gold} />
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {/* ── BULK UPLOAD: 3 phases — Classify all → Generate all → Assign & Publish all ── */}
+                  {createMode === 'bulk' && (
+                    <View style={{ gap: 14 }}>
+                      {/* Phase progress pips */}
+                      {bulkPhase !== 'pick' && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                          {(['classify', 'generate', 'assign'] as const).map((p, i) => (
+                            <React.Fragment key={p}>
+                              {i > 0 && <View style={{ flex: 1, height: 2, backgroundColor: colors.borderColor, borderRadius: 1 }} />}
+                              <View style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, backgroundColor: bulkPhase === p ? gold : 'transparent', borderWidth: bulkPhase === p ? 0 : 1, borderColor: colors.borderColor }}>
+                                <Text style={{ fontSize: 10, fontWeight: '700', color: bulkPhase === p ? '#fff' : colors.textDim }}>
+                                  {p === 'classify' ? '1. Classify' : p === 'generate' ? '2. Generate' : '3. Assign & Publish'}
+                                </Text>
+                              </View>
+                            </React.Fragment>
+                          ))}
+                        </View>
+                      )}
+
+                      {bulkPhase === 'pick' && (
+                        <>
+                          <Text style={{ fontSize: 13, color: colors.textDim, lineHeight: 18 }}>
+                            Select several worksheet files (PDF, image, or DOCX). You'll see and edit ALL of them together at each step — classify, then generate quizzes, then assign & publish.
+                          </Text>
+                          <TouchableOpacity
+                            style={{ padding: 20, borderRadius: 14, borderWidth: 1.5, borderStyle: 'dashed', borderColor: gold + '60', alignItems: 'center', gap: 8 }}
+                            onPress={pickBulkDocs}
+                            activeOpacity={0.8}
+                          >
+                            <Feather name="upload-cloud" size={26} color={gold} />
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: gold }}>Select Worksheets</Text>
+                          </TouchableOpacity>
+                        </>
+                      )}
+
+                      {/* ── PHASE 1: Classify — preview + editable subject/grade/title, ALL files ── */}
+                      {bulkPhase === 'classify' && (
+                        <View style={{ gap: 14 }}>
+                          {bulkItems.map((item, idx) => (
+                            <View key={item.id} style={{ padding: 12, borderRadius: 12, borderWidth: 1, borderColor: item.status === 'error' ? '#c9605f60' : colors.borderColor, backgroundColor: colors.cardDark, gap: 10 }}>
+                              <Text style={{ fontSize: 11, fontWeight: '800', color: gold }}>Worksheet {idx + 1} of {bulkItems.length}</Text>
+
+                              {item.status === 'extracting' && (
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }}>
+                                  <ActivityIndicator size="small" color={gold} />
+                                  <Text style={{ fontSize: 12, color: colors.textDim }}>Reading {item.name}...</Text>
+                                </View>
+                              )}
+
+                              {item.status === 'error' && (
+                                <Text style={{ fontSize: 12, color: '#c9605f' }}>Failed: {item.error}</Text>
+                              )}
+
+                              {item.status === 'ready' && (
+                                <>
+                                  {item.pages.length > 0 && (
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                                        {item.pages.map((p, pi) => (
+                                          <TouchableOpacity key={pi} activeOpacity={0.8} onPress={() => setFullscreenImage(`data:${p.mime};base64,${p.base64}`)}>
+                                            <View style={{ width: 90, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: gold + '50' }}>
+                                              <Image source={{ uri: `data:${p.mime};base64,${p.base64}` }} style={{ width: 90, height: 120 }} resizeMode="contain" />
+                                              <View style={{ paddingVertical: 2, backgroundColor: gold + '20', alignItems: 'center' }}>
+                                                <Text style={{ fontSize: 9, fontWeight: '700', color: gold }}>Page {pi + 1}</Text>
+                                              </View>
+                                            </View>
+                                          </TouchableOpacity>
+                                        ))}
+                                      </View>
+                                    </ScrollView>
+                                  )}
+
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim }}>Title</Text>
+                                  <TextInput
+                                    style={[styles.input, { marginBottom: 0 }]}
+                                    value={item.title}
+                                    onChangeText={(v) => updateBulkItem(item.id, { title: v })}
+                                    placeholder="Worksheet title"
+                                    placeholderTextColor={colors.textDim}
+                                  />
+
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim }}>Subject</Text>
+                                  <View style={styles.chipRow}>
+                                    {SUBJECTS.map(s => (
+                                      <TouchableOpacity key={s} style={[styles.chip, item.subject === s && { backgroundColor: gold + '18', borderColor: gold }]} onPress={() => updateBulkItem(item.id, { subject: s })} activeOpacity={0.75}>
+                                        <Text style={[styles.chipText, item.subject === s && { color: gold }]}>{s}</Text>
+                                      </TouchableOpacity>
+                                    ))}
+                                  </View>
+
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim }}>Grade</Text>
+                                  <View style={styles.chipRow}>
+                                    {/* The worksheet's own extracted grade must always be selectable,
+                                        even if it falls outside the teacher's normal teaching grades
+                                        (gradeOptions) — same fix as single-worksheet upload. Without
+                                        this, a worksheet correctly extracted as e.g. Grade 6 would have
+                                        no pill to select at all if the teacher only teaches Grade 3-5. */}
+                                    {(item.grade && !gradeOptions.includes(item.grade) ? [...gradeOptions, item.grade] : gradeOptions).map(g => (
+                                      <TouchableOpacity key={g} style={[styles.chip, item.grade === g && { backgroundColor: gold + '18', borderColor: gold }]} onPress={() => updateBulkItem(item.id, { grade: g })} activeOpacity={0.75}>
+                                        <Text style={[styles.chipText, item.grade === g && { color: gold }]}>{g}</Text>
+                                      </TouchableOpacity>
+                                    ))}
+                                  </View>
+
+                                  {/* Language picker — only for Language Acquisition worksheets,
+                                      same as single-worksheet upload. Was missing entirely here. */}
+                                  {item.subject === 'Language Acquisition' && (
+                                    <>
+                                      <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim }}>Language</Text>
+                                      <View style={styles.chipRow}>
+                                        {LANGUAGES.map(lang => (
+                                          <TouchableOpacity key={lang} style={[styles.chip, item.language === lang && { backgroundColor: '#BAA46720', borderColor: '#BAA467' }]} onPress={() => updateBulkItem(item.id, { language: lang })} activeOpacity={0.75}>
+                                            <Text style={[styles.chipText, item.language === lang && { color: '#BAA467' }]}>{lang}</Text>
+                                          </TouchableOpacity>
+                                        ))}
+                                      </View>
+                                    </>
+                                  )}
+                                </>
+                              )}
+                            </View>
+                          ))}
+
+                          {bulkItems.length > 0 && bulkItems.every(it => it.status !== 'extracting') && (
+                            <TouchableOpacity
+                              style={[styles.submitBtn, { opacity: bulkItems.some(it => it.status === 'ready') ? 1 : 0.5 }]}
+                              onPress={() => bulkItems.some(it => it.status === 'ready') && generateAllBulkQuizzes()}
+                              activeOpacity={0.85}
+                            >
+                              <Text style={styles.submitBtnText}>Continue to Generate Quizzes</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      )}
+
+                      {/* ── PHASE 2: Generate — quiz status + preview, ALL files ── */}
+                      {bulkPhase === 'generate' && (
+                        <View style={{ gap: 10 }}>
+                          {bulkItems.filter(it => it.status === 'ready').map((item, idx) => (
+                            <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 10, backgroundColor: colors.cardDark, borderWidth: 1, borderColor: item.quizStatus === 'error' ? '#c9605f60' : item.quizStatus === 'done' ? '#4a9d6e60' : colors.borderColor }}>
+                              {item.quizStatus === 'idle' && <Feather name="clock" size={16} color={colors.textDim} />}
+                              {item.quizStatus === 'generating' && <ActivityIndicator size="small" color={gold} />}
+                              {item.quizStatus === 'done' && <Feather name="check-circle" size={16} color="#4a9d6e" />}
+                              {item.quizStatus === 'error' && <Feather name="x-circle" size={16} color="#c9605f" />}
+                              <View style={{ flex: 1 }}>
+                                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMain }} numberOfLines={1}>{item.title}</Text>
+                                <Text style={{ fontSize: 10, color: colors.textDim }}>{item.subject} · {item.grade}</Text>
+                              </View>
+                              {item.quizStatus === 'done' && (
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    // Opens the SAME Preview/Edit Answers screen single-worksheet
+                                    // upload uses — teacher can review, then switch to "Edit
+                                    // Answers" to fix answers/hints for THIS worksheet before
+                                    // moving to Assign & Publish. Was previously read-only.
+                                    setEditingBulkItemId(item.id);
+                                    setInteractiveQuiz({ ...item.quiz, _previewHTML: item.quizHtml, _editMode: false });
+                                    setShowInteractivePreview(true);
+                                  }}
+                                  style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: gold + '18' }}
+                                  activeOpacity={0.75}
+                                >
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: gold }}>Preview / Edit</Text>
+                                </TouchableOpacity>
+                              )}
+                              {item.quizStatus === 'error' && (
+                                <View style={{ alignItems: 'flex-end', gap: 4, maxWidth: 130 }}>
+                                  <Text style={{ fontSize: 10, color: '#c9605f' }} numberOfLines={2}>{item.quizError}</Text>
+                                  <TouchableOpacity onPress={() => generateOneBulkQuiz(item)} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: '#c9605f18' }} activeOpacity={0.75}>
+                                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#c9605f' }}>Retry</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              )}
+                            </View>
+                          ))}
+
+                          {bulkItems.some(it => it.status === 'ready') && bulkItems.filter(it => it.status === 'ready').every(it => it.quizStatus === 'done' || it.quizStatus === 'error') && (
+                            <TouchableOpacity
+                              style={[styles.submitBtn, { opacity: bulkItems.some(it => it.quizStatus === 'done') ? 1 : 0.5 }]}
+                              onPress={() => bulkItems.some(it => it.quizStatus === 'done') && setBulkPhase('assign')}
+                              activeOpacity={0.85}
+                            >
+                              <Text style={styles.submitBtnText}>Continue to Assign & Publish</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      )}
+
+                      {/* ── PHASE 3: Assign & Publish — ALL files, one Publish action ── */}
+                      {bulkPhase === 'assign' && (
+                        <View style={{ gap: 14 }}>
+                          <Text style={styles.fieldLabel}>Due Date (applies to all)</Text>
+                          <DatePicker value={bulkDueDate} onChange={setBulkDueDate} />
+
+                          {bulkItems.filter(it => it.quizStatus === 'done').map((item, idx) => (
+                            <View key={item.id} style={{ padding: 12, borderRadius: 12, borderWidth: 1, borderColor: item.publishStatus === 'error' ? '#c9605f60' : item.publishStatus === 'done' ? '#4a9d6e60' : colors.borderColor, backgroundColor: colors.cardDark, gap: 8 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                {item.publishStatus === 'publishing' && <ActivityIndicator size="small" color={gold} />}
+                                {item.publishStatus === 'done' && <Feather name="check-circle" size={16} color="#4a9d6e" />}
+                                {item.publishStatus === 'error' && <Feather name="x-circle" size={16} color="#c9605f" />}
+                                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMain, flex: 1 }} numberOfLines={1}>{item.title}</Text>
+                              </View>
+                              <View style={styles.chipRow}>
+                                <TouchableOpacity style={[styles.chip, item.assignTo === 'all' && { backgroundColor: gold + '18', borderColor: gold }]} onPress={() => updateBulkItem(item.id, { assignTo: 'all' })} activeOpacity={0.75}>
+                                  <Feather name="users" size={12} color={item.assignTo === 'all' ? gold : colors.textMuted} />
+                                  <Text style={[styles.chipText, item.assignTo === 'all' && { color: gold }]}>All students</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.chip, item.assignTo === 'specific' && { backgroundColor: gold + '18', borderColor: gold }]} onPress={() => updateBulkItem(item.id, { assignTo: 'specific' })} activeOpacity={0.75}>
+                                  <Feather name="user" size={12} color={item.assignTo === 'specific' ? gold : colors.textMuted} />
+                                  <Text style={[styles.chipText, item.assignTo === 'specific' && { color: gold }]}>Specific student</Text>
+                                </TouchableOpacity>
+                              </View>
+                              {item.assignTo === 'specific' && (
+                                <View style={{ gap: 4 }}>
+                                  {students.filter(s => { const normG = (g?: string) => (g ?? '').toLowerCase().replace(/grade/g, '').replace(/\s+/g, '').trim(); return !item.grade || normG(s.grade) === normG(item.grade); }).slice(0, 6).map(s => (
+                                    <TouchableOpacity key={s.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 8, backgroundColor: item.selectedStudentId === s.id ? gold + '18' : 'transparent', borderWidth: 1, borderColor: item.selectedStudentId === s.id ? gold : colors.borderColor }} onPress={() => updateBulkItem(item.id, { selectedStudentId: s.id })} activeOpacity={0.75}>
+                                      <Feather name="user" size={12} color={item.selectedStudentId === s.id ? gold : colors.textMuted} />
+                                      <Text style={{ fontSize: 12, color: item.selectedStudentId === s.id ? gold : colors.textMain }}>{s.name}</Text>
+                                    </TouchableOpacity>
+                                  ))}
+                                </View>
+                              )}
+                              {item.publishStatus === 'error' && <Text style={{ fontSize: 11, color: '#c9605f' }}>{item.publishError}</Text>}
+                            </View>
+                          ))}
+
+                          {bulkItems.filter(it => it.quizStatus === 'done').every(it => it.publishStatus === 'idle') && (
+                            <TouchableOpacity style={styles.submitBtn} onPress={publishAllBulkItems} activeOpacity={0.85}>
+                              <Text style={styles.submitBtnText}>Publish All ({bulkItems.filter(it => it.quizStatus === 'done').length})</Text>
+                            </TouchableOpacity>
+                          )}
+
+                          {bulkItems.filter(it => it.quizStatus === 'done').length > 0 && bulkItems.filter(it => it.quizStatus === 'done').every(it => it.publishStatus === 'done' || it.publishStatus === 'error') && (
+                            <TouchableOpacity style={styles.submitBtn} onPress={() => { setShowModal(false); resetForm(); }} activeOpacity={0.85}>
+                              <Text style={styles.submitBtnText}>Done — {bulkItems.filter(it => it.publishStatus === 'done').length}/{bulkItems.filter(it => it.quizStatus === 'done').length} published</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      )}
                     </View>
                   )}
 
@@ -2614,8 +3305,17 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     </View>
                   )}
 
-                  {/* ── COMMON FIELDS (shown in both modes) ── */}
-                  {createMode !== 'choose' && (<>
+                  {/* ── COMMON FIELDS (shown in 'ai' and 'upload' modes only) ──
+                      'bulk' mode has NO business here — it publishes each
+                      worksheet with its OWN independently-extracted subject/
+                      grade/title, there's no single shared field for "which
+                      worksheet" these would even apply to. This block used to
+                      render for every mode except 'choose' (including 'bulk'),
+                      so these single-worksheet fields showed up underneath the
+                      per-file Bulk Upload list with no indication of which of
+                      the 3 files they belonged to — because they didn't belong
+                      to any of them. */}
+                  {(createMode === 'ai' || createMode === 'upload') && (<>
                   {(createMode === 'ai' || uploadStep === 3) && (<>
                   <Text style={styles.fieldLabel}>Title *{createMode === 'upload' && docFiles.length > 0 && title.trim() ? <Text style={{ fontSize: 10, color: colors.accentGreen, fontWeight: '600' }}> · auto-filled</Text> : null}</Text>
                   <TextInput
@@ -3410,6 +4110,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                               const params = new URLSearchParams();
                               if (subject) params.set('subject', subject);
                               if (grade) params.set('grade', grade);
+                              if (user?.id) params.set('teacherId', user.id);
                               const res = await fetch(`${SERVER_URL}/quiz/list?${params.toString()}`);
                               const d = await res.json();
                               setSavedQuizzes(d.quizzes || []);

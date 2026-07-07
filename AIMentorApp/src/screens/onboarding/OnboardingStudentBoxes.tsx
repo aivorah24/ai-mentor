@@ -5,7 +5,7 @@
  * Everything is visible and editable at once; "Complete Setup" saves
  * the profile and finishes onboarding.
  */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
   StyleSheet, Platform, Modal,
@@ -57,16 +57,16 @@ export default function OnboardingStudentBoxes() {
 
   // Form state
   const [fullName, setFullName] = useState(user?.name || '');
-  const [dob, setDob] = useState('');
-  const [gender, setGender] = useState('');
+  const [dob, setDob] = useState((user as any)?.dob || '');
+  const [gender, setGender] = useState((user as any)?.gender || '');
   const [curriculum, setCurriculum] = useState((user as any)?.curriculum || '');
   const [school, setSchool] = useState((user as any)?.school || '');
   const [city, setCity] = useState((user as any)?.location || '');
   const [stateProv, setStateProv] = useState((user as any)?.state || '');
   const [country, setCountry] = useState((user as any)?.country || 'India');
   const [grade, setGrade] = useState((user as any)?.grade || '');
-  const [avatarStyle, setAvatarStyle] = useState('default');
-  const [learningStyle, setLearningStyle] = useState('');
+  const [avatarStyle, setAvatarStyle] = useState((user as any)?.avatarStyle || 'default');
+  const [learningStyle, setLearningStyle] = useState((user as any)?.learningStyle || '');
 
   // ── Per-card completion ────────────────────────────
   const aboutYouDone = fullName.trim().length >= 2 && getAge(dob) !== null && getAge(dob)! >= 14;
@@ -78,6 +78,57 @@ export default function OnboardingStudentBoxes() {
   const requiredDone = aboutYouDone && curriculumDone && schoolGradeDone;
   const doneCount = [aboutYouDone, curriculumDone, schoolGradeDone, avatarDone, learningStyleDone].filter(Boolean).length;
   const completionPct = Math.round((doneCount / 5) * 100);
+
+  // Web: trap the browser Back button (#171 — this screen previously had no back-button
+  // handling at all, so pressing browser Back silently signed the student out with no
+  // confirmation). Routes to the same "Return to home page?" dialog as the in-page Back button.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    window.history.pushState(null, '', window.location.href);
+    const onPop = () => {
+      window.history.pushState(null, '', window.location.href);
+      setShowLeaveConfirm(true);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  // Saves whatever fields are filled in so far WITHOUT marking onboarding complete —
+  // used by the "Save & Exit" leave-confirm path so partial progress isn't lost just
+  // because the student hasn't finished every required field yet.
+  async function saveProgress() {
+    try {
+      const email = user?.email || '';
+      await fetch(`${SERVER_URL}/user/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email, role: 'student',
+          name: fullName.trim() || undefined,
+          school: school || undefined,
+          location: city || undefined,
+          grade: grade.trim() || undefined,
+          curriculum: curriculum.trim() || undefined,
+          state: stateProv || undefined,
+          country: country || undefined,
+        }),
+      });
+      await fetch(`${SERVER_URL}/user/preferences`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email, name: fullName.trim() || undefined, role: 'student',
+          grade: grade.trim() || undefined, curriculum: curriculum.trim() || undefined,
+          school: school || undefined, location: city || undefined,
+          state: stateProv || undefined, country: country || undefined,
+          avatarStyle, learningStyle: learningStyle || undefined, gender: gender || undefined,
+          dob: dob || undefined,
+        }),
+      }).catch(() => {});
+    } catch (e) {
+      console.error('[saveProgress] failed:', e);
+    }
+  }
 
   const underAge = dob.length >= 10 && getAge(dob) !== null && getAge(dob)! < 14;
 
@@ -134,6 +185,7 @@ export default function OnboardingStudentBoxes() {
           avatarStyle,
           learningStyle: learningStyle || undefined,
           gender: gender || undefined,
+          dob: dob || undefined,
         }),
       }).catch(() => {});
 
@@ -143,6 +195,11 @@ export default function OnboardingStudentBoxes() {
         location: city,
         onboardingComplete: true,
         avatarStyle,
+        learningStyle: learningStyle || undefined,
+        gender: gender || undefined,
+        dob: dob || undefined,
+        state: stateProv || undefined,
+        country: country || undefined,
         grade: saved.grade,
         curriculum: saved.curriculum,
       } as any);
@@ -172,6 +229,9 @@ export default function OnboardingStudentBoxes() {
             </TouchableOpacity>
             <View style={styles.logoMark}><Feather name="zap" size={14} color="#fff" /></View>
             <Text style={styles.logoTxt}>Aivorah</Text>
+            <View style={[styles.roleBadge, styles.roleBadgeStudent]}>
+              <Text style={[styles.roleBadgeText, styles.roleBadgeTextStudent]}>Student</Text>
+            </View>
           </View>
           <View style={styles.completionRow}>
             <Text style={styles.completionLbl}>Profile Completion</Text>
@@ -182,6 +242,11 @@ export default function OnboardingStudentBoxes() {
         </View>
 
         <View style={styles.greetWrap}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <View style={{ backgroundColor: TEAL + '18', borderColor: TEAL + '40', borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 }}>
+              <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' }}>Student Onboarding</Text>
+            </View>
+          </View>
           <Text style={styles.greetMain}>Nice — let's personalise your learning experience</Text>
           <Text style={styles.greetSub}>Fill in each box to help us tailor stories, examples and explanations just for you.</Text>
         </View>
@@ -418,22 +483,32 @@ export default function OnboardingStudentBoxes() {
             </View>
             <Text style={styles.confirmTitle}>Return to the home page?</Text>
             <Text style={styles.confirmBody}>
-              You'll be signed out and taken back to the Aivorah home page. Any details you
-              haven't saved on this page won't be kept.
+              You'll be signed out and taken back to the Aivorah home page. We can save what
+              you've entered so far so it's still here next time you sign in.
             </Text>
             <TouchableOpacity
               style={styles.confirmPrimary}
               activeOpacity={0.85}
-              onPress={() => { setShowLeaveConfirm(false); logout(); }}
+              disabled={saving}
+              onPress={async () => { setSaving(true); await saveProgress(); setSaving(false); setShowLeaveConfirm(false); logout(); }}
             >
-              <Text style={styles.confirmPrimaryTxt}>Sign out & go to home page</Text>
+              <Text style={styles.confirmPrimaryTxt}>{saving ? 'Saving...' : 'Save & go to home page'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.confirmSecondary}
               activeOpacity={0.7}
-              onPress={() => setShowLeaveConfirm(false)}
+              disabled={saving}
+              onPress={() => { setShowLeaveConfirm(false); logout(); }}
             >
-              <Text style={styles.confirmSecondaryTxt}>Stay here</Text>
+              <Text style={styles.confirmSecondaryTxt}>Leave without saving</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              disabled={saving}
+              onPress={() => setShowLeaveConfirm(false)}
+              style={{ marginTop: 4 }}
+            >
+              <Text style={[styles.confirmSecondaryTxt, { textDecorationLine: 'underline' }]}>Stay here</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -472,6 +547,27 @@ function useStyles(colors: any) {
     confirmSecondaryTxt: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
     logoMark: { width: 28, height: 28, borderRadius: 8, backgroundColor: TEAL, alignItems: 'center', justifyContent: 'center' },
     logoTxt: { fontSize: 16, fontWeight: '800', color: colors.textMain },
+    roleBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 2.5,
+      borderRadius: 12,
+      borderWidth: 1,
+      alignSelf: 'center',
+      marginLeft: 4,
+    },
+    roleBadgeStudent: {
+      backgroundColor: TEAL + '18',
+      borderColor: TEAL + '40',
+    },
+    roleBadgeText: {
+      fontSize: 9,
+      fontWeight: '800',
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+    },
+    roleBadgeTextStudent: {
+      color: TEAL,
+    },
     completionRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     completionLbl: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
     completionRing: {

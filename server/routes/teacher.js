@@ -28,12 +28,16 @@ function generateSecurePassword() {
   return chars.join('');
 }
 
-function generateStudentLoginId(name) {
-  const slug = String(name || 'student')
-    .trim().toLowerCase()
-    .replace(/[^a-z0-9]+/g, '.')
-    .replace(/^\.+|\.+$/g, '') || 'student';
-  return `${slug}.${Date.now()}${randomInt(1000, 9999)}@aivorah.student`;
+// Simple, typeable login IDs — s1, s2, s3, ... (global counter, no teacher
+// name attached) instead of a name + timestamp + random digits blob a student
+// can't reliably type. Collision-safe: checks the next free number.
+async function generateStudentLoginId() {
+  for (let n = 1; n < 100000; n++) {
+    const candidate = `s${n}@aivorah.student`;
+    const { data: existing } = await supabase.from('users').select('id').eq('email', candidate).maybeSingle();
+    if (!existing) return candidate;
+  }
+  return `s${Date.now()}@aivorah.student`;
 }
 
 // ── POST /teacher/students/init-auth ──────────────────────────────────────────
@@ -41,13 +45,13 @@ function generateStudentLoginId(name) {
 // Body: { name, email?, password? }
 router.post('/students/init-auth', async (req, res) => {
   try {
-    const { name, email, password: customPassword } = req.body || {};
+    const { name, email, password: customPassword, teacherEmail } = req.body || {};
     if (!name) return res.status(400).json({ error: 'name is required' });
 
     const emailProvided = Boolean(email && String(email).trim());
     const cleanEmail = emailProvided
       ? String(email).toLowerCase().trim()
-      : generateStudentLoginId(name);
+      : await generateStudentLoginId();
 
     // Check for duplicate
     const { data: existing } = await supabase.from('users').select('id').eq('email', cleanEmail).maybeSingle();
@@ -129,7 +133,11 @@ router.post('/:teacherEmail/students/link-created', async (req, res) => {
       { onConflict: 'user_email' }
     );
 
-    // Email credentials to teacher
+    // Email credentials to the teacher (always — they created the account and
+    // may need to hand it off) and, when the teacher entered the student's OWN
+    // real email address (not the auto-generated @aivorah.student placeholder
+    // used when the field was left blank), also send a copy directly to the
+    // student themselves so they don't have to wait on the teacher to relay it.
     await sendCredentialsEmail({
       to: cleanTeacherEmail,
       childName: toTitleCase(String(name).trim()),
@@ -137,6 +145,15 @@ router.post('/:teacherEmail/students/link-created', async (req, res) => {
       password: initialPassword || undefined,
       studentId: resolvedStudentId,
     });
+    if (!cleanEmail.endsWith('@aivorah.student') && cleanEmail !== cleanTeacherEmail) {
+      await sendCredentialsEmail({
+        to: cleanEmail,
+        childName: toTitleCase(String(name).trim()),
+        loginId: cleanEmail,
+        password: initialPassword || undefined,
+        studentId: resolvedStudentId,
+      }).catch(err => console.log('[teacher/link-created] student credentials email failed (non-fatal):', err.message));
+    }
 
     res.json({
       success: true,
@@ -323,7 +340,7 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
       const grade       = gradeIdx >= 0 && row[gradeIdx]?.trim() ? row[gradeIdx].trim() : defaultGrade;
       const curriculum  = curriculumIdx >= 0 && row[curriculumIdx]?.trim() ? row[curriculumIdx].trim() : defaultCurriculum;
       const school      = schoolIdx >= 0 ? (row[schoolIdx]?.trim() || '') : '';
-      const studentEmail = emailRaw ? emailRaw.toLowerCase() : generateStudentLoginId(cleanName);
+      const studentEmail = emailRaw ? emailRaw.toLowerCase() : await generateStudentLoginId();
 
       // Flag rows outside the grades/curricula this teacher actually teaches —
       // only proceed if the client already confirmed this exact row (after
@@ -387,8 +404,13 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_email' });
 
-        // Email credentials to teacher
+        // Email credentials to the teacher, and directly to the student too when a
+        // real email was given in the CSV (not the auto-generated placeholder).
         sendCredentialsEmail({ to: cleanTeacherEmail, childName: cleanName, loginId: studentEmail, password, studentId: resolvedStudentId });
+        if (!studentEmail.endsWith('@aivorah.student') && studentEmail !== cleanTeacherEmail) {
+          sendCredentialsEmail({ to: studentEmail, childName: cleanName, loginId: studentEmail, password, studentId: resolvedStudentId })
+            .catch(err => console.log('[teacher/bulk-import] student credentials email failed (non-fatal):', err.message));
+        }
 
         results.push({ name: cleanName, email: studentEmail, password, studentId: resolvedStudentId, grade, curriculum, status: 'created' });
       } catch (rowErr) {

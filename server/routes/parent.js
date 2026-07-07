@@ -28,13 +28,22 @@ function generateSecureChildPassword() {
   return chars.join('');
 }
 
-function generateChildLoginId(name) {
-  const slug = String(name || 'student')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '.')
-    .replace(/^\.+|\.+$/g, '') || 'student';
-  return `${slug}.${Date.now()}${randomInt(1000, 9999)}@aivorah.student`;
+async function generateChildLoginId(parentEmail) {
+  if (parentEmail) {
+    const localPart = parentEmail.split('@')[0].toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+    for (let n = 1; n < 100; n++) {
+      const candidate = `${localPart}_ch${n}@aivorah.student`;
+      const { data: existing } = await supabase.from('users').select('id').eq('email', candidate).maybeSingle();
+      if (!existing) return candidate;
+    }
+  }
+  for (let n = 1; n < 100000; n++) {
+    const candidate = `ch${n}@aivorah.student`;
+    const { data: existing } = await supabase.from('users').select('id').eq('email', candidate).maybeSingle();
+    if (!existing) return candidate;
+  }
+  // Extremely unlikely fallback if somehow 99999 are taken
+  return `ch${Date.now()}@aivorah.student`;
 }
 
 // ── POST /parent/children/init-auth ────────────────────────
@@ -42,13 +51,14 @@ function generateChildLoginId(name) {
 // This route handles both /parent/children/init-auth and legacy /parent/:email/children/init-auth
 router.post(['/children/init-auth', '/:parentEmail/children/init-auth'], async (req, res) => {
   try {
-    const { name, email, studentId, password: customPassword } = req.body || {};
+    const { name, email, studentId, password: customPassword, parentEmail: bodyParentEmail } = req.body || {};
     if (!name) return res.status(400).json({ error: 'name is required' });
 
+    const parentEmail = req.params.parentEmail || bodyParentEmail || '';
     const emailProvided = Boolean(email && String(email).trim());
     const cleanEmail = emailProvided
       ? String(email).toLowerCase().trim()
-      : generateChildLoginId(name);
+      : await generateChildLoginId(parentEmail);
 
     const resolvedStudentId = String(studentId || '').trim() || `STU-${Date.now()}-${randomInt(1000, 9999)}`;
 
@@ -181,7 +191,7 @@ router.get('/:parentEmail/children', async (req, res) => {
 router.post('/:parentEmail/children/link-created', async (req, res) => {
   try {
     const { parentEmail } = req.params;
-    const { firebaseUid, studentId, name, email, grade, curriculum, school = '', verificationRequired = false, age, initialPassword } = req.body || {};
+    const { firebaseUid, studentId, name, email, grade, curriculum, school = '', verificationRequired = false, age, initialPassword, otpVerified = false } = req.body || {};
 
     if (!firebaseUid || !name || !email || !grade || !curriculum) {
       return res.status(400).json({ error: 'firebaseUid, name, email, grade, curriculum are required' });
@@ -192,7 +202,10 @@ router.post('/:parentEmail/children/link-created', async (req, res) => {
     const cleanParentEmail = String(parentEmail).toLowerCase().trim();
     const resolvedStudentId = String(studentId || '').trim() || `STU-${Date.now()}`;
     const resolvedUserId = randomUUID();
-    const accountStatus = verificationRequired ? 'pending_verification' : 'active';
+
+    const isRealEmail = !cleanEmail.endsWith('@aivorah.student') && !otpVerified;
+    const actualVerificationRequired = isRealEmail || verificationRequired;
+    const accountStatus = actualVerificationRequired ? 'pending_verification' : 'active';
 
     // ── Duplicate child check ─────────────────────────────────────────────────
     // Prevent creating the same child (same name + grade) more than once under this parent
@@ -233,7 +246,7 @@ router.post('/:parentEmail/children/link-created', async (req, res) => {
         grade,
         curriculum,
         school: String(school || '').trim(),
-        onboarding_complete: !verificationRequired,
+        onboarding_complete: !actualVerificationRequired,
       }, { onConflict: 'id' });
     if (userUpsertErr) return res.status(500).json({ error: userUpsertErr.message });
 
@@ -257,8 +270,22 @@ router.post('/:parentEmail/children/link-created', async (req, res) => {
       studentId: resolvedStudentId,
     });
 
+    // When the parent supplied the child's OWN real email (not an auto-generated
+    // @aivorah.student placeholder), send the login credentials directly to that
+    // address too — previously only a bare verification link went there, so a
+    // child with their own email never actually received their login ID/password.
+    if (!cleanEmail.endsWith('@aivorah.student') && cleanEmail !== cleanParentEmail) {
+      sendCredentialsEmail({
+        to: cleanEmail,
+        childName: cleanName,
+        loginId: cleanEmail,
+        password: initialPassword || undefined,
+        studentId: resolvedStudentId,
+      }).catch(err => console.log('[parent/children] child credentials email failed (non-fatal):', err.message));
+    }
+
     // Send verification email to child's real Gmail (fire-and-forget)
-    if (verificationRequired) {
+    if (actualVerificationRequired) {
       const token = randomBytes(32).toString('hex');
       const expiry = Date.now() + 24 * 60 * 60 * 1000;
       const { data: existingPref } = await supabase
@@ -312,7 +339,7 @@ router.post('/:parentEmail/children/create-student', async (req, res) => {
     const emailProvided = Boolean(email && email.trim());
     const cleanEmail = emailProvided
       ? email.trim().toLowerCase()
-      : generateChildLoginId(name);
+      : await generateChildLoginId(parentEmail);
     const resolvedStudentId = String(studentId || '').trim() || `STU-${Date.now()}`;
     // Password is optional — default if not provided
     const hasPasswordInput = Boolean(password && password.trim());
@@ -670,11 +697,11 @@ router.post('/:parentEmail/children/:childId/resend-credentials', async (req, re
 });
 
 // ── PATCH /parent/:parentEmail/children/:childId ─────────
-// Edit a child's name, grade, curriculum, school
+// Edit a child's name, email, grade, curriculum, school
 router.patch('/:parentEmail/children/:childId', async (req, res) => {
   try {
     const { parentEmail, childId } = req.params;
-    const { name, grade, curriculum, school } = req.body;
+    const { name, email, grade, curriculum, school, otpVerified = false } = req.body;
 
     // Verify this child belongs to this parent
     const { data: link } = await supabase
@@ -685,11 +712,107 @@ router.patch('/:parentEmail/children/:childId', async (req, res) => {
       .maybeSingle();
     if (!link) return res.status(403).json({ error: 'Not authorised to edit this child.' });
 
+    const { data: childUser } = await supabase
+      .from('users')
+      .select('id, name, email, grade, curriculum, school')
+      .eq('id', childId)
+      .single();
+    if (!childUser) return res.status(404).json({ error: 'Child user not found.' });
+
     const patch = {};
     if (name)       patch.name       = name.trim();
     if (grade)      patch.grade      = grade;
     if (curriculum) patch.curriculum = curriculum;
     if (school !== undefined) patch.school = school;
+
+    let emailChanged = false;
+    let cleanEmail = '';
+    if (email && email.trim().toLowerCase() !== childUser.email.toLowerCase()) {
+      cleanEmail = email.trim().toLowerCase();
+      emailChanged = true;
+
+      // Check if email already registered to another user
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+      if (existingUser && existingUser.id !== childId) {
+        return res.status(409).json({ error: 'This email is already in use by another account.' });
+      }
+    }
+
+    if (emailChanged) {
+      // 1. Initialize Firebase Admin if not initialized
+      const admin = require('firebase-admin');
+      const path = require('path');
+      const fs = require('fs');
+      if (!admin.apps.length) {
+        let credential = null;
+        if (process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
+          credential = admin.credential.cert(JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_B64, 'base64').toString('utf8')));
+        } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+          credential = admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT));
+        } else {
+          const svcPath = path.join(__dirname, '../firebase-service-account.json');
+          if (fs.existsSync(svcPath)) credential = admin.credential.cert(require(svcPath));
+        }
+        if (credential) {
+          admin.initializeApp({ credential });
+        }
+      }
+
+      // 2. Update Firebase Auth user email
+      if (admin.apps.length) {
+        const { data: pref } = await supabase
+          .from('user_preferences')
+          .select('data')
+          .eq('user_email', childUser.email.toLowerCase())
+          .maybeSingle();
+        const firebaseUid = pref?.data?.firebaseUid;
+        try {
+          if (firebaseUid) {
+            await admin.auth().updateUser(firebaseUid, { email: cleanEmail });
+          } else {
+            const firebaseUser = await admin.auth().getUserByEmail(childUser.email);
+            await admin.auth().updateUser(firebaseUser.uid, { email: cleanEmail });
+          }
+        } catch (firebaseErr) {
+          console.warn('[PATCH /children/:childId] Firebase Auth email update failed/skipped:', firebaseErr.message);
+        }
+      }
+
+      // 3. Update primary key user_email in user_preferences table
+      await supabase
+        .from('user_preferences')
+        .update({ user_email: cleanEmail })
+        .eq('user_email', childUser.email.toLowerCase());
+
+      const isRealEmail = !cleanEmail.endsWith('@aivorah.student') && !otpVerified;
+      if (isRealEmail) {
+        // Send verification email to the new address
+        const token = randomBytes(32).toString('hex');
+        const expiry = Date.now() + 24 * 60 * 60 * 1000;
+        const { data: existingPref } = await supabase
+          .from('user_preferences').select('data').eq('user_email', cleanEmail).maybeSingle();
+        const currentData = existingPref?.data || {};
+        await supabase.from('user_preferences').upsert({
+          user_email: cleanEmail,
+          data: { ...currentData, verifyToken: token, verifyTokenExpiry: expiry, accountStatus: 'pending_verification' },
+        }, { onConflict: 'user_email' });
+
+        const serverBase = `${req.protocol}://${req.get('host')}`;
+        const appBase = req.headers.origin || 'http://localhost:8081';
+        const redirect = encodeURIComponent(appBase + '/verify-success');
+        const verifyUrl = `${serverBase}/user/verify/${token}?email=${encodeURIComponent(cleanEmail)}&redirect=${redirect}`;
+        sendVerificationEmail({ to: cleanEmail, name: (name || childUser.name).trim(), verifyUrl }).catch(() => {});
+
+        patch.onboarding_complete = false;
+      } else {
+        patch.onboarding_complete = true;
+      }
+      patch.email = cleanEmail;
+    }
 
     const { data, error } = await supabase
       .from('users')

@@ -341,6 +341,9 @@ export default function DashboardScreen({ navigation, route }: any) {
   useEffect(() => {
     (async () => {
       try {
+        const isGrade3 = studentGrade === 'Grade 3' || studentGrade === 'Class 3';
+        const useUnified = childOverride || isIBPYP || !isGrade3;
+
         // 1. Load cache instantly — no waiting
         const cached = await AsyncStorage.getItem(CACHE_KEY);
         if (cached) {
@@ -352,9 +355,9 @@ export default function DashboardScreen({ navigation, route }: any) {
         }
         // 2. Fetch fresh data silently in background
         let data: any;
-        if (childOverride || isIBPYP) {
+        if (useUnified) {
           // Use unified endpoint for all curricula when viewing a child's dashboard,
-          // and always for IB PYP
+          // for all IB PYP, and for CBSE Grade 1-12 (except Grade 3 which has hardcoded /ncert/chapters)
           const curricParam = encodeURIComponent(isIBPYP ? 'IB_PYP' : (childCurriculum ?? 'NCERT'));
           const gradeParam = encodeURIComponent(studentGrade);
           const res = await fetch(`${SERVER_URL}/curriculum?curriculum=${curricParam}&grade=${gradeParam}`);
@@ -376,7 +379,7 @@ export default function DashboardScreen({ navigation, route }: any) {
         setLoading(false);
       }
     })();
-  }, [user?.curriculum, user?.grade]);
+  }, [user?.curriculum, user?.grade, childOverride?.curriculum, childOverride?.grade]);
 
   useEffect(() => {
     if (!studentId || childOverride) return;

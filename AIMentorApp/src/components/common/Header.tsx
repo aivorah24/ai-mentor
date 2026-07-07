@@ -218,8 +218,27 @@ const [editingName, setEditingName] = useState(false);
             <Feather name="menu" size={20} color={colors.textMuted} />
           </TouchableOpacity>
         )}
-        <View>
-          <Text style={styles.title}>{title}</Text>
+        <View style={{ flexDirection: 'column' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <Text style={styles.title}>{title}</Text>
+            {user?.role && (
+              <View style={[
+                styles.roleBadge,
+                user.role === 'teacher' && styles.roleBadgeTeacher,
+                user.role === 'parent' && styles.roleBadgeParent,
+                user.role === 'student' && styles.roleBadgeStudent
+              ]}>
+                <Text style={[
+                  styles.roleBadgeText,
+                  user.role === 'teacher' && styles.roleBadgeTextTeacher,
+                  user.role === 'parent' && styles.roleBadgeTextParent,
+                  user.role === 'student' && styles.roleBadgeTextStudent
+                ]}>
+                  {user.role}
+                </Text>
+              </View>
+            )}
+          </View>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
       </View>
@@ -613,6 +632,40 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   title: { fontSize: 18, fontWeight: '700', color: c.textMain, letterSpacing: -0.3 },
   subtitle: { fontSize: 12, color: c.textMuted, marginTop: 1 },
+  roleBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignSelf: 'center',
+  },
+  roleBadgeTeacher: {
+    backgroundColor: c.accentYellow + '18',
+    borderColor: c.accentYellow + '40',
+  },
+  roleBadgeParent: {
+    backgroundColor: c.accentRed + '18',
+    borderColor: c.accentRed + '40',
+  },
+  roleBadgeStudent: {
+    backgroundColor: c.primary + '18',
+    borderColor: c.primary + '40',
+  },
+  roleBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  roleBadgeTextTeacher: {
+    color: c.accentYellow,
+  },
+  roleBadgeTextParent: {
+    color: c.accentRed,
+  },
+  roleBadgeTextStudent: {
+    color: c.primary,
+  },
   right: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   searchWrapper: {
     flexDirection: 'row', alignItems: 'center',

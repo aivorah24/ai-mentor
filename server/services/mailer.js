@@ -85,12 +85,9 @@ async function sendEmail({ to, subject, html, replyTo, attachments }, retries = 
 
 // ── Email functions (templates unchanged) ───────────────────────────────────
 
-async function sendCredentialsEmail({ to, childName, loginId, password, studentId }) {
+async function sendCredentialsEmail({ to, childName, loginId, password }) {
   if (!to) return;
   try {
-    const studentIdRow = studentId
-      ? `<tr><td style="padding:8px 0;color:#888;font-size:13px">Student ID</td><td style="padding:8px 0;font-family:monospace;font-size:14px;color:#1a1a1a">${studentId}</td></tr>`
-      : '';
     const passwordRow = password
       ? `<tr><td style="padding:8px 0;color:#888;font-size:13px">Password</td><td style="padding:8px 0;font-family:monospace;font-size:14px;color:#1a1a1a">${password}</td></tr>`
       : '';
@@ -113,14 +110,13 @@ async function sendCredentialsEmail({ to, childName, loginId, password, studentI
 
           <div style="background:#f5f3ff;border-radius:10px;padding:20px;margin:20px 0;border:1px solid #ddd6fe">
             <table style="width:100%;border-collapse:collapse">
-              ${studentIdRow}
               <tr><td style="padding:8px 0;color:#888;font-size:13px">Login ID</td><td style="padding:8px 0;font-family:monospace;font-size:14px;color:#1a1a1a">${loginId}</td></tr>
               ${passwordRow}
             </table>
           </div>
 
           <p style="font-size:13px;color:#666;line-height:1.6">
-            Your child can log in at <a href="https://aivorah.com" style="color:#7C3AED">aivorah.com</a>
+            Your child can log in at <a href="https://aivorah.ai" style="color:#7C3AED">aivorah.ai</a>
             using the <strong>Login ID</strong> and <strong>Password</strong> above.
             Select <em>Student</em> on the login screen.
           </p>
@@ -205,7 +201,7 @@ async function sendWelcomeEmail({ to, name, role }) {
           </div>
 
           <p style="font-size:13px;color:#666;line-height:1.6">
-            Visit <a href="https://aivorah.com" style="color:#7C3AED">aivorah.com</a> to continue setting up your account.
+            Visit <a href="https://aivorah.ai" style="color:#7C3AED">aivorah.ai</a> to continue setting up your account.
           </p>
 
           <p style="font-size:12px;color:#aaa;margin-top:32px;border-top:1px solid #eee;padding-top:16px">
