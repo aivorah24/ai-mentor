@@ -123,6 +123,14 @@ function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
       // to Landing with the login modal open so they can sign in and continue,
       // instead of dumping them on a dead-end Landing page.
       if (auth.currentUser) {
+        // This tab has a real, just-confirmed Firebase session (often a brand-new
+        // tab opened from the emailed link, e.g. Gmail opens links in a new tab —
+        // so it has no 'aivorah_auth_this_session' flag of its own). Without
+        // setting it here, the very next render of RootNavigator at '/' sees a
+        // logged-in user with onboardingComplete=false and no session flag, and
+        // the stale-session guard (App.tsx) signs them straight back out — which
+        // is exactly the reported "tap Continue → bounces to landing page" bug.
+        try { if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('aivorah_auth_this_session', '1'); } catch {}
         window.location.replace('/');
       } else {
         window.location.replace('/?signin=1');
@@ -539,11 +547,26 @@ function RootNavigator() {
   // sessionStorage 'aivorah_auth_this_session' is set only by an explicit
   // login/signup in this tab (survives F5, dies with the tab), so a genuine
   // signup flow still moves into onboarding normally.
+  //
+  // CRITICAL EXCLUSION: /verify-success is opened by clicking the emailed
+  // verification LINK — almost always in a brand-new tab, which shares the
+  // same Firebase auth session (via IndexedDB) but has no sessionStorage flag
+  // of its own. Without excluding this path, that fresh tab looks "stale" and
+  // calls logout() below — and because Firebase auth state syncs across tabs,
+  // that sign-out also kills the session in the ORIGINAL tab the user is
+  // still using, bouncing a genuine new signup back to the landing page and
+  // making a real second sign-in attempt look like it "auto signs out."
+  // Same reasoning applies to /reset-password (opened from an emailed link).
+  const isSpecialAuthLinkPath =
+    Platform.OS === 'web' &&
+    typeof window !== 'undefined' &&
+    (window.location.pathname.startsWith('/verify-success') || window.location.pathname.startsWith('/reset-password'));
   const staleIncompleteSession =
     Platform.OS === 'web' &&
     !loading && isAuthenticated &&
     user?.onboardingComplete === false &&
     !(user?.email?.endsWith('@demo.com') || user?.email?.endsWith('@test.ai')) &&
+    !isSpecialAuthLinkPath &&
     (typeof sessionStorage === 'undefined' || sessionStorage.getItem('aivorah_auth_this_session') !== '1');
 
   useEffect(() => {
