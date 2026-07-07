@@ -128,6 +128,47 @@ export default function TeacherSettingsScreen({ navigation }: any) {
     finally { setUploading(false); }
   }
 
+  // School + curriculum logo — uploaded once here, reused on every worksheet
+  // for this school/curriculum (not auto-detected per-PDF).
+  const [schoolLogoUrl, setSchoolLogoUrl] = useState<string | null>(null);
+  const [curriculumLogoUrl, setCurriculumLogoUrl] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState<'school' | 'curriculum' | null>(null);
+
+  useEffect(() => {
+    const school = user?.school, curriculum = (user as any)?.curriculum;
+    if (!school && !curriculum) return;
+    const params = new URLSearchParams();
+    if (school) params.set('school', school);
+    if (curriculum) params.set('curriculum', curriculum);
+    fetch(`${SERVER_URL}/branding/logos?${params.toString()}`)
+      .then(r => r.json())
+      .then(data => {
+        setSchoolLogoUrl(data.schoolLogoUrl || null);
+        setCurriculumLogoUrl(data.curriculumLogoUrl || null);
+      })
+      .catch(() => {});
+  }, [user?.school, (user as any)?.curriculum]);
+
+  async function handlePickLogo(kind: 'school' | 'curriculum') {
+    const name = kind === 'school' ? user?.school : (user as any)?.curriculum;
+    if (!name) { Alert.alert(`Set your ${kind} first`, `Add your ${kind} in Profile & Account before uploading its logo.`); return; }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Allow access to your photo library.'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.9, base64: true });
+    if (result.canceled || !result.assets?.[0]) return;
+    setUploadingLogo(kind);
+    try {
+      const res = await fetch(`${SERVER_URL}/branding/logo`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind, name, base64: result.assets[0].base64, mimeType: result.assets[0].mimeType ?? 'image/png' }),
+      });
+      const data = await res.json();
+      if (data.logoUrl) { kind === 'school' ? setSchoolLogoUrl(data.logoUrl) : setCurriculumLogoUrl(data.logoUrl); }
+      else Alert.alert('Upload failed', data.error || 'Could not upload logo.');
+    } catch { Alert.alert('Upload failed', 'Could not upload logo. Please try again.'); }
+    finally { setUploadingLogo(null); }
+  }
+
   // Teaching prefs
   const [autoGrading,       setAutoGrading]       = useState(true);
   const [shareProgress,     setShareProgress]     = useState(true);
@@ -455,6 +496,45 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                     </TouchableOpacity>
                   )}
                 </View>
+              </View>
+
+              {/* ── Branding (school + curriculum logo, reused on every worksheet) ── */}
+              <SectionHeader icon="image" label="Worksheet Branding" color={gold} styles={styles} />
+              <View style={styles.card}>
+                <View style={styles.fieldRow}>
+                  <TouchableOpacity onPress={() => handlePickLogo('school')} activeOpacity={0.85}
+                    style={{ width: 56, height: 56, borderRadius: 10, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {uploadingLogo === 'school' ? <ActivityIndicator size="small" color={gold} />
+                      : schoolLogoUrl ? <Image source={{ uri: schoolLogoUrl }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                      : <Feather name="upload" size={16} color={colors.textDim} />}
+                  </TouchableOpacity>
+                  <View style={{ flex: 1, marginLeft: spacing.md }}>
+                    <Text style={styles.fieldLabel}>School Logo</Text>
+                    <Text style={styles.fieldSub}>{user?.school || 'Set your school in Profile & Account first'}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.changeBtn} onPress={() => handlePickLogo('school')} activeOpacity={0.7}>
+                    <Text style={styles.changeBtnText}>{schoolLogoUrl ? 'Change' : 'Upload'}</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.fieldRow}>
+                  <TouchableOpacity onPress={() => handlePickLogo('curriculum')} activeOpacity={0.85}
+                    style={{ width: 56, height: 56, borderRadius: 10, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {uploadingLogo === 'curriculum' ? <ActivityIndicator size="small" color={gold} />
+                      : curriculumLogoUrl ? <Image source={{ uri: curriculumLogoUrl }} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                      : <Feather name="upload" size={16} color={colors.textDim} />}
+                  </TouchableOpacity>
+                  <View style={{ flex: 1, marginLeft: spacing.md }}>
+                    <Text style={styles.fieldLabel}>Curriculum Logo</Text>
+                    <Text style={styles.fieldSub}>{(user as any)?.curriculum || 'Set your curriculum in Profile & Account first'}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.changeBtn} onPress={() => handlePickLogo('curriculum')} activeOpacity={0.7}>
+                    <Text style={styles.changeBtnText}>{curriculumLogoUrl ? 'Change' : 'Upload'}</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={[styles.fieldSub, { marginTop: spacing.sm, fontStyle: 'italic' }]}>
+                  These two logos appear on every worksheet header for your school/curriculum.
+                </Text>
               </View>
 
               {/* ── Security ── */}

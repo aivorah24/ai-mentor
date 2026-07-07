@@ -216,7 +216,7 @@ router.post('/sync', async (req, res) => {
       school:             data.school,
       curriculum:         data.curriculum,
       location:           data.location,
-      phone:              data.phone ?? null,
+      phone:              data.phone ? decrypt(data.phone) : null,
       // Trust the DB column directly. NULL means not complete (new/migrated accounts).
       onboardingComplete: data.onboarding_complete === true,
       photoUrl:           data.photo_url ?? null,
@@ -274,7 +274,7 @@ router.patch('/profile', async (req, res) => {
     }
     if (school)     patch.school     = school.trim();
     if (location)   patch.location   = location;
-    if (phone)      patch.phone      = phone.trim();
+    if (phone)      patch.phone      = encrypt(phone.trim());
     // Store onboarding step for resume capability
     if (onboardingStep != null) patch.onboarding_step = onboardingStep;
 
@@ -320,7 +320,7 @@ router.patch('/profile', async (req, res) => {
 
     // Store parent children[] in preferences file
     if (children && Array.isArray(children)) {
-      await setPreferences(email, { children, ...(phone ? { phone } : {}), updatedAt: new Date().toISOString() });
+      await setPreferences(email, { children, ...(phone ? { phone: encrypt(phone) } : {}), updatedAt: new Date().toISOString() });
       // parent_children linking (by child_id) is handled separately via POST /parent/:email/children/create-student
     }
 
@@ -329,7 +329,7 @@ router.patch('/profile', async (req, res) => {
       const updates = { updatedAt: new Date().toISOString() };
       if (dob)    updates.dob    = dob;
       if (gender) updates.gender = gender;
-      if (phone)  updates.phone  = phone;
+      if (phone)  updates.phone  = encrypt(phone);
       await setPreferences(email, updates);
     }
 
@@ -410,7 +410,7 @@ router.patch('/profile', async (req, res) => {
       school:             data.school,
       curriculum:         data.curriculum,
       location:           data.location,
-      phone:              data.phone ?? null,
+      phone:              data.phone ? decrypt(data.phone) : null,
       onboardingComplete: data.onboarding_complete,
     });
   } catch (err) {
@@ -478,6 +478,7 @@ router.patch('/preferences', async (req, res) => {
       dob,
       mobile,
       phone,
+      mobileVerified,
       state,
       country,
     } = req.body ?? {};
@@ -519,7 +520,8 @@ router.patch('/preferences', async (req, res) => {
     if (state != null)   patch.state   = String(state);
     if (country != null) patch.country = String(country);
     const phoneVal = phone ?? mobile;
-    if (phoneVal != null) patch.phone = String(phoneVal);
+    if (phoneVal != null) patch.phone = encrypt(String(phoneVal));
+    if (mobileVerified != null) patch.mobileVerified = Boolean(mobileVerified);
     const { roles, activeRole } = req.body ?? {};
     if (Array.isArray(roles) && roles.length > 0) patch.roles = roles;
     if (activeRole != null) patch.activeRole = String(activeRole);
@@ -531,12 +533,13 @@ router.patch('/preferences', async (req, res) => {
     const usersPatch = {};
     if (grade != null) usersPatch.grade = String(grade);
     if (location != null) usersPatch.location = String(location);
-    if (phoneVal != null) usersPatch.phone = String(phoneVal);
+    if (phoneVal != null) usersPatch.phone = encrypt(String(phoneVal));
     if (Object.keys(usersPatch).length > 0) {
       await supabase.from('users').update(usersPatch).eq('email', email.toLowerCase().trim());
     }
 
     const saved = await getPreferences(email);
+    if (saved?.phone) saved.phone = decrypt(saved.phone);
     res.json({ ok: true, preference: saved });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -549,6 +552,7 @@ router.get('/preferences', async (req, res) => {
     const email = req.query.email ? String(req.query.email).toLowerCase().trim() : '';
     if (!email) return res.json({}); // don't expose all records
     const rec = await getPreferences(email);
+    if (rec?.phone) rec.phone = decrypt(rec.phone);
     res.json(rec ?? null);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -721,6 +725,45 @@ router.post('/email-otp/verify', async (req, res) => {
     res.json({ verified: true });
   } catch (err) {
     console.error('[email-otp/verify]', err.message);
+    res.status(500).json({ error: 'Verification failed. Please try again.' });
+  }
+});
+
+// ── Mobile-number OTP verification via Fast2SMS (India only — 10-digit
+// numbers). Mirrors the email-otp pattern above, same otpStore backing so
+// it works across multiple Cloud Run instances. ────────────────────────
+router.post('/mobile-otp/send', async (req, res) => {
+  try {
+    const digits = String(req.body?.mobile || '').replace(/\D/g, '').slice(-10);
+    if (digits.length !== 10) {
+      return res.status(400).json({ error: 'Enter a valid 10-digit mobile number.' });
+    }
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    await otpStore.setOtp(digits, 'mobile_verify', { otp });
+    const { sendMobileOtpSms } = require('../services/sms');
+    await sendMobileOtpSms({ to: digits, otp });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[mobile-otp/send]', err.message);
+    res.status(500).json({ error: 'Could not send the verification code. Please try again.' });
+  }
+});
+
+router.post('/mobile-otp/verify', async (req, res) => {
+  try {
+    const digits = String(req.body?.mobile || '').replace(/\D/g, '').slice(-10);
+    const otp = String(req.body?.otp || '').trim();
+    const stored = await otpStore.getOtp(digits, 'mobile_verify');
+    if (!stored) return res.status(400).json({ error: 'No code requested. Please send a code first.' });
+    if (Date.now() > stored.expiresAt) {
+      await otpStore.deleteOtp(digits, 'mobile_verify');
+      return res.status(400).json({ error: 'Code expired. Please request a new one.' });
+    }
+    if (stored.otp !== otp) return res.status(400).json({ error: 'Incorrect code. Please try again.' });
+    await otpStore.deleteOtp(digits, 'mobile_verify');
+    res.json({ verified: true });
+  } catch (err) {
+    console.error('[mobile-otp/verify]', err.message);
     res.status(500).json({ error: 'Verification failed. Please try again.' });
   }
 });

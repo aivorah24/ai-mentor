@@ -73,6 +73,7 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
   const parentEmail = user?.email || 'parent@demo.com';
 
   const [children, setChildren] = useState<any[]>([]);
+  const [childrenLoaded, setChildrenLoaded] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [activeFilter, setActiveFilter] = useState('All');
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -107,8 +108,17 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data) && data.length > 0) setChildren(data); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setChildrenLoaded(true));
   }, [parentEmail]));
+
+  // Without a linked child, fetchAssignments below never runs (it bails out
+  // early when `child` is undefined) — so loading must be resolved here
+  // instead, or a parent with zero linked children spins on "Loading..."
+  // forever instead of showing an empty/no-child state.
+  useEffect(() => {
+    if (childrenLoaded && children.length === 0) setLoading(false);
+  }, [childrenLoaded, children.length]);
 
   // Mark assignments as seen only when this screen is actually focused (viewed),
   // not on mount, and not during the post-refresh grace period — otherwise a page

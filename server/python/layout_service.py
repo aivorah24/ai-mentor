@@ -952,6 +952,106 @@ def detect_blanks():
     return jsonify({'pages': pages_out, 'timing_ms': round((time.time() - start) * 1000)})
 
 
+@app.route('/detect-logo', methods=['POST'])
+def detect_logo():
+    """
+    Best-effort school-logo detection for auto-populating branding on first
+    worksheet upload. Uses PyMuPDF to pull ACTUAL embedded raster image objects
+    from page 1 (not pixel/contour scanning like /extract-subfigures — a logo
+    is almost always a real embedded image in the PDF, so this is far more
+    reliable and can't misfire the way contour-based cropping can).
+
+    Filters candidates to ones shaped/positioned like a letterhead logo:
+    small, roughly square, near the top of the page. Picks the best match.
+    Never raises — always returns 200 with logoBase64: null if nothing
+    qualifies, so a failed/uncertain detection can never break ingestion.
+
+    Accepts: multipart file (field 'file') — must be a PDF.
+    Returns: { logoBase64, mimeType } or { logoBase64: null, reason }
+    """
+    try:
+        if 'file' not in request.files:
+            return jsonify({'logoBase64': None, 'reason': 'no file'}), 200
+        file_bytes = request.files['file'].read()
+        fname = (request.files['file'].filename or '').lower()
+        if not fname.endswith('.pdf'):
+            return jsonify({'logoBase64': None, 'reason': 'not a pdf'}), 200
+
+        doc = fitz.open(stream=file_bytes, filetype='pdf')
+        if doc.page_count == 0:
+            return jsonify({'logoBase64': None, 'reason': 'empty pdf'}), 200
+        page = doc[0]
+        page_w, page_h = page.rect.width, page.rect.height
+        page_area = page_w * page_h
+
+        candidates = []
+        for img in page.get_images(full=True):
+            xref = img[0]
+            try:
+                rects = page.get_image_rects(xref)
+                if not rects:
+                    continue
+                rect = rects[0]  # first placement on the page
+                w, h = rect.width, rect.height
+                if w <= 0 or h <= 0:
+                    continue
+                area_frac = (w * h) / page_area
+                aspect = w / h
+                top_frac = rect.y0 / page_h  # how far down the page it starts
+
+                # Logo-shaped: small, roughly square-to-slightly-rectangular,
+                # sitting in the top third of the page (typical letterhead position).
+                if area_frac > 0.10 or area_frac < 0.0005:
+                    continue
+                if aspect < 0.4 or aspect > 2.5:
+                    continue
+                if top_frac > 0.35:
+                    continue
+
+                candidates.append({'xref': xref, 'area_frac': area_frac, 'top_frac': top_frac})
+            except Exception:
+                continue  # a single bad image object must never abort the whole request
+
+        if not candidates:
+            return jsonify({'logoBase64': None, 'reason': 'no logo-shaped image found'}), 200
+
+        # Prefer the topmost candidate; break ties by picking the smaller (a
+        # small crest/emblem is more likely the logo than a large header banner).
+        candidates.sort(key=lambda c: (c['top_frac'], c['area_frac']))
+
+        import numpy as np
+        for cand in candidates:
+            try:
+                base_image = doc.extract_image(cand['xref'])
+                pil_img = Image.open(BytesIO(base_image['image'])).convert('RGBA')
+
+                # Reject QR codes / barcodes / stamps masquerading as logos: they're
+                # small, square, and near the top just like a real logo, but are
+                # essentially grayscale (near-zero difference between R/G/B channels),
+                # whereas real school/curriculum logos are almost always colored.
+                # Found this exact false-positive (a chapter QR code) while testing
+                # against real NCERT worksheets — this check is not optional.
+                rgb = np.array(pil_img.convert('RGB'))
+                colorfulness = float(np.mean(np.abs(rgb[:, :, 0].astype(int) - rgb[:, :, 1].astype(int)))
+                                      + np.mean(np.abs(rgb[:, :, 1].astype(int) - rgb[:, :, 2].astype(int)))
+                                      + np.mean(np.abs(rgb[:, :, 0].astype(int) - rgb[:, :, 2].astype(int))))
+                if colorfulness < 10:
+                    print(f'[layout] /detect-logo: rejected xref={cand["xref"]} (colorfulness={colorfulness:.1f} — likely QR/barcode, not a logo)')
+                    continue
+
+                out_buf = BytesIO()
+                pil_img.save(out_buf, format='PNG')
+                logo_b64 = base64.b64encode(out_buf.getvalue()).decode('ascii')
+                return jsonify({'logoBase64': logo_b64, 'mimeType': 'image/png'}), 200
+            except Exception:
+                continue  # a single bad candidate must never abort the whole request
+
+        return jsonify({'logoBase64': None, 'reason': 'all candidates failed the color/logo check'}), 200
+    except Exception as e:
+        print(f'[layout] /detect-logo failed (non-fatal): {e}')
+        return jsonify({'logoBase64': None, 'reason': str(e)}), 200
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     print(f'[layout] Aivorah Layout Detection Service')

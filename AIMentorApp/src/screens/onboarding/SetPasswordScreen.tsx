@@ -19,7 +19,7 @@ import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
-const TEAL = '#BAA467';
+const TEAL = '#5F8A86';
 
 export default function SetPasswordScreen() {
   const { user, updateUser, logout } = useAuth();

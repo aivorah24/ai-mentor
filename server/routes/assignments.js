@@ -1,10 +1,14 @@
-﻿const express    = require('express');
+const express    = require('express');
 const router     = express.Router();
 const supabase   = require('../services/supabase');
 const { sendPush } = require('../services/push');
 const Groq       = require('groq-sdk');
 const cloudinary = require('cloudinary').v2;
-const { renderQuizHTML } = require('./quiz');
+const { renderQuizHTML, fetchBranding, docxToPdf, callQwenVision, callPixtralVision } = require('./quiz');
+const { publishJob } = require('../services/jobQueue');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -213,8 +217,12 @@ router.get('/', async (req, res) => {
     (subs || []).forEach(s => { submissionsMap[s.assignment_id] = s; });
   }
 
+  // Fetched once per request (not per assignment) so the school/curriculum logo
+  // shows on every regenerated worksheet — see normalise()'s live HTML regen.
+  const branding = await fetchBranding(studentSchool, studentCurriculum);
+
   const result = filtered.map(a => {
-    const norm = normaliseWithSubmission(a, submissionsMap[a.id]);
+    const norm = normaliseWithSubmission(a, submissionsMap[a.id], branding);
     // For class-wide assignments: flag if student joined after due date (can't be overdue)
     if (!a.student_id && studentJoinedAt && a.due_date) {
       norm.joinedAfterDue = new Date(studentJoinedAt) > new Date(a.due_date);
@@ -1050,30 +1058,39 @@ Respond ONLY as valid JSON: {"questions":[{"id":"q1","question":"...","type":"mc
   }
 });
 
-// ── POST /assignments/extract-questions ───────────────────────────
-// Extract ALL content from worksheet images or PDF.
-// Body: { fileBase64, mimeType } for single file
-//   OR  { files: [{ base64, mimeType }] } for multiple files
-
-router.post('/extract-questions', async (req, res) => {
-  const { fileBase64, mimeType, files } = req.body;
-
-  // Build array of files to process
-  let fileList = [];
-  if (Array.isArray(files) && files.length > 0) {
-    fileList = files.map(f => ({ base64: f.base64, mime: f.mimeType || 'image/jpeg' }));
-  } else if (fileBase64) {
-    fileList = [{ base64: fileBase64, mime: mimeType || 'image/jpeg' }];
+// ── POST /assignments/docx-to-pdf ──────────────────────────────────
+// Converts an uploaded Word .docx to PDF so the client can generate the same
+// per-page image thumbnails it already does for real PDF uploads — .docx
+// files were previously pushed through unconverted, so the upload preview
+// showed a generic file icon instead of an actual page thumbnail.
+// Body: { fileBase64 } → { pdfBase64 }
+router.post('/docx-to-pdf', async (req, res) => {
+  try {
+    const { fileBase64 } = req.body;
+    if (!fileBase64) return res.status(400).json({ error: 'fileBase64 required' });
+    const buffer = Buffer.from(fileBase64, 'base64');
+    const pdfBuf = await docxToPdf(buffer);
+    res.json({ pdfBase64: pdfBuf.toString('base64') });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-  if (fileList.length === 0) return res.status(400).json({ error: 'No files provided' });
+});
 
+// ── extractWorksheetContent(fileList) ──────────────────────────────
+// The actual extraction logic, shared by BOTH the synchronous endpoint below
+// (what today's demo relies on — untouched) and the queued path used when a
+// teacher uploads several worksheets at once (see /extract-questions-async).
+// Pulled out into its own function purely so it can be reused as a job
+// handler — the extraction logic itself is unchanged.
+async function extractWorksheetContent(fileList) {
   const extractPrompt = `You are analyzing a page from a school worksheet. Extract ALL educational content visible on this page.
 Return ONLY a valid JSON object with these fields:
 {
-  “title”: “worksheet title, MHLE number, or activity name”,
-  “chapter”: “chapter, unit, topic, or activity name (e.g. 'MHLE 22', 'My Farm Story', 'Addition and Subtraction')”,
-  “subject”: “subject (e.g. Language, Mathematics, Science)”,
-  “grade”: “grade or PYP level if visible”,
+  “title”: “this worksheet's SPECIFIC topic/activity name — see TITLE RULES below”,
+  “chapter”: “chapter, unit, or topic code (e.g. 'MHLE 22', 'THLE-2', 'Addition and Subtraction') — see TITLE RULES below”,
+  “subject”: “the subject CATEGORY — see SUBJECT RULES below”,
+  “language”: “ONLY for language/literacy worksheets: the SPECIFIC language (e.g. 'Telugu', 'Hindi', 'English') — see SUBJECT RULES below. Empty string for non-language subjects.”,
+  “grade”: “grade or PYP level, ONLY if an explicit label like 'Grade 3', 'Class 4', 'PYP 2' is visible on the page — otherwise empty string”,
   “purpose”: “the purpose or objective stated on the worksheet”,
   “learningOutcomes”: [“learning outcomes exactly as written”],
   “taskDescription”: “full task/activity instructions including ALL task descriptions on this page”,
@@ -1091,6 +1108,19 @@ Return ONLY a valid JSON object with these fields:
   “feedbackSection”: “any feedback/feedforward/reflection instructions”
 }
 
+SUBJECT RULES — this decides which grade/subject library a student ever sees this worksheet in, so guessing wrong is worse than leaving it blank:
+- “subject” must be one of these categories: Mathematics, Science, English, Social Studies, Language Acquisition, Visual Arts, ICT, Physical Education. Pick based on the ACTUAL SCRIPT/LANGUAGE the riddles/questions/instructions are written in — never from a generic printed label.
+- IMPORTANT: Worksheets often print a generic self-description like "Subject Focus: Language" or "Language Arts" as a category header — this is NOT the same as the worksheet actually being written in a non-English language. That label alone does NOT mean "Language Acquisition". You must look at the actual words on the page: if the riddles/tasks/instructions are written in English script, the subject is "English", full stop — regardless of any generic "Language" header printed on the sheet.
+- Only classify as “Language Acquisition” when the actual body text (the riddles, sentences, vocabulary words being tested) is genuinely written in a non-English script (Telugu, Devanagari/Hindi, etc.) — set “language” to that SPECIFIC language, identified purely from the script actually printed. Do not guess the language from a series name, filename, or a generic subject header — read the actual text characters.
+- If the worksheet's actual sentences/questions are in English (even if it's an English worksheet ABOUT vocabulary, economics terms, spelling, etc.), set “subject” to “English” and leave “language” empty.
+- If the subject truly cannot be determined from what's on the page, return an empty string for “subject” rather than a guess.
+
+TITLE RULES — a repeating series/workbook name (e.g. a program banner like "Vocabulary Building" printed identically across many different worksheets) is NOT this worksheet's title. Do not confuse the two:
+- Prefer a specific unit/chapter CODE if one is printed (e.g. "MHLE 22", "THLE-2") — these uniquely identify this exact worksheet.
+- Otherwise, derive the title from what this specific page actually asks the student to do (e.g. "Match the correct word to the pictures" → title could be "Match Word to Picture"), not from a large/bold banner alone.
+- Large/bold text at the top is a title CANDIDATE only — verify it's specific to this page's content before using it. If it reads like a series/program/book name rather than this page's specific topic, prefer the chapter code or the task content instead.
+- “chapter” = the topic/MHLE number/unit. Put in BOTH “title” AND “chapter” only when they're genuinely the same thing.
+
 QUESTION FORMAT RULES:
 - Each question must be an object with “text”, “needsImage”, “imageYStart”, and “imageYEnd”.
 - “needsImage”: set to true ONLY if the question requires a visual (diagram, shape, table, math calculation layout, picture, choice board) to answer. Pure text/word problems do NOT need images.
@@ -1103,9 +1133,7 @@ GENERAL RULES:
 - Extract EVERY task on this page. Each task is a separate question.
 - Word problems should be extracted in full.
 - Include enrichment tasks and reflection questions.
-- LOOK for large/bold text at the top — that is usually the TITLE.
-- “chapter” = the topic/MHLE number/unit. Put in BOTH “title” AND “chapter”.
-- “learningOutcomes” are goals at the top. “successCriteria” are self-check items.
+- “learningOutcomes” are goals at the top. “successCriteria” are self-check items — extract these ONLY if explicitly printed, never inferred.
 - Do NOT invent questions. Only extract what is actually written on the page.
 - If a page has no questions, set “questions” to empty array.
 - Read EVERY piece of text carefully.`;
@@ -1113,7 +1141,7 @@ GENERAL RULES:
   try {
     // Merge results from all pages
     const merged = {
-      title: '', chapter: '', subject: '', grade: '', purpose: '',
+      title: '', chapter: '', subject: '', language: '', grade: '', purpose: '',
       learningOutcomes: [], taskDescription: '',
       questions: [], wordBank: [], successCriteria: [], stamps: [], feedbackSection: '',
       hasVisualContent: false, visualDescriptions: [],
@@ -1149,19 +1177,51 @@ GENERAL RULES:
         });
         extracted = JSON.parse(completion.choices[0].message.content);
       } else {
-        const completion = await groq.chat.completions.create({
-          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-          temperature: 0,
-          max_tokens: 2000,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'text', text: extractPrompt },
-              { type: 'image_url', image_url: { url: `data:${file.mime};base64,${file.base64}` } },
-            ],
-          }],
-        });
-        let raw = completion.choices[0].message.content.replace(/```json|```/g, '').trim();
+        // Same 4-engine fallback chain as quiz generation (Gemini → Qwen → Pixtral →
+        // Groq) — each provider has its own separate daily quota, so relying on a
+        // single one meant any one provider's quota (hit for real during heavy
+        // same-day demo-prep testing) left the whole form blank. Whichever engine
+        // actually has quota left picks up the request.
+        let raw;
+        const imgBuf = Buffer.from(file.base64, 'base64');
+        try {
+          if (!genAI) throw new Error('GEMINI_API_KEY not configured');
+          const model = genAI.getGenerativeModel({
+            model: 'gemini-2.5-flash',
+            generationConfig: { responseMimeType: 'application/json' }
+          });
+          const result = await model.generateContent([
+            { inlineData: { mimeType: file.mime || 'image/jpeg', data: file.base64 } },
+            { text: extractPrompt },
+          ]);
+          raw = result.response.text();
+        } catch (geminiErr) {
+          console.log('[extract] Gemini failed, trying Qwen:', geminiErr.message);
+          try {
+            raw = await callQwenVision([{ buffer: imgBuf, mime: file.mime }], { customPrompt: extractPrompt });
+          } catch (qwenErr) {
+            console.log('[extract] Qwen failed, trying Pixtral:', qwenErr.message);
+            try {
+              raw = await callPixtralVision([{ buffer: imgBuf, mime: file.mime }], { customPrompt: extractPrompt });
+            } catch (pixtralErr) {
+              console.log('[extract] Pixtral failed, trying Groq:', pixtralErr.message);
+              const completion = await groq.chat.completions.create({
+                model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+                temperature: 0,
+                max_tokens: 2000,
+                messages: [{
+                  role: 'user',
+                  content: [
+                    { type: 'text', text: extractPrompt },
+                    { type: 'image_url', image_url: { url: `data:${file.mime};base64,${file.base64}` } },
+                  ],
+                }],
+              });
+              raw = completion.choices[0].message.content;
+            }
+          }
+        }
+        raw = (raw || '').replace(/```json|```/g, '').trim();
         console.log('[extract] Raw AI response:', raw.slice(0, 500));
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
         if (jsonMatch) raw = jsonMatch[0];
@@ -1176,6 +1236,7 @@ GENERAL RULES:
       if (extracted.title && !merged.title) merged.title = extracted.title;
       if (extracted.chapter && !merged.chapter) merged.chapter = extracted.chapter;
       if (extracted.subject && !merged.subject) merged.subject = extracted.subject;
+      if (extracted.language && !merged.language) merged.language = extracted.language;
       if (extracted.grade && !merged.grade) merged.grade = extracted.grade;
       if (extracted.purpose && !merged.purpose) merged.purpose = extracted.purpose;
       if (extracted.taskDescription && !merged.taskDescription) merged.taskDescription = extracted.taskDescription;
@@ -1244,10 +1305,60 @@ GENERAL RULES:
 
     // Note: Auto-crop removed. Teachers manually select reference images via drag-to-crop UI.
 
-    console.log('[extract] Final merged:', JSON.stringify({ title: merged.title, chapter: merged.chapter, successCriteria: merged.successCriteria.length, wordBank: merged.wordBank.length }));
-    res.json(merged);
+    console.log('[extract] Final merged:', JSON.stringify({ title: merged.title, chapter: merged.chapter, subject: merged.subject, language: merged.language, grade: merged.grade, successCriteria: merged.successCriteria.length, wordBank: merged.wordBank.length }));
+    return merged;
   } catch (e) {
     console.error('extract-questions error:', e.message);
+    throw e;
+  }
+}
+
+// ── POST /assignments/extract-questions ───────────────────────────
+// Extract ALL content from worksheet images or PDF, SYNCHRONOUSLY — the
+// teacher's browser waits for the direct response. This is the path today's
+// demo relies on; left completely unchanged in behavior.
+// Body: { fileBase64, mimeType } for single file
+//   OR  { files: [{ base64, mimeType }] } for multiple files
+router.post('/extract-questions', async (req, res) => {
+  const { fileBase64, mimeType, files } = req.body;
+
+  let fileList = [];
+  if (Array.isArray(files) && files.length > 0) {
+    fileList = files.map(f => ({ base64: f.base64, mime: f.mimeType || 'image/jpeg' }));
+  } else if (fileBase64) {
+    fileList = [{ base64: fileBase64, mime: mimeType || 'image/jpeg' }];
+  }
+  if (fileList.length === 0) return res.status(400).json({ error: 'No files provided' });
+
+  try {
+    const merged = await extractWorksheetContent(fileList);
+    res.json(merged);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── POST /assignments/extract-questions-async ──────────────────────
+// Same extraction, but QUEUED (via the swappable db/Kafka job queue) instead
+// of blocking the request — for when a teacher uploads several worksheets
+// back-to-back (or several teachers upload at once) and shouldn't have their
+// browser tab hang waiting on an AI call that might be rate-limited or slow.
+// Returns { jobId } immediately; poll GET /jobs/:id for status + result.
+router.post('/extract-questions-async', async (req, res) => {
+  const { fileBase64, mimeType, files } = req.body;
+
+  let fileList = [];
+  if (Array.isArray(files) && files.length > 0) {
+    fileList = files.map(f => ({ base64: f.base64, mime: f.mimeType || 'image/jpeg' }));
+  } else if (fileBase64) {
+    fileList = [{ base64: fileBase64, mime: mimeType || 'image/jpeg' }];
+  }
+  if (fileList.length === 0) return res.status(400).json({ error: 'No files provided' });
+
+  try {
+    const { jobId } = await publishJob('worksheet_extract', { fileList });
+    res.json({ jobId });
+  } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
@@ -1501,8 +1612,27 @@ router.post('/', async (req, res) => {
         const { collections } = await qdrantClient.getCollections();
         if (!collections.some(c => c.name === QUIZ_COLLECTION)) {
           await qdrantClient.createCollection(QUIZ_COLLECTION, { vectors: { size: 384, distance: 'Cosine' } });
-          for (const f of ['subject', 'grade', 'curriculum', 'school_id', 'status']) {
+          for (const f of ['subject', 'grade', 'curriculum', 'school_id', 'status', 'school', 'teacher_name']) {
             await qdrantClient.createPayloadIndex(QUIZ_COLLECTION, { field_name: f, field_schema: 'keyword' });
+          }
+        }
+
+        let school = '';
+        let curriculum = finalCurriculum || '';
+        let grade = finalGrade || '';
+        let teacherName = '';
+
+        if (creatorId) {
+          const { data: teacherUser } = await supabase
+            .from('users')
+            .select('name, school, curriculum, grade')
+            .eq('id', creatorId)
+            .maybeSingle();
+          if (teacherUser) {
+            school = teacherUser.school || '';
+            curriculum = curriculum || teacherUser.curriculum || '';
+            grade = grade || teacherUser.grade || '';
+            teacherName = teacherUser.name || '';
           }
         }
 
@@ -1510,7 +1640,7 @@ router.post('/', async (req, res) => {
         const searchText = [
           title || '',
           subject || '',
-          finalGrade || '',
+          grade || '',
           ...(tasks).flatMap(t => (t.questions || []).map(q => q.question || '')),
         ].join(' ').substring(0, 1000);
 
@@ -1523,10 +1653,12 @@ router.post('/', async (req, res) => {
             payload: {
               title: title || '',
               subject: subject || '',
-              grade: finalGrade || '',
-              curriculum: finalCurriculum || '',
-              school_id: '',
+              grade: grade || '',
+              curriculum: curriculum || '',
+              school_id: school || '',
               teacher_id: creatorId || '',
+              teacher_name: teacherName || '',
+              school: school || '',
               source_file: interactiveQuiz?.sourceFile || '',
               status: 'published',
               created_at: new Date().toISOString(),
@@ -1638,7 +1770,7 @@ router.get('/:id/submissions', async (req, res) => {
     // Get the assignment itself (for questions)
     const { data: assignment } = await supabase
       .from('assignments')
-      .select('id, title, type, questions, quiz_questions, grade, curriculum, student_id')
+      .select('id, title, type, questions, quiz_questions, interactive_quiz, grade, curriculum, student_id')
       .eq('id', id)
       .single();
 
@@ -1676,6 +1808,17 @@ router.get('/:id/submissions', async (req, res) => {
       totalLinked = count || subs.length;
     }
 
+    // Best-effort question-text backfill for OLDER submissions captured before the
+    // client-side quiz template tagged each answer with its actual question text
+    // (they were stored with question: "") — recover it from the assignment's own
+    // interactive_quiz task list, matched by order. New submissions already carry
+    // real question text and don't need this.
+    const quizTasks = Array.isArray(assignment.interactive_quiz?.tasks) ? assignment.interactive_quiz.tasks : [];
+    function taskLabel(t) {
+      if (!t) return '';
+      return t.question || t.prompt || t.title || t.stepLabel || (t.type ? `(${t.type})` : '');
+    }
+
     const submissions = subs.map(s => {
       // Parse submission_text for per-question data
       let perQuestion = [];
@@ -1685,6 +1828,7 @@ router.get('/:id/submissions', async (req, res) => {
         perQuestion = parsed.perQuestion || [];
         studentAnswers = parsed.answers || [];
       } catch {}
+      perQuestion = perQuestion.map((q, i) => (!q.question && quizTasks[i]) ? { ...q, question: taskLabel(quizTasks[i]) } : q);
       return {
         studentId:      s.student_id,
         studentName:    userMap[s.student_id]?.name || 'Unknown',
@@ -2929,8 +3073,8 @@ async function resolveUserId(id) {
 }
 
 // normaliseWithSubmission merges per-student submission data onto assignment row
-function normaliseWithSubmission(a, sub) {
-  const base = normalise(a);
+function normaliseWithSubmission(a, sub, branding) {
+  const base = normalise(a, branding);
   if (sub) {
     base.status      = sub.status      || 'completed';
     base.score       = sub.score       ?? null;
@@ -2940,7 +3084,7 @@ function normaliseWithSubmission(a, sub) {
   return base;
 }
 
-function normalise(a) {
+function normalise(a, branding) {
   return {
     id:          a.id,
     title:       a.title,
@@ -2970,7 +3114,22 @@ function normalise(a) {
     learnerProfile:   a.learner_profile || null,
     atlSkill:         a.atl_skill || null,
     keyConcept:       a.key_concept || null,
-    interactiveQuizHtml: a.interactive_quiz_html || null,
+    // Regenerate the interactive quiz HTML live from the stored quiz JSON on every
+    // read, rather than trusting the frozen `interactive_quiz_html` snapshot taken
+    // at creation time. Otherwise every template fix (e.g. the missing Submit
+    // button, or a newly-added school/curriculum logo) only ever applies to
+    // assignments created AFTER the fix — every existing assignment stays stuck
+    // on whatever HTML happened to be baked in when it was made.
+    interactiveQuizHtml: (() => {
+      if (a.interactive_quiz && a.interactive_quiz.tasks) {
+        try {
+          return renderQuizHTML(JSON.parse(JSON.stringify(a.interactive_quiz)), branding || {});
+        } catch (e) {
+          console.log('[assignments] live quiz HTML regen failed, falling back to stored snapshot:', e.message);
+        }
+      }
+      return a.interactive_quiz_html || null;
+    })(),
   };
 }
 
@@ -3060,4 +3219,5 @@ router.post('/validate-fill-blank', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.extractWorksheetContent = extractWorksheetContent;
 

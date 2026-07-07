@@ -72,7 +72,7 @@ export default function ChallengesScreen({ navigation, route }: any) {
   // same pattern as TopicLessonScreen (flush whole minutes, not "screen was open").
   const challengeSessionStartRef = React.useRef<number>(0);
   const trackedChallengeMinutesRef = React.useRef(0);
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
 
   const [activeTab, setActiveTab] = useState(initialTab === 'assigned' ? 'Assigned' : 'Available');
   const [challenges, setChallenges] = useState<Challenge[]>([]);
@@ -139,7 +139,10 @@ export default function ChallengesScreen({ navigation, route }: any) {
     return () => clearInterval(interval);
   }, [fetchChallenges]);
 
-  useFocusEffect(useCallback(() => { fetchChallenges(); }, [fetchChallenges]));
+  useFocusEffect(useCallback(() => {
+    refreshProfile().catch(() => {});
+    fetchChallenges();
+  }, [fetchChallenges, refreshProfile]));
 
   // Deep-link open: when arriving from a notification or the Schedule (both pass
   // highlightId), open the matching challenge the instant it's available — opens

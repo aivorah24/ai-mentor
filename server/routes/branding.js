@@ -1,0 +1,71 @@
+const express    = require('express');
+const router     = express.Router();
+const cloudinary = require('cloudinary').v2;
+const supabase   = require('../services/supabase');
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// One school logo + one curriculum logo, uploaded once and reused on every
+// worksheet for that school/curriculum — not auto-detected per-PDF (too
+// fuzzy/error-prone, same risk class as the layout-crop bug).
+
+// ── POST /branding/logo ──────────────────────────────────────
+// Body: { kind: 'school' | 'curriculum', name, base64, mimeType }
+router.post('/logo', async (req, res) => {
+  try {
+    const { kind, name, base64, mimeType = 'image/png' } = req.body;
+    if (kind !== 'school' && kind !== 'curriculum') return res.status(400).json({ error: 'kind must be "school" or "curriculum"' });
+    if (!name)   return res.status(400).json({ error: 'name required' });
+    if (!base64) return res.status(400).json({ error: 'base64 image required' });
+
+    const dataUri = `data:${mimeType};base64,${base64}`;
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder:         'aivorah/branding',
+      public_id:      `${kind}_${name}`.replace(/[^a-z0-9_]/gi, '_'),
+      overwrite:      true,
+      transformation: [{ width: 300, height: 300, crop: 'fit' }],
+    });
+
+    const logoUrl = result.secure_url;
+    const { error } = await supabase.from('branding_logos').upsert({
+      kind, name, logo_url: logoUrl, updated_at: new Date().toISOString(),
+    }, { onConflict: 'kind,name' });
+    if (error) return res.status(500).json({ error: error.message });
+
+    res.json({ logoUrl });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /branding/logos?school=&curriculum= ──────────────────
+// Returns whichever logos exist for the given school/curriculum names.
+router.get('/logos', async (req, res) => {
+  try {
+    const school     = String(req.query.school || '').trim();
+    const curriculum = String(req.query.curriculum || '').trim();
+
+    const names = [];
+    if (school)     names.push({ kind: 'school', name: school });
+    if (curriculum) names.push({ kind: 'curriculum', name: curriculum });
+    if (names.length === 0) return res.json({ schoolLogoUrl: null, curriculumLogoUrl: null });
+
+    const { data } = await supabase
+      .from('branding_logos')
+      .select('kind, name, logo_url')
+      .in('kind', [...new Set(names.map(n => n.kind))]);
+
+    const schoolLogoUrl     = (data || []).find(r => r.kind === 'school' && r.name === school)?.logo_url || null;
+    const curriculumLogoUrl = (data || []).find(r => r.kind === 'curriculum' && r.name === curriculum)?.logo_url || null;
+
+    res.json({ schoolLogoUrl, curriculumLogoUrl });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
