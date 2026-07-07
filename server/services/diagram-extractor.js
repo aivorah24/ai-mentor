@@ -780,6 +780,14 @@ async function extractDiagramsFromImage(imageBuffer, quizId, options = {}) {
   return result;
 }
 
+function compareCoordinates(a, b) {
+  const yDiff = a.bbox.y - b.bbox.y;
+  if (Math.abs(yDiff) < 35) {
+    return a.bbox.x - b.bbox.x;
+  }
+  return yDiff;
+}
+
 // ── Smart diagram-to-question matching ──────────────────────────────────────
 /**
  * Matches ML-detected figures to quiz questions using:
@@ -807,7 +815,7 @@ function matchDiagramsToQuestions(extractionResult, quiz) {
     figuresByPage[pg].push(d);
   }
   for (const pg of Object.keys(figuresByPage)) {
-    figuresByPage[pg].sort((a, b) => a.bbox.y - b.bbox.y || a.bbox.x - b.bbox.x);
+    figuresByPage[pg].sort(compareCoordinates);
   }
 
   // Step 2.5: Auto-correct sourcePage when LLM assigns all tasks to page 1
@@ -864,7 +872,7 @@ function matchDiagramsToQuestions(extractionResult, quiz) {
         // order). This is deterministic and mirrors the physical layout, unlike the
         // position-label greedy below, which ties when several questions share the same
         // label (e.g. three pictures all marked "middle-left") and then picks arbitrarily.
-        const byY = [...available].sort((a, b) => (a.bbox.y - b.bbox.y) || (a.bbox.x - b.bbox.x));
+        const byY = [...available].sort(compareCoordinates);
         (task.questions || []).forEach((q, i) => {
           q.imageUrl = byY[i].imageUrl;
           q.diagramBbox = byY[i].bbox;
@@ -978,7 +986,7 @@ function matchDiagramsToQuestions(extractionResult, quiz) {
     // greedy tie-break then shuffles them; order-pairing is deterministic and mirrors
     // the physical layout when counts line up 1:1.
     if (unmatched.length === allImgQuestions.length) {
-      const byYOrder = [...unmatched].sort((a, b) => (a.bbox.y - b.bbox.y) || (a.bbox.x - b.bbox.x));
+      const byYOrder = [...unmatched].sort(compareCoordinates);
       allImgQuestions.forEach((q, i) => {
         q.imageUrl = byYOrder[i].imageUrl;
         q.diagramBbox = byYOrder[i].bbox;

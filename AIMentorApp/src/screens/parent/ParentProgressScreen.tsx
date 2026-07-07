@@ -76,6 +76,7 @@ export default function ParentProgressScreen({ navigation, route }: any) {
   const parentEmail = user?.email || 'parent@demo.com';
 
   const [children, setChildren] = useState<any[]>([]);
+  const [childrenLoaded, setChildrenLoaded] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [stats, setStats] = useState<any>(null);
   const [weekly, setWeekly] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
@@ -98,8 +99,17 @@ export default function ParentProgressScreen({ navigation, route }: any) {
             if (idx >= 0) setSelectedIdx(idx);
           }
         }
-      }).catch(() => {});
+      }).catch(() => {})
+      .finally(() => setChildrenLoaded(true));
   }, [parentEmail, route?.params?.childId]);
+
+  // Without a linked child, fetchData below never runs (refresh() bails out
+  // early when `child` is undefined) — so loading must be resolved here
+  // instead, or a parent with zero linked children spins on "Loading..."
+  // forever instead of showing an empty/no-child state.
+  useEffect(() => {
+    if (childrenLoaded && children.length === 0) setLoading(false);
+  }, [childrenLoaded, children.length]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;

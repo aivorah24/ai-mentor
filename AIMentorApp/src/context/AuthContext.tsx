@@ -42,6 +42,10 @@ export interface User {
   learningStyle?: string;
   interests?: string[];
   bio?: string;
+  dob?: string;
+  gender?: string;
+  state?: string;
+  country?: string;
   accountStatus?: string;
   isPro?: boolean;            // premium subscription — controlled by admin in DB
   mustChangePassword?: boolean; // true for auto-generated student accounts until they set their own password
@@ -145,6 +149,10 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User> & { _s
           children: Array.isArray(pref.children) && pref.children.length > 0 ? pref.children : undefined,
           roles: Array.isArray(pref.roles) && pref.roles.length > 0 ? pref.roles : undefined,
           activeRole: pref.activeRole || undefined,
+          dob: pref.dob || undefined,
+          gender: pref.gender || undefined,
+          state: pref.state || undefined,
+          country: pref.country || undefined,
         });
       }
     }

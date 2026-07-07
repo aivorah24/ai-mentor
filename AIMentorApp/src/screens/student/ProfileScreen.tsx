@@ -173,6 +173,13 @@ export default function ProfileScreen({ navigation }: any) {
 
             {/* Tags */}
             <View style={styles.heroTags}>
+              {/* Role badge — always visible so it's unmistakable which profile
+                  (student/parent/teacher) is being viewed, not just discoverable
+                  by clicking into a settings popup. */}
+              <View style={[styles.tag, { backgroundColor: colors.accentGreen + '22', borderColor: colors.accentGreen + '55' }]}>
+                <Feather name="user" size={10} color={colors.accentGreen} />
+                <Text style={[styles.tagText, { color: colors.accentGreen }]}>Student</Text>
+              </View>
               <View style={[styles.tag, { backgroundColor: colors.accentYellow + '22', borderColor: colors.accentYellow + '55' }]}>
                 <Feather name="book-open" size={10} color={colors.accentYellow} />
                 <Text style={[styles.tagText, { color: colors.accentYellow }]}>{user?.grade || 'Grade 3'}</Text>

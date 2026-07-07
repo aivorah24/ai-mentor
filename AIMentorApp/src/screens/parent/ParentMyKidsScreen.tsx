@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  ActivityIndicator, RefreshControl, Modal, TextInput, Alert, Platform,
+  ActivityIndicator, RefreshControl, Modal, TextInput, Alert, Platform, Share,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -187,8 +187,11 @@ export default function ParentMyKidsScreen({ navigation }: any) {
   // Create new student
   const [newName,       setNewName]       = useState('');
   const [newEmail,      setNewEmail]      = useState('');
-  const [newGrade,      setNewGrade]      = useState('Grade 3');
-  const [newCurriculum, setNewCurriculum] = useState('IB PYP');
+  // No default curriculum/grade — the parent must explicitly choose both,
+  // rather than silently creating an account under a preselected value they
+  // never actually picked (e.g. IB PYP / Grade 3 for a CBSE Grade 8 child).
+  const [newGrade,      setNewGrade]      = useState('');
+  const [newCurriculum, setNewCurriculum] = useState('');
   const [newSchool,     setNewSchool]     = useState('');
   const [creating,      setCreating]      = useState(false);
   const [createError,   setCreateError]   = useState('');
@@ -226,7 +229,13 @@ export default function ParentMyKidsScreen({ navigation }: any) {
   // Edit child modal
   const [editChild,      setEditChild]      = useState<any>(null);
   const [editName,       setEditName]       = useState('');
+  const [editEmail,      setEditEmail]      = useState('');
   const [editGrade,      setEditGrade]      = useState('Grade 3');
+  const [showOtpInput,   setShowOtpInput]   = useState(false);
+  const [otpCode,        setOtpCode]        = useState('');
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otpSentEmail,   setOtpSentEmail]   = useState('');
+  const [otpPurpose,     setOtpPurpose]     = useState<'create' | 'edit'>('edit');
   const [editCurriculum, setEditCurriculum] = useState('IB PYP');
   const [editSchool,     setEditSchool]     = useState('');
   const [saving,         setSaving]         = useState(false);
@@ -248,6 +257,23 @@ export default function ParentMyKidsScreen({ navigation }: any) {
     }
     setCopiedField(field);
     setTimeout(() => setCopiedField(''), 1500);
+  }
+
+  // Lets a parent send a child's Login ID to another app (WhatsApp, SMS, email
+  // client, etc.) — never includes the password, since that's deliberately kept
+  // out of the UI and sent only via email for security.
+  async function shareCredentials(childName: string, loginId: string) {
+    const message = `${childName}'s Aivorah login ID: ${loginId}\n(Password was sent to your email separately.)`;
+    if (Platform.OS === 'web') {
+      const nav: any = typeof navigator !== 'undefined' ? navigator : null;
+      if (nav?.share) {
+        try { await nav.share({ text: message }); return; } catch { /* user cancelled or unsupported — fall through */ }
+      }
+      copyToClipboard(message, 'share');
+      Alert.alert('Copied', 'Sharing is not available in this browser — the login details were copied instead, so you can paste them anywhere.');
+      return;
+    }
+    try { await Share.share({ message }); } catch { /* user cancelled */ }
   }
 
   async function fetchChildCreds(child: any) {
@@ -306,8 +332,8 @@ export default function ParentMyKidsScreen({ navigation }: any) {
 
   function openModal(tab: 'create' | 'link' = 'create') {
     setModalTab(tab);
-    setNewName(''); setNewEmail(''); setNewGrade('Grade 3');
-    setNewCurriculum('IB PYP'); setNewSchool(''); setCreateError('');
+    setNewName(''); setNewEmail(''); setNewGrade('');
+    setNewCurriculum(''); setNewSchool(''); setCreateError('');
     setChildEmail(''); setLinkError('');
     setShowModal(true);
   }
@@ -378,8 +404,10 @@ export default function ParentMyKidsScreen({ navigation }: any) {
   // Refresh immediately whenever the screen regains focus.
   useFocusEffect(useCallback(() => { fetchChildren(); }, [fetchChildren]));
 
-  async function createStudent() {
+  async function createStudent(otpVerified: boolean = false) {
     if (!newName.trim()) { setCreateError('Child\'s name is required.'); return; }
+    if (!newCurriculum) { setCreateError('Please select a curriculum.'); return; }
+    if (!newGrade) { setCreateError('Please select a grade.'); return; }
     if (newEmail.trim() && !/^\S+@\S+\.\S+$/.test(newEmail.trim())) {
       setCreateError('Please enter a valid child email address.'); return;
     }
@@ -394,6 +422,7 @@ export default function ParentMyKidsScreen({ navigation }: any) {
             name: childName,
             email: newEmail.trim().toLowerCase() || undefined,
             studentId,
+            parentEmail,
           }) }
       );
       const init = await initRes.json().catch(() => ({}));
@@ -431,6 +460,7 @@ export default function ParentMyKidsScreen({ navigation }: any) {
             school: newSchool.trim(),
             verificationRequired: false,
             initialPassword: childPassword,
+            otpVerified,
           }) }
       );
       const data = await res.json();
@@ -464,25 +494,128 @@ export default function ParentMyKidsScreen({ navigation }: any) {
   function openEdit(child: any) {
     setEditChild(child);
     setEditName(child.name || '');
+    setEditEmail(child.email || '');
     setEditGrade(child.grade || 'Grade 3');
     setEditCurriculum(child.curriculum || 'IB PYP');
     setEditSchool(child.school || '');
     setEditError('');
   }
 
-  async function saveEdit() {
+  async function handleEditSubmit() {
     if (!editChild || !editName.trim()) { setEditError('Name is required.'); return; }
+    if (editEmail.trim() && !/^\S+@\S+\.\S+$/.test(editEmail.trim())) { setEditError('Please enter a valid email address.'); return; }
+    
+    const emailChanged = editEmail.trim().toLowerCase() !== editChild.email?.toLowerCase();
+    const isRealEmail = editEmail.trim() && !editEmail.trim().endsWith('@aivorah.student');
+
+    if (emailChanged && isRealEmail) {
+      setSaving(true); setEditError('');
+      try {
+        const res = await fetch(`${SERVER_URL}/user/email-otp/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: editEmail.trim().toLowerCase(), name: editName.trim() })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { setEditError(data.error || 'Failed to send OTP code.'); return; }
+        
+        setOtpSentEmail(editEmail.trim().toLowerCase());
+        setOtpPurpose('edit');
+        setOtpCode('');
+        setShowOtpInput(true);
+      } catch {
+        setEditError('Network error sending OTP. Please try again.');
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      saveEdit();
+    }
+  }
+
+  async function handleCreateSubmit() {
+    if (!newName.trim() || !newCurriculum || !newGrade) { setCreateError('Name, Grade and Curriculum are required.'); return; }
+    if (newEmail.trim() && !/^\S+@\S+\.\S+$/.test(newEmail.trim())) { setCreateError('Please enter a valid email address.'); return; }
+
+    const isRealEmail = newEmail.trim() && !newEmail.trim().endsWith('@aivorah.student');
+
+    if (isRealEmail) {
+      setCreating(true); setCreateError('');
+      try {
+        const res = await fetch(`${SERVER_URL}/user/email-otp/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: newEmail.trim().toLowerCase(), name: newName.trim() })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { setCreateError(data.error || 'Failed to send OTP code.'); return; }
+
+        setOtpSentEmail(newEmail.trim().toLowerCase());
+        setOtpPurpose('create');
+        setOtpCode('');
+        setShowOtpInput(true);
+      } catch {
+        setCreateError('Network error sending OTP. Please try again.');
+      } finally {
+        setCreating(false);
+      }
+    } else {
+      createStudent();
+    }
+  }
+
+  async function handleVerifyOtp() {
+    if (!otpCode.trim() || otpCode.trim().length !== 6) {
+      const setErr = otpPurpose === 'edit' ? setEditError : setCreateError;
+      setErr('Please enter a 6-digit code.');
+      return;
+    }
+    setIsVerifyingOtp(true);
+    if (otpPurpose === 'edit') setEditError(''); else setCreateError('');
+    try {
+      const res = await fetch(`${SERVER_URL}/user/email-otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: otpSentEmail, otp: otpCode.trim() })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const setErr = otpPurpose === 'edit' ? setEditError : setCreateError;
+        setErr(data.error || 'Invalid OTP code. Please try again.');
+        return;
+      }
+
+      // Verified! Now call the actual backend functions
+      if (otpPurpose === 'edit') {
+        await saveEdit(true);
+      } else {
+        await createStudent(true);
+      }
+      setShowOtpInput(false);
+      setOtpCode('');
+    } catch {
+      const setErr = otpPurpose === 'edit' ? setEditError : setCreateError;
+      setErr('Verification network error. Please try again.');
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  }
+
+  async function saveEdit(otpVerified: boolean = false) {
+    if (!editChild || !editName.trim()) { setEditError('Name is required.'); return; }
+    if (editEmail.trim() && !/^\S+@\S+\.\S+$/.test(editEmail.trim())) { setEditError('Please enter a valid email address.'); return; }
     setSaving(true); setEditError('');
     try {
       const res = await fetch(
         `${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children/${editChild.id}`,
         { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: editName.trim(), grade: editGrade, curriculum: editCurriculum, school: editSchool.trim() }) }
+          body: JSON.stringify({ name: editName.trim(), email: editEmail.trim().toLowerCase(), grade: editGrade, curriculum: editCurriculum, school: editSchool.trim(), otpVerified }) }
       );
       const data = await res.json();
       if (!res.ok) { setEditError(data.error || 'Could not update.'); return; }
       setChildren(prev => prev.map(c => c.id === editChild.id ? { ...c, ...data.child } : c));
       setEditChild(null);
+      fetchChildren();
     } catch { setEditError('Network error. Please try again.'); }
     finally { setSaving(false); }
   }
@@ -730,13 +863,13 @@ export default function ParentMyKidsScreen({ navigation }: any) {
       </Modal>
 
       {/* Add Child Modal */}
-      <Modal visible={showModal} transparent animationType="fade" onRequestClose={() => setShowModal(false)}>
+      <Modal visible={showModal} transparent animationType="fade" onRequestClose={() => { setShowModal(false); setShowOtpInput(false); setOtpCode(''); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             {/* Header */}
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Child Account</Text>
-              <TouchableOpacity onPress={() => setShowModal(false)}>
+              <TouchableOpacity onPress={() => { setShowModal(false); setShowOtpInput(false); setOtpCode(''); }}>
                 <Feather name="x" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
@@ -761,83 +894,131 @@ export default function ParentMyKidsScreen({ navigation }: any) {
 
             {/* ── CREATE NEW ── */}
             {modalTab === 'create' && (
-              <View style={{ gap: 10 }}>
-                <Text style={styles.modalDesc}>
-                  Create a student account for your child. Only name and grade are required.
-                </Text>
-
-                <TextInput style={styles.input} placeholder="Child's full name *" placeholderTextColor={colors.textMuted}
-                  value={newName} onChangeText={t => { setNewName(t); setCreateError(''); }} autoCapitalize="words" />
-
-                {/* Email — optional */}
-                <View>
-                  <TextInput style={styles.input} placeholder="Email address (optional)" placeholderTextColor={colors.textMuted}
-                    value={newEmail} onChangeText={t => { setNewEmail(t); setCreateError(''); }}
-                    keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
-                  <Text style={[styles.modalDesc, { marginTop: 3, fontSize: 11, opacity: 0.7 }]}>
-                    Leave blank — we'll auto-generate a login ID
+              showOtpInput && otpPurpose === 'create' ? (
+                <View style={{ gap: 15, paddingVertical: 10 }}>
+                  <Text style={styles.modalDesc}>
+                    We have sent a 6-digit OTP verification code to <Text style={{ fontWeight: '700' }}>{otpSentEmail}</Text> to verify this child account email.
                   </Text>
+                  <TextInput
+                    style={[styles.input, { textAlign: 'center', fontSize: 20, letterSpacing: 5 }]}
+                    placeholder="000000"
+                    placeholderTextColor={colors.textMuted}
+                    maxLength={6}
+                    keyboardType="number-pad"
+                    value={otpCode}
+                    onChangeText={setOtpCode}
+                  />
+                  {createError ? (
+                    <View style={styles.errorRow}>
+                      <Feather name="alert-circle" size={13} color={colors.accentRed} />
+                      <Text style={[styles.errorText, { color: colors.accentRed }]}>{createError}</Text>
+                    </View>
+                  ) : null}
+                  <TouchableOpacity
+                    style={[styles.linkBtn, isVerifyingOtp && { opacity: 0.6 }]}
+                    onPress={handleVerifyOtp}
+                    disabled={isVerifyingOtp}
+                    activeOpacity={0.8}
+                  >
+                    {isVerifyingOtp ? (
+                      <ActivityIndicator color="white" size="small" />
+                    ) : (
+                      <Text style={styles.linkBtnText}>Verify & Create Account</Text>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.linkBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.textMuted }]}
+                    onPress={() => { setShowOtpInput(false); setOtpCode(''); setCreateError(''); }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.linkBtnText, { color: colors.textMuted }]}>Go Back</Text>
+                  </TouchableOpacity>
                 </View>
+              ) : (
+                <View style={{ gap: 10 }}>
+                  <Text style={styles.modalDesc}>
+                    Create a student account for your child. Only name and grade are required.
+                  </Text>
 
-                {/* Password — optional */}
-                <Text style={[styles.modalDesc, { marginTop: -4, fontSize: 11, opacity: 0.8 }]}>
-                  Aivorah generates the child password securely. Real email accounts must be verified before login.
-                </Text>
+                  <TextInput style={styles.input} placeholder="Child's full name *" placeholderTextColor={colors.textMuted}
+                    value={newName} onChangeText={t => { setNewName(t); setCreateError(''); }} autoCapitalize="words" />
 
-                <View style={styles.rowInputs}>
-                  {/* Grade picker */}
-                  <View style={[styles.input, styles.pickerWrap, { flex: 1 }]}>
-                    <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 4 }}>Curriculum</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                      {CURRICULA.map(c => (
-                        <TouchableOpacity key={c} onPress={() => { setNewCurriculum(c); setNewGrade(getGradesForCurriculum(c)[0]); }} activeOpacity={0.8}
-                          style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
-                            backgroundColor: newCurriculum === c ? colors.accentYellow + '20' : colors.bgDark,
-                            borderWidth: 1, borderColor: newCurriculum === c ? colors.accentYellow : colors.accentYellow + '25' }}>
-                          <Text style={{ fontSize: 12, color: newCurriculum === c ? colors.accentYellow : colors.textMuted, fontWeight: newCurriculum === c ? '700' : '400' }}>{c}</Text>
-                        </TouchableOpacity>
-                      ))}
+                  {/* Email — optional */}
+                  <View>
+                    <TextInput style={styles.input} placeholder="Email address (optional)" placeholderTextColor={colors.textMuted}
+                      value={newEmail} onChangeText={t => { setNewEmail(t); setCreateError(''); }}
+                      keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
+                    <Text style={[styles.modalDesc, { marginTop: 3, fontSize: 11, opacity: 0.7 }]}>
+                      Leave blank — we'll auto-generate a login ID
+                    </Text>
+                  </View>
+
+                  {/* Password — optional */}
+                  <Text style={[styles.modalDesc, { marginTop: -4, fontSize: 11, opacity: 0.8 }]}>
+                    Aivorah generates the child password securely. Real email accounts must be verified before login.
+                  </Text>
+
+                  <View style={styles.rowInputs}>
+                    {/* Grade picker */}
+                    <View style={[styles.input, styles.pickerWrap, { flex: 1 }]}>
+                      <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 4 }}>Curriculum</Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                        {CURRICULA.map(c => (
+                          <TouchableOpacity key={c} onPress={() => {
+                            setNewCurriculum(c);
+                            if (!getGradesForCurriculum(c).includes(newGrade)) setNewGrade('');
+                          }} activeOpacity={0.8}
+                            style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
+                              backgroundColor: newCurriculum === c ? colors.accentYellow + '20' : colors.bgDark,
+                              borderWidth: 1, borderColor: newCurriculum === c ? colors.accentYellow : colors.accentYellow + '25' }}>
+                            <Text style={{ fontSize: 12, color: newCurriculum === c ? colors.accentYellow : colors.textMuted, fontWeight: newCurriculum === c ? '700' : '400' }}>{c}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
                     </View>
                   </View>
-                </View>
 
-                <View style={styles.rowInputs}>
-                  {/* Grade picker — grades depend on the selected curriculum (same as onboarding) */}
-                  <View style={[styles.input, styles.pickerWrap, { flex: 1 }]}>
-                    <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 4 }}>Grade</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                      {getGradesForCurriculum(newCurriculum).map(g => (
-                        <TouchableOpacity key={g} onPress={() => setNewGrade(g)} activeOpacity={0.8}
-                          style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
-                            backgroundColor: newGrade === g ? colors.accentYellow + '20' : colors.bgDark,
-                            borderWidth: 1, borderColor: newGrade === g ? colors.accentYellow : colors.accentYellow + '25' }}>
-                          <Text style={{ fontSize: 12, color: newGrade === g ? colors.accentYellow : colors.textMuted, fontWeight: newGrade === g ? '700' : '400' }}>{g}</Text>
-                        </TouchableOpacity>
-                      ))}
+                  <View style={styles.rowInputs}>
+                    <View style={[styles.input, styles.pickerWrap, { flex: 1 }]}>
+                      <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 4 }}>Grade</Text>
+                      {newCurriculum ? (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                          {getGradesForCurriculum(newCurriculum).map(g => (
+                            <TouchableOpacity key={g} onPress={() => setNewGrade(g)} activeOpacity={0.8}
+                              style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
+                                backgroundColor: newGrade === g ? colors.accentYellow + '20' : colors.bgDark,
+                                borderWidth: 1, borderColor: newGrade === g ? colors.accentYellow : colors.accentYellow + '25' }}>
+                              <Text style={{ fontSize: 12, color: newGrade === g ? colors.accentYellow : colors.textMuted, fontWeight: newGrade === g ? '700' : '400' }}>{g}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      ) : (
+                        <Text style={{ fontSize: 12, color: colors.textMuted, fontStyle: 'italic' }}>Select a curriculum first</Text>
+                      )}
                     </View>
                   </View>
+
+                  <TextInput style={styles.input} placeholder="School name (optional)" placeholderTextColor={colors.textMuted}
+                    value={newSchool} onChangeText={setNewSchool} autoCapitalize="words" />
+
+                  {createError ? (
+                    <View style={styles.errorRow}>
+                      <Feather name="alert-circle" size={13} color={colors.accentRed} />
+                      <Text style={[styles.errorText, { color: colors.accentRed }]}>{createError}</Text>
+                    </View>
+                  ) : null}
+
+                  <TouchableOpacity
+                    style={[styles.linkBtn, (!newName.trim() || !newCurriculum || !newGrade || creating) && { opacity: 0.5 }]}
+                    onPress={handleCreateSubmit}
+                    disabled={!newName.trim() || !newCurriculum || !newGrade || creating}
+                    activeOpacity={0.8}>
+                    {creating
+                      ? <ActivityIndicator color="white" size="small" />
+                      : <><Feather name="user-plus" size={15} color="#fff" /><Text style={styles.linkBtnText}>Create Student Account</Text></>}
+                  </TouchableOpacity>
                 </View>
-
-                <TextInput style={styles.input} placeholder="School name (optional)" placeholderTextColor={colors.textMuted}
-                  value={newSchool} onChangeText={setNewSchool} autoCapitalize="words" />
-
-                {createError ? (
-                  <View style={styles.errorRow}>
-                    <Feather name="alert-circle" size={13} color={colors.accentRed} />
-                    <Text style={[styles.errorText, { color: colors.accentRed }]}>{createError}</Text>
-                  </View>
-                ) : null}
-
-                <TouchableOpacity
-                  style={[styles.linkBtn, (!newName.trim() || creating) && { opacity: 0.5 }]}
-                  onPress={createStudent}
-                  disabled={!newName.trim() || creating}
-                  activeOpacity={0.8}>
-                  {creating
-                    ? <ActivityIndicator color="white" size="small" />
-                    : <><Feather name="user-plus" size={15} color="#fff" /><Text style={styles.linkBtnText}>Create Student Account</Text></>}
-                </TouchableOpacity>
-              </View>
+              )
             )}
 
             {/* ── LINK EXISTING ── */}
@@ -910,6 +1091,9 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                   <Text style={{ flex: 1, color: colors.textMain, fontSize: 13, fontFamily: 'monospace' }} selectable>{credsEmail}</Text>
                   <TouchableOpacity onPress={() => copyToClipboard(credsEmail, 'cemail')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                     <Feather name={copiedField === 'cemail' ? 'check' : 'copy'} size={14} color={copiedField === 'cemail' ? colors.accentGreen : colors.textDim} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => shareCredentials(credsName, credsEmail)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Feather name="share-2" size={14} color={colors.textDim} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -986,7 +1170,7 @@ export default function ParentMyKidsScreen({ navigation }: any) {
       </Modal>
 
       {/* ── Edit Child Modal ── */}
-      <Modal visible={!!editChild} transparent animationType="fade" onRequestClose={() => setEditChild(null)}>
+      <Modal visible={!!editChild} transparent animationType="fade" onRequestClose={() => { setEditChild(null); setShowOtpInput(false); setOtpCode(''); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <View style={styles.modalHeader}>
@@ -994,58 +1178,104 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                 <Text style={styles.modalTitle}>Edit Child</Text>
                 <Text style={styles.modalDesc}>{editChild?.name}</Text>
               </View>
-              <TouchableOpacity onPress={() => setEditChild(null)}>
+              <TouchableOpacity onPress={() => { setEditChild(null); setShowOtpInput(false); setOtpCode(''); }}>
                 <Feather name="x" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
-            <View style={{ gap: 10 }}>
-              <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>Full Name</Text>
-              <TextInput style={styles.input} value={editName} onChangeText={t => { setEditName(t); setEditError(''); }}
-                placeholder="Child's name" placeholderTextColor={colors.textMuted} autoCapitalize="words" />
-
-              <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>Curriculum</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {CURRICULA.map(c => (
-                  <TouchableOpacity key={c} onPress={() => { setEditCurriculum(c); if (!getGradesForCurriculum(c).includes(editGrade)) setEditGrade(getGradesForCurriculum(c)[0]); }} activeOpacity={0.8}
-                    style={[styles.chip, editCurriculum === c && { backgroundColor: colors.accentYellow + '20', borderColor: colors.accentYellow }]}
-                  >
-                    <Text style={[styles.chipText, editCurriculum === c && { color: colors.accentYellow }]}>{c}</Text>
-                  </TouchableOpacity>
-                ))}
+            {showOtpInput && otpPurpose === 'edit' ? (
+              <View style={{ gap: 15, paddingVertical: 10 }}>
+                <Text style={styles.modalDesc}>
+                  We have sent a 6-digit OTP verification code to <Text style={{ fontWeight: '700' }}>{otpSentEmail}</Text> to verify the child's email address change.
+                </Text>
+                <TextInput
+                  style={[styles.input, { textAlign: 'center', fontSize: 20, letterSpacing: 5 }]}
+                  placeholder="000000"
+                  placeholderTextColor={colors.textMuted}
+                  maxLength={6}
+                  keyboardType="number-pad"
+                  value={otpCode}
+                  onChangeText={setOtpCode}
+                />
+                {editError ? (
+                  <View style={styles.errorRow}>
+                    <Feather name="alert-circle" size={13} color={colors.accentRed} />
+                    <Text style={[styles.errorText, { color: colors.accentRed }]}>{editError}</Text>
+                  </View>
+                ) : null}
+                <TouchableOpacity
+                  style={[styles.linkBtn, isVerifyingOtp && { opacity: 0.6 }]}
+                  onPress={handleVerifyOtp}
+                  disabled={isVerifyingOtp}
+                  activeOpacity={0.8}
+                >
+                  {isVerifyingOtp ? (
+                    <ActivityIndicator color="white" size="small" />
+                  ) : (
+                    <Text style={styles.linkBtnText}>Verify & Save Changes</Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.linkBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.textMuted }]}
+                  onPress={() => { setShowOtpInput(false); setOtpCode(''); setEditError(''); }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.linkBtnText, { color: colors.textMuted }]}>Go Back</Text>
+                </TouchableOpacity>
               </View>
+            ) : (
+              <View style={{ gap: 10 }}>
+                <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>Full Name</Text>
+                <TextInput style={styles.input} value={editName} onChangeText={t => { setEditName(t); setEditError(''); }}
+                  placeholder="Child's name" placeholderTextColor={colors.textMuted} autoCapitalize="words" />
 
-              <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>Grade</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {getGradesForCurriculum(editCurriculum).map(g => (
-                  <TouchableOpacity key={g} onPress={() => setEditGrade(g)} activeOpacity={0.8}
-                    style={[styles.chip, editGrade === g && { backgroundColor: colors.accentYellow + '20', borderColor: colors.accentYellow }]}
-                  >
-                    <Text style={[styles.chipText, editGrade === g && { color: colors.accentYellow }]}>{g}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>Email Address</Text>
+                <TextInput style={styles.input} value={editEmail} onChangeText={t => { setEditEmail(t); setEditError(''); }}
+                  placeholder="Child's email" placeholderTextColor={colors.textMuted} autoCapitalize="none" keyboardType="email-address" />
 
-              <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>School (optional)</Text>
-              <TextInput style={styles.input} value={editSchool} onChangeText={setEditSchool}
-                placeholder="School name" placeholderTextColor={colors.textMuted} />
-
-              {editError ? (
-                <View style={styles.errorRow}>
-                  <Feather name="alert-circle" size={13} color={colors.accentRed} />
-                  <Text style={[styles.errorText, { color: colors.accentRed }]}>{editError}</Text>
+                <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>Curriculum</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {CURRICULA.map(c => (
+                    <TouchableOpacity key={c} onPress={() => { setEditCurriculum(c); if (!getGradesForCurriculum(c).includes(editGrade)) setEditGrade(getGradesForCurriculum(c)[0]); }} activeOpacity={0.8}
+                      style={[styles.chip, editCurriculum === c && { backgroundColor: colors.accentYellow + '20', borderColor: colors.accentYellow }]}
+                    >
+                      <Text style={[styles.chipText, editCurriculum === c && { color: colors.accentYellow }]}>{c}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-              ) : null}
 
-              <TouchableOpacity
-                style={[styles.linkBtn, saving && { opacity: 0.6 }]}
-                onPress={saveEdit} disabled={saving} activeOpacity={0.8}
-              >
-                {saving
-                  ? <ActivityIndicator color="white" size="small" />
-                  : <><Feather name="check" size={15} color="#fff" /><Text style={styles.linkBtnText}>Save Changes</Text></>}
-              </TouchableOpacity>
-            </View>
+                <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>Grade</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {getGradesForCurriculum(editCurriculum).map(g => (
+                    <TouchableOpacity key={g} onPress={() => setEditGrade(g)} activeOpacity={0.8}
+                      style={[styles.chip, editGrade === g && { backgroundColor: colors.accentYellow + '20', borderColor: colors.accentYellow }]}
+                    >
+                      <Text style={[styles.chipText, editGrade === g && { color: colors.accentYellow }]}>{g}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={[styles.modalDesc, { marginBottom: 0, fontWeight: '600', color: colors.textMuted }]}>School (optional)</Text>
+                <TextInput style={styles.input} value={editSchool} onChangeText={setEditSchool}
+                  placeholder="School name" placeholderTextColor={colors.textMuted} />
+
+                {editError ? (
+                  <View style={styles.errorRow}>
+                    <Feather name="alert-circle" size={13} color={colors.accentRed} />
+                    <Text style={[styles.errorText, { color: colors.accentRed }]}>{editError}</Text>
+                  </View>
+                ) : null}
+
+                <TouchableOpacity
+                  style={[styles.linkBtn, saving && { opacity: 0.6 }]}
+                  onPress={handleEditSubmit} disabled={saving} activeOpacity={0.8}
+                >
+                  {saving
+                    ? <ActivityIndicator color="white" size="small" />
+                    : <><Feather name="check" size={15} color="#fff" /><Text style={styles.linkBtnText}>Save Changes</Text></>}
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -1084,6 +1314,9 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                       <Text style={{ flex: 1, color: colors.textMain, fontSize: 13, fontFamily: 'monospace' }} selectable>{viewCreds.loginId}</Text>
                       <TouchableOpacity onPress={() => copyToClipboard(viewCreds.loginId, 'vlogin')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                         <Feather name={copiedField === 'vlogin' ? 'check' : 'copy'} size={14} color={copiedField === 'vlogin' ? '#5F8A86' : colors.textDim} />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => shareCredentials(viewCredsChild?.name || 'Your child', viewCreds.loginId)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                        <Feather name="share-2" size={14} color={colors.textDim} />
                       </TouchableOpacity>
                     </View>
                   </View>

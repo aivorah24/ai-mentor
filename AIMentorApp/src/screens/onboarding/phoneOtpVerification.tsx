@@ -1,25 +1,12 @@
 /**
  * Mobile number OTP verification via Firebase Phone Auth.
  *
- * STATUS: ON HOLD — not currently wired into onboarding, pending
- * founder confirmation on SMS provider/cost (Firebase Phone Auth
- * requires the Phone sign-in provider enabled + Blaze billing plan
- * beyond the free quota).
- *
- * This file preserves the working implementation (hook + modal) so it
- * can be dropped back into OnboardingParentBoxes.tsx's "Mobile Number"
- * field once approved. To re-integrate:
- *  1. Call `usePhoneOtpVerification(mobile, setMobile)` inside the component.
- *  2. Render `<PhoneOtpModal {...otp} mobile={mobile} colors={colors} styles={styles} />`
- *     alongside the other modals.
- *  3. In the Mobile Number field, show a "Verify" button
- *     (onPress={otp.handleSendOtp}, disabled={otp.otpSending}) or a
- *     "Verified" badge when `otp.mobileVerified` is true, and render
- *     `<View ref={otp.recaptchaContainerRef} />` on web.
- *  4. Include `mobileVerified: otp.mobileVerified && mobile === otp.verifiedMobile`
- *     in the preferences PATCH payload.
- *  5. Add styles `verifyBtn`, `verifyBtnTxt`, `verifiedBadge`, `verifiedTxt`,
- *     `warnTxt` to the screen's stylesheet.
+ * Wired into OnboardingParentBoxes.tsx's "Mobile Number" field (#180).
+ * Requires the Phone sign-in provider enabled + Blaze billing plan on the
+ * Firebase project — without real billing, register test phone numbers +
+ * fixed OTPs in the Firebase Console (Authentication → Sign-in method →
+ * Phone → Phone numbers for testing) to exercise this flow at zero cost.
+ * Web only — `handleSendOtp` rejects native platforms today.
  */
 import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, Platform } from 'react-native';
@@ -27,7 +14,7 @@ import { Feather } from '@expo/vector-icons';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, signOut, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import firebaseApp from '../../config/firebase';
-const TEAL = '#BAA467'; // same value as OnboardingScreen — kept local to avoid circular import
+const TEAL = '#5F8A86'; // same value as OnboardingScreen — kept local to avoid circular import
 
 export function usePhoneOtpVerification(mobile: string, setMobile: (v: string) => void, mobileCode = '+91') {
   const [mobileVerified, setMobileVerified] = useState(false);

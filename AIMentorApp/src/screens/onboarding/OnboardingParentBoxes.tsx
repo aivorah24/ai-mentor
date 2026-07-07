@@ -25,11 +25,13 @@ import {
   AutocompleteField, CardHeader, BBox, fetchCitySuggestions, locateCity, locateFull,
   SelectField, COUNTRIES, INDIA_STATES, INDIA_CITIES, PhoneCodeSelect,
 } from './OnboardingSharedFields';
+import { PhoneOtpModal } from './phoneOtpVerification';
+import { useMobileOtpVerification } from './mobileOtpVerification';
 
-const FOREST = '#BAA467';
+const FOREST = '#5A8A70';
 // Override imported TEAL with Aivorah gold for parent onboarding
 // eslint-disable-next-line @typescript-eslint/no-shadow
-const TEAL = '#BAA467';
+const TEAL = '#5F8A86';
 const GRADE_GROUPS = [
   { label: 'Early Years', grades: ['Nursery', 'LKG', 'UKG'] },
   { label: 'Primary', grades: ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'] },
@@ -100,16 +102,26 @@ export default function OnboardingParentBoxes() {
   const [stateProv, setStateProv] = useState((user as any)?.state || '');
   const [country, setCountry] = useState((user as any)?.country || 'India');
   const [avatarStyle, setAvatarStyle] = useState('default');
+  const mobileOtp = useMobileOtpVerification(mobile, setMobile, mobileCode);
+  // Editing the number after verifying invalidates the previous verification.
+  const onMobileChange = (v: string) => {
+    setMobile(v);
+    if (mobileOtp.mobileVerified) mobileOtp.setMobileVerified(false);
+  };
 
-  // Web: trap the browser Back button while a teacher adds a parent profile, so it
-  // returns to the teacher dashboard in ONE tap instead of overshooting (one tap did
-  // nothing, two taps reached the verify/landing page).
+  // Web: trap the browser Back button for the whole parent onboarding flow (#171 —
+  // previously only trapped while a teacher adds a parent profile, so a normal new
+  // parent signup pressing browser Back would silently navigate away with no
+  // confirmation). Mirrors the in-page back/close button's logic at the "Return to
+  // home page?" confirm below: teacher-adding-parent cancels cleanly, anyone else
+  // gets the explicit leave-confirm dialog instead of an unannounced exit.
   useEffect(() => {
-    if (Platform.OS !== 'web' || !isAddingParent || typeof window === 'undefined') return;
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
     window.history.pushState(null, '', window.location.href);
     const onPop = () => {
       window.history.pushState(null, '', window.location.href);
-      cancelAddParentProfile();
+      if (isAddingParent) cancelAddParentProfile();
+      else setShowLeaveConfirm(true);
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
@@ -312,6 +324,11 @@ export default function OnboardingParentBoxes() {
         setSaveError(`Mobile number must have at least ${minDigits} digits.`);
         return;
       }
+      const isVerified = mobileOtp.mobileVerified && mobile === mobileOtp.verifiedMobile;
+      if (!isVerified) {
+        setSaveError('Please verify your mobile number (tap "Verify") before continuing.');
+        return;
+      }
     }
     setSaving(true);
     setSaveError('');
@@ -364,6 +381,7 @@ export default function OnboardingParentBoxes() {
           country: country || undefined,
           dob: dob || undefined,
           mobile: mobile ? `${mobileCode} ${mobile}` : undefined,
+          mobileVerified: mobile ? (mobileOtp.mobileVerified && mobile === mobileOtp.verifiedMobile) : undefined,
           avatarStyle,
           roles: mergedRoles,
         }),
@@ -570,6 +588,9 @@ export default function OnboardingParentBoxes() {
             </TouchableOpacity>
             <View style={styles.logoMark}><Feather name="zap" size={14} color="#0B0B0B" /></View>
             <Text style={styles.logoTxt}>Aivorah</Text>
+            <View style={[styles.roleBadge, styles.roleBadgeParent]}>
+              <Text style={[styles.roleBadgeText, styles.roleBadgeTextParent]}>Parent</Text>
+            </View>
           </View>
           <View style={styles.completionRow}>
             <Text style={styles.completionLbl}>Profile Completion</Text>
@@ -580,6 +601,11 @@ export default function OnboardingParentBoxes() {
         </View>
 
         <View style={styles.greetWrap}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <View style={{ backgroundColor: TEAL + '18', borderColor: TEAL + '40', borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 }}>
+              <Text style={{ color: TEAL, fontSize: 11, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' }}>Parent Onboarding</Text>
+            </View>
+          </View>
           <Text style={styles.greetMain}>Welcome — let's set up your family profile</Text>
           <Text style={styles.greetSub}>Fill in each section so we can connect you with your child's learning journey.</Text>
         </View>
@@ -666,9 +692,25 @@ export default function OnboardingParentBoxes() {
                 <View style={styles.phoneRow}>
                   <PhoneCodeSelect value={mobileCode} onChange={setMobileCode} colors={colors} styles={styles} />
                   <TextInput style={[styles.input, styles.phoneInput]} value={mobile}
-                    onChangeText={setMobile}
+                    onChangeText={onMobileChange}
                     placeholder="98765 43210" placeholderTextColor={colors.textDim} keyboardType="phone-pad" />
+                  {mobileOtp.mobileVerified && mobile === mobileOtp.verifiedMobile ? (
+                    <View style={styles.verifiedBadge}>
+                      <Feather name="check-circle" size={14} color={TEAL} />
+                      <Text style={styles.verifiedTxt}>Verified</Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.verifyBtn}
+                      onPress={mobileOtp.handleSendOtp}
+                      disabled={mobileOtp.otpSending || !mobile.trim()}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.verifyBtnTxt}>{mobileOtp.otpSending ? 'Sending...' : 'Verify'}</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
+                {mobileOtp.otpError ? <Text style={styles.warnTxt}>{mobileOtp.otpError}</Text> : null}
               </View>
             </View>
 
@@ -682,7 +724,7 @@ export default function OnboardingParentBoxes() {
 
           {/* Your Child(ren) */}
           <View style={[styles.card, styles.card3]}>
-            <CardHeader icon="users" title="2. Your Children" badge="Optional" subtitle="Add now, or skip and add them anytime from your dashboard." done={!addingChildren || childrenDone} styles={styles} subtitleColor="#BAA467" />
+            <CardHeader icon="users" title="2. Your Children" badge="Optional" subtitle="Add now, or skip and add them anytime from your dashboard." done={!addingChildren || childrenDone} styles={styles} subtitleColor={TEAL} />
 
             {children.length > 1 && (
               <View style={styles.chipRow}>
@@ -884,7 +926,7 @@ export default function OnboardingParentBoxes() {
                         <TouchableOpacity
                           onPress={sendChildOtp}
                           disabled={otpSending || otpCooldown > 0}
-                          style={{ paddingHorizontal: 14, paddingVertical: 11, borderRadius: 8, backgroundColor: '#BAA467', opacity: (otpSending || otpCooldown > 0) ? 0.5 : 1 }}
+                          style={{ paddingHorizontal: 14, paddingVertical: 11, borderRadius: 8, backgroundColor: TEAL, opacity: (otpSending || otpCooldown > 0) ? 0.5 : 1 }}
                           activeOpacity={0.85}>
                           <Text style={{ fontSize: 13, fontWeight: '700', color: '#0b0b0b' }}>
                             {otpSending ? 'Sending…' : otpCooldown > 0 ? `Resend (${otpCooldown}s)` : (otpSent ? 'Resend' : 'Send Code')}
@@ -904,7 +946,7 @@ export default function OnboardingParentBoxes() {
                           placeholder="Enter 6-digit code" placeholderTextColor={colors.textDim}
                           keyboardType="number-pad" maxLength={6} />
                         <TouchableOpacity onPress={verifyChildOtp} disabled={otpVerifying}
-                          style={{ paddingHorizontal: 16, paddingVertical: 11, borderRadius: 8, backgroundColor: '#BAA467', opacity: otpVerifying ? 0.5 : 1 }}
+                          style={{ paddingHorizontal: 16, paddingVertical: 11, borderRadius: 8, backgroundColor: TEAL, opacity: otpVerifying ? 0.5 : 1 }}
                           activeOpacity={0.85}>
                           <Text style={{ fontSize: 13, fontWeight: '700', color: '#0b0b0b' }}>{otpVerifying ? 'Verifying…' : 'Verify'}</Text>
                         </TouchableOpacity>
@@ -1044,6 +1086,20 @@ export default function OnboardingParentBoxes() {
           </View>
         </View>
       </Modal>
+
+      <PhoneOtpModal
+        mobile={mobile}
+        mobileCode={mobileCode}
+        otpModalVisible={mobileOtp.otpModalVisible}
+        otpCode={mobileOtp.otpCode}
+        setOtpCode={mobileOtp.setOtpCode}
+        otpError={mobileOtp.otpError}
+        otpVerifying={mobileOtp.otpVerifying}
+        handleVerifyOtp={mobileOtp.handleVerifyOtp}
+        handleCancelOtp={mobileOtp.handleCancelOtp}
+        colors={colors}
+        styles={styles}
+      />
     </View>
   );
 }
@@ -1078,6 +1134,27 @@ function useStyles(colors: any) {
     confirmSecondaryTxt: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
     logoMark: { width: 28, height: 28, borderRadius: 8, backgroundColor: TEAL, alignItems: 'center', justifyContent: 'center' },
     logoTxt: { fontSize: 16, fontWeight: '800', color: colors.textMain },
+    roleBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 2.5,
+      borderRadius: 12,
+      borderWidth: 1,
+      alignSelf: 'center',
+      marginLeft: 4,
+    },
+    roleBadgeParent: {
+      backgroundColor: TEAL + '18',
+      borderColor: TEAL + '40',
+    },
+    roleBadgeText: {
+      fontSize: 9,
+      fontWeight: '800',
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+    },
+    roleBadgeTextParent: {
+      color: TEAL,
+    },
     completionRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     completionLbl: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
     completionRing: {
@@ -1135,6 +1212,18 @@ function useStyles(colors: any) {
     },
     phoneCodeTxt: { fontSize: 14, fontWeight: '700', color: colors.textMain },
     phoneInput: { flex: 1 },
+    warnTxt: { color: '#ef4444', fontSize: 12, lineHeight: 17, marginTop: 4 },
+    verifyBtn: {
+      height: 44, paddingHorizontal: 14, justifyContent: 'center', alignItems: 'center',
+      borderRadius: 10, borderWidth: 1, borderColor: TEAL,
+    },
+    verifyBtnTxt: { fontSize: 12, fontWeight: '700', color: TEAL },
+    verifiedBadge: {
+      flexDirection: 'row', alignItems: 'center', gap: 6, height: 44,
+      paddingHorizontal: 12, justifyContent: 'center',
+      borderRadius: 10, borderWidth: 1, borderColor: TEAL + '40', backgroundColor: TEAL + '12',
+    },
+    verifiedTxt: { fontSize: 12, fontWeight: '700', color: TEAL },
 
     subHint: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
     hintBox: { borderRadius: 10, padding: 12, borderWidth: 1 },

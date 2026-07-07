@@ -125,6 +125,7 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
 
   // Children
   const [children, setChildren] = useState<any[]>([]);
+  const [childrenLoaded, setChildrenLoaded] = useState(false);
   const [selectedChildIdx, setSelectedChildIdx] = useState(0);
 
   // Calendar state
@@ -170,8 +171,17 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
           }
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setChildrenLoaded(true));
   }, [parentEmail, route?.params?.childId]);
+
+  // Without a linked child, fetchEvents below never runs (it bails out early
+  // when `child` is undefined) — so loading must be resolved here instead, or
+  // a parent with zero linked children spins on "Loading..." forever instead
+  // of showing an empty/no-child state.
+  useEffect(() => {
+    if (childrenLoaded && children.length === 0) setLoading(false);
+  }, [childrenLoaded, children.length]);
 
   const child = children[selectedChildIdx];
 

@@ -523,7 +523,7 @@ async function resolveDiagramFills(quiz, quizId) {
 }
 
 // ── Retry wrapper: exponential backoff on Gemini 429 (rate limit) / 503 (overloaded) ──
-async function geminiRetry(fn, { tries = 4, base = 1500 } = {}) {
+async function geminiRetry(fn, { tries = 6, base = 2500 } = {}) {
   let lastErr;
   for (let i = 0; i < tries; i++) {
     try {
@@ -560,7 +560,10 @@ async function geminiGenerate(model, content) {
 // ── Gemini Vision — primary engine (free, excellent accuracy) ────────────────
 async function callGeminiVision(parts, { grade, subject, school } = {}) {
   if (!genAI) throw new Error('GEMINI_API_KEY not configured');
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    generationConfig: { responseMimeType: 'application/json' }
+  });
   const prompt = buildQuizVisionPrompt({ grade, subject, school });
 
   return geminiGenerate(model, [
@@ -717,7 +720,10 @@ function parseCaptionArray(raw, n) {
 
 async function captionCropsGemini(crops) {
   if (!genAI) throw new Error('GEMINI_API_KEY not configured');
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    generationConfig: { responseMimeType: 'application/json' }
+  });
   const raw = await geminiGenerate(model, [
     ...geminiImageParts(crops),
     { text: cropCaptionPrompt(crops.length) },
@@ -934,6 +940,7 @@ LAYOUT EXTRACTION (CRITICAL — replicate the worksheet's visual layout):
 - "layout.columnGroups": array of column groups, each with "questionIds" listing which questions belong to that column (in order, top to bottom)
 - If a column group has a diagram/image above its questions, set "hasDiagram": true on that group
 - Questions in column 0 are LEFT side, column 1 are RIGHT side
+- CRITICAL ID RULE: Every question in a task MUST have a globally unique "id" (e.g. "a", "b", "c", "d", "e" for the left column, and "f", "g", "h", "i", "j" for the right column). Never reuse the same "id" within a task, even if the worksheet repeats question labels (like two columns both labeled 'a', 'b', 'c').
 
 Return this EXACT JSON structure:
 {
@@ -1025,20 +1032,22 @@ GRAPH / CHART HANDLING (CRITICAL — never reduce a graph to a text note):
 If a task shows a BAR GRAPH / COLUMN CHART that students read to answer questions, add a "chart" object to the TASK (not the question), and READ THE EXACT VALUES from the image:
 "chart": {
   "type": "bar",
-  "title": "Number of Votes",
-  "xLabel": "Sport",
-  "yLabel": "Number of Votes",
-  "yMax": 20,
-  "yStep": 2,
+  "title": "Favourite Fruit",
+  "xLabel": "Fruit",
+  "yLabel": "Count",
+  "yMax": 30,
+  "yStep": 5,
   "bars": [
-    { "label": "football", "value": 16 },
-    { "label": "tennis",   "value": 8 },
-    { "label": "rugby",    "value": 6 },
-    { "label": "cricket",  "value": 4 },
-    { "label": "hockey",   "value": 12 },
-    { "label": "badminton","value": 10 }
+    { "label": "apple",  "value": 15 },
+    { "label": "banana", "value": 25 },
+    { "label": "orange", "value": 10 },
+    { "label": "grape",  "value": 20 }
   ]
 }
+- DO NOT copy the fruit example labels or values into your output. You MUST extract the actual labels and values (e.g. sports names, votes count) shown on the graph in the worksheet!
+- BE EXTREMELY CAREFUL with the alignment of category labels on the X-axis and their corresponding bars. Do not swap or misalign adjacent columns/bars (like rugby and cricket). rugby is the 3rd bar and cricket is the 4th bar. Read their heights very precisely: rugby is at 10, cricket is at 6.
+- Cross-reference and double-check your extracted values against the math questions in the worksheet to make sure they are consistent (e.g., if a question asks about the sum of votes or doubled values, verify that your bar values yield the correct mathematical answers to those questions!).
+- Ensure that the "answer" field value is 100% consistent with your step-by-step reasoning in the "solution" field. Do not make contradiction errors (for example, if the solution correctly reasons that the sum matches rugby and badminton, then the "answer" must be rugby and badminton, not hockey and badminton!).
 - Read every bar's height precisely using the y-axis scale. yMax = top of the axis, yStep = gap between gridlines.
 - The questions below the graph stay as normal numeric/text/long questions — the chart is the shared visual they refer to.
 
@@ -1221,13 +1230,6 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
 
     const parallelTasks = [];
 
-    // A) Tesseract OCR — extract all text from PDF pages (no LLM)
-    parallelTasks.push(
-      ocrFullPDF(req.file.buffer, 1.5)
-        .then(r => ({ type: 'tesseract', result: r }))
-        .catch(err => { console.log('[quiz] Tesseract OCR failed:', err.message); return { type: 'tesseract', result: null }; })
-    );
-
     // B) Python ML layout detection (primary) — DocLayout-YOLO for precise figure/table cropping
     parallelTasks.push(
       callLayoutService(req.file.buffer, quizId, { filename: req.file.originalname || 'worksheet.pdf', mime: 'application/pdf' })
@@ -1244,7 +1246,7 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
       );
     }
 
-    console.log(`[quiz] Running ${parallelTasks.length} tasks in parallel: Tesseract OCR + ML Layout${genAI && !skipGemini ? ' + Gemini' : ''}...`);
+    console.log(`[quiz] Running ${parallelTasks.length} tasks in parallel: ML Layout${genAI && !skipGemini ? ' + Gemini' : ''}...`);
     const parallelResults = await Promise.all(parallelTasks);
 
     let ocrText = null;
@@ -1252,7 +1254,6 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
     for (const pr of parallelResults) {
       if (pr.type === 'gemini' && pr.result) result = pr.result;
       if (pr.type === 'layout-ml' && pr.result) layoutMLResult = pr.result;
-      if (pr.type === 'tesseract' && pr.result) ocrText = pr.result;
     }
 
     // Convert ML layout result to diagram format (or fall back to heuristic OpenCV)
@@ -1276,7 +1277,17 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
       }
     }
 
-    console.log(`[quiz] Gemini: ${result ? result.length + ' chars' : 'N/A'} | OCR: ${ocrText ? ocrText.fullText.length + ' chars' : 'failed'} | Diagrams: ${diagramExtraction ? diagramExtraction.diagrams.length + ' crops' : 'none'}`);
+    // Lazy load Tesseract OCR only if the primary Gemini Vision extraction failed
+    if (!result) {
+      try {
+        console.log('[quiz] Gemini Vision failed — running Tesseract OCR lazily as fallback...');
+        ocrText = await ocrFullPDF(req.file.buffer, 1.5);
+      } catch (err) {
+        console.log('[quiz] Lazy Tesseract OCR failed:', err.message);
+      }
+    }
+
+    console.log(`[quiz] Gemini: ${result ? result.length + ' chars' : 'N/A'} | OCR: ${ocrText ? ocrText.fullText.length + ' chars' : 'skipped/failed'} | Diagrams: ${diagramExtraction ? diagramExtraction.diagrams.length + ' crops' : 'none'}`);
 
     // ══════════════════════════════════════════════════════════════════════
     // FALLBACK CHAIN: Send page IMAGES (not OCR text) to vision LLMs.
@@ -1629,7 +1640,10 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
         try {
           console.log('[quiz] Using Gemini text-only for OCR text structuring...');
           usedVision = false; // text-only cannot reliably provide diagramPosition
-          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+          const model = genAI.getGenerativeModel({
+            model: 'gemini-2.5-flash',
+            generationConfig: { responseMimeType: 'application/json' }
+          });
           result = await geminiGenerate(model, [{ text: prompt }]);
           console.log(`[quiz] Gemini text returned ${result.length} chars`);
         } catch (err) {
@@ -2537,8 +2551,44 @@ function inferShapeData(question, answer, solution) {
   return null;
 }
 
+function sanitizeDuplicateQuestionIds(quiz) {
+  for (const task of (quiz.tasks || [])) {
+    const seenIds = new Set();
+    const allQs = task.questions || [];
+    for (const q of allQs) {
+      if (!q.id) {
+        q.id = Math.random().toString(36).substring(7);
+      }
+      if (seenIds.has(q.id)) {
+        const baseId = q.id;
+        let counter = 2;
+        while (seenIds.has(`${baseId}_${counter}`)) {
+          counter++;
+        }
+        const newId = `${baseId}_${counter}`;
+        
+        // Update in columnGroups
+        const colGroups = task.layout?.columnGroups || [];
+        for (let gIdx = colGroups.length - 1; gIdx >= 0; gIdx--) {
+          const group = colGroups[gIdx];
+          const qIds = group.questionIds || [];
+          const idx = qIds.lastIndexOf(baseId); // start replacing from the back
+          if (idx !== -1) {
+            qIds[idx] = newId;
+            break;
+          }
+        }
+        q.id = newId;
+        console.log(`[quiz-sanitize] Renamed duplicate ID collision: ${baseId} -> ${newId} for task "${task.title}"`);
+      }
+      seenIds.add(q.id);
+    }
+  }
+}
+
 // ── Post-process: auto-detect MCQ questions the LLM returned as text ──────
 function autoDetectMCQ(quiz) {
+  sanitizeDuplicateQuestionIds(quiz);
   for (const task of (quiz.tasks || [])) {
     const title = (task.title || '').toLowerCase();
     const isMcqTask = /tick|choose|circle.*correct|select.*option|multiple.*choice/i.test(title);
@@ -3619,9 +3669,14 @@ function renderQuizHTML(quiz) {
 
     if (isTableCell) {
       // Worksheet-style table cell: compact, inline input
-      html += `<div class="ws-cell" id="${qId}-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">`;
-      html += `<span style="font-size:14px;color:#F0EEEC;flex-shrink:0;"><strong style="color:#C3DCD8">${qLabel}</strong> ${fmtQuestion(questionText)}</span>`;
+      html += `<div class="ws-cell" id="${qId}-card" style="padding:10px 14px;border-bottom:1px solid rgba(195,220,216,0.15);display:flex;flex-direction:column;align-items:flex-start;gap:8px;">`;
+      html += `<span style="font-size:14px;color:#F0EEEC;"><strong style="color:#C3DCD8">${qLabel}</strong> ${fmtQuestion(questionText)}</span>`;
 
+      if (q.imageUrl && !q._sharedImage) {
+        html += `<div class="q-image" style="margin:4px 0 8px;align-self:center;"><img src="${embedImage(q.imageUrl)}" alt="${q.diagramDescription || 'Diagram'}" style="max-width:240px;max-height:200px;border-radius:6px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:6px;"></div>`;
+      }
+
+      html += `<div style="display:flex;align-items:center;gap:8px;width:100%;flex-wrap:wrap;">`;
       if (!isActivity && !isMcq) {
         html += `<input type="text" id="${qId}-input" class="q-input"${inputLangAttr} style="width:90px;padding:6px 8px;font-size:14px;" placeholder="?">`;
         if (displayUnit) html += `<span style="font-size:13px;color:#A8B5B3;">${displayUnit}</span>`;
@@ -3638,8 +3693,7 @@ function renderQuizHTML(quiz) {
       } else {
         html += `<button class="btn-show" style="display:inline-block;padding:6px 14px;font-size:12px;" onclick="toggleSolution('${qId}'); if(!done.has('${qId}')){sc++;done.add('${qId}');up();}">Show</button>`;
       }
-
-      html += `</div>`;
+      html += `</div></div>`;
       // Feedback row (hidden by default, spans full width)
       const solutionText = (q.solution || '').replace(/Step (\d)/g, '<br>Step $1').replace(/Answer:/g, '<br><strong>Answer:</strong>');
       html += `<div id="${qId}-hint" class="hint-box" style="display:none;margin:0 14px;font-size:13px;">${fmt(q.hint || '')}</div>`;
@@ -3974,22 +4028,6 @@ function renderQuizHTML(quiz) {
       const rightQIds = rightQuestions.map(q => registerQuestion(q));
 
       tasksHTML += `<table class="ws-table" style="width:100%;border-collapse:collapse;border:1px solid rgba(195,220,216,0.2);border-radius:8px;overflow:hidden;">`;
-
-      // Diagram row (show cropped images if available)
-      const hasAnyImage = leftQuestions.some(q => q.imageUrl) || rightQuestions.some(q => q.imageUrl);
-      if (hasAnyImage) {
-        tasksHTML += `<tr>`;
-        for (let col = 0; col < 2; col++) {
-          const colQ = col === 0 ? leftQuestions : rightQuestions;
-          tasksHTML += `<td style="width:50%;padding:12px;text-align:center;vertical-align:middle;border:1px solid rgba(195,220,216,0.15);background:rgba(28,28,28,0.6);">`;
-          const firstQ = colQ[0];
-          if (firstQ && firstQ.imageUrl) {
-            tasksHTML += `<img src="${embedImage(firstQ.imageUrl)}" alt="Diagram" style="max-width:240px;max-height:200px;border-radius:6px;background:#fff;padding:6px;">`;
-          }
-          tasksHTML += `</td>`;
-        }
-        tasksHTML += `</tr>`;
-      }
 
       // Question rows
       for (let r = 0; r < maxRows; r++) {

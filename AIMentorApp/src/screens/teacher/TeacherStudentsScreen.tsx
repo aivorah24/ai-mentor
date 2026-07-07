@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect, useCallback, memo, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, RefreshControl, Image, Modal, Platform,
+  TextInput, ActivityIndicator, RefreshControl, Image, Modal, Platform, Share, Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -190,6 +190,29 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   const [credsEmail,    setCredsEmail]    = useState('');
   const [credsPassword, setCredsPassword] = useState('');
   const [credsName,     setCredsName]     = useState('');
+  const [credsCopiedField, setCredsCopiedField] = useState('');
+
+  function copyCredsField(text: string, field: string) {
+    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+    setCredsCopiedField(field);
+    setTimeout(() => setCredsCopiedField(''), 1500);
+  }
+
+  async function shareCredsToStudent(name: string, email: string, password: string) {
+    const message = `${name}'s Aivorah login:\nEmail: ${email}\nPassword: ${password}`;
+    if (Platform.OS === 'web') {
+      const nav: any = typeof navigator !== 'undefined' ? navigator : null;
+      if (nav?.share) {
+        try { await nav.share({ text: message }); return; } catch { /* cancelled or unsupported */ }
+      }
+      copyCredsField(message, 'share');
+      Alert.alert('Copied', 'Sharing is not available in this browser — the login details were copied instead, so you can paste them anywhere.');
+      return;
+    }
+    try { await Share.share({ message }); } catch { /* cancelled */ }
+  }
   // Bulk import fields
   const [bulkGrade,        setBulkGrade]        = useState('Grade 3');
   const [bulkCurriculum,   setBulkCurriculum]   = useState('IB PYP');
@@ -353,6 +376,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
           name: newName.trim(),
           email: newEmail.trim() || undefined,
           password: newPassword.trim() || undefined,
+          teacherEmail: user?.email || '',
         }),
       });
       const init = await initRes.json();
@@ -1147,16 +1171,28 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
             <Text style={styles.modalNote}>{credsName} has been added to your class. Share these credentials with the student.</Text>
 
             {[
-              { label: 'Login Email / ID', value: credsEmail },
-              { label: 'Password', value: credsPassword },
+              { label: 'Login Email / ID', value: credsEmail, field: 'cEmail' },
+              { label: 'Password', value: credsPassword, field: 'cPass' },
             ].map(item => (
               <View key={item.label} style={{ marginBottom: 10 }}>
                 <Text style={styles.modalFieldLabel}>{item.label}</Text>
-                <View style={[styles.modalInput, { backgroundColor: colors.bgDark }]}>
+                <View style={[styles.modalInput, { backgroundColor: colors.bgDark, flexDirection: 'row', alignItems: 'center' }]}>
                   <Text style={[styles.modalTextInput, { flex: 1, color: colors.textMain }]}>{item.value}</Text>
+                  <TouchableOpacity onPress={() => copyCredsField(item.value, item.field)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ marginLeft: 8 }}>
+                    <Feather name={credsCopiedField === item.field ? 'check' : 'copy'} size={15} color={credsCopiedField === item.field ? colors.accentGreen : colors.textDim} />
+                  </TouchableOpacity>
                 </View>
               </View>
             ))}
+
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: gold + '18', borderRadius: 8, paddingVertical: 10, marginTop: 2, marginBottom: 4 }}
+              onPress={() => shareCredsToStudent(credsName, credsEmail, credsPassword)}
+              activeOpacity={0.8}
+            >
+              <Feather name="share-2" size={15} color={gold} />
+              <Text style={{ fontSize: 13, fontWeight: '700', color: gold }}>Share Login Details</Text>
+            </TouchableOpacity>
 
             <View style={{ backgroundColor: gold + '18', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: gold + '30', marginTop: 4 }}>
               <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
