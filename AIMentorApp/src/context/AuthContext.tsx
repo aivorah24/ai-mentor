@@ -177,6 +177,11 @@ function markAuthAction() {
   // show the landing page, not trap the visitor in the setup screen.
   try {
     if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('aivorah_auth_this_session', '1');
+    // Also seed the persisted last-active timestamp RootNavigator's stale-session
+    // guard reads — without this, the very first render right after a brand-new
+    // signup would see no timestamp yet (heartbeat hasn't run its first effect
+    // pass) and briefly flash the Landing page before self-correcting.
+    if (typeof localStorage !== 'undefined') localStorage.setItem('aivorah_last_active_ts', String(Date.now()));
   } catch {}
   // Keep the guard active a few seconds past the function returning so the
   // post-action onAuthStateChanged cycle (incl. its network fetch) completes.
@@ -301,9 +306,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           supaProfile._syncOk === true &&
           supaProfile._accountExists === false
         ) {
-          await new Promise((r) => setTimeout(r, 300));
+          // A single 300ms recheck was too tight — under any DB latency a freshly
+          // created row (signup, or a brand-new teacher/parent/student account mid
+          // onboarding) can still be missing at 300ms and get wrongly treated as a
+          // genuine deletion. Retry a few times with backoff before concluding that.
           let recheck: Partial<User> & { _syncOk?: boolean; _accountExists?: boolean } = {};
-          try { recheck = await fetchSupabaseProfile(email); } catch {}
+          for (const delay of [400, 800, 1500]) {
+            await new Promise((r) => setTimeout(r, delay));
+            try { recheck = await fetchSupabaseProfile(email); } catch { continue; }
+            if (recheck._syncOk === true && recheck._accountExists !== false) break;
+          }
           if (recheck._syncOk === true && recheck._accountExists === false) {
             // Row STILL missing. But if a sign-up / sign-in is in progress (or this
             // email is a fresh pending-verification signup), the row simply hasn't
@@ -595,6 +607,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // on a flaky network (otherwise setUser(null) would never run).
     setUser(null);
     try { if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem('aivorah_auth_this_session'); } catch {}
+    try { if (typeof localStorage !== 'undefined') localStorage.removeItem('aivorah_last_active_ts'); } catch {}
     await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
     await signOut(auth).catch(() => {});
   }
