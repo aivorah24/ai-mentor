@@ -99,6 +99,45 @@ export default function OnboardingTeacherBoxes() {
     setTeachSubjects(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
   }
 
+  // Saves whatever fields are filled in so far WITHOUT marking onboarding complete —
+  // used by the "Save & Exit" leave-confirm path so partial progress isn't lost just
+  // because the teacher hasn't finished every required field yet.
+  async function saveProgress() {
+    try {
+      const email = user?.email || '';
+      const teaches = teachGrades.map(g => ({ grade: g, curriculum: curriculum.trim(), subjects: teachSubjects }));
+      await fetch(`${SERVER_URL}/user/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email, role: 'teacher',
+          name: fullName.trim() || undefined,
+          school: school || undefined,
+          location: city || undefined,
+          dob: dob || undefined,
+          phone: mobile ? `${mobileCode} ${mobile}` : undefined,
+          state: state || undefined,
+          country: country || undefined,
+          curriculum: curriculum.trim() || undefined,
+          teaches,
+        }),
+      });
+      await fetch(`${SERVER_URL}/user/preferences`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email, name: fullName.trim() || undefined, role: 'teacher',
+          school: school || undefined, location: city || undefined,
+          dob: dob || undefined, mobile: mobile ? `${mobileCode} ${mobile}` : undefined,
+          state: state || undefined, country: country || undefined,
+          teacherRole, experience, curriculum: curriculum.trim() || undefined, avatarStyle,
+        }),
+      }).catch(() => {});
+    } catch (e) {
+      console.error('[saveProgress] failed:', e);
+    }
+  }
+
   async function handleFinish() {
     if (!requiredDone) {
       setSaveError('Please complete all required fields including State / Province.');
@@ -182,6 +221,8 @@ export default function OnboardingTeacherBoxes() {
         onboardingComplete: true,
         avatarStyle,
         curriculum: saved.curriculum || curriculum.trim(),
+        grade: teachGrades[0],
+        teaches: teachGrades.map(g => ({ grade: g, curriculum: curriculum.trim(), subjects: teachSubjects })),
       } as any);
     } catch (err: any) {
       console.error('Onboarding save error:', err);
@@ -478,22 +519,32 @@ export default function OnboardingTeacherBoxes() {
             </View>
             <Text style={styles.confirmTitle}>Return to the home page?</Text>
             <Text style={styles.confirmBody}>
-              You'll be signed out and taken back to the Aivorah home page. Any details you
-              haven't saved on this page won't be kept.
+              You'll be signed out and taken back to the Aivorah home page. We can save what
+              you've entered so far so it's still here next time you sign in.
             </Text>
             <TouchableOpacity
               style={styles.confirmPrimary}
               activeOpacity={0.85}
-              onPress={() => { setShowLeaveConfirm(false); logout(); }}
+              disabled={saving}
+              onPress={async () => { setSaving(true); await saveProgress(); setSaving(false); setShowLeaveConfirm(false); logout(); }}
             >
-              <Text style={styles.confirmPrimaryTxt}>Sign out & go to home page</Text>
+              <Text style={styles.confirmPrimaryTxt}>{saving ? 'Saving...' : 'Save & go to home page'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.confirmSecondary}
               activeOpacity={0.7}
-              onPress={() => setShowLeaveConfirm(false)}
+              disabled={saving}
+              onPress={() => { setShowLeaveConfirm(false); logout(); }}
             >
-              <Text style={styles.confirmSecondaryTxt}>Stay here</Text>
+              <Text style={styles.confirmSecondaryTxt}>Leave without saving</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              disabled={saving}
+              onPress={() => setShowLeaveConfirm(false)}
+              style={{ marginTop: 4 }}
+            >
+              <Text style={[styles.confirmSecondaryTxt, { textDecorationLine: 'underline' }]}>Stay here</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -602,7 +602,8 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                         ? [...new Set(teaches.map((t: any) => t.grade).filter(Boolean))]
                         : (user?.grade ? [user.grade] : []);
                       const cLabel = tCurricula.join(', ');
-                      const gLabel = tGrades.length > 0 ? tGrades.map((g: string) => g.replace('Grade ', '')).join(', ') : '3';
+                      if (tGrades.length === 0) return cLabel || 'Not set — tap Update to add your grades';
+                      const gLabel = tGrades.map((g: string) => g.replace('Grade ', '')).join(', ');
                       return `${cLabel} · Grade${tGrades.length > 1 ? 's' : ''} ${gLabel}`;
                     })()}</Text>
                   </View>
