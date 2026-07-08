@@ -12,7 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, View, ActivityIndicator, Platform, Text, TextInput, TouchableOpacity, Modal } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Feather } from '@expo/vector-icons';
-import { applyActionCode } from 'firebase/auth';
+import { applyActionCode, onAuthStateChanged } from 'firebase/auth';
 
 // Set browser tab title
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -113,16 +113,24 @@ function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
     handle();
   }, []);
 
-  function goToApp() {
+  async function goToApp() {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      // The email link often opens in a DIFFERENT browser context than the one
-      // the user signed up in (e.g. signed up in Incognito, but the link opens in
-      // the normal window; or verified on a different device). In that context this
-      // tab has no Firebase session, so navigating to '/' would just show Landing.
+      // The email link almost always opens in a BRAND-NEW tab (Gmail, Outlook etc.
+      // open links in a new tab/window). On a cold page load, Firebase's auth SDK
+      // restores the session from IndexedDB asynchronously — reading
+      // auth.currentUser synchronously right here can catch it *before* that
+      // restore finishes and see null even though the user IS logged in, sending
+      // them to '/?signin=1' instead of onboarding (the reported "verify → bounces
+      // to Sign In" bug). Wait for Firebase's own first onAuthStateChanged callback
+      // (with a short timeout fallback) so we check the real, settled state.
+      const settledUser = auth.currentUser ?? await new Promise<typeof auth.currentUser>((resolve) => {
+        const timer = setTimeout(() => resolve(auth.currentUser), 2500);
+        const unsub = onAuthStateChanged(auth, (u) => { clearTimeout(timer); unsub(); resolve(u); });
+      });
       // If logged in here → go straight to the app (onboarding). If not → send them
       // to Landing with the login modal open so they can sign in and continue,
       // instead of dumping them on a dead-end Landing page.
-      if (auth.currentUser) {
+      if (settledUser) {
         // This tab has a real, just-confirmed Firebase session (often a brand-new
         // tab opened from the emailed link, e.g. Gmail opens links in a new tab —
         // so it has no 'aivorah_auth_this_session' flag of its own). Without
@@ -422,7 +430,12 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
     Platform.OS === 'web' &&
     !!user &&
     user.emailVerified !== false &&
-    user.mustChangePassword !== true;
+    user.mustChangePassword !== true &&
+    // The onboarding screens (OnboardingTeacherBoxes/ParentBoxes/StudentBoxes) have
+    // their own richer "Return to home page?" confirm (with Save & Exit) and already
+    // trap the browser Back button themselves. Without this exclusion, BOTH guards
+    // fired on the same Back press and stacked two modals on top of each other.
+    user.onboardingComplete !== false;
 
   // Track current-route home-ness + the timestamp of the last navigation.
   // The nav container is often NOT ready yet when this mounts (restored session
@@ -561,13 +574,41 @@ function RootNavigator() {
     Platform.OS === 'web' &&
     typeof window !== 'undefined' &&
     (window.location.pathname.startsWith('/verify-success') || window.location.pathname.startsWith('/reset-password'));
+  // The sessionStorage flag alone is too fragile as the sole signal: mobile Safari
+  // (and some other browsers under memory pressure) can silently evict and reload
+  // a backgrounded tab — the URL/UI look unchanged but sessionStorage is wiped,
+  // even after switching apps for a few seconds. That was making a genuinely
+  // active onboarding session (someone mid-fill, briefly backgrounded) look
+  // "stale" and bounce to Landing within a minute, instead of only after real,
+  // sustained inactivity. Layer in a persisted (localStorage, survives tab
+  // reload) last-active timestamp with a real time threshold — refreshed by the
+  // heartbeat below — so "stale" means genuinely abandoned for a while, not just
+  // "this particular tab instance got recycled."
+  const ONBOARDING_STALE_MS = 20 * 60 * 1000; // 20 min of real inactivity
+  const lastActiveTs = (Platform.OS === 'web' && typeof localStorage !== 'undefined')
+    ? Number(localStorage.getItem('aivorah_last_active_ts') || 0)
+    : 0;
+  const genuinelyStale = lastActiveTs === 0 || (Date.now() - lastActiveTs) > ONBOARDING_STALE_MS;
   const staleIncompleteSession =
     Platform.OS === 'web' &&
     !loading && isAuthenticated &&
     user?.onboardingComplete === false &&
     !(user?.email?.endsWith('@demo.com') || user?.email?.endsWith('@test.ai')) &&
     !isSpecialAuthLinkPath &&
-    (typeof sessionStorage === 'undefined' || sessionStorage.getItem('aivorah_auth_this_session') !== '1');
+    (typeof sessionStorage === 'undefined' || sessionStorage.getItem('aivorah_auth_this_session') !== '1') &&
+    genuinelyStale;
+
+  // Heartbeat: while a real onboarding session is active in this tab, keep
+  // refreshing the last-active timestamp so time-based staleness only counts
+  // real, sustained absence — not a brief backgrounding or a page reload.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof localStorage === 'undefined') return;
+    if (!(!loading && isAuthenticated && user?.onboardingComplete === false)) return;
+    const touch = () => { try { localStorage.setItem('aivorah_last_active_ts', String(Date.now())); } catch {} };
+    touch();
+    const interval = setInterval(touch, 30 * 1000);
+    return () => clearInterval(interval);
+  }, [loading, isAuthenticated, user?.onboardingComplete]);
 
   useEffect(() => {
     if (staleIncompleteSession) {
