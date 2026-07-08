@@ -2812,6 +2812,11 @@ export default function AssignmentsScreen({ navigation, route }: any) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeAssignment, setActiveAssignment] = useState<Assignment | null>(null);
+  // Latest progress reported by the interactive-quiz iframe — used to gate the
+  // "Submit Assignment" button so the student confirms submission explicitly
+  // instead of it firing silently the instant every question is answered.
+  const [quizProgress, setQuizProgress] = useState<{ pct: number; completed: boolean; correct: number; total: number; answers: any[] } | null>(null);
+  const [submittingQuiz, setSubmittingQuiz] = useState(false);
 
   // Real "Study Time" for time spent actually working an assignment (any type:
   // quiz modal, scaffolded, submission, or the interactive-quiz iframe) — timed
@@ -3260,6 +3265,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                   ref={(el: any) => {
                     if (el && !(el as any)._done) {
                       (el as any)._done = true;
+                      setQuizProgress(null);
                       const blob = new Blob([html], { type: 'text/html' });
                       const url = URL.createObjectURL(blob);
                       const f = document.createElement('iframe');
@@ -3269,35 +3275,60 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                       f.onload = () => URL.revokeObjectURL(url);
                       el.appendChild(f);
 
-                      // Listen for score + per-question answers from quiz iframe
+                      // Track live progress from the quiz iframe — the student confirms
+                      // via the Submit Assignment button below rather than this firing
+                      // the submission automatically.
                       const onMsg = (e: MessageEvent) => {
-                        if (e.data?.type === 'quiz-score' && e.data.completed) {
-                          const pct = e.data.pct || Math.round((e.data.correct / e.data.total) * 100);
-                          // Submit score + detailed answers to server
-                          fetch(`${SERVER_URL}/assignments/${activeAssignment.id}/complete`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              score: pct,
-                              studentId: studentId,
-                              answers: e.data.answers || [],
-                              correct: e.data.correct,
-                              total: e.data.total,
-                            }),
-                          })
-                            .then(r => r.json())
-                            .then(updated => {
-                              handleSubmitted(updated);
-                              window.removeEventListener('message', onMsg);
-                              setActiveAssignment(null);
-                            })
-                            .catch(() => {});
+                        if (e.data?.type === 'quiz-score') {
+                          const pct = e.data.pct ?? Math.round((e.data.correct / e.data.total) * 100);
+                          setQuizProgress({ pct, completed: !!e.data.completed, correct: e.data.correct, total: e.data.total, answers: e.data.answers || [] });
                         }
                       };
                       window.addEventListener('message', onMsg);
                     }
                   }}
                 />
+                {/* Submit Assignment footer — enabled once every question is answered */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: 'rgba(195,220,216,0.15)', backgroundColor: '#141414' }}>
+                  <Text style={{ flex: 1, color: '#93B0AC', fontSize: 13 }}>
+                    {quizProgress ? `${quizProgress.correct}/${quizProgress.total} answered` : 'Answer every question to submit'}
+                  </Text>
+                  <TouchableOpacity
+                    disabled={!quizProgress?.completed || submittingQuiz}
+                    onPress={() => {
+                      if (!quizProgress?.completed || !activeAssignment) return;
+                      setSubmittingQuiz(true);
+                      fetch(`${SERVER_URL}/assignments/${activeAssignment.id}/complete`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          score: quizProgress.pct,
+                          studentId: studentId,
+                          answers: quizProgress.answers,
+                          correct: quizProgress.correct,
+                          total: quizProgress.total,
+                        }),
+                      })
+                        .then(r => r.json())
+                        .then(updated => {
+                          handleSubmitted(updated);
+                          setSubmittingQuiz(false);
+                          setQuizProgress(null);
+                          setActiveAssignment(null);
+                        })
+                        .catch(() => setSubmittingQuiz(false));
+                    }}
+                    style={{
+                      paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8,
+                      backgroundColor: quizProgress?.completed ? '#4a9d6e' : '#2A2A2A',
+                      opacity: submittingQuiz ? 0.6 : 1,
+                    }}
+                  >
+                    <Text style={{ color: quizProgress?.completed ? '#0F0F0F' : '#6E736B', fontSize: 14, fontWeight: '700' }}>
+                      {submittingQuiz ? 'Submitting…' : 'Submit Assignment'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </Modal>
           );

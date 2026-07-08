@@ -20,7 +20,7 @@ if (!MISTRAL_API_KEY) {
   process.exit(1);
 }
 
-const PIXTRAL_MODEL = 'pixtral-large-latest'; // vision model
+const PIXTRAL_MODEL = 'mistral-small-latest'; // vision model (pixtral-large-latest is deprecated)
 
 // ── Send request to Mistral API ─────────────────────────────────────────────
 async function callMistral(messages, model = PIXTRAL_MODEL) {

@@ -116,6 +116,13 @@ function stopCurrentAudio() {
     try { _currentAudio.pause(); _currentAudio.src = ''; } catch {}
     _currentAudio = null;
   }
+  // Web Speech API utterances aren't tied to _currentAudio — cancel them too,
+  // otherwise a scene skip (or unmount into the quiz phase) leaves a queued
+  // utterance speaking in the background since only a real screen blur
+  // (not an internal phase switch) was cancelling speechSynthesis.
+  if (Platform.OS === 'web' && (window as any).speechSynthesis) {
+    try { (window as any).speechSynthesis.cancel(); } catch {}
+  }
 }
 
 // ── Web Audio Player — plays a URL (cached .mp3 from server) ─────────────────

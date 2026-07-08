@@ -4,11 +4,28 @@ const supabase   = require('../services/supabase');
 const { sendPush } = require('../services/push');
 const Groq       = require('groq-sdk');
 const cloudinary = require('cloudinary').v2;
-const { renderQuizHTML, fetchBranding, docxToPdf, callQwenVision, callPixtralVision } = require('./quiz');
+const { renderQuizHTML, docxToPdf, callQwenVision, callPixtralVision } = require('./quiz');
 const { publishJob } = require('../services/jobQueue');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+
+// Mirrors GET /branding/logos — looked up here directly (no self HTTP call) so
+// every regenerated worksheet gets the school/curriculum logo.
+async function fetchBranding(school, curriculum) {
+  try {
+    const kinds = [];
+    if (school)     kinds.push('school');
+    if (curriculum) kinds.push('curriculum');
+    if (kinds.length === 0) return { schoolLogoUrl: null, curriculumLogoUrl: null };
+    const { data } = await supabase.from('branding_logos').select('kind, name, logo_url').in('kind', kinds);
+    const schoolLogoUrl     = (data || []).find(r => r.kind === 'school' && r.name === school)?.logo_url || null;
+    const curriculumLogoUrl = (data || []).find(r => r.kind === 'curriculum' && r.name === curriculum)?.logo_url || null;
+    return { schoolLogoUrl, curriculumLogoUrl };
+  } catch {
+    return { schoolLogoUrl: null, curriculumLogoUrl: null };
+  }
+}
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -109,6 +126,7 @@ router.get('/new-count', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
+  try {
   const { studentId, teacherId, viewerRole } = req.query;
 
   if (teacherId) {
@@ -251,6 +269,10 @@ router.get('/', async (req, res) => {
   }
 
   res.json(result);
+  } catch (err) {
+    console.error('[assignments] GET / failed:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // â”€â”€ POST /assignments/generate-quiz â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1527,8 +1549,14 @@ router.post('/', async (req, res) => {
   let finalQuizHtml = interactiveQuizHtml || null;
   if (interactiveQuiz && interactiveQuiz.tasks) {
     try {
+      let creatorSchool = null;
+      if (creatorId) {
+        const { data: creator } = await supabase.from('users').select('school').eq('id', creatorId).maybeSingle();
+        creatorSchool = creator?.school || null;
+      }
+      const branding = await fetchBranding(creatorSchool, finalCurriculum);
       // Deep-copy: renderQuizHTML mutates the quiz (normalizers add flags/options)
-      finalQuizHtml = renderQuizHTML(JSON.parse(JSON.stringify(interactiveQuiz)));
+      finalQuizHtml = renderQuizHTML(JSON.parse(JSON.stringify(interactiveQuiz)), branding);
       console.log(`[assignments] interactive quiz HTML rendered server-side (${Math.round(finalQuizHtml.length / 1024)}KB)`);
     } catch (e) {
       console.log('[assignments] server-side quiz render failed, falling back to client HTML:', e.message);
