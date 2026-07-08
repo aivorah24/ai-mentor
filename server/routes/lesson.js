@@ -939,27 +939,32 @@ router.get('/scene-audio', async (req, res) => {
     // Serve from persistent cache (Cloudinary in prod → absolute URL; local disk in dev)
     const cached = await getCachedAudio(cacheKey, SCENE_AUDIO_DIR);
     if (cached) {
-      let { mp3Url, timings } = cached;
-      let timingProvider = timings ? 'whisper' : 'none';
-      if (!timings) {
-        // Audio cached without timings — run Whisper now (needs a local file path)
-        const localPath = await getLocalPath(cacheKey, mp3Url);
-        timings = await generateSceneTimingsViaWhisper(localPath, text);
-        if (timings) { await saveTimings(cacheKey, SCENE_AUDIO_DIR, timings); timingProvider = 'whisper'; }
-      }
-      return res.json({ audioUrl: mp3Url, timings, timingProvider });
+      const { mp3Url, timings } = cached;
+      if (timings) return res.json({ audioUrl: mp3Url, timings, timingProvider: 'whisper' });
+
+      // Audio cached without timings — respond immediately (client falls back to
+      // estimated word-highlight timing) and backfill Whisper timings in the
+      // background so the NEXT play of this scene has them. Waiting on Whisper
+      // here was adding a full extra network round-trip to every playback.
+      res.json({ audioUrl: mp3Url, timings: null, timingProvider: 'none' });
+      getLocalPath(cacheKey, mp3Url)
+        .then(localPath => generateSceneTimingsViaWhisper(localPath, text))
+        .then(t => { if (t) return saveTimings(cacheKey, SCENE_AUDIO_DIR, t); })
+        .catch(() => {});
+      return;
     }
 
     // Generate audio via TikTok TTS → persist to Cloudinary (saveAudio also writes a
-    // tmp file we can hand to Whisper for word timings).
+    // tmp file we can hand to Whisper for word timings). Respond as soon as the
+    // audio itself is ready — Whisper timings are cosmetic (word highlighting)
+    // and computing them synchronously here was the main source of playback lag.
     const buffer = await generateSceneViaTikTok(text);
     const { mp3Url, tmpPath } = await saveAudio(cacheKey, SCENE_AUDIO_DIR, buffer, null);
 
-    const timings = await generateSceneTimingsViaWhisper(tmpPath, text);
-    let timingProvider = 'none';
-    if (timings) { await saveTimings(cacheKey, SCENE_AUDIO_DIR, timings); timingProvider = 'whisper'; }
-
-    res.json({ audioUrl: mp3Url, timings, timingProvider });
+    res.json({ audioUrl: mp3Url, timings: null, timingProvider: 'none' });
+    generateSceneTimingsViaWhisper(tmpPath, text)
+      .then(t => { if (t) return saveTimings(cacheKey, SCENE_AUDIO_DIR, t); })
+      .catch(() => {});
   } catch (err) {
     console.error('[lesson/scene-audio]', err.message);
     res.status(500).json({ error: 'TTS generation failed' });

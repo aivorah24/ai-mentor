@@ -129,11 +129,13 @@ export default function TeacherDashboardScreen({ navigation }: any) {
     }
   };
 
-  // Initial fetch + auto-refresh every 5s so Learning Path study time (and
-  // any other student stat) stays current without a manual refresh.
+  // Initial fetch + auto-refresh every 30s so Learning Path study time (and
+  // any other student stat) stays reasonably current without a manual refresh.
+  // (Previously 5s — far more aggressive than every other screen's polling and
+  // a real contributor to database connection pressure under load.)
   useEffect(() => {
     fetchStudents();
-    const interval = setInterval(fetchStudents, 5 * 1000);
+    const interval = setInterval(fetchStudents, 30 * 1000);
     return () => clearInterval(interval);
   }, [user?.email]);
 
