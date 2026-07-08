@@ -20,6 +20,24 @@ const { client, COLLECTION } = require('../services/qdrant');
 const { embed } = require('../services/embeddings');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { extractDiagrams, extractDiagramsFromImage, matchDiagramsToQuestions, ocrFullPDF, ocrRegion, analyzeRegionContent } = require('../services/diagram-extractor');
+const supabase = require('../services/supabase');
+
+// Mirrors GET /branding/logos — looked up here directly (no self HTTP call) so
+// every server-rendered preview/worksheet gets the school/curriculum logo.
+async function fetchBranding(school, curriculum) {
+  try {
+    const kinds = [];
+    if (school)     kinds.push('school');
+    if (curriculum) kinds.push('curriculum');
+    if (kinds.length === 0) return { schoolLogoUrl: null, curriculumLogoUrl: null };
+    const { data } = await supabase.from('branding_logos').select('kind, name, logo_url').in('kind', kinds);
+    const schoolLogoUrl     = (data || []).find(r => r.kind === 'school' && r.name === school)?.logo_url || null;
+    const curriculumLogoUrl = (data || []).find(r => r.kind === 'curriculum' && r.name === curriculum)?.logo_url || null;
+    return { schoolLogoUrl, curriculumLogoUrl };
+  } catch {
+    return { schoolLogoUrl: null, curriculumLogoUrl: null };
+  }
+}
 
 // ── Python Layout Detection Microservice (ML-based, replaces heuristic OpenCV) ──
 const LAYOUT_SERVICE_URL = process.env.LAYOUT_SERVICE_URL || 'http://localhost:5050';
@@ -649,7 +667,7 @@ async function callPixtralVision(imageBuffers, { grade, subject, school } = {}) 
       ...imageBlocks,
       { type: 'text', text: prompt },
     ],
-  }], 'pixtral-large-latest', 16000);
+  }], 'mistral-small-latest', 16000);
 
   return result;
 }
@@ -2155,12 +2173,13 @@ router.post('/batch-test', upload.array('pdfs', 25), async (req, res) => {
 
 // ── POST /quiz/render-preview — Accept quiz JSON, return fully rendered interactive HTML ──
 // Used by frontend to show Student Preview (rich server-rendered HTML with two-column layouts, SVGs, etc.)
-router.post('/render-preview', express.json({ limit: '5mb' }), (req, res) => {
+router.post('/render-preview', express.json({ limit: '5mb' }), async (req, res) => {
   try {
     const quiz = req.body.quiz || req.body;
     if (!quiz || !quiz.tasks) return res.status(400).json({ error: 'No quiz data provided' });
     autoDetectMCQ(quiz);
-    const html = renderQuizHTML(quiz);
+    const branding = await fetchBranding(quiz.school, quiz.curriculum);
+    const html = renderQuizHTML(quiz, branding);
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
   } catch (err) {
@@ -3280,7 +3299,7 @@ function stripImagesForStructuredTasks(quiz) {
   }
 }
 
-function renderQuizHTML(quiz) {
+function renderQuizHTML(quiz, branding = {}) {
   normalizeVennQuestions(quiz);
   normalizeCharts(quiz);
   normalizeRiddleTables(quiz);
@@ -3467,6 +3486,23 @@ function renderQuizHTML(quiz) {
     const ansIsNumber = typeof ansRaw === 'number' || (typeof ansRaw === 'string' && !isNaN(parseFloat(ansRaw)) && isFinite(ansRaw));
     const isNum = !isFraction && ansIsNumber;
     const isMcq = q.type === 'mcq' && Array.isArray(q.options);
+    const hasDefinedAnswer = ansRaw !== undefined && ansRaw !== null && String(ansRaw).trim() !== '';
+    // Open-ended (reflection/opinion) questions have NO single correct answer at all —
+    // mirrors smartLabel()'s null-label condition. These are auto-accepted once attempted.
+    const isOpenEnded = !hasDefinedAnswer && (q.type === 'long' ||
+      /\b(write|describe|explain|identify|correct|find the error|use.*word|sentence|passage|paragraph)\b/i.test(q.question || ''));
+    // Theory/short-factual answers DO have a definite correct answer, but it's multi-word
+    // TEXT ("hockey and football") where a student's exact phrasing rarely matches a
+    // strict string comparison. These get AI-tolerant grading instead of exact-match.
+    // Requires at least 2 genuinely alphabetic words — a number, a number-with-unit
+    // ("12 cm"), or a tally count must NEVER take this path; they have exactly one
+    // right answer and belong on the fast exact-match check.
+    const isTheory = typeof ansRaw === 'string' && !isNum && !isFraction && hasDefinedAnswer &&
+      (() => {
+        const tokens = ansRaw.trim().split(/\s+/);
+        const alphaTokens = tokens.filter(t => /^[a-zA-Z][a-zA-Z''-]*$/.test(t));
+        return tokens.length > 1 && alphaTokens.length >= 2;
+      })();
 
     if (isMcq) {
       const correctIdx = (q.options || []).findIndex(o => o.correct);
@@ -3475,7 +3511,7 @@ function renderQuizHTML(quiz) {
     } else if (isActivity) {
       answersMap[qId] = { answer: ansRaw, isNum: false, activity: true };
     } else {
-      answersMap[qId] = { answer: ansRaw, isNum, range: q.acceptRange || null };
+      answersMap[qId] = { answer: ansRaw, isNum, range: q.acceptRange || null, open: isOpenEnded, theory: isTheory };
     }
     return qId;
   }
@@ -3504,6 +3540,10 @@ function renderQuizHTML(quiz) {
             style="position:absolute;left:${left}px;top:${top}px;width:${BOX}px;height:${BOX}px;
             border:1.5px dashed rgba(195,220,216,0.5);border-radius:6px;background:rgba(255,255,255,0.06);
             color:#F0EEEC;font-size:14px;font-weight:700;text-align:center;box-sizing:border-box;font-family:inherit;">`;
+          inner += `<button class="mini-check" title="Check this box" onclick="checkOneGroup('${qId}')"
+            style="position:absolute;left:${left + BOX - 20}px;top:${top + BOX - 20}px;width:18px;height:18px;z-index:2;
+            border-radius:50%;border:none;background:#4a9d6e;color:#0F0F0F;font-size:11px;font-weight:900;
+            line-height:18px;padding:0;cursor:pointer;">&#10003;</button>`;
         }
       });
     });
@@ -3517,21 +3557,16 @@ function renderQuizHTML(quiz) {
 
   // ── Helper: wrap a diagram render (pyramid/diagramFill/etc.) in the same bordered
   // dark "q-card" look used by the Venn diagram, so every diagram task feels consistent. ──
-  function renderDiagramCard({ label, instructions, innerHtml, checkIds, groupResultId }) {
+  function renderDiagramCard({ label, instructions, innerHtml }) {
     return `<div class="q-card">
       ${label ? `<p class="q-text"><strong>${fmt(label)}</strong></p>` : ''}
       ${instructions ? `<p style="font-size:12px;color:#A8B5B3;margin:2px 0 12px;">${fmt(instructions)}</p>` : ''}
       ${innerHtml}
-      ${checkIds && checkIds.length ? `<div class="q-actions" style="display:flex;gap:10px;align-items:center;margin-top:12px;">
-        <button class="btn-check" onclick="checkGroup(${JSON.stringify(checkIds).replace(/"/g, '&quot;')})">Check all</button>
-        <span id="${groupResultId}" style="font-size:13px;"></span>
-      </div>` : ''}
     </div>`;
   }
 
   // ── Helper: render a fill-in table (registers each blank cell for scoring) ──
   function renderTaskTable(table) {
-    const ids = [];
     let h = '<div class="ws-table-wrap" style="overflow-x:auto;margin:8px 0 14px;">';
     if (table.title) h += `<div style="font-weight:700;color:#C3DCD8;margin-bottom:8px;">${fmt(String(table.title))}</div>`;
     h += '<table style="width:100%;border-collapse:collapse;">';
@@ -3546,9 +3581,20 @@ function renderQuizHTML(quiz) {
         if (cell && cell.input) {
           const isNumAns = /^\d+(\.\d+)?$/.test(String(cell.answer || '').trim());
           const qId = registerQuestion({ type: cell._qtype || (isNumAns ? 'numeric' : 'text'), answer: cell.answer });
-          ids.push(qId);
-          h += `<td style="border:1px solid rgba(195,220,216,0.18);padding:6px;text-align:center;">`
-            + `<input type="text" id="${qId}-input" class="q-input"${inputLangAttr} style="width:90%;max-width:170px;padding:6px 8px;font-size:14px;" placeholder="?"></td>`;
+          const hintText = cell.hint || '';
+          h += `<td style="border:1px solid rgba(195,220,216,0.18);padding:8px;text-align:center;">
+            <div style="display:flex;flex-direction:column;gap:6px;align-items:center;">
+              <div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;">
+                <input type="text" id="${qId}-input" class="q-input"${inputLangAttr} style="width:100px;padding:6px 8px;font-size:14px;" placeholder="?">
+                <button class="btn-check" style="padding:6px 12px;font-size:12px;" onclick="checkAnswer('${qId}')">Check</button>
+                ${hintText ? `<button class="btn-hint" style="padding:6px 10px;font-size:12px;" onclick="toggleHint('${qId}')">Hint</button>` : ''}
+              </div>
+              ${hintText ? `<div id="${qId}-hint" class="hint-box" style="display:none;width:100%;box-sizing:border-box;margin-top:0;">${fmt(hintText)}</div>` : ''}
+              <div id="${qId}-result" class="result-box"></div>
+              <div id="${qId}-solution" class="solution-box" style="display:none;width:100%;box-sizing:border-box;margin-top:0;font-size:12px;padding:10px 12px;"><strong>&#9989; Solution</strong><br>${fmt(String(cell.answer ?? ''))}</div>
+              <button id="${qId}-show" class="btn-show" style="display:none;font-size:11px;padding:4px 10px;" onclick="toggleSolution('${qId}')">Show Answer</button>
+            </div>
+          </td>`;
         } else {
           h += `<td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">${fmt(String((cell && cell.text) || ''))}</td>`;
         }
@@ -3556,11 +3602,6 @@ function renderQuizHTML(quiz) {
       h += '</tr>';
     }
     h += '</table>';
-    if (ids.length) {
-      h += `<div style="margin-top:12px;display:flex;gap:10px;align-items:center;">`
-        + `<button class="btn-check" onclick="checkTable(${JSON.stringify(ids).replace(/"/g, "&quot;")})">Check table</button>`
-        + `<span id="${ids[0]}-tableresult" style="font-size:13px;"></span></div>`;
-    }
     h += '</div>';
     return h;
   }
@@ -3602,17 +3643,17 @@ function renderQuizHTML(quiz) {
         h += `<div class="match-img match-img-text">${fmt(q.question || '')}</div>`;
       }
       h += `<div class="match-slot" id="${qId}-slot" ondragover="event.preventDefault()" ondrop="mDrop(event,'${qId}-slot')" onclick="mSlotClick(this)"><span class="match-slot-ph">Drop word here</span></div>`;
+      h += `<div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:6px;flex-wrap:wrap;">
+        <button class="btn-check" style="padding:6px 12px;font-size:12px;" onclick="checkOneMatch('${qId}')">Check</button>
+        ${q.hint ? `<button class="btn-hint" style="padding:6px 10px;font-size:12px;" onclick="toggleHint('${qId}')">Hint</button>` : ''}
+      </div>`;
+      if (q.hint) h += `<div id="${qId}-hint" class="hint-box" style="display:none;font-size:12px;">${fmt(q.hint)}</div>`;
       h += `<div id="${qId}-result" class="lang-result"></div>`;
       h += `<div id="${qId}-solution" class="solution-box" style="display:none;font-size:12px;"><strong>&#9989;</strong> ${fmt(String(q.answer ?? ''))}</div>`;
       h += `<button id="${qId}-show" class="btn-show" style="display:none;font-size:11px;" onclick="toggleSolution('${qId}')">Show Answer</button>`;
       h += `</div>`;
     });
     h += `</div>`;
-
-    h += `<div style="display:flex;gap:10px;align-items:center;margin-top:14px;">
-      <button class="btn-check" onclick="checkMatches(${JSON.stringify(qIds).replace(/"/g, '&quot;')})">Check matches</button>
-      <span id="${qIds[0]}-matchresult" style="font-size:13px;"></span>
-    </div>`;
 
     // Any non-matching questions in the same task render normally below
     for (const q of rest) {
@@ -3848,15 +3889,10 @@ function renderQuizHTML(quiz) {
     // ── NUMBER PYRAMIDS: redrawn as clean CSS boxes (not the scanned image), wrapped in
     //    the same bordered q-card look as the Venn diagram for visual consistency. ──
     if (Array.isArray(task.pyramids) && task.pyramids.length) {
-      const pyramidQIdsBefore = qNum;
       const pyramidsHtml = task.pyramids.map(p => renderPyramid(p)).join('');
-      const pyramidIds = [];
-      for (let i = pyramidQIdsBefore + 1; i <= qNum; i++) pyramidIds.push(`q${i}`);
       tasksHTML += renderDiagramCard({
-        instructions: 'Fill in each blank so every pair of adjacent blocks sums to the block above it.',
-        innerHtml: `<div>${pyramidsHtml}</div>`,
-        checkIds: pyramidIds,
-        groupResultId: pyramidIds[0] ? `${pyramidIds[0]}-groupresult` : ''
+        instructions: 'Fill in each blank, then tap its check mark — every pair of adjacent blocks sums to the block above it.',
+        innerHtml: `<div>${pyramidsHtml}</div>`
       });
     }
 
@@ -3872,16 +3908,18 @@ function renderQuizHTML(quiz) {
         return `<input type="text" id="${dfIds[i]}-input" class="q-input df-input"${inputLangAttr}
           style="position:absolute;left:${left}%;top:${top}%;width:${w}%;height:${h}%;box-sizing:border-box;
           padding:2px 4px;font-size:13px;text-align:center;border:1.5px dashed rgba(195,220,216,0.5);
-          border-radius:6px;background:rgba(28,28,28,0.82);color:#F0EEEC;font-weight:700;font-family:inherit;">`;
+          border-radius:6px;background:rgba(28,28,28,0.82);color:#F0EEEC;font-weight:700;font-family:inherit;">`
+          + `<button class="mini-check" title="Check this box" onclick="checkOneGroup('${dfIds[i]}')"
+          style="position:absolute;left:calc(${left}% + ${w}% - 16px);top:calc(${top}% + ${h}% - 16px);width:16px;height:16px;z-index:2;
+          border-radius:50%;border:none;background:#4a9d6e;color:#0F0F0F;font-size:10px;font-weight:900;
+          line-height:16px;padding:0;cursor:pointer;">&#10003;</button>`;
       }).join('');
       tasksHTML += renderDiagramCard({
-        instructions: 'Write your answers directly on the diagram below.',
+        instructions: 'Write your answers directly on the diagram below, then tap each check mark.',
         innerHtml: `<div class="diagram-fill-wrap" style="position:relative;display:inline-block;max-width:100%;background:#fff;border-radius:8px;border:1px solid rgba(195,220,216,0.2);padding:10px;">
           <img src="${embedImage(task.diagramFillImageUrl)}" alt="${task.sharedImageDescription || 'Worksheet diagram'}" style="display:block;max-width:100%;height:auto;border-radius:4px;">
           ${inputsHtml}
-        </div>`,
-        checkIds: dfIds,
-        groupResultId: dfIds[0] ? `${dfIds[0]}-groupresult` : ''
+        </div>`
       });
     } else
     // ── SHARED IMAGE: show one diagram for the entire task (all questions reference it) ──
@@ -4088,13 +4126,17 @@ function renderQuizHTML(quiz) {
     body { font-family: -apple-system, 'Segoe UI', Roboto, 'Noto Sans Telugu', 'Noto Sans Devanagari', Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
 
     /* ── Header — Aivorah Enchanted Forest ── */
-    .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 28px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); }
-    .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 4px; }
-    .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; }
-    .header-meta { font-size: 13px; color: #5A6B69; margin-top: 4px; }
+    .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 14px 110px 14px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); display: flex; align-items: center; min-height: 60px; }
+    .header-text { text-align: left; }
+    .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 2px; }
+    .header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; margin: 0; }
+    .header-meta { font-size: 13px; color: #5A6B69; margin-top: 2px; }
+    .header-logos { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+                     display: flex; gap: 16px; align-items: center; }
+    .header-logos img { height: 55px; width: auto; display: block; }
 
-    /* ── Score Badge ── */
-    .score { position: fixed; top: 20px; right: 24px; width: 76px; height: 76px; border-radius: 50%;
+    /* ── Score Badge — anchored to the header itself, not the viewport ── */
+    .score { position: absolute; top: 50%; right: 24px; transform: translateY(-50%); width: 76px; height: 76px; border-radius: 50%;
              background: linear-gradient(135deg, #93B0AC, #7AADA8); color: #0F0F0F;
              display: flex; flex-direction: column; align-items: center; justify-content: center;
              box-shadow: 0 4px 20px rgba(147,176,172,0.3); z-index: 100; }
@@ -4143,6 +4185,7 @@ function renderQuizHTML(quiz) {
     .btn-check { background: #93B0AC; color: #0F0F0F; border: none; padding: 10px 24px; border-radius: 8px;
                  font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; }
     .btn-check:hover { background: #7AADA8; transform: translateY(-1px); }
+    .mini-check:hover { transform: scale(1.15); }
     .btn-hint { background: #C5BD96; color: #0F0F0F; border: none; padding: 10px 20px; border-radius: 8px;
                 font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
     .btn-hint:hover { opacity: 0.85; transform: translateY(-1px); }
@@ -4154,8 +4197,8 @@ function renderQuizHTML(quiz) {
     .hint-box { margin-top: 12px; padding: 14px 16px; background: rgba(197,189,150,0.1); border-radius: 8px;
                 border-left: 4px solid #C5BD96; color: #C5BD96; font-size: 14px; line-height: 1.5; }
     .result-box { margin-top: 8px; font-size: 14px; min-height: 6px; }
-    .solution-box { margin-top: 12px; padding: 16px 18px; background: rgba(147,176,172,0.1); border-radius: 8px;
-                    border-left: 4px solid #93B0AC; color: #93B0AC; font-size: 14px; line-height: 1.7; }
+    .solution-box { margin-top: 12px; padding: 16px 18px; background: rgba(74,157,110,0.14); border-radius: 8px;
+                    border-left: 4px solid #4a9d6e; color: #4a9d6e; font-size: 14px; line-height: 1.7; }
 
     /* ── Activity boxes ── */
     .activity-box { background: linear-gradient(135deg, rgba(147,176,172,0.08), rgba(197,189,150,0.08)) !important;
@@ -4199,8 +4242,8 @@ function renderQuizHTML(quiz) {
       align-items:center; justify-content:center; padding:4px; cursor:pointer; transition:border-color .15s, background .15s; }
     .match-slot-ph { font-size:12px; color:#7c8a88; pointer-events:none; }
     .match-slot.filled .match-slot-ph { display:none; }
-    .match-slot.m-ok { border-style:solid; border-color:#93B0AC; background:rgba(147,176,172,0.12); }
-    .match-slot.m-bad { border-style:solid; border-color:#EFD1D4; background:rgba(239,209,212,0.08); }
+    .match-slot.m-ok { border-style:solid; border-color:#4a9d6e; background:rgba(74,157,110,0.18); }
+    .match-slot.m-bad { border-style:solid; border-color:#c9605f; background:rgba(201,96,95,0.14); }
     .lang-btn-hint { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(197,189,150,0.4);
                      background: transparent; color: #C5BD96; font-size: 14px; font-weight: 700; cursor: pointer;
                      display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
@@ -4214,15 +4257,16 @@ function renderQuizHTML(quiz) {
 
     /* ── Responsive ── */
     @media (max-width: 640px) {
-      .header { padding: 20px; }
+      .header { padding: 12px 76px 12px 16px; }
       .header h1 { font-size: 20px; }
+      .header-logos img { height: 40px; }
       .container { padding: 0 14px 40px; }
       .q-card { padding: 16px; }
       .lang-q-row { padding: 12px 14px 10px; }
       .lang-q-answer { margin-left: 28px; }
       .lang-result { margin-left: 28px; }
       .lang-example { margin-left: 28px; }
-      .score { width: 60px; height: 60px; top: 14px; right: 14px; }
+      .score { width: 60px; height: 60px; right: 12px; }
       .score-num { font-size: 18px; }
       .concepts-row { flex-direction: column; }
     }
@@ -4230,14 +4274,19 @@ function renderQuizHTML(quiz) {
 </head>
 <body>
   <div class="header">
-    <div class="header-sub">${quiz.school || 'Aivorah'} &middot; ${quiz.grade || ''}</div>
-    <h1>${fmt(quiz.title || 'Interactive Quiz')}</h1>
-    <div class="header-meta">Subject: ${quiz.subject || 'Mathematics'} &nbsp;|&nbsp; Powered by Aivorah</div>
-  </div>
-
-  <div class="score" id="score-badge">
-    <span class="score-num" id="score-num">0/${qNum}</span>
-    <span class="score-label">Score</span>
+    <div class="header-text">
+      <div class="header-sub">${quiz.school || 'Aivorah'} &middot; ${quiz.grade || ''}</div>
+      <h1>${fmt(quiz.title || 'Interactive Quiz')}</h1>
+      <div class="header-meta">Subject: ${quiz.subject || 'Mathematics'} &nbsp;|&nbsp; Powered by Aivorah</div>
+    </div>
+    ${(branding.schoolLogoUrl || branding.curriculumLogoUrl) ? `<div class="header-logos">
+      ${branding.schoolLogoUrl ? `<img src="${branding.schoolLogoUrl}" alt="School logo">` : ''}
+      ${branding.curriculumLogoUrl ? `<img src="${branding.curriculumLogoUrl}" alt="Curriculum logo">` : ''}
+    </div>` : ''}
+    <div class="score" id="score-badge">
+      <span class="score-num" id="score-num">0/${qNum}</span>
+      <span class="score-label">Score</span>
+    </div>
   </div>
 
   <div class="container">
@@ -4267,6 +4316,33 @@ function renderQuizHTML(quiz) {
     const studentAnswers = {}; // { qId: { answer, correct, timeSpent } }
     const questionStartTimes = {}; // { qId: timestamp }
 
+    // ── Effort-based credit: full marks for a clean first-attempt correct answer,
+    // half marks if a Hint was used along the way, zero if the student had to
+    // reveal the Show Answer before getting it right (that's reading, not solving). ──
+    const hintUsed = new Set();
+    const revealed = new Set();
+    function creditFor(id) { return revealed.has(id) ? 0 : (hintUsed.has(id) ? 0.5 : 1); }
+
+    // ── Theory/short-factual answer matching — compares meaningful keywords instead
+    // of literal strings, so word order and filler words don't cause a false "wrong".
+    // Pure client-side, no network call, no AI dependency. ──
+    const STOPWORDS = new Set(['a','an','the','is','was','it','of','in','to','and','or','on','at','for','with','this','that','be','been','were','are','as','by','from']);
+    function keywordSet(s) {
+      return new Set(
+        String(s).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+          .filter(function(w) { return w.length > 0 && !STOPWORDS.has(w); })
+      );
+    }
+    function keywordMatch(studentAnswer, correctAnswer) {
+      const expected = Array.from(keywordSet(correctAnswer));
+      if (expected.length === 0) return true; // nothing meaningful to check against
+      const studentSet = keywordSet(studentAnswer);
+      const matched = expected.filter(function(w) { return studentSet.has(w); }).length;
+      // Short answers (≤2 keywords) need every keyword present; longer ones allow ~80% coverage.
+      const required = expected.length <= 2 ? expected.length : Math.ceil(expected.length * 0.8);
+      return matched >= required;
+    }
+
     // Track when each question becomes visible / gets focus
     document.addEventListener('focusin', function(e) {
       const inp = e.target.closest('input');
@@ -4277,10 +4353,14 @@ function renderQuizHTML(quiz) {
     });
 
     function up() {
-      document.getElementById('score-num').textContent = sc + '/' + tot;
-      const pct = Math.round((done.size / tot) * 100);
-      document.getElementById('pf').style.width = pct + '%';
-      document.getElementById('pp').textContent = pct + '% complete';
+      document.getElementById('score-num').textContent = (sc % 1 === 0 ? sc : sc.toFixed(1)) + '/' + tot;
+      // Progress bar tracks how many questions have been attempted — completion, not correctness.
+      const donePct = Math.round((done.size / tot) * 100);
+      document.getElementById('pf').style.width = donePct + '%';
+      document.getElementById('pp').textContent = donePct + '% complete';
+      // Score percentage — what actually gets saved as the assignment's grade — reflects
+      // effort-weighted credit (full/half/zero per question), not just attempt count.
+      const scorePct = Math.round((sc / tot) * 100);
       // Build per-question answer list
       const answersArr = Object.entries(studentAnswers).map(([qId, data]) => ({
         qId, answer: data.answer, correct: data.correct,
@@ -4288,7 +4368,7 @@ function renderQuizHTML(quiz) {
         question: data.question || ''
       }));
       // Report score + answers to parent window (for student assignment iframe)
-      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: pct, completed: done.size === tot, answers: answersArr }, '*'); } catch(e) {}
+      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: scorePct, completed: done.size === tot, answers: answersArr }, '*'); } catch(e) {}
     }
 
     function checkAnswer(id) {
@@ -4298,6 +4378,45 @@ function renderQuizHTML(quiz) {
       const val = inp.value.trim();
       if (!val) { inp.style.borderColor = '#C5BD96'; return; }
       const r = document.getElementById(id + '-result');
+      // Open-ended (reflection) questions have no single correct text — any written
+      // response counts as answered, so completion isn't blocked waiting for an exact match.
+      if (a.open) {
+        const elapsedOpen = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+        studentAnswers[id] = { answer: val, correct: true, timeSpent: elapsedOpen, question: '' };
+        r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Answer recorded</span>';
+        inp.style.borderColor = '#4a9d6e';
+        inp.style.background = 'rgba(74,157,110,0.14)';
+        if (!done.has(id)) { sc += creditFor(id); done.add(id); }
+        const openSol = document.getElementById(id + '-solution');
+        if (openSol) openSol.style.display = 'block';
+        up();
+        return;
+      }
+      // Theory/short-factual answers (multi-word, a real correct answer exists but the
+      // student's phrasing won't line up with it exactly) — compare the meaningful
+      // KEYWORDS in each answer rather than the literal strings, so word order, filler
+      // words ("it was..."), and extra phrasing don't cause a false "wrong". Runs
+      // instantly, client-side — no network call, no dependency on any AI service.
+      if (a.theory) {
+        const okTh = keywordMatch(val, String(a.answer));
+        const elapsedTh = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+        studentAnswers[id] = { answer: val, correct: okTh, timeSpent: elapsedTh, question: '' };
+        if (okTh) {
+          r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Correct!</span>';
+          inp.style.borderColor = '#4a9d6e';
+          inp.style.background = 'rgba(74,157,110,0.14)';
+          if (!done.has(id)) { sc += creditFor(id); done.add(id); }
+          const sol = document.getElementById(id + '-solution');
+          if (sol) sol.style.display = 'block';
+        } else {
+          r.innerHTML = '<span style="color:#c9605f;font-weight:700">Not quite. Try again!</span>';
+          inp.style.borderColor = '#c9605f';
+          const sh = document.getElementById(id + '-show');
+          if (sh) sh.style.display = 'inline-block';
+        }
+        up();
+        return;
+      }
       let ok = false;
       if (a.isNum) {
         const v = parseFloat(val);
@@ -4312,14 +4431,14 @@ function renderQuizHTML(quiz) {
       const qText = qEl ? qEl.querySelector('.q-label, strong')?.textContent || '' : '';
       studentAnswers[id] = { answer: val, correct: ok, timeSpent: elapsed, question: qText };
       if (ok) {
-        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
-        inp.style.borderColor = '#93B0AC';
-        inp.style.background = 'rgba(147,176,172,0.1)';
-        if (!done.has(id)) { sc++; done.add(id); }
+        r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Correct!</span>';
+        inp.style.borderColor = '#4a9d6e';
+        inp.style.background = 'rgba(74,157,110,0.14)';
+        if (!done.has(id)) { sc += creditFor(id); done.add(id); }
         document.getElementById(id + '-solution').style.display = 'block';
       } else {
-        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
-        inp.style.borderColor = '#EFD1D4';
+        r.innerHTML = '<span style="color:#c9605f;font-weight:700">Not quite. Try again!</span>';
+        inp.style.borderColor = '#c9605f';
         document.getElementById(id + '-show').style.display = 'inline-block';
       }
       up();
@@ -4336,11 +4455,11 @@ function renderQuizHTML(quiz) {
       const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
       studentAnswers[id] = { answer: sel.value, correct: ok, timeSpent: elapsed, question: '' };
       if (ok) {
-        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct!</span>';
-        if (!done.has(id)) { sc++; done.add(id); }
+        r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Correct!</span>';
+        if (!done.has(id)) { sc += creditFor(id); done.add(id); }
         document.getElementById(id + '-solution').style.display = 'block';
       } else {
-        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite. Try again!</span>';
+        r.innerHTML = '<span style="color:#c9605f;font-weight:700">Not quite. Try again!</span>';
         document.getElementById(id + '-show').style.display = 'inline-block';
       }
       up();
@@ -4384,35 +4503,28 @@ function renderQuizHTML(quiz) {
       if (bank) bank.appendChild(chip);
       if (slot && slot.classList) slot.classList.remove('filled', 'm-ok', 'm-bad');
     }
-    function checkMatches(ids) {
-      let allOk = true, placed = 0;
-      ids.forEach(function(id) {
-        const a = answers[id];
-        const slot = document.getElementById(id + '-slot');
-        const r = document.getElementById(id + '-result');
-        const chip = slot ? slot.querySelector('.match-chip') : null;
-        if (!a || !slot) return;
-        if (!chip) { allOk = false; if (r) r.innerHTML = '<span style="color:#C5BD96;font-size:12px;">Place a word</span>'; return; }
-        placed++;
-        const val = chip.dataset.word;
-        const ok = String(val).replace(/\\s+/g, '').toLowerCase() === String(a.answer).replace(/\\s+/g, '').toLowerCase();
-        studentAnswers[id] = { answer: val, correct: ok, timeSpent: 0, question: '' };
-        if (ok) {
-          slot.classList.add('m-ok'); slot.classList.remove('m-bad');
-          if (r) r.innerHTML = '<span style="color:#93B0AC;font-weight:700;font-size:12px;">&#10004; Correct!</span>';
-          if (!done.has(id)) { sc++; done.add(id); }
-          const sol = document.getElementById(id + '-solution');
-          if (sol) sol.style.display = 'block';
-        } else {
-          allOk = false;
-          slot.classList.add('m-bad'); slot.classList.remove('m-ok');
-          if (r) r.innerHTML = '<span style="color:#EFD1D4;font-size:12px;">Try again</span>';
-          const sh = document.getElementById(id + '-show');
-          if (sh) sh.style.display = 'inline-block';
-        }
-      });
-      const sum = document.getElementById(ids[0] + '-matchresult');
-      if (sum) sum.innerHTML = (allOk && placed === ids.length) ? '<span style="color:#93B0AC;font-weight:700">&#10004; All matched!</span>' : '';
+    function checkOneMatch(id) {
+      const a = answers[id];
+      const slot = document.getElementById(id + '-slot');
+      const r = document.getElementById(id + '-result');
+      const chip = slot ? slot.querySelector('.match-chip') : null;
+      if (!a || !slot) return;
+      if (!chip) { if (r) r.innerHTML = '<span style="color:#C5BD96;font-size:12px;">Place a word first</span>'; return; }
+      const val = chip.dataset.word;
+      const ok = String(val).replace(/\\s+/g, '').toLowerCase() === String(a.answer).replace(/\\s+/g, '').toLowerCase();
+      studentAnswers[id] = { answer: val, correct: ok, timeSpent: 0, question: '' };
+      if (ok) {
+        slot.classList.add('m-ok'); slot.classList.remove('m-bad');
+        if (r) r.innerHTML = '<span style="color:#4a9d6e;font-weight:700;font-size:12px;">&#10004; Correct!</span>';
+        if (!done.has(id)) { sc += creditFor(id); done.add(id); }
+        const sol = document.getElementById(id + '-solution');
+        if (sol) sol.style.display = 'block';
+      } else {
+        slot.classList.add('m-bad'); slot.classList.remove('m-ok');
+        if (r) r.innerHTML = '<span style="color:#c9605f;font-size:12px;">Not quite. Try again!</span>';
+        const sh = document.getElementById(id + '-show');
+        if (sh) sh.style.display = 'inline-block';
+      }
       up();
     }
 
@@ -4437,8 +4549,8 @@ function renderQuizHTML(quiz) {
         if (val.length) anyFilled = true;
         var correct = normItems((a.answers[rg] || []).join(','));
         var ok = setEq(val, correct);
-        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
-        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
+        inp.style.borderColor = ok ? '#4a9d6e' : '#c9605f';
+        inp.style.background = ok ? 'rgba(74,157,110,0.14)' : 'rgba(201,96,95,0.10)';
         if (!ok) allOk = false;
         snapshot.push(rg + ': ' + inp.value.trim());
       });
@@ -4447,85 +4559,48 @@ function renderQuizHTML(quiz) {
       var elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
       studentAnswers[id] = { answer: snapshot.join(' | '), correct: allOk, timeSpent: elapsed, question: 'Venn diagram' };
       if (allOk) {
-        r.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; Correct! Every region is right.</span>';
-        if (!done.has(id)) { sc++; done.add(id); }
+        r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Correct! Every region is right.</span>';
+        if (!done.has(id)) { sc += creditFor(id); done.add(id); }
         document.getElementById(id + '-solution').style.display = 'block';
       } else {
-        r.innerHTML = '<span style="color:#EFD1D4;font-weight:700">Not quite — green boxes are right, pink need another look.</span>';
+        r.innerHTML = '<span style="color:#c9605f;font-weight:700">Not quite — green boxes are right, red boxes need another look.</span>';
         var sh = document.getElementById(id + '-show');
         if (sh) sh.style.display = 'inline-block';
       }
       up();
     }
 
-    function checkGroup(ids) {
-      var right = 0, filled = 0;
-      ids.forEach(function(id) {
-        var a = answers[id];
-        var inp = document.getElementById(id + '-input');
-        if (!a || !inp) return;
-        var val = inp.value.trim();
-        if (!val) return;
-        filled++;
-        var ok;
-        if (a.isNum) {
-          var v = parseFloat(val);
-          ok = !isNaN(v) && (a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01);
-        } else {
-          ok = val.replace(/\\s+/g, '').toLowerCase() === String(a.answer).replace(/\\s+/g, '').toLowerCase();
-        }
-        inp.style.borderColor = ok ? '#4a9d6e' : '#c9605f';
-        inp.style.background = ok ? 'rgba(74,157,110,0.14)' : 'rgba(201,96,95,0.10)';
-        if (ok && !done.has(id)) { sc++; done.add(id); }
-        studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'diagram blank' };
-        if (ok) right++;
-      });
-      var rEl = document.getElementById(ids[0] + '-groupresult');
-      if (rEl) {
-        if (!filled) rEl.innerHTML = '<span style="color:#C5BD96;">Fill in the blanks, then check.</span>';
-        else if (right === ids.length) rEl.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; All correct!</span>';
-        else rEl.innerHTML = '<span style="color:#EFD1D4;font-weight:700">' + right + '/' + ids.length + ' correct — keep trying!</span>';
+    function checkOneGroup(id) {
+      var a = answers[id];
+      var inp = document.getElementById(id + '-input');
+      if (!a || !inp) return;
+      var val = inp.value.trim();
+      if (!val) return;
+      var ok;
+      if (a.isNum) {
+        var v = parseFloat(val);
+        ok = !isNaN(v) && (a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01);
+      } else {
+        ok = val.replace(/\\s+/g, '').toLowerCase() === String(a.answer).replace(/\\s+/g, '').toLowerCase();
       }
-      up();
-    }
-
-    function checkTable(ids) {
-      var right = 0, filled = 0;
-      ids.forEach(function(id) {
-        var a = answers[id];
-        var inp = document.getElementById(id + '-input');
-        if (!a || !inp) return;
-        var val = inp.value.trim();
-        if (!val) return;
-        filled++;
-        var ok;
-        if (a.isNum) {
-          var v = parseFloat(val);
-          ok = !isNaN(v) && (a.range ? (v >= a.range[0] && v <= a.range[1]) : Math.abs(v - a.answer) < 0.01);
-        } else {
-          ok = val.replace(/\\s+/g, '').toLowerCase() === String(a.answer).replace(/\\s+/g, '').toLowerCase();
-        }
-        inp.style.borderColor = ok ? '#93B0AC' : '#EFD1D4';
-        inp.style.background = ok ? 'rgba(147,176,172,0.14)' : 'rgba(239,209,212,0.10)';
-        if (ok && !done.has(id)) { sc++; done.add(id); }
-        studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'table cell' };
-        if (ok) right++;
-      });
-      var rEl = document.getElementById(ids[0] + '-tableresult');
-      if (rEl) {
-        if (!filled) rEl.innerHTML = '<span style="color:#C5BD96;">Fill in the cells, then check.</span>';
-        else if (right === ids.length) rEl.innerHTML = '<span style="color:#93B0AC;font-weight:700">&#10004; All correct!</span>';
-        else rEl.innerHTML = '<span style="color:#EFD1D4;font-weight:700">' + right + '/' + ids.length + ' correct — green cells are right.</span>';
-      }
+      inp.style.borderColor = ok ? '#4a9d6e' : '#c9605f';
+      inp.style.background = ok ? 'rgba(74,157,110,0.14)' : 'rgba(201,96,95,0.10)';
+      if (ok && !done.has(id)) { sc += creditFor(id); done.add(id); }
+      studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'diagram blank' };
       up();
     }
 
     function toggleHint(id) {
+      hintUsed.add(id);
       const el = document.getElementById(id + '-hint');
       el.style.display = el.style.display === 'none' ? 'block' : 'none';
     }
 
     function toggleSolution(id) {
+      // Only an explicit "Show Answer" click reaches this — the auto-reveal after a
+      // correct answer sets the solution box's display style directly, so this
+      // reliably marks "the student needed the answer handed to them."
+      revealed.add(id);
       const el = document.getElementById(id + '-solution');
       el.style.display = el.style.display === 'none' ? 'block' : 'none';
     }
@@ -4749,3 +4824,6 @@ function renderQuizHTML(quiz) {
 module.exports = router;
 module.exports.renderQuizHTML = renderQuizHTML;
 module.exports.normalizeVennQuestions = normalizeVennQuestions;
+module.exports.docxToPdf = docxToPdf;
+module.exports.callQwenVision = callQwenVision;
+module.exports.callPixtralVision = callPixtralVision;

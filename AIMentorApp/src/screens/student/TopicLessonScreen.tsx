@@ -1371,6 +1371,37 @@ export default function TopicLessonScreen({ navigation, route }: any) {
     timingProvider: string;
   } | null>(null);
 
+  // Prefetch cache — scene audio for the whole lesson is requested in the
+  // background as soon as it loads, so "Next"/"Skip" served from cache instead
+  // of waiting on a fresh TTS round-trip (this is what makes narration feel
+  // instant instead of loading on every card).
+  const audioPrefetchRef = useRef<Record<string, Promise<{ audioUrl: string; timings: any; timingProvider: string } | null>>>({});
+
+  function fetchSceneAudio(lessonId: string, scene: { id: string; voice: string }) {
+    if (!audioPrefetchRef.current[scene.id]) {
+      audioPrefetchRef.current[scene.id] = fetch(
+        `${SERVER_URL}/lesson/scene-audio?lessonId=${encodeURIComponent(lessonId)}&sceneId=${encodeURIComponent(scene.id)}&text=${encodeURIComponent(scene.voice)}`
+      )
+        .then(r => r.json())
+        .then(data => (data.audioUrl ? data : null))
+        .catch(() => null);
+    }
+    return audioPrefetchRef.current[scene.id];
+  }
+
+  // Mirrors `paused` synchronously so async callbacks (audio-load .then(),
+  // togglePause) can read the latest intent without waiting for a re-render.
+  const pausedRef = useRef(false);
+
+  // Single-owner guard for narration playback. The auto-play effect and
+  // replayCard() both fetch audio and call .play() independently — if a user
+  // hits Replay (or skips to another card) before the in-flight fetch from the
+  // PREVIOUS request resolves, that stale request would still create its own
+  // <audio> and play it, overlapping with the newer one ("dual sound"). Every
+  // playback attempt claims a token before its fetch and checks it's still
+  // current once the fetch resolves; a superseded attempt is dropped silently.
+  const playTokenRef = useRef(0);
+
   function cancelHighlightLoop() {
     if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
   }
@@ -1449,13 +1480,31 @@ export default function TopicLessonScreen({ navigation, route }: any) {
     return () => ctrl.abort();
   }, [topic, grade, subject]);
 
+  // Pre-generate narration for the whole lesson as soon as it loads. Scenes are
+  // requested in reading order, one at a time, so the *next* card's audio is
+  // usually already cached (or mid-generation) by the time the student clicks
+  // Next/Skip — that's what makes narration play instantly instead of loading
+  // on every card.
+  useEffect(() => {
+    if (!lesson || Platform.OS !== 'web') return;
+    audioPrefetchRef.current = {};
+    let cancelled = false;
+    (async () => {
+      for (const scene of lesson.scenes) {
+        if (cancelled) return;
+        await fetchSceneAudio(lesson.id, scene);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [lesson]);
+
   // Auto-play TTS on card change
   useEffect(() => {
     if (!lesson) return;
     const scene = lesson.scenes[cardIdx];
     if (!scene) return;
     markActive();
-    setPaused(false);
+    setPaused(false); pausedRef.current = false;
     setWordIndex(-1);
     stopAudio();
 
@@ -1463,12 +1512,13 @@ export default function TopicLessonScreen({ navigation, route }: any) {
 
     setSpeaking(true);
     const voiceWords = (scene.voice.match(/\S+/g) || []);
-    const audioCtrl = new AbortController();
+    const myToken = ++playTokenRef.current;
+    let stale = false;
 
-    fetch(`${SERVER_URL}/lesson/scene-audio?lessonId=${encodeURIComponent(lesson.id)}&sceneId=${encodeURIComponent(scene.id)}&text=${encodeURIComponent(scene.voice)}`, { signal: audioCtrl.signal })
-      .then(r => r.json())
+    fetchSceneAudio(lesson.id, scene)
       .then(data => {
-        if (!data.audioUrl) throw new Error('no audioUrl');
+        if (stale || myToken !== playTokenRef.current) return; // superseded — don't overlap
+        if (!data?.audioUrl) throw new Error('no audioUrl');
         const audio = new Audio(/^https?:\/\//i.test(data.audioUrl) ? data.audioUrl : `${SERVER_URL}${data.audioUrl}`);
         audioRef.current = audio;
         audioMetaRef.current = { words: voiceWords, timings: data.timings || null, timingProvider: data.timingProvider || 'none' };
@@ -1484,10 +1534,11 @@ export default function TopicLessonScreen({ navigation, route }: any) {
         audio.ontimeupdate = () => { markActive(); };
         audio.onended = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
         audio.onerror = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
+        if (pausedRef.current) { setSpeaking(false); return; } // paused before load finished — stay paused, don't autoplay
         audio.play().catch(() => { setSpeaking(false); });
       })
-      .catch((err) => {
-        if (err.name === 'AbortError') return;
+      .catch(() => {
+        if (stale || myToken !== playTokenRef.current) return;
         // Fallback to Web Speech API if server unavailable
         const synth = Platform.OS === 'web' ? (window as any).speechSynthesis as SpeechSynthesis : null;
         if (!synth) { setSpeaking(false); return; }
@@ -1504,7 +1555,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
         synth.speak(utter);
       });
 
-    return () => { audioCtrl.abort(); stopAudio(); stopSpeech(); setSpeaking(false); };
+    return () => { stale = true; stopAudio(); stopSpeech(); setSpeaking(false); };
   }, [cardIdx, lesson]);
 
   // Cleanup on unmount
@@ -1513,7 +1564,8 @@ export default function TopicLessonScreen({ navigation, route }: any) {
   // Stop audio when navigating away (blur handles stack navigation without unmount)
   useEffect(() => {
     const unsubBlur = navigation.addListener('blur', () => {
-      stopAudio(); stopSpeech(); setSpeaking(false); setPaused(false);
+      playTokenRef.current++; // invalidate any in-flight fetch so it can't start playing after we've left
+      stopAudio(); stopSpeech(); setSpeaking(false); setPaused(false); pausedRef.current = false;
       isFocusedRef.current = false;
     });
     const unsubFocus = navigation.addListener('focus', () => {
@@ -1557,15 +1609,25 @@ export default function TopicLessonScreen({ navigation, route }: any) {
     if (Platform.OS !== 'web') return;
     const audio = audioRef.current;
     if (audio) {
-      if (paused) { audio.play(); setPaused(false); }
-      else { audio.pause(); setPaused(true); }
+      if (paused) { audio.play(); setPaused(false); pausedRef.current = false; }
+      else { audio.pause(); setPaused(true); pausedRef.current = true; }
       return;
     }
-    // Fallback: Web Speech
-    const synth = (window as any).speechSynthesis as SpeechSynthesis;
-    if (!synth) return;
-    if (paused) { synth.resume(); setPaused(false); }
-    else { synth.pause(); setPaused(true); }
+    // Fallback: Web Speech — only if it's actually the active narration source.
+    const synth = (window as any).speechSynthesis as SpeechSynthesis | undefined;
+    if (synth && (synth.speaking || synth.paused)) {
+      if (paused) { synth.resume(); setPaused(false); pausedRef.current = false; }
+      else { synth.pause(); setPaused(true); pausedRef.current = true; }
+      return;
+    }
+    // Neither an <audio> element nor an active speech utterance exists yet —
+    // this scene's narration is still being fetched/generated. Previously this
+    // fell through to the speech-synth branch above, which had nothing to
+    // pause but still flipped `paused` to true — leaving the UI stuck on
+    // "Paused" once the audio arrived a moment later and played anyway
+    // (the load effect below didn't check this flag). Just record the intent;
+    // the load effect honors it once the audio element exists.
+    setPaused(p => { pausedRef.current = !p; return !p; });
   }
 
   function goNext() {
@@ -1592,12 +1654,14 @@ export default function TopicLessonScreen({ navigation, route }: any) {
     if (!scene || Platform.OS !== 'web') return;
     setSpeaking(true);
     setWordIndex(-1);
+    setPaused(false); pausedRef.current = false;
     const voiceWords = (scene.voice.match(/\S+/g) || []);
-    const meta = audioMetaRef.current;
+    const myToken = ++playTokenRef.current; // claims ownership — supersedes any in-flight auto-play fetch for this scene
 
     fetch(`${SERVER_URL}/lesson/scene-audio?lessonId=${encodeURIComponent(lesson.id)}&sceneId=${encodeURIComponent(scene.id)}&text=${encodeURIComponent(scene.voice)}`)
       .then(r => r.json())
       .then(data => {
+        if (myToken !== playTokenRef.current) return; // superseded — don't overlap
         if (!data.audioUrl) throw new Error('no audioUrl');
         const audio = new Audio(/^https?:\/\//i.test(data.audioUrl) ? data.audioUrl : `${SERVER_URL}${data.audioUrl}`);
         audioRef.current = audio;
@@ -1610,7 +1674,7 @@ export default function TopicLessonScreen({ navigation, route }: any) {
         audio.onerror = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
         audio.play().catch(() => setSpeaking(false));
       })
-      .catch(() => setSpeaking(false));
+      .catch(() => { if (myToken === playTokenRef.current) setSpeaking(false); });
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
