@@ -21,6 +21,8 @@ import {
   AutocompleteField, CardHeader, BBox, fetchCitySuggestions, fetchSchoolSuggestions, locateCity, locateFull,
   SelectField, COUNTRIES, INDIA_STATES, INDIA_CITIES, PhoneCodeSelect,
 } from './OnboardingSharedFields';
+import { PhoneOtpModal } from './phoneOtpVerification';
+import { useMobileOtpVerification } from './mobileOtpVerification';
 
 const TEACHER_ROLES = ['Teacher', 'Coordinator', 'Principal'];
 const EXPERIENCE_RANGES = ['0 - 2 years', '3 - 5 years', '5 - 10 years', '10+ years'];
@@ -62,6 +64,11 @@ export default function OnboardingTeacherBoxes() {
   const [dob, setDob] = useState('');
   const [mobile, setMobile] = useState('');
   const [mobileCode, setMobileCode] = useState('+91');
+  const mobileOtp = useMobileOtpVerification(mobile, setMobile, mobileCode);
+  const onMobileChange = (v: string) => {
+    setMobile(v);
+    if (mobileOtp.mobileVerified) mobileOtp.setMobileVerified(false);
+  };
   const [school, setSchool] = useState((user as any)?.school || '');
   const [city, setCity] = useState((user as any)?.location || '');
   const [state, setState] = useState('');
@@ -72,6 +79,34 @@ export default function OnboardingTeacherBoxes() {
   const [teachGrades, setTeachGrades] = useState<string[]>([]);
   const [teachSubjects, setTeachSubjects] = useState<string[]>([]);
   const [avatarStyle, setAvatarStyle] = useState('default');
+
+  // Hydrate fields that aren't carried on the `user` object (dob, mobile, state,
+  // country, professional info, teach grades/subjects, avatar) from previously
+  // saved preferences — otherwise reopening onboarding after a partial/complete
+  // save shows these as blank even though the data exists server-side.
+  useEffect(() => {
+    if (!user?.email) return;
+    fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(user.email)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then((p) => {
+        if (!p) return;
+        if (p.dob) setDob(p.dob);
+        if (p.phone) {
+          const m = String(p.phone).match(/^(\+\d+)\s*(.*)$/);
+          if (m) { setMobileCode(m[1]); setMobile(m[2]); } else setMobile(String(p.phone));
+        }
+        if (p.state) setState(p.state);
+        if (p.country) setCountry(p.country);
+        if (p.teacherRole) setTeacherRole(p.teacherRole);
+        if (p.experience) setExperience(p.experience);
+        if (p.avatarStyle) setAvatarStyle(p.avatarStyle);
+        if (Array.isArray(p.teaches) && p.teaches.length > 0) {
+          setTeachGrades([...new Set(p.teaches.map((t: any) => t.grade).filter(Boolean))] as string[]);
+          setTeachSubjects([...new Set(p.teaches.flatMap((t: any) => t.subjects || []))] as string[]);
+        }
+      })
+      .catch(() => {});
+  }, [user?.email]);
 
   // ── Per-card completion ────────────────────────────
   const personalDone = fullName.trim().length >= 2 && dob.trim().length >= 6 && mobile.trim().length >= 7;
@@ -295,9 +330,25 @@ export default function OnboardingTeacherBoxes() {
               <Text style={styles.lbl}>Mobile Number <Text style={{ color: '#ef4444', fontSize: 13 }}>*</Text></Text>
               <View style={styles.phoneRow}>
                 <PhoneCodeSelect value={mobileCode} onChange={setMobileCode} colors={colors} styles={styles} />
-                <TextInput style={[styles.input, styles.phoneInput]} value={mobile} onChangeText={setMobile}
+                <TextInput style={[styles.input, styles.phoneInput]} value={mobile} onChangeText={onMobileChange}
                   placeholder="98765 43210" placeholderTextColor={colors.textDim} keyboardType="phone-pad" />
+                {mobileOtp.mobileVerified && mobile === mobileOtp.verifiedMobile ? (
+                  <View style={styles.verifiedBadge}>
+                    <Feather name="check-circle" size={14} color={TEAL} />
+                    <Text style={styles.verifiedTxt}>Verified</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.verifyBtn}
+                    onPress={mobileOtp.handleSendOtp}
+                    disabled={mobileOtp.otpSending || !mobile.trim()}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.verifyBtnTxt}>{mobileOtp.otpSending ? 'Sending...' : 'Verify'}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
+              {mobileOtp.otpError ? <Text style={styles.warnTxt}>{mobileOtp.otpError}</Text> : null}
             </View>
           </View>
 
@@ -549,6 +600,20 @@ export default function OnboardingTeacherBoxes() {
           </View>
         </View>
       </Modal>
+
+      <PhoneOtpModal
+        mobile={mobile}
+        mobileCode={mobileCode}
+        otpModalVisible={mobileOtp.otpModalVisible}
+        otpCode={mobileOtp.otpCode}
+        setOtpCode={mobileOtp.setOtpCode}
+        otpError={mobileOtp.otpError}
+        otpVerifying={mobileOtp.otpVerifying}
+        handleVerifyOtp={mobileOtp.handleVerifyOtp}
+        handleCancelOtp={mobileOtp.handleCancelOtp}
+        colors={colors}
+        styles={styles}
+      />
     </View>
   );
 }
@@ -639,13 +704,38 @@ function useStyles(colors: any) {
 
     fieldGroup: { gap: 8 },
     fieldRow: { flexDirection: 'row', gap: 12 },
-    phoneRow: { flexDirection: 'row', gap: 8 },
+    phoneRow: { flexDirection: 'row', flexWrap: 'nowrap', gap: 6, alignItems: 'center', width: '100%', overflow: 'hidden' },
     phoneCode: {
       height: 44, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, borderColor: colors.borderColor,
-      backgroundColor: colors.bgDark, alignItems: 'center', justifyContent: 'center',
+      backgroundColor: colors.bgDark, alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     },
     phoneCodeTxt: { fontSize: 14, fontWeight: '700', color: colors.textMain },
-    phoneInput: { flex: 1 },
+    phoneInput: { flex: 1, flexBasis: 0, minWidth: 0, flexShrink: 1 },
+    warnTxt: { color: '#ef4444', fontSize: 12, lineHeight: 17, marginTop: 4 },
+    verifyBtn: {
+      height: 44, paddingHorizontal: 10, justifyContent: 'center', alignItems: 'center',
+      borderRadius: 10, borderWidth: 1, borderColor: TEAL, flexShrink: 0,
+    },
+    verifyBtnTxt: { fontSize: 12, fontWeight: '700', color: TEAL },
+    verifiedBadge: {
+      flexDirection: 'row', alignItems: 'center', gap: 6, height: 44,
+      paddingHorizontal: 12, justifyContent: 'center', flexShrink: 0,
+      borderRadius: 10, borderWidth: 1, borderColor: TEAL + '40', backgroundColor: TEAL + '12',
+    },
+    verifiedTxt: { fontSize: 12, fontWeight: '700', color: TEAL },
+    modalOverlay: {
+      flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: 20,
+    },
+    modalBox: {
+      backgroundColor: colors.cardDark, borderRadius: 16, padding: 20, gap: 14,
+      width: '100%', maxWidth: 440, borderWidth: 1, borderColor: colors.borderColor,
+    },
+    modalTitle: { fontSize: 16, fontWeight: '800', color: colors.textMain },
+    modalText: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+    modalBtn: {
+      backgroundColor: TEAL, borderRadius: 10, paddingVertical: 14, alignItems: 'center',
+    },
+    modalBtnText: { fontSize: 14, fontWeight: '800', color: '#0B0B0B' },
     lbl: { fontSize: 12, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
     lblRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     locateBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },

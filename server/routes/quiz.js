@@ -602,6 +602,62 @@ function geminiImageParts(imageBuffers) {
   }));
 }
 
+// ── Bar-chart recovery ──────────────────────────────────────────────────────
+// The main vision pass SOMETIMES omits the structured task.chart (LLM run-to-run
+// nondeterminism), leaving the task to fall back to the raw cropped scan of the graph.
+// That's why the SAME worksheet renders a clean, generated bar chart on one upload and
+// a screenshot on the next. This targeted second pass re-reads the graph image for any
+// bar-graph task that is missing chart data and rebuilds task.chart deterministically,
+// so the generated chart ALWAYS wins. If the recovery call fails we keep the crop
+// (existing behaviour) — never worse than before.
+function taskLooksLikeBarGraph(task) {
+  const blob = [task.title, task.sharedImageDescription, ...(task.questions || []).map(q => q.question || '')].join('  ');
+  return /bar\s*graph|column\s*chart|bar\s*chart/i.test(blob);
+}
+
+async function recoverBarCharts(quiz) {
+  if (!genAI) return;
+  for (const task of (quiz.tasks || [])) {
+    // Already has structured bars (from the main pass or normalizeCharts) — nothing to do.
+    if (task.chart && Array.isArray(task.chart.bars) && task.chart.bars.length) continue;
+    if (!taskLooksLikeBarGraph(task)) continue;
+
+    // The graph image is either the crop assigned to this task, or its page image.
+    // (imageUrls are still /data/... file paths here — recovery runs before embedQuizImages.)
+    const imgUrl = (task.questions || []).find(q => q.imageUrl)?.imageUrl || task.pageImageUrl;
+    if (!imgUrl || imgUrl.startsWith('data:')) continue;
+    let buf;
+    try {
+      const p = path.join(__dirname, '..', imgUrl);
+      if (!fs.existsSync(p)) continue;
+      buf = fs.readFileSync(p);
+    } catch { continue; }
+
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', generationConfig: { responseMimeType: 'application/json' } });
+      const prompt = `This image is a BAR GRAPH from a school worksheet. Read it precisely and return ONLY a JSON object:
+{"type":"bar","title":"<graph title or empty string>","xLabel":"<x-axis label or empty>","yLabel":"<y-axis label or empty>","yMax":<number at the TOP gridline>,"yStep":<gap between gridlines>,"bars":[{"label":"<category>","value":<exact bar height read off the y-axis>}]}
+Rules: list bars strictly LEFT-TO-RIGHT in the order they appear. Read every bar's height precisely against the y-axis scale (yMax = top gridline, yStep = gap between gridlines). Do NOT swap adjacent bars. Output JSON only — no markdown, no commentary.`;
+      const raw = await geminiGenerate(model, [...geminiImageParts([{ buffer: buf, mime: 'image/png' }]), { text: prompt }]);
+      const chart = JSON.parse(cleanLLMJson(raw));
+      if (chart && Array.isArray(chart.bars) && chart.bars.length >= 2) {
+        chart.type = 'bar';
+        chart.bars = chart.bars.filter(b => b && b.label != null && !isNaN(Number(b.value))).map(b => ({ label: String(b.label), value: Number(b.value) }));
+        if (chart.bars.length >= 2) {
+          task.chart = chart;
+          // The structured chart now owns the visual — drop the raw scan so it isn't shown
+          // twice (stripImagesForStructuredTasks does the rest at render time).
+          task.sharedImage = false;
+          delete task.sharedImageDescription;
+          console.log(`[quiz] chart-recovery: rebuilt bar chart for "${(task.title || '').slice(0, 30)}" (${chart.bars.length} bars)`);
+        }
+      }
+    } catch (e) {
+      console.log(`[quiz] chart-recovery failed for "${(task.title || '').slice(0, 30)}": ${e.message}`);
+    }
+  }
+}
+
 // Downscale + cap page images so vision fallbacks don't 413 / exceed image limits.
 // Pixtral allows ≤8 images; Groq has a hard request-size limit — big full-res PNGs blow it.
 async function prepVisionImages(imageBuffers, { max = 8, width = 1400 } = {}) {
@@ -1047,7 +1103,7 @@ Instead add a "diagramFill" object to the TASK:
   OTHER questions in the task that are not part of filling the diagram itself (if any).
 
 GRAPH / CHART HANDLING (CRITICAL — never reduce a graph to a text note):
-If a task shows a BAR GRAPH / COLUMN CHART that students read to answer questions, add a "chart" object to the TASK (not the question), and READ THE EXACT VALUES from the image:
+If a task shows a BAR GRAPH / COLUMN CHART that students read to answer questions, you MUST ALWAYS add a "chart" object to the TASK (not the question). This is MANDATORY — never describe the graph only as a "sharedImage" or in text; the structured "chart" object must ALWAYS be present so the graph can be redrawn cleanly. READ THE EXACT VALUES from the image:
 "chart": {
   "type": "bar",
   "title": "Favourite Fruit",
@@ -1542,6 +1598,11 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
     //    and pair them with Gemini's answers so students can write directly on it ──
     await resolveDiagramFills(quiz, quizId);
 
+    // ── Bar-chart recovery: if a bar-graph task lost its structured chart data (LLM
+    //    nondeterminism), re-read the graph image and rebuild it so the generated chart
+    //    is shown every time instead of a raw scanned screenshot. ──
+    await recoverBarCharts(quiz);
+
     // ── Post-process: auto-detect MCQ questions the LLM missed ──
     autoDetectMCQ(quiz);
 
@@ -1789,6 +1850,10 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
 
     // ── Diagram-fill: detect blanks on any diagram and pair with Gemini's answers ──
     await resolveDiagramFills(quiz, quizId);
+
+    // ── Bar-chart recovery: rebuild any bar-graph task that lost its structured chart
+    //    data so the generated chart shows instead of a raw scanned screenshot. ──
+    await recoverBarCharts(quiz);
 
     // ── Post-process: auto-detect MCQ questions the LLM missed ──
     autoDetectMCQ(quiz);
