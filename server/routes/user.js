@@ -481,6 +481,9 @@ router.patch('/preferences', async (req, res) => {
       mobileVerified,
       state,
       country,
+      // Teacher onboarding fields
+      teacherRole,
+      experience,
     } = req.body ?? {};
 
     if (!email) return res.status(400).json({ error: 'email required' });
@@ -519,6 +522,8 @@ router.patch('/preferences', async (req, res) => {
     if (dob != null)     patch.dob     = String(dob);
     if (state != null)   patch.state   = String(state);
     if (country != null) patch.country = String(country);
+    if (teacherRole != null) patch.teacherRole = String(teacherRole);
+    if (experience != null)  patch.experience  = String(experience);
     const phoneVal = phone ?? mobile;
     if (phoneVal != null) patch.phone = encrypt(String(phoneVal));
     if (mobileVerified != null) patch.mobileVerified = Boolean(mobileVerified);

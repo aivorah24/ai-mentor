@@ -370,7 +370,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (pendingVerifyEmail === email && allowParentActivated) {
           await AsyncStorage.removeItem(PENDING_VERIFY_KEY).catch(() => {});
         }
-        const emailVerified = !requiresVerification && (firebaseUser.emailVerified || allowAutoGen || allowParentActivated);
+        // Email verification is monotonic — once an account is verified it never
+        // reverts. If the cached profile for THIS email already says verified,
+        // stay verified. This prevents a transient flash back to the "Check your
+        // inbox" screen when onAuthStateChanged re-fires right after the user
+        // verifies but before the DB's accountStatus='active' write is readable.
+        const emailVerified =
+          savedLocal.emailVerified === true ||
+          (!requiresVerification && (firebaseUser.emailVerified || allowAutoGen || allowParentActivated));
         const baseUser: User = {
           name:          firebaseUser.displayName?.split('|')[0] || firebaseUser.displayName || 'User',
           email,

@@ -102,6 +102,26 @@ export default function OnboardingParentBoxes() {
   const [stateProv, setStateProv] = useState((user as any)?.state || '');
   const [country, setCountry] = useState((user as any)?.country || 'India');
   const [avatarStyle, setAvatarStyle] = useState('default');
+
+  // Hydrate fields not carried on the `user` object (dob, mobile, avatar) from
+  // previously saved preferences — otherwise reopening onboarding after a
+  // partial/complete save shows these as blank even though they're saved server-side.
+  useEffect(() => {
+    if (!user?.email) return;
+    fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(user.email)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then((p) => {
+        if (!p) return;
+        if (p.dob) setDob(p.dob);
+        if (p.phone) {
+          const m = String(p.phone).match(/^(\+\d+)\s*(.*)$/);
+          if (m) { setMobileCode(m[1]); setMobile(m[2]); } else setMobile(String(p.phone));
+        }
+        if (p.avatarStyle) setAvatarStyle(p.avatarStyle);
+      })
+      .catch(() => {});
+  }, [user?.email]);
+
   const mobileOtp = useMobileOtpVerification(mobile, setMobile, mobileCode);
   // Editing the number after verifying invalidates the previous verification.
   const onMobileChange = (v: string) => {
@@ -120,12 +140,11 @@ export default function OnboardingParentBoxes() {
     window.history.pushState(null, '', window.location.href);
     const onPop = () => {
       window.history.pushState(null, '', window.location.href);
-      if (isAddingParent) cancelAddParentProfile();
-      else setShowLeaveConfirm(true);
+      setShowLeaveConfirm(true);
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, [isAddingParent]);
+  }, []);
 
   // Pre-fill from teacher profile when a teacher is adding a parent profile
   useEffect(() => {
@@ -310,7 +329,12 @@ export default function OnboardingParentBoxes() {
     (completionSteps.filter(Boolean).length / completionSteps.length) * 100
   );
 
-  async function handleFinish() {
+  // finalize=false is the "Save & go back" path (dual-role: teacher pausing
+  // partway through adding a parent profile) — it persists the fields entered
+  // so far but must NOT grant the parent role/switch-profile access, since the
+  // user hasn't confirmed via "Complete Setup". Only finalize=true (the real
+  // Complete Setup button) is allowed to flip role/roles/onboarding_complete.
+  async function handleFinish(finalize: boolean = true) {
     if (!requiredDone) {
       setSaveError(addingChildren
         ? 'Please finish the child details you started (curriculum, grade and account), or remove that child to skip.'
@@ -324,11 +348,7 @@ export default function OnboardingParentBoxes() {
         setSaveError(`Mobile number must have at least ${minDigits} digits.`);
         return;
       }
-      const isVerified = mobileOtp.mobileVerified && mobile === mobileOtp.verifiedMobile;
-      if (!isVerified) {
-        setSaveError('Please verify your mobile number (tap "Verify") before continuing.');
-        return;
-      }
+      // Verification is optional here — it can be completed later from Settings.
     }
     setSaving(true);
     setSaveError('');
@@ -337,11 +357,10 @@ export default function OnboardingParentBoxes() {
 
       const body: any = {
         email,
-        role: 'parent',
         name: fullName.trim(),
         school: children[0]?.school || '',
         location: city,
-        complete: true,
+        ...(finalize ? { role: 'parent', complete: true } : {}),
         children: children
           .filter(c => {
             const age = c.age ? parseInt(c.age, 10) : 0;
@@ -367,7 +386,11 @@ export default function OnboardingParentBoxes() {
         throw new Error(`Profile save failed (${profileRes.status}): ${errText.slice(0, 200)}`);
       }
 
-      const mergedRoles = getPendingReturnRole() === 'teacher' ? ['teacher', 'parent'] : ['parent'];
+      // Only grant the parent role/switch-profile access on a real "Complete
+      // Setup" (finalize) — a "Save & go back" must not add "parent" to roles.
+      const mergedRoles = finalize
+        ? (getPendingReturnRole() === 'teacher' ? ['teacher', 'parent'] : ['parent'])
+        : undefined;
 
       fetch(`${SERVER_URL}/user/preferences`, {
         method: 'PATCH',
@@ -375,7 +398,7 @@ export default function OnboardingParentBoxes() {
         body: JSON.stringify({
           email,
           name: fullName.trim(),
-          role: 'parent',
+          ...(finalize ? { role: 'parent' } : {}),
           location: city,
           state: stateProv || undefined,
           country: country || undefined,
@@ -383,17 +406,29 @@ export default function OnboardingParentBoxes() {
           mobile: mobile ? `${mobileCode} ${mobile}` : undefined,
           mobileVerified: mobile ? (mobileOtp.mobileVerified && mobile === mobileOtp.verifiedMobile) : undefined,
           avatarStyle,
-          roles: mergedRoles,
+          ...(mergedRoles ? { roles: mergedRoles } : {}),
         }),
       }).catch(() => {});
+
+      // ── Draft "Save & go back" (teacher pausing parent onboarding) ──────────
+      // The entered fields are now persisted (above), but we must NOT create
+      // child accounts or grant the parent role. Restore the teacher session so
+      // the app routes back to the teacher DASHBOARD — beginAddParentProfile had
+      // forced onboardingComplete=false to show parent onboarding, so without
+      // this restore we'd land back on teacher ONBOARDING instead.
+      if (!finalize) {
+        cancelAddParentProfile();
+        return;
+      }
+
       const localCompletionPatch: any = {
         name: fullName.trim(),
         location: city,
-        onboardingComplete: true,
         avatarStyle,
-        roles: mergedRoles,
         role: getPendingReturnRole() === 'teacher' ? 'teacher' : 'parent',
         activeRole: getPendingReturnRole() === 'teacher' ? 'teacher' : 'parent',
+        onboardingComplete: true,
+        roles: mergedRoles,
       };
 
       // ── Child account handling ─────────────────────────────────────
@@ -578,7 +613,7 @@ export default function OnboardingParentBoxes() {
         <View style={styles.topbar}>
           <View style={styles.logoRow}>
             <TouchableOpacity
-              onPress={() => { if (isAddingParent) cancelAddParentProfile(); else setShowLeaveConfirm(true); }}
+              onPress={() => setShowLeaveConfirm(true)}
               style={styles.backBtn}
               activeOpacity={0.7}
               accessibilityLabel={isAddingParent ? 'Back to teacher dashboard' : 'Back to home page'}
@@ -677,7 +712,7 @@ export default function OnboardingParentBoxes() {
                 />
               )}
             </View>
-            <View style={[styles.fieldRow, { zIndex: 4 }]}>
+            <View style={[styles.fieldRow, { zIndex: 6 }]}>
               <View style={[styles.fieldGroup, { flex: 1, minWidth: 140 }]}>
                 <Text style={styles.lbl}>Date of Birth</Text>
                 {Platform.OS === 'web' ? (
@@ -687,7 +722,7 @@ export default function OnboardingParentBoxes() {
                     placeholder="DD/MM/YYYY" placeholderTextColor={colors.textDim} keyboardType="numeric" />
                 )}
               </View>
-              <View style={[styles.fieldGroup, { flex: 1, minWidth: 140, zIndex: 6 }]}>
+              <View style={[styles.fieldGroup, { flex: 1, minWidth: 200 }]}>
                 <Text style={styles.lbl}>Mobile Number</Text>
                 <View style={styles.phoneRow}>
                   <PhoneCodeSelect value={mobileCode} onChange={setMobileCode} colors={colors} styles={styles} />
@@ -1049,7 +1084,7 @@ export default function OnboardingParentBoxes() {
             <TouchableOpacity
               style={[styles.completeBtn, !requiredDone && { opacity: 0.4 }]}
               disabled={!requiredDone || saving}
-              onPress={handleFinish} activeOpacity={0.85}>
+              onPress={() => handleFinish(true)} activeOpacity={0.85}>
               <Text style={styles.completeTxt}>{saving ? 'Saving...' : (addingChildren ? 'Complete Setup' : 'Skip for now & Finish')}</Text>
               {!saving && <Feather name="arrow-right" size={16} color="#fff" />}
             </TouchableOpacity>
@@ -1057,32 +1092,64 @@ export default function OnboardingParentBoxes() {
         </View>
       </ScrollView>
 
-      {/* ── Leave-to-home confirmation ── */}
+      {/* ── Leave confirmation (home page, or back-to-teacher-dashboard when adding a parent profile) ── */}
       <Modal transparent visible={showLeaveConfirm} animationType="fade" onRequestClose={() => setShowLeaveConfirm(false)}>
         <View style={styles.confirmOverlay}>
           <View style={styles.confirmBox}>
             <View style={styles.confirmIcon}>
               <Feather name="log-out" size={22} color={TEAL} />
             </View>
-            <Text style={styles.confirmTitle}>Return to the home page?</Text>
-            <Text style={styles.confirmBody}>
-              You'll be signed out and taken back to the Aivorah home page. Any details you
-              haven't saved on this page won't be kept.
+            <Text style={styles.confirmTitle}>
+              {isAddingParent ? 'Save this parent profile before going back?' : 'Return to the home page?'}
             </Text>
-            <TouchableOpacity
-              style={styles.confirmPrimary}
-              activeOpacity={0.85}
-              onPress={() => { setShowLeaveConfirm(false); logout(); }}
-            >
-              <Text style={styles.confirmPrimaryTxt}>Sign out & go to home page</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.confirmSecondary}
-              activeOpacity={0.7}
-              onPress={() => setShowLeaveConfirm(false)}
-            >
-              <Text style={styles.confirmSecondaryTxt}>Stay here</Text>
-            </TouchableOpacity>
+            <Text style={styles.confirmBody}>
+              {isAddingParent
+                ? "You'll return to your teacher dashboard. Save what you've entered so far, or discard it and go back without saving."
+                : "You'll be signed out and taken back to the Aivorah home page. Any details you haven't saved on this page won't be kept."}
+            </Text>
+            {isAddingParent ? (
+              <>
+                <TouchableOpacity
+                  style={styles.confirmPrimary}
+                  activeOpacity={0.85}
+                  disabled={saving}
+                  onPress={() => { setShowLeaveConfirm(false); handleFinish(false); }}
+                >
+                  <Text style={styles.confirmPrimaryTxt}>{saving ? 'Saving...' : 'Save & go back'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.confirmSecondary, { marginBottom: 10 }]}
+                  activeOpacity={0.7}
+                  onPress={() => { setShowLeaveConfirm(false); cancelAddParentProfile(); }}
+                >
+                  <Text style={styles.confirmSecondaryTxt}>Discard & go back</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.confirmSecondary}
+                  activeOpacity={0.7}
+                  onPress={() => setShowLeaveConfirm(false)}
+                >
+                  <Text style={styles.confirmSecondaryTxt}>Stay here</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.confirmPrimary}
+                  activeOpacity={0.85}
+                  onPress={() => { setShowLeaveConfirm(false); logout(); }}
+                >
+                  <Text style={styles.confirmPrimaryTxt}>Sign out & go to home page</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.confirmSecondary}
+                  activeOpacity={0.7}
+                  onPress={() => setShowLeaveConfirm(false)}
+                >
+                  <Text style={styles.confirmSecondaryTxt}>Stay here</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -1205,22 +1272,23 @@ function useStyles(colors: any) {
     dropdownItem: { paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.borderColor },
     dropdownTxt: { fontSize: 13, color: colors.textMain },
 
-    phoneRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+    phoneRow: { flexDirection: 'row', flexWrap: 'nowrap', gap: 6, alignItems: 'center', width: '100%', overflow: 'hidden' },
     phoneCode: {
-      height: 44, paddingHorizontal: 10, borderRadius: 10, borderWidth: 1, borderColor: colors.borderColor,
-      backgroundColor: colors.bgDark, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+      height: 44, paddingHorizontal: 8, borderRadius: 10, borderWidth: 1, borderColor: colors.borderColor,
+      backgroundColor: colors.bgDark, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
+      flexShrink: 0,
     },
     phoneCodeTxt: { fontSize: 14, fontWeight: '700', color: colors.textMain },
-    phoneInput: { flex: 1 },
+    phoneInput: { flex: 1, flexBasis: 0, minWidth: 0, flexShrink: 1 },
     warnTxt: { color: '#ef4444', fontSize: 12, lineHeight: 17, marginTop: 4 },
     verifyBtn: {
-      height: 44, paddingHorizontal: 14, justifyContent: 'center', alignItems: 'center',
-      borderRadius: 10, borderWidth: 1, borderColor: TEAL,
+      height: 44, paddingHorizontal: 10, justifyContent: 'center', alignItems: 'center',
+      borderRadius: 10, borderWidth: 1, borderColor: TEAL, flexShrink: 0,
     },
     verifyBtnTxt: { fontSize: 12, fontWeight: '700', color: TEAL },
     verifiedBadge: {
       flexDirection: 'row', alignItems: 'center', gap: 6, height: 44,
-      paddingHorizontal: 12, justifyContent: 'center',
+      paddingHorizontal: 12, justifyContent: 'center', flexShrink: 0,
       borderRadius: 10, borderWidth: 1, borderColor: TEAL + '40', backgroundColor: TEAL + '12',
     },
     verifiedTxt: { fontSize: 12, fontWeight: '700', color: TEAL },

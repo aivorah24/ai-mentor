@@ -93,6 +93,8 @@ export default function TeacherSettingsScreen({ navigation }: any) {
         if (!p) return;
         if (p.autoGrading != null)  setAutoGrading(p.autoGrading);
         if (p.shareProgress != null) setShareProgress(p.shareProgress);
+        if (p.teacherRole != null) setTeacherRoleVal(p.teacherRole);
+        if (p.experience != null)  setExperienceVal(p.experience);
       })
       .catch(() => {});
   }, [user?.email]);
@@ -172,6 +174,8 @@ export default function TeacherSettingsScreen({ navigation }: any) {
   // Teaching prefs
   const [autoGrading,       setAutoGrading]       = useState(true);
   const [shareProgress,     setShareProgress]     = useState(true);
+  const [teacherRoleVal,    setTeacherRoleVal]    = useState<string | null>(null);
+  const [experienceVal,     setExperienceVal]     = useState<string | null>(null);
 
   const isDualRole = (user?.roles?.length ?? 0) > 1;
 
@@ -611,6 +615,19 @@ export default function TeacherSettingsScreen({ navigation }: any) {
                     <Text style={styles.changeBtnText}>Update</Text>
                   </TouchableOpacity>
                 </View>
+                {(teacherRoleVal || experienceVal) && (
+                  <>
+                    <View style={styles.divider} />
+                    <View style={styles.fieldRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.fieldLabel}>Role &amp; Experience</Text>
+                        <Text style={styles.fieldSub}>
+                          {[teacherRoleVal, experienceVal].filter(Boolean).join(' · ') || 'Not set'}
+                        </Text>
+                      </View>
+                    </View>
+                  </>
+                )}
               </View>
 
               {/* ── Notifications ── */}

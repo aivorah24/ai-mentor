@@ -57,6 +57,25 @@ async function pdfToImages(pdfBase64: string): Promise<{ base64: string; mime: s
   }
 }
 
+/** Flatten a question answer (which may be a plain string, number, array, or a
+ *  structured object like { table: [...] } for "organise the data" activity tasks)
+ *  into readable, editable text for the Edit Answers screen. Prevents structured
+ *  answers from rendering as "[object Object]" / appearing empty. */
+function answerToEditText(a: any): string {
+  if (a == null) return '';
+  if (typeof a === 'string') return a;
+  if (typeof a === 'number' || typeof a === 'boolean') return String(a);
+  // Structured table answer → one readable line per row.
+  const rows = Array.isArray(a) ? a : (Array.isArray(a?.table) ? a.table : null);
+  if (rows && rows.length && typeof rows[0] === 'object') {
+    return rows
+      .map((r: any) => Object.values(r).map((v) => (v == null ? '' : String(v))).join(' — '))
+      .join('\n');
+  }
+  if (Array.isArray(a)) return a.map((x) => (typeof x === 'object' ? JSON.stringify(x) : String(x))).join(', ');
+  try { return JSON.stringify(a, null, 2); } catch { return String(a); }
+}
+
 /** Generate a standalone interactive HTML quiz for browser preview — Aivorah Enchanted Forest dark theme */
 function generateQuizHTMLPreview(quiz: any): string {
   const totalQ = quiz.tasks?.reduce((s: number, t: any) => s + (t.questions?.length || 0), 0) || 0;
@@ -2557,6 +2576,14 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   <TouchableOpacity
                     style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: !(interactiveQuiz as any)._editMode ? '#93B0AC' : '#1c2129' }}
                     onPress={async () => {
+                      // Fast path: we already hold the rendered HTML and nothing was edited
+                      // since (edits null out _previewHTML on every keystroke), so switch back
+                      // to Preview instantly instead of re-fetching from the server — this is
+                      // what removes the lag when toggling Edit Answers → Preview.
+                      if ((interactiveQuiz as any)._previewHTML) {
+                        setInteractiveQuiz({ ...interactiveQuiz, _editMode: false });
+                        return;
+                      }
                       const updated = { ...interactiveQuiz, _editMode: false };
                       // Fetch server-rendered HTML for preview (strip internal props)
                       const { _previewHTML: _p, _editMode: _e, ...cleanQ } = interactiveQuiz as any;
@@ -2781,6 +2808,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         {task.questions?.map((q: any, qi: number) => {
                           globalQNum++;
                           const questionLabel = q.id ? `${q.id})` : `Q${globalQNum}.`;
+                          // Activity/open-ended questions can carry a STRUCTURED answer (e.g. a
+                          // { table: [...] } object for "organise the data" tasks). String(obj)
+                          // renders "[object Object]", which looked like an empty/broken answer
+                          // (the "Task 3 has no answers" report). Flatten any structured answer
+                          // to readable, editable text so every task shows its real answer.
+                          const answerText = answerToEditText(q.answer);
+                          const answerIsLong = answerText.length > 48 || answerText.includes('\n');
                           return (
                             <View key={qi} style={{ backgroundColor: '#1C1C1C', padding: 16, borderRadius: 10, marginTop: 12, borderWidth: 1, borderColor: 'rgba(195,220,216,0.12)' }}>
                               <Text style={{ fontSize: 14, fontWeight: '600', color: '#F0EEEC', marginBottom: 10, lineHeight: 22 }}>{questionLabel} {(q.question || '').replace(/\*\*(.+?)\*\*/g, '$1')}</Text>
@@ -2795,9 +2829,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                 <Image source={{ uri: q.imageUrl.startsWith('http') ? q.imageUrl : `${SERVER_URL}${q.imageUrl}` }} style={{ width: '100%', height: 160, resizeMode: 'contain' }} />
                               </View>
                             )}
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10, backgroundColor: 'rgba(147,176,172,0.10)', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(147,176,172,0.3)' }}>
-                              <Text style={{ fontSize: 13, fontWeight: '700', color: '#93B0AC' }}>{/^-?\d+(\.\d+)?$/.test(String(q.answer ?? '').trim()) || q.type === 'numeric' ? 'Answer =' : 'Answer:'}</Text>
-                              <TextInput style={{ flex: 1, borderWidth: 1.5, borderColor: 'rgba(195,220,216,0.25)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 14, color: '#F0EEEC', backgroundColor: '#252525', fontWeight: '600' }} value={String(q.answer ?? '')} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].answer = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Answer" placeholderTextColor="#6E736B" />
+                            <View style={{ flexDirection: answerIsLong ? 'column' : 'row', alignItems: answerIsLong ? 'stretch' : 'center', gap: 8, marginBottom: 10, backgroundColor: 'rgba(147,176,172,0.10)', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(147,176,172,0.3)' }}>
+                              <Text style={{ fontSize: 13, fontWeight: '700', color: '#93B0AC' }}>{/^-?\d+(\.\d+)?$/.test(answerText.trim()) || q.type === 'numeric' ? 'Answer =' : 'Answer:'}</Text>
+                              <TextInput style={{ flex: answerIsLong ? undefined : 1, borderWidth: 1.5, borderColor: 'rgba(195,220,216,0.25)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 14, color: '#F0EEEC', backgroundColor: '#252525', fontWeight: '600', minHeight: answerIsLong ? 72 : undefined, textAlignVertical: answerIsLong ? 'top' : 'center' }} value={answerText} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].answer = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Answer" placeholderTextColor="#6E736B" multiline={answerIsLong} />
                               {q.unit && <Text style={{ fontSize: 13, color: '#A8B5B3', fontWeight: '500' }}>{q.unit}</Text>}
                             </View>
                             <View style={{ marginBottom: 10, backgroundColor: 'rgba(197,189,150,0.10)', padding: 10, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: '#C5BD96' }}>
