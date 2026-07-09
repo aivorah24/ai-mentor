@@ -590,12 +590,9 @@ export default function OnboardingParentBoxes() {
                     </View>
                   ))}
                   {cred.verificationRequired && (
-                    <View style={{ backgroundColor: TEAL + '12', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: TEAL + '30', gap: 4 }}>
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: TEAL }}>Your child can log in right away.</Text>
-                      <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
-                        A verification link was sent to <Text style={{ fontWeight: '700', color: colors.textMain }}>{cred.loginId}</Text>. You (the parent) can open that inbox and click the link — this enables "Forgot Password" if your child ever needs it.
-                      </Text>
-                    </View>
+                    <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center' }}>
+                      Login details were also emailed to <Text style={{ fontWeight: '700', color: colors.textMain }}>{cred.loginId}</Text>.
+                    </Text>
                   )}
                 </View>
               ))}

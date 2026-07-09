@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { WebView } from 'react-native-webview';
 import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
@@ -2815,8 +2816,16 @@ export default function AssignmentsScreen({ navigation, route }: any) {
   // Latest progress reported by the interactive-quiz iframe — used to gate the
   // "Submit Assignment" button so the student confirms submission explicitly
   // instead of it firing silently the instant every question is answered.
-  const [quizProgress, setQuizProgress] = useState<{ pct: number; completed: boolean; correct: number; total: number; answers: any[] } | null>(null);
+  const [quizProgress, setQuizProgress] = useState<{ pct: number; completed: boolean; correct: number; total: number; attemptedCount: number; answers: any[] } | null>(null);
   const [submittingQuiz, setSubmittingQuiz] = useState(false);
+  // Native (WebView) resets progress on each new interactive-quiz assignment the
+  // same way the web path's iframe ref callback does on first mount.
+  useEffect(() => {
+    if (Platform.OS !== 'web' && activeAssignment?.interactiveQuizHtml) {
+      setQuizProgress(null);
+      setSubmittingQuiz(false);
+    }
+  }, [activeAssignment?.id]);
 
   // Real "Study Time" for time spent actually working an assignment (any type:
   // quiz modal, scaffolded, submission, or the interactive-quiz iframe) — timed
@@ -3238,8 +3247,9 @@ export default function AssignmentsScreen({ navigation, route }: any) {
           )}
         </ScrollView>
 
-        {/* ── Interactive Quiz Modal (iframe-based, from PDF→Gemini pipeline) ── */}
-        {activeAssignment && activeAssignment.interactiveQuizHtml && activeAssignment.status !== 'completed' && Platform.OS === 'web' ? (() => {
+        {/* ── Interactive Quiz Modal (from PDF→Gemini pipeline) — iframe on web, ── */}
+        {/* WebView on native, so the Submit flow works on the mobile app too.   */}
+        {activeAssignment && activeAssignment.interactiveQuizHtml && activeAssignment.status !== 'completed' ? (() => {
           const html = activeAssignment.interactiveQuizHtml;
           return (
             <Modal visible animationType="slide" transparent={false} onRequestClose={() => setActiveAssignment(null)}>
@@ -3259,7 +3269,8 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                     <Feather name="x" size={18} color="#F0EEEC" />
                   </TouchableOpacity>
                 </View>
-                {/* Quiz iframe */}
+                {/* Quiz content */}
+                {Platform.OS === 'web' ? (
                 <View
                   style={{ flex: 1 } as any}
                   ref={(el: any) => {
@@ -3281,17 +3292,35 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                       const onMsg = (e: MessageEvent) => {
                         if (e.data?.type === 'quiz-score') {
                           const pct = e.data.pct ?? Math.round((e.data.correct / e.data.total) * 100);
-                          setQuizProgress({ pct, completed: !!e.data.completed, correct: e.data.correct, total: e.data.total, answers: e.data.answers || [] });
+                          setQuizProgress({ pct, completed: !!e.data.completed, correct: e.data.correct, total: e.data.total, attemptedCount: e.data.attemptedCount ?? e.data.correct, answers: e.data.answers || [] });
                         }
                       };
                       window.addEventListener('message', onMsg);
                     }
                   }}
                 />
+                ) : (
+                <WebView
+                  source={{ html }}
+                  style={{ flex: 1, backgroundColor: '#0F0F0F' }}
+                  originWhitelist={['*']}
+                  javaScriptEnabled
+                  domStorageEnabled
+                  onMessage={(event) => {
+                    try {
+                      const data = JSON.parse(event.nativeEvent.data);
+                      if (data?.type === 'quiz-score') {
+                        const pct = data.pct ?? Math.round((data.correct / data.total) * 100);
+                        setQuizProgress({ pct, completed: !!data.completed, correct: data.correct, total: data.total, attemptedCount: data.attemptedCount ?? data.correct, answers: data.answers || [] });
+                      }
+                    } catch { /* ignore malformed messages */ }
+                  }}
+                />
+                )}
                 {/* Submit Assignment footer — enabled once every question is answered */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: 'rgba(195,220,216,0.15)', backgroundColor: '#141414' }}>
                   <Text style={{ flex: 1, color: '#93B0AC', fontSize: 13 }}>
-                    {quizProgress ? `${quizProgress.correct}/${quizProgress.total} answered` : 'Answer every question to submit'}
+                    {quizProgress ? `${quizProgress.attemptedCount}/${quizProgress.total} answered` : 'Answer every question to submit'}
                   </Text>
                   <TouchableOpacity
                     disabled={!quizProgress?.completed || submittingQuiz}
@@ -3320,7 +3349,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                     }}
                     style={{
                       paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8,
-                      backgroundColor: quizProgress?.completed ? '#4a9d6e' : '#2A2A2A',
+                      backgroundColor: quizProgress?.completed ? '#BAA467' : '#2A2A2A',
                       opacity: submittingQuiz ? 0.6 : 1,
                     }}
                   >

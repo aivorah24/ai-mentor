@@ -66,6 +66,12 @@ export default function ProfileScreen({ navigation }: any) {
   const [saveProfileError,   setSaveProfileError]   = useState('');
 
   const currentAvatar = AVATARS.find(a => a.id === selAvatar) || AVATARS[0];
+  // The hero card sits on a light pastel gradient in light mode — the theme's
+  // standard accentGreen/accentYellow (tuned for dark backgrounds, or plain
+  // cream at best) read as washed-out/low-contrast there. Darker, hero-specific
+  // values only for light mode; dark mode keeps the normal theme colors.
+  const heroGreen  = isDark ? colors.accentGreen  : '#3F6B54';
+  const heroGold   = isDark ? colors.accentYellow : '#6B5219';
 
   function toggleInterest(id: string) {
     const next = interests.includes(id) ? interests.filter(i => i !== id) : [...interests, id];
@@ -176,35 +182,35 @@ export default function ProfileScreen({ navigation }: any) {
               {/* Role badge — always visible so it's unmistakable which profile
                   (student/parent/teacher) is being viewed, not just discoverable
                   by clicking into a settings popup. */}
-              <View style={[styles.tag, { backgroundColor: colors.accentGreen + '22', borderColor: colors.accentGreen + '55' }]}>
-                <Feather name="user" size={10} color={colors.accentGreen} />
-                <Text style={[styles.tagText, { color: colors.accentGreen }]}>Student</Text>
+              <View style={[styles.tag, { backgroundColor: isDark ? colors.accentGreen + '22' : '#FFFFFFB0', borderColor: heroGreen + '80' }]}>
+                <Feather name="user" size={10} color={heroGreen} />
+                <Text style={[styles.tagText, { color: heroGreen }]}>Student</Text>
               </View>
-              <View style={[styles.tag, { backgroundColor: colors.accentYellow + '22', borderColor: colors.accentYellow + '55' }]}>
-                <Feather name="book-open" size={10} color={colors.accentYellow} />
-                <Text style={[styles.tagText, { color: colors.accentYellow }]}>{user?.grade || 'Grade 3'}</Text>
+              <View style={[styles.tag, { backgroundColor: isDark ? colors.accentYellow + '22' : '#FFFFFFB0', borderColor: heroGold + '80' }]}>
+                <Feather name="book-open" size={10} color={heroGold} />
+                <Text style={[styles.tagText, { color: heroGold }]}>{user?.grade || 'Grade 3'}</Text>
               </View>
-              <View style={[styles.tag, { backgroundColor: colors.accentYellow + '22', borderColor: colors.accentYellow + '55' }]}>
-                <Feather name="globe" size={10} color={colors.accentYellow} />
-                <Text style={[styles.tagText, { color: colors.accentYellow }]}>{user?.curriculum || 'IB PYP'}</Text>
+              <View style={[styles.tag, { backgroundColor: isDark ? colors.accentYellow + '22' : '#FFFFFFB0', borderColor: heroGold + '80' }]}>
+                <Feather name="globe" size={10} color={heroGold} />
+                <Text style={[styles.tagText, { color: heroGold }]}>{user?.curriculum || 'IB PYP'}</Text>
               </View>
               {user?.location && (
-                <View style={[styles.tag, { backgroundColor: colors.accentGreen + '22', borderColor: colors.accentGreen + '55' }]}>
-                  <Feather name="map-pin" size={10} color={colors.accentGreen} />
-                  <Text style={[styles.tagText, { color: colors.accentGreen }]}>{user.location}</Text>
+                <View style={[styles.tag, { backgroundColor: isDark ? colors.accentGreen + '22' : '#FFFFFFB0', borderColor: heroGreen + '80' }]}>
+                  <Feather name="map-pin" size={10} color={heroGreen} />
+                  <Text style={[styles.tagText, { color: heroGreen }]}>{user.location}</Text>
                 </View>
               )}
               {/* Plan badge */}
               <TouchableOpacity
                 style={[styles.tag, (user as any)?.isPro
-                  ? { backgroundColor: '#C5A56A22', borderColor: '#C5A56A55' }
-                  : { backgroundColor: isDark ? 'rgba(147,176,172,0.18)' : 'rgba(147,176,172,0.22)', borderColor: isDark ? 'rgba(147,176,172,0.35)' : 'rgba(95,138,134,0.4)' }
+                  ? { backgroundColor: isDark ? '#C5A56A22' : '#FFFFFFB0', borderColor: '#C5A56A80' }
+                  : { backgroundColor: isDark ? 'rgba(147,176,172,0.18)' : '#FFFFFFB0', borderColor: heroGreen + '80' }
                 ]}
                 onPress={() => navigation.navigate('Subscription')}
                 activeOpacity={0.7}
               >
-                <Feather name={(user as any)?.isPro ? 'sun' : 'feather'} size={10} color={(user as any)?.isPro ? '#C5A56A' : colors.accentYellow} />
-                <Text style={[styles.tagText, { color: (user as any)?.isPro ? '#C5A56A' : colors.accentYellow }]}>
+                <Feather name={(user as any)?.isPro ? 'sun' : 'feather'} size={10} color={(user as any)?.isPro ? '#C5A56A' : heroGold} />
+                <Text style={[styles.tagText, { color: (user as any)?.isPro ? '#C5A56A' : heroGold }]}>
                   {(user as any)?.isPro ? 'Pro Plan' : 'Free Plan'}
                 </Text>
               </TouchableOpacity>
@@ -216,7 +222,13 @@ export default function ProfileScreen({ navigation }: any) {
             <SectionHead icon="user" iconBg={isDark ? 'rgba(147,176,172,0.18)' : 'rgba(195,220,216,0.35)'} iconColor={colors.accentYellow} title="Choose Your Look" sub="Pick an avatar style" />
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {AVATARS.map(av => {
-                const active = selAvatar === av.id;
+                // selAvatar defaults to 'default' whenever avatarStyle was never
+                // explicitly set — that's fine for a brand-new account with no
+                // photo, but once the student has picked a real uploaded photo
+                // instead, "Default" stayed checked here even though they're not
+                // actually using that style. A style is only truly "selected"
+                // when there's no custom photo overriding it.
+                const active = selAvatar === av.id && !photoUrl;
                 return (
                   <TouchableOpacity key={av.id} onPress={() => handleSelectAvatar(av.id)} style={styles.avOption} activeOpacity={0.8}>
                     <View style={[styles.avRing, active && { borderColor: colors.accentYellow }]}>

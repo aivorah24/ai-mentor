@@ -105,14 +105,16 @@ export default function ResetPasswordScreen() {
 
             <View style={s.field}>
               <Text style={s.label}>Confirm Password</Text>
-              <TextInput
-                style={s.input}
-                placeholder="Re-enter your password"
-                placeholderTextColor={MUTED}
-                secureTextEntry={!showPw}
-                value={confirm}
-                onChangeText={t => { setConfirm(t); setError(''); }}
-              />
+              <View style={s.inputRow}>
+                <TextInput
+                  style={s.input}
+                  placeholder="Re-enter your password"
+                  placeholderTextColor={MUTED}
+                  secureTextEntry={!showPw}
+                  value={confirm}
+                  onChangeText={t => { setConfirm(t); setError(''); }}
+                />
+              </View>
             </View>
 
             {error ? (
@@ -158,7 +160,7 @@ const s = StyleSheet.create({
   field: { gap: 6 },
   label: { fontSize: 11, fontWeight: '700', color: MUTED, textTransform: 'uppercase', letterSpacing: 0.5 },
   inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: BG, borderWidth: 1, borderColor: BORDER, borderRadius: 10, overflow: 'hidden' },
-  input: { flex: 1, backgroundColor: BG, borderWidth: 1, borderColor: BORDER, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 13, color: TEXT, fontSize: 14 },
+  input: { flex: 1, backgroundColor: BG, paddingHorizontal: 14, paddingVertical: 13, color: TEXT, fontSize: 14 },
   eyeBtn: { paddingHorizontal: 14 },
   errorRow: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: RED + '12', borderRadius: 8, padding: 10, borderWidth: 1, borderColor: RED + '30' },
   errorText: { fontSize: 13, color: RED, flex: 1 },
