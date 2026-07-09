@@ -69,6 +69,7 @@ import { NotificationProvider } from './src/context/NotificationContext';
 import NotificationBanner from './src/components/common/NotificationBanner';
 import { colors } from './src/theme';
 import { auth } from './src/config/firebase';
+import { isStudentLocked, subscribeStudentLocked } from './src/services/lockStatus';
 import { useNavigation } from '@react-navigation/native';
 
 function VerifySuccessPage({ onComplete }: { onComplete: () => void }) {
@@ -244,6 +245,9 @@ function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
 
   const [showWarning, setShowWarning] = useState(restoredIdleSecs > 0);
   const [countdown, setCountdown] = useState(restoredIdleSecs > 0 ? restoredIdleSecs : Math.round(IDLE_LOGOUT_MS / 1000));
+  // A parental-control lock screen (ScreenLayout) takes over the screen — the
+  // idle-logout "Are you still there?" popup makes no sense stacked on top of it.
+  const [studentLocked, setStudentLockedState] = useState(isStudentLocked());
 
   // Use refs so event handlers never go stale
   const lastActivityRef = useRef(Date.now());
@@ -255,6 +259,7 @@ function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { userRef.current = user; }, [user]);
   useEffect(() => { logoutRef.current = logout; }, [logout]);
+  useEffect(() => subscribeStudentLocked(setStudentLockedState), []);
 
   // If warning was persisted before refresh, resume the countdown from remaining secs
   useEffect(() => {
@@ -361,7 +366,7 @@ function IdleTimeoutGuard({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      {showWarning && (
+      {showWarning && !studentLocked && (
         <Modal transparent animationType="fade" visible>
           <View style={idleStyles.overlay}>
             <View style={[idleStyles.box, { backgroundColor: c.cardDark, borderColor: c.borderColor }]}>

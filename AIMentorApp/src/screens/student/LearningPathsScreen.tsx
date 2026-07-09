@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
@@ -683,10 +684,16 @@ export default function LearningPathsScreen({ navigation }: any) {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { isMobile } = useResponsive();
   const { stats } = useStudentData();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
 
   const curriculum = user?.curriculum ?? '';
   const grade = user?.grade ?? '';
+
+  // Re-sync grade/curriculum on focus — e.g. a parent editing this child's grade
+  // elsewhere would otherwise leave this screen showing the OLD grade's content
+  // until the student happened to visit Dashboard/Settings first (same fix
+  // already applied there and in Challenges).
+  useFocusEffect(useCallback(() => { refreshProfile().catch(() => {}); }, [refreshProfile]));
   // Normalise IB PYP — stored value may have space or underscore
   const isPYP  = /^ib.?pyp$/i.test(curriculum.trim());
   const isCBSE = !isPYP && (curriculum === 'NCERT' || curriculum === 'CBSE');

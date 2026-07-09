@@ -1,4 +1,16 @@
----
+Verification is done — the issue should not be closed yet. Here's what's actually true vs. assumed:
+
+What's real: Qdrant push does exist. When a teacher publishes an interactive quiz from a worksheet, server/routes/assignments.js (lines 1630–1703) does push it into a Qdrant collection called school_quizzes with metadata (subject, grade, curriculum, school, teacher_name, teacher_id, etc.) — so the "worksheet → knowledge base" idea from the founder call is genuinely implemented, not just planned.
+
+What's broken:
+1. Two divergent save paths write to the same Qdrant collection with inconsistent payloads. assignments.js saves the full metadata set; a second, older path in quiz.js (POST /save) saves a stripped-down version missing school, curriculum, and teacher_name entirely. Depending on which path fires, some quizzes in the library are properly tagged and others aren't.
+2. The actual scoping the founder asked for doesn't exist. GET /quiz/list only filters by school_id/grade/subject if the frontend happens to send them — there's no mandatory enforcement. The frontend (TeacherAssignmentsScreen.tsx) never sends schoolId or curriculum at all, and sends a teacherId that the backend silently ignores. Net result: exactly the bug the founder described live on the call — "restrict to my school" isn't happening; the library isn't scoped by school or curriculum today.
+3. Supabase's assignments table doesn't store school or teacher name — only grade/curriculum — so even the DB-side record is missing part of the metadata the founder wants.
+4. No trace of issue #168 in git history — can't confirm whether that dependency was ever actually resolved.
+
+So: infrastructure for the vision is there, but the specific ask ("don't show my worksheets to other schools") is not enforced, and it's the exact bug she hit live on today's call.
+
+Given this and the Submit-button fix are both flagged for the same demo — which do you want me on first?---
 name: QA Fix Priority Plan — Student Module
 description: Ordered fix plan for all 34 bugs found in the student module QA review, grouped by sprint priority and estimated effort
 type: project

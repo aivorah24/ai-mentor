@@ -38,7 +38,12 @@ async function sendMobileOtpSms({ to, otp }) {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data.return !== true) {
-    throw new Error(data?.message?.[0] || data?.message || `Fast2SMS send failed (${res.status})`);
+    // Fast2SMS returns `message` as an ARRAY for some error types but a plain
+    // STRING for others (e.g. auth failures) — treating it as always-an-array
+    // and reading [0] off a string silently grabbed just its first CHARACTER
+    // ("Your api key is invalid..." became just "Y"), hiding the real error.
+    const msg = Array.isArray(data?.message) ? data.message[0] : data?.message;
+    throw new Error(msg || `Fast2SMS send failed (${res.status})`);
   }
   return data;
 }

@@ -40,11 +40,23 @@ function getKafka() {
   });
   return _kafka;
 }
+let _producerPromise = null;
 async function getProducer() {
   if (_producer) return _producer;
-  _producer = getKafka().producer();
-  await _producer.connect();
-  return _producer;
+  // Cache the in-flight CONNECTION, not just the producer object — publishJob()
+  // is called concurrently (e.g. several teachers uploading at once), and the
+  // old version assigned `_producer` synchronously before `connect()` resolved,
+  // so a second concurrent call saw a truthy `_producer` and tried to send on it
+  // before the connection was actually established ("producer is disconnected").
+  if (!_producerPromise) {
+    _producerPromise = (async () => {
+      const producer = getKafka().producer();
+      await producer.connect();
+      _producer = producer;
+      return producer;
+    })();
+  }
+  return _producerPromise;
 }
 
 /**

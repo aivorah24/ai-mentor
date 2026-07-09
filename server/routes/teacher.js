@@ -144,6 +144,7 @@ router.post('/:teacherEmail/students/link-created', async (req, res) => {
       loginId: cleanEmail,
       password: initialPassword || undefined,
       studentId: resolvedStudentId,
+      childEmail: cleanEmail,
     });
     if (!cleanEmail.endsWith('@aivorah.student') && cleanEmail !== cleanTeacherEmail) {
       await sendCredentialsEmail({
@@ -406,7 +407,7 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
 
         // Email credentials to the teacher, and directly to the student too when a
         // real email was given in the CSV (not the auto-generated placeholder).
-        sendCredentialsEmail({ to: cleanTeacherEmail, childName: cleanName, loginId: studentEmail, password, studentId: resolvedStudentId });
+        sendCredentialsEmail({ to: cleanTeacherEmail, childName: cleanName, loginId: studentEmail, password, studentId: resolvedStudentId, childEmail: studentEmail });
         if (!studentEmail.endsWith('@aivorah.student') && studentEmail !== cleanTeacherEmail) {
           sendCredentialsEmail({ to: studentEmail, childName: cleanName, loginId: studentEmail, password, studentId: resolvedStudentId })
             .catch(err => console.log('[teacher/bulk-import] student credentials email failed (non-fatal):', err.message));

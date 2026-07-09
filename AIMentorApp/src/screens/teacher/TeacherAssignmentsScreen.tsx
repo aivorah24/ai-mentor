@@ -5,6 +5,7 @@ import {
   Platform, KeyboardAvoidingView, Image, Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { WebView } from 'react-native-webview';
 import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import { useTheme } from '../../context/ThemeContext';
@@ -268,8 +269,19 @@ function daysUntil(dateStr: string) {
 
 function getAnsweredQuizHtml(originalHtml: string, submission: any) {
   if (!originalHtml) return '';
-  const answersJson = JSON.stringify(submission.studentAnswers || {});
-  const perQuestionJson = JSON.stringify(submission.perQuestion || []);
+  // Interactive-quiz completions (PUT /assignments/:id/complete) store answers
+  // under submission_text as { perQuestion: [{qId, answer, correct, ...}] } —
+  // there is no separate top-level "answers" map. submission.studentAnswers is
+  // always empty for this submission type, so building the qId→answer lookup
+  // from it (as before) meant the injected script's loop never ran and the
+  // "answered sheet" preview always rendered blank.
+  const pq = Array.isArray(submission.perQuestion) ? submission.perQuestion : [];
+  const answersMap: Record<string, any> = {};
+  for (const q of pq) {
+    if (q && q.qId != null) answersMap[q.qId] = q.answer;
+  }
+  const answersJson = JSON.stringify(answersMap);
+  const perQuestionJson = JSON.stringify(pq);
   const scriptToInject = `
     <script>
       window.addEventListener('load', function() {
@@ -280,29 +292,97 @@ function getAnsweredQuizHtml(originalHtml: string, submission: any) {
           if (inputEl) {
             inputEl.value = ans;
             inputEl.disabled = true;
-            const qNum = parseInt(qId.replace('q', ''));
-            const qInfo = pq.find(x => x.number === qNum || x.number === qId);
+            const qInfo = pq.find(x => x.qId === qId);
             if (qInfo) {
               const correct = qInfo.correct ?? (qInfo.score >= 70);
               inputEl.style.borderColor = correct ? '#8bc34a' : '#e57373';
               inputEl.style.backgroundColor = correct ? 'rgba(139,195,74,0.1)' : 'rgba(229,115,115,0.1)';
             }
+            continue;
           }
           const radios = document.getElementsByName(qId);
           if (radios.length > 0) {
             for (const radio of radios) {
-              if (radio.value === ans) {
-                radio.checked = true;
-              }
+              if (radio.value === ans) radio.checked = true;
               radio.disabled = true;
             }
+            continue;
+          }
+          // Venn diagrams have no single "-input" element — 3 separate textareas
+          // (qId-left/-center/-right), and the stored answer is one combined
+          // string like "left: a, b | center: c | right: d" (checkVenn's own
+          // snapshot format). Split it back out per region.
+          const leftEl = document.getElementById(qId + '-left');
+          if (leftEl && typeof ans === 'string') {
+            const parts = ans.split('|').map(function(s) { return s.trim(); });
+            parts.forEach(function(part) {
+              const m = part.match(/^(left|center|right):\\s*(.*)$/i);
+              if (!m) return;
+              const el = document.getElementById(qId + '-' + m[1].toLowerCase());
+              if (el) { el.value = m[2]; el.disabled = true; }
+            });
           }
         }
         document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+
+        // The score badge and progress bar are normally only updated by the
+        // in-page up() function, which this review script never calls (it sets
+        // input values directly, bypassing the check pipeline) — so they stayed
+        // frozen at their initial "0/total, 0%" state even though the answers
+        // below were correctly populated. Set them directly from the real
+        // completed submission instead.
+        const totalQ = pq.length;
+        const correctQ = pq.filter(function(x) { return x.correct === true; }).length;
+        const scoreEl = document.getElementById('score-num');
+        if (scoreEl && totalQ > 0) scoreEl.textContent = correctQ + '/' + totalQ;
+        const pf = document.getElementById('pf');
+        if (pf) pf.style.width = '100%';
+        const pp = document.getElementById('pp');
+        if (pp) pp.textContent = '100% complete';
       });
     </script>
   `;
   return originalHtml.replace('</body>', scriptToInject + '</body>');
+}
+
+// Publishes a worksheet-extraction job to the swappable db/Kafka queue (server
+// polls it — see server/index.js) instead of blocking on the synchronous AI
+// call directly. The point isn't just "don't freeze this tab" (the old
+// sequential-for-loop already handled that for one teacher's own batch) — it's
+// that a synchronous call gives the SERVER no coordination point across
+// DIFFERENT teachers uploading at the same moment, only within one teacher's
+// own request. Routing through the queue means every worksheet, from every
+// teacher, funnels through the same drain (server/services/jobQueue.js
+// runWorkerOnce), which is the actual "handle concurrent teacher uploads
+// reliably" property. Falls back to the old synchronous endpoint if the queue
+// call itself fails to enqueue, so a queue outage never blocks uploads outright.
+async function extractViaQueue(serverUrl: string, body: any): Promise<any> {
+  try {
+    const enqueueRes = await fetch(`${serverUrl}/assignments/extract-questions-async`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const enqueueData = await enqueueRes.json();
+    if (!enqueueRes.ok || !enqueueData.jobId) throw new Error(enqueueData.error || 'Could not queue extraction');
+
+    const deadline = Date.now() + 3 * 60 * 1000; // 3 min — matches the vision-call fallback-chain budget
+    while (Date.now() < deadline) {
+      await new Promise(r => setTimeout(r, 2000));
+      const statusRes = await fetch(`${serverUrl}/jobs/${enqueueData.jobId}`);
+      const statusData = await statusRes.json();
+      if (statusData.status === 'done') return statusData.result;
+      if (statusData.status === 'failed') throw new Error(statusData.error || 'Extraction job failed');
+      // 'pending' or 'processing' — keep polling
+    }
+    throw new Error('Extraction timed out waiting for the queue to process it');
+  } catch (queueErr: any) {
+    console.log('[extractViaQueue] queue path failed, falling back to synchronous extraction:', queueErr?.message);
+    const fallbackRes = await fetch(`${serverUrl}/assignments/extract-questions`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const fallbackData = await fallbackRes.json();
+    if (!fallbackRes.ok) throw new Error(fallbackData.error || 'Extraction failed');
+    return fallbackData;
+  }
 }
 
 function formatDate(dateStr: string) {
@@ -551,14 +631,16 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       const params = new URLSearchParams();
       if (librarySubject) params.set('subject', librarySubject);
       if (libraryGrade) params.set('grade', libraryGrade);
-      if (user?.id) params.set('teacherId', user.id);
+      // The auth User type has no id field (only email/name/role/etc.) — send the
+      // teacher's email; the server resolves either an email or a UUID.
+      if (teacherEmail) params.set('teacherId', teacherEmail);
       const res = await fetch(`${SERVER_URL}/quiz/list?${params.toString()}`);
       const d = await res.json();
       setLibraryQuizzes(d.quizzes || []);
     } catch { setLibraryQuizzes([]); }
     setLibraryLoading(false);
     setLibraryLoaded(true);
-  }, [librarySubject, libraryGrade]);
+  }, [librarySubject, libraryGrade, teacherEmail]);
 
   useEffect(() => {
     if (activeTab === 'Quiz Library') fetchLibraryQuizzes();
@@ -986,12 +1068,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           const pageFiles = pages.length > 0 ? pages : [working];
           const fileList = pageFiles.map(p => ({ base64: p.base64, mimeType: p.mime }));
 
-          const eRes = await fetch(`${SERVER_URL}/assignments/extract-questions`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(fileList.length === 1 ? { fileBase64: fileList[0].base64, mimeType: fileList[0].mimeType } : { files: fileList }),
-          });
-          const eData = await eRes.json();
-          if (!eRes.ok) throw new Error(eData.error || 'Extraction failed');
+          const eData = await extractViaQueue(SERVER_URL,
+            fileList.length === 1 ? { fileBase64: fileList[0].base64, mimeType: fileList[0].mimeType } : { files: fileList }
+          );
 
           const extractedSubj = eData.subject
             ? (SUBJECTS.find(s => s.toLowerCase().includes(String(eData.subject).toLowerCase()) || String(eData.subject).toLowerCase().includes(s.toLowerCase())) || String(eData.subject))
@@ -1673,8 +1752,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                               style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, backgroundColor: subjectColor, alignItems: 'center', justifyContent: 'center' }}
                               activeOpacity={0.8}
                               onPress={() => {
-                                // Pre-load quiz and open modal at Step 3
-                                setInteractiveQuiz(q.quiz_data);
+                                // Pre-load quiz, open the wizard at Step 3, AND open the same
+                                // Preview/Edit Answers screen the normal upload flow uses —
+                                // previously this only set wizard state and never opened that
+                                // modal, so a reused-from-library quiz landed on a bare "assign"
+                                // step with no way to edit answers/hints before publishing.
+                                setInteractiveQuiz({ ...q.quiz_data, _editMode: false });
                                 setSubject(q.subject || 'Mathematics');
                                 setGrade(q.grade || defaultGrade);
                                 setCurriculum(q.curriculum || teacherCurriculum);
@@ -1683,6 +1766,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                 setCreateMode('upload');
                                 setUploadStep(3);
                                 setShowModal(true);
+                                setShowInteractivePreview(true);
                                 uploadScrollRef.current?.scrollTo({ y: 0, animated: false });
                               }}
                             >
@@ -1813,7 +1897,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       activeOpacity={0.8}
                       onPress={() => {
                         setLibraryPreviewQuiz(null);
-                        setInteractiveQuiz(q.quiz_data);
+                        // Same fix as the card grid's Assign button — actually open the
+                        // Preview/Edit Answers screen, not just wizard state, so answers
+                        // and hints are editable before publishing a reused quiz.
+                        setInteractiveQuiz({ ...q.quiz_data, _editMode: false });
                         setSubject(q.subject || 'Mathematics');
                         setGrade(q.grade || defaultGrade);
                         setCurriculum(q.curriculum || teacherCurriculum);
@@ -1822,45 +1909,40 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                         setCreateMode('upload');
                         setUploadStep(3);
                         setShowModal(true);
+                        setShowInteractivePreview(true);
                         uploadScrollRef.current?.scrollTo({ y: 0, animated: false });
                       }}
                     >
                       <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>Assign</Text>
                     </TouchableOpacity>
                   </View>
-                  {/* Questions list */}
-                  <ScrollView contentContainerStyle={{ padding: 18, gap: 14 }} showsVerticalScrollIndicator={false}>
-                    {libraryPreviewLoading ? (
-                      <ActivityIndicator color={colors.accentYellow} style={{ marginTop: 40 }} />
-                    ) : allQuestions.length === 0 ? (
-                      <Text style={{ color: colors.textDim, textAlign: 'center', marginTop: 32 }}>No questions found in this quiz.</Text>
-                    ) : allQuestions.map((ques: any, idx: number) => (
-                      <View key={idx} style={{ borderRadius: 12, borderWidth: 1, borderColor: colors.borderColor, padding: 14, gap: 8, backgroundColor: colors.cardHover }}>
-                        <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMain }}>Q{idx + 1}. {(ques.question || ques.text || ques.q || '').replace(/\*\*(.*?)\*\*/g, '$1')}</Text>
-                        {/* MCQ options */}
-                        {ques.options && ques.options.map((opt: string, oi: number) => (
-                          <View key={oi} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                            <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: opt === ques.answer ? colors.accentGreen : colors.borderColor, backgroundColor: opt === ques.answer ? colors.accentGreen + '20' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                              {opt === ques.answer && <Feather name="check" size={11} color={colors.accentGreen} />}
-                            </View>
-                            <Text style={{ fontSize: 12, color: opt === ques.answer ? colors.accentGreen : colors.textMuted, fontWeight: opt === ques.answer ? '700' : '400' }}>{opt}</Text>
-                          </View>
-                        ))}
-                        {/* Answer (non-MCQ) */}
-                        {!ques.options && (ques.answer || ques.correctAnswer) && (
-                          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                            <Feather name="check-circle" size={13} color={colors.accentGreen} />
-                            <Text style={{ fontSize: 12, color: colors.accentGreen, fontWeight: '700' }}>Answer: {ques.answer || ques.correctAnswer}</Text>
-                          </View>
-                        )}
-                        {/* Hint */}
-                        {ques.hint && (
-                          <Text style={{ fontSize: 11, color: colors.accentYellow, fontStyle: 'italic' }}>Hint: {ques.hint}</Text>
-                        )}
-                      </View>
-                    ))}
-                    <View style={{ height: 40 }} />
-                  </ScrollView>
+                  {/* Real interactive quiz — same rendered HTML the student sees,
+                      not a reconstructed plain-text summary. */}
+                  {libraryPreviewLoading ? (
+                    <ActivityIndicator color={colors.accentYellow} style={{ marginTop: 40 }} />
+                  ) : allQuestions.length === 0 ? (
+                    <Text style={{ color: colors.textDim, textAlign: 'center', marginTop: 32 }}>No questions found in this quiz.</Text>
+                  ) : Platform.OS === 'web' ? (
+                    <View
+                      style={{ flex: 1 } as any}
+                      ref={(el: any) => {
+                        if (el && !(el as any)._done) {
+                          (el as any)._done = true;
+                          const f = document.createElement('iframe');
+                          f.src = `${SERVER_URL}/quiz/${q.id}/html`;
+                          f.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+                          f.title = 'Quiz Preview';
+                          el.appendChild(f);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <WebView
+                      source={{ uri: `${SERVER_URL}/quiz/${q.id}/html` }}
+                      style={{ flex: 1 }}
+                      originWhitelist={['*']}
+                    />
+                  )}
                 </View>
               </View>
             </Modal>
@@ -2173,7 +2255,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                                     </View>
                                                   </View>
                                                 </View>
-                                                {studentAnswerText ? (
+                                                {/* Interactive-quiz assignments have a proper "View Student's Answered
+                                                    Sheet" button below (the real rendered worksheet, including Venn
+                                                    diagrams etc.) — this raw text dump was the only option before that
+                                                    existed and is redundant (and unreadable for Venn answers) once it
+                                                    does. Still needed for other assignment types, which have no such
+                                                    button. */}
+                                                {studentAnswerText && !(a as any).interactiveQuizHtml ? (
                                                   <View style={{ gap: 2 }}>
                                                     <Text style={{ fontSize: 10, color: colors.textDim, fontWeight: '600' }}>What the student did:</Text>
                                                     <Text style={{ fontSize: 12, color: colors.textMain, lineHeight: 18, backgroundColor: colors.cardDark, borderRadius: 6, padding: 8 }}>{studentAnswerText}</Text>
@@ -2726,7 +2814,6 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       'ENRICHMENT':{ border: '#C98A8A', bg: 'rgba(201,138,138,0.08)', label: '#C98A8A', labelBg: 'rgba(201,138,138,0.15)' },
                     };
                     const tp = tierPalette[task.tier] || tierPalette['MUST DO'];
-                    const tableRows: any[] = task.table?.rows || [];
                     return (
                       <View key={ti} style={{ marginBottom: 20, borderLeftWidth: 5, borderLeftColor: tp.border, borderRadius: 12, backgroundColor: tp.bg, padding: 18 }}>
                         <View style={{ backgroundColor: tp.labelBg, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 3, borderRadius: 4, marginBottom: 6 }}>
@@ -2773,37 +2860,67 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           </View>
                         )}
 
-                        {/* Riddle/word-bank tasks collapse into a No./Riddle/Answer table — same
-                            layout as the source worksheet and as Preview's rendered table. */}
-                        {tableRows.length > 0 && (
-                          <View style={{ borderWidth: 1, borderColor: 'rgba(195,220,216,0.18)', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
-                            <View style={{ flexDirection: 'row', backgroundColor: 'rgba(147,176,172,0.14)' }}>
-                              {(task.table.headers || ['No.', 'Riddle', 'Answer']).map((h: string, hi: number) => (
-                                <Text key={hi} style={{ flex: hi === 0 ? 0.15 : hi === 1 ? 0.55 : 0.3, fontSize: 12, fontWeight: '700', color: '#D8E8E6', padding: 10, textAlign: hi === 1 ? 'left' : 'center' }}>{h}</Text>
-                              ))}
-                            </View>
-                            {tableRows.map((row: any[], ri: number) => (
-                              <View key={ri} style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: 'rgba(195,220,216,0.12)' }}>
-                                <Text style={{ flex: 0.15, fontSize: 13, color: '#A8B5B3', padding: 10, textAlign: 'center' }}>{row[0]?.text}</Text>
-                                <Text style={{ flex: 0.55, fontSize: 13, color: '#F0EEEC', padding: 10 }}>{row[1]?.text}</Text>
-                                <View style={{ flex: 0.3, padding: 8 }}>
-                                  <TextInput
-                                    style={{ borderWidth: 1.5, borderColor: 'rgba(195,220,216,0.25)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#F0EEEC', backgroundColor: '#252525' }}
-                                    value={String(row[2]?.answer ?? '')}
-                                    onChangeText={(val) => {
-                                      const u = { ...interactiveQuiz };
-                                      u.tasks[ti].table.rows[ri][2].answer = val;
-                                      u._previewHTML = null;
-                                      setInteractiveQuiz(u);
-                                    }}
-                                    placeholder="?"
-                                    placeholderTextColor="#6E736B"
-                                  />
-                                </View>
+                        {/* Table tasks: render every table (task.table AND task.tables[]) with its
+                            real headers/columns, and make answer cells editable INSIDE the table
+                            grid — the same structure the worksheet and Preview show. */}
+                        {(() => {
+                          const tables: { tbl: any; kind: 'table' | 'tables'; idx: number }[] = [];
+                          if (task.table?.rows?.length) tables.push({ tbl: task.table, kind: 'table', idx: -1 });
+                          (task.tables || []).forEach((t: any, k: number) => { if (t?.rows?.length) tables.push({ tbl: t, kind: 'tables', idx: k }); });
+                          if (!tables.length) return null;
+                          return tables.map((entry, tIdx) => {
+                            const { tbl, kind, idx } = entry;
+                            const headers: string[] = tbl.headers || [];
+                            const ncols = Math.max(headers.length, ...tbl.rows.map((r: any[]) => r.length));
+                            // Column widths: input columns and short/number columns stay narrow;
+                            // long text columns get more room so riddle/question text stays readable.
+                            const colFlex: number[] = [];
+                            for (let c = 0; c < ncols; c++) {
+                              const anyInput = tbl.rows.some((r: any[]) => r[c]?.input);
+                              const avgLen = tbl.rows.reduce((s: number, r: any[]) => s + String(r[c]?.text ?? '').length, 0) / tbl.rows.length;
+                              colFlex[c] = anyInput ? 1 : (avgLen > 14 ? 1.8 : 0.55);
+                            }
+                            return (
+                              <View key={`tbl${tIdx}`} style={{ borderWidth: 1, borderColor: 'rgba(195,220,216,0.18)', borderRadius: 8, overflow: 'hidden', marginTop: 10 }}>
+                                {headers.length > 0 && (
+                                  <View style={{ flexDirection: 'row', backgroundColor: 'rgba(147,176,172,0.14)' }}>
+                                    {headers.map((h: string, hi: number) => (
+                                      <Text key={hi} style={{ flex: colFlex[hi] || 1, fontSize: 12, fontWeight: '700', color: '#D8E8E6', padding: 10, textAlign: 'center' }}>{String(h)}</Text>
+                                    ))}
+                                  </View>
+                                )}
+                                {tbl.rows.map((row: any[], ri: number) => (
+                                  <View key={ri} style={{ flexDirection: 'row', alignItems: 'stretch', borderTopWidth: 1, borderTopColor: 'rgba(195,220,216,0.12)' }}>
+                                    {Array.from({ length: ncols }).map((_, ci) => {
+                                      const cell = row[ci] || {};
+                                      return (
+                                        <View key={ci} style={{ flex: colFlex[ci] || 1, padding: 6, justifyContent: 'center' }}>
+                                          {cell.input ? (
+                                            <TextInput
+                                              style={{ borderWidth: 1.5, borderColor: 'rgba(147,176,172,0.45)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 6, fontSize: 13, color: '#F0EEEC', backgroundColor: '#252525', fontWeight: '600', textAlign: 'center' }}
+                                              value={String(cell.answer ?? '')}
+                                              onChangeText={(val) => {
+                                                const u = { ...interactiveQuiz };
+                                                if (kind === 'table') u.tasks[ti].table.rows[ri][ci].answer = val;
+                                                else u.tasks[ti].tables[idx].rows[ri][ci].answer = val;
+                                                u._previewHTML = null;
+                                                setInteractiveQuiz(u);
+                                              }}
+                                              placeholder="?"
+                                              placeholderTextColor="#6E736B"
+                                            />
+                                          ) : (
+                                            <Text style={{ fontSize: 13, color: ci === 0 ? '#A8B5B3' : '#F0EEEC', padding: 4, textAlign: colFlex[ci] > 1 ? 'left' : 'center' }}>{String(cell.text ?? cell.answer ?? '')}</Text>
+                                          )}
+                                        </View>
+                                      );
+                                    })}
+                                  </View>
+                                ))}
                               </View>
-                            ))}
-                          </View>
-                        )}
+                            );
+                          });
+                        })()}
 
                         {task.questions?.map((q: any, qi: number) => {
                           globalQNum++;
@@ -2815,6 +2932,52 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                           // to readable, editable text so every task shows its real answer.
                           const answerText = answerToEditText(q.answer);
                           const answerIsLong = answerText.length > 48 || answerText.includes('\n');
+
+                          // ── VENN DIAGRAM: edit the answer INSIDE the diagram. Two overlapping
+                          //    circles with three editable regions (left-only / both / right-only),
+                          //    bound to q.answers.{left,center,right}. Mirrors the Preview layout. ──
+                          if (q.type === 'venn') {
+                            const leftLabel = q.leftLabel || 'Group A';
+                            const rightLabel = q.rightLabel || 'Group B';
+                            const ans = q.answers || { left: [], center: [], right: [] };
+                            const asText = (arr: any) => Array.isArray(arr) ? arr.join(', ') : String(arr ?? '');
+                            const setRegion = (region: 'left' | 'center' | 'right', val: string) => {
+                              const u = { ...interactiveQuiz };
+                              const qq = u.tasks[ti].questions[qi];
+                              if (!qq.answers) qq.answers = { left: [], center: [], right: [] };
+                              qq.answers[region] = val.split(',').map((s: string) => s.trim()).filter(Boolean);
+                              u._previewHTML = null;
+                              setInteractiveQuiz(u);
+                            };
+                            const regionStyle: any = { position: 'absolute', borderWidth: 1.5, borderStyle: 'dashed', borderColor: 'rgba(195,220,216,0.55)', borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.06)', color: '#F0EEEC', fontSize: 13, padding: 6, textAlign: 'center', textAlignVertical: 'top' };
+                            return (
+                              <View key={qi} style={{ backgroundColor: '#1C1C1C', padding: 16, borderRadius: 10, marginTop: 12, borderWidth: 1, borderColor: 'rgba(195,220,216,0.12)' }}>
+                                <Text style={{ fontSize: 14, fontWeight: '600', color: '#F0EEEC', marginBottom: 4, lineHeight: 22 }}>{questionLabel} {(q.question || '').replace(/\*\*(.+?)\*\*/g, '$1')}</Text>
+                                <Text style={{ fontSize: 12, color: '#A8B5B3', marginBottom: 8 }}>Type answer items separated by commas — shared items go in the middle overlap.</Text>
+                                <View style={{ position: 'relative', width: '100%', maxWidth: 540, height: 300, alignSelf: 'center', marginBottom: 8 }}>
+                                  {/* two overlapping circles */}
+                                  <View style={{ position: 'absolute', left: 0, top: 26, width: '60%', height: 248, borderRadius: 9999, borderWidth: 2.5, borderColor: '#93B0AC', backgroundColor: 'rgba(147,176,172,0.10)' }} />
+                                  <View style={{ position: 'absolute', right: 0, top: 26, width: '60%', height: 248, borderRadius: 9999, borderWidth: 2.5, borderColor: '#C5BD96', backgroundColor: 'rgba(197,189,150,0.10)' }} />
+                                  {/* circle labels */}
+                                  <Text style={{ position: 'absolute', left: '10%', top: 0, fontSize: 15, fontWeight: '700', color: '#93B0AC' }}>{leftLabel}</Text>
+                                  <Text style={{ position: 'absolute', right: '10%', top: 0, fontSize: 15, fontWeight: '700', color: '#C5BD96' }}>{rightLabel}</Text>
+                                  {/* three editable regions */}
+                                  <TextInput multiline value={asText(ans.left)} onChangeText={(v) => setRegion('left', v)} placeholder={`${leftLabel} only`} placeholderTextColor="#6E736B" style={{ ...regionStyle, left: '2%', top: 92, width: '27%', height: 132 }} />
+                                  <TextInput multiline value={asText(ans.center)} onChangeText={(v) => setRegion('center', v)} placeholder="Both" placeholderTextColor="#6E736B" style={{ ...regionStyle, left: '37%', top: 100, width: '26%', height: 118 }} />
+                                  <TextInput multiline value={asText(ans.right)} onChangeText={(v) => setRegion('right', v)} placeholder={`${rightLabel} only`} placeholderTextColor="#6E736B" style={{ ...regionStyle, right: '2%', top: 92, width: '27%', height: 132 }} />
+                                </View>
+                                <View style={{ marginBottom: 10, backgroundColor: 'rgba(197,189,150,0.10)', padding: 10, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: '#C5BD96' }}>
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#C5BD96', marginBottom: 4 }}>Hint:</Text>
+                                  <TextInput style={{ borderWidth: 1, borderColor: 'rgba(197,189,150,0.3)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#D8E8E6', backgroundColor: '#252525' }} value={q.hint || ''} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].hint = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Hint" placeholderTextColor="#6E736B" multiline />
+                                </View>
+                                <View style={{ backgroundColor: 'rgba(147,176,172,0.10)', padding: 10, borderRadius: 8, borderLeftWidth: 3, borderLeftColor: '#93B0AC' }}>
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#93B0AC', marginBottom: 4 }}>Solution:</Text>
+                                  <TextInput style={{ borderWidth: 1, borderColor: 'rgba(147,176,172,0.3)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#D8E8E6', backgroundColor: '#252525' }} value={q.solution || ''} onChangeText={(val) => { const u = { ...interactiveQuiz }; u.tasks[ti].questions[qi].solution = val; u._previewHTML = null; setInteractiveQuiz(u); }} placeholder="Solution" placeholderTextColor="#6E736B" multiline numberOfLines={3} />
+                                </View>
+                              </View>
+                            );
+                          }
+
                           return (
                             <View key={qi} style={{ backgroundColor: '#1C1C1C', padding: 16, borderRadius: 10, marginTop: 12, borderWidth: 1, borderColor: 'rgba(195,220,216,0.12)' }}>
                               <Text style={{ fontSize: 14, fontWeight: '600', color: '#F0EEEC', marginBottom: 10, lineHeight: 22 }}>{questionLabel} {(q.question || '').replace(/\*\*(.+?)\*\*/g, '$1')}</Text>
@@ -4144,7 +4307,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                               const params = new URLSearchParams();
                               if (subject) params.set('subject', subject);
                               if (grade) params.set('grade', grade);
-                              if (user?.id) params.set('teacherId', user.id);
+                              if (teacherEmail) params.set('teacherId', teacherEmail);
                               const res = await fetch(`${SERVER_URL}/quiz/list?${params.toString()}`);
                               const d = await res.json();
                               setSavedQuizzes(d.quizzes || []);

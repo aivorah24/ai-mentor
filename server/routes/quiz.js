@@ -376,13 +376,22 @@ async function ensureQuizCollection() {
       await client.createCollection(QUIZ_COLLECTION, {
         vectors: { size: 384, distance: 'Cosine' },
       });
-      // Payload indexes for filtering
-      for (const field of ['school_id', 'grade', 'subject', 'teacher_id', 'status']) {
-        await client.createPayloadIndex(QUIZ_COLLECTION, {
-          field_name: field, field_schema: 'keyword',
-        });
-      }
       console.log('✅ Qdrant quiz collection created:', QUIZ_COLLECTION);
+    }
+    // Ensure every field ever filtered on has an index — Qdrant rejects filtering
+    // on an unindexed payload field. This runs even when the collection already
+    // existed (created before `curriculum` was added to the mandatory school/
+    // curriculum scoping filter), so a field added later still gets indexed
+    // instead of only being applied at first-ever collection creation.
+    for (const field of ['school_id', 'grade', 'subject', 'teacher_id', 'status', 'curriculum']) {
+      try {
+        await client.createPayloadIndex(QUIZ_COLLECTION, { field_name: field, field_schema: 'keyword' });
+      } catch (idxErr) {
+        // Already indexed — Qdrant errors on a duplicate index, which is fine.
+        if (!/already exists/i.test(idxErr.message || '')) {
+          console.warn(`[quiz] payload index for "${field}" failed:`, idxErr.message);
+        }
+      }
     }
     quizCollectionReady = true;
   } catch (err) {
@@ -623,14 +632,22 @@ async function recoverBarCharts(quiz) {
     if (!taskLooksLikeBarGraph(task)) continue;
 
     // The graph image is either the crop assigned to this task, or its page image.
-    // (imageUrls are still /data/... file paths here — recovery runs before embedQuizImages.)
+    // At generation time this is a /data/... file path; on a SAVED quiz reopened later
+    // (e.g. from the quiz library, or Preview/Edit Answers re-normalizing it) it has
+    // already been converted to a base64 data: URI by embedQuizImages — handle both.
     const imgUrl = (task.questions || []).find(q => q.imageUrl)?.imageUrl || task.pageImageUrl;
-    if (!imgUrl || imgUrl.startsWith('data:')) continue;
+    if (!imgUrl) continue;
     let buf;
     try {
-      const p = path.join(__dirname, '..', imgUrl);
-      if (!fs.existsSync(p)) continue;
-      buf = fs.readFileSync(p);
+      if (imgUrl.startsWith('data:')) {
+        const b64 = imgUrl.split(',')[1];
+        if (!b64) continue;
+        buf = Buffer.from(b64, 'base64');
+      } else {
+        const p = path.join(__dirname, '..', imgUrl);
+        if (!fs.existsSync(p)) continue;
+        buf = fs.readFileSync(p);
+      }
     } catch { continue; }
 
     try {
@@ -983,6 +1000,7 @@ RULES:
     the worksheet and make sure your output has that same count of questions for that task.
 3. Use the EXACT SAME NUMBERS from the worksheet. Do NOT substitute different numbers.
 4. Every question MUST have a correct "answer" field. YOU MUST SOLVE each problem. Think step by step, compute the answer, and write the final result. NEVER write "Not provided in the text" or "N/A" — you are the solver, not just an extractor.
+4b. Keep "answer" SHORT — the literal, direct response a student would type in the blank (e.g. "football", "12 cm", "rugby and badminton"). NEVER pack your full working/narrative into "answer" (e.g. do NOT write "20, closer to football" or "Current votes for rugby = 10, so doubled = 20..." as the answer) — that full reasoning belongs ONLY in "solution". A bloated "answer" field makes correct short student responses get marked wrong.
 5. Pay careful attention to UNITS.
 6. Every question MUST have a "solution" field with a clear step-by-step explanation. NEVER write "Not provided" — work through the problem and explain how to get the answer.
 7. Every question MUST have a "hint" field — a short clue that guides the student without giving the full answer. NEVER leave hint empty or omit it.
@@ -1182,6 +1200,7 @@ If the worksheet contains a Venn diagram to complete, output ONE question with "
 - "left"/"right" answers = items that belong ONLY to that circle. "center" = items in BOTH.
 - YOU MUST solve it: read the source text, compute which items are shared vs unique, and fill all three answer arrays. Never leave them empty.
 - Set "leftLabel"/"rightLabel" to the two circle labels from the worksheet.
+- CONSISTENCY (CRITICAL): the "answers" arrays and the "solution" text MUST list the EXACT SAME items — same count, same values. Never have "solution" narrate one set of numbers/items while "answers" contains a different set. An item must appear in EXACTLY ONE of left/center/right — never duplicated across regions, never omitted from all three. For "multiples of N" style lists, double-check your boundary (e.g. "first 15 multiples of 3" = 3,6,...,45 — recompute and recount before splitting into only/common).
 
 PASSAGE & EXAMPLE EXTRACTION (CRITICAL):
 - If a task has a reading passage, story, or paragraph that students must read before answering, include it as "passage" on the task object. Preserve the FULL text exactly.
@@ -1890,6 +1909,22 @@ router.post('/save', async (req, res) => {
     const { quiz, schoolId, teacherId } = req.body;
     if (!quiz) return res.status(400).json({ error: 'quiz object required' });
 
+    let school = schoolId || '';
+    let curriculum = quiz.curriculum || '';
+    let teacherName = '';
+    if (teacherId) {
+      const { data: teacherUser } = await supabase
+        .from('users')
+        .select('name, school, curriculum')
+        .eq('id', teacherId)
+        .maybeSingle();
+      if (teacherUser) {
+        school = school || teacherUser.school || '';
+        curriculum = curriculum || teacherUser.curriculum || '';
+        teacherName = teacherUser.name || '';
+      }
+    }
+
     const id = uuidv4();
     // Create embedding from quiz title + questions for semantic search
     const searchText = [
@@ -1911,8 +1946,11 @@ router.post('/save', async (req, res) => {
           title: quiz.title || '',
           subject: quiz.subject || 'Mathematics',
           grade: quiz.grade || 'PYP 4',
-          school_id: schoolId || '',
+          curriculum,
+          school_id: school,
+          school,
           teacher_id: teacherId || '',
+          teacher_name: teacherName,
           source_file: quiz.sourceFile || '',
           status: 'published',
           created_at: new Date().toISOString(),
@@ -1929,20 +1967,44 @@ router.post('/save', async (req, res) => {
   }
 });
 
-// ── GET /quiz/list — List quizzes from Qdrant ──────────────────────────────
+// ── GET /quiz/list — List quizzes from Qdrant, scoped to the requesting ─────
+// teacher's own school + curriculum. School/curriculum are resolved server-side
+// from the teacher's own user record (never trusted from the client), so a
+// teacher can never see another school's worksheets by omitting a query param.
 router.get('/list', async (req, res) => {
   try {
     await ensureQuizCollection();
-    const { schoolId, grade, subject, search } = req.query;
+    const { teacherId: teacherIdOrEmail, grade, subject, search } = req.query;
+
+    if (!teacherIdOrEmail) return res.json({ quizzes: [] });
+
+    // The frontend has no reliable Supabase user UUID on hand (the auth User type
+    // only carries email/name/role/etc.) — it sends the teacher's email instead.
+    // Accept either shape, same pattern already used by resolveUserId() elsewhere
+    // in this codebase.
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teacherIdOrEmail);
+    const { data: teacherUser } = await supabase
+      .from('users')
+      .select('school, curriculum')
+      .eq(isUuid ? 'id' : 'email', isUuid ? teacherIdOrEmail : teacherIdOrEmail.toLowerCase())
+      .maybeSingle();
+    const schoolId = teacherUser?.school || '';
+    const curriculum = teacherUser?.curriculum || '';
+
+    // No school on file for this teacher — nothing to safely show.
+    if (!schoolId) return res.json({ quizzes: [] });
+
+    const must = [
+      { key: 'status', match: { value: 'published' } },
+      { key: 'school_id', match: { value: schoolId } },
+    ];
+    if (curriculum) must.push({ key: 'curriculum', match: { value: curriculum } });
+    if (grade)      must.push({ key: 'grade', match: { value: grade } });
+    if (subject)    must.push({ key: 'subject', match: { value: subject } });
 
     // If search query provided, do semantic search
     if (search) {
       const vector = await embed(search);
-      const must = [{ key: 'status', match: { value: 'published' } }];
-      if (schoolId) must.push({ key: 'school_id', match: { value: schoolId } });
-      if (grade)    must.push({ key: 'grade', match: { value: grade } });
-      if (subject)  must.push({ key: 'subject', match: { value: subject } });
-
       const results = await client.search(QUIZ_COLLECTION, {
         vector,
         limit: 20,
@@ -1955,7 +2017,9 @@ router.get('/list', async (req, res) => {
         title: r.payload.title,
         subject: r.payload.subject,
         grade: r.payload.grade,
+        curriculum: r.payload.curriculum,
         school_id: r.payload.school_id,
+        teacher_name: r.payload.teacher_name,
         source_file: r.payload.source_file,
         status: r.payload.status,
         created_at: r.payload.created_at,
@@ -1965,11 +2029,6 @@ router.get('/list', async (req, res) => {
     }
 
     // Otherwise, scroll/filter
-    const must = [{ key: 'status', match: { value: 'published' } }];
-    if (schoolId) must.push({ key: 'school_id', match: { value: schoolId } });
-    if (grade)    must.push({ key: 'grade', match: { value: grade } });
-    if (subject)  must.push({ key: 'subject', match: { value: subject } });
-
     const results = await client.scroll(QUIZ_COLLECTION, {
       filter: { must },
       limit: 50,
@@ -1981,7 +2040,9 @@ router.get('/list', async (req, res) => {
       title: p.payload.title,
       subject: p.payload.subject,
       grade: p.payload.grade,
+      curriculum: p.payload.curriculum,
       school_id: p.payload.school_id,
+      teacher_name: p.payload.teacher_name,
       source_file: p.payload.source_file,
       status: p.payload.status,
       created_at: p.payload.created_at,
@@ -2243,6 +2304,10 @@ router.post('/render-preview', express.json({ limit: '5mb' }), async (req, res) 
     const quiz = req.body.quiz || req.body;
     if (!quiz || !quiz.tasks) return res.status(400).json({ error: 'No quiz data provided' });
     autoDetectMCQ(quiz);
+    // Recover any bar-graph task missing its structured chart — covers quizzes
+    // saved/reopened from BEFORE this fix (or generated on a day the LLM skipped
+    // the chart object), not just freshly-uploaded ones.
+    await recoverBarCharts(quiz);
     const branding = await fetchBranding(quiz.school, quiz.curriculum);
     const html = renderQuizHTML(quiz, branding);
     res.setHeader('Content-Type', 'text/html');
@@ -2256,7 +2321,7 @@ router.post('/render-preview', express.json({ limit: '5mb' }), async (req, res) 
 // normalization Preview applies (riddle/word-bank → table, grid → table, charts,
 // venn) but as JSON, not HTML. Lets the Edit Answers screen show the exact same
 // shape (e.g. a No./Riddle/Answer table) instead of drifting from Preview. ──
-router.post('/normalize', express.json({ limit: '5mb' }), (req, res) => {
+router.post('/normalize', express.json({ limit: '5mb' }), async (req, res) => {
   try {
     const quiz = req.body.quiz || req.body;
     if (!quiz || !quiz.tasks) return res.status(400).json({ error: 'No quiz data provided' });
@@ -2266,6 +2331,9 @@ router.post('/normalize', express.json({ limit: '5mb' }), (req, res) => {
     normalizeLetterGridTables(quiz);
     normalizeTables(quiz);
     normalizeMatchingTasks(quiz);
+    // Same safety net as Preview — a saved quiz reopened for editing may predate
+    // this fix (or the LLM skipped the chart object on generation day).
+    await recoverBarCharts(quiz);
     res.json({ quiz });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2342,8 +2410,14 @@ router.get('/:id/html', async (req, res) => {
       return res.status(404).json({ error: 'Quiz not found' });
     }
 
-    const quiz = results[0].payload.quiz_data;
-    const html = renderQuizHTML(quiz);
+    const payload = results[0].payload;
+    const quiz = payload.quiz_data;
+    // renderQuizHTML draws the school/curriculum logo header from `branding` —
+    // this endpoint never fetched it, so previews from the library always
+    // rendered with no logo even though the same quiz has one when assigned
+    // through the normal create/publish flow (which does pass branding).
+    const branding = await fetchBranding(payload.school || payload.school_id, payload.curriculum);
+    const html = renderQuizHTML(quiz, branding);
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
   } catch (err) {
@@ -3631,9 +3705,52 @@ function renderQuizHTML(quiz, branding = {}) {
   }
 
   // ── Helper: render a fill-in table (registers each blank cell for scoring) ──
+  // Render the traditional school tally convention: groups of 4 upright strokes with a
+  // diagonal 5th stroke crossing them, then loose strokes for the remainder. Typing a
+  // number into a "Tally marks" box (what this used to do) means nothing to a student —
+  // tally marks are a drawn notation, not text — so instead of asking them to type it,
+  // we DRAW the real thing here as a reference, and let the "Frequency" column (a genuine
+  // typed number) be the actual thing being tested.
+  function renderTallyMarks(n) {
+    // Extraction sometimes returns the tally column's answer as literal pipe
+    // characters (e.g. "|||" or "| | | |") instead of a plain count — parseInt
+    // on that yields NaN and nothing ever rendered. Count the pipes as a
+    // fallback rather than assuming the value is always a clean number.
+    let count = parseInt(n, 10);
+    if (isNaN(count) && typeof n === 'string') {
+      const pipes = (n.match(/\|/g) || []).length;
+      if (pipes > 0) count = pipes;
+    }
+    n = count;
+    if (isNaN(n) || n < 0) return '';
+    const groups = Math.floor(n / 5), rem = n % 5;
+    const groupW = 34, totalW = Math.max(groups * groupW + rem * 7 + 10, 30);
+    let svg = `<svg viewBox="0 0 ${totalW} 36" style="width:auto;height:32px;max-width:100%;">`;
+    let x = 4;
+    for (let g = 0; g < groups; g++) {
+      for (let i = 0; i < 4; i++) svg += `<line x1="${x + i * 7}" y1="4" x2="${x + i * 7}" y2="30" stroke="#F0EEEC" stroke-width="2.2" stroke-linecap="round"></line>`;
+      svg += `<line x1="${x - 2}" y1="30" x2="${x + 3 * 7 + 2}" y2="4" stroke="#C5BD96" stroke-width="2.4" stroke-linecap="round"></line>`;
+      x += groupW;
+    }
+    for (let i = 0; i < rem; i++) svg += `<line x1="${x + i * 7}" y1="4" x2="${x + i * 7}" y2="30" stroke="#F0EEEC" stroke-width="2.2" stroke-linecap="round"></line>`;
+    svg += `</svg>`;
+    return svg;
+  }
+
   function renderTaskTable(table) {
     let h = '<div class="ws-table-wrap" style="overflow-x:auto;margin:8px 0 14px;">';
     if (table.title) h += `<div style="font-weight:700;color:#C3DCD8;margin-bottom:8px;">${fmt(String(table.title))}</div>`;
+    const tallyColIdx = Array.isArray(table.headers) ? table.headers.findIndex(x => /tally/i.test(String(x || ''))) : -1;
+    // The Frequency column's answer is a plain verified number; the Tally column's
+    // own extracted answer is a hand-drawn-pipe STRING that can disagree with it
+    // (e.g. tally="| | | |" but frequency="6") — draw the tally marks from the
+    // frequency count instead of trusting the separately-extracted tally string.
+    const freqColIdx = Array.isArray(table.headers) ? table.headers.findIndex(x => /frequency/i.test(String(x || ''))) : -1;
+    if (tallyColIdx >= 0) {
+      h += `<div style="margin:0 0 10px;padding:10px 14px;background:rgba(197,189,150,0.10);border-left:3px solid #C5BD96;border-radius:6px;font-size:12.5px;color:#D8E8E6;line-height:1.6;">
+        In your notebook you draw the tally marks yourself: one line for each item, and the 5th line crosses the first four. Here the computer has already drawn them for you in the Tally marks column — you just need to COUNT the lines (every crossed bundle = 5, plus any loose lines) and write that total number in the Frequency box.
+      </div>`;
+    }
     h += '<table style="width:100%;border-collapse:collapse;">';
     if (Array.isArray(table.headers) && table.headers.length) {
       h += '<tr>' + table.headers.map(x =>
@@ -3642,7 +3759,18 @@ function renderQuizHTML(quiz, branding = {}) {
     }
     for (const row of (table.rows || [])) {
       h += '<tr>';
-      for (const cell of (row || [])) {
+      (row || []).forEach((cell, ci) => {
+        if (ci === tallyColIdx) {
+          // Display-only: draw the real tally marks from the verified Frequency
+          // count for this row when available (falls back to the tally cell's own
+          // answer only if there's no Frequency column at all). Not a checkable
+          // question — the Frequency column is where the student's understanding is tested,
+          // so this cell must NOT be registered (an unregistered cell can't ever block
+          // "answer every question" from reaching 100%).
+          const freqAnswer = freqColIdx >= 0 ? (row[freqColIdx] && row[freqColIdx].answer) : undefined;
+          h += `<td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;">${renderTallyMarks(freqAnswer ?? (cell && cell.answer))}</td>`;
+          return;
+        }
         if (cell && cell.input) {
           const isNumAns = /^\d+(\.\d+)?$/.test(String(cell.answer || '').trim());
           const qId = registerQuestion({ type: cell._qtype || (isNumAns ? 'numeric' : 'text'), answer: cell.answer });
@@ -3663,7 +3791,7 @@ function renderQuizHTML(quiz, branding = {}) {
         } else {
           h += `<td style="border:1px solid rgba(195,220,216,0.18);padding:8px 12px;text-align:center;color:#F0EEEC;font-size:13px;">${fmt(String((cell && cell.text) || ''))}</td>`;
         }
-      }
+      });
       h += '</tr>';
     }
     h += '</table>';
@@ -3797,7 +3925,7 @@ function renderQuizHTML(quiz, branding = {}) {
         }).join('');
         html += `</div><button class="btn-check" style="padding:6px 14px;font-size:12px;" onclick="checkMCQ('${qId}')">&#10003;</button>`;
       } else {
-        html += `<button class="btn-show" style="display:inline-block;padding:6px 14px;font-size:12px;" onclick="toggleSolution('${qId}'); if(!done.has('${qId}')){sc++;done.add('${qId}');up();}">Show</button>`;
+        html += `<button class="btn-show" style="display:inline-block;padding:6px 14px;font-size:12px;" onclick="toggleSolution('${qId}'); if(!done.has('${qId}')){sc++;done.add('${qId}');} attempted.add('${qId}'); up();">Show</button>`;
       }
       html += `</div></div>`;
       // Feedback row (hidden by default, spans full width)
@@ -3873,7 +4001,7 @@ function renderQuizHTML(quiz, branding = {}) {
           <p style="font-size:13px;color:#A8B5B3;margin:0 0 12px;line-height:1.5">This is a hands-on activity. Try it on paper!</p>
         </div>
         <div class="q-actions" style="display:flex;gap:10px;margin-top:10px">
-          <button class="btn-show" style="display:inline-block" onclick="toggleSolution('${qId}'); if(!done.has('${qId}')){sc++;done.add('${qId}');up();}">Show Answer</button>
+          <button class="btn-show" style="display:inline-block" onclick="toggleSolution('${qId}'); if(!done.has('${qId}')){sc++;done.add('${qId}');} attempted.add('${qId}'); up();">Show Answer</button>
           ${q.hint ? `<button class="btn-hint" onclick="toggleHint('${qId}')">Hint</button>` : ''}
         </div>`;
       } else if (isMcq) {
@@ -4191,13 +4319,21 @@ function renderQuizHTML(quiz, branding = {}) {
     body { font-family: -apple-system, 'Segoe UI', Roboto, 'Noto Sans Telugu', 'Noto Sans Devanagari', Helvetica, Arial, sans-serif; background: #0F0F0F; color: #F0EEEC; line-height: 1.6; }
 
     /* ── Header — Aivorah Enchanted Forest ── */
-    .header { background: linear-gradient(135deg, #1C1C1C 0%, #252525 100%); color: #F0EEEC; padding: 14px 110px 14px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); display: flex; align-items: center; min-height: 60px; }
-    .header-text { text-align: left; }
+    /* Matches the page's own background (#0F0F0F) instead of a lighter gradient box —
+       when there's no school/curriculum logo to show, the header used to read as a
+       separate, visually disconnected dark rectangle sitting on top of the page rather
+       than blending into it. */
+    .header { background: #0F0F0F; color: #F0EEEC; padding: 14px 110px 14px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); display: flex; align-items: center; min-height: 60px; }
+    .header-text { text-align: left; flex: 0 1 auto; }
     .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 2px; }
     .header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; margin: 0; }
     .header-meta { font-size: 13px; color: #5A6B69; margin-top: 2px; }
-    .header-logos { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-                     display: flex; gap: 16px; align-items: center; }
+    /* Centered in the space BETWEEN the title text and the score badge, not the
+       header box's raw 50% mark — the box has asymmetric padding (extra room on
+       the right for the score circle), so centering on the box itself always
+       skewed the logos off the true visual center. */
+    .header-logos { flex: 1 1 auto; display: flex; gap: 16px; align-items: center;
+                     justify-content: center; min-width: 0; }
     .header-logos img { height: 55px; width: auto; display: block; }
 
     /* ── Score Badge — anchored to the header itself, not the viewport ── */
@@ -4376,7 +4512,13 @@ function renderQuizHTML(quiz, branding = {}) {
   <script>
     let sc = 0;
     const tot = ${qNum};
-    const done = new Set();
+    const done = new Set(); // questions answered CORRECTLY (drives score credit)
+    // Questions ATTEMPTED at least once, right or wrong — drives the progress bar and
+    // whether "Submit Assignment" unlocks. Submission must depend on the student having
+    // answered every question, NOT on getting every question right — those are different
+    // things, and gating submission on a perfect score blocked students who tried
+    // everything but got some wrong from ever handing the assignment in.
+    const attempted = new Set();
     const answers = ${JSON.stringify(answersMap)};
     const studentAnswers = {}; // { qId: { answer, correct, timeSpent } }
     const questionStartTimes = {}; // { qId: timestamp }
@@ -4394,17 +4536,48 @@ function renderQuizHTML(quiz, branding = {}) {
     const STOPWORDS = new Set(['a','an','the','is','was','it','of','in','to','and','or','on','at','for','with','this','that','be','been','were','are','as','by','from']);
     function keywordSet(s) {
       return new Set(
-        String(s).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+        String(s).toLowerCase().replace(/[^a-z0-9\\s]/g, ' ').split(/\\s+/)
           .filter(function(w) { return w.length > 0 && !STOPWORDS.has(w); })
       );
     }
     function keywordMatch(studentAnswer, correctAnswer) {
-      const expected = Array.from(keywordSet(correctAnswer));
+      // Many "theory" answers are auto-generated as a full multi-sentence
+      // JUSTIFICATION ("New height will be 20. It will reach closer to the football
+      // bar. The football bar is at 16, so the difference is 4. The hockey bar is
+      // at 12, so the difference is 8...") when the question itself only asks for a
+      // choice/short fact ("...closer to the football bar or the hockey bar?"). A
+      // student who correctly answers "football" was never asked to reproduce the
+      // reasoning — but matching keywords against the WHOLE narrative demands they
+      // do (14 keywords → 7 required, "football" only overlaps 1). The decisive
+      // conclusion almost always lives in the first sentence or two; later
+      // sentences explain/compare and often mention the REJECTED alternative too
+      // (here, "hockey"), so pulling keywords from the whole thing also risks
+      // marking a WRONG short answer correct just because it names something
+      // discussed later in the justification. Limiting the keyword pool to the
+      // first couple of sentences fixes both problems at once.
+      const sentences = correctAnswer.split(/(?<=[.!?])\\s+/).filter(Boolean);
+      const answerSource = sentences.length > 2 ? sentences.slice(0, 2).join(' ') : correctAnswer;
+      // Bare numbers (e.g. an intermediate computed value like "20" restated inside
+      // "20, closer to football") are narrative filler, not something a student must
+      // retype to prove correct reasoning — a purely numeric answer already goes
+      // through the isNum exact-match path, so any stray digit token reaching HERE is
+      // incidental. Drop it, otherwise a correct short answer ("football") gets
+      // penalized for not repeating a number the question never asked for.
+      const stripNums = (set) => new Set(Array.from(set).filter(function(w) { return !/^\\d+$/.test(w); }));
+      const expected = Array.from(stripNums(keywordSet(answerSource)));
       if (expected.length === 0) return true; // nothing meaningful to check against
-      const studentSet = keywordSet(studentAnswer);
+      const studentSet = stripNums(keywordSet(studentAnswer));
       const matched = expected.filter(function(w) { return studentSet.has(w); }).length;
-      // Short answers (≤2 keywords) need every keyword present; longer ones allow ~80% coverage.
-      const required = expected.length <= 2 ? expected.length : Math.ceil(expected.length * 0.8);
+      // Short answers (≤3 meaningful words, e.g. "rugby and badminton") still need
+      // majority overlap for real discrimination. Anything longer than that — even
+      // after narrowing to the first couple of sentences — is asking more than a
+      // short answer box should require verbatim, so a single genuine keyword
+      // overlap (already scoped to the decisive sentences, so "hockey" can't sneak
+      // in from the justification) is accepted. A stricter near-100% threshold
+      // marked genuinely correct short answers wrong; a lower bar costs a rare
+      // false positive, which is a far smaller problem live than telling a student
+      // their right answer is wrong.
+      const required = expected.length <= 3 ? Math.max(1, Math.ceil(expected.length * 0.5)) : 1;
       return matched >= required;
     }
 
@@ -4420,7 +4593,7 @@ function renderQuizHTML(quiz, branding = {}) {
     function up() {
       document.getElementById('score-num').textContent = (sc % 1 === 0 ? sc : sc.toFixed(1)) + '/' + tot;
       // Progress bar tracks how many questions have been attempted — completion, not correctness.
-      const donePct = Math.round((done.size / tot) * 100);
+      const donePct = Math.round((attempted.size / tot) * 100);
       document.getElementById('pf').style.width = donePct + '%';
       document.getElementById('pp').textContent = donePct + '% complete';
       // Score percentage — what actually gets saved as the assignment's grade — reflects
@@ -4432,8 +4605,18 @@ function renderQuizHTML(quiz, branding = {}) {
         timeSpent: data.timeSpent || 0,
         question: data.question || ''
       }));
-      // Report score + answers to parent window (for student assignment iframe)
-      try { window.parent.postMessage({ type: 'quiz-score', correct: sc, total: tot, pct: scorePct, completed: done.size === tot, answers: answersArr }, '*'); } catch(e) {}
+      // Report score + answers to the host — web (iframe, window.parent) and
+      // native (react-native-webview, which only accepts a stringified message
+      // via a different bridge object) need different delivery mechanisms.
+      // "correct" is a partial-credit SCORE (0 for revealed, 0.5 for hinted, 1 for
+      // clean), not a count of how many questions have been checked — a host UI
+      // showing "correct/total" as if it were "answered/total" undercounts and
+      // confuses the student into thinking questions are still outstanding even
+      // after they've checked every one. "attemptedCount" is the real signal for
+      // how many have actually been checked so far.
+      const scoreMsg = { type: 'quiz-score', correct: sc, total: tot, pct: scorePct, completed: attempted.size === tot, attemptedCount: attempted.size, answers: answersArr };
+      try { window.parent.postMessage(scoreMsg, '*'); } catch(e) {}
+      try { if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify(scoreMsg)); } catch(e) {}
     }
 
     function checkAnswer(id) {
@@ -4448,6 +4631,7 @@ function renderQuizHTML(quiz, branding = {}) {
       if (a.open) {
         const elapsedOpen = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
         studentAnswers[id] = { answer: val, correct: true, timeSpent: elapsedOpen, question: '' };
+        attempted.add(id);
         r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Answer recorded</span>';
         inp.style.borderColor = '#4a9d6e';
         inp.style.background = 'rgba(74,157,110,0.14)';
@@ -4466,6 +4650,7 @@ function renderQuizHTML(quiz, branding = {}) {
         const okTh = keywordMatch(val, String(a.answer));
         const elapsedTh = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
         studentAnswers[id] = { answer: val, correct: okTh, timeSpent: elapsedTh, question: '' };
+        attempted.add(id);
         if (okTh) {
           r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Correct!</span>';
           inp.style.borderColor = '#4a9d6e';
@@ -4495,6 +4680,7 @@ function renderQuizHTML(quiz, branding = {}) {
       const qEl = document.getElementById(id + '-card');
       const qText = qEl ? qEl.querySelector('.q-label, strong')?.textContent || '' : '';
       studentAnswers[id] = { answer: val, correct: ok, timeSpent: elapsed, question: qText };
+      attempted.add(id);
       if (ok) {
         r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Correct!</span>';
         inp.style.borderColor = '#4a9d6e';
@@ -4519,6 +4705,7 @@ function renderQuizHTML(quiz, branding = {}) {
       // Track student answer + time
       const elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
       studentAnswers[id] = { answer: sel.value, correct: ok, timeSpent: elapsed, question: '' };
+      attempted.add(id);
       if (ok) {
         r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Correct!</span>';
         if (!done.has(id)) { sc += creditFor(id); done.add(id); }
@@ -4578,6 +4765,7 @@ function renderQuizHTML(quiz, branding = {}) {
       const val = chip.dataset.word;
       const ok = String(val).replace(/\\s+/g, '').toLowerCase() === String(a.answer).replace(/\\s+/g, '').toLowerCase();
       studentAnswers[id] = { answer: val, correct: ok, timeSpent: 0, question: '' };
+      attempted.add(id);
       if (ok) {
         slot.classList.add('m-ok'); slot.classList.remove('m-bad');
         if (r) r.innerHTML = '<span style="color:#4a9d6e;font-weight:700;font-size:12px;">&#10004; Correct!</span>';
@@ -4600,10 +4788,18 @@ function renderQuizHTML(quiz, branding = {}) {
         return String(s || '').replace(/\\band\\b/gi, ',').split(/[,;\\n]/)
           .map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean).sort();
       }
-      function setEq(x, y) {
-        if (x.length !== y.length) return false;
-        for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
-        return true;
+      // Near-match, not exact-set-equality: a long "multiples of N" list (12-15 items)
+      // where the student gets all-but-one right shouldn't fail the whole region red —
+      // that's the same all-or-nothing problem the theory-answer keyword match already
+      // solves elsewhere. Require ~80% recall (most correct items present) AND ~80%
+      // precision (not padding with extra/wrong items) so partial credit is fair without
+      // letting a student just paste a huge range of numbers to fish for a match.
+      function setEq(typed, correct) {
+        if (correct.length === 0) return typed.length === 0;
+        var matched = typed.filter(function(t) { return correct.indexOf(t) !== -1; }).length;
+        var recall = matched / correct.length;
+        var precision = typed.length ? matched / typed.length : 0;
+        return recall >= 0.8 && precision >= 0.8;
       }
       var regions = ['left', 'center', 'right'];
       var allOk = true, anyFilled = false, snapshot = [];
@@ -4623,6 +4819,7 @@ function renderQuizHTML(quiz, branding = {}) {
       var r = document.getElementById(id + '-result');
       var elapsed = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
       studentAnswers[id] = { answer: snapshot.join(' | '), correct: allOk, timeSpent: elapsed, question: 'Venn diagram' };
+      attempted.add(id);
       if (allOk) {
         r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Correct! Every region is right.</span>';
         if (!done.has(id)) { sc += creditFor(id); done.add(id); }
@@ -4652,6 +4849,7 @@ function renderQuizHTML(quiz, branding = {}) {
       inp.style.background = ok ? 'rgba(74,157,110,0.14)' : 'rgba(201,96,95,0.10)';
       if (ok && !done.has(id)) { sc += creditFor(id); done.add(id); }
       studentAnswers[id] = { answer: val, correct: !!ok, timeSpent: 0, question: 'diagram blank' };
+      attempted.add(id);
       up();
     }
 

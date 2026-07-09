@@ -232,6 +232,27 @@ const server = app.listen(PORT, () => {
 // successfully generated. Allow up to 10 minutes end-to-end.
 server.requestTimeout = 600000;
 server.headersTimeout = 610000;
+
+// ── Job queue draining ──────────────────────────────────────────────────────
+// db driver: nothing was draining `upload_jobs` locally (only an external Cloud
+// Scheduler hitting POST /jobs/process was assumed) — jobs published via
+// extract-questions-async would enqueue and then sit "pending" forever. Poll
+// locally every few seconds so the queue is genuinely operational without
+// depending on that external cron being configured. Cheap when empty (one
+// indexed SELECT ... LIMIT), and every claim is still atomic (jobQueue.js
+// processJobById), so this is safe to run alongside a real Cloud Scheduler hit
+// too — whichever gets there first wins, no double-processing.
+// kafka driver: this loop is skipped — the always-on consumer (startConsumer)
+// handles draining instead, started right below.
+const { DRIVER: QUEUE_DRIVER, runWorkerOnce, startConsumer } = require('./services/jobQueue');
+if (QUEUE_DRIVER === 'kafka') {
+  startConsumer().catch(err => console.error('[jobQueue] Kafka consumer failed to start:', err.message));
+} else {
+  setInterval(() => {
+    runWorkerOnce(5).catch(err => console.error('[jobQueue] drain tick failed:', err.message));
+  }, 4000);
+  console.log('[jobQueue] local drain loop started (QUEUE_DRIVER=db, every 4s)');
+}
 server.setTimeout(600000);
 
 // The server died silently (exit 255, no log) during a quiz upload — make any future
