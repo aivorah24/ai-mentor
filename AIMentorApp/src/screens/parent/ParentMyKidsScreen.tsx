@@ -48,11 +48,7 @@ function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onMana
   const badgeLabel = !hasActivity ? 'Getting Started' : isOnTrack ? 'On Track' : 'Needs Attention';
 
   return (
-    <TouchableOpacity
-      style={styles.childCard}
-      activeOpacity={0.9}
-      onPress={() => navigation.navigate('ParentStudentView', { childData: child })}
-    >
+    <View style={styles.childCard}>
       <View style={styles.childCardHeader}>
         <View style={[styles.avatar, { backgroundColor: badgeColor + '20' }]}>
           <Text style={[styles.avatarText, { color: badgeColor }]}>
@@ -167,7 +163,7 @@ function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onMana
           </View>
         )}
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -207,7 +203,6 @@ export default function ParentMyKidsScreen({ navigation }: any) {
   const [credsPassword, setCredsPassword] = useState('');
   const [credsStudentId, setCredsStudentId] = useState('');
   const [credsName,     setCredsName]     = useState('');
-  const [credsVerificationRequired, setCredsVerificationRequired] = useState(false);
 
   // Remove child confirmation
   const [removeConfirmChild, setRemoveConfirmChild] = useState<any>(null);
@@ -430,7 +425,6 @@ export default function ParentMyKidsScreen({ navigation }: any) {
       const childEmail = String(init.email || '').toLowerCase();
       const childPassword = String(init.password || '');
       const finalStudentId = init.studentId || studentId;
-      const emailProvided = Boolean(init.emailProvided); // real Gmail supplied?
 
       // Create child in Firebase Auth (same provider used by login screen).
       const secondaryName = `mykids-child-${Date.now()}`;
@@ -478,7 +472,6 @@ export default function ParentMyKidsScreen({ navigation }: any) {
         setCredsEmail(data.child.email);
         setCredsPassword(childPassword);
         setCredsStudentId(data.child.studentId || finalStudentId);
-        setCredsVerificationRequired(emailProvided); // show Gmail note if real email provided
         setCredsModal(true);
       }
     } catch (err: any) {
@@ -1098,20 +1091,13 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                 </View>
               </View>
               <View style={{ backgroundColor: colors.accentGreen + '15', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: colors.accentGreen + '30' }}>
-                <Text style={{ fontSize: 12, color: colors.accentGreen, fontWeight: '700', marginBottom: 2 }}>Credentials sent to your email</Text>
+                <Text style={{ fontSize: 12, color: colors.accentGreen, fontWeight: '700', marginBottom: 2 }}>Login details sent</Text>
                 <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
-                  The full login details (including password) have been sent to your email for security. Use "Resend" below if needed.
+                  {credsEmail && !credsEmail.endsWith('@aivorah.student')
+                    ? 'The full login details, including the password, have been sent to your email and to your child\'s email for safekeeping.'
+                    : 'The full login details, including the password, have been sent to your email for safekeeping.'}
                 </Text>
               </View>
-
-              {credsVerificationRequired && (
-                <View style={{ backgroundColor: '#5F8A8612', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: '#5F8A8630', gap: 4 }}>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#5F8A86' }}>Your child can log in right away.</Text>
-                  <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
-                    A verification link was sent to <Text style={{ fontWeight: '700', color: colors.textMain }}>{credsEmail}</Text>. You (the parent) can open that inbox and click it — this enables "Forgot Password" for your child in the future.
-                  </Text>
-                </View>
-              )}
             </View>
 
             <TouchableOpacity
@@ -1324,7 +1310,9 @@ export default function ParentMyKidsScreen({ navigation }: any) {
                 <View style={{ backgroundColor: '#5F8A8612', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: '#5F8A8630' }}>
                   <Text style={{ fontSize: 12, color: '#5F8A86', fontWeight: '700', marginBottom: 2 }}>Password not shown for security</Text>
                   <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18 }}>
-                    Use the button below to send the full login credentials to your email.
+                    {viewCreds?.initialPassword
+                      ? 'Use the button below to send the full login credentials to your email.'
+                      : 'The password was last changed via a reset link, so we no longer have a copy to resend. Use "Reset Child\'s Password" below to send a fresh reset link.'}
                   </Text>
                 </View>
 

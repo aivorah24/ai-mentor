@@ -10,6 +10,7 @@ import ParentAIPanel from './ParentAIPanel';
 import type { AppColors } from '../../theme';
 import { Feather } from '@expo/vector-icons';
 import SERVER_URL from '../../config/serverUrl';
+import { setStudentLocked } from '../../services/lockStatus';
 
 interface ScreenLayoutProps {
   children: React.ReactNode;
@@ -46,7 +47,25 @@ export default function ScreenLayout({ children, hideAIPanel }: ScreenLayoutProp
   const isParent = user?.role === 'parent';
   const isStudent = user?.role === 'student';
 
-  const [controls, setControls] = useState<StudentControls | null>(null);
+  // Cache the last-known screen-time-status response so a refresh renders the
+  // correct lock state on the FIRST paint — waiting for a fresh fetch (even
+  // gated behind a blank screen) still depends on exact render-order timing
+  // between auth restoring and this component mounting, which is fragile.
+  // Reading a synchronous localStorage snapshot at init time is not.
+  const LS_CONTROLS = 'aivorah_lastScreenTimeStatus';
+  const getCachedControls = (): StudentControls | null => {
+    try {
+      const raw = localStorage.getItem(LS_CONTROLS);
+      if (!raw) return null;
+      const { email, data } = JSON.parse(raw);
+      return email === user?.email ? data : null;
+    } catch { return null; }
+  };
+  const saveCachedControls = (data: StudentControls) => {
+    try { localStorage.setItem(LS_CONTROLS, JSON.stringify({ email: user?.email, data })); } catch {}
+  };
+
+  const [controls, setControls] = useState<StudentControls | null>(() => (isStudent ? getCachedControls() : null));
 
   // ── Break enforcer helpers (localStorage so refresh-safe) ──────────────
   const todayKey = () => new Date().toISOString().split('T')[0];
@@ -97,14 +116,18 @@ export default function ScreenLayout({ children, hideAIPanel }: ScreenLayoutProp
   // Learn5EScreen (via recordStudyTime), plus ChallengesScreen and the Assignments
   // quiz, each timing only their own active session.
 
-  // Fetch controls every 15s
+  // `controlsLoaded` gates first paint for students who have NO cached status yet
+  // (first login on this device) — once cached, `controls` already starts correct
+  // on every subsequent mount/refresh, so there is nothing to gate.
+  const [controlsLoaded, setControlsLoaded] = useState(!isStudent || !!getCachedControls());
   useEffect(() => {
     if (!isStudent || !user?.email) return;
     const fetch_ = () => {
       fetch(`${SERVER_URL}/parent/screen-time-status/${encodeURIComponent(user.email)}`)
         .then(r => r.json())
-        .then(data => setControls(data))
-        .catch(() => {});
+        .then(data => { setControls(data); saveCachedControls(data); })
+        .catch(() => {})
+        .finally(() => setControlsLoaded(true));
     };
     fetch_();
     controlsIntervalRef.current = setInterval(fetch_, 15 * 1000);
@@ -163,15 +186,28 @@ export default function ScreenLayout({ children, hideAIPanel }: ScreenLayoutProp
   const isOverWeeklyCap = controls?.weeklyCap?.enabled && controls.weeklyCap.isOverWeeklyCap;
 
 
+  // Before the first screen-time-status response lands, a student's dashboard
+  // must stay hidden — otherwise a locked student sees their real dashboard for
+  // a moment on every refresh, before the lock overlay has data to render.
   const content = (
     <View style={{ flex: 1 }}>
-      {children}
-
+      {isStudent && !controlsLoaded ? null : children}
     </View>
   );
 
-  const showFullscreen = isStudent && (breakActive || isLocked || isOutsideAllowedHours || (isOverWeeklyCap ?? false));
-  const fullscreenLock = showFullscreen ? (
+  const showLoadingGate = isStudent && !controlsLoaded;
+  const showFullscreen = isStudent && controlsLoaded && (breakActive || isLocked || isOutsideAllowedHours || (isOverWeeklyCap ?? false));
+
+  // Let App.tsx's idle-logout guard know so it never stacks its "Are you still
+  // there?" popup on top of a parental-control lock screen.
+  useEffect(() => {
+    setStudentLocked(showLoadingGate || showFullscreen);
+  }, [showLoadingGate, showFullscreen]);
+  useEffect(() => () => setStudentLocked(false), []);
+
+  const fullscreenLock = showLoadingGate ? (
+    <View style={[styles.fullscreenOverlay, { backgroundColor: colors.bgDark }]} />
+  ) : showFullscreen ? (
     <View style={styles.fullscreenOverlay}>
       {breakActive ? (
         <View style={[styles.overlayCard, { backgroundColor: '#1A1A1A', borderColor: '#93B0AC40' }]}>

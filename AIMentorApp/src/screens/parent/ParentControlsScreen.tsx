@@ -296,7 +296,8 @@ export default function ParentControlsScreen({ navigation }: any) {
   return (
     <ScreenLayout>
       <Header title="Parental Controls" subtitle="Manage your child's app usage" />
-      <ScrollView style={s.screen} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+      <ScrollView style={s.screen} contentContainerStyle={{ padding: 20, paddingBottom: 40, alignItems: 'center' }}>
+        <View style={{ width: '100%', maxWidth: 640 }}>
 
         {/* Child selector */}
         {children.length > 1 && (
@@ -321,71 +322,65 @@ export default function ParentControlsScreen({ navigation }: any) {
 
         {selectedChild && (
           <>
-            {/* ── Usage Overview ── */}
-            <View style={{ marginBottom: 12 }}>
-              <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>
+            {/* ── Usage Overview — compact horizontal strip, not tall donut cards ── */}
+            <View style={{ marginBottom: 10 }}>
+              <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6 }}>
                 USAGE OVERVIEW — {selectedChild.name.toUpperCase()}
               </Text>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                {/* Daily card */}
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {/* Daily */}
                 {(() => {
                   const used = ctrl.todayUsageMinutes;
                   const limit = ctrl.isEnabled ? ctrl.dailyLimitMinutes : 0;
                   const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
                   const color = pct >= 90 ? '#EFD1D4' : pct >= 70 ? '#C5BD96' : colors.accentYellow;
-                  const r = 28; const circ = 2 * Math.PI * r;
+                  const r = 16; const circ = 2 * Math.PI * r;
                   const dash = circ * (pct / 100);
                   return (
-                    <LinearGradient colors={['#93B0AC12', '#C3DCD808']} style={[s.usageHalf, { borderColor: color + '30' }]}>
-                      <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 10 }}>TODAY</Text>
-                      <View style={{ alignItems: 'center', marginBottom: 10 }}>
-                        <Svg width="72" height="72" viewBox="0 0 72 72">
-                          <Circle cx="36" cy="36" r={r} fill="none" stroke={color + '22'} strokeWidth="6" />
-                          <Circle cx="36" cy="36" r={r} fill="none" stroke={color} strokeWidth="6"
+                    <LinearGradient colors={['#93B0AC12', '#C3DCD808']} style={[s.usageStrip, { borderColor: color + '30' }]}>
+                      <View style={{ width: 40, height: 40 }}>
+                        <Svg width="40" height="40" viewBox="0 0 40 40">
+                          <Circle cx="20" cy="20" r={r} fill="none" stroke={color + '22'} strokeWidth="4" />
+                          <Circle cx="20" cy="20" r={r} fill="none" stroke={color} strokeWidth="4"
                             strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-                            transform="rotate(-90 36 36)" />
+                            transform="rotate(-90 20 20)" />
                         </Svg>
-                        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-                          <Text style={{ color, fontWeight: '800', fontFamily: fonts.serif, fontSize: 15 }}>{formatMinutes(used)}</Text>
-                          <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 9 }}>used</Text>
-                        </View>
                       </View>
-                      <Text style={{ color: colors.textMain, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, textAlign: 'center' }}>{pct}%</Text>
-                      <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 11, textAlign: 'center', marginTop: 2 }}>
-                        {ctrl.isEnabled ? `of ${formatMinutes(limit)}` : 'no limit'}
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 9.5, fontWeight: '700', letterSpacing: 0.6 }}>TODAY</Text>
+                        <Text style={{ color, fontWeight: '800', fontFamily: fonts.serif, fontSize: 14 }}>{formatMinutes(used)}</Text>
+                      </View>
+                      <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 11 }}>
+                        {ctrl.isEnabled ? `${pct}% of ${formatMinutes(limit)}` : 'no limit'}
                       </Text>
                     </LinearGradient>
                   );
                 })()}
 
-                {/* Weekly card — donut ring */}
+                {/* Weekly */}
                 {(() => {
                   const used = ctrl.weeklyUsageMinutes;
                   const limit = ctrl.weeklyCapEnabled ? ctrl.weeklyCapMinutes : 0;
                   const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
                   const color = pct >= 90 ? '#EFD1D4' : '#C5BD96';
-                  const r = 28; const circ = 2 * Math.PI * r;
+                  const r = 16; const circ = 2 * Math.PI * r;
                   const dash = circ * (pct / 100);
                   return (
-                    <LinearGradient colors={['#C5BD9612', '#EEE8B408']} style={[s.usageHalf, { borderColor: color + '30' }]}>
-                      <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 10 }}>THIS WEEK</Text>
-                      <View style={{ alignItems: 'center', marginBottom: 10 }}>
-                        <Svg width="72" height="72" viewBox="0 0 72 72">
-                          <Circle cx="36" cy="36" r={r} fill="none" stroke={color + '22'} strokeWidth="6" />
-                          <Circle cx="36" cy="36" r={r} fill="none" stroke={color} strokeWidth="6"
+                    <LinearGradient colors={['#C5BD9612', '#EEE8B408']} style={[s.usageStrip, { borderColor: color + '30' }]}>
+                      <View style={{ width: 40, height: 40 }}>
+                        <Svg width="40" height="40" viewBox="0 0 40 40">
+                          <Circle cx="20" cy="20" r={r} fill="none" stroke={color + '22'} strokeWidth="4" />
+                          <Circle cx="20" cy="20" r={r} fill="none" stroke={color} strokeWidth="4"
                             strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-                            transform="rotate(-90 36 36)" />
+                            transform="rotate(-90 20 20)" />
                         </Svg>
-                        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
-                          <Text style={{ color, fontWeight: '800', fontFamily: fonts.serif, fontSize: 13 }}>{formatMinutes(used)}</Text>
-                          <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 9 }}>used</Text>
-                        </View>
                       </View>
-                      <Text style={{ color: colors.textMain, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, textAlign: 'center' }}>
-                        {ctrl.weeklyCapEnabled ? `${pct}%` : formatMinutes(used)}
-                      </Text>
-                      <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 11, textAlign: 'center', marginTop: 2 }}>
-                        {ctrl.weeklyCapEnabled ? `of ${formatMinutes(ctrl.weeklyCapMinutes)}` : 'this week'}
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 9.5, fontWeight: '700', letterSpacing: 0.6 }}>THIS WEEK</Text>
+                        <Text style={{ color, fontWeight: '800', fontFamily: fonts.serif, fontSize: 14 }}>{formatMinutes(used)}</Text>
+                      </View>
+                      <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 11 }}>
+                        {ctrl.weeklyCapEnabled ? `${pct}% of ${formatMinutes(ctrl.weeklyCapMinutes)}` : 'no cap'}
                       </Text>
                     </LinearGradient>
                   );
@@ -393,159 +388,121 @@ export default function ParentControlsScreen({ navigation }: any) {
               </View>
             </View>
 
-            {/* ── Row A: Daily + Weekly ── */}
-            <View style={s.cardRow}>
-              <SectionCard title="Daily Limit" icon="clock" iconBg="#93B0AC20" iconColor="#93B0AC" colors={colors} s={s} style={s.halfCard} compact>
-                <View style={s.row}>
-                  <Text style={[s.rowLabel, { color: colors.textMain, fontSize: 13 }]}>Enable</Text>
-                  <Switch value={ctrl.isEnabled} onValueChange={v => set({ isEnabled: v })}
-                    trackColor={{ false: colors.textDim + '30', true: colors.accentYellow + '50' }}
-                    thumbColor={ctrl.isEnabled ? colors.accentYellow : colors.textDim} />
+            {/* ── Screen time controls — stacked list, each row expands independently ── */}
+            <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6 }}>
+              SCREEN TIME
+            </Text>
+            <View style={s.controlList}>
+              <ControlRow title="Daily Limit" icon="clock" iconBg="#93B0AC20" iconColor="#93B0AC"
+                enabled={ctrl.isEnabled} onToggle={v => set({ isEnabled: v })} colors={colors} s={s}>
+                <View style={s.fieldFull}>
+                  <Text style={[s.fieldLabel, { color: colors.textDim, marginTop: 0 }]}>Limit</Text>
+                  <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
+                    onPress={() => setPickerMode('daily')} activeOpacity={0.7}>
+                    <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.dailyLimitMinutes)}</Text>
+                    <Feather name="chevron-down" size={13} color={colors.accentYellow} />
+                  </TouchableOpacity>
+                  <View style={[s.row, { marginTop: 10 }]}>
+                    <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 12, flex: 1 }}>Lock app when limit is reached</Text>
+                    <Switch value={ctrl.lockWhenReached} onValueChange={v => set({ lockWhenReached: v })}
+                      trackColor={{ false: colors.textDim + '30', true: '#EFD1D450' }}
+                      thumbColor={ctrl.lockWhenReached ? '#EFD1D4' : colors.textDim} />
+                  </View>
                 </View>
-                {ctrl.isEnabled && (
-                  <>
-                    <Text style={[s.fieldLabel, { color: colors.textDim }]}>Limit</Text>
+              </ControlRow>
+
+              <ControlRow title="Weekly Cap" icon="calendar" iconBg="#C5BD9620" iconColor="#C5BD96"
+                enabled={ctrl.weeklyCapEnabled} onToggle={v => set({ weeklyCapEnabled: v })} colors={colors} s={s}>
+                <View style={s.fieldFull}>
+                  <Text style={[s.fieldLabel, { color: colors.textDim, marginTop: 0 }]}>Weekly limit</Text>
+                  <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
+                    onPress={() => setPickerMode('weekly')} activeOpacity={0.7}>
+                    <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.weeklyCapMinutes)}</Text>
+                    <Feather name="chevron-down" size={13} color={colors.accentYellow} />
+                  </TouchableOpacity>
+                </View>
+              </ControlRow>
+
+              <ControlRow title="Allowed Hours" icon="sun" iconBg="#F0C27020" iconColor="#F0C270"
+                enabled={ctrl.allowedHoursEnabled} onToggle={v => set({ allowedHoursEnabled: v })} colors={colors} s={s}>
+                <View style={s.fieldRow}>
+                  <View style={s.fieldHalf}>
+                    <Text style={[s.fieldLabel, { color: colors.textDim, marginTop: 0 }]}>From</Text>
                     <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
-                      onPress={() => setPickerMode('daily')} activeOpacity={0.7}>
-                      <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.dailyLimitMinutes)}</Text>
+                      onPress={() => setPickerMode('startHour')} activeOpacity={0.7}>
+                      <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatHour(ctrl.allowedHoursStart)}</Text>
                       <Feather name="chevron-down" size={13} color={colors.accentYellow} />
                     </TouchableOpacity>
-                    <View style={[s.row, { marginTop: 10 }]}>
-                      <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 12, flex: 1 }}>Lock on limit</Text>
-                      <Switch value={ctrl.lockWhenReached} onValueChange={v => set({ lockWhenReached: v })}
-                        trackColor={{ false: colors.textDim + '30', true: '#EFD1D450' }}
-                        thumbColor={ctrl.lockWhenReached ? '#EFD1D4' : colors.textDim} />
-                    </View>
-                  </>
-                )}
-              </SectionCard>
-
-              <SectionCard title="Weekly Cap" icon="calendar" iconBg="#C5BD9620" iconColor="#C5BD96" colors={colors} s={s} style={s.halfCard} compact>
-                <View style={s.row}>
-                  <Text style={[s.rowLabel, { color: colors.textMain, fontSize: 13 }]}>Enable</Text>
-                  <Switch value={ctrl.weeklyCapEnabled} onValueChange={v => set({ weeklyCapEnabled: v })}
-                    trackColor={{ false: colors.textDim + '30', true: colors.accentYellow + '50' }}
-                    thumbColor={ctrl.weeklyCapEnabled ? colors.accentYellow : colors.textDim} />
-                </View>
-                {ctrl.weeklyCapEnabled && (
-                  <>
-                    <Text style={[s.fieldLabel, { color: colors.textDim }]}>Weekly limit</Text>
+                  </View>
+                  <View style={s.fieldHalf}>
+                    <Text style={[s.fieldLabel, { color: colors.textDim, marginTop: 0 }]}>To</Text>
                     <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
-                      onPress={() => setPickerMode('weekly')} activeOpacity={0.7}>
-                      <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.weeklyCapMinutes)}</Text>
+                      onPress={() => setPickerMode('endHour')} activeOpacity={0.7}>
+                      <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatHour(ctrl.allowedHoursEnd)}</Text>
                       <Feather name="chevron-down" size={13} color={colors.accentYellow} />
                     </TouchableOpacity>
-                  </>
-                )}
-              </SectionCard>
+                  </View>
+                </View>
+              </ControlRow>
+
+              <ControlRow title="Break Enforcer" icon="coffee" iconBg="#93B0AC20" iconColor="#93B0AC"
+                enabled={ctrl.breakEnforcerEnabled} onToggle={v => set({ breakEnforcerEnabled: v })} colors={colors} s={s}>
+                <View style={s.fieldRow}>
+                  <View style={s.fieldHalf}>
+                    <Text style={[s.fieldLabel, { color: colors.textDim, marginTop: 0 }]}>Break every</Text>
+                    <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
+                      onPress={() => setPickerMode('breakInterval')} activeOpacity={0.7}>
+                      <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.breakIntervalMinutes)}</Text>
+                      <Feather name="chevron-down" size={13} color={colors.accentYellow} />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={s.fieldHalf}>
+                    <Text style={[s.fieldLabel, { color: colors.textDim, marginTop: 0 }]}>Break lasts</Text>
+                    <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
+                      onPress={() => setPickerMode('breakDuration')} activeOpacity={0.7}>
+                      <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.breakDurationMinutes)}</Text>
+                      <Feather name="chevron-down" size={13} color={colors.accentYellow} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ControlRow>
             </View>
 
-            {/* ── Row B: Allowed Hours + Break Enforcer ── */}
-            <View style={s.cardRow}>
-              <SectionCard title="Allowed Hours" icon="sun" iconBg="#F0C27020" iconColor="#F0C270" colors={colors} s={s} style={s.halfCard} compact>
-                <View style={s.row}>
-                  <Text style={[s.rowLabel, { color: colors.textMain, fontSize: 13 }]}>Enable</Text>
-                  <Switch value={ctrl.allowedHoursEnabled} onValueChange={v => set({ allowedHoursEnabled: v })}
-                    trackColor={{ false: colors.textDim + '30', true: colors.accentYellow + '50' }}
-                    thumbColor={ctrl.allowedHoursEnabled ? colors.accentYellow : colors.textDim} />
+            {/* ── Content controls ── */}
+            <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 6 }}>
+              CONTENT
+            </Text>
+            <View style={s.controlList}>
+              <ControlRow title="Subject Filter" subtitle="Blocked subjects are locked on the student's app" icon="filter" iconBg="#C5BD9620" iconColor="#C5BD96"
+                enabled={ctrl.subjectFilterEnabled} onToggle={v => set({ subjectFilterEnabled: v })} colors={colors} s={s}>
+                <View style={s.subjectGrid}>
+                  {SUBJECTS.map(subject => {
+                    const blocked = ctrl.blockedSubjects.includes(subject);
+                    return (
+                      <TouchableOpacity
+                        key={subject}
+                        style={[s.subjectChip, {
+                          backgroundColor: blocked ? '#EFD1D420' : colors.accentYellow + '15',
+                          borderColor: blocked ? '#EFD1D480' : colors.accentYellow + '60',
+                        }]}
+                        onPress={() => toggleSubject(subject)}
+                        activeOpacity={0.7}
+                      >
+                        <Feather name={blocked ? 'lock' : 'unlock'} size={11} color={blocked ? '#EFD1D4' : colors.accentYellow} />
+                        <Text style={{ color: blocked ? '#EFD1D4' : colors.accentYellow, fontFamily: fonts.serif, fontSize: 11, fontWeight: '600' }} numberOfLines={1}>
+                          {subject}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
-                {ctrl.allowedHoursEnabled && (
-                  <View style={{ gap: 6, marginTop: 4 }}>
-                    <View>
-                      <Text style={[s.fieldLabel, { color: colors.textDim }]}>From</Text>
-                      <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
-                        onPress={() => setPickerMode('startHour')} activeOpacity={0.7}>
-                        <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatHour(ctrl.allowedHoursStart)}</Text>
-                        <Feather name="chevron-down" size={13} color={colors.accentYellow} />
-                      </TouchableOpacity>
-                    </View>
-                    <View>
-                      <Text style={[s.fieldLabel, { color: colors.textDim }]}>To</Text>
-                      <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
-                        onPress={() => setPickerMode('endHour')} activeOpacity={0.7}>
-                        <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatHour(ctrl.allowedHoursEnd)}</Text>
-                        <Feather name="chevron-down" size={13} color={colors.accentYellow} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )}
-              </SectionCard>
-
-              <SectionCard title="Break Enforcer" icon="coffee" iconBg="#93B0AC20" iconColor="#93B0AC" colors={colors} s={s} style={s.halfCard} compact>
-                <View style={s.row}>
-                  <Text style={[s.rowLabel, { color: colors.textMain, fontSize: 13 }]}>Enable</Text>
-                  <Switch value={ctrl.breakEnforcerEnabled} onValueChange={v => set({ breakEnforcerEnabled: v })}
-                    trackColor={{ false: colors.textDim + '30', true: colors.accentYellow + '50' }}
-                    thumbColor={ctrl.breakEnforcerEnabled ? colors.accentYellow : colors.textDim} />
-                </View>
-                {ctrl.breakEnforcerEnabled && (
-                  <View style={{ gap: 6, marginTop: 4 }}>
-                    <View>
-                      <Text style={[s.fieldLabel, { color: colors.textDim }]}>Break every</Text>
-                      <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
-                        onPress={() => setPickerMode('breakInterval')} activeOpacity={0.7}>
-                        <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.breakIntervalMinutes)}</Text>
-                        <Feather name="chevron-down" size={13} color={colors.accentYellow} />
-                      </TouchableOpacity>
-                    </View>
-                    <View>
-                      <Text style={[s.fieldLabel, { color: colors.textDim }]}>Break lasts</Text>
-                      <TouchableOpacity style={[s.pickerBtn, { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '10' }]}
-                        onPress={() => setPickerMode('breakDuration')} activeOpacity={0.7}>
-                        <Text style={{ color: colors.accentYellow, fontWeight: '700', fontFamily: fonts.serif, fontSize: 13, flex: 1 }}>{formatMinutes(ctrl.breakDurationMinutes)}</Text>
-                        <Feather name="chevron-down" size={13} color={colors.accentYellow} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )}
-              </SectionCard>
-            </View>
-
-            {/* ── 5. Subject Filter ── */}
-            <SectionCard title="Subject Filter" icon="filter" iconBg="#C5BD9620" iconColor="#C5BD96" colors={colors} s={s}>
-              <View style={[s.row, { marginBottom: ctrl.subjectFilterEnabled ? 14 : 0 }]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[s.rowLabel, { color: colors.textMain }]}>Block specific subjects</Text>
-                  <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 12, marginTop: 2 }}>
-                    Blocked subjects are locked on the student's app
+                {ctrl.blockedSubjects.length > 0 && (
+                  <Text style={{ color: '#EFD1D4', fontFamily: fonts.serif, fontSize: 11, marginTop: 10 }}>
+                    {ctrl.blockedSubjects.length} subject{ctrl.blockedSubjects.length > 1 ? 's' : ''} blocked
                   </Text>
-                </View>
-                <Switch value={ctrl.subjectFilterEnabled} onValueChange={v => set({ subjectFilterEnabled: v })}
-                  trackColor={{ false: colors.textDim + '30', true: colors.accentYellow + '50' }}
-                  thumbColor={ctrl.subjectFilterEnabled ? colors.accentYellow : colors.textDim} />
-              </View>
-              {ctrl.subjectFilterEnabled && (
-                <>
-                  <Text style={[s.fieldLabel, { color: colors.textDim }]}>Tap to block / unblock</Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                    {SUBJECTS.map(subject => {
-                      const blocked = ctrl.blockedSubjects.includes(subject);
-                      return (
-                        <TouchableOpacity
-                          key={subject}
-                          style={[s.subjectChip, {
-                            backgroundColor: blocked ? '#EFD1D420' : colors.accentYellow + '15',
-                            borderColor: blocked ? '#EFD1D480' : colors.accentYellow + '60',
-                          }]}
-                          onPress={() => toggleSubject(subject)}
-                          activeOpacity={0.7}
-                        >
-                          <Feather name={blocked ? 'lock' : 'unlock'} size={12} color={blocked ? '#EFD1D4' : colors.accentYellow} />
-                          <Text style={{ color: blocked ? '#EFD1D4' : colors.accentYellow, fontFamily: fonts.serif, fontSize: 12, fontWeight: '600' }}>
-                            {subject}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                  {ctrl.blockedSubjects.length > 0 && (
-                    <Text style={{ color: '#EFD1D4', fontFamily: fonts.serif, fontSize: 11, marginTop: 10 }}>
-                      {ctrl.blockedSubjects.length} subject{ctrl.blockedSubjects.length > 1 ? 's' : ''} blocked
-                    </Text>
-                  )}
-                </>
-              )}
-            </SectionCard>
+                )}
+              </ControlRow>
+            </View>
 
             {/* Toast */}
             <Animated.View style={[s.toast, { opacity: toastOpacity }]}>
@@ -576,6 +533,7 @@ export default function ParentControlsScreen({ navigation }: any) {
             </Text>
           </View>
         )}
+        </View>
       </ScrollView>
 
       {/* Generic picker modal */}
@@ -628,6 +586,31 @@ function SectionCard({ title, icon, iconBg, iconColor, colors, s, children, styl
   );
 }
 
+// ── Stacked control row — expands in place, never stretches to match a sibling ──
+function ControlRow({ title, subtitle, icon, iconBg, iconColor, enabled, onToggle, colors, s, children }: any) {
+  return (
+    <View style={[s.controlRow, { borderColor: colors.borderColor, backgroundColor: colors.cardDark }]}>
+      <View style={s.controlRowHead}>
+        <View style={[s.controlRowIcon, { backgroundColor: iconBg }]}>
+          <Feather name={icon} size={13} color={iconColor} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[s.rowLabel, { color: colors.textMain, fontSize: 13 }]}>{title}</Text>
+          {subtitle && <Text style={{ color: colors.textDim, fontFamily: fonts.serif, fontSize: 10.5, marginTop: 1 }}>{subtitle}</Text>}
+        </View>
+        <Switch value={enabled} onValueChange={onToggle}
+          trackColor={{ false: colors.textDim + '30', true: colors.accentYellow + '50' }}
+          thumbColor={enabled ? colors.accentYellow : colors.textDim} />
+      </View>
+      {enabled && (
+        <View style={[s.controlRowBody, { borderTopColor: colors.borderColor }]}>
+          {children}
+        </View>
+      )}
+    </View>
+  );
+}
+
 const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bgDark },
   childRow: { flexDirection: 'row', gap: 10, marginBottom: 16, flexWrap: 'wrap' },
@@ -635,19 +618,29 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
   avatar: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   usageCard: { padding: 20, borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: c.borderColor },
   usageHalf: { flex: 1, padding: 14, borderRadius: 16, borderWidth: 1, alignItems: 'center' },
+  usageStrip: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: 12, borderWidth: 1 },
   iconCircle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   cardTitle: { fontFamily: fonts.serif, fontSize: 15, fontWeight: '700' },
   progressBarBg: { height: 8, borderRadius: 4, backgroundColor: isDark ? '#ffffff12' : '#00000012', overflow: 'hidden' },
   progressBarFill: { height: '100%', borderRadius: 4 },
   card: { padding: 18, borderRadius: 16, marginBottom: 14, borderWidth: 1 },
-  cardRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
+  cardRow: { flexDirection: 'row', gap: 10, marginBottom: 14, alignItems: 'flex-start' },
   halfCard: { flex: 1, padding: 12, marginBottom: 0 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   rowLabel: { fontWeight: '600', fontFamily: fonts.serif, fontSize: 14 },
-  fieldLabel: { fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 8 },
-  pickerBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 10, borderWidth: 1.5, marginBottom: 4 },
+  fieldLabel: { fontFamily: fonts.serif, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6, marginTop: 6 },
+  pickerBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 9, borderWidth: 1.5, marginBottom: 4 },
   divider: { borderTopWidth: 1, marginBottom: 0 },
-  subjectChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
+  subjectGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  subjectChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16, borderWidth: 1, minWidth: '30%', justifyContent: 'center' },
+  controlList: { gap: 6, marginBottom: 14 },
+  controlRow: { borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
+  controlRowHead: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 9 },
+  controlRowIcon: { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  controlRowBody: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: 12, borderTopWidth: 1 },
+  fieldFull: { gap: 4 },
+  fieldRow: { flexDirection: 'row', gap: 10 },
+  fieldHalf: { flex: 1 },
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 24, borderRadius: 999, marginTop: 4, alignSelf: 'center' },
   toast: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', backgroundColor: c.accentYellow, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, marginBottom: 8 },
   // Modal

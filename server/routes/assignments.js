@@ -1327,6 +1327,36 @@ GENERAL RULES:
 
     // Note: Auto-crop removed. Teachers manually select reference images via drag-to-crop UI.
 
+    // ── Validate subject/grade against what the prompt actually promised ──────
+    // The prompt above tells the model to pick "subject" from a closed list and to
+    // leave "grade" empty unless an explicit label is visible — but nothing enforced
+    // that promise. A model that ignores the instruction (weaker fallback engine, or
+    // just a bad call) could leak worksheet body text like "Vocabulary Building"
+    // straight into the subject/grade fields, which is exactly what got reported live
+    // on a founder call. Reject anything that doesn't actually match rather than
+    // trusting the model's word for it — matches the prompt's own "leave it blank
+    // rather than guess" instruction, just actually enforced this time.
+    const VALID_SUBJECTS = ['Mathematics', 'Science', 'English', 'Social Studies', 'Language Acquisition', 'Visual Arts', 'ICT', 'Physical Education'];
+    if (merged.subject) {
+      const matched = VALID_SUBJECTS.find(s => s.toLowerCase() === merged.subject.trim().toLowerCase());
+      if (!matched) {
+        console.log(`[extract] Rejected out-of-list subject "${merged.subject}" — clearing rather than trusting it.`);
+        merged.subject = '';
+      } else {
+        merged.subject = matched;
+      }
+    }
+    // A real grade label is short ("Grade 4", "Class 5", "PYP 2") — reject anything
+    // that looks like extracted body text (long, or no digit) leaking into the field.
+    if (merged.grade) {
+      const gradeText = merged.grade.trim();
+      const looksLikeGrade = /^(grade|class|pyp|std\.?|standard)\s*\d{1,2}$/i.test(gradeText) || /^\d{1,2}(st|nd|rd|th)?$/i.test(gradeText);
+      if (!looksLikeGrade) {
+        console.log(`[extract] Rejected implausible grade "${gradeText}" — clearing rather than trusting it.`);
+        merged.grade = '';
+      }
+    }
+
     console.log('[extract] Final merged:', JSON.stringify({ title: merged.title, chapter: merged.chapter, subject: merged.subject, language: merged.language, grade: merged.grade, successCriteria: merged.successCriteria.length, wordBank: merged.wordBank.length }));
     return merged;
   } catch (e) {
@@ -1547,13 +1577,18 @@ router.post('/', async (req, res) => {
   // _previewHTML snapshot can be stale (old app bundle, or fetched before server
   // fixes were deployed) — trusting it freezes old bugs into the assignment.
   let finalQuizHtml = interactiveQuizHtml || null;
+  // Resolved once here so it can be persisted on the assignment row (for the
+  // worksheet library's school/curriculum scoping) regardless of assignment type,
+  // not just interactive quizzes.
+  let creatorSchool = null;
+  let creatorName = null;
+  if (creatorId) {
+    const { data: creator } = await supabase.from('users').select('school, name').eq('id', creatorId).maybeSingle();
+    creatorSchool = creator?.school || null;
+    creatorName = creator?.name || null;
+  }
   if (interactiveQuiz && interactiveQuiz.tasks) {
     try {
-      let creatorSchool = null;
-      if (creatorId) {
-        const { data: creator } = await supabase.from('users').select('school').eq('id', creatorId).maybeSingle();
-        creatorSchool = creator?.school || null;
-      }
       const branding = await fetchBranding(creatorSchool, finalCurriculum);
       // Deep-copy: renderQuizHTML mutates the quiz (normalizers add flags/options)
       finalQuizHtml = renderQuizHTML(JSON.parse(JSON.stringify(interactiveQuiz)), branding);
@@ -1572,6 +1607,8 @@ router.post('/', async (req, res) => {
       student_id:       userId,
       created_by_id:    creatorId,
       created_by_role:  createdByRole,
+      created_by_name:  creatorName,
+      school:           creatorSchool,
       grade: finalGrade, curriculum: finalCurriculum,
       // Store questions as structured objects with expected answers + teacher comments
       // Format: [{ question: "...", expectedAnswer: "...", comment: "..." }] or plain strings
@@ -1645,24 +1682,13 @@ router.post('/', async (req, res) => {
           }
         }
 
-        let school = '';
-        let curriculum = finalCurriculum || '';
-        let grade = finalGrade || '';
-        let teacherName = '';
-
-        if (creatorId) {
-          const { data: teacherUser } = await supabase
-            .from('users')
-            .select('name, school, curriculum, grade')
-            .eq('id', creatorId)
-            .maybeSingle();
-          if (teacherUser) {
-            school = teacherUser.school || '';
-            curriculum = curriculum || teacherUser.curriculum || '';
-            grade = grade || teacherUser.grade || '';
-            teacherName = teacherUser.name || '';
-          }
-        }
+        // Reuse the creator lookup already done above for the assignments row —
+        // keeps this payload's school/teacher_name consistent with what's stored
+        // in Supabase instead of a second, potentially-diverging query.
+        const school = creatorSchool || '';
+        const curriculum = finalCurriculum || '';
+        const grade = finalGrade || '';
+        const teacherName = creatorName || '';
 
         const tasks = interactiveQuiz.tasks || interactiveQuiz.questions || [];
         const searchText = [
@@ -1944,13 +1970,22 @@ router.post('/:id/submit', async (req, res) => {
   const autoGradeOn = await teacherSetting(assignment.created_by_id, 'autoGrading', true);
   if (!autoGradeOn) {
     const studentUid = await resolveUserId(studentId);
-    const submissionText = Array.isArray(answers) && answers.length
-      ? answers.filter(Boolean).join('\n')
-      : (Array.isArray(quizAnswers) ? quizAnswers.map((a, i) => `Q${i + 1}: ${a}`).join('\n') : '');
+    // submission_text must be the same { perQuestion: [...] } JSON shape every
+    // other grading path writes — GET /:id/submissions only knows how to parse
+    // that shape (a plain joined string here silently failed JSON.parse and the
+    // teacher's per-student detail view showed no answers at all).
+    const pendingQuestions = Array.isArray(assignment.questions) ? assignment.questions : [];
+    const perQuestion = pendingQuestions.length > 0
+      ? pendingQuestions.map((q, i) => {
+          const qText = typeof q === 'object' ? (q.question || '') : q;
+          const studentAns = String((Array.isArray(quizAnswers) && quizAnswers[i]?.answer) || (Array.isArray(answers) && answers[i]) || '').trim();
+          return { number: i + 1, question: qText, studentAnswer: studentAns, answered: !!studentAns };
+        })
+      : (Array.isArray(quizAnswers) ? quizAnswers.map((a, i) => ({ number: i + 1, question: '', studentAnswer: String(a?.answer || a || '').trim(), answered: true })) : []);
     await supabase.from('assignment_submissions').upsert({
       assignment_id: id, student_id: studentUid,
       status: 'submitted', score: null,
-      submission_text: submissionText || null,
+      submission_text: JSON.stringify({ perQuestion }),
       ai_feedback: JSON.stringify({ text: 'Submitted. Your teacher will review and grade this.', awaitingReview: true }),
       completed_at: new Date().toISOString(),
     }, { onConflict: 'assignment_id,student_id' });
@@ -2024,7 +2059,12 @@ router.post('/:id/submit', async (req, res) => {
         const studentUid = await resolveUserId(studentId);
         const { error: subErr } = await supabase.from('assignment_submissions').upsert({
           assignment_id: id, student_id: studentUid,
-          status: 'completed', score, ai_feedback: feedback, completed_at: new Date().toISOString(),
+          status: 'completed', score, ai_feedback: feedback,
+          // GET /:id/submissions reads answers from submission_text, not ai_feedback
+          // (even though feedback also embeds perQuestion) — without this, the
+          // teacher's per-student detail view showed a score but no answers.
+          submission_text: JSON.stringify({ perQuestion: graded }),
+          completed_at: new Date().toISOString(),
         }, { onConflict: 'assignment_id,student_id' });
         if (subErr) return res.status(500).json({ error: subErr.message });
         return res.json({ score, feedback, perQuestion: graded });

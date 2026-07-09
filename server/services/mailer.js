@@ -85,12 +85,29 @@ async function sendEmail({ to, subject, html, replyTo, attachments }, retries = 
 
 // ── Email functions (templates unchanged) ───────────────────────────────────
 
-async function sendCredentialsEmail({ to, childName, loginId, password }) {
+async function sendCredentialsEmail({ to, childName, loginId, password, childEmail }) {
   if (!to) return;
   try {
     const passwordRow = password
       ? `<tr><td style="padding:8px 0;color:#888;font-size:13px">Password</td><td style="padding:8px 0;font-family:monospace;font-size:14px;color:#1a1a1a">${password}</td></tr>`
       : '';
+
+    // Only offer a "forward to child" button when this copy is going to someone
+    // other than the child (i.e. the parent/teacher), and there's a password to forward.
+    const canForward = password && childEmail && childEmail.toLowerCase() !== String(to).toLowerCase();
+    const forwardBlock = canForward ? (() => {
+      const mailtoBody = encodeURIComponent(
+        `Hi ${childName},\n\nHere are your Aivorah login details:\n\nLogin ID: ${loginId}\nPassword: ${password}\n\nLog in at https://aivorah.ai`
+      );
+      const mailtoHref = `mailto:${encodeURIComponent(childEmail)}?subject=${encodeURIComponent('Your Aivorah Login')}&body=${mailtoBody}`;
+      return `
+          <div style="text-align:center;margin:4px 0 20px">
+            <a href="${mailtoHref}" style="display:inline-block;background:#7C3AED;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600">
+              Forward these credentials to your child
+            </a>
+            <p style="font-size:12px;color:#999;margin:8px 0 0">Opens your mail app with the Login ID and Password pre-filled, addressed to ${childEmail}.</p>
+          </div>`;
+    })() : '';
 
     await sendEmail({
       to,
@@ -114,7 +131,7 @@ async function sendCredentialsEmail({ to, childName, loginId, password }) {
               ${passwordRow}
             </table>
           </div>
-
+${forwardBlock}
           <p style="font-size:13px;color:#666;line-height:1.6">
             Your child can log in at <a href="https://aivorah.ai" style="color:#7C3AED">aivorah.ai</a>
             using the <strong>Login ID</strong> and <strong>Password</strong> above.
