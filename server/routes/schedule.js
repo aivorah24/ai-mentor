@@ -1,18 +1,9 @@
 const express  = require('express');
 const router   = express.Router();
-const fs       = require('fs');
-const path     = require('path');
 const supabase = require('../services/supabase');
 
 function uuidv4() {
   return 'ev_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-}
-
-const ASGN_PATH = path.join(__dirname, '../data/assignments.json');
-
-function readAssignments() {
-  try { return JSON.parse(fs.readFileSync(ASGN_PATH, 'utf8')); }
-  catch { return []; }
 }
 
 // ── Row mapper: Supabase snake_case → camelCase ──────────────
@@ -34,22 +25,20 @@ function mapRow(e) {
 }
 
 // ── GET /schedule/teacher?date=YYYY-MM-DD&email=... ──────────────────────────
+// schedule_events is the single source of truth for the calendar — assignment
+// and challenge deadlines are materialized into it at creation time (see
+// assignments.js POST / and challenges.js POST /assign), so this route no
+// longer needs to separately re-derive deadline events from those tables.
 router.get('/teacher', async (req, res) => {
   const { date, email } = req.query;
   if (!date) return res.status(400).json({ error: 'date required' });
   try {
-    // Resolve THIS teacher and the students they teach, so the schedule only shows
-    // events for the teacher's OWN class — not every event in the system (which is
-    // why unrelated students'/parents' events were leaking into the teacher schedule).
+    // Resolve THIS teacher, so the schedule only shows events for the teacher's
+    // OWN class — not every event in the system.
     let teacherId = null;
-    let teacherStudentIds = new Set();
     if (email) {
       const { data: tRow } = await supabase.from('users').select('id').eq('email', String(email).toLowerCase().trim()).maybeSingle();
       teacherId = tRow?.id || null;
-      if (teacherId) {
-        const { data: links } = await supabase.from('teacher_student').select('student_id').eq('teacher_id', teacherId);
-        teacherStudentIds = new Set((links || []).map(l => l.student_id).filter(Boolean));
-      }
     }
 
     const { data, error } = await supabase
@@ -81,155 +70,9 @@ router.get('/teacher', async (req, res) => {
       }
     });
 
-    // 2. Assignment deadlines on this date (created by this teacher)
-    let assignmentEvents = [];
-    try {
-      let asnQuery = supabase
-        .from('assignments')
-        .select('id,title,subject,chapter,due_date,type,grade,curriculum,student_id,created_by_id')
-        .eq('due_date', date);
-
-      // Filter by teacher email if provided
-      if (email) {
-        const { data: teacherRow } = await supabase.from('users').select('id').eq('email', email.toLowerCase().trim()).maybeSingle();
-        if (teacherRow?.id) asnQuery = asnQuery.eq('created_by_id', teacherRow.id);
-      }
-
-      const { data: assignments } = await asnQuery;
-      const existingAssignmentIds = new Set(manualEvents.filter(e => e.assignmentId).map(e => e.assignmentId));
-
-      assignmentEvents = (assignments || [])
-        .filter(a => !existingAssignmentIds.has(a.id) && a.due_date)
-        .map(a => ({
-          id:          'asgn_' + a.id,
-          title:       a.title + ' — Due',
-          date:        a.due_date,
-          startTime:   '23:59',
-          endTime:     '23:59',
-          type:        'deadline',
-          note:        `${a.subject || ''}${a.chapter ? ' · ' + a.chapter : ''}${a.grade ? ' · ' + a.grade : ''}`,
-          studentId:   a.student_id || 'all',
-          createdBy:   'teacher',
-          tag:         a.subject || null,
-          assignmentId: a.id,
-        }));
-    } catch (_) {}
-
-    // 3. Challenge deadlines on this date
-    let challengeEvents = [];
-    try {
-      const { data: chalAssignments } = await supabase
-        .from('challenge_assignments')
-        .select('id,challenge_id,student_id,due_date,status')
-        .eq('due_date', date)
-        .neq('status', 'completed');
-
-      const challenges = readChallenges();
-      const existingIds = new Set([...manualEvents, ...assignmentEvents].filter(e => e.assignmentId).map(e => e.assignmentId));
-
-      challengeEvents = (chalAssignments || [])
-        .filter(a => !existingIds.has(a.id))
-        // Only the teacher's own students' challenge deadlines (when scoped by email).
-        .filter(a => !email || !teacherId || teacherStudentIds.has(a.student_id))
-        .map(a => {
-          const ch = challenges.find(c => c.id === a.challenge_id);
-          return {
-            id:           'chal_' + a.id,
-            title:        (ch?.title || 'Challenge') + ' — Due',
-            date:         a.due_date,
-            startTime:    '23:59',
-            endTime:      '23:59',
-            type:         'challenge',
-            note:         ch ? `${ch.category} · ${ch.subject}` : '',
-            studentId:    a.student_id,
-            createdBy:    'teacher',
-            tag:          ch?.subject || null,
-            assignmentId: a.id,
-          };
-        });
-    } catch (_) {}
-
-    res.json([...manualEvents, ...assignmentEvents, ...challengeEvents]);
+    res.json(manualEvents);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
-
-// ── Helper: fetch pending assignments for a student as deadline events ──
-async function getAssignmentDeadlines(userId, studentCurriculum, studentGrade, filterDate = null) {
-  const orFilter = userId
-    ? `student_id.eq.${userId},student_id.is.null`
-    : `student_id.is.null`;
-
-  let query = supabase.from('assignments').select('id,title,subject,chapter,due_date,type,grade,curriculum,student_id').or(orFilter);
-  if (filterDate) query = query.eq('due_date', filterDate);
-
-  const { data: allData } = await query;
-
-  // Filter by grade+curriculum for class-wide, exclude already-completed via submissions
-  const filtered = (allData || []).filter(a => {
-    if (a.student_id !== null) return true;
-    if (a.curriculum && studentCurriculum && a.curriculum !== studentCurriculum) return false;
-    if (a.grade && studentGrade && a.grade !== studentGrade) return false;
-    return true;
-  });
-
-  // Exclude assignments student already submitted
-  let completedIds = new Set();
-  if (userId && filtered.length > 0) {
-    const { data: subs } = await supabase
-      .from('assignment_submissions')
-      .select('assignment_id')
-      .eq('student_id', userId)
-      .eq('status', 'completed')
-      .in('assignment_id', filtered.map(a => a.id));
-    (subs || []).forEach(s => completedIds.add(s.assignment_id));
-  }
-
-  return filtered
-    .filter(a => !completedIds.has(a.id) && a.due_date)
-    .map(a => ({
-      id:           'asgn_' + a.id,
-      title:        a.title + ' — Due',
-      date:         a.due_date,
-      startTime:    '23:59',
-      endTime:      '23:59',
-      type:         'deadline',
-      note:         `${a.subject || ''}${a.chapter ? ' · ' + a.chapter : ''}${a.grade ? ' · ' + a.grade : ''}`,
-      studentId:    a.student_id || 'all',
-      createdBy:    'teacher',
-      tag:          a.subject || null,
-      assignmentId: a.id,
-    }));
-}
-
-// ── Helper: fetch pending challenge deadlines as schedule events ──
-const CHALLENGES_PATH = path.join(__dirname, '../data/challenges.json');
-function readChallenges() { try { return JSON.parse(fs.readFileSync(CHALLENGES_PATH, 'utf8')); } catch { return []; } }
-
-async function getChallengeDeadlines(studentId, filterDate = null) {
-  if (!studentId) return [];
-  let query = supabase.from('challenge_assignments').select('id,challenge_id,student_id,due_date,status').eq('student_id', studentId).neq('status', 'completed');
-  if (filterDate) query = query.eq('due_date', filterDate);
-  const { data } = await query;
-  if (!data || data.length === 0) return [];
-
-  const challenges = readChallenges();
-  return data.filter(a => a.due_date).map(a => {
-    const ch = challenges.find(c => c.id === a.challenge_id);
-    return {
-      id:           'chal_' + a.id,
-      title:        (ch?.title || 'Challenge') + ' — Due',
-      date:         a.due_date,
-      startTime:    '23:59',
-      endTime:      '23:59',
-      type:         'challenge',
-      note:         ch ? `${ch.category} · ${ch.subject}` : '',
-      studentId:    a.student_id,
-      createdBy:    'teacher',
-      tag:          ch?.subject || null,
-      assignmentId: a.id,
-    };
-  });
-}
 
 // ── Helper: fetch student profile (curriculum + grade) ──────────
 async function getStudentProfile(studentId) {
@@ -246,6 +89,51 @@ async function getStudentProfile(studentId) {
   return { userId: null, curriculum: null, grade: null };
 }
 
+// A teacher's "'all' students" schedule event must only reach the students under
+// THAT teacher — not every student in the database. Rows created before the
+// created_by_id column existed (or by a non-teacher role) have no reliable
+// creator to scope by, so they stay visible rather than being silently dropped.
+async function scopeAllEvents(rows, userId) {
+  const allRows = (rows || []).filter(e => e.student_id === 'all' && e.created_by === 'teacher' && e.created_by_id);
+  if (allRows.length === 0 || !userId) return rows;
+
+  const { data: tlinks } = await supabase.from('teacher_student').select('teacher_id').eq('student_id', userId);
+  const linkedTeacherIds = new Set((tlinks || []).map(l => l.teacher_id).filter(Boolean));
+
+  return (rows || []).filter(e => {
+    if (e.student_id !== 'all' || e.created_by !== 'teacher' || !e.created_by_id) return true;
+    return linkedTeacherIds.has(e.created_by_id);
+  });
+}
+
+// A deadline event's underlying assignment/challenge may already be completed by
+// THIS student — a class-wide (student_id='all') deadline row is shared across
+// every student in the class, so it can't just be deleted on completion; it has
+// to be filtered out per-student at read time instead.
+async function filterCompleted(rows, userId) {
+  if (!userId) return rows;
+  const asgnIds = (rows || []).filter(e => e.type === 'deadline' && e.assignment_id).map(e => e.assignment_id);
+  const chalIds = (rows || []).filter(e => e.type === 'challenge' && e.assignment_id).map(e => e.assignment_id);
+  if (asgnIds.length === 0 && chalIds.length === 0) return rows;
+
+  const [{ data: subs }, { data: chals }] = await Promise.all([
+    asgnIds.length > 0
+      ? supabase.from('assignment_submissions').select('assignment_id').eq('student_id', userId).eq('status', 'completed').in('assignment_id', asgnIds)
+      : Promise.resolve({ data: [] }),
+    chalIds.length > 0
+      ? supabase.from('challenge_assignments').select('id').eq('status', 'completed').in('id', chalIds)
+      : Promise.resolve({ data: [] }),
+  ]);
+  const completedAsgn = new Set((subs || []).map(s => s.assignment_id));
+  const completedChal = new Set((chals || []).map(c => c.id));
+
+  return (rows || []).filter(e => {
+    if (e.type === 'deadline' && e.assignment_id) return !completedAsgn.has(e.assignment_id);
+    if (e.type === 'challenge' && e.assignment_id) return !completedChal.has(e.assignment_id);
+    return true;
+  });
+}
+
 // ── GET /schedule?studentId=xxx&date=YYYY-MM-DD ──────────────
 router.get('/', async (req, res) => {
   const { studentId, date } = req.query;
@@ -257,16 +145,9 @@ router.get('/', async (req, res) => {
     ]);
     if (error) throw error;
 
-    const [deadlines, chalDeadlines] = await Promise.all([
-      getAssignmentDeadlines(profile.userId, profile.curriculum, profile.grade, date),
-      getChallengeDeadlines(profile.userId || studentId, date),
-    ]);
-
-    // Merge, deduplicate by assignmentId
-    const existingAssignmentIds = new Set((data ?? []).filter(e => e.assignment_id).map(e => e.assignment_id));
-    const newDeadlines = [...deadlines, ...chalDeadlines].filter(d => !existingAssignmentIds.has(d.assignmentId));
-
-    res.json([...(data ?? []).map(mapRow), ...newDeadlines]);
+    let scopedData = await scopeAllEvents(data, profile.userId);
+    scopedData = await filterCompleted(scopedData, profile.userId);
+    res.json((scopedData ?? []).map(mapRow));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -277,20 +158,14 @@ router.get('/month', async (req, res) => {
   const prefix = `${year}-${String(month).padStart(2, '0')}`;
   try {
     const [{ data, error }, profile] = await Promise.all([
-      supabase.from('schedule_events').select('event_date').like('event_date', `${prefix}%`).or(`student_id.eq.${studentId},student_id.eq.all`),
+      supabase.from('schedule_events').select('event_date,student_id,created_by,created_by_id,type,assignment_id').like('event_date', `${prefix}%`).or(`student_id.eq.${studentId},student_id.eq.all`),
       getStudentProfile(studentId),
     ]);
     if (error) throw error;
 
-    const [deadlines, chalDeadlines] = await Promise.all([
-      getAssignmentDeadlines(profile.userId, profile.curriculum, profile.grade),
-      getChallengeDeadlines(profile.userId || studentId),
-    ]);
-    const allDeadlineDates = [...deadlines, ...chalDeadlines]
-      .filter(d => d.date && d.date.startsWith(prefix))
-      .map(d => d.date);
-
-    const dates = [...new Set([...(data ?? []).map(e => e.event_date), ...allDeadlineDates])];
+    let scopedData = await scopeAllEvents(data, profile.userId);
+    scopedData = await filterCompleted(scopedData, profile.userId);
+    const dates = [...new Set((scopedData ?? []).map(e => e.event_date))];
     res.json({ dates });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -301,23 +176,16 @@ router.get('/upcoming', async (req, res) => {
   if (!studentId) return res.status(400).json({ error: 'studentId required' });
   const today = new Date().toISOString().split('T')[0];
   try {
+    // Assignment deadlines are type='deadline', challenge deadlines are type='challenge'.
     const [{ data, error }, profile] = await Promise.all([
-      supabase.from('schedule_events').select('*').eq('type', 'deadline').gte('event_date', today).or(`student_id.eq.${studentId},student_id.eq.all`).order('event_date', { ascending: true }),
+      supabase.from('schedule_events').select('*').in('type', ['deadline', 'challenge']).gte('event_date', today).or(`student_id.eq.${studentId},student_id.eq.all`).order('event_date', { ascending: true }),
       getStudentProfile(studentId),
     ]);
     if (error) throw error;
 
-    const [deadlines, chalDeadlines] = await Promise.all([
-      getAssignmentDeadlines(profile.userId, profile.curriculum, profile.grade),
-      getChallengeDeadlines(profile.userId || studentId),
-    ]);
-    const futureDeadlines = [...deadlines, ...chalDeadlines].filter(d => d.date >= today);
-
-    // Merge, deduplicate by assignmentId, sort by date, take top 5
-    const existingAssignmentIds = new Set((data ?? []).filter(e => e.assignment_id).map(e => e.assignment_id));
-    const newDeadlines = futureDeadlines.filter(d => !existingAssignmentIds.has(d.assignmentId));
-
-    const all = [...(data ?? []).map(mapRow), ...newDeadlines]
+    let scopedData = await scopeAllEvents(data, profile.userId);
+    scopedData = await filterCompleted(scopedData, profile.userId);
+    const all = (scopedData ?? []).map(mapRow)
       .sort((a, b) => (a.date > b.date ? 1 : -1))
       .slice(0, 5);
 
@@ -333,6 +201,15 @@ router.post('/', async (req, res) => {
   }
   const id = uuidv4();
   try {
+    // Needed to scope 'all'-student events to just this creator's own linked
+    // students (see GET /schedule etc.) — without it, a teacher's "all students"
+    // event was visible to every student in the database, not just their class.
+    let creatorId = null;
+    if (creatorEmail) {
+      const { data: creatorRow } = await supabase.from('users').select('id').eq('email', creatorEmail.toLowerCase().trim()).maybeSingle();
+      creatorId = creatorRow?.id || null;
+    }
+
     const { data, error } = await supabase
       .from('schedule_events')
       .insert({
@@ -345,6 +222,7 @@ router.post('/', async (req, res) => {
         note:          note       || '',
         student_id:    studentId,
         created_by:    createdBy  || studentId,
+        created_by_id: creatorId,
         tag:           tag        || null,
       })
       .select()

@@ -441,20 +441,30 @@ router.put('/:id', async (req, res) => {
     const patch = {};
     if (body.xpPoints            != null) patch.xp_points            = body.xpPoints;
     if (body.level               != null) patch.level                = body.level;
-    if (body.studyTimeMinutes    != null) patch.study_time_minutes   = body.studyTimeMinutes;
-    if (body.learningPathMinutes != null) patch.learning_path_minutes = body.learningPathMinutes;
-    if (body.assignmentTimeMinutes != null) patch.assignment_time_minutes = body.assignmentTimeMinutes;
-    if (body.challengeTimeMinutes   != null) patch.challenge_time_minutes   = body.challengeTimeMinutes;
     if (body.topicsExplored      != null) patch.topics_explored      = body.topicsExplored;
     if (body.challengesCompleted != null) patch.challenges_completed = body.challengesCompleted;
     if (body.assignmentsDone     != null) patch.assignments_done     = body.assignmentsDone;
     if (body.currentStreak       != null) patch.current_streak       = body.currentStreak;
-    if (body.todayStudyMinutes   != null) patch.today_study_minutes  = body.todayStudyMinutes;
     if (body.todayXP             != null) patch.today_xp             = body.todayXP;
-    // NOTE: completed_topics is intentionally excluded here — it is managed
-    // exclusively by POST /complete-lesson to avoid race-condition overwrites.
+    // NOTE: completed_topics AND all study-time fields (study_time_minutes,
+    // today_study_minutes, learning_path_minutes, assignment_time_minutes,
+    // challenge_time_minutes) are intentionally excluded here — they're managed
+    // exclusively by POST /complete-lesson and POST /:id/study-time (the latter
+    // uses an atomic DB-side increment specifically to avoid a read-then-write
+    // race). This blind full-state PUT fires from any client tab whenever its
+    // local `stats` changes for ANY reason — a parent's session viewing a stale
+    // snapshot could silently overwrite the child's freshly-incremented real
+    // study time back down, which is exactly what was being reported.
     if (body.lastLesson          != null) patch.last_lesson          = body.lastLesson;
-    if (body.lastActiveDate      != null) patch.last_active_date     = body.lastActiveDate;
+    // last_active_date is ALSO excluded from this blind sync — it's the field
+    // the atomic study-time RPC and the GET day-boundary reset both use to
+    // decide "same day, keep accumulating" vs "new day, reset today's minutes
+    // to 0". A stale client write here (e.g. a tab that loaded before midnight,
+    // or before the child's most recent study session) would silently make the
+    // NEXT real study-time increment look like a new day and wipe today's
+    // count — exactly the "753 min total but 0 today" contradiction seen in
+    // the data. It's now updated exclusively by POST /:id/study-time and the
+    // GET /:id day-rollover check.
     patch.updated_at = new Date().toISOString();
 
     // Upsert — creates if not exists
@@ -593,36 +603,24 @@ router.post('/:id/study-time', async (req, res) => {
   try {
     const { id } = req.params;
     const { minutes = 1, source, subject } = req.body;
-    const record = await getOrCreate(id);
-    const today  = todayISO();
+    const today = todayISO();
 
-    const todayMins = record.last_active_date === today
-      ? (record.today_study_minutes || 0) + minutes
-      : minutes;
+    // Atomic DB-side increment — the previous read-then-write (SELECT the row,
+    // compute new totals in JS, then UPDATE) raced whenever two study-time calls
+    // landed close together (e.g. a lesson's 15s tracker + a quiz timer firing
+    // around the same moment): both reads saw the same "before" value, and
+    // whichever write finished last silently discarded the other's minutes.
+    // That's how a student's real study time under-counted or appeared "stuck".
+    const { data: updated, error } = await supabase
+      .rpc('increment_student_study_time', { p_student_id: id, p_minutes: minutes, p_source: source || null, p_today: today })
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
 
-    const totalMins = (record.study_time_minutes || 0) + minutes;
-    // Per-stream minutes are each a subset of total study time, counted only
-    // when the source screen matches, so the teacher dashboard can report
-    // Learning Path / Assignments / Challenges time separately.
-    const learningPathMins = source === 'learningPath'
-      ? (record.learning_path_minutes || 0) + minutes
-      : (record.learning_path_minutes || 0);
-    const assignmentMins = source === 'assignment'
-      ? (record.assignment_time_minutes || 0) + minutes
-      : (record.assignment_time_minutes || 0);
-    const challengeMins = source === 'challenge'
-      ? (record.challenge_time_minutes || 0) + minutes
-      : (record.challenge_time_minutes || 0);
-
-    await supabase.from('student_stats').update({
-      study_time_minutes:      totalMins,
-      today_study_minutes:     todayMins,
-      learning_path_minutes:   learningPathMins,
-      assignment_time_minutes: assignmentMins,
-      challenge_time_minutes:  challengeMins,
-      last_active_date:        today,
-      updated_at:              new Date().toISOString(),
-    }).eq('student_id', id);
+    const totalMins = updated.study_time_minutes;
+    const todayMins = updated.today_study_minutes;
+    const learningPathMins = updated.learning_path_minutes;
+    const assignmentMins = updated.assignment_time_minutes;
+    const challengeMins = updated.challenge_time_minutes;
 
     // Upsert daily log
     await supabase.from('student_daily_log').upsert({
@@ -635,23 +633,9 @@ router.post('/:id/study-time', async (req, res) => {
     // subjects (e.g. Maths + English) see only their subjects' time, with
     // time spent on other subjects (PE, Art, ...) tracked separately.
     if (source === 'learningPath' && subject) {
-      const { data: subjRow } = await supabase
-        .from('student_subject_time')
-        .select('minutes, today_minutes, today_date')
-        .eq('student_id', id)
-        .eq('subject', subject)
-        .maybeSingle();
-      const subjTodayMins = subjRow?.today_date === today
-        ? (subjRow?.today_minutes || 0) + minutes
-        : minutes;
-      await supabase.from('student_subject_time').upsert({
-        student_id:    id,
-        subject,
-        minutes:       (subjRow?.minutes || 0) + minutes,
-        today_minutes: subjTodayMins,
-        today_date:    today,
-        updated_at:    new Date().toISOString(),
-      }, { onConflict: 'student_id,subject' });
+      await supabase.rpc('increment_student_subject_time', {
+        p_student_id: id, p_subject: subject, p_minutes: minutes, p_today: today,
+      });
     }
 
     res.json({ studyTimeMinutes: totalMins, todayStudyMinutes: todayMins, learningPathMinutes: learningPathMins, assignmentTimeMinutes: assignmentMins, challengeTimeMinutes: challengeMins });

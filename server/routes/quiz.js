@@ -584,12 +584,39 @@ async function geminiGenerate(model, content) {
   return result.response.text();
 }
 
+// ── Timeout guard for the primary Gemini Vision call ──────────────────────────
+// The Gemini SDK call has no built-in timeout/AbortSignal: if Google's backend
+// stalls on a large multimodal payload, generateContent() can hang indefinitely
+// with no error and no result, starving the Promise.all() it's raced against in
+// generateQuizHandler and blocking the existing Qwen/Pixtral/Groq/OCR fallback
+// chain from ever kicking in. This wraps ONLY that call in a configurable
+// timeout so a stall becomes a fast, logged failure instead of an infinite wait
+// — the fallback chain itself is untouched. The underlying SDK call can't be
+// aborted (no AbortController exposed), so it keeps running in the background
+// after the timeout fires; Promise.race still attaches a handler to it, so it
+// cannot become an unhandled-rejection leak — it just resolves/rejects unused.
+const GEMINI_VISION_TIMEOUT_MS = parseInt(process.env.GEMINI_VISION_TIMEOUT_MS || '75000', 10);
+function withTimeout(promise, ms, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`TIMEOUT:${label}:${ms}ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 // ── Gemini Vision — primary engine (free, excellent accuracy) ────────────────
 async function callGeminiVision(parts, { grade, subject, school } = {}) {
   if (!genAI) throw new Error('GEMINI_API_KEY not configured');
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json' }
+    // temperature was never set here, so Gemini defaulted to ~1.0 (its highest,
+    // most "creative"/randomized setting) for what is a pure READING task, not
+    // a creative one — this is why the SAME worksheet's bar chart came back
+    // right on one upload and wrong on the next: the model was sampling a
+    // different "guess" each run instead of deterministically reading the
+    // pixels. temperature: 0 makes it always pick its single most likely
+    // (highest-confidence) reading of the image, run after run.
+    generationConfig: { responseMimeType: 'application/json', temperature: 0 }
   });
   const prompt = buildQuizVisionPrompt({ grade, subject, school });
 
@@ -624,55 +651,276 @@ function taskLooksLikeBarGraph(task) {
   return /bar\s*graph|column\s*chart|bar\s*chart/i.test(blob);
 }
 
-async function recoverBarCharts(quiz) {
-  if (!genAI) return;
-  for (const task of (quiz.tasks || [])) {
-    // Already has structured bars (from the main pass or normalizeCharts) — nothing to do.
-    if (task.chart && Array.isArray(task.chart.bars) && task.chart.bars.length) continue;
-    if (!taskLooksLikeBarGraph(task)) continue;
+// True if the task has NO visual representation at all yet — no chart, no
+// shared task image, no diagram-fill, no per-question image. Deliberately
+// generic (not bar-chart-specific): "does this task claim ANY visual
+// component" applies the same way to a Venn diagram, a table, a geometry
+// figure, a timeline, or a map.
+function taskHasNoVisual(task) {
+  const hasChart = task.chart && Array.isArray(task.chart.bars) && task.chart.bars.length;
+  return !hasChart && !task.sharedImage && !task.diagramFill
+    && !(task.questions || []).some(q => q.hasImage);
+}
 
-    // The graph image is either the crop assigned to this task, or its page image.
-    // At generation time this is a /data/... file path; on a SAVED quiz reopened later
-    // (e.g. from the quiz library, or Preview/Edit Answers re-normalizing it) it has
-    // already been converted to a base64 data: URI by embedQuizImages — handle both.
-    const imgUrl = (task.questions || []).find(q => q.imageUrl)?.imageUrl || task.pageImageUrl;
-    if (!imgUrl) continue;
-    let buf;
-    try {
-      if (imgUrl.startsWith('data:')) {
-        const b64 = imgUrl.split(',')[1];
-        if (!b64) continue;
-        buf = Buffer.from(b64, 'base64');
-      } else {
-        const p = path.join(__dirname, '..', imgUrl);
-        if (!fs.existsSync(p)) continue;
-        buf = fs.readFileSync(p);
-      }
-    } catch { continue; }
+// Generic, type-agnostic recovery trigger: does this task sit on a page where
+// the layout service (DocLayout-YOLO) detected a visual region, with NO
+// interactive component in the quiz claiming it? This is intentionally
+// decoupled from any one visual TYPE (bar chart, Venn, table, geometry,
+// timeline, map, ...) — it only answers "was something visual detected here
+// that nothing in the quiz accounts for," using layout data ALREADY fetched
+// during generation (see Step 1's reuse of the same /crop response for
+// validation), so it costs zero additional API calls. Any future recovery
+// handler for a different visual type can call this same function instead of
+// re-deriving page/region lookup logic — `regionTypes` lets each caller pick
+// which detected region kinds are relevant to it (e.g. a table-recovery
+// handler would pass ['table'] instead of the default ['figure']).
+function hasUnclaimedVisualRegion(task, layoutMLResult, regionTypes = ['figure']) {
+  if (!layoutMLResult?.pages || !taskHasNoVisual(task)) return false;
+  const page = layoutMLResult.pages.find(p => p.pageNum === (task.sourcePage || 1));
+  return (page?.crops || []).some(c => regionTypes.includes(c.type));
+}
 
-    try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', generationConfig: { responseMimeType: 'application/json' } });
-      const prompt = `This image is a BAR GRAPH from a school worksheet. Read it precisely and return ONLY a JSON object:
+// `layoutMLResult` (optional) is the SAME /crop response already fetched for
+// diagram cropping earlier in generation (see Step 1's use of allCrops for
+// validation) — reused here, not a new call. Its `pages[].crops` list every
+// figure/table region DocLayout-YOLO found on that page.
+// One task's chart-recovery attempt — factored out of recoverBarCharts so it
+// can be run concurrently across tasks (see below) instead of serially. Each
+// call only reads/writes its own `task` object, so running several at once is
+// safe: no shared mutable state between tasks.
+async function recoverOneBarChart(task, layoutMLResult) {
+  // Already has structured bars (from the main pass or normalizeCharts) — nothing to do.
+  if (task.chart && Array.isArray(task.chart.bars) && task.chart.bars.length) return;
+  // Keyword trigger stays specific to THIS recovery handler (bar charts) —
+  // the generic, reusable part is hasUnclaimedVisualRegion below, not this.
+  const keywordTrigger = taskLooksLikeBarGraph(task);
+  const layoutTrigger = !keywordTrigger && hasUnclaimedVisualRegion(task, layoutMLResult, ['figure']);
+  if (!keywordTrigger && !layoutTrigger) return;
+
+  // The graph image is either the crop assigned to this task, or its page image.
+  // At generation time this is a /data/... file path; on a SAVED quiz reopened later
+  // (e.g. from the quiz library, or Preview/Edit Answers re-normalizing it) it has
+  // already been converted to a base64 data: URI by embedQuizImages — handle both.
+  const imgUrl = (task.questions || []).find(q => q.imageUrl)?.imageUrl || task.pageImageUrl;
+  if (!imgUrl) return;
+  let buf;
+  try {
+    if (imgUrl.startsWith('data:')) {
+      const b64 = imgUrl.split(',')[1];
+      if (!b64) return;
+      buf = Buffer.from(b64, 'base64');
+    } else {
+      const p = path.join(__dirname, '..', imgUrl);
+      if (!fs.existsSync(p)) return;
+      buf = fs.readFileSync(p);
+    }
+  } catch { return; }
+
+  try {
+    // temperature: 0 — this is the targeted RE-READ of a bar chart specifically
+    // because the main pass sometimes omits/misreads it; leaving temperature
+    // unset here would reintroduce the same run-to-run randomness this
+    // recovery pass exists to fix.
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', generationConfig: { responseMimeType: 'application/json', temperature: 0 } });
+    const prompt = `This image is a BAR GRAPH from a school worksheet. Read it precisely and return ONLY a JSON object:
 {"type":"bar","title":"<graph title or empty string>","xLabel":"<x-axis label or empty>","yLabel":"<y-axis label or empty>","yMax":<number at the TOP gridline>,"yStep":<gap between gridlines>,"bars":[{"label":"<category>","value":<exact bar height read off the y-axis>}]}
 Rules: list bars strictly LEFT-TO-RIGHT in the order they appear. Read every bar's height precisely against the y-axis scale (yMax = top gridline, yStep = gap between gridlines). Do NOT swap adjacent bars. Output JSON only — no markdown, no commentary.`;
-      const raw = await geminiGenerate(model, [...geminiImageParts([{ buffer: buf, mime: 'image/png' }]), { text: prompt }]);
-      const chart = JSON.parse(cleanLLMJson(raw));
-      if (chart && Array.isArray(chart.bars) && chart.bars.length >= 2) {
-        chart.type = 'bar';
-        chart.bars = chart.bars.filter(b => b && b.label != null && !isNaN(Number(b.value))).map(b => ({ label: String(b.label), value: Number(b.value) }));
-        if (chart.bars.length >= 2) {
-          task.chart = chart;
-          // The structured chart now owns the visual — drop the raw scan so it isn't shown
-          // twice (stripImagesForStructuredTasks does the rest at render time).
-          task.sharedImage = false;
-          delete task.sharedImageDescription;
-          console.log(`[quiz] chart-recovery: rebuilt bar chart for "${(task.title || '').slice(0, 30)}" (${chart.bars.length} bars)`);
-        }
+    // Same timeout guard as the primary/retry vision calls.
+    const raw = await withTimeout(
+      geminiGenerate(model, [...geminiImageParts([{ buffer: buf, mime: 'image/png' }]), { text: prompt }]),
+      GEMINI_VISION_TIMEOUT_MS,
+      'gemini-chart-recovery'
+    );
+    const chart = JSON.parse(cleanLLMJson(raw));
+    if (chart && Array.isArray(chart.bars) && chart.bars.length >= 2) {
+      chart.type = 'bar';
+      chart.bars = chart.bars.filter(b => b && b.label != null && !isNaN(Number(b.value))).map(b => ({ label: String(b.label), value: Number(b.value) }));
+      if (chart.bars.length >= 2) {
+        task.chart = chart;
+        // The structured chart now owns the visual — drop the raw scan so it isn't shown
+        // twice (stripImagesForStructuredTasks does the rest at render time).
+        task.sharedImage = false;
+        delete task.sharedImageDescription;
+        console.log(`[quiz] chart-recovery: rebuilt bar chart for "${(task.title || '').slice(0, 30)}" (${chart.bars.length} bars)`);
       }
-    } catch (e) {
-      console.log(`[quiz] chart-recovery failed for "${(task.title || '').slice(0, 30)}": ${e.message}`);
+    }
+  } catch (e) {
+    const isTimeout = String(e && e.message).startsWith('TIMEOUT:');
+    console.log(`[quiz] chart-recovery ${isTimeout ? `TIMEOUT after ${GEMINI_VISION_TIMEOUT_MS}ms` : 'failed'} for "${(task.title || '').slice(0, 30)}"${isTimeout ? '' : ': ' + e.message}`);
+  }
+}
+
+async function recoverBarCharts(quiz, layoutMLResult = null) {
+  if (!genAI) return;
+  // Each task's recovery attempt is fully independent (own image, own
+  // task.chart write) — running them concurrently instead of one-at-a-time
+  // means N tasks needing recovery cost ~1 timeout window total instead of
+  // N timeout windows serially (profiling showed a single stalled task
+  // already cost 75s alone; a worksheet with 2+ such tasks was paying that
+  // multiple times over for no reason).
+  await Promise.all((quiz.tasks || []).map(task => recoverOneBarChart(task, layoutMLResult)));
+}
+
+// ── Missing-digit vertical arithmetic: deterministic solver ────────────────
+// Solves for "_" digits in a stacked addition/subtraction (top ± bottom = result)
+// using the same column-by-column carry/borrow procedure a student would use —
+// pure arithmetic, no AI call, reusing the top/bottom/result strings the main
+// extraction pass already produced. A column is only solved when exactly one of
+// its three digits is unknown (the standard "missing digit puzzle" shape); a
+// column with 2+ unknowns can't be solved deterministically and is left
+// unsolved, which makes the whole question fall back to today's existing
+// generic text-answer behavior (solvable === false) — this never regresses a
+// worksheet that already worked.
+function solveVerticalMath(vm) {
+  if (!vm || !vm.top || !vm.bottom) return { solvable: false };
+  const op = vm.operator === '+' ? '+' : '-';
+  const width = Math.max(vm.top.length, vm.bottom.length, (vm.result || '').length);
+  const pad = (s) => String(s || '').padStart(width, op === '+' ? '_' : '_'); // right-align
+  const top = pad(vm.top).split('');
+  const bottom = pad(vm.bottom).split('');
+  const result = vm.result ? pad(vm.result).split('') : new Array(width).fill('_');
+  const hadResult = !!vm.result;
+  const blanks = [];
+  const steps = [];
+  let carry = 0; // carry (addition) or borrow (subtraction) into the next (leftward) column
+  for (let i = width - 1; i >= 0; i--) {
+    const t = top[i], b = bottom[i], r = result[i];
+    const tKnown = t !== '_' && t !== undefined, bKnown = b !== '_' && b !== undefined, rKnown = r !== '_' && r !== undefined && hadResult;
+    const unknownCount = (tKnown ? 0 : 1) + (bKnown ? 0 : 1) + (hadResult ? (rKnown ? 0 : 1) : 0);
+    const colLabel = width - i; // 1 = units, 2 = tens, ...
+    if (op === '+') {
+      if (tKnown && bKnown) {
+        const sum = Number(t) + Number(b) + carry;
+        const digit = sum % 10;
+        const nextCarry = sum >= 10 ? 1 : 0;
+        if (!hadResult) { result[i] = String(digit); }
+        else if (!rKnown) { result[i] = String(digit); blanks.push({ row: 'result', index: i, digit: String(digit) }); }
+        else if (Number(r) !== digit) return { solvable: false }; // extracted digits are internally inconsistent — bail rather than show a wrong "fix"
+        steps.push(`Column ${colLabel}: ${t} + ${b}${carry ? ' + 1 (carried)' : ''} = ${sum} → write ${digit}${nextCarry ? ', carry 1' : ''}`);
+        carry = nextCarry;
+      } else if (unknownCount === 1 && hadResult && rKnown) {
+        if (!tKnown) {
+          let v = Number(r) - Number(b) - carry; let nextCarry = 0;
+          if (v < 0) { v += 10; } // shouldn't happen for '+', but guards against bad extraction
+          if (v < 0 || v > 9) return { solvable: false };
+          top[i] = String(v); blanks.push({ row: 'top', index: i, digit: String(v) });
+          steps.push(`Column ${colLabel}: ? + ${b}${carry ? ' + 1 (carried)' : ''} = ${r} → missing top digit is ${v}`);
+          carry = nextCarry;
+        } else {
+          let v = Number(r) - Number(t) - carry; let nextCarry = 0;
+          if (v < 0 || v > 9) return { solvable: false };
+          bottom[i] = String(v); blanks.push({ row: 'bottom', index: i, digit: String(v) });
+          steps.push(`Column ${colLabel}: ${t} + ? ${carry ? '+ 1 (carried) ' : ''}= ${r} → missing bottom digit is ${v}`);
+          carry = nextCarry;
+        }
+      } else {
+        return { solvable: false }; // under-determined column
+      }
+    } else {
+      // subtraction: top - bottom = result, with borrow propagating leftward
+      if (tKnown && bKnown) {
+        let tv = Number(t) - carry, borrowOut = 0;
+        if (tv < Number(b)) { tv += 10; borrowOut = 1; }
+        const digit = tv - Number(b);
+        if (!hadResult) { result[i] = String(digit); }
+        else if (!rKnown) { result[i] = String(digit); blanks.push({ row: 'result', index: i, digit: String(digit) }); }
+        else if (Number(r) !== digit) return { solvable: false };
+        steps.push(`Column ${colLabel}: ${t}${carry ? ' (borrowed, so ' + tv + ')' : ''} − ${b} = ${digit}${borrowOut ? ', borrow 1 from next column' : ''}`);
+        carry = borrowOut;
+      } else if (unknownCount === 1 && hadResult && rKnown) {
+        if (!bKnown) {
+          let tv = Number(t) - carry;
+          let v = tv - Number(r);
+          let borrowOut = 0;
+          if (v < 0) { v += 10; borrowOut = 1; }
+          if (v < 0 || v > 9) return { solvable: false };
+          bottom[i] = String(v); blanks.push({ row: 'bottom', index: i, digit: String(v) });
+          steps.push(`Column ${colLabel}: ${t}${carry ? ' (borrowed)' : ''} − ? = ${r} → missing bottom digit is ${v}`);
+          carry = borrowOut;
+        } else {
+          // top unknown, bottom & result known.
+          // t - carry - b = r  (if no further borrow needed)  =>  t = r + b + carry
+          // or, if that column itself needed a borrow: t = r + b + carry - 10
+          let v = Number(r) + Number(b) + carry;
+          let borrowOut = 0;
+          if (v > 9) { v -= 10; borrowOut = 1; }
+          if (v < 0 || v > 9) return { solvable: false };
+          top[i] = String(v); blanks.push({ row: 'top', index: i, digit: String(v) });
+          steps.push(`Column ${colLabel}: ? ${carry ? '(borrowed) ' : ''}− ${b} = ${r} → missing top digit is ${v}`);
+          carry = borrowOut;
+        }
+      } else {
+        return { solvable: false };
+      }
     }
   }
+  if (blanks.length === 0) return { solvable: false }; // nothing was actually missing — not this feature's concern
+  // Steps were pushed units-first (loop runs right→left); that IS the natural
+  // solving order a student follows, so no reordering needed here.
+  return {
+    solvable: true,
+    blanks,
+    solvedTopStr: top.join(''),
+    solvedBottomStr: bottom.join(''),
+    solvedResultStr: result.join(''),
+    steps,
+  };
+}
+
+// ── Vertical-math operator self-consistency check ──────────────────────────
+// The +/− symbol is a small glyph vision models occasionally misread even at
+// temperature 0. This never rewords the prompt or adds an API call — it just
+// cross-checks the ALREADY-EXTRACTED top/bottom/result/answer against pure JS
+// arithmetic, using two independent, purely pattern-based signals:
+//   Tier 1 (broad, no gating): if the worksheet shows a result row, does
+//   top OP bottom actually equal it? If not, does the OPPOSITE operator match?
+//   Applies to any vertical-math question with a result row, on any worksheet.
+//   Tier 2 (narrow fallback): if there's no result row (the answer is a
+//   looked-up letter, not a shown digit — e.g. a decode-the-message pattern),
+//   and the SAME task also has a lookup table, check whether the stated vs.
+//   opposite operator's result appears as a key in that table. Only ever
+//   activates when both a code-style table AND a no-result vertical-math
+//   question coexist in the same task — worksheets without a lookup table are
+//   completely untouched by this tier; its trigger condition never matches.
+function checkVerticalMathOperator(q, task) {
+  const vm = q.verticalMath;
+  if (!vm || !vm.top || !vm.bottom || /_/.test(vm.top) || /_/.test(vm.bottom)) return null; // only fully-given digits — blanks are solveVerticalMath's job
+  const top = Number(vm.top), bottom = Number(vm.bottom);
+  if (isNaN(top) || isNaN(bottom)) return null;
+  const stated = vm.operator === '+' ? '+' : '-';
+  const opposite = stated === '+' ? '-' : '+';
+  const compute = (op, a, b) => op === '+' ? a + b : a - b;
+  const statedResult = compute(stated, top, bottom);
+  const oppositeResult = compute(opposite, top, bottom);
+
+  // Tier 1: a shown result row is itself the ground truth.
+  if (vm.result && !/_/.test(vm.result)) {
+    const shown = Number(vm.result);
+    if (!isNaN(shown)) {
+      if (statedResult === shown) return null; // consistent — nothing to flag
+      if (oppositeResult === shown) return { correctOperator: opposite, correctResult: oppositeResult, via: 'result-row' };
+      return null; // neither matches — a different kind of error; don't guess
+    }
+  }
+
+  // Tier 2: no result row — only usable if this task has a lookup table
+  // shaped like "<number> - <letter/code>" rows (a decode/cipher pattern).
+  const tables = Array.isArray(task.tables) ? task.tables : (task.table ? [task.table] : []);
+  const lookup = new Map();
+  for (const tbl of tables) {
+    for (const row of (tbl.rows || [])) {
+      for (const cell of row) {
+        const text = (cell && (cell.text || '')) || '';
+        const m = text.match(/^\s*(\d+)\s*[-–—]\s*(\S+)\s*$/);
+        if (m) lookup.set(m[1], m[2]);
+      }
+    }
+  }
+  if (lookup.size === 0) return null; // no code table in this task — Tier 2 never activates
+  const statedHit = lookup.get(String(statedResult));
+  const oppositeHit = lookup.get(String(oppositeResult));
+  if (!statedHit && oppositeHit) return { correctOperator: opposite, correctResult: oppositeResult, correctAnswer: oppositeHit, via: 'code-table' };
+  return null;
 }
 
 // Downscale + cap page images so vision fallbacks don't 413 / exceed image limits.
@@ -813,7 +1061,7 @@ async function captionCropsGemini(crops) {
   if (!genAI) throw new Error('GEMINI_API_KEY not configured');
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json' }
+    generationConfig: { responseMimeType: 'application/json', temperature: 0 }
   });
   const raw = await geminiGenerate(model, [
     ...geminiImageParts(crops),
@@ -1059,7 +1307,7 @@ Return this EXACT JSON structure:
   "concepts": [{ "term": "name", "definition": "short child-friendly definition", "unit": "unit" }],
   "tasks": [
     {
-      "tier": "MUST DO",
+      "tier": "<section label exactly as printed, e.g. 'Must Do' — or '' if none>",
       "title": "Task 1: exact title from worksheet",
       "sourcePage": 1,
       "layout": {
@@ -1076,7 +1324,7 @@ Return this EXACT JSON structure:
       ]
     },
     {
-      "tier": "COULD DO",
+      "tier": "<this task's own section label, exactly as printed>",
       "title": "Task 3: Observe the picture and fill in the blanks",
       "sourcePage": 2,
       "sharedImage": true,
@@ -1114,6 +1362,9 @@ block above them). Add a "pyramids" ARRAY to the TASK (one entry per pyramid sho
   "solved": [ ["4.5"], ["3.4", "1.1"], ["3.3", "1.2", "0.1"] ]  (example only — solve for real)
 - Do NOT set sharedImage/diagramFill for a task fully described by "pyramids", and do NOT
   create separate questions for it — "pyramids" + "solved" fully replaces both.
+- ⚠️ The numbers above (1., 3.3, 1.2, 4.5...) are ONLY an illustration of the JSON shape — they are
+  NOT from any real worksheet. Read the ACTUAL numbers printed in the pyramid you were given and
+  solve THOSE. Never output this example's numbers unless they genuinely appear on the page.
 
 DIAGRAM-FILL HANDLING (use this for any OTHER diagram not covered above — clocks, number
 lines, labeled figures, and ANY diagram type where the student writes answers directly ONTO
@@ -1137,7 +1388,24 @@ Instead add a "diagramFill" object to the TASK:
   OTHER questions in the task that are not part of filling the diagram itself (if any).
 
 GRAPH / CHART HANDLING (CRITICAL — never reduce a graph to a text note):
-If a task shows a BAR GRAPH / COLUMN CHART that students read to answer questions, you MUST ALWAYS add a "chart" object to the TASK (not the question). This is MANDATORY — never describe the graph only as a "sharedImage" or in text; the structured "chart" object must ALWAYS be present so the graph can be redrawn cleanly. READ THE EXACT VALUES from the image:
+⚠️ FIRST decide whether a chart ALREADY EXISTS on the worksheet, or whether the worksheet is
+ASKING THE STUDENT TO CREATE ONE:
+- If the worksheet ALREADY PRINTS a finished bar graph/column chart with bars, axes, and a scale
+  — and questions below it ask the student to READ values off that graph — then add "chart" to
+  the task as described below (this is the ONLY case where "chart" applies).
+- If the worksheet instead gives RAW DATA (a list of survey answers, a tally table, a frequency
+  table) and the INSTRUCTION says something like "organize the data and draw a bar graph in your
+  graph book/notebook" — there is NO existing chart to read. The graph does not exist yet; the
+  STUDENT draws it on paper. This is a hands-on "activity" question ("type": "activity"), NOT a
+  chart-reading task. Do NOT synthesize/compute a "chart" object for this — that would show the
+  student an already-solved graph before they've done the work themselves, which defeats the
+  exercise. Just capture the raw data as a "tables" entry (per TABLE HANDLING above) and emit ONE
+  "activity" question with the "draw a bar graph" instruction as its text.
+- When in doubt: only emit "chart" if you can literally see bars with a height/scale printed on
+  the page right now — never emit it as a "solution" or "answer" to a data-organizing activity.
+
+If a task shows a BAR GRAPH / COLUMN CHART that students read to answer questions (the FIRST case
+above), you MUST ALWAYS add a "chart" object to the TASK (not the question). This is MANDATORY — never describe the graph only as a "sharedImage" or in text; the structured "chart" object must ALWAYS be present so the graph can be redrawn cleanly. READ THE EXACT VALUES from the image:
 "chart": {
   "type": "bar",
   "title": "Favourite Fruit",
@@ -1152,30 +1420,36 @@ If a task shows a BAR GRAPH / COLUMN CHART that students read to answer question
     { "label": "grape",  "value": 20 }
   ]
 }
-- DO NOT copy the fruit example labels or values into your output. You MUST extract the actual labels and values (e.g. sports names, votes count) shown on the graph in the worksheet!
-- BE EXTREMELY CAREFUL with the alignment of category labels on the X-axis and their corresponding bars. Do not swap or misalign adjacent columns/bars (like rugby and cricket). rugby is the 3rd bar and cricket is the 4th bar. Read their heights very precisely: rugby is at 10, cricket is at 6.
+⚠️ CRITICAL — the "apple"/"banana"/15/25 values above are ONLY a JSON-shape illustration. They are
+NOT from any real worksheet and must NEVER appear in your output. Extract the ACTUAL labels and
+values shown on the REAL graph you were given, reading fresh from the image each time — do not
+let any category names or numbers you've seen before (in this prompt or any other worksheet)
+influence what you report here. Every value must come from the pixels in front of you right now.
+- BE EXTREMELY CAREFUL with the alignment of category labels on the X-axis and their corresponding bars. Do not swap or misalign adjacent columns/bars — count bars left to right and match each one to its own label directly below it before reading its height.
 - Cross-reference and double-check your extracted values against the math questions in the worksheet to make sure they are consistent (e.g., if a question asks about the sum of votes or doubled values, verify that your bar values yield the correct mathematical answers to those questions!).
-- Ensure that the "answer" field value is 100% consistent with your step-by-step reasoning in the "solution" field. Do not make contradiction errors (for example, if the solution correctly reasons that the sum matches rugby and badminton, then the "answer" must be rugby and badminton, not hockey and badminton!).
+- Ensure that the "answer" field value is 100% consistent with your step-by-step reasoning in the "solution" field — both must name the exact same categories, computed from the exact same bar values you read.
 - Read every bar's height precisely using the y-axis scale. yMax = top of the axis, yStep = gap between gridlines.
 - The questions below the graph stay as normal numeric/text/long questions — the chart is the shared visual they refer to.
 
 TABLE HANDLING (CRITICAL — never split a table into separate one-line questions, never drop a table):
-Capture EVERY table in a task inside a "tables" ARRAY on the TASK (a task can have more than one table — e.g. a raw data grid AND a tally/frequency table). Keep each grid intact:
+Capture EVERY table in a task inside a "tables" ARRAY on the TASK (a task can have more than one table — e.g. a raw data grid AND a tally/frequency table). Keep each grid intact. This is only an
+illustration of the JSON SHAPE — "ItemA"/"ItemB" etc are generic placeholders, NOT real content;
+replace every value with what is ACTUALLY printed on the worksheet you were given:
 "tables": [
   {
-    "title": "Survey data",
+    "title": "<table title or empty string>",
     "headers": [],
     "rows": [
-      [ { "text": "Chutney" }, { "text": "Cheese" }, { "text": "Chutney" }, { "text": "Salt and Vinegar" }, { "text": "Cheese" } ],
-      [ { "text": "Chilli" },  { "text": "Spring Onion" }, { "text": "Cheese" }, { "text": "Spring Onion" }, { "text": "Chutney" } ]
+      [ { "text": "ItemA" }, { "text": "ItemB" }, { "text": "ItemA" }, { "text": "ItemC" }, { "text": "ItemB" } ],
+      [ { "text": "ItemD" }, { "text": "ItemE" }, { "text": "ItemB" }, { "text": "ItemE" }, { "text": "ItemA" } ]
     ]
   },
   {
     "title": "",
-    "headers": ["Favourite flavour of chips", "Tally marks", "Frequency"],
+    "headers": ["<column 1 header>", "<column 2 header>", "<column 3 header>"],
     "rows": [
-      [ { "text": "Chutney" },      { "input": true, "answer": "6" }, { "input": true, "answer": "6" } ],
-      [ { "text": "Spring Onion" }, { "input": true, "answer": "6" }, { "input": true, "answer": "6" } ]
+      [ { "text": "ItemA" }, { "input": true, "answer": "<count you computed>" }, { "input": true, "answer": "<count you computed>" } ],
+      [ { "text": "ItemB" }, { "input": true, "answer": "<count you computed>" }, { "input": true, "answer": "<count you computed>" } ]
     ]
   }
 ]
@@ -1191,20 +1465,20 @@ the actual problems. This mapping key is ALWAYS a separate READ-ONLY table you m
 "tables" — even though it looks like a small boxed grid rather than a traditional data table, and
 even though the questions below it ask "what is the secret letter for X" (those stay as their own
 "numeric"/"text" questions in "questions" as already instructed — the mapping key is IN ADDITION
-to them, not instead). Example:
+to them, not instead). Shape only — every number/letter below is a placeholder, NOT real content:
 "tables": [
   {
     "title": "CODE",
     "headers": [],
     "rows": [
-      [ { "text": "333 - S" },  { "text": "622 - R" },  { "text": "427 - X" } ],
-      [ { "text": "1219 - Y" }, { "text": "745 - M" },  { "text": "435 - A" } ],
-      [ { "text": "620 - M" },  { "text": "59 - E" },   { "text": "1422 - R" } ]
+      [ { "text": "<n1> - <L1>" }, { "text": "<n2> - <L2>" }, { "text": "<n3> - <L3>" } ],
+      [ { "text": "<n4> - <L4>" }, { "text": "<n5> - <L5>" }, { "text": "<n6> - <L6>" } ]
     ]
   }
 ]
-- Read the EXACT number and letter for every cell in the box — students need this table to check
-  their own decoded answers, so it must be 100% accurate, not approximate.
+- Read the EXACT number and letter for EVERY cell actually printed in the box on the worksheet you
+  were given — students need this table to check their own decoded answers, so it must be 100%
+  accurate, not approximate, and must match the real page, not this placeholder shape.
 - Preserve the grid's row/column layout exactly as printed (do not reorder or reflow entries).
 
 VERTICAL / COLUMN ARITHMETIC DISPLAY (CRITICAL for readability — worksheets showing a stacked
@@ -1213,9 +1487,10 @@ missing digits: 9 6 _ - _ 8 3 ----- 1 6 2" — students can't read that). For AN
 worksheet shows the numbers stacked vertically (with a rule line under the second number),
 whether or not any digits are missing, add a "verticalMath" object to that question so it can be
 displayed in the same column layout as the worksheet:
-"verticalMath": { "operator": "-", "top": "96_", "bottom": "_83", "result": "162" }
+"verticalMath": { "operator": "-", "top": "<digits you actually see>", "bottom": "<digits you actually see>", "result": "<digits you actually see>" }
 - "top"/"bottom"/"result" are STRINGS of digits, one character per column, read top-to-bottom
-  exactly as printed. Use "_" for any digit that is blank/missing on the worksheet (to be solved).
+  exactly as printed on the REAL worksheet — never copy the placeholder text above literally.
+  Use "_" for any digit that is blank/missing on the worksheet (to be solved).
 - "operator" is "+" or "-".
 - Leave "result" as "" if the worksheet doesn't show a result row (i.e. the student computes the
   whole sum, not just missing digits).
@@ -1233,30 +1508,54 @@ QUESTION TYPES:
 - "venn" — a Venn diagram the student must FILL IN (two overlapping circles). Use this WHENEVER the worksheet shows a Venn diagram / two overlapping circles to be completed. DO NOT convert a Venn into a plain text box.
 
 VENN DIAGRAM QUESTIONS (CRITICAL — never flatten a Venn into a single text box):
+⚠️ The example below is ONLY the JSON SHAPE, not real content — "GroupA"/"GroupB" and every item
+name are generic placeholders. Read the ACTUAL two circle labels and the ACTUAL items from the
+worksheet you were given; never output "Almond"/"Spinach" or any of the placeholder item names
+below unless those exact words genuinely appear on the real page in front of you.
 If the worksheet contains a Venn diagram to complete, output ONE question with "type":"venn" and this exact shape:
 {
   "id": "1",
   "type": "venn",
-  "question": "Complete the Venn diagram to compare the nutrients in Almonds and Spinach.",
-  "leftLabel": "Almond",
-  "rightLabel": "Spinach",
+  "question": "Complete the Venn diagram to compare <GroupA> and <GroupB>.",
+  "leftLabel": "GroupA",
+  "rightLabel": "GroupB",
   "regions": [
-    { "id": "left",   "placeholder": "Almond only" },
+    { "id": "left",   "placeholder": "GroupA only" },
     { "id": "center", "placeholder": "Both (common)" },
-    { "id": "right",  "placeholder": "Spinach only" }
+    { "id": "right",  "placeholder": "GroupB only" }
   ],
   "answers": {
-    "left":   ["Protein", "Healthy Fats", "Vitamin E", "Magnesium"],
-    "center": ["Fibre"],
-    "right":  ["Iron", "Vitamin K", "Vitamin A", "Calcium"]
+    "left":   ["<item unique to GroupA>", "<item unique to GroupA>"],
+    "center": ["<item shared by both>"],
+    "right":  ["<item unique to GroupB>", "<item unique to GroupB>"]
   },
   "hint": "Items shared by BOTH go in the overlapping middle; unique items go in their own circle.",
-  "solution": "Almond only: Protein, Healthy Fats, Vitamin E, Magnesium. Both: Fibre. Spinach only: Iron, Vitamin K, Vitamin A, Calcium."
+  "solution": "<restate exactly which items you put in each region, matching 'answers' above>"
 }
 - "left"/"right" answers = items that belong ONLY to that circle. "center" = items in BOTH.
 - YOU MUST solve it: read the source text, compute which items are shared vs unique, and fill all three answer arrays. Never leave them empty.
 - Set "leftLabel"/"rightLabel" to the two circle labels from the worksheet.
 - CONSISTENCY (CRITICAL): the "answers" arrays and the "solution" text MUST list the EXACT SAME items — same count, same values. Never have "solution" narrate one set of numbers/items while "answers" contains a different set. An item must appear in EXACTLY ONE of left/center/right — never duplicated across regions, never omitted from all three. For "multiples of N" style lists, double-check your boundary (e.g. "first 15 multiples of 3" = 3,6,...,45 — recompute and recount before splitting into only/common).
+
+⚠️ OPEN-ENDED VENN DIAGRAMS — DO NOT SKIP THESE, HANDLE DIFFERENTLY (do not drop the task just
+because it can't be auto-solved): some worksheets ask the STUDENT to first pick their OWN input
+before filling a Venn diagram — e.g. "Choose any two times tables. Write the first 15 multiples of
+each, then sort them into a Venn diagram" (the student decides which two numbers — the worksheet
+gives no fixed numbers, so there is no single correct "answers" to compute). For this kind of task:
+- Still emit "type":"venn" (so the student gets the real two-circle diagram to fill in, not a
+  plain text instruction with no diagram) — but set "openEnded": true and OMIT "answers" entirely
+  (do not invent/guess numbers; you cannot know what the student will choose, and a fixed answer
+  would be hallucinated). Use the actual circle labels the worksheet gives if any are fixed (e.g.
+  "left"/"right" for "First Number"/"Second Number"), otherwise generic labels like "Circle A"/
+  "Circle B". Set "hint" to explain the PROCESS the student should follow (e.g. "Pick two numbers,
+  list 15 multiples of each, then sort: only-first-number's-multiples on the left, only-second on
+  the right, shared multiples in the middle.") — never a "solution" with specific values, since
+  there isn't one.
+- The distinguishing signal: if the worksheet gives you the SPECIFIC items/data to sort (like the
+  GroupA/GroupB shape above, filled with the real items from the page), it's a solvable "venn"
+  question with "answers" filled in. If the worksheet tells the student to CHOOSE their own
+  numbers/items first, it's "venn" with
+  "openEnded": true and no "answers" — never invent one, and never downgrade it to plain text.
 
 PASSAGE & EXAMPLE EXTRACTION (CRITICAL):
 - If a task has a reading passage, story, or paragraph that students must read before answering, include it as "passage" on the task object. Preserve the FULL text exactly.
@@ -1279,7 +1578,12 @@ CRITICAL ACCURACY RULES:
 
 IMPORTANT: Each task MUST include "sourcePage": <page_number> (1-indexed) indicating which PDF page the task appears on.
 
-Tiers: "MUST DO", "COULD DO", "ENRICHMENT"
+TIERS/SECTIONS: extract whatever section labels the worksheet actually prints for "tier"
+(e.g. "Must Do" / "Could Do" / "Enrichment" is one common convention, but others exist —
+"Core" / "Extension" / "Challenge", "Level 1" / "Level 2", or a worksheet may have no
+tier/section labels at all). Copy the label EXACTLY as printed, in its original casing and
+wording — do NOT force it into "MUST DO" / "COULD DO" / "ENRICHMENT" if the worksheet uses
+different words. If the worksheet has no tier/section structure, leave "tier" as "".
 
 PURPOSE & LEARNING OUTCOME:
 - If the worksheet has a "Purpose:" line near the top, copy it verbatim into the top-level "purpose" field. Leave it "" if the worksheet has none.
@@ -1288,13 +1592,24 @@ PURPOSE & LEARNING OUTCOME:
 NOTES & SUCCESS CRITERIA:
 - If the worksheet includes a "Note to Parents", "Teacher's Note", or general instructions at the top/bottom (e.g. explaining Must Do / Could Do / Enrichment Task tiers), extract them into a top-level "notes" field (string).
 - If the worksheet includes "Success Criteria", "Learning Goals", "I can..." statements, or rubric, extract them into a top-level "successCriteria" array of strings.
-- Example: "purpose": "To practice the concepts of addition and subtraction.", "learningOutcomes": ["Model addition and subtraction of whole numbers up to 999 with and without regrouping."], "notes": "Dear Parents, please help your child with these activities...", "successCriteria": ["I can convert between units of measurement", "I can solve word problems involving fractions"]
+- Shape only, NOT real content — use the worksheet's own actual wording, never these placeholders:
+  "purpose": "<verbatim Purpose line, or empty string>", "learningOutcomes": ["<verbatim bullet 1>", "<verbatim bullet 2>"], "notes": "<verbatim note/instructions text, or empty string>", "successCriteria": ["<verbatim I-can statement 1>", "<verbatim I-can statement 2>"]
 
 Return ONLY valid JSON, no markdown fences, no extra text, and NO // or /* */ comments anywhere in the JSON (comments make it invalid and unparseable).`;
 }
 
 // ── Validation: check LLM output against OCR ground truth ───────────────────
-function validateQuizAgainstOCR(quiz, ocrText) {
+// `layoutCounts` (optional) is { figures, tables } detected by the ML layout
+// service (DocLayout-YOLO) — infrastructure that already runs on every
+// generation for cropping, just never previously consulted for validation.
+// Deliberately scoped to figures/tables only, not a full question count:
+// DocLayout-YOLO's "plain text" regions are coarse (one region can span
+// several questions), so comparing its region count directly to question
+// count would produce false-positive retries. Figure/table detection is
+// where this model is actually reliable, and it directly targets the
+// "dropped diagram/table" failure mode, which existing OCR-text-based
+// validation structurally cannot see (a diagram has no text to miss).
+function validateQuizAgainstOCR(quiz, ocrText, layoutCounts = null) {
   if (!ocrText) return { valid: true, missingTasks: [], detectedTiers: [], detectedTaskHeaders: [] };
 
   const textLower = ocrText.toLowerCase();
@@ -1327,7 +1642,62 @@ function validateQuizAgainstOCR(quiz, ocrText) {
     missingTasks.push(`${detectedTaskHeaders.length - (quiz.tasks || []).length} task(s) by count`);
   }
 
-  return { valid: missingTasks.length === 0, missingTasks, detectedTiers, detectedTaskHeaders };
+  // Question-level check (not just task/tier headers): count question-label-like
+  // patterns in the OCR text (lettered "a)", numbered "1)", or "Q1"/"Q.1" style)
+  // and compare against how many questions actually made it into the quiz. This
+  // catches the specific failure mode of "the model got the right TASKS but
+  // silently dropped one question inside a task" — the previous check only saw
+  // task/tier headers, so a dropped individual question was invisible to it.
+  // Deliberately conservative (only flags a CLEAR shortfall, not off-by-one) to
+  // avoid triggering an unnecessary/wasteful retry on borderline OCR noise —
+  // table cells and decode-code entries can loosely resemble a label pattern,
+  // so a small mismatch is expected and not worth a retry.
+  const labelMatches = new Set();
+  const letterLabelRe = /(?:^|[\s(])([a-h])\)\s/gm;
+  const numberLabelRe = /(?:^|[\s(])(\d{1,2})\)\s/gm;
+  const qLabelRe = /\bQ\.?\s?(\d{1,2})\b/gi;
+  let lm;
+  while ((lm = letterLabelRe.exec(ocrText)) !== null) labelMatches.add(`L${lm[1].toLowerCase()}`);
+  while ((lm = numberLabelRe.exec(ocrText)) !== null) labelMatches.add(`N${lm[1]}`);
+  while ((lm = qLabelRe.exec(ocrText)) !== null) labelMatches.add(`Q${lm[1]}`);
+  const likelyLabelCount = labelMatches.size;
+  const actualQuestionCount = (quiz.tasks || []).reduce((sum, t) => sum + (t.questions || []).length, 0);
+  // Only flag a shortfall of at least 3 (or 25%, whichever is larger) — well
+  // past normal OCR-pattern noise, but still catches genuinely dropped questions.
+  const shortfall = likelyLabelCount - actualQuestionCount;
+  const shortfallThreshold = Math.max(3, Math.ceil(actualQuestionCount * 0.25));
+  if (likelyLabelCount > 0 && shortfall >= shortfallThreshold) {
+    missingTasks.push(`~${shortfall} question(s) by label count (OCR suggests ~${likelyLabelCount} labeled items, quiz has ${actualQuestionCount})`);
+  }
+
+  // Figure/table cross-check against the ML layout detector (see comment above
+  // the function). Count every visual element the quiz actually captured —
+  // shared task images, per-question diagrams, charts, Venns, diagram-fills,
+  // and table blocks — and compare against what the layout model detected on
+  // the page. Conservative by design (shortfall of 2+, not 1) since a single
+  // detected "figure" is sometimes decorative (a logo, clipart) rather than
+  // content — this check exists to catch a clearly dropped diagram or table,
+  // not to nitpick borderline cases.
+  if (layoutCounts && (layoutCounts.figures > 0 || layoutCounts.tables > 0)) {
+    let capturedVisuals = 0;
+    for (const t of (quiz.tasks || [])) {
+      if (t.sharedImage) capturedVisuals++;
+      if (t.chart) capturedVisuals++;
+      if (t.diagramFill) capturedVisuals++;
+      if (Array.isArray(t.tables)) capturedVisuals += t.tables.length;
+      for (const q of (t.questions || [])) {
+        if (q.type === 'venn') capturedVisuals++;
+        if (q.hasImage) capturedVisuals++;
+      }
+    }
+    const detectedVisuals = (layoutCounts.figures || 0) + (layoutCounts.tables || 0);
+    const visualShortfall = detectedVisuals - capturedVisuals;
+    if (visualShortfall >= 2) {
+      missingTasks.push(`~${visualShortfall} diagram/table(s) by layout detection (page has ~${detectedVisuals} figure/table regions, quiz captured ${capturedVisuals})`);
+    }
+  }
+
+  return { valid: missingTasks.length === 0, missingTasks, detectedTiers, detectedTaskHeaders, likelyLabelCount, actualQuestionCount };
 }
 
 // ── POST /quiz/generate — PDF upload → quiz JSON (Claude Vision primary, Mistral fallback) ──
@@ -1340,6 +1710,12 @@ async function generateQuizHandler(req, res) {
 
     const { grade, subject, school } = req.body;
     const quizId = uuidv4().slice(0, 8);
+    // ── Diagnostic timing instrumentation (temporary — investigating an
+    // intermittent stall on large image-heavy worksheets). Logs elapsed ms at
+    // each pipeline stage boundary, tagged with quizId so concurrent requests
+    // don't interleave confusingly. ──
+    const __t0 = Date.now();
+    const __mark = (stage) => console.log(`[quiz][timing][${quizId}] ${stage}: ${Date.now() - __t0}ms elapsed`);
     // ?engine=qwen (etc.) skips Gemini so the fallback chain starts at that engine —
     // used for benchmarking engines against each other on the same worksheet.
     const forceEngine = String(req.query.engine || req.body.engine || '').toLowerCase();
@@ -1380,11 +1756,28 @@ async function generateQuizHandler(req, res) {
     //      (falls back to heuristic OpenCV if Python service is unavailable)
     //   C) Gemini Vision            → read PDF directly for quiz JSON (LLM)
     //
-    // Priority: Gemini reads the PDF best. OCR text is fallback.
+    // Priority: Gemini reads the PDF best, so its JSON is the primary result.
+    // OCR text serves two purposes: (1) fallback content source if Gemini fails,
+    // and (2) ALWAYS-ON ground truth for validateQuizAgainstOCR() below, so every
+    // generation — not just failed ones — gets cross-checked before the teacher
+    // sees a preview.
     // Images come from ML layout crops (primary) or OpenCV crops (fallback).
     // ══════════════════════════════════════════════════════════════════════
 
     const parallelTasks = [];
+
+    // A) Tesseract OCR — ALWAYS run, not just as a failure fallback. This is the
+    // ground truth validateQuizAgainstOCR() below checks Gemini's output against
+    // (missing tasks/tiers) before the teacher ever sees a preview. Previously
+    // this only ran when Gemini's primary call had already FAILED, so on the
+    // normal/successful path (the common case, especially now with
+    // temperature:0 making Gemini reliable) there was NO independent
+    // cross-check at all before showing the preview — a real accuracy gap.
+    parallelTasks.push(
+      ocrFullPDF(req.file.buffer, 1.5)
+        .then(r => ({ type: 'ocr', result: r }))
+        .catch(err => { console.log('[quiz] OCR failed:', err.message); return { type: 'ocr', result: null }; })
+    );
 
     // B) Python ML layout detection (primary) — DocLayout-YOLO for precise figure/table cropping
     parallelTasks.push(
@@ -1416,26 +1809,40 @@ async function generateQuizHandler(req, res) {
     // C) Gemini Vision — generate structured quiz JSON (LLM, primary)
     if (genAI && !skipGemini) {
       parallelTasks.push(
-        callGeminiVision(geminiParts, { grade, subject, school })
+        withTimeout(callGeminiVision(geminiParts, { grade, subject, school }), GEMINI_VISION_TIMEOUT_MS, 'gemini-vision')
           .then(r => ({ type: 'gemini', result: r }))
-          .catch(err => { console.log('[quiz] Gemini failed:', err.message); return { type: 'gemini', result: null }; })
+          .catch(err => {
+            const msg = String((err && err.message) || err);
+            if (msg.startsWith('TIMEOUT:')) {
+              console.log(`[quiz] Gemini TIMEOUT — no response after ${GEMINI_VISION_TIMEOUT_MS}ms, falling back to Qwen/Pixtral/Groq/OCR`);
+            } else if (/network|fetch|ECONNRESET|ETIMEDOUT|ENOTFOUND/i.test(msg)) {
+              console.log('[quiz] Gemini local/network error:', msg);
+            } else {
+              console.log('[quiz] Gemini API error:', msg);
+            }
+            return { type: 'gemini', result: null };
+          })
       );
     }
 
     console.log(`[quiz] Running ${parallelTasks.length} tasks in parallel: ML Layout${genAI && !skipGemini ? ' + Gemini' : ''}...`);
+    __mark('before Promise.all(OCR + layout-ml + Gemini)');
     const parallelResults = await Promise.all(parallelTasks);
+    __mark('after Promise.all(OCR + layout-ml + Gemini)');
 
     let ocrText = null;
     let layoutMLResult = null;
     for (const pr of parallelResults) {
       if (pr.type === 'gemini' && pr.result) result = pr.result;
       if (pr.type === 'layout-ml' && pr.result) layoutMLResult = pr.result;
+      if (pr.type === 'ocr' && pr.result) ocrText = pr.result;
     }
 
     // Convert ML layout result to diagram format (or fall back to heuristic OpenCV)
     if (layoutMLResult) {
       diagramExtraction = await layoutResultToDiagramFormat(layoutMLResult);
       console.log(`[quiz] ML Layout: ${diagramExtraction?.diagrams?.length || 0} figures/tables detected`);
+      __mark('after layoutResultToDiagramFormat');
     }
     if (!diagramExtraction) {
       console.log('[quiz] ML Layout unavailable, falling back to heuristic OpenCV...');
@@ -1453,13 +1860,16 @@ async function generateQuizHandler(req, res) {
       }
     }
 
-    // Lazy load Tesseract OCR only if the primary Gemini Vision extraction failed
-    if (!result) {
+    // Safety net: OCR now runs upfront in the parallel block above, always — but
+    // if that specific call failed (network blip, timeout) while the vision fallback
+    // chain below is about to run anyway, retry it once so validation still has
+    // ground truth to check against.
+    if (!ocrText) {
       try {
-        console.log('[quiz] Gemini Vision failed — running Tesseract OCR lazily as fallback...');
+        console.log('[quiz] OCR missing — retrying once before validation...');
         ocrText = await ocrFullPDF(req.file.buffer, 1.5);
       } catch (err) {
-        console.log('[quiz] Lazy Tesseract OCR failed:', err.message);
+        console.log('[quiz] OCR retry also failed:', err.message);
       }
     }
 
@@ -1581,6 +1991,7 @@ async function generateQuizHandler(req, res) {
     if (!result) {
       return res.status(500).json({ error: 'Could not generate quiz from worksheet' });
     }
+    __mark('after fallback chain (result ready)');
 
     // Parse JSON response
     let quiz;
@@ -1589,10 +2000,20 @@ async function generateQuizHandler(req, res) {
     } catch {
       return res.status(500).json({ error: 'AI returned invalid JSON', raw: result });
     }
+    __mark('after JSON.parse(result)');
 
     // ── VALIDATION: Check LLM output against OCR ground truth ──
     const ocrFullText = ocrText ? ocrText.fullText : '';
-    const validation = validateQuizAgainstOCR(quiz, ocrFullText);
+    // layoutMLResult.allCrops is already computed by the /crop call in the
+    // parallel step above (default types=figure,table) — reading its counts
+    // here adds zero extra requests, zero extra latency, zero extra cost.
+    const layoutCounts = layoutMLResult?.allCrops
+      ? {
+          figures: layoutMLResult.allCrops.filter(c => c.type === 'figure').length,
+          tables: layoutMLResult.allCrops.filter(c => c.type === 'table').length,
+        }
+      : null;
+    const validation = validateQuizAgainstOCR(quiz, ocrFullText, layoutCounts);
     if (!validation.valid) {
       console.log(`[quiz] VALIDATION FAILED: Missing ${validation.missingTasks.join(', ')} | Detected tiers: ${validation.detectedTiers.join(',')} | Tasks in OCR: ${validation.detectedTaskHeaders.join(',')}`);
 
@@ -1606,9 +2027,25 @@ async function generateQuizHandler(req, res) {
 
       let retryResult = null;
       // Retry: Gemini → Mistral → Groq
+      // This call is TEXT-ONLY (OCR text in, JSON out) — no images — so it's
+      // inherently much faster than the primary vision call when it succeeds.
+      // Profiling across every observed run this session (MHLE-12, MHLE-22
+      // best/worst case) showed this retry NEVER once completed within the
+      // shared 75s vision timeout — it always timed out and fell through to
+      // Mistral/Groq, which is what actually produced the result. That made
+      // this step pure dead time: 50-67% of total generation time across all
+      // three profiled runs, for zero benefit. A shorter, dedicated timeout
+      // fails fast into the same existing fallback chain (no capability lost)
+      // instead of always waiting the full 75s first.
+      const GEMINI_RETRY_TIMEOUT_MS = parseInt(process.env.GEMINI_RETRY_TIMEOUT_MS || '25000', 10);
       if (genAI) {
-        try { const m = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' }); retryResult = await geminiGenerate(m, [{ text: retryPrompt }]); }
-        catch (e) { /* skip */ }
+        try {
+          const m = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', generationConfig: { temperature: 0 } });
+          retryResult = await withTimeout(geminiGenerate(m, [{ text: retryPrompt }]), GEMINI_RETRY_TIMEOUT_MS, 'gemini-retry');
+        }
+        catch (e) {
+          if (String(e && e.message).startsWith('TIMEOUT:')) console.log(`[quiz] Gemini retry TIMEOUT after ${GEMINI_RETRY_TIMEOUT_MS}ms — falling back to Mistral/Groq`);
+        }
       }
       if (!retryResult && MISTRAL_API_KEY) {
         try { retryResult = await callMistral([{ role: 'user', content: retryPrompt }], 'mistral-large-latest', 16000); }
@@ -1634,6 +2071,7 @@ async function generateQuizHandler(req, res) {
     } else {
       console.log(`[quiz] VALIDATION OK: ${(quiz.tasks||[]).length} tasks, tiers: ${validation.detectedTiers.join(',')}`);
     }
+    __mark('after validateQuizAgainstOCR (+ retry chain if triggered)');
 
     // ── Strip unreliable diagramPosition when LLM was text-only (couldn't see the image) ──
     if (!usedVision) {
@@ -1649,12 +2087,14 @@ async function generateQuizHandler(req, res) {
       matchDiagramsToQuestions(diagramExtraction, quiz);
       quiz.fullPageImages = diagramExtraction.fullPageImages;
       await verifyDiagramAssignments(diagramExtraction, quiz);
+      __mark('after matchDiagramsToQuestions + verifyDiagramAssignments');
     }
 
     // ── Extract sub-figures from table crops (diagrams embedded inside tables) ──
     if (diagramExtraction && diagramExtraction.tableCrops && diagramExtraction.tableCrops.length > 0) {
       console.log(`[quiz] Checking ${diagramExtraction.tableCrops.length} table crops for embedded diagrams...`);
       await extractSubfiguresFromTables(quiz, diagramExtraction.tableCrops, quizId);
+      __mark('after extractSubfiguresFromTables');
     }
 
     // ── Fast path: If ML was unavailable, try PDF→images→subfigure extraction (no ML needed) ──
@@ -1699,17 +2139,40 @@ async function generateQuizHandler(req, res) {
     // ── Diagram-fill: detect blanks on any diagram (pyramid/clock/number-line/etc.)
     //    and pair them with Gemini's answers so students can write directly on it ──
     await resolveDiagramFills(quiz, quizId);
+    __mark('after resolveDiagramFills');
 
     // ── Bar-chart recovery: if a bar-graph task lost its structured chart data (LLM
     //    nondeterminism), re-read the graph image and rebuild it so the generated chart
     //    is shown every time instead of a raw scanned screenshot. ──
-    await recoverBarCharts(quiz);
+    await recoverBarCharts(quiz, layoutMLResult);
+    __mark('after recoverBarCharts');
+
+    // ── Missing-digit vertical arithmetic: solve blanks deterministically from
+    //    the top/bottom/result strings the main pass already extracted — pure
+    //    JS arithmetic, zero additional Gemini calls. Attaches per-blank correct
+    //    digits + step-by-step working so the renderer/grader below don't have
+    //    to fall back to generic single-text-box comparison for this type. ──
+    for (const task of (quiz.tasks || [])) {
+      for (const q of (task.questions || [])) {
+        if (!q.verticalMath) continue;
+        const solved = solveVerticalMath(q.verticalMath);
+        if (solved.solvable) Object.assign(q.verticalMath, solved);
+        const opCheck = checkVerticalMathOperator(q, task);
+        if (opCheck) {
+          console.log(`[quiz] vertical-math operator corrected (${opCheck.via}): "${q.verticalMath.top} ${q.verticalMath.operator} ${q.verticalMath.bottom}" → operator should be "${opCheck.correctOperator}"`);
+          q.verticalMath.operator = opCheck.correctOperator;
+          if (opCheck.correctAnswer !== undefined) q.answer = opCheck.correctAnswer;
+          else if (q.verticalMath.result) q.verticalMath.result = String(opCheck.correctResult);
+        }
+      }
+    }
 
     // ── Post-process: auto-detect MCQ questions the LLM missed ──
     autoDetectMCQ(quiz);
 
     // ── Embed all images as base64 data URIs (so quiz works on Cloud Run / any server) ──
     embedQuizImages(quiz);
+    __mark('after embedQuizImages (done)');
 
     // Add metadata
     quiz.engine = usedEngine;
@@ -1844,7 +2307,7 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
           usedVision = false; // text-only cannot reliably provide diagramPosition
           const model = genAI.getGenerativeModel({
             model: 'gemini-2.5-flash',
-            generationConfig: { responseMimeType: 'application/json' }
+            generationConfig: { responseMimeType: 'application/json', temperature: 0 }
           });
           result = await geminiGenerate(model, [{ text: prompt }]);
           console.log(`[quiz] Gemini text returned ${result.length} chars`);
@@ -1976,7 +2439,7 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
 
     // ── Bar-chart recovery: rebuild any bar-graph task that lost its structured chart
     //    data so the generated chart shows instead of a raw scanned screenshot. ──
-    await recoverBarCharts(quiz);
+    await recoverBarCharts(quiz, layoutMLResult);
 
     // ── Post-process: auto-detect MCQ questions the LLM missed ──
     autoDetectMCQ(quiz);
@@ -2270,6 +2733,59 @@ router.post('/validate', express.json({ limit: '5mb' }), (req, res) => {
     res.json(validation);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /quiz/grade-answer — Tier 2 semantic grading (only called when the
+// free client-side keyword check already marked an answer wrong) ───────────
+// Short-answer questions have many valid phrasings ("Plants need sunlight to
+// make food" vs "Sunlight helps plants produce food") that a keyword-overlap
+// check can miss when the paraphrase shares no root words. This is the
+// fallback: a small, fast Groq text call (no vision, no Gemini) that judges
+// MEANING, not wording. Kept cheap/fast on purpose — it's Tier 2, only
+// invoked for the minority of answers that already failed the free Tier 1
+// check, so most correct answers never reach this endpoint at all.
+router.post('/grade-answer', express.json({ limit: '20kb' }), async (req, res) => {
+  try {
+    const { expected, student, question } = req.body || {};
+    if (!expected || !student) return res.status(400).json({ error: 'expected and student required' });
+    if (!groq) return res.json({ verdict: 'incorrect', reason: 'Semantic grading unavailable.' });
+
+    const prompt = `You are grading a primary-school student's short-answer response.
+Question: ${question || '(not provided)'}
+Expected concept: ${expected}
+Student's answer: ${student}
+
+Judge whether the student's answer means the SAME THING as the expected concept, even if the
+wording, sentence structure, or synonyms differ completely. Accept valid paraphrases. Reject
+answers that state a genuinely different or incorrect concept, even if some words overlap.
+Be strict about the CONCEPT being right — do not accept a wrong idea just because it's phrased
+confidently or shares a topic word with the expected answer.
+
+The expected concept may have MULTIPLE parts (e.g. "Plants need sunlight, water, and carbon
+dioxide to make food" has three parts). If the student correctly names SOME but not ALL of the
+required parts, and nothing they said is wrong, that is "partial" — not "correct" and not
+"incorrect". Only use "correct" when every required part is present (in any wording). Use
+"incorrect" when the answer is off-topic or states a wrong concept, even if partially detailed.
+
+Reply with ONLY this JSON, no markdown:
+{"verdict": "correct" or "partial" or "incorrect", "reason": "one short sentence, written directly to the student, explaining why (for partial, name what's missing)"}`;
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0,
+      max_tokens: 150,
+      response_format: { type: 'json_object' },
+    });
+    const parsed = JSON.parse(completion.choices[0].message.content);
+    const verdict = ['correct', 'partial', 'incorrect'].includes(parsed.verdict) ? parsed.verdict : 'incorrect';
+    res.json({ verdict, reason: parsed.reason || '' });
+  } catch (err) {
+    console.error('[quiz/grade-answer]', err.message);
+    // Fail closed to "incorrect" but don't crash the quiz UI — the student
+    // still sees their Tier-1 result, just without the semantic override.
+    res.json({ verdict: 'incorrect', reason: '' });
   }
 });
 
@@ -3187,7 +3703,7 @@ function validateQuiz(quiz) {
 // Sends BOTH the original PDF and the quiz JSON to Gemini and asks it to compare
 async function compareQuizWithPDF(pdfBuffer, quiz, quizHTML) {
   if (!genAI) throw new Error('GEMINI_API_KEY not configured');
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', generationConfig: { temperature: 0 } });
 
   const prompt = `You are a Quality Assurance expert for an EdTech platform called Aivorah.
 
@@ -3449,6 +3965,16 @@ function normalizeCharts(quiz) {
     if (task.chart && Array.isArray(task.chart.bars) && task.chart.bars.length) continue;
     const blob = [task.title, task.sharedImageDescription, ...(task.questions || []).map(q => q.question || '')].join('  ');
     if (!/bar\s*graph|column\s*chart|bar\s*chart/i.test(blob)) continue;
+    // Never auto-synthesize a chart for a task the AI already classified as an
+    // "activity" — that means the student draws/constructs the graph
+    // themselves on paper (e.g. "organize the data... draw a bar graph in
+    // your graph book"), so showing a pre-solved chart here defeats the
+    // exercise. This regex fallback used to run blind, ignoring that
+    // classification entirely — it would trigger on the mere PHRASE "bar
+    // graph" even when the worksheet was asking the student to draw one,
+    // not showing an existing one to read.
+    if ((task.questions || []).some(q => q.type === 'activity')) continue;
+    if (/\bdraw\b[^.]{0,40}\b(graph|chart)\b[^.]{0,25}\b(book|notebook|copy)\b/i.test(blob)) continue;
 
     // Parse "football has 16 votes, tennis has 8, ..." → bars
     const bars = [];
@@ -3634,6 +4160,12 @@ function renderQuizHTML(quiz, branding = {}) {
     'MUST DO':     { bg: 'rgba(147,176,172,0.08)', border: '#93B0AC', label: '#93B0AC', labelBg: 'rgba(147,176,172,0.15)' },
     'COULD DO':    { bg: 'rgba(197,189,150,0.08)', border: '#C5BD96', label: '#C5BD96', labelBg: 'rgba(197,189,150,0.15)' },
     'ENRICHMENT':  { bg: 'rgba(239,209,212,0.08)', border: '#EFD1D4', label: '#EFD1D4', labelBg: 'rgba(239,209,212,0.15)' },
+    // Neutral fallback for any tier language that isn't one of the three
+    // above ("Core"/"Extension", "Level 1/2/3", custom section names, or no
+    // tiers at all). Previously any unrecognized tier silently inherited
+    // MUST DO's green — implying an urgency/priority meaning the worksheet
+    // never stated. Slate, not tied to any tier's meaning.
+    'DEFAULT':     { bg: 'rgba(168,181,179,0.06)', border: '#8C9C99', label: '#8C9C99', labelBg: 'rgba(168,181,179,0.14)' },
   };
 
   // Aivorah concept card colors
@@ -3720,7 +4252,28 @@ function renderQuizHTML(quiz, branding = {}) {
     qNum++;
     const qId = `q${qNum}`;
     if (q.type === 'venn') {
-      answersMap[qId] = { venn: true, answers: q.answers || { left: [], center: [], right: [] } };
+      // openEnded: the worksheet asks the student to pick their OWN data to sort
+      // (e.g. "choose any two times tables and sort their multiples") — there is
+      // no single correct answer for the AI to compute, so grading against a
+      // fixed "answers" set is impossible. Auto-accept once filled in, same
+      // pattern as open-ended text questions above (a.open).
+      answersMap[qId] = { venn: true, open: !!q.openEnded, answers: q.answers || { left: [], center: [], right: [] } };
+      return qId;
+    }
+    // Missing-digit vertical arithmetic with a deterministic solve available
+    // (see solveVerticalMath) gets its OWN grading path — dedicated per-blank
+    // digit validation + an independent arithmetic cross-check — instead of
+    // the generic single-text-box comparison every other type uses below.
+    if (q.verticalMath && q.verticalMath.solvable) {
+      answersMap[qId] = {
+        vertMath: true,
+        vmOperator: q.verticalMath.operator || '-',
+        vmBlanks: q.verticalMath.blanks,
+        vmTop: q.verticalMath.solvedTopStr,
+        vmBottom: q.verticalMath.solvedBottomStr,
+        vmResult: q.verticalMath.solvedResultStr,
+        vmSteps: q.verticalMath.steps,
+      };
       return qId;
     }
     const ansRaw = q.answer;
@@ -4099,23 +4652,30 @@ function renderQuizHTML(quiz, branding = {}) {
       // student would actually see it on the worksheet — a right-aligned digit
       // stack with the operator and a rule line — instead of flat run-on text
       // like "Calculate the missing digits: 9 6 _ - _ 8 3 ----- 1 6 2", which
-      // students couldn't parse. Display-only; the existing answer input/check
-      // below is untouched.
+      // students couldn't parse.
+      // When solveVerticalMath() found a deterministic answer, blank cells
+      // become individual single-digit <input> boxes (dedicated grading path,
+      // see checkVerticalMath below) instead of just a static dash.
+      const isVertMathSolvable = q.verticalMath && q.verticalMath.solvable;
       if (q.verticalMath && q.verticalMath.top && q.verticalMath.bottom) {
         const vm = q.verticalMath;
-        const digitCell = (d) => {
+        const digitCell = (d, row, idx) => {
           const blank = d === '_' || d === '' || d == null;
+          if (blank && isVertMathSolvable) {
+            return `<input type="text" maxlength="1" inputmode="numeric" id="${qId}-vmb-${row}-${idx}" data-vm-row="${row}" data-vm-idx="${idx}" style="display:inline-block;width:1.1em;height:1.2em;text-align:center;font:inherit;color:inherit;background:rgba(197,189,150,0.12);border:none;border-bottom:2px solid #C5BD96;padding:0;">`;
+          }
           return `<span style="display:inline-block;min-width:1.3em;text-align:center;${blank ? 'border-bottom:2px solid #C5BD96;color:#C5BD96;' : ''}">${blank ? '&nbsp;' : fmt(String(d))}</span>`;
         };
-        const digitsRow = (s) => String(s).split('').map(digitCell).join('');
+        const digitsRow = (s, row) => String(s).split('').map((d, idx) => digitCell(d, row, idx)).join('');
         const opSpacer = `<span style="display:inline-block;min-width:1.3em;text-align:center;">&nbsp;</span>`;
         const opCell = `<span style="display:inline-block;min-width:1.3em;text-align:center;color:#93B0AC;">${fmt(vm.operator || '-')}</span>`;
-        html += `<div style="margin:4px 0 16px;font-family:'Courier New',monospace;font-size:22px;font-weight:700;color:#F0EEEC;display:inline-block;text-align:right;line-height:1.5;">
-          <div>${opSpacer}${digitsRow(vm.top)}</div>
-          <div>${opCell}${digitsRow(vm.bottom)}</div>
+        html += `<div id="${qId}-vm-display" style="margin:4px 0 16px;font-family:'Courier New',monospace;font-size:22px;font-weight:700;color:#F0EEEC;display:inline-block;text-align:right;line-height:1.5;">
+          <div>${opSpacer}${digitsRow(vm.top, 'top')}</div>
+          <div>${opCell}${digitsRow(vm.bottom, 'bottom')}</div>
           <div style="border-top:2px solid #93B0AC;margin:2px 0;"></div>
-          <div>${vm.result ? `${opSpacer}${digitsRow(vm.result)}` : ''}</div>
-        </div>`;
+          <div>${vm.result ? `${opSpacer}${digitsRow(vm.result, 'result')}` : ''}</div>
+        </div>
+        <div id="${qId}-vm-corrected" style="display:none;margin:4px 0 16px;font-family:'Courier New',monospace;font-size:22px;font-weight:700;color:#F0EEEC;text-align:right;line-height:1.5;"></div>`;
       }
 
       if (q.imageUrl && !q._sharedImage) {
@@ -4129,6 +4689,14 @@ function renderQuizHTML(quiz, branding = {}) {
         </div>
         <div class="q-actions" style="display:flex;gap:10px;margin-top:10px">
           <button class="btn-show" style="display:inline-block" onclick="toggleSolution('${qId}'); if(!done.has('${qId}')){sc++;done.add('${qId}');} attempted.add('${qId}'); up();">Show Answer</button>
+          ${q.hint ? `<button class="btn-hint" onclick="toggleHint('${qId}')">Hint</button>` : ''}
+        </div>`;
+      } else if (isVertMathSolvable) {
+        // Dedicated validator (checkVerticalMath below) — reads the per-blank
+        // digit inputs rendered above, not a single generic text box.
+        html += `
+        <div class="q-actions" style="display:flex;gap:10px;margin-top:10px">
+          <button class="btn-check" onclick="checkVerticalMath('${qId}')">Check</button>
           ${q.hint ? `<button class="btn-hint" onclick="toggleHint('${qId}')">Hint</button>` : ''}
         </div>`;
       } else if (isMcq) {
@@ -4183,14 +4751,20 @@ function renderQuizHTML(quiz, branding = {}) {
   }
 
   for (const task of (quiz.tasks || [])) {
-    const s = tierStyles[task.tier] || tierStyles['MUST DO'];
+    // Case-insensitive match: the prompt now preserves the worksheet's own
+    // casing verbatim ("Must Do", not forced to "MUST DO"), so the lookup
+    // must normalize before matching — otherwise the three common tiers
+    // would ALSO wrongly fall through to the neutral style, breaking the
+    // exact worksheets this styling was originally built for. The BADGE
+    // TEXT still uses task.tier's original casing below, unchanged.
+    const s = tierStyles[(task.tier || '').toUpperCase()] || tierStyles['DEFAULT'];
     const taskTitle = (task.title || '').replace(/^(Task\s*\d+)\s*[:\.]\s*/i, '$1 &middot; ').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     const layout = task.layout || { type: 'single-column', columns: 1 };
     const questions = task.questions || [];
 
     tasksHTML += `
     <div class="task-block" style="border-left:5px solid ${s.border}; background:${s.bg}; border-radius:12px; padding:20px 24px; margin:28px 0;">
-      <span class="tier-badge" style="display:inline-block;background:${s.labelBg};color:${s.label};font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">${task.tier}</span>
+      ${task.tier ? `<span class="tier-badge" style="display:inline-block;background:${s.labelBg};color:${s.label};font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:4px;margin-bottom:6px;">${task.tier}</span>` : ''}
       <h2 style="font-size:18px;color:${s.label};margin:6px 0 18px;font-weight:700;">${taskTitle}</h2>
       ${task.passage ? `<div style="margin:0 0 20px;padding:16px 20px;background:rgba(255,255,255,0.04);border:1px solid rgba(195,220,216,0.2);border-radius:10px;font-size:14px;color:#D8E8E6;line-height:1.8;">${fmt(task.passage)}</div>` : ''}`;
 
@@ -4451,7 +5025,13 @@ function renderQuizHTML(quiz, branding = {}) {
        separate, visually disconnected dark rectangle sitting on top of the page rather
        than blending into it. */
     .header { background: #0F0F0F; color: #F0EEEC; padding: 14px 110px 14px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; min-height: 60px; }
-    .header-text { text-align: left; flex: 1 1 260px; min-width: 0; }
+    /* flex-grow MUST stay 0 here — giving header-text grow:1 (equal to
+       header-logos) let it fight header-logos for free space, which pushed the
+       logos off the true center between title and score (the regression seen
+       with a short title like "Mathematics Activity Sheet" leaving the logos
+       sitting right-of-center instead of centered in the remaining gap). Only
+       flex-shrink + a basis are needed for wrapping on narrow/split screens. */
+    .header-text { text-align: left; flex: 0 1 260px; min-width: 0; }
     .header-text h1 { overflow-wrap: anywhere; }
     .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 2px; }
     .header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; margin: 0; }
@@ -4675,7 +5255,12 @@ function renderQuizHTML(quiz, branding = {}) {
     // reveal the Show Answer before getting it right (that's reading, not solving). ──
     const hintUsed = new Set();
     const revealed = new Set();
-    function creditFor(id) { return revealed.has(id) ? 0 : (hintUsed.has(id) ? 0.5 : 1); }
+    const semanticCredit = new Map(); // qId -> fraction, set when Tier 2 grading returns "partial"
+    function creditFor(id) {
+      if (revealed.has(id)) return 0;
+      const base = hintUsed.has(id) ? 0.5 : 1;
+      return semanticCredit.has(id) ? Math.min(base, semanticCredit.get(id)) : base;
+    }
 
     // ── Theory/short-factual answer matching — compares meaningful keywords instead
     // of literal strings, so word order and filler words don't cause a false "wrong".
@@ -4766,7 +5351,7 @@ function renderQuizHTML(quiz, branding = {}) {
       try { if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify(scoreMsg)); } catch(e) {}
     }
 
-    function checkAnswer(id) {
+    async function checkAnswer(id) {
       const a = answers[id];
       if (!a) return;
       const inp = document.getElementById(id + '-input');
@@ -4789,24 +5374,62 @@ function renderQuizHTML(quiz, branding = {}) {
         return;
       }
       // Theory/short-factual answers (multi-word, a real correct answer exists but the
-      // student's phrasing won't line up with it exactly) — compare the meaningful
-      // KEYWORDS in each answer rather than the literal strings, so word order, filler
-      // words ("it was..."), and extra phrasing don't cause a false "wrong". Runs
-      // instantly, client-side — no network call, no dependency on any AI service.
+      // student's phrasing won't line up with it exactly). Two tiers:
+      // Tier 1 — instant, free, client-side KEYWORD overlap. Catches most valid
+      // paraphrases immediately with zero network call.
+      // Tier 2 — only when Tier 1 says "wrong": one small server-side semantic
+      // check (Groq text model, not vision) that judges MEANING, so a
+      // synonym-only rewrite with no shared root words ("Chlorophyll converts
+      // solar energy into glucose" for an expected answer about sunlight/food)
+      // isn't wrongly marked incorrect just because the words don't overlap.
       if (a.theory) {
         const okTh = keywordMatch(val, String(a.answer));
         const elapsedTh = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
-        studentAnswers[id] = { answer: val, correct: okTh, timeSpent: elapsedTh, question: '' };
-        attempted.add(id);
         if (okTh) {
+          studentAnswers[id] = { answer: val, correct: true, timeSpent: elapsedTh, question: '' };
+          attempted.add(id);
           r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Correct!</span>';
           inp.style.borderColor = '#4a9d6e';
           inp.style.background = 'rgba(74,157,110,0.14)';
           if (!done.has(id)) { sc += creditFor(id); done.add(id); }
           const sol = document.getElementById(id + '-solution');
           if (sol) sol.style.display = 'block';
+          up();
+          return;
+        }
+        // Tier 1 says wrong — ask Tier 2 before finalizing, in case it's a
+        // valid (or partially valid) paraphrase Tier 1's keyword overlap
+        // couldn't recognize. Three-way verdict: correct / partial / incorrect.
+        r.innerHTML = '<span style="color:#A8B5B3;font-weight:600">Checking...</span>';
+        let semanticResult = { verdict: 'incorrect', reason: '' };
+        try {
+          const qEl0 = document.getElementById(id + '-card');
+          const qText0 = qEl0 ? (qEl0.querySelector('.q-label, strong')?.textContent || '') : '';
+          const gRes = await fetch(API_BASE + '/quiz/grade-answer', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ expected: String(a.answer), student: val, question: qText0 }),
+          });
+          if (gRes.ok) semanticResult = await gRes.json();
+        } catch (e) { /* network hiccup — fall back to Tier 1's "wrong" */ }
+        const verdict = semanticResult.verdict || 'incorrect';
+        studentAnswers[id] = { answer: val, correct: verdict !== 'incorrect', partial: verdict === 'partial', timeSpent: elapsedTh, question: '' };
+        attempted.add(id);
+        if (verdict === 'correct') {
+          r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Correct!</span>' + (semanticResult.reason ? '<div style="font-size:12px;color:#A8B5B3;margin-top:4px;">' + fmt(semanticResult.reason) + '</div>' : '');
+          inp.style.borderColor = '#4a9d6e';
+          inp.style.background = 'rgba(74,157,110,0.14)';
+          if (!done.has(id)) { sc += creditFor(id); done.add(id); }
+          const sol = document.getElementById(id + '-solution');
+          if (sol) sol.style.display = 'block';
+        } else if (verdict === 'partial') {
+          r.innerHTML = '<span style="color:#C5BD96;font-weight:700">&#9679; Partially Correct</span>' + (semanticResult.reason ? '<div style="font-size:12px;color:#A8B5B3;margin-top:4px;">' + fmt(semanticResult.reason) + '</div>' : '');
+          inp.style.borderColor = '#C5BD96';
+          inp.style.background = 'rgba(197,189,150,0.14)';
+          if (!done.has(id)) { semanticCredit.set(id, 0.5); sc += creditFor(id); done.add(id); }
+          const sol2 = document.getElementById(id + '-solution');
+          if (sol2) sol2.style.display = 'block';
         } else {
-          r.innerHTML = '<span style="color:#c9605f;font-weight:700">Not quite. Try again!</span>';
+          r.innerHTML = '<span style="color:#c9605f;font-weight:700">Not quite. Try again!</span>' + (semanticResult.reason ? '<div style="font-size:12px;color:#A8B5B3;margin-top:4px;">' + fmt(semanticResult.reason) + '</div>' : '');
           inp.style.borderColor = '#c9605f';
           const sh = document.getElementById(id + '-show');
           if (sh) sh.style.display = 'inline-block';
@@ -4838,6 +5461,103 @@ function renderQuizHTML(quiz, branding = {}) {
         r.innerHTML = '<span style="color:#c9605f;font-weight:700">Not quite. Try again!</span>';
         inp.style.borderColor = '#c9605f';
         document.getElementById(id + '-show').style.display = 'inline-block';
+      }
+      up();
+    }
+
+    // ── Dedicated validator for missing-digit vertical arithmetic ──
+    // Each blank is its own <input> (rendered by digitCell in the server
+    // template as id="<qId>-vmb-<row>-<index>"). This function:
+    //   1) checks EACH blank digit independently against the deterministically
+    //      solved correct digit (not a single flattened string comparison),
+    //   2) reconstructs the full top/bottom/result from the student's digits
+    //      and independently re-verifies the arithmetic itself (top ± bottom
+    //      === result) as a cross-check — so correctness never rests on trusting
+    //      the per-digit compare alone,
+    //   3) on a wrong answer, re-renders the same vertical column layout with
+    //      the correct digits highlighted (not plain text) plus the
+    //      step-by-step borrow/carry working already computed server-side.
+    function checkVerticalMath(id) {
+      const a = answers[id];
+      if (!a || !a.vertMath) return;
+      const r = document.getElementById(id + '-result');
+      const blanks = a.vmBlanks || [];
+      let allFilled = true;
+      const studentDigits = {}; // "row-idx" -> digit typed
+      for (const bl of blanks) {
+        const inp = document.getElementById(id + '-vmb-' + bl.row + '-' + bl.index);
+        const v = inp ? inp.value.trim() : '';
+        if (!/^[0-9]$/.test(v)) { allFilled = false; if (inp) inp.style.borderColor = '#C5BD96'; continue; }
+        studentDigits[bl.row + '-' + bl.index] = v;
+      }
+      if (!allFilled) return;
+
+      // Reconstruct the full strings the student effectively entered.
+      const reconstruct = (correctStr, row) => correctStr.split('').map((d, idx) =>
+        studentDigits[row + '-' + idx] !== undefined ? studentDigits[row + '-' + idx] : d
+      ).join('');
+      const studentTop = reconstruct(a.vmTop, 'top');
+      const studentBottom = reconstruct(a.vmBottom, 'bottom');
+      const studentResult = reconstruct(a.vmResult, 'result');
+
+      // Per-blank check.
+      let allDigitsCorrect = true;
+      for (const bl of blanks) {
+        const typed = studentDigits[bl.row + '-' + bl.index];
+        const inp = document.getElementById(id + '-vmb-' + bl.row + '-' + bl.index);
+        const correct = typed === bl.digit;
+        if (!correct) allDigitsCorrect = false;
+        if (inp) {
+          inp.style.borderColor = correct ? '#4a9d6e' : '#c9605f';
+          inp.style.background = correct ? 'rgba(74,157,110,0.14)' : 'rgba(201,96,95,0.14)';
+        }
+      }
+
+      // Independent mathematical cross-check — never trust the digit compare alone.
+      const tN = parseInt(studentTop, 10), bN = parseInt(studentBottom, 10), rN = parseInt(studentResult, 10);
+      const arithmeticOk = a.vmOperator === '+' ? (tN + bN === rN) : (tN - bN === rN);
+
+      const ok = allDigitsCorrect && arithmeticOk;
+      const elapsedVm = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+      studentAnswers[id] = { answer: studentTop + ' ' + a.vmOperator + ' ' + studentBottom + ' = ' + studentResult, correct: ok, timeSpent: elapsedVm, question: '' };
+      attempted.add(id);
+
+      if (ok) {
+        r.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Correct!</span>';
+        if (!done.has(id)) { sc += creditFor(id); done.add(id); }
+        const sol = document.getElementById(id + '-solution');
+        if (sol) sol.style.display = 'block';
+      } else {
+        r.innerHTML = '<span style="color:#c9605f;font-weight:700">Not quite — check the highlighted digit(s).</span>';
+        // Show the completed, correct working in the same vertical layout,
+        // with each corrected digit highlighted — not plain text.
+        const correctedRow = (s, row) => s.split('').map((d, idx) => {
+          const wasBlank = blanks.some(function(bl) { return bl.row === row && bl.index === idx; });
+          const style = wasBlank
+            ? 'display:inline-block;min-width:1.3em;text-align:center;background:rgba(74,157,110,0.22);color:#4a9d6e;border-radius:3px;'
+            : 'display:inline-block;min-width:1.3em;text-align:center;';
+          return '<span style="' + style + '">' + d + '</span>';
+        }).join('');
+        const opSp = '<span style="display:inline-block;min-width:1.3em;text-align:center;">&nbsp;</span>';
+        const opC = '<span style="display:inline-block;min-width:1.3em;text-align:center;color:#93B0AC;">' + (a.vmOperator || '-') + '</span>';
+        const corrected = document.getElementById(id + '-vm-corrected');
+        if (corrected) {
+          corrected.innerHTML =
+            '<div style="font-size:12px;color:#93B0AC;font-family:inherit;font-weight:600;margin-bottom:4px;">Corrected working:</div>' +
+            '<div>' + opSp + correctedRow(a.vmTop, 'top') + '</div>' +
+            '<div>' + opC + correctedRow(a.vmBottom, 'bottom') + '</div>' +
+            '<div style="border-top:2px solid #93B0AC;margin:2px 0;"></div>' +
+            '<div>' + opSp + correctedRow(a.vmResult, 'result') + '</div>';
+          corrected.style.display = 'block';
+        }
+        const stepsHtml = (a.vmSteps || []).map(function(s) { return '<li>' + fmt(s) + '</li>'; }).join('');
+        const sol = document.getElementById(id + '-solution');
+        if (sol) {
+          sol.innerHTML = '<strong>&#9989; Step-by-step:</strong><ol style="margin:6px 0 0 18px;padding:0;">' + stepsHtml + '</ol>';
+          sol.style.display = 'block';
+        }
+        const sh = document.getElementById(id + '-show');
+        if (sh) sh.style.display = 'none'; // solution is already shown inline above
       }
       up();
     }
@@ -4931,6 +5651,25 @@ function renderQuizHTML(quiz, branding = {}) {
     function checkVenn(id) {
       const a = answers[id];
       if (!a || !a.venn) return;
+      // Open-ended Venn (student chose their own data — no fixed correct answer):
+      // accept whatever they filled in, same as open-ended text questions.
+      if (a.open) {
+        var anyFilledOpen = false;
+        ['left','center','right'].forEach(function(rg) {
+          var inp = document.getElementById(id + '-' + rg);
+          if (inp && inp.value.trim()) anyFilledOpen = true;
+          if (inp) { inp.style.borderColor = '#4a9d6e'; inp.style.background = 'rgba(74,157,110,0.14)'; }
+        });
+        if (!anyFilledOpen) return;
+        var rOpen = document.getElementById(id + '-result');
+        var elapsedOpen2 = questionStartTimes[id] ? Math.round((Date.now() - questionStartTimes[id]) / 1000) : 0;
+        studentAnswers[id] = { answer: 'completed', correct: true, timeSpent: elapsedOpen2, question: 'Venn diagram' };
+        attempted.add(id);
+        rOpen.innerHTML = '<span style="color:#4a9d6e;font-weight:700">&#10004; Answer recorded</span>';
+        if (!done.has(id)) { sc += creditFor(id); done.add(id); }
+        up();
+        return;
+      }
       function normItems(s) {
         return String(s || '').replace(/\\band\\b/gi, ',').split(/[,;\\n]/)
           .map(function(x){ return x.trim().toLowerCase(); }).filter(Boolean).sort();

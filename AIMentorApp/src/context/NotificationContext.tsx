@@ -57,7 +57,9 @@ const NotificationContext = createContext<NotificationState>({
   triggerPoll: () => {},
 });
 
-const POLL_INTERVAL_MS  = 15000; // 15s — one combined request, less stress
+const POLL_INTERVAL_MS  = 8000; // 8s — was 15s; push notifications don't exist on web (see
+// pushNotifications.ts), so this poll is the ONLY way the web app learns about a new
+// challenge/assignment — 15s made that delay noticeable ("challenge notification is slow").
 const TOAST_AUTO_HIDE_MS = 5000;
 const STALE_GUARD_MS    = 5000;
 

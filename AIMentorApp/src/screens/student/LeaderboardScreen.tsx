@@ -58,7 +58,9 @@ export default function LeaderboardScreen({ navigation }: any) {
   }, [tab, myGrade, mySchool, myCurriculum]);
 
   useEffect(() => { fetchLeaderboard(); }, [fetchLeaderboard]);
-  useFocusEffect(useCallback(() => { fetchLeaderboard(); }, [fetchLeaderboard]));
+  // isRefresh=true on refocus — the mount/tab-change effect above already loaded
+  // the board, so refocusing shouldn't blank it back to the spinner.
+  useFocusEffect(useCallback(() => { fetchLeaderboard(true); }, [fetchLeaderboard]));
 
   const myEntry = leaderboard.find(s => s.id === studentId) ?? null;
   const aboveEntry = myEntry ? leaderboard.find(e => e.rank === myEntry.rank - 1) : null;

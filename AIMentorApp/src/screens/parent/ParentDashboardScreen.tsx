@@ -349,7 +349,11 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
       }).catch(() => {});
     fetch(`${SERVER_URL}/assignments?studentId=${selectedChild.id}`)
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setAssignments(data.slice(0, 4)); })
+      // Server sorts oldest-due-first, so a long-overdue-but-still-pending
+      // assignment sorts ahead of real upcoming ones — take a wider pool here
+      // so the "Upcoming Events" date filter below has real future items to find,
+      // instead of only ever seeing the 4 oldest (most overdue) assignments.
+      .then(data => { if (Array.isArray(data)) setAssignments(data.slice(0, 20)); })
       .catch(() => {});
     setSubjectPerf([]);
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children/${selectedChild.id}/ai-report`)
@@ -377,8 +381,15 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
     child.xpPoints >= 1000 && { icon: 'star', label: '1000 XP', color: colors.accentYellow },
   ].filter(Boolean) as { icon: string; label: string; color: string }[];
 
-  // Upcoming events from assignments
-  const upcomingEvents = assignments.filter(a => a.status === 'pending').slice(0, 2);
+  // Upcoming events from assignments — must actually be upcoming (due today or
+  // later), not just "pending". A long-overdue, never-submitted assignment from
+  // months ago is still status='pending' forever, which was permanently clogging
+  // this list with stale past dates instead of showing real upcoming work.
+  const todayISOStr = new Date().toISOString().split('T')[0];
+  const upcomingEvents = assignments
+    .filter(a => a.status === 'pending' && a.dueDate && a.dueDate >= todayISOStr)
+    .sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : 1))
+    .slice(0, 2);
 
   return (
     <ScreenLayout>
@@ -832,7 +843,7 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
                       </View>
                     ))}
                   </View>
-                  <TouchableOpacity style={s.eventsViewAll} onPress={() => navigation.navigate('ParentAssignments')} activeOpacity={0.8}>
+                  <TouchableOpacity style={s.eventsViewAll} onPress={() => navigation.navigate('ParentSchedule')} activeOpacity={0.8}>
                     <Text style={s.cardFooterText}>View Calendar</Text>
                     <Feather name="arrow-right" size={13} color={colors.accentYellow} />
                   </TouchableOpacity>

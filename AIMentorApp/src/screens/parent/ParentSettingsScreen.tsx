@@ -24,7 +24,7 @@ import {
 import { auth } from '../../config/firebase';
 import SERVER_URL from '../../config/serverUrl';
 
-type ModalType = 'name' | 'email' | 'password' | null;
+type ModalType = 'name' | 'email' | 'password' | 'location' | null;
 
 export default function ParentSettingsScreen({ navigation }: any) {
   const { user, updateUser, logout } = useAuth();
@@ -139,15 +139,38 @@ export default function ParentSettingsScreen({ navigation }: any) {
   const [confirmPw,     setConfirmPw]    = useState('');
   const [showCurrent,   setShowCurrent]  = useState(false);
   const [showNew,       setShowNew]      = useState(false);
+  const [newLocation,   setNewLocation]  = useState(user?.location || '');
+  const [modalError,    setModalError]   = useState('');
 
   function openModal(type: ModalType) {
     setNewName(user?.name || '');
     setNewEmail(''); setEmailPassword(''); setEmailError('');
     setEmailStep('form'); setEmailOtp('');
     setCurrentPw(''); setNewPw(''); setConfirmPw('');
+    setNewLocation(user?.location || '');
+    setModalError('');
     setActiveModal(type);
   }
   function closeModal() { setActiveModal(null); setModalLoading(false); }
+
+  async function handleSaveLocation() {
+    const trimmed = newLocation.trim();
+    if (!trimmed) { setModalError('Please enter a location.'); return; }
+    setModalLoading(true);
+    try {
+      const res = await fetch(`${SERVER_URL}/user/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user?.email, location: trimmed }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to save'); }
+      updateUser({ location: trimmed } as any);
+      closeModal();
+      Alert.alert('Updated', 'Your location has been saved.');
+    } catch (e: any) {
+      setModalError(e.message || 'Failed to update location.');
+    } finally { setModalLoading(false); }
+  }
 
   async function handleSaveName() {
     const trimmed = newName.trim();
@@ -241,7 +264,7 @@ export default function ParentSettingsScreen({ navigation }: any) {
                 <View style={styles.divider} />
                 <FieldRow label="Email Address" sub={user?.email || '—'} btnLabel="Change" onPress={() => openModal('email')} styles={styles} />
                 <View style={styles.divider} />
-                <FieldRow label="Location" sub={user?.location || 'Not set'} btnLabel="Update" onPress={() => navigation.navigate('ParentProfile')} styles={styles} />
+                <FieldRow label="Location" sub={user?.location || 'Not set'} btnLabel="Update" onPress={() => openModal('location')} styles={styles} />
               </View>
 
               {/* ── Security ── */}
@@ -555,6 +578,22 @@ export default function ParentSettingsScreen({ navigation }: any) {
           />
         </View>
         <ModalButtons onCancel={closeModal} onSave={handleChangePassword} loading={modalLoading} saveLabel="Change Password" styles={styles} />
+      </AppModal>
+
+      {/* Location Modal — same inline-modal pattern as TeacherSettingsScreen's
+          "School / Institution" field, instead of navigating away to ParentProfile. */}
+      <AppModal visible={activeModal === 'location'} title="Location" onClose={closeModal} styles={styles} colors={colors}>
+        <Text style={styles.modalFieldLabel}>City</Text>
+        <View style={styles.modalInput}>
+          <Feather name="map-pin" size={15} color={colors.textDim} />
+          <TextInput
+            style={styles.modalTextInput} value={newLocation} onChangeText={setNewLocation}
+            placeholder="e.g. Salem" placeholderTextColor={colors.textDim}
+            autoCapitalize="words" autoFocus
+          />
+        </View>
+        {modalError ? <Text style={{ color: colors.accentRed, fontSize: 13, marginTop: 8 }}>{modalError}</Text> : null}
+        <ModalButtons onCancel={closeModal} onSave={handleSaveLocation} loading={modalLoading} saveLabel="Save" styles={styles} />
       </AppModal>
 
       {/* Delete Account — provider-aware (password vs Google), plain overlay for instant close */}

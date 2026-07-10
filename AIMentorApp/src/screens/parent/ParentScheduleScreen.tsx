@@ -114,6 +114,7 @@ interface ScheduleEvent {
   studentId: string;
   createdBy: string;
   assignmentId?: string | null;
+  createdAt?: string;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -142,6 +143,7 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
   const [deadlines, setDeadlines] = useState<ScheduleEvent[]>([]);
   const [eventDates, setEventDates] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const firstLoadDoneRef = useRef(false);
 
   // Event detail modal — shows the full title/time/note when tapping an event block
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
@@ -187,7 +189,10 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
 
   const fetchEvents = useCallback(async () => {
     if (!child) return;
-    setLoading(true);
+    // Only show the full-page spinner on the very first load. All subsequent
+    // fetches (week change, focus, 30s poll) run silently in the background —
+    // otherwise the schedule blanked out and reappeared every 30s ("blinking").
+    if (!firstLoadDoneRef.current) setLoading(true);
     try {
       const weekDates = week.map(d => d.iso);
       const dayFetches = weekDates.map(d =>
@@ -214,7 +219,10 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
         setEventDates(new Set(m.dates ?? []));
       }
     } catch {}
-    setLoading(false);
+    if (!firstLoadDoneRef.current) {
+      firstLoadDoneRef.current = true;
+      setLoading(false);
+    }
   }, [child, week, calYear, calMonth]);
 
   useEffect(() => {
@@ -385,6 +393,32 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                       <Text style={styles.emptyText}>Loading schedule…</Text>
                     </View>
                   ) : (
+                    <>
+                    {/* All-day row — deadline/challenge items (stored at 23:59) are excluded
+                        from the hourly grid below since a 1-minute-tall block there would be
+                        invisible; show them here instead. */}
+                    <View style={styles.allDayRow}>
+                      {week.map((d) => {
+                        const allDayEvents = (eventsMap[d.iso] ?? []).filter(e => e.startTime === '23:59');
+                        return (
+                          <View key={d.iso} style={[styles.allDayCol, { width: colWidth }]}>
+                            {allDayEvents.map(e => {
+                              const [accent, fill, textCol] = typeColors(e.type);
+                              return (
+                                <TouchableOpacity
+                                  key={e.id}
+                                  style={[styles.allDayChip, { backgroundColor: fill, borderLeftColor: accent }]}
+                                  onPress={() => setSelectedEvent({ ...e, accent, fill, textCol })}
+                                  activeOpacity={0.75}
+                                >
+                                  <Text style={[styles.allDayChipText, { color: textCol }]} numberOfLines={1}>{e.title}</Text>
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </View>
+                        );
+                      })}
+                    </View>
                     <View style={{ flexDirection: 'row' }}>
                       {/* Day columns */}
                       {week.map((d) => {
@@ -495,6 +529,7 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                         );
                       })}
                     </View>
+                    </>
                   )}
                 </View>
               </ScrollView>
@@ -642,9 +677,22 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                   <Feather name="x" size={18} color={colors.textDim} />
                 </TouchableOpacity>
               </View>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: selectedEvent?.accent || colors.accentYellow, marginTop: 4 }}>
-                {selectedEvent?.startTime}{selectedEvent?.endTime ? ` – ${selectedEvent.endTime}` : ''}
-              </Text>
+              {selectedEvent?.assignmentId && (selectedEvent?.type === 'deadline' || selectedEvent?.type === 'challenge') ? (
+                <>
+                  {selectedEvent?.createdAt ? (
+                    <Text style={{ fontSize: 12, color: colors.textDim, marginTop: 6 }}>
+                      Assigned {new Date(selectedEvent.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(selectedEvent.createdAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}
+                    </Text>
+                  ) : null}
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: selectedEvent?.accent || colors.accentYellow, marginTop: 4 }}>
+                    Closes {new Date(selectedEvent.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {selectedEvent.startTime}
+                  </Text>
+                </>
+              ) : (
+                <Text style={{ fontSize: 13, fontWeight: '700', color: selectedEvent?.accent || colors.accentYellow, marginTop: 4 }}>
+                  {selectedEvent?.startTime}{selectedEvent?.endTime ? ` – ${selectedEvent.endTime}` : ''}
+                </Text>
+              )}
               {selectedEvent?.note ? (
                 <View style={{ marginTop: 12, backgroundColor: colors.bgDark, borderRadius: radius.md, padding: 12, borderWidth: 1, borderColor: colors.borderColor }}>
                   <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Note from the teacher</Text>
@@ -705,6 +753,12 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   dayHeaderDate:        { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700', color: c.textMuted },
   dayHeaderDateToday:   { color: 'white' },
   dayDot:               { width: 4, height: 4, borderRadius: 2, backgroundColor: c.textDim },
+
+  // All-day row (deadline/challenge chips, above the hourly grid)
+  allDayRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: c.borderColor },
+  allDayCol: { paddingHorizontal: 3, paddingVertical: 4, gap: 3 },
+  allDayChip: { borderLeftWidth: 3, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 3 },
+  allDayChipText: { fontSize: 10, fontWeight: '700' },
 
   // Grid
   dayCol:   { position: 'relative', borderLeftWidth: 1, borderLeftColor: c.borderColor + '50' },

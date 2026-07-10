@@ -81,6 +81,7 @@ export default function ParentProgressScreen({ navigation, route }: any) {
   const [stats, setStats] = useState<any>(null);
   const [weekly, setWeekly] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [loading, setLoading] = useState(true);
+  const firstLoadDoneRef = useRef(false);
   const [refreshing, setRefreshing] = useState(false);
   const [practiceInsights, setPracticeInsights] = useState<any>(null);
   const [insightsGenerating, setInsightsGenerating] = useState(false);
@@ -129,7 +130,9 @@ export default function ParentProgressScreen({ navigation, route }: any) {
 
   const fetchData = async () => {
     if (!child) return;
-    setLoading(true);
+    // Only spinner-block on the very first load — the 30s poll and focus
+    // refresh should update silently, not blank the dashboard each time.
+    if (!firstLoadDoneRef.current) setLoading(true);
     try {
       const [statsRes, weeklyRes, trendsRes] = await Promise.all([
         fetch(`${SERVER_URL}/student/${child.id}`).then(r => r.json()),
@@ -145,7 +148,10 @@ export default function ParentProgressScreen({ navigation, route }: any) {
       }
       setPracticeInsights(trendsRes ?? null);
     } catch { /* ignore */ } finally {
-      setLoading(false);
+      if (!firstLoadDoneRef.current) {
+        firstLoadDoneRef.current = true;
+        setLoading(false);
+      }
       setRefreshing(false);
     }
   };
@@ -615,7 +621,17 @@ export default function ParentProgressScreen({ navigation, route }: any) {
                     </View>
                   </View>
 
-                  {topics.filter(t => !t.passed).length === 0 ? (
+                  {topics.length === 0 ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 }}>
+                      <View style={[styles.insightIcon, { backgroundColor: gold + '18' }]}>
+                        <Feather name="info" size={14} color={gold} />
+                      </View>
+                      <View>
+                        <Text style={{ fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', color: colors.textMain }}>No practice tests taken yet</Text>
+                        <Text style={{ fontFamily: fonts.serif, fontSize: 10, color: colors.textDim }}>Weak areas will show here once your child starts practicing</Text>
+                      </View>
+                    </View>
+                  ) : topics.filter(t => !t.passed).length === 0 ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10 }}>
                       <View style={[styles.insightIcon, { backgroundColor: gold + '18' }]}>
                         <Feather name="check-circle" size={14} color={gold} />

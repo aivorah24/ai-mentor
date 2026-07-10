@@ -130,6 +130,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
   const [targetStudents, setTargetStudents] = useState<'all' | 'specific'>('all');
   const [selectedStudent, setSelectedStudent] = useState<StudentItem | null>(null);
   const [saving, setSaving] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [saveError, setSaveError] = useState('');
 
   // Drag-to-create preview
@@ -467,6 +468,33 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                     })}
                   </View>
 
+                  {/* All-day row — deadline/challenge items (stored at 23:59) are excluded
+                      from the hourly grid below since a 1-minute-tall block there would be
+                      invisible; show them here instead. Not draggable/deletable since these
+                      are auto-generated from assignments/challenges, but tappable to view detail. */}
+                  <View style={styles.allDayRow}>
+                    {week.map((d) => {
+                      const allDayEvents = (eventsMap[d.iso] ?? []).filter(e => e.startTime === '23:59');
+                      return (
+                        <View key={d.iso} style={[styles.allDayCol, { width: colWidth }]}>
+                          {allDayEvents.map(e => {
+                            const [accent, fill, textCol] = typeColors(e.type);
+                            return (
+                              <TouchableOpacity
+                                key={e.id}
+                                style={[styles.allDayChip, { backgroundColor: fill, borderLeftColor: accent }]}
+                                onPress={() => setSelectedEvent({ ...e, accent, fill, textCol })}
+                                activeOpacity={0.75}
+                              >
+                                <Text style={[styles.allDayChipText, { color: textCol }]} numberOfLines={1}>{e.title}</Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      );
+                    })}
+                  </View>
+
                   {/* Day columns */}
                   <View style={{ flexDirection: 'row' }}>
                     {week.map((d) => {
@@ -747,6 +775,39 @@ export default function TeacherScheduleScreen({ navigation }: any) {
             </View>
           </View>
         </Modal>
+
+        {/* ── Event Detail Modal — assignment/challenge deadline chips (read-only) ── */}
+        <Modal visible={!!selectedEvent} transparent animationType="fade" onRequestClose={() => setSelectedEvent(null)}>
+          <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setSelectedEvent(null)}>
+            <TouchableOpacity activeOpacity={1} onPress={() => {}} style={[styles.modal, { borderLeftWidth: 4, borderLeftColor: selectedEvent?.accent || gold }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <Text style={[styles.modalTitle, { flex: 1 }]}>{selectedEvent?.title ?? ''}</Text>
+                <TouchableOpacity onPress={() => setSelectedEvent(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Feather name="x" size={18} color={colors.textDim} />
+                </TouchableOpacity>
+              </View>
+              {selectedEvent?.createdAt ? (
+                <Text style={{ fontSize: 12, color: colors.textDim, marginTop: 6 }}>
+                  Assigned {new Date(selectedEvent.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(selectedEvent.createdAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}
+                </Text>
+              ) : null}
+              <Text style={{ fontSize: 12, fontWeight: '700', color: selectedEvent?.accent || gold, marginTop: 4 }}>
+                Closes {selectedEvent?.date ? new Date(selectedEvent.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''} at {selectedEvent?.startTime}
+              </Text>
+              {selectedEvent?.note ? (
+                <View style={{ marginTop: 12, backgroundColor: colors.bgDark, borderRadius: radius.md, padding: 12, borderWidth: 1, borderColor: colors.borderColor }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Note</Text>
+                  <Text style={{ fontSize: 13, color: colors.textMain, lineHeight: 19 }}>{selectedEvent.note}</Text>
+                </View>
+              ) : null}
+              <View style={[styles.modalBtns, { justifyContent: 'center' }]}>
+                <TouchableOpacity style={[styles.modalConfirm, { flex: 0, paddingHorizontal: 32 }]} onPress={() => setSelectedEvent(null)}>
+                  <Text style={styles.modalConfirmText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
       </View>
     </ScreenLayout>
   );
@@ -794,6 +855,12 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   dayHeaderCircleToday: { backgroundColor: c.accentYellow },
   dayHeaderDate:        { fontSize: 14, fontWeight: '700', color: c.textMuted },
   dayHeaderDateToday:   { color: 'white' },
+
+  // All-day row (deadline/challenge chips, above the hourly grid)
+  allDayRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: c.borderColor },
+  allDayCol: { paddingHorizontal: 3, paddingVertical: 4, gap: 3 },
+  allDayChip: { borderLeftWidth: 3, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 3 },
+  allDayChipText: { fontSize: 10, fontWeight: '700' },
 
   // Grid
   timeColHeader: { height: 62, borderBottomWidth: 1, borderBottomColor: c.borderColor },

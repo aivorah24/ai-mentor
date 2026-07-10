@@ -1848,7 +1848,14 @@ export default function Learn5EScreen({ route, navigation }: any) {
               />
             )}
             {phase === 'learn'    && <LearnPhase topic={topic} grade={GRADE} textChunks={textChunks} imageChunks={imageChunks} colors={colors} character={character} isScience={isScience} onActivity={markActive} onDone={(quiz) => { if (quiz?.length) setLessonQuiz(quiz); setPhase('practice'); }} />}
-            {phase === 'practice' && <PracticePhase topic={topic} textChunks={textChunks} colors={colors} fixedQuiz={lessonQuiz} isScience={isScience} onActivity={markActive} onComplete={(s) => { setFinalScore(s); completeLesson(topic, subject, GRADE, 'NCERT'); setPhase('complete'); }} />}
+            {phase === 'practice' && <PracticePhase topic={topic} textChunks={textChunks} colors={colors} fixedQuiz={lessonQuiz} isScience={isScience} onActivity={markActive} onComplete={(s) => {
+              setFinalScore(s);
+              // s is a raw count out of 5 (matches CompletePhase's own "X/5" display) —
+              // require the same >=60% pass bar as the IB PYP quiz flow, instead of
+              // marking the topic done unconditionally regardless of score.
+              if ((s / 5) * 100 >= 60) completeLesson(topic, subject, GRADE, 'NCERT');
+              setPhase('complete');
+            }} />}
             {phase === 'complete' && <CompletePhase topic={topic} score={finalScore} colors={colors} onBack={() => navigation.goBack()} />}
           </>
         )}
