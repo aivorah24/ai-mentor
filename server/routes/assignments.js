@@ -7,8 +7,31 @@ const cloudinary = require('cloudinary').v2;
 const { renderQuizHTML, docxToPdf, callQwenVision, callPixtralVision } = require('./quiz');
 const { publishJob } = require('../services/jobQueue');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const crypto = require('crypto');
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+
+// normalise() re-renders the full interactive-quiz HTML (renderQuizHTML — the
+// same ~1000+ line template used for the actual student-facing quiz) for
+// EVERY assignment row on EVERY list load, so template fixes always propagate
+// even to old assignments. That's correct, but re-doing it on every single
+// page view (most of which are just re-opening the same, unchanged list) was
+// a major contributor to "Assignments takes a while to load". Cache by a hash
+// of the exact inputs that affect the output (quiz JSON + branding) — a cache
+// hit costs a hash + Map lookup instead of a full HTML re-render; a genuine
+// template code change only takes effect on process restart (new deploy),
+// which is an acceptable trade vs. paying the full render cost on every read.
+const _quizHtmlCache = new Map(); // assignmentId → { key, html }
+function renderQuizHTMLCached(assignmentId, quizJson, branding) {
+  const key = crypto.createHash('md5')
+    .update(JSON.stringify(quizJson)).update('|').update(JSON.stringify(branding || {}))
+    .digest('hex');
+  const cached = _quizHtmlCache.get(assignmentId);
+  if (cached && cached.key === key) return cached.html;
+  const html = renderQuizHTML(JSON.parse(JSON.stringify(quizJson)), branding || {});
+  _quizHtmlCache.set(assignmentId, { key, html });
+  return html;
+}
 
 // Mirrors GET /branding/logos — looked up here directly (no self HTTP call) so
 // every regenerated worksheet gets the school/curriculum logo.
@@ -1169,7 +1192,13 @@ GENERAL RULES:
       hasVisualContent: false, visualDescriptions: [],
     };
 
-    for (const file of fileList) {
+    // Run page extraction CONCURRENTLY instead of one page after another — a
+    // multi-page worksheet upload previously paid the full per-page AI latency
+    // serially (3 pages = 3x the wait). Each page's AI call is independent, so
+    // Promise.all cuts a 3-page upload's wall-clock time roughly to that of the
+    // single slowest page. Merging below still walks results in original file
+    // order (not completion order) so "first non-empty page wins" is unchanged.
+    async function extractOnePage(file) {
       let extracted = {};
 
       if (file.mime === 'application/pdf') {
@@ -1177,7 +1206,7 @@ GENERAL RULES:
         const buffer = Buffer.from(file.base64, 'base64');
         const pdfData = await pdfParse(buffer);
         const text = pdfData.text?.trim();
-        if (!text) continue;
+        if (!text) return null;
 
         const completion = await groq.chat.completions.create({
           model: 'llama-3.3-70b-versatile',
@@ -1190,7 +1219,7 @@ GENERAL RULES:
         const buffer = Buffer.from(file.base64, 'base64');
         const result = await mammoth.extractRawText({ buffer });
         const text = result.value?.trim();
-        if (!text) continue;
+        if (!text) return null;
 
         const completion = await groq.chat.completions.create({
           model: 'llama-3.3-70b-versatile',
@@ -1249,11 +1278,21 @@ GENERAL RULES:
         if (jsonMatch) raw = jsonMatch[0];
         try { extracted = JSON.parse(raw); } catch {
           raw = raw.replace(/,\s*([}\]])/g, '$1');
-          try { extracted = JSON.parse(raw); } catch { continue; }
+          try { extracted = JSON.parse(raw); } catch { return null; }
         }
       }
 
       console.log('[extract] Page result:', JSON.stringify({ chapter: extracted.chapter, title: extracted.title, successCriteria: extracted.successCriteria, learningOutcomes: extracted.learningOutcomes }));
+      return extracted;
+    }
+
+    const perPageResults = await Promise.all(
+      fileList.map(file => extractOnePage(file).catch(e => { console.log('[extract] page failed:', e.message); return null; }))
+    );
+
+    for (let pageIdx = 0; pageIdx < perPageResults.length; pageIdx++) {
+      const extracted = perPageResults[pageIdx];
+      if (!extracted) continue;
       // Merge: first non-empty scalar wins, arrays get concatenated
       if (extracted.title && !merged.title) merged.title = extracted.title;
       if (extracted.chapter && !merged.chapter) merged.chapter = extracted.chapter;
@@ -1265,7 +1304,6 @@ GENERAL RULES:
       if (extracted.feedbackSection && !merged.feedbackSection) merged.feedbackSection = extracted.feedbackSection;
       if (Array.isArray(extracted.learningOutcomes)) merged.learningOutcomes.push(...extracted.learningOutcomes);
       if (Array.isArray(extracted.questions)) {
-        const pageIdx = fileList.indexOf(file);
         extracted.questions.forEach(q => {
           if (typeof q === 'string') {
             merged.questions.push({ text: q, pageIndex: pageIdx, needsImage: false, imageYStart: 0, imageYEnd: 100 });
@@ -3191,7 +3229,7 @@ function normalise(a, branding) {
     interactiveQuizHtml: (() => {
       if (a.interactive_quiz && a.interactive_quiz.tasks) {
         try {
-          return renderQuizHTML(JSON.parse(JSON.stringify(a.interactive_quiz)), branding || {});
+          return renderQuizHTMLCached(a.id, a.interactive_quiz, branding);
         } catch (e) {
           console.log('[assignments] live quiz HTML regen failed, falling back to stored snapshot:', e.message);
         }

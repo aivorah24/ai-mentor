@@ -58,6 +58,61 @@ async function pdfToImages(pdfBase64: string): Promise<{ base64: string; mime: s
   }
 }
 
+/** Combine several worksheet page IMAGES (base64) into ONE multi-page PDF, so a
+ *  multi-image upload can go through the exact same all-pages PDF quiz pipeline
+ *  a real PDF uses — instead of only the first image being read (the previous
+ *  behaviour, which silently dropped pages 2+). Web-only (uses the DOM Image +
+ *  jsPDF), which is fine since this teacher tool runs in the browser. */
+async function imagesToPdfBase64(images: { base64: string; mime: string }[]): Promise<string | null> {
+  if (Platform.OS !== 'web' || images.length === 0) return null;
+  try {
+    const { jsPDF } = require('jspdf');
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    // Re-encode each page through a canvas capped at MAX_PX on its longest side,
+    // as JPEG. Directly embedding the raw uploaded images (e.g. multi-MB phone
+    // photos) blew past the server's 4MB PDF cap — the job then failed with
+    // "File too large". ~2000px keeps 3-digit arithmetic crisply readable while
+    // keeping the combined PDF small.
+    const MAX_PX = 2000;
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      const dataUri = `data:${img.mime};base64,${img.base64}`;
+      const el = await new Promise<any>((resolve, reject) => {
+        const im = new (window as any).Image();
+        im.onload = () => resolve(im);
+        im.onerror = () => reject(new Error('image decode failed'));
+        im.src = dataUri;
+      });
+      const srcW = el.width || pageW;
+      const srcH = el.height || pageH;
+      const scale = Math.min(1, MAX_PX / Math.max(srcW, srcH));
+      const cw = Math.round(srcW * scale);
+      const ch = Math.round(srcH * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = cw; canvas.height = ch;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) continue;
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch); // flatten any transparency
+      ctx.drawImage(el, 0, 0, cw, ch);
+      const jpeg = canvas.toDataURL('image/jpeg', 0.82);
+      // Fit inside the A4 page, preserving aspect ratio.
+      const ratio = Math.min(pageW / cw, pageH / ch);
+      const w = cw * ratio;
+      const h = ch * ratio;
+      const x = (pageW - w) / 2;
+      const y = (pageH - h) / 2;
+      if (i > 0) doc.addPage();
+      doc.addImage(jpeg, 'JPEG', x, y, w, h);
+    }
+    return (doc.output('datauristring') as string).split(',')[1] || null;
+  } catch (err: any) {
+    console.error('[imagesToPdfBase64] FAILED:', err?.message || err);
+    return null;
+  }
+}
+
 /** Flatten a question answer (which may be a plain string, number, array, or a
  *  structured object like { table: [...] } for "organise the data" activity tasks)
  *  into readable, editable text for the Edit Answers screen. Prevents structured
@@ -258,6 +313,23 @@ const SUBJECT_COLORS: Record<string, string> = {
   'ICT':                  AIVORAH_GOLD,
   'Physical Education':   AIVORAH_GOLD,
 };
+
+// Polls a queued job (see server/services/jobQueue.js) until it's done/failed,
+// instead of blocking a single long-lived request — used by the worksheet
+// upload/classify and quiz-generation steps so the browser tab (and any load
+// balancer/proxy in front of it) never has to hold one connection open for
+// the full AI pipeline duration.
+async function pollJob(jobId: string, { intervalMs = 1500, timeoutMs = 240000 } = {}): Promise<any> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const res = await fetch(`${SERVER_URL}/jobs/${jobId}`);
+    const job = await res.json().catch(() => ({}));
+    if (job.status === 'done') return job.result;
+    if (job.status === 'failed') throw new Error(job.error || 'Processing failed. Please try again.');
+    await new Promise(r => setTimeout(r, intervalMs));
+  }
+  throw new Error('Timed out waiting for processing to finish. Please try again.');
+}
 
 function daysUntil(dateStr: string) {
   const diff = new Date(dateStr).getTime() - Date.now();
@@ -932,7 +1004,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         setExtractingQuestions(true);
         try {
           const allBase64 = uploadedFiles.map(f => ({ base64: f.base64, mimeType: f.mime }));
-          const eRes = await fetch(`${SERVER_URL}/assignments/extract-questions`, {
+          // Queued (Kafka/db job) instead of one blocking request — the browser
+          // tab polls for the result rather than holding a connection open for
+          // the whole AI extraction pipeline.
+          const jobRes = await fetch(`${SERVER_URL}/assignments/extract-questions-async`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(
@@ -941,13 +1016,11 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                 : { files: allBase64 }
             ),
           });
-          const eData = await eRes.json();
-          console.log('[extract] response ok:', eRes.ok, 'data:', JSON.stringify(eData).slice(0, 500));
-          if (!eRes.ok) {
-            setFormError(`Auto-fill failed: ${eData.error || 'unknown error'}. You can still fill in Subject/Grade/Chapter manually below.`);
-          }
-          if (eRes.ok) {
-            if (eData.title && !title.trim()) setTitle(eData.title);
+          const jobData = await jobRes.json();
+          if (!jobRes.ok || !jobData.jobId) throw new Error(jobData.error || 'Could not start extraction.');
+          const eData = await pollJob(jobData.jobId);
+          console.log('[extract] job done, data:', JSON.stringify(eData).slice(0, 500));
+          if (eData.title && !title.trim()) setTitle(eData.title);
             // Use chapter if available, otherwise fall back to title as chapter/topic
             const chapterVal = eData.chapter || eData.title || '';
             if (chapterVal) setChapter(prev => prev || chapterVal);
@@ -1003,7 +1076,6 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               });
               setExtractedQuestions(prev => [...prev, ...mappedQuestions]);
             }
-          }
         } catch (extractErr: any) {
           // Was previously silent — a network failure or unexpected server error here
           // would leave every field at default with zero indication of why, exactly
@@ -1199,34 +1271,62 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   // Generate interactive quiz via Mistral (PDF/image → structured quiz with answers, hints, solutions)
   async function generateInteractiveQuiz() {
     if (docFiles.length === 0) return;
+    // Guard against double-taps: without this, each tap while a generation was
+    // already in flight queued ANOTHER job (the console showed 4-5 duplicate
+    // "pdf (queued)" lines from a few impatient taps).
+    if (generatingInteractiveQuiz) return;
     setGeneratingInteractiveQuiz(true);
     setInteractiveQuiz(null);
     try {
       // Prefer original PDF (sends ALL pages to Gemini Vision) over single-page images
-      const pdfFile = docFiles.find(f => f.mime === 'application/pdf') || originalPdfRef.current;
+      let pdfFile = docFiles.find(f => f.mime === 'application/pdf') || originalPdfRef.current;
+      // Multiple loose images with no PDF: stitch them into one PDF so EVERY page
+      // is read, not just docFiles[0] (the old bug — pages 2+ were silently dropped).
+      if (!pdfFile && docFiles.length > 1) {
+        const imgs = docFiles.filter(f => f.mime.startsWith('image/'));
+        if (imgs.length > 1) {
+          const combined = await imagesToPdfBase64(imgs);
+          if (combined) {
+            pdfFile = { name: 'worksheet.pdf', base64: combined, mime: 'application/pdf' };
+            console.log('[quiz-gen] combined', imgs.length, 'images into one PDF for full multi-page read');
+          }
+        }
+      }
       const file = pdfFile || docFiles[0];
       const isImage = !pdfFile && file.mime.startsWith('image/');
-      const endpoint = isImage ? '/quiz/generate-image' : '/quiz/generate';
-      console.log('[quiz-gen] Using', endpoint, 'with', file.mime, 'name:', file.name, 'pages in docFiles:', docFiles.length);
+      console.log('[quiz-gen]', isImage ? 'image (sync)' : 'pdf (queued)', 'with', file.mime, 'name:', file.name, 'pages in docFiles:', docFiles.length);
 
-      // Use FormData for file upload
-      const formData = new FormData();
-      const byteChars = atob(file.base64);
-      const byteArray = new Uint8Array(byteChars.length);
-      for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
-      const blob = new Blob([byteArray], { type: file.mime });
-      const fieldName = isImage ? 'image' : 'pdf';
-      formData.append(fieldName, blob, file.name || (isImage ? 'worksheet.jpg' : 'worksheet.pdf'));
-      formData.append('grade', grade || 'PYP 4');
-      formData.append('subject', subject || 'Mathematics');
-      formData.append('school', user?.school || '');
-
-      const res = await fetch(`${SERVER_URL}${endpoint}`, {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (res.ok && data.quiz) {
+      let data: any;
+      if (isImage) {
+        // No queued path for the image endpoint yet — still one blocking request.
+        const formData = new FormData();
+        const byteChars = atob(file.base64);
+        const byteArray = new Uint8Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+        const blob = new Blob([byteArray], { type: file.mime });
+        formData.append('image', blob, file.name || 'worksheet.jpg');
+        formData.append('grade', grade || 'PYP 4');
+        formData.append('subject', subject || 'Mathematics');
+        formData.append('school', user?.school || '');
+        const res = await fetch(`${SERVER_URL}/quiz/generate-image`, { method: 'POST', body: formData });
+        data = await res.json();
+        if (!res.ok) data = { error: data.error || 'Failed to generate interactive quiz' };
+      } else {
+        // Queued (Kafka/db job) — the browser tab polls for the result rather
+        // than holding a connection open for the whole AI generation pipeline.
+        const jobRes = await fetch(`${SERVER_URL}/quiz/generate-async`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileBase64: file.base64, mimeType: file.mime, filename: file.name || 'worksheet.pdf',
+            grade: grade || 'PYP 4', subject: subject || 'Mathematics', school: user?.school || '',
+          }),
+        });
+        const jobData = await jobRes.json();
+        if (!jobRes.ok || !jobData.jobId) throw new Error(jobData.error || 'Could not start quiz generation.');
+        data = await pollJob(jobData.jobId);
+      }
+      if (data.quiz) {
         // Force school/curriculum to the teacher's REAL account values, always —
         // never trust whatever the AI put in quiz.school. The vision prompt asks
         // the AI to echo back the passed school name, but it can instead read
@@ -3029,8 +3129,14 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           />
         )}
 
-        {/* Create Assignment Modal */}
-        <Modal visible={showModal} animationType="slide" transparent onRequestClose={() => { setShowModal(false); resetForm(); }}>
+        {/* Create Assignment Modal
+            Hidden while a preview is open: this wizard modal renders LATER in the
+            tree than the interactive/student preview modals, so RN stacks it ON
+            TOP — which showed the "Generate Quiz" wizard floating over the
+            split-screen preview. Collapsing it to invisible while a preview is up
+            keeps the wizard's state (uploadStep etc.) intact so closing the
+            preview returns the teacher exactly where they were. */}
+        <Modal visible={showModal && !showInteractivePreview && !studentPreviewHtml} animationType="slide" transparent onRequestClose={() => { setShowModal(false); resetForm(); }}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
             <View style={[styles.modalOverlay, createMode === 'choose' && { justifyContent: 'center' }]}>
               <View style={[styles.modalSheet, createMode === 'choose' && { maxHeight: undefined, borderRadius: 20 }]}>

@@ -530,10 +530,16 @@ const [editingName, setEditingName] = useState(false);
                     <Feather name="mail" size={15} color={colors.accentYellow} />
                     <Text style={styles.profileInfoCardText} numberOfLines={1}>{user?.email}</Text>
                   </View>
-                  {(user?.location || user?.school) && (
+                  {user?.location && (
                     <View style={styles.profileInfoCard}>
                       <Feather name="map-pin" size={15} color={colors.accentYellow} />
-                      <Text style={styles.profileInfoCardText} numberOfLines={1}>{user?.location || user?.school}</Text>
+                      <Text style={styles.profileInfoCardText} numberOfLines={1}>{user.location}</Text>
+                    </View>
+                  )}
+                  {user?.school && (
+                    <View style={styles.profileInfoCard}>
+                      <Feather name="home" size={15} color={colors.accentYellow} />
+                      <Text style={styles.profileInfoCardText} numberOfLines={1}>{user.school}</Text>
                     </View>
                   )}
                 </View>
