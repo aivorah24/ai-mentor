@@ -348,7 +348,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   heroTitle: { fontSize: 22, fontWeight: '800', color: c.textMain, textAlign: 'center', marginBottom: spacing.sm, letterSpacing: -0.5 },
   heroSub: { fontSize: 13, color: c.textMuted, textAlign: 'center', lineHeight: 20, marginBottom: spacing.xl, paddingHorizontal: spacing.xl },
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: 28, paddingHorizontal: spacing.xl, height: 52, width: '100%' },
-  searchInput: { flex: 1, fontSize: 14, color: c.textMain },
+  searchInput: { flex: 1, fontSize: 14, color: c.textMain, ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}) },
   searchResultCount: { fontSize: 12, color: c.textDim, marginTop: spacing.md },
 
   sectionTitle: { fontSize: 16, fontWeight: '700', color: c.textMain, marginBottom: spacing.lg, marginTop: spacing.xl },

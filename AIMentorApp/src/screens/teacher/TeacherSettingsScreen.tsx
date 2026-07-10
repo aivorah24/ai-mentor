@@ -198,6 +198,8 @@ export default function TeacherSettingsScreen({ navigation }: any) {
   const [newName,       setNewName]       = useState(user?.name || '');
   const [newEmail,      setNewEmail]      = useState('');
   const [emailPassword, setEmailPassword] = useState('');
+  const [emailStep,     setEmailStep]     = useState<'form' | 'otp'>('form');
+  const [emailOtp,      setEmailOtp]      = useState('');
   const [currentPw,     setCurrentPw]    = useState('');
   const [newPw,         setNewPw]        = useState('');
   const [confirmPw,     setConfirmPw]    = useState('');
@@ -218,6 +220,13 @@ export default function TeacherSettingsScreen({ navigation }: any) {
 
   // Feedback + sign-out confirm (replaces Alert.alert on web)
   const [feedback,       setFeedback]       = useState<{ title: string; message: string } | null>(null);
+  // Set when the feedback dialog being shown must sign the user out once
+  // dismissed (currently: after a successful email change — see below for why).
+  const [logoutAfterFeedback, setLogoutAfterFeedback] = useState(false);
+  function dismissFeedback() {
+    setFeedback(null);
+    if (logoutAfterFeedback) { setLogoutAfterFeedback(false); logout(); }
+  }
   const [signOutConfirm, setSignOutConfirm] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
@@ -266,6 +275,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
   function openModal(type: ModalType) {
     setNewName(user?.name || '');
     setNewEmail(''); setEmailPassword('');
+    setEmailStep('form'); setEmailOtp('');
     setCurrentPw(''); setNewPw(''); setConfirmPw('');
     setNewSchool(user?.school || '');
     setEditCurricula(
@@ -712,47 +722,164 @@ export default function TeacherSettingsScreen({ navigation }: any) {
         <ModalButtons onCancel={closeModal} onSave={handleSaveName} loading={modalLoading} styles={styles} />
       </AppModal>
 
-      {/* Change Email Modal */}
+      {/* Change Email Modal — two steps: (1) confirm identity + enter new email,
+          (2) verify the code we email to the NEW address before committing. */}
       <AppModal visible={activeModal === 'email'} title="Change Email Address" onClose={closeModal} styles={styles} colors={colors}>
-        <Text style={styles.modalNote}>Enter your new email and current password to confirm.</Text>
-        <Text style={styles.modalFieldLabel}>New Email</Text>
-        <View style={styles.modalInput}>
-          <Feather name="mail" size={15} color={colors.textDim} />
-          <TextInput
-            style={styles.modalTextInput} value={newEmail} onChangeText={setNewEmail}
-            placeholder="new@example.com" placeholderTextColor={colors.textDim}
-            keyboardType="email-address" autoCapitalize="none" autoFocus
-          />
-        </View>
-        <Text style={styles.modalFieldLabel}>Current Password</Text>
-        <View style={styles.modalInput}>
-          <Feather name="lock" size={15} color={colors.textDim} />
-          <TextInput
-            style={styles.modalTextInput} value={emailPassword} onChangeText={setEmailPassword}
-            placeholder="••••••••" placeholderTextColor={colors.textDim} secureTextEntry
-          />
-        </View>
-        {modalError ? <Text style={{ color: colors.accentRed, fontSize: 13, marginTop: 8 }}>{modalError}</Text> : null}
-        <ModalButtons
-          onCancel={closeModal}
-          onSave={async () => {
-            if (!newEmail.trim() || !emailPassword) { setModalError('Fill in all fields.'); return; }
-            setModalLoading(true);
-            try {
-              const fu = auth.currentUser;
-              if (fu && fu.email) {
-                const cred = EmailAuthProvider.credential(fu.email, emailPassword);
-                await reauthenticateWithCredential(fu, cred);
-              }
-              updateUser({ email: newEmail.trim() });
-              closeModal();
-              setFeedback({ title: 'Email Updated', message: 'Your email address has been changed.' });
-            } catch (e: any) {
-              setModalError(e.message || 'Failed to update email.');
-            } finally { setModalLoading(false); }
-          }}
-          loading={modalLoading} saveLabel="Update Email" styles={styles}
-        />
+        {emailStep === 'form' ? (
+          <>
+            <Text style={styles.modalNote}>
+              {isPasswordUser
+                ? 'Enter your new email and current password to confirm.'
+                : 'Enter your new email. Since you sign in with Google, confirm with Google instead of a password.'}
+            </Text>
+            <Text style={styles.modalFieldLabel}>New Email</Text>
+            <View style={styles.modalInput}>
+              <Feather name="mail" size={15} color={colors.textDim} />
+              <TextInput
+                style={styles.modalTextInput} value={newEmail} onChangeText={setNewEmail}
+                placeholder="new@example.com" placeholderTextColor={colors.textDim}
+                keyboardType="email-address" autoCapitalize="none" autoFocus
+              />
+            </View>
+            {isPasswordUser && (
+              <>
+                <Text style={styles.modalFieldLabel}>Current Password</Text>
+                <View style={styles.modalInput}>
+                  <Feather name="lock" size={15} color={colors.textDim} />
+                  <TextInput
+                    style={styles.modalTextInput} value={emailPassword} onChangeText={setEmailPassword}
+                    placeholder="••••••••" placeholderTextColor={colors.textDim} secureTextEntry
+                  />
+                </View>
+              </>
+            )}
+            {modalError ? <Text style={{ color: colors.accentRed, fontSize: 13, marginTop: 8 }}>{modalError}</Text> : null}
+            <ModalButtons
+              onCancel={closeModal}
+              onSave={async () => {
+                const email = newEmail.trim().toLowerCase();
+                if (!email) { setModalError('Please enter your new email.'); return; }
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setModalError('Please enter a valid email address.'); return; }
+                if (email === (user?.email || '').toLowerCase()) { setModalError('That is already your current email.'); return; }
+                if (isPasswordUser && !emailPassword) { setModalError('Please enter your current password.'); return; }
+                setModalLoading(true);
+                setModalError('');
+                try {
+                  // Fail fast if that email already belongs to another Aivorah account —
+                  // check BEFORE asking for a password/Google popup, so the user isn't
+                  // walked through a whole reauth + OTP flow just to be blocked at the end.
+                  const takenRes = await fetch(`${SERVER_URL}/user/role?email=${encodeURIComponent(email)}`);
+                  if (takenRes.ok) {
+                    setModalError('That email is already registered to another Aivorah account.');
+                    setModalLoading(false);
+                    return;
+                  }
+                  const fu = auth.currentUser;
+                  if (fu && fu.email) {
+                    if (isPasswordUser) {
+                      const cred = EmailAuthProvider.credential(fu.email, emailPassword);
+                      await reauthenticateWithCredential(fu, cred);
+                    } else if (isGoogleUser) {
+                      await reauthenticateWithPopup(fu, new GoogleAuthProvider());
+                    }
+                  }
+                  const res = await fetch(`${SERVER_URL}/user/email-otp/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, name: user?.name }),
+                  });
+                  const d = await res.json().catch(() => ({}));
+                  if (!res.ok) throw new Error(d.error || 'Could not send the verification code.');
+                  setEmailStep('otp');
+                } catch (e: any) {
+                  if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+                    setModalError('Incorrect password. Please try again.');
+                  } else if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+                    setModalError('Google confirmation was cancelled. Please try again.');
+                  } else {
+                    setModalError(e.message || 'Failed to send verification code.');
+                  }
+                } finally { setModalLoading(false); }
+              }}
+              loading={modalLoading} saveLabel={isGoogleUser ? 'Confirm with Google' : 'Send Verification Code'} styles={styles}
+            />
+          </>
+        ) : (
+          <>
+            <Text style={styles.modalNote}>
+              We sent a 6-digit code to <Text style={{ fontWeight: '700' }}>{newEmail.trim()}</Text>. Enter it below to confirm the change.
+            </Text>
+            <Text style={styles.modalFieldLabel}>Verification Code</Text>
+            <View style={styles.modalInput}>
+              <Feather name="shield" size={15} color={colors.textDim} />
+              <TextInput
+                style={styles.modalTextInput} value={emailOtp} onChangeText={setEmailOtp}
+                placeholder="123456" placeholderTextColor={colors.textDim}
+                keyboardType="number-pad" maxLength={6} autoFocus
+              />
+            </View>
+            <TouchableOpacity
+              disabled={modalLoading}
+              onPress={async () => {
+                setModalError('');
+                try {
+                  const res = await fetch(`${SERVER_URL}/user/email-otp/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: newEmail.trim().toLowerCase(), name: user?.name }),
+                  });
+                  const d = await res.json().catch(() => ({}));
+                  if (!res.ok) throw new Error(d.error || 'Could not resend the code.');
+                  setFeedback({ title: 'Code Resent', message: `A new code was sent to ${newEmail.trim()}.` });
+                } catch (e: any) {
+                  setModalError(e.message || 'Failed to resend code.');
+                }
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.accentYellow, marginTop: 4 }}>Resend code</Text>
+            </TouchableOpacity>
+            {modalError ? <Text style={{ color: colors.accentRed, fontSize: 13, marginTop: 8 }}>{modalError}</Text> : null}
+            <ModalButtons
+              onCancel={() => setEmailStep('form')}
+              cancelLabel="Back"
+              onSave={async () => {
+                if (!emailOtp.trim()) { setModalError('Please enter the code.'); return; }
+                setModalLoading(true);
+                setModalError('');
+                try {
+                  const res = await fetch(`${SERVER_URL}/user/change-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      currentEmail: user?.email,
+                      newEmail: newEmail.trim().toLowerCase(),
+                      otp: emailOtp.trim(),
+                    }),
+                  });
+                  const d = await res.json().catch(() => ({}));
+                  if (!res.ok) throw new Error(d.error || 'Could not update your email.');
+                  // The server just renamed this account's email in Firebase Auth via
+                  // Admin SDK — but the browser's current Firebase session still carries
+                  // the OLD email. Left alone, the next background auth check looks up
+                  // that stale old email, finds no matching account (since it was just
+                  // renamed), and a guard meant to catch genuinely deleted accounts signs
+                  // the user out — a confusing, unexplained bounce to the sign-in screen.
+                  // Make that sign-out deliberate and clearly explained instead.
+                  const changedTo = newEmail.trim().toLowerCase();
+                  closeModal();
+                  setLogoutAfterFeedback(true);
+                  setFeedback({
+                    title: 'Email Updated',
+                    message: `Your email has been changed to ${changedTo}. For security, please sign in again with your new email.`,
+                  });
+                } catch (e: any) {
+                  setModalError(e.message || 'Failed to update email.');
+                } finally { setModalLoading(false); }
+              }}
+              loading={modalLoading} saveLabel="Verify & Update Email" styles={styles}
+            />
+          </>
+        )}
       </AppModal>
 
       {/* Change Password Modal */}
@@ -1077,12 +1204,12 @@ export default function TeacherSettingsScreen({ navigation }: any) {
           <View style={[styles.modalBox, { maxWidth: 360 }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{feedback.title}</Text>
-              <TouchableOpacity onPress={() => setFeedback(null)}><Feather name="x" size={20} color={colors.textMuted} /></TouchableOpacity>
+              <TouchableOpacity onPress={dismissFeedback}><Feather name="x" size={20} color={colors.textMuted} /></TouchableOpacity>
             </View>
             <Text style={styles.modalNote}>{feedback.message}</Text>
             <View style={{ alignItems: 'center', marginTop: 4 }}>
               <TouchableOpacity
-                onPress={() => setFeedback(null)}
+                onPress={dismissFeedback}
                 activeOpacity={0.85}
                 style={{ backgroundColor: gold, borderRadius: radius.md, paddingHorizontal: 40, paddingVertical: 11, alignItems: 'center', justifyContent: 'center', minWidth: 120 }}
               >
@@ -1137,11 +1264,11 @@ function AppModal({ visible, title, onClose, children, styles, colors }: { visib
   );
 }
 
-function ModalButtons({ onCancel, onSave, loading, saveLabel = 'Save Changes', styles }: { onCancel: () => void; onSave: () => void; loading: boolean; saveLabel?: string; styles: any }) {
+function ModalButtons({ onCancel, onSave, loading, saveLabel = 'Save Changes', cancelLabel = 'Cancel', styles }: { onCancel: () => void; onSave: () => void; loading: boolean; saveLabel?: string; cancelLabel?: string; styles: any }) {
   return (
     <View style={styles.modalBtns}>
       <TouchableOpacity style={styles.modalCancelBtn} onPress={onCancel}>
-        <Text style={styles.modalCancelText}>Cancel</Text>
+        <Text style={styles.modalCancelText}>{cancelLabel}</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.modalSaveBtn} onPress={onSave} disabled={loading}>
         {loading ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.modalSaveText}>{saveLabel}</Text>}
@@ -1226,7 +1353,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor,
     borderRadius: radius.md, height: 46, paddingHorizontal: spacing.lg,
   },
-  modalTextInput: { flex: 1, fontSize: 14, color: c.textMain },
+  modalTextInput: { flex: 1, fontSize: 14, color: c.textMain, ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}) },
   modalBtns: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl },
   modalCancelBtn: { flex: 1, height: 46, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center', justifyContent: 'center' },
   modalCancelText: { fontSize: 14, fontWeight: '600', color: c.textMuted },

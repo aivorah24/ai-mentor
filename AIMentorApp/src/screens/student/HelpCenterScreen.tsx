@@ -495,7 +495,7 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
 
   // Search
   searchBox: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: 28, paddingHorizontal: spacing.xl, height: 52, marginBottom: spacing.sm },
-  searchInput: { flex: 1, fontSize: 14, color: c.textMain },
+  searchInput: { flex: 1, fontSize: 14, color: c.textMain, ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}) },
   searchCount: { fontSize: 12, color: c.textDim, marginBottom: spacing.md, marginLeft: 4 },
 
   sectionTitle: { fontSize: 18, fontWeight: '700', color: c.textMain, marginTop: spacing.xl, marginBottom: spacing.md, fontFamily: fonts.serif },

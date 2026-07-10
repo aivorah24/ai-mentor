@@ -19,7 +19,7 @@ const { v4: uuidv4 } = require('uuid');
 const { client, COLLECTION } = require('../services/qdrant');
 const { embed } = require('../services/embeddings');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { extractDiagrams, extractDiagramsFromImage, matchDiagramsToQuestions, ocrFullPDF, ocrRegion, analyzeRegionContent } = require('../services/diagram-extractor');
+const { extractDiagrams, extractDiagramsFromImage, matchDiagramsToQuestions, ocrFullPDF, ocrRegion, analyzeRegionContent, pdfToImages: pdfToPageImages } = require('../services/diagram-extractor');
 const supabase = require('../services/supabase');
 
 // Mirrors GET /branding/logos — looked up here directly (no self HTTP call) so
@@ -981,6 +981,20 @@ function buildQuizVisionPrompt({ grade, subject, school } = {}) {
 
 STEP 1: CAREFULLY examine the worksheet image(s). Read EVERY number, word, symbol, shape, table, and layout element.
 
+⚠️ ACCURACY IS THE #1 PRIORITY. NEVER guess, approximate, or invent a number. Every number in your output MUST be a number you can actually SEE printed on the worksheet. If you output a problem like "100 + 233" when the worksheet actually shows "326 + 419", that is a CRITICAL FAILURE. Read each digit individually.
+
+⚠️ VERTICAL / COLUMN ARITHMETIC (READ THIS CAREFULLY — this is where most mistakes happen):
+Many math worksheets show addition/subtraction as a VERTICAL STACK, not inline. For example:
+     326                317
+   + 419              - 258
+   ─────              ─────
+This means "326 + 419" and "317 - 258". To read a vertical stack correctly:
+  1. Read the TOP number completely, digit by digit, left to right (e.g. 3-2-6 = 326).
+  2. Read the operator on the left (+ or −).
+  3. Read the BOTTOM number completely, digit by digit (e.g. 4-1-9 = 419).
+  4. The problem is "TOP operator BOTTOM" (e.g. "326 + 419").
+Do NOT swap digits, drop digits, or invent a smaller/rounder number. "628" is NOT "68" or "600". Read all THREE digits. If the worksheet has 9 stacked problems, you MUST output those 9 problems with their EXACT numbers — count them and match.
+
 STEP 2: For each task/section in the worksheet, extract:
 - The exact title/heading
 - Every single question with exact numbers
@@ -1040,6 +1054,8 @@ Return this EXACT JSON structure:
   "subject": "${subject || 'Mathematics'}",
   "grade": "${grade || 'PYP 4'}",
   "school": "${school || ''}",
+  "purpose": "the Purpose/objective line stated on the worksheet, verbatim (empty string if none)",
+  "learningOutcomes": ["each Learning Outcome bullet point, exactly as written on the worksheet"],
   "concepts": [{ "term": "name", "definition": "short child-friendly definition", "unit": "unit" }],
   "tasks": [
     {
@@ -1168,6 +1184,46 @@ Capture EVERY table in a task inside a "tables" ARRAY on the TASK (a task can ha
 - SOLVE every blank cell yourself and put the value in "answer" (e.g. count the tallies → frequency).
 - Do NOT also emit table cells as separate questions — the tables replace them.
 
+DECODE / CIPHER / SECRET-CODE TABLES (CRITICAL — do not skip this, it is easy to miss):
+Many "solve the problems, then use the code to reveal the secret message" tasks show a small
+reference table/box mapping numbers to letters (e.g. "333 - S", "622 - R", "1219 - Y" ...) ABOVE
+the actual problems. This mapping key is ALWAYS a separate READ-ONLY table you must capture in
+"tables" — even though it looks like a small boxed grid rather than a traditional data table, and
+even though the questions below it ask "what is the secret letter for X" (those stay as their own
+"numeric"/"text" questions in "questions" as already instructed — the mapping key is IN ADDITION
+to them, not instead). Example:
+"tables": [
+  {
+    "title": "CODE",
+    "headers": [],
+    "rows": [
+      [ { "text": "333 - S" },  { "text": "622 - R" },  { "text": "427 - X" } ],
+      [ { "text": "1219 - Y" }, { "text": "745 - M" },  { "text": "435 - A" } ],
+      [ { "text": "620 - M" },  { "text": "59 - E" },   { "text": "1422 - R" } ]
+    ]
+  }
+]
+- Read the EXACT number and letter for every cell in the box — students need this table to check
+  their own decoded answers, so it must be 100% accurate, not approximate.
+- Preserve the grid's row/column layout exactly as printed (do not reorder or reflow entries).
+
+VERTICAL / COLUMN ARITHMETIC DISPLAY (CRITICAL for readability — worksheets showing a stacked
+sum like "96_ \n -_83 \n ----- \n 162" MUST NOT be flattened into run-on text like "Calculate the
+missing digits: 9 6 _ - _ 8 3 ----- 1 6 2" — students can't read that). For ANY question whose
+worksheet shows the numbers stacked vertically (with a rule line under the second number),
+whether or not any digits are missing, add a "verticalMath" object to that question so it can be
+displayed in the same column layout as the worksheet:
+"verticalMath": { "operator": "-", "top": "96_", "bottom": "_83", "result": "162" }
+- "top"/"bottom"/"result" are STRINGS of digits, one character per column, read top-to-bottom
+  exactly as printed. Use "_" for any digit that is blank/missing on the worksheet (to be solved).
+- "operator" is "+" or "-".
+- Leave "result" as "" if the worksheet doesn't show a result row (i.e. the student computes the
+  whole sum, not just missing digits).
+- This is IN ADDITION to the normal "question"/"answer"/"hint"/"solution" fields — keep those as
+  usual (the "question" text can stay short, e.g. "Calculate the missing digits.", since the
+  numbers themselves are now shown via verticalMath, not restated in the sentence).
+- Do NOT use this for simple inline sums the worksheet already writes horizontally (e.g. "12 + 8 = ___") — only for worksheets that print the numbers stacked with a line under them.
+
 QUESTION TYPES:
 - "numeric" — number answer (integer or decimal)
 - "text" — text answers, fractions like "14/25", comparisons like "<", mixed like "1 km 800 m"
@@ -1225,10 +1281,14 @@ IMPORTANT: Each task MUST include "sourcePage": <page_number> (1-indexed) indica
 
 Tiers: "MUST DO", "COULD DO", "ENRICHMENT"
 
+PURPOSE & LEARNING OUTCOME:
+- If the worksheet has a "Purpose:" line near the top, copy it verbatim into the top-level "purpose" field. Leave it "" if the worksheet has none.
+- If the worksheet has a "Learning Outcome:" section (usually a bulleted list right under Purpose), copy EACH bullet verbatim as its own entry in the top-level "learningOutcomes" array. Leave it [] if the worksheet has none. Do NOT confuse this with "Success Criteria"/"Learning Goals"/"I can..." statements below — those go in "successCriteria" instead, per the section below.
+
 NOTES & SUCCESS CRITERIA:
-- If the worksheet includes a "Note to Parents", "Teacher's Note", instructions, or learning objectives at the top/bottom, extract them into a top-level "notes" field (string).
+- If the worksheet includes a "Note to Parents", "Teacher's Note", or general instructions at the top/bottom (e.g. explaining Must Do / Could Do / Enrichment Task tiers), extract them into a top-level "notes" field (string).
 - If the worksheet includes "Success Criteria", "Learning Goals", "I can..." statements, or rubric, extract them into a top-level "successCriteria" array of strings.
-- Example: "notes": "Dear Parents, please help your child with these activities...", "successCriteria": ["I can convert between units of measurement", "I can solve word problems involving fractions"]
+- Example: "purpose": "To practice the concepts of addition and subtraction.", "learningOutcomes": ["Model addition and subtraction of whole numbers up to 999 with and without regrouping."], "notes": "Dear Parents, please help your child with these activities...", "successCriteria": ["I can convert between units of measurement", "I can solve word problems involving fractions"]
 
 Return ONLY valid JSON, no markdown fences, no extra text, and NO // or /* */ comments anywhere in the JSON (comments make it invalid and unparseable).`;
 }
@@ -1271,7 +1331,10 @@ function validateQuizAgainstOCR(quiz, ocrText) {
 }
 
 // ── POST /quiz/generate — PDF upload → quiz JSON (Claude Vision primary, Mistral fallback) ──
-router.post('/generate', upload.single('pdf'), async (req, res) => {
+// Named (not inline) so it can also be driven by a mock req/res from the
+// queued /generate-async path (see quiz_generate job handler) — same logic,
+// just not blocking the teacher's browser tab for the full AI pipeline.
+async function generateQuizHandler(req, res) {
   try {
     if (!req.file) return res.status(400).json({ error: 'No PDF file uploaded' });
 
@@ -1330,10 +1393,30 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
         .catch(err => { console.log('[quiz] ML layout failed:', err.message); return { type: 'layout-ml', result: null }; })
     );
 
+    // High-DPI page images for Gemini. Sending the RAW PDF let Gemini rasterize
+    // it internally at a low, uncontrolled resolution — which is why small
+    // vertically-stacked digits (326 over 419) and dense CODE tables got misread
+    // or dropped. Rendering each page ourselves at scale 3.0 (~216 DPI) gives
+    // Gemini sharp text to read, dramatically improving digit/symbol accuracy.
+    // Falls back to the raw PDF if rasterization fails, so we never regress.
+    let geminiParts = [geminiPdfPart(req.file.buffer)];
+    try {
+      // scale 2.5 ≈ 180 DPI — sharp enough for 3-digit stacked arithmetic and
+      // dense code tables, while keeping multi-page PNG payload within Gemini's
+      // inline request limit and Cloud Run memory.
+      const hiResPages = await pdfToPageImages(req.file.buffer, 2.5); // [{ pageNum, buffer }]
+      if (Array.isArray(hiResPages) && hiResPages.length > 0) {
+        geminiParts = geminiImageParts(hiResPages.map(p => ({ buffer: p.buffer || p, mime: 'image/png' })));
+        console.log(`[quiz] Rendered ${hiResPages.length} page(s) at high DPI (scale 2.5) for Gemini`);
+      }
+    } catch (e) {
+      console.log('[quiz] High-DPI page render failed, sending raw PDF to Gemini:', e.message);
+    }
+
     // C) Gemini Vision — generate structured quiz JSON (LLM, primary)
     if (genAI && !skipGemini) {
       parallelTasks.push(
-        callGeminiVision([geminiPdfPart(req.file.buffer)], { grade, subject, school })
+        callGeminiVision(geminiParts, { grade, subject, school })
           .then(r => ({ type: 'gemini', result: r }))
           .catch(err => { console.log('[quiz] Gemini failed:', err.message); return { type: 'gemini', result: null }; })
       );
@@ -1643,6 +1726,27 @@ router.post('/generate', upload.single('pdf'), async (req, res) => {
   } catch (err) {
     console.error('Quiz generate error:', err);
     res.status(500).json({ error: err.message });
+  }
+}
+router.post('/generate', upload.single('pdf'), generateQuizHandler);
+
+// ── POST /quiz/generate-async — same as /generate, but QUEUED (via the
+// swappable db/Kafka job queue) instead of blocking the request. Returns
+// { jobId } immediately; poll GET /jobs/:id for status + result. Body is JSON
+// (not multipart) since the file has to round-trip through the job payload:
+// { fileBase64, mimeType?, filename?, grade?, subject?, school?, engine? }
+router.post('/generate-async', express.json({ limit: '10mb' }), async (req, res) => {
+  const { fileBase64, mimeType, filename, grade, subject, school, engine } = req.body || {};
+  if (!fileBase64) return res.status(400).json({ error: 'fileBase64 required' });
+  try {
+    const { publishJob } = require('../services/jobQueue');
+    const { jobId } = await publishJob('quiz_generate', {
+      fileBase64, mimeType: mimeType || 'application/pdf', filename: filename || 'worksheet.pdf',
+      grade, subject, school, engine,
+    });
+    res.json({ jobId });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
@@ -3991,6 +4095,29 @@ function renderQuizHTML(quiz, branding = {}) {
         html += `<div style="margin:8px 0 12px;padding:10px 14px;background:rgba(195,220,216,0.07);border-left:3px solid rgba(195,220,216,0.4);border-radius:0 8px 8px 0;font-size:13px;color:#A8B5B3;font-style:italic;">${fmt(q.example)}</div>`;
       }
 
+      // Vertical column arithmetic (e.g. "96_ - _83 ----- 162"): render as the
+      // student would actually see it on the worksheet — a right-aligned digit
+      // stack with the operator and a rule line — instead of flat run-on text
+      // like "Calculate the missing digits: 9 6 _ - _ 8 3 ----- 1 6 2", which
+      // students couldn't parse. Display-only; the existing answer input/check
+      // below is untouched.
+      if (q.verticalMath && q.verticalMath.top && q.verticalMath.bottom) {
+        const vm = q.verticalMath;
+        const digitCell = (d) => {
+          const blank = d === '_' || d === '' || d == null;
+          return `<span style="display:inline-block;min-width:1.3em;text-align:center;${blank ? 'border-bottom:2px solid #C5BD96;color:#C5BD96;' : ''}">${blank ? '&nbsp;' : fmt(String(d))}</span>`;
+        };
+        const digitsRow = (s) => String(s).split('').map(digitCell).join('');
+        const opSpacer = `<span style="display:inline-block;min-width:1.3em;text-align:center;">&nbsp;</span>`;
+        const opCell = `<span style="display:inline-block;min-width:1.3em;text-align:center;color:#93B0AC;">${fmt(vm.operator || '-')}</span>`;
+        html += `<div style="margin:4px 0 16px;font-family:'Courier New',monospace;font-size:22px;font-weight:700;color:#F0EEEC;display:inline-block;text-align:right;line-height:1.5;">
+          <div>${opSpacer}${digitsRow(vm.top)}</div>
+          <div>${opCell}${digitsRow(vm.bottom)}</div>
+          <div style="border-top:2px solid #93B0AC;margin:2px 0;"></div>
+          <div>${vm.result ? `${opSpacer}${digitsRow(vm.result)}` : ''}</div>
+        </div>`;
+      }
+
       if (q.imageUrl && !q._sharedImage) {
         html += `<div class="q-image" style="margin:0 0 14px;text-align:center"><img src="${embedImage(q.imageUrl)}" alt="${q.diagramDescription || 'Worksheet diagram'}" style="max-width:320px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"></div>`;
       }
@@ -4323,8 +4450,9 @@ function renderQuizHTML(quiz, branding = {}) {
        when there's no school/curriculum logo to show, the header used to read as a
        separate, visually disconnected dark rectangle sitting on top of the page rather
        than blending into it. */
-    .header { background: #0F0F0F; color: #F0EEEC; padding: 14px 110px 14px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); display: flex; align-items: center; min-height: 60px; }
-    .header-text { text-align: left; flex: 0 1 auto; }
+    .header { background: #0F0F0F; color: #F0EEEC; padding: 14px 110px 14px 40px; position: relative; border-bottom: 1px solid rgba(195,220,216,0.12); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; min-height: 60px; }
+    .header-text { text-align: left; flex: 1 1 260px; min-width: 0; }
+    .header-text h1 { overflow-wrap: anywhere; }
     .header-sub { font-size: 13px; color: #5A6B69; margin-bottom: 2px; }
     .header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #C3DCD8; margin: 0; }
     .header-meta { font-size: 13px; color: #5A6B69; margin-top: 2px; }
@@ -4334,7 +4462,21 @@ function renderQuizHTML(quiz, branding = {}) {
        skewed the logos off the true visual center. */
     .header-logos { flex: 1 1 auto; display: flex; gap: 16px; align-items: center;
                      justify-content: center; min-width: 0; }
-    .header-logos img { height: 55px; width: auto; display: block; }
+    .header-logos img { height: 55px; width: auto; max-width: 100%; object-fit: contain; display: block; }
+
+    /* Compact / split-screen: the fixed-height logos used to collide with a long
+       title (they don't shrink), so the row overlapped. Below these widths the
+       header wraps the logos onto their own centered line and scales them down so
+       nothing overlaps the title or the score badge. */
+    @media (max-width: 820px) {
+      .header { padding: 14px 96px 14px 20px; }
+      .header-logos { flex-basis: 100%; order: 3; justify-content: center; margin-top: 6px; }
+      .header-logos img { height: 42px; }
+    }
+    @media (max-width: 520px) {
+      .header-logos img { height: 34px; }
+      .header h1 { font-size: 20px; }
+    }
 
     /* ── Score Badge — anchored to the header itself, not the viewport ── */
     .score { position: absolute; top: 50%; right: 24px; transform: translateY(-50%); width: 76px; height: 76px; border-radius: 50%;
@@ -4497,6 +4639,11 @@ function renderQuizHTML(quiz, branding = {}) {
       <div class="progress-pct" id="pp">0% complete</div>
     </div>
 
+    ${(quiz.purpose || quiz.learningOutcomes?.length) ? `<div style="background:rgba(197,165,106,0.08);border:1px solid rgba(197,165,106,0.25);border-radius:10px;padding:16px 20px;margin:16px 0;">
+      <h3 style="font-size:14px;color:#C5A56A;margin-bottom:8px;font-weight:700;">&#127919; Learning Outcome</h3>
+      ${quiz.purpose ? `<p style="font-size:14px;color:#D8C79A;line-height:1.5;margin:0 0 8px;"><strong>Purpose:</strong> ${fmt(quiz.purpose)}</p>` : ''}
+      ${quiz.learningOutcomes?.length ? `<ul style="margin:0;padding-left:20px;">${quiz.learningOutcomes.map(o => `<li style="font-size:14px;color:#D8C79A;margin:4px 0;">${fmt(o)}</li>`).join('')}</ul>` : ''}
+    </div>` : ''}
     ${conceptsHTML}
     ${quiz.notes ? `<div style="background:rgba(147,176,172,0.08);border:1px solid rgba(147,176,172,0.2);border-radius:10px;padding:16px 20px;margin:16px 0;">
       <h3 style="font-size:14px;color:#93B0AC;margin-bottom:6px;font-weight:700;">&#128221; Note</h3>
@@ -5085,6 +5232,7 @@ function renderQuizHTML(quiz, branding = {}) {
 }
 
 module.exports = router;
+module.exports.generateQuizHandler = generateQuizHandler;
 module.exports.renderQuizHTML = renderQuizHTML;
 module.exports.normalizeVennQuestions = normalizeVennQuestions;
 module.exports.docxToPdf = docxToPdf;

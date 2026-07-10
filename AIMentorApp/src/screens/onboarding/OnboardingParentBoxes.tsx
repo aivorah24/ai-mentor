@@ -8,7 +8,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView,
-  StyleSheet, Platform, Modal,
+  StyleSheet, Platform, Modal, Share,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -278,6 +278,23 @@ export default function OnboardingParentBoxes() {
     setActiveChildIdx(prev => Math.min(prev, children.length - 2));
   };
 
+  // Native share sheet (WhatsApp, SMS, mail, etc.) instead of a mail-only
+  // "forward" link — on web, uses the Web Share API where available and
+  // falls back to a WhatsApp click-to-chat link on desktop browsers that
+  // don't support navigator.share.
+  async function shareCredentials(cred: { name: string; loginId: string; password: string }) {
+    const text = `Hi ${cred.name},\n\nHere are your Aivorah login details:\n\nLogin ID: ${cred.loginId}\nPassword: ${cred.password}\n\nLog in at https://aivorah.ai`;
+    if (Platform.OS === 'web') {
+      const nav: any = typeof navigator !== 'undefined' ? navigator : null;
+      if (nav?.share) {
+        try { await nav.share({ title: 'Aivorah Login Details', text }); return; } catch { return; }
+      }
+      if (typeof window !== 'undefined') window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      return;
+    }
+    try { await Share.share({ message: text }); } catch {}
+  }
+
   function copyToClipboard(text: string, field: string) {
     if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(text).catch(() => {});
@@ -287,7 +304,8 @@ export default function OnboardingParentBoxes() {
   }
 
   // ── Per-card completion ────────────────────────────
-  const personalDone = fullName.trim().length >= 2 && city.trim().length >= 2;
+  const personalDone = fullName.trim().length >= 2 && city.trim().length >= 2
+    && dob.trim().length > 0 && mobile.trim().length > 0;
 
   // Adding children is OPTIONAL during onboarding (client feedback, 2026-06-13):
   // a parent may skip and add kids later from the dashboard. A child only has to
@@ -320,10 +338,25 @@ export default function OnboardingParentBoxes() {
   // (Previously the default avatar + "no children" always counted as done, so a
   // blank form already showed ~67%.) Avatar always has a default, so it isn't a
   // step; children only count once the parent starts adding one.
+  //
+  // The child section used to be ONE bundled step (curriculumDone && accountDone),
+  // so the ring sat frozen while a parent filled in curriculum, grade, school,
+  // email — then jumped straight to 100% only once every field was done. Split
+  // into its individual sub-fields so the ring actually climbs as detail is
+  // entered, matching what a "progress" indicator should do. (client feedback)
+  const childCurriculumDone = startedChildren.every(c => c.curriculum.length > 0);
+  const childGradeDone = startedChildren.every(c => c.grade.length > 0);
+  const childSchoolOrLinkDone = startedChildren.every(c => {
+    const age = c.age ? parseInt(c.age, 10) : 0;
+    if (age >= 14) return /^\S+@\S+\.\S+$/.test(c.linkEmail.trim());
+    return c.school.trim().length >= 2;
+  });
   const completionSteps = [
     fullName.trim().length >= 2,                       // name
     city.trim().length >= 2,                           // city
-    ...(addingChildren ? [curriculumDone && accountDone] : []),  // child (only if started)
+    dob.trim().length > 0,                              // date of birth
+    mobile.trim().length > 0,                           // mobile number
+    ...(addingChildren ? [childCurriculumDone, childGradeDone, childSchoolOrLinkDone, accountDone] : []),
   ];
   const completionPct = Math.round(
     (completionSteps.filter(Boolean).length / completionSteps.length) * 100
@@ -575,7 +608,6 @@ export default function OnboardingParentBoxes() {
                   {createdChildCreds.length > 1 && <Text style={{ fontSize: 14, fontWeight: '700', color: TEAL }}>{cred.name}</Text>}
                   <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center' }}>Save these — {cred.name} uses them to log in as a Student on any device.</Text>
                   {[
-                    { label: 'Student ID', value: cred.studentId, field: `studentId-${idx}` },
                     { label: 'Login ID (Email)', value: cred.loginId, field: `loginId-${idx}` },
                     ...(cred.password ? [{ label: 'Password', value: cred.password, field: `password-${idx}` }] : []),
                   ].map(({ label, value, field }) => (
@@ -593,6 +625,14 @@ export default function OnboardingParentBoxes() {
                     <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center' }}>
                       Login details were also emailed to <Text style={{ fontWeight: '700', color: colors.textMain }}>{cred.loginId}</Text>.
                     </Text>
+                  )}
+                  {!!cred.password && (
+                    <TouchableOpacity
+                      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: TEAL + '15', borderWidth: 1, borderColor: TEAL + '40', borderRadius: 8, paddingVertical: 9 }}
+                      onPress={() => shareCredentials(cred)} activeOpacity={0.8}>
+                      <Feather name="share-2" size={13} color={TEAL} />
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: TEAL }}>Share credentials</Text>
+                    </TouchableOpacity>
                   )}
                 </View>
               ))}

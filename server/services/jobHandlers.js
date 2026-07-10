@@ -25,6 +25,35 @@ registerHandler('worksheet_extract', async (payload) => {
   return extractWorksheetContent(payload.fileList);
 });
 
+// Real quiz-generation job — the "Generating Interactive Quiz..." step reuses
+// the exact same handler as the synchronous POST /quiz/generate (Gemini vision
+// pipeline, diagram matching, etc.) via a mock req/res, so this queued path
+// can never drift from what the synchronous endpoint does. Opt-in via
+// POST /quiz/generate-async — the synchronous route is untouched.
+registerHandler('quiz_generate', async (payload) => {
+  const { generateQuizHandler } = require('../routes/quiz');
+  const mockReq = {
+    file: {
+      buffer: Buffer.from(payload.fileBase64, 'base64'),
+      originalname: payload.filename || 'worksheet.pdf',
+      mimetype: payload.mimeType || 'application/pdf',
+    },
+    body: { grade: payload.grade, subject: payload.subject, school: payload.school, engine: payload.engine },
+    query: {},
+  };
+  return new Promise((resolve, reject) => {
+    const mockRes = {
+      _status: 200,
+      status(code) { this._status = code; return this; },
+      json(body) {
+        if (this._status >= 400) reject(new Error(body?.error || `quiz generation failed (${this._status})`));
+        else resolve(body);
+      },
+    };
+    generateQuizHandler(mockReq, mockRes).catch(reject);
+  });
+});
+
 // ── Templates for the real heavy jobs — wire these incrementally ──────────────
 //
 // registerHandler('content_ingest', async (payload) => {

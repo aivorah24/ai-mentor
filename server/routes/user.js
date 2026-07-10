@@ -734,6 +734,100 @@ router.post('/email-otp/verify', async (req, res) => {
   }
 });
 
+// ── Change email address ──────────────────────────────────────────────
+// Reuses the same 'email_verify' OTP purpose as above: the client must first
+// call POST /email-otp/send with the NEW email so the owner proves they can
+// receive mail there, then submits that code here alongside the account they
+// want to rename. Identity of the CURRENT account is confirmed client-side
+// before this call (password reauth, or Google popup reauth for SSO users —
+// there is no password to check for those, so the UI must not require one).
+// This single call verifies the OTP and propagates the rename everywhere the
+// email is used as a lookup key: the `users` table, every email-keyed table
+// (no FK — `user_email`/`student_email`/`parent_email` columns), and both
+// auth providers (Supabase Auth + Firebase Auth), so no side of the system is
+// left pointing at the old address.
+router.post('/change-email', async (req, res) => {
+  try {
+    const currentEmail = String(req.body?.currentEmail || '').trim().toLowerCase();
+    const newEmail     = String(req.body?.newEmail || '').trim().toLowerCase();
+    const otp          = String(req.body?.otp || '').trim();
+    if (!currentEmail || !newEmail || !otp) {
+      return res.status(400).json({ error: 'currentEmail, newEmail and otp are required.' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      return res.status(400).json({ error: 'Please enter a valid email address.' });
+    }
+    if (newEmail === currentEmail) {
+      return res.status(400).json({ error: 'New email must be different from your current one.' });
+    }
+
+    const { data: taken } = await supabase.from('users').select('id').eq('email', newEmail).maybeSingle();
+    if (taken) return res.status(409).json({ error: 'That email is already in use by another account.' });
+
+    const stored = await otpStore.getOtp(newEmail, 'email_verify');
+    if (!stored) return res.status(400).json({ error: 'No code requested for that email. Please send a code first.' });
+    if (Date.now() > stored.expiresAt) {
+      await otpStore.deleteOtp(newEmail, 'email_verify');
+      return res.status(400).json({ error: 'Code expired. Please request a new one.' });
+    }
+    if (stored.otp !== otp) return res.status(400).json({ error: 'Incorrect code. Please try again.' });
+    await otpStore.deleteOtp(newEmail, 'email_verify');
+
+    const { data: updated, error } = await supabase
+      .from('users')
+      .update({ email: newEmail })
+      .eq('email', currentEmail)
+      .select('id, name, email, role')
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Best-effort: propagate to every other email-keyed table so nothing is
+    // silently orphaned under the old address. None of these block the response —
+    // the identity rename (above) is the part that must succeed.
+    const emailKeyedTables = [
+      ['user_preferences',    'user_email'],
+      ['student_preferences', 'user_email'],
+      ['analytics_events',    'user_email'],
+      ['habits_checkins',     'user_email'],
+      ['llm_logs',            'student_email'],
+    ];
+    for (const [table, col] of emailKeyedTables) {
+      await supabase.from(table).update({ [col]: newEmail }).eq(col, currentEmail)
+        .then(({ error: e }) => { if (e) console.error(`[change-email] ${table}.${col}:`, e.message); });
+    }
+    await supabase.from('parent_children').update({ parent_email: newEmail }).eq('parent_email', currentEmail)
+      .then(({ error: e }) => { if (e) console.error('[change-email] parent_children.parent_email:', e.message); });
+
+    // Supabase Auth (if this user also has a password-based Supabase Auth account)
+    try {
+      const { data: authList } = await supabase.auth.admin.listUsers();
+      const authUser = authList?.users?.find(u => u.email === currentEmail);
+      if (authUser) {
+        await supabase.auth.admin.updateUserById(authUser.id, { email: newEmail, email_confirm: true });
+      }
+    } catch (e) {
+      console.error('[change-email] supabase auth update failed:', e.message);
+    }
+
+    // Firebase Auth — updated via Admin SDK so this works uniformly for both
+    // password and Google-SSO accounts (no client-side reauth token needed here;
+    // ownership of newEmail was already proven by the OTP above).
+    try {
+      if (firebaseAdmin) {
+        const fbUser = await firebaseAdmin.auth().getUserByEmail(currentEmail);
+        await firebaseAdmin.auth().updateUser(fbUser.uid, { email: newEmail, emailVerified: true });
+      }
+    } catch (e) {
+      console.error('[change-email] firebase auth update failed:', e.message);
+    }
+
+    res.json({ ok: true, user: updated });
+  } catch (err) {
+    console.error('[change-email]', err.message);
+    res.status(500).json({ error: 'Could not update your email. Please try again.' });
+  }
+});
+
 // ── Mobile-number OTP verification via Fast2SMS (India only — 10-digit
 // numbers). Mirrors the email-otp pattern above, same otpStore backing so
 // it works across multiple Cloud Run instances. ────────────────────────
