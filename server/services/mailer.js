@@ -96,16 +96,23 @@ async function sendCredentialsEmail({ to, childName, loginId, password, childEma
     // other than the child (i.e. the parent/teacher), and there's a password to forward.
     const canForward = password && childEmail && childEmail.toLowerCase() !== String(to).toLowerCase();
     const forwardBlock = canForward ? (() => {
-      const mailtoBody = encodeURIComponent(
-        `Hi ${childName},\n\nHere are your Aivorah login details:\n\nLogin ID: ${loginId}\nPassword: ${password}\n\nLog in at https://aivorah.ai`
-      );
+      const shareText = `Hi ${childName},\n\nHere are your Aivorah login details:\n\nLogin ID: ${loginId}\nPassword: ${password}\n\nLog in at https://aivorah.ai`;
+      const mailtoBody = encodeURIComponent(shareText);
       const mailtoHref = `mailto:${encodeURIComponent(childEmail)}?subject=${encodeURIComponent('Your Aivorah Login')}&body=${mailtoBody}`;
+      // WhatsApp's click-to-chat URL is a plain link (no JS/Web Share API needed,
+      // so it works inside any email client) — opens the app with the message
+      // pre-filled, letting the parent pick who to send it to (WhatsApp, SMS via
+      // the OS share sheet on mobile, etc.), not just the child's own email.
+      const waHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
       return `
           <div style="text-align:center;margin:4px 0 20px">
-            <a href="${mailtoHref}" style="display:inline-block;background:#7C3AED;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600">
-              Forward these credentials to your child
+            <a href="${mailtoHref}" style="display:inline-block;background:#7C3AED;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;margin:0 6px 8px">
+              Forward via Email
             </a>
-            <p style="font-size:12px;color:#999;margin:8px 0 0">Opens your mail app with the Login ID and Password pre-filled, addressed to ${childEmail}.</p>
+            <a href="${waHref}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;margin:0 6px 8px">
+              Share via WhatsApp
+            </a>
+            <p style="font-size:12px;color:#999;margin:8px 0 0">Opens your mail app or WhatsApp with the Login ID and Password pre-filled.</p>
           </div>`;
     })() : '';
 

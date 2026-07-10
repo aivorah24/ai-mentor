@@ -1330,7 +1330,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor,
     borderRadius: radius.md, height: 46, paddingHorizontal: spacing.md,
   },
-  modalTextInput: { flex: 1, fontSize: 14, color: c.textMain },
+  modalTextInput: { flex: 1, fontSize: 14, color: c.textMain, ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}) },
   modalOption: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8, borderWidth: 1, marginTop: 4,

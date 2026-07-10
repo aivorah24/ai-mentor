@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  Modal, TextInput, Alert, Image, ActivityIndicator,
+  Modal, TextInput, Alert, Image, ActivityIndicator, Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -14,6 +14,12 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import SERVER_URL from '../../config/serverUrl';
 import { AVATAR_STYLES } from '../../constants/avatarStyles';
+import { CURRICULA, getGradesForCurriculum } from '../onboarding/OnboardingScreen';
+import { SelectField, locateFull, INDIA_CITIES } from '../onboarding/OnboardingSharedFields';
+
+// Flat, deduped, sorted list of every city across all Indian states — the
+// dropdown source for the Location picker (search-to-filter, pick one).
+const ALL_CITIES = Array.from(new Set(Object.values(INDIA_CITIES).flat())).sort();
 
 // ── Avatars — Enchanting Forest palette ─────────────────────────────────────
 const AVATARS = AVATAR_STYLES;
@@ -23,7 +29,7 @@ const LEARNING_STYLES = [
   { id: 'visual',    label: 'Visual',    desc: 'I learn best through diagrams & images',  icon: 'eye'      as const, color: '#9FB2A4' },
   { id: 'auditory',  label: 'Auditory',  desc: 'I learn best by listening & discussing',  icon: 'volume-2' as const, color: '#B2C2B7' },
   { id: 'reading',   label: 'Reading',   desc: 'I learn best through reading & writing',  icon: 'book'     as const, color: '#BAA467' },
-  { id: 'handson',   label: 'Hands-On', desc: 'I learn best by doing & experimenting',   icon: 'tool'     as const, color: '#C9A24E' },
+  { id: 'hands-on',  label: 'Hands-On', desc: 'I learn best by doing & experimenting',   icon: 'tool'     as const, color: '#C9A24E' },
 ];
 
 // ── Subject interests — Enchanting Forest palette ─────────────────────────────
@@ -60,8 +66,11 @@ export default function ProfileScreen({ navigation }: any) {
   const [editVisible,    setEditVisible]    = useState(false);
   const [editName,       setEditName]       = useState(user?.name || '');
   const [editGrade,      setEditGrade]      = useState(user?.grade || '');
+  const [editCurriculum, setEditCurriculum] = useState(user?.curriculum || '');
   const [editLocation,   setEditLocation]   = useState(user?.location || '');
+  const [editSchool,     setEditSchool]     = useState((user as any)?.school || '');
   const [editBio,        setEditBio]        = useState((user as any)?.bio || '');
+  const [locating,       setLocating]       = useState(false);
   const [saveProfileLoading, setSaveProfileLoading] = useState(false);
   const [saveProfileError,   setSaveProfileError]   = useState('');
 
@@ -94,8 +103,10 @@ export default function ProfileScreen({ navigation }: any) {
       // /user/profile so teacher & parent views (which read users.name) update.
       // (Previously this hit /user/preferences, so the name never persisted.)
       const profileBody: Record<string, any> = { email: user?.email, name: editName.trim() };
-      if (editGrade.trim())    profileBody.grade    = editGrade.trim();
-      if (editLocation.trim()) profileBody.location = editLocation.trim();
+      if (editGrade.trim())      profileBody.grade      = editGrade.trim();
+      if (editCurriculum.trim()) profileBody.curriculum = editCurriculum.trim();
+      if (editLocation.trim())   profileBody.location   = editLocation.trim();
+      if (editSchool.trim())     profileBody.school     = editSchool.trim();
       await fetch(`${SERVER_URL}/user/profile`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -112,7 +123,9 @@ export default function ProfileScreen({ navigation }: any) {
       updateUser({
         name: editName.trim(),
         grade: editGrade.trim() || user?.grade,
+        curriculum: editCurriculum.trim() || user?.curriculum,
         location: editLocation.trim() || user?.location,
+        school: editSchool.trim() || (user as any)?.school,
         bio: editBio.trim() || (user as any)?.bio,
       } as any);
       setEditVisible(false);
@@ -200,6 +213,12 @@ export default function ProfileScreen({ navigation }: any) {
                   <Text style={[styles.tagText, { color: heroGreen }]}>{user.location}</Text>
                 </View>
               )}
+              {(user as any)?.school && (
+                <View style={[styles.tag, { backgroundColor: isDark ? colors.accentGreen + '22' : '#FFFFFFB0', borderColor: heroGreen + '80' }]}>
+                  <Feather name="home" size={10} color={heroGreen} />
+                  <Text style={[styles.tagText, { color: heroGreen }]}>{(user as any).school}</Text>
+                </View>
+              )}
               {/* Plan badge */}
               <TouchableOpacity
                 style={[styles.tag, (user as any)?.isPro
@@ -254,7 +273,15 @@ export default function ProfileScreen({ navigation }: any) {
                   <TouchableOpacity
                     key={s.id}
                     style={[styles.styleCard, active && { borderColor: s.color, backgroundColor: isDark ? `${s.color}18` : `${s.color}10` }]}
-                    onPress={() => { setLearningStyle(s.id); updateUser({ learningStyle: s.id } as any); }}
+                    onPress={() => {
+                      setLearningStyle(s.id);
+                      updateUser({ learningStyle: s.id } as any);
+                      fetch(`${SERVER_URL}/user/preferences`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user?.email, learningStyle: s.id }),
+                      }).catch(() => {});
+                    }}
                     activeOpacity={0.8}
                   >
                     <View style={[styles.styleIconWrap, { backgroundColor: `${s.color}20` }]}>
@@ -343,24 +370,87 @@ export default function ProfileScreen({ navigation }: any) {
                 <TouchableOpacity onPress={() => setEditVisible(false)}><Feather name="x" size={20} color={colors.textMuted} /></TouchableOpacity>
               </View>
 
-              {[
-                { label: 'Full Name',   icon: 'user'    as const, val: editName,     set: setEditName,     ph: 'Your name',         cap: 'words' as const },
-                { label: 'Grade',       icon: 'book'    as const, val: editGrade,    set: setEditGrade,    ph: 'e.g. Grade 3',      cap: 'none'  as const },
-                { label: 'Location',    icon: 'map-pin' as const, val: editLocation, set: setEditLocation, ph: 'e.g. Hyderabad',    cap: 'none'  as const },
-                { label: 'Bio',         icon: 'edit-2'  as const, val: editBio,      set: setEditBio,      ph: 'A short tagline…',  cap: 'sentences' as const },
-              ].map(f => (
-                <View key={f.label}>
-                  <Text style={styles.fieldLabel}>{f.label}</Text>
-                  <View style={styles.inputRow}>
-                    <Feather name={f.icon} size={14} color={colors.textDim} />
-                    <TextInput style={styles.input} placeholder={f.ph} placeholderTextColor={colors.textDim} value={f.val} onChangeText={f.set} autoCapitalize={f.cap} />
-                  </View>
-                </View>
-              ))}
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.fieldLabel}>Full Name</Text>
+              <View style={styles.inputRow}>
+                <Feather name="user" size={14} color={colors.textDim} />
+                <TextInput style={styles.input} placeholder="Your name" placeholderTextColor={colors.textDim} value={editName} onChangeText={setEditName} autoCapitalize="words" />
+              </View>
+
+              {/* Curriculum — same radio-tile picker as onboarding */}
+              <Text style={styles.fieldLabel}>Curriculum</Text>
+              <View style={styles.radioGrid}>
+                {CURRICULA.map(c => (
+                  <TouchableOpacity
+                    key={c}
+                    style={[styles.radioTile, editCurriculum === c && styles.radioTileActive]}
+                    onPress={() => {
+                      setEditCurriculum(c);
+                      if (!getGradesForCurriculum(c).includes(editGrade)) setEditGrade('');
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.chipTxt, editCurriculum === c && styles.chipTxtActive]}>{c}</Text>
+                    <View style={[styles.radio, editCurriculum === c && { borderColor: colors.accentYellow }]}>
+                      {editCurriculum === c && <View style={styles.radioDot} />}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Grade — same chip picker as onboarding, scoped to the chosen curriculum */}
+              <Text style={styles.fieldLabel}>Grade</Text>
+              <View style={styles.chipRow}>
+                {getGradesForCurriculum(editCurriculum).map(g => (
+                  <TouchableOpacity key={g} style={[styles.chip, editGrade === g && styles.chipActive]}
+                    onPress={() => setEditGrade(g)} activeOpacity={0.8}>
+                    <Text style={[styles.chipTxt, editGrade === g && styles.chipTxtActive]}>{g}</Text>
+                  </TouchableOpacity>
+                ))}
+                {!editCurriculum && <Text style={styles.hintTxt}>Pick a curriculum above to see grade options.</Text>}
+              </View>
+
+              {/* Location — searchable city dropdown (city name only) + "use my location" */}
+              <View style={styles.lblRow}>
+                <Text style={styles.fieldLabel}>Location</Text>
+                {Platform.OS === 'web' && (
+                  <TouchableOpacity
+                    style={styles.locateBtn}
+                    onPress={() => locateFull(({ city }) => { if (city) setEditLocation(city); }, setLocating)}
+                    disabled={locating}
+                    activeOpacity={0.8}
+                  >
+                    <Feather name="crosshair" size={12} color={colors.accentYellow} />
+                    <Text style={styles.locateTxt}>{locating ? 'Locating...' : 'Use my location'}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <SelectField
+                value={editLocation}
+                onChange={setEditLocation}
+                options={ALL_CITIES}
+                placeholder="Select your city"
+                searchPlaceholder="Search city..."
+                colors={colors}
+                styles={{ ...styles, input: styles.pickerInput }}
+              />
+
+              <Text style={styles.fieldLabel}>School</Text>
+              <View style={styles.inputRow}>
+                <Feather name="home" size={14} color={colors.textDim} />
+                <TextInput style={styles.input} placeholder="e.g. DPS Bengaluru" placeholderTextColor={colors.textDim} value={editSchool} onChangeText={setEditSchool} autoCapitalize="words" />
+              </View>
+
+              <Text style={styles.fieldLabel}>Bio</Text>
+              <View style={styles.inputRow}>
+                <Feather name="edit-2" size={14} color={colors.textDim} />
+                <TextInput style={styles.input} placeholder="A short tagline…" placeholderTextColor={colors.textDim} value={editBio} onChangeText={setEditBio} autoCapitalize="sentences" />
+              </View>
 
               {!!saveProfileError && (
                 <Text style={{ color: '#ef4444', fontSize: 13, marginBottom: 10 }}>{saveProfileError}</Text>
               )}
+              </ScrollView>
               <View style={styles.modalBtns}>
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditVisible(false)} disabled={saveProfileLoading}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
                 <TouchableOpacity style={[styles.saveBtn, saveProfileLoading && { opacity: 0.6 }]} onPress={handleSaveProfile} disabled={saveProfileLoading}>
@@ -513,12 +603,47 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
 
   // Modal
   overlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
-  modalBox:   { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.xl, width: '100%', maxWidth: 440 },
+  modalBox:   { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.xl, padding: spacing.xl, width: '100%', maxWidth: 440, maxHeight: '85%' },
   modalHead:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xl },
+  modalScroll:{ flexGrow: 1, flexShrink: 1 },
   modalTitle: { fontSize: 18, fontWeight: '700', color: c.textMain, fontFamily: fonts.serif },
   fieldLabel: { fontSize: 12, fontWeight: '600', color: c.textMuted, marginBottom: 6, marginTop: spacing.md },
+  lblRow:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   inputRow:   { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.md, height: 46, paddingHorizontal: spacing.lg },
-  input:      { flex: 1, fontSize: 14, color: c.textMain },
+  input:      { flex: 1, fontSize: 14, color: c.textMain, ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}) },
+  // SelectField/AutocompleteField (from onboarding) render their box directly
+  // via `styles.input` with no separate bordered wrapper — unlike this file's
+  // own fields, which get their border from `inputRow`. Give those shared
+  // components a self-contained bordered variant so they don't render as bare
+  // underlined text.
+  pickerInput: {
+    height: 46, backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: radius.md, paddingHorizontal: spacing.lg, fontSize: 14, color: c.textMain,
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
+  },
+
+  // Onboarding-style pickers reused in Edit Profile (curriculum / grade / location)
+  locateBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  locateTxt: { fontSize: 11, fontWeight: '700', color: c.accentYellow },
+  hintTxt:   { fontSize: 11, color: c.textDim },
+  chipRow:   { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip:      { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 18, borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark },
+  chipActive:{ backgroundColor: c.accentYellow + '20', borderColor: c.accentYellow },
+  chipTxt:   { fontSize: 13, fontWeight: '600', color: c.textMuted },
+  chipTxtActive: { color: c.accentYellow },
+  radioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  radioTile: {
+    flexBasis: '47%', flexGrow: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 14, paddingVertical: 12, borderRadius: 10,
+    borderWidth: 1, borderColor: c.borderColor, backgroundColor: c.bgDark,
+  },
+  radioTileActive: { borderColor: c.accentYellow, backgroundColor: c.accentYellow + '10' },
+  radio:     { width: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: c.borderColor, alignItems: 'center', justifyContent: 'center' },
+  radioDot:  { width: 8, height: 8, borderRadius: 4, backgroundColor: c.accentYellow },
+  dropdown:  { marginTop: 6, backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: 10, overflow: 'hidden' },
+  dropdownItem: { paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.borderColor },
+  dropdownTxt:  { fontSize: 13, color: c.textMain },
+
   modalBtns:  { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl },
   cancelBtn:  { flex: 1, height: 46, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, alignItems: 'center', justifyContent: 'center' },
   cancelText: { fontSize: 14, fontWeight: '600', color: c.textMuted },
