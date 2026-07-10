@@ -250,7 +250,7 @@ export default function DashboardScreen({ navigation, route }: any) {
   const childOverride = route?.params?.childData as {
     name: string; grade: string; curriculum: string;
     xpPoints: number; level: number; currentStreak: number;
-    studyTimeMinutes: number; topicsExplored: number;
+    studyTimeMinutes: number; todayStudyMinutes: number; topicsExplored: number;
     completedTopics: string[]; totalTopics: number;
   } | undefined;
 
@@ -262,7 +262,10 @@ export default function DashboardScreen({ navigation, route }: any) {
     studyTimeMinutes: childOverride.studyTimeMinutes ?? 0,
     topicsExplored: childOverride.topicsExplored ?? 0,
     completedTopics: childOverride.completedTopics ?? [],
-    todayStudyMinutes: 0,
+    // Was hardcoded to 0 regardless of the child's real value — this is why
+    // "Study Time" on the parent's view of a child's dashboard always showed
+    // 0m/0% even when the child had genuinely studied today.
+    todayStudyMinutes: childOverride.todayStudyMinutes ?? 0,
   } : ctxStats;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -619,6 +622,14 @@ export default function DashboardScreen({ navigation, route }: any) {
   title={childOverride ? `${firstName}'s Dashboard` : `${getGreeting()}, ${firstName}`}
   subtitle={`${curriculumName} · ${studentGrade}`}
   showSearch={false}
+  // On mobile the hamburger menu already doubled as "back" here, but on web/
+  // desktop onMenuPress is never wired to a visible button at all (it only
+  // renders on isMobile) — so a parent viewing a child's dashboard had no
+  // visible way back to My Kids. showBack renders a proper back arrow on
+  // every platform, and onBack sends them straight to My Kids explicitly
+  // rather than relying on navigation history.
+  showBack={!!childOverride}
+  onBack={childOverride ? () => navigation.navigate('ParentMyKids') : undefined}
   onMenuPress={childOverride ? () => navigation.goBack() : () => navigation.openDrawer()}
   onProfilePress={childOverride ? undefined : () => navigation.navigate('Profile')}
   notificationCount={childOverride ? 0 : unreadCount}

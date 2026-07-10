@@ -2,7 +2,7 @@ const express  = require('express');
 const router   = express.Router();
 const supabase = require('../services/supabase');
 const { randomUUID, randomInt } = require('crypto');
-const { sendCredentialsEmail } = require('../services/mailer');
+const { sendCredentialsEmail, sendBulkCredentialsEmail } = require('../services/mailer');
 const multer   = require('multer');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -238,6 +238,17 @@ router.post('/:teacherEmail/students/link-existing', async (req, res) => {
 
 // ── Helpers for bulk import ───────────────────────────────────────────────────
 
+function parseXLSX(buffer) {
+  const XLSX = require('xlsx');
+  const wb = XLSX.read(buffer, { type: 'buffer' });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  // raw: false formats every cell as a display string (consistent with the CSV
+  // path, which is all strings) — avoids numbers/dates coming through as raw
+  // JS numbers that then fail the .trim() calls downstream.
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+  return rows.map(row => row.map(cell => String(cell ?? '').trim()));
+}
+
 function parseCSV(text) {
   // Strip BOM if present (Excel UTF-8 files)
   const clean = text.replace(/^﻿/, '');
@@ -289,11 +300,21 @@ async function createFirebaseAccount(email, password) {
 // CSV columns (case-insensitive, order-independent):
 //   Name (required), Email (optional), Grade, Curriculum, School
 // Optional body fields: defaultGrade, defaultCurriculum
+//
+// Two-step flow — nothing is EVER created without an explicit commit:
+//   1. previewOnly=true  → classify every row (matched / needs_confirmation /
+//      skipped-duplicate) with NO database writes, no accounts, no email, no
+//      download. Lets the teacher review and pick exactly who to import.
+//   2. previewOnly absent + selectedRowIndexes=[...] → creates ONLY those exact
+//      rows (by their 1-based position in the file), whether they were
+//      originally matched or flagged for review. One single pass, one email,
+//      one download — never re-processes rows the teacher didn't select.
 router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (req, res) => {
   try {
     const { teacherEmail } = req.params;
     const defaultGrade      = (req.body?.defaultGrade      || 'Grade 3').trim();
     const defaultCurriculum = (req.body?.defaultCurriculum || 'IB PYP').trim();
+    const previewOnly = req.body?.previewOnly === 'true' || req.body?.previewOnly === true;
 
     if (!req.file) return res.status(400).json({ error: 'No CSV file uploaded.' });
 
@@ -309,14 +330,26 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
     const teacherTeaches = teacherPrefs?.data?.teaches || [];
     const normKey = (g, c) => `${String(g || '').trim().toLowerCase()}|${String(c || '').trim().toLowerCase()}`;
     const teacherGradeCurriculumSet = new Set(teacherTeaches.map(t => normKey(t.grade, t.curriculum)));
-    // Explicit per-row confirmation from the client after reviewing mismatches —
-    // { "RowName|Grade|Curriculum": true } — only these mismatched rows proceed.
-    let confirmedMismatches = {};
-    try { confirmedMismatches = JSON.parse(req.body?.confirmedMismatches || '{}'); } catch {}
 
-    const csvText = req.file.buffer.toString('utf-8');
-    const rows = parseCSV(csvText);
-    if (rows.length < 2) return res.status(400).json({ error: 'CSV must have a header row and at least one student row.' });
+    // Which exact rows (by 1-based position in the parsed file) the teacher
+    // has decided to actually import — only present on the commit call.
+    let selectedRowIndexes = null;
+    if (!previewOnly) {
+      try {
+        const parsed = JSON.parse(req.body?.selectedRowIndexes || '[]');
+        if (Array.isArray(parsed)) selectedRowIndexes = new Set(parsed.map(Number));
+      } catch {}
+      if (!selectedRowIndexes) selectedRowIndexes = new Set();
+    }
+
+    // The file input accepts .csv and .xlsx/.xls — a real Excel workbook is a
+    // zipped binary format, so decoding it as UTF-8 text and running it through
+    // the CSV parser would just produce garbage rows. Branch on extension.
+    const isExcel = /\.xlsx?$/i.test(req.file.originalname || '');
+    const rows = isExcel
+      ? parseXLSX(req.file.buffer)
+      : parseCSV(req.file.buffer.toString('utf-8'));
+    if (rows.length < 2) return res.status(400).json({ error: 'File must have a header row and at least one student row.' });
 
     // Map header columns
     const header = rows[0].map(h => h.toLowerCase().replace(/[^a-z]/g, ''));
@@ -341,29 +374,36 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
       const grade       = gradeIdx >= 0 && row[gradeIdx]?.trim() ? row[gradeIdx].trim() : defaultGrade;
       const curriculum  = curriculumIdx >= 0 && row[curriculumIdx]?.trim() ? row[curriculumIdx].trim() : defaultCurriculum;
       const school      = schoolIdx >= 0 ? (row[schoolIdx]?.trim() || '') : '';
-      const studentEmail = emailRaw ? emailRaw.toLowerCase() : await generateStudentLoginId();
 
-      // Flag rows outside the grades/curricula this teacher actually teaches —
-      // only proceed if the client already confirmed this exact row (after
-      // showing the teacher a "this student is a different grade, import
-      // anyway?" prompt). Skip DB writes entirely for unconfirmed mismatches.
-      const rowKey = `${cleanName}|${grade}|${curriculum}`;
       const gradeCurriculumMismatch = teacherGradeCurriculumSet.size > 0 && !teacherGradeCurriculumSet.has(normKey(grade, curriculum));
       const schoolMismatch = Boolean(school) && Boolean(teacher.school)
         && school.trim().toLowerCase() !== teacher.school.trim().toLowerCase();
-      if ((gradeCurriculumMismatch || schoolMismatch) && !confirmedMismatches[rowKey]) {
-        const reason = gradeCurriculumMismatch && schoolMismatch
-          ? `${grade} · ${curriculum} · ${school} doesn't match your classes or school`
-          : gradeCurriculumMismatch
-            ? `${grade} · ${curriculum} isn't a class you teach`
-            : `"${school}" doesn't match your school ("${teacher.school}")`;
+      const isMismatch = gradeCurriculumMismatch || schoolMismatch;
+      const mismatchReason = gradeCurriculumMismatch && schoolMismatch
+        ? `${grade} · ${curriculum} · ${school} doesn't match your classes or school`
+        : gradeCurriculumMismatch
+          ? `${grade} · ${curriculum} isn't a class you teach`
+          : `"${school}" doesn't match your school ("${teacher.school}")`;
+
+      // ── PREVIEW: classify only, never touch the database ──────────────────
+      if (previewOnly) {
+        let dupEmail = false;
+        if (emailRaw) {
+          const { data: dup } = await supabase.from('users').select('id').eq('email', emailRaw.toLowerCase()).maybeSingle();
+          dupEmail = Boolean(dup);
+        }
         results.push({
-          name: cleanName, email: studentEmail, grade, curriculum, school,
-          status: 'needs_confirmation',
-          error: `${reason} — confirm to import anyway.`,
+          rowIndex: i, name: cleanName, email: emailRaw, grade, curriculum, school,
+          status: dupEmail ? 'skipped' : (isMismatch ? 'needs_confirmation' : 'matched'),
+          error: dupEmail ? 'Email already exists' : (isMismatch ? `${mismatchReason} — confirm to import anyway.` : undefined),
         });
         continue;
       }
+
+      // ── COMMIT: only create rows the teacher explicitly selected ──────────
+      if (!selectedRowIndexes.has(i)) continue;
+
+      const studentEmail = emailRaw ? emailRaw.toLowerCase() : await generateStudentLoginId();
 
       try {
         // Skip duplicates
@@ -405,9 +445,10 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_email' });
 
-        // Email credentials to the teacher, and directly to the student too when a
-        // real email was given in the CSV (not the auto-generated placeholder).
-        sendCredentialsEmail({ to: cleanTeacherEmail, childName: cleanName, loginId: studentEmail, password, studentId: resolvedStudentId, childEmail: studentEmail });
+        // Email the student directly when a real email was given in the CSV (not
+        // the auto-generated placeholder). The teacher gets ONE consolidated
+        // email with every row after the loop (below) instead of one per student —
+        // a large bulk import used to flood their inbox with a separate email per row.
         if (!studentEmail.endsWith('@aivorah.student') && studentEmail !== cleanTeacherEmail) {
           sendCredentialsEmail({ to: studentEmail, childName: cleanName, loginId: studentEmail, password, studentId: resolvedStudentId })
             .catch(err => console.log('[teacher/bulk-import] student credentials email failed (non-fatal):', err.message));
@@ -419,10 +460,23 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
       }
     }
 
-    const created = results.filter(r => r.status === 'created').length;
+    if (previewOnly) {
+      const matched = results.filter(r => r.status === 'matched').length;
+      const needsConfirmation = results.filter(r => r.status === 'needs_confirmation').length;
+      const skipped = results.filter(r => r.status === 'skipped').length;
+      return res.json({ success: true, preview: true, summary: { matched, needsConfirmation, skipped, total: results.length }, results });
+    }
+
+    const createdRows = results.filter(r => r.status === 'created');
+    const created = createdRows.length;
     const skipped = results.filter(r => r.status === 'skipped').length;
     const errors  = results.filter(r => r.status === 'error').length;
-    const needsConfirmation = results.filter(r => r.status === 'needs_confirmation').length;
+    const needsConfirmation = 0; // commit pass never leaves anything pending — unselected rows are simply not processed
+
+    if (createdRows.length > 0) {
+      sendBulkCredentialsEmail({ to: cleanTeacherEmail, created: createdRows })
+        .catch(err => console.log('[teacher/bulk-import] bulk credentials email failed (non-fatal):', err.message));
+    }
 
     res.json({ success: true, summary: { created, skipped, errors, needsConfirmation, total: results.length }, results });
   } catch (err) {

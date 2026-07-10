@@ -319,7 +319,7 @@ const SUBJECT_COLORS: Record<string, string> = {
 // upload/classify and quiz-generation steps so the browser tab (and any load
 // balancer/proxy in front of it) never has to hold one connection open for
 // the full AI pipeline duration.
-async function pollJob(jobId: string, { intervalMs = 1500, timeoutMs = 240000 } = {}): Promise<any> {
+async function pollJob(jobId: string, { intervalMs = 1500, timeoutMs = 360000 } = {}): Promise<any> {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     const res = await fetch(`${SERVER_URL}/jobs/${jobId}`);
@@ -428,6 +428,14 @@ function getAnsweredQuizHtml(originalHtml: string, submission: any) {
 // runWorkerOnce), which is the actual "handle concurrent teacher uploads
 // reliably" property. Falls back to the old synchronous endpoint if the queue
 // call itself fails to enqueue, so a queue outage never blocks uploads outright.
+// The extraction AI is instructed not to use a program/series banner (e.g. a
+// grade label like "PYP: 4") as the title/chapter, but doesn't always follow
+// that — grade already has its own dedicated field, so strip a leading
+// "PYP <n>" / "PYP: <n>" / "Grade <n>" prefix if the model echoed it anyway.
+function stripGradePrefix(text: string): string {
+  return (text || '').replace(/^\s*(PYP|Grade|Class)\s*:?\s*\d+\s*[:\-–]?\s*/i, '').trim();
+}
+
 async function extractViaQueue(serverUrl: string, body: any): Promise<any> {
   try {
     const enqueueRes = await fetch(`${serverUrl}/assignments/extract-questions-async`, {
@@ -596,6 +604,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
 
   // Student picker
   const [students, setStudents] = useState<StudentItem[]>([]);
+  // Distinguishes "still fetching" from "genuinely no students" — without this,
+  // the picker could flash "No students linked yet" if the teacher reached the
+  // Specific-student step before the by-teacher fetch (below) had resolved.
+  const [studentsLoaded, setStudentsLoaded] = useState(false);
   const [assignTo, setAssignTo] = useState<'all' | 'specific'>('all');
   const [selectedStudent, setSelectedStudent] = useState<StudentItem | null>(null);
   const [studentSearch, setStudentSearch] = useState('');
@@ -782,7 +794,8 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         // to by-curriculum, which would show students from other classes.
         setStudents(matched);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setStudentsLoaded(true));
   }, [teacherEmail, user?.curriculum, user?.school]));
 
   const filtered = assignments.filter(a => {
@@ -953,10 +966,17 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
             if (dRes.ok && dData.pdfBase64) {
               workingFd = { name: fd.name.replace(/\.docx$/i, '.pdf'), base64: dData.pdfBase64, mime: 'application/pdf' };
             } else {
-              console.log('[upload] DOCX to PDF conversion failed, sending as-is:', dData.error);
+              // Previously fell through silently and sent the RAW (unconverted)
+              // Word bytes onward as if they were an image — which can never work
+              // (Gemini vision can't read .docx bytes), so it just failed again
+              // later with a confusing, unrelated-looking error. Surface the real
+              // conversion error immediately instead.
+              throw new Error(dData.error || 'Could not read this Word document. Please export it to PDF and upload that.');
             }
-          } catch (e) {
-            console.log('[upload] DOCX to PDF conversion request failed, sending as-is');
+          } catch (e: any) {
+            setUploadingDoc(false);
+            setFormError(`"${fd.name}": ${e?.message || 'Could not read this Word document. Please export it to PDF and upload that.'}`);
+            return;
           }
         }
         if (workingFd.mime === 'application/pdf') {
@@ -1020,9 +1040,9 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           if (!jobRes.ok || !jobData.jobId) throw new Error(jobData.error || 'Could not start extraction.');
           const eData = await pollJob(jobData.jobId);
           console.log('[extract] job done, data:', JSON.stringify(eData).slice(0, 500));
-          if (eData.title && !title.trim()) setTitle(eData.title);
+          if (eData.title && !title.trim()) setTitle(stripGradePrefix(eData.title));
             // Use chapter if available, otherwise fall back to title as chapter/topic
-            const chapterVal = eData.chapter || eData.title || '';
+            const chapterVal = stripGradePrefix(eData.chapter || eData.title || '');
             if (chapterVal) setChapter(prev => prev || chapterVal);
             if (eData.subject) {
               const extractedSubj = String(eData.subject).trim();
@@ -1134,7 +1154,16 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               body: JSON.stringify({ fileBase64: working.base64 }),
             });
             const dData = await dRes.json();
-            if (dRes.ok && dData.pdfBase64) working = { name: working.name.replace(/\.docx$/i, '.pdf'), base64: dData.pdfBase64, mime: 'application/pdf' };
+            if (dRes.ok && dData.pdfBase64) {
+              working = { name: working.name.replace(/\.docx$/i, '.pdf'), base64: dData.pdfBase64, mime: 'application/pdf' };
+            } else {
+              // Previously fell through silently and treated the RAW (unconverted)
+              // Word bytes as an "image" page, which can never work — it just
+              // failed again downstream with a confusing, delayed error at the
+              // Generate step instead of here, at Classify, where the real cause
+              // (docx conversion failure) actually happened.
+              throw new Error(dData.error || 'Could not read this Word document. Please export it to PDF and upload that.');
+            }
           }
           const pages = working.mime === 'application/pdf' ? await pdfToImages(working.base64) : [working];
           const pageFiles = pages.length > 0 ? pages : [working];
@@ -1150,7 +1179,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           const rawGrade = eData.grade ? String(eData.grade).trim() : '';
           const gradeStr = rawGrade.replace(/[^0-9]/g, '');
           const resolvedGrade = rawGrade ? (gradeOptions.find(g => (gradeStr && g.includes(gradeStr)) || g.toLowerCase() === rawGrade.toLowerCase()) || (gradeStr ? `Grade ${gradeStr}` : rawGrade)) : effectiveGrade;
-          const resolvedTitle = eData.title || eData.chapter || item.name.replace(/\.[^.]+$/, '');
+          const resolvedTitle = stripGradePrefix(eData.title || eData.chapter || item.name.replace(/\.[^.]+$/, ''));
           const matchLang = eData.language ? LANGUAGES.find(l => l.toLowerCase() === String(eData.language).toLowerCase()) : undefined;
 
           updateBulkItem(item.id, {
@@ -1162,7 +1191,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
             // "Could not read this Word document" even though the file was fine.
             name: working.name, mime: working.mime, base64: working.base64,
             pages: pageFiles, status: 'ready',
-            title: resolvedTitle, chapter: eData.chapter || resolvedTitle,
+            title: resolvedTitle, chapter: stripGradePrefix(eData.chapter) || resolvedTitle,
             subject: extractedSubj, grade: resolvedGrade, language: matchLang || '',
           });
         } catch (err: any) {
@@ -1305,7 +1334,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
         const blob = new Blob([byteArray], { type: file.mime });
         formData.append('image', blob, file.name || 'worksheet.jpg');
-        formData.append('grade', grade || 'PYP 4');
+        formData.append('grade', grade || effectiveGrade);
         formData.append('subject', subject || 'Mathematics');
         formData.append('school', user?.school || '');
         const res = await fetch(`${SERVER_URL}/quiz/generate-image`, { method: 'POST', body: formData });
@@ -1319,7 +1348,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fileBase64: file.base64, mimeType: file.mime, filename: file.name || 'worksheet.pdf',
-            grade: grade || 'PYP 4', subject: subject || 'Mathematics', school: user?.school || '',
+            grade: grade || effectiveGrade, subject: subject || 'Mathematics', school: user?.school || '',
           }),
         });
         const jobData = await jobRes.json();
@@ -3492,12 +3521,26 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                               </View>
                               {item.assignTo === 'specific' && (
                                 <View style={{ gap: 4 }}>
-                                  {students.filter(s => { const normG = (g?: string) => (g ?? '').toLowerCase().replace(/grade/g, '').replace(/\s+/g, '').trim(); return !item.grade || normG(s.grade) === normG(item.grade); }).slice(0, 6).map(s => (
-                                    <TouchableOpacity key={s.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 8, backgroundColor: item.selectedStudentId === s.id ? gold + '18' : 'transparent', borderWidth: 1, borderColor: item.selectedStudentId === s.id ? gold : colors.borderColor }} onPress={() => updateBulkItem(item.id, { selectedStudentId: s.id })} activeOpacity={0.75}>
-                                      <Feather name="user" size={12} color={item.selectedStudentId === s.id ? gold : colors.textMuted} />
-                                      <Text style={{ fontSize: 12, color: item.selectedStudentId === s.id ? gold : colors.textMain }}>{s.name}</Text>
-                                    </TouchableOpacity>
-                                  ))}
+                                  {!studentsLoaded && students.length === 0 && (
+                                    <ActivityIndicator size="small" color={gold} style={{ marginVertical: 8 }} />
+                                  )}
+                                  {studentsLoaded && (() => {
+                                    const normG = (g?: string) => (g ?? '').toLowerCase().replace(/grade/g, '').replace(/\s+/g, '').trim();
+                                    const gradeMatched = students.filter(s => !item.grade || normG(s.grade) === normG(item.grade));
+                                    // If the extracted grade doesn't match any student's grade format,
+                                    // fall back to the full roster instead of silently showing nothing —
+                                    // a strict-only filter could block assigning entirely on a format mismatch.
+                                    const list = gradeMatched.length > 0 ? gradeMatched : students;
+                                    if (list.length === 0) {
+                                      return <Text style={{ fontSize: 11, color: colors.textMuted, paddingVertical: 8 }}>No students linked yet — add students in the Students tab.</Text>;
+                                    }
+                                    return list.slice(0, 6).map(s => (
+                                      <TouchableOpacity key={s.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, borderRadius: 8, backgroundColor: item.selectedStudentId === s.id ? gold + '18' : 'transparent', borderWidth: 1, borderColor: item.selectedStudentId === s.id ? gold : colors.borderColor }} onPress={() => updateBulkItem(item.id, { selectedStudentId: s.id })} activeOpacity={0.75}>
+                                        <Feather name="user" size={12} color={item.selectedStudentId === s.id ? gold : colors.textMuted} />
+                                        <Text style={{ fontSize: 12, color: item.selectedStudentId === s.id ? gold : colors.textMain }}>{s.name}</Text>
+                                      </TouchableOpacity>
+                                    ));
+                                  })()}
                                 </View>
                               )}
                               {item.publishStatus === 'error' && <Text style={{ fontSize: 11, color: '#c9605f' }}>{item.publishError}</Text>}
@@ -4623,7 +4666,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                                   <Feather name="chevron-right" size={14} color={colors.textDim} />
                                 </TouchableOpacity>
                               ))}
-                            {students.length === 0 && (
+                            {!studentsLoaded && students.length === 0 && (
+                              <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+                                <ActivityIndicator color={gold} />
+                              </View>
+                            )}
+                            {studentsLoaded && students.length === 0 && (
                               <View style={{ alignItems: 'center', paddingVertical: 32, paddingHorizontal: 16 }}>
                                 <Feather name="users" size={32} color={colors.textDim} style={{ marginBottom: 10 }} />
                                 <Text style={{ color: colors.textMain, fontSize: 14, fontWeight: '600', textAlign: 'center', marginBottom: 6 }}>No students linked yet</Text>

@@ -3,6 +3,7 @@ const router   = express.Router();
 const fs       = require('fs');
 const path     = require('path');
 const supabase = require('../services/supabase');
+const { sendPush } = require('../services/push');
 
 const CLOUDINARY_URLS  = path.join(__dirname, '../data/cloudinary_urls.json');
 
@@ -97,6 +98,7 @@ router.get('/', async (req, res) => {
       score:          a?.score          ?? null,
       xpAwarded:      a?.xp_awarded     ?? null,
       dueDate:        a?.due_date       ?? null,
+      closed:         a?.due_date ? isPastDue(a.due_date) : false,
       assignedByRole: a?.assigned_by_role ?? null,
     };
   });
@@ -120,7 +122,7 @@ router.get('/assigned', async (req, res) => {
   const result = (assignments ?? []).map(a => {
     const ch = challenges.find(c => c.id === a.challenge_id);
     if (!ch) return null;
-    return { ...attachImageUrl(ch), assignmentId: a.id, status: a.status, score: a.score, xpAwarded: a.xp_awarded, dueDate: a.due_date, assignedByRole: a.assigned_by_role };
+    return { ...attachImageUrl(ch), assignmentId: a.id, status: a.status, score: a.score, xpAwarded: a.xp_awarded, dueDate: a.due_date, closed: isPastDue(a.due_date), assignedByRole: a.assigned_by_role };
   }).filter(Boolean);
 
   res.json(result);
@@ -201,6 +203,23 @@ router.post('/assign', async (req, res) => {
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
+
+  // Push-notify the targeted student + their parent on mobile (non-blocking).
+  // Mirrors assignments.js's POST / — challenges previously never sent a push at all.
+  (async () => {
+    try {
+      const { data: stu } = await supabase.from('users').select('email').eq('id', studentId).maybeSingle();
+      const { data: links } = await supabase.from('parent_children').select('parent_email').eq('child_id', studentId);
+      const emails = [stu?.email, ...((links ?? []).map(l => l.parent_email))].filter(Boolean);
+      if (emails.length) {
+        await sendPush(emails, {
+          title: `New challenge: ${challengeCheck.title}`,
+          body: dueDate ? `Due ${new Date(dueDate).toLocaleDateString()}` : 'Tap to view',
+          data: { type: 'challenge', challengeId, assignmentId: data.id },
+        });
+      }
+    } catch (_) { /* push is best-effort */ }
+  })();
 
   // Auto-add to schedule if dueDate provided
   const challenge = challengeCheck;
@@ -287,6 +306,13 @@ router.post('/unassign', async (req, res) => {
 
 // ── POST /challenges/:assignmentId/complete ──────────────────────
 
+// A due_date is a plain 'YYYY-MM-DD' date with no time — the schedule always
+// shows deadlines as closing at 23:59 that day, so "closed" means past that.
+function isPastDue(dueDate) {
+  if (!dueDate) return false;
+  return new Date() > new Date(`${dueDate}T23:59:59`);
+}
+
 router.post('/:assignmentId/complete', async (req, res) => {
   const { assignmentId } = req.params;
   const { studentId, score = 0 } = req.body;
@@ -301,6 +327,7 @@ router.post('/:assignmentId/complete', async (req, res) => {
   if (!assignment)                          return res.status(404).json({ error: 'Assignment not found' });
   if (assignment.student_id !== studentId)  return res.status(403).json({ error: 'Forbidden' });
   if (assignment.status === 'completed')    return res.json({ ...assignment, xpAwarded: assignment.xp_awarded });
+  if (isPastDue(assignment.due_date))       return res.status(403).json({ error: 'This challenge closed on its due date and no longer accepts submissions.' });
 
   const challenge  = await getChallengeById(assignment.challenge_id);
   const xpAwarded  = Math.round((challenge?.xpReward ?? 100) * (score / 100));
