@@ -1239,7 +1239,12 @@ GENERAL RULES:
           if (!genAI) throw new Error('GEMINI_API_KEY not configured');
           const model = genAI.getGenerativeModel({
             model: 'gemini-2.5-flash',
-            generationConfig: { responseMimeType: 'application/json' }
+            // temperature: 0 — this call reads a worksheet to extract subject/
+            // grade/title, a precise-reading task, not a creative one. Leaving
+            // temperature unset defaults Gemini to ~1.0 (max randomness), which
+            // is the root cause of "same worksheet, different result each time"
+            // across this whole pipeline (see quiz.js for the matching fix).
+            generationConfig: { responseMimeType: 'application/json', temperature: 0 }
           });
           const result = await model.generateContent([
             { inlineData: { mimeType: file.mime || 'image/jpeg', data: file.base64 } },
@@ -1792,6 +1797,7 @@ router.post('/', async (req, res) => {
         note:         `${subject}${chapter ? ' · ' + chapter : ''}${finalGrade ? ' · ' + finalGrade : ''}`,
         student_id:   scheduleStudentId,
         created_by:   createdByRole || 'teacher',
+        created_by_id: creatorId || null,
         tag:          subject || null,
         assignment_id: data.id,
       });
@@ -2001,6 +2007,7 @@ router.post('/:id/submit', async (req, res) => {
     .single();
 
   if (fetchErr || !assignment) return res.status(404).json({ error: 'Assignment not found' });
+  if (isPastDue(assignment.due_date)) return res.status(403).json({ error: 'This assignment closed on its due date and no longer accepts submissions.' });
 
   // ── ENFORCE: AI Auto-Grading (teacher setting) ───────────────────────────────
   // If the creating teacher turned OFF "AI Auto-Grading", the submission is saved
@@ -2851,6 +2858,9 @@ router.put('/:id/complete', async (req, res) => {
   const { id } = req.params;
   const { score = null, studentId, answers, correct, total } = req.body;
 
+  const { data: asgnRow } = await supabase.from('assignments').select('due_date').eq('id', id).maybeSingle();
+  if (asgnRow && isPastDue(asgnRow.due_date)) return res.status(403).json({ error: 'This assignment closed on its due date and no longer accepts submissions.' });
+
   const studentUid = studentId ? await resolveUserId(studentId) : null;
   if (studentUid) {
     // Build submission_text with per-question answer details
@@ -2889,6 +2899,13 @@ router.delete('/:id', async (req, res) => {
 });
 
 // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+// A due_date is a plain 'YYYY-MM-DD' date with no time — the schedule always
+// shows deadlines as closing at 23:59 that day, so "closed" means past that.
+function isPastDue(dueDate) {
+  if (!dueDate) return false;
+  return new Date() > new Date(`${dueDate}T23:59:59`);
+}
 
 function normalizeText(value) {
   return String(value ?? '').trim().toLowerCase();
@@ -3203,6 +3220,7 @@ function normalise(a, branding) {
     createdBy:   a.created_by_role ?? 'teacher',
     // Never show another student's score from the assignment row itself
     status:      a.student_id !== null ? (a.status || 'pending') : 'pending',
+    closed:      isPastDue(a.due_date),
     score:       a.student_id !== null ? a.score : null,
     createdAt:   a.created_at,
     completedAt: a.student_id !== null ? a.completed_at : null,

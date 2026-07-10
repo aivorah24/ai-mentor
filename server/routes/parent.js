@@ -192,6 +192,7 @@ router.get('/:parentEmail/children', async (req, res) => {
         level:            s.level             ?? 1,
         currentStreak:    s.current_streak    ?? 0,
         studyTimeMinutes: s.study_time_minutes ?? 0,
+        todayStudyMinutes: s.today_study_minutes ?? 0,
         topicsExplored:   s.topics_explored   ?? 0,
         completedTopics:  s.completed_topics  ?? [],
         assignmentsDone:  s.assignments_done  ?? 0,

@@ -3058,6 +3058,10 @@ export default function AssignmentsScreen({ navigation, route }: any) {
   }
 
   async function openAssignment(item: Assignment) {
+    if ((item as any).closed && item.status !== 'completed') {
+      Alert.alert('Assignment Closed', 'This assignment closed on its due date and no longer accepts submissions.');
+      return;
+    }
     setOpeningAssignmentId(item.id);
     try {
       if (item.type === 'quiz') {
@@ -3161,8 +3165,10 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                   ? { label: 'Pending', colorKey: 'textMuted' as const, isOverdue: false }
                   : rawDue;
                 const dueColor = colors[due.colorKey as keyof AppColors] as string;
+                const isClosed = (item as any).closed && item.status !== 'completed';
                 const statusColor = item.status === 'completed'
                   ? colors.accentGreen
+                  : isClosed ? colors.textDim
                   : colors.accentYellow;
                 const statusStyle = {
                   bg: statusColor + '16',
@@ -3170,6 +3176,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                   border: statusColor + '38',
                   label: item.status === 'completed'
                     ? (item.score != null ? `${item.score}%` : 'Done')
+                    : isClosed ? 'Closed'
                     : 'Let\'s go!',
                 };
 
@@ -3225,7 +3232,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                           </View>
                         </View>
                       </View>
-                      {item.status === 'pending' && (
+                      {item.status === 'pending' && !isClosed && (
                         <TouchableOpacity
                           style={[styles.actionBtn, { backgroundColor: color, borderColor: color + '80', borderWidth: 1 }]}
                           activeOpacity={0.7}

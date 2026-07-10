@@ -82,19 +82,21 @@ export default function ParentChallengesScreen({ navigation }: any) {
   useEffect(() => { fetchStats(true); }, [child?.id]);
 
   // Fetch challenges for child's grade
-  const fetchChallenges = useCallback(() => {
+  const fetchChallenges = useCallback((showSpinner = false) => {
     if (!child?.grade) return;
-    setLoadingCh(true);
+    if (showSpinner) setLoadingCh(true);
     fetch(`${SERVER_URL}/challenges?grade=${encodeURIComponent(child.grade)}&curriculum=${encodeURIComponent(child.curriculum || 'IB PYP')}&studentId=${child.id}`)
       .then(r => r.ok ? r.json() : [])
       .then(data => { if (Array.isArray(data)) setChallenges(data); })
       .catch(() => {})
-      .finally(() => setLoadingCh(false));
+      .finally(() => { if (showSpinner) setLoadingCh(false); });
   }, [child?.id, child?.grade]);
 
-  useEffect(() => { fetchChallenges(); }, [fetchChallenges]);
+  useEffect(() => { fetchChallenges(true); }, [fetchChallenges]);
 
-  // Reload on focus + poll every 30s while screen is visible
+  // Reload on focus + poll every 30s while screen is visible. showSpinner=false
+  // here — these are background refreshes and shouldn't blank the already-loaded
+  // list back to a spinner (that was the "challenges blinking off" bug).
   const challengeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useFocusEffect(useCallback(() => {
     fetchChallenges();

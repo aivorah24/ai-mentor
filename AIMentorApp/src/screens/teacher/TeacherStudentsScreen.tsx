@@ -220,7 +220,14 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   const [bulkResults,      setBulkResults]      = useState<any[] | null>(null);
   const [bulkSummary,      setBulkSummary]      = useState<any | null>(null);
   const [bulkError,        setBulkError]        = useState('');
-  const bulkFileRef = useRef<File | null>(null); // kept so mismatch-confirmation can resubmit the same CSV
+  // Two-step flow: uploading a file only ever PREVIEWS it (classifies rows as
+  // matched/needs-review/skipped, creates nothing). bulkPreview=true while
+  // showing that review screen. The teacher checks off exactly who to import
+  // (by row index — stable across the preview→commit resubmission of the same
+  // file) and only the explicit "Import Selected" tap actually creates anyone.
+  const [bulkPreview,      setBulkPreview]       = useState(false);
+  const [selectedRows,     setSelectedRows]      = useState<Set<number>>(new Set());
+  const bulkFileRef = useRef<File | null>(null); // kept so the commit step can resubmit the same file
   const fileInputRef = useRef<any>(null);
 
   const isDemo = DEMO_EMAILS.has(user?.email?.toLowerCase() || '');
@@ -313,29 +320,38 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
 
   // confirmedMismatches: rowKey ("Name|Grade|Curriculum") → true, for rows the
   // teacher explicitly approved after being warned they're outside the
-  // grades/curricula they teach. Omitted on the first pass, so any such row
-  // comes back as 'needs_confirmation' instead of being silently imported.
-  async function handleBulkImport(file: File, confirmedMismatches: Record<string, boolean> = {}) {
+  // grades/curricula they teach.
+  //
+  // STEP 1 — preview only: classifies every row (matched / needs review /
+  // already exists) with ZERO database writes, no accounts created, no email,
+  // no download. Nothing happens just from picking a file.
+  async function previewBulkImport(file: File) {
     bulkFileRef.current = file;
-    setBulkImporting(true); setBulkError(''); setBulkResults(null); setBulkSummary(null);
+    setBulkImporting(true); setBulkError(''); setBulkResults(null); setBulkSummary(null); setBulkPreview(false);
     try {
       const formData = new FormData();
       formData.append('csv', file, file.name);
       formData.append('defaultGrade', bulkGrade);
       formData.append('defaultCurriculum', bulkCurriculum);
-      if (Object.keys(confirmedMismatches).length > 0) {
-        formData.append('confirmedMismatches', JSON.stringify(confirmedMismatches));
-      }
+      formData.append('previewOnly', 'true');
 
       const res = await fetch(
         `${SERVER_URL}/teacher/${encodeURIComponent(user?.email || '')}/students/bulk-import`,
         { method: 'POST', body: formData }
       );
       const data = await res.json();
-      if (!res.ok) { setBulkError(data.error || 'Bulk import failed.'); return; }
+      if (!res.ok) { setBulkError(data.error || 'Could not read this file.'); return; }
       setBulkResults(data.results || []);
       setBulkSummary(data.summary || null);
-      load();
+      setBulkPreview(true);
+      // Every importable row (matched or needs-review) starts checked — the
+      // teacher can uncheck any of them; nothing is created until they tap
+      // "Import Selected".
+      setSelectedRows(new Set(
+        (data.results || [])
+          .filter((r: any) => r.status === 'matched' || r.status === 'needs_confirmation')
+          .map((r: any) => r.rowIndex)
+      ));
     } catch (e: any) {
       setBulkError(e.message || 'Network error. Please try again.');
     } finally {
@@ -343,16 +359,45 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
     }
   }
 
-  // Re-submits the same CSV, approving every currently-flagged mismatch row so
-  // they get imported on this pass (already-created rows are skipped server-side
-  // as duplicates, so nothing gets double-created).
-  function confirmAndImportMismatches() {
-    if (!bulkFileRef.current || !bulkResults) return;
-    const confirmMap: Record<string, boolean> = {};
-    bulkResults.filter(r => r.status === 'needs_confirmation').forEach(r => {
-      confirmMap[`${r.name}|${r.grade}|${r.curriculum}`] = true;
+  function toggleRow(rowIndex: number) {
+    setSelectedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(rowIndex)) next.delete(rowIndex); else next.add(rowIndex);
+      return next;
     });
-    handleBulkImport(bulkFileRef.current, confirmMap);
+  }
+
+  // STEP 2 — the ONLY action that actually creates anyone. Resubmits the same
+  // file with exactly the row indexes the teacher left checked (whether they
+  // were originally matched or flagged for review) — one single pass, one
+  // download, one email, then the modal closes.
+  async function commitBulkImport() {
+    if (!bulkFileRef.current) return;
+    setBulkImporting(true); setBulkError('');
+    try {
+      const formData = new FormData();
+      formData.append('csv', bulkFileRef.current, bulkFileRef.current.name);
+      formData.append('defaultGrade', bulkGrade);
+      formData.append('defaultCurriculum', bulkCurriculum);
+      formData.append('selectedRowIndexes', JSON.stringify(Array.from(selectedRows)));
+
+      const res = await fetch(
+        `${SERVER_URL}/teacher/${encodeURIComponent(user?.email || '')}/students/bulk-import`,
+        { method: 'POST', body: formData }
+      );
+      const data = await res.json();
+      if (!res.ok) { setBulkError(data.error || 'Bulk import failed.'); return; }
+      downloadCredentials(data.results || []);
+      load();
+      // The commit step is the entire import — nothing is ever left pending
+      // after it, so the modal always closes once it succeeds.
+      setAddModal(false);
+      setBulkResults(null); setBulkSummary(null); setBulkPreview(false); bulkFileRef.current = null;
+    } catch (e: any) {
+      setBulkError(e.message || 'Network error. Please try again.');
+    } finally {
+      setBulkImporting(false);
+    }
   }
 
   function downloadTemplate() {
@@ -361,6 +406,22 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href = url; a.download = 'aivorah_students_template.csv';
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  // A single sheet with every login/password from this commit batch — the
+  // teacher gets the same list by email too. Auto-triggered right after
+  // commitBulkImport succeeds instead of requiring a manual click.
+  function downloadCredentials(rows: any[]) {
+    const created = rows.filter((r: any) => r.status === 'created' && r.password);
+    if (created.length === 0) return;
+    const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const header = 'Name,Login Email,Password,Grade,Curriculum\n';
+    const body = created.map((r: any) => [r.name, r.email, r.password, r.grade || bulkGrade, r.curriculum || bulkCurriculum].map(esc).join(',')).join('\n');
+    const blob = new Blob([header + body], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `student_logins_${new Date().toISOString().split('T')[0]}.csv`;
     a.click(); URL.revokeObjectURL(url);
   }
 
@@ -727,7 +788,10 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                 </View>
                 <Text style={styles.modalTitle}>Add Student</Text>
               </View>
-              <TouchableOpacity onPress={() => setAddModal(false)}>
+              <TouchableOpacity onPress={() => {
+                setAddModal(false);
+                setBulkResults(null); setBulkSummary(null); setBulkPreview(false); setBulkError(''); bulkFileRef.current = null;
+              }}>
                 <Feather name="x" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
@@ -985,7 +1049,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                 {!bulkResults ? (
                   <>
                     <Text style={styles.modalNote}>
-                      Upload a CSV file with columns: <Text style={{ color: colors.textMain, fontWeight: '700' }}>Name</Text>, Email (optional), Grade, Curriculum, School.
+                      Upload a CSV or Excel file with columns: <Text style={{ color: colors.textMain, fontWeight: '700' }}>Name</Text>, Email (optional), Grade, Curriculum, School.
                     </Text>
 
                     {/* Default Grade / Curriculum for rows without those columns */}
@@ -1028,11 +1092,11 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                       <input
                         ref={fileInputRef}
                         type="file"
-                        accept=".csv,text/csv"
+                        accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                         style={{ display: 'none' }}
                         onChange={(e: any) => {
                           const f = e.target.files?.[0];
-                          if (f) handleBulkImport(f);
+                          if (f) previewBulkImport(f);
                           e.target.value = '';
                         }}
                       />
@@ -1058,22 +1122,21 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                       >
                         {bulkImporting
                           ? <><ActivityIndicator color="white" size="small" /><Text style={styles.modalSaveText}>Importing...</Text></>
-                          : <><Feather name="upload" size={14} color="#fff" /><Text style={styles.modalSaveText}>Choose CSV File</Text></>}
+                          : <><Feather name="upload" size={14} color="#fff" /><Text style={styles.modalSaveText}>Choose File</Text></>}
                       </TouchableOpacity>
                     </View>
                   </>
                 ) : (
-                  /* Results view */
+                  /* Preview / selection view — NOTHING has been created yet. The
+                     only way anyone gets created is the explicit "Import Selected"
+                     tap below, which closes this modal itself once it succeeds. */
                   <>
                     {bulkSummary && (
                       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                         {[
-                          { label: 'Created', value: bulkSummary.created, color: colors.accentGreen },
-                          { label: 'Skipped', value: bulkSummary.skipped, color: colors.accentYellow },
-                          { label: 'Errors', value: bulkSummary.errors, color: colors.accentRed },
-                          ...(bulkSummary.needsConfirmation > 0
-                            ? [{ label: 'Needs Review', value: bulkSummary.needsConfirmation, color: '#B8797E' }]
-                            : []),
+                          { label: 'Matches Your Class', value: bulkSummary.matched ?? 0, color: colors.accentGreen },
+                          { label: 'Needs Review', value: bulkSummary.needsConfirmation ?? 0, color: '#B8797E' },
+                          { label: 'Already Exists', value: bulkSummary.skipped ?? 0, color: colors.accentYellow },
                         ].map(s => (
                           <View key={s.label} style={{ flex: 1, minWidth: 70, backgroundColor: s.color + '15', borderWidth: 1, borderColor: s.color + '30', borderRadius: 8, padding: 10, alignItems: 'center' }}>
                             <Text style={{ fontSize: 20, fontWeight: '800', color: s.color }}>{s.value}</Text>
@@ -1083,66 +1146,65 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                       </View>
                     )}
 
-                    {bulkSummary?.needsConfirmation > 0 && (
-                      <View style={{ backgroundColor: '#B8797E15', borderWidth: 1, borderColor: '#B8797E40', borderRadius: 10, padding: 10, gap: 6 }}>
-                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#B8797E' }}>
-                          {bulkSummary.needsConfirmation} student{bulkSummary.needsConfirmation !== 1 ? 's' : ''} are from a grade/curriculum you don't teach
-                        </Text>
-                        <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                          They were NOT imported yet. Review the rows below marked "Needs Review", then confirm if you still want to add them.
-                        </Text>
-                      </View>
-                    )}
+                    <Text style={styles.modalNote}>
+                      Nothing has been created yet. Uncheck anyone you don't want to import, then tap "Import Selected".
+                    </Text>
 
                     <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
-                      {bulkResults.map((r: any, idx: number) => {
-                        const iconName = r.status === 'created' ? 'check-circle'
-                          : r.status === 'needs_confirmation' ? 'alert-triangle'
-                          : r.status === 'skipped' ? 'skip-forward' : 'x-circle';
-                        const iconColor = r.status === 'created' ? colors.accentGreen
-                          : r.status === 'needs_confirmation' ? '#B8797E'
-                          : r.status === 'skipped' ? colors.accentYellow : colors.accentRed;
+                      {bulkResults.filter((r: any) => r.status !== 'skipped').map((r: any) => {
+                        const isChecked = selectedRows.has(r.rowIndex);
+                        const dotColor = r.status === 'needs_confirmation' ? '#B8797E' : colors.accentGreen;
                         return (
-                          <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.borderColor }}>
-                            <Feather name={iconName as any} size={14} color={iconColor} />
+                          <TouchableOpacity
+                            key={r.rowIndex} activeOpacity={0.7} onPress={() => toggleRow(r.rowIndex)}
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.borderColor }}
+                          >
+                            <View style={{
+                              width: 18, height: 18, borderRadius: 4, borderWidth: 2,
+                              borderColor: isChecked ? dotColor : colors.borderColor,
+                              backgroundColor: isChecked ? dotColor : 'transparent',
+                              alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              {isChecked && <Feather name="check" size={12} color="#fff" />}
+                            </View>
                             <View style={{ flex: 1 }}>
                               <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain }}>{r.name}</Text>
                               <Text style={{ fontSize: 11, color: colors.textMuted }} numberOfLines={1}>
-                                {r.status === 'needs_confirmation' ? `${r.grade} · ${r.curriculum}` : r.email}
+                                {r.grade} · {r.curriculum}{r.email ? ` · ${r.email}` : ''}
                               </Text>
-                              {r.error ? <Text style={{ fontSize: 11, color: iconColor }}>{r.error}</Text> : null}
+                              {r.error ? <Text style={{ fontSize: 11, color: dotColor }}>{r.error}</Text> : null}
                             </View>
-                            {r.status === 'created' && r.password ? (
-                              <Text style={{ fontSize: 11, color: colors.textDim, fontFamily: 'monospace' }}>{r.password}</Text>
-                            ) : null}
-                          </View>
+                          </TouchableOpacity>
                         );
                       })}
+                      {bulkResults.filter((r: any) => r.status === 'skipped').map((r: any) => (
+                        <View key={r.rowIndex} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.borderColor, opacity: 0.6 }}>
+                          <Feather name="skip-forward" size={14} color={colors.accentYellow} />
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textMain }}>{r.name}</Text>
+                            <Text style={{ fontSize: 11, color: colors.accentYellow }}>{r.error}</Text>
+                          </View>
+                        </View>
+                      ))}
                     </ScrollView>
 
-                    <Text style={[styles.modalNote, { marginTop: 4 }]}>
-                      Credentials have been emailed to you. Students can log in immediately.
-                    </Text>
+                    {bulkError ? (
+                      <Text style={{ color: colors.accentRed, fontSize: 13 }}>{bulkError}</Text>
+                    ) : null}
 
                     <View style={styles.modalBtns}>
-                      <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setBulkResults(null); setBulkSummary(null); setBulkError(''); bulkFileRef.current = null; }}>
-                        <Text style={styles.modalCancelText}>Import More</Text>
+                      <TouchableOpacity style={styles.modalCancelBtn} onPress={() => { setBulkResults(null); setBulkSummary(null); setBulkPreview(false); setBulkError(''); bulkFileRef.current = null; }}>
+                        <Text style={styles.modalCancelText}>Cancel</Text>
                       </TouchableOpacity>
-                      {bulkSummary?.needsConfirmation > 0 ? (
-                        <TouchableOpacity
-                          style={[styles.modalSaveBtn, bulkImporting && { opacity: 0.6 }]}
-                          onPress={confirmAndImportMismatches}
-                          disabled={bulkImporting}
-                        >
-                          {bulkImporting
-                            ? <><ActivityIndicator color="white" size="small" /><Text style={styles.modalSaveText}>Importing...</Text></>
-                            : <Text style={styles.modalSaveText}>Confirm & Import Anyway</Text>}
-                        </TouchableOpacity>
-                      ) : (
-                        <TouchableOpacity style={styles.modalSaveBtn} onPress={() => setAddModal(false)}>
-                          <Text style={styles.modalSaveText}>Done</Text>
-                        </TouchableOpacity>
-                      )}
+                      <TouchableOpacity
+                        style={[styles.modalSaveBtn, (bulkImporting || selectedRows.size === 0) && { opacity: 0.6 }]}
+                        onPress={commitBulkImport}
+                        disabled={bulkImporting || selectedRows.size === 0}
+                      >
+                        {bulkImporting
+                          ? <><ActivityIndicator color="white" size="small" /><Text style={styles.modalSaveText}>Importing...</Text></>
+                          : <Text style={styles.modalSaveText}>Import Selected ({selectedRows.size})</Text>}
+                      </TouchableOpacity>
                     </View>
                   </>
                 )}

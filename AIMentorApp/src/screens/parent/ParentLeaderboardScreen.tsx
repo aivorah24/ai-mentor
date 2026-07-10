@@ -91,7 +91,8 @@ export default function ParentLeaderboardScreen({ navigation }: any) {
   }, [user?.email]);
 
   useEffect(() => { fetchLeaderboard(); }, [fetchLeaderboard]);
-  useFocusEffect(useCallback(() => { fetchLeaderboard(); }, [fetchLeaderboard]));
+  // isRefresh=true — refocusing shouldn't blank the already-loaded board.
+  useFocusEffect(useCallback(() => { fetchLeaderboard(true); }, [fetchLeaderboard]));
 
   const selectedEntry = leaderboard.find(s => s.id === selectedChild?.id) ?? null;
   const aboveEntry = selectedEntry ? leaderboard.find(e => e.rank === selectedEntry.rank - 1) : null;

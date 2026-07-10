@@ -76,8 +76,8 @@ function ChildCard({ child, colors, styles, navigation, onRemove, onEdit, onMana
 
       <View style={styles.statsRow}>
         <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Study Time</Text>
-          <Text style={styles.statValue}>{formatStudyTime(child.studyTimeMinutes ?? 0)}</Text>
+          <Text style={styles.statLabel}>Study Time Today</Text>
+          <Text style={styles.statValue}>{formatStudyTime(child.todayStudyMinutes ?? 0)}</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statBox}>

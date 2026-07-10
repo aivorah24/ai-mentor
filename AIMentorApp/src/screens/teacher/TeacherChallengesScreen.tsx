@@ -68,6 +68,9 @@ export default function TeacherChallengesScreen({ navigation }: any) {
   const gold = colors.accentYellow;
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { user } = useAuth();
+  // Same pattern as TeacherAssignmentsScreen — was hardcoded to 'IB PYP', which
+  // silently hid all challenges for NCERT/Cambridge teachers.
+  const teacherCurriculum = (user as any)?.teaches?.[0]?.curriculum || (user as any)?.curriculum || 'IB PYP';
 
   const [activeTab, setActiveTab]         = useState<'challenges' | 'leaderboard'>('challenges');
   const [selectedGrade, setSelectedGrade] = useState('Grade 3');
@@ -128,12 +131,12 @@ export default function TeacherChallengesScreen({ navigation }: any) {
   // Fetch challenges for selected grade
   const fetchChallenges = useCallback(() => {
     setLoading(true);
-    fetch(`${SERVER_URL}/challenges?grade=${encodeURIComponent(selectedGrade)}&curriculum=IB%20PYP`)
+    fetch(`${SERVER_URL}/challenges?grade=${encodeURIComponent(selectedGrade)}&curriculum=${encodeURIComponent(teacherCurriculum)}`)
       .then(r => r.ok ? r.json() : [])
       .then(data => { if (Array.isArray(data)) setChallenges(data); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [selectedGrade]);
+  }, [selectedGrade, teacherCurriculum]);
 
   // Fetch challenges regardless of active tab so the "Active Challenges" stat on
   // the Leaderboard tab is populated too.

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Modal, RefreshControl, Image, TextInput,
+  ActivityIndicator, Modal, RefreshControl, Image, TextInput, Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius, fonts } from '../../theme';
@@ -135,13 +135,16 @@ export default function ChallengesScreen({ navigation, route }: any) {
 
   useEffect(() => {
     fetchChallenges();
-    const interval = setInterval(() => fetchChallenges(), 30 * 1000);
+    // isRefresh=true so the periodic poll doesn't blank the list back to the
+    // full-screen spinner every 30s (that was the "challenge blinking off" bug).
+    const interval = setInterval(() => fetchChallenges(true), 30 * 1000);
     return () => clearInterval(interval);
   }, [fetchChallenges]);
 
   useFocusEffect(useCallback(() => {
     refreshProfile().catch(() => {});
-    fetchChallenges();
+    // Same reasoning — refocusing the tab shouldn't blank the already-loaded list.
+    fetchChallenges(true);
   }, [fetchChallenges, refreshProfile]));
 
   // Deep-link open: when arriving from a notification or the Schedule (both pass
@@ -185,6 +188,10 @@ export default function ChallengesScreen({ navigation, route }: any) {
   }
 
   async function startChallenge(ch: Challenge) {
+    if ((ch as any).closed && ch.status !== 'completed') {
+      Alert.alert('Challenge Closed', 'This challenge closed on its due date and no longer accepts submissions.');
+      return;
+    }
     setActiveChallenge(ch);
     setQuizResult(null);
     setAnswers([]);
@@ -483,6 +490,11 @@ export default function ChallengesScreen({ navigation, route }: any) {
                     <View style={styles.completedRow}>
                       <Feather name="check-circle" size={13} color={colors.accentGreen} />
                       <Text style={[styles.completedText, { color: colors.accentGreen }]}>{ch.score}% · +{ch.xpAwarded} XP</Text>
+                    </View>
+                  ) : (ch as any).closed ? (
+                    <View style={[styles.completedRow, { opacity: 0.7 }]}>
+                      <Feather name="lock" size={13} color={colors.textDim} />
+                      <Text style={[styles.completedText, { color: colors.textDim }]}>Closed</Text>
                     </View>
                   ) : (
                     <TouchableOpacity

@@ -156,6 +156,67 @@ ${forwardBlock}
   }
 }
 
+// One consolidated email per bulk-import batch, with a CSV attachment of every
+// created student's login/password — replaces sending the teacher a separate
+// email for every single row, which flooded their inbox on a large import.
+async function sendBulkCredentialsEmail({ to, created }) {
+  if (!to || !created || created.length === 0) return;
+  try {
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const csvLines = [
+      'Name,Login Email,Password,Grade,Curriculum',
+      ...created.map(r => [r.name, r.email, r.password, r.grade, r.curriculum].map(esc).join(',')),
+    ];
+    const csvContent = csvLines.join('\n');
+
+    const rowsHtml = created.map(r => `
+          <tr>
+            <td style="padding:6px 10px;border-bottom:1px solid #eee;font-size:13px">${r.name}</td>
+            <td style="padding:6px 10px;border-bottom:1px solid #eee;font-family:monospace;font-size:12px">${r.email}</td>
+            <td style="padding:6px 10px;border-bottom:1px solid #eee;font-family:monospace;font-size:12px">${r.password}</td>
+          </tr>`).join('');
+
+    await sendEmail({
+      to,
+      subject: `${created.length} student login${created.length !== 1 ? 's' : ''} created — Aivorah bulk import`,
+      attachments: [{
+        filename: `student_logins_${new Date().toISOString().split('T')[0]}.csv`,
+        content: Buffer.from(csvContent).toString('base64'),
+        contentType: 'text/csv',
+      }],
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#fff">
+          <div style="background:#7C3AED;border-radius:12px;padding:24px 24px 16px;margin-bottom:24px">
+            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700">Aivorah</h1>
+            <p style="margin:8px 0 0;color:#e9d5ff;font-size:14px">Bulk import complete</p>
+          </div>
+          <p style="font-size:14px;color:#555;line-height:1.6">
+            <strong>${created.length}</strong> student account${created.length !== 1 ? 's were' : ' was'} created. The full list is attached as a CSV — here's a quick preview:
+          </p>
+          <table style="width:100%;border-collapse:collapse;margin:16px 0">
+            <thead>
+              <tr style="background:#f5f3ff">
+                <td style="padding:6px 10px;font-size:12px;color:#888;font-weight:700">Name</td>
+                <td style="padding:6px 10px;font-size:12px;color:#888;font-weight:700">Login ID</td>
+                <td style="padding:6px 10px;font-size:12px;color:#888;font-weight:700">Password</td>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+          <p style="font-size:13px;color:#666;line-height:1.6">
+            Students can log in at <a href="https://aivorah.ai" style="color:#7C3AED">aivorah.ai</a> using the Login ID and Password above — select <em>Student</em> on the login screen.
+          </p>
+          <p style="font-size:12px;color:#aaa;margin-top:32px;border-top:1px solid #eee;padding-top:16px">
+            This email was sent because a bulk student import was run on your Aivorah teacher account.
+          </p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.warn('[mailer] sendBulkCredentialsEmail failed:', err.message);
+  }
+}
+
 async function sendVerificationEmail({ to, name, verifyUrl }) {
   if (!to) return;
   try {
@@ -492,4 +553,4 @@ async function sendEmailOtpCode({ to, otp, name }) {
   });
 }
 
-module.exports = { sendCredentialsEmail, sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendRecoveryEmailConfirmation, sendRecoveryOtpEmail, sendContactEmail, sendDemoRequestToFounder, sendDemoConfirmation, sendEmailOtpCode };
+module.exports = { sendCredentialsEmail, sendBulkCredentialsEmail, sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendRecoveryEmailConfirmation, sendRecoveryOtpEmail, sendContactEmail, sendDemoRequestToFounder, sendDemoConfirmation, sendEmailOtpCode };

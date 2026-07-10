@@ -245,7 +245,12 @@ export function StudentDataProvider({ children }: { children: ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ topic, subject, grade, curriculum }),
     })
-      .then(r => r.json())
+      // A server error (400/500) still returns valid JSON — without this check,
+      // r.json() resolves "successfully" with an { error } body, which used to
+      // get merged straight into stats (leaving completedTopics untouched) and
+      // never reach the offline-fallback catch below. That's how a student could
+      // pass a quiz, see XP awarded, but the topic never actually marks as done.
+      .then(r => { if (!r.ok) throw new Error('complete-lesson failed'); return r.json(); })
       .then(data => setStats(prev => ({ ...prev, ...data })))
       .catch(() => {
         // Offline fallback
