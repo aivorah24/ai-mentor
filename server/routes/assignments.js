@@ -234,9 +234,11 @@ router.get('/', async (req, res) => {
       if (studentGrade && a.grade !== studentGrade) return false;
     }
     // Teacher "All students" broadcast: only the teacher's own linked students see it.
-    // (Non-teacher broadcasts — e.g. school/admin — stay curriculum-wide.)
-    if (a.created_by_role === 'teacher' && a.created_by_id) {
-      if (!studentTeacherIds.has(a.created_by_id)) return false;
+    // (Non-teacher broadcasts — e.g. school/admin — stay curriculum-wide.) A teacher
+    // broadcast with no creator id can't be attributed to any teacher — exclude it
+    // rather than falling back to showing it to every student in the curriculum.
+    if (a.created_by_role === 'teacher') {
+      if (!a.created_by_id || !studentTeacherIds.has(a.created_by_id)) return false;
     }
     // School scoping: same curriculum but a different school must NOT receive it.
     if (a.created_by_id) {

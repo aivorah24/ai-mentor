@@ -90,18 +90,24 @@ async function getStudentProfile(studentId) {
 }
 
 // A teacher's "'all' students" schedule event must only reach the students under
-// THAT teacher — not every student in the database. Rows created before the
-// created_by_id column existed (or by a non-teacher role) have no reliable
-// creator to scope by, so they stay visible rather than being silently dropped.
+// THAT teacher — not every student in the database. A broadcast whose creator (or
+// this student's own profile) can't be resolved is never attributable to "this
+// student's teacher" — exclude it rather than falling back to showing it to
+// literally everyone (that fallback was the cause of orphaned/unresolved
+// broadcasts leaking to the whole database).
 async function scopeAllEvents(rows, userId) {
-  const allRows = (rows || []).filter(e => e.student_id === 'all' && e.created_by === 'teacher' && e.created_by_id);
-  if (allRows.length === 0 || !userId) return rows;
+  const teacherAllRows = (rows || []).filter(e => e.student_id === 'all' && e.created_by === 'teacher');
+  if (teacherAllRows.length === 0) return rows;
 
-  const { data: tlinks } = await supabase.from('teacher_student').select('teacher_id').eq('student_id', userId);
-  const linkedTeacherIds = new Set((tlinks || []).map(l => l.teacher_id).filter(Boolean));
+  const linkedTeacherIds = new Set();
+  if (userId) {
+    const { data: tlinks } = await supabase.from('teacher_student').select('teacher_id').eq('student_id', userId);
+    (tlinks || []).forEach(l => { if (l.teacher_id) linkedTeacherIds.add(l.teacher_id); });
+  }
 
   return (rows || []).filter(e => {
-    if (e.student_id !== 'all' || e.created_by !== 'teacher' || !e.created_by_id) return true;
+    if (e.student_id !== 'all' || e.created_by !== 'teacher') return true;
+    if (!e.created_by_id || !userId) return false;
     return linkedTeacherIds.has(e.created_by_id);
   });
 }
