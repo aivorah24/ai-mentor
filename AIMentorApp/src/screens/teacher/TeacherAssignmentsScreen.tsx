@@ -531,6 +531,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       const { _previewHTML, _editMode, _normalized, ...cleanQ } = interactiveQuiz as any;
       updateBulkItem(editingBulkItemId, { quiz: cleanQ, quizHtml: _previewHTML || '' });
       setEditingBulkItemId(null);
+    } else if (createMode === 'upload' && uploadStep === 2) {
+      // Approving the quiz on the single-worksheet wizard used to just close this
+      // modal and drop the teacher back on step 2, where the Assign-to/specific
+      // student section isn't rendered (it's gated to uploadStep === 3) — so the
+      // picker looked like it never showed up. Auto-advance instead of making
+      // them tap "Next" again to reach it.
+      setUploadStep(3);
     }
     setShowInteractivePreview(false);
   }
@@ -4633,16 +4640,22 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                             onChangeText={setStudentSearch}
                           />
                           <ScrollView style={styles.studentList} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-                            {students
-                              .filter(s => {
+                            {(() => {
+                              const base = students.filter(s => {
                                 const matchSearch = s.name?.toLowerCase().includes(studentSearch.toLowerCase());
                                 const matchCurriculum = !teacherCurriculum || !s.curriculum || s.curriculum === teacherCurriculum;
-                                // Show ONLY students in the grade currently selected in the
-                                // form — picking "Grade 3" must not surface Grade 5 students.
-                                const normG = (g?: string) => (g ?? '').toLowerCase().replace(/grade/g, '').replace(/\s+/g, '').trim();
-                                const matchGrade = !grade || normG(s.grade) === normG(grade);
-                                return matchSearch && matchCurriculum && matchGrade;
-                              })
+                                return matchSearch && matchCurriculum;
+                              });
+                              // Show ONLY students in the grade currently selected in the
+                              // form — picking "Grade 3" must not surface Grade 5 students.
+                              const normG = (g?: string) => (g ?? '').toLowerCase().replace(/grade/g, '').replace(/\s+/g, '').trim();
+                              const gradeMatched = base.filter(s => !grade || normG(s.grade) === normG(grade));
+                              // If the (possibly AI-extracted, e.g. from a worksheet upload) grade
+                              // doesn't match any student's grade format, fall back to the full
+                              // roster instead of silently showing nothing.
+                              const list = gradeMatched.length > 0 ? gradeMatched : base;
+                              return list;
+                            })()
                               .map(s => (
                                 <TouchableOpacity
                                   key={s.id}
