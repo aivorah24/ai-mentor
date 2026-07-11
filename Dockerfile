@@ -2,17 +2,28 @@
 FROM node:20-slim
 WORKDIR /app
 
-# Skip Chromium download — puppeteer only used in local scripts, not server routes
-ENV PUPPETEER_SKIP_DOWNLOAD=true
+# NOTE: puppeteer IS used by a live server route (quiz.js docx→PDF conversion
+# for Word-worksheet uploads), not just local scripts — do NOT set
+# PUPPETEER_SKIP_DOWNLOAD here. Skipping it left Chrome missing in production,
+# so every .docx upload failed with "Could not find Chrome" at runtime.
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# ── Python 3 + the ML layout/crop microservice's deps ──
-# Without this, server/python/layout_service.py has nowhere to run in production,
-# so every image-crop/table-detect call silently fails over to the crude
-# "whole page" fallback (worksheet images render uncropped/misplaced in prod).
+# ── Python 3 + the ML layout/crop microservice's deps, PLUS the shared
+# libraries headless Chrome needs to actually launch (node:20-slim is a
+# minimal Debian image with none of these) ──
+# Without the python libs, server/python/layout_service.py has nowhere to run
+# in production, so every image-crop/table-detect call silently falls back to
+# the crude "whole page" fallback. Without the Chrome libs, puppeteer.launch()
+# in quiz.js's docx→PDF conversion fails at runtime even after Chrome itself
+# downloads successfully ("error while loading shared libraries").
 RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip python3-dev build-essential \
     libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 libxcb1 \
+    ca-certificates fonts-liberation libasound2 libatk-bridge2.0-0 libatk1.0-0 \
+    libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 \
+    libgtk-3-0 libnspr4 libnss3 libpango-1.0-0 libpangocairo-1.0-0 \
+    libx11-6 libx11-xcb1 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+    libxshmfence1 xdg-utils wget \
     && rm -rf /var/lib/apt/lists/*
 COPY server/python/requirements.txt ./server/python/requirements.txt
 RUN pip3 install --no-cache-dir --break-system-packages -r server/python/requirements.txt
