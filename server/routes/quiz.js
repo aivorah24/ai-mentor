@@ -767,19 +767,50 @@ async function recoverBarCharts(quiz, layoutMLResult = null) {
 // pure arithmetic, no AI call, reusing the top/bottom/result strings the main
 // extraction pass already produced. A column is only solved when exactly one of
 // its three digits is unknown (the standard "missing digit puzzle" shape); a
-// column with 2+ unknowns can't be solved deterministically and is left
-// unsolved, which makes the whole question fall back to today's existing
-// generic text-answer behavior (solvable === false) — this never regresses a
-// worksheet that already worked.
+// column with 2+ unknowns can't be solved by this fast path and falls through
+// to the brute-force verifier below instead.
 function solveVerticalMath(vm) {
   if (!vm || !vm.top || !vm.bottom) return { solvable: false };
   const op = vm.operator === '+' ? '+' : '-';
   const width = Math.max(vm.top.length, vm.bottom.length, (vm.result || '').length);
-  const pad = (s) => String(s || '').padStart(width, op === '+' ? '_' : '_'); // right-align
-  const top = pad(vm.top).split('');
-  const bottom = pad(vm.bottom).split('');
-  const result = vm.result ? pad(vm.result).split('') : new Array(width).fill('_');
+  const pad = (s) => String(s || '').padStart(width, '_'); // right-align
   const hadResult = !!vm.result;
+  const fast = solveVerticalMathFast(pad(vm.top).split(''), pad(vm.bottom).split(''), hadResult ? pad(vm.result).split('') : new Array(width).fill('_'), hadResult, op, width);
+  if (fast.solvable) return fast;
+
+  // Fallback: brute-force search for puzzles with 2+ unknown digits in the same
+  // column (under-determined for the column method above, e.g. "7_5 - 3_7 = 670").
+  // Only meaningful when a result row was actually shown (nothing to verify a
+  // guess against otherwise). If exactly one digit assignment reproduces the
+  // shown equation, that's the verified answer. If NONE do, the extracted
+  // digits/operator are simply impossible — `impossible: true` tells the caller
+  // to drop the question rather than ever display a guessed/hallucinated
+  // "solution". If MORE THAN ONE do, the puzzle is genuinely ambiguous and gets
+  // the same treatment — we never guess between competing valid answers.
+  if (!hadResult) return { solvable: false };
+  const brute = bruteForceSolveVerticalMath(pad(vm.top).split(''), pad(vm.bottom).split(''), pad(vm.result).split(''), op, width);
+  if (!brute) return { solvable: false, impossible: true };
+  const topArr = pad(vm.top).split(''), bottomArr = pad(vm.bottom).split(''), resultArr = pad(vm.result).split('');
+  const blanks = [];
+  for (let i = 0; i < width; i++) {
+    if (topArr[i] === '_') blanks.push({ row: 'top', index: i, digit: brute.t[i] });
+    if (bottomArr[i] === '_') blanks.push({ row: 'bottom', index: i, digit: brute.b[i] });
+    if (resultArr[i] === '_') blanks.push({ row: 'result', index: i, digit: brute.r[i] });
+  }
+  return {
+    solvable: true,
+    blanks,
+    solvedTopStr: brute.t.join(''),
+    solvedBottomStr: brute.b.join(''),
+    solvedResultStr: brute.r.join(''),
+    steps: [`${brute.t.join('')} ${op} ${brute.b.join('')} = ${brute.r.join('')} (verified — the only digit combination that satisfies this problem)`],
+  };
+}
+
+// Fast path: solves a column only when exactly one of its three digits is
+// unknown, using the same carry/borrow procedure a student would follow —
+// this also produces the human-readable step-by-step narrative.
+function solveVerticalMathFast(top, bottom, result, hadResult, op, width) {
   const blanks = [];
   const steps = [];
   let carry = 0; // carry (addition) or borrow (subtraction) into the next (leftward) column
@@ -867,6 +898,45 @@ function solveVerticalMath(vm) {
   };
 }
 
+// Brute-force fallback for columns with 2+ unknown digits (out of reach for the
+// carry/borrow fast path). Tries every digit 0-9 for each blank position and
+// keeps only assignments where top ± bottom EXACTLY equals the shown result.
+// Returns the unique solution, or null if there are zero or multiple — either
+// way the caller must not display an unverified guess. Capped at 6 blanks
+// (10^6 combinations) which comfortably covers any real worksheet puzzle
+// while keeping this instant.
+function bruteForceSolveVerticalMath(top, bottom, result, op, width) {
+  const blanks = [];
+  for (let i = 0; i < width; i++) {
+    if (top[i] === '_') blanks.push({ row: 'top', index: i });
+    if (bottom[i] === '_') blanks.push({ row: 'bottom', index: i });
+    if (result[i] === '_') blanks.push({ row: 'result', index: i });
+  }
+  if (blanks.length === 0 || blanks.length > 6) return null;
+  let solution = null;
+  const total = Math.pow(10, blanks.length);
+  for (let n = 0; n < total; n++) {
+    const t = top.slice(), b = bottom.slice(), r = result.slice();
+    let rem = n;
+    for (let k = 0; k < blanks.length; k++) {
+      const d = String(rem % 10);
+      rem = Math.floor(rem / 10);
+      const bl = blanks[k];
+      if (bl.row === 'top') t[bl.index] = d;
+      else if (bl.row === 'bottom') b[bl.index] = d;
+      else r[bl.index] = d;
+    }
+    if (width > 1 && t[0] === '0') continue; // no leading-zero numbers
+    if (width > 1 && b[0] === '0') continue;
+    const tv = Number(t.join('')), bv = Number(b.join('')), rv = Number(r.join(''));
+    const computed = op === '+' ? tv + bv : tv - bv;
+    if (computed !== rv) continue;
+    if (solution) return null; // second valid assignment found — ambiguous, refuse to guess
+    solution = { t, b, r };
+  }
+  return solution;
+}
+
 // ── Vertical-math operator self-consistency check ──────────────────────────
 // The +/− symbol is a small glyph vision models occasionally misread even at
 // temperature 0. This never rewords the prompt or adds an API call — it just
@@ -905,6 +975,18 @@ function checkVerticalMathOperator(q, task) {
 
   // Tier 2: no result row — only usable if this task has a lookup table
   // shaped like "<number> - <letter/code>" rows (a decode/cipher pattern).
+  const lookup = buildDecodeLookup(task);
+  if (lookup.size === 0) return null; // no code table in this task — Tier 2 never activates
+  const statedHit = lookup.get(String(statedResult));
+  const oppositeHit = lookup.get(String(oppositeResult));
+  if (!statedHit && oppositeHit) return { correctOperator: opposite, correctResult: oppositeResult, correctAnswer: oppositeHit, via: 'code-table' };
+  return null;
+}
+
+// Builds a "<number printed in table> → <letter/code printed next to it>" map from a
+// task's decode/cipher reference table(s), e.g. rows like "745 - M" become ("745" → "M").
+// Shared by checkVerticalMathOperator's Tier 2 and checkDecodeAnswer below.
+function buildDecodeLookup(task) {
   const tables = Array.isArray(task.tables) ? task.tables : (task.table ? [task.table] : []);
   const lookup = new Map();
   for (const tbl of tables) {
@@ -916,11 +998,32 @@ function checkVerticalMathOperator(q, task) {
       }
     }
   }
-  if (lookup.size === 0) return null; // no code table in this task — Tier 2 never activates
-  const statedHit = lookup.get(String(statedResult));
-  const oppositeHit = lookup.get(String(oppositeResult));
-  if (!statedHit && oppositeHit) return { correctOperator: opposite, correctResult: oppositeResult, correctAnswer: oppositeHit, via: 'code-table' };
-  return null;
+  return lookup;
+}
+
+// ── Decode/cipher plain-arithmetic answer cross-check ──────────────────────
+// For ordinary (non-verticalMath) sub-questions like "326 + 419" that sit under a
+// "solve, then use the code to find the letter" task, the LLM has to do arithmetic
+// AND a table lookup in the same pass — nothing forces those two steps to agree
+// with each other. This recomputes the arithmetic straight from the question text
+// in pure JS, looks the result up in the SAME code table Gemini already extracted,
+// and overrides `q.answer` whenever the LLM's stored answer doesn't match what the
+// table actually says — so the student is never graded against a mismatched letter.
+function checkDecodeAnswer(q, task) {
+  if (!q || q.verticalMath) return null; // vertical-math questions have their own check
+  const text = String(q.question || '');
+  const m = text.match(/(-?\d+(?:\.\d+)?)\s*([+\-])\s*(-?\d+(?:\.\d+)?)/);
+  if (!m) return null;
+  const lookup = buildDecodeLookup(task);
+  if (lookup.size === 0) return null;
+  const a = Number(m[1]), b = Number(m[3]);
+  if (isNaN(a) || isNaN(b)) return null;
+  const result = m[2] === '+' ? a + b : a - b;
+  const correctAnswer = lookup.get(String(result));
+  if (correctAnswer === undefined) return null; // computed sum isn't in the table — don't guess
+  const stated = String(q.answer == null ? '' : q.answer).trim();
+  if (stated.toLowerCase() === String(correctAnswer).trim().toLowerCase()) return null; // already consistent
+  return { result, correctAnswer };
 }
 
 // Downscale + cap page images so vision fallbacks don't 413 / exceed image limits.
@@ -1480,6 +1583,12 @@ to them, not instead). Shape only — every number/letter below is a placeholder
   were given — students need this table to check their own decoded answers, so it must be 100%
   accurate, not approximate, and must match the real page, not this placeholder shape.
 - Preserve the grid's row/column layout exactly as printed (do not reorder or reflow entries).
+- CRITICAL SELF-CHECK — for every problem that decodes through this table: after you compute the
+  arithmetic result, LOOK UP that exact number in the code table you just captured, and put the
+  matching letter (not a guessed or remembered one) in the "answer" field. Then re-read the
+  "answer" field back against the "solution" field's final number — they MUST reference the same
+  row of the table. Never let "answer" and "solution" disagree; if they would, redo the lookup
+  rather than shipping a mismatch.
 
 VERTICAL / COLUMN ARITHMETIC DISPLAY (CRITICAL for readability — worksheets showing a stacked
 sum like "96_ \n -_83 \n ----- \n 162" MUST NOT be flattened into run-on text like "Calculate the
@@ -2154,16 +2263,37 @@ async function generateQuizHandler(req, res) {
     //    to fall back to generic single-text-box comparison for this type. ──
     for (const task of (quiz.tasks || [])) {
       for (const q of (task.questions || [])) {
-        if (!q.verticalMath) continue;
-        const solved = solveVerticalMath(q.verticalMath);
-        if (solved.solvable) Object.assign(q.verticalMath, solved);
-        const opCheck = checkVerticalMathOperator(q, task);
-        if (opCheck) {
-          console.log(`[quiz] vertical-math operator corrected (${opCheck.via}): "${q.verticalMath.top} ${q.verticalMath.operator} ${q.verticalMath.bottom}" → operator should be "${opCheck.correctOperator}"`);
-          q.verticalMath.operator = opCheck.correctOperator;
-          if (opCheck.correctAnswer !== undefined) q.answer = opCheck.correctAnswer;
-          else if (q.verticalMath.result) q.verticalMath.result = String(opCheck.correctResult);
+        if (q.verticalMath) {
+          const solved = solveVerticalMath(q.verticalMath);
+          if (solved.solvable) Object.assign(q.verticalMath, solved);
+          else if (solved.impossible) {
+            // No digit assignment reproduces the extracted equation at all (the
+            // OCR/extraction of this puzzle is simply wrong) — never show a
+            // guessed/hallucinated answer for it. Drop the question outright.
+            console.warn(`[quiz] dropping impossible vertical-math question (task "${task.title}", id ${q.id}): "${q.verticalMath.top} ${q.verticalMath.operator} ${q.verticalMath.bottom} = ${q.verticalMath.result}" has no valid solution`);
+            q.__drop = true;
+            continue;
+          }
+          const opCheck = checkVerticalMathOperator(q, task);
+          if (opCheck) {
+            console.log(`[quiz] vertical-math operator corrected (${opCheck.via}): "${q.verticalMath.top} ${q.verticalMath.operator} ${q.verticalMath.bottom}" → operator should be "${opCheck.correctOperator}"`);
+            q.verticalMath.operator = opCheck.correctOperator;
+            if (opCheck.correctAnswer !== undefined) q.answer = opCheck.correctAnswer;
+            else if (q.verticalMath.result) q.verticalMath.result = String(opCheck.correctResult);
+          }
+        } else {
+          // Plain "326 + 419"-style sub-question feeding a decode/cipher table:
+          // recompute the arithmetic ourselves and cross-check against the SAME
+          // table Gemini extracted, so a stale/mistaken lookup never ships as-is.
+          const decodeCheck = checkDecodeAnswer(q, task);
+          if (decodeCheck) {
+            console.log(`[quiz] decode-table answer corrected: "${q.question}" → ${decodeCheck.result} maps to "${decodeCheck.correctAnswer}" (was "${q.answer}")`);
+            q.answer = decodeCheck.correctAnswer;
+          }
         }
+      }
+      if (task.questions && task.questions.some(q => q.__drop)) {
+        task.questions = task.questions.filter(q => !q.__drop);
       }
     }
 
@@ -2180,12 +2310,19 @@ async function generateQuizHandler(req, res) {
     quiz.generatedAt = new Date().toISOString();
     quiz.status = 'draft';
 
+    // ── AI answer verification: re-derive every answer from the original PDF
+    //    and auto-correct any that don't match (general safety net beyond the
+    //    two deterministic checks above). ──
+    const answerVerification = await verifyQuizAnswers(req.file.buffer, 'application/pdf', quiz);
+    console.log(`[quiz] Answer verification: ${answerVerification.checked} checked, ${answerVerification.corrected} corrected${answerVerification.error ? ` (error: ${answerVerification.error})` : ''}`);
+    __mark('after verifyQuizAnswers');
+
     // Auto-validate quality
     const qualityCheck = validateQuiz(quiz);
     console.log(`[quiz] Quality: ${qualityCheck.grade} (${qualityCheck.score}/100) — ${qualityCheck.totalQuestions} questions, ${qualityCheck.issues.length} issues`);
     if (qualityCheck.issues.length) console.log(`[quiz] Issues:`, qualityCheck.issues.join('; '));
 
-    res.json({ quiz, validation: qualityCheck });
+    res.json({ quiz, validation: qualityCheck, answerVerification });
   } catch (err) {
     console.error('Quiz generate error:', err);
     res.status(500).json({ error: err.message });
@@ -2441,6 +2578,34 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
     //    data so the generated chart shows instead of a raw scanned screenshot. ──
     await recoverBarCharts(quiz, layoutMLResult);
 
+    // ── Missing-digit vertical arithmetic + decode-table answer cross-check
+    //    (same deterministic verification as the PDF path) ──
+    for (const task of (quiz.tasks || [])) {
+      for (const q of (task.questions || [])) {
+        if (q.verticalMath) {
+          const solved = solveVerticalMath(q.verticalMath);
+          if (solved.solvable) Object.assign(q.verticalMath, solved);
+          else if (solved.impossible) {
+            console.warn(`[quiz] dropping impossible vertical-math question (task "${task.title}", id ${q.id}): "${q.verticalMath.top} ${q.verticalMath.operator} ${q.verticalMath.bottom} = ${q.verticalMath.result}" has no valid solution`);
+            q.__drop = true;
+            continue;
+          }
+          const opCheck = checkVerticalMathOperator(q, task);
+          if (opCheck) {
+            q.verticalMath.operator = opCheck.correctOperator;
+            if (opCheck.correctAnswer !== undefined) q.answer = opCheck.correctAnswer;
+            else if (q.verticalMath.result) q.verticalMath.result = String(opCheck.correctResult);
+          }
+        } else {
+          const decodeCheck = checkDecodeAnswer(q, task);
+          if (decodeCheck) q.answer = decodeCheck.correctAnswer;
+        }
+      }
+      if (task.questions && task.questions.some(q => q.__drop)) {
+        task.questions = task.questions.filter(q => !q.__drop);
+      }
+    }
+
     // ── Post-process: auto-detect MCQ questions the LLM missed ──
     autoDetectMCQ(quiz);
 
@@ -2458,11 +2623,16 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
     quiz.generatedAt = new Date().toISOString();
     quiz.status = 'draft';
 
+    // ── AI answer verification: re-derive every answer from the original image
+    //    and auto-correct any that don't match. ──
+    const answerVerification = await verifyQuizAnswers(req.file.buffer, mime, quiz);
+    console.log(`[quiz] Answer verification: ${answerVerification.checked} checked, ${answerVerification.corrected} corrected${answerVerification.error ? ` (error: ${answerVerification.error})` : ''}`);
+
     const validation = validateQuiz(quiz);
     console.log(`[quiz] Quality: ${validation.grade} (${validation.score}/100) — ${validation.totalQuestions} questions, ${validation.issues.length} issues`);
     if (validation.issues.length) console.log(`[quiz] Issues:`, validation.issues.join('; '));
 
-    res.json({ quiz, validation });
+    res.json({ quiz, validation, answerVerification });
   } catch (err) {
     console.error('Quiz generate-image error:', err);
     res.status(500).json({ error: err.message });
@@ -3767,6 +3937,70 @@ Return ONLY valid JSON, no markdown fences.`;
   // Strip markdown fences if present
   text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
   return JSON.parse(text);
+}
+
+// ── AI answer verification: catches wrong answers on ANY question type ─────
+// The deterministic checks above (solveVerticalMath, checkDecodeAnswer) only
+// cover two specific puzzle shapes. This is the general safety net: one extra
+// Gemini call per generation that re-derives every answer from the ORIGINAL
+// worksheet file and flags whichever ones don't match what's on file. Runs
+// once, after all other post-processing, right before the quiz is returned.
+// Fail-open: if the call errors or returns malformed JSON, generation still
+// succeeds with today's (unverified) answers rather than blocking the teacher.
+async function verifyQuizAnswers(fileBuffer, mimeType, quiz) {
+  if (!genAI) return { checked: 0, corrected: 0 };
+  const items = [];
+  (quiz.tasks || []).forEach((task, ti) => {
+    (task.questions || []).forEach(q => {
+      if (q.type === 'activity' || q.type === 'venn' || q.verticalMath) return; // no single "answer" field, or already deterministically verified
+      items.push({ uid: `${ti}-${q.id}`, question: String(q.question || '').slice(0, 300), answer: q.answer });
+    });
+  });
+  if (items.length === 0) return { checked: 0, corrected: 0 };
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', generationConfig: { temperature: 0 } });
+    const prompt = `You are checking a generated quiz's answer key against the original worksheet file (attached).
+
+Below is every question along with the answer our system currently has on file. For EACH one, independently work out the correct answer from the worksheet (do the actual computation/lookup yourself — don't just trust the stated answer), then compare.
+
+QUESTIONS:
+${JSON.stringify(items, null, 2)}
+
+Return ONLY JSON, no markdown fences:
+{ "corrections": [ { "uid": "<uid of a WRONG entry only>", "correctAnswer": "<the right answer>", "reason": "short reason" } ] }
+
+Only include an entry in "corrections" if its CURRENT answer is actually wrong — omit every question that's already correct. If everything is correct, return { "corrections": [] }.`;
+
+    const parts = [
+      { inlineData: { mimeType, data: fileBuffer.toString('base64') } },
+      { text: prompt },
+    ];
+    const result = await geminiRetry(() => model.generateContent(parts));
+    let text = result.response.text().trim();
+    text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+    const parsed = JSON.parse(text);
+    const corrections = Array.isArray(parsed.corrections) ? parsed.corrections : [];
+
+    let corrected = 0;
+    for (const c of corrections) {
+      if (!c || !c.uid || c.correctAnswer === undefined || c.correctAnswer === null || c.correctAnswer === '') continue;
+      const dashIdx = String(c.uid).indexOf('-');
+      if (dashIdx < 0) continue;
+      const ti = Number(String(c.uid).slice(0, dashIdx));
+      const qId = String(c.uid).slice(dashIdx + 1);
+      const task = (quiz.tasks || [])[ti];
+      const q = task && (task.questions || []).find(qq => String(qq.id) === qId);
+      if (!q) continue;
+      console.log(`[quiz] AI answer-verification corrected "${String(q.question || '').slice(0, 60)}": "${q.answer}" → "${c.correctAnswer}" (${c.reason || ''})`);
+      q.answer = c.correctAnswer;
+      corrected++;
+    }
+    return { checked: items.length, corrected };
+  } catch (err) {
+    console.warn('[quiz] AI answer-verification failed, keeping existing answers:', err.message);
+    return { checked: items.length, corrected: 0, error: err.message };
+  }
 }
 
 // ── Venn helpers ────────────────────────────────────────────────────────────
