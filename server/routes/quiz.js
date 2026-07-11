@@ -1589,6 +1589,12 @@ to them, not instead). Shape only — every number/letter below is a placeholder
   "answer" field back against the "solution" field's final number — they MUST reference the same
   row of the table. Never let "answer" and "solution" disagree; if they would, redo the lookup
   rather than shipping a mismatch.
+- The "question" text for EACH lettered item MUST contain the actual two numbers being added or
+  subtracted, read exactly off the worksheet — e.g. "question": "Calculate: 326 + 419" or
+  "question": "Calculate: 317 - 258". NEVER emit only the generic instruction line ("Calculate the
+  sum." / "Calculate the difference.") with no operands — that leaves the student with nothing to
+  compute. If a whole block of items shares one generic instruction, still copy the specific pair
+  of numbers for that item into that item's own "question" string.
 
 VERTICAL / COLUMN ARITHMETIC DISPLAY (CRITICAL for readability — worksheets showing a stacked
 sum like "96_ \n -_83 \n ----- \n 162" MUST NOT be flattened into run-on text like "Calculate the
