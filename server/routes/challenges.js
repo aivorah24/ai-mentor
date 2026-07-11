@@ -63,7 +63,7 @@ function attachImageUrl(challenge) {
 
   return { ...challenge, imageUrl: null };
 }
-function uuidv4() { return 'ca_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+function uuidv4() { return require('crypto').randomUUID(); }
 
 function computeLevel(xp) {
   let level = 1, threshold = 500, total = 0;
@@ -179,28 +179,53 @@ router.post('/assign', async (req, res) => {
     }
   }
 
-  // Return existing if already assigned
+  // Return existing if already assigned AND still pending — this is the
+  // idempotent "already assigned" case, not a re-assignment.
   const { data: existing } = await supabase
     .from('challenge_assignments')
     .select('*')
     .eq('challenge_id', challengeId)
     .eq('student_id', studentId)
     .single();
-  if (existing) return res.json({ ...existing, assignmentId: existing.id });
+  if (existing && existing.status !== 'completed') {
+    return res.json({ ...existing, assignmentId: existing.id });
+  }
 
-  const { data, error } = await supabase
-    .from('challenge_assignments')
-    .insert({
-      id:               uuidv4(),
-      challenge_id:     challengeId,
-      student_id:       studentId,
-      assigned_by_id:   assignedById || '',
-      assigned_by_role: assignedByRole,
-      due_date:         dueDate || null,
-      status:           'assigned',
-    })
-    .select()
-    .single();
+  let data, error;
+  if (existing && existing.status === 'completed') {
+    // Re-assigning a challenge the student already completed (e.g. a retry) used
+    // to just return the old completed row untouched — no new due date, no
+    // schedule entry, no notification, so it silently looked like nothing
+    // happened. Reset it instead so it shows up as newly assigned again.
+    ({ data, error } = await supabase
+      .from('challenge_assignments')
+      .update({
+        assigned_by_id:   assignedById || '',
+        assigned_by_role: assignedByRole,
+        due_date:         dueDate || null,
+        status:           'assigned',
+        score:            null,
+        xp_awarded:       null,
+        completed_at:     null,
+      })
+      .eq('id', existing.id)
+      .select()
+      .single());
+  } else {
+    ({ data, error } = await supabase
+      .from('challenge_assignments')
+      .insert({
+        id:               uuidv4(),
+        challenge_id:     challengeId,
+        student_id:       studentId,
+        assigned_by_id:   assignedById || '',
+        assigned_by_role: assignedByRole,
+        due_date:         dueDate || null,
+        status:           'assigned',
+      })
+      .select()
+      .single());
+  }
 
   if (error) return res.status(500).json({ error: error.message });
 
@@ -224,20 +249,20 @@ router.post('/assign', async (req, res) => {
   // Auto-add to schedule if dueDate provided
   const challenge = challengeCheck;
   if (dueDate && challenge) {
-    try {
-      await supabase.from('schedule_events').insert({
-        title:         `${challenge.title} — Due`,
-        event_date:    dueDate,
-        start_time:    '23:59',
-        end_time:      '23:59',
-        type:          'challenge',
-        note:          `${challenge.category} · ${challenge.subject}${challenge.grade ? ' · ' + challenge.grade : ''}`,
-        student_id:    studentId,
-        created_by:    assignedByRole,
-        tag:           challenge.subject || null,
-        assignment_id: data.id,
-      });
-    } catch (_) {}
+    const { error: scheduleError } = await supabase.from('schedule_events').insert({
+      id:            uuidv4(),
+      title:         `${challenge.title} — Due`,
+      event_date:    dueDate,
+      start_time:    '23:59',
+      end_time:      '23:59',
+      type:          'challenge',
+      note:          `${challenge.category} · ${challenge.subject}${challenge.grade ? ' · ' + challenge.grade : ''}`,
+      student_id:    studentId,
+      created_by:    assignedByRole,
+      tag:           challenge.subject || null,
+      assignment_id: data.id,
+    });
+    if (scheduleError) console.error('[challenges/assign] schedule_events insert failed:', scheduleError.message);
   }
 
   // Student challenge reminders come from the challenge_assignments table directly.
