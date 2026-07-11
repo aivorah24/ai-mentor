@@ -46,16 +46,17 @@ router.get('/teacher', async (req, res) => {
       .select('*')
       .eq('event_date', date);
     if (error) throw error;
-    let manualEvents = (data ?? []).map(mapRow);
-    // Scope to the teacher's own class: events for a student they teach, class-wide
-    // ('all') events, or events the teacher themselves created. (No email → no scope.)
-    // Teacher's schedule only shows events the teacher created — never events a
-    // student or parent self-scheduled (even for a student in the teacher's class).
+    let rawEvents = data ?? [];
+    // Scope to events THIS teacher created — never every teacher's events in the
+    // system. Must filter on the raw created_by_id (a real user id) BEFORE
+    // mapRow(), since mapRow's "createdBy" field only carries the role string
+    // ('teacher'/'parent'/'student'), not an id — comparing that to teacherId
+    // was always false and silently fell through to "any teacher-created event",
+    // leaking every teacher's schedule onto every other teacher's calendar.
     if (email && teacherId) {
-      manualEvents = manualEvents.filter(e =>
-        e.createdBy === teacherId || e.createdBy === 'teacher'
-      );
+      rawEvents = rawEvents.filter(e => e.created_by === 'teacher' && e.created_by_id === teacherId);
     }
+    let manualEvents = rawEvents.map(mapRow);
 
     // Resolve student names for non-'all' events
     const studentIds = [...new Set(manualEvents.filter(e => e.studentId && e.studentId !== 'all').map(e => e.studentId))];
