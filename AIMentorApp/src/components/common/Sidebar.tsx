@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
   Modal,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,7 +17,11 @@ import { useAuth, setPendingReturnRole, getPendingReturnRole } from '../../conte
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeMode } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useAnnouncements } from '../../features/announcements/context/AnnouncementProvider';
 import { getAvatarGradient, getAvatarIcon } from '../../constants/avatarStyles';
+import { roleLabel } from '../../constants/roleLabels';
+import { useFocusEffect } from '@react-navigation/native';
+import SERVER_URL from '../../config/serverUrl';
 
 const STUDENT_NAV_ITEMS = [
   { label: 'Dashboard',        icon: 'grid',         screen: 'Dashboard',          group: 'MENU',    premium: false },
@@ -26,6 +31,8 @@ const STUDENT_NAV_ITEMS = [
   { label: 'Schedule',         icon: 'calendar',     screen: 'Schedule',           group: 'MENU',    premium: false },
   { label: 'The World & You',  icon: 'globe',        screen: 'WorldAndYou',        group: 'MENU',    premium: false },
   { label: 'Read Aloud',       icon: 'mic',          screen: 'ReadAloud',          group: 'MENU',    premium: false },
+  { label: 'Announcements',    icon: 'volume-2',     screen: 'Announcements',      group: 'MENU',    premium: false },
+  { label: 'My Classes',       icon: 'layers',       screen: 'MyClasses',          group: 'MENU',    premium: false },
   { label: 'Bedtime Stories',  icon: 'book',         screen: 'BhagavathaStories',  group: 'MENU',    premium: true  },
   { label: 'Daily Habits',     icon: 'sun',          screen: 'DailyHabits',        group: 'MENU',    premium: true  },
   { label: 'Assignments',      icon: 'check-square', screen: 'Assignments',        group: 'FOCUS',   premium: false },
@@ -41,12 +48,16 @@ const STUDENT_NAV_ITEMS = [
 const TEACHER_NAV_ITEMS = [
   { label: 'Dashboard', icon: 'grid', screen: 'TeacherDashboard', group: 'MENU' },
   { label: 'Students', icon: 'users', screen: 'TeacherStudents', group: 'MENU' },
+  { label: 'My Classes', icon: 'layers', screen: 'MyClasses', group: 'MENU' },
+  { label: 'Attendance', icon: 'clipboard', screen: 'TeacherAttendance', group: 'MENU' },
   { label: 'Schedule', icon: 'calendar', screen: 'TeacherSchedule', group: 'MENU' },
   { label: 'Assignments', icon: 'check-square', screen: 'TeacherAssignments', group: 'MANAGE' },
   { label: 'Challenges', icon: 'target', screen: 'TeacherChallenges', group: 'MANAGE' },
   { label: 'Student Progress', icon: 'bar-chart-2', screen: 'TeacherProgress', group: 'MANAGE' },
   { label: 'Learning Paths', icon: 'map', screen: 'TeacherLearningPaths', group: 'MANAGE' },
   { label: 'Messages', icon: 'message-square', screen: 'TeacherMessages', group: 'MANAGE' },
+  { label: 'Announcements', icon: 'volume-2', screen: 'TeacherAnnouncements', group: 'MANAGE' },
+  { label: 'Send Announcement', icon: 'edit-3', screen: 'AnnouncementManager', group: 'MANAGE' },
   { label: 'Settings', icon: 'settings', screen: 'TeacherSettings', group: 'SYSTEM' },
 ];
 
@@ -54,14 +65,17 @@ const PARENT_NAV_ITEMS = [
   { label: 'Dashboard',         icon: 'grid',           screen: 'ParentDashboard',    group: 'MENU',     premium: false },
   { label: 'Profile',           icon: 'user',           screen: 'ParentProfile',      group: 'MENU',     premium: false },
   { label: 'My Kids',           icon: 'users',          screen: 'ParentMyKids',       group: 'MENU',     premium: false },
+  { label: 'My Classes',        icon: 'layers',         screen: 'MyClasses',          group: 'MENU',     premium: false },
   { label: 'Daily Tasks',       icon: 'check-square',   screen: 'ParentDailyTasks',   group: 'MENU',     premium: false },
   { label: 'Schedule',          icon: 'calendar',       screen: 'ParentSchedule',     group: 'MENU',     premium: false },
   { label: 'Learning',          icon: 'book-open',      screen: 'ParentLearning',     group: 'CHILDREN', premium: false },
   { label: 'Assignments',       icon: 'check-square',   screen: 'ParentAssignments',  group: 'CHILDREN', premium: false },
   { label: 'Progress',          icon: 'bar-chart-2',    screen: 'ParentProgress',     group: 'CHILDREN', premium: false },
+  { label: 'Attendance',        icon: 'clipboard',      screen: 'ParentAttendance',    group: 'CHILDREN', premium: false },
   { label: 'AI Progress Report',  icon: 'file-text',    screen: 'ParentAIReports',    group: 'CHILDREN', premium: false },
   { label: 'Challenges',        icon: 'target',         screen: 'ParentChallenges',   group: 'CHILDREN', premium: false },
   { label: 'Messages',          icon: 'message-square', screen: 'ParentMessages',     group: 'CHILDREN', premium: false },
+  { label: 'Announcements',     icon: 'volume-2',       screen: 'ParentAnnouncements', group: 'CHILDREN', premium: false },
   { label: 'Parental Controls', icon: 'shield',         screen: 'ParentControls',     group: 'CHILDREN', premium: true  },
   { label: 'Plans & Billing',   icon: 'credit-card',    screen: 'ParentSubscription', group: 'SYSTEM',   premium: false },
   { label: 'Help',              icon: 'help-circle',    screen: 'ParentHelp',         group: 'SYSTEM',   premium: false },
@@ -76,12 +90,13 @@ const THEME_OPTIONS: { id: ThemeMode; icon: string; label: string }[] = [
 
 interface SidebarProps {
   currentScreen: string;
-  onNavigate: (screen: string) => void;
+  onNavigate: (screen: string, params?: Record<string, any>) => void;
 }
 
 const SUPER_ADMIN_NAV_ITEMS = [
   { label: 'Dashboard',          icon: 'grid',         screen: 'TeacherDashboard',   group: 'MENU'    },
   { label: 'Students',           icon: 'users',        screen: 'TeacherStudents',    group: 'MENU'    },
+  { label: 'Attendance',          icon: 'clipboard',     screen: 'TeacherAttendance',    group: 'MENU'    },
   { label: 'Schedule',           icon: 'calendar',     screen: 'TeacherSchedule',    group: 'MENU'    },
   { label: 'Assignments',        icon: 'check-square', screen: 'TeacherAssignments', group: 'MANAGE'  },
   { label: 'Challenges',         icon: 'target',       screen: 'TeacherChallenges',  group: 'MANAGE'  },
@@ -90,14 +105,81 @@ const SUPER_ADMIN_NAV_ITEMS = [
   { label: 'Student Progress',   icon: 'bar-chart-2',  screen: 'TeacherProgress',      group: 'MANAGE'  },
   { label: 'Learning Paths',     icon: 'map',          screen: 'TeacherLearningPaths', group: 'MANAGE' },
   { label: 'Messages',           icon: 'message-square', screen: 'TeacherMessages',  group: 'MANAGE'  },
+  { label: 'Announcements',      icon: 'volume-2',     screen: 'TeacherAnnouncements', group: 'MANAGE' },
+  { label: 'Announcement Manager', icon: 'edit-3',     screen: 'AnnouncementManager',  group: 'MANAGE' },
   { label: 'Settings',           icon: 'settings',     screen: 'TeacherSettings',    group: 'SYSTEM'  },
 ];
 
-const ROLE_DASH: Record<string, string> = { super_admin: 'TeacherDashboard', teacher: 'TeacherDashboard', parent: 'ParentDashboard', student: 'Dashboard' };
+const SCHOOL_ADMIN_NAV_ITEMS: { label: string; icon: string; screen: string; group: string; params?: Record<string, any> }[] = [
+  { label: 'Overview',           icon: 'grid',          screen: 'SchoolAdminDashboard',    group: 'WORKSPACE' },
+  { label: 'Students',           icon: 'users',         screen: 'SchoolAdminStudents',      group: 'STUDENT MANAGEMENT' },
+  { label: 'Add Student',        icon: 'user-plus',     screen: 'SchoolAdminAddStudent',    group: 'STUDENT MANAGEMENT' },
+  { label: 'Bulk Import',        icon: 'upload',        screen: 'SchoolAdminBulkImport',    group: 'STUDENT MANAGEMENT' },
+  { label: 'Grades & Sections',  icon: 'list',          screen: 'SchoolAdminGradesSections', group: 'ACADEMIC STRUCTURE' },
+  { label: 'Classes',            icon: 'layers',        screen: 'SchoolAdminClasses',       group: 'ACADEMIC STRUCTURE' },
+  { label: 'Promotions',         icon: 'trending-up',   screen: 'SchoolAdminPromotions',    group: 'STUDENT LIFECYCLE' },
+  { label: 'Archived Students',  icon: 'archive',       screen: 'SchoolAdminArchivedStudents', group: 'STUDENT LIFECYCLE' },
+  { label: 'Teachers',           icon: 'user',          screen: 'SchoolAdminTeachers',      group: 'PEOPLE' },
+  { label: 'Add Teacher',        icon: 'user-plus',     screen: 'SchoolAdminAddTeacher',    group: 'PEOPLE' },
+  { label: 'Import Teachers',    icon: 'upload',        screen: 'SchoolAdminTeacherBulkImport', group: 'PEOPLE' },
+  { label: 'Parents',            icon: 'heart',         screen: 'SchoolAdminParents',       group: 'PEOPLE' },
+  { label: 'Announcements',      icon: 'edit-3',        screen: 'AnnouncementManager',      group: 'COMMUNICATION' },
+  { label: 'Import History',     icon: 'clock',         screen: 'SchoolAdminImportHistory', group: 'ADMINISTRATION' },
+  { label: 'Workspace Settings', icon: 'settings',      screen: 'SchoolAdminSettings',      group: 'ADMINISTRATION' },
+  { label: 'Help & Support',     icon: 'help-circle',   screen: 'TeacherHelp',              group: 'SUPPORT' },
+];
+
+const ROLE_DASH: Record<string, string> = { super_admin: 'TeacherDashboard', school_admin: 'SchoolAdminDashboard', teacher: 'TeacherDashboard', parent: 'ParentDashboard', student: 'Dashboard' };
+
+const COLLAPSE_KEY = 'aivorah_sidebar_collapsed';
 
 export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
   const { logout, user, switchRole, updateUser, beginAddParentProfile } = useAuth();
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+  const activeItemRef = useRef<any>(null);
+
+  // Keep the active nav item visible when it changes (e.g. after navigating
+  // via a deep link or programmatic navigation), only scrolling the sidebar's
+  // own scroll container — never `Element.scrollIntoView()`, which walks up
+  // *every* scrollable ancestor (including the outer page) and can drag the
+  // whole app viewport down, exposing blank background beneath it. Setting
+  // `scrollTop` directly on the sidebar scroller keeps the scroll contained,
+  // and centering the item (instead of snapping to whichever edge is nearer)
+  // gives it comfortable margin, matching VS Code/Slack-style sidebars.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const node = activeItemRef.current as HTMLElement | null | undefined;
+    const scroller = node?.closest('[data-sidebar-scroll]') as HTMLElement | null | undefined;
+    if (!node || !scroller || typeof node.getBoundingClientRect !== 'function') return;
+    const itemRect = node.getBoundingClientRect();
+    const scrollerRect = scroller.getBoundingClientRect();
+    const isVisible = itemRect.top >= scrollerRect.top && itemRect.bottom <= scrollerRect.bottom;
+    if (isVisible) return;
+    const itemOffsetWithinScroller = itemRect.top - scrollerRect.top + scroller.scrollTop;
+    const targetScrollTop = itemOffsetWithinScroller - (scroller.clientHeight - node.clientHeight) / 2;
+    const maxScrollTop = scroller.scrollHeight - scroller.clientHeight;
+    scroller.scrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
+  }, [currentScreen]);
+  // Collapsible, icon-only rail — like Google Admin's hamburger-collapsed nav.
+  // Scoped to school_admin: that role now has the Overview tile launcher as
+  // its primary navigation, so a permanently-open labeled sidebar is
+  // redundant by default. Every other role keeps today's always-open sidebar
+  // unchanged. The user's manual expand/collapse choice persists.
+  const [collapsed, setCollapsed] = useState(() => {
+    if (user?.role !== 'school_admin') return false;
+    try {
+      const saved = localStorage.getItem(COLLAPSE_KEY);
+      return saved === null ? true : saved === '1';
+    } catch { return true; }
+  });
+  const canCollapse = user?.role === 'school_admin';
+  function toggleCollapsed() {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try { localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0'); } catch {}
+      return next;
+    });
+  }
   const pendingReturn = getPendingReturnRole();
   const isDualRole = (user?.roles?.length ?? 0) > 1 || Boolean(pendingReturn);
   // Roles to display in Switch Profile pills — use actual roles or infer from pending return
@@ -105,39 +187,104 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
     ? user!.roles!
     : pendingReturn === 'teacher' ? ['teacher', 'parent'] : [];
   const role = user?.role;
-  const NAV_ITEMS = role === 'super_admin' ? SUPER_ADMIN_NAV_ITEMS : role === 'teacher' ? TEACHER_NAV_ITEMS : role === 'parent' ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
-  const groups = (role === 'super_admin' || role === 'teacher') ? ['MENU', 'MANAGE', 'SYSTEM'] : role === 'parent' ? ['MENU', 'CHILDREN', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
+
+  // School branding card (school_admin only): fetch the school's real name so
+  // the sidebar header matches the mobile drawer and the design.
+  const isSchoolAdmin = role === 'school_admin';
+  const [schoolName, setSchoolName] = useState<string | null>(null);
+  const [schoolLogoUrl, setSchoolLogoUrl] = useState<string | null>(null);
+  useFocusEffect(useCallback(() => {
+    if (!isSchoolAdmin || !user?.email) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${SERVER_URL}/school-admin/overview?adminEmail=${encodeURIComponent(user.email)}`);
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled && res.ok) {
+          setSchoolName(data?.school?.name || null);
+          setSchoolLogoUrl(data?.school?.logoUrl || null);
+        }
+      } catch { /* silent — sidebar still renders without the school card */ }
+    })();
+    return () => { cancelled = true; };
+  }, [isSchoolAdmin, user?.email]));
+
+  const NAV_ITEMS = role === 'super_admin' ? SUPER_ADMIN_NAV_ITEMS : role === 'school_admin' ? SCHOOL_ADMIN_NAV_ITEMS : role === 'teacher' ? TEACHER_NAV_ITEMS : role === 'parent' ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
+  const groups = (role === 'super_admin' || role === 'teacher') ? ['MENU', 'MANAGE', 'SYSTEM'] : role === 'school_admin' ? ['WORKSPACE', 'STUDENT MANAGEMENT', 'ACADEMIC STRUCTURE', 'STUDENT LIFECYCLE', 'PEOPLE', 'COMMUNICATION', 'ADMINISTRATION', 'SUPPORT'] : role === 'parent' ? ['MENU', 'CHILDREN', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
   const { colors, themeMode, setThemeMode } = useTheme();
   const { unreadCount, unreadAssignments, unreadChallenges } = useNotification();
+  const { bannerAnnouncements } = useAnnouncements();
+  const unreadAnnouncements = bannerAnnouncements.length;
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const MESSAGE_SCREENS     = ['TeacherMessages', 'ParentMessages', 'Messages'];
-  const ASSIGNMENT_SCREENS  = ['Assignments', 'ParentAssignments'];
-  const CHALLENGE_SCREENS   = ['Challenges', 'ParentChallenges'];
+  const MESSAGE_SCREENS      = ['TeacherMessages', 'ParentMessages', 'Messages'];
+  const ASSIGNMENT_SCREENS   = ['Assignments', 'ParentAssignments'];
+  const CHALLENGE_SCREENS    = ['Challenges', 'ParentChallenges'];
+  const ANNOUNCEMENT_SCREENS = ['Announcements', 'ParentAnnouncements', 'TeacherAnnouncements'];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, collapsed && styles.containerCollapsed]}>
       {/* Logo */}
-      <TouchableOpacity style={styles.logo} activeOpacity={0.7} onPress={() => setShowHomeConfirm(true)}>
-        <View style={styles.logoMark}>
-          <Feather name="zap" size={18} color="white" />
-        </View>
-        <Text style={styles.logoText}>Aivorah</Text>
-      </TouchableOpacity>
+      <View style={[styles.logoRow, collapsed && styles.logoRowCollapsed]}>
+        <TouchableOpacity style={[styles.logo, collapsed && { paddingLeft: 0 }]} activeOpacity={0.7} onPress={() => setShowHomeConfirm(true)}>
+          <View style={styles.logoMark}>
+            <Feather name="zap" size={18} color="white" />
+          </View>
+          {!collapsed && <Text style={styles.logoText}>Aivorah</Text>}
+        </TouchableOpacity>
+        {canCollapse && (
+          <TouchableOpacity
+            onPress={toggleCollapsed}
+            style={styles.collapseBtn}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <Feather name="menu" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+      {/* School branding card — school_admin only (mirrors the mobile drawer
+          and the approved design's sidebar header). Shows the school's uploaded
+          logo when one exists (from Workspace Settings); no monogram fallback
+          here per request — just the school name + role when there's no logo. */}
+      {isSchoolAdmin && schoolName && !collapsed && (
+        <View style={styles.schoolCard}>
+          {schoolLogoUrl && (
+            <View style={styles.schoolBadge}>
+              <Image source={{ uri: schoolLogoUrl }} style={styles.schoolBadgeImg} resizeMode="contain" />
+            </View>
+          )}
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.schoolName} numberOfLines={2}>{schoolName}</Text>
+            <Text style={styles.schoolRole}>School Administrator</Text>
+          </View>
+        </View>
+      )}
+
+      <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }} {...({ dataSet: { sidebarScroll: 'true' } } as any)}>
         {groups.map((group) => {
           const items = NAV_ITEMS.filter((i) => i.group === group);
           return (
             <View key={group} style={styles.navGroup}>
-              <Text style={styles.navLabel}>{group}</Text>
+              {!collapsed && <Text style={styles.navLabel}>{group}</Text>}
               {items.map((item) => {
-                const isActive = currentScreen === item.screen;
+                // A nav item is only ever "active" when its screen is a
+                // distinct route (own route name in the navigator/URL — see
+                // SchoolAdminArchivedStudents vs SchoolAdminStudents). Any
+                // future item that instead reaches a shared screen via
+                // runtime `params` must not get the persistent active
+                // highlight, or every item pointing at that screen would
+                // light up together.
+                const isActive = !(item as any).params && currentScreen === item.screen;
                 return (
                   <TouchableOpacity
-                    key={item.screen}
-                    style={[styles.navItem, isActive && styles.navItemActive]}
-                    onPress={() => onNavigate(item.screen)}
+                    key={`${item.screen}-${item.label}`}
+                    ref={isActive ? activeItemRef : undefined}
+                    style={[styles.navItem, isActive && styles.navItemActive, collapsed && styles.navItemCollapsed]}
+                    onPress={() => onNavigate(item.screen, (item as any).params)}
                     activeOpacity={0.7}
+                    accessibilityLabel={collapsed ? item.label : undefined}
                   >
                     {isActive && <View style={styles.activeBar} />}
                     <Feather
@@ -145,9 +292,11 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
                       size={17}
                       color={isActive ? colors.accentYellow : colors.textMuted}
                     />
-                    <Text style={[styles.navItemText, isActive && styles.navItemTextActive]}>
-                      {item.label}
-                    </Text>
+                    {!collapsed && (
+                      <Text style={[styles.navItemText, isActive && styles.navItemTextActive]}>
+                        {item.label}
+                      </Text>
+                    )}
                     {MESSAGE_SCREENS.includes(item.screen) && unreadCount > 0 && (
                       <View style={styles.navBadge}>
                         <Text style={styles.navBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
@@ -156,6 +305,11 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
                     {ASSIGNMENT_SCREENS.includes(item.screen) && unreadAssignments > 0 && (
                       <View style={styles.navBadge}>
                         <Text style={styles.navBadgeText}>{unreadAssignments > 9 ? '9+' : unreadAssignments}</Text>
+                      </View>
+                    )}
+                    {ANNOUNCEMENT_SCREENS.includes(item.screen) && unreadAnnouncements > 0 && (
+                      <View style={styles.navBadge}>
+                        <Text style={styles.navBadgeText}>{unreadAnnouncements > 9 ? '9+' : unreadAnnouncements}</Text>
                       </View>
                     )}
                     {(item as any).premium && (
@@ -180,10 +334,14 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
             </View>
           );
         })}
-      </ScrollView>
 
-      {/* User + Logout */}
+      {/* User + Logout — inside the same scroll region as the nav list, so a
+          short nav list packs the footer right below it instead of leaving a
+          gap (flex:1 on a separate ScrollView always stretched to fill the
+          remaining sidebar height regardless of content), while a long nav
+          list still scrolls the whole sidebar together as one unit. */}
       <View style={styles.footer}>
+        {!collapsed && (
         <View style={styles.themeBlock}>
           <Text style={styles.themeLabel}>Theme</Text>
           <View style={styles.themeRow}>
@@ -203,9 +361,10 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
             })}
           </View>
         </View>
+        )}
 
         {/* Role switcher — only for dual-role users (teacher+parent) */}
-        {isDualRole && effectiveRoles.length > 0 && (
+        {!collapsed && isDualRole && effectiveRoles.length > 0 && (
           <View style={styles.roleSwitcher}>
             <Text style={styles.roleSwitcherLabel}>Switch Profile</Text>
             <View style={styles.roleSwitcherRow}>
@@ -253,7 +412,9 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
         )}
 
         {user && (
-          <TouchableOpacity style={styles.userRow} activeOpacity={0.75} onPress={() => {
+          <TouchableOpacity style={[styles.userRow, collapsed && styles.userRowCollapsed]} activeOpacity={0.75} onPress={() => {
+            if (role === 'school_admin') return onNavigate('SchoolAdminSettings');
+            if (role === 'super_admin') return; // no dedicated profile screen for this role
             const profileScreen = role === 'parent' ? 'ParentProfile' : 'Profile';
             onNavigate(profileScreen);
           }}>
@@ -272,34 +433,46 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
                 <Feather name="user" size={13} color={colors.textMuted} />
               )}
             </View>
+            {!collapsed && (
             <View style={{ flex: 1 }}>
               <Text style={styles.userName} numberOfLines={1}>{user.name}</Text>
               <View style={styles.userMetaRow}>
-                <Text style={styles.userRole}>{user.role}</Text>
-                <View style={[
-                  styles.planBadge,
-                  (user as any).isPro
-                    ? styles.planBadgePro
-                    : styles.planBadgeFree,
-                ]}>
-                  <Text style={[
-                    styles.planBadgeText,
+                <Text style={styles.userRole}>{roleLabel(user.role)}</Text>
+                {/* PRO/FREE is a consumer subscription-plan badge — meaningless
+                    for admin identities, so it's hidden for those roles. */}
+                {role !== 'school_admin' && role !== 'super_admin' && (
+                  <View style={[
+                    styles.planBadge,
                     (user as any).isPro
-                      ? styles.planBadgeTextPro
-                      : styles.planBadgeTextFree,
+                      ? styles.planBadgePro
+                      : styles.planBadgeFree,
                   ]}>
-                    {(user as any).isPro ? 'PRO' : 'FREE'}
-                  </Text>
-                </View>
+                    <Text style={[
+                      styles.planBadgeText,
+                      (user as any).isPro
+                        ? styles.planBadgeTextPro
+                        : styles.planBadgeTextFree,
+                    ]}>
+                      {(user as any).isPro ? 'PRO' : 'FREE'}
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
+            )}
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.navItem} onPress={logout} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={[styles.navItem, collapsed && styles.navItemCollapsed]}
+          onPress={logout}
+          activeOpacity={0.7}
+          accessibilityLabel={collapsed ? 'Logout' : undefined}
+        >
           <Feather name="log-out" size={17} color={colors.accentRed} />
-          <Text style={[styles.navItemText, { color: colors.accentRed }]}>Logout</Text>
+          {!collapsed && <Text style={[styles.navItemText, { color: colors.accentRed }]}>Logout</Text>}
         </TouchableOpacity>
       </View>
+      </ScrollView>
 
       {/* Branded Home Confirmation Modal */}
       <Modal visible={showHomeConfirm} transparent animationType="fade" onRequestClose={() => setShowHomeConfirm(false)}>
@@ -340,11 +513,22 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingBottom: spacing.xl,
     flexShrink: 0,
   },
+  containerCollapsed: {
+    width: 72,
+    paddingHorizontal: spacing.sm,
+    alignItems: 'center',
+  },
+  logoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 36 },
+  logoRowCollapsed: { flexDirection: 'column', gap: 10, marginBottom: 28 },
+  collapseBtn: {
+    width: 30, height: 30, borderRadius: radius.sm,
+    alignItems: 'center', justifyContent: 'center',
+    marginLeft: 'auto',
+  },
   logo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 36,
     paddingLeft: spacing.md,
   },
   logoMark: {
@@ -360,6 +544,43 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     fontWeight: '700',
     color: c.textMain,
     letterSpacing: -0.3,
+  },
+  schoolCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 24,
+    padding: 12,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: c.borderColor,
+    backgroundColor: c.cardDark,
+  },
+  schoolBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.sm,
+    backgroundColor: `${c.accentYellow}22`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    flexShrink: 0,
+  },
+  schoolBadgeImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: radius.sm,
+  },
+  schoolName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: c.textMain,
+    lineHeight: 16,
+  },
+  schoolRole: {
+    fontSize: 11,
+    color: c.textDim,
+    marginTop: 2,
   },
   navGroup: { marginBottom: 28 },
   navLabel: {
@@ -378,6 +599,11 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderRadius: radius.sm,
     marginBottom: 2,
     position: 'relative',
+  },
+  navItemCollapsed: {
+    justifyContent: 'center',
+    paddingHorizontal: 0,
+    width: 44,
   },
   navItemActive: { backgroundColor: c.accentYellow + '18' },
   activeBar: {
@@ -546,6 +772,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingVertical: spacing.sm,
     marginBottom: spacing.sm,
   },
+  userRowCollapsed: { paddingHorizontal: 0, justifyContent: 'center' },
   userAvatar: {
     width: 30,
     height: 30,

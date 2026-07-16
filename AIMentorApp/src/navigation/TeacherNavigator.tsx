@@ -18,6 +18,11 @@ import TeacherSettingsScreen from '../screens/teacher/TeacherSettingsScreen';
 import TeacherVideoLibraryScreen from '../screens/teacher/TeacherVideoLibraryScreen';
 import TeacherMessagesScreen from '../screens/teacher/TeacherMessagesScreen';
 import ProjectDetailsScreen from '../screens/teacher/ProjectDetailsScreen';
+import TeacherAnnouncementsScreen from '../screens/teacher/TeacherAnnouncementsScreen';
+import AnnouncementManagerScreen from '../features/announcements/components/AnnouncementManagerScreen';
+import MyClassesScreen from '../features/classes/components/MyClassesScreen';
+import ClassDetailScreen from '../features/classes/components/ClassDetailScreen';
+import TeacherAttendanceScreen from '../screens/teacher/TeacherAttendanceScreen';
 
 const Drawer = createDrawerNavigator<TeacherDrawerParamList>();
 
@@ -56,6 +61,11 @@ export default function TeacherNavigator() {
       <Drawer.Screen name="TeacherVideoLibrary" component={TeacherVideoLibraryScreen} />
       <Drawer.Screen name="TeacherMessages" component={TeacherMessagesScreen} />
       <Drawer.Screen name="ProjectDetails" component={ProjectDetailsScreen} />
+      <Drawer.Screen name="TeacherAnnouncements" component={TeacherAnnouncementsScreen} />
+      <Drawer.Screen name="AnnouncementManager" component={AnnouncementManagerScreen} />
+      <Drawer.Screen name="MyClasses" component={MyClassesScreen} />
+      <Drawer.Screen name="ClassDetail" component={ClassDetailScreen} />
+      <Drawer.Screen name="TeacherAttendance" component={TeacherAttendanceScreen} />
     </Drawer.Navigator>
   );
 }

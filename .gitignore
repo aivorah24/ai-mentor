@@ -116,3 +116,10 @@ server/public/models/
 
 # Per-generation quiz crops/pages (temp; quiz HTML embeds images as base64)
 server/data/images/quiz/
+
+# Local scratch / debug artifacts — never ship (kept out of live deploys)
+archive/
+AIMentorApp/_probe*.js
+server/_gen_worksheet.js
+server/worksheet_test.png
+bulk_import_test_sample.xlsx

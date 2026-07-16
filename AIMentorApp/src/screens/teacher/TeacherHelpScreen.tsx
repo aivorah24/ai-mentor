@@ -13,7 +13,7 @@ import Header from '../../components/common/Header';
 import { useAuth } from '../../context/AuthContext';
 import SERVER_URL from '../../config/serverUrl';
 
-const FAQS = [
+const TEACHER_FAQS = [
   { q: 'How do I create an assignment for all students?', a: "Go to Assignments → tap '+'. Leave the student field set to 'All Students' to broadcast to everyone enrolled. The assignment appears instantly in every student's app and is auto-tracked in their schedule." },
   { q: 'How do I see which students need help?', a: "Your Dashboard shows a 'Needs Attention' section. The Students screen gives a full breakdown — look for red badges. Students with scores below 60% on recent assignments are automatically flagged." },
   { q: 'How is student progress calculated?', a: "Progress = completed topics ÷ total curriculum topics × 100. Students earn XP for each topic they complete via the Learn screen. You can view per-student breakdowns in the Progress tab." },
@@ -26,12 +26,32 @@ const FAQS = [
   { q: 'How do I contact Aivorah support?', a: "Use the 'Submit Ticket' button below to send us a message, or chat with Aivorah 24/7 for instant answers. Our support team responds to tickets within 24 hours on business days." },
 ];
 
-const CHAT_SUGGESTIONS = [
+const SCHOOL_ADMIN_FAQS = [
+  { q: 'How do I add a student?', a: "Go to Students → 'Add Student' for one student, or 'Bulk Import' to upload a CSV/Excel file of many at once. New accounts get login credentials emailed automatically, and you can review/download them right after an import." },
+  { q: 'How does Bulk Import work?', a: "Upload a CSV or Excel file, map its columns to Aivorah's fields, review the rows we flagged as invalid, then confirm. Every import — including who ran it and how many rows were imported or skipped — is logged in Import History." },
+  { q: 'How do I set up Grades & Sections and Classes?', a: "Grades & Sections defines your school's academic structure. Classes is every Grade×Section pair — assign a Class Teacher to each from there so parents and students see the right contact." },
+  { q: 'How do I add or manage Teachers?', a: "Go to Teachers → 'Add Teacher' for one, or 'Import Teachers' for a bulk CSV/Excel upload. You can edit a teacher's assigned grades and subjects at any time from their profile." },
+  { q: 'How do I create a school-wide Announcement?', a: "Go to Announcements → compose a new one, choose the audience (e.g. all parents, a specific grade), and publish or schedule it. Published announcements also show as Active on your Overview." },
+  { q: 'How do I archive or restore a student?', a: "Open a student from Students and choose Archive — this preserves their record but disables sign-in. Archived Students lists everyone you've archived, with a one-tap Restore." },
+  { q: 'What does the Import History page show?', a: "Every bulk-import run for your school — the file, who ran it, rows imported vs. skipped, and the outcome — so you always have a record of what changed and when." },
+  { q: 'What can I edit in Workspace Settings?', a: "Academic year, timezone, and contact email are editable from Workspace Settings → Academic Setup → Edit. School name and logo are managed by the Aivorah team for now." },
+  { q: 'How do I contact Aivorah support?', a: "Use the 'Submit Ticket' button below to send us a message, or chat with Aivorah 24/7 for instant answers. Our support team responds to tickets within 24 hours on business days." },
+];
+
+const TEACHER_CHAT_SUGGESTIONS = [
   'How do I create an assignment?',
   'How does AI grading work?',
   'How do I message parents?',
   'How is progress calculated?',
   'Can I create challenges?',
+];
+
+const SCHOOL_ADMIN_CHAT_SUGGESTIONS = [
+  'How do I add a student?',
+  'How does Bulk Import work?',
+  'How do I add a teacher?',
+  'How do I create an announcement?',
+  'What can I edit in Workspace Settings?',
 ];
 
 export default function TeacherHelpScreen({ navigation }: any) {
@@ -40,6 +60,9 @@ export default function TeacherHelpScreen({ navigation }: any) {
   const gold = colors.accentYellow;
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const firstName = user?.name?.split(' ')[0] || 'there';
+  const isSchoolAdmin = user?.role === 'school_admin';
+  const FAQS = isSchoolAdmin ? SCHOOL_ADMIN_FAQS : TEACHER_FAQS;
+  const CHAT_SUGGESTIONS = isSchoolAdmin ? SCHOOL_ADMIN_CHAT_SUGGESTIONS : TEACHER_CHAT_SUGGESTIONS;
 
   const [search,       setSearch]       = useState('');
   const [openFaq,      setOpenFaq]      = useState<number | null>(null);
@@ -51,7 +74,9 @@ export default function TeacherHelpScreen({ navigation }: any) {
   const [chatInput,   setChatInput]   = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [chatMsgs,    setChatMsgs]    = useState<ChatMsg[]>([
-    { id: 0, role: 'ai', text: `Hi! I'm your Aivorah 24/7 Support Assistant. Ask me anything about managing your class, assignments, grading, and more!` },
+    { id: 0, role: 'ai', text: isSchoolAdmin
+      ? `Hi! I'm your Aivorah 24/7 Support Assistant. Ask me anything about managing students, teachers, bulk imports, and announcements!`
+      : `Hi! I'm your Aivorah 24/7 Support Assistant. Ask me anything about managing your class, assignments, grading, and more!` },
   ]);
   const chatScrollRef = useRef<ScrollView>(null);
 
@@ -253,7 +278,7 @@ export default function TeacherHelpScreen({ navigation }: any) {
               <View style={[styles.chatInputRow, { borderTopColor: colors.borderColor, backgroundColor: colors.bgDark }]}>
                 <TextInput
                   style={[styles.chatTextInput, { color: colors.textMain }]}
-                  placeholder="Ask about assignments, grading, students..."
+                  placeholder={isSchoolAdmin ? "Ask about students, teachers, imports..." : "Ask about assignments, grading, students..."}
                   placeholderTextColor={colors.textDim}
                   value={chatInput}
                   onChangeText={setChatInput}

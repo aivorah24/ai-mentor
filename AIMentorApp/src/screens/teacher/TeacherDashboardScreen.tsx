@@ -59,6 +59,7 @@ function AICardDecoration() {
 const QUICK_ACTIONS = [
   { icon: 'plus-circle' as const, label: 'New Assignment', color: '#6366f1', screen: 'TeacherAssignments' },
   { icon: 'edit-3' as const, label: 'Grade Papers', color: '#f59e0b', screen: 'TeacherAssignments' },
+  { icon: 'clipboard' as const, label: 'Attendance', color: '#ba905a', screen: 'TeacherAttendance' },
   { icon: 'calendar' as const, label: 'Schedule', color: '#10b981', screen: 'TeacherSchedule' },
   { icon: 'bar-chart-2' as const, label: 'Progress', color: '#06b6d4', screen: 'TeacherProgress' },
   { icon: 'users' as const, label: 'Students', color: '#8b5cf6', screen: 'TeacherStudents' },

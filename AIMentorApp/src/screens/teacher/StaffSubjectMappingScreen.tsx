@@ -60,6 +60,7 @@ function EditTeacherModal({
   onSaved: (name: string) => void;
   colors: AppColors;
 }) {
+  const gold = colors.accentYellow;
   const [entries, setEntries] = useState<TeachesEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -389,6 +390,7 @@ export default function StaffSubjectMappingScreen({ navigation }: any) {
 
 // ── Styles ─────────────────────────────────────────────────────────────────────
 function makeStyles(colors: AppColors) {
+  const gold = colors.accentYellow;
   return StyleSheet.create({
     screen: { flex: 1 },
     searchBar: {
@@ -467,6 +469,7 @@ function makeStyles(colors: AppColors) {
 }
 
 function makeModalStyles(colors: AppColors) {
+  const gold = colors.accentYellow;
   return StyleSheet.create({
     overlay: {
       flex: 1,

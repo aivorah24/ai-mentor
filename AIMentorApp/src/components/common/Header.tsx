@@ -23,6 +23,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useAuth } from '../../context/AuthContext';
 import SERVER_URL from '../../config/serverUrl';
 import { getAvatarGradient, getAvatarIcon } from '../../constants/avatarStyles';
+import { roleLabel } from '../../constants/roleLabels';
 
 const ADMIN_EMAILS = new Set(['admin@aivorah.ai', 'preddy6678@gmail.com']);
 
@@ -226,15 +227,17 @@ const [editingName, setEditingName] = useState(false);
                 styles.roleBadge,
                 user.role === 'teacher' && styles.roleBadgeTeacher,
                 user.role === 'parent' && styles.roleBadgeParent,
-                user.role === 'student' && styles.roleBadgeStudent
+                user.role === 'student' && styles.roleBadgeStudent,
+                (user.role === 'school_admin' || user.role === 'super_admin') && styles.roleBadgeAdmin,
               ]}>
                 <Text style={[
                   styles.roleBadgeText,
                   user.role === 'teacher' && styles.roleBadgeTextTeacher,
                   user.role === 'parent' && styles.roleBadgeTextParent,
-                  user.role === 'student' && styles.roleBadgeTextStudent
+                  user.role === 'student' && styles.roleBadgeTextStudent,
+                  (user.role === 'school_admin' || user.role === 'super_admin') && styles.roleBadgeTextAdmin,
                 ]}>
-                  {user.role}
+                  {roleLabel(user.role)}
                 </Text>
               </View>
             )}
@@ -308,8 +311,9 @@ const [editingName, setEditingName] = useState(false);
                     {notificationItems.map(item => {
                       const isChallenge = item.type === 'challenge';
                       const isEvent = item.type === 'event';
+                      const isPortfolio = item.type === 'portfolio';
                       const accent = colors.accentYellow;
-                      const iconName = isChallenge ? 'award' : isEvent ? 'calendar' : (item.type === 'quiz' ? 'help-circle' : 'check-square');
+                      const iconName = isChallenge ? 'award' : isEvent ? 'calendar' : (isPortfolio ? 'image' : (item.type === 'quiz' ? 'help-circle' : 'check-square'));
                       return (
                       <TouchableOpacity
                         key={item.id}
@@ -325,6 +329,14 @@ const [editingName, setEditingName] = useState(false);
                           } else if (isEvent) {
                             void clearUnreadEvents();
                             navigation.navigate(screenNames.schedule);
+                          } else if (isPortfolio) {
+                            void clearUnreadEvents();
+                            navigation.navigate('ClassDetail', {
+                              grade: (item as any).grade,
+                              section: (item as any).section,
+                              postId: (item as any).postId,
+                              label: `${(item as any).grade || 'Class'} Portfolio`
+                            });
                           } else {
                             void clearUnreadAssignments();
                             navigation.navigate(screenNames.assignments, { highlightId: item.id });
@@ -657,6 +669,10 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: c.primary + '18',
     borderColor: c.primary + '40',
   },
+  roleBadgeAdmin: {
+    backgroundColor: c.accentYellow + '18',
+    borderColor: c.accentYellow + '40',
+  },
   roleBadgeText: {
     fontSize: 9,
     fontWeight: '800',
@@ -671,6 +687,9 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   roleBadgeTextStudent: {
     color: c.primary,
+  },
+  roleBadgeTextAdmin: {
+    color: c.accentYellow,
   },
   right: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   searchWrapper: {
