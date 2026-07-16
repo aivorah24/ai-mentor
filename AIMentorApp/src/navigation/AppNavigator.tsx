@@ -37,6 +37,9 @@ import ReadAloudScreen from '../screens/student/ReadAloudScreen';
 import DailyHabitsScreen from '../screens/student/DailyHabitsScreen';
 import SubscriptionScreen from '../screens/student/SubscriptionScreen';
 import MessagesScreen from '../screens/shared/MessagesScreen';
+import AnnouncementsScreen from '../screens/student/AnnouncementsScreen';
+import MyClassesScreen from '../features/classes/components/MyClassesScreen';
+import ClassDetailScreen from '../features/classes/components/ClassDetailScreen';
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
@@ -97,6 +100,9 @@ export default function AppNavigator() {
       <Drawer.Screen name="DailyHabits" component={DailyHabitsScreen} />
       <Drawer.Screen name="Subscription" component={SubscriptionScreen} />
       <Drawer.Screen name="Messages" component={MessagesScreen} />
+      <Drawer.Screen name="Announcements" component={AnnouncementsScreen} />
+      <Drawer.Screen name="MyClasses" component={MyClassesScreen} />
+      <Drawer.Screen name="ClassDetail" component={ClassDetailScreen} />
     </Drawer.Navigator>
     <NotificationBanner
       onNavigate={(screen, params) => navigation.navigate(screen, params)}

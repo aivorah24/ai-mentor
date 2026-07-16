@@ -51,6 +51,7 @@ import { registerPushToken, configureForegroundHandler } from './src/services/pu
 configureForegroundHandler();
 import TeacherNavigator from './src/navigation/TeacherNavigator';
 import SuperAdminNavigator from './src/navigation/SuperAdminNavigator';
+import SchoolAdminNavigator from './src/navigation/SchoolAdminNavigator';
 import ParentNavigator from './src/navigation/ParentNavigator';
 import LandingScreen from './src/screens/auth/LandingScreen';
 import VerifyEmailScreen from './src/screens/auth/VerifyEmailScreen';
@@ -67,6 +68,8 @@ import { StudentDataProvider } from './src/context/StudentDataContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { NotificationProvider } from './src/context/NotificationContext';
 import NotificationBanner from './src/components/common/NotificationBanner';
+import { AnnouncementProvider } from './src/features/announcements/context/AnnouncementProvider';
+import AnnouncementBanner from './src/features/announcements/components/AnnouncementBanner';
 import { colors } from './src/theme';
 import { auth } from './src/config/firebase';
 import { isStudentLocked, subscribeStudentLocked } from './src/services/lockStatus';
@@ -221,6 +224,35 @@ function NotificationBannerWrapper() {
   }
 
   return <NotificationBanner onNavigate={handleNavigate} />;
+}
+
+function AnnouncementBannerWrapper() {
+  const { isAuthenticated, user } = useAuth();
+  const navigation = useNavigation<any>();
+
+  // Same readiness gate as NotificationBannerWrapper — don't show announcements
+  // over the onboarding/verification flow.
+  const isDemoOrTest = user?.email?.endsWith('@demo.com') || user?.email?.endsWith('@test.ai');
+  const isReady = isAuthenticated &&
+    (isDemoOrTest || (user?.onboardingComplete === true && user?.emailVerified !== false)) &&
+    !user?.mustChangePassword;
+
+  if (!isReady) return null;
+
+  const announcementsScreen =
+    user?.role === 'teacher'      ? 'TeacherAnnouncements'     :
+    user?.role === 'parent'       ? 'ParentAnnouncements'      :
+    user?.role === 'school_admin' ? 'SchoolAdminAnnouncements' :
+    'Announcements';
+
+  function handleView(id: string) {
+    try { navigation.navigate(announcementsScreen, { openId: id }); } catch {}
+  }
+  function handleViewAll() {
+    try { navigation.navigate(announcementsScreen); } catch {}
+  }
+
+  return <AnnouncementBanner onView={handleView} onViewAll={handleViewAll} />;
 }
 
 const IDLE_WARN_MS   = 25 * 60 * 1000; // 25 min idle → show warning
@@ -714,8 +746,13 @@ function RootNavigator() {
     return <VerifyEmailScreen />;
   }
 
-  // Onboarding gate — skip for demo/test accounts
-  if (!isDemoOrTest && user?.onboardingComplete !== true) {
+  // Onboarding gate — skip for demo/test accounts AND admin roles. The
+  // curriculum/avatar/learning-style wizard is a learner flow; admin accounts
+  // (school_admin / super_admin) are provisioned by the platform with their
+  // role and school already set, so they go straight to their console —
+  // standard behaviour for admin identities (they never self-onboard).
+  const isAdminRole = user?.role === 'school_admin' || user?.role === 'super_admin';
+  if (!isDemoOrTest && !isAdminRole && user?.onboardingComplete !== true) {
     console.log('[Auth] Onboarding incomplete, showing OnboardingScreen');
     return <OnboardingScreen />;
   }
@@ -729,6 +766,7 @@ function RootNavigator() {
   // Role-based navigator — if pendingReturnRole is set, honour it (teacher finishing parent onboarding)
   const activeRole = getPendingReturnRole() || user?.role;
   if (activeRole === 'super_admin') return <SuperAdminNavigator key="super_admin" />;
+  if (activeRole === 'school_admin') return <SchoolAdminNavigator key="school_admin" />;
   if (activeRole === 'teacher') return <TeacherNavigator key="teacher" />;
   if (activeRole === 'parent')  return <ParentNavigator key="parent" />;
 
@@ -755,6 +793,7 @@ function ThemedRoot() {
       <AuthProvider>
         <StudentDataProvider>
           <NotificationProvider>
+          <AnnouncementProvider>
             <NavigationContainer
               ref={navigationRef}
               documentTitle={{ formatter: () => 'Aivorah' }}
@@ -791,6 +830,9 @@ function ThemedRoot() {
                     StoryReader: 'story-reader',
                     DailyHabits: 'daily-habits',
                     Subscription: 'subscription',
+                    Announcements: 'announcements',
+                    MyClasses: 'my-classes',
+                    ClassDetail: 'my-classes/class',
                     // Teacher screens
                     TeacherDashboard: 'teacher/dashboard',
                     TeacherStudents: 'teacher/students',
@@ -804,9 +846,29 @@ function ThemedRoot() {
                     TeacherHelp: 'teacher/help',
                     TeacherSettings: 'teacher/settings',
                     TeacherMessages: 'teacher/messages',
+                    TeacherAnnouncements: 'teacher/announcements',
                     ChallengeManager: 'super-admin/challenges',
                     SuperAdminStudents: 'super-admin/students',
                     ProjectDetails: 'teacher/project-details',
+                    // School Admin screens
+                    SchoolAdminDashboard: 'school-admin/dashboard',
+                    SchoolAdminPeople: 'school-admin/people',
+                    SchoolAdminStudents: 'school-admin/students',
+                    SchoolAdminArchivedStudents: 'school-admin/students/archived',
+                    SchoolAdminAddStudent: 'school-admin/add-student',
+                    SchoolAdminTeachers: 'school-admin/teachers',
+                    SchoolAdminAddTeacher: 'school-admin/add-teacher',
+                    SchoolAdminEditTeacher: 'school-admin/edit-teacher',
+                    SchoolAdminTeacherBulkImport: 'school-admin/teacher-bulk-import',
+                    SchoolAdminParents: 'school-admin/parents',
+                    SchoolAdminBulkImport: 'school-admin/bulk-import',
+                    SchoolAdminGradesSections: 'school-admin/grades-sections',
+                    SchoolAdminClasses: 'school-admin/classes',
+                    SchoolAdminPromotions: 'school-admin/promotions',
+                    SchoolAdminImportHistory: 'school-admin/import-history',
+                    AnnouncementManager: 'school-admin/announcements',
+                    SchoolAdminAnnouncements: 'school-admin/announcements-view',
+                    SchoolAdminSettings: 'school-admin/settings',
                     // Parent screens
                     ParentStudentView: 'parent/student-view',
                     ParentDashboard: 'parent/dashboard',
@@ -823,18 +885,21 @@ function ThemedRoot() {
                     ParentHelp: 'parent/help',
                     ParentMessages: 'parent/messages',
                     ParentDailyTasks: 'parent/daily-tasks',
+                    ParentAnnouncements: 'parent/announcements',
                   },
                 },
               }}
             >
               <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={c.bgDark} />
               <IdleTimeoutGuard>
+                <AnnouncementBannerWrapper />
                 <WebBackGuard>
                   <RootNavigator />
                 </WebBackGuard>
                 <NotificationBannerWrapper />
               </IdleTimeoutGuard>
             </NavigationContainer>
+          </AnnouncementProvider>
           </NotificationProvider>
         </StudentDataProvider>
       </AuthProvider>

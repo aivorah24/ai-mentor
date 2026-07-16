@@ -270,7 +270,7 @@ export default function ScreenLayout({ children, hideAIPanel }: ScreenLayoutProp
 
   return (
     <View style={styles.desktopContainer}>
-      <Sidebar currentScreen={route.name} onNavigate={(screen) => navigation.navigate(screen as any)} />
+      <Sidebar currentScreen={route.name} onNavigate={(screen, params) => navigation.navigate(screen as any, params as any)} />
       <View style={styles.contentWrapper}>{content}</View>
       {isTeacher && !hideAIPanel && <TeacherAIPanel />}
       {isParent && !hideAIPanel && <ParentAIPanel />}

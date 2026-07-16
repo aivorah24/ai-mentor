@@ -291,6 +291,9 @@ router.get('/notifications-summary', async (req, res) => {
     const parentEventMsgs = parentSystemMsgs.filter(m =>
       stripChildPrefix(m.content).startsWith('SCHEDULE_CARD|')
     );
+    const parentPortfolioMsgs = parentSystemMsgs.filter(m =>
+      stripChildPrefix(m.content).startsWith('PORTFOLIO_CARD|')
+    );
 
     // Merge personal + class assignments (students only), dedupe by id
     const allAssigns = [...(personalAssignRes.data || []), ...(classAssignRes.data || [])];
@@ -398,11 +401,27 @@ router.get('/notifications-summary', async (req, res) => {
           createdAt:  e.created_at,
         }));
 
-    const notificationItems = [...assignmentItems, ...challengeItems, ...eventItems]
+    const portfolioItems = parentPortfolioMsgs.map(m => {
+      const c = stripChildPrefix(m.content);
+      const [, postId, text, grade, section] = c.split('|');
+      return {
+        id:         m.id,
+        type:       'portfolio',
+        postId:     postId,
+        grade:      grade,
+        section:    section,
+        title:      'Class Portfolio',
+        subtitle:   text || 'New portfolio post',
+        senderName: m.sender_name || 'Aivorah',
+        createdAt:  m.created_at,
+      };
+    });
+
+    const notificationItems = [...assignmentItems, ...challengeItems, ...eventItems, ...portfolioItems]
       .sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0))
       .slice(0, 10);
 
-    res.json({ messages: msgCount, assignments: assignCount, challenges: challengeCount, events: eventCount, latest, notificationItems });
+    res.json({ messages: msgCount, assignments: assignCount, challenges: challengeCount, events: eventCount + portfolioItems.length, latest, notificationItems });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

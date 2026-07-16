@@ -21,7 +21,11 @@ import ParentSettingsScreen from '../screens/parent/ParentSettingsScreen';
 import ParentHelpScreen from '../screens/parent/ParentHelpScreen';
 import ParentMessagesScreen from '../screens/parent/ParentMessagesScreen';
 import ParentDailyTasksScreen from '../screens/parent/ParentDailyTasksScreen';
+import ParentAnnouncementsScreen from '../screens/parent/ParentAnnouncementsScreen';
 import SubscriptionScreen from '../screens/student/SubscriptionScreen';
+import MyClassesScreen from '../features/classes/components/MyClassesScreen';
+import ClassDetailScreen from '../features/classes/components/ClassDetailScreen';
+import ParentAttendanceScreen from '../screens/parent/ParentAttendanceScreen';
 
 const Drawer = createDrawerNavigator<ParentDrawerParamList>();
 
@@ -63,7 +67,11 @@ export default function ParentNavigator() {
       <Drawer.Screen name="ParentHelp" component={ParentHelpScreen} />
       <Drawer.Screen name="ParentMessages" component={ParentMessagesScreen} />
       <Drawer.Screen name="ParentDailyTasks" component={ParentDailyTasksScreen} />
+      <Drawer.Screen name="ParentAnnouncements" component={ParentAnnouncementsScreen} />
+      <Drawer.Screen name="ParentAttendance" component={ParentAttendanceScreen} />
       <Drawer.Screen name="ParentSubscription" component={SubscriptionScreen} />
+      <Drawer.Screen name="MyClasses" component={MyClassesScreen} />
+      <Drawer.Screen name="ClassDetail" component={ClassDetailScreen} />
     </Drawer.Navigator>
   );
 }

@@ -243,6 +243,7 @@ function ChallengeFormModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const gold = colors.accentYellow;
   const { user } = useAuth();
   const scrollRef = React.useRef<ScrollView>(null);
   const [tab, setTab] = useState<'ai' | 'manual'>(editTarget ? 'manual' : 'ai');
@@ -584,6 +585,7 @@ function ChallengeFormModal({
 
 // ── Question Preview (AI generated, editable) ─────────────────────────
 function QuestionPreviewList({ questions, onChange, colors }: { questions: Question[]; onChange: (q: Question[]) => void; colors: AppColors }) {
+  const gold = colors.accentYellow;
   const s = useMemo(() => makeModalStyles(colors), [colors]);
   return (
     <View style={{ marginTop: 12 }}>
@@ -644,6 +646,7 @@ function QuestionPreviewList({ questions, onChange, colors }: { questions: Quest
 
 // ── Manual Questions Editor ───────────────────────────────────────────
 function ManualQuestionsEditor({ questions, onChange, colors }: { questions: Question[]; onChange: (q: Question[]) => void; colors: AppColors }) {
+  const gold = colors.accentYellow;
   const s = useMemo(() => makeModalStyles(colors), [colors]);
 
   const addQuestion = () => {
@@ -743,6 +746,7 @@ function FieldRow({ label, children, colors }: { label: string; children: React.
 }
 
 function SelectPicker({ value, options, onChange, colors, labelMap }: { value: string; options: string[]; onChange: (v: string) => void; colors: AppColors; labelMap?: Record<string, string> }) {
+  const gold = colors.accentYellow;
   if (Platform.OS === 'web') {
     return (
       <select
@@ -789,6 +793,7 @@ function SelectPicker({ value, options, onChange, colors, labelMap }: { value: s
 
 // ── Styles ────────────────────────────────────────────────────────────
 function makeStyles(colors: AppColors) {
+  const gold = colors.accentYellow;
   return StyleSheet.create({
     container: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: 8 },
     filterRow: { maxHeight: 44, marginBottom: 12 },
@@ -823,6 +828,7 @@ function makeStyles(colors: AppColors) {
 }
 
 function makeModalStyles(colors: AppColors) {
+  const gold = colors.accentYellow;
   return StyleSheet.create({
     overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end', alignItems: Platform.OS === 'web' ? 'center' : 'stretch' },
     sheet: { backgroundColor: colors.bgDark, borderRadius: Platform.OS === 'web' ? 16 : 0, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%', padding: 20, ...(Platform.OS === 'web' ? { width: '100%', maxWidth: 640, alignSelf: 'center' } : {}) },
