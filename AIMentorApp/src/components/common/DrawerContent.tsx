@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,17 @@ import { useAuth, setPendingReturnRole, getPendingReturnRole } from '../../conte
 import { useTheme } from '../../context/ThemeContext';
 import type { ThemeMode } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useAnnouncements } from '../../features/announcements/context/AnnouncementProvider';
 import { getAvatarGradient, getAvatarIcon } from '../../constants/avatarStyles';
+import { roleLabel } from '../../constants/roleLabels';
+import { useFocusEffect } from '@react-navigation/native';
+import SERVER_URL from '../../config/serverUrl';
+
+function schoolInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return 'A';
+  return words.slice(0, 3).map((w) => w[0].toUpperCase()).join('');
+}
 
 const STUDENT_NAV_ITEMS = [
   { label: 'Dashboard', icon: 'grid', screen: 'Dashboard', group: 'MENU' },
@@ -29,6 +39,8 @@ const STUDENT_NAV_ITEMS = [
   { label: 'Read Aloud', icon: 'mic', screen: 'ReadAloud', group: 'MENU' },
   { label: 'Bedtime Stories', icon: 'book', screen: 'BhagavathaStories', group: 'MENU', premium: true },
   { label: 'Daily Habits', icon: 'sun', screen: 'DailyHabits', group: 'MENU', premium: true },
+  { label: 'Announcements', icon: 'volume-2', screen: 'Announcements', group: 'MENU' },
+  { label: 'My Classes', icon: 'layers', screen: 'MyClasses', group: 'MENU' },
   { label: 'Assignments', icon: 'check-square', screen: 'Assignments', group: 'FOCUS', premium: false },
   { label: 'Challenges', icon: 'target', screen: 'Challenges', group: 'FOCUS', premium: true },
   { label: 'Leaderboard', icon: 'award', screen: 'Leaderboard', group: 'FOCUS' },
@@ -42,13 +54,16 @@ const PARENT_NAV_ITEMS = [
   { label: 'Dashboard',        icon: 'grid',         screen: 'ParentDashboard',   group: 'MENU' },
   { label: 'Profile',          icon: 'user',         screen: 'ParentProfile',     group: 'MENU' },
   { label: 'My Kids',          icon: 'users',        screen: 'ParentMyKids',      group: 'MENU' },
+  { label: 'My Classes',       icon: 'layers',       screen: 'MyClasses',         group: 'MENU' },
   { label: 'Daily Tasks',      icon: 'check-square', screen: 'ParentDailyTasks',  group: 'MENU' },
   { label: 'Schedule',         icon: 'calendar',     screen: 'ParentSchedule',    group: 'MENU' },
   { label: 'Messages',         icon: 'message-square', screen: 'ParentMessages',  group: 'MENU' },
+  { label: 'Announcements',    icon: 'volume-2',     screen: 'ParentAnnouncements', group: 'MENU' },
   { label: 'Learning',         icon: 'book-open',    screen: 'ParentLearning',    group: 'CHILDREN' },
   { label: 'Assignments',      icon: 'check-square', screen: 'ParentAssignments', group: 'CHILDREN' },
   { label: 'Challenges',       icon: 'target',       screen: 'ParentChallenges',  group: 'CHILDREN' },
   { label: 'Progress',         icon: 'bar-chart-2',  screen: 'ParentProgress',    group: 'CHILDREN' },
+  { label: 'Attendance',       icon: 'clipboard',    screen: 'ParentAttendance',   group: 'CHILDREN' },
   { label: 'Parental Controls',icon: 'shield',       screen: 'ParentControls',    group: 'SYSTEM' },
   { label: 'Settings',         icon: 'settings',     screen: 'ParentSettings',    group: 'SYSTEM' },
   { label: 'Help Centre',      icon: 'help-circle',  screen: 'ParentHelp',        group: 'SYSTEM' },
@@ -57,11 +72,14 @@ const PARENT_NAV_ITEMS = [
 const TEACHER_NAV_ITEMS = [
   { label: 'Dashboard', icon: 'grid', screen: 'TeacherDashboard', group: 'MENU' },
   { label: 'Students', icon: 'users', screen: 'TeacherStudents', group: 'MENU' },
+  { label: 'My Classes', icon: 'layers', screen: 'MyClasses', group: 'MENU' },
+  { label: 'Attendance', icon: 'clipboard', screen: 'TeacherAttendance', group: 'MENU' },
   { label: 'Assignments', icon: 'check-square', screen: 'TeacherAssignments', group: 'MENU' },
   { label: 'Challenges', icon: 'target', screen: 'TeacherChallenges', group: 'MENU' },
   { label: 'Schedule', icon: 'calendar', screen: 'TeacherSchedule', group: 'MENU' },
   { label: 'Student Progress', icon: 'bar-chart-2', screen: 'TeacherProgress', group: 'MENU' },
   { label: 'Messages', icon: 'message-square', screen: 'TeacherMessages', group: 'MENU' },
+  { label: 'Announcements', icon: 'volume-2', screen: 'TeacherAnnouncements', group: 'MENU' },
   { label: 'Learning Paths', icon: 'map', screen: 'TeacherLearningPaths', group: 'TEACHING DEVELOPMENT' },
   { label: 'Achievements', icon: 'award', screen: 'TeacherAchievements', group: 'TEACHING DEVELOPMENT' },
   { label: 'Project Details', icon: 'activity', screen: 'ProjectDetails', group: 'SYSTEM' },
@@ -78,6 +96,7 @@ const THEME_OPTIONS: { id: ThemeMode; icon: string; label: string }[] = [
 const SUPER_ADMIN_NAV_ITEMS = [
   { label: 'Dashboard',         icon: 'grid',           screen: 'TeacherDashboard',    group: 'MENU' },
   { label: 'Student Manager',   icon: 'users',          screen: 'SuperAdminStudents',  group: 'MENU' },
+  { label: 'Attendance',        icon: 'clipboard',      screen: 'TeacherAttendance',   group: 'MENU' },
   { label: 'Assignments',       icon: 'check-square',   screen: 'TeacherAssignments',  group: 'MENU' },
   { label: 'Challenges',        icon: 'target',         screen: 'TeacherChallenges',   group: 'MENU' },
   { label: 'Challenge Manager', icon: 'shield',         screen: 'ChallengeManager',    group: 'MENU' },
@@ -85,11 +104,31 @@ const SUPER_ADMIN_NAV_ITEMS = [
   { label: 'Schedule',          icon: 'calendar',       screen: 'TeacherSchedule',     group: 'MENU' },
   { label: 'Student Progress',  icon: 'bar-chart-2',    screen: 'TeacherProgress',     group: 'MENU' },
   { label: 'Messages',          icon: 'message-square', screen: 'TeacherMessages',     group: 'MENU' },
+  { label: 'Announcement Manager', icon: 'edit-3',      screen: 'AnnouncementManager', group: 'MENU' },
   { label: 'Learning Paths',    icon: 'map',            screen: 'TeacherLearningPaths',group: 'SYSTEM' },
   { label: 'Settings',          icon: 'settings',       screen: 'TeacherSettings',     group: 'SYSTEM' },
 ];
 
-const ROLE_DASH: Record<string, string> = { super_admin: 'ChallengeManager', teacher: 'TeacherDashboard', parent: 'ParentDashboard', student: 'Dashboard' };
+const SCHOOL_ADMIN_NAV_ITEMS: { label: string; icon: string; screen: string; group: string; params?: Record<string, any> }[] = [
+  { label: 'Overview',           icon: 'grid',          screen: 'SchoolAdminDashboard',    group: 'WORKSPACE' },
+  { label: 'Students',           icon: 'users',         screen: 'SchoolAdminStudents',      group: 'STUDENT MANAGEMENT' },
+  { label: 'Add Student',        icon: 'user-plus',     screen: 'SchoolAdminAddStudent',    group: 'STUDENT MANAGEMENT' },
+  { label: 'Bulk Import',        icon: 'upload',        screen: 'SchoolAdminBulkImport',    group: 'STUDENT MANAGEMENT' },
+  { label: 'Grades & Sections',  icon: 'list',          screen: 'SchoolAdminGradesSections', group: 'ACADEMIC STRUCTURE' },
+  { label: 'Classes',            icon: 'layers',        screen: 'SchoolAdminClasses',       group: 'ACADEMIC STRUCTURE' },
+  { label: 'Promotions',         icon: 'trending-up',   screen: 'SchoolAdminPromotions',    group: 'STUDENT LIFECYCLE' },
+  { label: 'Archived Students',  icon: 'archive',       screen: 'SchoolAdminArchivedStudents', group: 'STUDENT LIFECYCLE' },
+  { label: 'Teachers',           icon: 'user',          screen: 'SchoolAdminTeachers',      group: 'PEOPLE' },
+  { label: 'Add Teacher',        icon: 'user-plus',     screen: 'SchoolAdminAddTeacher',    group: 'PEOPLE' },
+  { label: 'Import Teachers',    icon: 'upload',        screen: 'SchoolAdminTeacherBulkImport', group: 'PEOPLE' },
+  { label: 'Parents',            icon: 'heart',         screen: 'SchoolAdminParents',       group: 'PEOPLE' },
+  { label: 'Announcements',      icon: 'edit-3',        screen: 'AnnouncementManager',      group: 'COMMUNICATION' },
+  { label: 'Import History',     icon: 'clock',         screen: 'SchoolAdminImportHistory', group: 'ADMINISTRATION' },
+  { label: 'Workspace Settings', icon: 'settings',      screen: 'SchoolAdminSettings',      group: 'ADMINISTRATION' },
+  { label: 'Help & Support',     icon: 'help-circle',   screen: 'TeacherHelp',              group: 'SUPPORT' },
+];
+
+const ROLE_DASH: Record<string, string> = { super_admin: 'ChallengeManager', school_admin: 'SchoolAdminDashboard', teacher: 'TeacherDashboard', parent: 'ParentDashboard', student: 'Dashboard' };
 export default function DrawerContent(props: any) {
   const { state, navigation } = props;
   const currentRoute = state.routes[state.index]?.name;
@@ -104,22 +143,43 @@ export default function DrawerContent(props: any) {
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const isSuperAdmin = user?.role === 'super_admin';
+  const isSchoolAdmin = user?.role === 'school_admin';
+  const [schoolName, setSchoolName] = useState<string | null>(null);
+  const [schoolLogoUrl, setSchoolLogoUrl] = useState<string | null>(null);
+  useFocusEffect(useCallback(() => {
+    if (!isSchoolAdmin || !user?.email) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${SERVER_URL}/school-admin/overview?adminEmail=${encodeURIComponent(user.email)}`);
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled && res.ok) {
+          setSchoolName(data?.school?.name || null);
+          setSchoolLogoUrl(data?.school?.logoUrl || null);
+        }
+      } catch { /* silent — sidebar still renders without the school card */ }
+    })();
+    return () => { cancelled = true; };
+  }, [isSchoolAdmin, user?.email]));
   const isTeacher = user?.role === 'teacher';
   const isParent = user?.role === 'parent';
-  const NAV_ITEMS_BASE = isSuperAdmin ? SUPER_ADMIN_NAV_ITEMS : isTeacher ? TEACHER_NAV_ITEMS : isParent ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
+  const NAV_ITEMS_BASE = isSuperAdmin ? SUPER_ADMIN_NAV_ITEMS : isSchoolAdmin ? SCHOOL_ADMIN_NAV_ITEMS : isTeacher ? TEACHER_NAV_ITEMS : isParent ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
 
   // ── Mobile app = focused teacher/parent companion ──────────────────────────
   // On native (the mobile app) show only the founder-approved modules. Web keeps
   // the full menu untouched. (Other screens stay registered for deep navigation.)
-  const MOBILE_TEACHER_SCREENS = ['TeacherDashboard', 'TeacherStudents', 'TeacherAssignments', 'TeacherSchedule', 'TeacherProgress', 'TeacherMessages', 'TeacherSettings', 'TeacherHelp'];
+  const MOBILE_TEACHER_SCREENS = ['TeacherDashboard', 'TeacherStudents', 'TeacherAttendance', 'TeacherAssignments', 'TeacherSchedule', 'TeacherProgress', 'TeacherMessages', 'TeacherSettings', 'TeacherHelp'];
   const MOBILE_PARENT_SCREENS  = ['ParentDashboard', 'ParentMyKids', 'ParentDailyTasks', 'ParentSchedule', 'ParentProgress', 'ParentMessages', 'ParentControls', 'ParentSettings', 'ParentHelp'];
   const mobileAllow = Platform.OS !== 'web' ? (isTeacher ? MOBILE_TEACHER_SCREENS : isParent ? MOBILE_PARENT_SCREENS : null) : null;
   const NAV_ITEMS = mobileAllow ? NAV_ITEMS_BASE.filter((i) => mobileAllow.includes(i.screen)) : NAV_ITEMS_BASE;
-  const groups = (isSuperAdmin || isTeacher) ? ['MENU', 'TEACHING DEVELOPMENT', 'SYSTEM'] : isParent ? ['MENU', 'CHILDREN', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
+  const groups = (isSuperAdmin || isTeacher) ? ['MENU', 'TEACHING DEVELOPMENT', 'SYSTEM'] : isSchoolAdmin ? ['WORKSPACE', 'STUDENT MANAGEMENT', 'ACADEMIC STRUCTURE', 'STUDENT LIFECYCLE', 'PEOPLE', 'COMMUNICATION', 'ADMINISTRATION', 'SUPPORT'] : isParent ? ['MENU', 'CHILDREN', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
   const { unreadCount, unreadAssignments, unreadChallenges } = useNotification();
-  const MESSAGE_SCREENS    = ['TeacherMessages', 'ParentMessages', 'Messages'];
-  const ASSIGNMENT_SCREENS = ['Assignments', 'ParentAssignments'];
-  const CHALLENGE_SCREENS  = ['Challenges', 'ParentChallenges'];
+  const { bannerAnnouncements } = useAnnouncements();
+  const unreadAnnouncements = bannerAnnouncements.length;
+  const MESSAGE_SCREENS      = ['TeacherMessages', 'ParentMessages', 'Messages'];
+  const ASSIGNMENT_SCREENS   = ['Assignments', 'ParentAssignments'];
+  const CHALLENGE_SCREENS    = ['Challenges', 'ParentChallenges'];
+  const ANNOUNCEMENT_SCREENS = ['Announcements', 'ParentAnnouncements', 'TeacherAnnouncements'];
 
   return (
     <View style={styles.container}>
@@ -131,6 +191,22 @@ export default function DrawerContent(props: any) {
         <Text style={styles.logoText}>Aivorah</Text>
       </TouchableOpacity>
 
+      {isSchoolAdmin && schoolName && (
+        <View style={styles.schoolCard}>
+          <View style={styles.schoolBadge}>
+            {schoolLogoUrl ? (
+              <Image source={{ uri: schoolLogoUrl }} style={styles.schoolBadgeImg} resizeMode="contain" />
+            ) : (
+              <Text style={styles.schoolBadgeText}>{schoolInitials(schoolName)}</Text>
+            )}
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.schoolName} numberOfLines={2}>{schoolName}</Text>
+            <Text style={styles.schoolRole}>School Administrator</Text>
+          </View>
+        </View>
+      )}
+
       <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
         {groups.map((group) => {
           const items = NAV_ITEMS.filter((i) => i.group === group);
@@ -138,12 +214,16 @@ export default function DrawerContent(props: any) {
             <View key={group} style={styles.navGroup}>
               <Text style={styles.navLabel}>{group}</Text>
               {items.map((item) => {
-                const isActive = currentRoute === item.screen;
+                // Same fix as Sidebar.tsx: a nav item is only "active" when
+                // its screen is a distinct route (own route name/URL). An
+                // item that instead reaches a shared screen via runtime
+                // `params` must not get the persistent active highlight.
+                const isActive = !(item as any).params && currentRoute === item.screen;
                 return (
                   <TouchableOpacity
-                    key={item.screen}
+                    key={`${item.screen}-${item.label}`}
                     style={[styles.navItem, isActive && styles.navItemActive]}
-                    onPress={() => navigation.navigate(item.screen)}
+                    onPress={() => navigation.navigate(item.screen, (item as any).params)}
                     activeOpacity={0.7}
                   >
                     {isActive && <View style={styles.activeBar} />}
@@ -173,6 +253,11 @@ export default function DrawerContent(props: any) {
                     {CHALLENGE_SCREENS.includes(item.screen) && unreadChallenges > 0 && (
                       <View style={styles.navBadge}>
                         <Text style={styles.navBadgeText}>{unreadChallenges > 9 ? '9+' : unreadChallenges}</Text>
+                      </View>
+                    )}
+                    {ANNOUNCEMENT_SCREENS.includes(item.screen) && unreadAnnouncements > 0 && (
+                      <View style={styles.navBadge}>
+                        <Text style={styles.navBadgeText}>{unreadAnnouncements > 9 ? '9+' : unreadAnnouncements}</Text>
                       </View>
                     )}
                     {(item as any).premium && (
@@ -284,7 +369,7 @@ export default function DrawerContent(props: any) {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.userName} numberOfLines={1}>{user.name}</Text>
-              <Text style={styles.userRole}>{user.role}</Text>
+              <Text style={styles.userRole}>{roleLabel(user.role)}</Text>
             </View>
           </View>
         )}
@@ -351,6 +436,48 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     fontWeight: '700',
     color: 'white',
     letterSpacing: -0.3,
+  },
+  schoolCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: spacing.md,
+    marginBottom: 24,
+    padding: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: c.borderColor,
+    backgroundColor: c.cardDark,
+  },
+  schoolBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.sm,
+    backgroundColor: `${c.accentYellow}22`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  schoolBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: c.accentYellow,
+  },
+  schoolBadgeImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: radius.sm,
+  },
+  schoolName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: c.textMain,
+    lineHeight: 16,
+  },
+  schoolRole: {
+    fontSize: 11,
+    color: c.textDim,
+    marginTop: 2,
   },
   navGroup: {
     marginBottom: 28,

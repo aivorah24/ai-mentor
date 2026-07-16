@@ -128,12 +128,43 @@ router.post('/sync', async (req, res) => {
     // Build upsert patch — only include fields that are provided
     // IMPORTANT: only set name if explicitly provided; never fall back to email prefix
     // (fetchSupabaseProfile calls this with only email, and we must not overwrite a real name)
-    const patch = { email: email.toLowerCase().trim() };
+    const patch = { email: email.toLowerCase().trim(), last_active_at: new Date().toISOString() };
     if (name)       patch.name       = name;
     if (grade)      patch.grade      = grade;
     if (school)     patch.school     = school?.trim();
     if (curriculum) patch.curriculum = curriculum;
     if (location)   patch.location   = location;
+
+    // Resolve the free-text school to a schools row so new users don't pile up
+    // with school_id = null (the V1 tenant boundary is users.school_id).
+    // MATCH-ONLY: never auto-create a school from arbitrary signup text — the
+    // schools table already has near-duplicate noise, and only a case-insensitive
+    // exact match (guaranteed unique by schools_name_lower_idx) is unambiguous.
+    // No match → school_id stays untouched (null for new users).
+    //
+    // ONE-TIME FILL ONLY — never overwrite an existing school_id. `/user/sync`
+    // runs on every login, and the client's `school` fallback (AuthContext:
+    // `profile.school || 'Hyderabad International School'`) fires whenever the
+    // DB's free-text `school` column happens to be empty — including for
+    // school_admin accounts whose real tenant boundary is school_id, not that
+    // legacy text field. Re-resolving on every login would silently reassign a
+    // school_admin's scope to whatever that fallback string matches. Only fill
+    // school_id when the row doesn't have one yet.
+    if (patch.school) {
+      try {
+        const { data: existing } = await supabase
+          .from('users').select('school_id').eq('email', patch.email).maybeSingle();
+        if (!existing?.school_id) {
+          const { data: schoolRow } = await supabase
+            .from('schools').select('id')
+            .ilike('name', patch.school)
+            .maybeSingle();
+          if (schoolRow) patch.school_id = schoolRow.id;
+        }
+      } catch (e) {
+        console.warn('[/user/sync] school_id resolution skipped:', e.message);
+      }
+    }
 
     // If name is not provided, do a SELECT only — don't upsert
     // Upserting without name would fail the NOT NULL constraint on the name column

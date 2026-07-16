@@ -31,6 +31,7 @@ function daysSince(dateStr?: string) {
 
 // ── Bulk Add Modal ─────────────────────────────────────────────────────────────
 function BulkAddModal({ visible, onClose, onCreated, adminEmail, colors, styles }: any) {
+  const gold = colors.accentYellow;
   const [grade, setGrade] = useState('Grade 3');
   const [section, setSection] = useState('A');
   const [school, setSchool] = useState('');

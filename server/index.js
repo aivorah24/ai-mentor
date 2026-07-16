@@ -81,7 +81,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true })); // for the founder demo-confirm form POST
 // Serve saved page images and scene images
 app.use('/data/images', express.static(path.join(__dirname, 'data/images')));
@@ -98,7 +98,7 @@ app.use('/sounds', express.static(path.join(__dirname, 'public/sounds')));
 
 // Redirect browser direct-navigation to SPA paths back to index.html
 // This prevents API routes from returning errors when user refreshes /assignments, /teacher/assignments, etc.
-const SPA_PATHS = ['/assignments', '/teacher', '/student', '/parent', '/profile', '/schedule', '/progress', '/challenges', '/leaderboard', '/settings', '/help', '/dashboard', '/messages', '/rewards', '/super-admin'];
+const SPA_PATHS = ['/assignments', '/teacher', '/student', '/parent', '/profile', '/schedule', '/progress', '/challenges', '/leaderboard', '/settings', '/help', '/dashboard', '/messages', '/rewards', '/super-admin', '/school-admin', '/classes'];
 app.use((req, res, next) => {
   const accept = req.headers.accept || '';
   if (req.method === 'GET' && accept.includes('text/html') && SPA_PATHS.some(p => req.path === p || req.path.startsWith(p + '/'))) {
@@ -137,6 +137,11 @@ app.use('/payment',      lazyRoute('./routes/payment'));
 app.use('/quiz',         lazyRoute('./routes/quiz'));
 app.use('/read-aloud',   lazyRoute('./routes/read-aloud'));
 app.use('/super-admin',  require('./routes/super-admin'));
+app.use('/announcements', require('./routes/announcements'));
+app.use('/classes', require('./routes/classes'));
+app.use('/class-portfolio', require('./routes/class-portfolio'));
+app.use('/school-admin', require('./routes/school-admin'));
+app.use('/attendance', require('./routes/attendance'));
 app.use('/jobs',         require('./routes/jobs'));
 require('./services/jobHandlers'); // register swappable-queue handlers (for /jobs/process)
 

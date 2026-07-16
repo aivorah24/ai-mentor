@@ -64,12 +64,27 @@ const TOAST_AUTO_HIDE_MS = 5000;
 const STALE_GUARD_MS    = 5000;
 
 // ── Notification chime (Web Audio API — two-tone pleasant bell) ──────────────
+// A fresh `new AudioContext()` per chime was the cause of a perceptible sound
+// delay: the browser spins up the audio hardware/thread from scratch each
+// time (100-300ms+, worse on the very first chime of a session), and old
+// contexts were never closed, so they piled up and made things slower over
+// time. Create the context once and reuse it for every chime instead.
+let sharedAudioCtx: any = null;
+function getAudioCtx() {
+  if (Platform.OS !== 'web') return null;
+  if (sharedAudioCtx) return sharedAudioCtx;
+  const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+  if (!AudioCtx) return null;
+  sharedAudioCtx = new AudioCtx();
+  return sharedAudioCtx;
+}
+
 function playNotificationSound() {
   if (Platform.OS !== 'web') return;
   try {
-    const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
 
     function tone(freq: number, startAt: number, duration: number, vol: number) {
       const osc  = ctx.createOscillator();

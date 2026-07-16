@@ -1,3 +1,13 @@
+type ClassDetailParams = {
+  grade: string;
+  section: string;
+  label: string;
+  code: string;
+  classTeacherEmail?: string | null;
+  studentId?: string;
+  studentName?: string;
+} | undefined;
+
 export type DrawerParamList = {
   Dashboard: undefined;
   Profile: undefined;
@@ -29,6 +39,9 @@ export type DrawerParamList = {
   DailyHabits: undefined;
   Subscription: undefined;
   Messages: undefined;
+  Announcements: { openId?: string } | undefined;
+  MyClasses: undefined;
+  ClassDetail: ClassDetailParams;
 };
 
 export type ParentDrawerParamList = {
@@ -49,6 +62,10 @@ export type ParentDrawerParamList = {
   ParentMessages: undefined;
   ParentDailyTasks: undefined;
   ParentSubscription: undefined;
+  ParentAnnouncements: { openId?: string } | undefined;
+  ParentAttendance: { childId?: string } | undefined;
+  MyClasses: undefined;
+  ClassDetail: ClassDetailParams;
 };
 
 export type TeacherDrawerParamList = {
@@ -65,4 +82,9 @@ export type TeacherDrawerParamList = {
   TeacherSettings: undefined;
   TeacherMessages: undefined;
   ProjectDetails: undefined;
+  TeacherAnnouncements: { openId?: string } | undefined;
+  AnnouncementManager: { openComposer?: boolean; statusTab?: 'all' | 'published' | 'scheduled' | 'draft' | 'archived' } | undefined;
+  MyClasses: undefined;
+  ClassDetail: ClassDetailParams;
+  TeacherAttendance: undefined;
 };

@@ -212,6 +212,11 @@ export default function ParentDashboardScreen({ navigation, route }: any) {
   const [reportData, setReportData] = useState<any>(null);
   const [loadingReport, setLoadingReport] = useState(false);
 
+  const [attendanceSummary, setAttendanceSummary] = useState<any>(null);
+  const [showAttendanceHistoryModal, setShowAttendanceHistoryModal] = useState(false);
+  const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth());
+
   function copyToClipboard(text: string, field: string) {
     if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(text).catch(() => {});
@@ -360,7 +365,25 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data?.subjectPerformance) setSubjectPerf(data.subjectPerformance); })
       .catch(() => {});
+    setAttendanceSummary(null);
+    fetch(`${SERVER_URL}/attendance/student/${selectedChild.id}/summary`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.summary) {
+          setAttendanceSummary(data);
+        }
+      })
+      .catch(() => {});
   }, [selectedChild.id]);
+
+  useEffect(() => {
+    if (route.params?.openAttendance) {
+      setShowAttendanceHistoryModal(true);
+      setCalendarYear(new Date().getFullYear());
+      setCalendarMonth(new Date().getMonth());
+      navigation.setParams({ openAttendance: undefined });
+    }
+  }, [route.params?.openAttendance, navigation]);
 
   const child = selectedChild;
   const weeklyStudyH = formatStudyTime(child.studyTimeMinutes);
@@ -640,6 +663,56 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
                   </View>
                 )}
               </View>
+
+              {/* Attendance Card */}
+              {attendanceSummary && attendanceSummary.summary && (
+                <View style={[s.statCardFull, { marginTop: 14 }]}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <View style={[s.statIconWrap, { backgroundColor: colors.accentYellow + '18' }]}>
+                        <Feather name="clipboard" size={16} color={colors.accentYellow} />
+                      </View>
+                      <View>
+                        <Text style={[s.sectionTitle, { fontSize: 15 }]}>Attendance Record</Text>
+                        <Text style={{ fontFamily: fonts.serif, fontSize: 12, color: colors.textDim }}>
+                          Overall attendance: <Text style={{ color: colors.accentYellow, fontWeight: '700' }}>{attendanceSummary.summary.ratePct}%</Text>
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      style={s.viewHistoryBtn}
+                      onPress={() => {
+                        setShowAttendanceHistoryModal(true);
+                        setCalendarYear(new Date().getFullYear());
+                        setCalendarMonth(new Date().getMonth());
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={s.viewHistoryBtnText}>View Monthly Logs</Text>
+                      <Feather name="chevron-right" size={14} color={colors.accentYellow} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={s.attendanceMiniBreakdown}>
+                    <View style={s.miniStatItem}>
+                      <Text style={[s.miniStatVal, { color: '#10b981' }]}>{attendanceSummary.summary.present}</Text>
+                      <Text style={s.miniStatLbl}>Present</Text>
+                    </View>
+                    <View style={s.miniStatItem}>
+                      <Text style={[s.miniStatVal, { color: colors.accentRed }]}>{attendanceSummary.summary.absent}</Text>
+                      <Text style={s.miniStatLbl}>Absent</Text>
+                    </View>
+                    <View style={s.miniStatItem}>
+                      <Text style={[s.miniStatVal, { color: '#f59e0b' }]}>{attendanceSummary.summary.late}</Text>
+                      <Text style={s.miniStatLbl}>Late</Text>
+                    </View>
+                    <View style={s.miniStatItem}>
+                      <Text style={s.miniStatVal}>{attendanceSummary.summary.total}</Text>
+                      <Text style={s.miniStatLbl}>Total Days</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
 
               {/* ── Row 3: Activity Overview ── */}
               <View style={[s.sectionHeader, { marginTop: 22 }]}>
@@ -1011,6 +1084,152 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
           </View>
         </View>
       </Modal>
+      {/* Attendance History Modal */}
+      {showAttendanceHistoryModal && attendanceSummary && (
+        <Modal transparent animationType="fade" visible={showAttendanceHistoryModal} onRequestClose={() => setShowAttendanceHistoryModal(false)}>
+          <View style={s.modalOverlay}>
+            <View style={s.calendarModalCard}>
+              <View style={s.calendarModalHeader}>
+                <Text style={s.calendarModalTitle}>{selectedChild.name}'s Attendance</Text>
+                <TouchableOpacity onPress={() => setShowAttendanceHistoryModal(false)} accessibilityRole="button">
+                  <Feather name="x" size={18} color={colors.textHeading} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={s.calendarModalBody}>
+                <View style={s.calendarContainer}>
+                  {/* Month Nav */}
+                  <View style={s.calendarHeader}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        let newMonth = calendarMonth - 1;
+                        let newYear = calendarYear;
+                        if (newMonth < 0) {
+                          newMonth = 11;
+                          newYear -= 1;
+                        }
+                        setCalendarMonth(newMonth);
+                        setCalendarYear(newYear);
+                      }}
+                      style={s.calendarHeaderNavBtn}
+                    >
+                      <Feather name="chevron-left" size={16} color={colors.textMain} />
+                    </TouchableOpacity>
+                    <Text style={s.calendarHeaderTitle}>
+                      {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][calendarMonth]} {calendarYear}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        let newMonth = calendarMonth + 1;
+                        let newYear = calendarYear;
+                        if (newMonth > 11) {
+                          newMonth = 0;
+                          newYear += 1;
+                        }
+                        setCalendarMonth(newMonth);
+                        setCalendarYear(newYear);
+                      }}
+                      style={s.calendarHeaderNavBtn}
+                    >
+                      <Feather name="chevron-right" size={16} color={colors.textMain} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Weekdays */}
+                  <View style={s.calendarWeekdaysRow}>
+                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((wd) => (
+                      <Text key={wd} style={s.calendarWeekdayText}>
+                        {wd}
+                      </Text>
+                    ))}
+                  </View>
+
+                  {/* Days grid */}
+                  <View style={s.calendarGrid}>
+                    {(() => {
+                      const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+                      const startDayOfWeek = new Date(calendarYear, calendarMonth, 1).getDay();
+                      const days = [];
+                      for (let i = 0; i < startDayOfWeek; i++) {
+                        days.push({ dayNum: null, dateString: null });
+                      }
+                      for (let d = 1; d <= daysInMonth; d++) {
+                        const monthStr = String(calendarMonth + 1).padStart(2, '0');
+                        const dayStr = String(d).padStart(2, '0');
+                        const dateString = `${calendarYear}-${monthStr}-${dayStr}`;
+                        days.push({ dayNum: d, dateString });
+                      }
+
+                      // Convert history to quick lookup map
+                      const historyMap: Record<string, string> = {};
+                      (attendanceSummary.history || []).forEach((h: any) => {
+                        historyMap[h.date] = h.status;
+                      });
+
+                      return days.map((item, idx) => {
+                        const status = item.dateString ? historyMap[item.dateString] : null;
+                        const isToday = item.dateString !== null && item.dateString === new Date().toISOString().split('T')[0];
+
+                        let statusBgStyle: any = null;
+                        let statusTextStyle: any = null;
+                        if (status === 'present') {
+                          statusBgStyle = { backgroundColor: '#10b981' };
+                          statusTextStyle = { color: '#fff', fontWeight: '700' };
+                        } else if (status === 'absent') {
+                          statusBgStyle = { backgroundColor: colors.accentRed };
+                          statusTextStyle = { color: '#fff', fontWeight: '700' };
+                        } else if (status === 'late') {
+                          statusBgStyle = { backgroundColor: '#f59e0b' };
+                          statusTextStyle = { color: '#fff', fontWeight: '700' };
+                        }
+
+                        return (
+                          <View
+                            key={idx}
+                            style={[
+                              s.calendarDayCell,
+                              statusBgStyle,
+                              isToday && !status && { borderWidth: 1.5, borderColor: colors.accentYellow }
+                            ]}
+                          >
+                            {item.dayNum !== null ? (
+                              <Text
+                                style={[
+                                  s.calendarDayText,
+                                  statusTextStyle,
+                                  isToday && !status && { color: colors.accentYellow, fontWeight: '700' }
+                                ]}
+                              >
+                                {item.dayNum}
+                              </Text>
+                            ) : null}
+                          </View>
+                        );
+                      });
+                    })()}
+                  </View>
+                </View>
+
+                {/* Legend */}
+                <View style={s.legendRow}>
+                  <View style={s.legendItem}>
+                    <View style={[s.legendColor, { backgroundColor: '#10b981' }]} />
+                    <Text style={s.legendText}>Present</Text>
+                  </View>
+                  <View style={s.legendItem}>
+                    <View style={[s.legendColor, { backgroundColor: colors.accentRed }]} />
+                    <Text style={s.legendText}>Absent</Text>
+                  </View>
+                  <View style={s.legendItem}>
+                    <View style={[s.legendColor, { backgroundColor: '#f59e0b' }]} />
+                    <Text style={s.legendText}>Late</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </ScreenLayout>
   );
 }
@@ -1220,4 +1439,28 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   reportSectionTitle: { fontSize: 12, fontWeight: '700', color: c.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 },
   reportBody: { fontSize: 13, color: c.textMain, lineHeight: 20 },
   reportListItem: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', marginBottom: 6 },
+  statCardFull: { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: 16, padding: 18, gap: 12 },
+  viewHistoryBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 10, borderRadius: radius.sm, borderWidth: 1, borderColor: c.borderColor },
+  viewHistoryBtnText: { fontFamily: fonts.serif, fontSize: 11.5, fontWeight: '700', color: c.textMuted },
+  attendanceMiniBreakdown: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: c.borderColor, paddingTop: 12, marginTop: 4 },
+  miniStatItem: { alignItems: 'center', flex: 1 },
+  miniStatVal: { fontFamily: fonts.serif, fontSize: 15, fontWeight: '700', color: c.textMain },
+  miniStatLbl: { fontFamily: fonts.serif, fontSize: 9.5, fontWeight: '600', color: c.textDim, textTransform: 'uppercase', marginTop: 2 },
+  calendarModalCard: { width: '100%', maxWidth: 360, backgroundColor: c.bgDark, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor, overflow: 'hidden' },
+  calendarModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: c.borderColor },
+  calendarModalTitle: { fontFamily: fonts.serif, fontSize: 15, fontWeight: '700', color: c.textHeading },
+  calendarModalBody: { padding: 16 },
+  calendarContainer: { padding: 12, backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.sm, width: '100%' },
+  calendarHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  calendarHeaderNavBtn: { padding: 6, borderRadius: 4 },
+  calendarHeaderTitle: { fontFamily: fonts.serif, fontSize: 13.5, fontWeight: '700', color: c.textHeading },
+  calendarWeekdaysRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  calendarWeekdayText: { width: 32, textAlign: 'center', fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: c.textDim },
+  calendarGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  calendarDayCell: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginVertical: 2, borderRadius: 16 },
+  calendarDayText: { fontFamily: fonts.serif, fontSize: 12.5, color: c.textMain },
+  legendRow: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 14 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendColor: { width: 12, height: 12, borderRadius: 6 },
+  legendText: { fontFamily: fonts.serif, fontSize: 11, color: c.textMuted },
 });

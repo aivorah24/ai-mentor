@@ -20,10 +20,14 @@ import ProjectDetailsScreen from '../screens/teacher/ProjectDetailsScreen';
 import ChallengeManagerScreen from '../screens/teacher/ChallengeManagerScreen';
 import SuperAdminStudentsScreen from '../screens/teacher/SuperAdminStudentsScreen';
 import StaffSubjectMappingScreen from '../screens/teacher/StaffSubjectMappingScreen';
+import AnnouncementManagerScreen from '../features/announcements/components/AnnouncementManagerScreen';
+import TeacherAnnouncementsScreen from '../screens/teacher/TeacherAnnouncementsScreen';
+import TeacherAttendanceScreen from '../screens/teacher/TeacherAttendanceScreen';
 
 export type SuperAdminDrawerParamList = {
   TeacherDashboard: undefined;
   TeacherStudents: undefined;
+  TeacherAttendance: undefined;
   TeacherAssignments: undefined;
   TeacherChallenges: undefined;
   TeacherSchedule: undefined;
@@ -38,6 +42,8 @@ export type SuperAdminDrawerParamList = {
   ChallengeManager: undefined;
   SuperAdminStudents: undefined;
   StaffSubjectMapping: undefined;
+  AnnouncementManager: undefined;
+  TeacherAnnouncements: { openId?: string } | undefined;
 };
 
 const Drawer = createDrawerNavigator<SuperAdminDrawerParamList>();
@@ -66,6 +72,7 @@ export default function SuperAdminNavigator() {
     >
       <Drawer.Screen name="TeacherDashboard" component={TeacherDashboardScreen} />
       <Drawer.Screen name="TeacherStudents" component={TeacherStudentsScreen} />
+      <Drawer.Screen name="TeacherAttendance" component={TeacherAttendanceScreen} />
       <Drawer.Screen name="TeacherAssignments" component={TeacherAssignmentsScreen} />
       <Drawer.Screen name="TeacherChallenges" component={TeacherChallengesScreen} />
       <Drawer.Screen name="TeacherSchedule" component={TeacherScheduleScreen} />
@@ -80,6 +87,8 @@ export default function SuperAdminNavigator() {
       <Drawer.Screen name="ChallengeManager" component={ChallengeManagerScreen} />
       <Drawer.Screen name="SuperAdminStudents" component={SuperAdminStudentsScreen} />
       <Drawer.Screen name="StaffSubjectMapping" component={StaffSubjectMappingScreen} />
+      <Drawer.Screen name="AnnouncementManager" component={AnnouncementManagerScreen} />
+      <Drawer.Screen name="TeacherAnnouncements" component={TeacherAnnouncementsScreen} />
     </Drawer.Navigator>
   );
 }

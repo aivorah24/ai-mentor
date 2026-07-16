@@ -368,13 +368,13 @@ export default function OnboardingParentBoxes() {
   // user hasn't confirmed via "Complete Setup". Only finalize=true (the real
   // Complete Setup button) is allowed to flip role/roles/onboarding_complete.
   async function handleFinish(finalize: boolean = true) {
-    if (!requiredDone) {
+    if (finalize && !requiredDone) {
       setSaveError(addingChildren
         ? 'Please finish the child details you started (curriculum, grade and account), or remove that child to skip.'
         : 'Please complete your Personal Info to continue.');
       return;
     }
-    if (mobile.trim()) {
+    if (finalize && mobile.trim()) {
       const digits = mobile.replace(/\D/g, '');
       const minDigits = mobileCode === '+91' ? 10 : 7;
       if (digits.length < minDigits) {
@@ -450,7 +450,11 @@ export default function OnboardingParentBoxes() {
       // forced onboardingComplete=false to show parent onboarding, so without
       // this restore we'd land back on teacher ONBOARDING instead.
       if (!finalize) {
-        cancelAddParentProfile();
+        if (isAddingParent) {
+          cancelAddParentProfile();
+        } else {
+          logout();
+        }
         return;
       }
 
@@ -726,7 +730,7 @@ export default function OnboardingParentBoxes() {
                 />
               </View>
             </View>
-            <View style={[styles.fieldGroup, { zIndex: 5 }]}>
+            <View style={[styles.fieldGroup, { zIndex: 9 }]}>
               <Text style={styles.lbl}>City</Text>
               {country === 'India' && INDIA_CITIES[stateProv] ? (
                 <SelectField
@@ -749,7 +753,7 @@ export default function OnboardingParentBoxes() {
                 />
               )}
             </View>
-            <View style={[styles.fieldRow, { zIndex: 6 }]}>
+            <View style={[styles.fieldRow, { zIndex: 8 }]}>
               <View style={[styles.fieldGroup, { flex: 1, minWidth: 140 }]}>
                 <Text style={styles.lbl}>Date of Birth</Text>
                 {Platform.OS === 'web' ? (
@@ -1174,9 +1178,17 @@ export default function OnboardingParentBoxes() {
                 <TouchableOpacity
                   style={styles.confirmPrimary}
                   activeOpacity={0.85}
+                  disabled={saving}
+                  onPress={() => { setShowLeaveConfirm(false); handleFinish(false); }}
+                >
+                  <Text style={styles.confirmPrimaryTxt}>{saving ? 'Saving...' : 'Save draft & sign out'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.confirmSecondary, { marginBottom: 10 }]}
+                  activeOpacity={0.7}
                   onPress={() => { setShowLeaveConfirm(false); logout(); }}
                 >
-                  <Text style={styles.confirmPrimaryTxt}>Sign out & go to home page</Text>
+                  <Text style={styles.confirmSecondaryTxt}>Discard draft & sign out</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.confirmSecondary}

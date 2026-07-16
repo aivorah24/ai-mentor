@@ -163,24 +163,42 @@ async function sendBulkCredentialsEmail({ to, created }) {
   if (!to || !created || created.length === 0) return;
   try {
     const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const roleLabel = (role) => (role === 'parent' ? 'Parent' : 'Student');
+
+    // A bulk import creates BOTH students and their parents — the email must
+    // reflect that mix, not label everyone a "student" (parents were being told
+    // to log in as Student, which fails). Each row carries its own role.
+    const studentCount = created.filter(r => r.role !== 'parent').length;
+    const parentCount = created.filter(r => r.role === 'parent').length;
+
+    // Human breakdown, e.g. "2 students and 2 parents" / "3 students" / "1 parent".
+    const parts = [];
+    if (studentCount) parts.push(`${studentCount} student${studentCount !== 1 ? 's' : ''}`);
+    if (parentCount) parts.push(`${parentCount} parent${parentCount !== 1 ? 's' : ''}`);
+    const breakdown = parts.join(' and ');
+    const totalWord = `${created.length} account${created.length !== 1 ? 's were' : ' was'} created`;
+
     const csvLines = [
-      'Name,Login Email,Password,Grade,Curriculum',
-      ...created.map(r => [r.name, r.email, r.password, r.grade, r.curriculum].map(esc).join(',')),
+      'Name,Role,Login Email,Password,Grade,Curriculum',
+      ...created.map(r => [r.name, roleLabel(r.role), r.email, r.password, r.grade, r.curriculum].map(esc).join(',')),
     ];
     const csvContent = csvLines.join('\n');
 
+    // word-break lets long Login IDs / passwords WRAP inside their cell instead
+    // of forcing the table wider than a phone screen (the mobile overflow bug).
     const rowsHtml = created.map(r => `
           <tr>
-            <td style="padding:6px 10px;border-bottom:1px solid #eee;font-size:13px">${r.name}</td>
-            <td style="padding:6px 10px;border-bottom:1px solid #eee;font-family:monospace;font-size:12px">${r.email}</td>
-            <td style="padding:6px 10px;border-bottom:1px solid #eee;font-family:monospace;font-size:12px">${r.password}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eee;font-size:13px;word-break:break-word">${r.name}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eee;font-size:12px;color:${r.role === 'parent' ? '#7C3AED' : '#0f766e'};font-weight:700">${roleLabel(r.role)}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eee;font-family:monospace;font-size:11px;word-break:break-all">${r.email}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eee;font-family:monospace;font-size:11px;word-break:break-all">${r.password}</td>
           </tr>`).join('');
 
     await sendEmail({
       to,
-      subject: `${created.length} student login${created.length !== 1 ? 's' : ''} created — Aivorah bulk import`,
+      subject: `${created.length} login${created.length !== 1 ? 's' : ''} created — Aivorah bulk import`,
       attachments: [{
-        filename: `student_logins_${new Date().toISOString().split('T')[0]}.csv`,
+        filename: `logins_${new Date().toISOString().split('T')[0]}.csv`,
         content: Buffer.from(csvContent).toString('base64'),
         contentType: 'text/csv',
       }],
@@ -191,23 +209,27 @@ async function sendBulkCredentialsEmail({ to, created }) {
             <p style="margin:8px 0 0;color:#e9d5ff;font-size:14px">Bulk import complete</p>
           </div>
           <p style="font-size:14px;color:#555;line-height:1.6">
-            <strong>${created.length}</strong> student account${created.length !== 1 ? 's were' : ' was'} created. The full list is attached as a CSV — here's a quick preview:
+            <strong>${totalWord}</strong>${breakdown ? ` (${breakdown})` : ''}. The full list is attached as a CSV — here's a quick preview:
           </p>
-          <table style="width:100%;border-collapse:collapse;margin:16px 0">
+          <table style="width:100%;border-collapse:collapse;margin:16px 0;table-layout:fixed">
+            <colgroup>
+              <col style="width:22%"><col style="width:16%"><col style="width:33%"><col style="width:29%">
+            </colgroup>
             <thead>
               <tr style="background:#f5f3ff">
-                <td style="padding:6px 10px;font-size:12px;color:#888;font-weight:700">Name</td>
-                <td style="padding:6px 10px;font-size:12px;color:#888;font-weight:700">Login ID</td>
-                <td style="padding:6px 10px;font-size:12px;color:#888;font-weight:700">Password</td>
+                <td style="padding:6px 8px;font-size:12px;color:#888;font-weight:700">Name</td>
+                <td style="padding:6px 8px;font-size:12px;color:#888;font-weight:700">Role</td>
+                <td style="padding:6px 8px;font-size:12px;color:#888;font-weight:700">Login ID</td>
+                <td style="padding:6px 8px;font-size:12px;color:#888;font-weight:700">Password</td>
               </tr>
             </thead>
             <tbody>${rowsHtml}</tbody>
           </table>
           <p style="font-size:13px;color:#666;line-height:1.6">
-            Students can log in at <a href="https://aivorah.ai" style="color:#7C3AED">aivorah.ai</a> using the Login ID and Password above — select <em>Student</em> on the login screen.
+            Everyone logs in at <a href="https://aivorah.ai" style="color:#7C3AED">aivorah.ai</a> using their Login ID and Password above — each person selects their own role on the login screen (<em>Student</em> for students, <em>Parent</em> for parents). Everyone is asked to set a new password on first sign-in.
           </p>
           <p style="font-size:12px;color:#aaa;margin-top:32px;border-top:1px solid #eee;padding-top:16px">
-            This email was sent because a bulk student import was run on your Aivorah teacher account.
+            This email was sent because a bulk import was run on your Aivorah account.
           </p>
         </div>
       `,
@@ -255,6 +277,52 @@ async function sendVerificationEmail({ to, name, verifyUrl }) {
     });
   } catch (err) {
     console.warn('[mailer] sendVerificationEmail failed:', err.message);
+  }
+}
+
+// Sends someone THEIR OWN login credentials (not a proxy/parent forwarding
+// a child's) — used for parent accounts created during bulk import, where
+// (unlike a student's system-generated email) the parent's own real inbox is
+// the one that actually needs to receive it.
+async function sendOwnAccountCredentialsEmail({ to, name, loginId, password, role }) {
+  if (!to) return;
+  const roleLabel = role === 'teacher' ? 'Teacher' : role === 'parent' ? 'Parent' : 'Student';
+  try {
+    await sendEmail({
+      to,
+      subject: `Your Aivorah ${roleLabel} account is ready`,
+      html: `
+        <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#fff">
+          <div style="background:#7C3AED;border-radius:12px;padding:24px 24px 16px;margin-bottom:24px">
+            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700">Aivorah</h1>
+            <p style="margin:8px 0 0;color:#e9d5ff;font-size:14px">${roleLabel} account ready</p>
+          </div>
+
+          <p style="font-size:15px;color:#333;margin-bottom:4px">Hi ${name || 'there'}!</p>
+          <p style="font-size:14px;color:#555;line-height:1.6">
+            Your Aivorah ${roleLabel} account has been created. Here are your login credentials — please save them somewhere safe.
+          </p>
+
+          <div style="background:#f5f3ff;border-radius:10px;padding:20px;margin:20px 0;border:1px solid #ddd6fe">
+            <table style="width:100%;border-collapse:collapse">
+              <tr><td style="padding:8px 0;color:#888;font-size:13px">Login ID</td><td style="padding:8px 0;font-family:monospace;font-size:14px;color:#1a1a1a">${loginId}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:13px">Password</td><td style="padding:8px 0;font-family:monospace;font-size:14px;color:#1a1a1a">${password}</td></tr>
+            </table>
+          </div>
+
+          <p style="font-size:13px;color:#666;line-height:1.6">
+            Log in at <a href="https://aivorah.ai" style="color:#7C3AED">aivorah.ai</a>
+            using the <strong>Login ID</strong> and <strong>Password</strong> above. Select <em>${roleLabel}</em> on the login screen.
+          </p>
+
+          <p style="font-size:12px;color:#aaa;margin-top:32px;border-top:1px solid #eee;padding-top:16px">
+            This email was sent because a ${roleLabel} account was created for you on Aivorah. If you didn't expect this, please contact support.
+          </p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.warn('[mailer] sendOwnAccountCredentialsEmail failed:', err.message);
   }
 }
 
@@ -553,4 +621,4 @@ async function sendEmailOtpCode({ to, otp, name }) {
   });
 }
 
-module.exports = { sendCredentialsEmail, sendBulkCredentialsEmail, sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendRecoveryEmailConfirmation, sendRecoveryOtpEmail, sendContactEmail, sendDemoRequestToFounder, sendDemoConfirmation, sendEmailOtpCode };
+module.exports = { sendCredentialsEmail, sendBulkCredentialsEmail, sendOwnAccountCredentialsEmail, sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendRecoveryEmailConfirmation, sendRecoveryOtpEmail, sendContactEmail, sendDemoRequestToFounder, sendDemoConfirmation, sendEmailOtpCode };

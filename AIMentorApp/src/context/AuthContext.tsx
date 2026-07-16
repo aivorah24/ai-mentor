@@ -12,6 +12,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import SERVER_URL from '../config/serverUrl';
+import { useTheme } from './ThemeContext';
 
 const PROFILE_KEY = 'ai_mentor_user_profile';
 
@@ -23,7 +24,7 @@ function isCachedProfileForEmail(profile: Partial<User>, email: string) {
   return normalizeEmail(profile.email) === normalizeEmail(email);
 }
 
-export type UserRole = 'student' | 'teacher' | 'parent' | 'super_admin';
+export type UserRole = 'student' | 'teacher' | 'parent' | 'school_admin' | 'super_admin';
 
 export interface User {
   name: string;
@@ -227,6 +228,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // True once Firebase has confirmed the auth state (user or null)
   const firebaseConfirmed = React.useRef(false);
   function clearAuthError() { setAuthError(null); }
+
+  // School admins land in the light/cream workspace theme by default (matches
+  // the approved Claude design) — set once per login, not on every render, so
+  // an admin who manually switches to dark mid-session isn't fought back to light.
+  const { setThemeMode } = useTheme();
+  const lightDefaultApplied = React.useRef<string | null>(null);
+  useEffect(() => {
+    if (user?.role === 'school_admin' && lightDefaultApplied.current !== user.email) {
+      lightDefaultApplied.current = user.email;
+      setThemeMode('light');
+    }
+  }, [user?.role, user?.email, setThemeMode]);
 
   // On web: immediately restore cached profile so the correct screen shows
   // on page refresh without waiting for Firebase to read IndexedDB.
@@ -1181,6 +1194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       teacher:     { name: 'Ms. Zara',         email: 'teacher@demo.com', role: 'teacher',     school: 'Hyderabad International School', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true, teaches: [{ grade: 'Grade 3', curriculum: 'IB PYP' }] },
       parent:      { name: 'Priya Richardson', email: 'parent@demo.com',  role: 'parent',      location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true, children: [{ name: 'Alex Richardson', grade: 'Grade 3', curriculum: 'IB PYP', email: 'alex@demo.com' }] },
       super_admin: { name: 'Sunitha Gujjula',  email: 'gujjula.sunitha@gmail.com', role: 'super_admin', school: 'The Shri Ram Academy', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true },
+      school_admin: { name: 'Test SchoolAdmin TSRA', email: 'schooladmin.tsra.test@aivorah.com', role: 'school_admin', school: 'TSRA', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true },
     };
     setUser(demos[role]);
   }

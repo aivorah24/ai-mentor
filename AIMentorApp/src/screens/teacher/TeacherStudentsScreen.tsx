@@ -400,14 +400,40 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
     }
   }
 
-  function downloadTemplate() {
-    const csv = 'Name,Email,Grade,Curriculum,School\nAanya Kapoor,,Grade 3,IB PYP,My School\nRaj Sharma,raj@gmail.com,Grade 4,NCERT,\n';
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = 'aivorah_students_template.csv';
-    a.click(); URL.revokeObjectURL(url);
+  // Server-rendered templates (same style as the School Admin bulk import):
+  // branded header, borders, frozen row, sample rows visually marked, and
+  // pre-filled with this teacher's own existing students.
+  //
+  // Use a same-origin anchor with the `download` attribute rather than
+  // window.open — window.open can be popup-blocked or (in this SPA) open a
+  // blank/navigating tab that lands on the dashboard instead of saving the
+  // file. An <a download> forces a real download without touching app nav.
+  // Fetch the file and download it as a blob URL. A plain same-origin anchor
+  // gets intercepted by the SPA router (navigates to the dashboard instead of
+  // downloading); a blob: URL can't be intercepted, so this reliably saves the
+  // file to Downloads without navigating the app.
+  async function triggerTemplateDownload(ext: 'csv' | 'xlsx') {
+    if (!user?.email || Platform.OS !== 'web') return;
+    const url = `${SERVER_URL}/teacher/${encodeURIComponent(user.email)}/students/template.${ext}`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = `students_template.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+    } catch (e) {
+      console.error('[template download] failed:', e);
+    }
   }
+
+  function downloadTemplate() { triggerTemplateDownload('csv'); }
+  function downloadTemplateXlsx() { triggerTemplateDownload('xlsx'); }
 
   // A single sheet with every login/password from this commit batch — the
   // teacher gets the same list by email too. Auto-triggered right after
@@ -416,8 +442,18 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
     const created = rows.filter((r: any) => r.status === 'created' && r.password);
     if (created.length === 0) return;
     const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const header = 'Name,Login Email,Password,Grade,Curriculum\n';
-    const body = created.map((r: any) => [r.name, r.email, r.password, r.grade || bulkGrade, r.curriculum || bulkCurriculum].map(esc).join(',')).join('\n');
+    const header = 'Name,Role,Login Email,Password,Grade,Curriculum\n';
+    const body = created.map((r: any) => {
+      const isParent = r.role === 'parent';
+      return [
+        r.name,
+        isParent ? 'Parent' : 'Student',
+        r.email,
+        r.password,
+        isParent ? '' : (r.grade || bulkGrade),
+        isParent ? '' : (r.curriculum || bulkCurriculum),
+      ].map(esc).join(',');
+    }).join('\n');
     const blob = new Blob([header + body], { type: 'text/csv' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
@@ -1049,7 +1085,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                 {!bulkResults ? (
                   <>
                     <Text style={styles.modalNote}>
-                      Upload a CSV or Excel file with columns: <Text style={{ color: colors.textMain, fontWeight: '700' }}>Name</Text>, Email (optional), Grade, Curriculum, School.
+                      Upload a CSV or Excel file with columns: <Text style={{ color: colors.textMain, fontWeight: '700' }}>Name</Text>, Email (optional), Grade, Curriculum, School, Parent Name, Parent Email, Parent Phone. When a Parent Name is filled in, the parent gets their own account too. Everyone is asked to set a new password on first sign-in.
                     </Text>
 
                     {/* Default Grade / Curriculum for rows without those columns */}
@@ -1109,9 +1145,20 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                         activeOpacity={0.8}
                       >
                         <Feather name="download" size={14} color={colors.textMuted} />
-                        <Text style={styles.modalCancelText}>Download Template</Text>
+                        <Text style={styles.modalCancelText}>Template (CSV)</Text>
                       </TouchableOpacity>
 
+                      <TouchableOpacity
+                        style={[styles.modalCancelBtn, { flex: 1 }]}
+                        onPress={downloadTemplateXlsx}
+                        activeOpacity={0.8}
+                      >
+                        <Feather name="file-text" size={14} color={colors.textMuted} />
+                        <Text style={styles.modalCancelText}>Template (Excel)</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                       <TouchableOpacity
                         style={[styles.modalSaveBtn, { flex: 1 }, bulkImporting && { opacity: 0.6 }]}
                         onPress={() => {
@@ -1172,6 +1219,14 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                               <Text style={{ fontSize: 11, color: colors.textMuted }} numberOfLines={1}>
                                 {r.grade} · {r.curriculum}{r.email ? ` · ${r.email}` : ''}
                               </Text>
+                              {r.parentName ? (
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                                  <Feather name="users" size={10} color={colors.textDim} />
+                                  <Text style={{ fontSize: 11, color: colors.textMuted, flex: 1 }} numberOfLines={1}>
+                                    {r.parentName}{r.parentEmail ? ` · ${r.parentEmail}` : ''}
+                                  </Text>
+                                </View>
+                              ) : null}
                               {r.error ? <Text style={{ fontSize: 11, color: dotColor }}>{r.error}</Text> : null}
                             </View>
                           </TouchableOpacity>
