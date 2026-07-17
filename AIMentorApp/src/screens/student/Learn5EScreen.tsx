@@ -125,6 +125,54 @@ function stopCurrentAudio() {
   }
 }
 
+function cleanOptionsHelper(options: any[], correctVal: any) {
+  let opts: string[] = Array.isArray(options) ? options.map(o => typeof o === 'string' ? o : (o?.label || String(o || ''))) : [];
+  let correct = typeof correctVal === 'number' ? correctVal : 0;
+  if (typeof correctVal === 'string') {
+    const LETTER_MAP: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+    correct = LETTER_MAP[correctVal.toUpperCase()] ?? 0;
+  }
+
+  if (opts.length === 6 || opts.length === 8) {
+    const allEvenLetters = opts.every((opt, i) => {
+      if (i % 2 !== 0) return true;
+      const s = String(opt || '').trim();
+      return /^[A-Da-d0-4][.)\]]?$/.test(s) || /^\[[A-Da-d0-4]\]$/.test(s);
+    });
+    if (allEvenLetters) {
+      const extracted = [];
+      for (let i = 1; i < opts.length; i += 2) {
+        extracted.push(opts[i]);
+      }
+      opts = extracted;
+      if (correct >= opts.length) correct = Math.floor(correct / 2);
+    }
+  }
+
+  const cleaned = opts.map(opt => String(opt || '').replace(/^\[?[A-Da-d0-4]\]?[.)\-:]?\s*/, '').trim()).filter(Boolean);
+
+  return {
+    options: cleaned.length > 0 ? cleaned : opts,
+    correct: Math.min(Math.max(0, correct), Math.max(0, (cleaned.length || opts.length) - 1)),
+  };
+}
+
+function normalizeScenesData(scenes: Scene[]): Scene[] {
+  return (scenes || []).map(s => {
+    if (!s || !s.checkpoint) return s;
+    const { options, correct } = cleanOptionsHelper(s.checkpoint.options, s.checkpoint.correct);
+    return { ...s, checkpoint: { ...s.checkpoint, options, correct } };
+  });
+}
+
+function normalizeQuizArray(quiz: QuizQ[]): QuizQ[] {
+  return (quiz || []).map(q => {
+    if (!q) return q;
+    const { options, correct } = cleanOptionsHelper(q.options, q.correct);
+    return { ...q, options, correct };
+  });
+}
+
 // ── Web Audio Player — plays a URL (cached .mp3 from server) ─────────────────
 function playAudioUrl(url: string): Promise<void> {
   return new Promise((resolve) => {
@@ -586,8 +634,8 @@ function LearnPhase({ topic, grade, textChunks, imageChunks, colors, onDone, cha
       });
       const data = await res.json();
       if (data.scenes?.length) {
-        setScenes(data.scenes);
-        if (data.quiz?.length) lessonQuizRef.quiz = data.quiz;
+        setScenes(normalizeScenesData(data.scenes));
+        if (data.quiz?.length) lessonQuizRef.quiz = normalizeQuizArray(data.quiz);
         // Unsplash concept-image fetching disabled — using immersive color visuals instead
       } else setError('Could not generate lesson. Try again.');
     } catch { setError('Server error. Check server is running.'); }
@@ -1268,7 +1316,7 @@ function PracticePhase({ topic, textChunks, colors, onComplete, fixedQuiz, isSci
     try {
       // Use fixed quiz from lesson script if available
       if (fixedQuiz?.length) {
-        setQuestions(fixedQuiz);
+        setQuestions(normalizeQuizArray(fixedQuiz));
         setAnswers(new Array(fixedQuiz.length).fill(-1));
         setLoading(false);
         return;
@@ -1281,7 +1329,7 @@ function PracticePhase({ topic, textChunks, colors, onComplete, fixedQuiz, isSci
       });
       const data = await res.json();
       if (data.questions?.length) {
-        setQuestions(data.questions);
+        setQuestions(normalizeQuizArray(data.questions));
         setAnswers(new Array(data.questions.length).fill(-1));
       } else setError('Could not load quiz. Try again.');
     } catch { setError('Server error.'); }

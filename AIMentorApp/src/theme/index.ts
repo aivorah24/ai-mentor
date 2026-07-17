@@ -39,20 +39,20 @@ export const lightColors = {
   textMain: '#0B0B0B',      // landing --bg as text (full contrast on cream)
   textHeading: '#524738',   // headings: warm brown (clearly softer than black)
   textMuted: '#4A4A48',     // dark muted
-  textDim: '#8A8A86',       // dimmed
+  textDim: '#70706B',       // dimmed (darkened for cream readability, ~4.6:1)
 
-  // Primary: sage — same role as dark mode (text/borders only, no fills)
-  primary: '#9FB2A4',
-  primaryHover: '#8AA396',
+  // Primary: sage — darkened for legible text on cream (~4.7:1 on #F5F3EE)
+  primary: '#5E7566',
+  primaryHover: '#67806F',
   primaryGlow: 'rgba(159,178,164,0.18)',
 
-  // Accents — same gold/sage identity, slightly deeper for cream readability
-  accentBlue: '#9FB2A4',    // sage
+  // Accents — same gold/sage identity, deeper for cream readability
+  accentBlue: '#5E7566',    // sage (readable on cream)
   accentPurple: '#BAA467',  // gold
-  accentGreen: '#9FB2A4',   // sage
+  accentGreen: '#5E7566',   // sage (readable on cream)
   accentYellow: '#9A7B2E',  // deep gold (readable on cream)
   accentRed: '#B8595F',     // muted rose
-  accentCyan: '#9FB2A4',    // sage
+  accentCyan: '#5E7566',    // sage (readable on cream)
   accentOrange: '#B07A1E',  // amber-gold
   accentPink: '#BAA467',    // gold
 };

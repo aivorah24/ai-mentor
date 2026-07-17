@@ -55,6 +55,8 @@ export default function NotificationBanner({ onNavigate }: Props) {
   const hasMsg       = !!latestNotif;
   const hasAssign    = unreadAssignments > 0;
   const hasChallenge = unreadChallenges > 0;
+  const taskItem     = notificationItems.find(i => i.type === 'task');
+  const hasTask      = !!taskItem;
 
   let icon: string = 'bell';
   let iconColor = colors.accentYellow;
@@ -84,6 +86,14 @@ export default function NotificationBanner({ onNavigate }: Props) {
     subtitle = latestChallenge ? latestChallenge.subtitle : 'Tap to view your challenges';
     targetScreen = challengeScreen;
     targetParams = latestChallenge ? { highlightId: latestChallenge.id, tab: 'assigned' } : { tab: 'assigned' };
+  } else if (hasTask) {
+    // Parent-assigned daily task → route to the student's Daily Habits screen.
+    icon = 'check-circle';
+    iconColor = colors.accentYellow;
+    title = 'New daily task';
+    subtitle = taskItem!.subtitle || 'Tap to view your daily habits';
+    targetScreen = 'DailyHabits';
+    targetParams = undefined;
   } else if (hasMsg) {
     icon = isAivorahMsg ? 'cpu' : 'message-square';
     iconColor = colors.accentYellow;

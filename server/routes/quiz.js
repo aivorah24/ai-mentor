@@ -31,8 +31,12 @@ async function fetchBranding(school, curriculum) {
     if (curriculum) kinds.push('curriculum');
     if (kinds.length === 0) return { schoolLogoUrl: null, curriculumLogoUrl: null };
     const { data } = await supabase.from('branding_logos').select('kind, name, logo_url').in('kind', kinds);
-    const schoolLogoUrl     = (data || []).find(r => r.kind === 'school' && r.name === school)?.logo_url || null;
-    const curriculumLogoUrl = (data || []).find(r => r.kind === 'curriculum' && r.name === curriculum)?.logo_url || null;
+    // Case- and whitespace-insensitive match: teacher/school records drift in
+    // casing/spacing ("The shri ram academy" vs "The Shri Ram Academy"), and an
+    // exact === match silently dropped the logo on every such mismatch.
+    const norm = s => String(s || '').trim().toLowerCase();
+    const schoolLogoUrl     = (data || []).find(r => r.kind === 'school' && norm(r.name) === norm(school))?.logo_url || null;
+    const curriculumLogoUrl = (data || []).find(r => r.kind === 'curriculum' && norm(r.name) === norm(curriculum))?.logo_url || null;
     return { schoolLogoUrl, curriculumLogoUrl };
   } catch {
     return { schoolLogoUrl: null, curriculumLogoUrl: null };
@@ -41,6 +45,23 @@ async function fetchBranding(school, curriculum) {
 
 // ── Python Layout Detection Microservice (ML-based, replaces heuristic OpenCV) ──
 const LAYOUT_SERVICE_URL = process.env.LAYOUT_SERVICE_URL || 'http://localhost:5050';
+
+/**
+ * fetch() with an abort timeout, for ALL Python layout-service calls. Several
+ * layout fetches previously had NO timeout, so one slow/hung Python request
+ * could freeze a whole quiz generation until the 600s server limit — observed
+ * as the 180s+ "hanging layout service" timeouts in QA. Every caller already
+ * treats a thrown error as "skip / fall back to OpenCV", so aborting is safe.
+ */
+async function layoutFetch(url, opts = {}, ms = 45000) {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...opts, signal: controller.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
 
 /**
  * Call Python layout microservice to detect & crop figures/tables from PDF/image.
@@ -88,7 +109,7 @@ async function extractDiagramsWithoutML(fileBuffer, quizId, { filename = 'file.p
     const form = new FormData();
     form.set('file', new Blob([fileBuffer], { type: mime }), filename);
     const url = `${LAYOUT_SERVICE_URL}/pdf-to-images?quiz_id=${quizId}`;
-    const res = await fetch(url, { method: 'POST', body: form });
+    const res = await layoutFetch(url, { method: 'POST', body: form });
     if (!res.ok) throw new Error(`pdf-to-images failed: ${res.status}`);
 
     const { pages } = await res.json();
@@ -104,7 +125,7 @@ async function extractDiagramsWithoutML(fileBuffer, quizId, { filename = 'file.p
       const sfForm = new FormData();
       sfForm.set('file', new Blob([imgBuf], { type: 'image/png' }), 'page.png');
       const sfUrl = `${LAYOUT_SERVICE_URL}/extract-subfigures?quiz_id=${quizId}&prefix=diag_p${pg.pageNum}_`;
-      const sfRes = await fetch(sfUrl, { method: 'POST', body: sfForm });
+      const sfRes = await layoutFetch(sfUrl, { method: 'POST', body: sfForm });
       if (!sfRes.ok) continue;
 
       const sfResult = await sfRes.json();
@@ -216,7 +237,7 @@ async function extractSubfiguresFromTables(quiz, tableCrops, quizId) {
       form.set('file', new Blob([tableBuffer], { type: 'image/png' }), 'table.png');
 
       const url = `${LAYOUT_SERVICE_URL}/extract-subfigures?quiz_id=${quizId}&prefix=diag_p${pg}_`;
-      const res = await fetch(url, { method: 'POST', body: form });
+      const res = await layoutFetch(url, { method: 'POST', body: form });
       if (!res.ok) continue;
 
       const result = await res.json();
@@ -807,6 +828,24 @@ function solveVerticalMath(vm) {
   };
 }
 
+// ── "Identify the mistake" / "spot the error" tasks ──────────────────────────
+// These worksheets DELIBERATELY show wrong working (e.g. "203 - 57 = 373") and
+// ask the student to find and correct the error. The extracted verticalMath is
+// therefore SUPPOSED to be arithmetically false — it must never be routed
+// through solveVerticalMath's drop-the-impossible-puzzle logic, or the whole
+// question (and its task) gets silently deleted, leaving a bare task heading.
+// See the guarded drop sites in both generate handlers.
+function isSpotTheErrorTask(task) {
+  const blob = [
+    task && task.title,
+    task && task.instructions,
+    ...((task && task.questions) || []).map(q => q && q.question),
+  ].filter(Boolean).join('  ');
+  return /\b(identify|find|spot|correct|explain)\b[^.]{0,40}\b(the\s+)?(mistake|error|wrong)\b/i.test(blob)
+    || /\bwrong\s+(working|answer|calculation)\b/i.test(blob)
+    || /\bwhat(?:'s| is| has gone)\s+wrong\b/i.test(blob);
+}
+
 // Fast path: solves a column only when exactly one of its three digits is
 // unknown, using the same carry/borrow procedure a student would follow —
 // this also produces the human-readable step-by-step narrative.
@@ -1384,6 +1423,13 @@ RULES:
    d) If a task/section has an ILLUSTRATION or DECORATIVE IMAGE (e.g. a cartoon character, animal picture, beehive, tree diagram, branching arrows) that provides context but is not a per-question diagram, treat it as a sharedImage on the task:
       - Set "sharedImage": true, "sharedImageDescription": description, "sharedImagePosition": position
       This ensures ALL visual elements from the worksheet are preserved, not just math diagrams.
+   e) ⚠️ TRANSCRIBE DATA THAT LIVES INSIDE A PICTURE INTO THE QUESTION TEXT. If the numbers, digits,
+      letters, or values a student needs to answer are printed INSIDE an image (e.g. digit/number
+      cards "3 5 2 4 1 0", a set of number tiles, dominoes, dice faces, price tags, a clock face),
+      you MUST copy those exact values into the "question" text (e.g. "Using the digits 3, 5, 2, 4,
+      1, 0 (each once), make two 3-digit numbers…"). The picture may not always render, so the
+      question must be fully answerable from its text ALONE. Still set "hasImage"/"sharedImage" so
+      the picture is also preserved — but NEVER leave the essential values only inside the image.
 9. Do NOT generate SVG, HTML diagrams, or diagramHTML. The server handles all image rendering separately.
 10. For questions that reference a graph/chart/image: READ the visual data from the image to compute the answer. For example, if a bar graph shows football=16, tennis=8 and the Y-axis goes 0,2,4,6... then the scale is 2.
 11. MATCH-THE-FOLLOWING TASKS (e.g. "match the word to the picture", "match the following", "జతపరచండి"): emit ONE question per item to match. Set "type": "mcq" and "options": an array of ALL candidate words/phrases from the matching column (the full pool — the SAME list for every question in that task, in a different order per question), and "answer": the correct word for that item. Do NOT emit matching items as free-text fill-in questions — the student must pick from the pool, not type it.
@@ -1613,6 +1659,17 @@ displayed in the same column layout as the worksheet:
   usual (the "question" text can stay short, e.g. "Calculate the missing digits.", since the
   numbers themselves are now shown via verticalMath, not restated in the sentence).
 - Do NOT use this for simple inline sums the worksheet already writes horizontally (e.g. "12 + 8 = ___") — only for worksheets that print the numbers stacked with a line under them.
+
+⚠️ "IDENTIFY / FIND / SPOT THE MISTAKE" TASKS (worksheets that show a WORKED-OUT sum that is
+DELIBERATELY WRONG and ask the student to find & correct the error, e.g. a box showing
+"203 - 57 = 373"): this is a real, answerable question — NEVER skip it or leave the task empty.
+  • You MUST capture the wrong working as a "verticalMath" object with the result EXACTLY as printed
+    on the worksheet, EVEN THOUGH it is arithmetically wrong (that is the whole point — "top":"203",
+    "bottom":"57","result":"373"). Do not "correct" it, do not drop it, do not blank the result.
+  • Set "type":"long" (the student writes the correct working + an explanation of the mistake).
+  • Put the correct working and the explanation of what went wrong in "answer"/"solution".
+  • Keep the "question" text like "Identify the mistake in the working shown, write the correct
+    working, and explain what went wrong." — the numbers are shown via verticalMath, not restated.
 
 QUESTION TYPES:
 - "numeric" — number answer (integer or decimal)
@@ -2015,7 +2072,7 @@ async function generateQuizHandler(req, res) {
         try {
           const form = new FormData();
           form.set('file', new Blob([req.file.buffer], { type: 'application/pdf' }), 'worksheet.pdf');
-          const pdfImgRes = await fetch(`${LAYOUT_SERVICE_URL}/pdf-to-images?quiz_id=${quizId}`, { method: 'POST', body: form });
+          const pdfImgRes = await layoutFetch(`${LAYOUT_SERVICE_URL}/pdf-to-images?quiz_id=${quizId}`, { method: 'POST', body: form });
           if (pdfImgRes.ok) {
             const { pages } = await pdfImgRes.json();
             for (const pg of pages) {
@@ -2196,6 +2253,16 @@ async function generateQuizHandler(req, res) {
       }
     }
 
+    // ── PERF: kick off the independent AI answer-verification vision pass NOW,
+    //    concurrently with the diagram/image post-processing below, instead of
+    //    running it sequentially at the very end. It's a full extra Gemini pass
+    //    (~20-40s) that only reads question text + writes q.answer, so it overlaps
+    //    safely with the image steps (which touch imageUrl/chart/verticalMath, not
+    //    answers). Deterministic corrections stay authoritative via q.__answerAuthoritative
+    //    (see the apply loop in verifyQuizAnswers). This shaves the diagram-processing
+    //    time off the total generation latency the teacher waits through. ──
+    const answerVerificationPromise = verifyQuizAnswers(req.file.buffer, 'application/pdf', quiz);
+
     // ── Match figure-cropped diagrams to questions ──
     if (diagramExtraction && diagramExtraction.diagrams.length > 0) {
       console.log(`[quiz] Matching ${diagramExtraction.diagrams.length} figure crops to questions...`);
@@ -2273,18 +2340,28 @@ async function generateQuizHandler(req, res) {
           const solved = solveVerticalMath(q.verticalMath);
           if (solved.solvable) Object.assign(q.verticalMath, solved);
           else if (solved.impossible) {
-            // No digit assignment reproduces the extracted equation at all (the
-            // OCR/extraction of this puzzle is simply wrong) — never show a
-            // guessed/hallucinated answer for it. Drop the question outright.
-            console.warn(`[quiz] dropping impossible vertical-math question (task "${task.title}", id ${q.id}): "${q.verticalMath.top} ${q.verticalMath.operator} ${q.verticalMath.bottom} = ${q.verticalMath.result}" has no valid solution`);
-            q.__drop = true;
-            continue;
+            if (isSpotTheErrorTask(task)) {
+              // "Identify the mistake" task: the wrong working is INTENTIONAL.
+              // Keep it as a static display (the student must SEE the wrong sum)
+              // plus a written-explanation box — never drop it, never try to
+              // grade it as a solvable puzzle.
+              q.verticalMath.showOnly = true;
+              if (q.type === 'numeric' || !q.type) q.type = 'long';
+              console.log(`[quiz] spot-the-error task "${task.title}" — keeping intentionally-wrong working "${q.verticalMath.top} ${q.verticalMath.operator} ${q.verticalMath.bottom} = ${q.verticalMath.result}" as display-only`);
+            } else {
+              // No digit assignment reproduces the extracted equation at all (the
+              // OCR/extraction of this puzzle is simply wrong) — never show a
+              // guessed/hallucinated answer for it. Drop the question outright.
+              console.warn(`[quiz] dropping impossible vertical-math question (task "${task.title}", id ${q.id}): "${q.verticalMath.top} ${q.verticalMath.operator} ${q.verticalMath.bottom} = ${q.verticalMath.result}" has no valid solution`);
+              q.__drop = true;
+              continue;
+            }
           }
           const opCheck = checkVerticalMathOperator(q, task);
           if (opCheck) {
             console.log(`[quiz] vertical-math operator corrected (${opCheck.via}): "${q.verticalMath.top} ${q.verticalMath.operator} ${q.verticalMath.bottom}" → operator should be "${opCheck.correctOperator}"`);
             q.verticalMath.operator = opCheck.correctOperator;
-            if (opCheck.correctAnswer !== undefined) q.answer = opCheck.correctAnswer;
+            if (opCheck.correctAnswer !== undefined) { q.answer = opCheck.correctAnswer; q.__answerAuthoritative = true; }
             else if (q.verticalMath.result) q.verticalMath.result = String(opCheck.correctResult);
           }
         } else {
@@ -2295,6 +2372,8 @@ async function generateQuizHandler(req, res) {
           if (decodeCheck) {
             console.log(`[quiz] decode-table answer corrected: "${q.question}" → ${decodeCheck.result} maps to "${decodeCheck.correctAnswer}" (was "${q.answer}")`);
             q.answer = decodeCheck.correctAnswer;
+            // Deterministic (computed) — must win over the concurrent AI answer-verification pass.
+            q.__answerAuthoritative = true;
           }
         }
       }
@@ -2316,12 +2395,27 @@ async function generateQuizHandler(req, res) {
     quiz.generatedAt = new Date().toISOString();
     quiz.status = 'draft';
 
-    // ── AI answer verification: re-derive every answer from the original PDF
-    //    and auto-correct any that don't match (general safety net beyond the
-    //    two deterministic checks above). ──
-    const answerVerification = await verifyQuizAnswers(req.file.buffer, 'application/pdf', quiz);
+    // ── Engine provenance (grep "[quiz][ENGINE]") — makes it obvious at a glance
+    //    whether a quiz came from the primary Gemini Vision pass or fell through to
+    //    a weaker fallback engine (the real cause of "sometimes good, sometimes bad"
+    //    output — NOT a free/paid tier thing). A non-gemini engine or usedVision=false
+    //    means Gemini failed/timed out for this upload; check the logs above for why. ──
+    {
+      const isFallback = !String(usedEngine).startsWith('gemini');
+      console.log(`[quiz][ENGINE][${quizId}] produced by "${usedEngine}"${isFallback ? ' ⚠️ FALLBACK (Gemini primary did NOT produce this)' : ' (Gemini primary)'} | vision=${usedVision ? 'yes' : 'NO (text-only — layout/diagrams unreliable)'} | file="${req.file.originalname}"`);
+    }
+
+    // ── AI answer verification: re-derive every answer from the original PDF and
+    //    auto-correct any that don't match (safety net beyond the deterministic
+    //    checks above). Kicked off earlier (concurrently with diagram processing) —
+    //    just await its result here. Deterministic corrections are protected via
+    //    q.__answerAuthoritative inside verifyQuizAnswers. ──
+    const answerVerification = await answerVerificationPromise;
     console.log(`[quiz] Answer verification: ${answerVerification.checked} checked, ${answerVerification.corrected} corrected${answerVerification.error ? ` (error: ${answerVerification.error})` : ''}`);
     __mark('after verifyQuizAnswers');
+
+    // Strip the internal deterministic-answer flag so it never ships in the payload.
+    for (const t of (quiz.tasks || [])) for (const q of (t.questions || [])) delete q.__answerAuthoritative;
 
     // Auto-validate quality
     const qualityCheck = validateQuiz(quiz);
@@ -2592,9 +2686,17 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
           const solved = solveVerticalMath(q.verticalMath);
           if (solved.solvable) Object.assign(q.verticalMath, solved);
           else if (solved.impossible) {
-            console.warn(`[quiz] dropping impossible vertical-math question (task "${task.title}", id ${q.id}): "${q.verticalMath.top} ${q.verticalMath.operator} ${q.verticalMath.bottom} = ${q.verticalMath.result}" has no valid solution`);
-            q.__drop = true;
-            continue;
+            if (isSpotTheErrorTask(task)) {
+              // "Identify the mistake" task: wrong working is intentional — keep
+              // it display-only with an explanation box (see PDF handler above).
+              q.verticalMath.showOnly = true;
+              if (q.type === 'numeric' || !q.type) q.type = 'long';
+              console.log(`[quiz] spot-the-error task "${task.title}" — keeping intentionally-wrong working as display-only`);
+            } else {
+              console.warn(`[quiz] dropping impossible vertical-math question (task "${task.title}", id ${q.id}): "${q.verticalMath.top} ${q.verticalMath.operator} ${q.verticalMath.bottom} = ${q.verticalMath.result}" has no valid solution`);
+              q.__drop = true;
+              continue;
+            }
           }
           const opCheck = checkVerticalMathOperator(q, task);
           if (opCheck) {
@@ -2628,6 +2730,12 @@ router.post('/generate-image', upload.single('image'), async (req, res) => {
     quiz.sourceFile = req.file.originalname;
     quiz.generatedAt = new Date().toISOString();
     quiz.status = 'draft';
+
+    // ── Engine provenance (grep "[quiz][ENGINE]") — see PDF handler for rationale. ──
+    {
+      const isFallback = !String(usedEngine).startsWith('gemini');
+      console.log(`[quiz][ENGINE][${quizId}] produced by "${usedEngine}"${isFallback ? ' ⚠️ FALLBACK (Gemini primary did NOT produce this)' : ' (Gemini primary)'} | vision=${usedVision ? 'yes' : 'NO (text-only — layout/diagrams unreliable)'} | file="${req.file.originalname}"`);
+    }
 
     // ── AI answer verification: re-derive every answer from the original image
     //    and auto-correct any that don't match. ──
@@ -3702,6 +3810,13 @@ function embedQuizImages(quiz) {
   // Embed question images + remove SVG diagrams (use only original worksheet images)
   for (const task of (quiz.tasks || [])) {
     if (task.pageImageUrl) task.pageImageUrl = toDataUri(task.pageImageUrl);
+    // Diagram-fill tasks (pyramids/clocks/number-lines) own their own cropped
+    // image via task.diagramFillImageUrl. This was NOT embedded here, so it
+    // shipped as a relative "/data/images/quiz/..." path — which 404s once Cloud
+    // Run recycles its ephemeral disk (~24-48h), breaking the image for students
+    // who load the quiz after that. Embed it as base64 like every other image so
+    // the quiz stays self-contained and survives container restarts.
+    if (task.diagramFillImageUrl) task.diagramFillImageUrl = toDataUri(task.diagramFillImageUrl);
     const taskPage = task.sourcePage || 1;
     let taskNeedsPageFallback = false;
 
@@ -3997,7 +4112,8 @@ Only include an entry in "corrections" if its CURRENT answer is actually wrong �
       const qId = String(c.uid).slice(dashIdx + 1);
       const task = (quiz.tasks || [])[ti];
       const q = task && (task.questions || []).find(qq => String(qq.id) === qId);
-      if (!q) continue;
+      if (!q) continue; // question was dropped after the snapshot (e.g. impossible vertical-math)
+      if (q.__answerAuthoritative) continue; // deterministic (computed) answer wins — never overwrite it
       console.log(`[quiz] AI answer-verification corrected "${String(q.question || '').slice(0, 60)}": "${q.answer}" → "${c.correctAnswer}" (${c.reason || ''})`);
       q.answer = c.correctAnswer;
       corrected++;
@@ -4527,18 +4643,34 @@ function renderQuizHTML(quiz, branding = {}) {
     // mirrors smartLabel()'s null-label condition. These are auto-accepted once attempted.
     const isOpenEnded = !hasDefinedAnswer && (q.type === 'long' ||
       /\b(write|describe|explain|identify|correct|find the error|use.*word|sentence|passage|paragraph)\b/i.test(q.question || ''));
-    // Theory/short-factual answers DO have a definite correct answer, but it's multi-word
-    // TEXT ("hockey and football") where a student's exact phrasing rarely matches a
-    // strict string comparison. These get AI-tolerant grading instead of exact-match.
-    // Requires at least 2 genuinely alphabetic words — a number, a number-with-unit
-    // ("12 cm"), or a tally count must NEVER take this path; they have exactly one
-    // right answer and belong on the fast exact-match check.
-    const isTheory = typeof ansRaw === 'string' && !isNum && !isFraction && hasDefinedAnswer &&
+    // Theory/short-factual answers DO have a definite correct answer, but it's TEXT
+    // ("football", "hockey and football") where a student's exact phrasing rarely
+    // lines up with a strict string comparison — a correct "the football bar" would
+    // fail exact-match against "football". These get the teacher-marking-scheme
+    // treatment instead: keyword overlap (keywordMatch) + an AI semantic fallback,
+    // so meaning is judged, not surface form.
+    //
+    // This applies to ANY pure-text answer, single word or many — the ONLY things
+    // that stay on the strict exact/numeric path are answers that genuinely have one
+    // right form: a number, a fraction, or a number-with-unit / tally ("12 cm", "3
+    // apples"). We detect those by "contains a digit" and exclude them here, so a
+    // relaxed keyword check can never wrongly accept "5 cm" for "12 cm".
+    const hasDigit = /\d/.test(String(ansRaw));
+    const isTheory = typeof ansRaw === 'string' && !isNum && !isFraction && !hasDigit && hasDefinedAnswer &&
       (() => {
         const tokens = ansRaw.trim().split(/\s+/);
         const alphaTokens = tokens.filter(t => /^[a-zA-Z][a-zA-Z''-]*$/.test(t));
-        return tokens.length > 1 && alphaTokens.length >= 2;
+        return alphaTokens.length >= 1; // any pure-text answer, incl. a single word
       })();
+    // "Identify the mistake / write the correct working / explain what went wrong"
+    // questions are open-ended reflection tasks: the student writes free-form
+    // multi-line working + reasoning (e.g. "203 - 057 ----- 146"), never a single
+    // exact string. Exact/numeric matching wrongly rejects a correct working, and
+    // even AI semantic grading is unreliable/harsh for a young child's phrasing.
+    // Industry norm (Khan Academy, Google) is to ACCEPT any genuine attempt and
+    // reveal the worked solution to learn from — so route these to the open-ended
+    // path (auto-accept once attempted + show solution), never a hard red fail.
+    const isExplanatory = /\b(identify the mistake|what went wrong|correct working|explain (what|why|how)|describe (how|why)|find the error)\b/i.test(q.question || '');
 
     if (isMcq) {
       const correctIdx = (q.options || []).findIndex(o => o.correct);
@@ -4547,7 +4679,7 @@ function renderQuizHTML(quiz, branding = {}) {
     } else if (isActivity) {
       answersMap[qId] = { answer: ansRaw, isNum: false, activity: true };
     } else {
-      answersMap[qId] = { answer: ansRaw, isNum, range: q.acceptRange || null, open: isOpenEnded, theory: isTheory };
+      answersMap[qId] = { answer: ansRaw, isNum: isNum && !isExplanatory, range: q.acceptRange || null, open: isOpenEnded || isExplanatory, theory: isTheory && !isExplanatory };
     }
     return qId;
   }
@@ -4721,15 +4853,28 @@ function renderQuizHTML(quiz, branding = {}) {
     h += `<div class="match-bank" id="${bankId}">` + bankWords.map(w =>
       `<span class="match-chip" draggable="true" data-word="${esc(w)}" data-bank="${bankId}" ondragstart="mDragStart(event)" onclick="mChipClick(this)">${fmt(w)}</span>`).join('') + `</div>`;
 
+    // If EVERY card would show the exact same image, the diagram extractor failed
+    // to split the worksheet's picture column into individual crops and instead
+    // gave every question the one uncropped strip (all N icons stacked). Rendering
+    // that identical tall strip inside all N cards is visually broken and useless
+    // for matching. Show it ONCE as a reference above the cards instead, and leave
+    // the cards clean (they fall back to the question text as the match label).
+    const cardImgs = matchQs.map(q => q.imageUrl).filter(Boolean);
+    const allSameImage = cardImgs.length === matchQs.length && cardImgs.length >= 2 && new Set(cardImgs).size === 1;
+    if (allSameImage) {
+      h += `<div class="match-shared-ref" style="text-align:center;margin:0 0 14px;"><img src="${embedImage(cardImgs[0])}" alt="Pictures to match" style="max-width:220px;max-height:360px;border-radius:8px;border:1px solid rgba(195,220,216,0.2);background:#fff;padding:8px;"><div style="font-size:12px;color:#A8B5B3;margin-top:4px;">Match each word to the correct picture above.</div></div>`;
+    }
+
     h += `<div class="match-grid">`;
     matchQs.forEach((q, i) => {
       const qId = qIds[i];
       h += `<div class="match-card" id="${qId}-card">`;
       if (q.id) h += `<div class="match-card-label">${esc(q.id)})</div>`;
-      if (q.imageUrl) {
+      if (q.imageUrl && !allSameImage) {
         h += `<div class="match-img"><img src="${embedImage(q.imageUrl)}" alt="${esc(q.diagramDescription || 'Picture to match')}"></div>`;
       } else {
-        // No cropped picture — fall back to the question text as the thing to match
+        // No cropped picture (or the only image is the shared strip shown above) —
+        // fall back to the question text as the thing to match.
         h += `<div class="match-img match-img-text">${fmt(q.question || '')}</div>`;
       }
       h += `<div class="match-slot" id="${qId}-slot" ondragover="event.preventDefault()" ondrop="mDrop(event,'${qId}-slot')" onclick="mSlotClick(this)"><span class="match-slot-ph">Drop word here</span></div>`;
@@ -5549,7 +5694,13 @@ function renderQuizHTML(quiz, branding = {}) {
       // marked genuinely correct short answers wrong; a lower bar costs a rare
       // false positive, which is a far smaller problem live than telling a student
       // their right answer is wrong.
-      const required = expected.length <= 3 ? Math.max(1, Math.ceil(expected.length * 0.5)) : 1;
+      //
+      // Require just ONE genuine keyword overlap, uniformly. The old
+      // "ceil(len*0.5) for lists ≤3" rule was NON-MONOTONIC — a 3-keyword answer
+      // demanded 2 matches while 2-keyword AND 4+-keyword answers needed only 1,
+      // so "market" (1 of 2) passed but "production" (1 of 3) failed for the same
+      // one-word effort. One valid keyword now passes at every list length.
+      const required = 1;
       return matched >= required;
     }
 
@@ -6217,3 +6368,6 @@ module.exports.normalizeVennQuestions = normalizeVennQuestions;
 module.exports.docxToPdf = docxToPdf;
 module.exports.callQwenVision = callQwenVision;
 module.exports.callPixtralVision = callPixtralVision;
+module.exports.isSpotTheErrorTask = isSpotTheErrorTask;
+module.exports.solveVerticalMath = solveVerticalMath;
+module.exports.embedQuizImages = embedQuizImages;

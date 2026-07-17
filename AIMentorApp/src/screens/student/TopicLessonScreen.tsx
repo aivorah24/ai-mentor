@@ -1414,22 +1414,28 @@ export default function TopicLessonScreen({ navigation, route }: any) {
     cancelHighlightLoop();
     let lastRendered = -1;
     function tick() {
-      if (!audio || audio.paused || audio.ended) return;
+      if (!audio || audio.ended) return;
+      if (audio.paused) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
       let idx = 0;
-      if (timings && timings.length > 0) {
+      const activeTimings = audioMetaRef.current?.timings || timings;
+      if (activeTimings && activeTimings.length > 0) {
         // Small look-ahead: Whisper timestamps tend to lag ~80ms behind actual speech
         const AHEAD = 0.08 / (audio.playbackRate || 1);
         const t = audio.currentTime + AHEAD;
-        for (let i = 0; i < timings.length; i++) {
-          const wordEnd = timings[i + 1]?.startTime ?? (audio.duration + 1);
-          if (t >= timings[i].startTime && t < wordEnd) { idx = i; break; }
-          if (t >= timings[i].startTime) idx = i;
+        for (let i = 0; i < activeTimings.length; i++) {
+          const wordEnd = activeTimings[i + 1]?.startTime ?? (audio.duration && isFinite(audio.duration) ? audio.duration + 1 : 9999);
+          if (t >= activeTimings[i].startTime && t < wordEnd) { idx = i; break; }
+          if (t >= activeTimings[i].startTime) idx = i;
         }
       } else {
         // Weight each word by its character length for a more natural highlight pace
         const totalChars = words.reduce((s, w) => s + Math.max(w.length, 1), 0);
         const LAG = 0.15 / (audio.playbackRate || 1);
-        const ratio = Math.max(0, audio.currentTime - LAG) / (audio.duration || 1);
+        const effectiveDuration = isFinite(audio.duration) && audio.duration > 0 ? audio.duration : Math.max(3, totalChars / 13);
+        const ratio = Math.min(1, Math.max(0, audio.currentTime - LAG) / effectiveDuration);
         const targetChars = ratio * totalChars;
         let cumChars = 0;
         idx = words.length - 1;
@@ -1526,16 +1532,36 @@ export default function TopicLessonScreen({ navigation, route }: any) {
         const timings = data.timings || null;
         // Start highlight loop once metadata is ready (duration known) and playing
         audio.onloadedmetadata = () => {
-          // pre-warm: highlight word 0 immediately
-          setWordIndex(0);
+          // pre-warm: highlight word 0 immediately only if near start
+          if (audio.currentTime < 0.15) setWordIndex(0);
         };
         audio.onplay  = () => { setSpeaking(true); markActive(); startHighlightLoop(audio, voiceWords, timings); };
         audio.onpause = () => { cancelHighlightLoop(); };
-        audio.ontimeupdate = () => { markActive(); };
+        audio.ontimeupdate = () => {
+          markActive();
+          if (!rafRef.current && !audio.paused && !audio.ended) {
+            startHighlightLoop(audio, voiceWords, audioMetaRef.current?.timings || timings);
+          }
+        };
         audio.onended = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
         audio.onerror = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
         if (pausedRef.current) { setSpeaking(false); return; } // paused before load finished — stay paused, don't autoplay
         audio.play().catch(() => { setSpeaking(false); });
+
+        // If pre-fetched audio was cached without Whisper timings (when background Whisper job hadn't finished yet),
+        // poll/fetch fresh timings so that mid-narration highlighting immediately switches to exact Whisper timestamps.
+        if (!timings) {
+          fetch(`${SERVER_URL}/lesson/scene-audio?lessonId=${encodeURIComponent(lesson.id)}&sceneId=${encodeURIComponent(scene.id)}&text=${encodeURIComponent(scene.voice)}`)
+            .then(r => r.json())
+            .then(fresh => {
+              if (stale || myToken !== playTokenRef.current) return;
+              if (fresh?.timings && audioMetaRef.current) {
+                audioMetaRef.current.timings = fresh.timings;
+                audioPrefetchRef.current[scene.id] = Promise.resolve(fresh);
+              }
+            })
+            .catch(() => {});
+        }
       })
       .catch(() => {
         if (stale || myToken !== playTokenRef.current) return;
@@ -1667,9 +1693,14 @@ export default function TopicLessonScreen({ navigation, route }: any) {
         audioRef.current = audio;
         const timings2 = data.timings || null;
         audioMetaRef.current = { words: voiceWords, timings: timings2, timingProvider: data.timingProvider || 'none' };
-        audio.onloadedmetadata = () => { setWordIndex(0); };
+        audio.onloadedmetadata = () => { if (audio.currentTime < 0.15) setWordIndex(0); };
         audio.onplay  = () => { setSpeaking(true); startHighlightLoop(audio, voiceWords, timings2); };
         audio.onpause = () => { cancelHighlightLoop(); };
+        audio.ontimeupdate = () => {
+          if (!rafRef.current && !audio.paused && !audio.ended) {
+            startHighlightLoop(audio, voiceWords, audioMetaRef.current?.timings || timings2);
+          }
+        };
         audio.onended = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
         audio.onerror = () => { cancelHighlightLoop(); setSpeaking(false); setWordIndex(-1); };
         audio.play().catch(() => setSpeaking(false));

@@ -132,6 +132,57 @@ function answerToEditText(a: any): string {
   try { return JSON.stringify(a, null, 2); } catch { return String(a); }
 }
 
+/**
+ * Pre-publish validation for the interactive quiz (issue #6). Returns a blocking
+ * error when the quiz must NOT be published:
+ *  1. Wrong worksheet — the selected files changed after the quiz was generated
+ *     (guards the "uploaded Telugu, got a Math quiz" mixup: file-ID must equal the
+ *     processed file's ID).
+ *  2. Empty task card — a task with a heading but no questions and no visual
+ *     content (chart/table/pyramid/passage/diagram/matching/image), i.e. content
+ *     was lost during extraction (the "Task 4 shows only a heading" bug).
+ */
+function validateInteractiveQuizForPublish(
+  quiz: any,
+  docFiles: { name: string; url?: string }[],
+): { ok: true } | { ok: false; error: string } {
+  if (!quiz) return { ok: true };
+
+  // 1) Correct-worksheet check: the file set must be identical to the one the
+  //    quiz was generated from. If the teacher swapped/added/removed a worksheet
+  //    after generating (or the quiz is stale from a previous upload), re-generate.
+  if (quiz._sourceDocKey != null) {
+    const currentKey = (docFiles || []).map((f) => f.url || f.name).sort().join('|');
+    if (currentKey !== quiz._sourceDocKey) {
+      return { ok: false, error: 'The selected worksheet has changed since this quiz was generated. Tap "Generate Interactive Quiz" again so the quiz matches the uploaded worksheet before publishing.' };
+    }
+  }
+
+  // 2) No empty task cards — every task must carry renderable content.
+  const tasks = Array.isArray(quiz.tasks) ? quiz.tasks : [];
+  if (tasks.length === 0) {
+    return { ok: false, error: 'This quiz has no tasks. Please re-generate before publishing.' };
+  }
+  const taskHasContent = (t: any): boolean => {
+    if (Array.isArray(t.questions) && t.questions.length > 0) return true;
+    if (t.chart && Array.isArray(t.chart.bars) && t.chart.bars.length) return true;
+    if (Array.isArray(t.tables) && t.tables.length) return true;
+    if (t.table && Array.isArray(t.table.rows) && t.table.rows.length) return true;
+    if (Array.isArray(t.pyramids) && t.pyramids.length) return true;
+    if (Array.isArray(t.diagramFillBlanks) && t.diagramFillBlanks.length) return true;
+    if (t._matchTask || t.sharedImage) return true;
+    if (t.passage && String(t.passage).trim()) return true;
+    return false;
+  };
+  const emptyTasks = tasks.filter((t: any) => !taskHasContent(t));
+  if (emptyTasks.length > 0) {
+    const names = emptyTasks.map((t: any) => (t.title || 'Untitled task').replace(/\s+/g, ' ').trim().slice(0, 60)).join('; ');
+    return { ok: false, error: `Some tasks are empty (content was not extracted): ${names}. Please re-generate — do not publish an incomplete quiz.` };
+  }
+
+  return { ok: true };
+}
+
 /** Generate a standalone interactive HTML quiz for browser preview — Aivorah Enchanted Forest dark theme */
 function generateQuizHTMLPreview(quiz: any): string {
   const totalQ = quiz.tasks?.reduce((s: number, t: any) => s + (t.questions?.length || 0), 0) || 0;
@@ -503,7 +554,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   const [quizCount, setQuizCount] = useState(5);
   const [quizType, setQuizType] = useState<'mcq'|'fill_blank'|'mixed'>('mcq');
   const [teacherNotes, setTeacherNotes] = useState('');
-  const [docFiles, setDocFiles] = useState<{ name: string; base64: string; mime: string; url?: string }[]>([]);
+  const [docFiles, setDocFiles] = useState<{ name: string; base64: string; mime: string; url?: string; sourcePdfBase64?: string; sourcePdfName?: string }[]>([]);
   const originalPdfRef = React.useRef<{ name: string; base64: string; mime: string } | null>(null);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [extractingQuestions, setExtractingQuestions] = useState(false);
@@ -822,6 +873,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     if (!title.trim()) { setFormError('Title is required'); return; }
     if (!dueDate.trim()) { setFormError('Due date is required'); return; }
     if (type === 'quiz' && quizQuestions.length === 0) { setFormError('Generate quiz questions first before assigning this quiz.'); return; }
+    // ── Pre-publish validation gate (issue #6) — never publish a wrong/incomplete
+    //    interactive quiz. Blocks on: wrong worksheet, empty task cards. ──
+    if (interactiveQuiz) {
+      const gate = validateInteractiveQuizForPublish(interactiveQuiz, docFiles);
+      if (!gate.ok) { setFormError(gate.error); return; }
+    }
     setFormError('');
     setCreating(true);
     console.log('[createAssignment] Publishing...', { title, subject, grade, curriculum, type, dueDate, docFiles: docFiles.length, questions: questions.length, quizQuestions: quizQuestions.length });
@@ -893,7 +950,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           })),
           quizQuestions: quizQuestions,
           // Interactive quiz (from PDF→Gemini pipeline) — stored for student rendering
-          interactiveQuiz: interactiveQuiz ? (() => { const { _previewHTML, _editMode, ...clean } = interactiveQuiz as any; return clean; })() : null,
+          interactiveQuiz: interactiveQuiz ? (() => { const clean: any = {}; for (const k of Object.keys(interactiveQuiz)) { if (!k.startsWith('_')) clean[k] = (interactiveQuiz as any)[k]; } return clean; })() : null,
           interactiveQuizHtml: (interactiveQuiz as any)?._previewHTML || null,
           documentUrl: docFiles[0]?.url || null,
           documentUrls: docFiles.map(f => f.url).filter(Boolean),
@@ -993,6 +1050,13 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           const pageImages = await pdfToImages(workingFd.base64);
           console.log('[upload] PDF converted to', pageImages.length, 'images');
           if (pageImages.length > 0) {
+            // Tie the original PDF to THESE page-images so quiz generation always
+            // reads the PDF that belongs to the currently-selected files — never a
+            // stale PDF left over in originalPdfRef from a PREVIOUS upload. That
+            // stale-ref path was the "uploaded Telugu but got a Math quiz" bug:
+            // a later image-only upload found no PDF in docFiles and silently fell
+            // back to the previous worksheet's PDF still sitting in the ref.
+            for (const p of pageImages) { (p as any).sourcePdfBase64 = workingFd.base64; (p as any).sourcePdfName = workingFd.name; }
             expanded.push(...pageImages);
           } else {
             console.log('[upload] PDF conversion failed, sending as PDF');
@@ -1006,7 +1070,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       console.log('[upload] Files after PDF conversion:', fileDataArr.map(f => `${f.name} (${f.mime})`));
 
       // Upload all files (now all images)
-      const uploadedFiles: { name: string; base64: string; mime: string; url?: string }[] = [];
+      const uploadedFiles: { name: string; base64: string; mime: string; url?: string; sourcePdfBase64?: string; sourcePdfName?: string }[] = [];
       for (const fd of fileDataArr) {
         try {
           const res = await fetch(`${SERVER_URL}/assignments/upload-doc`, {
@@ -1016,7 +1080,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           });
           const data = await res.json();
           if (res.ok) {
-            uploadedFiles.push({ name: fd.name, base64: fd.base64, mime: fd.mime, url: data.url });
+            uploadedFiles.push({ name: fd.name, base64: fd.base64, mime: fd.mime, url: data.url, sourcePdfBase64: (fd as any).sourcePdfBase64, sourcePdfName: (fd as any).sourcePdfName });
           }
         } catch {/* skip failed uploads */}
       }
@@ -1314,8 +1378,20 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
     setGeneratingInteractiveQuiz(true);
     setInteractiveQuiz(null);
     try {
-      // Prefer original PDF (sends ALL pages to Gemini Vision) over single-page images
-      let pdfFile = docFiles.find(f => f.mime === 'application/pdf') || originalPdfRef.current;
+      // Prefer original PDF (sends ALL pages to Gemini Vision) over single-page images.
+      // CRITICAL: only ever use a PDF that belongs to the CURRENT docFiles set — an
+      // actual PDF entry, or one carried alongside a converted page-image via
+      // sourcePdfBase64. We deliberately do NOT fall back to originalPdfRef here:
+      // that decoupled ref persists across uploads and caused a later worksheet to
+      // be generated from a PREVIOUS file (the Telugu→Math mixup).
+      const pdfEntry = docFiles.find(f => f.mime === 'application/pdf');
+      const carriedPdf = !pdfEntry ? docFiles.find(f => f.sourcePdfBase64) : null;
+      let pdfFile: { name: string; base64: string; mime: string } | null =
+        pdfEntry
+          ? { name: pdfEntry.name, base64: pdfEntry.base64, mime: 'application/pdf' }
+          : carriedPdf
+            ? { name: carriedPdf.sourcePdfName || carriedPdf.name, base64: carriedPdf.sourcePdfBase64!, mime: 'application/pdf' }
+            : null;
       // Multiple loose images with no PDF: stitch them into one PDF so EVERY page
       // is read, not just docFiles[0] (the old bug — pages 2+ were silently dropped).
       if (!pdfFile && docFiles.length > 1) {
@@ -1372,7 +1448,12 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
         // match against branding_logos, that mismatch silently returned no logo
         // on every SUBSEQUENT re-fetch (e.g. re-clicking the Preview tab), which
         // reads school/curriculum from this stored object, not from account state.
-        const quizData = { ...data.quiz, school: user?.school || '', curriculum: effectiveCurriculum, _editMode: false };
+        // Stamp the EXACT file set this quiz was generated from. createAssignment()
+        // re-computes this key from the then-current docFiles and refuses to publish
+        // if it changed — so a quiz can never be published against a different
+        // worksheet than the one it was built from (the Telugu→Math class of bug).
+        const sourceDocKey = docFiles.map(f => f.url || f.name).sort().join('|');
+        const quizData = { ...data.quiz, school: user?.school || '', curriculum: effectiveCurriculum, _editMode: false, _sourceDocKey: sourceDocKey };
         try {
           const previewRes = await fetch(`${SERVER_URL}/quiz/render-preview`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quiz: quizData }) });
           if (previewRes.ok) quizData._previewHTML = await previewRes.text();

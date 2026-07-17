@@ -50,6 +50,7 @@ export interface User {
   accountStatus?: string;
   isPro?: boolean;            // premium subscription — controlled by admin in DB
   mustChangePassword?: boolean; // true for auto-generated student accounts until they set their own password
+  authProvider?: 'google' | 'password'; // login provider ('google' vs 'password')
   // Relationship metadata
   children?: { name: string; grade: string; email: string; curriculum?: string }[];  // for parents
   teaches?: { grade: string; curriculum: string }[];            // for teachers
@@ -396,6 +397,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           role:          storedRole,
           emailVerified,
+          authProvider:  isGoogleProvider ? 'google' : 'password',
         };
 
         const resolvedRole = (supaProfile.role as UserRole) || baseUser.role;
@@ -456,7 +458,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const activeRole: UserRole = isAddingNewRole
           ? _pendingRole
           : (savedActiveRole && validRoles.includes(savedActiveRole) ? savedActiveRole : resolvedRole);
-        const resolvedUser = { ...baseUser, ...savedLocal, ...supaProfile, email, onboardingComplete, emailVerified, role: activeRole, roles: bestRoles };
+        const finalAuthProvider = isGoogleProvider || savedLocal.authProvider === 'google' || supaProfile.authProvider === 'google' ? 'google' : (baseUser.authProvider || 'password');
+        const resolvedUser = { ...baseUser, ...savedLocal, ...supaProfile, email, onboardingComplete, emailVerified, role: activeRole, roles: bestRoles, authProvider: finalAuthProvider };
         setUser(resolvedUser);
 
         // Persist locally
@@ -543,6 +546,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         photoUrl: updated.photoUrl,
         roles: updated.roles,
         mustChangePassword: updated.mustChangePassword,
+        authProvider: updated.authProvider,
       })).catch(() => {});
       fetch(`${SERVER_URL}/user/preferences`, {
         method: 'PATCH',
@@ -593,6 +597,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           accountStatus: updated.accountStatus, avatarStyle: updated.avatarStyle,
           learningStyle: updated.learningStyle, interests: updated.interests, bio: updated.bio,
           photoUrl: updated.photoUrl, roles: updated.roles, mustChangePassword: updated.mustChangePassword,
+          authProvider: updated.authProvider,
         })).catch(() => {});
         return updated;
       });
@@ -909,7 +914,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           onboardingComplete,
           // First-time Google SSO users must verify via Aivorah email before entering
           emailVerified: existingRole ? cred.user.emailVerified : false,
+          authProvider: 'google',
         };
+        setUser(newUser);
+        AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(newUser)).catch(() => {});
 
         // Send Aivorah activation email if not yet verified (covers new users + returning unverified)
         const isAlreadyVerified = profile.accountStatus === 'active';
@@ -920,7 +928,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Sync user to Supabase first so user_preferences row exists for token storage
           await fetch(`${SERVER_URL}/user/sync`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, role: effectiveRole }),
+            body: JSON.stringify({ name, email, role: effectiveRole, authProvider: 'google' }),
           }).catch(() => {});
 
           // Now send the verification email
@@ -943,7 +951,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Google displayName (which ignores in-app renames). Echo the DB name instead.
           fetch(`${SERVER_URL}/user/sync`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, ...(profile.name ? { name: profile.name } : { name }), role: effectiveRole }),
+            body: JSON.stringify({ email, ...(profile.name ? { name: profile.name } : { name }), role: effectiveRole, authProvider: 'google' }),
           }).catch(() => {});
         }
       } catch (error: any) {

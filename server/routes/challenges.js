@@ -241,6 +241,7 @@ router.post('/assign', async (req, res) => {
           title: `New challenge: ${challengeCheck.title}`,
           body: dueDate ? `Due ${new Date(dueDate).toLocaleDateString()}` : 'Tap to view',
           data: { type: 'challenge', challengeId, assignmentId: data.id },
+          prefKey: 'challengeUpdates',
         });
       }
     } catch (_) { /* push is best-effort */ }
@@ -251,7 +252,7 @@ router.post('/assign', async (req, res) => {
   if (dueDate && challenge) {
     const { error: scheduleError } = await supabase.from('schedule_events').insert({
       id:            uuidv4(),
-      title:         `${challenge.title} — Due`,
+      title:         `${challenge.title} — Challenge due`,
       event_date:    dueDate,
       start_time:    '23:59',
       end_time:      '23:59',

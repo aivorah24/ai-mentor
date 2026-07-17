@@ -14,7 +14,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
     "test:e2e:parent": "playwright test e2e/parent-",
-    "vercel-build": "expo export --platform web"
+    "vercel-build": "expo export --platform web",
+    "test:e2e:lifecycle": "playwright test e2e/full-lifecycle.spec.ts"
   },
   "dependencies": {
     "@expo/metro-runtime": "~55.0.6",

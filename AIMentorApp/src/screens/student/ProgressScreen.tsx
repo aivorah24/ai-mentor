@@ -254,7 +254,7 @@ export default function ProgressScreen({ navigation }: any) {
                   const isToday = d.date === new Date().toISOString().split('T')[0];
                   return (
                     <View key={d.date} style={styles.barItem}>
-                      <Text style={[styles.barMinute, isToday && { color: '#9FB2A4' }]}>
+                      <Text style={[styles.barMinute, isToday && { color: colors.accentGreen }]}>
                         {d.studyMinutes > 0 ? `${d.studyMinutes}m` : ''}
                       </Text>
                       <View style={styles.barWrapper}>
@@ -264,7 +264,7 @@ export default function ProgressScreen({ navigation }: any) {
                           isToday && styles.barActive,
                         ]} />
                       </View>
-                      <Text style={[styles.barLabel, isToday && { color: '#9FB2A4', fontWeight: '700' }]}>{d.day}</Text>
+                      <Text style={[styles.barLabel, isToday && { color: colors.accentGreen, fontWeight: '700' }]}>{d.day}</Text>
                     </View>
                   );
                 })}
@@ -318,7 +318,7 @@ export default function ProgressScreen({ navigation }: any) {
               <View style={styles.cardHeader}>
                 <Text style={styles.sectionTitle}>Completed Topics</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('LearningPaths')} activeOpacity={0.7}>
-                  <Text style={[styles.seeAll, { color: '#9FB2A4' }]}>See all →</Text>
+                  <Text style={[styles.seeAll, { color: colors.accentGreen }]}>See all →</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.topicsList}>
