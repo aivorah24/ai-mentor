@@ -255,6 +255,44 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ── Option cleaner helper for quiz options ───────────────────────────
+function normalizeQuizQuestions(questions) {
+  if (!Array.isArray(questions)) return [];
+  const LETTER_MAP = { A: 0, B: 1, C: 2, D: 3 };
+  return questions.map(q => {
+    if (!q || typeof q !== 'object') return q;
+    let opts = Array.isArray(q.options) ? q.options.map(o => typeof o === 'string' ? o : (o?.label || String(o || ''))) : [];
+    let correct = typeof q.correct === 'number' ? q.correct : (LETTER_MAP[String(q.correct || '').toUpperCase()] ?? 0);
+
+    // If options array has 6 or 8 items and even indices are just letter badges ("A", "B", "C", "D", "a)", "[A]"), extract the odd indices
+    if (opts.length === 6 || opts.length === 8) {
+      const allEvenLetters = opts.every((opt, i) => {
+        if (i % 2 !== 0) return true;
+        const s = String(opt || '').trim();
+        return /^[A-Da-d0-4][.)\]]?$/.test(s) || /^\[[A-Da-d0-4]\]$/.test(s);
+      });
+      if (allEvenLetters) {
+        const extracted = [];
+        for (let i = 1; i < opts.length; i += 2) {
+          extracted.push(opts[i]);
+        }
+        opts = extracted;
+        if (correct >= opts.length) correct = Math.floor(correct / 2);
+      }
+    }
+
+    // Strip leading prefixes like "A. ", "a) ", "A - ", "[A] ", "1. " from option strings
+    const cleaned = opts.map(opt => String(opt || '').replace(/^\[?[A-Da-d0-4]\]?[.)\-:]?\s*/, '').trim()).filter(Boolean);
+
+    return {
+      ...q,
+      question: q.question || '',
+      options: cleaned.length > 0 ? cleaned : opts,
+      correct: Math.min(Math.max(0, correct), Math.max(0, (cleaned.length || opts.length) - 1)),
+    };
+  });
+}
+
 // ── POST /daily-tidbit/quiz ──────────────────────────────────────────
 // Generate 2 MCQ comprehension questions from a current affairs article
 router.post('/quiz', async (req, res) => {
@@ -272,7 +310,7 @@ router.post('/quiz', async (req, res) => {
 Based on the news article, create exactly 2 multiple-choice questions to test reading comprehension.
 Each question must have 4 short options with exactly one correct answer.
 Respond ONLY with a valid JSON array — no markdown, no explanation:
-[{"question":"...","options":["A","B","C","D"],"correct":0},{"question":"...","options":["A","B","C","D"],"correct":2}]
+[{"question":"...","options":["First choice","Second choice","Third choice","Fourth choice"],"correct":0},{"question":"...","options":["First choice","Second choice","Third choice","Fourth choice"],"correct":2}]
 (correct is the 0-based index of the right option)`,
         },
         { role: 'user', content: `Article headline: ${headline}\nSummary: ${summary}` },
@@ -283,7 +321,7 @@ Respond ONLY with a valid JSON array — no markdown, no explanation:
 
     const raw   = resp.choices[0].message.content.trim();
     const clean = raw.replace(/```json\n?/g, '').replace(/```/g, '').trim();
-    const questions = JSON.parse(clean);
+    const questions = normalizeQuizQuestions(JSON.parse(clean));
     res.json({ questions });
   } catch (e) {
     console.error('[daily-tidbit/quiz]', e.message);

@@ -159,7 +159,7 @@ router.get('/notifications-summary', async (req, res) => {
     let userId = null, studentCurriculum = null, studentGrade = null, studentSchool = null, userRole = null;
     const { data: uRow } = await supabase
       .from('users')
-      .select('id, curriculum, grade, school, role')
+      .select('id, curriculum, grade, school, role, created_at')
       .eq('email', userEmail)
       .maybeSingle();
     if (uRow) {
@@ -171,6 +171,24 @@ router.get('/notifications-summary', async (req, res) => {
     } else if (studentId && !studentId.includes('@')) {
       userId = studentId;
     }
+
+    // ── Registration cap (Google Classroom / Canvas model): the Bell must never
+    // surface an alert for something created BEFORE this account existed. A
+    // brand-new signup lands on the dashboard with the client's default 7-day
+    // lookback and would otherwise see a week of pre-existing class broadcasts.
+    // Cap every "since" below at the LATER of the client's value and the user's
+    // own registration timestamp. (The Assignments screen is untouched — it
+    // shows full due workload regardless of when the account was created.)
+    const userCreatedAtMs = uRow?.created_at && Number.isFinite(Date.parse(uRow.created_at))
+      ? Date.parse(uRow.created_at) : 0;
+    function capSince(clientSinceIso) {
+      const clientMs = clientSinceIso && Number.isFinite(Date.parse(clientSinceIso)) ? Date.parse(clientSinceIso) : 0;
+      const effectiveMs = Math.max(clientMs, userCreatedAtMs);
+      return effectiveMs > 0 ? new Date(effectiveMs).toISOString() : null;
+    }
+    const effectiveSince          = capSince(since);
+    const effectiveChallengeSince = capSince(challengeSince);
+    const effectiveEventSince     = capSince(eventSince);
 
     // 1. Real chat messages (unread) — students have no Messages, so this is 0 for them
     const msgQ = supabase
@@ -206,7 +224,7 @@ router.get('/notifications-summary', async (req, res) => {
         .eq('student_id', userId)
         .order('created_at', { ascending: false })
         .limit(10);
-      if (since) personalAssignQ = personalAssignQ.gt('created_at', since);
+      if (effectiveSince) personalAssignQ = personalAssignQ.gt('created_at', effectiveSince);
 
       classAssignQ = supabase
         .from('assignments')
@@ -222,7 +240,7 @@ router.get('/notifications-summary', async (req, res) => {
         ? classAssignQ.or(`curriculum.is.null,curriculum.eq."${studentCurriculum}"`)
         : classAssignQ.is('curriculum', null);
       if (studentGrade) classAssignQ = classAssignQ.or(`grade.is.null,grade.eq."${studentGrade}"`);
-      if (since)        classAssignQ = classAssignQ.gt('created_at', since);
+      if (effectiveSince) classAssignQ = classAssignQ.gt('created_at', effectiveSince);
       // Teacher broadcasts only from this student's own teachers; non-teacher
       // (admin/school) broadcasts stay curriculum-wide.
       classAssignQ = studentTeacherIds.length > 0
@@ -240,7 +258,7 @@ router.get('/notifications-summary', async (req, res) => {
         .neq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(10);
-      if (challengeSince) challengeQ = challengeQ.gt('created_at', challengeSince);
+      if (effectiveChallengeSince) challengeQ = challengeQ.gt('created_at', effectiveChallengeSince);
     }
 
     // 4. New schedule events created FOR this student by a teacher or parent.
@@ -254,15 +272,29 @@ router.get('/notifications-summary', async (req, res) => {
         .in('created_by', ['teacher', 'parent'])
         .order('created_at', { ascending: false })
         .limit(10);
-      if (eventSince) eventQ = eventQ.gt('created_at', eventSince);
+      if (effectiveEventSince) eventQ = eventQ.gt('created_at', effectiveEventSince);
     }
 
-    const [msgRes, personalAssignRes, classAssignRes, challengeRes, eventRes] = await Promise.all([
+    // 5. New daily tasks a PARENT assigned to this student. Previously these landed
+    //    silently — the student got no bell alert (unlike challenges/assignments).
+    let taskQ = null;
+    if (isStudent && userId) {
+      taskQ = supabase
+        .from('parent_daily_tasks')
+        .select('id, label, created_at')
+        .eq('child_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (effectiveEventSince) taskQ = taskQ.gt('created_at', effectiveEventSince);
+    }
+
+    const [msgRes, personalAssignRes, classAssignRes, challengeRes, eventRes, taskRes] = await Promise.all([
       msgQ,
       personalAssignQ || Promise.resolve({ data: [] }),
       classAssignQ    || Promise.resolve({ data: [] }),
       challengeQ      || Promise.resolve({ data: [] }),
       eventQ          || Promise.resolve({ data: [] }),
+      taskQ           || Promise.resolve({ data: [] }),
     ]);
 
     // Split incoming messages: real chat vs system notifications (assignment/challenge alerts)
@@ -279,8 +311,14 @@ router.get('/notifications-summary', async (req, res) => {
 
     // For parents: system-prefix messages in their inbox are assignment/challenge alerts
     // inserted by the assignments route when a teacher assigns to their child.
+    // Registration cap applies here too: msgQ has no time filter at all (it's
+    // unread-only), so without this a parent whose account predates a backfilled/
+    // migrated system message could still see a pre-registration alert. Same
+    // Google Classroom / Canvas rule as the assignment/challenge/event queries above.
     const isParent = userRole === 'parent';
-    const parentSystemMsgs = isParent ? rawMsgs.filter(m => isSystemNotification(m.content)) : [];
+    const parentSystemMsgs = isParent
+      ? rawMsgs.filter(m => isSystemNotification(m.content) && (!userCreatedAtMs || Date.parse(m.created_at) > userCreatedAtMs))
+      : [];
     const parentAssignMsgs = parentSystemMsgs.filter(m => {
       const c = stripChildPrefix(m.content);
       return c.startsWith('New Assignment assigned:') || c.startsWith('New Quiz assigned:');
@@ -395,6 +433,10 @@ router.get('/notifications-summary', async (req, res) => {
       : eventRows.map(e => ({
           id:         'evt_' + e.id,
           type:       'event',
+          // Preserve the source schedule type ('challenge' | 'deadline' | 'study' …)
+          // so the client can gate a challenge's due-date event under the Challenge
+          // Updates toggle instead of Assignment Alerts.
+          srcType:    e.type || null,
           title:      e.title || 'New Event',
           subtitle:   [e.event_date, e.note].filter(Boolean).join(' · '),
           senderName: e.created_by === 'parent' ? 'Your parent' : 'Your teacher',
@@ -417,11 +459,23 @@ router.get('/notifications-summary', async (req, res) => {
       };
     });
 
-    const notificationItems = [...assignmentItems, ...challengeItems, ...eventItems, ...portfolioItems]
+    // Parent-assigned daily tasks (students only). Counted alongside events so the
+    // bell respects the same Assignment Alerts toggle.
+    const taskRows = isParent ? [] : (taskRes.data || []);
+    const taskItems = taskRows.map(t => ({
+      id:         'task_' + t.id,
+      type:       'task',
+      title:      'New daily task',
+      subtitle:   [t.label, 'from your parent'].filter(Boolean).join(' · '),
+      senderName: 'Your parent',
+      createdAt:  t.created_at,
+    }));
+
+    const notificationItems = [...assignmentItems, ...challengeItems, ...eventItems, ...taskItems, ...portfolioItems]
       .sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0))
       .slice(0, 10);
 
-    res.json({ messages: msgCount, assignments: assignCount, challenges: challengeCount, events: eventCount + portfolioItems.length, latest, notificationItems });
+    res.json({ messages: msgCount, assignments: assignCount, challenges: challengeCount, events: eventCount + portfolioItems.length + taskItems.length, latest, notificationItems });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

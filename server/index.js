@@ -260,12 +260,33 @@ if (QUEUE_DRIVER === 'kafka') {
 }
 server.setTimeout(600000);
 
-// The server died silently (exit 255, no log) during a quiz upload — make any future
-// crash leave a reason in the log instead of vanishing.
-process.on('uncaughtException', (err) => {
-  console.error('[FATAL] uncaughtException:', err && err.stack || err);
-  process.exit(1);
-});
+// ── Graceful Shutdown & Fatal Error Trapping ────────────────────────────────
+let isShuttingDown = false;
+function gracefulShutdown(signal, err = null) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  if (err) {
+    console.error(`[FATAL] ${signal} triggered due to error:`, err && err.stack || err);
+  } else {
+    console.log(`\n[Server] Received ${signal}. Starting graceful shutdown...`);
+  }
+  server.close(() => {
+    console.log('[Server] HTTP server closed cleanly. Port released.');
+    process.exit(err ? 1 : 0);
+  });
+  // Force-exit backstop if connections don't drain in time. MUST have an explicit
+  // delay — setTimeout() with no delay fires at ~0ms and would force-exit
+  // immediately every time, defeating the graceful drain. 9s keeps us just under
+  // Cloud Run's default 10s SIGTERM→SIGKILL grace window so we log cleanly first.
+  setTimeout(() => {
+    console.error('[Server] Could not close connections in time. Forcing exit.');
+    process.exit(err ? 1 : 0);
+  }, 9000).unref();
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('uncaughtException', (err) => gracefulShutdown('uncaughtException', err));
 process.on('unhandledRejection', (reason) => {
   console.error('[FATAL] unhandledRejection:', reason && reason.stack || reason);
 });

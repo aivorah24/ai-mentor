@@ -1,6 +1,7 @@
 const express  = require('express');
 const router   = express.Router();
 const supabase = require('../services/supabase');
+const { sendPush } = require('../services/push');
 
 const STREAK_BONUS_DAYS  = 100;
 const STREAK_BONUS_COINS = 20;
@@ -243,6 +244,23 @@ router.post('/parent-tasks', async (req, res) => {
     const { data, error } = await supabase.from('parent_daily_tasks').insert({ parent_email: parentEmail, child_id: childId, label: label.trim(), icon, coins }).select().single();
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
+
+    // Notify the child that a new daily task arrived — same bell + push treatment
+    // as challenges/assignments. Previously a parent-assigned task landed silently,
+    // so the student never knew. Best-effort (non-blocking; never fails the create).
+    (async () => {
+      try {
+        const { data: child } = await supabase.from('users').select('email').eq('id', childId).maybeSingle();
+        if (child?.email) {
+          await sendPush(child.email, {
+            title: 'New daily task',
+            body: `Your parent added: ${label.trim()}`,
+            data: { type: 'task' },
+            prefKey: 'assignmentAlerts',
+          });
+        }
+      } catch (_) { /* best-effort */ }
+    })();
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

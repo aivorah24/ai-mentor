@@ -18,7 +18,9 @@
     "video:chapter:package": "node scripts/build-canva-chapter-package.js",
     "video:chapter:g3:living": "node scripts/build-canva-chapter-package.js --lesson science_g3_living_non_living_script.json",
     "canva:oauth": "node scripts/canva-oauth.js",
-    "test": "jest --verbose"
+    "test": "jest --verbose",
+    "seed:e2e": "node scripts/seed-e2e-accounts.js",
+    "seed:e2e:clean": "node scripts/seed-e2e-accounts.js --cleanup"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",

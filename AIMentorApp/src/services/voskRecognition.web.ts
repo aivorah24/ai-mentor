@@ -55,18 +55,34 @@ export async function loadVoskModel(modelUrl: string = DEFAULT_MODEL_URL): Promi
   }
 }
 
-// Build a Vosk grammar from the passage so recognition is constrained to the
-// words that actually appear in it (plus [unk] to absorb everything else).
+// Build a Vosk grammar from the passage plus common English distractors/substitutes
+// so recognition is constrained cleanly without forcing substituted words to snap to passage words.
 function buildGrammar(grammarWords: string[]): string {
+  const COMMON_DISTRACTORS = [
+    "sometimes", "something", "someone", "somewhere", "everyday", "everyone", "everything", "everywhere",
+    "went", "want", "what", "when", "where", "were", "three", "there", "their", "them", "then", "they",
+    "this", "that", "look", "took", "book", "good", "food", "make", "made", "came", "come", "time",
+    "some", "same", "read", "red", "said", "see", "saw", "house", "horse", "play", "place", "people",
+    "water", "world", "word", "work", "little", "large", "long", "like", "live", "love", "know", "new",
+    "now", "own", "one", "two", "too", "for", "from", "first", "find", "give", "get", "go", "going",
+    "have", "has", "had", "here", "hear", "how", "just", "much", "many", "most", "more", "may", "my",
+    "out", "our", "other", "only", "or", "on", "in", "up", "upon", "over", "under", "around", "about",
+    "before", "after", "again", "against", "also", "any", "ask", "away", "because", "between", "both",
+    "by", "call", "could", "would", "should", "can", "did", "does", "down", "each", "even", "every",
+    "feel", "few", "great", "help", "her", "his", "him", "into", "its", "keep", "kind", "let", "life",
+    "man", "men", "might", "never", "next", "night", "old", "part", "put", "right", "say", "she", "he",
+    "so", "still", "take", "tell", "than", "think", "thought", "through", "together", "try", "turn",
+    "us", "use", "very", "way", "well", "which", "while", "who", "why", "will", "with", "year", "you", "your",
+    "morning", "evening", "afternoon", "butterflies", "caterpillar", "sunflower", "beautiful", "different",
+    "important", "animal", "animals", "children", "child", "school", "friend", "friends", "family", "story"
+  ];
   const unique = Array.from(
     new Set(
-      grammarWords
+      [...grammarWords, ...COMMON_DISTRACTORS]
         .map((w) => w.toLowerCase().replace(/[^a-z']/g, ''))
         .filter((w) => w.length > 0)
     )
   );
-  // "[unk]" lets the recognizer emit an unknown token for anything off-script
-  // instead of forcing a wrong in-grammar match.
   return JSON.stringify([...unique, '[unk]']);
 }
 
@@ -102,12 +118,8 @@ export async function startVoskRecognition(opts: {
     };
 
     // Confidence threshold below which a grammar-forced word is treated as a
-    // likely mispronunciation rather than a clean match. Grammar-constrained
-    // decoding ALWAYS snaps to the nearest in-grammar word — it can't say "I
-    // don't know" — so `[unk]` alone misses most real mispronunciations. Final
-    // results (with `setWords(true)`) carry per-word acoustic confidence; a
-    // low-confidence word is the actual mispronunciation signal Read Along uses.
-    const LOW_CONF_THRESHOLD = 0.45;
+    // likely mispronunciation rather than a clean match.
+    const LOW_CONF_THRESHOLD = 0.60;
 
     // Final results carry per-word confidence (`result.result[].conf`) — swap
     // any low-confidence word for the ⍰ sentinel so the matcher flags it as

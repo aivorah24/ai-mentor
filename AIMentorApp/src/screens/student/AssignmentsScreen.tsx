@@ -29,6 +29,7 @@ import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
+import { getAnsweredQuizHtml } from '../../utils/answeredQuizHtml';
 import { useTheme } from '../../context/ThemeContext';
 import { useStudentData } from '../../context/StudentDataContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -624,7 +625,7 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                     <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#9FB2A420', alignItems: 'center', justifyContent: 'center' }}>
                       <Feather name="check-circle" size={15} color="#9FB2A4" />
                     </View>
-                    <Text style={{ fontSize: 14, fontWeight: '800', color: '#9FB2A4' }}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accentGreen }}>
                       Questions You Got Right ({result.perQuestion.filter((q: any) => q?.correct).length})
                     </Text>
                   </View>
@@ -638,8 +639,8 @@ function QuizModal({ assignment, colors, onClose, onSubmitted }: {
                           <Text style={styles.qText}>{q.question}</Text>
                           {q.studentAnswer ? (
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, padding: 8, borderRadius: 8, backgroundColor: colors.bgDark }}>
-                              <Text style={{ fontSize: 11, fontWeight: '800', color: '#9FB2A4', width: 90, letterSpacing: 0.3 }}>Your answer</Text>
-                              <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#9FB2A4' }}>{q.studentAnswer}</Text>
+                              <Text style={{ fontSize: 11, fontWeight: '800', color: colors.accentGreen, width: 90, letterSpacing: 0.3 }}>Your answer</Text>
+                              <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: colors.accentGreen }}>{q.studentAnswer}</Text>
                             </View>
                           ) : null}
                         </View>
@@ -2534,8 +2535,9 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
                           onChangeText={(t) => setTextAnswers(prev => prev.map((v, i) => i === qi ? t : v))}
                           multiline
                         />
-                        {/* Optional photo upload */}
-                        {questionPhotos[qi]?.preview ? (
+                        {/* Optional photo upload — hidden for parent-created
+                            assignments (simple typed Q&A; no image-based answering). */}
+                        {assignment.createdBy !== 'parent' && (questionPhotos[qi]?.preview ? (
                           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
                             <Image source={{ uri: questionPhotos[qi].preview! }} style={{ width: 60, height: 60, borderRadius: 8 }} resizeMode="cover" />
                             <TouchableOpacity onPress={() => {
@@ -2581,7 +2583,7 @@ function SubmissionModal({ assignment, colors, onClose, onSubmitted }: {
                             <Feather name="camera" size={13} color={color} />
                             <Text style={{ fontSize: 11, color, fontWeight: '600' }}>Upload photo answer</Text>
                           </TouchableOpacity>
-                        )}
+                        ))}
                       </View>
                     </View>
                   );
@@ -3529,12 +3531,16 @@ export default function AssignmentsScreen({ navigation, route }: any) {
             pq = Array.isArray(parsed.perQuestion) ? parsed.perQuestion : [];
             teacherFb = parsed.teacherFeedback || '';
           } catch { feedbackText = a.aiFeedback || ''; }
+          // Interactive quizzes store answers in submission_text (surfaced as
+          // a.perQuestion by the server), not ai_feedback — prefer that.
+          if ((a as any).perQuestion?.length) pq = (a as any).perQuestion;
           const stampData = getStamp(a.score);
           return (
-            <Modal visible animationType="slide" transparent onRequestClose={() => setViewingResult(null)}>
-              <View style={{ flex: 1, backgroundColor: colors.bgDark }}>
+            <Modal visible animationType="fade" transparent onRequestClose={() => setViewingResult(null)}>
+              <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 16 }}>
+               <View style={{ backgroundColor: colors.bgDark, borderRadius: 18, maxHeight: '92%', width: '100%', maxWidth: 820, borderWidth: 1, borderColor: colors.borderColor, overflow: 'hidden' }}>
                 {/* Header */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: colors.borderColor, gap: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: colors.borderColor, gap: 12 }}>
                   <View style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: sc + '20', alignItems: 'center', justifyContent: 'center' }}>
                     <Feather name={(SUBJECT_ICON[a.subject] ?? 'book-open') as any} size={18} color={sc} />
                   </View>
@@ -3547,14 +3553,15 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                   </TouchableOpacity>
                 </View>
 
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, gap: 16, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
-                  {/* Score badge */}
-                  <View style={{ alignItems: 'center', padding: 28, borderRadius: 20, backgroundColor: sc + '10', borderWidth: 1, borderColor: sc + '25' }}>
-                    <Text style={{ fontSize: 56, fontWeight: '900', color: sc, letterSpacing: -2 }}>{a.score ?? 0}%</Text>
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 14, gap: 10, maxWidth: 720, alignSelf: 'center', width: '100%' }}>
+                  {/* Score badge — use accentYellow (readable in both themes) for the
+                       number/stamp; pale subject colours wash out on the cream bg. */}
+                  <View style={{ alignItems: 'center', padding: 14, borderRadius: 14, backgroundColor: colors.accentYellow + '12', borderWidth: 1, borderColor: colors.accentYellow + '30' }}>
+                    <Text style={{ fontSize: 40, fontWeight: '900', color: colors.accentYellow, letterSpacing: -1.5 }}>{a.score ?? 0}%</Text>
                     {stampData && (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                        <Feather name={stampData.icon as any} size={18} color={stampData.color} />
-                        <Text style={{ fontSize: 15, fontWeight: '700', color: sc }}>{stampData.label}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                        <Feather name={stampData.icon as any} size={16} color={stampData.color} />
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.accentYellow }}>{stampData.label}</Text>
                       </View>
                     )}
                   </View>
@@ -3564,6 +3571,45 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                     <View style={{ backgroundColor: colors.cardDark, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colors.borderColor, gap: 6 }}>
                       <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8 }}>AI Feedback</Text>
                       <Text style={{ fontSize: 14, color: colors.textMain, lineHeight: 22 }}>{feedbackText}</Text>
+                    </View>
+                  ) : null}
+
+                  {/* ── Submitted worksheet (interactive quizzes) — the same answered
+                       view the teacher sees: the student's answers filled in and
+                       colour-marked. Shown only when there's an interactive quiz +
+                       recorded per-question answers. */}
+                  {a.interactiveQuizHtml && pq.length > 0 ? (
+                    <View style={{ gap: 8 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8 }}>Your Submitted Worksheet</Text>
+                      <View style={{ height: 520, borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: colors.borderColor, backgroundColor: '#0F0F0F' }}>
+                        {Platform.OS === 'web' ? (
+                          <View
+                            style={{ flex: 1 } as any}
+                            ref={(el: any) => {
+                              if (el && !(el as any)._answered) {
+                                (el as any)._answered = true;
+                                const answered = getAnsweredQuizHtml(a.interactiveQuizHtml!, { perQuestion: pq });
+                                const blob = new Blob([answered], { type: 'text/html' });
+                                const url = URL.createObjectURL(blob);
+                                const f = document.createElement('iframe');
+                                f.src = url;
+                                f.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+                                f.title = 'Submitted Worksheet';
+                                f.onload = () => URL.revokeObjectURL(url);
+                                el.appendChild(f);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <WebView
+                            source={{ html: getAnsweredQuizHtml(a.interactiveQuizHtml!, { perQuestion: pq }) }}
+                            style={{ flex: 1, backgroundColor: '#0F0F0F' }}
+                            originWhitelist={['*']}
+                            javaScriptEnabled
+                            domStorageEnabled
+                          />
+                        )}
+                      </View>
                     </View>
                   ) : null}
 
@@ -3591,14 +3637,16 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                     </View>
                   ) : null}
 
-                  {/* ── Questions You Got Right ── */}
-                  {pq.filter((q: any) => q.correct).length > 0 && (
+                  {/* ── Questions You Got Right ── (hidden for interactive quizzes —
+                       those have no per-question text; the submitted worksheet above
+                       already shows every answer marked). */}
+                  {!a.interactiveQuizHtml && pq.filter((q: any) => q.correct).length > 0 && (
                     <View style={{ gap: 8 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#9FB2A420', alignItems: 'center', justifyContent: 'center' }}>
                           <Feather name="check-circle" size={15} color="#9FB2A4" />
                         </View>
-                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#9FB2A4' }}>
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accentGreen }}>
                           Questions You Got Right ({pq.filter((q: any) => q.correct).length})
                         </Text>
                       </View>
@@ -3612,8 +3660,8 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                           </View>
                           {q.studentAnswer ? (
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 8, borderRadius: 8, backgroundColor: colors.bgDark, marginLeft: 32 }}>
-                              <Text style={{ fontSize: 11, fontWeight: '800', color: '#9FB2A4', width: 90 }}>Your answer</Text>
-                              <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: '#9FB2A4' }}>{q.studentAnswer}</Text>
+                              <Text style={{ fontSize: 11, fontWeight: '800', color: colors.accentGreen, width: 90 }}>Your answer</Text>
+                              <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: colors.accentGreen }}>{q.studentAnswer}</Text>
                             </View>
                           ) : null}
                         </View>
@@ -3621,8 +3669,8 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                     </View>
                   )}
 
-                  {/* ── Questions You Got Wrong ── */}
-                  {pq.filter((q: any) => !q.correct && q.answered).length > 0 && (
+                  {/* ── Questions You Got Wrong ── (also hidden for interactive quizzes) */}
+                  {!a.interactiveQuizHtml && pq.filter((q: any) => !q.correct && q.answered).length > 0 && (
                     <View style={{ gap: 8 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: '#C5BD9620', alignItems: 'center', justifyContent: 'center' }}>
@@ -3686,13 +3734,13 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                                   {exp.steps.map((step: string, si: number) => (
                                     <View key={si} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
                                       <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.bgDark, alignItems: 'center', justifyContent: 'center' }}>
-                                        <Text style={{ fontSize: 10, fontWeight: '800', color: '#9FB2A4' }}>{si + 1}</Text>
+                                        <Text style={{ fontSize: 10, fontWeight: '800', color: colors.accentGreen }}>{si + 1}</Text>
                                       </View>
                                       <Text style={{ flex: 1, fontSize: 12, color: colors.textMain, lineHeight: 18 }}>{step.replace(/^Step \d+:\s*/i, '')}</Text>
                                     </View>
                                   ))}
                                   {exp.tip ? (
-                                    <Text style={{ fontSize: 12, color: '#9FB2A4', fontStyle: 'italic', lineHeight: 18 }}>{exp.tip}</Text>
+                                    <Text style={{ fontSize: 12, color: colors.accentGreen, fontStyle: 'italic', lineHeight: 18 }}>{exp.tip}</Text>
                                   ) : null}
                                 </View>
                               ) : (
@@ -3733,6 +3781,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                     <View style={{ flex: 1 }} />
                   </View>
                 </ScrollView>
+               </View>
               </View>
             </Modal>
           );

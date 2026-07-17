@@ -30,11 +30,41 @@ async function getTokensForEmails(emails) {
   }
 }
 
+// Filter out recipients who have opted out of a given notification category
+// (assignmentAlerts / challengeUpdates), matching the same preference the
+// in-app bell already respects (NotificationContext.tsx). Defaults to allowed
+// when the preference was never set, so existing users see no behavior change.
+async function filterByPreference(emails, prefKey) {
+  const list = (Array.isArray(emails) ? emails : [emails])
+    .filter(Boolean)
+    .map((e) => String(e).toLowerCase().trim());
+  if (!prefKey || list.length === 0) return list;
+  try {
+    const { data } = await supabase
+      .from('user_preferences')
+      .select('user_email, data')
+      .in('user_email', list);
+    const optedOut = new Set(
+      (data ?? [])
+        .filter((row) => row?.data?.[prefKey] === false)
+        .map((row) => String(row.user_email).toLowerCase().trim())
+    );
+    return list.filter((e) => !optedOut.has(e));
+  } catch (err) {
+    console.error('[push] filterByPreference:', err?.message);
+    return list; // fail open — a lookup error shouldn't block a real notification
+  }
+}
+
 // Send a push to one or more users (by email). title/body required; data optional
 // (used for deep-linking to a screen when the user taps the notification).
-async function sendPush(emails, { title, body, data } = {}) {
+// Pass prefKey ('assignmentAlerts' | 'challengeUpdates') to skip recipients who
+// have that notification category turned off in Settings.
+async function sendPush(emails, { title, body, data, prefKey } = {}) {
   try {
-    const tokens = await getTokensForEmails(emails);
+    const allowedEmails = await filterByPreference(emails, prefKey);
+    if (allowedEmails.length === 0) return { sent: 0 };
+    const tokens = await getTokensForEmails(allowedEmails);
     if (tokens.length === 0) return { sent: 0 };
 
     const messages = tokens.map((to) => ({

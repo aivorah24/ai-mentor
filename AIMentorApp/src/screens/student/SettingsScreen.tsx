@@ -17,11 +17,13 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import { useAuth } from '../../context/AuthContext';
+import { getAvatarGradient, getAvatarIcon } from '../../constants/avatarStyles';
 import { useStudentData, formatLevel } from '../../context/StudentDataContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -37,11 +39,11 @@ import {
 import { auth } from '../../config/firebase';
 import SERVER_URL from '../../config/serverUrl';
 
-type ModalType = 'name' | 'email' | 'password' | 'recovery' | 'delete' | 'grade' | 'location' | null;
+type ModalType = 'name' | 'email' | 'password' | 'recovery' | 'delete' | 'grade' | 'location' | 'ssoInfo' | null;
 
 export default function SettingsScreen({ navigation, route }: any) {
   const { user, updateUser, logout, refreshProfile } = useAuth();
-  const { triggerPoll, clearUnreadAssignments, clearUnreadChallenges } = useNotification();
+  const { triggerPoll, clearUnreadAssignments, clearUnreadChallenges, muteCategory } = useNotification();
   // Profile photo — same upload flow as the student profile/teacher/parent (shared).
   const [photoUrl,  setPhotoUrl]  = useState<string | null>((user as any)?.photoUrl ?? null);
   const [uploading, setUploading] = useState(false);
@@ -446,8 +448,8 @@ export default function SettingsScreen({ navigation, route }: any) {
   const [deleteError, setDeleteError] = useState('');
 
   // Does this account sign in with email+password, or only via Google SSO?
-  const isPasswordUser = (auth.currentUser?.providerData ?? []).some(p => p.providerId === 'password');
-  const isGoogleUser   = (auth.currentUser?.providerData ?? []).some(p => p.providerId === 'google.com');
+  const isGoogleUser   = user?.authProvider === 'google' || (auth.currentUser?.providerData ?? []).some(p => p.providerId === 'google.com');
+  const isPasswordUser = !isGoogleUser;
 
   async function confirmDeleteAccount() {
     setDeleteError('');
@@ -513,9 +515,19 @@ export default function SettingsScreen({ navigation, route }: any) {
           <View style={styles.card}>
             <View style={styles.profileRow}>
               <TouchableOpacity style={styles.avatarBig} onPress={handlePickPhoto} activeOpacity={0.85}>
-                {photoUrl
-                  ? <Image source={{ uri: photoUrl }} style={{ width: '100%', height: '100%', borderRadius: 32 }} />
-                  : <Feather name="user" size={30} color={colors.textMuted} />}
+                {photoUrl ? (
+                  <Image source={{ uri: photoUrl }} style={{ width: '100%', height: '100%', borderRadius: 32 }} />
+                ) : (user as any)?.avatarStyle ? (
+                  <LinearGradient
+                    colors={getAvatarGradient((user as any).avatarStyle)}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    style={{ width: '100%', height: '100%', borderRadius: 32, alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <Feather name={getAvatarIcon((user as any).avatarStyle) as any} size={28} color="white" />
+                  </LinearGradient>
+                ) : (
+                  <Feather name="user" size={30} color={colors.textMuted} />
+                )}
                 <View style={styles.avatarCam}>
                   {uploading ? <ActivityIndicator size="small" color={colors.accentYellow} /> : <Feather name="camera" size={11} color={colors.accentYellow} />}
                 </View>
@@ -587,10 +599,10 @@ export default function SettingsScreen({ navigation, route }: any) {
           <SectionHeader icon="shield" label="Security" color={colors.accentGreen} styles={styles} />
           <View style={styles.card}>
             {[
-              { icon: 'lock', label: 'Password', sub: 'Change your account password', btn: 'Change', onPress: () => openModal('password') },
+              { icon: 'lock', label: 'Password', sub: isPasswordUser ? 'Change your account password' : 'Managed via Google Sign-In', btn: isPasswordUser ? 'Change' : 'Google SSO', badgeOnly: !isPasswordUser, onPress: isPasswordUser ? () => openModal('password') : () => openModal('ssoInfo') },
               { icon: 'mail', label: 'Recovery Email', sub: recoverySaved || 'Backup email for account recovery', btn: recoverySaved ? 'Update' : 'Set', onPress: () => openModal('recovery') },
               { icon: 'shield', label: 'Two-Factor Auth', sub: 'Add an extra layer of security', btn: 'Soon', onPress: null },
-            ].map((r, i) => (
+            ].map((r: any, i) => (
               <View key={r.label}>
                 {i > 0 && <View style={styles.rowDivider} />}
                 <View style={styles.iconRow}>
@@ -599,7 +611,11 @@ export default function SettingsScreen({ navigation, route }: any) {
                     <Text style={styles.fieldLabel}>{r.label}</Text>
                     <Text style={styles.fieldSub}>{r.sub}</Text>
                   </View>
-                  {r.onPress ? (
+                  {r.badgeOnly ? (
+                    <TouchableOpacity style={[styles.editBtn, { borderColor: colors.accentYellow + '50', backgroundColor: colors.accentYellow + '14' }]} onPress={r.onPress} activeOpacity={0.7}>
+                      <Text style={[styles.editBtnText, { color: colors.accentYellow }]}>{r.btn}</Text>
+                    </TouchableOpacity>
+                  ) : r.onPress ? (
                     <TouchableOpacity style={styles.editBtn} onPress={r.onPress} activeOpacity={0.7}>
                       <Text style={styles.editBtnText}>{r.btn}</Text>
                     </TouchableOpacity>
@@ -641,6 +657,8 @@ export default function SettingsScreen({ navigation, route }: any) {
                         // those notifications don't replay — only new ones appear.
                         if (v && item.key === 'assignmentAlerts') clearUnreadAssignments();
                         if (v && item.key === 'challengeUpdates') clearUnreadChallenges();
+                        // Turning OFF: instantly purge already-shown items for this category.
+                        if (!v && (item.key === 'assignmentAlerts' || item.key === 'challengeUpdates')) muteCategory(item.key);
                       }}
                       trackColor={{ false: colors.borderColor, true: colors.accentYellow }}
                       thumbColor="white"
@@ -793,8 +811,30 @@ export default function SettingsScreen({ navigation, route }: any) {
         )}
       </AppModal>
 
+      {/* ── Google SSO Info Modal ── */}
+      <AppModal visible={activeModal === 'ssoInfo' || (activeModal === 'password' && !isPasswordUser)} title="Google Sign-In Account" onClose={closeModal} styles={styles} colors={colors}>
+        <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+          <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accentYellow + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+            <Feather name="shield" size={24} color={colors.accentYellow} />
+          </View>
+          <Text style={{ fontSize: 15, fontWeight: '700', color: colors.textMain, textAlign: 'center', marginBottom: 8 }}>
+            Managed via Google Sign-In
+          </Text>
+          <Text style={{ fontSize: 13, color: colors.textDim, textAlign: 'center', lineHeight: 20, marginBottom: 16 }}>
+            You signed into Aivorah securely using your Google Account. Your password and account security are protected by Google. To change your password or security settings, please visit your Google Account Security settings (myaccount.google.com).
+          </Text>
+          <TouchableOpacity
+            style={[styles.modalSaveBtn, { width: '100%', marginTop: 8 }]}
+            onPress={closeModal}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.modalSaveText}>Understood</Text>
+          </TouchableOpacity>
+        </View>
+      </AppModal>
+
       {/* ── Change Password Modal ── */}
-      <AppModal visible={activeModal === 'password'} title="Change Password" onClose={closeModal} styles={styles} colors={colors}>
+      <AppModal visible={activeModal === 'password' && isPasswordUser} title="Change Password" onClose={closeModal} styles={styles} colors={colors}>
         <Text style={styles.modalFieldLabel}>Current Password</Text>
         <View style={styles.modalInput}>
           <Feather name="lock" size={15} color={colors.textDim} />

@@ -127,6 +127,42 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
     return () => handler.remove();
   }, [phase]);
 
+  function normalizeQuizQuestions(rawQs: any[]): Question[] {
+    return (rawQs || []).map((q: any) => {
+      let opts: string[] = Array.isArray(q.options) ? q.options.map((o: any) => typeof o === 'string' ? o : (o?.label || String(o || ''))) : [];
+      let correct = typeof q.correct === 'number' ? q.correct : 0;
+      if (typeof q.correct === 'string') {
+        const LETTER_MAP: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+        correct = LETTER_MAP[q.correct.toUpperCase()] ?? 0;
+      }
+
+      if (opts.length === 6 || opts.length === 8) {
+        const allEvenLetters = opts.every((opt, i) => {
+          if (i % 2 !== 0) return true;
+          const s = String(opt || '').trim();
+          return /^[A-Da-d0-4][.)\]]?$/.test(s) || /^\[[A-Da-d0-4]\]$/.test(s);
+        });
+        if (allEvenLetters) {
+          const extracted = [];
+          for (let i = 1; i < opts.length; i += 2) {
+            extracted.push(opts[i]);
+          }
+          opts = extracted;
+          if (correct >= opts.length) correct = Math.floor(correct / 2);
+        }
+      }
+
+      const cleaned = opts.map(opt => String(opt || '').replace(/^\[?[A-Da-d0-4]\]?[.)\-:]?\s*/, '').trim()).filter(Boolean);
+
+      return {
+        ...q,
+        question: q.question || '',
+        options: cleaned.length > 0 ? cleaned : opts,
+        correct: Math.min(Math.max(0, correct), Math.max(0, (cleaned.length || opts.length) - 1)),
+      };
+    });
+  }
+
   const fetchQuiz = useCallback(async (isRetake = false) => {
     setPhase('loading');
     setScore(0); setCurrentQ(0);
@@ -144,7 +180,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
       });
       const data = await res.json();
       if (!data.questions?.length) throw new Error('No questions');
-      setQuestions(data.questions);
+      setQuestions(normalizeQuizQuestions(data.questions));
       setPhase('quiz');
     } catch {
       Alert.alert('Error', 'Could not generate quiz. Please try again.');
@@ -402,7 +438,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
                   <View style={[styles.reviewSectionIcon, { backgroundColor: '#9FB2A420' }]}>
                     <Feather name="check-circle" size={16} color="#9FB2A4" />
                   </View>
-                  <Text style={[styles.reviewSectionTitle, { color: '#9FB2A4' }]}>
+                  <Text style={[styles.reviewSectionTitle, { color: colors.accentGreen }]}>
                     Questions You Got Right ({correctQs.length})
                   </Text>
                 </View>
@@ -419,8 +455,8 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMain, lineHeight: 22 }}>{r.question}</Text>
                         <View style={[styles.reviewAnswerRow, { backgroundColor: colors.bgDark, borderRadius: 8, marginTop: 10 }]}>
-                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#9FB2A4', width: 90, letterSpacing: 0.3 }}>Your answer</Text>
-                          <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#9FB2A4' }}>{r.studentAnswer}</Text>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: colors.accentGreen, width: 90, letterSpacing: 0.3 }}>Your answer</Text>
+                          <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: colors.accentGreen }}>{r.studentAnswer}</Text>
                         </View>
                       </View>
                     </View>

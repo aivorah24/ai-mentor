@@ -12,4 +12,4 @@ sleep 1
 
 echo "[start] Launching Node.js server on port ${PORT:-8080}..."
 cd /app/server
-exec node index.js
+exec node --max-old-space-size=3072 index.js

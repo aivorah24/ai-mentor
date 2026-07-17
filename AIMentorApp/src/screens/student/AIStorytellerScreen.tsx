@@ -219,7 +219,7 @@ export default function AIStorytellerScreen({ route, navigation }: any) {
                         <Text style={s.choiceLetterText}>{String.fromCharCode(65 + i)}</Text>
                       </View>
                       <Text style={[s.choiceText, { color: colors.textMain }]}>
-                        {choice.replace(/^Choice [ABC]:\s*/i, '')}
+                        {choice.replace(/^Choice [A-D]:\s*/i, '').replace(/^\[?[A-D]\]?[.)\-:]?\s*/i, '').trim()}
                       </Text>
                       <Feather name="chevron-right" size={16} color={colors.textMuted} />
                     </TouchableOpacity>

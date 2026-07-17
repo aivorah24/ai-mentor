@@ -71,11 +71,55 @@ interface AssessResult {
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 function splitWords(text: string): string[] {
-  return text.match(/\S+/g) || [];
+  return (text || '').split(/[-—–\s]+/).filter(Boolean);
 }
 
 function normalize(w: string): string {
-  return w.toLowerCase().replace(/[^a-z']/g, '').replace(/^'+|'+$/g, '');
+  return (w || '').toLowerCase().replace(/[^a-z0-9']/g, '').replace(/^'+|'+$/g, '');
+}
+
+function getStem(w: string): string {
+  if (!w) return '';
+  let s = w.replace(/our($|s|ed|ing)/, 'or$1')
+           .replace(/ise($|s|d|ing)/, 'ize$1')
+           .replace(/tre($|s)/, 'ter$1')
+           .replace(/isation($|s)/, 'ization$1')
+           .replace(/aeroplane/, 'airplane')
+           .replace(/grey/, 'gray');
+  s = s.replace(/ied$/, 'y')
+       .replace(/ies$/, 'y')
+       .replace(/(.)\1(ed|ing)$/, '$1');
+  if (w.length > 4 && !/(?:thing|ning|ling|ring|king|wing|spring|bring)$/.test(w)) {
+    s = s.replace(/(?:es|s|ed|ing)$/, '');
+  } else if (w.length > 3) {
+    s = s.replace(/(?:es|s)$/, '');
+  }
+  return s;
+}
+
+const EQUIV_MAP: Record<string, string[]> = {
+  'mr': ['mister'], 'mrs': ['missus', 'missis'], 'dr': ['doctor'], 'st': ['street', 'saint'],
+  'vs': ['versus'], 'etc': ['etcetera'], 'and': ['&'],
+  'hear': ['here'], 'here': ['hear'],
+  'there': ['their', 'theyre'], 'their': ['there', 'theyre'], 'theyre': ['there', 'their'],
+  'to': ['too', 'two'], 'too': ['to', 'two'], 'two': ['to', 'too'],
+  'for': ['four'], 'four': ['for'],
+  'no': ['know'], 'know': ['no'],
+  'right': ['write'], 'write': ['right'],
+  'by': ['buy'], 'buy': ['by'],
+  'one': ['won'], 'won': ['one'],
+  'cant': ['cannot'], 'cannot': ['cant'],
+  'dont': ['do not'], 'wont': ['will not'],
+  '10': ['ten'], '100': ['hundred', 'one hundred'], '1000': ['thousand', 'one thousand'],
+  '1st': ['first'], '2nd': ['second'], '3rd': ['third'], '4th': ['fourth'], '5th': ['fifth'],
+};
+
+function isEquivalent(spoken: string, expected: string): boolean {
+  if (!spoken || !expected) return false;
+  if (spoken === expected) return true;
+  if (EQUIV_MAP[expected] && EQUIV_MAP[expected].includes(spoken)) return true;
+  if (EQUIV_MAP[spoken] && EQUIV_MAP[spoken].includes(expected)) return true;
+  return false;
 }
 
 function levenshtein(a: string, b: string): number {
@@ -96,13 +140,28 @@ function levenshtein(a: string, b: string): number {
 }
 
 function fuzzyMatch(spoken: string, expected: string): boolean {
+  if (!spoken || !expected) return false;
   if (spoken === expected) return true;
-  // Short words must match exactly — too many false positives otherwise
-  // e.g., "mood"→"food" (lev=2), "from"→"food" (lev=2)
-  if (expected.length <= 4) return spoken === expected;
-  // Longer words allow 1 edit (typo/accent), very long allow 2
-  const maxDist = expected.length >= 8 ? 2 : 1;
-  return levenshtein(spoken, expected) <= maxDist;
+  if (isEquivalent(spoken, expected)) return true;
+
+  // Strict check: reject grammatical tense and plural suffix mismatches (-ed, -ing, -s, -es)
+  // If stripping suffixes produces identical roots (e.g. work vs worked), but the full words differ, reject!
+  const stripSuffix = (w: string) => w.length > 3 ? w.replace(/(?:es|s|ed|ing)$/, '') : w;
+  if (stripSuffix(spoken) === stripSuffix(expected) && spoken !== expected) {
+    return false;
+  }
+
+  const sStem = getStem(spoken);
+  const eStem = getStem(expected);
+  if (sStem.length >= 3 && sStem === eStem) return true;
+
+  if (expected.length <= 5) return false;
+
+  if (Math.abs(spoken.length - expected.length) > 2) return false;
+  if (spoken.slice(0, 3) !== expected.slice(0, 3) && sStem.slice(0, 3) !== eStem.slice(0, 3)) return false;
+
+  const maxDist = expected.length >= 10 ? 2 : 1;
+  return levenshtein(spoken, expected) <= maxDist || (sStem.length >= 5 && levenshtein(sStem, eStem) <= maxDist);
 }
 
 // ── Word-weight model for TTS highlight sync ────────────────────────────
@@ -353,8 +412,59 @@ export default function ReadAloudScreen() {
     rafRef.current = requestAnimationFrame(tick);
   }, [passage, cancelHighlightLoop]);
 
+  const playBrowserFallbackTTS = useCallback(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window) || !passage) {
+      setAudioLoading(false);
+      setIsListeningModel(false);
+      Alert.alert('Audio Unavailable', 'Text-to-speech is currently unavailable on this device.');
+      return;
+    }
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(passage.text);
+      utterance.rate = 0.9;
+      utterance.lang = 'en-US';
+      setAudioLoading(false);
+      setIsListeningModel(true);
+      setIsListenPaused(false);
+      setHighlightIdx(0);
+
+      let currentWordIdx = 0;
+      utterance.onboundary = (e: any) => {
+        if (e.name === 'word' || e.charIndex !== undefined) {
+          setHighlightIdx(currentWordIdx);
+          if (currentWordIdx < words.length - 1) currentWordIdx++;
+        }
+      };
+      utterance.onend = () => {
+        setIsListeningModel(false);
+        setIsListenPaused(false);
+        setHighlightIdx(-1);
+      };
+      utterance.onerror = () => {
+        setIsListeningModel(false);
+        setIsListenPaused(false);
+        setHighlightIdx(-1);
+        setAudioLoading(false);
+      };
+      window.speechSynthesis.speak(utterance);
+    } catch {
+      setAudioLoading(false);
+      setIsListeningModel(false);
+      setHighlightIdx(-1);
+    }
+  }, [passage, words.length]);
+
   const listenFirst = useCallback(async () => {
     if (Platform.OS !== 'web' || !passage) return;
+
+    // If browser TTS is paused, resume it
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      setIsListenPaused(false);
+      setIsListeningModel(true);
+      return;
+    }
 
     // If audio is loaded and paused, just resume
     if (audioRef.current && audioRef.current.paused && audioRef.current.currentTime > 0) {
@@ -379,8 +489,8 @@ export default function ReadAloudScreen() {
       });
       const data = await res.json();
       if (!data.audioUrl) {
-        setAudioLoading(false);
-        setIsListeningModel(false);
+        console.warn('[ReadAloud] ElevenLabs audioUrl missing, falling back to browser TTS');
+        playBrowserFallbackTTS();
         return;
       }
 
@@ -399,8 +509,8 @@ export default function ReadAloudScreen() {
         audio.play().then(() => {
           startHighlightLoop(audio, data.wordTimings, words.length);
         }).catch((e: any) => {
-          console.warn('[ReadAloud] Play failed:', e);
-          setIsListeningModel(false);
+          console.warn('[ReadAloud] Play failed, falling back to browser TTS:', e);
+          playBrowserFallbackTTS();
         });
       };
       audio.addEventListener('loadeddata', onReady, { once: true });
@@ -411,21 +521,24 @@ export default function ReadAloudScreen() {
         setHighlightIdx(-1);
       }, { once: true });
       audio.addEventListener('error', (e: any) => {
-        console.error('[ReadAloud] Audio error:', e);
+        console.warn('[ReadAloud] Audio load error, falling back to browser TTS:', e);
         cancelHighlightLoop();
-        setAudioLoading(false);
-        setIsListeningModel(false);
-        setHighlightIdx(-1);
+        playBrowserFallbackTTS();
       }, { once: true });
       audio.load();
     } catch {
-      setAudioLoading(false);
-      setIsListeningModel(false);
-      setHighlightIdx(-1);
+      console.warn('[ReadAloud] TTS fetch catch, falling back to browser TTS');
+      playBrowserFallbackTTS();
     }
-  }, [passage, words, startHighlightLoop, cancelHighlightLoop]);
+  }, [passage, words, startHighlightLoop, cancelHighlightLoop, playBrowserFallbackTTS]);
 
   const pauseListening = useCallback(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+      window.speechSynthesis.pause();
+      setIsListenPaused(true);
+      setIsListeningModel(false);
+      return;
+    }
     if (audioRef.current && !audioRef.current.paused) {
       audioRef.current.pause();
       cancelHighlightLoop();
@@ -435,6 +548,12 @@ export default function ReadAloudScreen() {
   }, [cancelHighlightLoop]);
 
   const resumeListening = useCallback(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      setIsListenPaused(false);
+      setIsListeningModel(true);
+      return;
+    }
     if (audioRef.current && audioRef.current.paused && audioRef.current.currentTime > 0) {
       audioRef.current.play();
       setIsListenPaused(false);
@@ -444,6 +563,9 @@ export default function ReadAloudScreen() {
   }, [words, startHighlightLoop]);
 
   const stopListening = useCallback(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try { window.speechSynthesis.cancel(); } catch {}
+    }
     cancelHighlightLoop();
     if (audioRef.current) {
       try { audioRef.current.pause(); audioRef.current.currentTime = 0; } catch {}
@@ -560,7 +682,7 @@ export default function ReadAloudScreen() {
     if (serverStatuses) serverStatusesRef.current = serverStatuses;
     const passageText = passageRef.current?.text;
     if (!passageText) return;
-    const passageWords = passageText.match(/\S+/g) || [];
+    const passageWords = splitWords(passageText);
     const totalWords = passageWords.length;
 
     // Time-based cap: max ~3 words/second from recording start.
@@ -713,7 +835,10 @@ export default function ReadAloudScreen() {
     let display = displayPosRef.current;
     if (display >= target) { stop(); return; }
     const gap = target - display;
-    display = Math.min(target, display + Math.max(1, Math.round(gap / 3))); // glide, catch up if far behind
+    // Catch up at half the gap per tick (was a third) so a fast reader's 3–4 word
+    // leap resolves in ~2 ticks instead of ~4 — keeps the karaoke sweep smooth
+    // without the ~200ms visual lag behind fast speech.
+    display = Math.min(target, display + Math.max(1, Math.ceil(gap / 2)));
     displayPosRef.current = display;
     const vis = targetStatusesRef.current.slice();
     for (let i = display + 1; i < total; i++) vis[i] = 'pending'; // hide words not yet reached
@@ -726,13 +851,13 @@ export default function ReadAloudScreen() {
 
   const ensureStepper = useCallback(() => {
     if (stepTimerRef.current) return;
-    stepTimerRef.current = setInterval(() => revealStep(), 55);
+    stepTimerRef.current = setInterval(() => revealStep(), 40);
   }, [revealStep]);
 
   const advanceHighlightTo = useCallback((newPos: number, marks?: { skipped?: number[]; misread?: number[] }) => {
     const passageText = passageRef.current?.text;
     if (!passageText) return;
-    const passageWords = passageText.match(/\S+/g) || [];
+    const passageWords = splitWords(passageText);
     const totalWords = passageWords.length;
     if (newPos <= webSpeechPosRef.current) return; // never go backwards
     if (newPos > totalWords) newPos = totalWords;
@@ -769,7 +894,7 @@ export default function ReadAloudScreen() {
     if (!liveRecognitionActiveRef.current) return;
     if (spoken.length === 0) return;
     const pText = passageRef.current?.text || '';
-    const pWords = pText.match(/\S+/g) || [];
+    const pWords = splitWords(pText);
     if (pWords.length === 0) return;
 
     const cursor = webSpeechPosRef.current;
@@ -837,7 +962,7 @@ export default function ReadAloudScreen() {
       // Window stays narrow (3) — `recent` words are genuinely sequential and
       // fresh, so a wider search would only risk matching a LATER repeat of
       // the same word (e.g. "water" appears 5x) instead of the true next one.
-      const window = isCommon(word) ? 1 : 3;
+      const window = isCommon(word) ? 1 : 4;
       let found = -1;
       for (let d = 0; d <= window && pi + d < pWords.length; d++) {
         if (fuzzyMatch(word, normalize(pWords[pi + d]))) { found = d; break; }
@@ -852,7 +977,11 @@ export default function ReadAloudScreen() {
         // (e.g. "appr…" → "appreciation"). Keep scanning forward (don't
         // freeze the scan) so later words still align; only the AUTHORITATIVE
         // cursor stays frozen at this position until confirmed.
-        if (found === 0 && expectedWord.length >= LONG_WORD_LEN && (pendingNow === null || pendingNow.pos !== matchedPos)) {
+        // The long-word hold guards ONLY against Vosk's grammar snapping a partial
+        // guess to the full word on the first syllable. The browser Web Speech API
+        // has no such partial-snap, so holding there just freezes the highlight for
+        // no reason — skip the hold entirely unless Vosk is the active engine.
+        if (voskActiveRef.current && found === 0 && expectedWord.length >= LONG_WORD_LEN && (pendingNow === null || pendingNow.pos !== matchedPos)) {
           pendingNow = { pos: matchedPos, skipped: skipped.slice(), misread: misread.slice() };
           pi = matchedPos + 1;
           continue;
@@ -881,6 +1010,16 @@ export default function ReadAloudScreen() {
       // else: not found nearby — noise/mispronunciation → wait, ignore it
     }
 
+    // A long word held from a PREVIOUS emission has now survived into this one
+    // (`pendingNow === pending` means it's the carried-in hold, unchanged — a
+    // freshly-created hold this call is a new object and keeps its one frame of
+    // grace). One Vosk partial cycle (~100–250ms) is enough to catch a false
+    // syllable-snap, so confirm it now instead of freezing the highlight until
+    // the reader "moves on" — which is what caused the "read it 2–3 times" stall.
+    if (pendingNow !== null && pendingNow === pending) {
+      pendingNow = null;
+    }
+
     scanPosRef.current = pi;
     pendingLongMatchRef.current = pendingNow;
 
@@ -902,7 +1041,16 @@ export default function ReadAloudScreen() {
   // runs the on-device, passage-constrained engine — the Google Read Along feel.
   useEffect(() => {
     if (Platform.OS === 'web' && isVoskSupported()) {
+      let settled = false;
+      const timeout = setTimeout(() => {
+        if (!settled) {
+          console.log('[ReadAloud] Vosk model loading timed out — allowing fallback start');
+          setVoskStatus('unavailable');
+        }
+      }, 3500);
       loadVoskModel().then((ok) => {
+        settled = true;
+        clearTimeout(timeout);
         if (ok) {
           console.log('[ReadAloud] Vosk model preloaded — Read Along engine ready');
           setVoskStatus('ready');
@@ -911,6 +1059,7 @@ export default function ReadAloudScreen() {
           setVoskStatus('unavailable');
         }
       });
+      return () => clearTimeout(timeout);
     } else {
       setVoskStatus('unavailable');
     }
@@ -950,7 +1099,7 @@ export default function ReadAloudScreen() {
 
       // Build keywords from passage for better accuracy
       const passageText = passageRef.current?.text || '';
-      const uniqueWords = [...new Set(passageText.match(/\S+/g)?.map((w: string) => w.replace(/[^a-zA-Z']/g, '').toLowerCase()).filter((w: string) => w.length > 3) || [])];
+      const uniqueWords = [...new Set(splitWords(passageText).map((w: string) => w.replace(/[^a-zA-Z']/g, '').toLowerCase()).filter((w: string) => w.length > 3))];
       const keywords = uniqueWords.slice(0, 20).map((w: string) => `${w}:2`).join('&keywords=');
 
       // Open WebSocket to Deepgram streaming API
@@ -1002,7 +1151,7 @@ export default function ReadAloudScreen() {
 
           const passageText = passageRef.current?.text;
           if (!passageText) return;
-          const passageWords = passageText.match(/\S+/g) || [];
+          const passageWords = splitWords(passageText);
           const pos = webSpeechPosRef.current;
           if (pos >= passageWords.length) return;
 
@@ -1171,7 +1320,7 @@ export default function ReadAloudScreen() {
     // model isn't ready (still downloading) or fails, we fall through to the
     // open Web Speech engine below.
     if (isVoskSupported() && isVoskModelReady() && mediaStreamRef.current) {
-      const grammarWords = passageRef.current?.text?.match(/\S+/g) || [];
+      const grammarWords = splitWords(passageRef.current?.text || '');
       const started = await startVoskRecognition({
         stream: mediaStreamRef.current,
         grammarWords,
@@ -1548,12 +1697,16 @@ export default function ReadAloudScreen() {
       });
       const data = await res.json();
 
-      // If calibration mode, compute Lexile and go back to pick
+      // If calibration mode, compute Lexile and show feedback review
       if (isCalibrationRef.current) {
         isCalibrationRef.current = false;
-        await handleCalibrationResult(data.accuracy || 0, data.wcpm || 0);
-        setPhase('pick');
-        setResult(null);
+        const calLexile = await handleCalibrationResult(data.accuracy || 0, data.wcpm || 0);
+        setResult({
+          ...data,
+          isCalibration: true,
+          calibrationLexile: calLexile,
+          feedback: `Awesome job! Based on your reading of this baseline passage, your initial Lexile level is set to ${calLexile}L. Now let's explore stories tailored specifically for you!`
+        });
         return;
       }
 
@@ -1569,9 +1722,31 @@ export default function ReadAloudScreen() {
       const correct = finalStatuses.filter(s => s === 'correct').length;
       const total = finalStatuses.length;
       const dMin = dur / 60;
+      const accuracy = Math.round((correct / total) * 100);
+      const wcpm = dMin > 0 ? Math.round(correct / dMin) : 0;
+      if (isCalibrationRef.current) {
+        isCalibrationRef.current = false;
+        const calLexile = await handleCalibrationResult(accuracy, wcpm);
+        setResult({
+          accuracy,
+          wcpm,
+          wpm: dMin > 0 ? Math.round(total / dMin) : 0,
+          totalWords: total,
+          correct,
+          misread: finalStatuses.filter(s => s === 'misread').length,
+          skipped: finalStatuses.filter(s => s === 'skipped').length,
+          duration: Math.round(dur),
+          errors: [],
+          isCalibration: true,
+          calibrationLexile: calLexile,
+          feedback: `Awesome job! Based on your reading of this baseline passage, your initial Lexile level is set to ${calLexile}L. Now let's explore stories tailored specifically for you!`,
+          level: 'good',
+        });
+        return;
+      }
       setResult({
-        accuracy: Math.round((correct / total) * 100),
-        wcpm: dMin > 0 ? Math.round(correct / dMin) : 0,
+        accuracy,
+        wcpm,
         wpm: dMin > 0 ? Math.round(total / dMin) : 0,
         totalWords: total,
         correct,
@@ -1638,7 +1813,7 @@ export default function ReadAloudScreen() {
       const data = await res.json();
       isCalibrationRef.current = true;
       setPassage({ title: data.title, text: data.text, topic: 'Calibration', level: 'medium' });
-      const w = (data.text || '').match(/\S+/g) || [];
+      const w = splitWords(data.text || '');
       setWords(w);
       const initStatuses: WordStatus[] = new Array(w.length).fill('pending');
       if (initStatuses.length > 0) initStatuses[0] = 'current';
@@ -1780,9 +1955,6 @@ export default function ReadAloudScreen() {
       <View style={s.idleContainer}>
         {/* Header bar */}
         <View style={s.passageHeader}>
-          <TouchableOpacity onPress={() => { stopListening(); setPhase('pick'); }} style={[s.backBtn, { backgroundColor: colors.cardDark }]}>
-            <Feather name="arrow-left" size={18} color={colors.textMuted} />
-          </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={[s.passageTitleLarge, { color: colors.textMain }]}>{passage?.title}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
@@ -1800,19 +1972,23 @@ export default function ReadAloudScreen() {
           <LinearGradient colors={[grad[0] + '15', grad[1] + '08']} style={s.textCardGradientBar} />
           <Text style={s.passageTextWrap}>
             {words.map((w, i) => {
-              const isCurrent = isListeningModel && i === highlightIdx;
-              const isPast = isListeningModel && highlightIdx >= 0 && i < highlightIdx;
+              const isListeningActive = isListeningModel || isListenPaused;
+              const isCurrent = isListeningActive && i === highlightIdx;
+              const isPast = isListeningActive && highlightIdx >= 0 && i < highlightIdx;
               return (
                 <Text
                   key={i}
                   style={{
-                    color: isCurrent ? grad[0] : isPast ? colors.textMuted : colors.textMain,
-                    fontWeight: '400',
-                    backgroundColor: isCurrent ? grad[0] + '25' : 'transparent',
+                    color: isCurrent ? (isDark ? '#FFF' : '#1A1A1A') : isPast ? colors.textMuted : colors.textMain,
+                    fontWeight: isCurrent ? '700' : '400',
+                    backgroundColor: isCurrent ? (isListenPaused ? colors.accentYellow + '55' : colors.accentYellow + '30') : 'transparent',
                     textDecorationLine: isCurrent ? 'underline' : 'none',
-                    textDecorationColor: grad[0],
+                    textDecorationColor: colors.accentYellow,
                     fontSize: 19,
                     lineHeight: 36,
+                    borderRadius: 6,
+                    borderWidth: isCurrent && isListenPaused ? 2 : 0,
+                    borderColor: colors.accentYellow,
                   }}
                 >
                   {w}{' '}
@@ -1825,39 +2001,43 @@ export default function ReadAloudScreen() {
         {/* Action buttons */}
         <View style={s.actionRow}>
           <TouchableOpacity
-            style={[s.actionBtn, { backgroundColor: colors.cardDark, borderColor: colors.borderColor + '40' }]}
+            style={[
+              s.actionBtn,
+              isListeningModel || isListenPaused
+                ? { backgroundColor: colors.accentYellow + '22', borderColor: colors.accentYellow }
+                : { backgroundColor: colors.cardDark, borderColor: colors.accentYellow + '60' }
+            ]}
             onPress={isListeningModel ? pauseListening : isListenPaused ? resumeListening : listenFirst}
             activeOpacity={0.7}
             disabled={audioLoading}
           >
             {audioLoading
-              ? <ActivityIndicator size="small" color={grad[0]} />
-              : <Feather name={isListeningModel ? 'pause' : isListenPaused ? 'play' : 'headphones'} size={18} color={grad[0]} />
+              ? <ActivityIndicator size="small" color={colors.accentYellow} />
+              : <Feather name={isListeningModel ? 'pause' : isListenPaused ? 'play' : 'headphones'} size={18} color={colors.accentYellow} />
             }
-            <Text style={{ color: grad[0], fontWeight: '600', fontSize: 14 }}>
+            <Text style={{ color: colors.accentYellow, fontWeight: '700', fontSize: 14 }}>
               {audioLoading ? 'Loading...' : isListeningModel ? 'Pause' : isListenPaused ? 'Resume' : 'Listen First'}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[s.actionBtn, s.primaryBtn, { backgroundColor: colors.accentYellow, opacity: voskStatus === 'loading' ? 0.6 : 1 }]}
+            style={[s.actionBtn, s.primaryBtn, { backgroundColor: colors.accentYellow }]}
             onPress={startCountdown}
             activeOpacity={0.7}
-            disabled={voskStatus === 'loading'}
+            disabled={false}
           >
             {voskStatus === 'loading'
               ? <ActivityIndicator size="small" color="#fff" />
               : <Feather name="mic" size={18} color="#fff" />
             }
             <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
-              {voskStatus === 'loading' ? 'Preparing voice engine…' : 'Start Reading'}
+              {voskStatus === 'loading' ? 'Start Reading (Preparing engine...)' : 'Start Reading'}
             </Text>
           </TouchableOpacity>
         </View>
         {voskStatus === 'loading' && (
           <Text style={{ color: colors.textDim, fontSize: 12, textAlign: 'center', marginTop: 8 }}>
-            Loading the on-device Read Along engine (one-time, ~40MB) — this gives the smooth, accurate
-            word-tracking like Google Read Along. Please wait a moment before starting.
+            Setting up the voice engine. You can tap Start Reading immediately or wait a second for maximum accuracy!
           </Text>
         )}
       </View>
