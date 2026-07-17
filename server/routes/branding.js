@@ -59,8 +59,10 @@ router.get('/logos', async (req, res) => {
       .select('kind, name, logo_url')
       .in('kind', [...new Set(names.map(n => n.kind))]);
 
-    const schoolLogoUrl     = (data || []).find(r => r.kind === 'school' && r.name === school)?.logo_url || null;
-    const curriculumLogoUrl = (data || []).find(r => r.kind === 'curriculum' && r.name === curriculum)?.logo_url || null;
+    // Case/whitespace-insensitive match so casing/spacing drift still resolves the logo.
+    const norm = s => String(s || '').trim().toLowerCase();
+    const schoolLogoUrl     = (data || []).find(r => r.kind === 'school' && norm(r.name) === norm(school))?.logo_url || null;
+    const curriculumLogoUrl = (data || []).find(r => r.kind === 'curriculum' && norm(r.name) === norm(curriculum))?.logo_url || null;
 
     res.json({ schoolLogoUrl, curriculumLogoUrl });
   } catch (err) {

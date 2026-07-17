@@ -1,0 +1,52 @@
+{
+  "s1_4images": {
+    "status": 500,
+    "secs": "253",
+    "quiz": {
+      "error": true
+    },
+    "err": "AI returned invalid JSON"
+  },
+  "s2_pdf": {
+    "status": 200,
+    "secs": "124",
+    "quiz": {
+      "engine": "gemini",
+      "tasks": 4,
+      "questions": 6,
+      "emptyTasks": 0,
+      "emptyTitles": [],
+      "images": 7,
+      "base64Images": 7,
+      "relPathImages": 0
+    }
+  },
+  "s3_pdf": {
+    "status": 200,
+    "secs": "300",
+    "quiz": {
+      "engine": "pixtral",
+      "tasks": 8,
+      "questions": 18,
+      "emptyTasks": 0,
+      "emptyTitles": [],
+      "images": 10,
+      "base64Images": 10,
+      "relPathImages": 0
+    }
+  },
+  "s3_docx": {
+    "status": 200,
+    "secs": "68",
+    "quiz": {
+      "engine": "gemini",
+      "tasks": 5,
+      "questions": 24,
+      "emptyTasks": 0,
+      "emptyTitles": [],
+      "images": 5,
+      "base64Images": 5,
+      "relPathImages": 0
+    }
+  }
+}

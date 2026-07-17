@@ -16,7 +16,11 @@ interface LatestNotif {
 
 export interface NotifItem {
   id: string;
-  type: 'assignment' | 'quiz' | 'challenge' | 'message' | 'event';
+  type: 'assignment' | 'quiz' | 'challenge' | 'message' | 'event' | 'task';
+  // For 'event' items, the source schedule type ('challenge' | 'deadline' | 'study' …).
+  // A challenge's due-date event has srcType 'challenge' so it can be gated under the
+  // Challenge Updates toggle rather than Assignment Alerts.
+  srcType?: string | null;
   title: string;
   subtitle: string;
   senderName: string;
@@ -38,6 +42,7 @@ interface NotificationState {
   clearUnreadEvents: () => Promise<void>;
   refresh: () => Promise<void>;
   triggerPoll: () => void;
+  muteCategory: (key: 'assignmentAlerts' | 'challengeUpdates') => void;
 }
 
 const NotificationContext = createContext<NotificationState>({
@@ -55,6 +60,7 @@ const NotificationContext = createContext<NotificationState>({
   clearUnreadEvents: async () => {},
   refresh: async () => {},
   triggerPoll: () => {},
+  muteCategory: () => {},
 });
 
 const POLL_INTERVAL_MS  = 8000; // 8s — was 15s; push notifications don't exist on web (see
@@ -224,13 +230,22 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const allowMsg       = notifPrefs.teacherMessages     !== false;
       const allowChallenge = notifPrefs.challengeUpdates    !== false;
 
+      // A challenge's due-date event follows the Challenge Updates toggle, not
+      // Assignment Alerts — so count it under challenges, never under events.
+      // Compute these BEFORE the chime logic so the sound/toast never fires for a
+      // category that's toggled off (which produced a "blank push with sound").
+      const challengeEventCount = items.filter(i => i.type === 'event' && i.srcType === 'challenge').length;
+      const nonChallengeEventCount = Math.max(0, eventCount - challengeEventCount);
+      const effChallengeCount = challengeCount + challengeEventCount;
+      const effEventCount     = nonChallengeEventCount;
+
       // Only chime/toast when a count goes UP *after* the baseline is set.
       // The first poll after mount/refresh just records the baseline silently.
       const baseline = hasBaselineRef.current;
-      const newMsg       = baseline && allowMsg       && !markReadInFlight.current && msgCount       > prevMsgRef.current;
-      const newAssign    = baseline && allowAssign    && !markReadInFlight.current && assignCount    > prevAssignRef.current;
-      const newChallenge = baseline && allowChallenge && !markReadInFlight.current && challengeCount > prevChallengeRef.current;
-      const newEvent     = baseline && allowAssign    && !markReadInFlight.current && eventCount     > prevEventRef.current;
+      const newMsg       = baseline && allowMsg       && !markReadInFlight.current && msgCount          > prevMsgRef.current;
+      const newAssign    = baseline && allowAssign    && !markReadInFlight.current && assignCount       > prevAssignRef.current;
+      const newChallenge = baseline && allowChallenge && !markReadInFlight.current && effChallengeCount > prevChallengeRef.current;
+      const newEvent     = baseline && allowAssign    && !markReadInFlight.current && effEventCount     > prevEventRef.current;
 
       if (!silent && (newMsg || newAssign || newChallenge || newEvent)) {
         playNotificationSound();
@@ -242,20 +257,23 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
       prevMsgRef.current       = msgCount;
       prevAssignRef.current    = assignCount;
-      prevChallengeRef.current = challengeCount;
-      prevEventRef.current     = eventCount;
+      prevChallengeRef.current = effChallengeCount;
+      prevEventRef.current     = effEventCount;
       hasBaselineRef.current   = true;
 
       setUnreadCount(allowMsg ? msgCount : 0);
       setUnreadAssignments(allowAssign ? assignCount : 0);
-      setUnreadChallenges(allowChallenge ? challengeCount : 0);
-      setUnreadEvents(allowAssign ? eventCount : 0);
+      setUnreadChallenges(allowChallenge ? effChallengeCount : 0);
+      setUnreadEvents(allowAssign ? effEventCount : 0);
       setLatestNotif(msgCount > 0 ? latest : null);
       // Respect the user's notification preferences for the bell dropdown items too —
       // when Assignment Alerts / Challenge Updates are OFF, those items must NOT appear
       // in the bell at all (not just have a zeroed badge count).
       const filteredItems = items.filter(it => {
-        if ((it.type === 'assignment' || it.type === 'quiz' || it.type === 'event') && !allowAssign) return false;
+        // A challenge's due-date event follows the Challenge Updates toggle.
+        const isChallengeEvent = it.type === 'event' && it.srcType === 'challenge';
+        if (isChallengeEvent) return allowChallenge;
+        if ((it.type === 'assignment' || it.type === 'quiz' || it.type === 'event' || it.type === 'task') && !allowAssign) return false;
         if (it.type === 'challenge' && !allowChallenge) return false;
         return true;
       });
@@ -277,7 +295,30 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       return;
     }
 
-    void poll({ reason: 'initial', allowDuringMarkRead: true });
+    // Seed the bell's local pref key from the server BEFORE the first poll. The
+    // toggle's visual state loads from the server preference, but the bell's
+    // filtering reads AsyncStorage `notifPrefs_` — which is only written when the
+    // user actively flips a switch. On a fresh session (e.g. incognito) that key
+    // is empty, so a preference already set to OFF wouldn't be respected and the
+    // notification would still show. Merge server prefs in (local keys still win).
+    const email = user.email;
+    (async () => {
+      try {
+        const res = await fetch(`${SERVER_URL}/user/preferences?email=${encodeURIComponent(email)}`);
+        const serverPrefs = res.ok ? await res.json() : null;
+        if (serverPrefs) {
+          const NK = `notifPrefs_${email}`;
+          const raw = await AsyncStorage.getItem(NK).catch(() => null);
+          const local = raw ? JSON.parse(raw) : {};
+          const merged = { ...local };
+          for (const k of ['assignmentAlerts', 'challengeUpdates', 'teacherMessages'] as const) {
+            if (merged[k] === undefined && serverPrefs[k] !== undefined) merged[k] = serverPrefs[k];
+          }
+          await AsyncStorage.setItem(NK, JSON.stringify(merged)).catch(() => {});
+        }
+      } catch {}
+      void poll({ reason: 'initial', allowDuringMarkRead: true });
+    })();
     pollRef.current = setInterval(() => void poll({ reason: 'interval' }), POLL_INTERVAL_MS);
 
     return () => {
@@ -380,6 +421,27 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     await poll({ reason: 'manual-refresh', allowDuringMarkRead: true });
   }, [poll]);
 
+  // Immediately drop already-displayed items for a category the user just turned OFF,
+  // so the bell reflects the change instantly instead of waiting for the next poll.
+  // (The poll itself already respects the saved preference on subsequent fetches.)
+  const muteCategory = useCallback((key: 'assignmentAlerts' | 'challengeUpdates') => {
+    if (key === 'challengeUpdates') {
+      setUnreadChallenges(0);
+      prevChallengeRef.current = 0;
+      setNotificationItems(items => items.filter(
+        i => !(i.type === 'challenge' || (i.type === 'event' && i.srcType === 'challenge'))
+      ));
+    } else {
+      setUnreadAssignments(0);
+      setUnreadEvents(0);
+      prevAssignRef.current = 0;
+      prevEventRef.current = 0;
+      setNotificationItems(items => items.filter(
+        i => !(i.type === 'assignment' || i.type === 'quiz' || i.type === 'task' || (i.type === 'event' && i.srcType !== 'challenge'))
+      ));
+    }
+  }, []);
+
   // Trigger an immediate poll (e.g. after pref changes in Settings)
   const triggerPoll = useCallback(() => {
     void poll({ reason: 'prefs-changed', allowDuringMarkRead: false });
@@ -389,7 +451,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     <NotificationContext.Provider value={{
       unreadCount, unreadAssignments, unreadChallenges, unreadEvents,
       latestNotif, notificationItems, toastVisible,
-      dismissToast, clearUnread, clearUnreadAssignments, clearUnreadChallenges, clearUnreadEvents, refresh, triggerPoll,
+      dismissToast, clearUnread, clearUnreadAssignments, clearUnreadChallenges, clearUnreadEvents, refresh, triggerPoll, muteCategory,
     }}>
       {children}
     </NotificationContext.Provider>

@@ -42,8 +42,11 @@ async function fetchBranding(school, curriculum) {
     if (curriculum) kinds.push('curriculum');
     if (kinds.length === 0) return { schoolLogoUrl: null, curriculumLogoUrl: null };
     const { data } = await supabase.from('branding_logos').select('kind, name, logo_url').in('kind', kinds);
-    const schoolLogoUrl     = (data || []).find(r => r.kind === 'school' && r.name === school)?.logo_url || null;
-    const curriculumLogoUrl = (data || []).find(r => r.kind === 'curriculum' && r.name === curriculum)?.logo_url || null;
+    // Case/whitespace-insensitive match so casing/spacing drift in a teacher's
+    // school name ("The shri ram academy") still resolves the logo.
+    const norm = s => String(s || '').trim().toLowerCase();
+    const schoolLogoUrl     = (data || []).find(r => r.kind === 'school' && norm(r.name) === norm(school))?.logo_url || null;
+    const curriculumLogoUrl = (data || []).find(r => r.kind === 'curriculum' && norm(r.name) === norm(curriculum))?.logo_url || null;
     return { schoolLogoUrl, curriculumLogoUrl };
   } catch {
     return { schoolLogoUrl: null, curriculumLogoUrl: null };
@@ -314,20 +317,44 @@ router.post('/ai-generate', async (req, res) => {
   if (!prompt.trim()) return res.status(400).json({ error: 'prompt required' });
 
   const questionCount = Math.max(3, Math.min(10, Number(count) || 5));
-  const systemPrompt = `You are an expert ${curriculum} ${grade} ${subject} teacher.
+  const wantQuiz = (reqType || 'quiz') === 'quiz';
+  // For a QUIZ, generate multiple-choice questions with 4 options + the correct
+  // answer, so the child answers by picking an option (matching the teacher flow).
+  // For an ASSIGNMENT, plain open-response questions are fine.
+  const systemPrompt = wantQuiz
+    ? `You are an expert ${curriculum} ${grade} ${subject} teacher.
+A parent wants a multiple-choice quiz for their child. Generate a structured quiz.
+Return ONLY valid JSON — no markdown, no explanation — in this exact shape:
+{
+  "title": "short quiz title (max 10 words)",
+  "chapter": "topic or chapter name",
+  "type": "quiz",
+  "note": "2-3 sentence encouraging note to the child explaining what to do",
+  "questions": [
+    { "question": "What is 3 groups of 4 pencils in total?", "options": ["10", "12", "7", "16"], "correct": "12" }
+  ]
+}
+Rules:
+- Keep language simple and age-appropriate for ${grade}
+- Generate exactly ${questionCount} questions matching the difficulty of ${grade} ${subject}
+- EVERY question MUST have EXACTLY 4 options and a "correct" that equals one of those 4 options verbatim
+- options MUST be the REAL answer choices (actual numbers or words the child chooses between), NEVER placeholder letters like "A", "B", "C", "D"
+- exactly one option is correct; the other three must be plausible but wrong
+- note should be warm, encouraging, and motivating for a young learner
+- Align content to ${curriculum} standards`
+    : `You are an expert ${curriculum} ${grade} ${subject} teacher.
 A parent has described what they want their child to practice. Generate a structured assignment.
 Return ONLY valid JSON — no markdown, no explanation — in this exact shape:
 {
   "title": "short assignment title (max 10 words)",
   "chapter": "topic or chapter name",
-  "type": "assignment" or "quiz",
+  "type": "assignment",
   "note": "2-3 sentence encouraging note to the child explaining what to do",
   "questions": ["question 1", "question 2", ...]
 }
 Rules:
 - Keep language simple and age-appropriate for ${grade}
 - questions array: generate exactly ${questionCount} questions matching the difficulty of ${grade} ${subject}
-- type should be "${reqType || 'quiz'}" as requested; override only if clearly different
 - note should be warm, encouraging, and motivating for a young learner
 - Align content to ${curriculum} standards`;
 
@@ -349,12 +376,27 @@ Rules:
     try { result = JSON.parse(jsonStr); }
     catch { return res.status(500).json({ error: 'AI returned invalid JSON', raw }); }
 
+    const outType = result.type === 'quiz' ? 'quiz' : 'assignment';
+    const rawQuestions = Array.isArray(result.questions) ? result.questions : [];
+    // Quiz questions come back as {question, options, correct} objects. Normalize
+    // them (exactly 4 options + a valid correct) and also expose the plain question
+    // TEXT for the client's fallback preview. Assignment questions stay plain strings.
+    let quizQuestions = [];
+    let questions = [];
+    if (outType === 'quiz') {
+      quizQuestions = normalizeQuizQuestions(rawQuestions);
+      questions = quizQuestions.map(q => q.question);
+    } else {
+      questions = rawQuestions.map(q => (typeof q === 'string' ? q : (q && q.question) || '')).filter(Boolean);
+    }
+
     res.json({
       title:     result.title     || 'AI Generated Assignment',
       chapter:   result.chapter   || '',
-      type:      result.type === 'quiz' ? 'quiz' : 'assignment',
+      type:      outType,
       note:      result.note      || '',
-      questions: Array.isArray(result.questions) ? result.questions : [],
+      questions,
+      quizQuestions,
     });
   } catch (e) {
     console.error('[ai-generate] error:', e.message);
@@ -1632,6 +1674,33 @@ router.post('/', async (req, res) => {
     creatorSchool = creator?.school || null;
     creatorName = creator?.name || null;
   }
+  // ── Pre-publish validation gate (issue #6), server-side defense-in-depth ──
+  // The client validates too, but the server must never persist an interactive
+  // quiz with empty task cards (content lost during extraction) — that ships a
+  // broken worksheet to students. Reject so the teacher re-generates instead.
+  if (interactiveQuiz && Array.isArray(interactiveQuiz.tasks)) {
+    const taskHasContent = (t) => {
+      if (Array.isArray(t.questions) && t.questions.length > 0) return true;
+      if (t.chart && Array.isArray(t.chart.bars) && t.chart.bars.length) return true;
+      if (Array.isArray(t.tables) && t.tables.length) return true;
+      if (t.table && Array.isArray(t.table.rows) && t.table.rows.length) return true;
+      if (Array.isArray(t.pyramids) && t.pyramids.length) return true;
+      if (Array.isArray(t.diagramFillBlanks) && t.diagramFillBlanks.length) return true;
+      if (t._matchTask || t.sharedImage) return true;
+      if (t.passage && String(t.passage).trim()) return true;
+      return false;
+    };
+    if (interactiveQuiz.tasks.length === 0) {
+      return res.status(422).json({ error: 'This quiz has no tasks. Please re-generate the interactive quiz before publishing.' });
+    }
+    const emptyTasks = interactiveQuiz.tasks.filter(t => !taskHasContent(t));
+    if (emptyTasks.length > 0) {
+      const names = emptyTasks.map(t => (t.title || 'Untitled task').replace(/\s+/g, ' ').trim().slice(0, 60)).join('; ');
+      console.warn(`[assignments] BLOCKED publish — empty task cards: ${names}`);
+      return res.status(422).json({ error: `Cannot publish: some tasks are empty (content was not extracted): ${names}. Please re-generate the interactive quiz.` });
+    }
+  }
+
   if (interactiveQuiz && interactiveQuiz.tasks) {
     try {
       const branding = await fetchBranding(creatorSchool, finalCurriculum);
@@ -1699,10 +1768,12 @@ router.post('/', async (req, res) => {
         const emails = [stu?.email, ...((links ?? []).map(l => l.parent_email))].filter(Boolean);
         if (emails.length) {
           const label = type === 'quiz' ? 'quiz' : type === 'challenge' ? 'challenge' : 'assignment';
+          const prefKey = type === 'challenge' ? 'challengeUpdates' : 'assignmentAlerts';
           await sendPush(emails, {
             title: `New ${label}: ${title}`,
             body: dueDate ? `Due ${new Date(dueDate).toLocaleDateString()}` : 'Tap to view',
             data: { type: 'assignment', assignmentId: data.id },
+            prefKey,
           });
         }
       } catch (_) { /* push is best-effort */ }
@@ -1789,9 +1860,17 @@ router.post('/', async (req, res) => {
       .select('id')
       .eq('assignment_id', data.id)
       .maybeSingle();
-    if (!existing) {
-      await supabase.from('schedule_events').insert({
-        title:        `${title} — Due`,
+    // Only materialize a calendar deadline when a real due date was set — an
+    // undefined/empty dueDate would create a bogus event and (with a NOT NULL
+    // event_date) fail anyway.
+    if (!existing && dueDate) {
+      const { error: schErr } = await supabase.from('schedule_events').insert({
+        // schedule_events.id is NOT NULL with no DB default — omitting it made
+        // this insert fail silently (caught below), so assignment deadlines never
+        // reached the student OR teacher calendar. Challenges worked only because
+        // challenges.js supplies its own id. Supply one here too.
+        id:           crypto.randomUUID(),
+        title:        `${title} — ${type === 'quiz' ? 'Quiz' : 'Assignment'} due`,
         event_date:   dueDate,
         start_time:   '23:59',
         end_time:     '23:59',
@@ -1803,6 +1882,7 @@ router.post('/', async (req, res) => {
         tag:          subject || null,
         assignment_id: data.id,
       });
+      if (schErr) console.error('[assignments] schedule_events insert failed:', schErr.message);
     }
   } catch (_) {}
 
@@ -1811,6 +1891,21 @@ router.post('/', async (req, res) => {
     try {
       const assignType = type === 'quiz' ? 'Quiz' : 'Assignment';
       const dueDateStr = dueDate ? new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'TBD';
+      // Don't notify the parent who CREATED this assignment — they just did it, so
+      // a "New Assignment assigned" alert to themselves is noise. Co-parents (any
+      // other linked parent) are still notified. The client sends createdById as the
+      // parent's USER ID (UUID), so resolve it to an email before comparing — a raw
+      // UUID never matches a parent_email, which is why the self-alert leaked before.
+      let creatorEmail = '';
+      if (createdByRole === 'parent') {
+        const raw = String(createdById || '').trim();
+        if (raw.includes('@')) {
+          creatorEmail = raw.toLowerCase();
+        } else if (creatorId) {
+          const { data: cu } = await supabase.from('users').select('email').eq('id', creatorId).maybeSingle();
+          creatorEmail = String(cu?.email || '').toLowerCase().trim();
+        }
+      }
       const notifyParentsOf = async (childId, childName) => {
         const { data: parents } = await supabase
           .from('parent_children')
@@ -1819,6 +1914,8 @@ router.post('/', async (req, res) => {
         if (!parents || parents.length === 0) return;
         const msgContent = 'New ' + assignType + ' assigned: "' + title + '" (' + (subject || 'General') + ') has been assigned to ' + (childName || 'your child') + '. Due: ' + dueDateStr + '.';
         for (const { parent_email } of parents) {
+          if (creatorEmail && String(parent_email || '').toLowerCase().trim() === creatorEmail) continue; // skip the creator
+
           await supabase.from('messages').insert({
             sender_email:    'system@aivorah.com',
             sender_name:     'Aivorah',
@@ -3205,6 +3302,14 @@ function normaliseWithSubmission(a, sub, branding) {
     base.score       = sub.score       ?? null;
     base.aiFeedback  = sub.ai_feedback || null;
     base.completedAt = sub.completed_at || null;
+    // Expose the student's per-question answers (stored in submission_text) so the
+    // completed view can render the submitted worksheet. ai_feedback is often null
+    // for interactive quizzes — the answers only live in submission_text — so
+    // without this the student/parent could never see what was submitted.
+    try {
+      const st = typeof sub.submission_text === 'string' ? JSON.parse(sub.submission_text || '{}') : sub.submission_text;
+      if (st && Array.isArray(st.perQuestion)) base.perQuestion = st.perQuestion;
+    } catch {}
   }
   return base;
 }

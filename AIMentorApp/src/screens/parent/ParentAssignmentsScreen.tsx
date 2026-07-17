@@ -11,12 +11,15 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { WebView } from 'react-native-webview';
 import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
+import { getAnsweredQuizHtml } from '../../utils/answeredQuizHtml';
 import DatePicker from '../../components/common/DatePicker';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -67,6 +70,8 @@ setTimeout(() => { pPageJustLoaded = false; }, 3000);
 
 export default function ParentAssignmentsScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { width: winWidth } = useWindowDimensions();
+  const twoCol = winWidth >= 768; // 2-up grid on desktop/tablet, single column on phones
   const { user } = useAuth();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { clearUnreadAssignments } = useNotification();
@@ -91,6 +96,8 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
   const [type, setType] = useState<'assignment' | 'quiz'>('assignment');
   const [note, setNote] = useState('');
   const [questions, setQuestions] = useState<string[]>(['']);
+  // For quizzes: MCQ questions with options + correct answer (from AI generate).
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState('');
   // AI generate state
@@ -192,7 +199,7 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
   function resetForm() {
     setTitle(''); setChapter(''); setDueDate(''); setNote('');
     setSubject('Mathematics'); setType('assignment');
-    setQuestions(['']); setFormError('');
+    setQuestions(['']); setQuizQuestions([]); setFormError('');
     setAiPrompt(''); setAiGenerated(false); setQuizCount(5); setShowTopicPicker(false);
   }
 
@@ -221,6 +228,7 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
         setNote(data.note || '');
         setType(data.type === 'quiz' ? 'quiz' : 'assignment');
         setQuestions(data.questions?.length > 0 ? data.questions : ['']);
+        setQuizQuestions(Array.isArray(data.quizQuestions) ? data.quizQuestions : []);
         setAiGenerated(true);
       } else {
         const err = await res.json().catch(() => ({}));
@@ -255,6 +263,9 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
           createdByRole: 'parent',
           grade: child.grade,
           questions: questions.filter(q => q.trim()),
+          // For a quiz, send the MCQ questions (with options + correct) so the child
+          // gets real multiple-choice, not plain text. Empty for assignments.
+          quizQuestions: type === 'quiz' ? quizQuestions : [],
         }),
       });
       if (res.ok) {
@@ -381,7 +392,7 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
               const statusColor = a.status === 'completed' ? colors.accentGreen : colors.accentBlue;
 
               return (
-                <TouchableOpacity key={a.id} style={styles.assignmentRow} activeOpacity={0.75} onPress={() => setDetailAssignment(a)}>
+                <TouchableOpacity key={a.id} style={[styles.assignmentRow, { width: twoCol ? '48.5%' : '100%' }]} activeOpacity={0.75} onPress={() => setDetailAssignment(a)}>
                   <View style={[styles.assignmentIconSm, { backgroundColor: colors.accentYellow + '18' }]}>
                     <Feather name="book-open" size={14} color={colors.accentYellow} />
                   </View>
@@ -598,8 +609,34 @@ export default function ParentAssignmentsScreen({ navigation }: any) {
                     </TouchableOpacity>
                   </View>
 
-                  {/* Questions preview (after AI generate or manual) */}
-                  {questions.filter(q => q.trim()).length > 0 && (
+                  {/* MCQ quiz preview — questions with their 4 options + correct answer */}
+                  {type === 'quiz' && quizQuestions.length > 0 && (
+                    <View style={{ gap: 10 }}>
+                      <Text style={styles.fieldLabel}>Questions</Text>
+                      {quizQuestions.map((qq: any, i: number) => (
+                        <View key={i} style={{ backgroundColor: colors.cardDark, borderRadius: radius.md, borderWidth: 1, borderColor: colors.borderColor, padding: spacing.md, gap: 8 }}>
+                          <View style={{ flexDirection: 'row', gap: 8 }}>
+                            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: colors.accentYellow, alignItems: 'center', justifyContent: 'center' }}>
+                              <Text style={{ fontFamily: fonts.serif, fontSize: 10, fontWeight: '800', color: '#0B0B0B' }}>{i + 1}</Text>
+                            </View>
+                            <Text style={{ flex: 1, fontFamily: fonts.serif, fontSize: 14, color: colors.textMain, fontWeight: '600' }}>{qq.question}</Text>
+                          </View>
+                          {Array.isArray(qq.options) && qq.options.map((opt: string, oi: number) => {
+                            const isCorrect = String(opt).trim() === String(qq.correct).trim();
+                            return (
+                              <View key={oi} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 30 }}>
+                                <Feather name={isCorrect ? 'check-circle' : 'circle'} size={14} color={isCorrect ? colors.accentGreen : colors.textDim} />
+                                <Text style={{ fontFamily: fonts.serif, fontSize: 13, color: isCorrect ? colors.accentGreen : colors.textMuted, fontWeight: isCorrect ? '700' : '500' }}>{opt}</Text>
+                              </View>
+                            );
+                          })}
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Plain-text questions preview (assignments, or a quiz with no options) */}
+                  {!(type === 'quiz' && quizQuestions.length > 0) && questions.filter(q => q.trim()).length > 0 && (
                     <View style={{ gap: 8 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                         <Text style={styles.fieldLabel}>Questions</Text>
@@ -722,12 +759,16 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   sectionLabel: { fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: c.textDim, letterSpacing: 0.8, marginBottom: spacing.md, textTransform: 'uppercase' },
 
   assignmentList: {
-    gap: 6,
+    // 2-column grid on wide screens; collapses to a single column on narrow ones
+    // (each card has a minWidth, so <2 fit → they wrap to one per row).
+    flexDirection: 'row', flexWrap: 'wrap', gap: 8,
   },
   assignmentRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
     borderRadius: radius.md, paddingVertical: 10, paddingHorizontal: 14,
+    // width is set inline (48.5% for 2-col, 100% for 1-col) so the last odd card
+    // stays half-width instead of stretching across the row.
   },
   assignmentIconSm: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   assignmentTitle: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '600', color: c.textMain },
@@ -830,6 +871,9 @@ function AssignmentDetailModal({ assignment, colors, childName, onClose }: { ass
       feedback = { text: a.aiFeedback };
     }
   }
+  // Interactive quizzes store answers in submission_text (surfaced as a.perQuestion
+  // by the server), not ai_feedback — prefer that so the submitted worksheet shows.
+  if ((a as any).perQuestion?.length) perQuestion = (a as any).perQuestion;
 
   const allQuestions: string[] = a.questions?.length ? a.questions : [];
   const taskSteps: any[] = a.taskSteps?.length ? a.taskSteps : [];
@@ -837,11 +881,11 @@ function AssignmentDetailModal({ assignment, colors, childName, onClose }: { ass
   const hasContent = allQuestions.length > 0 || taskSteps.length > 0 || quizQuestions.length > 0;
 
   return (
-    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' }}>
-        <View style={{ backgroundColor: colors.cardDark, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '92%', borderWidth: 1, borderBottomWidth: 0, borderColor: colors.borderColor }}>
+    <Modal visible animationType="fade" transparent onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 16 }}>
+        <View style={{ backgroundColor: colors.cardDark, borderRadius: 18, maxHeight: '90%', width: '100%', maxWidth: 820, borderWidth: 1, borderColor: colors.borderColor }}>
           {/* Header */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: colors.borderColor, gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: colors.borderColor, gap: 12 }}>
             <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: colors.accentYellow + '18', alignItems: 'center', justifyContent: 'center' }}>
               <Feather name="book-open" size={20} color={colors.accentYellow} />
             </View>
@@ -856,35 +900,35 @@ function AssignmentDetailModal({ assignment, colors, childName, onClose }: { ass
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 48 }}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 14, gap: 10, paddingBottom: 24 }}>
 
             {/* Status + Due info */}
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ flex: 1, padding: 16, borderRadius: 14, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center' }}>
-                <Feather name={isCompleted ? 'check-circle' : 'clock'} size={22} color={isCompleted ? colors.accentGreen : colors.accentYellow} />
-                <Text style={{ fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: isCompleted ? colors.accentGreen : colors.accentYellow, marginTop: 6 }}>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ flex: 1, padding: 10, borderRadius: 12, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center' }}>
+                <Feather name={isCompleted ? 'check-circle' : 'clock'} size={18} color={isCompleted ? colors.accentGreen : colors.accentYellow} />
+                <Text style={{ fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: isCompleted ? colors.accentGreen : colors.accentYellow, marginTop: 4 }}>
                   {isCompleted ? 'Completed' : 'Pending'}
                 </Text>
-                <Text style={{ fontFamily: fonts.serif, fontSize: 11, color: colors.textDim, marginTop: 2 }}>{due.label}</Text>
+                <Text style={{ fontFamily: fonts.serif, fontSize: 11, color: colors.textDim, marginTop: 1 }}>{due.label}</Text>
               </View>
               {isCompleted && a.score != null && (
-                <View style={{ flex: 1, padding: 16, borderRadius: 14, backgroundColor: colors.accentYellow + '18', borderWidth: 1, borderColor: colors.accentYellow + '30', alignItems: 'center' }}>
-                  <Text style={{ fontFamily: fonts.serif, fontSize: 36, fontWeight: '900', color: colors.accentYellow, letterSpacing: -1 }}>{a.score}%</Text>
-                  <Text style={{ fontFamily: fonts.serif, fontSize: 12, fontWeight: '600', color: colors.accentYellow, marginTop: 2 }}>Score</Text>
+                <View style={{ flex: 1, padding: 10, borderRadius: 12, backgroundColor: colors.accentYellow + '18', borderWidth: 1, borderColor: colors.accentYellow + '30', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontFamily: fonts.serif, fontSize: 26, fontWeight: '900', color: colors.accentYellow, letterSpacing: -1 }}>{a.score}%</Text>
+                  <Text style={{ fontFamily: fonts.serif, fontSize: 12, fontWeight: '600', color: colors.accentYellow, marginTop: 1 }}>Score</Text>
                 </View>
               )}
               {isCompleted && (a as any).scoreHidden && (
-                <View style={{ flex: 1, padding: 16, borderRadius: 14, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center', justifyContent: 'center' }}>
-                  <Feather name="lock" size={20} color={colors.textMuted} />
-                  <Text style={{ fontFamily: fonts.serif, fontSize: 11, color: colors.textMuted, marginTop: 6, textAlign: 'center', lineHeight: 15 }}>
+                <View style={{ flex: 1, padding: 10, borderRadius: 12, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="lock" size={18} color={colors.textMuted} />
+                  <Text style={{ fontFamily: fonts.serif, fontSize: 11, color: colors.textMuted, marginTop: 4, textAlign: 'center', lineHeight: 15 }}>
                     Score hidden — the teacher has turned off progress sharing.
                   </Text>
                 </View>
               )}
               {isCompleted && feedback.stamp && (
-                <View style={{ flex: 1, padding: 16, borderRadius: 14, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center', justifyContent: 'center' }}>
-                  <Feather name="award" size={22} color={colors.accentYellow} />
-                  <Text style={{ fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', color: colors.accentYellow, textAlign: 'center', marginTop: 6 }}>{feedback.stamp}</Text>
+                <View style={{ flex: 1, padding: 10, borderRadius: 12, backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor, alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="award" size={18} color={colors.accentYellow} />
+                  <Text style={{ fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', color: colors.accentYellow, textAlign: 'center', marginTop: 4 }}>{feedback.stamp}</Text>
                 </View>
               )}
             </View>
@@ -932,9 +976,46 @@ function AssignmentDetailModal({ assignment, colors, childName, onClose }: { ass
               </View>
             ) : null}
 
+            {/* Submitted worksheet (interactive quizzes) — same answered view the
+                 teacher/student see: the child's answers filled in and colour-marked. */}
+            {isCompleted && (a as any).interactiveQuizHtml && perQuestion.length > 0 ? (
+              <View style={{ gap: 6 }}>
+                <Text style={{ fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8 }}>Submitted Worksheet</Text>
+                <View style={{ height: 500, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: colors.borderColor, backgroundColor: '#0F0F0F' }}>
+                  {Platform.OS === 'web' ? (
+                    <View
+                      style={{ flex: 1 } as any}
+                      ref={(el: any) => {
+                        if (el && !(el as any)._answered) {
+                          (el as any)._answered = true;
+                          const answered = getAnsweredQuizHtml((a as any).interactiveQuizHtml, { perQuestion });
+                          const blob = new Blob([answered], { type: 'text/html' });
+                          const url = URL.createObjectURL(blob);
+                          const f = document.createElement('iframe');
+                          f.src = url;
+                          f.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+                          f.title = 'Submitted Worksheet';
+                          f.onload = () => URL.revokeObjectURL(url);
+                          el.appendChild(f);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <WebView
+                      source={{ html: getAnsweredQuizHtml((a as any).interactiveQuizHtml, { perQuestion }) }}
+                      style={{ flex: 1, backgroundColor: '#0F0F0F' }}
+                      originWhitelist={['*']}
+                      javaScriptEnabled
+                      domStorageEnabled
+                    />
+                  )}
+                </View>
+              </View>
+            ) : null}
+
             {/* Questions Section */}
             {hasContent && (
-              <View style={{ gap: 10 }}>
+              <View style={{ gap: 6 }}>
                 <Text style={{ fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.8 }}>
                   {isCompleted ? 'Questions & Answers' : 'Questions'}
                 </Text>
@@ -954,19 +1035,19 @@ function AssignmentDetailModal({ assignment, colors, childName, onClose }: { ass
                     : 'x-circle';
 
                   return (
-                    <View key={idx} style={{ padding: 14, borderRadius: 12, borderWidth: 1, borderColor: (isCompleted && pq) ? qColor + '40' : colors.borderColor, backgroundColor: (isCompleted && pq) ? qColor + '06' : colors.bgDark, gap: 8 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
-                        <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: isCompleted && pq ? qColor + '20' : colors.accentYellow + '18', alignItems: 'center', justifyContent: 'center' }}>
+                    <View key={idx} style={{ padding: 10, borderRadius: 10, borderWidth: 1, borderColor: (isCompleted && pq) ? qColor + '40' : colors.borderColor, backgroundColor: (isCompleted && pq) ? qColor + '06' : colors.bgDark, gap: 5 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                        <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: isCompleted && pq ? qColor + '20' : colors.accentYellow + '18', alignItems: 'center', justifyContent: 'center' }}>
                           {isCompleted && pq ? (
-                            <Feather name={qIcon as any} size={14} color={qColor} />
+                            <Feather name={qIcon as any} size={12} color={qColor} />
                           ) : (
                             <Text style={{ fontFamily: fonts.serif, fontSize: 11, fontWeight: '800', color: colors.accentYellow }}>{idx + 1}</Text>
                           )}
                         </View>
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontFamily: fonts.serif, fontSize: 14, fontWeight: '600', color: colors.textMain, lineHeight: 20 }}>{q}</Text>
+                          <Text style={{ fontFamily: fonts.serif, fontSize: 13, fontWeight: '600', color: colors.textMain, lineHeight: 18 }}>{q}</Text>
                           {isCompleted && pq && (
-                            <View style={{ marginTop: 8, gap: 6 }}>
+                            <View style={{ marginTop: 5, gap: 3 }}>
                               {pq.studentAnswer && (
                                 <View style={{ flexDirection: 'row', gap: 6 }}>
                                   <Text style={{ fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: colors.textDim }}>Answer:</Text>
@@ -1102,8 +1183,8 @@ function AssignmentDetailModal({ assignment, colors, childName, onClose }: { ass
               </View>
             )}
 
-            {/* No content fallback */}
-            {!hasContent && (
+            {/* No content fallback — hidden when the submitted worksheet is shown. */}
+            {!hasContent && !(isCompleted && (a as any).interactiveQuizHtml && perQuestion.length > 0) && (
               <View style={{ alignItems: 'center', paddingVertical: 32 }}>
                 <Feather name="file-text" size={32} color={colors.textDim} />
                 <Text style={{ fontFamily: fonts.serif, fontSize: 14, color: colors.textDim, marginTop: 8 }}>

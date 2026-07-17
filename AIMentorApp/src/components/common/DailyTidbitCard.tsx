@@ -109,6 +109,42 @@ export default function DailyTidbitCard({ grade, studentId }: Props) {
   }
 
   // ── Quiz helpers ─────────────────────────────────────────────────
+  function normalizeQuizQuestions(rawQs: any[]): QuizQuestion[] {
+    return (rawQs || []).map((q: any) => {
+      let opts: string[] = Array.isArray(q.options) ? q.options.map((o: any) => typeof o === 'string' ? o : (o?.label || String(o || ''))) : [];
+      let correct = typeof q.correct === 'number' ? q.correct : 0;
+      if (typeof q.correct === 'string') {
+        const LETTER_MAP: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+        correct = LETTER_MAP[q.correct.toUpperCase()] ?? 0;
+      }
+
+      if (opts.length === 6 || opts.length === 8) {
+        const allEvenLetters = opts.every((opt, i) => {
+          if (i % 2 !== 0) return true;
+          const s = String(opt || '').trim();
+          return /^[A-Da-d0-4][.)\]]?$/.test(s) || /^\[[A-Da-d0-4]\]$/.test(s);
+        });
+        if (allEvenLetters) {
+          const extracted = [];
+          for (let i = 1; i < opts.length; i += 2) {
+            extracted.push(opts[i]);
+          }
+          opts = extracted;
+          if (correct >= opts.length) correct = Math.floor(correct / 2);
+        }
+      }
+
+      const cleaned = opts.map(opt => String(opt || '').replace(/^\[?[A-Da-d0-4]\]?[.)\-:]?\s*/, '').trim()).filter(Boolean);
+
+      return {
+        ...q,
+        question: q.question || '',
+        options: cleaned.length > 0 ? cleaned : opts,
+        correct: Math.min(Math.max(0, correct), Math.max(0, (cleaned.length || opts.length) - 1)),
+      };
+    });
+  }
+
   function quizCacheKey(headline: string) {
     const hash = headline.replace(/\W+/g, '').toLowerCase().slice(0, 24);
     return `quiz_done_${hash}_${new Date().toISOString().split('T')[0]}`;
@@ -133,7 +169,7 @@ export default function DailyTidbitCard({ grade, studentId }: Props) {
       });
       const json = await resp.json();
       if (!json.questions?.length) throw new Error('No questions');
-      setQuestions(json.questions);
+      setQuestions(normalizeQuizQuestions(json.questions));
       setQuizState('active');
     } catch (e: any) {
       setQuizError('Could not load quiz. Please try again.');

@@ -312,8 +312,9 @@ const [editingName, setEditingName] = useState(false);
                       const isChallenge = item.type === 'challenge';
                       const isEvent = item.type === 'event';
                       const isPortfolio = item.type === 'portfolio';
+                      const isTask = item.type === 'task';
                       const accent = colors.accentYellow;
-                      const iconName = isChallenge ? 'award' : isEvent ? 'calendar' : (isPortfolio ? 'image' : (item.type === 'quiz' ? 'help-circle' : 'check-square'));
+                      const iconName = isChallenge ? 'award' : isEvent ? 'calendar' : (isPortfolio ? 'image' : isTask ? 'check-circle' : (item.type === 'quiz' ? 'help-circle' : 'check-square'));
                       return (
                       <TouchableOpacity
                         key={item.id}
@@ -337,6 +338,10 @@ const [editingName, setEditingName] = useState(false);
                               postId: (item as any).postId,
                               label: `${(item as any).grade || 'Class'} Portfolio`
                             });
+                          } else if (isTask) {
+                            void clearUnreadEvents();
+                            // Daily tasks live on the student's Daily Habits screen.
+                            navigation.navigate('DailyHabits');
                           } else {
                             void clearUnreadAssignments();
                             navigation.navigate(screenNames.assignments, { highlightId: item.id });

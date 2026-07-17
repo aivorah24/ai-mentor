@@ -158,7 +158,7 @@ const CELL = 38;
 const s = StyleSheet.create({
   field:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 11, borderRadius: 10, borderWidth: 1 },
   fieldText:  { fontSize: 14, fontWeight: '500' },
-  popover:    { width: CELL * 7 + 24, borderWidth: 1, borderRadius: 14, padding: 12,
+  popover:    { width: CELL * 7 + 24 + 2, borderWidth: 1, borderRadius: 14, padding: 12,
                 // @ts-ignore
                 boxShadow: '0 8px 28px rgba(0,0,0,0.35)' },
   header:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
