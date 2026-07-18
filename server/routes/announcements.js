@@ -145,10 +145,24 @@ async function fetchAnnouncementsWithTargets(statuses) {
 }
 
 function matchesAudience(targets, userCtx, taughtByTeacherIds) {
-  if (!targets || targets.length === 0) return true; // no targets = global
+  // 1. No target rows at all = Global Aivorah Platform Announcement (e.g. system
+  // downtime). Everyone — B2C and B2B alike — sees it.
+  if (!targets || targets.length === 0) return true;
+
+  // 2. B2C / unassigned user (or anonymous/logged-out — userCtx is null): must
+  // NEVER see announcements tied to a specific school or teacher. May still see
+  // platform-wide notices scoped to their role (e.g. "all students on Aivorah").
+  // Applies uniformly to every role (student/teacher/parent) and both read
+  // surfaces (banner + inbox), since both call this function.
+  if (!userCtx?.school_id) {
+    return targets.every((t) => !t.school_id && !t.teacher_id)
+        && targets.some((t) => !t.role || t.role === userCtx?.role);
+  }
+
+  // 3. B2B school user: standard scoping across school, role, and assigned teachers.
   return targets.some((t) => {
-    const schoolOk = !t.school_id || t.school_id === userCtx?.school_id;
-    const roleOk = !t.role || t.role === userCtx?.role;
+    const schoolOk = !t.school_id || t.school_id === userCtx.school_id;
+    const roleOk = !t.role || t.role === userCtx.role;
     const teacherOk = !t.teacher_id || !!taughtByTeacherIds?.has(t.teacher_id);
     return schoolOk && roleOk && teacherOk;
   });
