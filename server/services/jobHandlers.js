@@ -54,6 +54,31 @@ registerHandler('quiz_generate', async (payload) => {
   });
 });
 
+// Syllabus PDF extraction job — lets a teacher upload several PDFs (e.g. a
+// book split across "Unit 1-5.pdf", "Unit 6-10.pdf") in one go without each
+// one blocking a browser tab on a 15-30s AI call. Reuses the exact same
+// canonical-extraction pipeline as the synchronous POST /teacher/syllabus/extract
+// (services/syllabusExtraction.js) — this queued path can never drift from it.
+registerHandler('syllabus_extract', async (payload) => {
+  const { runExtraction } = require('./syllabusExtraction');
+  const buffer = Buffer.from(payload.fileBase64, 'base64');
+  const extractRawText = async (buf) => {
+    const name = (payload.filename || '').toLowerCase();
+    if (name.endsWith('.pdf')) return (await require('pdf-parse')(buf)).text;
+    if (name.endsWith('.docx')) return (await require('mammoth').extractRawText({ buffer: buf })).value;
+    if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+      const XLSX = require('xlsx');
+      const wb = XLSX.read(buf, { type: 'buffer' });
+      return wb.SheetNames.map((n) => XLSX.utils.sheet_to_csv(wb.Sheets[n])).join('\n');
+    }
+    throw new Error('Unsupported file type — upload a PDF, DOCX, or XLSX.');
+  };
+  const { jobId, canonical, cached } = await runExtraction(buffer, extractRawText, {
+    grade: payload.grade, subject: payload.subject, curriculum: payload.curriculum,
+  });
+  return { extractionJobId: jobId, canonical, cached, filename: payload.filename };
+});
+
 // ── Templates for the real heavy jobs — wire these incrementally ──────────────
 //
 // registerHandler('content_ingest', async (payload) => {

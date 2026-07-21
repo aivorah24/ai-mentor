@@ -32,6 +32,7 @@ interface NotificationState {
   unreadAssignments: number;
   unreadChallenges: number;
   unreadEvents: number;
+  unreadJoinRequests: number; // pending B2C→B2B school-join requests (school-admin only)
   latestNotif: LatestNotif | null;
   notificationItems: NotifItem[];
   toastVisible: boolean;
@@ -50,6 +51,7 @@ const NotificationContext = createContext<NotificationState>({
   unreadAssignments: 0,
   unreadChallenges: 0,
   unreadEvents: 0,
+  unreadJoinRequests: 0,
   latestNotif: null,
   notificationItems: [],
   toastVisible: false,
@@ -132,6 +134,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [unreadAssignments, setUnreadAssignments] = useState(0);
   const [unreadChallenges,  setUnreadChallenges]  = useState(0);
   const [unreadEvents,      setUnreadEvents]      = useState(0);
+  const [unreadJoinRequests, setUnreadJoinRequests] = useState(0);
   const [latestNotif,       setLatestNotif]       = useState<LatestNotif | null>(null);
   const [notificationItems, setNotificationItems] = useState<NotifItem[]>([]);
   const [toastVisible,      setToastVisible]      = useState(false);
@@ -327,6 +330,27 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     };
   }, [user?.email, poll]);
 
+  // ── School-admin only: poll pending B2C→B2B join requests for the bell badge ──
+  // Kept separate from the messages poll above (different endpoint + audience) so
+  // it can't affect the student/parent notification path. Non-admins never poll.
+  useEffect(() => {
+    const role = user?.role;
+    const isAdmin = role === 'school_admin' || role === 'super_admin';
+    if (!user?.email || !isAdmin) { setUnreadJoinRequests(0); return; }
+    let cancelled = false;
+    const fetchCount = async () => {
+      try {
+        const res = await fetch(`${SERVER_URL}/school-admin/access-requests?adminEmail=${encodeURIComponent(user.email)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data)) setUnreadJoinRequests(data.length);
+      } catch { /* silent — badge just stays as-is */ }
+    };
+    fetchCount();
+    const t = setInterval(fetchCount, POLL_INTERVAL_MS * 4); // 32s — requests are low-frequency
+    return () => { cancelled = true; clearInterval(t); };
+  }, [user?.email, user?.role]);
+
   const dismissToast = () => setToastVisible(false);
 
   const clearUnread = useCallback(async () => {
@@ -449,7 +473,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   return (
     <NotificationContext.Provider value={{
-      unreadCount, unreadAssignments, unreadChallenges, unreadEvents,
+      unreadCount, unreadAssignments, unreadChallenges, unreadEvents, unreadJoinRequests,
       latestNotif, notificationItems, toastVisible,
       dismissToast, clearUnread, clearUnreadAssignments, clearUnreadChallenges, clearUnreadEvents, refresh, triggerPoll, muteCategory,
     }}>

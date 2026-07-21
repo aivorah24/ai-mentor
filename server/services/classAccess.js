@@ -35,7 +35,7 @@ async function getUserContext(email) {
   if (!email) return null;
   const { data, error } = await supabase
     .from('users')
-    .select('id, role, school_id, email, grade, section')
+    .select('id, role, school_id, email, grade, section, curriculum')
     .eq('email', String(email).toLowerCase().trim())
     .maybeSingle();
   if (error) throw error;

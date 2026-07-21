@@ -8,6 +8,25 @@ function uuidv4() {
 
 // ── Row mapper: Supabase snake_case → camelCase ──────────────
 function mapRow(e) {
+  const startDate = (e.type === 'deadline' || e.type === 'challenge') && e.created_at
+    ? e.created_at.split('T')[0]
+    : e.event_date;
+
+  let tag = e.tag || null;
+  let tagCategory = 'assignment';
+  if (!tag) {
+    if (e.type === 'challenge') tag = 'AI Challenge';
+    else if (e.type === 'deadline') tag = 'Worksheet';
+    else if (e.type === 'lesson') tag = 'Live Class';
+    else if (e.type === 'break') { tag = 'Working Day'; tagCategory = 'event'; }
+    else tag = 'Quick task';
+  } else {
+    const eventTags = ['Holidays and vacations', 'School holidays', 'Whole school events', 'Curriculum Unit Timeline', 'MYP Unit Timeline', 'Special Assembly', 'Working Day', 'Rotation Day Cycle', 'SmartTask Cycle Tim...'];
+    if (eventTags.some(t => String(tag).toLowerCase().includes(t.toLowerCase()))) {
+      tagCategory = 'event';
+    }
+  }
+
   return {
     id:           e.id,
     title:        e.title,
@@ -18,9 +37,12 @@ function mapRow(e) {
     note:         e.note       || '',
     studentId:    e.student_id,
     createdBy:    e.created_by || e.student_id,
-    tag:          e.tag        || null,
+    tag:          tag,
+    tagCategory:  tagCategory,
     assignmentId: e.assignment_id ?? null,
     createdAt:    e.created_at,
+    isCompleted:  !!e.isCompleted,
+    startDate,
   };
 }
 
@@ -54,7 +76,15 @@ router.get('/teacher', async (req, res) => {
     // was always false and silently fell through to "any teacher-created event",
     // leaking every teacher's schedule onto every other teacher's calendar.
     if (email && teacherId) {
-      rawEvents = rawEvents.filter(e => e.created_by === 'teacher' && e.created_by_id === teacherId);
+      const { data: tlinks } = await supabase.from('teacher_student').select('student_id').eq('teacher_id', teacherId);
+      const linkedStudents = new Set((tlinks || []).map(l => l.student_id).filter(Boolean));
+
+      rawEvents = rawEvents.filter(e => {
+        if (e.created_by_id === teacherId || (e.created_by === 'teacher' && !e.created_by_id)) return true;
+        if (['school_admin', 'school-admin', 'super_admin'].includes(String(e.created_by || '').toLowerCase())) return true;
+        if (e.student_id && e.student_id !== 'all' && linkedStudents.has(e.student_id)) return true;
+        return false;
+      });
     }
     let manualEvents = rawEvents.map(mapRow);
 
@@ -114,14 +144,19 @@ async function scopeAllEvents(rows, userId) {
 }
 
 // A deadline event's underlying assignment/challenge may already be completed by
-// THIS student — a class-wide (student_id='all') deadline row is shared across
-// every student in the class, so it can't just be deleted on completion; it has
-// to be filtered out per-student at read time instead.
+// THIS student. Instead of deleting the row, we mark it with isCompleted = true
+// so the calendar can render it in pastel green with strikethrough OR hide it depending on the toggle.
 async function filterCompleted(rows, userId) {
-  if (!userId) return rows;
+  if (!userId) {
+    (rows || []).forEach(e => { e.isCompleted = false; });
+    return rows;
+  }
   const asgnIds = (rows || []).filter(e => e.type === 'deadline' && e.assignment_id).map(e => e.assignment_id);
   const chalIds = (rows || []).filter(e => e.type === 'challenge' && e.assignment_id).map(e => e.assignment_id);
-  if (asgnIds.length === 0 && chalIds.length === 0) return rows;
+  if (asgnIds.length === 0 && chalIds.length === 0) {
+    (rows || []).forEach(e => { e.isCompleted = false; });
+    return rows;
+  }
 
   const [{ data: subs }, { data: chals }] = await Promise.all([
     asgnIds.length > 0
@@ -134,44 +169,68 @@ async function filterCompleted(rows, userId) {
   const completedAsgn = new Set((subs || []).map(s => s.assignment_id));
   const completedChal = new Set((chals || []).map(c => c.id));
 
-  return (rows || []).filter(e => {
-    if (e.type === 'deadline' && e.assignment_id) return !completedAsgn.has(e.assignment_id);
-    if (e.type === 'challenge' && e.assignment_id) return !completedChal.has(e.assignment_id);
-    return true;
+  (rows || []).forEach(e => {
+    if (e.type === 'deadline' && e.assignment_id) {
+      e.isCompleted = completedAsgn.has(e.assignment_id);
+    } else if (e.type === 'challenge' && e.assignment_id) {
+      e.isCompleted = completedChal.has(e.assignment_id);
+    } else {
+      e.isCompleted = false;
+    }
   });
+
+  return rows;
 }
 
 // ── GET /schedule?studentId=xxx&date=YYYY-MM-DD ──────────────
 router.get('/', async (req, res) => {
-  const { studentId, date } = req.query;
+  const { studentId, date, hideCompleted } = req.query;
   if (!studentId || !date) return res.status(400).json({ error: 'studentId and date required' });
   try {
-    const [{ data, error }, profile] = await Promise.all([
+    const [{ data: exactData, error: err1 }, { data: activeDeadlines, error: err2 }, profile] = await Promise.all([
       supabase.from('schedule_events').select('*').eq('event_date', date).or(`student_id.eq.${studentId},student_id.eq.all`),
+      supabase.from('schedule_events').select('*').in('type', ['deadline', 'challenge']).gte('event_date', date).or(`student_id.eq.${studentId},student_id.eq.all`),
       getStudentProfile(studentId),
     ]);
-    if (error) throw error;
+    if (err1) throw err1;
+    if (err2) throw err2;
 
-    let scopedData = await scopeAllEvents(data, profile.userId);
+    const allMap = new Map();
+    (exactData || []).forEach(e => allMap.set(e.id, e));
+    (activeDeadlines || []).forEach(e => {
+      const start = e.created_at ? e.created_at.split('T')[0] : e.event_date;
+      if (start <= date && e.event_date >= date) {
+        allMap.set(e.id, e);
+      }
+    });
+    let rows = Array.from(allMap.values());
+
+    let scopedData = await scopeAllEvents(rows, profile.userId);
     scopedData = await filterCompleted(scopedData, profile.userId);
+    if (String(hideCompleted) === 'true') {
+      scopedData = scopedData.filter(e => !e.isCompleted);
+    }
     res.json((scopedData ?? []).map(mapRow));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── GET /schedule/month?studentId=xxx&year=2026&month=4 ──────
 router.get('/month', async (req, res) => {
-  const { studentId, year, month } = req.query;
+  const { studentId, year, month, hideCompleted } = req.query;
   if (!studentId || !year || !month) return res.status(400).json({ error: 'studentId, year, month required' });
   const prefix = `${year}-${String(month).padStart(2, '0')}`;
   try {
     const [{ data, error }, profile] = await Promise.all([
-      supabase.from('schedule_events').select('event_date,student_id,created_by,created_by_id,type,assignment_id').like('event_date', `${prefix}%`).or(`student_id.eq.${studentId},student_id.eq.all`),
+      supabase.from('schedule_events').select('id,event_date,start_time,end_time,type,note,student_id,created_by,created_by_id,assignment_id,created_at').like('event_date', `${prefix}%`).or(`student_id.eq.${studentId},student_id.eq.all`),
       getStudentProfile(studentId),
     ]);
     if (error) throw error;
 
     let scopedData = await scopeAllEvents(data, profile.userId);
     scopedData = await filterCompleted(scopedData, profile.userId);
+    if (String(hideCompleted) === 'true') {
+      scopedData = scopedData.filter(e => !e.isCompleted);
+    }
     const dates = [...new Set((scopedData ?? []).map(e => e.event_date))];
     res.json({ dates });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -179,7 +238,7 @@ router.get('/month', async (req, res) => {
 
 // ── GET /schedule/upcoming?studentId=xxx ────────────────────
 router.get('/upcoming', async (req, res) => {
-  const { studentId } = req.query;
+  const { studentId, hideCompleted } = req.query;
   if (!studentId) return res.status(400).json({ error: 'studentId required' });
   const today = new Date().toISOString().split('T')[0];
   try {
@@ -192,12 +251,16 @@ router.get('/upcoming', async (req, res) => {
 
     let scopedData = await scopeAllEvents(data, profile.userId);
     scopedData = await filterCompleted(scopedData, profile.userId);
+    if (String(hideCompleted) === 'true') {
+      scopedData = scopedData.filter(e => !e.isCompleted);
+    }
     const all = (scopedData ?? []).map(mapRow)
       .sort((a, b) => (a.date > b.date ? 1 : -1))
       .slice(0, 5);
 
     res.json(all);
   } catch (err) { res.status(500).json({ error: err.message }); }
+
 });
 
 // ── POST /schedule ───────────────────────────────────────────
@@ -289,19 +352,30 @@ router.post('/', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ── PATCH /schedule/:id ──────────────────────────────────────
-router.patch('/:id', async (req, res) => {
+// ── PATCH / PUT /schedule/:id ────────────────────────────────
+async function handleUpdateSchedule(req, res) {
   const { id } = req.params;
-  const { startTime, endTime } = req.body;
+  const { startTime, endTime, title, date, event_date, type, note, tag, isCompleted, studentId } = req.body;
   try {
     const updates = {};
     if (startTime !== undefined) updates.start_time = startTime;
     if (endTime !== undefined) updates.end_time = endTime;
+    if (title !== undefined) updates.title = title;
+    if (date !== undefined) updates.event_date = date;
+    if (event_date !== undefined) updates.event_date = event_date;
+    if (type !== undefined) updates.type = type;
+    if (note !== undefined) updates.note = note;
+    if (tag !== undefined) updates.tag = tag;
+    if (isCompleted !== undefined) updates.isCompleted = !!isCompleted;
+    if (studentId !== undefined) updates.student_id = studentId;
     const { data, error } = await supabase.from('schedule_events').update(updates).eq('id', id).select().single();
     if (error) throw error;
-    res.json(data);
+    res.json(mapRow(data));
   } catch (err) { res.status(500).json({ error: err.message }); }
-});
+}
+
+router.patch('/:id', handleUpdateSchedule);
+router.put('/:id', handleUpdateSchedule);
 
 // ── DELETE /schedule/:id ─────────────────────────────────────
 router.delete('/:id', async (req, res) => {
@@ -311,6 +385,125 @@ router.delete('/:id', async (req, res) => {
     if (error) throw error;
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/tags', (req, res) => {
+  res.json({
+    assignmentTags: [
+      { key: 'learning_experience', label: 'Learning experience', color: '#7FC29B' },
+      { key: 'quick_task', label: 'Quick task', color: '#7FB2D6' },
+      { key: 'worksheet', label: 'Worksheet', color: '#E3B24C' },
+      { key: 'ai_tutor', label: 'AI Tutor', color: '#9B8FE8' },
+      { key: 'video_meeting', label: 'Video meeting', color: '#E58AA6' },
+      { key: 'ai_challenge', label: 'AI Challenge', color: '#E58AA6' },
+      { key: 'live_class', label: 'Live Class', color: '#7FC29B' },
+    ],
+    eventTags: [
+      { key: 'holidays_and_vacations', label: 'Holidays and vacations', color: '#E58AA6' },
+      { key: 'whole_school_events', label: 'Whole school events', color: '#7FC29B' },
+      { key: 'curriculum_unit_timeline', label: 'MYP Unit Timeline', color: '#E58AA6' },
+      { key: 'special_assembly', label: 'Special Assembly', color: '#7FC29B' },
+      { key: 'working_day', label: 'Working Day', color: '#C4BCA9' },
+      { key: 'rotation_day_cycle', label: 'Rotation Day Cycle', color: '#7FB2D6' },
+      { key: 'smarttask_cycle', label: 'SmartTask Cycle Timeline', color: '#E58AA6' },
+    ],
+  });
+});
+
+router.get('/ical', async (req, res) => {
+  try {
+    const { studentId, email, role } = req.query;
+
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 30);
+    const dateStr = pastDate.toISOString().split('T')[0];
+
+    let query = supabase.from('schedule_events').select('*').gte('event_date', dateStr);
+
+    if (studentId) {
+      query = query.or(`student_id.eq.${studentId},student_id.eq.all`);
+    }
+
+    if (role === 'teacher' && email) {
+      const { data: userData, error: userError } = await supabase.from('users').select('id').eq('email', email).single();
+      if (!userError && userData) {
+        query = query.eq('created_by_id', userData.id);
+      }
+    }
+
+    const { data: events, error } = await query;
+    if (error) throw error;
+
+    const mappedEvents = (events || []).map(mapRow);
+
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    const dtstamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth()+1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
+
+    let ical = 'BEGIN:VCALENDAR\r\n';
+    ical += 'VERSION:2.0\r\n';
+    ical += 'PRODID:-//Aivorah//Schedule//EN\r\n';
+    ical += 'CALSCALE:GREGORIAN\r\n';
+    ical += 'METHOD:PUBLISH\r\n';
+    ical += 'X-WR-CALNAME:Aivorah Schedule\r\n';
+    ical += 'X-WR-TIMEZONE:Asia/Kolkata\r\n';
+
+    for (const ev of mappedEvents) {
+      if (!ev.date) continue;
+      const dateVal = ev.date.replace(/-/g, '');
+      let stTime = ev.startTime;
+      let enTime = ev.endTime;
+      
+      let startStr = '';
+      let endStr = '';
+      
+      if (!stTime) {
+        stTime = '00:00';
+      }
+      
+      if (stTime === '23:59') {
+        const nextDate = new Date(ev.date);
+        nextDate.setDate(nextDate.getDate() + 1);
+        const nextDateStr = nextDate.toISOString().split('T')[0].replace(/-/g, '');
+        startStr = `DTSTART;VALUE=DATE:${dateVal}\r\n`;
+        endStr = `DTEND;VALUE=DATE:${nextDateStr}\r\n`;
+      } else {
+        if (!enTime) {
+          const [h, m] = stTime.split(':').map(Number);
+          enTime = `${pad((h+1)%24)}:${pad(m)}`;
+        }
+        const stTimeVal = stTime.replace(/:/g, '') + '00';
+        const enTimeVal = enTime.replace(/:/g, '') + '00';
+        startStr = `DTSTART;TZID=Asia/Kolkata:${dateVal}T${stTimeVal}\r\n`;
+        endStr = `DTEND;TZID=Asia/Kolkata:${dateVal}T${enTimeVal}\r\n`;
+      }
+
+      ical += 'BEGIN:VEVENT\r\n';
+      ical += `UID:${ev.id}@aivorah.com\r\n`;
+      ical += `DTSTAMP:${dtstamp}\r\n`;
+      ical += startStr;
+      ical += endStr;
+      ical += `SUMMARY:${ev.title || ''}\r\n`;
+      if (ev.note) {
+        ical += `DESCRIPTION:${ev.note.replace(/\r?\n/g, '\\n')}\r\n`;
+      } else {
+        ical += `DESCRIPTION:\r\n`;
+      }
+      if (ev.tag) {
+        ical += `CATEGORIES:${ev.tag}\r\n`;
+      }
+      ical += 'STATUS:CONFIRMED\r\n';
+      ical += 'END:VEVENT\r\n';
+    }
+
+    ical += 'END:VCALENDAR';
+
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="aivorah-schedule.ics"');
+    res.send(ical);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

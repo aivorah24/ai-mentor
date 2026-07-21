@@ -25,6 +25,9 @@ import ParentAnnouncementsScreen from '../screens/parent/ParentAnnouncementsScre
 import SubscriptionScreen from '../screens/student/SubscriptionScreen';
 import MyClassesScreen from '../features/classes/components/MyClassesScreen';
 import ClassDetailScreen from '../features/classes/components/ClassDetailScreen';
+import TimetableScreen from '../features/timetable/components/TimetableScreen';
+import ResourcesScreen from '../features/resources/components/ResourcesScreen';
+import ChannelsScreen from '../features/channels/components/ChannelsScreen';
 import ParentAttendanceScreen from '../screens/parent/ParentAttendanceScreen';
 
 const Drawer = createDrawerNavigator<ParentDrawerParamList>();
@@ -72,6 +75,9 @@ export default function ParentNavigator() {
       <Drawer.Screen name="ParentSubscription" component={SubscriptionScreen} />
       <Drawer.Screen name="MyClasses" component={MyClassesScreen} />
       <Drawer.Screen name="ClassDetail" component={ClassDetailScreen} />
+      <Drawer.Screen name="Timetable" component={TimetableScreen} />
+      <Drawer.Screen name="Resources" component={ResourcesScreen} />
+      <Drawer.Screen name="Channels" component={ChannelsScreen} />
     </Drawer.Navigator>
   );
 }

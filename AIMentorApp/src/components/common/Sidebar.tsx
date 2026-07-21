@@ -26,13 +26,27 @@ import SERVER_URL from '../../config/serverUrl';
 const STUDENT_NAV_ITEMS = [
   { label: 'Dashboard',        icon: 'grid',         screen: 'Dashboard',          group: 'MENU',    premium: false },
   { label: 'Profile',          icon: 'user',         screen: 'Profile',            group: 'MENU',    premium: false },
-  { label: 'My Learning Paths',icon: 'book-open',    screen: 'LearningPaths',      group: 'MENU',    premium: false },
+  { label: 'My Learning Paths',icon: 'book-open',    screen: 'LearningPaths',      group: 'MENU',    premium: false,
+    // Screens reached FROM "My Learning Paths" (choose a subject → choose a
+    // topic/chapter → open a lesson/quiz/tool) so the sidebar item stays
+    // highlighted through that whole flow, not just on the landing screen
+    // itself. This is a flat Drawer.Navigator (siblings, not a nested Stack),
+    // so there's no parent/child relationship in the navigation state to
+    // read back — this list is the only source of truth for "belongs to
+    // Learning Paths." Keep in sync with AppNavigator.tsx's Drawer.Screen
+    // list if a new topic-flow screen is added.
+    childScreens: [
+      'SubjectTopics', 'SubjectSyllabus', 'LessonScreen', 'TopicLesson',
+      'VideoLesson', 'VideoPlayer', 'IBPYPQuiz', 'Learn5E', 'MathHelper',
+      'WordWizard', 'DrawingBuddy', 'AIStoryteller', 'NCERTChapters',
+    ] },
   { label: 'AI Coach',         icon: 'message-circle',screen: 'AICoach',           group: 'MENU',    premium: false },
   { label: 'Schedule',         icon: 'calendar',     screen: 'Schedule',           group: 'MENU',    premium: false },
   { label: 'The World & You',  icon: 'globe',        screen: 'WorldAndYou',        group: 'MENU',    premium: false },
   { label: 'Read Aloud',       icon: 'mic',          screen: 'ReadAloud',          group: 'MENU',    premium: false },
   { label: 'Announcements',    icon: 'volume-2',     screen: 'Announcements',      group: 'MENU',    premium: false },
   { label: 'My Classes',       icon: 'layers',       screen: 'MyClasses',          group: 'MENU',    premium: false },
+  { label: 'Timetable',        icon: 'clock',        screen: 'Timetable',          group: 'MENU',    premium: false },
   { label: 'Bedtime Stories',  icon: 'book',         screen: 'BhagavathaStories',  group: 'MENU',    premium: true  },
   { label: 'Daily Habits',     icon: 'sun',          screen: 'DailyHabits',        group: 'MENU',    premium: true  },
   { label: 'Assignments',      icon: 'check-square', screen: 'Assignments',        group: 'FOCUS',   premium: false },
@@ -49,12 +63,15 @@ const TEACHER_NAV_ITEMS = [
   { label: 'Dashboard', icon: 'grid', screen: 'TeacherDashboard', group: 'MENU' },
   { label: 'Students', icon: 'users', screen: 'TeacherStudents', group: 'MENU' },
   { label: 'My Classes', icon: 'layers', screen: 'MyClasses', group: 'MENU' },
+  { label: 'Timetable', icon: 'clock', screen: 'Timetable', group: 'MENU' },
+  { label: 'Resources', icon: 'folder', screen: 'Resources', group: 'MENU' },
   { label: 'Attendance', icon: 'clipboard', screen: 'TeacherAttendance', group: 'MENU' },
   { label: 'Schedule', icon: 'calendar', screen: 'TeacherSchedule', group: 'MENU' },
   { label: 'Assignments', icon: 'check-square', screen: 'TeacherAssignments', group: 'MANAGE' },
   { label: 'Challenges', icon: 'target', screen: 'TeacherChallenges', group: 'MANAGE' },
   { label: 'Student Progress', icon: 'bar-chart-2', screen: 'TeacherProgress', group: 'MANAGE' },
   { label: 'Learning Paths', icon: 'map', screen: 'TeacherLearningPaths', group: 'MANAGE' },
+  { label: 'Manage Syllabus', icon: 'upload', screen: 'TeacherSyllabusImport', group: 'MANAGE' },
   { label: 'Messages', icon: 'message-square', screen: 'TeacherMessages', group: 'MANAGE' },
   { label: 'Announcements', icon: 'volume-2', screen: 'TeacherAnnouncements', group: 'MANAGE' },
   { label: 'Send Announcement', icon: 'edit-3', screen: 'AnnouncementManager', group: 'MANAGE' },
@@ -66,6 +83,8 @@ const PARENT_NAV_ITEMS = [
   { label: 'Profile',           icon: 'user',           screen: 'ParentProfile',      group: 'MENU',     premium: false },
   { label: 'My Kids',           icon: 'users',          screen: 'ParentMyKids',       group: 'MENU',     premium: false },
   { label: 'My Classes',        icon: 'layers',         screen: 'MyClasses',          group: 'MENU',     premium: false },
+  { label: 'Timetable',         icon: 'clock',          screen: 'Timetable',          group: 'MENU',     premium: false },
+  { label: 'Resources',         icon: 'folder',         screen: 'Resources',          group: 'MENU',     premium: false },
   { label: 'Daily Tasks',       icon: 'check-square',   screen: 'ParentDailyTasks',   group: 'MENU',     premium: false },
   { label: 'Schedule',          icon: 'calendar',       screen: 'ParentSchedule',     group: 'MENU',     premium: false },
   { label: 'Learning',          icon: 'book-open',      screen: 'ParentLearning',     group: 'CHILDREN', premium: false },
@@ -113,16 +132,17 @@ const SUPER_ADMIN_NAV_ITEMS = [
 const SCHOOL_ADMIN_NAV_ITEMS: { label: string; icon: string; screen: string; group: string; params?: Record<string, any> }[] = [
   { label: 'Overview',           icon: 'grid',          screen: 'SchoolAdminDashboard',    group: 'WORKSPACE' },
   { label: 'Students',           icon: 'users',         screen: 'SchoolAdminStudents',      group: 'STUDENT MANAGEMENT' },
-  { label: 'Add Student',        icon: 'user-plus',     screen: 'SchoolAdminAddStudent',    group: 'STUDENT MANAGEMENT' },
-  { label: 'Bulk Import',        icon: 'upload',        screen: 'SchoolAdminBulkImport',    group: 'STUDENT MANAGEMENT' },
   { label: 'Grades & Sections',  icon: 'list',          screen: 'SchoolAdminGradesSections', group: 'ACADEMIC STRUCTURE' },
   { label: 'Classes',            icon: 'layers',        screen: 'SchoolAdminClasses',       group: 'ACADEMIC STRUCTURE' },
+  { label: 'Timetable',          icon: 'clock',         screen: 'Timetable',                group: 'ACADEMIC STRUCTURE' },
+  { label: 'Resources',          icon: 'folder',        screen: 'Resources',                group: 'ACADEMIC STRUCTURE' },
   { label: 'Promotions',         icon: 'trending-up',   screen: 'SchoolAdminPromotions',    group: 'STUDENT LIFECYCLE' },
   { label: 'Archived Students',  icon: 'archive',       screen: 'SchoolAdminArchivedStudents', group: 'STUDENT LIFECYCLE' },
   { label: 'Teachers',           icon: 'user',          screen: 'SchoolAdminTeachers',      group: 'PEOPLE' },
   { label: 'Add Teacher',        icon: 'user-plus',     screen: 'SchoolAdminAddTeacher',    group: 'PEOPLE' },
   { label: 'Import Teachers',    icon: 'upload',        screen: 'SchoolAdminTeacherBulkImport', group: 'PEOPLE' },
   { label: 'Parents',            icon: 'heart',         screen: 'SchoolAdminParents',       group: 'PEOPLE' },
+  { label: 'Messages',           icon: 'message-square', screen: 'Messages',                group: 'COMMUNICATION' },
   { label: 'Announcements',      icon: 'edit-3',        screen: 'AnnouncementManager',      group: 'COMMUNICATION' },
   { label: 'Import History',     icon: 'clock',         screen: 'SchoolAdminImportHistory', group: 'ADMINISTRATION' },
   { label: 'Workspace Settings', icon: 'settings',      screen: 'SchoolAdminSettings',      group: 'ADMINISTRATION' },
@@ -209,7 +229,15 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
     return () => { cancelled = true; };
   }, [isSchoolAdmin, user?.email]));
 
-  const NAV_ITEMS = role === 'super_admin' ? SUPER_ADMIN_NAV_ITEMS : role === 'school_admin' ? SCHOOL_ADMIN_NAV_ITEMS : role === 'teacher' ? TEACHER_NAV_ITEMS : role === 'parent' ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
+  const NAV_ITEMS_ROLE = role === 'super_admin' ? SUPER_ADMIN_NAV_ITEMS : role === 'school_admin' ? SCHOOL_ADMIN_NAV_ITEMS : role === 'teacher' ? TEACHER_NAV_ITEMS : role === 'parent' ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
+  // B2C vs B2B: independent (no schoolId) student/teacher/parent accounts don't
+  // belong to a school org, so hide school-only features (class rosters,
+  // attendance) rather than routing them to a dead-end. Mirrors DrawerContent.tsx.
+  const isB2B = !!user?.schoolId;
+  const SCHOOL_ONLY_SCREENS = ['MyClasses', 'TeacherAttendance', 'ParentAttendance', 'Timetable', 'Resources'];
+  const NAV_ITEMS = (!isB2B && (role === 'teacher' || role === 'parent' || role === 'student'))
+    ? NAV_ITEMS_ROLE.filter((i) => !SCHOOL_ONLY_SCREENS.includes(i.screen))
+    : NAV_ITEMS_ROLE;
   const groups = (role === 'super_admin' || role === 'teacher') ? ['MENU', 'MANAGE', 'SYSTEM'] : role === 'school_admin' ? ['WORKSPACE', 'STUDENT MANAGEMENT', 'ACADEMIC STRUCTURE', 'STUDENT LIFECYCLE', 'PEOPLE', 'COMMUNICATION', 'ADMINISTRATION', 'SUPPORT'] : role === 'parent' ? ['MENU', 'CHILDREN', 'SYSTEM'] : ['MENU', 'FOCUS', 'SYSTEM'];
   const { colors, themeMode, setThemeMode } = useTheme();
   const { unreadCount, unreadAssignments, unreadChallenges } = useNotification();
@@ -276,7 +304,9 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
                 // runtime `params` must not get the persistent active
                 // highlight, or every item pointing at that screen would
                 // light up together.
-                const isActive = !(item as any).params && currentScreen === item.screen;
+                const childScreens: string[] | undefined = (item as any).childScreens;
+                const isActive = !(item as any).params &&
+                  (currentScreen === item.screen || (childScreens?.includes(currentScreen) ?? false));
                 return (
                   <TouchableOpacity
                     key={`${item.screen}-${item.label}`}

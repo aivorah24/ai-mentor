@@ -12,6 +12,7 @@ import TeacherAssignmentsScreen from '../screens/teacher/TeacherAssignmentsScree
 import TeacherChallengesScreen from '../screens/teacher/TeacherChallengesScreen';
 import TeacherProgressScreen from '../screens/teacher/TeacherProgressScreen';
 import TeacherLearningPathsScreen from '../screens/teacher/TeacherLearningPathsScreen';
+import TeacherSyllabusImportScreen from '../screens/teacher/TeacherSyllabusImportScreen';
 import TeacherAchievementsScreen from '../screens/teacher/TeacherAchievementsScreen';
 import TeacherHelpScreen from '../screens/teacher/TeacherHelpScreen';
 import TeacherSettingsScreen from '../screens/teacher/TeacherSettingsScreen';
@@ -23,6 +24,9 @@ import AnnouncementManagerScreen from '../features/announcements/components/Anno
 import MyClassesScreen from '../features/classes/components/MyClassesScreen';
 import ClassDetailScreen from '../features/classes/components/ClassDetailScreen';
 import TeacherAttendanceScreen from '../screens/teacher/TeacherAttendanceScreen';
+import TimetableScreen from '../features/timetable/components/TimetableScreen';
+import ResourcesScreen from '../features/resources/components/ResourcesScreen';
+import ChannelsScreen from '../features/channels/components/ChannelsScreen';
 
 const Drawer = createDrawerNavigator<TeacherDrawerParamList>();
 
@@ -55,6 +59,7 @@ export default function TeacherNavigator() {
       <Drawer.Screen name="TeacherSchedule" component={TeacherScheduleScreen} />
       <Drawer.Screen name="TeacherProgress" component={TeacherProgressScreen} />
       <Drawer.Screen name="TeacherLearningPaths" component={TeacherLearningPathsScreen} />
+      <Drawer.Screen name="TeacherSyllabusImport" component={TeacherSyllabusImportScreen} />
       <Drawer.Screen name="TeacherAchievements" component={TeacherAchievementsScreen} />
       <Drawer.Screen name="TeacherHelp" component={TeacherHelpScreen} />
       <Drawer.Screen name="TeacherSettings" component={TeacherSettingsScreen} />
@@ -66,6 +71,9 @@ export default function TeacherNavigator() {
       <Drawer.Screen name="MyClasses" component={MyClassesScreen} />
       <Drawer.Screen name="ClassDetail" component={ClassDetailScreen} />
       <Drawer.Screen name="TeacherAttendance" component={TeacherAttendanceScreen} />
+      <Drawer.Screen name="Timetable" component={TimetableScreen} />
+      <Drawer.Screen name="Resources" component={ResourcesScreen} />
+      <Drawer.Screen name="Channels" component={ChannelsScreen} />
     </Drawer.Navigator>
   );
 }

@@ -601,19 +601,42 @@ router.patch('/read', async (req, res) => {
   }
 });
 
+// Aivorah's own feature set, kept short and current so the assistant can
+// answer "how do I..." questions about the app itself, not just parenting
+// support. Update this list when a real feature is added/renamed.
+const APP_FEATURES_BRIEF = `Aivorah is an AI-powered learning platform. Its features and exact navigation — only state a step if it matches this list, never invent a tab or button name:
+- Messages screen: 1:1 chat with teachers/parents/students/school admin. Teachers and school admins additionally see a "New" button (top of the conversation list) that opens a chooser: "New direct message" or "New group channel". Channels appear merged into the same conversation list, filterable by the All/Unread/Staff tabs.
+- Creating a group (via "New" -> "New group channel"): a chooser with THREE modes, all worth mentioning when the user asks "how do I create a group" — don't stop at just naming the button:
+  1. "Class channel" — broadcast to a whole grade/section, auto-adds those parents, has an optional Staff Room scope for internal-only staff chat.
+  2. "Family room" — one room per student: that teacher + the student's parents, everyone can post.
+  3. "Create group" — search and hand-pick specific students/parents by name, WhatsApp-style, for things like an activity club.
+- AI Coach: a patient AI tutor students chat with to learn topics (Learn -> Practice flow).
+- Assignments: teachers/parents assign work linked to learning topics; auto-graded, wrong answers get an AI explanation + retry.
+- Challenges & Leaderboard: competitive practice, ranked by grade/school.
+- Attendance, Timetable, Schedule: class scheduling and attendance tracking for teachers/school admins.
+- Announcements: one-way broadcast notices from school admin to the school.
+- Progress: student progress tracking, teacher gets a class-wide + individual view.
+If unsure of an exact button label, describe the general location (e.g. "from the Messages screen") rather than inventing a specific name.`;
+
 router.post('/aivorah-reply', async (req, res) => {
   try {
-    const { parentEmail, parentName, message, childName, childGrade } = req.body;
+    const { parentEmail, parentName, message, childName, childGrade, role } = req.body;
     if (!parentEmail || !message) return res.status(400).json({ error: 'parentEmail and message required' });
 
     const Groq = require('groq-sdk');
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    const systemPrompt = `You are Aivorah, a warm and supportive AI learning companion for parents. Your role is to help ${parentName || 'this parent'} support their child${childName ? ` ${childName}` : ''}${childGrade ? ` (Grade ${childGrade})` : ''} in their learning journey. Be concise (2-4 sentences), empathetic, practical, and encouraging. Offer specific actionable advice when relevant. Never be dismissive of parental concerns. Always end with a positive, supportive note.`;
+    // Aivorah is a general assistant: answer "how do I use X" questions about
+    // the app directly and completely, AND (for parents) offer supportive,
+    // practical advice on helping their child learn — whichever the message
+    // is actually asking for.
+    const systemPrompt = `You are Aivorah, the AI assistant built into this app, talking to ${parentName || 'a user'}${role ? ` (${role})` : ''}${childName ? `, whose child is ${childName}${childGrade ? ` (Grade ${childGrade})` : ''}` : ''}. The user is already inside the Messages screen chatting with you right now — never tell them to "go to the Messages screen", they're already there.
+${APP_FEATURES_BRIEF}
+Answer completely, not just the first click: if a feature has multiple sub-options (like the three group types above), name and briefly describe ALL of them so the user can pick the right one, formatted as a numbered list — don't make them ask a follow-up just to learn the options exist. Keep it tight (no filler, no repeating the question back) but don't sacrifice completeness for brevity. If asked about supporting a child's learning, give practical, encouraging advice. If you don't know something specific to this school's data, say so plainly instead of guessing.`;
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.1-8b-instant',
       messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: message }],
-      max_tokens: 300,
+      max_tokens: 450,
     });
     const reply = completion.choices[0]?.message?.content?.trim() || 'I am here to help! Please try again.';
 
@@ -709,7 +732,7 @@ router.get('/contacts', async (req, res) => {
     // Look up the user's id, role, and school
     const { data: me, error: meErr } = await supabase
       .from('users')
-      .select('id, role, name, school')
+      .select('id, role, name, school, school_id')
       .eq('email', userEmail)
       .single();
 
@@ -772,58 +795,98 @@ router.get('/contacts', async (req, res) => {
     }
 
     if (effectiveRole === 'teacher') {
+      const contacts = [];
+
       // 1. Get students this teacher is assigned to via teacher_student table
       const { data: tsLinks } = await supabase
         .from('teacher_student')
         .select('student_id')
         .eq('teacher_id', me.id);
+      const studentIds = (tsLinks || []).map(ts => ts.student_id);
 
-      if (!tsLinks || tsLinks.length === 0) return res.json([]);
+      if (studentIds.length) {
+        // 2. Get student names
+        const { data: students } = await supabase
+          .from('users')
+          .select('id, name')
+          .in('id', studentIds);
+        const studentNames = {};
+        (students || []).forEach(s => { studentNames[s.id] = s.name; });
 
-      const studentIds = tsLinks.map(ts => ts.student_id);
+        // 3. Get parent links for those students
+        const { data: parentLinks } = await supabase
+          .from('parent_children')
+          .select('parent_email, child_id')
+          .in('child_id', studentIds);
 
-      // 2. Get student names
-      const { data: students } = await supabase
-        .from('users')
-        .select('id, name')
-        .in('id', studentIds);
+        // Build parent_email → child names
+        const parentChildMap = {};
+        (parentLinks || []).forEach(p => {
+          if (!parentChildMap[p.parent_email]) parentChildMap[p.parent_email] = [];
+          const cname = studentNames[p.child_id];
+          if (cname) parentChildMap[p.parent_email].push(cname);
+        });
 
-      const studentNames = {};
-      (students || []).forEach(s => { studentNames[s.id] = s.name; });
+        const parentEmails = Object.keys(parentChildMap);
+        if (parentEmails.length) {
+          // 4. Get parent user details
+          const { data: parents } = await supabase
+            .from('users')
+            .select('id, name, email')
+            .in('email', parentEmails);
 
-      // 3. Get parent links for those students
-      const { data: parentLinks } = await supabase
-        .from('parent_children')
-        .select('parent_email, child_id')
-        .in('child_id', studentIds);
+          contacts.push(...(parents || []).map(p => ({
+            id:      p.id,
+            name:    p.name || p.email,
+            email:   p.email,
+            role:    'parent',
+            context: `Parent of ${[...new Set(parentChildMap[p.email] || [])].join(', ')}`,
+          })));
+        }
+      }
 
-      if (!parentLinks || parentLinks.length === 0) return res.json([]);
+      // 5. Staff directory — other teachers and school admins at the same
+      // school, so a teacher can reach a colleague or their admin directly
+      // instead of only ever messaging parents.
+      if (me.school_id) {
+        const { data: staff } = await supabase
+          .from('users')
+          .select('id, name, email, role')
+          .eq('school_id', me.school_id)
+          .in('role', ['teacher', 'school_admin'])
+          .neq('email', userEmail);
 
-      // Build parent_email → child names
-      const parentChildMap = {};
-      parentLinks.forEach(p => {
-        if (!parentChildMap[p.parent_email]) parentChildMap[p.parent_email] = [];
-        const cname = studentNames[p.child_id];
-        if (cname) parentChildMap[p.parent_email].push(cname);
-      });
-
-      const parentEmails = Object.keys(parentChildMap);
-
-      // 4. Get parent user details
-      const { data: parents } = await supabase
-        .from('users')
-        .select('id, name, email')
-        .in('email', parentEmails);
-
-      const contacts = (parents || []).map(p => ({
-        id:      p.id,
-        name:    p.name || p.email,
-        email:   p.email,
-        role:    'parent',
-        context: `Parent of ${[...new Set(parentChildMap[p.email] || [])].join(', ')}`,
-      }));
+        contacts.push(...(staff || []).map(s => ({
+          id:      s.id,
+          name:    s.name || s.email,
+          email:   s.email,
+          role:    s.role,
+          context: s.role === 'school_admin' ? 'School Administrator' : 'Teacher',
+        })));
+      }
 
       return res.json(contacts);
+    }
+
+    if (effectiveRole === 'school_admin') {
+      // A school admin's contacts are every other staff member (teachers +
+      // fellow admins) at their own school — the internal-chat counterpart
+      // to the teacher branch above.
+      if (!me.school_id) return res.json([]);
+      const { data: staff } = await supabase
+        .from('users')
+        .select('id, name, email, role')
+        .eq('school_id', me.school_id)
+        .in('role', ['teacher', 'school_admin'])
+        .neq('email', userEmail);
+
+      return res.json((staff || []).map(s => ({
+        id:      s.id,
+        name:    s.name || s.email,
+        email:   s.email,
+        role:    s.role,
+        context: s.role === 'school_admin' ? 'School Administrator' : 'Teacher',
+      })));
     }
 
     if (effectiveRole === 'student') {
@@ -908,10 +971,12 @@ router.get('/conversations', async (req, res) => {
       // Use DB role lookup as source of truth; fall back to sender_role for incoming messages
       const otherRole  = roleMap[otherEmail] || (msg.sender_email !== userEmail ? msg.sender_role : null) || 'parent';
 
-      // Filter by active role: teacher sees parents, parent sees teachers.
+      // Filter by active role: a teacher sees parents AND staff (other
+      // teachers, school admins) — a school's internal chat, not just the
+      // parent-facing side. A parent still only sees teachers.
       // Aivorah system reminders use sender_role 'teacher' (system@aivorah.com),
       // so they appear in the parent's (and student's) thread list automatically.
-      if (activeRole === 'teacher' && otherRole !== 'parent') return;
+      if (activeRole === 'teacher' && !['parent', 'teacher', 'school_admin'].includes(otherRole)) return;
       if (activeRole === 'parent'  && otherRole !== 'teacher') return;
 
       if (!threadMap[otherEmail]) {
@@ -954,7 +1019,64 @@ router.get('/thread', async (req, res) => {
       .order('created_at', { ascending: true });
 
     if (error) return res.status(500).json({ error: error.message });
-    res.json(data ?? []);
+
+    // Resolve each reply's quoted original (snippet + sender), so the client
+    // can render a Toddle/WhatsApp-style quote strip without a second round trip.
+    const replyIds = [...new Set((data ?? []).map((m) => m.reply_to_id).filter(Boolean))];
+    let repliedTo = {};
+    if (replyIds.length) {
+      const { data: originals } = await supabase.from('messages').select('id, content, sender_name, sender_email').in('id', replyIds);
+      repliedTo = Object.fromEntries((originals ?? []).map((o) => [o.id, o]));
+    }
+    // Group reactions per message: { emoji -> count, mine -> my current emoji }.
+    const msgIds = (data ?? []).map((m) => m.id);
+    let reactionsByMsg = {};
+    if (msgIds.length) {
+      const { data: reactions } = await supabase.from('message_reactions').select('message_id, user_email, emoji').in('message_id', msgIds);
+      for (const r of reactions || []) {
+        if (!reactionsByMsg[r.message_id]) reactionsByMsg[r.message_id] = { counts: {}, mine: null };
+        reactionsByMsg[r.message_id].counts[r.emoji] = (reactionsByMsg[r.message_id].counts[r.emoji] || 0) + 1;
+        if (r.user_email === userEmail) reactionsByMsg[r.message_id].mine = r.emoji;
+      }
+    }
+
+    const withReplies = (data ?? []).map((m) => ({
+      ...m,
+      reply_to: m.reply_to_id && repliedTo[m.reply_to_id] ? {
+        id: repliedTo[m.reply_to_id].id,
+        senderName: repliedTo[m.reply_to_id].sender_name,
+        content: repliedTo[m.reply_to_id].content,
+      } : null,
+      reactions: reactionsByMsg[m.id]?.counts || {},
+      myReaction: reactionsByMsg[m.id]?.mine || null,
+    }));
+
+    res.json(withReplies);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /messages/:id/react  { userEmail, emoji } ──────────
+// Toggle: tapping the same emoji again removes it; a different emoji replaces it.
+router.post('/:id/react', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userEmail = (req.body?.userEmail || '').trim().toLowerCase();
+    const emoji = req.body?.emoji;
+    if (!userEmail || !emoji) return res.status(400).json({ error: 'userEmail and emoji required' });
+
+    const { data: existing } = await supabase.from('message_reactions').select('id, emoji').eq('message_id', id).eq('user_email', userEmail).maybeSingle();
+    if (existing?.emoji === emoji) {
+      await supabase.from('message_reactions').delete().eq('id', existing.id);
+      return res.json({ ok: true, removed: true });
+    }
+    const { error } = await supabase.from('message_reactions').upsert(
+      { message_id: id, user_email: userEmail, emoji },
+      { onConflict: 'message_id,user_email' }
+    );
+    if (error) throw error;
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -996,6 +1118,7 @@ router.post('/', async (req, res) => {
       recipientEmail, recipientName,
       content, studentId, studentName,
       attachmentUrl, attachmentName, attachmentSize, attachmentType,
+      replyToId,
     } = req.body;
 
     if (!senderEmail || !recipientEmail || (!content && !attachmentUrl)) {
@@ -1009,6 +1132,7 @@ router.post('/', async (req, res) => {
       recipient_email: recipientEmail.toLowerCase().trim(),
       recipient_name:  recipientName || recipientEmail,
       content:         (content || '').trim() || (attachmentName ? `Shared a file: ${attachmentName}` : ''),
+      reply_to_id:     replyToId || null,
       student_id:      studentId || null,
       student_name:    studentName || null,
     };

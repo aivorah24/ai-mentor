@@ -368,7 +368,7 @@ Last lesson: ${selectedChild.lastLesson || 'unknown'}`
           shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
         }}>
         <Feather name="cpu" size={11} color="#fff" />
-        <Text style={{ fontSize: 8, color: '#fff', fontWeight: '800', transform: [{ rotate: '90deg' }], marginTop: 4 }}>AI</Text>
+        <Text style={{ fontSize: 9, color: '#fff', fontWeight: '800', lineHeight: 10, marginTop: 4 }}>A{'\n'}I</Text>
         <Feather name={open ? 'chevron-right' : 'chevron-left'} size={11} color="#fff" />
       </TouchableOpacity>
     </View>

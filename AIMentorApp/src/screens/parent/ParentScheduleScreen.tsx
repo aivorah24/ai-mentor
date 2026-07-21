@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
@@ -24,7 +24,7 @@ import TimePicker from '../../components/common/TimePicker';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const DAYS_SHORT = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-const TIMES = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
+const TIMES = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}:00`);
 const CAL_DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 const DURATIONS = ['30 min', '45 min', '1 hr', '1.5 hrs', '2 hrs', '2.5 hrs', '3 hrs'];
 const DURATION_MINS: Record<string, number> = {
@@ -57,6 +57,13 @@ function calcEndTime(startTime: string, duration: string): string {
   const [h, m] = startTime.split(':').map(Number);
   const total = h * 60 + m + (DURATION_MINS[duration] ?? 60);
   return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+function fmtHour12(hhmm: string): string {
+  const h = Number(hhmm.split(':')[0]);
+  const ampm = h >= 12 ? 'pm' : 'am';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12} ${ampm}`;
 }
 
 function dateISO(d: Date): string {
@@ -144,6 +151,21 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
   const [eventDates, setEventDates] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const firstLoadDoneRef = useRef(false);
+
+  // Compute all-day lane height from events — avoids onLayout feedback loop
+  const allDayHeight = useMemo(() => {
+    const max = Math.max(
+      1,
+      ...week.map((d) =>
+        (eventsMap[d.iso] ?? []).filter((e) => {
+          const tagLower = (e.tag || '').toLowerCase();
+          const isEventTag = ['holiday', 'vacation', 'assembly', 'timeline', 'whole school', 'rotation', 'cycle'].some((k) => tagLower.includes(k));
+          return e.startTime === '23:59' || e.isAllDay || e.type === 'deadline' || e.type === 'challenge' || isEventTag;
+        }).length
+      )
+    );
+    return Math.max(36, max * 26 + 10);
+  }, [eventsMap, week]);
 
   // Event detail modal — shows the full title/time/note when tapping an event block
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
@@ -287,12 +309,20 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
   function nextWeek() { const d = new Date(weekBase); d.setDate(d.getDate() + 7); setWeekBase(d); }
 
   const horizScrollRef = useRef<ScrollView>(null);
+  const vScrollRef = useRef<ScrollView>(null);
 
   // Scroll horizontally to show today's column (0-indexed day of week, Mon=0)
   function scrollToToday(cw: number) {
     const dow = today.getDay(); // 0=Sun
     const todayCol = (dow + 6) % 7; // Mon=0 … Sun=6
     horizScrollRef.current?.scrollTo({ x: todayCol * cw, animated: true });
+  }
+
+  function scrollToCurrentTime(animated = true) {
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    const timeOffsetY = Math.max(0, ((currentMins - TIMELINE_START_HOUR * 60 - 60) / 60) * HOUR_HEIGHT);
+    setTimeout(() => vScrollRef.current?.scrollTo({ y: timeOffsetY, animated }), 200);
   }
 
   const { width: screenWidth } = useWindowDimensions();
@@ -304,6 +334,7 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
     if (weekIsos.includes(todayISO)) {
       setTimeout(() => scrollToToday(colWidth), 300);
     }
+    scrollToCurrentTime();
   }, [weekBase, colWidth]);
   const gridHeight = TIMES.length * HOUR_HEIGHT;
   const totalGridWidth = TIME_LABEL_WIDTH + colWidth * 7;
@@ -318,7 +349,7 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
           onMenuPress={() => navigation.openDrawer()}
         />
 
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView ref={vScrollRef} style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
           {/* ── Child Selector ── */}
           {children.length > 0 && (
@@ -357,14 +388,20 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
             {/* ── Left: Week Calendar Grid ── */}
             <View style={styles.calendarContainer}>
               {/* Sticky time label column + scrollable day columns */}
-              <View style={{ flexDirection: 'row' }}>
+              <View style={{ flexDirection: 'row', height: 56 + allDayHeight + gridHeight }}>
                 {/* Time labels — sticky, outside horizontal scroll */}
                 <View style={{ width: TIME_LABEL_WIDTH }}>
-                  {/* Spacer matching day header height */}
-                  <View style={{ height: 56 }} />
+                  {/* Spacer matching day header height with GMT label */}
+                  <View style={[styles.timeColHeader, { justifyContent: 'flex-end', paddingBottom: 6, alignItems: 'center' }]}>
+                    <Text style={{ fontSize: 8.5, fontWeight: '700', color: colors.textDim, textAlign: 'center', lineHeight: 11 }}>GMT{'\n'}+05:30</Text>
+                  </View>
+                  {/* All-day gutter label matching Toddle */}
+                  <View style={[styles.allDayGutter, { height: allDayHeight }]}>
+                    <Text style={styles.allDayGutterText}>All{'\n'}day</Text>
+                  </View>
                   {TIMES.map((t) => (
                     <View key={t} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 4 }}>
-                      <Text style={styles.timeLabel}>{t}</Text>
+                      <Text style={styles.timeLabel}>{fmtHour12(t)}</Text>
                     </View>
                   ))}
                 </View>
@@ -397,11 +434,15 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                     {/* All-day row — deadline/challenge items (stored at 23:59) are excluded
                         from the hourly grid below since a 1-minute-tall block there would be
                         invisible; show them here instead. */}
-                    <View style={styles.allDayRow}>
+                    <View style={[styles.allDayRow, { height: allDayHeight }]}>
                       {week.map((d) => {
-                        const allDayEvents = (eventsMap[d.iso] ?? []).filter(e => e.startTime === '23:59');
+                        const allDayEvents = (eventsMap[d.iso] ?? []).filter(e => {
+                          const tagLower = (e.tag || '').toLowerCase();
+                          const isEventTag = ['holiday', 'vacation', 'assembly', 'timeline', 'whole school', 'rotation', 'cycle'].some(k => tagLower.includes(k));
+                          return e.startTime === '23:59' || e.isAllDay || e.type === 'deadline' || e.type === 'challenge' || isEventTag;
+                        });
                         return (
-                          <View key={d.iso} style={[styles.allDayCol, { width: colWidth }]}>
+                          <View key={d.iso} style={[styles.allDayCol, { width: colWidth, height: allDayHeight }]}>
                             {allDayEvents.map(e => {
                               const [accent, fill, textCol] = typeColors(e.type);
                               return (
@@ -422,9 +463,11 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                     <View style={{ flexDirection: 'row' }}>
                       {/* Day columns */}
                       {week.map((d) => {
-                        const dayEvents = (eventsMap[d.iso] ?? []).filter(
-                          e => e.startTime !== '23:59'
-                        );
+                        const dayEvents = (eventsMap[d.iso] ?? []).filter(e => {
+                          const tagLower = (e.tag || '').toLowerCase();
+                          const isEventTag = ['holiday', 'vacation', 'assembly', 'timeline', 'whole school', 'rotation', 'cycle'].some(k => tagLower.includes(k));
+                          return e.startTime !== '23:59' && !e.isAllDay && e.type !== 'deadline' && e.type !== 'challenge' && !isEventTag;
+                        });
                         return (
                           <View
                             key={d.iso}
@@ -534,6 +577,7 @@ export default function ParentScheduleScreen({ navigation, route }: any) {
                 </View>
               </ScrollView>
               </View>{/* end sticky row wrapper */}
+
 
               {/* Add event button */}
               <TouchableOpacity style={styles.addEventBtn} onPress={() => { setModalDate(todayISO); setNewStartTime('09:00'); setNewEndTime('10:00'); setModalVisible(true); }} activeOpacity={0.8}>
@@ -753,6 +797,9 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   dayHeaderDate:        { fontFamily: fonts.serif, fontSize: 14, fontWeight: '700', color: c.textMuted },
   dayHeaderDateToday:   { color: 'white' },
   dayDot:               { width: 4, height: 4, borderRadius: 2, backgroundColor: c.textDim },
+  timeColHeader:        { height: 56, justifyContent: 'flex-end', paddingBottom: 6, alignItems: 'center' },
+  allDayGutter:         { justifyContent: 'center', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: c.borderColor, paddingHorizontal: 2 },
+  allDayGutterText:     { fontSize: 9, fontWeight: '700', color: c.textDim, textAlign: 'center', letterSpacing: 0.3 },
 
   // All-day row (deadline/challenge chips, above the hourly grid)
   allDayRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: c.borderColor },

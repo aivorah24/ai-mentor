@@ -174,7 +174,7 @@ router.post('/sync', async (req, res) => {
     if (isReadOnly) {
       ({ data, error } = await supabase
         .from('users')
-        .select('id, name, email, role, grade, school, curriculum, location, phone, onboarding_complete, photo_url')
+        .select('id, name, email, role, grade, school, school_id, curriculum, location, phone, onboarding_complete, photo_url')
         .eq('email', patch.email)
         .maybeSingle());
     } else {
@@ -199,7 +199,7 @@ router.post('/sync', async (req, res) => {
       ({ data, error } = await supabase
         .from('users')
         .upsert(patch, { onConflict: 'email' })
-        .select('id, name, email, role, grade, school, curriculum, location, phone, onboarding_complete, photo_url')
+        .select('id, name, email, role, grade, school, school_id, curriculum, location, phone, onboarding_complete, photo_url')
         .single());
 
       // Fresh signup + leftover user_preferences from a previously DELETED account:
@@ -245,6 +245,10 @@ router.post('/sync', async (req, res) => {
       roles:              rolesFromPrefs || [data.role].filter(Boolean),
       grade:              data.grade,
       school:             data.school,
+      // Authoritative B2B tenant boundary: a real school-org FK. NULL = B2C /
+      // independent self-signup (no official school link). The client uses this
+      // to hide school-only features (My Classes, Attendance) for B2C users.
+      schoolId:           data.school_id ?? null,
       curriculum:         data.curriculum,
       location:           data.location,
       phone:              data.phone ? decrypt(data.phone) : null,
@@ -258,6 +262,12 @@ router.post('/sync', async (req, res) => {
       mustChangePassword: (data.email || '').endsWith('@aivorah.student')
         ? prefs?.mustChangePassword !== false
         : prefs?.mustChangePassword === true,
+      // BUG FIX (2026-07-21): this was never included even though `prefs` was
+      // already fetched above — the Google SSO client-side check
+      // (`profile.accountStatus === 'active'`) could therefore never see a
+      // true "already verified" state, so every single Google login resent
+      // the verification email instead of only the first one.
+      accountStatus:      prefs?.accountStatus ?? null,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -568,6 +578,7 @@ router.patch('/preferences', async (req, res) => {
     // Also persist grade / location / phone to the users table so they survive re-login
     const usersPatch = {};
     if (grade != null) usersPatch.grade = String(grade);
+    if (curriculum != null) usersPatch.curriculum = String(curriculum);
     if (location != null) usersPatch.location = String(location);
     if (phoneVal != null) usersPatch.phone = encrypt(String(phoneVal));
     if (Object.keys(usersPatch).length > 0) {
@@ -1119,9 +1130,6 @@ router.post('/send-verification', async (req, res) => {
     const { email, name, frontendOrigin } = req.body;
     if (!email || !name) return res.status(400).json({ error: 'email and name required' });
 
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-
     // Store token in user_preferences.data
     const { data: existing } = await supabase
       .from('user_preferences')
@@ -1130,6 +1138,19 @@ router.post('/send-verification', async (req, res) => {
       .maybeSingle();
 
     const currentData = existing?.data || {};
+
+    // Idempotency guard (regression fix, 2026-07-20): an already-active account
+    // must never be resent a verification email or downgraded back to
+    // pending_verification. Without this, any caller that races ahead of a
+    // fresh accountStatus read (e.g. the client re-checking on every SSO
+    // login) silently re-parks a verified user in "pending" state.
+    if (currentData.accountStatus === 'active') {
+      return res.json({ ok: true, alreadyVerified: true });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiry = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
     await supabase.from('user_preferences').upsert({
       user_email: email.toLowerCase(),
       data: { ...currentData, verifyToken: token, verifyTokenExpiry: expiry, accountStatus: 'pending_verification' },
@@ -1321,6 +1342,116 @@ router.post('/push-token', async (req, res) => {
     res.json({ ok: true, devices: merged.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// B2C → B2B conversion bridge (Connect to My School)
+// ---------------------------------------------------------------------------
+
+// GET /user/schools — public, minimal school list for the "Connect to My School"
+// picker (id + name only). No auth: it exposes nothing sensitive and any
+// signed-in B2C user needs it to pick their school.
+router.get('/schools', async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('schools').select('id, name').order('name');
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('[GET /user/schools] error:', err.message);
+    res.status(500).json({ error: 'Failed to load schools' });
+  }
+});
+
+// GET /user/school-structure?schoolId= — public: the grades (and their sections)
+// defined at a school, for the "Connect to My School" grade/section dropdowns.
+// Archived grades/sections are excluded. Read-only, non-sensitive.
+router.get('/school-structure', async (req, res) => {
+  const schoolId = req.query.schoolId;
+  if (!schoolId) return res.status(400).json({ error: 'schoolId is required' });
+  try {
+    const { buildGradesSectionsView } = require('../services/academicStructure');
+    const grades = await buildGradesSectionsView(schoolId);
+    const out = (grades || [])
+      .filter((g) => !g.archived)
+      .map((g) => ({
+        name: g.name,
+        sections: (g.sections || []).filter((s) => !s.archived).map((s) => s.name),
+      }));
+    // Include the school's base curriculum (IB / CBSE / ...) so the client can
+    // group grades by programme (e.g. IB → PYP / MYP / DP) in pickers.
+    const { data: school } = await supabase.from('schools').select('curriculum').eq('id', schoolId).maybeSingle();
+    res.json({ grades: out, curriculum: school?.curriculum || null });
+  } catch (err) {
+    console.error('[GET /user/school-structure] error:', err.message);
+    res.status(500).json({ error: 'Failed to load school grades' });
+  }
+});
+
+// POST /user/request-school-access  { email, schoolId, grade?, section? }
+// A B2C user asks to join an official school. Records a pending request for a
+// School Admin to approve — does NOT link the account itself (approval does).
+router.post('/request-school-access', async (req, res) => {
+  const email = String(req.body?.email || '').toLowerCase().trim();
+  const schoolId = req.body?.schoolId;
+  const grade = req.body?.grade ? String(req.body.grade).trim() : null;
+  const section = req.body?.section ? String(req.body.section).trim() : null;
+  const parentEmail = req.body?.parentEmail ? String(req.body.parentEmail).toLowerCase().trim() : null;
+  if (!email || !schoolId) return res.status(400).json({ error: 'email and schoolId are required' });
+  try {
+    const { data: u } = await supabase
+      .from('users').select('id, school_id').eq('email', email).maybeSingle();
+    if (!u) return res.status(404).json({ error: 'Account not found' });
+
+    if (parentEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail)) {
+      await supabase.from('parent_children').upsert({
+        parent_email: parentEmail,
+        child_id: u.id,
+      }, { onConflict: 'parent_email,child_id' }).catch((e) => console.warn('[request-school-access] parent link warning:', e.message));
+
+      const { data: pref } = await supabase.from('user_preferences').select('data').eq('user_email', email).maybeSingle();
+      await supabase.from('user_preferences').upsert({
+        user_email: email,
+        data: { ...(pref?.data || {}), parentConsentStatus: 'parent_action_required' },
+      }).catch(() => {});
+    }
+
+    // Check if the user already has a formally approved B2B access request
+    const { data: approvedReq } = await supabase
+      .from('school_access_requests')
+      .select('id, school_id, status')
+      .eq('user_email', email)
+      .eq('status', 'approved')
+      .maybeSingle();
+    if (approvedReq) {
+      return res.status(409).json({ error: 'Your account is already verified and linked to an official school.' });
+    }
+
+    // Verify the school exists (avoids orphan requests / FK errors).
+    const { data: school } = await supabase
+      .from('schools').select('id, name').eq('id', schoolId).maybeSingle();
+    if (!school) return res.status(404).json({ error: 'School not found' });
+
+    // De-dupe / update: if a pending request already exists, update grade/section if provided, and return success.
+    const { data: existing } = await supabase
+      .from('school_access_requests')
+      .select('id').eq('user_email', email).eq('school_id', schoolId).eq('status', 'pending').maybeSingle();
+    if (existing) {
+      if (grade || section) {
+        await supabase.from('school_access_requests').update({ grade, section }).eq('id', existing.id);
+      }
+      return res.json({ ok: true, status: 'pending', schoolName: school.name });
+    }
+
+    const { error } = await supabase.from('school_access_requests').insert({
+      user_email: email, school_id: schoolId, grade, section, status: 'pending',
+    });
+    if (error) throw error;
+    res.status(201).json({ ok: true, status: 'pending', schoolName: school.name });
+  } catch (err) {
+    console.error('[POST /user/request-school-access] error:', err.message);
+    res.status(500).json({ error: 'Failed to submit request. Please try again.' });
   }
 });
 
