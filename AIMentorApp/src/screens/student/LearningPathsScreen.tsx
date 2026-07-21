@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  TextInput,
   Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -22,6 +21,7 @@ import { useStudentData } from '../../context/StudentDataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import SERVER_URL from '../../config/serverUrl';
+import { getSubjectSyllabus } from '../../data/syllabusRegistry';
 
 type FeatherName = React.ComponentProps<typeof Feather>['name'];
 
@@ -47,6 +47,17 @@ const SUBJECT_META: Record<string, SubjectMeta> = {
   'Social Studies':     { icon: 'globe',
     accentDark: '#BAA467', bgFromDark: '#E0D898', bgToDark: '#EEE8B4',
     accentLight: '#BAA467', bgFromLight: '#E0D898', bgToLight: '#EEE8B4' },
+  // CBSE/NCERT names this subject "Social Science" (IB PYP calls it "Social
+  // Studies") — same pastel treatment, just under the name CBSE actually sends.
+  'Social Science':     { icon: 'globe',
+    accentDark: '#BAA467', bgFromDark: '#E0D898', bgToDark: '#EEE8B4',
+    accentLight: '#BAA467', bgFromLight: '#E0D898', bgToLight: '#EEE8B4' },
+  Hindi:                { icon: 'book-open',
+    accentDark: '#C98A8A', bgFromDark: '#EAD0D0', bgToDark: '#F2DEDE',
+    accentLight: '#C98A8A', bgFromLight: '#EAD0D0', bgToLight: '#F2DEDE' },
+  'Computer Science':   { icon: 'monitor',
+    accentDark: '#7E9A86', bgFromDark: '#CFE0D3', bgToDark: '#DEEBE1',
+    accentLight: '#7E9A86', bgFromLight: '#CFE0D3', bgToLight: '#DEEBE1' },
   English:              { icon: 'book-open',
     accentDark: '#C9A24E', bgFromDark: '#E4D4A8', bgToDark: '#F0E2BC',
     accentLight: '#C9A24E', bgFromLight: '#E4D4A8', bgToLight: '#F0E2BC' },
@@ -65,10 +76,12 @@ const SUBJECT_META: Record<string, SubjectMeta> = {
 };
 
 function subjectMeta(subject: string): SubjectMeta {
+  // Same soft pastel treatment as every mapped subject — an unmapped name
+  // (e.g. a new CBSE subject) should never fall back to a jarring dark card.
   return SUBJECT_META[subject] ?? {
     icon: 'book',
-    accentDark: '#BAA467',  bgFromDark: '#3A3520',  bgToDark: '#4A4228',
-    accentLight: '#9A7B2E', bgFromLight: '#E6DEBC', bgToLight: '#D8CFA8',
+    accentDark: '#BAA467',  bgFromDark: '#D8CFA8',  bgToDark: '#E6DEBC',
+    accentLight: '#BAA467', bgFromLight: '#D8CFA8', bgToLight: '#E6DEBC',
   };
 }
 
@@ -83,16 +96,6 @@ interface SubjectData {
   subject: string;
   topicCount: number;
   topics: TopicItem[];
-}
-
-interface SearchResult {
-  topic: string;
-  subject: string;
-  grade: string;
-  unit: string;
-  description: string;
-  score: number;
-  snippet: string;
 }
 
 const NCERT_SUBJECTS = [
@@ -245,74 +248,6 @@ function getIBPYPStaticSubjects(grade: string): SubjectData[] {
   return [...seeded, ...extras];
 }
 
-const QUICK_HINTS = ['fractions', 'plants', 'grammar', 'magnets'];
-
-function SearchResultRow({
-  item,
-  colors,
-  isDark,
-  onPress,
-}: {
-  item: SearchResult;
-  colors: AppColors;
-  isDark: boolean;
-  onPress: () => void;
-}) {
-  const meta = subjectMeta(item.subject);
-  const accent = isDark ? meta.accentDark : meta.accentLight;
-  return (
-    <TouchableOpacity
-      style={[searchStyles.row, { backgroundColor: colors.cardDark, borderColor: accent + '40' }]}
-      onPress={onPress}
-      activeOpacity={0.82}
-    >
-      <View style={[searchStyles.iconBox, { backgroundColor: accent + '1f' }]}>
-        <Feather name={meta.icon} size={17} color={accent} />
-      </View>
-      <View style={searchStyles.main}>
-        <View style={searchStyles.headlineRow}>
-          <Text style={[searchStyles.topic, { color: colors.textMain }]} numberOfLines={1}>
-            {item.topic}
-          </Text>
-          <Text style={[searchStyles.score, { color: accent }]}>{Math.round(item.score * 100)}%</Text>
-        </View>
-        <Text style={[searchStyles.meta, { color: accent }]} numberOfLines={1}>
-          {item.subject} {item.grade ? `- ${item.grade}` : ''} {item.unit ? `- ${item.unit}` : ''}
-        </Text>
-        <Text style={[searchStyles.snippet, { color: colors.textMuted }]} numberOfLines={2}>
-          {item.snippet || item.description}
-        </Text>
-      </View>
-      <Feather name="arrow-up-right" size={16} color={accent} />
-    </TouchableOpacity>
-  );
-}
-
-const searchStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 13,
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-  iconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  main: { flex: 1, gap: 2 },
-  headlineRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  topic: { fontSize: 13, fontWeight: '700', flex: 1 },
-  score: { fontSize: 11, fontWeight: '800' },
-  meta: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
-  snippet: { fontSize: 12, lineHeight: 17 },
-});
 
 function SubjectCard({
   data,
@@ -501,184 +436,6 @@ const cardStyles = StyleSheet.create({
   blockedText: { color: '#fff', fontSize: 12, fontWeight: '700' },
 });
 
-function normalizeText(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function stemToken(token: string): string {
-  if (token.length > 4 && token.endsWith('ies')) return `${token.slice(0, -3)}y`;
-  if (token.length > 4 && token.endsWith('es')) return token.slice(0, -2);
-  if (token.length > 3 && token.endsWith('s')) return token.slice(0, -1);
-  return token;
-}
-
-const SEARCH_STOPWORDS = new Set(['a', 'an', 'and', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'with']);
-const SUBJECT_SEARCH_KEYWORDS: Record<string, string[]> = {
-  Mathematics: ['math', 'mathematics', 'number', 'numbers', 'fractions', 'geometry', 'algebra', 'shapes', 'calculation'],
-  Science: ['science', 'plant', 'plants', 'animal', 'animals', 'weather', 'space', 'matter', 'gravity'],
-  English: ['english', 'grammar', 'reading', 'writing', 'story', 'stories', 'language', 'punctuation', 'adjective', 'speech', 'direct', 'indirect', 'tense', 'tenses', 'noun', 'verb', 'comprehension', 'narrative', 'descriptive', 'persuasive', 'poetry', 'vocabulary', 'synonym', 'antonym', 'conjunction', 'apostrophe', 'inference', 'figurative', 'idiom', 'active', 'passive', 'voice', 'literature'],
-  'Social Studies': ['social', 'society', 'studies', 'history', 'geography', 'community', 'culture', 'map', 'maps'],
-  Arts: ['art', 'arts', 'drawing', 'painting', 'music', 'rhythm', 'drama', 'creative', 'colour', 'color'],
-  'Physical Education': ['pe', 'physical', 'sports', 'movement', 'fitness', 'exercise', 'game', 'games'],
-  ICT: ['ict', 'computer', 'computers', 'digital', 'internet', 'coding', 'technology', 'scratch'],
-};
-
-function tokenize(value: string): string[] {
-  return normalizeText(value)
-    .split(' ')
-    .map(stemToken)
-    .filter((token) => token.length > 1 && !SEARCH_STOPWORDS.has(token));
-}
-
-function localTopicSearch(query: string, grade: string, subjects: SubjectData[], limit = 12): SearchResult[] {
-  const qNorm = normalizeText(query);
-  if (!qNorm) return [];
-  const qTokens = tokenize(query);
-
-  const scored = subjects.flatMap((subject) =>
-    subject.topics
-      .map((topicItem) => {
-        const topic = topicItem.topic ?? '';
-        const unit = topicItem.unit ?? '';
-        const description = topicItem.description ?? '';
-
-        const topicNorm = normalizeText(topic);
-        const unitNorm = normalizeText(unit);
-        const subjectNorm = normalizeText(subject.subject);
-        const descriptionNorm = normalizeText(description);
-        const subjectKeywords = SUBJECT_SEARCH_KEYWORDS[subject.subject] ?? [];
-
-        let score = 0;
-        if (topicNorm === qNorm) score += 1;
-        if (topicNorm.startsWith(qNorm)) score += 0.35;
-        if (topicNorm.includes(qNorm)) score += 0.28;
-        if (unitNorm.includes(qNorm)) score += 0.24;
-        if (subjectNorm.includes(qNorm)) score += 0.3;
-        if (descriptionNorm.includes(qNorm)) score += 0.18;
-
-        for (const token of qTokens) {
-          if (topicNorm.includes(token)) score += 0.18;
-          if (unitNorm.includes(token)) score += 0.12;
-          if (subjectNorm.includes(token)) score += 0.2;
-          if (descriptionNorm.includes(token)) score += 0.08;
-          if (subjectKeywords.some((keyword) => normalizeText(keyword).includes(token) || token.includes(normalizeText(keyword)))) {
-            score += 0.2;
-          }
-        }
-
-        if (score <= 0) return null;
-
-        return {
-          topic,
-          subject: subject.subject,
-          grade: topicItem.grade ?? grade,
-          unit,
-          description: description || `Learn about ${topic} in ${unit || subject.subject}`,
-          score: Math.min(score, 1),
-          snippet: unit ? `${unit} - ${topic}` : topic,
-        } as SearchResult;
-      })
-      .filter((item): item is SearchResult => item !== null),
-  );
-
-  return scored
-    .sort((a, b) => b.score - a.score || a.topic.localeCompare(b.topic))
-    .slice(0, limit);
-}
-
-function inferSubjectFromQuery(query: string, subjects: SubjectData[]): string {
-  const tokens = tokenize(query);
-  if (tokens.length === 0) return subjects[0]?.subject ?? 'Science';
-
-  const available = subjects.length > 0 ? subjects.map((s) => s.subject) : Object.keys(SUBJECT_SEARCH_KEYWORDS);
-  let bestSubject = available[0] ?? 'Science';
-  let bestScore = 0;
-
-  for (const subject of available) {
-    const subjectTokens = tokenize(subject);
-    const keywords = [...subjectTokens, ...(SUBJECT_SEARCH_KEYWORDS[subject] ?? [])].map((k) => normalizeText(k));
-    const score = tokens.reduce((acc, token) => {
-      return acc + (keywords.some((keyword) => keyword.includes(token) || token.includes(keyword)) ? 1 : 0);
-    }, 0);
-    if (score > bestScore) {
-      bestScore = score;
-      bestSubject = subject;
-    }
-  }
-
-  return bestSubject;
-}
-
-function dedupeSearchResults(results: SearchResult[]): SearchResult[] {
-  const seen = new Set<string>();
-  const deduped: SearchResult[] = [];
-  for (const item of results) {
-    const key = `${normalizeText(item.topic)}|${normalizeText(item.subject)}|${normalizeText(item.grade)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    deduped.push(item);
-  }
-  return deduped;
-}
-
-function createExactTopicSuggestion(query: string, grade: string, subjects: SubjectData[]): SearchResult {
-  const cleanQuery = query.trim().replace(/\s+/g, ' ');
-  const topic = cleanQuery.charAt(0).toUpperCase() + cleanQuery.slice(1);
-  const subject = inferSubjectFromQuery(cleanQuery, subjects);
-  return {
-    topic,
-    subject,
-    grade,
-    unit: 'Student Search',
-    description: `Start learning "${topic}" for ${grade} ${subject}.`,
-    score: 1,
-    snippet: `Exact match - ${topic}`,
-  };
-}
-
-function finalizeSearchResults(
-  query: string,
-  grade: string,
-  subjects: SubjectData[],
-  results: SearchResult[],
-  limit = 12,
-): SearchResult[] {
-  const qNorm = normalizeText(query);
-  if (!qNorm) return [];
-
-  const deduped = dedupeSearchResults(results).map((item) => ({
-    ...item,
-    grade: item.grade || grade,
-  }));
-  const hasExact = deduped.some((item) => normalizeText(item.topic) === qNorm);
-  const ranked = deduped.sort((a, b) => {
-    const aExact = normalizeText(a.topic) === qNorm ? 1 : 0;
-    const bExact = normalizeText(b.topic) === qNorm ? 1 : 0;
-    if (aExact !== bExact) return bExact - aExact;
-    return b.score - a.score || a.topic.localeCompare(b.topic);
-  });
-
-  if (!hasExact) {
-    return [createExactTopicSuggestion(query, grade, subjects), ...ranked].slice(0, limit);
-  }
-  return ranked.slice(0, limit);
-}
-
-function getIBPYPFallbackSearchResults(query: string, grade: string, subjects: SubjectData[], limit = 12): SearchResult[] {
-  const localResults = localTopicSearch(query, grade, subjects, limit);
-  if (localResults.length > 0) return localResults;
-
-  const gradeTopics = IB_PYP_TOPIC_BANK.filter((entry) => entry.grade === grade);
-  const gradeResults = localTopicSearch(query, grade, buildSubjectsFromTopicBank(gradeTopics), limit);
-  if (gradeResults.length > 0) return gradeResults;
-
-  return localTopicSearch(query, grade, buildSubjectsFromTopicBank(IB_PYP_TOPIC_BANK), limit);
-}
-
 export default function LearningPathsScreen({ navigation }: any) {
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -704,10 +461,6 @@ export default function LearningPathsScreen({ navigation }: any) {
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchText, setSearchText] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [searching, setSearching] = useState(false);
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const completedSet = useMemo(() => new Set(stats.completedTopics ?? []), [stats.completedTopics]);
 
@@ -758,94 +511,7 @@ export default function LearningPathsScreen({ navigation }: any) {
     };
   }, [curriculum, grade, isCBSE]);
 
-  useEffect(() => {
-    return () => {
-      if (searchTimer.current) clearTimeout(searchTimer.current);
-    };
-  }, []);
-
-  const handleSearch = useCallback(
-    (text: string) => {
-      setSearchText(text);
-      if (searchTimer.current) clearTimeout(searchTimer.current);
-      if (!text.trim()) {
-        setSearching(false);
-        setSearchResults([]);
-        return;
-      }
-
-      setSearching(true);
-      searchTimer.current = setTimeout(async () => {
-        try {
-          let currentSubjects = subjects;
-          const res = await fetch(
-            `${SERVER_URL}/curriculum/search?q=${encodeURIComponent(text.trim())}&grade=${encodeURIComponent(grade)}&curriculum=${encodeURIComponent(curriculum)}&limit=12`,
-          );
-          const data = await res.json();
-          const remoteResults = Array.isArray(data.topics) ? data.topics : [];
-
-          const localResults = isPYP
-            ? getIBPYPFallbackSearchResults(text, grade, subjects, 12)
-            : localTopicSearch(text, grade, subjects, 12);
-          const combinedInitial = finalizeSearchResults(text, grade, currentSubjects, [...remoteResults, ...localResults], 12);
-          if (combinedInitial.length > 0) {
-            setSearchResults(combinedInitial);
-          }
-
-          const hasLocalTopics = subjects.some((s) => s.topics.length > 0);
-          if (!hasLocalTopics && !isCBSE && remoteResults.length === 0) {
-            const subjectsRes = await fetch(
-              `${SERVER_URL}/curriculum/subjects?grade=${encodeURIComponent(grade)}&curriculum=${encodeURIComponent(curriculum)}`,
-            );
-            const subjectsData = await subjectsRes.json();
-            const fetchedSubjects = Array.isArray(subjectsData.subjects) ? subjectsData.subjects : [];
-            if (fetchedSubjects.length > 0) {
-              setSubjects(fetchedSubjects);
-              currentSubjects = fetchedSubjects;
-              const fallbackResults = isPYP
-                ? getIBPYPFallbackSearchResults(text, grade, fetchedSubjects, 12)
-                : localTopicSearch(text, grade, fetchedSubjects, 12);
-              setSearchResults(finalizeSearchResults(text, grade, fetchedSubjects, [...remoteResults, ...fallbackResults], 12));
-              return;
-            }
-          }
-
-          if (remoteResults.length === 0) {
-            setSearchResults(
-              finalizeSearchResults(
-                text,
-                grade,
-                currentSubjects,
-                isPYP
-                  ? getIBPYPFallbackSearchResults(text, grade, currentSubjects, 12)
-                  : localTopicSearch(text, grade, currentSubjects, 12),
-                12,
-              ),
-            );
-          }
-        } catch {
-          setSearchResults(
-            finalizeSearchResults(
-              text,
-              grade,
-              subjects,
-              isPYP
-                ? getIBPYPFallbackSearchResults(text, grade, subjects, 12)
-                : localTopicSearch(text, grade, subjects, 12),
-              12,
-            ),
-          );
-        } finally {
-          setSearching(false);
-        }
-      }, 360);
-    },
-    [curriculum, grade, isCBSE, isPYP, subjects],
-  );
-
-  const isSearching = searchText.trim().length > 0;
   const cardWidth = (isMobile ? '100%' : '48.7%') as `${number}%`;
-  const metricWidth = (isMobile ? '48.7%' : '24%') as `${number}%`;
 
   const totals = useMemo(() => {
     const totalTopics = subjects.reduce((acc, s) => acc + s.topicCount, 0);
@@ -859,14 +525,16 @@ export default function LearningPathsScreen({ navigation }: any) {
   }, [subjects, completedSet]);
 
   const heroName = user?.name?.split(' ')[0] ?? 'Student';
-  const heroSubtitle = `${subjects.length} subjects - ${totals.doneTopics}/${totals.totalTopics} topics completed`;
-
-  const statCards = [
-    { label: 'Topics Done', value: String(Math.min(completedSet.size, totals.totalTopics)), icon: 'check-circle' as FeatherName, color: colors.accentGreen },
-    { label: 'Streak', value: `${stats.currentStreak}d`, icon: 'zap' as FeatherName, color: colors.accentYellow },
-    { label: 'Today XP', value: `+${stats.todayXP}`, icon: 'star' as FeatherName, color: colors.accentYellow },
-    { label: 'Level', value: `Lv ${stats.level}`, icon: 'award' as FeatherName, color: colors.accentYellow },
-  ];
+  // Raw topic counts (e.g. "0/2350 topics completed") read as discouraging for a
+  // brand-new student and don't map to how the syllabus is actually organised
+  // for them (units/chapters, not a flat topic tally) — client asked to swap
+  // this for a subject-progress framing instead. True unit-level completion
+  // isn't tracked on the student side yet (syllabus_chapters/unit_no exists
+  // server-side for teacher import only) — that would need a new endpoint.
+  const subjectsInProgress = subjects.filter((s) => s.topics.some((t) => completedSet.has(t.topic))).length;
+  const heroSubtitle = subjects.length > 0
+    ? `${subjectsInProgress}/${subjects.length} subjects in progress`
+    : '';
 
   // Guard: if grade or curriculum is missing, the user's profile is incomplete.
   // Never silently show wrong curriculum content — prompt them to complete setup.
@@ -908,17 +576,6 @@ export default function LearningPathsScreen({ navigation }: any) {
               We're carefully crafting age-appropriate learning content for {grade}. It will appear here as soon as it's ready. Thank you for your patience!
             </Text>
           </View>
-        </View>
-      </ScreenLayout>
-    );
-  }
-
-  if (loading) {
-    return (
-      <ScreenLayout>
-        <View style={[styles.screen, styles.center]}>
-          <ActivityIndicator size="large" color={colors.accentYellow} />
-          <Text style={[styles.dimText, { marginTop: 16 }]}>Loading {curriculum} curriculum...</Text>
         </View>
       </ScreenLayout>
     );
@@ -979,189 +636,18 @@ export default function LearningPathsScreen({ navigation }: any) {
             </View>
           </LinearGradient>
 
-          <View style={[styles.searchPanel, { borderColor: colors.borderColor }]}>
-            <View style={[styles.searchBox, { borderColor: colors.borderColor, backgroundColor: colors.cardDark }]}>
-              <Feather name="search" size={15} color={colors.textMuted} style={{ marginRight: 8 }} />
-              <TextInput
-                style={[styles.searchInput, { color: colors.textMain }]}
-                placeholder="Search topics... e.g. fractions, photosynthesis"
-                placeholderTextColor={colors.textDim}
-                value={searchText}
-                onChangeText={handleSearch}
-                returnKeyType="search"
-              />
-              {searchText.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => {
-                    setSearchText('');
-                    setSearchResults([]);
-                    setSearching(false);
-                  }}
-                  hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}
-                >
-                  <Feather name="x" size={14} color={colors.textMuted} />
-                </TouchableOpacity>
-              )}
-              {searching ? <ActivityIndicator size="small" color={colors.accentYellow} style={{ marginLeft: 8 }} /> : null}
-            </View>
-            {!isSearching ? (
-              <View style={styles.hintsRow}>
-                <Text style={styles.hintsLabel}>Try:</Text>
-                {QUICK_HINTS.map((hint) => (
-                  <TouchableOpacity
-                    key={hint}
-                    style={[styles.hintChip, { borderColor: colors.borderColor, backgroundColor: colors.cardDark }]}
-                    onPress={() => handleSearch(hint)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.hintChipText}>{hint}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            ) : null}
-          </View>
-
-          {isSearching ? (
-            <View style={{ marginTop: 2 }}>
-              {searchResults.length === 0 && !searching ? (
-                <View style={styles.emptySearch}>
-                  <Feather name="search" size={16} color={colors.textDim} />
-                  <Text style={styles.dimText}>No topics found for "{searchText}"</Text>
-                </View>
-              ) : (
-                searchResults.map((item) => (
-                  <SearchResultRow
-                    key={`${item.subject}|${item.topic}`}
-                    item={item}
-                    colors={colors}
-                    isDark={isDark}
-                    onPress={() =>
-                      navigation.navigate('VideoLesson', {
-                        topic: item.topic,
-                        grade: item.grade || grade,
-                        subject: item.subject,
-                        curriculum,
-                      })
-                    }
-                  />
-                ))
-              )}
-            </View>
-          ) : (
-            <>
-              <View style={styles.metricGrid}>
-                {statCards.map((s) => (
-                  <View
-                    key={s.label}
-                    style={[
-                      styles.metricCard,
-                      {
-                        width: metricWidth,
-                        borderColor: s.color + '3a',
-                        backgroundColor: colors.cardDark,
-                      },
-                    ]}
-                  >
-                    <View style={[styles.metricIcon, { backgroundColor: s.color + '18' }]}>
-                      <Feather name={s.icon} size={14} color={s.color} />
-                    </View>
-                    <Text style={[styles.metricValue, { color: s.color }]}>{s.value}</Text>
-                    <Text style={styles.metricLabel}>{s.label}</Text>
-                  </View>
-                ))}
-              </View>
-
-              {(() => {
-                if (totals.overallPct === 100) {
-                  return (
-                    <View style={[styles.continueBanner, { borderColor: '#10b98145' }]}>
-                      <View style={[styles.continueDot, { backgroundColor: '#10b981' }]} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.continueLabel, { color: '#10b981' }]}>All topics completed!</Text>
-                        <Text style={[styles.continueTopic, { color: colors.textMuted }]} numberOfLines={1}>
-                          Amazing work — you've explored everything.
-                        </Text>
-                      </View>
-                      <Feather name="check-circle" size={17} color="#10b981" />
-                    </View>
-                  );
-                }
-
-                // All topics with their subject for lookup
-                const allTopics = subjects.flatMap(s => s.topics.map(t => ({ ...t, subject: s.subject })));
-
-                // Case 1: User was mid-topic (lastLesson exists and not yet completed)
-                // → Route them directly to the quiz to finish what they started
-                const midTopic = stats.lastLesson
-                  ? allTopics.find(t => t.topic === stats.lastLesson && !completedSet.has(t.topic))
-                  : null;
-                const midSubject = midTopic
-                  ? subjects.find(s => s.topics.some(t => t.topic === midTopic.topic))
-                  : null;
-
-                if (midTopic && midSubject) {
-                  return (
-                    <TouchableOpacity
-                      style={[styles.continueBanner, { borderColor: colors.accentYellow + '60' }]}
-                      onPress={() =>
-                        navigation.navigate('IBPYPQuiz', {
-                          topic: midTopic.topic,
-                          subject: midSubject.subject,
-                          grade,
-                          curriculum: isCBSE ? 'CBSE' : curriculum,
-                        })
-                      }
-                      activeOpacity={0.87}
-                    >
-                      <View style={[styles.continueDot, { backgroundColor: colors.accentYellow }]} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.continueLabel, { color: colors.accentYellow }]}>Complete your quiz</Text>
-                        <Text style={[styles.continueTopic, { color: colors.textMain }]} numberOfLines={1}>
-                          {midTopic.topic}
-                        </Text>
-                      </View>
-                      <Feather name="arrow-right" size={17} color={colors.accentYellow} />
-                    </TouchableOpacity>
-                  );
-                }
-
-                // Case 2: Last topic is done — find the next incomplete topic
-                const nextTopic = allTopics.find(t => !completedSet.has(t.topic));
-                const nextSubject = nextTopic
-                  ? subjects.find(s => s.topics.some(t => t.topic === nextTopic.topic))
-                  : null;
-
-                if (!nextTopic || !nextSubject) return null;
-
-                return (
-                  <TouchableOpacity
-                    style={[styles.continueBanner, { borderColor: colors.accentYellow + '45' }]}
-                    onPress={() =>
-                      navigation.navigate('SubjectTopics', {
-                        subject: nextSubject.subject,
-                        curriculum: isCBSE ? 'CBSE' : curriculum,
-                        grade,
-                      })
-                    }
-                    activeOpacity={0.87}
-                  >
-                    <View style={[styles.continueDot, { backgroundColor: colors.accentYellow }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.continueLabel}>Up next</Text>
-                      <Text style={[styles.continueTopic, { color: colors.textMain }]} numberOfLines={1}>
-                        {nextTopic.topic}
-                      </Text>
-                    </View>
-                    <Feather name="arrow-right" size={17} color={colors.accentYellow} />
-                  </TouchableOpacity>
-                );
-              })()}
-
+          <>
               <View style={styles.sectionHead}>
                 <Text style={styles.sectionTitle}>Subjects</Text>
                 <Text style={styles.sectionSub}>Choose what to study next</Text>
               </View>
 
+              {loading && subjects.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <ActivityIndicator size="small" color={colors.accentYellow} />
+                  <Text style={styles.dimText}>Loading {isCBSE ? 'CBSE' : curriculum} subjects…</Text>
+                </View>
+              ) : (
               <View style={styles.subjectGrid}>
                 {subjects.map((subject) => (
                   <SubjectCard
@@ -1170,25 +656,31 @@ export default function LearningPathsScreen({ navigation }: any) {
                     completedSet={completedSet}
                     width={cardWidth}
                     isBlocked={blockedSubjects.has(subject.subject)}
-                    onPress={() =>
-                      navigation.navigate('SubjectTopics', {
+                    onPress={() => {
+                      const resolvedCurriculum = isCBSE ? 'CBSE' : curriculum;
+                      // Some subjects have a curated, chapter-accurate syllabus —
+                      // route through the textbook-first Syllabus screen instead of
+                      // the old flat topic list. Others fall back to the flat list
+                      // until they get the same curated treatment (see syllabusRegistry.ts).
+                      const hasCuratedSyllabus = getSubjectSyllabus(resolvedCurriculum, grade, subject.subject).length > 0;
+                      navigation.navigate(hasCuratedSyllabus ? 'SubjectSyllabus' : 'SubjectTopics', {
                         subject: subject.subject,
-                        curriculum: isCBSE ? 'CBSE' : curriculum,
+                        curriculum: resolvedCurriculum,
                         grade,
-                      })
-                    }
+                      });
+                    }}
                   />
                 ))}
               </View>
+              )}
 
-              {subjects.length === 0 ? (
+              {!loading && subjects.length === 0 ? (
                 <View style={styles.emptyState}>
                   <Feather name="inbox" size={18} color={colors.textDim} />
                   <Text style={styles.dimText}>No subjects available for this profile yet.</Text>
                 </View>
               ) : null}
             </>
-          )}
         </ScrollView>
       </View>
     </ScreenLayout>
@@ -1243,33 +735,6 @@ const makeStyles = (c: AppColors) =>
       backgroundColor: c.cardDark,
     },
     heroMetaText: { fontSize: 11, color: c.textMuted, fontWeight: '600' },
-
-    searchPanel: {
-      borderWidth: 1,
-      borderRadius: 16,
-      backgroundColor: c.cardHover,
-      padding: 10,
-      marginBottom: spacing.lg,
-    },
-    searchBox: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-    },
-    searchInput: { flex: 1, fontSize: 14, fontWeight: '500', outlineStyle: 'none' } as any,
-    hintsRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 9 },
-    hintsLabel: { fontSize: 11, color: c.textDim, fontWeight: '700', textTransform: 'uppercase' },
-    hintChip: {
-      borderWidth: 1,
-      borderRadius: 999,
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-    },
-    hintChipText: { fontSize: 11, color: c.textMuted, fontWeight: '600' },
-    emptySearch: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, marginBottom: 4 },
 
     metricGrid: {
       flexDirection: 'row',

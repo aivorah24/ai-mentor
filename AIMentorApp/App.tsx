@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef, getStateFromPath } from '@react-navigation/native';
 
 // Shared ref so the web Back-guard can read the current route name.
 const navigationRef = createNavigationContainerRef<any>();
@@ -8,6 +8,117 @@ const navigationRef = createNavigationContainerRef<any>();
 // Role "home" screens. Back here = exit attempt → confirm. Back elsewhere =
 // normal in-app navigation to the previous screen (no popup).
 const HOME_ROUTES = new Set(['Dashboard', 'TeacherDashboard', 'ParentDashboard']);
+
+// URL <-> screen-name map, shared by the NavigationContainer `linking` prop
+// AND by the pre-computed `initialState` below (regression fix, 2026-07-21 —
+// see note near ThemedRoot). Kept as one object so the two never drift apart.
+const LINKING_SCREENS = {
+  // Student screens
+  Dashboard: 'dashboard',
+  Profile: 'profile',
+  LearningPaths: 'learning-paths',
+  AICoach: 'ai-coach',
+  Schedule: 'schedule',
+  Assignments: 'assignments',
+  Challenges: 'challenges',
+  Leaderboard: 'leaderboard',
+  Progress: 'progress',
+  Rewards: 'rewards',
+  HelpCenter: 'help',
+  Settings: 'settings',
+  VideoLesson: 'video-lesson',
+  VideoPlayer: 'video-player',
+  NCERTChapters: 'ncert-chapters',
+  SubjectTopics: 'subject-topics',
+  // These four were missing from this map entirely (regression root cause,
+  // 2026-07-21): a screen absent here never gets reflected in the browser
+  // URL when navigated to, so a refresh reloads whatever the LAST mapped
+  // URL was — not the screen actually on-screen. This is what was really
+  // behind "refresh on a lesson/subject page bounces away" for CBSE
+  // students (SubjectSyllabus + LessonScreen are the CBSE chapter/unit and
+  // lesson-reader screens — see SubjectSyllabusScreen.tsx / LessonScreen.tsx).
+  SubjectSyllabus: 'subject-syllabus',
+  LessonScreen: 'lesson',
+  ReadAloud: 'read-aloud',
+  Messages: 'messages',
+  Learn5E: 'learn',
+  MathHelper: 'math-helper',
+  AIStoryteller: 'ai-storyteller',
+  DrawingBuddy: 'drawing-buddy',
+  WordWizard: 'word-wizard',
+  IBPYPQuiz: 'quiz',
+  WorldAndYou: 'world-and-you',
+  TopicLesson: 'topic-lesson',
+  BhagavathaStories: 'stories',
+  StoryReader: 'story-reader',
+  DailyHabits: 'daily-habits',
+  Subscription: 'subscription',
+  Announcements: 'announcements',
+  MyClasses: 'my-classes',
+  ClassDetail: 'my-classes/class',
+  Timetable: 'class-timetable',
+  Resources: 'school-resources',
+  // Teacher screens
+  TeacherDashboard: 'teacher/dashboard',
+  TeacherStudents: 'teacher/students',
+  TeacherAssignments: 'teacher/assignments',
+  TeacherChallenges: 'teacher/challenges',
+  TeacherSchedule: 'teacher/schedule',
+  TeacherProgress: 'teacher/progress',
+  TeacherLearningPaths: 'teacher/learning-paths',
+  TeacherAchievements: 'teacher/achievements',
+  TeacherVideoLibrary: 'teacher/videos',
+  TeacherHelp: 'teacher/help',
+  TeacherSettings: 'teacher/settings',
+  TeacherMessages: 'teacher/messages',
+  TeacherAnnouncements: 'teacher/announcements',
+  TeacherAttendance: 'teacher/attendance',
+  TeacherSyllabusImport: 'teacher/syllabus-import',
+  ChallengeManager: 'super-admin/challenges',
+  SuperAdminStudents: 'super-admin/students',
+  StaffSubjectMapping: 'super-admin/staff-subject-mapping',
+  ProjectDetails: 'teacher/project-details',
+  Channels: 'channels',
+  // School Admin screens
+  SchoolAdminDashboard: 'school-admin/dashboard',
+  SchoolAdminPeople: 'school-admin/people',
+  SchoolAdminStudents: 'school-admin/students',
+  SchoolAdminArchivedStudents: 'school-admin/students/archived',
+  SchoolAdminAddStudent: 'school-admin/add-student',
+  SchoolAdminTeachers: 'school-admin/teachers',
+  SchoolAdminAddTeacher: 'school-admin/add-teacher',
+  SchoolAdminEditTeacher: 'school-admin/edit-teacher',
+  SchoolAdminTeacherBulkImport: 'school-admin/teacher-bulk-import',
+  SchoolAdminParents: 'school-admin/parents',
+  SchoolAdminBulkImport: 'school-admin/bulk-import',
+  SchoolAdminGradesSections: 'school-admin/grades-sections',
+  SchoolAdminClasses: 'school-admin/classes',
+  SchoolAdminPromotions: 'school-admin/promotions',
+  SchoolAdminImportHistory: 'school-admin/import-history',
+  AnnouncementManager: 'school-admin/announcements',
+  SchoolAdminAnnouncements: 'school-admin/announcements-view',
+  SchoolAdminSettings: 'school-admin/settings',
+  // Parent screens
+  ParentStudentView: 'parent/student-view',
+  ParentDashboard: 'parent/dashboard',
+  ParentProfile: 'parent/profile',
+  ParentMyKids: 'parent/my-kids',
+  ParentSchedule: 'parent/schedule',
+  ParentLearning: 'parent/learning',
+  ParentAssignments: 'parent/assignments',
+  ParentChallenges: 'parent/challenges',
+  ParentLeaderboard: 'parent/leaderboard',
+  ParentProgress: 'parent/progress',
+  ParentControls: 'parent/controls',
+  ParentSettings: 'parent/settings',
+  ParentHelp: 'parent/help',
+  ParentMessages: 'parent/messages',
+  ParentDailyTasks: 'parent/daily-tasks',
+  ParentAIReports: 'parent/ai-reports',
+  ParentAttendance: 'parent/attendance',
+  ParentSubscription: 'parent/subscription',
+  ParentAnnouncements: 'parent/announcements',
+};
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, View, ActivityIndicator, Platform, Text, TextInput, TouchableOpacity, Modal } from 'react-native';
 import { useFonts } from 'expo-font';
@@ -663,6 +774,53 @@ function RootNavigator() {
     }
   }, [isAuthenticated, user?.email]);
 
+  // REGRESSION FIX (2026-07-21, take 2) — "refresh on a deep screen bounces
+  // to Dashboard": an earlier attempt passed a precomputed `initialState` to
+  // NavigationContainer, but that has NO effect — React Navigation's
+  // `linking` prop takes priority over `initialState` whenever
+  // `linking.getInitialURL()` resolves a non-null URL, which it always does
+  // on web (the browser URL is never null). So the container was still
+  // falling back to whatever the first-mounted role navigator's
+  // `initialRouteName` is (Dashboard, TeacherDashboard, ...) — same bug,
+  // silently defeating the first fix.
+  //
+  // Real fix: don't rely on NavigationContainer's automatic resolution at
+  // all. Once the actual navigator is mounted and `navigationRef` is ready,
+  // IMPERATIVELY reset the route to whatever the URL says, using the same
+  // LINKING_SCREENS map. Runs at most once per page load (hasRestoredRef) so
+  // it never fights real in-app navigation afterward (e.g. user taps
+  // Dashboard on purpose later — must not get yanked back to the old URL).
+  const hasRestoredFromUrlRef = useRef(false);
+  useEffect(() => {
+    if (hasRestoredFromUrlRef.current) return;
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    if (loading || !isAuthenticated) return; // only once auth has actually resolved
+    const path = window.location.pathname + window.location.search;
+    if (!path || path === '/') { hasRestoredFromUrlRef.current = true; return; }
+
+    hasRestoredFromUrlRef.current = true; // claim it now — one attempt per page load
+    let cancelled = false;
+    let attempts = 0;
+    const tryRestore = () => {
+      if (cancelled) return;
+      if (navigationRef.isReady()) {
+        try {
+          const target = getStateFromPath(path, { screens: LINKING_SCREENS }) as any;
+          const targetRoute = target?.routes?.[target.routes.length - 1];
+          const current = navigationRef.getCurrentRoute();
+          if (targetRoute?.name && current?.name && targetRoute.name !== current.name) {
+            navigationRef.resetRoot(target);
+          }
+        } catch {}
+        return;
+      }
+      attempts += 1;
+      if (attempts < 60) setTimeout(tryRestore, 50); // up to ~3s for the role navigator to mount
+    };
+    tryRestore();
+    return () => { cancelled = true; };
+  }, [loading, isAuthenticated]);
+
   const isWebAdminPath =
     Platform.OS === 'web' &&
     typeof window !== 'undefined' &&
@@ -788,6 +946,13 @@ function ThemedRoot() {
     document.head.appendChild(link);
   }, []);
 
+  // "Refresh on a deep screen bounces to Dashboard" fix lives in
+  // RootNavigator now (imperative navigationRef.resetRoot from the URL) — an
+  // earlier attempt here that passed a precomputed `initialState` to
+  // NavigationContainer had no effect, since `linking` silently overrides
+  // `initialState` whenever `linking.getInitialURL()` resolves non-null,
+  // which it always does on web.
+
   return (
     <View style={[styles.root, { backgroundColor: c.bgDark }]}>
       <AuthProvider>
@@ -797,98 +962,7 @@ function ThemedRoot() {
             <NavigationContainer
               ref={navigationRef}
               documentTitle={{ formatter: () => 'Aivorah' }}
-              linking={{
-                prefixes: [],
-                config: {
-                  screens: {
-                    // Student screens
-                    Dashboard: 'dashboard',
-                    Profile: 'profile',
-                    LearningPaths: 'learning-paths',
-                    AICoach: 'ai-coach',
-                    Schedule: 'schedule',
-                    Assignments: 'assignments',
-                    Challenges: 'challenges',
-                    Leaderboard: 'leaderboard',
-                    Progress: 'progress',
-                    Rewards: 'rewards',
-                    HelpCenter: 'help',
-                    Settings: 'settings',
-                    VideoLesson: 'video-lesson',
-                    VideoPlayer: 'video-player',
-                    NCERTChapters: 'ncert-chapters',
-                    SubjectTopics: 'subject-topics',
-                    Learn5E: 'learn',
-                    MathHelper: 'math-helper',
-                    AIStoryteller: 'ai-storyteller',
-                    DrawingBuddy: 'drawing-buddy',
-                    WordWizard: 'word-wizard',
-                    IBPYPQuiz: 'quiz',
-                    WorldAndYou: 'world-and-you',
-                    TopicLesson: 'topic-lesson',
-                    BhagavathaStories: 'stories',
-                    StoryReader: 'story-reader',
-                    DailyHabits: 'daily-habits',
-                    Subscription: 'subscription',
-                    Announcements: 'announcements',
-                    MyClasses: 'my-classes',
-                    ClassDetail: 'my-classes/class',
-                    // Teacher screens
-                    TeacherDashboard: 'teacher/dashboard',
-                    TeacherStudents: 'teacher/students',
-                    TeacherAssignments: 'teacher/assignments',
-                    TeacherChallenges: 'teacher/challenges',
-                    TeacherSchedule: 'teacher/schedule',
-                    TeacherProgress: 'teacher/progress',
-                    TeacherLearningPaths: 'teacher/learning-paths',
-                    TeacherAchievements: 'teacher/achievements',
-                    TeacherVideoLibrary: 'teacher/videos',
-                    TeacherHelp: 'teacher/help',
-                    TeacherSettings: 'teacher/settings',
-                    TeacherMessages: 'teacher/messages',
-                    TeacherAnnouncements: 'teacher/announcements',
-                    ChallengeManager: 'super-admin/challenges',
-                    SuperAdminStudents: 'super-admin/students',
-                    ProjectDetails: 'teacher/project-details',
-                    // School Admin screens
-                    SchoolAdminDashboard: 'school-admin/dashboard',
-                    SchoolAdminPeople: 'school-admin/people',
-                    SchoolAdminStudents: 'school-admin/students',
-                    SchoolAdminArchivedStudents: 'school-admin/students/archived',
-                    SchoolAdminAddStudent: 'school-admin/add-student',
-                    SchoolAdminTeachers: 'school-admin/teachers',
-                    SchoolAdminAddTeacher: 'school-admin/add-teacher',
-                    SchoolAdminEditTeacher: 'school-admin/edit-teacher',
-                    SchoolAdminTeacherBulkImport: 'school-admin/teacher-bulk-import',
-                    SchoolAdminParents: 'school-admin/parents',
-                    SchoolAdminBulkImport: 'school-admin/bulk-import',
-                    SchoolAdminGradesSections: 'school-admin/grades-sections',
-                    SchoolAdminClasses: 'school-admin/classes',
-                    SchoolAdminPromotions: 'school-admin/promotions',
-                    SchoolAdminImportHistory: 'school-admin/import-history',
-                    AnnouncementManager: 'school-admin/announcements',
-                    SchoolAdminAnnouncements: 'school-admin/announcements-view',
-                    SchoolAdminSettings: 'school-admin/settings',
-                    // Parent screens
-                    ParentStudentView: 'parent/student-view',
-                    ParentDashboard: 'parent/dashboard',
-                    ParentProfile: 'parent/profile',
-                    ParentMyKids: 'parent/my-kids',
-                    ParentSchedule: 'parent/schedule',
-                    ParentLearning: 'parent/learning',
-                    ParentAssignments: 'parent/assignments',
-                    ParentChallenges: 'parent/challenges',
-                    ParentLeaderboard: 'parent/leaderboard',
-                    ParentProgress: 'parent/progress',
-                    ParentControls: 'parent/controls',
-                    ParentSettings: 'parent/settings',
-                    ParentHelp: 'parent/help',
-                    ParentMessages: 'parent/messages',
-                    ParentDailyTasks: 'parent/daily-tasks',
-                    ParentAnnouncements: 'parent/announcements',
-                  },
-                },
-              }}
+              linking={{ prefixes: [], config: { screens: LINKING_SCREENS } }}
             >
               <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={c.bgDark} />
               <IdleTimeoutGuard>

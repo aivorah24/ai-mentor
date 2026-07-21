@@ -192,6 +192,9 @@ export default function ParentDashboardScreen({ navigation, route }: any) {
   const { user } = useAuth();
   const { unreadCount, unreadAssignments } = useNotification();
   const s = useMemo(() => makeStyles(colors), [colors]);
+  // B2C = parent not linked to any school; school-only features (attendance,
+  // classes, timetable) are hidden from them. B2B = has a schoolId.
+  const isB2B = !!user?.schoolId;
   const { width } = useWindowDimensions();
   const isWide = width >= 768;
   const totalNotifs = unreadCount + unreadAssignments;
@@ -365,15 +368,18 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data?.subjectPerformance) setSubjectPerf(data.subjectPerformance); })
       .catch(() => {});
+    // Attendance is a B2B (school-linked) feature only — skip fetch for B2C parents.
     setAttendanceSummary(null);
-    fetch(`${SERVER_URL}/attendance/student/${selectedChild.id}/summary`)
-      .then(r => r.json())
-      .then(data => {
-        if (data && data.summary) {
-          setAttendanceSummary(data);
-        }
-      })
-      .catch(() => {});
+    if (isB2B) {
+      fetch(`${SERVER_URL}/attendance/student/${selectedChild.id}/summary`)
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.summary) {
+            setAttendanceSummary(data);
+          }
+        })
+        .catch(() => {});
+    }
   }, [selectedChild.id]);
 
   useEffect(() => {
@@ -664,8 +670,8 @@ ${report.encouragement ? `<blockquote style="border-left:4px solid #BAA467;paddi
                 )}
               </View>
 
-              {/* Attendance Card */}
-              {attendanceSummary && attendanceSummary.summary && (
+              {/* Attendance Card — B2B only (school-linked parents) */}
+              {isB2B && attendanceSummary && attendanceSummary.summary && (
                 <View style={[s.statCardFull, { marginTop: 14 }]}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>

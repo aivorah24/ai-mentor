@@ -34,7 +34,10 @@ export interface User {
   activeRole?: UserRole;     // currently active profile
   grade?: string;
   curriculum?: string;       // e.g. 'NCERT', 'IB PYP', 'CBSE', 'IGCSE'
-  school?: string;
+  school?: string;           // free-text school name (not authoritative for B2B)
+  schoolId?: string | null;  // official school-org FK. Set => B2B (school account);
+                             // null/undefined => B2C (independent self-signup). Drives
+                             // whether school-only features (My Classes, Attendance) show.
   location?: string;
   onboardingComplete?: boolean;
   emailVerified?: boolean;
@@ -124,6 +127,7 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User> & { _s
         grade:              data.grade      || undefined,
         curriculum:         data.curriculum || undefined,
         school:             data.school     || undefined,
+        schoolId:           data.schoolId   ?? null,
         location:           data.location   || undefined,
         onboardingComplete: data.onboardingComplete ?? false,
         photoUrl:           data.photoUrl   || undefined,
@@ -512,6 +516,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await AsyncStorage.removeItem(PROFILE_KEY).catch(() => {});
           await signOut(auth).catch(() => {});
           setUser(null);
+        } else if (profile._syncOk === true && profile._accountExists !== false) {
+          if (profile.schoolId !== undefined && profile.schoolId !== (user?.schoolId ?? null)) {
+            setUser(prev => {
+              if (!prev) return prev;
+              const updated = { ...prev, schoolId: profile.schoolId ?? null, school: profile.school ?? prev.school };
+              AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(updated)).catch(() => {});
+              return updated;
+            });
+          }
         }
       } catch {}
     };
@@ -535,7 +548,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: updated.email,
         role: updated.role,
         activeRole: updated.activeRole,
-        school: updated.school, location: updated.location,
+        school: updated.school,
+        schoolId: updated.schoolId !== undefined ? updated.schoolId : null,
+        location: updated.location,
         onboardingComplete: updated.onboardingComplete,
         emailVerified: updated.emailVerified,
         accountStatus: updated.accountStatus,
@@ -570,8 +585,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }
 
-  // Re-pull the authoritative profile (grade/curriculum/school/name/photo) from the
-  // server and update the session — so changes made elsewhere (e.g. a parent editing
+  // Re-pull the authoritative profile (grade/curriculum/school/name/photo/schoolId) from the
+  // server and update the session — so changes made elsewhere (e.g. B2B approval or parent editing
   // the child's grade) reflect for the logged-in user without re-login.
   async function refreshProfile() {
     const email = user?.email;
@@ -586,13 +601,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           grade:      fresh.grade      ?? prev.grade,
           curriculum: fresh.curriculum ?? prev.curriculum,
           school:     fresh.school     ?? prev.school,
+          schoolId:   fresh.schoolId !== undefined ? fresh.schoolId : prev.schoolId,
           name:       fresh.name       ?? prev.name,
           photoUrl:   fresh.photoUrl   ?? prev.photoUrl,
         };
         AsyncStorage.setItem(PROFILE_KEY, JSON.stringify({
           name: updated.name, grade: updated.grade, curriculum: updated.curriculum,
           email: updated.email, role: updated.role, activeRole: updated.activeRole,
-          school: updated.school, location: updated.location,
+          school: updated.school,
+          schoolId: updated.schoolId !== undefined ? updated.schoolId : null,
+          location: updated.location,
           onboardingComplete: updated.onboardingComplete, emailVerified: updated.emailVerified,
           accountStatus: updated.accountStatus, avatarStyle: updated.avatarStyle,
           learningStyle: updated.learningStyle, interests: updated.interests, bio: updated.bio,
@@ -700,6 +718,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         grade:              profile.grade              || undefined,
         curriculum:         profile.curriculum         || undefined,
         school:             profile.school             || 'Hyderabad International School',
+        schoolId:           profile.schoolId           ?? null,
         location:           profile.location           || 'Hyderabad, India',
         onboardingComplete: profile.onboardingComplete === true || onboardingComplete,
         emailVerified:      cred.user.emailVerified || allowAutoGen || allowParentActivated,
@@ -904,23 +923,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const onboardingComplete =
           profile.onboardingComplete === true ||
           savedLocal.onboardingComplete === true;
+
+        // isAlreadyVerified must be computed from AIVORAH's own accountStatus
+        // (not cred.user.emailVerified, which is Google's flag and is true for
+        // every Google account regardless of whether the Aivorah verification
+        // step ran) BEFORE newUser is built or cached — see regression note below.
+        const isAlreadyVerified = profile.accountStatus === 'active';
         const newUser: User = {
           name, email, role: effectiveRole,
           roles:              Array.isArray(profile.roles) ? profile.roles as UserRole[] : [effectiveRole],
           grade:              profile.grade      || undefined,
           curriculum:         profile.curriculum || undefined,
           school:             profile.school     || undefined,
+          schoolId:           profile.schoolId   ?? null,
           location:           profile.location   || 'Hyderabad, India',
           onboardingComplete,
-          // First-time Google SSO users must verify via Aivorah email before entering
-          emailVerified: existingRole ? cred.user.emailVerified : false,
+          // First-time Google SSO users must verify via Aivorah email before entering.
+          // REGRESSION GUARD (2026-07-20, broke in e2a7f90 on top of the Jul-9
+          // "sticky emailVerified" cache): this must be Aivorah's own
+          // isAlreadyVerified, never cred.user.emailVerified. Google's flag is
+          // always true, so using it here — combined with setUser/AsyncStorage
+          // writes that ran BEFORE this check existed — poisoned the sticky
+          // local cache with emailVerified:true on every single Google login,
+          // letting unverified users fall through to onboarding. Do not move
+          // the setUser/AsyncStorage.setItem calls below to before this line,
+          // and do not swap this back to cred.user.emailVerified.
+          emailVerified: existingRole ? isAlreadyVerified : false,
           authProvider: 'google',
         };
         setUser(newUser);
         AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(newUser)).catch(() => {});
 
         // Send Aivorah activation email if not yet verified (covers new users + returning unverified)
-        const isAlreadyVerified = profile.accountStatus === 'active';
         if (!isAlreadyVerified) {
           // Persist to AsyncStorage — survives multiple onAuthStateChanged fires
           await AsyncStorage.setItem(PENDING_VERIFY_KEY, email).catch(() => {});
@@ -1012,6 +1046,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       emailVerified: true,
       accountStatus: profile.accountStatus,
       school: profile.school,
+      schoolId: profile.schoolId ?? null,
       location: profile.location,
       curriculum: profile.curriculum,
     });
@@ -1197,12 +1232,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function demoLogin(role: UserRole = 'student') {
+    // Demo accounts are B2B (school-linked) so the founder demo shows the full
+    // school feature set (My Classes, Attendance). schoolId is a sentinel — the
+    // authoritative B2B signal — so these never fall into the B2C hidden-nav path.
     const demos: Record<UserRole, User> = {
-      student:     { name: 'Alex Richardson',  email: 'alex@demo.com',    role: 'student',     grade: 'Grade 3', curriculum: 'IB PYP', school: 'Hyderabad International School', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true },
-      teacher:     { name: 'Ms. Zara',         email: 'teacher@demo.com', role: 'teacher',     school: 'Hyderabad International School', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true, teaches: [{ grade: 'Grade 3', curriculum: 'IB PYP' }] },
-      parent:      { name: 'Priya Richardson', email: 'parent@demo.com',  role: 'parent',      location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true, children: [{ name: 'Alex Richardson', grade: 'Grade 3', curriculum: 'IB PYP', email: 'alex@demo.com' }] },
-      super_admin: { name: 'Sunitha Gujjula',  email: 'gujjula.sunitha@gmail.com', role: 'super_admin', school: 'The Shri Ram Academy', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true },
-      school_admin: { name: 'Test SchoolAdmin TSRA', email: 'schooladmin.tsra.test@aivorah.com', role: 'school_admin', school: 'TSRA', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true },
+      student:     { name: 'Alex Richardson',  email: 'alex@demo.com',    role: 'student',     grade: 'Grade 3', curriculum: 'IB PYP', school: 'Hyderabad International School', schoolId: 'demo-school', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true },
+      teacher:     { name: 'Ms. Zara',         email: 'teacher@demo.com', role: 'teacher',     school: 'Hyderabad International School', schoolId: 'demo-school', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true, teaches: [{ grade: 'Grade 3', curriculum: 'IB PYP' }] },
+      parent:      { name: 'Priya Richardson', email: 'parent@demo.com',  role: 'parent',      school: 'Hyderabad International School', schoolId: 'demo-school', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true, children: [{ name: 'Alex Richardson', grade: 'Grade 3', curriculum: 'IB PYP', email: 'alex@demo.com' }] },
+      super_admin: { name: 'Sunitha Gujjula',  email: 'gujjula.sunitha@gmail.com', role: 'super_admin', school: 'The Shri Ram Academy', schoolId: 'demo-school', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true },
+      school_admin: { name: 'Test SchoolAdmin TSRA', email: 'schooladmin.tsra.test@aivorah.com', role: 'school_admin', school: 'TSRA', schoolId: 'demo-school', location: 'Hyderabad, India', onboardingComplete: true, emailVerified: true },
     };
     setUser(demos[role]);
   }

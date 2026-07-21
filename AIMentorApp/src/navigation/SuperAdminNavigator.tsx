@@ -23,6 +23,10 @@ import StaffSubjectMappingScreen from '../screens/teacher/StaffSubjectMappingScr
 import AnnouncementManagerScreen from '../features/announcements/components/AnnouncementManagerScreen';
 import TeacherAnnouncementsScreen from '../screens/teacher/TeacherAnnouncementsScreen';
 import TeacherAttendanceScreen from '../screens/teacher/TeacherAttendanceScreen';
+import TimetableScreen from '../features/timetable/components/TimetableScreen';
+import ResourcesScreen from '../features/resources/components/ResourcesScreen';
+import ChannelsScreen from '../features/channels/components/ChannelsScreen';
+import ContentReviewDashboardScreen from '../screens/admin/ContentReviewDashboardScreen';
 
 export type SuperAdminDrawerParamList = {
   TeacherDashboard: undefined;
@@ -44,6 +48,7 @@ export type SuperAdminDrawerParamList = {
   StaffSubjectMapping: undefined;
   AnnouncementManager: undefined;
   TeacherAnnouncements: { openId?: string } | undefined;
+  ContentReviewDashboard: undefined;
 };
 
 const Drawer = createDrawerNavigator<SuperAdminDrawerParamList>();
@@ -89,6 +94,10 @@ export default function SuperAdminNavigator() {
       <Drawer.Screen name="StaffSubjectMapping" component={StaffSubjectMappingScreen} />
       <Drawer.Screen name="AnnouncementManager" component={AnnouncementManagerScreen} />
       <Drawer.Screen name="TeacherAnnouncements" component={TeacherAnnouncementsScreen} />
+      <Drawer.Screen name="Timetable" component={TimetableScreen} />
+      <Drawer.Screen name="Resources" component={ResourcesScreen} />
+      <Drawer.Screen name="Channels" component={ChannelsScreen} />
+      <Drawer.Screen name="ContentReviewDashboard" component={ContentReviewDashboardScreen} />
     </Drawer.Navigator>
   );
 }

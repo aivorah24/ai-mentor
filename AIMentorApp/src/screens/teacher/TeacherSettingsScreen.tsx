@@ -11,6 +11,7 @@ import { spacing, radius } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
+import ConnectSchoolBanner from '../../features/classes/components/ConnectSchoolBanner';
 import { useAuth } from '../../context/AuthContext';
 import { getAvatarGradient, getAvatarIcon } from '../../constants/avatarStyles';
 import { useTheme } from '../../context/ThemeContext';
@@ -26,6 +27,7 @@ import {
 import { auth } from '../../config/firebase';
 import SERVER_URL from '../../config/serverUrl';
 import { GRADES_TEACHER, CURRICULA, getGradesForCurriculum } from '../onboarding/OnboardingScreen';
+import TeachingEntriesEditor, { type TeachingEntry, emptyEntry } from '../school-admin/TeachingEntriesEditor';
 
 // Grade levels — mirrors the student onboarding grade selector so the teacher's
 // "Grades you teach" picker groups grades by level instead of a flat list.
@@ -208,17 +210,20 @@ export default function TeacherSettingsScreen({ navigation }: any) {
   const [showCurrent,   setShowCurrent]  = useState(false);
   const [showNew,       setShowNew]      = useState(false);
   const [newSchool,     setNewSchool]    = useState(user?.school || '');
-  // Multi-curriculum + multi-grade: a teacher can handle several curricula and grades.
-  const [editCurricula, setEditCurricula] = useState<string[]>(
-    Array.isArray(user?.teaches) && user.teaches.length > 0
-      ? [...new Set(user.teaches.map((t: any) => t.curriculum).filter(Boolean))] as string[]
-      : (user?.curriculum ? [user.curriculum] : [])
-  );
-  const [editGrades, setEditGrades] = useState<string[]>(
-    Array.isArray(user?.teaches) && user.teaches.length > 0
-      ? [...new Set(user.teaches.map((t: any) => t.grade).filter(Boolean))] as string[]
-      : (user?.grade ? [user.grade] : [])
-  );
+  // Multi-curriculum: a teacher can teach several INDEPENDENT curriculum+grade
+  // combos (e.g. IB MYP for Grade 7 AND CBSE for Grade 9) — each row is its
+  // own entry, not a cartesian product of every curriculum × every grade.
+  function teachesToEntries(): TeachingEntry[] {
+    if (Array.isArray(user?.teaches) && user.teaches.length > 0) {
+      return user.teaches.map((t: any) => ({
+        curriculum: t.curriculum || '', grade: t.grade || '',
+        subjectsInput: Array.isArray(t.subjects) ? t.subjects.join(', ') : '',
+      }));
+    }
+    return user?.curriculum || user?.grade ? [{ curriculum: user?.curriculum || '', grade: user?.grade || '', subjectsInput: '' }] : [emptyEntry()];
+  }
+  const [editEntries, setEditEntries] = useState<TeachingEntry[]>(teachesToEntries());
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // Feedback + sign-out confirm (replaces Alert.alert on web)
   const [feedback,       setFeedback]       = useState<{ title: string; message: string } | null>(null);
@@ -280,16 +285,8 @@ export default function TeacherSettingsScreen({ navigation }: any) {
     setEmailStep('form'); setEmailOtp('');
     setCurrentPw(''); setNewPw(''); setConfirmPw('');
     setNewSchool(user?.school || '');
-    setEditCurricula(
-      Array.isArray(user?.teaches) && user.teaches.length > 0
-        ? [...new Set(user.teaches.map((t: any) => t.curriculum).filter(Boolean))] as string[]
-        : (user?.curriculum ? [user.curriculum] : [])
-    );
-    setEditGrades(
-      Array.isArray(user?.teaches) && user.teaches.length > 0
-        ? [...new Set(user.teaches.map((t: any) => t.grade).filter(Boolean))] as string[]
-        : (user?.grade ? [user.grade] : [])
-    );
+    setEditEntries(teachesToEntries());
+    setOpenDropdown(null);
     setModalError('');
     setActiveModal(type);
   }
@@ -331,19 +328,19 @@ export default function TeacherSettingsScreen({ navigation }: any) {
   }
 
   async function handleSaveCurriculum() {
-    if (editCurricula.length === 0) { setModalError('Please select at least one curriculum.'); return; }
-    if (editGrades.length === 0) { setModalError('Please select at least one grade.'); return; }
+    const validEntries = editEntries.filter(e => e.curriculum && e.grade);
+    if (validEntries.length === 0) { setModalError('Please add at least one curriculum + grade.'); return; }
     setModalLoading(true);
     try {
-      // Build teaches[] from every curriculum × grade the teacher selected — the
-      // authoritative source the assignment/student/challenge screens read. The
-      // users columns hold one value each (the first selected curriculum/grade).
-      const subjects = ((user?.teaches?.[0] as any)?.subjects) || [];
-      const orderedCurricula = CURRICULA.filter(c => editCurricula.includes(c));
-      const orderedGrades = GRADES_TEACHER.filter(g => editGrades.includes(g));
-      const teaches = orderedCurricula.flatMap(c => orderedGrades.map(g => ({ grade: g, curriculum: c, subjects })));
-      const primaryCurriculum = orderedCurricula[0];
-      const primaryGrade = orderedGrades[0];
+      // Each row is an INDEPENDENT curriculum+grade the teacher actually
+      // teaches (e.g. IB MYP/Grade 7 and CBSE/Grade 9) — no cross-product.
+      // The users columns hold the first row's values for legacy consumers.
+      const teaches = validEntries.map(e => ({
+        grade: e.grade, curriculum: e.curriculum,
+        subjects: e.subjectsInput.split(',').map(s => s.trim()).filter(Boolean),
+      }));
+      const primaryCurriculum = teaches[0].curriculum;
+      const primaryGrade = teaches[0].grade;
       const res = await fetch(`${SERVER_URL}/user/profile`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -449,6 +446,7 @@ export default function TeacherSettingsScreen({ navigation }: any) {
           onMenuPress={() => navigation.openDrawer()}
         />
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <ConnectSchoolBanner />
           <View style={styles.columns}>
 
             {/* ── Left column ── */}
@@ -974,69 +972,19 @@ export default function TeacherSettingsScreen({ navigation }: any) {
         <ModalButtons onCancel={closeModal} onSave={handleSaveSchool} loading={modalLoading} saveLabel="Save" styles={styles} />
       </AppModal>
 
-      {/* Curriculum Modal */}
+      {/* Curriculum Modal — one row per curriculum+grade the teacher actually
+          teaches (e.g. IB MYP/Grade 7 and CBSE/Grade 9 as two independent rows,
+          not a grid of every curriculum × every grade). */}
       <AppModal visible={activeModal === 'curriculum'} title="Curriculum & Grade" onClose={closeModal} styles={styles} colors={colors}>
-        <Text style={styles.modalFieldLabel}>Curriculum you teach</Text>
-        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-          {CURRICULA.map(c => {
-            const on = editCurricula.includes(c);
-            return (
-              <TouchableOpacity
-                key={c} activeOpacity={0.8}
-                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, borderColor: on ? gold : colors.borderColor, backgroundColor: on ? gold + '18' : 'transparent' }}
-                onPress={() => {
-                  // A teacher handles exactly ONE curriculum — single-select (radio).
-                  setEditCurricula([c]);
-                  // Drop any selected grades not valid for the chosen curriculum
-                  // (e.g. switching to IB MYP clears Grades 1–5).
-                  const allowed = new Set(getGradesForCurriculum(c));
-                  setEditGrades(g => g.filter(x => allowed.has(x)));
-                }}
-              >
-                {on && <Feather name="check" size={12} color={gold} />}
-                <Text style={{ fontSize: 13, color: on ? gold : colors.textMuted, fontWeight: '600' }}>{c}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        <Text style={[styles.modalFieldLabel, { marginTop: 12 }]}>Grades you teach (select all that apply)</Text>
-        <View style={{ gap: 12, marginBottom: 4 }}>
-          {(() => {
-            // Only show grades valid for the selected curricula (union) — exactly like
-            // teacher onboarding: IB PYP → Grades 1–5, IB MYP → 6–10, IB DP → 11–12, etc.
-            // No curriculum selected yet → show all grades.
-            const allowed = editCurricula.length > 0
-              ? new Set(editCurricula.flatMap(c => getGradesForCurriculum(c)))
-              : new Set(GRADES_TEACHER);
-            return GRADE_GROUPS.map(group => {
-            const available = group.grades.filter(g => allowed.has(g));
-            if (available.length === 0) return null;
-            return (
-              <View key={group.label} style={{ gap: 7 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-                  <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: gold }} />
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.5 }}>{group.label}</Text>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-                  {available.map(g => {
-                    const on = editGrades.includes(g);
-                    return (
-                      <TouchableOpacity
-                        key={g} activeOpacity={0.8}
-                        style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 5, borderColor: on ? gold : colors.borderColor, backgroundColor: on ? gold + '18' : 'transparent' }}
-                        onPress={() => setEditGrades(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])}
-                      >
-                        {on && <Feather name="check" size={12} color={gold} />}
-                        <Text style={{ fontSize: 13, color: on ? gold : colors.textMuted, fontWeight: '600' }}>{g}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-            );
-          });
-          })()}
-        </View>
+        <Text style={styles.modalFieldLabel}>What you teach — add a row for each curriculum + grade</Text>
+        <TeachingEntriesEditor
+          entries={editEntries}
+          onChange={setEditEntries}
+          schoolCurriculumBase={null}
+          colors={colors}
+          openDropdown={openDropdown}
+          setOpenDropdown={setOpenDropdown}
+        />
         {modalError ? <Text style={{ color: colors.accentRed, fontSize: 13, marginTop: 8 }}>{modalError}</Text> : null}
         <ModalButtons onCancel={closeModal} onSave={handleSaveCurriculum} loading={modalLoading} saveLabel="Save" styles={styles} />
       </AppModal>
@@ -1304,7 +1252,9 @@ function AppModal({ visible, title, onClose, children, styles, colors }: { visib
             <Text style={styles.modalTitle}>{title}</Text>
             <TouchableOpacity onPress={onClose}><Feather name="x" size={20} color={colors.textMuted} /></TouchableOpacity>
           </View>
-          {children}
+          <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
+            {children}
+          </ScrollView>
         </View>
       </View>
     </Modal>

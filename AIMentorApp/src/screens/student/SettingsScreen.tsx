@@ -22,6 +22,7 @@ import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
+import ConnectSchoolBanner from '../../features/classes/components/ConnectSchoolBanner';
 import { useAuth } from '../../context/AuthContext';
 import { getAvatarGradient, getAvatarIcon } from '../../constants/avatarStyles';
 import { useStudentData, formatLevel } from '../../context/StudentDataContext';
@@ -38,8 +39,9 @@ import {
 } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import SERVER_URL from '../../config/serverUrl';
+import { CURRICULA } from '../onboarding/OnboardingScreen';
 
-type ModalType = 'name' | 'email' | 'password' | 'recovery' | 'delete' | 'grade' | 'location' | 'ssoInfo' | null;
+type ModalType = 'name' | 'email' | 'password' | 'recovery' | 'delete' | 'grade' | 'location' | 'curriculum' | 'ssoInfo' | null;
 
 export default function SettingsScreen({ navigation, route }: any) {
   const { user, updateUser, logout, refreshProfile } = useAuth();
@@ -201,6 +203,7 @@ export default function SettingsScreen({ navigation, route }: any) {
     setPasswordError('');
     setSelectedGrade(user?.grade || '');
     setNewLocation(user?.location || '');
+    setSelectedCurriculum((user as any)?.curriculum || '');
     setActiveModal(type);
   }
 
@@ -418,6 +421,29 @@ export default function SettingsScreen({ navigation, route }: any) {
     }
   }
 
+  // Curriculum modal
+  const [selectedCurriculum, setSelectedCurriculum] = useState((user as any)?.curriculum || '');
+  const [curriculumLoading, setCurriculumLoading] = useState(false);
+
+  async function handleSaveCurriculum() {
+    if (!selectedCurriculum) return;
+    setCurriculumLoading(true);
+    try {
+      await fetch(`${SERVER_URL}/user/preferences`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user?.email, curriculum: selectedCurriculum }),
+      });
+      updateUser({ curriculum: selectedCurriculum } as any);
+      closeModal();
+    } catch {
+      updateUser({ curriculum: selectedCurriculum } as any);
+      closeModal();
+    } finally {
+      setCurriculumLoading(false);
+    }
+  }
+
   // Location modal
   const [newLocation, setNewLocation] = useState('');
   const [locationLoading, setLocationLoading] = useState(false);
@@ -508,6 +534,7 @@ export default function SettingsScreen({ navigation, route }: any) {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
+          <ConnectSchoolBanner />
           <View style={styles.columns}>
           <View style={styles.col}>
           {/* ── Profile & Account ── */}
@@ -546,6 +573,7 @@ export default function SettingsScreen({ navigation, route }: any) {
               { label: 'Display Name', value: user?.name || '—', modal: 'name' },
               { label: 'Email Address', value: user?.email || '—', modal: 'email' },
               { label: 'Grade / Year', value: user?.grade || 'Not set', modal: 'grade' },
+              { label: 'Curriculum', value: (user as any)?.curriculum || 'Not set', modal: 'curriculum' },
               { label: 'Location', value: user?.location || 'Not set', modal: 'location' },
             ].map((f, i) => (
               <View key={f.label}>
@@ -1051,6 +1079,45 @@ export default function SettingsScreen({ navigation, route }: any) {
             disabled={!selectedGrade || gradeLoading}
           >
             {gradeLoading ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.modalSaveText}>Save</Text>}
+          </TouchableOpacity>
+        </View>
+      </AppModal>
+
+      {/* ── Curriculum Modal ── */}
+      <AppModal visible={activeModal === 'curriculum'} title="Change Curriculum" onClose={closeModal} styles={styles} colors={colors}>
+        <Text style={[styles.modalNote, { marginBottom: 12 }]}>Select the curriculum you follow. Your learning paths and content will update accordingly.</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+          {CURRICULA.map(c => {
+            const active = selectedCurriculum === c;
+            return (
+              <TouchableOpacity
+                key={c}
+                onPress={() => setSelectedCurriculum(c)}
+                style={{
+                  paddingHorizontal: 14,
+                  paddingVertical: 9,
+                  borderRadius: 10,
+                  borderWidth: 1.5,
+                  borderColor: active ? colors.accentYellow : colors.borderColor,
+                  backgroundColor: active ? colors.accentYellow + '20' : 'transparent',
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: active ? colors.accentYellow : colors.textMuted, fontWeight: active ? '700' : '400', fontSize: 12.5 }}>{c}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <View style={styles.modalBtns}>
+          <TouchableOpacity style={styles.modalCancelBtn} onPress={closeModal}>
+            <Text style={styles.modalCancelText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modalSaveBtn, (!selectedCurriculum || curriculumLoading) && { opacity: 0.6 }]}
+            onPress={handleSaveCurriculum}
+            disabled={!selectedCurriculum || curriculumLoading}
+          >
+            {curriculumLoading ? <ActivityIndicator color="white" size="small" /> : <Text style={styles.modalSaveText}>Save</Text>}
           </TouchableOpacity>
         </View>
       </AppModal>

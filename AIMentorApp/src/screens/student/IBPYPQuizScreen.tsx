@@ -51,7 +51,14 @@ const SUBJECT_ICON: Record<string, string> = {
 };
 
 export default function IBPYPQuizScreen({ navigation, route }: any) {
-  const { topic, grade = 'Grade 3', subject = 'Mathematics', curriculum = 'IB PYP' } = route?.params ?? {};
+  const { topic, grade = 'Grade 3', subject = 'Mathematics', curriculum = 'IB PYP', returnTo, returnParams } = route?.params ?? {};
+  // Whoever launched this quiz — SubjectTopics by default, but LessonScreen's
+  // Practice tab passes its own returnTo/returnParams so back lands there
+  // instead of always dumping the student back on the topic list.
+  const goBackToOrigin = () => {
+    if (returnTo) navigation.navigate(returnTo, returnParams);
+    else navigation.navigate('SubjectTopics', { subject, grade, curriculum });
+  };
   const { colors, isDark } = useTheme();
   const { user }           = useAuth();
   const { completeLesson, addXP, recordStudyTime } = useStudentData();
@@ -391,7 +398,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
     return (
       <ScreenLayout>
         <View style={styles.screen}>
-          <Header title="Practice Results" showBack onBack={() => navigation.navigate('SubjectTopics', { subject, grade, curriculum })} onMenuPress={() => navigation.openDrawer()} />
+          <Header title="Practice Results" showBack onBack={goBackToOrigin} onMenuPress={() => navigation.openDrawer()} />
           <ScrollView contentContainerStyle={[styles.scrollContent]} showsVerticalScrollIndicator={false}>
           <View style={[styles.content, { alignItems: 'center', paddingTop: 32 }]}>
 
@@ -545,7 +552,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
   return (
     <ScreenLayout>
       <View style={styles.screen}>
-        <Header title={`${subject} Practice`} subtitle={topic} showBack onBack={() => navigation.navigate('SubjectTopics', { subject, grade, curriculum })} onMenuPress={() => navigation.openDrawer()} />
+        <Header title={`${subject} Practice`} subtitle={topic} showBack onBack={goBackToOrigin} onMenuPress={() => navigation.openDrawer()} />
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.twoPanel}>
 

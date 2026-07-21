@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
   Platform,
   useWindowDimensions,
+  Linking,
+  Animated,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius, fonts } from '../../theme';
@@ -25,9 +27,45 @@ import SERVER_URL from '../../config/serverUrl';
 import TimePicker from '../../components/common/TimePicker';
 
 const DAYS_SHORT = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-const TIMES = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
+// Full-day axis (12 AM – 11 PM) like Toddle; the grid auto-scrolls to the
+// current hour on load (see scrollToCurrentTime) so it opens on relevant hours.
+const TIMES = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}:00`);
 const CAL_DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 const DURATIONS = ['30 min', '45 min', '1 hr', '1.5 hrs', '2 hrs', '2.5 hrs', '3 hrs'];
+
+// ── Canonical tag definitions (mirrors Toddle's tag sidebar) ──────────────
+const ASSIGNMENT_TAGS = [
+  { key: 'Live Class / Lesson', color: '#7FC29B' },
+  { key: 'Study Session',       color: '#C9A24E' },
+  { key: 'Learning experience', color: '#7FC29B' },
+  { key: 'Quick task',          color: '#7FB2D6' },
+  { key: 'Worksheet / Assignment', color: '#E3B24C' },
+  { key: 'AI Tutor',            color: '#9B8FE8' },
+  { key: 'Video meeting',       color: '#E58AA6' },
+  { key: 'AI Challenge',        color: '#6B5BA8' },
+  { key: 'Deadline',            color: '#B84A3A' },
+];
+
+const EVENT_TAGS = [
+  { key: 'Holidays and vacations', color: '#E58AA6' },
+  { key: 'Whole school events',    color: '#7FC29B' },
+  { key: 'Special Assembly',       color: '#7FC29B' },
+  { key: 'Working Day / Break',    color: '#C4BCA9' },
+  { key: 'MYP Unit Timeline',      color: '#E58AA6' },
+  { key: 'Rotation Day Cycle',     color: '#7FB2D6' },
+  { key: 'SmartTask Cycle Timeline', color: '#E58AA6' },
+];
+
+function deriveTypeFromTag(tag: string): string {
+  if (!tag) return 'study';
+  const lower = tag.toLowerCase();
+  if (lower.includes('lesson') || lower.includes('live class') || lower.includes('video')) return 'lesson';
+  if (lower.includes('challenge')) return 'challenge';
+  if (lower.includes('deadline')) return 'deadline';
+  if (lower.includes('worksheet') || lower.includes('assignment')) return 'assignment';
+  if (lower.includes('break') || lower.includes('working day')) return 'break';
+  return 'study';
+}
 const HOUR_HEIGHT = 56;
 const DAY_COL_WIDTH = 140;
 const TIME_LABEL_WIDTH = 52;
@@ -72,25 +110,39 @@ interface ScheduleEvent {
   studentId: string;
   createdBy: string;
   tag: string | null;
+  tagCategory?: 'assignment' | 'event';
   assignmentId?: string | null;
   createdAt?: string;
+  isCompleted?: boolean;
+  startDate?: string;
+  isTimetableClass?: boolean;
 }
 
-// Returns [accent, pastelfill, textColor] — same palette as teacher schedule
+// Returns [accent, pastelfill, textColor] — aligned to the Timetable pastel
+// palette so the Calendar and Timetable read as one system. Pastel fills carry
+// dark ink and render the same in dark/light (like the timetable cards).
 function typeColors(type: string): [string, string, string] {
   const map: Record<string, [string, string, string]> = {
-    lesson:     ['#9C844A', '#F5EDDA', '#6B5A30'],
-    study:      ['#C9A24E', '#FBF3DA', '#7A5C1E'],  // amber-gold, matches Aivorah theme
-    challenge:  ['#6B5BA8', '#E8E4F5', '#3F3270'],
-    deadline:   ['#B84A3A', '#F5DDD9', '#7A2A1E'],
-    assignment: ['#3A8A6A', '#D9F0E8', '#1E5A40'],
-    break:      ['#7A7A7A', '#EBEBEB', '#4A4A4A'],
+    lesson:     ['#7FC29B', '#E4F3E9', '#2E7D5B'],  // live class — mint
+    study:      ['#7FB2D6', '#E1EEFA', '#2E6285'],  // daily task / personal study — sky
+    challenge:  ['#E58AA6', '#FCE0E9', '#9C3556'],  // challenge — rose
+    deadline:   ['#E3B24C', '#FFF6C9', '#6E5410'],  // worksheet / assignment due — gold
+    assignment: ['#E3B24C', '#FFF6C9', '#6E5410'],  // worksheet — gold
+    break:      ['#C4BCA9', '#EDE9E2', '#6E6A60'],  // neutral
   };
-  return map[type] ?? ['#9C844A', '#F5EDDA', '#6B5A30'];
+  return map[type] ?? ['#7FB2D6', '#E1EEFA', '#2E6285'];
 }
 
 function toTitleCase(str: string) {
   return String(str || '').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// '08:00' → '8 AM', '13:00' → '1 PM' — friendly 12-hour axis (not railway time).
+function fmtHour12(hhmm: string): string {
+  const h = Number(hhmm.split(':')[0]);
+  const ampm = h >= 12 ? 'pm' : 'am';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12} ${ampm}`;
 }
 
 function dateISO(d: Date): string {
@@ -142,6 +194,52 @@ export default function ScheduleScreen({ navigation }: any) {
   const [eventDates, setEventDates] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
+  // Category filters and completion status switch
+  const [filterType, setFilterType] = useState<'all' | 'assignments' | 'study' | 'classes'>('all');
+  const [hideCompleted, setHideCompleted] = useState(false);
+
+  // ── Tag-based filter checkboxes (like Toddle's sidebar) ──
+  const [enabledAssignmentTags, setEnabledAssignmentTags] = useState<Set<string>>(
+    () => new Set(ASSIGNMENT_TAGS.map(t => t.key))
+  );
+  const [enabledEventTags, setEnabledEventTags] = useState<Set<string>>(
+    () => new Set(EVENT_TAGS.map(t => t.key))
+  );
+  const [showTagPanel, setShowTagPanel] = useState(false);
+  const [iCalCopied, setICalCopied] = useState(false);
+  const [timetableData, setTimetableData] = useState<any | null>(null);
+
+  // Returns true if the event's tag passes the current tag filter checkboxes
+  const passesTagFilter = useCallback((ev: ScheduleEvent): boolean => {
+    const tag = ev.tag || '';
+    // Check event tags
+    const isEventTag = EVENT_TAGS.some(t => tag.toLowerCase().includes(t.key.toLowerCase()));
+    if (isEventTag) {
+      return EVENT_TAGS.some(t => tag.toLowerCase().includes(t.key.toLowerCase()) && enabledEventTags.has(t.key));
+    }
+    // Check assignment tags
+    return ASSIGNMENT_TAGS.some(t => tag.toLowerCase().includes(t.key.toLowerCase()) && enabledAssignmentTags.has(t.key))
+      || (!ASSIGNMENT_TAGS.some(t => tag.toLowerCase().includes(t.key.toLowerCase())) && enabledAssignmentTags.size > 0);
+  }, [enabledAssignmentTags, enabledEventTags]);
+
+  // Compute all-day lane height from events — avoids onLayout feedback loop
+  const allDayHeight = useMemo(() => {
+    const max = Math.max(
+      1,
+      ...week.map((d) =>
+        (eventsMap[d.iso] ?? []).filter((e) => {
+          if (hideCompleted && e.isCompleted) return false;
+          if (filterType === 'study' || filterType === 'classes') return false;
+          if (!passesTagFilter(e)) return false;
+          const tagLower = (e.tag || '').toLowerCase();
+          const isEventTag = ['holiday', 'vacation', 'assembly', 'timeline', 'whole school', 'rotation', 'cycle'].some((k) => tagLower.includes(k));
+          return e.startTime === '23:59' || e.isAllDay || e.type === 'deadline' || e.type === 'challenge' || isEventTag;
+        }).length
+      )
+    );
+    return Math.max(36, max * 26 + 10);
+  }, [eventsMap, week, hideCompleted, filterType, enabledAssignmentTags, enabledEventTags]);
+
   // Event detail modal — shows the full title/time/note when tapping an event block
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
@@ -151,7 +249,9 @@ export default function ScheduleScreen({ navigation }: any) {
   const [newTitle, setNewTitle] = useState('');
   const [newStartTime, setNewStartTime] = useState('09:00');
   const [newEndTime, setNewEndTime] = useState('10:00');
+  const [isAllDay, setIsAllDay] = useState(false);
   const [newType, setNewType] = useState('study');
+  const [newTag, setNewTag] = useState('Study Session');
   const [newNote, setNewNote] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -162,17 +262,18 @@ export default function ScheduleScreen({ navigation }: any) {
     // unmounts and the horizontal scroll resets back to Monday each time.
     if (!firstLoadDoneRef.current) setLoading(true);
     try {
-      // Fetch all 7 days of the week in parallel + deadlines + month dots
+      // Fetch all 7 days of the week in parallel + deadlines + month dots + timetable
       const weekDates = week.map(d => d.iso);
       const dayFetches = weekDates.map(d =>
-        fetch(`${SERVER_URL}/schedule?studentId=${studentId}&date=${d}`)
+        fetch(`${SERVER_URL}/schedule?studentId=${studentId}&date=${d}&hideCompleted=${hideCompleted}`)
           .then(r => r.ok ? r.json() : [])
           .then((evs: ScheduleEvent[]) => ({ date: d, events: evs }))
           .catch(() => ({ date: d, events: [] }))
       );
-      const [dlRes, monthRes, ...dayResults] = await Promise.all([
-        fetch(`${SERVER_URL}/schedule/upcoming?studentId=${studentId}`),
-        fetch(`${SERVER_URL}/schedule/month?studentId=${studentId}&year=${calYear}&month=${calMonth}`),
+      const [dlRes, monthRes, ttRes, ...dayResults] = await Promise.all([
+        fetch(`${SERVER_URL}/schedule/upcoming?studentId=${studentId}&hideCompleted=${hideCompleted}`),
+        fetch(`${SERVER_URL}/schedule/month?studentId=${studentId}&year=${calYear}&month=${calMonth}&hideCompleted=${hideCompleted}`),
+        fetch(`${SERVER_URL}/timetable?studentId=${studentId}`),
         ...dayFetches,
       ]);
 
@@ -187,9 +288,12 @@ export default function ScheduleScreen({ navigation }: any) {
         const m = await monthRes.json();
         setEventDates(new Set(m.dates ?? []));
       }
+      if (ttRes.ok) {
+        setTimetableData(await ttRes.json());
+      }
     } catch {}
     if (!firstLoadDoneRef.current) { setLoading(false); firstLoadDoneRef.current = true; }
-  }, [studentId, week, calYear, calMonth]);
+  }, [studentId, week, calYear, calMonth, hideCompleted]);
 
   useEffect(() => {
     fetchEvents();
@@ -234,13 +338,23 @@ export default function ScheduleScreen({ navigation }: any) {
     return () => clearInterval(interval);
   }, [eventsMap]);
 
-  function openSlotModal(dateISO: string, timeLabel: string) {
+  function openSlotModal(dateISO: string, timeLabel?: string, presetAllDay?: boolean, presetTag?: string) {
     setModalDate(dateISO);
-    const [h] = timeLabel.split(':');
-    const startH = h.padStart(2, '0');
-    const endH = String(Math.min(23, parseInt(startH) + 1)).padStart(2, '0');
-    setNewStartTime(`${startH}:00`);
-    setNewEndTime(`${endH}:00`);
+    setIsAllDay(!!presetAllDay);
+    if (presetTag) setNewTag(presetTag);
+    if (presetAllDay) {
+      setNewStartTime('23:59');
+      setNewEndTime('23:59');
+    } else if (timeLabel) {
+      const [h] = timeLabel.split(':');
+      const startH = h.padStart(2, '0');
+      const endH = String(Math.min(23, parseInt(startH) + 1)).padStart(2, '0');
+      setNewStartTime(`${startH}:00`);
+      setNewEndTime(`${endH}:00`);
+    } else {
+      setNewStartTime('09:00');
+      setNewEndTime('10:00');
+    }
     setModalVisible(true);
   }
 
@@ -254,9 +368,10 @@ export default function ScheduleScreen({ navigation }: any) {
         body: JSON.stringify({
           title:     newTitle,
           date:      modalDate,
-          startTime: newStartTime,
-          endTime:   newEndTime,
-          type:      newType,
+          startTime: isAllDay ? '23:59' : newStartTime,
+          endTime:   isAllDay ? '23:59' : newEndTime,
+          type:      deriveTypeFromTag(newTag),
+          tag:       newTag || 'Study Session',
           note:      newNote,
           studentId,
           createdBy: studentId,
@@ -271,7 +386,7 @@ export default function ScheduleScreen({ navigation }: any) {
         setEventDates(prev => new Set([...prev, modalDate]));
       }
     } catch {}
-    setNewTitle(''); setNewNote(''); setSaving(false); setModalVisible(false);
+    setNewTitle(''); setNewNote(''); setNewTag('Study Session'); setIsAllDay(false); setSaving(false); setModalVisible(false);
   }
 
   async function removeEvent(id: string, dateStr: string) {
@@ -303,10 +418,8 @@ export default function ScheduleScreen({ navigation }: any) {
   }
 
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  // Comfortable column width (matches the Parent schedule). The grid shows a few
-  // days at a readable width and scrolls horizontally; the auto-scroll-to-today
-  // keeps today's column in view.
-  const colWidth = Math.max(DAY_COL_WIDTH, Math.floor((screenWidth - TIME_LABEL_WIDTH) / 7));
+  const availableGridWidth = Math.max(700, screenWidth - 260 - 24);
+  const colWidth = Math.max(DAY_COL_WIDTH, Math.floor((availableGridWidth - TIME_LABEL_WIDTH) / 7));
   const gridHeight = TIMES.length * HOUR_HEIGHT;
   const totalGridWidth = TIME_LABEL_WIDTH + colWidth * 7;
 
@@ -392,6 +505,60 @@ export default function ScheduleScreen({ navigation }: any) {
     scrollToCurrentTime();
   }, [week, todayISO, colWidth]);
 
+  // ── Tag filter helpers ──────────────────────────────────────────────────────
+  const toggleAssignmentTag = useCallback((key: string) => {
+    setEnabledAssignmentTags(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }, []);
+
+  const toggleEventTag = useCallback((key: string) => {
+    setEnabledEventTags(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }, []);
+
+  const toggleAllAssignment = useCallback((on: boolean) => {
+    setEnabledAssignmentTags(on ? new Set(ASSIGNMENT_TAGS.map(t => t.key)) : new Set());
+  }, []);
+
+  const toggleAllEvent = useCallback((on: boolean) => {
+    setEnabledEventTags(on ? new Set(EVENT_TAGS.map(t => t.key)) : new Set());
+  }, []);
+
+  const allAssignmentOn = enabledAssignmentTags.size === ASSIGNMENT_TAGS.length;
+  const allEventOn = enabledEventTags.size === EVENT_TAGS.length;
+
+  // iCal subscribe URL
+  const iCalUrl = useMemo(() => {
+    const base = SERVER_URL.replace(/^https?:/, 'webcal:');
+    return `${base}/schedule/ical?studentId=${studentId || ''}&role=student`;
+  }, [studentId]);
+
+  const iCalHttpUrl = useMemo(() => {
+    return `${SERVER_URL}/schedule/ical?studentId=${studentId || ''}&role=student`;
+  }, [studentId]);
+
+  const handleSubscribe = useCallback(() => {
+    if (Platform.OS === 'web') {
+      window.open(iCalUrl, '_blank');
+    } else {
+      Linking.openURL(iCalUrl);
+    }
+  }, [iCalUrl]);
+
+  const handleCopyIcal = useCallback(async () => {
+    if (Platform.OS === 'web' && navigator?.clipboard) {
+      await navigator.clipboard.writeText(iCalHttpUrl);
+      setICalCopied(true);
+      setTimeout(() => setICalCopied(false), 2000);
+    }
+  }, [iCalHttpUrl]);
+
   return (
     <ScreenLayout>
       <View style={styles.screen}>
@@ -403,6 +570,42 @@ export default function ScheduleScreen({ navigation }: any) {
         />
 
         <ScrollView ref={vScrollRef} style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
+          {/* ── Category Filters & Hide Completed Toggle ── */}
+          <View style={styles.filterBar}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, alignItems: 'center' }}>
+              {[
+                { key: 'all', icon: 'grid', label: 'All Events' },
+                { key: 'assignments', icon: 'flag', label: 'Assignments & Deadlines' },
+                { key: 'study', icon: 'clock', label: 'Personal Study' },
+              ].map(item => {
+                const active = filterType === item.key;
+                return (
+                <TouchableOpacity
+                  key={item.key}
+                  style={[styles.filterChip, active && styles.filterChipActive]}
+                  onPress={() => setFilterType(item.key as any)}
+                >
+                  <Feather name={item.icon as any} size={13} color={active ? colors.accentYellow : colors.textMuted} style={{ marginRight: 6 }} />
+                  <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              );})}
+
+              <View style={{ width: 1, height: 20, backgroundColor: colors.borderColor, marginHorizontal: 4 }} />
+
+              <TouchableOpacity
+                style={[styles.toggleChip, hideCompleted && styles.toggleChipActive]}
+                onPress={() => setHideCompleted(!hideCompleted)}
+              >
+                <Feather name={hideCompleted ? 'check-square' : 'square'} size={15} color={hideCompleted ? colors.accentYellow : colors.textMuted} />
+                <Text style={[styles.toggleChipText, hideCompleted && { color: colors.accentYellow, fontWeight: '700' }]}>
+                  Hide Completed
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
 
           {/* ── Week navigation bar ── */}
           <View style={styles.weekNavBar}>
@@ -429,13 +632,20 @@ export default function ScheduleScreen({ navigation }: any) {
                   <Text style={styles.emptyText}>Loading schedule…</Text>
                 </View>
               ) : (
-                <View style={{ flexDirection: 'row' }}>
+                <View style={{ flexDirection: 'row', height: 60 + allDayHeight + gridHeight }}>
                   {/* FIXED LEFT: time labels (never scroll horizontally) */}
                   <View style={{ width: TIME_LABEL_WIDTH, backgroundColor: colors.bgDark, zIndex: 2 }}>
-                    <View style={styles.timeColHeader} />
+                    <View style={[styles.timeColHeader, { justifyContent: 'flex-end', paddingBottom: 6, alignItems: 'center' }]}>
+                      <Text style={{ fontSize: 8.5, fontWeight: '700', color: colors.textDim, textAlign: 'center', lineHeight: 11 }}>GMT{'\n'}+05:30</Text>
+                    </View>
+                    {/* "All-day" gutter label — keeps the time axis aligned with the
+                        all-day lane on the right, and labels the lane. */}
+                    <View style={[styles.allDayGutter, { height: allDayHeight }]}>
+                      <Text style={styles.allDayGutterText}>All{'\n'}day</Text>
+                    </View>
                     {TIMES.map((t) => (
                       <View key={t} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 4 }}>
-                        <Text style={styles.timeLabel}>{t}</Text>
+                        <Text style={styles.timeLabel}>{fmtHour12(t)}</Text>
                       </View>
                     ))}
                   </View>
@@ -473,28 +683,60 @@ export default function ScheduleScreen({ navigation }: any) {
                         })}
                       </View>
 
-                      {/* All-day row — deadline/challenge items (stored at 23:59) are excluded
-                          from the hourly grid below since a 1-minute-tall block there would be
-                          invisible; show them here instead so they're not just a tiny dot. */}
-                      <View style={styles.allDayRow}>
+                      {/* All-day row — deadline/challenge items (or multi-day assignment ribbons) */}
+                      <View style={[styles.allDayRow, { height: allDayHeight }]}>
                         {week.map((d) => {
-                          const allDayEvents = (eventsMap[d.iso] ?? []).filter(e => e.startTime === '23:59');
+                          const allDayEvents = (eventsMap[d.iso] ?? []).filter(e => {
+                            if (hideCompleted && e.isCompleted) return false;
+                            if (filterType === 'study' || filterType === 'classes') return false;
+                            if (!passesTagFilter(e)) return false;
+                            const tagLower = (e.tag || '').toLowerCase();
+                            const isEventTag = ['holiday', 'vacation', 'assembly', 'timeline', 'whole school', 'rotation', 'cycle'].some(k => tagLower.includes(k));
+                            return e.startTime === '23:59' || e.isAllDay || e.type === 'deadline' || e.type === 'challenge' || isEventTag;
+                          });
                           return (
-                            <View key={d.iso} style={[styles.allDayCol, { width: colWidth }]}>
+                            <TouchableOpacity
+                              key={d.iso}
+                              style={[styles.allDayCol, { width: colWidth, height: allDayHeight }]}
+                              onPress={() => openSlotModal(d.iso, undefined, true, 'Holidays and vacations')}
+                              activeOpacity={0.8}
+                            >
                               {allDayEvents.map(e => {
                                 const [accent, fill, textCol] = typeColors(e.type);
+                                const isCompleted = !!e.isCompleted;
+                                const chipBg = isCompleted ? '#E6F4EA' : fill;
+                                const chipBorder = isCompleted ? '#137333' : accent;
+                                const chipTextCol = isCompleted ? '#137333' : textCol;
+                                const isMultiDay = e.startDate && e.startDate !== e.date;
                                 return (
                                   <TouchableOpacity
                                     key={e.id}
-                                    style={[styles.allDayChip, { backgroundColor: fill, borderLeftColor: accent }]}
-                                    onPress={() => setSelectedEvent({ ...e, accent, fill, textCol })}
+                                    style={[styles.allDayChip, { backgroundColor: chipBg, borderLeftColor: chipBorder }]}
+                                    onPress={(evt) => {
+                                      evt.stopPropagation();
+                                      setSelectedEvent({ ...e, accent, fill, textCol });
+                                    }}
                                     activeOpacity={0.75}
                                   >
-                                    <Text style={[styles.allDayChipText, { color: textCol }]} numberOfLines={1}>{e.title}</Text>
+                                    <Feather
+                                      name={isCompleted ? 'check' : e.type === 'challenge' ? 'award' : 'flag'}
+                                      size={11}
+                                      color={chipTextCol}
+                                      style={{ marginRight: 5, flexShrink: 0 }}
+                                    />
+                                    <Text
+                                      style={[
+                                        styles.allDayChipText,
+                                        { color: chipTextCol, textDecorationLine: isCompleted ? 'line-through' : 'none' }
+                                      ]}
+                                      numberOfLines={1}
+                                    >
+                                      {isMultiDay ? `Due ${e.date.slice(5)} · ` : ''}{e.title}
+                                    </Text>
                                   </TouchableOpacity>
                                 );
                               })}
-                            </View>
+                            </TouchableOpacity>
                           );
                         })}
                       </View>
@@ -502,9 +744,18 @@ export default function ScheduleScreen({ navigation }: any) {
                       {/* Day columns */}
                       <View style={{ flexDirection: 'row' }}>
                         {week.map((d, colIdx) => {
-                          const dayEvents = (eventsMap[d.iso] ?? []).filter(
-                            e => e.startTime !== '23:59'
-                          );
+                          // Timed events only. The weekly recurring bell schedule lives on
+                          // the dedicated Timetable screen — it is intentionally NOT overlaid
+                          // onto this calendar (which shows dated assignments/challenges/tasks
+                          // and one-off events).
+                          let dayEvents = (eventsMap[d.iso] ?? []).filter(e => {
+                            if (e.startTime === '23:59' || e.type === 'deadline' || e.type === 'challenge') return false;
+                            if (hideCompleted && e.isCompleted) return false;
+                            if (filterType === 'assignments') return false;
+                            if (!passesTagFilter(e)) return false;
+                            return true;
+                          });
+
                           return (
                             <View
                               key={d.iso}
@@ -550,15 +801,17 @@ export default function ScheduleScreen({ navigation }: any) {
                                   >
                                     <Text style={[styles.eventTitle, { color: textCol }]}>{toTitleCase(event.title)}</Text>
                                     <Text style={[styles.eventTime, { color: accent }]}>{event.startTime}{event.endTime ? `–${event.endTime}` : ''}</Text>
-                                    <TouchableOpacity
-                                      style={styles.deleteBtn}
-                                      onPress={() => removeEvent(event.id, d.iso)}
-                                      // @ts-ignore
-                                      onMouseDown={(e: any) => e.stopPropagation?.()}
-                                      hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-                                    >
-                                      <Feather name="x" size={10} color={accent} />
-                                    </TouchableOpacity>
+                                    {!event.isTimetableClass && (
+                                      <TouchableOpacity
+                                        style={styles.deleteBtn}
+                                        onPress={() => removeEvent(event.id, d.iso)}
+                                        // @ts-ignore
+                                        onMouseDown={(e: any) => e.stopPropagation?.()}
+                                        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+                                      >
+                                        <Feather name="x" size={10} color={accent} />
+                                      </TouchableOpacity>
+                                    )}
                                   </TouchableOpacity>
                                 );
                               })}
@@ -578,115 +831,275 @@ export default function ScheduleScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
 
-            {/* ── Right Sidebar ── */}
+            {/* ── Right Sidebar: Tag Filters + Mini Calendar + iCal Subscribe ── */}
             <View style={styles.sideCol}>
-              {/* Mini Calendar */}
+
+              {/* ── Tag Filter Panel ── */}
+              <View style={styles.sideCard}>
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: showTagPanel ? spacing.md : 0 }}
+                  onPress={() => setShowTagPanel(!showTagPanel)}
+                  activeOpacity={0.7}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Feather name="filter" size={14} color={colors.accentYellow} />
+                    <Text style={styles.sideTitle}>Tag Filters</Text>
+                  </View>
+                  <Feather name={showTagPanel ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textDim} />
+                </TouchableOpacity>
+
+                {showTagPanel && (
+                  <View>
+                    {/* Assignment Tags */}
+                    <TouchableOpacity
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}
+                      onPress={() => toggleAllAssignment(!allAssignmentOn)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={{
+                        width: 18, height: 18, borderRadius: 4,
+                        backgroundColor: allAssignmentOn ? colors.accentYellow : 'transparent',
+                        borderWidth: 1.5, borderColor: allAssignmentOn ? colors.accentYellow : colors.textDim,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {allAssignmentOn && <Feather name="check" size={12} color="white" />}
+                      </View>
+                      <Text style={{ fontSize: 12, fontWeight: '800', color: colors.textHeading, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        ASSIGNMENT TAGS
+                      </Text>
+                    </TouchableOpacity>
+                    {ASSIGNMENT_TAGS.map(tag => {
+                      const on = enabledAssignmentTags.has(tag.key);
+                      return (
+                        <TouchableOpacity
+                          key={tag.key}
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5, paddingLeft: 4 }}
+                          onPress={() => toggleAssignmentTag(tag.key)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={{
+                            width: 18, height: 18, borderRadius: 4,
+                            backgroundColor: on ? tag.color : 'transparent',
+                            borderWidth: 1.5, borderColor: on ? tag.color : colors.textDim + '60',
+                            alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            {on && <Feather name="check" size={12} color="white" />}
+                          </View>
+                          <Text style={{ fontSize: 13, color: colors.textMain, fontWeight: '500' }}>{tag.key}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+
+                    {/* Divider */}
+                    <View style={{ height: 1, backgroundColor: colors.borderColor, marginVertical: 14 }} />
+
+                    {/* Event Tags */}
+                    <TouchableOpacity
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}
+                      onPress={() => toggleAllEvent(!allEventOn)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={{
+                        width: 18, height: 18, borderRadius: 4,
+                        backgroundColor: allEventOn ? colors.accentYellow : 'transparent',
+                        borderWidth: 1.5, borderColor: allEventOn ? colors.accentYellow : colors.textDim,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {allEventOn && <Feather name="check" size={12} color="white" />}
+                      </View>
+                      <Text style={{ fontSize: 12, fontWeight: '800', color: colors.textHeading, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        EVENT TAGS
+                      </Text>
+                    </TouchableOpacity>
+                    {EVENT_TAGS.map(tag => {
+                      const on = enabledEventTags.has(tag.key);
+                      return (
+                        <TouchableOpacity
+                          key={tag.key}
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5, paddingLeft: 4 }}
+                          onPress={() => toggleEventTag(tag.key)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={{
+                            width: 18, height: 18, borderRadius: 4,
+                            backgroundColor: on ? tag.color : 'transparent',
+                            borderWidth: 1.5, borderColor: on ? tag.color : colors.textDim + '60',
+                            alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            {on && <Feather name="check" size={12} color="white" />}
+                          </View>
+                          <Text style={{ fontSize: 13, color: colors.textMain, fontWeight: '500' }}>{tag.key}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+
+              {/* ── Mini Calendar ── */}
               <View style={styles.sideCard}>
                 <View style={styles.calHeader}>
+                  <TouchableOpacity onPress={() => {
+                    if (calMonth === 1) { setCalMonth(12); setCalYear(calYear - 1); }
+                    else setCalMonth(calMonth - 1);
+                  }}>
+                    <Feather name="chevron-left" size={16} color={colors.textDim} />
+                  </TouchableOpacity>
                   <Text style={styles.calMonth}>{MONTH_NAMES[calMonth - 1]} {calYear}</Text>
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <TouchableOpacity onPress={() => { if (calMonth === 1) { setCalMonth(12); setCalYear(y => y - 1); } else setCalMonth(m => m - 1); }}>
-                      <Feather name="chevron-left" size={14} color={colors.textMuted} />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => { if (calMonth === 12) { setCalMonth(1); setCalYear(y => y + 1); } else setCalMonth(m => m + 1); }}>
-                      <Feather name="chevron-right" size={14} color={colors.textMuted} />
-                    </TouchableOpacity>
-                  </View>
+                  <TouchableOpacity onPress={() => {
+                    if (calMonth === 12) { setCalMonth(1); setCalYear(calYear + 1); }
+                    else setCalMonth(calMonth + 1);
+                  }}>
+                    <Feather name="chevron-right" size={16} color={colors.textDim} />
+                  </TouchableOpacity>
                 </View>
                 <View style={styles.calDayHeaders}>
-                  {CAL_DAYS.map((d) => <Text key={d} style={styles.calDayHeader}>{d}</Text>)}
+                  {CAL_DAYS.map(d => <Text key={d} style={styles.calDayHeader}>{d}</Text>)}
                 </View>
-                {calWeeks.map((week2, wi) => (
+                {calWeeks.map((row, wi) => (
                   <View key={wi} style={styles.calWeek}>
-                    {week2.map((date, di) => {
-                      if (date === null) return <View key={di} style={styles.calDate} />;
-                      const iso = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
-                      const isToday   = iso === todayISO;
-                      const isWeekDay = week.some(d => d.iso === iso);
-                      const hasDot    = eventDates.has(iso);
+                    {row.map((day, di) => {
+                      if (day === null) return <View key={di} style={styles.calDate} />;
+                      const dStr = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                      const isToday = dStr === todayISO;
+                      const inWeek = week.some(w => w.iso === dStr);
+                      const hasEvent = eventDates.has(dStr);
                       return (
-                        <View
+                        <TouchableOpacity
                           key={di}
-                          style={[styles.calDate, isToday && styles.calDateToday, isWeekDay && !isToday && styles.calDateWeekHighlight]}
+                          style={[styles.calDate, isToday && styles.calDateToday, !isToday && inWeek && styles.calDateWeekHighlight]}
+                          onPress={() => {
+                            const nd = new Date(calYear, calMonth - 1, day);
+                            setWeekBase(nd);
+                          }}
                         >
-                          <Text style={[styles.calDateText, isToday && styles.calDateTextToday, isWeekDay && !isToday && { color: colors.accentYellow }]}>
-                            {date}
-                          </Text>
-                          {hasDot && <View style={[styles.calDot, { backgroundColor: isToday ? 'white' : colors.accentYellow }]} />}
-                        </View>
+                          <Text style={[styles.calDateText, isToday && styles.calDateTextToday]}>{day}</Text>
+                          {hasEvent && <View style={[styles.calDot, { backgroundColor: isToday ? 'white' : colors.accentYellow }]} />}
+                        </TouchableOpacity>
                       );
                     })}
                   </View>
                 ))}
               </View>
 
-              {/* Upcoming Deadlines */}
+              {/* ── Upcoming Deadlines ── */}
               <View style={styles.sideCard}>
-                <Text style={styles.sideTitle}>Upcoming Deadlines</Text>
+                <Text style={[styles.sideTitle, { marginBottom: spacing.lg }]}>Upcoming Deadlines</Text>
                 {deadlines.length === 0 ? (
-                  <Text style={styles.emptyText}>No upcoming deadlines.{'\n'}Teacher will add them here.</Text>
-                ) : (
-                  deadlines.map((d) => {
-                    const urgent   = d.date === todayISO;
-                    const dueColor = urgent ? colors.accentRed : d.date < todayISO ? colors.accentRed : colors.accentYellow;
-                    const dueLabel = urgent ? 'Due Today' : d.date;
-                    return (
-                      <View key={d.id} style={styles.deadlineItem}>
-                        <View style={[styles.deadlineIcon, { backgroundColor: dueColor + '18' }]}>
-                          <Feather name="clock" size={14} color={dueColor} />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.deadlineTitle}>{d.title}</Text>
-                          <Text style={[styles.deadlineDue, { color: dueColor }]}>{dueLabel}</Text>
-                        </View>
+                  <Text style={styles.emptyText}>No upcoming deadlines 🎉</Text>
+                ) : deadlines.slice(0, 6).map(dl => {
+                  const [accent, fill] = typeColors(dl.type);
+                  return (
+                    <View key={dl.id} style={styles.deadlineItem}>
+                      <View style={[styles.deadlineIcon, { backgroundColor: fill }]}>
+                        <Feather name={dl.type === 'challenge' ? 'award' : 'flag'} size={14} color={accent} />
                       </View>
-                    );
-                  })
-                )}
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.deadlineTitle} numberOfLines={1}>{dl.title}</Text>
+                        <Text style={[styles.deadlineDue, { color: accent }]}>Due {dl.date}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
+
+
             </View>
+
           </View>
         </ScrollView>
 
         {/* ── Add Event Modal ── */}
-        <Modal visible={modalVisible} transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modal}>
-              <Text style={styles.modalTitle}>Add Event — {modalDate}</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Event title..."
-                placeholderTextColor={colors.textDim}
-                value={newTitle}
-                onChangeText={setNewTitle}
-              />
-              <TextInput
-                style={[styles.modalInput, { fontSize: 12 }]}
-                placeholder="Note (optional)..."
-                placeholderTextColor={colors.textDim}
-                value={newNote}
-                onChangeText={setNewNote}
-              />
-              <Text style={styles.modalLabel}>Type:</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {['study','lesson','challenge','deadline','assignment','break'].map(t => (
-                  <TouchableOpacity key={t} style={[styles.timeChip, newType === t && { borderColor: typeColors(t)[0], backgroundColor: typeColors(t)[1] }]} onPress={() => setNewType(t)}>
-                    <Text style={[styles.timeChipText, newType === t && { color: typeColors(t)[2], fontWeight: '700' }]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <View style={{ flexDirection: 'row', gap: 10, marginTop: 4, zIndex: 100 }}>
-                <TimePicker label="Start time" value={newStartTime} onChange={(v) => {
-                  setNewStartTime(v);
-                  if (v >= newEndTime) {
-                    const [h, m] = v.split(':').map(Number);
-                    const end = new Date(0, 0, 0, h, m + 30);
-                    setNewEndTime(`${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`);
-                  }
-                }} />
-                <TimePicker label="End time" value={newEndTime} onChange={setNewEndTime} minTime={newStartTime} />
+        {/* ── Add Event Modal ── */}
+        <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={() => setModalVisible(false)}>
+          <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModalVisible(false)}>
+            <TouchableOpacity activeOpacity={1} onPress={() => {}} style={[styles.modal, { display: 'flex', flexDirection: 'column' }]}>
+              {/* Top Fixed Header */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: colors.borderColor, paddingBottom: 12, marginBottom: 12 }}>
+                <Text style={[styles.modalTitle, { marginBottom: 0 }]}>Add Event — {modalDate}</Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Feather name="x" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
               </View>
-              <View style={styles.modalBtns}>
+
+              {/* Scrollable Form Content */}
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ flexShrink: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 6 }}>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Event title..."
+                  placeholderTextColor={colors.textDim}
+                  value={newTitle}
+                  onChangeText={setNewTitle}
+                />
+                <TextInput
+                  style={[styles.modalInput, { fontSize: 12 }]}
+                  placeholder="Note (optional)..."
+                  placeholderTextColor={colors.textDim}
+                  value={newNote}
+                  onChangeText={setNewNote}
+                />
+                <Text style={styles.modalLabel}>Category / Tagline * (Links directly to Tag Filters):</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chipRowContent}>
+                  {ASSIGNMENT_TAGS.concat(EVENT_TAGS).map(t => (
+                    <TouchableOpacity
+                      key={t.key}
+                      style={[
+                        styles.timeChip,
+                        { flexDirection: 'row', alignItems: 'center' },
+                        newTag === t.key && { borderColor: t.color, backgroundColor: t.color + '26', borderWidth: 1.5 }
+                      ]}
+                      onPress={() => setNewTag(t.key)}
+                    >
+                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: t.color, marginRight: 6 }} />
+                      <Text style={[styles.timeChipText, newTag === t.key && { color: colors.textMain, fontWeight: '700' }]}>{t.key}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6, marginTop: 4 }}
+                  onPress={() => {
+                    const next = !isAllDay;
+                    setIsAllDay(next);
+                    if (next) {
+                      setNewStartTime('23:59');
+                      setNewEndTime('23:59');
+                      if (!newTag || newTag === 'Study Session') setNewTag('Holidays and vacations');
+                    } else {
+                      setNewStartTime('09:00');
+                      setNewEndTime('10:00');
+                    }
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View style={{
+                    width: 20, height: 20, borderRadius: 5, borderWidth: 1.5,
+                    borderColor: isAllDay ? gold : colors.borderColor,
+                    backgroundColor: isAllDay ? gold : 'transparent',
+                    alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    {isAllDay && <Feather name="check" size={13} color="white" />}
+                  </View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMain }}>
+                    All-day event (Holiday / Vacation / Assembly / Timeline)
+                  </Text>
+                </TouchableOpacity>
+                {!isAllDay && (
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 4, zIndex: 100 }}>
+                    <TimePicker label="Start time" value={newStartTime} onChange={(v) => {
+                      setNewStartTime(v);
+                      if (v >= newEndTime) {
+                        const [h, m] = v.split(':').map(Number);
+                        const end = new Date(0, 0, 0, h, m + 30);
+                        setNewEndTime(`${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`);
+                      }
+                    }} />
+                    <TimePicker label="End time" value={newEndTime} onChange={setNewEndTime} minTime={newStartTime} />
+                  </View>
+                )}
+              </ScrollView>
+
+              {/* Bottom Fixed Footer (Always visible without scrolling) */}
+              <View style={[styles.modalBtns, { paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.borderColor, marginTop: 12 }]}>
                 <TouchableOpacity style={styles.modalCancel} onPress={() => setModalVisible(false)}>
                   <Text style={styles.modalCancelText}>Cancel</Text>
                 </TouchableOpacity>
@@ -694,8 +1107,8 @@ export default function ScheduleScreen({ navigation }: any) {
                   <Text style={styles.modalConfirmText}>{saving ? 'Saving…' : 'Add Event'}</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </Modal>
 
         {/* ── Event Detail Modal — full title/time/note, tapped from a block ── */}
@@ -732,7 +1145,36 @@ export default function ScheduleScreen({ navigation }: any) {
               ) : (
                 <Text style={{ fontSize: 12, color: colors.textDim, marginTop: 12, fontStyle: 'italic' }}>No note added for this event.</Text>
               )}
-              <View style={[styles.modalBtns, { justifyContent: 'center' }]}>
+              {selectedEvent?.assignmentId && !selectedEvent?.isTimetableClass && (
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: colors.accentYellow,
+                    borderRadius: radius.md,
+                    paddingVertical: 11,
+                    paddingHorizontal: 18,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    marginTop: 14,
+                  }}
+                  onPress={() => {
+                    const isChal = selectedEvent?.type === 'challenge';
+                    setSelectedEvent(null);
+                    if (isChal) {
+                      navigation.navigate('Challenges');
+                    } else {
+                      navigation.navigate('Assignments');
+                    }
+                  }}
+                >
+                  <Feather name="external-link" size={16} color={colors.bgDark} />
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: colors.bgDark }}>
+                    {selectedEvent?.type === 'challenge' ? 'Open Challenge' : 'Open Assignment Worksheet'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              <View style={[styles.modalBtns, { justifyContent: 'center', marginTop: 4 }]}>
                 <TouchableOpacity style={[styles.modalConfirm, { flex: 0, paddingHorizontal: 32 }]} onPress={() => setSelectedEvent(null)}>
                   <Text style={styles.modalConfirmText}>Close</Text>
                 </TouchableOpacity>
@@ -750,6 +1192,28 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   scroll:  { flex: 1 },
   content: { padding: spacing.xl, paddingBottom: 40 },
 
+  // Filters & Toggles
+  filterBar: { marginBottom: spacing.lg },
+  filterChip: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.full,
+    backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
+  },
+  filterChipActive: {
+    backgroundColor: c.accentYellow + '20', borderColor: c.accentYellow,
+  },
+  filterChipText: { fontSize: 12, fontWeight: '600', color: c.textMuted },
+  filterChipTextActive: { color: c.accentYellow, fontWeight: '700' },
+  toggleChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: radius.full,
+    backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor,
+  },
+  toggleChipActive: {
+    backgroundColor: c.accentYellow + '18', borderColor: c.accentYellow,
+  },
+  toggleChipText: { fontSize: 12, fontWeight: '600', color: c.textMuted },
+
   // Week nav
   weekNavBar: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
@@ -766,8 +1230,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
 
   // Layout
   mainLayout:        { flexDirection: 'row', gap: spacing.xl },
-  calendarContainer: { flex: 1.5 },
-  sideCol:           { flex: 1, gap: spacing.lg },
+  calendarContainer: { flex: 1 },
+  sideCol:           { width: 260, gap: spacing.lg },
 
   timeColHeader: { height: 60 }, // matches dayHeader height so time labels align with grid
   // Day header row (above grid)
@@ -778,7 +1242,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     marginBottom: 0,
   },
   dayHeader: {
-    alignItems: 'center', paddingVertical: spacing.sm, gap: 2,
+    height: 60, alignItems: 'center', justifyContent: 'center', gap: 2,
   },
   dayHeaderLabel: { fontSize: 10, fontWeight: '700', color: c.textDim, letterSpacing: 0.5 },
   dayHeaderLabelToday: { color: c.accentYellow },
@@ -792,10 +1256,12 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   dayDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: c.textDim },
 
   // All-day row (deadline/challenge chips, above the hourly grid)
-  allDayRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: c.borderColor },
-  allDayCol: { paddingHorizontal: 3, paddingVertical: 4, gap: 3 },
-  allDayChip: { borderLeftWidth: 3, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 3 },
-  allDayChipText: { fontSize: 10, fontWeight: '700' },
+  allDayRow: { flexDirection: 'row', minHeight: 32, borderBottomWidth: 1, borderBottomColor: c.borderColor },
+  allDayCol: { paddingHorizontal: 3, paddingVertical: 4, gap: 3, minHeight: 32 },
+  allDayGutter: { minHeight: 32, borderBottomWidth: 1, borderBottomColor: c.borderColor, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
+  allDayGutterText: { fontSize: 8, fontWeight: '700', color: c.textDim, textAlign: 'center', letterSpacing: 0.3, lineHeight: 10, textTransform: 'uppercase' },
+  allDayChip: { flexDirection: 'row', alignItems: 'center', borderLeftWidth: 3, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 4 },
+  allDayChipText: { flex: 1, fontSize: 10, fontWeight: '700' },
 
   // Grid
   dayCol: { position: 'relative', borderLeftWidth: 1, borderLeftColor: c.borderColor + '50' },
@@ -839,7 +1305,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   calDateText:           { fontSize: 12, color: c.textMuted, fontWeight: '500' },
   calDateTextToday:      { color: 'white', fontWeight: '700' },
   calDot:        { width: 4, height: 4, borderRadius: 2 },
-  sideTitle:     { fontSize: 14, fontWeight: '700', color: c.textMain, marginBottom: spacing.lg },
+  sideTitle:     { fontSize: 14, fontWeight: '700', color: c.textMain },
   deadlineItem:  { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
   deadlineIcon:  { width: 32, height: 32, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
   deadlineTitle: { fontSize: 12, fontWeight: '600', color: c.textMain },

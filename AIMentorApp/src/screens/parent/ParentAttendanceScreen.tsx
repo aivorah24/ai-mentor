@@ -17,6 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
+import IndependentAccountEmpty from '../../features/classes/components/IndependentAccountEmpty';
 
 interface Child {
   id: string;
@@ -43,9 +44,12 @@ export default function ParentAttendanceScreen({ navigation, route }: any) {
   const [currentCalendarYear, setCurrentCalendarYear] = useState(new Date().getFullYear());
 
   const parentEmail = user?.email || 'parent@demo.com';
+  // B2C / independent parent: no school link — show the connect bridge.
+  const isB2C = !user?.schoolId;
 
   // 1. Fetch children
   useEffect(() => {
+    if (isB2C) { setLoadingChildren(false); return; }
     let active = true;
     fetch(`${SERVER_URL}/parent/${encodeURIComponent(parentEmail)}/children`)
       .then((r) => r.json())
@@ -229,6 +233,22 @@ export default function ParentAttendanceScreen({ navigation, route }: any) {
       </View>
     );
   };
+
+  if (isB2C) {
+    return (
+      <ScreenLayout>
+        <View style={styles.container}>
+          <Header
+            title="Attendance Portal"
+            subtitle="Track your children's attendance history"
+            onMenuPress={() => navigation.openDrawer()}
+            onNotificationPress={() => navigation.navigate('ParentMessages')}
+          />
+          <IndependentAccountEmpty feature="attendance" />
+        </View>
+      </ScreenLayout>
+    );
+  }
 
   return (
     <ScreenLayout>

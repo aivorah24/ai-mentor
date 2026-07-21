@@ -16,41 +16,7 @@ import { askAIMentorStream, type ChatHistoryTurn, type AskImage } from '../../se
 import { spacing, radius } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 
-// ── TTS text preprocessor — prevents mis-readings of fractions, decimals ──────
-function preprocessForTTS(raw: string): string {
-  const DENOM: Record<string, string> = {
-    '2': 'half', '3': 'thirds', '4': 'fourths', '5': 'fifths',
-    '6': 'sixths', '7': 'sevenths', '8': 'eighths', '9': 'ninths',
-    '10': 'tenths', '11': 'elevenths', '12': 'twelfths',
-    '100': 'hundredths', '1000': 'thousandths',
-  };
-  return raw
-    .replace(/\b(\d+)\/(\d+)\b/g, (_m, num, den) => `${num} ${DENOM[den] || 'over ' + den}`)
-    .replace(/\b(\d+)\.(\d+)\b/g, (_m, int, frac) => `${int} point ${frac}`)
-    .replace(/\s*\+\s*/g, ' plus ')
-    .replace(/\s*=\s*/g, ' equals ')
-    .replace(/\s*×\s*/g, ' times ')
-    .replace(/\s*÷\s*/g, ' divided by ');
-}
-
 // ── Web Speech API helpers ──────────────────────────────────────────────────
-function speakText(text: string): Promise<void> {
-  return new Promise((resolve) => {
-    if (Platform.OS !== 'web' || !(window as any).speechSynthesis) { resolve(); return; }
-    const synth = (window as any).speechSynthesis as SpeechSynthesis;
-    synth.cancel();
-    const utter = new SpeechSynthesisUtterance(preprocessForTTS(text));
-    utter.rate = 1.05; utter.pitch = 1.3; utter.volume = 1.0;
-    const voices = synth.getVoices();
-    const pick = voices.find(v => /zira/i.test(v.name))
-      || voices.find(v => /google.*en.*us/i.test(v.name))
-      || voices.find(v => /en[-_]US/i.test(v.lang));
-    if (pick) utter.voice = pick;
-    utter.onend = () => resolve();
-    utter.onerror = () => resolve();
-    synth.speak(utter);
-  });
-}
 
 function stopSpeech() {
   if (Platform.OS === 'web' && (window as any).speechSynthesis) {
@@ -154,13 +120,40 @@ function sanitizeDisplayedAIText(text: string): string {
     .replace(/\bmice\b/gi, 'mouse');
 }
 
+// Splits into non-empty lines, keeping each line's absolute start offset in
+// the full string — so a word inside a line can be matched against a global
+// TTS char-index (from the "Listen"-style karaoke highlight).
+function linesWithOffsets(text: string): { line: string; start: number }[] {
+  const out: { line: string; start: number }[] = [];
+  let idx = 0;
+  for (const raw of text.split('\n')) {
+    if (raw.trim()) out.push({ line: raw, start: idx });
+    idx += raw.length + 1; // +1 for the '\n' consumed by split
+  }
+  return out;
+}
+function wordsWithOffsets(text: string): { word: string; start: number }[] {
+  const out: { word: string; start: number }[] = [];
+  const re = /\S+/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) out.push({ word: m[0], start: m.index });
+  return out;
+}
+
 interface Props {
   topic: string;
   subject?: string;
   grade?: string;
   curriculum?: string;
+  chapter?: string;
+  autoOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   onMessageSent?: (message: string) => void;
+  // Renders as a plain panel filling its container — no floating FAB, no
+  // backdrop, no slide-up animation. For dedicated "Ask AI" screens/tabs
+  // (e.g. LessonScreen) where the chat IS the content, not an overlay on
+  // top of other content.
+  inline?: boolean;
 }
 
 export default function TopicAICoach({
@@ -168,17 +161,21 @@ export default function TopicAICoach({
   subject = 'Mathematics',
   grade = 'Grade 3',
   curriculum = 'IB_PYP',
+  chapter,
+  autoOpen = false,
   onOpenChange,
   onMessageSent,
+  inline = false,
 }: Props) {
   const { colors } = useTheme();
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [feedbackByMsg, setFeedbackByMsg] = useState<Record<number, number>>({});
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
+  const [speakingCharIndex, setSpeakingCharIndex] = useState(0);
   const [recording, setRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -201,8 +198,13 @@ export default function TopicAICoach({
   });
   const opacity = slideAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 1, 1] });
 
-  // Reset conversation when topic changes (new topic = fresh start)
+  // Reset conversation when topic changes (new topic = fresh start) — but not
+  // on the initial mount, otherwise this fires right after autoOpen sets the
+  // panel open and immediately closes it again (chat never visibly appears).
+  const prevTopicRef = useRef(topic);
   useEffect(() => {
+    if (prevTopicRef.current === topic) return;
+    prevTopicRef.current = topic;
     setMessages([]);
     setOpen(false);
     setInput('');
@@ -219,15 +221,34 @@ export default function TopicAICoach({
     }
   }, [open]);
 
-  async function handleSpeak(idx: number, text: string) {
+  // Reads a message aloud AND tracks word-boundary position (karaoke-style),
+  // same mechanism as the Listen tab. Speaks the text exactly as displayed —
+  // no fraction/decimal preprocessing — so char offsets line up with what's
+  // on screen for highlighting.
+  function handleSpeak(idx: number, text: string) {
     if (speakingIdx === idx) {
       stopSpeech();
       setSpeakingIdx(null);
+      setSpeakingCharIndex(0);
       return;
     }
+    stopSpeech();
     setSpeakingIdx(idx);
-    await speakText(text);
-    setSpeakingIdx(null);
+    setSpeakingCharIndex(0);
+    if (Platform.OS !== 'web' || !(window as any).speechSynthesis) { setSpeakingIdx(null); return; }
+    const synth = (window as any).speechSynthesis as SpeechSynthesis;
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.85; utter.pitch = 1.1; utter.volume = 1.0;
+    const voices = synth.getVoices();
+    const pick = voices.find(v => /zira/i.test(v.name))
+      || voices.find(v => /google.*en.*us/i.test(v.name))
+      || voices.find(v => /en[-_]US/i.test(v.lang));
+    if (pick) utter.voice = pick;
+    utter.onboundary = (e: any) => { if (e.name === 'word' || e.charIndex !== undefined) setSpeakingCharIndex(e.charIndex ?? 0); };
+    utter.onend = () => { setSpeakingIdx(null); setSpeakingCharIndex(0); };
+    utter.onerror = () => { setSpeakingIdx(null); setSpeakingCharIndex(0); };
+    synth.speak(utter);
   }
 
   const pendingSendRef = useRef<string | null>(null);
@@ -350,9 +371,9 @@ export default function TopicAICoach({
   const aiBubble  = colors.cardHover;
 
   return (
-    <View style={styles.wrapper} pointerEvents="box-none">
-      {/* Backdrop — tap to close */}
-      {open && (
+    <View style={inline ? styles.inlineWrapper : styles.wrapper} pointerEvents={inline ? 'auto' : 'box-none'}>
+      {/* Backdrop — tap to close (floating mode only) */}
+      {open && !inline && (
         <TouchableOpacity
           style={styles.backdrop}
           activeOpacity={1}
@@ -360,18 +381,22 @@ export default function TopicAICoach({
         />
       )}
 
-      {/* Slide-up chat panel */}
+      {/* Chat panel — a plain filled panel when inline, a slide-up floating panel otherwise */}
       <Animated.View
-        style={[
-          styles.panel,
-          {
-            backgroundColor: panelBg,
-            borderColor: colors.borderColor,
-            transform: [{ translateY }],
-            opacity,
-          },
-        ]}
-        pointerEvents={open ? 'auto' : 'none'}
+        style={
+          inline
+            ? [styles.inlinePanel, { backgroundColor: panelBg, borderColor: colors.borderColor }]
+            : [
+                styles.panel,
+                {
+                  backgroundColor: panelBg,
+                  borderColor: colors.borderColor,
+                  transform: [{ translateY }],
+                  opacity,
+                },
+              ]
+        }
+        pointerEvents={inline || open ? 'auto' : 'none'}
       >
         {/* Panel header */}
         <View style={[styles.panelHeader, { backgroundColor: headerBg, borderBottomColor: colors.borderColor }]}>
@@ -382,9 +407,11 @@ export default function TopicAICoach({
             <Text style={[styles.panelTitle, { color: colors.textMain }]}>AI Coach</Text>
             <Text style={[styles.panelSub, { color: colors.textMuted }]} numberOfLines={1}>{topic}</Text>
           </View>
-          <TouchableOpacity onPress={() => setOpen(false)} style={styles.closeBtn}>
-            <Feather name="x" size={18} color={colors.textMuted} />
-          </TouchableOpacity>
+          {!inline && (
+            <TouchableOpacity onPress={() => setOpen(false)} style={styles.closeBtn}>
+              <Feather name="x" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Messages */}
@@ -413,21 +440,40 @@ export default function TopicAICoach({
                 >
                   {msg.role === 'ai' ? (
                     <View style={{ gap: 5 }}>
-                      {shownText.split('\n').filter(l => l.trim()).map((line, li) => {
+                      {linesWithOffsets(shownText).map(({ line, start }, li) => {
                         const isStep     = /^step\s*\d+[:.→]/i.test(line.trim());
                         const isAnswer   = /^answer[:.]/i.test(line.trim());
                         const isPractice = /^(try this|practice|question)[:.]/i.test(line.trim());
+                        const lineStyle = [
+                          styles.bubbleText,
+                          { color: colors.textMain },
+                          isStep     && { fontWeight: '700', color: colors.accentYellow, marginTop: li > 0 ? 3 : 0 },
+                          isAnswer   && { fontWeight: '700', color: '#4A9E70', marginTop: 3 },
+                          isPractice && { fontWeight: '600', color: colors.textMuted, fontStyle: 'italic', marginTop: 3 },
+                        ];
+                        // While this message is being read aloud, highlight the
+                        // word currently spoken — same karaoke-style highlight
+                        // as the Listen tab's read-along.
+                        if (speakingIdx === i) {
+                          const words = wordsWithOffsets(line);
+                          const curWordIdx = words.reduce(
+                            (best, w, wi) => (start + w.start <= speakingCharIndex ? wi : best), -1,
+                          );
+                          return (
+                            <Text key={li} style={lineStyle}>
+                              {words.map((w, wi) => (
+                                <Text
+                                  key={wi}
+                                  style={wi === curWordIdx ? { backgroundColor: colors.accentYellow + '30', color: colors.accentYellow, fontWeight: '700' } : undefined}
+                                >
+                                  {w.word + ' '}
+                                </Text>
+                              ))}
+                            </Text>
+                          );
+                        }
                         return (
-                          <Text
-                            key={li}
-                            style={[
-                              styles.bubbleText,
-                              { color: colors.textMain },
-                              isStep     && { fontWeight: '700', color: colors.accentYellow, marginTop: li > 0 ? 3 : 0 },
-                              isAnswer   && { fontWeight: '700', color: '#4A9E70', marginTop: 3 },
-                              isPractice && { fontWeight: '600', color: colors.textMuted, fontStyle: 'italic', marginTop: 3 },
-                            ]}
-                          >
+                          <Text key={li} style={lineStyle}>
                             {line}
                           </Text>
                         );
@@ -463,27 +509,38 @@ export default function TopicAICoach({
                 {msg.role === 'ai' && (
                   <View style={styles.feedbackRow}>
                     <TouchableOpacity
-                      style={[styles.feedbackBtn, speakingIdx === i && { borderColor: colors.accentYellow, backgroundColor: colors.accentYellow + '22' }]}
+                      style={[
+                        styles.feedbackBtn,
+                        { borderColor: colors.accentYellow + '50', backgroundColor: colors.accentYellow + (speakingIdx === i ? '30' : '14') },
+                      ]}
                       onPress={() => handleSpeak(i, shownText)}
                       activeOpacity={0.8}
                     >
-                      <Feather name={speakingIdx === i ? 'volume-x' : 'volume-2'} size={12} color={speakingIdx === i ? colors.accentYellow : colors.textDim} />
+                      <Feather name={speakingIdx === i ? 'volume-x' : 'volume-2'} size={12} color={colors.accentYellow} />
                     </TouchableOpacity>
                     {i > 0 && (
                       <>
                         <TouchableOpacity
-                          style={[styles.feedbackBtn, feedbackByMsg[i] === 5 && { borderColor: '#10b981', backgroundColor: '#10b98122' }]}
+                          style={[
+                            styles.feedbackBtn,
+                            { borderColor: colors.accentYellow + '50', backgroundColor: colors.accentYellow + '14' },
+                            feedbackByMsg[i] === 5 && { borderColor: '#10b981', backgroundColor: '#10b98122' },
+                          ]}
                           onPress={() => submitFeedback(i, 5, msg.text)}
                           activeOpacity={0.8}
                         >
-                          <Feather name="thumbs-up" size={12} color={feedbackByMsg[i] === 5 ? '#10b981' : colors.textDim} />
+                          <Feather name="thumbs-up" size={12} color={feedbackByMsg[i] === 5 ? '#10b981' : colors.accentYellow} />
                         </TouchableOpacity>
                         <TouchableOpacity
-                          style={[styles.feedbackBtn, feedbackByMsg[i] === 1 && { borderColor: '#ef4444', backgroundColor: '#ef444422' }]}
+                          style={[
+                            styles.feedbackBtn,
+                            { borderColor: colors.accentYellow + '50', backgroundColor: colors.accentYellow + '14' },
+                            feedbackByMsg[i] === 1 && { borderColor: '#ef4444', backgroundColor: '#ef444422' },
+                          ]}
                           onPress={() => submitFeedback(i, 1, msg.text)}
                           activeOpacity={0.8}
                         >
-                          <Feather name="thumbs-down" size={12} color={feedbackByMsg[i] === 1 ? '#ef4444' : colors.textDim} />
+                          <Feather name="thumbs-down" size={12} color={feedbackByMsg[i] === 1 ? '#ef4444' : colors.accentYellow} />
                         </TouchableOpacity>
                       </>
                     )}
@@ -502,13 +559,13 @@ export default function TopicAICoach({
           <View style={[styles.inputRow, { borderTopColor: colors.borderColor, backgroundColor: panelBg }]}>
             <TouchableOpacity
               style={[styles.micBtn, {
-                backgroundColor: recording ? '#ef444422' : colors.bgDark,
-                borderColor: recording ? '#ef4444' : colors.borderColor,
+                backgroundColor: recording ? '#ef444422' : colors.accentYellow + '14',
+                borderColor: recording ? '#ef4444' : colors.accentYellow + '50',
               }]}
               onPress={toggleMic}
               activeOpacity={0.8}
             >
-              <Feather name={recording ? 'mic-off' : 'mic'} size={16} color={recording ? '#ef4444' : colors.textMuted} />
+              <Feather name={recording ? 'mic-off' : 'mic'} size={16} color={recording ? '#ef4444' : colors.accentYellow} />
             </TouchableOpacity>
             <TextInput
               style={[styles.input, { backgroundColor: colors.bgDark, color: colors.textMain, borderColor: colors.borderColor }]}
@@ -542,14 +599,16 @@ export default function TopicAICoach({
         </KeyboardAvoidingView>
       </Animated.View>
 
-      {/* Floating action button */}
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: fabBg, shadowColor: fabBg }]}
-        onPress={() => setOpen(prev => !prev)}
-        activeOpacity={0.85}
-      >
-        <Feather name={open ? 'x' : 'cpu'} size={22} color="#fff" />
-      </TouchableOpacity>
+      {/* Floating action button (floating mode only) */}
+      {!inline && (
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: fabBg, shadowColor: fabBg }]}
+          onPress={() => setOpen(prev => !prev)}
+          activeOpacity={0.85}
+        >
+          <Feather name={open ? 'x' : 'cpu'} size={22} color="#fff" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -583,6 +642,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
+  },
+  inlineWrapper: { flex: 1, minHeight: 420 },
+  inlinePanel: {
+    flex: 1,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
   panel: {
     position: 'absolute',

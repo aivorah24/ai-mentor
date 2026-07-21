@@ -41,6 +41,7 @@ const STUDENT_NAV_ITEMS = [
   { label: 'Daily Habits', icon: 'sun', screen: 'DailyHabits', group: 'MENU', premium: true },
   { label: 'Announcements', icon: 'volume-2', screen: 'Announcements', group: 'MENU' },
   { label: 'My Classes', icon: 'layers', screen: 'MyClasses', group: 'MENU' },
+  { label: 'Timetable', icon: 'clock', screen: 'Timetable', group: 'MENU' },
   { label: 'Assignments', icon: 'check-square', screen: 'Assignments', group: 'FOCUS', premium: false },
   { label: 'Challenges', icon: 'target', screen: 'Challenges', group: 'FOCUS', premium: true },
   { label: 'Leaderboard', icon: 'award', screen: 'Leaderboard', group: 'FOCUS' },
@@ -55,6 +56,8 @@ const PARENT_NAV_ITEMS = [
   { label: 'Profile',          icon: 'user',         screen: 'ParentProfile',     group: 'MENU' },
   { label: 'My Kids',          icon: 'users',        screen: 'ParentMyKids',      group: 'MENU' },
   { label: 'My Classes',       icon: 'layers',       screen: 'MyClasses',         group: 'MENU' },
+  { label: 'Timetable',        icon: 'clock',        screen: 'Timetable',         group: 'MENU' },
+  { label: 'Resources',        icon: 'folder',       screen: 'Resources',         group: 'MENU' },
   { label: 'Daily Tasks',      icon: 'check-square', screen: 'ParentDailyTasks',  group: 'MENU' },
   { label: 'Schedule',         icon: 'calendar',     screen: 'ParentSchedule',    group: 'MENU' },
   { label: 'Messages',         icon: 'message-square', screen: 'ParentMessages',  group: 'MENU' },
@@ -73,6 +76,8 @@ const TEACHER_NAV_ITEMS = [
   { label: 'Dashboard', icon: 'grid', screen: 'TeacherDashboard', group: 'MENU' },
   { label: 'Students', icon: 'users', screen: 'TeacherStudents', group: 'MENU' },
   { label: 'My Classes', icon: 'layers', screen: 'MyClasses', group: 'MENU' },
+  { label: 'Timetable', icon: 'clock', screen: 'Timetable', group: 'MENU' },
+  { label: 'Resources', icon: 'folder', screen: 'Resources', group: 'MENU' },
   { label: 'Attendance', icon: 'clipboard', screen: 'TeacherAttendance', group: 'MENU' },
   { label: 'Assignments', icon: 'check-square', screen: 'TeacherAssignments', group: 'MENU' },
   { label: 'Challenges', icon: 'target', screen: 'TeacherChallenges', group: 'MENU' },
@@ -81,6 +86,7 @@ const TEACHER_NAV_ITEMS = [
   { label: 'Messages', icon: 'message-square', screen: 'TeacherMessages', group: 'MENU' },
   { label: 'Announcements', icon: 'volume-2', screen: 'TeacherAnnouncements', group: 'MENU' },
   { label: 'Learning Paths', icon: 'map', screen: 'TeacherLearningPaths', group: 'TEACHING DEVELOPMENT' },
+  { label: 'Manage Syllabus', icon: 'upload', screen: 'TeacherSyllabusImport', group: 'TEACHING DEVELOPMENT' },
   { label: 'Achievements', icon: 'award', screen: 'TeacherAchievements', group: 'TEACHING DEVELOPMENT' },
   { label: 'Project Details', icon: 'activity', screen: 'ProjectDetails', group: 'SYSTEM' },
   { label: 'Help Center', icon: 'help-circle', screen: 'TeacherHelp', group: 'SYSTEM' },
@@ -101,6 +107,7 @@ const SUPER_ADMIN_NAV_ITEMS = [
   { label: 'Challenges',        icon: 'target',         screen: 'TeacherChallenges',   group: 'MENU' },
   { label: 'Challenge Manager', icon: 'shield',         screen: 'ChallengeManager',    group: 'MENU' },
   { label: 'Staff Subjects',    icon: 'book-open',      screen: 'StaffSubjectMapping', group: 'MENU' },
+  { label: 'Content Review',    icon: 'clipboard',      screen: 'ContentReviewDashboard', group: 'MENU' },
   { label: 'Schedule',          icon: 'calendar',       screen: 'TeacherSchedule',     group: 'MENU' },
   { label: 'Student Progress',  icon: 'bar-chart-2',    screen: 'TeacherProgress',     group: 'MENU' },
   { label: 'Messages',          icon: 'message-square', screen: 'TeacherMessages',     group: 'MENU' },
@@ -112,16 +119,17 @@ const SUPER_ADMIN_NAV_ITEMS = [
 const SCHOOL_ADMIN_NAV_ITEMS: { label: string; icon: string; screen: string; group: string; params?: Record<string, any> }[] = [
   { label: 'Overview',           icon: 'grid',          screen: 'SchoolAdminDashboard',    group: 'WORKSPACE' },
   { label: 'Students',           icon: 'users',         screen: 'SchoolAdminStudents',      group: 'STUDENT MANAGEMENT' },
-  { label: 'Add Student',        icon: 'user-plus',     screen: 'SchoolAdminAddStudent',    group: 'STUDENT MANAGEMENT' },
-  { label: 'Bulk Import',        icon: 'upload',        screen: 'SchoolAdminBulkImport',    group: 'STUDENT MANAGEMENT' },
   { label: 'Grades & Sections',  icon: 'list',          screen: 'SchoolAdminGradesSections', group: 'ACADEMIC STRUCTURE' },
   { label: 'Classes',            icon: 'layers',        screen: 'SchoolAdminClasses',       group: 'ACADEMIC STRUCTURE' },
+  { label: 'Timetable',          icon: 'clock',         screen: 'Timetable',                group: 'ACADEMIC STRUCTURE' },
+  { label: 'Resources',          icon: 'folder',        screen: 'Resources',                group: 'ACADEMIC STRUCTURE' },
   { label: 'Promotions',         icon: 'trending-up',   screen: 'SchoolAdminPromotions',    group: 'STUDENT LIFECYCLE' },
   { label: 'Archived Students',  icon: 'archive',       screen: 'SchoolAdminArchivedStudents', group: 'STUDENT LIFECYCLE' },
   { label: 'Teachers',           icon: 'user',          screen: 'SchoolAdminTeachers',      group: 'PEOPLE' },
   { label: 'Add Teacher',        icon: 'user-plus',     screen: 'SchoolAdminAddTeacher',    group: 'PEOPLE' },
   { label: 'Import Teachers',    icon: 'upload',        screen: 'SchoolAdminTeacherBulkImport', group: 'PEOPLE' },
   { label: 'Parents',            icon: 'heart',         screen: 'SchoolAdminParents',       group: 'PEOPLE' },
+  { label: 'Messages',           icon: 'message-square', screen: 'Messages',                group: 'COMMUNICATION' },
   { label: 'Announcements',      icon: 'edit-3',        screen: 'AnnouncementManager',      group: 'COMMUNICATION' },
   { label: 'Import History',     icon: 'clock',         screen: 'SchoolAdminImportHistory', group: 'ADMINISTRATION' },
   { label: 'Workspace Settings', icon: 'settings',      screen: 'SchoolAdminSettings',      group: 'ADMINISTRATION' },
@@ -163,7 +171,18 @@ export default function DrawerContent(props: any) {
   }, [isSchoolAdmin, user?.email]));
   const isTeacher = user?.role === 'teacher';
   const isParent = user?.role === 'parent';
-  const NAV_ITEMS_BASE = isSuperAdmin ? SUPER_ADMIN_NAV_ITEMS : isSchoolAdmin ? SCHOOL_ADMIN_NAV_ITEMS : isTeacher ? TEACHER_NAV_ITEMS : isParent ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
+  const NAV_ITEMS_ROLE = isSuperAdmin ? SUPER_ADMIN_NAV_ITEMS : isSchoolAdmin ? SCHOOL_ADMIN_NAV_ITEMS : isTeacher ? TEACHER_NAV_ITEMS : isParent ? PARENT_NAV_ITEMS : STUDENT_NAV_ITEMS;
+
+  // ── B2C vs B2B: hide school-only features for independent (self-registered)
+  // accounts. A user with no schoolId isn't linked to a school org, so class
+  // rosters and attendance are dead-ends for them — remove those nav items
+  // instead of routing to an error screen. Admin roles are always school-bound,
+  // so this only applies to student/teacher/parent.
+  const isB2B = !!user?.schoolId;
+  const SCHOOL_ONLY_SCREENS = ['MyClasses', 'TeacherAttendance', 'ParentAttendance', 'Timetable', 'Resources'];
+  const NAV_ITEMS_BASE = (!isB2B && (isTeacher || isParent || (!isSuperAdmin && !isSchoolAdmin)))
+    ? NAV_ITEMS_ROLE.filter((i) => !SCHOOL_ONLY_SCREENS.includes(i.screen))
+    : NAV_ITEMS_ROLE;
 
   // ── Mobile app = focused teacher/parent companion ──────────────────────────
   // On native (the mobile app) show only the founder-approved modules. Web keeps

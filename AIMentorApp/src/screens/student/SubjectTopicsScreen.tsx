@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, Image,
+  View, Text, ScrollView, TouchableOpacity, Image, TextInput,
   StyleSheet, ActivityIndicator, useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -14,6 +14,7 @@ import type { AppColors } from '../../theme';
 import SERVER_URL from '../../config/serverUrl';
 import { useResponsive } from '../../hooks/useResponsive';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getSubjectSyllabus } from '../../data/syllabusRegistry';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface TopicItem {
@@ -413,6 +414,7 @@ export default function SubjectTopicsScreen({ navigation, route }: any) {
   const [topics,  setTopics]  = useState<TopicItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
+  const [searchText, setSearchText] = useState('');
 
   const qdrantCurriculum = curriculum.replace(/ /g, '_'); // IB PYP → IB_PYP
 
@@ -448,6 +450,18 @@ export default function SubjectTopicsScreen({ navigation, route }: any) {
 
   const doneCount = topics.filter(t => completedSet.has(t.topic)).length;
   const pct       = topics.length > 0 ? Math.round((doneCount / topics.length) * 100) : 0;
+
+  // Scoped to this subject only — unlike the old cross-subject search that
+  // used to live on the Learning Paths landing page.
+  const filteredTopics = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
+    if (!q) return topics;
+    return topics.filter(t =>
+      t.topic.toLowerCase().includes(q) ||
+      (t.unit || '').toLowerCase().includes(q) ||
+      (t.description || '').toLowerCase().includes(q),
+    );
+  }, [topics, searchText]);
 
   function handleModule(routeName: string, topic: TopicItem, index: number) {
     if (routeName === 'Learn5E') {
@@ -526,6 +540,26 @@ export default function SubjectTopicsScreen({ navigation, route }: any) {
             </View>
           </View>
 
+          {/* ── Search within this subject's topics ── */}
+          {topics.length > 0 && (
+            <View style={[styles.searchBox, { borderColor: colors.borderColor, backgroundColor: colors.cardDark }]}>
+              <Feather name="search" size={15} color={colors.textMuted} style={{ marginRight: 8 }} />
+              <TextInput
+                style={[styles.searchInput, { color: colors.textMain }]}
+                placeholder={`Search ${subject} units or topics...`}
+                placeholderTextColor={colors.textDim}
+                value={searchText}
+                onChangeText={setSearchText}
+                returnKeyType="search"
+              />
+              {searchText.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchText('')} hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}>
+                  <Feather name="x" size={14} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
           {/* ── Topics grid ── */}
           {topics.length === 0 ? (
             <View style={styles.emptyBox}>
@@ -534,9 +568,16 @@ export default function SubjectTopicsScreen({ navigation, route }: any) {
                 No topics found for {subject} in {grade} {curriculum}.
               </Text>
             </View>
+          ) : filteredTopics.length === 0 ? (
+            <View style={styles.emptyBox}>
+              <Feather name="search" size={32} color={colors.textMuted} />
+              <Text style={[styles.dimText, { marginTop: 12, textAlign: 'center' }]}>
+                No topics match "{searchText}" in {subject}.
+              </Text>
+            </View>
           ) : (
             <View style={styles.topicsGrid}>
-              {topics.map((t, i) => (
+              {filteredTopics.map((t, i) => (
                 <TopicCard
                   key={t.topic}
                   index={i}
@@ -577,6 +618,14 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   progBarTrack:    { height: 6, borderRadius: 3, overflow: 'hidden', marginTop: 8 },
   progBarFill:     { height: '100%', borderRadius: 3 },
   owl:             { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+
+  searchBox: {
+    flexDirection: 'row', alignItems: 'center',
+    borderWidth: 1, borderRadius: radius.md,
+    paddingHorizontal: 12, paddingVertical: 9,
+    alignSelf: 'flex-start', minWidth: 260, maxWidth: 360,
+  },
+  searchInput: { flex: 1, fontSize: 14, fontWeight: '500', outlineStyle: 'none' } as any,
 
   topicsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, justifyContent: 'flex-start' },
 

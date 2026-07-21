@@ -22,6 +22,8 @@ import VideoLessonScreen from '../screens/student/VideoLessonScreen';
 import VideoPlayerScreen from '../screens/student/VideoPlayerScreen';
 import NCERTChaptersScreen from '../screens/student/NCERTChaptersScreen';
 import SubjectTopicsScreen from '../screens/student/SubjectTopicsScreen';
+import SubjectSyllabusScreen from '../screens/student/SubjectSyllabusScreen';
+import LessonScreen from '../screens/student/LessonScreen';
 import Learn5EScreen from '../screens/student/Learn5EScreen';
 import MathHelperScreen from '../screens/student/MathHelperScreen';
 import AIStorytellerScreen from '../screens/student/AIStorytellerScreen';
@@ -40,6 +42,7 @@ import MessagesScreen from '../screens/shared/MessagesScreen';
 import AnnouncementsScreen from '../screens/student/AnnouncementsScreen';
 import MyClassesScreen from '../features/classes/components/MyClassesScreen';
 import ClassDetailScreen from '../features/classes/components/ClassDetailScreen';
+import TimetableScreen from '../features/timetable/components/TimetableScreen';
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
@@ -86,6 +89,8 @@ export default function AppNavigator() {
       <Drawer.Screen name="VideoPlayer" component={VideoPlayerScreen} />
       <Drawer.Screen name="NCERTChapters" component={NCERTChaptersScreen} />
       <Drawer.Screen name="SubjectTopics" component={SubjectTopicsScreen} />
+      <Drawer.Screen name="SubjectSyllabus" component={SubjectSyllabusScreen} />
+      <Drawer.Screen name="LessonScreen" component={LessonScreen} />
       <Drawer.Screen name="Learn5E" component={Learn5EScreen} />
       <Drawer.Screen name="MathHelper" component={MathHelperScreen} />
       <Drawer.Screen name="AIStoryteller" component={AIStorytellerScreen} />
@@ -103,6 +108,7 @@ export default function AppNavigator() {
       <Drawer.Screen name="Announcements" component={AnnouncementsScreen} />
       <Drawer.Screen name="MyClasses" component={MyClassesScreen} />
       <Drawer.Screen name="ClassDetail" component={ClassDetailScreen} />
+      <Drawer.Screen name="Timetable" component={TimetableScreen} />
     </Drawer.Navigator>
     <NotificationBanner
       onNavigate={(screen, params) => navigation.navigate(screen, params)}

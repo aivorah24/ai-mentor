@@ -28,8 +28,12 @@ import SchoolAdminEditTeacherScreen from '../screens/school-admin/SchoolAdminEdi
 import SchoolAdminTeacherBulkImportScreen from '../screens/school-admin/SchoolAdminTeacherBulkImportScreen';
 import AnnouncementManagerScreen from '../features/announcements/components/AnnouncementManagerScreen';
 import AnnouncementsScreen from '../features/announcements/components/AnnouncementsScreen';
+import TimetableScreen from '../features/timetable/components/TimetableScreen';
+import ResourcesScreen from '../features/resources/components/ResourcesScreen';
+import ChannelsScreen from '../features/channels/components/ChannelsScreen';
 import TeacherSettingsScreen from '../screens/teacher/TeacherSettingsScreen';
 import TeacherHelpScreen from '../screens/teacher/TeacherHelpScreen';
+import SchoolAdminMessagesScreen from '../screens/school-admin/SchoolAdminMessagesScreen';
 
 export type SchoolAdminDrawerParamList = {
   SchoolAdminDashboard: undefined;
@@ -52,6 +56,7 @@ export type SchoolAdminDrawerParamList = {
   SchoolAdminSettings: undefined;
   TeacherSettings: undefined;
   TeacherHelp: undefined;
+  Messages: undefined;
 };
 
 const Drawer = createDrawerNavigator<SchoolAdminDrawerParamList>();
@@ -111,6 +116,10 @@ export default function SchoolAdminNavigator() {
       <Drawer.Screen name="SchoolAdminSettings" component={SchoolAdminSettingsScreen} />
       <Drawer.Screen name="TeacherSettings" component={TeacherSettingsScreen} />
       <Drawer.Screen name="TeacherHelp" component={TeacherHelpScreen} />
+      <Drawer.Screen name="Timetable" component={TimetableScreen} />
+      <Drawer.Screen name="Resources" component={ResourcesScreen} />
+      <Drawer.Screen name="Channels" component={ChannelsScreen} />
+      <Drawer.Screen name="Messages" component={SchoolAdminMessagesScreen} />
     </Drawer.Navigator>
   );
 }

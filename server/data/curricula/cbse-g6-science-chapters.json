@@ -1,0 +1,20 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 6",
+  "subject": "Science",
+  "book": "Curiosity",
+  "chapters": [
+    { "chapter": 1, "pdfFile": "fecu101.pdf", "title": "The Wonderful World of Science", "kind": "Non-fiction" },
+    { "chapter": 2, "pdfFile": "fecu102.pdf", "title": "Diversity in the Living World", "kind": "Non-fiction" },
+    { "chapter": 3, "pdfFile": "fecu103.pdf", "title": "Mindful Eating: A Path to a Healthy Body", "kind": "Non-fiction" },
+    { "chapter": 4, "pdfFile": "fecu104.pdf", "title": "Exploring Magnets", "kind": "Non-fiction" },
+    { "chapter": 5, "pdfFile": "fecu105.pdf", "title": "Measurement of Length and Motion", "kind": "Non-fiction" },
+    { "chapter": 6, "pdfFile": "fecu106.pdf", "title": "Materials Around Us", "kind": "Non-fiction" },
+    { "chapter": 7, "pdfFile": "fecu107.pdf", "title": "Temperature and its Measurement", "kind": "Non-fiction" },
+    { "chapter": 8, "pdfFile": "fecu108.pdf", "title": "A Journey through States of Water", "kind": "Non-fiction" },
+    { "chapter": 9, "pdfFile": "fecu109.pdf", "title": "Methods of Separation in Everyday Life", "kind": "Non-fiction" },
+    { "chapter": 10, "pdfFile": "fecu110.pdf", "title": "Living Creatures: Exploring their Characteristics", "kind": "Non-fiction" },
+    { "chapter": 11, "pdfFile": "fecu111.pdf", "title": "Nature's Treasures", "kind": "Non-fiction" },
+    { "chapter": 12, "pdfFile": "fecu112.pdf", "title": "Beyond Earth", "kind": "Non-fiction" }
+  ]
+}

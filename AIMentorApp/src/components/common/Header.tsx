@@ -97,6 +97,7 @@ export default function Header({
     clearUnreadAssignments,
     clearUnreadChallenges,
     clearUnreadEvents,
+    unreadJoinRequests,
   } = useNotification();
 
   // Resolve screen names based on user role
@@ -115,8 +116,9 @@ const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  // Bell count: real-time messages + real-time assignments + challenges.
-  const count = unreadCount + unreadAssignments + unreadChallenges + unreadEvents;
+  // Bell count: real-time messages + assignments + challenges (+ school join
+  // requests for a school admin, whose bell is otherwise unused).
+  const count = unreadCount + unreadAssignments + unreadChallenges + unreadEvents + unreadJoinRequests;
   const avatarStyle = (user as any)?.avatarStyle;
   const photoUrl = (user as any)?.photoUrl;
 
@@ -306,6 +308,29 @@ const [editingName, setEditingName] = useState(false);
 
                 {(count > 0 || notificationItems.length > 0) ? (
                   <View style={{ overflowY: 'auto', maxHeight: 400 } as any}>
+
+                    {/* School join requests (school admin) — jump to the review panel */}
+                    {unreadJoinRequests > 0 && (
+                      <TouchableOpacity
+                        style={styles.notifItem}
+                        activeOpacity={0.75}
+                        onPress={() => {
+                          setBellVisible(false);
+                          navigation.navigate('SchoolAdminDashboard');
+                        }}
+                      >
+                        <View style={[styles.notifIconWrap, { backgroundColor: colors.accentYellow + '22' }]}>
+                          <Feather name="user-plus" size={16} color={colors.accentYellow} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.notifItemTitle} numberOfLines={1}>
+                            {unreadJoinRequests === 1 ? '1 school join request' : `${unreadJoinRequests} school join requests`}
+                          </Text>
+                          <Text style={styles.notifPreview} numberOfLines={1}>Tap to review and approve</Text>
+                        </View>
+                        <View style={styles.notifUnreadDot} />
+                      </TouchableOpacity>
+                    )}
 
                     {/* Individual assignment notification items (Google Classroom style) */}
                     {notificationItems.map(item => {

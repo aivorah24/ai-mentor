@@ -301,13 +301,13 @@ async function createFirebaseAccount(email, password) {
 // re-upload via POST /students/bulk-import. Mirrors the School Admin bulk
 // import template (branded header, borders, frozen row, sample rows
 // visually marked) so both flows look/feel consistent.
-const TEACHER_TEMPLATE_HEADER = ['Name', 'Email', 'Grade', 'Curriculum', 'School', 'Parent Name', 'Parent Email', 'Parent Phone'];
+const TEACHER_TEMPLATE_HEADER = ['Name', 'Email', 'Grade', 'Section', 'Curriculum', 'School', 'Parent Name', 'Parent Email', 'Parent Phone'];
 const TEACHER_SAMPLE_ROW_COUNT = 2;
 
 function teacherSampleRows(defaultGrade, defaultCurriculum, school) {
   return [
-    ['Aarav Sample (delete before uploading)', '', defaultGrade, defaultCurriculum, school || '', 'Ravi Sample', 'ravi.sample@example.com', '+91 90000 00001'],
-    ['Diya Sample (delete before uploading)', '', defaultGrade, defaultCurriculum, school || '', '', '', ''],
+    ['Aarav Sample (delete before uploading)', '', defaultGrade, 'A', defaultCurriculum, school || '', 'Ravi Sample', 'ravi.sample@example.com', '+91 90000 00001'],
+    ['Diya Sample (delete before uploading)', '', defaultGrade, 'B', defaultCurriculum, school || '', '', '', ''],
   ];
 }
 
@@ -337,7 +337,7 @@ async function buildTeacherTemplateRows(cleanTeacherEmail) {
   const { data: links } = await supabase.from('teacher_student').select('student_id').eq('teacher_id', teacher.id);
   const studentIds = [...new Set((links || []).map(l => l.student_id))];
   const { data: students } = studentIds.length
-    ? await supabase.from('users').select('id, name, email, grade, curriculum, school').in('id', studentIds).order('name')
+    ? await supabase.from('users').select('id, name, email, grade, section, curriculum, school').in('id', studentIds).order('name')
     : { data: [] };
 
   // Pre-fill each student's linked parent (name/email/phone) so the roster
@@ -359,7 +359,7 @@ async function buildTeacherTemplateRows(cleanTeacherEmail) {
     const pEmail = parentEmailByChild.get(s.id) || '';
     const parent = pEmail ? parentByEmail.get(pEmail) : null;
     return [
-      s.name || '', s.email || '', s.grade || '', s.curriculum || '', s.school || '',
+      s.name || '', s.email || '', s.grade || '', s.section || '', s.curriculum || '', s.school || '',
       parent?.name || '', parent?.email || pEmail || '', parent?.phone || '',
     ];
   });
@@ -394,7 +394,7 @@ router.get('/:teacherEmail/students/template.xlsx', async (req, res) => {
       views: [{ state: 'frozen', ySplit: 1 }],
     });
 
-    const COL_WIDTHS = [30, 30, 12, 14, 24, 24, 28, 18];
+    const COL_WIDTHS = [30, 30, 12, 10, 14, 24, 24, 28, 18];
     ws.columns = TEACHER_TEMPLATE_HEADER.map((header, i) => ({ header, key: `c${i}`, width: COL_WIDTHS[i] || 18 }));
 
     const HEADER_FILL = 'FF5C4A1E'; // deep olive-gold — Aivorah brand accent
@@ -437,7 +437,7 @@ router.get('/:teacherEmail/students/template.xlsx', async (req, res) => {
 // ── POST /teacher/:teacherEmail/students/bulk-import ─────────────────────────
 // Accepts multipart/form-data with a 'csv' file field.
 // CSV columns (case-insensitive, order-independent):
-//   Name (required), Email (optional), Grade, Curriculum, School,
+//   Name (required), Email (optional), Grade, Section (optional), Curriculum, School,
 //   Parent Name (optional), Parent Email (optional), Parent Phone (optional)
 // When a Parent Name is present the parent is onboarded too — a parent account
 // is created (or an existing one reused) and linked to the student, mirroring
@@ -501,6 +501,7 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
     const nameIdx        = col('name');
     const emailIdx       = col('email');
     const gradeIdx       = col('grade');
+    const sectionIdx     = col('section');
     const curriculumIdx  = col('curriculum');
     const schoolIdx      = col('school');
     const parentNameIdx  = col('parentname');
@@ -519,6 +520,7 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
       const cleanName    = toTitleCase(rawName);
       const emailRaw     = emailIdx >= 0 ? (row[emailIdx]?.trim() || '') : '';
       const grade        = gradeIdx >= 0 && row[gradeIdx]?.trim() ? row[gradeIdx].trim() : defaultGrade;
+      const section      = sectionIdx >= 0 ? (row[sectionIdx]?.trim() || '') : '';
       const curriculum   = curriculumIdx >= 0 && row[curriculumIdx]?.trim() ? row[curriculumIdx].trim() : defaultCurriculum;
       const school       = schoolIdx >= 0 ? (row[schoolIdx]?.trim() || '') : '';
       const parentName   = parentNameIdx  >= 0 ? (row[parentNameIdx]?.trim() || '')  : '';
@@ -543,7 +545,7 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
           dupEmail = Boolean(dup);
         }
         results.push({
-          rowIndex: i, name: cleanName, email: emailRaw, grade, curriculum, school,
+          rowIndex: i, name: cleanName, email: emailRaw, grade, section, curriculum, school,
           parentName, parentEmail: parentEmailIn,
           status: dupEmail ? 'skipped' : (isMismatch ? 'needs_confirmation' : 'matched'),
           error: dupEmail ? 'Email already exists' : (isMismatch ? `${mismatchReason} — confirm to import anyway.` : undefined),
@@ -560,7 +562,7 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
         // Skip duplicates
         const { data: dup } = await supabase.from('users').select('id').eq('email', studentEmail).maybeSingle();
         if (dup) {
-          results.push({ name: cleanName, email: studentEmail, grade, curriculum, status: 'skipped', error: 'Email already exists' });
+          results.push({ name: cleanName, email: studentEmail, grade, section, curriculum, status: 'skipped', error: 'Email already exists' });
           continue;
         }
 
@@ -575,7 +577,7 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
 
         const { error: userErr } = await supabase.from('users').upsert({
           id: userId, name: cleanName, email: studentEmail, role: 'student',
-          grade, curriculum, school, onboarding_complete: true,
+          grade, section, curriculum, school, onboarding_complete: true,
         }, { onConflict: 'id' });
         if (userErr) throw new Error(userErr.message);
 
@@ -606,7 +608,7 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
             .catch(err => console.log('[teacher/bulk-import] student credentials email failed (non-fatal):', err.message));
         }
 
-        results.push({ name: cleanName, email: studentEmail, password, studentId: resolvedStudentId, grade, curriculum, role: 'student', status: 'created' });
+        results.push({ name: cleanName, email: studentEmail, password, studentId: resolvedStudentId, grade, section, curriculum, role: 'student', status: 'created' });
 
         // ── PARENT onboarding (only when a Parent Name is supplied) ──────────
         // Mirrors the School Admin bulk import: create-or-reuse a parent account,
@@ -682,7 +684,7 @@ router.post('/:teacherEmail/students/bulk-import', upload.single('csv'), async (
             .catch(err => console.log('[teacher/bulk-import] student-login-to-parent email failed (non-fatal):', err.message));
         }
       } catch (rowErr) {
-        results.push({ name: cleanName, email: studentEmail, grade, curriculum, role: 'student', status: 'error', error: rowErr.message });
+        results.push({ name: cleanName, email: studentEmail, grade, section, curriculum, role: 'student', status: 'error', error: rowErr.message });
       }
     }
 

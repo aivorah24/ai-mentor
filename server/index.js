@@ -95,13 +95,19 @@ app.use('/data/read-aloud/audio', express.static(path.join(__dirname, 'data/read
 app.use('/data/uploads', express.static(path.join(__dirname, 'data/uploads')));
 // Serve UI sounds
 app.use('/sounds', express.static(path.join(__dirname, 'public/sounds')));
+// Serve the real NCERT textbook PDFs (for the "real book" pane in the reading experience)
+app.use('/data/ncert_books', express.static(path.join(__dirname, 'data/ncert_books')));
 
 // Redirect browser direct-navigation to SPA paths back to index.html
 // This prevents API routes from returning errors when user refreshes /assignments, /teacher/assignments, etc.
-const SPA_PATHS = ['/assignments', '/teacher', '/student', '/parent', '/profile', '/schedule', '/progress', '/challenges', '/leaderboard', '/settings', '/help', '/dashboard', '/messages', '/rewards', '/super-admin', '/school-admin', '/classes'];
+// Includes '/timetable' so a browser refresh of the (case-insensitive) SPA URL
+// serves the app instead of hitting the /timetable API route. API calls from the
+// app use Accept: */* (not text/html), so they still reach the JSON endpoints.
+const SPA_PATHS = ['/assignments', '/teacher', '/student', '/parent', '/profile', '/schedule', '/progress', '/challenges', '/leaderboard', '/settings', '/help', '/dashboard', '/messages', '/rewards', '/super-admin', '/school-admin', '/classes', '/my-classes', '/class-timetable', '/timetable', '/school-resources', '/resources'];
 app.use((req, res, next) => {
   const accept = req.headers.accept || '';
-  if (req.method === 'GET' && accept.includes('text/html') && SPA_PATHS.some(p => req.path === p || req.path.startsWith(p + '/'))) {
+  const lowerPath = req.path.toLowerCase(); // browser URLs may differ in case (/Timetable)
+  if (req.method === 'GET' && accept.includes('text/html') && SPA_PATHS.some(p => lowerPath === p || lowerPath.startsWith(p + '/'))) {
     return res.sendFile(path.join(__dirname, '../AIMentorApp/dist2/index.html'));
   }
   next();
@@ -110,6 +116,9 @@ app.use((req, res, next) => {
 app.use('/ask',        lazyRoute('./routes/ask'));
 app.use('/ingest',     lazyRoute('./routes/ingest'));
 app.use('/curriculum', lazyRoute('./routes/curriculum'));
+app.use('/curriculum/v2', lazyRoute('./routes/curriculumV2')); // generic CurriculumProvider-backed API — additive, does not replace the routes above
+app.use('/curriculum/ingest', lazyRoute('./routes/curriculumIngest')); // ICSE/Cambridge/future-curriculum ingestion pipeline — platform-admin only, CBSE unaffected
+app.use('/content-review', lazyRoute('./routes/contentReview'));
 app.use('/lesson',  lessonRoute);
 app.use('/student',  studentRoute);
 app.use('/schedule', scheduleRoute);
@@ -120,6 +129,7 @@ app.use('/assignments',  assignmentsRoute);
 app.use('/challenges',   challengesRoute);
 app.use('/parent',       parentRoute);
 app.use('/teacher',      teacherRoute);
+app.use('/teacher/syllabus', require('./routes/syllabusImport'));
 app.use('/user',         userRoute);
 app.use('/branding',     brandingRoute);
 app.use('/messages',     messagesRoute);
@@ -141,6 +151,9 @@ app.use('/announcements', require('./routes/announcements'));
 app.use('/classes', require('./routes/classes'));
 app.use('/class-portfolio', require('./routes/class-portfolio'));
 app.use('/school-admin', require('./routes/school-admin'));
+app.use('/timetable', require('./routes/timetable'));
+app.use('/resources', require('./routes/resources'));
+app.use('/channels', require('./routes/channels'));
 app.use('/attendance', require('./routes/attendance'));
 app.use('/jobs',         require('./routes/jobs'));
 require('./services/jobHandlers'); // register swappable-queue handlers (for /jobs/process)
