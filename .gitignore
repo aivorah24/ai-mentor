@@ -123,3 +123,15 @@ AIMentorApp/_probe*.js
 server/_gen_worksheet.js
 server/worksheet_test.png
 bulk_import_test_sample.xlsx
+
+# Ad-hoc manual test screenshots left at repo root by various debug sessions
+/dashboard.png
+/drag-*.png
+/learning_paths*.png
+/lp_screen.png
+/schedule-*.png
+/screen1.png
+/stepper-check-*.png
+/subjects*.png
+/test-result.png
+server/data/test-screenshots/
