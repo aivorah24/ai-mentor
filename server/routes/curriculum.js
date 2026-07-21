@@ -4,6 +4,12 @@ const { client, searchContent, resolveCollection } = require('../services/qdrant
 const { embed } = require('../services/embeddings');
 const { normalizeCurriculum } = require('../utils/curriculum');
 
+// Curriculum content changes rarely (only on re-ingestion), but this endpoint
+// scrolls thousands of Qdrant points per request — cache each grade+curriculum
+// combo for a few minutes so repeat screen visits don't re-pay that cost.
+const subjectsCache = new Map(); // key -> { at: number, data: object }
+const SUBJECTS_CACHE_TTL_MS = 5 * 60 * 1000;
+
 // ── GET /curriculum?curriculum=IB_PYP ─────────────────────────────
 // Returns all unique topics grouped by grade → subject
 // Used by the student Learning Paths screen to populate the full curriculum tree
@@ -20,10 +26,11 @@ router.get('/', async (req, res) => {
 
     const mustFilters = [{ key: 'curriculum', match: { value: qdrantCurriculum } }];
     if (grade) mustFilters.push({ key: 'grade', match: { value: qdrantGrade } });
+    const mustNotFilters = [{ key: 'content_type', match: { value: 'image' } }];
 
     do {
       const result = await client.scroll(collection, {
-        filter:       { must: mustFilters },
+        filter:       { must: mustFilters, must_not: mustNotFilters },
         limit:        100,
         offset:       offset ?? undefined,
         with_payload: true,
@@ -31,7 +38,10 @@ router.get('/', async (req, res) => {
       });
 
       for (const point of result.points) {
-        const p   = point.payload;
+        const p = point.payload;
+        // Defensive: skip anything that is clearly an image caption, even if
+        // content_type wasn't tagged correctly at ingest time.
+        if (!p.topic || /^\[?IMAGE\]?/i.test(p.topic) || /^this image/i.test(p.topic)) continue;
         const key = `${p.grade}|${p.subject}|${p.topic}`;
         if (!seen.has(key)) {
           seen.add(key);
@@ -87,6 +97,12 @@ router.get('/subjects', async (req, res) => {
     const normCurr2 = normalizeCurriculum(req.query.curriculum, 'IB PYP');
     const { collection: col2, qdrantCurriculum: qCurr2, qdrantGrade: qGrade2 } = resolveCollection(normCurr2, grade);
 
+    const cacheKey = `${col2}|${qCurr2}|${qGrade2}`;
+    const cached = subjectsCache.get(cacheKey);
+    if (cached && Date.now() - cached.at < SUBJECTS_CACHE_TTL_MS) {
+      return res.json(cached.data);
+    }
+
     const seen    = new Set();
     const topicMap = {};   // subject → Set<topic>
     let offset    = null;
@@ -98,15 +114,21 @@ router.get('/subjects', async (req, res) => {
             { key: 'curriculum', match: { value: qCurr2 } },
             { key: 'grade',      match: { value: qGrade2 } },
           ],
+          must_not: [{ key: 'content_type', match: { value: 'image' } }],
         },
-        limit:        100,
+        limit:        2000,
         offset:       offset ?? undefined,
-        with_payload: true,
+        // Only pull the fields this endpoint actually uses — the raw chunk
+        // "text" field is large and irrelevant here, and fetching it for
+        // every point (thousands, for subjects like Mathematics) was the
+        // main cause of this screen's slow load.
+        with_payload: ['subject', 'topic', 'unit', 'textbook', 'description', 'chapter'],
         with_vector:  false,
       });
 
       for (const point of result.points) {
-        const p   = point.payload;
+        const p = point.payload;
+        if (!p.topic || /^\[?IMAGE\]?/i.test(p.topic) || /^this image/i.test(p.topic)) continue;
         const key = `${p.subject}|${p.topic}`;
         if (!seen.has(key)) {
           seen.add(key);
@@ -129,7 +151,9 @@ router.get('/subjects', async (req, res) => {
       topics:     topics.sort((a, b) => (a.chapter ?? 0) - (b.chapter ?? 0) || a.topic.localeCompare(b.topic)),
     })).sort((a, b) => a.subject.localeCompare(b.subject));
 
-    res.json({ grade, curriculum: normCurr2, subjects });
+    const responseBody = { grade, curriculum: normCurr2, subjects };
+    subjectsCache.set(cacheKey, { at: Date.now(), data: responseBody });
+    res.json(responseBody);
   } catch (err) {
     console.error('Error in GET /curriculum/subjects:', err.message);
     res.status(500).json({ error: 'Failed to fetch subjects' });

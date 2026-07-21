@@ -15,17 +15,50 @@ import Header from '../../components/common/Header';
 import SERVER_URL from '../../config/serverUrl';
 import TimePicker from '../../components/common/TimePicker';
 
-const TIMES = ['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
+const TIMES = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}:00`);
 const DAYS_SHORT = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const DURATIONS = ['30 min', '45 min', '1 hr', '1.5 hrs', '2 hrs', '2.5 hrs', '3 hrs'];
 const HOUR_HEIGHT = 56;
 const DAY_COL_WIDTH = 140;
-const TIME_LABEL_WIDTH = 52;
+const TIME_LABEL_WIDTH = 64;
 const TIMELINE_START_HOUR = Number(TIMES[0].split(':')[0]);
 const DURATION_MINS: Record<string, number> = {
   '30 min': 30, '45 min': 45, '1 hr': 60,
   '1.5 hrs': 90, '2 hrs': 120, '2.5 hrs': 150, '3 hrs': 180,
 };
+
+const ASSIGNMENT_TAGS = [
+  { key: 'Live Class / Lesson', color: '#7FC29B' },
+  { key: 'Study Session',       color: '#C9A24E' },
+  { key: 'Learning experience', color: '#7FC29B' },
+  { key: 'Quick task',          color: '#7FB2D6' },
+  { key: 'Worksheet / Assignment', color: '#E3B24C' },
+  { key: 'AI Tutor',            color: '#9B8FE8' },
+  { key: 'Video meeting',       color: '#E58AA6' },
+  { key: 'AI Challenge',        color: '#6B5BA8' },
+  { key: 'Deadline',            color: '#B84A3A' },
+];
+
+const EVENT_TAGS = [
+  { key: 'Holidays and vacations', color: '#E58AA6' },
+  { key: 'Whole school events',    color: '#7FC29B' },
+  { key: 'Special Assembly',       color: '#7FC29B' },
+  { key: 'Working Day / Break',    color: '#C4BCA9' },
+  { key: 'MYP Unit Timeline',      color: '#E58AA6' },
+  { key: 'Rotation Day Cycle',     color: '#7FB2D6' },
+  { key: 'SmartTask Cycle Timeline', color: '#E58AA6' },
+];
+
+function deriveTypeFromTag(tag: string): string {
+  if (!tag) return 'study';
+  const lower = tag.toLowerCase();
+  if (lower.includes('lesson') || lower.includes('live class') || lower.includes('video')) return 'lesson';
+  if (lower.includes('challenge')) return 'challenge';
+  if (lower.includes('deadline')) return 'deadline';
+  if (lower.includes('worksheet') || lower.includes('assignment')) return 'assignment';
+  if (lower.includes('break') || lower.includes('working day')) return 'break';
+  return 'study';
+}
 
 function calcEventTop(startTime: string): number {
   const [h, m] = startTime.split(':').map(Number);
@@ -84,6 +117,17 @@ function typeColors(type: string): [string, string, string] {
   return map[type] ?? ['#9C844A', '#F5EDDA', '#6B5A30'];
 }
 
+const ALL_TAGS = [...ASSIGNMENT_TAGS, ...EVENT_TAGS];
+
+// Prefer the event's own tag color (same swatch shown in Tag Filters and the
+// tag picker) so a chip on the calendar always matches its tag — falls back
+// to the coarse type-bucket color only for legacy events with no tag.
+function tagColors(tag: string | null | undefined, type: string): [string, string, string] {
+  const match = tag ? ALL_TAGS.find(t => tag.toLowerCase().includes(t.key.toLowerCase())) : null;
+  if (match) return [match.color, match.color + '22', match.color];
+  return typeColors(type);
+}
+
 function dateISO(d: Date): string {
   return d.toISOString().split('T')[0];
 }
@@ -97,6 +141,13 @@ function buildWeek(base: Date): { iso: string; day: string; date: number }[] {
     d.setDate(monday.getDate() + i);
     return { iso: dateISO(d), day: DAYS_SHORT[i], date: d.getDate() };
   });
+}
+
+function fmtHour12(hhmm: string): string {
+  const h = Number(hhmm.split(':')[0]);
+  const ampm = h >= 12 ? 'pm' : 'am';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12} ${ampm}`;
 }
 
 export default function TeacherScheduleScreen({ navigation }: any) {
@@ -125,13 +176,51 @@ export default function TeacherScheduleScreen({ navigation }: any) {
   const [newTitle, setNewTitle] = useState('');
   const [newStartTime, setNewStartTime] = useState('09:00');
   const [newEndTime, setNewEndTime] = useState('10:00');
+  const [isAllDay, setIsAllDay] = useState(false);
   const [newType, setNewType] = useState('lesson');
+  const [newTag, setNewTag] = useState('Live Class / Lesson');
   const [newNote, setNewNote] = useState('');
   const [targetStudents, setTargetStudents] = useState<'all' | 'specific'>('all');
   const [selectedStudent, setSelectedStudent] = useState<StudentItem | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [saveError, setSaveError] = useState('');
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+
+  // ── Tag-based filter checkboxes ──
+  const [enabledAssignmentTags, setEnabledAssignmentTags] = useState<Set<string>>(
+    () => new Set(ASSIGNMENT_TAGS.map(t => t.key))
+  );
+  const [enabledEventTags, setEnabledEventTags] = useState<Set<string>>(
+    () => new Set(EVENT_TAGS.map(t => t.key))
+  );
+  const [showTagPanel, setShowTagPanel] = useState(false);
+
+  const passesTagFilter = useCallback((ev: ScheduleEvent): boolean => {
+    const tag = ev.tag || '';
+    const isEventTag = EVENT_TAGS.some(t => tag.toLowerCase().includes(t.key.toLowerCase()));
+    if (isEventTag) {
+      return EVENT_TAGS.some(t => tag.toLowerCase().includes(t.key.toLowerCase()) && enabledEventTags.has(t.key));
+    }
+    return ASSIGNMENT_TAGS.some(t => tag.toLowerCase().includes(t.key.toLowerCase()) && enabledAssignmentTags.has(t.key))
+      || (!ASSIGNMENT_TAGS.some(t => tag.toLowerCase().includes(t.key.toLowerCase())) && enabledAssignmentTags.size > 0);
+  }, [enabledAssignmentTags, enabledEventTags]);
+
+  // Compute all-day lane height from events — avoids onLayout feedback loop
+  const allDayHeight = useMemo(() => {
+    const max = Math.max(
+      1,
+      ...week.map((d) =>
+        (eventsMap[d.iso] ?? []).filter((e) => {
+          if (!passesTagFilter(e)) return false;
+          const tagLower = (e.tag || '').toLowerCase();
+          const isEventTag = ['holiday', 'vacation', 'assembly', 'timeline', 'whole school', 'rotation', 'cycle'].some((k) => tagLower.includes(k));
+          return e.startTime === '23:59' || e.isAllDay || e.type === 'deadline' || e.type === 'challenge' || isEventTag;
+        }).length
+      )
+    );
+    return Math.max(36, max * 26 + 10);
+  }, [eventsMap, week, enabledAssignmentTags, enabledEventTags]);
 
   // Drag-to-create preview
   const [dragPreviewTeacher, setDragPreviewTeacher] = useState<{ dayIso: string; top: number; height: number; startT: string; endT: string } | null>(null);
@@ -284,51 +373,123 @@ export default function TeacherScheduleScreen({ navigation }: any) {
       .catch(() => {});
   }, [user?.email]));
 
-  function openModal(presetDate?: string, presetTime?: string) {
+  function resetModalForm() {
+    setNewTitle(''); setNewNote(''); setNewTag('Live Class / Lesson');
+    setSelectedStudent(null); setStudentSearch(''); setIsAllDay(false);
+    setTargetStudents('all'); setEditingEventId(null);
+  }
+
+  function closeModal() {
+    setModalVisible(false);
+    setEditingEventId(null);
+  }
+
+  function openModal(presetDate?: string, presetTime?: string, presetAllDay?: boolean, presetTag?: string) {
+    setEditingEventId(null);
+    setNewTitle(''); setNewNote(''); setSelectedStudent(null); setStudentSearch(''); setTargetStudents('all');
+    setNewTag(presetTag || 'Live Class / Lesson');
     setModalDate(presetDate ?? todayISO);
-    if (presetTime) {
+    setIsAllDay(!!presetAllDay);
+    if (presetAllDay) {
+      setNewStartTime('23:59');
+      setNewEndTime('23:59');
+    } else if (presetTime) {
       const [h] = presetTime.split(':');
       const sh = h.padStart(2, '0');
       const eh = String(Math.min(23, parseInt(sh) + 1)).padStart(2, '0');
       setNewStartTime(`${sh}:00`);
       setNewEndTime(`${eh}:00`);
+    } else {
+      setNewStartTime('09:00');
+      setNewEndTime('10:00');
     }
     setSaveError('');
     setModalVisible(true);
   }
 
-  async function createEvent() {
+  // Pre-fills the same Create Event modal from an existing event so editing
+  // reuses one form instead of a second UI — saveEvent() below branches on
+  // editingEventId to PATCH instead of POST.
+  function openEditModal(ev: any) {
+    setSelectedEvent(null);
+    setEditingEventId(ev.id);
+    setModalDate(ev.date);
+    setNewTitle(ev.title || '');
+    setNewNote(ev.note || '');
+    setNewTag(ev.tag || 'Live Class / Lesson');
+    const allDay = ev.startTime === '23:59';
+    setIsAllDay(allDay);
+    setNewStartTime(allDay ? '23:59' : ev.startTime);
+    setNewEndTime(allDay ? '23:59' : (ev.endTime || ev.startTime));
+    if (ev.studentId && ev.studentId !== 'all') {
+      setTargetStudents('specific');
+      const found = students.find(s => s.id === ev.studentId);
+      setSelectedStudent(found || { id: ev.studentId, name: ev.studentName || 'Student', grade: '' });
+    } else {
+      setTargetStudents('all');
+      setSelectedStudent(null);
+    }
+    setStudentSearch('');
+    setSaveError('');
+    setModalVisible(true);
+  }
+
+  async function saveEvent() {
     if (!newTitle.trim()) { setSaveError('Please enter an event title.'); return; }
     const assignTo = targetStudents === 'all' ? 'all' : (selectedStudent?.id ?? 'all');
+    const payload = {
+      title:     newTitle,
+      date:      modalDate,
+      startTime: isAllDay ? '23:59' : newStartTime,
+      endTime:   isAllDay ? '23:59' : newEndTime,
+      type:      deriveTypeFromTag(newTag),
+      tag:       newTag || 'Live Class / Lesson',
+      note:      newNote,
+      studentId: assignTo,
+    };
     setSaving(true); setSaveError('');
     try {
-      const res = await fetch(`${SERVER_URL}/schedule`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title:     newTitle,
-          date:      modalDate,
-          startTime: newStartTime,
-          endTime:   newEndTime,
-          type:      newType,
-          note:      newNote,
-          studentId: assignTo,
-          createdBy:    'teacher',
-          creatorEmail: user?.email || '',
-        }),
-      });
-      if (res.ok) {
-        const ev = await res.json();
-        setEventsMap(prev => ({
-          ...prev,
-          [modalDate]: [...(prev[modalDate] ?? []), ev],
-        }));
-        setNewTitle(''); setNewNote(''); setSelectedStudent(null); setStudentSearch('');
-        setSaving(false); setModalVisible(false);
+      if (editingEventId) {
+        const res = await fetch(`${SERVER_URL}/schedule/${editingEventId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const updated = await res.json().catch(() => null);
+          const merged = (updated && updated.id) ? updated : { ...payload, id: editingEventId, createdBy: 'teacher', creatorEmail: user?.email || '' };
+          setEventsMap(prev => {
+            const next: Record<string, ScheduleEvent[]> = {};
+            for (const key of Object.keys(prev)) next[key] = prev[key].filter(e => e.id !== editingEventId);
+            next[modalDate] = [...(next[modalDate] ?? []), merged];
+            return next;
+          });
+          resetModalForm();
+          setSaving(false); setModalVisible(false);
+        } else {
+          const body = await res.json().catch(() => ({}));
+          setSaveError(body.error ?? `Server error ${res.status}`);
+          setSaving(false);
+        }
       } else {
-        const body = await res.json().catch(() => ({}));
-        setSaveError(body.error ?? `Server error ${res.status}`);
-        setSaving(false);
+        const res = await fetch(`${SERVER_URL}/schedule`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, createdBy: 'teacher', creatorEmail: user?.email || '' }),
+        });
+        if (res.ok) {
+          const ev = await res.json();
+          setEventsMap(prev => ({
+            ...prev,
+            [modalDate]: [...(prev[modalDate] ?? []), ev],
+          }));
+          resetModalForm();
+          setSaving(false); setModalVisible(false);
+        } else {
+          const body = await res.json().catch(() => ({}));
+          setSaveError(body.error ?? `Server error ${res.status}`);
+          setSaving(false);
+        }
       }
     } catch (err: any) {
       setSaveError(err?.message ?? 'Network error — is the server running?');
@@ -346,6 +507,13 @@ export default function TeacherScheduleScreen({ navigation }: any) {
     } catch {}
   }
 
+  async function confirmDeleteEvent(ev: any) {
+    const ok = Platform.OS === 'web' ? window.confirm(`Delete "${ev.title}"? This can't be undone.`) : true;
+    if (!ok) return;
+    await removeEvent(ev.id, ev.date);
+    setSelectedEvent(null);
+  }
+
   const filteredStudents = useMemo(() =>
     students.filter(s =>
       s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
@@ -356,11 +524,13 @@ export default function TeacherScheduleScreen({ navigation }: any) {
 
   const gridHeight = TIMES.length * HOUR_HEIGHT;
   const { width: screenWidth } = useWindowDimensions();
-  const colWidth = Math.max(DAY_COL_WIDTH, Math.floor((screenWidth - TIME_LABEL_WIDTH) / 7));
+  const availableGridWidth = Math.max(700, screenWidth - 260 - 24);
+  const colWidth = Math.max(DAY_COL_WIDTH, Math.floor((availableGridWidth - TIME_LABEL_WIDTH) / 7));
   const totalGridWidth = TIME_LABEL_WIDTH + colWidth * 7;
 
-  // Horizontal scroll to today's column.
+  // Horizontal scroll to today's column + vertical scroll to current time.
   const hScrollRef = useRef<ScrollView>(null);
+  const vScrollRef = useRef<ScrollView>(null);
   const firstLoadDoneRef = useRef(false);
 
   function scrollToTodayCol(base: Date, cw: number) {
@@ -369,17 +539,58 @@ export default function TeacherScheduleScreen({ navigation }: any) {
     hScrollRef.current?.scrollTo({ x: todayCol * cw, animated: true });
   }
 
+  function scrollToCurrentTime(animated = true) {
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    const timeOffsetY = Math.max(0, ((currentMins - TIMELINE_START_HOUR * 60 - 60) / 60) * HOUR_HEIGHT);
+    setTimeout(() => vScrollRef.current?.scrollTo({ y: timeOffsetY, animated }), 200);
+  }
+
   function goToday() {
     const now = new Date();
     const alreadyOnThisWeek = week.some(d => d.iso === todayISO);
     if (alreadyOnThisWeek) {
-      // Already on the correct week — just scroll, no state change, no re-fetch.
       scrollToTodayCol(now, colWidth);
+      scrollToCurrentTime();
     } else {
       setWeekBase(now);
-      // Scroll fires via onContentSizeChange after the new week's grid renders.
     }
   }
+
+  useEffect(() => {
+    if (week.some(d => d.iso === todayISO)) {
+      setTimeout(() => scrollToTodayCol(weekBase, colWidth), 300);
+    }
+    scrollToCurrentTime();
+  }, [week, todayISO, colWidth]);
+
+  // ── Tag filter helpers ──
+  const toggleAssignmentTag = useCallback((key: string) => {
+    setEnabledAssignmentTags(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }, []);
+
+  const toggleEventTag = useCallback((key: string) => {
+    setEnabledEventTags(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }, []);
+
+  const toggleAllAssignment = useCallback((on: boolean) => {
+    setEnabledAssignmentTags(on ? new Set(ASSIGNMENT_TAGS.map(t => t.key)) : new Set());
+  }, []);
+
+  const toggleAllEvent = useCallback((on: boolean) => {
+    setEnabledEventTags(on ? new Set(EVENT_TAGS.map(t => t.key)) : new Set());
+  }, []);
+
+  const allAssignmentOn = enabledAssignmentTags.size === ASSIGNMENT_TAGS.length;
+  const allEventOn = enabledEventTags.size === EVENT_TAGS.length;
 
   return (
     <ScreenLayout>
@@ -395,7 +606,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView ref={vScrollRef} style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
           {/* Info banner */}
           <View style={styles.infoBanner}>
@@ -423,17 +634,26 @@ export default function TeacherScheduleScreen({ navigation }: any) {
           {loading ? (
             <ActivityIndicator size="large" color={gold} style={{ marginTop: 40 }} />
           ) : (
-            <View style={{ flexDirection: 'row' }}>
-              {/* FIXED LEFT: time label column (never scrolls horizontally) */}
-              <View style={{ width: TIME_LABEL_WIDTH, backgroundColor: colors.bgDark, zIndex: 2 }}>
-                {/* Spacer matching day header height */}
-                <View style={styles.timeColHeader} />
-                {TIMES.map((t) => (
-                  <View key={t} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 4 }}>
-                    <Text style={styles.timeLabel}>{t}</Text>
+            <View style={styles.mainLayout}>
+              {/* ── Left: Week Calendar Grid ── */}
+              <View style={styles.calendarContainer}>
+                <View style={{ flexDirection: 'row', height: 62 + allDayHeight + gridHeight }}>
+                  {/* FIXED LEFT: time label column (never scrolls horizontally) */}
+                  <View style={{ width: TIME_LABEL_WIDTH, backgroundColor: colors.bgDark, zIndex: 2, overflow: 'hidden', borderRightWidth: 1, borderRightColor: colors.borderColor }}>
+                    {/* Spacer matching day header height with GMT label — Toddle-style: single line, left-aligned */}
+                    <View style={[styles.timeColHeader, { justifyContent: 'flex-end', paddingBottom: 6, paddingLeft: 6, alignItems: 'flex-start' }]}>
+                      <Text style={{ fontSize: 9, fontWeight: '600', color: colors.textDim }} numberOfLines={1}>GMT+05:30</Text>
+                    </View>
+                    {/* All-day gutter label matching Toddle */}
+                    <View style={[styles.allDayGutter, { height: allDayHeight }]}>
+                      <Text style={styles.allDayGutterText}>All day</Text>
+                    </View>
+                    {TIMES.map((t) => (
+                      <View key={t} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 4 }}>
+                        <Text style={styles.timeLabel}>{fmtHour12(t)}</Text>
+                      </View>
+                    ))}
                   </View>
-                ))}
-              </View>
 
               {/* SCROLLABLE RIGHT: day headers + columns */}
               <ScrollView
@@ -458,11 +678,8 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                     {week.map((d) => {
                       const isToday = d.iso === todayISO;
                       return (
-                        <View key={d.iso} style={[styles.dayHeader, { width: colWidth }]}>
-                          <Text style={[styles.dayHeaderLabel, isToday && styles.dayHeaderLabelToday]}>{d.day}</Text>
-                          <View style={[styles.dayHeaderCircle, isToday && styles.dayHeaderCircleToday]}>
-                            <Text style={[styles.dayHeaderDate, isToday && styles.dayHeaderDateToday]}>{d.date}</Text>
-                          </View>
+                        <View key={d.iso} style={[styles.dayHeader, { width: colWidth }, isToday && styles.dayHeaderToday]}>
+                          <Text style={[styles.dayHeaderLabel, isToday && styles.dayHeaderLabelToday]}>{String(d.date).padStart(2, '0')} {d.day.charAt(0) + d.day.slice(1).toLowerCase()}</Text>
                         </View>
                       );
                     })}
@@ -472,25 +689,39 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                       from the hourly grid below since a 1-minute-tall block there would be
                       invisible; show them here instead. Not draggable/deletable since these
                       are auto-generated from assignments/challenges, but tappable to view detail. */}
-                  <View style={styles.allDayRow}>
+                  {/* All-day row — Toddle style holiday / vacation / timeline / challenge chips */}
+                  <View style={[styles.allDayRow, { height: allDayHeight }]}>
                     {week.map((d) => {
-                      const allDayEvents = (eventsMap[d.iso] ?? []).filter(e => e.startTime === '23:59');
+                      const allDayEvents = (eventsMap[d.iso] ?? []).filter(e => {
+                        if (!passesTagFilter(e)) return false;
+                        const tagLower = (e.tag || '').toLowerCase();
+                        const isEventTag = ['holiday', 'vacation', 'assembly', 'timeline', 'whole school', 'rotation', 'cycle'].some(k => tagLower.includes(k));
+                        return e.startTime === '23:59' || e.isAllDay || e.type === 'deadline' || e.type === 'challenge' || isEventTag;
+                      });
                       return (
-                        <View key={d.iso} style={[styles.allDayCol, { width: colWidth }]}>
+                        <TouchableOpacity
+                          key={d.iso}
+                          style={[styles.allDayCol, { width: colWidth, height: allDayHeight }]}
+                          onPress={() => openModal(d.iso, undefined, true, 'Holidays and vacations')}
+                          activeOpacity={0.8}
+                        >
                           {allDayEvents.map(e => {
-                            const [accent, fill, textCol] = typeColors(e.type);
+                            const [accent, fill, textCol] = tagColors(e.tag, e.type);
                             return (
                               <TouchableOpacity
                                 key={e.id}
                                 style={[styles.allDayChip, { backgroundColor: fill, borderLeftColor: accent }]}
-                                onPress={() => setSelectedEvent({ ...e, accent, fill, textCol })}
+                                onPress={(evt) => {
+                                  evt.stopPropagation();
+                                  setSelectedEvent({ ...e, accent, fill, textCol });
+                                }}
                                 activeOpacity={0.75}
                               >
                                 <Text style={[styles.allDayChipText, { color: textCol }]} numberOfLines={1}>{e.title}</Text>
                               </TouchableOpacity>
                             );
                           })}
-                        </View>
+                        </TouchableOpacity>
                       );
                     })}
                   </View>
@@ -499,7 +730,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                   <View style={{ flexDirection: 'row' }}>
                     {week.map((d) => {
                       const dayEvents = (eventsMap[d.iso] ?? []).filter(
-                        e => e.startTime !== '23:59'
+                        e => e.startTime !== '23:59' && passesTagFilter(e)
                       );
                       return (
                         <View
@@ -587,7 +818,7 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                           {dayEvents.map(event => {
                             const origTop = calcEventTop(event.startTime);
                             const height  = calcEventHeight(event.startTime, event.endTime);
-                            const [accent, fill, textCol] = typeColors(event.type);
+                            const [accent, fill, textCol] = tagColors(event.tag, event.type);
                             const [sh, sm] = event.startTime.split(':').map(Number);
                             const [eh, em] = (event.endTime || event.startTime).split(':').map(Number);
                             const durationMins = Math.max(30, (eh * 60 + em) - (sh * 60 + sm));
@@ -606,6 +837,13 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                                   if ((e.target as HTMLElement).closest('[data-delbtn]')) return;
                                   e.preventDefault();
                                   startDrag(e.currentTarget, e.clientY);
+                                }}
+                                onClick={(e) => {
+                                  // A drag (mousemove past the 4px threshold) sets wasDragRef —
+                                  // only open the detail popup for a genuine click, not a drop.
+                                  if (wasDragRef.current) return;
+                                  if ((e.target as HTMLElement).closest('[data-delbtn]')) return;
+                                  setSelectedEvent({ ...event, date: d.iso, accent, fill, textCol });
                                 }}
                                 style={{
                                   position: 'absolute', left: 2, right: 2,
@@ -640,16 +878,128 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                   </View>
                 </View>
               </ScrollView>
-            </View>
+            </View>{/* end calendarContainer */}
+            </View>{/* end mainLayout */}
           )}
+
+          {/* ── Right Sidebar: Tag Filters ── */}
+          <View style={styles.sideCol}>
+
+            {/* ── Tag Filter Panel ── */}
+            <View style={styles.sideCard}>
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: showTagPanel ? spacing.md : 0 }}
+                onPress={() => setShowTagPanel(!showTagPanel)}
+                activeOpacity={0.7}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Feather name="filter" size={14} color={gold} />
+                  <Text style={styles.sideTitle}>Tag Filters</Text>
+                </View>
+                <Feather name={showTagPanel ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textDim} />
+              </TouchableOpacity>
+
+              {showTagPanel && (
+                <View>
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}
+                    onPress={() => toggleAllAssignment(!allAssignmentOn)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{
+                      width: 18, height: 18, borderRadius: 4,
+                      backgroundColor: allAssignmentOn ? gold : 'transparent',
+                      borderWidth: 1.5, borderColor: allAssignmentOn ? gold : colors.textDim,
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {allAssignmentOn && <Feather name="check" size={12} color="white" />}
+                    </View>
+                    <Text style={{ fontSize: 12, fontWeight: '800', color: colors.textMain, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      ASSIGNMENT TAGS
+                    </Text>
+                  </TouchableOpacity>
+                  {ASSIGNMENT_TAGS.map(tag => {
+                    const on = enabledAssignmentTags.has(tag.key);
+                    return (
+                      <TouchableOpacity
+                        key={tag.key}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5, paddingLeft: 4 }}
+                        onPress={() => toggleAssignmentTag(tag.key)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={{
+                          width: 18, height: 18, borderRadius: 4,
+                          backgroundColor: on ? tag.color : 'transparent',
+                          borderWidth: 1.5, borderColor: on ? tag.color : colors.textDim + '60',
+                          alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {on && <Feather name="check" size={12} color="white" />}
+                        </View>
+                        <Text style={{ fontSize: 13, color: colors.textMain, fontWeight: '500' }}>{tag.key}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                  <View style={{ height: 1, backgroundColor: colors.borderColor, marginVertical: 14 }} />
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}
+                    onPress={() => toggleAllEvent(!allEventOn)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{
+                      width: 18, height: 18, borderRadius: 4,
+                      backgroundColor: allEventOn ? gold : 'transparent',
+                      borderWidth: 1.5, borderColor: allEventOn ? gold : colors.textDim,
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {allEventOn && <Feather name="check" size={12} color="white" />}
+                    </View>
+                    <Text style={{ fontSize: 12, fontWeight: '800', color: colors.textMain, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      EVENT TAGS
+                    </Text>
+                  </TouchableOpacity>
+                  {EVENT_TAGS.map(tag => {
+                    const on = enabledEventTags.has(tag.key);
+                    return (
+                      <TouchableOpacity
+                        key={tag.key}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5, paddingLeft: 4 }}
+                        onPress={() => toggleEventTag(tag.key)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={{
+                          width: 18, height: 18, borderRadius: 4,
+                          backgroundColor: on ? tag.color : 'transparent',
+                          borderWidth: 1.5, borderColor: on ? tag.color : colors.textDim + '60',
+                          alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {on && <Feather name="check" size={12} color="white" />}
+                        </View>
+                        <Text style={{ fontSize: 13, color: colors.textMain, fontWeight: '500' }}>{tag.key}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+        )}
         </ScrollView>
 
-        {/* ── Create Event Modal ── */}
-        <Modal visible={modalVisible} transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modal}>
-              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 16 }}>
-                <Text style={styles.modalTitle}>Create Event — {modalDate}</Text>
+        {/* ── Create / Edit Event Modal ── */}
+        <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={closeModal}>
+          <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={closeModal}>
+            <TouchableOpacity activeOpacity={1} onPress={() => {}} style={[styles.modal, { display: 'flex', flexDirection: 'column' }]}>
+              {/* Top Fixed Header */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: colors.borderColor, paddingBottom: 12, marginBottom: 12 }}>
+                <Text style={[styles.modalTitle, { marginBottom: 0 }]}>{editingEventId ? 'Edit Event' : 'Create Event'} — {modalDate}</Text>
+                <TouchableOpacity onPress={closeModal} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Feather name="x" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Scrollable Form Content */}
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ flexShrink: 1 }} contentContainerStyle={{ gap: 14, paddingBottom: 6 }}>
                 <TextInput
                   style={[styles.modalInput, saveError && !newTitle.trim() && { borderColor: colors.accentRed }]}
                   placeholder="Event title *"
@@ -664,25 +1014,64 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                   value={newNote}
                   onChangeText={setNewNote}
                 />
-                <Text style={styles.modalLabel}>Type:</Text>
+                <Text style={styles.modalLabel}>Category / Tagline * (Links directly to Tag Filters):</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={styles.chipRowContent}>
-                  {['lesson','study','challenge','deadline','assignment','break'].map(t => (
-                    <TouchableOpacity key={t} style={[styles.timeChip, newType === t && { borderColor: typeColors(t)[0], backgroundColor: typeColors(t)[1] }]} onPress={() => setNewType(t)}>
-                      <Text style={[styles.timeChipText, newType === t && { color: typeColors(t)[2], fontWeight: '700' }]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
+                  {ASSIGNMENT_TAGS.concat(EVENT_TAGS).map(t => (
+                    <TouchableOpacity
+                      key={t.key}
+                      style={[
+                        styles.timeChip,
+                        { flexDirection: 'row', alignItems: 'center' },
+                        newTag === t.key && { borderColor: t.color, backgroundColor: t.color + '26', borderWidth: 1.5 }
+                      ]}
+                      onPress={() => setNewTag(t.key)}
+                    >
+                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: t.color, marginRight: 6 }} />
+                      <Text style={[styles.timeChipText, newTag === t.key && { color: colors.textMain, fontWeight: '700' }]}>{t.key}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
-                <View style={{ flexDirection: 'row', gap: 10, marginTop: 4, zIndex: 100 }}>
-                  <TimePicker label="Start time" value={newStartTime} onChange={(v) => {
-                    setNewStartTime(v);
-                    if (v >= newEndTime) {
-                      const [h, m] = v.split(':').map(Number);
-                      const end = new Date(0, 0, 0, h, m + 30);
-                      setNewEndTime(`${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`);
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6, marginTop: 4 }}
+                  onPress={() => {
+                    const next = !isAllDay;
+                    setIsAllDay(next);
+                    if (next) {
+                      setNewStartTime('23:59');
+                      setNewEndTime('23:59');
+                      if (!newTag || newTag === 'Live Class / Lesson') setNewTag('Holidays and vacations');
+                    } else {
+                      setNewStartTime('09:00');
+                      setNewEndTime('10:00');
                     }
-                  }} />
-                  <TimePicker label="End time" value={newEndTime} onChange={setNewEndTime} minTime={newStartTime} />
-                </View>
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View style={{
+                    width: 20, height: 20, borderRadius: 5, borderWidth: 1.5,
+                    borderColor: isAllDay ? gold : colors.borderColor,
+                    backgroundColor: isAllDay ? gold : 'transparent',
+                    alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    {isAllDay && <Feather name="check" size={13} color="white" />}
+                  </View>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textMain }}>
+                    All-day event (Holiday / Vacation / Assembly / Timeline)
+                  </Text>
+                </TouchableOpacity>
+                {!isAllDay && (
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 4, zIndex: 100 }}>
+                    <TimePicker label="Start time" value={newStartTime} onChange={(v) => {
+                      setNewStartTime(v);
+                      if (v >= newEndTime) {
+                        const [h, m] = v.split(':').map(Number);
+                        const end = new Date(0, 0, 0, h, m + 30);
+                        setNewEndTime(`${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`);
+                      }
+                    }} />
+                    <TimePicker label="End time" value={newEndTime} onChange={setNewEndTime} minTime={newStartTime} />
+                  </View>
+                )}
 
                 {/* Assign to */}
                 <Text style={styles.modalLabel}>Assign to:</Text>
@@ -763,28 +1152,38 @@ export default function TeacherScheduleScreen({ navigation }: any) {
                     <Text style={styles.errorText}>{saveError}</Text>
                   </View>
                 ) : null}
-                <View style={styles.modalBtns}>
-                  <TouchableOpacity style={styles.modalCancel} onPress={() => setModalVisible(false)}>
-                    <Text style={styles.modalCancelText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.modalConfirm} onPress={createEvent} disabled={saving}>
-                    <Text style={styles.modalConfirmText}>{saving ? 'Saving…' : 'Create Event'}</Text>
-                  </TouchableOpacity>
-                </View>
               </ScrollView>
-            </View>
-          </View>
+
+              {/* Bottom Fixed Footer (Always visible without scrolling) */}
+              <View style={[styles.modalBtns, { paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.borderColor, marginTop: 12 }]}>
+                <TouchableOpacity style={styles.modalCancel} onPress={closeModal}>
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.modalConfirm} onPress={saveEvent} disabled={saving}>
+                  <Text style={styles.modalConfirmText}>{saving ? 'Saving…' : (editingEventId ? 'Save Changes' : 'Create Event')}</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </Modal>
 
-        {/* ── Event Detail Modal — assignment/challenge deadline chips (read-only) ── */}
+        {/* ── Event Detail Modal — view, edit, or delete an event ── */}
         <Modal visible={!!selectedEvent} transparent animationType="fade" onRequestClose={() => setSelectedEvent(null)}>
           <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setSelectedEvent(null)}>
             <TouchableOpacity activeOpacity={1} onPress={() => {}} style={[styles.modal, { borderLeftWidth: 4, borderLeftColor: selectedEvent?.accent || gold }]}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <Text style={[styles.modalTitle, { flex: 1 }]}>{selectedEvent?.title ?? ''}</Text>
-                <TouchableOpacity onPress={() => setSelectedEvent(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Feather name="x" size={18} color={colors.textDim} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginLeft: 8 }}>
+                  <TouchableOpacity onPress={() => selectedEvent && openEditModal(selectedEvent)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel="Edit event">
+                    <Feather name="edit-2" size={16} color={colors.textDim} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => selectedEvent && confirmDeleteEvent(selectedEvent)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel="Delete event">
+                    <Feather name="trash-2" size={16} color={colors.accentRed} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setSelectedEvent(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel="Close">
+                    <Feather name="x" size={18} color={colors.textDim} />
+                  </TouchableOpacity>
+                </View>
               </View>
               {selectedEvent?.createdAt ? (
                 <Text style={{ fontSize: 12, color: colors.textDim, marginTop: 6 }}>
@@ -843,24 +1242,28 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   todayBtnText: { fontSize: 12, fontWeight: '600', color: c.textMuted },
   weekLabel:    { flex: 1, fontSize: 13, fontWeight: '700', color: c.textMain, textAlign: 'center' },
 
+  // Layout
+  mainLayout:        { flexDirection: 'row', gap: spacing.xl },
+  calendarContainer: { flex: 1 },
+  sideCol:           { width: 260, gap: spacing.lg },
+
   // Day header
   dayHeaderRow: {
-    flexDirection: 'row', borderBottomWidth: 1,
+    flexDirection: 'row', height: 62, borderBottomWidth: 1,
     borderBottomColor: c.borderColor, marginBottom: 0,
   },
-  dayHeader:            { alignItems: 'center', paddingVertical: spacing.sm, gap: 2 },
-  dayHeaderLabel:       { fontSize: 10, fontWeight: '700', color: c.textDim, letterSpacing: 0.5 },
+  dayHeader:            { flex: 1, alignItems: 'flex-start', justifyContent: 'center', paddingLeft: 10, borderLeftWidth: 1, borderLeftColor: c.borderColor + '50' },
+  dayHeaderToday:       { backgroundColor: c.accentYellow + '12' },
+  dayHeaderLabel:       { fontSize: 13.5, fontWeight: '700', color: c.textMuted },
   dayHeaderLabelToday:  { color: c.accentYellow },
-  dayHeaderCircle:      { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  dayHeaderCircleToday: { backgroundColor: c.accentYellow },
-  dayHeaderDate:        { fontSize: 14, fontWeight: '700', color: c.textMuted },
-  dayHeaderDateToday:   { color: 'white' },
 
-  // All-day row (deadline/challenge chips, above the hourly grid)
-  allDayRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: c.borderColor },
-  allDayCol: { paddingHorizontal: 3, paddingVertical: 4, gap: 3 },
-  allDayChip: { borderLeftWidth: 3, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 3 },
-  allDayChipText: { fontSize: 10, fontWeight: '700' },
+  // All-day row (Toddle style holiday/vacation/timeline chips, above hourly grid)
+  allDayRow: { flexDirection: 'row', minHeight: 32, borderBottomWidth: 1, borderBottomColor: c.borderColor },
+  allDayCol: { paddingHorizontal: 3, paddingVertical: 4, gap: 3, minHeight: 32, borderLeftWidth: 1, borderLeftColor: c.borderColor + '50' },
+  allDayGutter: { minHeight: 32, borderBottomWidth: 1, borderBottomColor: c.borderColor, alignItems: 'flex-start', justifyContent: 'center', paddingVertical: 4, paddingLeft: 6 },
+  allDayGutterText: { fontSize: 10.5, fontWeight: '600', color: c.textDim },
+  allDayChip: { flexDirection: 'row', alignItems: 'center', borderLeftWidth: 3, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 4 },
+  allDayChipText: { flex: 1, fontSize: 11, fontWeight: '700' },
 
   // Grid
   timeColHeader: { height: 62, borderBottomWidth: 1, borderBottomColor: c.borderColor },
@@ -914,4 +1317,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   modalCancelText:  { fontSize: 13, fontWeight: '600', color: c.textMuted },
   modalConfirm:     { flex: 1, paddingVertical: 12, borderRadius: radius.md, backgroundColor: c.accentYellow, alignItems: 'center' },
   modalConfirmText: { fontSize: 13, fontWeight: '700', color: 'white' },
+  // Sidebar
+  sideCard:      { backgroundColor: c.cardDark, borderWidth: 1, borderColor: c.borderColor, borderRadius: radius.lg, padding: spacing.lg },
+  sideTitle:     { fontSize: 14, fontWeight: '700', color: c.textMain },
 });

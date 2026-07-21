@@ -22,6 +22,7 @@ import firebaseApp from '../../config/firebase';
 import OnboardingStudentBoxes from './OnboardingStudentBoxes';
 import OnboardingTeacherBoxes from './OnboardingTeacherBoxes';
 import OnboardingParentBoxes from './OnboardingParentBoxes';
+import { getSubjectsForEntry } from '../school-admin/TeachingEntriesEditor';
 
 // ── Custom Date Picker ─────────────────────────────────────
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -920,7 +921,10 @@ export default function OnboardingScreen() {
           </View>
           <Text style={styles.fieldLabel}>Subjects (select multiple)</Text>
           <View style={styles.chipRow}>
-            {SUBJECTS.map(s => (
+            {(teachGrades.length > 0
+              ? [...new Set(teachGrades.flatMap(g => getSubjectsForEntry(curriculum, g)))]
+              : SUBJECTS
+            ).map(s => (
               <TouchableOpacity key={s} style={[styles.chip, teachSubjects.includes(s) && styles.chipActive]}
                 onPress={() => toggleArrayItem(teachSubjects, s, setTeachSubjects)} activeOpacity={0.8}>
                 <Text style={[styles.chipText, teachSubjects.includes(s) && styles.chipTextActive]}>{s}</Text>

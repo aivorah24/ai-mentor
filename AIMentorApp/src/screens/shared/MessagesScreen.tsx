@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   FlatList,
+  ScrollView,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
@@ -11,17 +12,26 @@ import {
   ActivityIndicator,
   Modal,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { spacing, radius, typography } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
+import MarkdownText from '../../components/common/MarkdownText';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsFocused } from '@react-navigation/native';
 import SERVER_URL from '../../config/serverUrl';
+// ── Channels (parallel path) — group chats merged into the inbox for non-students.
+// Data stays 100% separate from the 1:1 `messages` API; if it errors, DMs still load.
+import { fetchChannels, markChannelRead, sendChannelMessage, Channel, fmtChannelTime } from '../../features/channels/api/channelsApi';
+import ChannelThreadView from '../../features/channels/components/ChannelThreadView';
+import CreateChannelModal from '../../features/channels/components/CreateChannelModal';
+import { pastelBg, pastelText, initials } from '../../features/channels/utils/avatar';
+import { isGroupIcon } from '../../features/channels/utils/icons';
 
 interface Contact {
   id: string;
@@ -50,6 +60,9 @@ interface Message {
   created_at: string;
   read_at: string | null;
   is_edited: boolean;
+  reply_to?: { id: string; senderName: string; content: string } | null;
+  reactions?: Record<string, number>;
+  myReaction?: string | null;
 }
 
 function formatTime(iso: string) {
@@ -78,16 +91,58 @@ function formatDateDivider(iso: string) {
 }
 
 const AIVORAH_EMAIL = 'system@aivorah.com';
+// WhatsApp-style categorized picker — plain Unicode, no library/CSP risk,
+// works identically on native and web since it's just Text glyphs.
+const EMOJI_CATEGORIES: { label: string; icon: string; emojis: string[] }[] = [
+  { label: 'Smileys', icon: '😀', emojis: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🥵','🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐'] },
+  { label: 'Gestures', icon: '👍', emojis: ['👍','👎','👌','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','👋','🤚','🖐️','✋','🖖','👏','🙌','🤝','🙏','✍️','💪','🦾','👊','✊','🤛','🤜'] },
+  { label: 'Hearts', icon: '❤️', emojis: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','😍','🥰'] },
+  { label: 'Animals', icon: '🐶', emojis: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞'] },
+  { label: 'Food', icon: '🍎', emojis: ['🍏','🍎','🍊','🍋','🍌','🍉','🍇','🍓','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥕','🌽','🥐','🍞','🧀','🥚','🍳','🥞','🍔','🍟','🍕','🌮','🍣','🍦','🍩','🍪','🎂','🍫','🍭','☕','🍵','🧃','🥤'] },
+  { label: 'Objects', icon: '📚', emojis: ['📚','📖','✏️','📝','📌','📎','📅','📊','📈','💻','📱','⌚','🎒','🎓','🏆','🏅','🎯','⚽','🏀','🎨','🎵','🎬','📷','💡','🔔','🔑','🎁','🎉','🎊','⭐','✨','🔥','💯','✅','❌','❗','❓','⚠️'] },
+];
+const QUICK_REACTS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 // The Aivorah system sender (assignment/challenge reminders) is shown as a friendly
 // "Learning Buddy" rather than the raw DB role ('teacher').
 function isAivorah(c?: { otherEmail?: string; otherName?: string } | null) {
   return c?.otherEmail === AIVORAH_EMAIL || c?.otherName === 'Aivorah';
 }
 function roleLabel(role: string) {
-  return role === 'teacher' ? 'Teacher' : 'Parent';
+  return role === 'teacher' || role === 'school_admin' ? 'Staff' : 'Parent';
 }
 function convoRoleLabel(c: { otherEmail?: string; otherName?: string; otherRole: string }) {
   return isAivorah(c) ? 'Learning Buddy' : roleLabel(c.otherRole);
+}
+
+function renderPersonAvatar(
+  name: string,
+  role?: string,
+  photoUrl?: string,
+  size: number = 44,
+  isAivorahItem: boolean = false,
+  colors?: any
+) {
+  const radius = size / 2;
+  if (isAivorahItem) {
+    return (
+      <View style={{ width: size, height: size, borderRadius: radius, backgroundColor: (colors?.accentYellow || '#BAA467') + '20', borderWidth: 1, borderColor: (colors?.accentYellow || '#BAA467') + '50', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Feather name="cpu" size={Math.round(size * 0.42)} color={colors?.accentYellow || '#BAA467'} />
+      </View>
+    );
+  }
+  if (photoUrl && typeof photoUrl === 'string' && photoUrl.trim()) {
+    return (
+      <Image source={{ uri: photoUrl }} style={{ width: size, height: size, borderRadius: radius, flexShrink: 0 }} />
+    );
+  }
+  const bg = pastelBg(name);
+  const fg = pastelText(name);
+  const init = initials(name);
+  return (
+    <View style={{ width: size, height: size, borderRadius: radius, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <Text style={{ fontSize: Math.round(size * 0.38), fontWeight: '700', color: fg }}>{init}</Text>
+    </View>
+  );
 }
 
 // Parse message content — may be plain text or JSON with attachment
@@ -129,6 +184,14 @@ export default function MessagesScreen(_props: any) {
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvo, setActiveConvo]     = useState<Conversation | null>(null);
+  // ── Channels parallel-path (non-students only) ──
+  const showChannels = userRole !== 'student';
+  const [channels, setChannels]           = useState<Channel[]>([]);
+  const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
+  const [showCreateChannel, setShowCreateChannel] = useState(false);
+  const [showNewMenu, setShowNewMenu]     = useState(false);
+  const [newMenuPos, setNewMenuPos]       = useState({ top: 120, left: 340 });
+  const newBtnRef = useRef<any>(null);
   const [messages, setMessages]           = useState<Message[]>([]);
   const [inputText, setInputText]         = useState('');
   const [loadingConvos, setLoadingConvos] = useState(false);
@@ -147,7 +210,8 @@ export default function MessagesScreen(_props: any) {
   // Attachment
   const [uploading, setUploading]     = useState(false);
   const [attachment, setAttachment]   = useState<{ url: string; name: string; size: number; type: string } | null>(null);
-  const [convoFilter, setConvoFilter] = useState<'all' | 'unread' | 'starred'>('all');
+  const [convoFilter, setConvoFilter] = useState<'all' | 'unread' | 'starred' | 'staff'>('all');
+  const [convoSearch, setConvoSearch] = useState('');
   const fileInputRef = useRef<any>(null);
 
   const flatListRef        = useRef<FlatList>(null);
@@ -165,9 +229,9 @@ export default function MessagesScreen(_props: any) {
       const data = await res.json();
       if (Array.isArray(data)) {
         // Client-side role filter (belt-and-suspenders in case server hasn't restarted):
-        // teacher sees parents, parent sees teachers
+        // teacher sees parents + staff (colleagues, school admin); parent sees teachers
         const filtered = data.filter((c: Conversation) => {
-          if (userRole === 'teacher') return c.otherRole === 'parent';
+          if (userRole === 'teacher') return ['parent', 'teacher', 'school_admin'].includes(c.otherRole);
           if (userRole === 'parent')  return c.otherRole === 'teacher';
           return true;
         });
@@ -218,7 +282,13 @@ export default function MessagesScreen(_props: any) {
     finally { setLoadingContacts(false); }
   };
 
-  useEffect(() => { loadConversations(); }, []);
+  // Channels load in parallel and never block the DM list (isolated try/catch).
+  const loadChannels = async () => {
+    if (!showChannels || !userEmail) return;
+    try { setChannels(await fetchChannels(userEmail)); } catch {}
+  };
+
+  useEffect(() => { loadConversations(); loadChannels(); }, []);
 
   useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current);
@@ -242,6 +312,8 @@ export default function MessagesScreen(_props: any) {
   }, [activeConvo, isFocused]);
 
   const openConversation = (convo: Conversation) => {
+    setActiveChannel(null); // parallel-path mutual exclusion
+    setReplyTo(null);
     // Optimistically clear the badge on this conversation immediately
     setConversations(prev => prev.map(c =>
       c.otherEmail === convo.otherEmail ? { ...c, unreadCount: 0 } : c
@@ -249,6 +321,13 @@ export default function MessagesScreen(_props: any) {
     setActiveConvo(convo);
     setLoadingThread(true);
     loadThread(convo.otherEmail, true);
+  };
+
+  const openChannel = (ch: Channel) => {
+    setActiveConvo(null); // parallel-path mutual exclusion
+    setChannels(prev => prev.map(c => c.id === ch.id ? { ...c, unread: 0 } : c));
+    markChannelRead(userEmail, ch.id);
+    setActiveChannel(ch);
   };
 
   const startEdit = (msg: Message) => {
@@ -274,10 +353,74 @@ export default function MessagesScreen(_props: any) {
   const [focusedMsgId, setFocusedMsgId] = useState<string | null>(null);
   // context menu (right-click / long-press)
   const [contextMenu, setContextMenu] = useState<{ msgId: string; x: number; y: number; isMine: boolean } | null>(null);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [emojiCategory, setEmojiCategory] = useState(0);
+  const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+  const [forwardMsg, setForwardMsg] = useState<Message | null>(null);
+
+  // Auto-close emoji picker and focused message when clicking anywhere outside on Web
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const handleOutsideClick = () => {
+      if (showEmoji) setShowEmoji(false);
+      if (focusedMsgId) setFocusedMsgId(null);
+    };
+    if (showEmoji || focusedMsgId) {
+      const timer = setTimeout(() => {
+        window.addEventListener('click', handleOutsideClick);
+      }, 10);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('click', handleOutsideClick);
+      };
+    }
+  }, [showEmoji, focusedMsgId]);
+
+  const copyMessageText = async (text: string, msgId: string) => {
+    try {
+      if (Platform.OS === 'web' && (navigator as any)?.clipboard?.writeText) {
+        await (navigator as any).clipboard.writeText(text);
+        setCopiedMsgId(msgId);
+        setTimeout(() => setCopiedMsgId((v) => (v === msgId ? null : v)), 1500);
+      }
+    } catch {}
+  };
+
+  const toggleReaction = async (msgId: string, emoji: string) => {
+    try {
+      await fetch(`${SERVER_URL}/messages/${msgId}/react`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail, emoji }),
+      });
+      if (activeConvo) await loadThread(activeConvo.otherEmail);
+    } catch {}
+  };
+
+  const forwardMessage = async (target: { kind: 'convo'; email: string; name: string } | { kind: 'channel'; id: string }) => {
+    if (!forwardMsg) return;
+    const text = parseContent(forwardMsg.content).text || '';
+    try {
+      if (target.kind === 'convo') {
+        await fetch(`${SERVER_URL}/messages`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            senderEmail: userEmail, senderName: userName, senderRole: userRole,
+            recipientEmail: target.email, recipientName: target.name, content: forwardMsg.content,
+          }),
+        });
+      } else {
+        await sendChannelMessage(userEmail, target.id, text);
+      }
+    } catch {}
+    setForwardMsg(null);
+  };
 
   // Start a new conversation from contact picker
   const startConversation = (contact: Contact) => {
     setShowContacts(false);
+    setActiveChannel(null);
+    setReplyTo(null);
     const convo: Conversation = {
       otherEmail:    contact.email,
       otherName:     contact.name,
@@ -352,7 +495,10 @@ export default function MessagesScreen(_props: any) {
     if ((!inputText.trim() && !attachment) || !activeConvo || sending) return;
     setSending(true);
     const text = inputText.trim();
+    const replyToId = replyTo?.id;
     setInputText('');
+    setReplyTo(null);
+    setShowEmoji(false);
     const att = attachment;
     setAttachment(null);
     try {
@@ -366,6 +512,7 @@ export default function MessagesScreen(_props: any) {
           recipientEmail: activeConvo.otherEmail,
           recipientName:  activeConvo.otherName,
           content:        text,
+          ...(replyToId ? { replyToId } : {}),
           ...(att ? {
             attachmentUrl:  att.url,
             attachmentName: att.name,
@@ -386,6 +533,7 @@ export default function MessagesScreen(_props: any) {
             parentEmail: userEmail,
             parentName: userName,
             message: text,
+            role: userRole,
           }),
         }).then(() => loadThread(activeConvo.otherEmail)).catch(() => {});
       }
@@ -393,27 +541,20 @@ export default function MessagesScreen(_props: any) {
     finally { setSending(false); }
   };
 
-  // ── Conversation List ──────────────────────────────────
-  const renderConvoItem = ({ item, index }: { item: Conversation; index: number }) => {
+  // ── Conversation List — WhatsApp-style: no date-group headers, just
+  // newest-first ordering (the server already sorts by lastMessageAt desc). ──
+  const renderConvoItem = ({ item }: { item: Conversation; index: number }) => {
     const isActive = activeConvo?.otherEmail === item.otherEmail;
     const isToday = sameDay(new Date(item.lastMessageAt), new Date());
-    const prevItem = index > 0 ? filteredConvos[index - 1] : null;
-    const prevIsToday = prevItem ? sameDay(new Date(prevItem.lastMessageAt), new Date()) : null;
-    const showTodayHeader = isToday && (index === 0 || prevIsToday === false);
-    const showEarlierHeader = !isToday && (index === 0 || prevIsToday === true);
 
     return (
       <>
-        {showTodayHeader && <Text style={styles.convoSectionLabel}>TODAY</Text>}
-        {showEarlierHeader && <Text style={styles.convoSectionLabel}>EARLIER</Text>}
         <TouchableOpacity
           style={[styles.convoItem, isActive && styles.convoItemActive]}
           onPress={() => openConversation(item)}
           activeOpacity={0.7}
         >
-          <View style={styles.convoAvatar}>
-            <Feather name={isAivorah(item) ? 'cpu' : (item.otherRole === 'teacher' ? 'book-open' : 'user')} size={18} color={colors.accentYellow} />
-          </View>
+          {renderPersonAvatar(item.otherName, item.otherRole, (item as any).photoUrl, 44, isAivorah(item), colors)}
           <View style={{ flex: 1 }}>
             <View style={styles.convoHeader}>
               <Text style={styles.convoName} numberOfLines={1}>{item.otherName}</Text>
@@ -439,11 +580,38 @@ export default function MessagesScreen(_props: any) {
   };
 
   const totalUnread = conversations.reduce((s, c) => s + (c.unreadCount || 0), 0);
+  const convoSearchLower = convoSearch.trim().toLowerCase();
   const filteredConvos = conversations.filter(c => {
-    if (convoFilter === 'unread') return c.unreadCount > 0;
-    if (convoFilter === 'starred') return isAivorah(c);
+    // "Staff" = DMs with a teacher/school admin (colleague chat), same
+    // people who show under the unified "Staff" role pill, plus staff-only
+    // broadcast channels (handled separately below).
+    if (convoFilter === 'staff' && !['teacher', 'school_admin'].includes(c.otherRole)) return false;
+    if (convoFilter === 'unread' && c.unreadCount <= 0) return false;
+    if (convoFilter === 'starred' && !isAivorah(c)) return false;
+    if (convoSearchLower && !c.otherName.toLowerCase().includes(convoSearchLower)) return false;
     return true;
   });
+
+  // ── Unified inbox — WhatsApp-style: channels and DMs share one list sorted
+  // by whoever has the most recent activity, not "channels always on top". ──
+  type InboxItem = { key: string; time: number } & ({ kind: 'channel'; data: Channel } | { kind: 'convo'; data: Conversation });
+  const unifiedInbox: InboxItem[] = useMemo(() => {
+    const items: InboxItem[] = [];
+    if (showChannels && convoFilter !== 'starred') {
+      let chList = channels;
+      if (convoFilter === 'staff') chList = chList.filter(c => c.category === 'staff');
+      else if (convoFilter === 'unread') chList = chList.filter(c => c.unread > 0);
+      if (convoSearchLower) chList = chList.filter(c => c.name.toLowerCase().includes(convoSearchLower));
+      for (const c of chList) {
+        items.push({ kind: 'channel', data: c, key: `ch-${c.id}`, time: c.lastMessage ? new Date(c.lastMessage.at).getTime() : 0 });
+      }
+    }
+    for (const c of filteredConvos) {
+      items.push({ kind: 'convo', data: c, key: `dm-${c.otherEmail}`, time: new Date(c.lastMessageAt).getTime() });
+    }
+    items.sort((a, b) => b.time - a.time);
+    return items;
+  }, [channels, filteredConvos, convoFilter, convoSearchLower, showChannels]);
 
   // ── Auto-Logout card (Aivorah special message) ────────────
   const renderAutoLogoutCard = (item: Message, index: number) => {
@@ -693,16 +861,18 @@ export default function MessagesScreen(_props: any) {
           <Text style={styles.dateDividerText}>{formatDateDivider(item.created_at)}</Text>
         </View>
       )}
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={() => { setContextMenu(null); setFocusedMsgId(focusedMsgId === item.id ? null : (isMine ? item.id : null)); }}
-        onLongPress={() => setContextMenu({ msgId: item.id, x: 0, y: 0, isMine })}
+      <View
         {...(Platform.OS === 'web' ? {
           onContextMenu: (e: any) => {
             e.preventDefault?.();
-            setContextMenu({ msgId: item.id, x: e.clientX ?? 0, y: e.clientY ?? 0, isMine });
+            setContextMenu({ msgId: item.id, x: e.clientX ?? e.nativeEvent?.pageX ?? 0, y: e.clientY ?? e.nativeEvent?.pageY ?? 0, isMine });
           }
         } : {})}
+      >
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => { setContextMenu(null); setFocusedMsgId(focusedMsgId === item.id ? null : (isMine ? item.id : null)); }}
+        onLongPress={(e: any) => setContextMenu({ msgId: item.id, x: e.nativeEvent?.pageX ?? 0, y: e.nativeEvent?.pageY ?? 0, isMine })}
       >
         <View style={[styles.bubbleWrap, isMine ? styles.bubbleWrapRight : styles.bubbleWrapLeft]}>
           {/* Edit button — shows when own message is tapped */}
@@ -712,6 +882,12 @@ export default function MessagesScreen(_props: any) {
             </TouchableOpacity>
           )}
           <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
+            {item.reply_to && (
+              <View style={[styles.replyQuote, { borderLeftColor: isMine ? 'rgba(11,11,11,0.35)' : colors.accentYellow }]}>
+                <Text style={[styles.replyQuoteName, { color: isMine ? 'rgba(11,11,11,0.7)' : colors.accentYellow }]} numberOfLines={1}>{item.reply_to.senderName}</Text>
+                <Text style={[styles.replyQuoteText, { color: isMine ? 'rgba(11,11,11,0.6)' : colors.textDim }]} numberOfLines={2}>{parseContent(item.reply_to.content).text || 'Attachment'}</Text>
+              </View>
+            )}
             {(() => {
               const parsed = parseContent(item.content);
               return (
@@ -743,15 +919,38 @@ export default function MessagesScreen(_props: any) {
                     </TouchableOpacity>
                   )}
                   {parsed.text ? (
-                    <Text style={[styles.bubbleText, isMine ? styles.bubbleTextMine : styles.bubbleTextTheirs]}>
-                      {parsed.text}
-                    </Text>
+                    item.sender_email === AIVORAH_EMAIL ? (
+                      <MarkdownText
+                        text={parsed.text}
+                        style={[styles.bubbleText, styles.bubbleTextTheirs]}
+                        boldStyle={styles.bubbleTextBold}
+                      />
+                    ) : (
+                      <Text style={[styles.bubbleText, isMine ? styles.bubbleTextMine : styles.bubbleTextTheirs]}>
+                        {parsed.text}
+                      </Text>
+                    )
                   ) : null}
                 </>
               );
             })()}
           </View>
+          {!!item.reactions && Object.keys(item.reactions).length > 0 && (
+            <View style={[styles.reactionsRow, isMine && { alignSelf: 'flex-end' }]}>
+              {Object.entries(item.reactions).map(([emoji, count]) => (
+                <TouchableOpacity
+                  key={emoji}
+                  style={[styles.reactionPill, item.myReaction === emoji && styles.reactionPillMine]}
+                  onPress={() => toggleReaction(item.id, emoji)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.reactionPillText}>{emoji} {count}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
           <View style={styles.bubbleMeta}>
+            {copiedMsgId === item.id && <Text style={styles.copiedBadge}>Copied</Text>}
             {item.is_edited && <Text style={styles.editedLabel}>edited</Text>}
             <Text style={styles.bubbleTime}>{formatTime(item.created_at)}</Text>
             {isMine && (
@@ -760,9 +959,20 @@ export default function MessagesScreen(_props: any) {
                 {seen && <Feather name="check" size={11} color={colors.accentYellow} style={{ marginLeft: -6 }} />}
               </View>
             )}
+            {/* Always-tappable entry point for Copy/Reply/Forward/React — long-press
+                and right-click also work, but this guarantees discoverability. */}
+            <TouchableOpacity
+              style={styles.moreBtn}
+              onPress={(e: any) => setContextMenu({ msgId: item.id, x: e.nativeEvent?.pageX ?? e.clientX ?? 0, y: e.nativeEvent?.pageY ?? e.clientY ?? 0, isMine })}
+              activeOpacity={0.6}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Feather name="more-horizontal" size={14} color={colors.textDim} />
+            </TouchableOpacity>
           </View>
         </View>
       </TouchableOpacity>
+      </View>
       </>
     );
   };
@@ -785,8 +995,18 @@ export default function MessagesScreen(_props: any) {
             </View>
             {userRole !== 'student' && (
               <TouchableOpacity
+                ref={newBtnRef}
                 style={styles.newBtn}
-                onPress={() => { setShowContacts(true); loadContacts(); }}
+                onPress={() => {
+                  const canCreate = userRole === 'teacher' || userRole === 'school_admin' || userRole === 'super_admin';
+                  if (canCreate) {
+                    // Anchor the chooser just below the New button (not the screen edge).
+                    newBtnRef.current?.measureInWindow?.((x: number, y: number, w: number, h: number) => {
+                      setNewMenuPos({ top: y + h + 6, left: Math.max(12, x + w - 224) });
+                    });
+                    setShowNewMenu(true);
+                  } else { setShowContacts(true); loadContacts(); } // parents: direct New chat
+                }}
                 activeOpacity={0.7}
               >
                 <Feather name="edit" size={13} color={colors.accentYellow} />
@@ -795,24 +1015,56 @@ export default function MessagesScreen(_props: any) {
             )}
           </View>
 
-          {/* Filter tabs */}
-          <View style={styles.filterRow}>
-            {(['all', 'unread', 'starred'] as const).map(tab => {
-              const count = tab === 'all' ? conversations.length : tab === 'unread' ? totalUnread : conversations.filter(c => isAivorah(c)).length;
+          {/* Search — filters conversations & channels by name, WhatsApp-style. */}
+          <View style={styles.convoSearchBar}>
+            <Feather name="search" size={14} color={colors.textDim} />
+            <TextInput
+              style={styles.convoSearchInput}
+              value={convoSearch}
+              onChangeText={setConvoSearch}
+              placeholder="Search chats and groups…"
+              placeholderTextColor={colors.textDim}
+            />
+            {!!convoSearch && (
+              <TouchableOpacity onPress={() => setConvoSearch('')}><Feather name="x" size={14} color={colors.textDim} /></TouchableOpacity>
+            )}
+          </View>
+
+          {/* Filter tabs — students keep the lean DM tabs; everyone else gets the
+              unified inbox tabs (channels merged in). Horizontally scrollable
+              so labels never clip on narrower panels. */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterRow}
+            contentContainerStyle={styles.filterRowContent}
+            nestedScrollEnabled
+            {...(Platform.OS === 'web' ? { persistentScrollbar: false } : {})}
+          >
+            {(showChannels ? (['all', 'unread', 'staff'] as const) : (['all', 'unread', 'starred'] as const)).map(tab => {
+              const chUnread = channels.reduce((n, c) => n + c.unread, 0);
+              const count = tab === 'all' ? conversations.length + channels.length
+                : tab === 'unread' ? totalUnread + chUnread
+                : tab === 'staff' ? channels.filter(c => c.category === 'staff').length + conversations.filter(c => ['teacher', 'school_admin'].includes(c.otherRole)).length
+                : conversations.filter(c => isAivorah(c)).length;
               const active = convoFilter === tab;
+              const icon = tab === 'all' ? 'message-square' : tab === 'unread' ? 'mail' : tab === 'staff' ? 'users' : 'star';
               return (
                 <TouchableOpacity key={tab} style={[styles.filterTab, active && styles.filterTabActive]} onPress={() => setConvoFilter(tab)} activeOpacity={0.7}>
-                  <Feather name={tab === 'all' ? 'message-square' : tab === 'unread' ? 'mail' : 'star'} size={12} color={active ? colors.accentYellow : colors.textDim} />
+                  <Feather name={icon as any} size={11} color={active ? colors.accentYellow : colors.textDim} />
                   <Text style={[styles.filterTabText, active && styles.filterTabTextActive]}>{tab.charAt(0).toUpperCase() + tab.slice(1)}</Text>
                   {count > 0 && <View style={[styles.filterBadge, active && styles.filterBadgeActive]}><Text style={[styles.filterBadgeText, active && { color: '#0B0B0B' }]}>{count}</Text></View>}
                 </TouchableOpacity>
               );
             })}
-          </View>
+          </ScrollView>
 
+          {/* Unified inbox — channels and DMs share one scrollable, recency-
+              sorted list (WhatsApp-style), instead of channels being pinned
+              above the DM list regardless of which is more recent. */}
           {loadingConvos ? (
             <ActivityIndicator color={colors.accentYellow} style={{ marginTop: 24 }} />
-          ) : filteredConvos.length === 0 ? (
+          ) : unifiedInbox.length === 0 ? (
             <View style={styles.emptyState}>
               <Feather name="message-square" size={32} color={colors.textDim} />
               <Text style={styles.emptyText}>No messages yet</Text>
@@ -825,18 +1077,35 @@ export default function MessagesScreen(_props: any) {
             </View>
           ) : (
             <FlatList
-              data={filteredConvos}
-              keyExtractor={i => i.otherEmail}
-              renderItem={({ item, index }) => renderConvoItem({ item, index })}
+              data={unifiedInbox}
+              keyExtractor={i => i.key}
+              renderItem={({ item }) => item.kind === 'channel' ? (
+                <TouchableOpacity style={styles.chRow} onPress={() => openChannel(item.data)} activeOpacity={0.75}>
+                  <View style={[styles.chBadge, { backgroundColor: pastelBg(item.data.name) }]}><Feather name={isGroupIcon(item.data.iconLabel) ? item.data.iconLabel : 'users'} size={18} color={pastelText(item.data.name)} /></View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={styles.chName} numberOfLines={1}>{item.data.name}</Text>
+                      <Text style={styles.chTime}>{item.data.lastMessage ? fmtChannelTime(item.data.lastMessage.at) : ''}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                      <Text style={styles.chSub} numberOfLines={1}>{item.data.memberCount} members{item.data.posting === 'staff_only' ? ' · broadcast' : ''}{item.data.lastMessage ? ` · ${item.data.lastMessage.body}` : ''}</Text>
+                      {item.data.unread > 0 && <View style={styles.chUnread}><Text style={styles.chUnreadText}>{item.data.unread}</Text></View>}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ) : renderConvoItem({ item: item.data, index: 0 })}
               showsVerticalScrollIndicator={false}
               style={{ flex: 1 }}
             />
           )}
 
-          {/* Aivorah bottom banner */}
+          {/* Aivorah bottom banner — opens the existing thread, or starts a
+              fresh one if this user has never messaged Aivorah before (the
+              banner previously did nothing in that case). */}
           <TouchableOpacity style={styles.aivBanner} activeOpacity={0.8} onPress={() => {
             const aiConvo = conversations.find(c => isAivorah(c));
             if (aiConvo) openConversation(aiConvo);
+            else startConversation({ id: AIVORAH_EMAIL, email: AIVORAH_EMAIL, name: 'Aivorah', role: 'teacher', context: '' });
           }}>
             <View style={styles.aivBannerIcon}><Feather name="cpu" size={22} color={colors.accentYellow} /></View>
             <Text style={styles.aivBannerText}>Aivorah is here to <Text style={{ color: colors.accentYellow, fontWeight: '700' }}>support</Text>{'\n'}your child's learning journey.</Text>
@@ -844,9 +1113,11 @@ export default function MessagesScreen(_props: any) {
           </TouchableOpacity>
         </View>
 
-        {/* ── Right panel: chat thread ── */}
+        {/* ── Right panel: chat thread (channel takes over via parallel path) ── */}
         <View style={styles.chatPanel}>
-          {!activeConvo ? (
+          {activeChannel ? (
+            <ChannelThreadView channel={activeChannel} onBack={() => { setActiveChannel(null); loadChannels(); }} />
+          ) : !activeConvo ? (
             <View style={styles.noConvoState}>
               <Feather name="message-circle" size={48} color={colors.textDim} />
               <Text style={styles.noConvoText}>Select a conversation</Text>
@@ -864,13 +1135,7 @@ export default function MessagesScreen(_props: any) {
             >
               {/* Chat header */}
               <View style={[styles.chatHeader, isAivorah(activeConvo) && styles.chatHeaderAivorah]}>
-                <View style={[styles.chatAvatar, isAivorah(activeConvo) && styles.chatAvatarAivorah]}>
-                  <Feather
-                    name={isAivorah(activeConvo) ? 'cpu' : (activeConvo.otherRole === 'teacher' ? 'book-open' : 'user')}
-                    size={isAivorah(activeConvo) ? 18 : 16}
-                    color={colors.accentYellow}
-                  />
-                </View>
+                {renderPersonAvatar(activeConvo.otherName, activeConvo.otherRole, (activeConvo as any).photoUrl, 38, isAivorah(activeConvo), colors)}
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.chatName, isAivorah(activeConvo) && { fontSize: 16, fontWeight: '800' }]}>{activeConvo.otherName}</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -897,20 +1162,57 @@ export default function MessagesScreen(_props: any) {
               {loadingThread ? (
                 <ActivityIndicator color={colors.accentYellow} style={{ flex: 1 }} />
               ) : (
-                <FlatList
-                  ref={flatListRef}
-                  data={messages}
-                  keyExtractor={i => i.id}
-                  renderItem={renderMessage}
-                  contentContainerStyle={styles.messageList}
-                  showsVerticalScrollIndicator={false}
-                  onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-                  ListEmptyComponent={
-                    <View style={styles.noMessagesState}>
-                      <Text style={styles.emptyText}>No messages yet. Say hello!</Text>
-                    </View>
-                  }
-                />
+                <>
+                  {showEmoji && (
+                    <TouchableOpacity
+                      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10 }}
+                      activeOpacity={1}
+                      onPress={() => setShowEmoji(false)}
+                    />
+                  )}
+                  <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    keyExtractor={i => i.id}
+                    renderItem={renderMessage}
+                    contentContainerStyle={styles.messageList}
+                    showsVerticalScrollIndicator={false}
+                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                    {...(Platform.OS === 'web' ? {
+                      onClick: () => {
+                        if (showEmoji) setShowEmoji(false);
+                        if (focusedMsgId) setFocusedMsgId(null);
+                      }
+                    } : {})}
+                    onTouchStart={() => {
+                      if (showEmoji) setShowEmoji(false);
+                      if (focusedMsgId) setFocusedMsgId(null);
+                    }}
+                    onScrollBeginDrag={() => {
+                      if (showEmoji) setShowEmoji(false);
+                      if (focusedMsgId) setFocusedMsgId(null);
+                    }}
+                    ListEmptyComponent={
+                      <View style={styles.noMessagesState}>
+                        <Text style={styles.emptyText}>No messages yet. Say hello!</Text>
+                      </View>
+                    }
+                  />
+                </>
+              )}
+
+              {/* Reply preview — quoting the message being replied to */}
+              {replyTo && userRole !== 'student' && (
+                <View style={styles.replyPreviewRow}>
+                  <Feather name="corner-up-left" size={14} color={colors.accentYellow} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.replyPreviewName}>{replyTo.sender_email === userEmail ? 'You' : replyTo.sender_name}</Text>
+                    <Text style={styles.replyPreviewText} numberOfLines={1}>{parseContent(replyTo.content).text || 'Attachment'}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setReplyTo(null)} activeOpacity={0.7}>
+                    <Feather name="x" size={16} color={colors.textDim} />
+                  </TouchableOpacity>
+                </View>
               )}
 
               {/* Attachment preview */}
@@ -931,49 +1233,89 @@ export default function MessagesScreen(_props: any) {
                   <Text style={{ fontSize: 12, color: colors.textDim }}>Messages from your teacher or parent appear here.</Text>
                 </View>
               ) : (
-                <View style={styles.inputRow}>
-                  {Platform.OS === 'web' && (
+                <View>
+                  <View style={styles.inputRow}>
+                    {Platform.OS === 'web' && (
+                      <TouchableOpacity
+                        style={styles.attachBtn}
+                        onPress={pickFile}
+                        disabled={uploading || sending}
+                        activeOpacity={0.7}
+                      >
+                        {uploading
+                          ? <ActivityIndicator size="small" color={colors.accentYellow} />
+                          : <Feather name="paperclip" size={18} color={colors.accentYellow} />
+                        }
+                      </TouchableOpacity>
+                    )}
                     <TouchableOpacity
                       style={styles.attachBtn}
-                      onPress={pickFile}
-                      disabled={uploading || sending}
+                      onPress={() => setShowEmoji((v) => !v)}
+                      {...(Platform.OS === 'web' ? { onClick: (e: any) => e.stopPropagation?.() } : {})}
                       activeOpacity={0.7}
                     >
-                      {uploading
-                        ? <ActivityIndicator size="small" color={colors.accentYellow} />
-                        : <Feather name="paperclip" size={18} color={colors.accentYellow} />
+                      <Feather name="smile" size={18} color={colors.accentYellow} />
+                    </TouchableOpacity>
+                    <TextInput
+                      style={styles.input}
+                      value={inputText}
+                      onChangeText={setInputText}
+                      placeholder={`Message ${activeConvo.otherName}...`}
+                      placeholderTextColor={colors.textDim}
+                      multiline
+                      maxLength={1000}
+                      onKeyPress={(e: any) => {
+                        if (Platform.OS === 'web' && e.nativeEvent?.key === 'Enter' && !e.nativeEvent?.shiftKey) {
+                          e.preventDefault?.();
+                          if (inputText.trim() || attachment) sendMessage();
+                        }
+                      }}
+                    />
+                    <TouchableOpacity
+                      style={[styles.sendBtn, (!inputText.trim() && !attachment || sending) && styles.sendBtnDisabled]}
+                      onPress={sendMessage}
+                      disabled={(!inputText.trim() && !attachment) || sending}
+                      activeOpacity={0.7}
+                    >
+                      {sending
+                        ? <ActivityIndicator size="small" color="white" />
+                        : <Feather name="send" size={16} color="white" />
                       }
                     </TouchableOpacity>
-                  )}
-                  <TextInput
-                    style={styles.input}
-                    value={inputText}
-                    onChangeText={setInputText}
-                    placeholder={`Message ${activeConvo.otherName}...`}
-                    placeholderTextColor={colors.textDim}
-                    multiline
-                    maxLength={1000}
-                    onKeyPress={(e: any) => {
-                      if (Platform.OS === 'web' && e.nativeEvent?.key === 'Enter' && !e.nativeEvent?.shiftKey) {
-                        e.preventDefault?.();
-                        if (inputText.trim() || attachment) sendMessage();
-                      }
-                    }}
-                  />
-                  <TouchableOpacity
-                    style={[styles.sendBtn, (!inputText.trim() && !attachment || sending) && styles.sendBtnDisabled]}
-                    onPress={sendMessage}
-                    disabled={(!inputText.trim() && !attachment) || sending}
-                    activeOpacity={0.7}
-                  >
-                    {sending
-                      ? <ActivityIndicator size="small" color="white" />
-                      : <Feather name="send" size={16} color="white" />
-                    }
-                  </TouchableOpacity>
+                  </View>
                 </View>
               )}
             </KeyboardAvoidingView>
+          )}
+
+          {/* Emoji picker — floats above the composer as an overlay spanning the
+              whole chat panel, so tapping anywhere outside (message list included)
+              closes it, WhatsApp-style. */}
+          {showEmoji && (
+            <>
+              <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => setShowEmoji(false)} />
+              <View style={styles.emojiPickerFloating}>
+                <View style={styles.emojiCategoryTabs}>
+                  {EMOJI_CATEGORIES.map((cat, i) => (
+                    <TouchableOpacity
+                      key={cat.label}
+                      style={[styles.emojiCategoryTab, emojiCategory === i && styles.emojiCategoryTabActive]}
+                      onPress={() => setEmojiCategory(i)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.emojiCategoryIcon}>{cat.icon}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <ScrollView style={styles.emojiPanel} contentContainerStyle={styles.emojiPanelContent} nestedScrollEnabled>
+                  {EMOJI_CATEGORIES[emojiCategory].emojis.map((e, i) => (
+                    <TouchableOpacity key={`${e}-${i}`} onPress={() => setInputText((t) => t + e)} activeOpacity={0.6} style={styles.emojiCell}>
+                      <Text style={styles.emojiItem}>{e}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </>
           )}
         </View>
       </View>
@@ -1004,46 +1346,198 @@ export default function MessagesScreen(_props: any) {
       </Modal>
 
       {/* ── Context Menu (right-click / long-press on message) ── */}
-      {contextMenu && (
-        <Modal visible transparent animationType="fade" onRequestClose={() => setContextMenu(null)}>
-          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setContextMenu(null)}>
-            <View style={[styles.contextMenuBox, Platform.OS === 'web' && contextMenu.x > 0
-              ? { position: 'absolute', left: contextMenu.x, top: contextMenu.y }
-              : { position: 'absolute', bottom: 120, alignSelf: 'center' }
-            ]}>
-              {contextMenu.isMine && (
-                <TouchableOpacity style={styles.contextMenuItem} activeOpacity={0.7} onPress={() => {
-                  const msg = messages.find(m => m.id === contextMenu.msgId);
-                  if (msg) { setEditingMsg(msg); setEditText(parseContent(msg.content).text || ''); }
-                  setContextMenu(null);
-                }}>
-                  <Feather name="edit-2" size={14} color={colors.accentYellow} />
-                  <Text style={styles.contextMenuText}>Edit</Text>
-                </TouchableOpacity>
-              )}
-              {contextMenu.isMine && (
-                <TouchableOpacity style={styles.contextMenuItem} activeOpacity={0.7} onPress={() => {
-                  deleteMessage(contextMenu.msgId);
-                  setContextMenu(null);
-                }}>
-                  <Feather name="trash-2" size={14} color={colors.accentRed} />
-                  <Text style={[styles.contextMenuText, { color: colors.accentRed }]}>Delete</Text>
-                </TouchableOpacity>
-              )}
-              {!contextMenu.isMine && (
-                <TouchableOpacity style={styles.contextMenuItem} activeOpacity={0.7} onPress={() => {
-                  const msg = messages.find(m => m.id === contextMenu.msgId);
-                  if (msg) setInputText(parseContent(msg.content).text || '');
-                  setContextMenu(null);
-                }}>
-                  <Feather name="corner-up-left" size={14} color={colors.textMuted} />
-                  <Text style={styles.contextMenuText}>Reply</Text>
-                </TouchableOpacity>
-              )}
+      {contextMenu && (() => {
+        const winW = Dimensions.get('window').width;
+        const winH = Dimensions.get('window').height;
+        const menuW = 230;
+        const menuH = contextMenu.isMine ? 330 : 250;
+        const hasCoords = contextMenu.x > 0 || contextMenu.y > 0;
+
+        const clampedLeft = hasCoords
+          ? Math.min(Math.max(16, contextMenu.x - (contextMenu.isMine ? menuW - 24 : 24)), winW - menuW - 16)
+          : undefined;
+        const clampedTop = hasCoords
+          ? Math.min(Math.max(30, contextMenu.y - 10), winH - menuH - 30)
+          : undefined;
+
+        return (
+          <Modal visible transparent animationType="fade" onRequestClose={() => setContextMenu(null)}>
+            <TouchableOpacity
+              style={[styles.contextMenuOverlay, !hasCoords && { justifyContent: 'center', alignItems: 'center' }]}
+              activeOpacity={1}
+              onPress={() => setContextMenu(null)}
+            >
+              <View
+                style={hasCoords ? {
+                  position: 'absolute',
+                  left: clampedLeft,
+                  top: clampedTop,
+                  width: menuW,
+                } : {
+                  width: menuW,
+                  alignSelf: contextMenu.isMine ? 'flex-end' : 'flex-start',
+                  marginHorizontal: 32,
+                }}
+                onStartShouldSetResponder={() => true}
+                onTouchEnd={(e) => e.stopPropagation?.()}
+                {...(Platform.OS === 'web' ? { onClick: (e: any) => e.stopPropagation?.() } : {})}
+              >
+                <View style={styles.quickReactRow}>
+                  {QUICK_REACTS.map((e) => (
+                    <TouchableOpacity
+                      key={e}
+                      onPress={() => { toggleReaction(contextMenu.msgId, e); setContextMenu(null); }}
+                      {...(Platform.OS === 'web' ? { onClick: () => { toggleReaction(contextMenu.msgId, e); setContextMenu(null); } } : {})}
+                      activeOpacity={0.6}
+                    >
+                      <Text style={styles.quickReactEmoji}>{e}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <View style={styles.contextMenuBox}>
+                  <TouchableOpacity
+                    style={styles.contextMenuItem}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      const msg = messages.find(m => m.id === contextMenu.msgId);
+                      if (msg) copyMessageText(parseContent(msg.content).text || '', msg.id);
+                      setContextMenu(null);
+                    }}
+                    {...(Platform.OS === 'web' ? { onClick: () => {
+                      const msg = messages.find(m => m.id === contextMenu.msgId);
+                      if (msg) copyMessageText(parseContent(msg.content).text || '', msg.id);
+                      setContextMenu(null);
+                    } } : {})}
+                  >
+                    <Feather name="copy" size={17} color="#B8B9BC" />
+                    <Text style={styles.contextMenuText}>Copy</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.contextMenuItem}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      const msg = messages.find(m => m.id === contextMenu.msgId);
+                      if (msg) setReplyTo(msg);
+                      setContextMenu(null);
+                    }}
+                    {...(Platform.OS === 'web' ? { onClick: () => {
+                      const msg = messages.find(m => m.id === contextMenu.msgId);
+                      if (msg) setReplyTo(msg);
+                      setContextMenu(null);
+                    } } : {})}
+                  >
+                    <Feather name="corner-up-left" size={17} color="#B8B9BC" />
+                    <Text style={styles.contextMenuText}>Reply</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.contextMenuItem}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      const msg = messages.find(m => m.id === contextMenu.msgId);
+                      if (msg) { setForwardMsg(msg); if (!contacts.length) loadContacts(); }
+                      setContextMenu(null);
+                    }}
+                    {...(Platform.OS === 'web' ? { onClick: () => {
+                      const msg = messages.find(m => m.id === contextMenu.msgId);
+                      if (msg) { setForwardMsg(msg); if (!contacts.length) loadContacts(); }
+                      setContextMenu(null);
+                    } } : {})}
+                  >
+                    <Feather name="corner-up-right" size={17} color="#B8B9BC" />
+                    <Text style={styles.contextMenuText}>Forward</Text>
+                  </TouchableOpacity>
+                  {contextMenu.isMine && (
+                    <TouchableOpacity
+                      style={styles.contextMenuItem}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        const msg = messages.find(m => m.id === contextMenu.msgId);
+                        if (msg) { setEditingMsg(msg); setEditText(parseContent(msg.content).text || ''); }
+                        setContextMenu(null);
+                      }}
+                      {...(Platform.OS === 'web' ? { onClick: () => {
+                        const msg = messages.find(m => m.id === contextMenu.msgId);
+                        if (msg) { setEditingMsg(msg); setEditText(parseContent(msg.content).text || ''); }
+                        setContextMenu(null);
+                      } } : {})}
+                    >
+                      <Feather name="edit-2" size={17} color="#B8B9BC" />
+                      <Text style={styles.contextMenuText}>Edit</Text>
+                    </TouchableOpacity>
+                  )}
+                  {contextMenu.isMine && (
+                    <>
+                      <View style={styles.contextMenuDivider} />
+                      <TouchableOpacity
+                        style={styles.contextMenuItem}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          deleteMessage(contextMenu.msgId);
+                          setContextMenu(null);
+                        }}
+                        {...(Platform.OS === 'web' ? { onClick: () => {
+                          deleteMessage(contextMenu.msgId);
+                          setContextMenu(null);
+                        } } : {})}
+                      >
+                        <Feather name="trash-2" size={17} color="#F26B6B" />
+                        <Text style={[styles.contextMenuText, { color: '#F26B6B' }]}>Delete</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
+              </View>
+            </TouchableOpacity>
+          </Modal>
+        );
+      })()}
+
+      {/* ── Forward Message Modal ── */}
+      <Modal visible={!!forwardMsg} transparent animationType="fade" onRequestClose={() => setForwardMsg(null)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Forward to…</Text>
+              <TouchableOpacity onPress={() => setForwardMsg(null)} activeOpacity={0.7}>
+                <Feather name="x" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-        </Modal>
-      )}
+            {!!forwardMsg && (
+              <View style={styles.forwardPreview}>
+                <Text style={styles.forwardPreviewText} numberOfLines={2}>{parseContent(forwardMsg.content).text || 'Attachment'}</Text>
+              </View>
+            )}
+            <ScrollView style={{ maxHeight: 360 }}>
+              {loadingContacts && <ActivityIndicator color={colors.accentYellow} style={{ padding: spacing.xl }} />}
+              {!!channels.length && (
+                <>
+                  <Text style={styles.forwardSectionLabel}>Channels</Text>
+                  {channels.map((ch) => (
+                    <TouchableOpacity key={ch.id} style={styles.contactItem} activeOpacity={0.7} onPress={() => forwardMessage({ kind: 'channel', id: ch.id })}>
+                      <View style={styles.contactAvatar}><Feather name="users" size={16} color={colors.accentYellow} /></View>
+                      <Text style={styles.contactName}>{ch.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </>
+              )}
+              {!!contacts.length && (
+                <>
+                  <Text style={styles.forwardSectionLabel}>People</Text>
+                  {contacts.map((c) => (
+                    <TouchableOpacity key={c.email} style={styles.contactItem} activeOpacity={0.7} onPress={() => forwardMessage({ kind: 'convo', email: c.email, name: c.name })}>
+                      <View style={styles.contactAvatar}><Feather name="user" size={16} color={colors.accentYellow} /></View>
+                      <Text style={styles.contactName}>{c.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </>
+              )}
+              {!loadingContacts && !contacts.length && !channels.length && (
+                <Text style={{ padding: spacing.lg, color: colors.textDim, fontSize: 12.5 }}>No contacts to forward to yet.</Text>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {/* ── Contact Picker Modal ── */}
       <Modal visible={showContacts} transparent animationType="fade" onRequestClose={() => setShowContacts(false)}>
@@ -1080,13 +1574,7 @@ export default function MessagesScreen(_props: any) {
                     onPress={() => startConversation(item)}
                     activeOpacity={0.7}
                   >
-                    <View style={styles.contactAvatar}>
-                      <Feather
-                        name={item.role === 'teacher' ? 'book-open' : 'user'}
-                        size={18}
-                        color={colors.accentYellow}
-                      />
-                    </View>
+                    {renderPersonAvatar(item.name, item.role, (item as any).photoUrl, 38, false, colors)}
                     <View style={{ flex: 1 }}>
                       <Text style={styles.contactName}>{item.name}</Text>
                       <Text style={styles.contactContext}>{item.context}</Text>
@@ -1100,6 +1588,23 @@ export default function MessagesScreen(_props: any) {
           </View>
         </View>
       </Modal>
+
+      {/* ── New (chooser) — teachers/admins pick New chat or New channel ── */}
+      <Modal visible={showNewMenu} transparent animationType="fade" onRequestClose={() => setShowNewMenu(false)}>
+        <TouchableOpacity style={styles.chMenuOverlay} activeOpacity={1} onPress={() => setShowNewMenu(false)}>
+          <View style={[styles.chMenu, { top: newMenuPos.top, left: newMenuPos.left }]}>
+            <TouchableOpacity style={styles.chMenuItem} onPress={() => { setShowNewMenu(false); setShowContacts(true); loadContacts(); }}>
+              <Feather name="message-circle" size={16} color={colors.accentYellow} /><Text style={styles.chMenuText}>New direct message</Text>
+            </TouchableOpacity>
+            <View style={styles.chMenuDivider} />
+            <TouchableOpacity style={styles.chMenuItem} onPress={() => { setShowNewMenu(false); setShowCreateChannel(true); }}>
+              <Feather name="users" size={16} color={colors.accentYellow} /><Text style={styles.chMenuText}>New group channel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <CreateChannelModal visible={showCreateChannel} onClose={() => setShowCreateChannel(false)} onCreated={() => { setShowCreateChannel(false); loadChannels(); }} />
     </ScreenLayout>
   );
 }
@@ -1127,26 +1632,40 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     fontSize: 18, fontWeight: '800', color: c.textMain,
   },
   sidebarSubtitle: { fontSize: 11, color: c.textDim, marginTop: 1 },
+  convoSearchBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    marginHorizontal: spacing.md, marginTop: 10, marginBottom: 2,
+    backgroundColor: c.bgDark, borderWidth: 1, borderColor: c.borderColor,
+    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8,
+  },
+  convoSearchInput: {
+    flex: 1, fontSize: 13, color: c.textHeading, padding: 0,
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
+  },
   filterRow: {
-    flexDirection: 'row', gap: 6,
-    paddingHorizontal: spacing.md, paddingVertical: 10,
+    maxHeight: 40, flexGrow: 0, flexShrink: 0,
     borderBottomWidth: 1, borderBottomColor: c.borderColor,
+    ...(Platform.OS === 'web' ? { overflowX: 'auto' as any, overflowY: 'hidden' as any } : {}),
+  },
+  filterRowContent: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: spacing.md, paddingVertical: 6,
   },
   filterTab: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20,
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 16,
     borderWidth: 1, borderColor: c.borderColor,
-    backgroundColor: c.bgDark,
+    backgroundColor: c.bgDark, flexShrink: 0, alignSelf: 'flex-start',
   },
   filterTabActive: { borderColor: c.accentYellow + '60', backgroundColor: c.accentYellow + '12' },
-  filterTabText: { fontSize: 11, fontWeight: '600', color: c.textDim },
+  filterTabText: { fontSize: 10.5, fontWeight: '600', color: c.textDim },
   filterTabTextActive: { color: c.accentYellow },
   filterBadge: {
-    minWidth: 16, height: 16, borderRadius: 8,
+    minWidth: 14, height: 14, borderRadius: 7,
     backgroundColor: c.borderColor, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
   },
   filterBadgeActive: { backgroundColor: c.accentYellow },
-  filterBadgeText: { fontSize: 9, fontWeight: '800', color: c.textDim },
+  filterBadgeText: { fontSize: 8.5, fontWeight: '800', color: c.textDim },
   convoSectionLabel: {
     fontSize: 10, fontWeight: '700', color: c.textDim,
     letterSpacing: 1, paddingHorizontal: spacing.md,
@@ -1167,6 +1686,19 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     fontWeight: '600',
     color: c.accentYellow,
   },
+  // Channel rows merged into the inbox
+  chRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.borderColor },
+  chBadge: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  chName: { flex: 1, fontSize: 14, fontWeight: '700', color: c.textHeading },
+  chTime: { fontSize: 10.5, color: c.textDim },
+  chSub: { flex: 1, fontSize: 11.5, color: c.textMuted },
+  chUnread: { backgroundColor: c.accentRed, borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
+  chUnreadText: { color: '#fff', fontSize: 10, fontWeight: '800' },
+  chMenuOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
+  chMenu: { position: 'absolute', backgroundColor: c.cardDark, borderRadius: 12, borderWidth: 1, borderColor: c.borderColor, paddingVertical: 6, width: 224, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
+  chMenuItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 11 },
+  chMenuText: { fontSize: 13.5, fontWeight: '600', color: c.textHeading },
+  chMenuDivider: { height: StyleSheet.hairlineWidth, backgroundColor: c.borderColor, marginHorizontal: 8 },
   convoItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1178,7 +1710,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   convoItemActive: { backgroundColor: 'rgba(186,164,103,0.08)' },
   convoAvatar: {
-    width: 52, height: 52, borderRadius: 26,
+    width: 44, height: 44, borderRadius: 22,
     backgroundColor: c.accentYellow + '15',
     borderWidth: 1, borderColor: c.accentYellow + '40',
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
@@ -1255,7 +1787,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   chatName: { fontSize: 14, fontWeight: '600', color: c.textMain },
   chatRole: { fontSize: 11, color: c.accentYellow },
-  messageList: { padding: spacing.lg, gap: spacing.md, flexGrow: 1 },
+  messageList: { padding: spacing.lg, gap: spacing.md, flexGrow: 1, justifyContent: 'flex-end' },
   dateDivider: { alignSelf: 'stretch', alignItems: 'center', marginVertical: spacing.sm },
   dateDividerText: { fontSize: 11, fontWeight: '600', color: c.textDim, backgroundColor: c.cardDark,
                      borderWidth: 1, borderColor: c.borderColor, borderRadius: 12,
@@ -1269,10 +1801,46 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   bubbleText: { fontSize: 14, lineHeight: 20 },
   bubbleTextMine:   { color: '#0B0B0B' },
   bubbleTextTheirs: { color: c.textMain },
+  bubbleTextBold:   { fontWeight: '800', color: c.textHeading },
+  replyQuote: { borderLeftWidth: 3, paddingLeft: 8, marginBottom: 6 },
+  replyQuoteName: { fontSize: 11.5, fontWeight: '700' },
+  replyQuoteText: { fontSize: 12, marginTop: 1 },
+  copiedBadge: { fontSize: 10, fontWeight: '700', color: c.accentYellow },
+  replyPreviewRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: spacing.md, paddingVertical: 8, borderTopWidth: 1, borderTopColor: c.borderColor, backgroundColor: c.bgDark },
+  replyPreviewName: { fontSize: 11.5, fontWeight: '700', color: c.accentYellow },
+  replyPreviewText: { fontSize: 12, color: c.textDim, marginTop: 1 },
+  emojiPickerFloating: {
+    position: 'absolute', left: 0, right: 0, bottom: 64,
+    borderTopWidth: 1, borderTopColor: c.borderColor, backgroundColor: c.bgDark,
+    shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 10,
+  },
+  emojiCategoryTabs: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: c.borderColor, paddingHorizontal: 6 },
+  emojiCategoryTab: { flex: 1, alignItems: 'center', paddingVertical: 8, borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  emojiCategoryTabActive: { borderBottomColor: c.accentYellow },
+  emojiCategoryIcon: { fontSize: 17 },
+  emojiPanel: { maxHeight: 200 },
+  emojiPanelContent: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8, paddingVertical: 8 },
+  emojiCell: { width: '12.5%', alignItems: 'center', justifyContent: 'center', paddingVertical: 6 },
+  emojiItem: { fontSize: 22 },
+  quickReactRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#1F2023', borderRadius: 999,
+    paddingHorizontal: 14, paddingVertical: 8, marginBottom: 8, alignSelf: 'flex-start',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 12,
+  },
+  quickReactEmoji: { fontSize: 22 },
+  reactionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
+  reactionPill: { flexDirection: 'row', backgroundColor: c.cardHover, borderWidth: 1, borderColor: c.borderColor, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
+  reactionPillMine: { borderColor: c.accentYellow, backgroundColor: c.accentYellow + '18' },
+  reactionPillText: { fontSize: 11.5, color: c.textMain },
+  forwardPreview: { backgroundColor: c.bgDark, borderRadius: radius.sm, padding: 10, marginBottom: 8 },
+  forwardPreviewText: { fontSize: 12.5, color: c.textDim },
+  forwardSectionLabel: { fontSize: 10.5, fontWeight: '700', color: c.textDim, textTransform: 'uppercase', letterSpacing: 0.4, paddingHorizontal: 4, paddingTop: 10, paddingBottom: 4 },
   bubbleMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3, paddingHorizontal: 2 },
   bubbleTime: { fontSize: 10, color: c.textDim },
   editedLabel: { fontSize: 10, color: c.textDim, fontStyle: 'italic' },
   tickWrap: { flexDirection: 'row', alignItems: 'center' },
+  moreBtn: { marginLeft: 2, padding: 2 },
   noMessagesState: { flex: 1, alignItems: 'center', paddingTop: 60 },
   inputRow: {
     flexDirection: 'row', alignItems: 'flex-end', gap: spacing.md,
@@ -1287,6 +1855,7 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
     fontSize: 14, color: c.textMain,
     maxHeight: 100, minHeight: 40,
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
   },
   attachBtn: {
     width: 40, height: 40, borderRadius: 20,
@@ -1464,18 +2033,20 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   assignmentTipText: { fontSize: 11, color: c.textMuted, flex: 1, lineHeight: 16 },
   assignmentDayLabel: { fontSize: 10, color: c.textDim, textAlign: 'center', marginBottom: 2 },
 
-  // Context menu
+  // Context menu — WhatsApp-style: a floating quick-react pill above a dark rounded card,
+  // always centered in the viewport so it can never clip off a screen edge.
+  contextMenuOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
   contextMenuBox: {
-    backgroundColor: c.cardDark, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: c.accentYellow + '40',
-    paddingVertical: 4, minWidth: 160,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 20,
+    backgroundColor: '#1F2023', borderRadius: 18,
+    paddingVertical: 6, minWidth: 210,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.45, shadowRadius: 20, elevation: 20,
   },
   contextMenuItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 16, paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingHorizontal: 18, paddingVertical: 13,
   },
-  contextMenuText: { fontSize: 13, fontWeight: '600', color: c.textMain },
+  contextMenuText: { fontSize: 14.5, fontWeight: '500', color: '#F2F2F2' },
+  contextMenuDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginVertical: 4 },
 
   // Online status dot
   onlineDot: {

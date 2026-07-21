@@ -33,6 +33,37 @@ export function emptyEntry(defaultCurriculum = ''): TeachingEntry {
   return { curriculum: defaultCurriculum, grade: '', subjectsInput: '' };
 }
 
+// Real subject offerings per curriculum (and grade band, where the framework
+// actually differs — e.g. CBSE primary has EVS instead of separate Science/
+// Social Science). Lets a teacher pick from an actual list instead of typing
+// free text.
+function gradeNum(grade: string): number {
+  const m = grade.match(/\d+/);
+  return m ? parseInt(m[0], 10) : 0;
+}
+export function getSubjectsForEntry(curriculum: string, grade: string): string[] {
+  if (curriculum === 'IB PYP') return ['English', 'Mathematics', 'Science', 'Social Studies', 'Arts', 'Physical Education', 'PSPE'];
+  if (curriculum === 'IB MYP') return ['Language & Literature', 'Language Acquisition', 'Individuals & Societies', 'Sciences', 'Mathematics', 'Arts', 'Physical & Health Education', 'Design'];
+  if (curriculum === 'IB DP') return ['Language & Literature', 'Language Acquisition', 'Individuals & Societies', 'Sciences', 'Mathematics', 'The Arts', 'Theory of Knowledge'];
+  if (curriculum === 'Cambridge') return ['English', 'Mathematics', 'Science', 'Global Perspectives', 'ICT', 'Art & Design'];
+  if (curriculum === 'CBSE' || curriculum === 'ICSE') {
+    const n = gradeNum(grade);
+    if (!grade || n <= 5) return ['English', 'Mathematics', 'EVS', 'Hindi', 'Art', 'Physical Education'];
+    // Grades 11-12: senior secondary is stream-based (Science / Commerce /
+    // Humanities), not a single "Science"/"Social Science" subject anymore.
+    if (n >= 11) {
+      return [
+        'English', 'Physics', 'Chemistry', 'Mathematics', 'Biology', 'Computer Science',
+        'Accountancy', 'Business Studies', 'Economics',
+        'History', 'Political Science', 'Geography', 'Psychology', 'Sociology',
+        'Physical Education',
+      ];
+    }
+    return ['English', 'Mathematics', 'Science', 'Social Science', 'Hindi', 'ICT', 'Art', 'Physical Education'];
+  }
+  return ['English', 'Mathematics', 'Science', 'Social Studies'];
+}
+
 function FormDropdown({ value, placeholder, options, onChange, colors, open, onToggle }: {
   value: string; placeholder: string; options: { value: string; label: string }[];
   onChange: (v: string) => void; colors: AppColors; open: boolean; onToggle: () => void;
@@ -121,11 +152,29 @@ export default function TeachingEntriesEditor({
                 />
               </View>
             </View>
-            <Text style={styles.formLabel}>Subjects for this grade (comma-separated)</Text>
-            <TextInput
-              value={entry.subjectsInput} onChangeText={(v) => updateEntry(idx, { subjectsInput: v })}
-              style={styles.textInput} placeholder="e.g. Social Studies" placeholderTextColor={colors.textDim}
-            />
+            <Text style={styles.formLabel}>Subjects for this grade</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {(() => {
+                const selected = entry.subjectsInput.split(',').map((s) => s.trim()).filter(Boolean);
+                const options = getSubjectsForEntry(entry.curriculum, entry.grade);
+                return options.map((subj) => {
+                  const on = selected.includes(subj);
+                  return (
+                    <Pressable
+                      key={subj}
+                      style={[styles.subjectChip, on && styles.subjectChipActive]}
+                      onPress={() => {
+                        const next = on ? selected.filter((s) => s !== subj) : [...selected, subj];
+                        updateEntry(idx, { subjectsInput: next.join(', ') });
+                      }}
+                    >
+                      {on && <Feather name="check" size={12} color={colors.accentYellow} />}
+                      <Text style={[styles.subjectChipText, on && styles.subjectChipTextActive]}>{subj}</Text>
+                    </Pressable>
+                  );
+                });
+              })()}
+            </View>
           </View>
         );
       })}
@@ -143,7 +192,11 @@ function makeStyles(colors: AppColors) {
     removeBtn: { alignSelf: 'flex-end', padding: 4, marginBottom: 2 },
     formRow: { flexDirection: 'row', gap: 14 },
     formLabel: { fontFamily: fonts.serif, fontSize: 11.5, fontWeight: '600', color: colors.textMuted, marginBottom: 6, marginTop: 10 },
-    textInput: { fontFamily: fonts.serif, fontSize: 13, color: colors.textMain, borderWidth: 1, borderColor: colors.borderColor, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: colors.cardDark },
+    textInput: { fontFamily: fonts.serif, fontSize: 13, color: colors.textMain, borderWidth: 1, borderColor: colors.borderColor, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: colors.cardDark, ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}) },
+    subjectChip: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: colors.borderColor, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: colors.cardDark },
+    subjectChipActive: { borderColor: colors.accentYellow, backgroundColor: `${colors.accentYellow}18` },
+    subjectChipText: { fontFamily: fonts.serif, fontSize: 12.5, color: colors.textMuted, fontWeight: '600' },
+    subjectChipTextActive: { color: colors.textHeading },
     ddTrigger: { borderWidth: 1, borderColor: colors.borderColor, borderRadius: radius.sm, paddingHorizontal: 12, height: 40, backgroundColor: colors.cardDark, justifyContent: 'center' },
     ddTriggerText: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '600', color: colors.textHeading, flexShrink: 1 },
     ddBackdropWeb: { position: 'fixed' as any, top: 0, left: 0, right: 0, bottom: 0, zIndex: 19 },

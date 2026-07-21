@@ -17,7 +17,7 @@ const {
   generateSecurePassword, generateStudentEmail, generateStaffEmail, generateParentLoginId, createFirebaseAccount,
   toTitleCase, generateAdmissionNumber,
 } = require('../services/studentAccounts');
-const { sendCredentialsEmail, sendOwnAccountCredentialsEmail } = require('../services/mailer');
+const { sendCredentialsEmail, sendOwnAccountCredentialsEmail, sendB2BConversionWelcomeEmail } = require('../services/mailer');
 
 router.use(requireAdminScope);
 
@@ -157,7 +157,15 @@ router.patch('/workspace-settings', async (req, res) => {
     const { data: school, error } = await supabase
       .from('schools').update(patch).eq('id', schoolId)
       .select('id, name, curriculum, academic_year, contact_email').maybeSingle();
-    if (error) throw error;
+    if (error) {
+      // A school name is unique (case-insensitive) across the platform. Surface
+      // that as a clear, actionable message instead of a generic 500 so the
+      // admin knows the name is taken rather than thinking the save is broken.
+      if (error.code === '23505' || /schools_name_lower_idx|duplicate key/i.test(error.message || '')) {
+        return res.status(409).json({ error: 'A school with this name already exists. Please choose a different name.' });
+      }
+      throw error;
+    }
 
     // Keep the denormalized users.school text column aligned with the new name
     // so anything still matching by name (branding, monogram) resolves right.
@@ -263,12 +271,20 @@ router.get('/students', async (req, res) => {
     if (statusFilter && statusFilter !== 'all') items = items.filter((i) => i.status === statusFilter);
     else items = items.filter((i) => i.status !== 'archived'); // "All" excludes archived, same as the approved design
 
-    const sortKey = req.query.sort === 'grade' ? 'grade' : 'name';
+    const sortKey = ['grade', 'admissionNumber'].includes(req.query.sort) ? req.query.sort : 'name';
     const dir = req.query.dir === 'desc' ? -1 : 1;
     items.sort((a, b) => {
       if (sortKey === 'grade') {
         const g = (a.grade || '').localeCompare(b.grade || '') || (a.section || '').localeCompare(b.section || '');
         return (g || a.name.localeCompare(b.name)) * dir;
+      }
+      if (sortKey === 'admissionNumber') {
+        // Rows with no admission number sort last regardless of direction, so
+        // a missing ID reads as a flagged gap in the list, not a stray "top" row.
+        if (!a.admissionNumber && !b.admissionNumber) return a.name.localeCompare(b.name);
+        if (!a.admissionNumber) return 1;
+        if (!b.admissionNumber) return -1;
+        return a.admissionNumber.localeCompare(b.admissionNumber, undefined, { numeric: true }) * dir;
       }
       return a.name.localeCompare(b.name) * dir;
     });
@@ -1042,6 +1058,25 @@ router.patch('/grades/:grade/sections/:section/class-teacher', async (req, res) 
     if (!section) return res.status(404).json({ error: 'Section not found' });
     section.classTeacherEmail = teacherEmail;
     await saveStructure(schoolId, grades);
+
+    // Auto-link the class teacher to every student in this grade+section, so
+    // Messages/Contacts can resolve their parents without a manual DB fix.
+    // (Root cause of a real bug: class-teacher assignment alone never used
+    // to populate teacher_student — see chat-channel membership incident.)
+    if (teacherEmail) {
+      try {
+        const { data: teacher } = await supabase.from('users').select('id').eq('email', teacherEmail).eq('role', 'teacher').eq('school_id', schoolId).maybeSingle();
+        const { data: students } = await supabase.from('users').select('id')
+          .eq('role', 'student').eq('school_id', schoolId).eq('grade', gradeName).eq('section', sectionName);
+        if (teacher && students?.length) {
+          const rows = students.map((s) => ({ teacher_id: teacher.id, student_id: s.id, subject: 'Homeroom' }));
+          await supabase.from('teacher_student').upsert(rows, { onConflict: 'teacher_id,student_id,subject', ignoreDuplicates: true });
+        }
+      } catch (linkErr) {
+        console.error('[class-teacher] teacher_student auto-link failed:', linkErr.message);
+      }
+    }
+
     res.json({ ok: true });
   } catch (err) {
     console.error('[PATCH /school-admin/grades/:grade/sections/:section/class-teacher] error:', err.message);
@@ -1499,6 +1534,224 @@ router.post('/parents', async (req, res) => {
   } catch (err) {
     console.error('[POST /school-admin/parents] error:', err.message);
     res.status(500).json({ error: err.message || 'Failed to invite parent' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// B2C → B2B access requests (Connect to My School approvals)
+// Scoped to the admin's own school via effectiveSchoolId — an admin only ever
+// sees / actions requests targeting their school.
+// ---------------------------------------------------------------------------
+
+// GET /school-admin/access-requests?adminEmail=[&status=pending]
+router.get('/access-requests', async (req, res) => {
+  const schoolId = effectiveSchoolId(req);
+  if (!schoolId) return res.status(400).json({ error: 'schoolId required for platform admins' });
+  const status = req.query.status || 'pending';
+  try {
+    const { data: reqs, error } = await supabase
+      .from('school_access_requests')
+      .select('id, user_email, grade, section, status, created_at')
+      .eq('school_id', schoolId).eq('status', status)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    // Decorate each request with the full picture the admin needs to decide:
+    // the requester's identity (name/role/grade/curriculum/phone/age), their
+    // under-14 consent requirements, and — for a student — their linked parent(s).
+    const emails = [...new Set((reqs || []).map((r) => r.user_email))];
+    const userMap = new Map();       // email -> { id, name, role, grade, curriculum, phone, created_at }
+    const prefMap = new Map();       // email -> { age, dateOfBirth, parentConsentStatus }
+    if (emails.length) {
+      const [{ data: users }, { data: prefs }] = await Promise.all([
+        supabase.from('users').select('id, email, name, role, grade, curriculum, phone, created_at').in('email', emails),
+        supabase.from('user_preferences').select('user_email, data').in('user_email', emails),
+      ]);
+      for (const u of users || []) userMap.set(u.email, u);
+      for (const p of prefs || []) prefMap.set(p.user_email, p.data || {});
+    }
+
+    // Resolve linked parents for the student requesters. parent_children links a
+    // parent_email to a child_id (the student's users.id); we then resolve each
+    // parent_email to a display name + phone.
+    const studentIds = [...new Set([...userMap.values()].filter((u) => u.role === 'student').map((u) => u.id))];
+    const parentsByChildId = new Map(); // child_id -> [{ name, email, phone }]
+    if (studentIds.length) {
+      const { data: links } = await supabase
+        .from('parent_children').select('child_id, parent_email').in('child_id', studentIds);
+      const parentEmails = [...new Set((links || []).map((l) => l.parent_email))];
+      const parentMap = new Map();
+      if (parentEmails.length) {
+        const { data: parents } = await supabase.from('users').select('email, name, phone').in('email', parentEmails);
+        for (const p of parents || []) parentMap.set(p.email, p);
+      }
+      for (const l of links || []) {
+        if (!parentsByChildId.has(l.child_id)) parentsByChildId.set(l.child_id, []);
+        const pInfo = parentMap.get(l.parent_email) || {};
+        parentsByChildId.get(l.child_id).push({ email: l.parent_email, name: pInfo.name || null, phone: pInfo.phone || null });
+      }
+    }
+
+    res.json((reqs || []).map((r) => {
+      const u = userMap.get(r.user_email);
+      const pref = prefMap.get(r.user_email) || {};
+      const parents = u ? (parentsByChildId.get(u.id) || []) : [];
+
+      // Calculate or estimate age from profile preferences or grade level
+      let age = pref.age || null;
+      if (!age && pref.dateOfBirth) {
+        const dob = new Date(pref.dateOfBirth);
+        if (!isNaN(dob.getTime())) {
+          age = Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        }
+      }
+      // If age not explicitly provided, estimate from requested/current grade
+      const gStr = String(r.grade || u?.grade || '').toLowerCase();
+      let isUnder14 = age !== null ? age < 14 : true;
+      if (age === null && (gStr.includes('myp 4') || gStr.includes('myp 5') || gStr.includes('dp') || gStr.includes('grade 9') || gStr.includes('grade 10') || gStr.includes('grade 11') || gStr.includes('grade 12'))) {
+        isUnder14 = false;
+      }
+
+      // Determine parent consent status (< 14 vs >= 14)
+      let parentConsentStatus = pref.parentConsentStatus || null;
+      if (!parentConsentStatus) {
+        if (isUnder14) {
+          parentConsentStatus = parents.length > 0 ? 'approved_by_parent' : 'pending_parent_verification';
+        } else {
+          parentConsentStatus = parents.length > 0 ? 'student_initiated_with_parent' : 'student_initiated_independent';
+        }
+      }
+
+      return {
+        ...r,
+        name: u?.name || null,
+        role: u?.role || null,
+        phone: u?.phone || null,
+        age,
+        isUnder14,
+        parentConsentStatus,
+        userCreatedAt: u?.created_at || null,
+        studentGrade: u?.grade || null,
+        curriculum: u?.curriculum || null,
+        parents,
+      };
+    }));
+  } catch (err) {
+    console.error('[GET /school-admin/access-requests] error:', err.message);
+    res.status(500).json({ error: 'Failed to load requests' });
+  }
+});
+
+// POST /school-admin/access-requests/:id/approve  { adminEmail }
+// Links the requester and all linked parents to this school (B2C → B2B cascade)
+// and sends professional welcome notifications via Resend.
+router.post('/access-requests/:id/approve', async (req, res) => {
+  const schoolId = effectiveSchoolId(req);
+  if (!schoolId) return res.status(400).json({ error: 'schoolId required for platform admins' });
+  try {
+    const { data: reqRow, error: rErr } = await supabase
+      .from('school_access_requests').select('*').eq('id', req.params.id).maybeSingle();
+    if (rErr) throw rErr;
+    if (!reqRow) return res.status(404).json({ error: 'Request not found' });
+    // Ownership guard: an admin can only action requests for their own school.
+    if (reqRow.school_id !== schoolId) return res.status(403).json({ error: 'Not authorized for this request' });
+    if (reqRow.status !== 'pending') return res.status(409).json({ error: `Request already ${reqRow.status}` });
+
+    // Look up school name and user record for cascade & notification
+    const [{ data: schoolRow }, { data: userRow }] = await Promise.all([
+      supabase.from('schools').select('name').eq('id', schoolId).maybeSingle(),
+      supabase.from('users').select('id, name, role').eq('email', reqRow.user_email).maybeSingle(),
+    ]);
+    const schoolName = schoolRow?.name || 'Your School';
+
+    // Link the user to the school AND place them in the requested grade+section
+    const patch = { school_id: schoolId, school: schoolName };
+    if (reqRow.grade) patch.grade = reqRow.grade;
+    if (reqRow.section) patch.section = reqRow.section;
+    const { error: uErr } = await supabase.from('users').update(patch).eq('email', reqRow.user_email);
+    if (uErr) throw uErr;
+
+    // Also update preferences data with school details
+    const { data: prefRow } = await supabase.from('user_preferences').select('data').eq('user_email', reqRow.user_email).maybeSingle();
+    const updatedPref = { ...(prefRow?.data || {}), school: schoolName, schoolId, accountStatus: 'active' };
+    await supabase.from('user_preferences').upsert({ user_email: reqRow.user_email, data: updatedPref });
+
+    // ── Cascade to linked parents (if requester is a student) ──────────────────
+    let linkedParents = [];
+    if (userRow && userRow.role === 'student' && userRow.id) {
+      const { data: parentLinks } = await supabase.from('parent_children').select('parent_email').eq('child_id', userRow.id);
+      if (parentLinks && parentLinks.length > 0) {
+        const parentEmails = parentLinks.map(l => l.parent_email).filter(Boolean);
+        if (parentEmails.length > 0) {
+          // Link all parents to this school as B2B parent accounts
+          await supabase.from('users').update({ school_id: schoolId, school: schoolName }).in('email', parentEmails);
+          const { data: parentUsers } = await supabase.from('users').select('name, email').in('email', parentEmails);
+          linkedParents = parentUsers || [];
+          for (const p of linkedParents) {
+            const { data: pPref } = await supabase.from('user_preferences').select('data').eq('user_email', p.email).maybeSingle();
+            await supabase.from('user_preferences').upsert({
+              user_email: p.email,
+              data: { ...(pPref?.data || {}), school: schoolName, schoolId, accountStatus: 'active' },
+            });
+          }
+        }
+      }
+    }
+
+    const { error: sErr } = await supabase.from('school_access_requests')
+      .update({ status: 'approved', reviewed_by: req.adminEmail, reviewed_at: new Date().toISOString() })
+      .eq('id', req.params.id);
+    if (sErr) throw sErr;
+
+    // ── Send Professional Welcome Notifications via Resend ─────────────────────
+    sendB2BConversionWelcomeEmail({
+      to: reqRow.user_email,
+      name: userRow?.name || null,
+      role: userRow?.role || 'student',
+      schoolName,
+      grade: reqRow.grade,
+      section: reqRow.section,
+    }).catch(err => console.error('[approve request] failed to send student welcome email:', err.message));
+
+    for (const p of linkedParents) {
+      sendB2BConversionWelcomeEmail({
+        to: p.email,
+        name: p.name || 'Parent',
+        role: 'parent',
+        schoolName,
+        studentName: userRow?.name || 'your child',
+        grade: reqRow.grade,
+        section: reqRow.section,
+      }).catch(err => console.error('[approve request] failed to send parent welcome email:', err.message));
+    }
+
+    res.json({ ok: true, status: 'approved', cascadedParents: linkedParents.length });
+  } catch (err) {
+    console.error('[POST /school-admin/access-requests/:id/approve] error:', err.message);
+    res.status(500).json({ error: 'Failed to approve request' });
+  }
+});
+
+// POST /school-admin/access-requests/:id/reject  { adminEmail }
+router.post('/access-requests/:id/reject', async (req, res) => {
+  const schoolId = effectiveSchoolId(req);
+  if (!schoolId) return res.status(400).json({ error: 'schoolId required for platform admins' });
+  try {
+    const { data: reqRow, error: rErr } = await supabase
+      .from('school_access_requests').select('id, school_id, status').eq('id', req.params.id).maybeSingle();
+    if (rErr) throw rErr;
+    if (!reqRow) return res.status(404).json({ error: 'Request not found' });
+    if (reqRow.school_id !== schoolId) return res.status(403).json({ error: 'Not authorized for this request' });
+    if (reqRow.status !== 'pending') return res.status(409).json({ error: `Request already ${reqRow.status}` });
+
+    const { error } = await supabase.from('school_access_requests')
+      .update({ status: 'rejected', reviewed_by: req.adminEmail, reviewed_at: new Date().toISOString() })
+      .eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ ok: true, status: 'rejected' });
+  } catch (err) {
+    console.error('[POST /school-admin/access-requests/:id/reject] error:', err.message);
+    res.status(500).json({ error: 'Failed to reject request' });
   }
 });
 

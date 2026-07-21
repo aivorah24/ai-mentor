@@ -515,19 +515,19 @@ export default function SchoolAdminBulkImportScreen({ navigation }: any) {
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.topBar}>
             <StepIndicator step={step} colors={colors} />
-            {step === 1 && (
-              <View style={styles.templateBtnGroup}>
-                <TouchableOpacity style={styles.templateBtn} onPress={downloadTemplate} accessibilityRole="button">
-                  <Feather name="file-text" size={14} color={colors.textHeading} />
-                  <Text style={styles.templateBtnText}>CSV Template</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.templateBtn} onPress={downloadTemplateXlsx} accessibilityRole="button">
-                  <Feather name="grid" size={14} color={colors.textHeading} />
-                  <Text style={styles.templateBtnText}>Excel Template</Text>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
+          {step === 1 && (
+            <View style={styles.templateBtnGroup}>
+              <TouchableOpacity style={styles.templateBtn} onPress={downloadTemplate} accessibilityRole="button">
+                <Feather name="file-text" size={14} color={colors.textHeading} />
+                <Text style={styles.templateBtnText}>CSV Template</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.templateBtn} onPress={downloadTemplateXlsx} accessibilityRole="button">
+                <Feather name="grid" size={14} color={colors.textHeading} />
+                <Text style={styles.templateBtnText}>Excel Template</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* ── Step 1: Upload ─────────────────────────────────────────── */}
           {step === 1 && (
@@ -867,7 +867,7 @@ function makeStyles(colors: AppColors) {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
       gap: 12, marginBottom: spacing.xl, flexWrap: 'wrap',
     },
-    templateBtnGroup: { flexDirection: 'row', gap: 8 },
+    templateBtnGroup: { flexDirection: 'row', gap: 8, justifyContent: 'center', width: '100%', marginBottom: spacing.lg },
     templateBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7,
       backgroundColor: colors.bgDark, borderWidth: 1, borderColor: colors.borderColor,

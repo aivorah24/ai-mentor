@@ -17,6 +17,7 @@ import { useTheme } from '../../context/ThemeContext';
 import SERVER_URL from '../../config/serverUrl';
 import { AVATAR_STYLES } from '../../constants/avatarStyles';
 import { CURRICULA, getGradesForCurriculum, SUBJECTS, TEAL, DatePickerInput } from './OnboardingScreen';
+import { getSubjectsForEntry } from '../school-admin/TeachingEntriesEditor';
 import {
   AutocompleteField, CardHeader, BBox, fetchCitySuggestions, fetchSchoolSuggestions, locateCity, locateFull,
   SelectField, COUNTRIES, INDIA_STATES, INDIA_CITIES, PhoneCodeSelect,
@@ -504,7 +505,10 @@ export default function OnboardingTeacherBoxes() {
               <Text style={styles.lbl}>Subjects</Text>
               <View style={styles.fieldBox}>
                 <View style={styles.chipRow}>
-                  {SUBJECTS.map(s => (
+                  {(teachGrades.length > 0
+                    ? [...new Set(teachGrades.flatMap(g => getSubjectsForEntry(curriculum, g)))]
+                    : SUBJECTS
+                  ).map(s => (
                     <TouchableOpacity key={s} style={[styles.chip, teachSubjects.includes(s) && styles.chipActive]}
                       onPress={() => toggleSubject(s)} activeOpacity={0.8}>
                       <Text style={[styles.chipTxt, teachSubjects.includes(s) && styles.chipTxtActive]}>{s}</Text>

@@ -11,6 +11,7 @@ import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
+import ConnectSchoolBanner from '../../features/classes/components/ConnectSchoolBanner';
 import { useAuth } from '../../context/AuthContext';
 import { getAvatarGradient, getAvatarIcon } from '../../constants/avatarStyles';
 import { useTheme } from '../../context/ThemeContext';
@@ -237,6 +238,7 @@ export default function ParentSettingsScreen({ navigation }: any) {
           onMenuPress={() => navigation.openDrawer()}
         />
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <ConnectSchoolBanner />
           <View style={styles.columns}>
 
             {/* ── Left column ── */}

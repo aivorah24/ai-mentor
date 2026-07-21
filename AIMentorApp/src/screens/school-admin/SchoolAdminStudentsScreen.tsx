@@ -56,7 +56,7 @@ interface StudentDetail extends StudentRow {
 }
 
 type StatusFilter = 'all' | 'invited' | 'active' | 'inactive' | 'archived';
-type SortKey = 'name' | 'grade';
+type SortKey = 'name' | 'grade' | 'admissionNumber';
 
 const STATUS_LABEL: Record<string, string> = { invited: 'Invited', active: 'Active', inactive: 'Inactive', archived: 'Archived' };
 
@@ -152,7 +152,7 @@ export default function SchoolAdminStudentsScreen({ navigation, route }: any) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(isArchivedRoute ? 'archived' : ((route?.params?.initialStatus as StatusFilter) || 'all'));
   const [gradeFilter, setGradeFilter] = useState('all');
   const [sectionFilter, setSectionFilter] = useState('all');
-  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortKey, setSortKey] = useState<SortKey>('admissionNumber');
   const [sortAsc, setSortAsc] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -396,7 +396,7 @@ export default function SchoolAdminStudentsScreen({ navigation, route }: any) {
                   </Pressable>
                 </View>
                 <View style={styles.thNameCol}><SortHeader label="Student" sortKey="name" /></View>
-                <View style={styles.thAdmCol}><Text style={[styles.thText, styles.thStatic]}>Student ID</Text></View>
+                <View style={styles.thAdmCol}><SortHeader label="Student ID" sortKey="admissionNumber" /></View>
                 <View style={styles.thGradeCol}><SortHeader label="Grade · Section" sortKey="grade" /></View>
                 <View style={styles.thStatusCol}><Text style={[styles.thText, styles.thStatic]}>Status</Text></View>
                 <View style={styles.thJoinedCol}><Text style={[styles.thText, styles.thStatic]}>Last Active</Text></View>

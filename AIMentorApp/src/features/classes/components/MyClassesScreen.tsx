@@ -16,12 +16,16 @@ import { useAuth } from '../../../context/AuthContext';
 import { spacing, radius, fonts } from '../../../theme';
 import type { AppColors } from '../../../theme';
 import { fetchMyClasses, MyClass } from '../api/classesApi';
+import IndependentAccountEmpty from './IndependentAccountEmpty';
 
 export default function MyClassesScreen({ navigation }: any) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { user } = useAuth();
   const email = user?.email || '';
+  // B2C / independent account: no school link — show the connect bridge instead
+  // of fetching a roster that will always be empty for them.
+  const isB2C = !user?.schoolId;
 
   const [classes, setClasses] = useState<MyClass[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +44,7 @@ export default function MyClassesScreen({ navigation }: any) {
     }
   }, [email]);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => { if (!isB2C) load(); }, [load, isB2C]));
 
   const title = user?.role === 'parent' ? "My Kids' Classes" : 'My Classes';
 
@@ -49,7 +53,9 @@ export default function MyClassesScreen({ navigation }: any) {
       <View style={styles.screen}>
         <Header title={title} subtitle="Homeroom, portfolio and updates for your class" onMenuPress={() => navigation?.openDrawer?.()} />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {loading ? (
+          {isB2C ? (
+            <IndependentAccountEmpty feature="classes" />
+          ) : loading ? (
             <ActivityIndicator color={colors.accentYellow} style={{ marginTop: 40 }} />
           ) : error ? (
             <View style={styles.emptyBox}>

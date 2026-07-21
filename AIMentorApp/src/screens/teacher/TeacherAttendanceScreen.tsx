@@ -12,6 +12,7 @@ import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import SERVER_URL from '../../config/serverUrl';
 import { fetchMyClasses, MyClass } from '../../features/classes/api/classesApi';
+import IndependentAccountEmpty from '../../features/classes/components/IndependentAccountEmpty';
 
 interface StudentAttendance {
   id: string;
@@ -26,6 +27,9 @@ export default function TeacherAttendanceScreen({ navigation }: any) {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { user } = useAuth();
   const email = user?.email || '';
+  // B2C / independent teacher: no school link — attendance is a dead-end, so
+  // show the "Connect to My School" bridge instead (see early return below).
+  const isB2C = !user?.schoolId;
 
   const [classes, setClasses] = useState<MyClass[]>([]);
   const [selectedClass, setSelectedClass] = useState<MyClass | null>(null);
@@ -44,7 +48,7 @@ export default function TeacherAttendanceScreen({ navigation }: any) {
 
   // 1. Fetch Teacher's Classes
   useEffect(() => {
-    if (!email) return;
+    if (!email || isB2C) return;
     fetchMyClasses(email)
       .then(res => {
         setClasses(res);
@@ -212,6 +216,19 @@ export default function TeacherAttendanceScreen({ navigation }: any) {
       s.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [students, searchQuery]);
+
+  if (isB2C) {
+    return (
+      <ScreenLayout>
+        <Header
+          title="Attendance"
+          subtitle="Mark daily student attendance records"
+          onMenuPress={() => navigation?.openDrawer()}
+        />
+        <IndependentAccountEmpty feature="attendance" />
+      </ScreenLayout>
+    );
+  }
 
   return (
     <ScreenLayout>
