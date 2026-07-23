@@ -410,6 +410,14 @@ router.get('/:teacherEmail/students/template.xlsx', async (req, res) => {
     });
     headerRow.height = 22;
 
+    // Parent Phone column holds values like "+91 9361594071". Excel reads a
+    // leading "+" (or "=", "-") as the start of a formula and pops up the
+    // "we found a typo in your formula" prompt. Force the whole column to Text
+    // format so both the pre-filled values AND anything the user types there are
+    // treated literally — no formula parsing. (Parent Phone is the last column.)
+    const PHONE_COL = TEACHER_TEMPLATE_HEADER.indexOf('Parent Phone') + 1;
+    ws.getColumn(PHONE_COL).numFmt = '@';
+
     rows.forEach((rowValues, i) => {
       const row = ws.addRow(rowValues);
       const isSample = i < TEACHER_SAMPLE_ROW_COUNT;
@@ -420,6 +428,11 @@ router.get('/:teacherEmail/students/template.xlsx', async (req, res) => {
           cell.font = { italic: true, color: { argb: 'FF8A7550' } };
         }
       });
+      // Belt-and-braces: also stamp Text format on this row's phone cell (column
+      // numFmt alone can be overridden by per-cell defaults in some Excel builds).
+      const phoneCell = row.getCell(PHONE_COL);
+      phoneCell.numFmt = '@';
+      if (phoneCell.value != null) phoneCell.value = String(phoneCell.value);
     });
 
     ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: TEACHER_TEMPLATE_HEADER.length } };

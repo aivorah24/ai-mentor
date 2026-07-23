@@ -295,8 +295,7 @@ export default function ParentProfileScreen({ navigation }: any) {
                 <Feather name="user" size={16} color={colors.accentYellow} />
                 <Text style={styles.cardTitle}>Profile Information</Text>
               </View>
-              <InfoRow icon="user"     label="First Name"      value={firstName || '—'} styles={styles} />
-              <InfoRow icon="user"     label="Last Name"       value={lastName || '—'}  styles={styles} />
+              <InfoRow icon="user"     label="Name"            value={user?.name || firstName || '—'} styles={styles} />
               <InfoRow icon="mail"     label="Email Address"   value={email || '—'}     styles={styles} />
               <InfoRow icon="phone"    label="Contact Number"  value={phone || '—'}     styles={styles} />
               <InfoRow icon="map-pin"  label="City"            value={city || '—'}      styles={styles} isLast />
@@ -427,7 +426,7 @@ export default function ParentProfileScreen({ navigation }: any) {
             <View style={[styles.modalInput, { justifyContent: 'center', opacity: 0.5 }]}>
               <Text style={{ fontSize: 14, color: colors.textMain }}>{email}</Text>
             </View>
-            <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: -8 }}>Email cannot be changed</Text>
+            <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: -8 }}>You can update your email address anytime from Settings</Text>
             <Text style={styles.modalLabel}>Contact Number</Text>
             <TextInput style={styles.modalInput} value={editPhone} onChangeText={setEditPhone}
               placeholder="e.g. +91 98765 43210" placeholderTextColor={colors.textDim} keyboardType="phone-pad" />

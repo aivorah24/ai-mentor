@@ -7,6 +7,11 @@
 import { useState } from 'react';
 import SERVER_URL from '../../config/serverUrl';
 
+// Mobile-number OTP verification is not live yet (SMS sending currently errors),
+// so the "Verify" button is hidden across onboarding to avoid a dead-end/error.
+// The number is still collected; flip this to true once SMS delivery is enabled.
+export const MOBILE_VERIFICATION_ENABLED = false;
+
 export function useMobileOtpVerification(mobile: string, setMobile: (v: string) => void, mobileCode = '+91') {
   const [mobileVerified, setMobileVerified] = useState(false);
   const [verifiedMobile, setVerifiedMobile] = useState('');

@@ -491,18 +491,18 @@ router.post('/generate-ibpyp', async (req, res) => {
   let sourceChunks = 0;
   try {
     const { embed } = require('../services/embeddings');
-    const { searchContent } = require('../services/qdrant');
+    const { searchGrounding } = require('../services/qdrant');
     const queryText = [subject, topic, grade, curriculum, unitOfInquiry].filter(Boolean).join(' ');
     const vector = await embed(queryText);
-    const results = await searchContent({
-      vector,
-      curriculum: curriculum || undefined,
-      grade: grade || undefined,
-      subject: subject || undefined,
-      limit: 6,
+    // Route to the correct collection + normalise + fall back to the base
+    // curriculum (IB PYP → CBSE/NCERT) so RAG actually grounds instead of the old
+    // "always default NCERT collection → 0 hits → generic content" bug.
+    const { chunks: results, source } = await searchGrounding({
+      vector, curriculum, grade, subject, topic, limit: 6,
     });
     sourceChunks = results.length;
     if (results.length > 0) {
+      console.log(`[generate-ibpyp] grounded on ${results.length} chunks from`, source?.collection, source?.curriculum, source?.grade);
       curriculumContext = results
         .map(r => {
           const p = r.payload || {};
@@ -515,7 +515,11 @@ router.post('/generate-ibpyp', async (req, res) => {
   }
 
   const langNote = subject === 'Language Acquisition' && language
-    ? `Language focus: ${language}. Include ${language} vocabulary in the Word Bank.`
+    ? `TARGET LANGUAGE: ${language}. This is a ${language} acquisition assignment.
+- Write ALL target-language content in ${language}'s native script (e.g. Devanagari for Hindi, Telugu script for Telugu) WITH an English gloss in brackets — not only in the Word Bank, but in the scenario/provocation, sentence starters/frames, and the vocabulary students practise.
+- English is used ONLY for the surrounding instructions/scaffolding a beginner needs to understand the task; every place the STUDENT produces language, it must be ${language}.
+- The Word Bank must contain ${language} words in native script + romanisation + English meaning.
+- NO voice/audio: never ask the student to speak, say aloud, record, or present orally — all responses are written/typed.`
     : '';
   const unitNote = unitOfInquiry ? `Unit of Inquiry / Theme: "${unitOfInquiry}"` : '';
 
@@ -670,13 +674,13 @@ Instructions MUST ask: "Read about this cultural tradition. Write 3-5 words you 
       guidance: `⚠️ LANGUAGE PRACTICE STEP — Students USE the target language. NOT English writing, NOT drawing.
 Section 1 "Vocabulary Practice": List 5 target language words/phrases for ${topic} with English meanings. Students write ONE sentence in the target language using each word. Use scaffolded sentence starters in the target language.
 Section 2 "My Sentences": Write 4-5 sentences IN THE TARGET LANGUAGE describing ${topic}. Provide sentence frames: e.g. "मेरा _______ है।" (My _______ is.). Students fill in and extend.
-Section 3 "Cultural Connection": ONE sentence (can be in English for Grade 3, target language for Grade 4-5) comparing how ${topic} is expressed in the target language culture vs their own culture.
-${gradeAgeNote}. Every instruction must push students to produce TARGET LANGUAGE output.`,
+Section 3 "Cultural Connection": ONE written sentence in the target language (with a short English gloss in brackets) comparing how ${topic} is expressed in the target language culture vs their own culture.
+${gradeAgeNote}. Every instruction must push students to produce TARGET LANGUAGE output, IN WRITING (this platform has NO voice/audio input — never ask students to "speak", "say aloud", or "record").`,
       sections: ['Vocabulary Practice', 'My Sentences', 'Cultural Connection'],
     },
     step3: {
       type: 'communication',
-      guidance: `⚠️ COMMUNICATION STEP — Students PRODUCE language. 3 specific prompts:
+      guidance: `⚠️ COMMUNICATION STEP — Students PRODUCE language IN WRITING (this platform has NO voice/audio input — never ask them to "speak", "say aloud", "record" or "present orally"; all responses are typed/written). 3 specific prompts:
 Prompt 1 (sections[0] = "My Paragraph"): "Write a short paragraph (3-4 sentences) IN THE TARGET LANGUAGE about ${topic}. Use at least 5 words from the word bank. You may use sentence starters provided." (Must specify sentence starters in target language)
 Prompt 2 (sections[1] = "Favourite Word or Phrase"): "What was the most interesting or fun word/phrase you learned in this lesson? Write it, its meaning, and WHY you like it." (English okay)
 Prompt 3 (sections[2] = "Cultural Comparison"): "How is ${topic} similar or different in the target language culture compared to your culture? Give one specific example." (1-2 sentences)`,
@@ -914,13 +918,23 @@ ABSOLUTE RULES — violation = wrong output:
   const STRICT_RULES_PLACEHOLDER = ''; // absorbed above
   const STRICT_RULES = '';  // no longer needed below
   try {
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    // Primary model, then fall back to a lighter model on rate-limit / failure so
+    // generation never dead-ends on a blank screen when the 70B daily token cap
+    // (Groq 429 "tokens per day") is hit — the 8B model has its own token budget.
+    const genWithModel = (model) => groq.chat.completions.create({
+      model,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.5,
       max_tokens: 1800,
       response_format: { type: 'json_object' },
     });
+    let completion;
+    try {
+      completion = await genWithModel('llama-3.3-70b-versatile');
+    } catch (primaryErr) {
+      console.warn('[generate-ibpyp] primary model failed, falling back to 8B:', primaryErr.status || '', primaryErr.message);
+      completion = await genWithModel('llama-3.1-8b-instant');
+    }
     const raw = completion.choices[0]?.message?.content || '{}';
     const parsed = JSON.parse(raw);
     if (!parsed.purpose) return res.status(500).json({ error: 'AI returned invalid structure' });
@@ -933,14 +947,19 @@ ABSOLUTE RULES — violation = wrong output:
       isMaths         ? ['tuning_in',          'problem_solving',    'math_reflection']    :
       isScience        ? ['prior_knowledge',     'drawing',            'structured_writing'] :
       isEnglish        ? ['text_connection',     'reading_comprehension', 'writing_reflection'] :
-      isLangAcq        ? ['language_culture',    'language_practice',  'communication']      :
+      // Communication (the voice/oral-style step) is intentionally dropped for
+      // Language Acquisition — this platform has no audio input, so a language
+      // assignment is just Culture + written Practice. (2026-07-22)
+      isLangAcq        ? ['language_culture',    'language_practice']                        :
       isSocialStudies  ? ['social_inquiry',      'research_notes',     'social_synthesis']   :
       isArts           ? ['artistic_exploration','art_creation',       'artistic_reflection'] :
       isICT            ? ['digital_awareness',   'tech_skill_practice','digital_citizenship'] :
       isPE             ? ['movement_exploration','skill_practice',     'physical_reflection'] :
                          ['brainstorm',          'drawing',            'structured_writing'];
 
-    const taskSteps = rawSteps.slice(0, 3).map((s, idx) => {
+    // Language Acquisition = 2 steps (no Communication); everything else = 3.
+    const numSteps = isLangAcq ? 2 : 3;
+    const taskSteps = rawSteps.slice(0, numSteps).map((s, idx) => {
       const enforcedType = stepTypeMap[idx] || s.type || 'brainstorm';
 
       // Default sections per step type
@@ -1020,7 +1039,15 @@ ABSOLUTE RULES — violation = wrong output:
       keyConcept:       ibMeta.keyConcept || '',
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    // Surface a clear, user-facing message (never a blank screen). A Groq daily
+    // token cap survives even the 8B fallback → tell the teacher to retry later.
+    const isRateLimit = err.status === 429 || /rate.?limit|tokens per day/i.test(err.message || '');
+    console.error('[generate-ibpyp] error:', err.status || '', err.message);
+    res.status(isRateLimit ? 429 : 500).json({
+      error: isRateLimit
+        ? 'The AI is busy right now (daily generation limit reached). Please try again in a little while.'
+        : (err.message || 'IB generation failed. Please try again.'),
+    });
   }
 });
 
@@ -1029,6 +1056,7 @@ router.post('/generate-quiz', async (req, res) => {
     subject = '', chapter = '', grade = '', curriculum = '',
     difficulty = 'medium', count = 5, teacherNotes = '',
     quizType = 'mcq',   // 'mcq' | 'fill_blank' | 'mixed'
+    language = '',      // target language for Language Acquisition (e.g. 'Hindi')
   } = req.body;
 
   const cleanSubject = String(subject || '').trim();
@@ -1045,15 +1073,16 @@ router.post('/generate-quiz', async (req, res) => {
     let sourceChunks = 0;
     try {
       const { embed } = require('../services/embeddings');
-      const { searchContent } = require('../services/qdrant');
+      const { searchGrounding } = require('../services/qdrant');
 
       const queryText = [cleanSubject, cleanChapter, cleanGrade, cleanCurriculum, cleanNotes].filter(Boolean).join(' ');
       const vector = await embed(queryText);
-      const results = await searchContent({
+      const { chunks: results } = await searchGrounding({
         vector,
         curriculum: cleanCurriculum || undefined,
         grade: cleanGrade || undefined,
         subject: cleanSubject || undefined,
+        topic: cleanChapter || undefined,
         limit: 10,
       });
 
@@ -1078,42 +1107,49 @@ router.post('/generate-quiz', async (req, res) => {
     const contextBlock = context ? `TEXTBOOK CONTENT:\n${context}\n\n` : '';
     const notesBlock = cleanNotes ? `TEACHER NOTES: ${cleanNotes}\n\n` : '';
 
-    const makeMcqPrompt = (n) => `${contextBlock}${notesBlock}Generate ${n} MCQ questions for ${baseContext}.
+    // For a Language Acquisition subject, the questions, options and answers must
+    // be in the target language's NATIVE SCRIPT (Devanagari for Hindi, Telugu
+    // script for Telugu, etc.) with a short English gloss in brackets — not
+    // English. Latin-script languages (French/Spanish) just use their own script.
+    const cleanLanguage = String(language || '').trim();
+    const langDirective = (cleanSubject === 'Language Acquisition' && cleanLanguage)
+      ? `\nTARGET LANGUAGE: ${cleanLanguage}. Write the question stems, ALL options, and the correct answer in ${cleanLanguage}'s native script, each followed by a short English gloss in brackets — e.g. "नमस्ते (hello)". The hint/explanation may stay in English. Do NOT write the questions or options only in English. No audio/speaking — text only.`
+      : '';
+
+    const makeMcqPrompt = (n) => `${contextBlock}${notesBlock}Generate ${n} MCQ questions for ${baseContext}.${langDirective}
 Each question: type "mcq", exactly 4 options, "correct" is the exact text of the correct option, include "hint" and "explanation".
 Respond ONLY as valid JSON: {"questions":[{"id":"q1","question":"...","type":"mcq","options":["A","B","C","D"],"correct":"A","hint":"...","explanation":"..."}]}`;
 
-
+    // Primary 70B model, then fall back to the 8B model on rate-limit / failure so
+    // quiz generation never dead-ends when the daily token cap (Groq 429) is hit.
+    const mcqCompletion = async (content) => {
+      const opts = { messages: [{ role: 'user', content }], response_format: { type: 'json_object' } };
+      try {
+        return await groq.chat.completions.create({ model: 'llama-3.3-70b-versatile', ...opts });
+      } catch (primaryErr) {
+        console.warn('[generate-quiz] primary model failed, falling back to 8B:', primaryErr.status || '', primaryErr.message);
+        return await groq.chat.completions.create({ model: 'llama-3.1-8b-instant', ...opts });
+      }
+    };
 
     let generated = [];
 
     if (quizType === 'fill_blank') {
       // Generate as MCQ then convert all to fill_blank
-      const completion = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: makeMcqPrompt(requestedCount) }],
-        response_format: { type: 'json_object' },
-      });
+      const completion = await mcqCompletion(makeMcqPrompt(requestedCount));
       const result = JSON.parse(completion.choices[0].message.content);
       const mcqQs = normalizeQuizQuestions(Array.isArray(result.questions) ? result.questions : [], requestedCount);
       generated = mcqQs.map(q => mcqToFillBlank(q));
     } else if (quizType === 'mixed') {
       const totalNeeded = requestedCount;
-      const completion = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: makeMcqPrompt(totalNeeded) }],
-        response_format: { type: 'json_object' },
-      });
+      const completion = await mcqCompletion(makeMcqPrompt(totalNeeded));
       const result = JSON.parse(completion.choices[0].message.content);
       const allMcq = normalizeQuizQuestions(Array.isArray(result.questions) ? result.questions : [], totalNeeded);
       // Convert every other question to fill_blank
       generated = allMcq.map((q, i) => i % 2 === 1 ? mcqToFillBlank(q) : q);
     } else {
       // MCQ only
-      const completion = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: makeMcqPrompt(requestedCount) }],
-        response_format: { type: 'json_object' },
-      });
+      const completion = await mcqCompletion(makeMcqPrompt(requestedCount));
       const result = JSON.parse(completion.choices[0].message.content);
       generated = normalizeQuizQuestions(Array.isArray(result.questions) ? result.questions : [], requestedCount);
     }
@@ -2192,7 +2228,7 @@ router.post('/:id/submit', async (req, res) => {
         score = graded.length > 0 ? Math.round(graded.reduce((s, q) => s + q.score, 0) / graded.length) : 50;
         try {
           const summaryComp = await groq.chat.completions.create({
-            model: 'llama-3.1-8b-instant',
+            model: 'llama-3.3-70b-versatile',
             messages: [{ role: 'user', content: `IB PYP ${assignment.grade||'Grade 3'} student scored ${score}% on "${assignment.title}" (${assignment.subject}). Write 2 warm encouraging sentences for a young learner. JSON: {"text":"...","stamp":"Amazing Work! or Good Effort! or Keep Trying!","wellDone":"...","improve":"..."}` }],
             response_format: { type: 'json_object' },
           });
@@ -2672,7 +2708,7 @@ Respond ONLY as JSON: {"text":"...student-facing...","teacherSummary":"...teache
       score = answeredGraded.length > 0 ? Math.round(answeredGraded.reduce((s, q) => s + q.score, 0) / graded.length) : 0;
       try {
         const summaryComp = await groq.chat.completions.create({
-          model: 'llama-3.1-8b-instant',
+          model: 'llama-3.3-70b-versatile',
           messages: [{ role: 'user', content: `IB PYP ${assignment.grade||'Grade 3'} student scored ${score}% on "${assignment.title}" (${assignment.subject}). ${answeredGraded.length}/${graded.length} questions answered. Write 2 warm encouraging sentences for a young learner. JSON: {"text":"...","stamp":"Amazing Work! or Good Effort! or Keep Trying!","wellDone":"...","improve":"..."}` }],
           response_format: { type: 'json_object' },
         });

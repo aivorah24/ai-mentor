@@ -1,0 +1,93 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 7",
+  "subject": "Science",
+  "code": "gecu1",
+  "imageSubject": "Science",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "gecu101.pdf",
+      "title": "The Ever-Evolving World of Science",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "gecu102.pdf",
+      "title": "Exploring Substances: Acidic, Basic, and Neutral",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "gecu103.pdf",
+      "title": "Electricity: Circuits and their Components",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "gecu104.pdf",
+      "title": "The World of Metals and Non-metals",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "gecu105.pdf",
+      "title": "Changes Around Us: Physical and Chemical",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "gecu106.pdf",
+      "title": "Adolescence: A Stage of Growth and Change",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 7,
+      "pdfFile": "gecu107.pdf",
+      "title": "Heat Transfer in Nature",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 8,
+      "pdfFile": "gecu108.pdf",
+      "title": "Measurement of Time and Motion",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 9,
+      "pdfFile": "gecu109.pdf",
+      "title": "Life Processes in Animals",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 10,
+      "pdfFile": "gecu110.pdf",
+      "title": "Life Processes in Plants",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 11,
+      "pdfFile": "gecu111.pdf",
+      "title": "Light: Shadows and Reflections",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 12,
+      "pdfFile": "gecu112.pdf",
+      "title": "Chapter 12",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

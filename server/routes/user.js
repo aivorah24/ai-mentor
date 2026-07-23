@@ -788,6 +788,52 @@ router.post('/email-otp/verify', async (req, res) => {
 // (no FK — `user_email`/`student_email`/`parent_email` columns), and both
 // auth providers (Supabase Auth + Firebase Auth), so no side of the system is
 // left pointing at the old address.
+// Rename an account's email everywhere it is used as a lookup key: the `users`
+// table (the identity row — its failure is fatal), every email-keyed table with
+// no FK, and Supabase Auth. Firebase Auth is intentionally NOT touched here — the
+// two callers handle it differently (password → updateUser; Google → delete old
+// user), so each does its own Firebase step after this returns.
+// Returns { user } on success or { error } if the identity rename failed.
+async function renameEmailAcrossData(currentEmail, newEmail, logTag) {
+  const { data: updated, error } = await supabase
+    .from('users')
+    .update({ email: newEmail })
+    .eq('email', currentEmail)
+    .select('id, name, email, role')
+    .single();
+  if (error) return { error: error.message };
+
+  // Best-effort: propagate to every other email-keyed table so nothing is
+  // silently orphaned under the old address. None of these block the response —
+  // the identity rename (above) is the part that must succeed.
+  const emailKeyedTables = [
+    ['user_preferences',    'user_email'],
+    ['student_preferences', 'user_email'],
+    ['analytics_events',    'user_email'],
+    ['habits_checkins',     'user_email'],
+    ['llm_logs',            'student_email'],
+  ];
+  for (const [table, col] of emailKeyedTables) {
+    await supabase.from(table).update({ [col]: newEmail }).eq(col, currentEmail)
+      .then(({ error: e }) => { if (e) console.error(`[${logTag}] ${table}.${col}:`, e.message); });
+  }
+  await supabase.from('parent_children').update({ parent_email: newEmail }).eq('parent_email', currentEmail)
+    .then(({ error: e }) => { if (e) console.error(`[${logTag}] parent_children.parent_email:`, e.message); });
+
+  // Supabase Auth (if this user also has a password-based Supabase Auth account)
+  try {
+    const { data: authList } = await supabase.auth.admin.listUsers();
+    const authUser = authList?.users?.find(u => u.email === currentEmail);
+    if (authUser) {
+      await supabase.auth.admin.updateUserById(authUser.id, { email: newEmail, email_confirm: true });
+    }
+  } catch (e) {
+    console.error(`[${logTag}] supabase auth update failed:`, e.message);
+  }
+
+  return { user: updated };
+}
+
 router.post('/change-email', async (req, res) => {
   try {
     const currentEmail = String(req.body?.currentEmail || '').trim().toLowerCase();
@@ -806,6 +852,34 @@ router.post('/change-email', async (req, res) => {
     const { data: taken } = await supabase.from('users').select('id').eq('email', newEmail).maybeSingle();
     if (taken) return res.status(409).json({ error: 'That email is already in use by another account.' });
 
+    // GUARD (root-cause fix): a Google-SSO account's identity is its linked
+    // google.com provider, NOT the Firebase top-level email. Admin SDK's
+    // updateUser({email}) only rewrites the top-level field and CANNOT re-point
+    // a Google provider link (that requires the new account's OAuth credential).
+    // Rewriting the email anyway leaves a split-brain user: top-level email =
+    // new address, but google.com provider still = old address. Sign-in with the
+    // NEW Google account then fails with auth/provider-already-linked, and the
+    // OLD Google account still logs in. So refuse the rename for Google users
+    // BEFORE mutating anything, and tell them how to actually switch. (2026-07-22)
+    if (firebaseAdmin) {
+      try {
+        const fbUser = await firebaseAdmin.auth().getUserByEmail(currentEmail);
+        const isGoogleLinked = (fbUser.providerData || []).some(p => p.providerId === 'google.com');
+        if (isGoogleLinked) {
+          return res.status(409).json({
+            error: 'This account signs in with Google, so its email is tied to your Google account and can’t be changed here. To use a different address, sign up / sign in with that Google account instead.',
+            code: 'GOOGLE_SSO_EMAIL_IMMUTABLE',
+          });
+        }
+      } catch (e) {
+        // No Firebase user for currentEmail (e.g. Supabase-only account) → not a
+        // Google-SSO account, so nothing to guard against; fall through.
+        if (e.code !== 'auth/user-not-found') {
+          console.error('[change-email] google-guard lookup failed:', e.message);
+        }
+      }
+    }
+
     const stored = await otpStore.getOtp(newEmail, 'email_verify');
     if (!stored) return res.status(400).json({ error: 'No code requested for that email. Please send a code first.' });
     if (Date.now() > stored.expiresAt) {
@@ -815,45 +889,12 @@ router.post('/change-email', async (req, res) => {
     if (stored.otp !== otp) return res.status(400).json({ error: 'Incorrect code. Please try again.' });
     await otpStore.deleteOtp(newEmail, 'email_verify');
 
-    const { data: updated, error } = await supabase
-      .from('users')
-      .update({ email: newEmail })
-      .eq('email', currentEmail)
-      .select('id, name, email, role')
-      .single();
-    if (error) return res.status(500).json({ error: error.message });
+    const { user: updated, error } = await renameEmailAcrossData(currentEmail, newEmail, 'change-email');
+    if (error) return res.status(500).json({ error });
 
-    // Best-effort: propagate to every other email-keyed table so nothing is
-    // silently orphaned under the old address. None of these block the response —
-    // the identity rename (above) is the part that must succeed.
-    const emailKeyedTables = [
-      ['user_preferences',    'user_email'],
-      ['student_preferences', 'user_email'],
-      ['analytics_events',    'user_email'],
-      ['habits_checkins',     'user_email'],
-      ['llm_logs',            'student_email'],
-    ];
-    for (const [table, col] of emailKeyedTables) {
-      await supabase.from(table).update({ [col]: newEmail }).eq(col, currentEmail)
-        .then(({ error: e }) => { if (e) console.error(`[change-email] ${table}.${col}:`, e.message); });
-    }
-    await supabase.from('parent_children').update({ parent_email: newEmail }).eq('parent_email', currentEmail)
-      .then(({ error: e }) => { if (e) console.error('[change-email] parent_children.parent_email:', e.message); });
-
-    // Supabase Auth (if this user also has a password-based Supabase Auth account)
-    try {
-      const { data: authList } = await supabase.auth.admin.listUsers();
-      const authUser = authList?.users?.find(u => u.email === currentEmail);
-      if (authUser) {
-        await supabase.auth.admin.updateUserById(authUser.id, { email: newEmail, email_confirm: true });
-      }
-    } catch (e) {
-      console.error('[change-email] supabase auth update failed:', e.message);
-    }
-
-    // Firebase Auth — updated via Admin SDK so this works uniformly for both
-    // password and Google-SSO accounts (no client-side reauth token needed here;
-    // ownership of newEmail was already proven by the OTP above).
+    // Firebase Auth — for a password account the top-level email IS the identity,
+    // so updateUser({email}) is the correct rewrite. (Google-SSO accounts never
+    // reach here — the guard above bounces them to /change-email-google instead.)
     try {
       if (firebaseAdmin) {
         const fbUser = await firebaseAdmin.auth().getUserByEmail(currentEmail);
@@ -867,6 +908,85 @@ router.post('/change-email', async (req, res) => {
   } catch (err) {
     console.error('[change-email]', err.message);
     res.status(500).json({ error: 'Could not update your email. Please try again.' });
+  }
+});
+
+// ── Change email for a Google-SSO account (self-serve identity migration) ──
+// A Google account's identity is its google.com provider link, which the Admin
+// SDK cannot re-point — so a Google user "changes email" by proving ownership of
+// the DESTINATION Google account and moving their Aivorah data onto it:
+//
+//   1. Client opens a Google popup (prompt=select_account) and the user picks
+//      the NEW Google account. That popup sign-in itself creates/opens a Firebase
+//      user for the new account and yields a fresh ID token.
+//   2. Client posts { currentEmail, idToken } here.
+//   3. Server verifies the ID token with the Admin SDK — this is the security
+//      proof that the caller really controls newEmail (= token.email) and that it
+//      was a google.com sign-in. Nothing about the request body is trusted.
+//   4. Server renames all Aivorah data currentEmail → newEmail (same propagation
+//      as /change-email), then deletes the OLD Firebase user so it can't log back
+//      into now-empty data. The NEW Firebase user (from step 1) becomes the
+//      account's identity going forward.
+//
+// On any failure before the rename, nothing is mutated and the old account is
+// untouched — the user can simply sign back in with their old Google account.
+router.post('/change-email-google', async (req, res) => {
+  try {
+    const currentEmail = String(req.body?.currentEmail || '').trim().toLowerCase();
+    const idToken      = String(req.body?.idToken || '').trim();
+    if (!currentEmail || !idToken) {
+      return res.status(400).json({ error: 'currentEmail and idToken are required.' });
+    }
+    if (!firebaseAdmin) {
+      return res.status(503).json({ error: 'Account migration is temporarily unavailable. Please try again later.' });
+    }
+
+    // Verify ownership of the NEW Google account. The email + provider come ONLY
+    // from the verified token, never from the request body.
+    let decoded;
+    try {
+      decoded = await firebaseAdmin.auth().verifyIdToken(idToken);
+    } catch (e) {
+      return res.status(401).json({ error: 'Could not verify the Google sign-in. Please try again.' });
+    }
+    const newEmail = String(decoded.email || '').trim().toLowerCase();
+    const provider = decoded.firebase?.sign_in_provider;
+    if (!newEmail) return res.status(400).json({ error: 'The Google account has no email address.' });
+    if (provider !== 'google.com') {
+      return res.status(400).json({ error: 'Please confirm with a Google account.' });
+    }
+    if (newEmail === currentEmail) {
+      return res.status(400).json({ error: 'That is the same Google account you already use. Pick a different one.' });
+    }
+
+    // Destination address must not already belong to another Aivorah account.
+    const { data: taken } = await supabase.from('users').select('id').eq('email', newEmail).maybeSingle();
+    if (taken) {
+      return res.status(409).json({ error: 'That Google account is already registered with Aivorah. Sign in with it directly instead.' });
+    }
+
+    // Move the data. This is the point of no return; do it before deleting the
+    // old Firebase user so a rename failure leaves everything recoverable.
+    const { user: updated, error } = await renameEmailAcrossData(currentEmail, newEmail, 'change-email-google');
+    if (error) return res.status(500).json({ error });
+
+    // Retire the OLD Firebase user so it can't sign back into now-empty data.
+    // Best-effort: the data has already moved, so a delete failure is non-fatal.
+    try {
+      const oldFbUser = await firebaseAdmin.auth().getUserByEmail(currentEmail);
+      if (oldFbUser.uid !== decoded.uid) {
+        await firebaseAdmin.auth().deleteUser(oldFbUser.uid);
+      }
+    } catch (e) {
+      if (e.code !== 'auth/user-not-found') {
+        console.error('[change-email-google] old firebase user cleanup failed:', e.message);
+      }
+    }
+
+    res.json({ ok: true, user: updated, newEmail });
+  } catch (err) {
+    console.error('[change-email-google]', err.message);
+    res.status(500).json({ error: 'Could not switch your Google account. Please try again.' });
   }
 });
 

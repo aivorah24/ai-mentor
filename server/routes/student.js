@@ -785,7 +785,7 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
 
     const { data: links, error } = await supabase
       .from('teacher_student')
-      .select('student_id, subject, users!teacher_student_student_id_fkey(id, name, email, grade, school, curriculum, photo_url)')
+      .select('student_id, subject, users!teacher_student_student_id_fkey(id, name, email, grade, school, curriculum, photo_url, created_at)')
       .eq('teacher_id', teacherId ?? rawId);
 
     if (error) return res.status(500).json({ error: error.message });
@@ -1021,7 +1021,22 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
       // it's unknown (e.g. Qdrant lookup miss for that curriculum/grade), fall back
       // to "has completed zero topics" so the flag can't be silently defeated by a
       // missing topic count.
-      const needsAttention = totalTopics > 0 ? progressPct < 20 : topicsCount === 0;
+      //
+      // GRACE for freshly-added students: a student who has NEVER engaged (no
+      // last-active, no XP, no completed topics) and whose account is younger
+      // than NEW_STUDENT_GRACE_DAYS is NOT flagged — otherwise every student a
+      // teacher adds shows "Attention" the instant they're created, before they
+      // ever had a chance to log in. After the grace window a still-untouched
+      // account does surface (they genuinely need a nudge).
+      const NEW_STUDENT_GRACE_DAYS = 7;
+      const hasStarted = Boolean(s.last_active_date) || (s.xp_points ?? 0) > 0 || topicsCount > 0;
+      const accountAgeDays = user.created_at
+        ? (Date.now() - new Date(user.created_at).getTime()) / 86400000
+        : 999;
+      const inNewGrace = !hasStarted && accountAgeDays < NEW_STUDENT_GRACE_DAYS;
+      const needsAttention = inNewGrace
+        ? false
+        : (totalTopics > 0 ? progressPct < 20 : topicsCount === 0);
 
       return {
         id:             link.student_id,
@@ -1033,6 +1048,8 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
         subject:        link.subject,
         scopedSubjects,
         totalTopics,
+        createdAt:      user.created_at ?? null,
+        hasStarted,
         xpPoints:       s.xp_points        ?? 0,
         level:          s.level            ?? 1,
         currentStreak:  s.current_streak   ?? 0,

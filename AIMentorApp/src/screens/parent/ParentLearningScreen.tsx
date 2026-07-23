@@ -153,7 +153,7 @@ function TopicRow({
     <View style={[topicRowStyles.row, !isLast && { borderBottomWidth: 1, borderBottomColor: accent + '30' }]}>
       <Feather name={statusIcon as any} size={14} color={statusColor} style={{ marginTop: 1 }} />
       <View style={topicRowStyles.info}>
-        <Text style={[topicRowStyles.name, { color: '#1C2A28' }]} numberOfLines={2}>
+        <Text style={[topicRowStyles.name, { color: colors.textMain }]} numberOfLines={2}>
           {topic.topic || topic}
         </Text>
         <View style={topicRowStyles.metaRow}>
@@ -219,14 +219,15 @@ function SubjectCard({
   const pct     = sub.topicCount > 0 ? Math.round((done / sub.topicCount) * 100) : 0;
 
   return (
-    <View style={[cardStyles.wrapper, width ? { width } : undefined]}>
+    <View style={[cardStyles.wrapper, width ? { width } : undefined, isExpanded && { borderWidth: 2, borderColor: accent }]}>
       <LinearGradient
         colors={[meta.bgFromDark, meta.bgToDark]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={cardStyles.gradient}
       >
-        {/* Header row — always visible */}
+        {/* Compact card — details open in a separate panel below, not inline,
+            so an expanded subject never stretches the grid or leaves a gap. */}
         <TouchableOpacity onPress={onToggle} activeOpacity={0.85} style={cardStyles.header}>
           <View style={[cardStyles.iconWrap, { backgroundColor: '#ffffff50' }]}>
             <Feather name={meta.icon as any} size={18} color={accent} />
@@ -239,7 +240,7 @@ function SubjectCard({
             <View style={[cardStyles.pctPill, { borderColor: accent + '88', backgroundColor: '#ffffff50' }]}>
               <Text style={[cardStyles.pctText, { color: accent }]}>{pct}%</Text>
             </View>
-            <Feather name={isExpanded ? 'chevron-up' : 'chevron-down'} size={16} color={accent} style={{ marginTop: 4 }} />
+            <Feather name={isExpanded ? 'chevron-up' : 'chevron-right'} size={16} color={accent} style={{ marginTop: 4 }} />
           </View>
         </TouchableOpacity>
 
@@ -247,38 +248,97 @@ function SubjectCard({
         <View style={[cardStyles.track, { backgroundColor: accent + '40' }]}>
           <View style={[cardStyles.fill, { width: `${pct}%`, backgroundColor: accent }]} />
         </View>
-
-        {/* Expanded topic list */}
-        {isExpanded && topics.length > 0 && (
-          <View style={[cardStyles.topicList, { backgroundColor: '#ffffffcc' }]}>
-            {topics.map((t: any, i: number) => {
-              const topicName = typeof t === 'string' ? t : t.topic;
-              const ta        = analyticsReport?.topics[topicName];
-              const isDone    = completedSet.has(topicName) || [...completedSet].some(c => c.includes(topicName));
-              return (
-                <TopicRow
-                  key={topicName || i}
-                  topic={t}
-                  analytics={ta}
-                  isDone={isDone}
-                  accent={accent}
-                  colors={{ textDim: '#8A9A98' } as any}
-                  isLast={i === topics.length - 1}
-                />
-              );
-            })}
-          </View>
-        )}
-
-        {isExpanded && topics.length === 0 && (
-          <View style={[cardStyles.topicList, { backgroundColor: '#ffffffcc', paddingVertical: 16, alignItems: 'center' }]}>
-            <Text style={{ color: '#6A8A86', fontFamily: fonts.serif, fontSize: 12 }}>Topic details loading…</Text>
-          </View>
-        )}
       </LinearGradient>
     </View>
   );
 }
+
+// ── Full-width detail panel — topic-by-topic for the SELECTED subject ─────────
+// Rendered once, below the grid (never inside a card), so opening a subject
+// keeps the compact grid intact and scannable.
+function SubjectDetailPanel({
+  sub, completedSet, analyticsReport, colors, onClose, isMobile,
+}: {
+  sub: any;
+  completedSet: Set<string>;
+  analyticsReport: ChildReport | null;
+  colors: AppColors;
+  onClose: () => void;
+  isMobile: boolean;
+}) {
+  const meta = subjectMeta(sub.subject);
+  const accent = meta.accentDark;
+  const topics: any[] = sub.topics ?? [];
+  const done = topics.filter((t: any) => {
+    const name = typeof t === 'string' ? t : t.topic;
+    return completedSet.has(name) || [...completedSet].some(c => c.includes(name));
+  }).length;
+  const pct = sub.topicCount > 0 ? Math.round((done / sub.topicCount) * 100) : 0;
+
+  return (
+    <View style={[panelStyles.card, { backgroundColor: colors.cardDark, borderColor: accent + '55' }]}>
+      <View style={panelStyles.header}>
+        <View style={[cardStyles.iconWrap, { backgroundColor: accent + '18' }]}>
+          <Feather name={meta.icon as any} size={16} color={accent} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[panelStyles.title, { color: colors.textMain }]}>{sub.subject}</Text>
+          <Text style={[panelStyles.meta, { color: colors.textMuted }]}>{sub.topicCount} topics · {done} completed</Text>
+        </View>
+        <View style={[cardStyles.pctPill, { borderColor: accent + '88', backgroundColor: accent + '14', marginRight: 8 }]}>
+          <Text style={[cardStyles.pctText, { color: accent }]}>{pct}%</Text>
+        </View>
+        <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Feather name="x" size={18} color={colors.textMuted} />
+        </TouchableOpacity>
+      </View>
+
+      {topics.length === 0 ? (
+        <View style={{ paddingVertical: 16, alignItems: 'center' }}>
+          <Text style={{ color: colors.textMuted, fontFamily: fonts.serif, fontSize: 12 }}>Topic details loading…</Text>
+        </View>
+      ) : (
+        <View style={[panelStyles.list, { borderColor: colors.borderColor, flexDirection: isMobile ? 'column' : 'row', flexWrap: 'wrap' }]}>
+          {topics.map((t: any, i: number) => {
+            const topicName = typeof t === 'string' ? t : t.topic;
+            const ta = analyticsReport?.topics[topicName];
+            const isDone = completedSet.has(topicName) || [...completedSet].some(c => c.includes(topicName));
+            // 2-column grid on wider screens: left column gets a divider on its
+            // right; every cell gets a bottom divider for a clean table feel.
+            const leftCol = !isMobile && i % 2 === 0;
+            return (
+              <View
+                key={topicName || i}
+                style={{
+                  width: isMobile ? '100%' : '50%',
+                  borderBottomWidth: 1, borderBottomColor: colors.borderColor,
+                  ...(leftCol ? { borderRightWidth: 1, borderRightColor: colors.borderColor } : {}),
+                }}
+              >
+                <TopicRow
+                  topic={t}
+                  analytics={ta}
+                  isDone={isDone}
+                  accent={accent}
+                  colors={colors}
+                  isLast
+                />
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const panelStyles = StyleSheet.create({
+  card:   { borderWidth: 1, borderRadius: 16, padding: 14, gap: 12 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  title:  { fontFamily: fonts.serif, fontSize: 16, fontWeight: '800' },
+  meta:   { fontFamily: fonts.serif, fontSize: 11, fontWeight: '600', marginTop: 2 },
+  list:   { borderWidth: 1, borderRadius: 12, overflow: 'hidden' },
+});
 
 const cardStyles = StyleSheet.create({
   wrapper:     { borderRadius: 16, overflow: 'hidden' },
@@ -467,19 +527,34 @@ export default function ParentLearningScreen({ navigation, route }: any) {
                   <Text style={styles.emptyText}>No content found for {childCurriculum || 'this curriculum'} {childGrade}.{'\n'}Content will appear once ingested.</Text>
                 </View>
               ) : (
-                <View style={styles.subjectGrid}>
-                  {subjects.map((sub) => (
-                    <SubjectCard
-                      key={sub.subject}
-                      sub={sub}
+                <>
+                  <View style={styles.subjectGrid}>
+                    {subjects.map((sub) => (
+                      <SubjectCard
+                        key={sub.subject}
+                        sub={sub}
+                        completedSet={completedSet}
+                        analyticsReport={analyticsReport}
+                        isExpanded={expandedSubject === sub.subject}
+                        onToggle={() => setExpandedSubject(prev => prev === sub.subject ? null : sub.subject)}
+                        width={cardWidth}
+                      />
+                    ))}
+                  </View>
+
+                  {/* Details for the selected subject — one full-width panel below
+                      the grid, so the grid stays compact and scannable. */}
+                  {expandedSubject && subjects.find(s => s.subject === expandedSubject) && (
+                    <SubjectDetailPanel
+                      sub={subjects.find(s => s.subject === expandedSubject)}
                       completedSet={completedSet}
                       analyticsReport={analyticsReport}
-                      isExpanded={expandedSubject === sub.subject}
-                      onToggle={() => setExpandedSubject(prev => prev === sub.subject ? null : sub.subject)}
-                      width={cardWidth}
+                      colors={colors}
+                      onClose={() => setExpandedSubject(null)}
+                      isMobile={isMobile}
                     />
-                  ))}
-                </View>
+                  )}
+                </>
               )}
             </>
           )}

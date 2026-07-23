@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, ActivityIndicator, RefreshControl,
@@ -114,6 +114,10 @@ const SUBJECT_COLORS: Record<string, string> = {
   All: P.slate, Math: P.teal, Science: P.green, English: P.gold, Arts: P.peach, Other: P.rose,
 };
 
+// Curriculum topics per grade+curriculum are static, so cache them across
+// re-renders / revisits — after the first load the card renders instantly.
+const CURRICULUM_CACHE = new Map<string, any[]>();
+
 function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects, cleanName, subjectOf }: {
   allStudents: Student[]; colors: any;
   availableGrades: string[];
@@ -121,8 +125,24 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
   cleanName: (t: string) => string;
   subjectOf: (t: string) => string;
 }) {
-  const [gradeF, setGradeF] = useState('All');
+  // Start ON the first real grade (synchronously, from the prop) so we NEVER do
+  // the slow "All grades" curriculum fetch on mount — that double-fetch was the
+  // visible load delay. Falls back to 'All' only if grades aren't ready yet, and
+  // the effect below fills it in once they are.
+  const [gradeF, setGradeF] = useState(() => availableGrades.filter(g => g !== 'All')[0] || 'All');
   const [subjectF, setSubjectF] = useState('All');
+  const didInitGradeRef = useRef(gradeF !== 'All'); // already initialised if prop was ready
+
+  // Fallback: if grades weren't ready at first render, pick the first one once —
+  // guarded so it never fights a later manual clear.
+  useEffect(() => {
+    if (didInitGradeRef.current) return;
+    const realGrades = availableGrades.filter(g => g !== 'All');
+    if (realGrades.length > 0) {
+      didInitGradeRef.current = true;
+      setGradeF(realGrades[0]);
+    }
+  }, [availableGrades]);
   // { topic, subject } pairs from curriculum API
   const [curriculumTopics, setCurriculumTopics] = useState<{topic: string; subject: string}[]>([]);
   const [availCurrSubjects, setAvailCurrSubjects] = useState<string[]>([]);
@@ -132,19 +152,22 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
     const fetchTopics = async () => {
       const grades = gradeF === 'All' ? availableGrades.filter(g => g !== 'All') : [gradeF];
       const topicMap = new Map<string, string>(); // topic -> subject
-      for (const grade of grades) {
+      await Promise.all(grades.map(async (grade) => {
         try {
           const gradeStudents = allStudents.filter(s => s.grade === grade);
           const curriculum = gradeStudents[0]?.curriculum || 'IB PYP';
-          const res = await fetch(`${SERVER_URL}/curriculum?grade=${encodeURIComponent(grade)}&curriculum=${encodeURIComponent(curriculum)}`);
-          if (res.ok) {
-            const data = await res.json();
-            (data.topics || []).forEach((t: any) => {
-              if (t.topic) topicMap.set(t.topic, t.subject || subjectOf(t.topic));
-            });
+          const cacheKey = `${grade}|${curriculum}`;
+          let topics = CURRICULUM_CACHE.get(cacheKey);
+          if (!topics) {
+            const res = await fetch(`${SERVER_URL}/curriculum?grade=${encodeURIComponent(grade)}&curriculum=${encodeURIComponent(curriculum)}`);
+            topics = res.ok ? ((await res.json()).topics || []) : [];
+            CURRICULUM_CACHE.set(cacheKey, topics);
           }
+          topics.forEach((t: any) => {
+            if (t.topic) topicMap.set(t.topic, t.subject || subjectOf(t.topic));
+          });
         } catch {}
-      }
+      }));
       const pairs = Array.from(topicMap.entries()).map(([topic, subject]) => ({ topic, subject }));
       setCurriculumTopics(pairs);
       // Unique subjects from curriculum — only what exists in data
@@ -152,7 +175,9 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
       const order = ['Math', 'Mathematics', 'Science', 'English', 'Arts', 'Social Studies', 'Other'];
       const sorted = [...order.filter(s => subjSet.has(s)), ...[...subjSet].filter(s => !order.includes(s))];
       setAvailCurrSubjects(sorted);
-      setSubjectF('All'); // reset subject when grade changes
+      // Default to the FIRST available subject for this grade (user can change or
+      // tap the active chip to clear back to "All").
+      setSubjectF(sorted[0] || 'All');
     };
     if (allStudents.length > 0) fetchTopics();
   }, [gradeF, allStudents, availableGrades]);
@@ -192,13 +217,14 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
         <Text style={{ fontSize: 11, color: colors.textDim }}>lowest first</Text>
       </View>
 
-      {/* Subject chips — on top */}
+      {/* Subject chips — only the real subjects (no "All" chip). Tapping the
+          active one again clears the filter back to showing everything. */}
       <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
         <Text style={{ fontSize: 11, color: colors.textDim, marginRight: 2 }}>Subject:</Text>
-        {['All', ...displaySubjects].map(subj => {
+        {displaySubjects.map(subj => {
           const sc = SUBJECT_COLORS[subj] || P.teal;
           return (
-            <TouchableOpacity key={subj} onPress={() => setSubjectF(subj)} activeOpacity={0.75}
+            <TouchableOpacity key={subj} onPress={() => setSubjectF(prev => prev === subj ? 'All' : subj)} activeOpacity={0.75}
               style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, borderWidth: 1,
                 borderColor: subjectF === subj ? sc : colors.borderColor,
                 backgroundColor: subjectF === subj ? sc + '20' : 'transparent' }}>
@@ -208,11 +234,11 @@ function TopicCoverage({ allStudents, colors, availableGrades, availableSubjects
         })}
       </View>
 
-      {/* Grade chips */}
+      {/* Grade chips — only the real grades (no "All" chip). */}
       <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
         <Text style={{ fontSize: 11, color: colors.textDim, marginRight: 2 }}>Grade:</Text>
-        {availableGrades.map(g => (
-          <TouchableOpacity key={g} onPress={() => setGradeF(g)} activeOpacity={0.75}
+        {availableGrades.filter(g => g !== 'All').map(g => (
+          <TouchableOpacity key={g} onPress={() => setGradeF(prev => prev === g ? 'All' : g)} activeOpacity={0.75}
             style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, borderWidth: 1,
               borderColor: gradeF === g ? P.slate : colors.borderColor,
               backgroundColor: gradeF === g ? P.slate + '20' : 'transparent' }}>

@@ -234,7 +234,10 @@ export default function Sidebar({ currentScreen, onNavigate }: SidebarProps) {
   // belong to a school org, so hide school-only features (class rosters,
   // attendance) rather than routing them to a dead-end. Mirrors DrawerContent.tsx.
   const isB2B = !!user?.schoolId;
-  const SCHOOL_ONLY_SCREENS = ['MyClasses', 'TeacherAttendance', 'ParentAttendance', 'Timetable', 'Resources'];
+  // 'AnnouncementManager' (Send Announcement) is B2B-only: a teacher's announcements
+  // are school-scoped, so B2C teachers (no school) have no audience for it — hide it
+  // rather than route to the "not assigned to a school" dead-end.
+  const SCHOOL_ONLY_SCREENS = ['MyClasses', 'TeacherAttendance', 'ParentAttendance', 'Timetable', 'Resources', 'AnnouncementManager'];
   const NAV_ITEMS = (!isB2B && (role === 'teacher' || role === 'parent' || role === 'student'))
     ? NAV_ITEMS_ROLE.filter((i) => !SCHOOL_ONLY_SCREENS.includes(i.screen))
     : NAV_ITEMS_ROLE;

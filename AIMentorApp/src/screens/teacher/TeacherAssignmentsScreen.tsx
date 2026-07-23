@@ -14,6 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import Header from '../../components/common/Header';
 import DatePicker from '../../components/common/DatePicker';
+import TransliterationInput, { langNameToCode } from '../../components/common/TransliterationInput';
 import { GRADES_TEACHER } from '../onboarding/OnboardingScreen';
 import SERVER_URL from '../../config/serverUrl';
 // @ts-ignore — pdfjs-dist v3 CommonJS import
@@ -326,7 +327,7 @@ const STEP_ICONS: Record<StepType, string> = {
   brainstorm: 'cloud', drawing: 'edit-3', structured_writing: 'align-left', problem_solving: 'hash',
   tuning_in: 'zap', math_reflection: 'rotate-ccw', prior_knowledge: 'bookmark',
   text_connection: 'book-open', reading_comprehension: 'search', writing_reflection: 'feather',
-  language_culture: 'globe', language_practice: 'message-circle', communication: 'mic',
+  language_culture: 'globe', language_practice: 'message-circle', communication: 'edit-3',
   social_inquiry: 'compass', research_notes: 'file-text', social_synthesis: 'layers',
   artistic_exploration: 'eye', art_creation: 'edit-3', artistic_reflection: 'aperture',
   digital_awareness: 'monitor', tech_skill_practice: 'cpu', digital_citizenship: 'shield',
@@ -649,6 +650,10 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   // English and extraction correctly declined to guess a language for it.
   const [selectedLanguage, setSelectedLanguage] = useState('');
   const [unitOfInquiry, setUnitOfInquiry] = useState('');
+  // Available syllabus topics for the selected grade + subject (from ingested
+  // RAG content) — teacher can tap one to fill Chapter/Topic, or type their own.
+  const [availableTopics, setAvailableTopics] = useState<string[]>([]);
+  const [topicsLoading, setTopicsLoading] = useState(false);
   const [ibPurpose, setIbPurpose] = useState('');
   const [ibLearningOutcomes, setIbLearningOutcomes] = useState<string[]>(['']);
   const [ibWordBank, setIbWordBank] = useState<string[]>([]);
@@ -752,6 +757,27 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
   useEffect(() => {
     if (effectiveCurriculum && curriculum !== effectiveCurriculum) setCurriculum(effectiveCurriculum);
   }, [effectiveCurriculum]);
+
+  // Fetch the syllabus topics available for the selected grade + subject so the
+  // teacher can pick from what the curriculum actually covers (or type their own).
+  useEffect(() => {
+    let cancelled = false;
+    if (!subject || !effectiveGrade) { setAvailableTopics([]); return; }
+    setTopicsLoading(true);
+    fetch(`${SERVER_URL}/curriculum/subjects?grade=${encodeURIComponent(effectiveGrade)}&curriculum=${encodeURIComponent(effectiveCurriculum)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled) return;
+        const match = (data?.subjects || []).find((s: any) => s.subject === subject);
+        const topics = (match?.topics || [])
+          .map((t: any) => String(t.topic || '').trim())
+          .filter(Boolean);
+        setAvailableTopics(Array.from(new Set(topics)) as string[]);
+      })
+      .catch(() => { if (!cancelled) setAvailableTopics([]); })
+      .finally(() => { if (!cancelled) setTopicsLoading(false); });
+    return () => { cancelled = true; };
+  }, [subject, effectiveGrade, effectiveCurriculum]);
 
   const load = useCallback(async () => {
     try {
@@ -1591,7 +1617,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
           'Mathematics':          ['tuning_in', 'problem_solving', 'math_reflection'],
           'Science':              ['prior_knowledge', 'drawing', 'structured_writing'],
           'English':              ['text_connection', 'reading_comprehension', 'writing_reflection'],
-          'Language Acquisition': ['language_culture', 'language_practice', 'communication'],
+          'Language Acquisition': ['language_culture', 'language_practice'],
           'Social Studies':       ['social_inquiry', 'research_notes', 'social_synthesis'],
           'Visual Arts':          ['artistic_exploration', 'art_creation', 'artistic_reflection'],
           'ICT':                  ['digital_awareness', 'tech_skill_practice', 'digital_citizenship'],
@@ -1741,7 +1767,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
       const res = await fetch(`${SERVER_URL}/assignments/generate-quiz`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, chapter: chapter.trim(), grade, curriculum, difficulty: quizDifficulty, count: quizCount, teacherNotes: teacherNotes.trim(), quizType }),
+        body: JSON.stringify({ subject, chapter: chapter.trim(), grade, curriculum, difficulty: quizDifficulty, count: quizCount, teacherNotes: teacherNotes.trim(), quizType, language: subject === 'Language Acquisition' ? selectedLanguage : undefined }),
       });
       const data = await res.json().catch(() => null);
       if (res.ok && Array.isArray(data?.questions)) {
@@ -3752,12 +3778,14 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   {(createMode === 'ai' || createMode === 'upload') && (<>
                   {(createMode === 'ai' || uploadStep === 3) && (<>
                   <Text style={styles.fieldLabel}>Title *{createMode === 'upload' && docFiles.length > 0 && title.trim() ? <Text style={{ fontSize: 10, color: colors.accentGreen, fontWeight: '600' }}> · auto-filled</Text> : null}</Text>
-                  <TextInput
+                  <TransliterationInput
                     style={styles.input}
                     placeholder="e.g. Chapter 5 Worksheet"
                     placeholderTextColor={colors.textDim}
+                    colors={colors}
                     value={title}
                     onChangeText={setTitle}
+                    langCode={subject === 'Language Acquisition' ? langNameToCode(selectedLanguage) : null}
                   />
                   </>)}
 
@@ -3825,13 +3853,42 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   </View>
 
                   <Text style={styles.fieldLabel}>Chapter / Topic{createMode === 'upload' && docFiles.length > 0 && chapter.trim() ? <Text style={{ fontSize: 10, color: colors.accentGreen, fontWeight: '600' }}> · auto-filled</Text> : null}</Text>
-                  <TextInput
+                  <TransliterationInput
                     style={styles.input}
                     placeholder="e.g. Fractions and Decimals"
                     placeholderTextColor={colors.textDim}
+                    colors={colors}
                     value={chapter}
                     onChangeText={setChapter}
+                    langCode={subject === 'Language Acquisition' ? langNameToCode(selectedLanguage) : null}
                   />
+
+                  {/* Available syllabus topics for this grade + subject — tap to
+                      fill, or type your own above. Pulled from ingested content. */}
+                  {topicsLoading ? (
+                    <Text style={{ fontSize: 11, color: colors.textDim, marginTop: 6 }}>Loading topics for {subject}…</Text>
+                  ) : availableTopics.length > 0 ? (
+                    <View style={{ marginTop: 6, gap: 6 }}>
+                      <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                        Topics in {effectiveGrade} · {subject} — tap to use, or type your own above
+                      </Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                        {availableTopics.map(t => {
+                          const active = chapter.trim().toLowerCase() === t.toLowerCase();
+                          return (
+                            <TouchableOpacity
+                              key={t}
+                              onPress={() => setChapter(t)}
+                              activeOpacity={0.75}
+                              style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: active ? gold : colors.borderColor, backgroundColor: active ? gold + '18' : 'transparent' }}
+                            >
+                              <Text style={{ fontSize: 12, color: active ? gold : colors.textMuted, fontWeight: active ? '700' : '500' }}>{t}</Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  ) : null}
                   </>)}
 
                   {(createMode === 'ai' || uploadStep === 3) && (<>
@@ -4118,7 +4175,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       'Mathematics':          ['tuning_in', 'problem_solving', 'math_reflection'],
                       'Science':              ['prior_knowledge', 'drawing', 'structured_writing'],
                       'English':              ['text_connection', 'reading_comprehension', 'writing_reflection'],
-                      'Language Acquisition': ['language_culture', 'language_practice', 'communication'],
+                      'Language Acquisition': ['language_culture', 'language_practice'],
                       'Social Studies':       ['social_inquiry', 'research_notes', 'social_synthesis'],
                       'Visual Arts':          ['artistic_exploration', 'art_creation', 'artistic_reflection'],
                       'ICT':                  ['digital_awareness', 'tech_skill_practice', 'digital_citizenship'],
@@ -4199,25 +4256,27 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       {step.provocation !== undefined && (
                         <>
                           <Text style={{ fontSize: 11, color: colors.textDim, fontWeight: '600' }}>Scenario / Provocation</Text>
-                          <TextInput
+                          <TransliterationInput
                             style={[styles.input, styles.inputMulti, { borderColor: STEP_COLORS[step.type] + '60', minHeight: 72 }]}
                             placeholder="Write the scenario or provocation text the student will read..."
                             placeholderTextColor={colors.textDim}
+                            colors={colors}
                             value={step.provocation}
                             onChangeText={t => updateTaskStep(step.id, { provocation: t })}
                             multiline
-                            numberOfLines={3}
+                            langCode={subject === 'Language Acquisition' ? langNameToCode(selectedLanguage) : null}
                           />
                         </>
                       )}
-                      <TextInput
+                      <TransliterationInput
                         style={[styles.input, styles.inputMulti, { borderColor: STEP_COLORS[step.type] + '40' }]}
                         placeholder="Instructions for student..."
                         placeholderTextColor={colors.textDim}
+                        colors={colors}
                         value={step.instructions}
                         onChangeText={t => updateTaskStep(step.id, { instructions: t })}
                         multiline
-                        numberOfLines={2}
+                        langCode={subject === 'Language Acquisition' ? langNameToCode(selectedLanguage) : null}
                       />
 
                       {step.type === 'structured_writing' && (
@@ -4287,13 +4346,17 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   </View>
                   {questions.map((q, i) => (
                     <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <TextInput
-                        style={[styles.input, { flex: 1 }]}
+                      <View style={{ flex: 1 }}>
+                      <TransliterationInput
+                        style={styles.input}
                         placeholder={`Question ${i + 1}...`}
                         placeholderTextColor={colors.textDim}
+                        colors={colors}
                         value={q}
                         onChangeText={(t) => setQuestions(prev => prev.map((x, j) => j === i ? t : x))}
+                        langCode={subject === 'Language Acquisition' ? langNameToCode(selectedLanguage) : null}
                       />
+                      </View>
                       {questions.length > 1 && (
                         <TouchableOpacity onPress={() => setQuestions(prev => prev.filter((_, j) => j !== i))} activeOpacity={0.75}>
                           <Feather name="trash-2" size={16} color={colors.accentRed} />
