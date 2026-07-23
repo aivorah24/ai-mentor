@@ -170,6 +170,21 @@ async function fetchSupabaseProfile(email: string): Promise<Partial<User> & { _s
 let _pendingRole: UserRole = 'student';
 let _pendingRoleSet = false; // true only when role was explicitly chosen this session (not the default)
 let _isAddingRole = false; // true when an existing user is adding a second role (teacher↔parent only)
+
+// The in-memory `_isAddingRole` flag is lost on a page reload, which dropped a
+// teacher mid "add parent profile" back to the teacher dashboard on refresh.
+// This transient AsyncStorage flag (value = the email being onboarded) survives
+// the reload so the auth resolver can re-enter parent onboarding. It is cleared
+// when the parent onboarding completes (updateUser onboardingComplete:true), when
+// the flow is cancelled, or when the user switches profiles — never persisted as
+// a real role, so backing out still leaves no half-created parent.
+const ADD_PARENT_PENDING_KEY = 'ai_mentor_add_parent_pending';
+function setAddParentPending(email: string) {
+  AsyncStorage.setItem(ADD_PARENT_PENDING_KEY, email.toLowerCase().trim()).catch(() => {});
+}
+function clearAddParentPending() {
+  AsyncStorage.removeItem(ADD_PARENT_PENDING_KEY).catch(() => {});
+}
 // True while a user-initiated sign-in / sign-up is running (and briefly after).
 // The "account deleted server-side" auto-sign-out must NOT fire during this window,
 // because a brand-new signup can momentarily look account-less to a concurrent
@@ -437,9 +452,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Regular users who verified via Aivorah email still need onboarding regardless of accountStatus
         const isParentCreatedStudent = allowAutoGen && resolvedRole === 'student';
 
-        // When a teacher is adding a parent profile, force parent onboarding
-        const isAddingNewRole = _isAddingRole;
+        // When a teacher is adding a parent profile, force parent onboarding.
+        // On a fresh page load `_isAddingRole` is gone, so also honour the
+        // persisted ADD_PARENT_PENDING flag (survives reload) so a refresh mid
+        // add-parent stays on parent onboarding instead of bouncing to teacher.
+        const addParentPendingEmail = await AsyncStorage.getItem(ADD_PARENT_PENDING_KEY).catch(() => null);
+        const isAddParentReload = !!addParentPendingEmail && addParentPendingEmail === email.toLowerCase().trim();
+        const isAddingNewRole = _isAddingRole || isAddParentReload;
         if (_isAddingRole) _isAddingRole = false;
+        if (isAddParentReload) {
+          // Restore the transient add-parent context the reload wiped.
+          _pendingRole = 'parent';
+          _pendingReturnRole = 'teacher';
+        }
 
         const onboardingComplete = isAddingNewRole ? false : (
           allowAutoGen ||
@@ -540,6 +565,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function updateUser(fields: Partial<User>) {
+    // Parent onboarding completing (onboardingComplete flips true) is the natural
+    // end of the add-parent flow — the parent role is now persisted, so clear the
+    // transient "still adding parent" refresh flag.
+    if (fields.onboardingComplete === true) clearAddParentPending();
     setUser(prev => {
       if (!prev) return prev;
       const updated = { ...prev, ...fields };
@@ -1016,6 +1045,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     _pendingRole = 'parent'; _pendingRoleSet = true;
     _isAddingRole = true;
+    setAddParentPending(email); // survive a refresh mid parent onboarding
     // onAuthStateChanged will fire and route to parent onboarding
   }
 
@@ -1029,6 +1059,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     _pendingRole = 'parent'; _pendingRoleSet = true;
     _isAddingRole = true;
     _pendingReturnRole = 'teacher';
+    setAddParentPending(email); // survive a refresh mid parent onboarding
 
     // user state is null at this point (onAuthStateChanged returned early without setUser)
     // Build user from scratch using Firebase current user + Supabase profile
@@ -1055,6 +1086,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Switch between teacher/parent profiles (dual-role users only)
   function switchRole(newRole: UserRole) {
     _pendingReturnRole = undefined;
+    clearAddParentPending();
     setUser(prev => {
       if (!prev || !prev.roles?.includes(newRole)) return prev;
       const updated = { ...prev, role: newRole, activeRole: newRole };
@@ -1080,7 +1112,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Only pendingReturnRole + in-memory state (mirrors the original working path,
     // minus the premature persistence). Completion persists the parent role.
     _pendingReturnRole = 'teacher';
-    setUser(prev => prev ? { ...prev, role: 'parent', onboardingComplete: false } : prev);
+    setUser(prev => {
+      if (prev?.email) setAddParentPending(prev.email); // survive a refresh mid parent onboarding
+      return prev ? { ...prev, role: 'parent', onboardingComplete: false } : prev;
+    });
   }
 
   // Cancel the add-parent flow (in-app Back or browser Back) — restore the teacher
@@ -1089,6 +1124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // the in-memory user so the app routes straight back to the teacher dashboard.
   function cancelAddParentProfile() {
     _pendingReturnRole = undefined;
+    clearAddParentPending();
     setUser(prev => {
       if (!prev) return prev;
       const roles = (prev.roles || []).filter(r => r !== 'parent');

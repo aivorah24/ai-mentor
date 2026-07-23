@@ -1,0 +1,51 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 11",
+  "subject": "Chemistry",
+  "code": "kech1",
+  "imageSubject": "Chemistry",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "kech101.pdf",
+      "title": "Chapter 1",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "kech102.pdf",
+      "title": "Chapter 2",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "kech103.pdf",
+      "title": "Chapter 3",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "kech104.pdf",
+      "title": "Chapter 4",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "kech105.pdf",
+      "title": "Chapter 5",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "kech106.pdf",
+      "title": "Chapter 6",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

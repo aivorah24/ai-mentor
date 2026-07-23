@@ -1,0 +1,58 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 7",
+  "subject": "Mathematics",
+  "code": "gegp2",
+  "imageSubject": "Mathematics",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "gegp201.pdf",
+      "title": "Geometric Twins",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "gegp202.pdf",
+      "title": "Operations with Integers",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "gegp203.pdf",
+      "title": "Finding Common Ground",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "gegp204.pdf",
+      "title": "Another Peek Beyond the Point",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "gegp205.pdf",
+      "title": "Connecting the Dots...",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "gegp206.pdf",
+      "title": "Constructions and Tilings",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 7,
+      "pdfFile": "gegp207.pdf",
+      "title": "Chapter 7",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

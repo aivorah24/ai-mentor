@@ -1,0 +1,128 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 9",
+  "subject": "English",
+  "code": "iemr1",
+  "imageSubject": "English",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "iemr101.pdf",
+      "title": "Introduction to the History of Arts 3 Theatre",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "iemr102.pdf",
+      "title": "The Stage Is Yours",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "iemr103.pdf",
+      "title": "Symbols and Metaphors on S tage",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "iemr104.pdf",
+      "title": "Creativity in L ight and S ound",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "iemr105.pdf",
+      "title": "From Vision to Performance: Direction and Acting 72 Music",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "iemr106.pdf",
+      "title": "Music and Us",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 7,
+      "pdfFile": "iemr107.pdf",
+      "title": "The S cience of M usic",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 8,
+      "pdfFile": "iemr108.pdf",
+      "title": "Rāga and T ā l a",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 9,
+      "pdfFile": "iemr109.pdf",
+      "title": "Music Travels Around the World 127 Dance",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 10,
+      "pdfFile": "iemr110.pdf",
+      "title": "Components of Dance",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 11,
+      "pdfFile": "iemr111.pdf",
+      "title": "Dance as Visual Storytelling",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 12,
+      "pdfFile": "iemr112.pdf",
+      "title": "Cultural Connections Through Dance",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 13,
+      "pdfFile": "iemr113.pdf",
+      "title": "Dance Choreography 169 Visual Arts",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 14,
+      "pdfFile": "iemr114.pdf",
+      "title": "Exploring the Fundamentals of Visual Arts",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 15,
+      "pdfFile": "iemr115.pdf",
+      "title": "Mediums and Techniques in Visual Art",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 16,
+      "pdfFile": "iemr116.pdf",
+      "title": "Visual Composition",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 17,
+      "pdfFile": "iemr117.pdf",
+      "title": "Chapter 17",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

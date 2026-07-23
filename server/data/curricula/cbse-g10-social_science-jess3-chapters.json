@@ -1,0 +1,44 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 10",
+  "subject": "Social Science",
+  "code": "jess3",
+  "imageSubject": "Social_Science",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "jess301.pdf",
+      "title": "Chapter 1",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "jess302.pdf",
+      "title": "Chapter 2",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "jess303.pdf",
+      "title": "Chapter 3",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "jess304.pdf",
+      "title": "Chapter 4",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "jess305.pdf",
+      "title": "Chapter 5",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

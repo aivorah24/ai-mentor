@@ -1,0 +1,44 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 8",
+  "subject": "English",
+  "code": "hepr1",
+  "imageSubject": "English",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "hepr101.pdf",
+      "title": "Chapter 1",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "hepr102.pdf",
+      "title": "Chapter 2",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "hepr103.pdf",
+      "title": "Chapter 3",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "hepr104.pdf",
+      "title": "Chapter 4",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "hepr105.pdf",
+      "title": "Chapter 5",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

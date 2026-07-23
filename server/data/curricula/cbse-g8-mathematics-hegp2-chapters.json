@@ -1,0 +1,58 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 8",
+  "subject": "Mathematics",
+  "code": "hegp2",
+  "imageSubject": "Mathematics",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "hegp201.pdf",
+      "title": "Fractions in Disguise",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "hegp202.pdf",
+      "title": "The Baudhayana-Pythagoras Theorem",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "hegp203.pdf",
+      "title": "Proportional Reasoning-2",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "hegp204.pdf",
+      "title": "Exploring Some Geometric Themes",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "hegp205.pdf",
+      "title": "Tales by Dots and Lines",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "hegp206.pdf",
+      "title": "Algebra Play",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 7,
+      "pdfFile": "hegp207.pdf",
+      "title": "Chapter 7",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

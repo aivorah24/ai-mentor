@@ -1,0 +1,44 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 12",
+  "subject": "Chemistry",
+  "code": "lech1",
+  "imageSubject": "Chemistry",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "lech101.pdf",
+      "title": "Chapter 1",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "lech102.pdf",
+      "title": "Chapter 2",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "lech103.pdf",
+      "title": "Chapter 3",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "lech104.pdf",
+      "title": "Chapter 4",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "lech105.pdf",
+      "title": "Chapter 5",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

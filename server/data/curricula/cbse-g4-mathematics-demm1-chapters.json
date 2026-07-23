@@ -1,0 +1,107 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 4",
+  "subject": "Mathematics",
+  "code": "demm1",
+  "imageSubject": "Mathematics",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "demm101.pdf",
+      "title": ": Shapes Around Us",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "demm102.pdf",
+      "title": ": Hide and Seek",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "demm103.pdf",
+      "title": ": Pattern Around Us",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "demm104.pdf",
+      "title": ": Thousands Around Us",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "demm105.pdf",
+      "title": ": Sharing and Measuring",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "demm106.pdf",
+      "title": ": Measuring Length",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 7,
+      "pdfFile": "demm107.pdf",
+      "title": ": The Cleanest Village",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 8,
+      "pdfFile": "demm108.pdf",
+      "title": ": Weigh it, Pour it",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 9,
+      "pdfFile": "demm109.pdf",
+      "title": ": Equal Groups",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 10,
+      "pdfFile": "demm110.pdf",
+      "title": ": Elephants,Tigers, and Leopards",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 11,
+      "pdfFile": "demm111.pdf",
+      "title": ": Fun with Symmetry",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 12,
+      "pdfFile": "demm112.pdf",
+      "title": ": Ticking Clocks and Turning Calendar",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 13,
+      "pdfFile": "demm113.pdf",
+      "title": ": The Transport Museum",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 14,
+      "pdfFile": "demm114.pdf",
+      "title": ": Data Handling 203 Learning Material Sheets",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    }
+  ]
+}

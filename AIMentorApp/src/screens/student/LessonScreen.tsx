@@ -103,6 +103,27 @@ function subjectToBookFolder(subject: string): string {
   return s.replace(/\s+/g, '_');
 }
 
+// The real NCERT book title varies by grade + subject — "Poorvi" is only the
+// Grade 6 English reader. Using it as a blanket label mislabels every other
+// book (e.g. Grade 6 Science is "Curiosity"). Map the ones we ship; fall back
+// to a neutral, non-misleading label for the rest.
+function bookTitleFor(grade: string, subject: string): string {
+  const g = grade.replace(/[^0-9]/g, '');
+  const s = subject.trim().toLowerCase();
+  const G6: Record<string, string> = {
+    english: 'Poorvi',
+    science: 'Curiosity',
+    'social science': 'Exploring Society: India and Beyond',
+    mathematics: 'Ganita Prakash',
+  };
+  const key = s.includes('social') ? 'social science'
+    : s.includes('science') ? 'science'
+    : s.includes('math') ? 'mathematics'
+    : s.includes('english') ? 'english' : s;
+  if (g === '6' && G6[key]) return G6[key];
+  return `${grade} ${subject} Textbook`;
+}
+
 export default function LessonScreen({ navigation, route }: any) {
   const subject      = (route?.params?.subject      ?? 'English') as string;
   const curriculum   = (route?.params?.curriculum   ?? 'CBSE')    as string;
@@ -464,18 +485,24 @@ export default function LessonScreen({ navigation, route }: any) {
                 {topic.readText.body.map((p, i) => (
                   <Text key={i} style={[styles.bodyText, { color: colors.textMuted }]}>{p}</Text>
                 ))}
-                <View style={[styles.figure, { borderColor: colors.borderColor, backgroundColor: colors.bgDark }]}>
-                  {topic.readText.figureUrl ? (
-                    <Image
-                      source={{ uri: topic.readText.figureUrl }}
-                      style={styles.figureImg}
-                      resizeMode="contain"
-                    />
-                  ) : (
-                    <Feather name="image" size={28} color={colors.textMuted} />
-                  )}
-                  <Text style={[styles.figureCaption, { color: colors.textMuted }]}>{topic.readText.figureCaption}</Text>
-                </View>
+                {(() => {
+                  // Prefer the multi-image gallery; fall back to the single
+                  // figureUrl for older content that predates `figures`.
+                  const gallery = (topic.readText.figures && topic.readText.figures.length > 0)
+                    ? topic.readText.figures
+                    : (topic.readText.figureUrl ? [{ url: topic.readText.figureUrl, caption: topic.readText.figureCaption }] : []);
+                  if (gallery.length === 0) return null; // no blank placeholder box when there's genuinely no image
+                  return gallery.map((fig, i) => (
+                    <View key={i} style={[styles.figure, { borderColor: colors.borderColor, backgroundColor: colors.bgDark }]}>
+                      <Image source={{ uri: fig.url }} style={styles.figureImg} resizeMode="contain" />
+                      {!!(fig.caption || topic.readText.figureCaption) && (
+                        <Text style={[styles.figureCaption, { color: colors.textMuted }]}>
+                          {fig.caption || topic.readText.figureCaption}
+                        </Text>
+                      )}
+                    </View>
+                  ));
+                })()}
                 <View style={[styles.activityBox, { borderColor: colors.primary + '55', backgroundColor: colors.primary + '14' }]}>
                   <Text style={[styles.activityLabel, { color: colors.primary }]}>Try this yourself</Text>
                   <Text style={[styles.activityText, { color: colors.textMain }]}>{topic.readText.activity}</Text>
@@ -489,7 +516,7 @@ export default function LessonScreen({ navigation, route }: any) {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Feather name="file-text" size={12} color={colors.textMuted} />
                     <Text style={[styles.paneLabelText, { color: colors.textMuted }]} numberOfLines={1}>
-                      Original Textbook · Poorvi, {grade} {subject}
+                      Original Textbook · {bookTitleFor(grade, subject)}, {grade} {subject}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -519,7 +546,7 @@ export default function LessonScreen({ navigation, route }: any) {
                 <Text style={{ color: colors.textMain, fontWeight: '700', fontSize: 13 }}>Back to Learning</Text>
               </TouchableOpacity>
               <Text style={{ color: colors.textMuted, fontSize: 12.5 }}>
-                Poorvi — {grade} {subject} · full textbook, use the built-in page controls to browse
+                {bookTitleFor(grade, subject)} — {grade} {subject} · full textbook, use the built-in page controls to browse
               </Text>
               <View style={{ width: 130 }} />
             </View>
@@ -559,7 +586,7 @@ export default function LessonScreen({ navigation, route }: any) {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Feather name="file-text" size={12} color={colors.textMuted} />
                     <Text style={[styles.paneLabelText, { color: colors.textMuted }]} numberOfLines={1}>
-                      Original Textbook · Poorvi, {grade} {subject}
+                      Original Textbook · {bookTitleFor(grade, subject)}, {grade} {subject}
                     </Text>
                   </View>
                   <TouchableOpacity

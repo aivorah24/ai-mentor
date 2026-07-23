@@ -1,0 +1,100 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 8",
+  "subject": "Mathematics",
+  "code": "hemh1",
+  "imageSubject": "Mathematics",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "hemh101.pdf",
+      "title": "Chapter 1",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "hemh102.pdf",
+      "title": "Chapter 2",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "hemh103.pdf",
+      "title": "Chapter 3",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "hemh104.pdf",
+      "title": "Chapter 4",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "hemh105.pdf",
+      "title": "Chapter 5",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "hemh106.pdf",
+      "title": "Chapter 6",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 7,
+      "pdfFile": "hemh107.pdf",
+      "title": "Chapter 7",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 8,
+      "pdfFile": "hemh108.pdf",
+      "title": "Chapter 8",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 9,
+      "pdfFile": "hemh109.pdf",
+      "title": "Chapter 9",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 10,
+      "pdfFile": "hemh110.pdf",
+      "title": "Chapter 10",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 11,
+      "pdfFile": "hemh111.pdf",
+      "title": "Chapter 11",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 12,
+      "pdfFile": "hemh112.pdf",
+      "title": "Chapter 12",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 13,
+      "pdfFile": "hemh113.pdf",
+      "title": "Chapter 13",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

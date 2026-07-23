@@ -1,0 +1,100 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 8",
+  "subject": "Science",
+  "code": "hecu1",
+  "imageSubject": "Science",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "hecu101.pdf",
+      "title": "Exploring the Investigative World of Science",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "hecu102.pdf",
+      "title": "The Invisible Living World: Beyond Our Naked Eye",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "hecu103.pdf",
+      "title": "Health: The Ultimate Treasure",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "hecu104.pdf",
+      "title": "Electricity: Magnetic and Heating Effects",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "hecu105.pdf",
+      "title": "Exploring Forces",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "hecu106.pdf",
+      "title": "Pressure, Winds, Storms, and Cyclones",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 7,
+      "pdfFile": "hecu107.pdf",
+      "title": "Particulate Nature of Matter",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 8,
+      "pdfFile": "hecu108.pdf",
+      "title": "Nature of Matter: Elements, Compounds, and Mixtures",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 9,
+      "pdfFile": "hecu109.pdf",
+      "title": "The Amazing World of Solutes, Solvents, and Solutions",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 10,
+      "pdfFile": "hecu110.pdf",
+      "title": "Light: Mirrors and Lenses",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 11,
+      "pdfFile": "hecu111.pdf",
+      "title": "Keeping Time with the Skies",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 12,
+      "pdfFile": "hecu112.pdf",
+      "title": "How Nature Works in Harmony",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 13,
+      "pdfFile": "hecu113.pdf",
+      "title": "Our Home: Earth, a Unique Life Sustaining Planet",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    }
+  ]
+}

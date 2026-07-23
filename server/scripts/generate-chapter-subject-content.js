@@ -26,12 +26,64 @@ const OUT_FILE = path.resolve(__dirname, '..', '..', argVal('--out'));
 const VAR_NAME = argVal('--varname');
 const BOOK_DIR = path.resolve(__dirname, '..', argVal('--bookdir'));
 const IMAGE_SUBJECT = argVal('--imagesubject');
+const GRADE = parseInt(argVal('--grade', '6'), 10);
+const CODE = argVal('--code', null); // book code (e.g. gegp1) — disambiguates multi-volume image matching
 const ONLY_CHAPTER = argVal('--only', null);
+// Lite mode: ONE LLM call per chapter (intro + simplified body + activity),
+// Listen tab kept as raw un-enriched text chunks. ~8x fewer calls than full
+// mode so free-tier quotas can cover all of G1-12 in a few daily passes.
+const LITE = process.argv.includes('--lite');
+const MAX_FIGURES = parseInt(argVal('--maxfigures', '6'), 10);
+const MIN_FIGURE_AREA = 20000; // ~140x140px — smaller entries are icons/decorations, not real figures
 
 const IMAGE_MANIFEST = path.join(__dirname, '../data/ncert_image_jsonl/ncert_images_index.json');
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const NVIDIA_API_KEY = process.env.NVIDIA_NIM_API_KEY;
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODELS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const NVIDIA_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+
+// Ordered fallback chain. Free OpenRouter models come first — Nemotron 120B is
+// fast (~1.3s) and high quality, and its quota is separate from Groq's (whose
+// good 70b model hits a daily cap). Groq stays as the final backup. Each
+// endpoint is tried in order; on quota/unavailability we drop to the next.
+const LLM_ENDPOINTS = [
+
+  ...(OPENROUTER_API_KEY ? [
+
+    { provider: 'openrouter', model: 'nvidia/nemotron-3-super-120b-a12b:free' },
+
+    { provider: 'openrouter', model: 'openai/gpt-oss-20b:free' },
+
+    { provider: 'openrouter', model: 'nvidia/nemotron-3-nano-30b-a3b:free' },
+
+    { provider: 'openrouter', model: 'google/gemma-4-31b-it:free' },
+
+    { provider: 'openrouter', model: 'qwen/qwen3-30b-a3b:free' },
+
+    { provider: 'openrouter', model: 'deepseek/deepseek-r1:free' },
+
+    { provider: 'openrouter', model: 'meta-llama/llama-3.3-70b-instruct:free' },
+
+  ] : []),
+
+  ...(GROQ_API_KEY ? [
+
+    { provider: 'groq', model: 'llama-3.3-70b-versatile' },
+
+    { provider: 'groq', model: 'deepseek-r1-distill-llama-70b' },
+
+    { provider: 'groq', model: 'qwen-2.5-32b' },
+
+    { provider: 'groq', model: 'gemma2-9b-it' },
+
+    { provider: 'groq', model: 'llama-3.1-8b-instant' },
+
+  ] : [])
+
+];
+ 
 
 async function extractPages(pdfPath) {
   const buf = fs.readFileSync(pdfPath);
@@ -91,50 +143,123 @@ function chunkIntoParts(fullText, targetWords = 280) {
 // — exclude page 1 (title page) and unusually wide-and-short images (aspect
 // ratio > 2:1, typically a banner strip, not a real illustration).
 function pickImagesForChapter(manifest, chapter) {
-  return manifest
-    .filter((m) => m.subject === IMAGE_SUBJECT && m.grade === 6 && m.chapter === chapter && m.page > 1)
-    .filter((m) => m.width / m.height < 2)
-    .sort((a, b) => b.width * b.height - a.width * a.height);
+  const inChapter = manifest.filter(
+    (m) => m.subject === IMAGE_SUBJECT && m.grade === GRADE && m.chapter === chapter && m.page > 1 &&
+    // Multi-volume books (e.g. gegp1 + gegp2) reuse chapter numbers 1..N in each
+    // volume; the image url/public_id embeds the book code, so require it to
+    // match to avoid pulling volume-2 images into a volume-1 chapter.
+    (!CODE || (m.url || m.public_id || '').includes(CODE))
+  );
+  const byArea = (a, b) => b.width * b.height - a.width * a.height;
+  // Preferred: real content illustrations (exclude wide-and-short banner strips).
+  const contentImgs = inChapter.filter((m) => m.width / m.height < 2).sort(byArea);
+  if (contentImgs.length) return contentImgs;
+  // Fallback: rather than render a blank placeholder box, accept the best
+  // remaining figure for this chapter even if it's a wider graphic — a real
+  // on-topic image beats an empty box. Only page-1 title banners stay excluded.
+  return inChapter.sort(byArea);
 }
 
-async function callGroq(system, user) {
-  if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY not set');
+// The Learn panel now shows a gallery of the chapter's real illustrations, not
+// a single figure. Pick several genuine figures (skip tiny icons), spread them
+// across different pages so they track the chapter's flow, and cap the count.
+// Generic caption = the chapter title (no per-image captions in the index).
+function pickFiguresForChapter(manifest, chapter, chapterTitle) {
+  const ranked = pickImagesForChapter(manifest, chapter);
+  const figures = [];
+  const seenPages = new Set();
+  for (const im of ranked) {
+    if (im.width * im.height < MIN_FIGURE_AREA) continue; // skip icons/decorations
+    if (seenPages.has(im.page)) continue;                 // one per page → spread across the chapter
+    seenPages.add(im.page);
+    figures.push({ url: im.url, caption: chapterTitle });
+    if (figures.length >= MAX_FIGURES) break;
+  }
+  // If the size filter removed everything, still show the single best image
+  // rather than a blank box.
+  if (figures.length === 0 && ranked[0]) figures.push({ url: ranked[0].url, caption: chapterTitle });
+  return figures;
+}
+
+// Provider-agnostic LLM call with an ordered fallback chain (see LLM_ENDPOINTS).
+// Returns parsed JSON. On quota/unavailability, drops to the next endpoint; on
+// short rate-limits, waits and retries the same one. Named callGroq-compatible
+// (callLLM) so existing call sites just work.
+async function callLLM(system, user) {
+  if (LLM_ENDPOINTS.length === 0) throw new Error('No LLM API key set (OPENROUTER_API_KEY or GROQ_API_KEY)');
   let lastErr;
-  for (const model of GROQ_MODELS) {
-    const body = JSON.stringify({
-      model,
+for (const ep of LLM_ENDPOINTS) {
+    console.log(`\n=== Trying ${ep.provider}: ${ep.model} ===`);
+
+    const url = ep.provider === 'groq' ? GROQ_URL : ep.provider === 'nvidia' ? NVIDIA_URL : OPENROUTER_URL;
+    const key = ep.provider === 'groq' ? GROQ_API_KEY : ep.provider === 'nvidia' ? NVIDIA_API_KEY : OPENROUTER_API_KEY;
+    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` };
+    if (ep.provider === 'openrouter') {
+      headers['HTTP-Referer'] = 'https://aivorah.app';
+      headers['X-Title'] = 'Aivorah content pipeline';
+    }
+    const payload = {
+      model: ep.model,
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
       temperature: 0.4,
-      response_format: { type: 'json_object' },
-    });
+    };
+    // NVIDIA NIM doesn't reliably support response_format — rely on JSON salvage.
+    if (ep.provider !== 'nvidia') payload.response_format = { type: 'json_object' };
+    if (ep.provider === 'nvidia') payload.max_tokens = 1200;
+    const body = JSON.stringify(payload);
+    // NVIDIA calls run ~70-120s under load; give generous headroom so a slow
+    // response completes instead of aborting and wasting the whole call.
+    const timeoutMs = ep.provider === 'nvidia' ? 220000 : 60000;
     for (let attempt = 0; attempt < 4; attempt++) {
-      const res = await fetch(GROQ_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_API_KEY}` },
-        body,
-      });
+      let res;
+      try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), timeoutMs);
+        res = await fetch(url, { method: 'POST', headers, body, signal: ctrl.signal });
+        clearTimeout(to);
+      } catch (e) {
+        console.log(`  ... ${ep.model} network/timeout (${e.message}) — switching model`);
+        lastErr = e;
+        break;
+      }
       if (res.ok) {
         const data = await res.json();
-        return JSON.parse(data.choices?.[0]?.message?.content || '{}');
+        const content = data.choices?.[0]?.message?.content;
+        if (!content) { lastErr = new Error(`${ep.model} empty content`); break; }
+        try {
+          return JSON.parse(content);
+        } catch (_) {
+          const m = content.match(/\{[\s\S]*\}/);
+          if (m) { try { return JSON.parse(m[0]); } catch (__) {} }
+          console.log(`  ... ${ep.model} returned non-JSON — switching model`);
+          lastErr = new Error(`${ep.model} non-JSON`);
+          break;
+        }
       }
       const errText = await res.text();
       if (res.status === 429) {
-        if (/tokens per day|requests per day/i.test(errText)) {
-          console.log(`  ... ${model} hit its daily quota — switching model`);
+        if (/per day|daily|quota|free-models-per-day/i.test(errText)) {
+          console.log(`  ... ${ep.model} hit its daily quota — switching model`);
           lastErr = new Error('daily quota');
           break;
         }
         const waitMatch = errText.match(/try again in ([\d.]+)s/i);
-        const waitSec = waitMatch ? parseFloat(waitMatch[1]) + 1 : 15 * (attempt + 1);
-        console.log(`  ... rate limited on ${model}, waiting ${waitSec.toFixed(1)}s`);
+        const waitSec = waitMatch ? parseFloat(waitMatch[1]) + 1 : 8 * (attempt + 1);
+        console.log(`  ... rate limited on ${ep.model}, waiting ${waitSec.toFixed(1)}s`);
         await new Promise((r) => setTimeout(r, waitSec * 1000));
         lastErr = new Error('rate limited');
         continue;
       }
-      throw new Error(`Groq ${res.status}: ${errText.slice(0, 300)}`);
+      if ([404, 500, 502, 503, 504].includes(res.status)) {
+        console.log(`  ... ${ep.model} unavailable (${res.status}) — switching model`);
+        lastErr = new Error(`${ep.model} ${res.status}`);
+        break;
+      }
+      lastErr = new Error(`${ep.provider} ${res.status}: ${errText.slice(0, 200)}`);
+      break;
     }
   }
-  throw lastErr;
+  throw lastErr || new Error('all LLM endpoints failed');
 }
 
 function tsStringLiteral(s) {
@@ -171,7 +296,77 @@ ${figureUrl ? '- If any part in this batch matches the illustration, its keyIdea
 - "vocab": 2-4 genuinely useful terms FROM this batch's text.
 - Do not include text outside the JSON object.`;
 
-  return callGroq(system, user);
+  return callLLM(system, user);
+}
+
+// The "Learn with Aivorah — simplified" panel needs genuinely simplified prose,
+// NOT the verbatim textbook text (that lives in the Listen tab as listenParts).
+// We synthesise 3-4 short Grade-6 paragraphs from the per-part keyIdeas, which
+// are concise enough to stay well within the fallback model's token budget.
+async function generateSimplifiedBody(ch, listenParts) {
+  const ideas = listenParts
+    .map((p, i) => `${i + 1}. ${p.keyIdea || p.heading}`)
+    .filter(Boolean)
+    .join('\n');
+  const system = `You write simplified, friendly explanations for a Grade 6 CBSE ${IMAGE_SUBJECT} lesson. Return strict JSON only.`;
+  const user = `Chapter: "${ch.title}", Grade 6 CBSE ${IMAGE_SUBJECT}.
+Here are the key ideas of the chapter, in order:
+${ideas}
+
+Write a simplified retelling for a 11-year-old student who is reading this for the first time.
+Return JSON exactly: { "body": ["paragraph 1", "paragraph 2", "paragraph 3"] }
+
+Rules:
+- 3 to 4 short paragraphs, each 2-4 sentences, in simple, warm, plain English.
+- Cover the chapter's main ideas in a natural flow — do NOT just restate the list.
+- No headings, no bullet points, no markdown. Plain sentences only.
+- Do not include text outside the JSON object.`;
+  const out = await callLLM(system, user);
+  const body = Array.isArray(out.body) ? out.body.filter((p) => typeof p === 'string' && p.trim()) : [];
+  return body;
+}
+
+// Lite mode: produce intro + simplified body + activity in a SINGLE call from
+// the raw chapter text (truncated to stay within smaller free models' context).
+// No per-part enrichment — that's what makes it ~8x cheaper.
+async function generateLiteContent(ch, rawText) {
+  const text = rawText.slice(0, 12000);
+  const system = `You write simplified, friendly Grade ${GRADE} CBSE ${IMAGE_SUBJECT} lesson content. Return strict JSON only.`;
+  const user = `Chapter: "${ch.title}", Grade ${GRADE} CBSE ${IMAGE_SUBJECT}.
+Here is the real textbook chapter text (may be truncated):
+"""${text}"""
+
+Return JSON exactly:
+{ "intro": "one sentence overview of what this chapter teaches",
+  "body": ["paragraph 1", "paragraph 2", "paragraph 3"],
+  "activity": "one short reflection/try-it-yourself question grounded in this chapter" }
+
+Rules:
+- "body": 3-4 short paragraphs, each 2-4 sentences, simple warm plain English for an 11-year-old, covering the chapter's main ideas in a natural flow.
+${IMAGE_SUBJECT.toLowerCase().includes('math') ? '- This is Maths: explain concepts in plain words with tiny worked examples; do NOT dump raw symbols/equations.\n' : ''}- No headings, no bullet points, no markdown.
+- Do not include text outside the JSON object.`;
+  const out = await callLLM(system, user);
+  return {
+    intro: typeof out.intro === 'string' ? out.intro.trim() : '',
+    body: Array.isArray(out.body) ? out.body.filter((p) => typeof p === 'string' && p.trim()) : [],
+    activity: typeof out.activity === 'string' ? out.activity.trim() : '',
+  };
+}
+
+// Pre-publish validation gate: a chapter must have a real multi-paragraph
+// simplified body and a real figure before it's allowed into the syllabus.
+// Returns { ok, reasons[] } so the caller can retry then flag needs_review.
+const MIN_BODY_CHARS = 200;
+const MIN_BODY_PARAS = 2;
+function validateChapter(c) {
+  const reasons = [];
+  const bodyText = (c.body || []).join(' ').trim();
+  if ((c.body || []).length < MIN_BODY_PARAS) reasons.push(`body has <${MIN_BODY_PARAS} paragraphs`);
+  if (bodyText.length < MIN_BODY_CHARS) reasons.push(`body too short (${bodyText.length}<${MIN_BODY_CHARS} chars)`);
+  if (bodyText && c.intro && bodyText === c.intro.trim()) reasons.push('body duplicates intro');
+  if (!c.figureUrl) reasons.push('no figure image');
+  if (!c.listenParts || c.listenParts.length === 0) reasons.push('no listen parts');
+  return { ok: reasons.length === 0, reasons };
 }
 
 async function processChapter(ch, manifest) {
@@ -181,47 +376,85 @@ async function processChapter(ch, manifest) {
   const textParts = chunkIntoParts(rawText);
   if (textParts.length === 0) { console.warn('  ! no text extracted'); return null; }
 
-  const images = pickImagesForChapter(manifest, ch.chapter);
-  const figureUrl = images[0]?.url;
+  const figures = pickFiguresForChapter(manifest, ch.chapter, ch.title);
+  const figureUrl = figures[0]?.url; // first image kept for back-compat / validation
+  console.log(`  ... ${figures.length} figure(s) selected`);
 
   let intro, activity;
   const listenParts = [];
   const vocab = [];
-  for (let i = 0; i < textParts.length; i += PARTS_PER_BATCH) {
-    const batch = textParts.slice(i, i + PARTS_PER_BATCH);
-    console.log(`  ... enriching parts ${i + 1}-${i + batch.length}/${textParts.length}`);
-    let enrichment;
-    try {
-      enrichment = await enrichBatch(ch, batch, i, figureUrl, i === 0);
-    } catch (err) {
-      console.error(`  ! batch ${i + 1}-${i + batch.length} failed: ${err.message}`);
-      batch.forEach((text, bi) => listenParts.push({ heading: `Part ${i + bi + 1}`, text }));
-      continue;
+  let body = [];
+
+  if (LITE) {
+    // One call: intro + simplified body + activity. Listen tab keeps the real
+    // text as un-enriched chunks so it's still usable (backfill enrichment later).
+    textParts.forEach((text, i) => listenParts.push({ heading: `Part ${i + 1}`, text }));
+    for (let attempt = 0; attempt < 3 && body.length < MIN_BODY_PARAS; attempt++) {
+      if (attempt > 0) console.log(`  ... lite retry ${attempt}`);
+      try {
+        const lite = await generateLiteContent(ch, rawText);
+        intro = lite.intro || intro;
+        activity = lite.activity || activity;
+        body = lite.body;
+      } catch (err) {
+        console.error(`  ! lite attempt ${attempt + 1} failed: ${err.message}`);
+      }
     }
-    if (i === 0) { intro = enrichment.intro; activity = enrichment.activity; }
-    batch.forEach((text, bi) => {
-      listenParts.push({
-        heading: enrichment.parts?.[bi]?.heading || `Part ${i + bi + 1}`,
-        text,
-        keyIdea: enrichment.parts?.[bi]?.keyIdea,
-        pauseThink: enrichment.parts?.[bi]?.pauseThink,
+  } else {
+    for (let i = 0; i < textParts.length; i += PARTS_PER_BATCH) {
+      const batch = textParts.slice(i, i + PARTS_PER_BATCH);
+      console.log(`  ... enriching parts ${i + 1}-${i + batch.length}/${textParts.length}`);
+      let enrichment;
+      try {
+        enrichment = await enrichBatch(ch, batch, i, figureUrl, i === 0);
+      } catch (err) {
+        console.error(`  ! batch ${i + 1}-${i + batch.length} failed: ${err.message}`);
+        batch.forEach((text, bi) => listenParts.push({ heading: `Part ${i + bi + 1}`, text }));
+        continue;
+      }
+      if (i === 0) { intro = enrichment.intro; activity = enrichment.activity; }
+      batch.forEach((text, bi) => {
+        listenParts.push({
+          heading: enrichment.parts?.[bi]?.heading || `Part ${i + bi + 1}`,
+          text,
+          keyIdea: enrichment.parts?.[bi]?.keyIdea,
+          pauseThink: enrichment.parts?.[bi]?.pauseThink,
+        });
       });
-    });
-    if (enrichment.vocab) vocab.push(...enrichment.vocab);
+      if (enrichment.vocab) vocab.push(...enrichment.vocab);
+    }
+
+    // Real simplified body for the Learn panel — retry a couple of times before
+    // giving up, since a thin body is the exact bug we're fixing.
+    for (let attempt = 0; attempt < 3 && body.length < MIN_BODY_PARAS; attempt++) {
+      if (attempt > 0) console.log(`  ... simplified-body retry ${attempt}`);
+      try {
+        body = await generateSimplifiedBody(ch, listenParts);
+      } catch (err) {
+        console.error(`  ! simplified-body attempt ${attempt + 1} failed: ${err.message}`);
+      }
+    }
   }
 
-  return {
+  const chapter = {
     name: ch.title,
     kind: ch.kind,
     pdfFile: ch.pdfFile,
     pdfPage: 1,
     intro: intro || `Chapter ${ch.chapter}: ${ch.title}.`,
+    body,
+    figures,
     figureUrl,
     figureCaption: ch.title,
     activity: activity || `What did you learn from "${ch.title}"?`,
     listenParts,
     vocab,
   };
+
+  const check = validateChapter(chapter);
+  chapter.needsReview = !check.ok;
+  if (!check.ok) console.warn(`  ⚠ NEEDS REVIEW "${ch.title}": ${check.reasons.join('; ')}`);
+  return chapter;
 }
 
 async function main() {
@@ -266,8 +499,13 @@ async function main() {
         name: ${tsStringLiteral(c.name)}, kind: ${tsStringLiteral(c.kind)}, page: 'p.1', pdfFile: ${tsStringLiteral(c.pdfFile)}, pdfPage: ${c.pdfPage},
         readText: {
           intro: ${tsStringLiteral(c.intro)},
-          body: [ ${tsStringLiteral(c.intro)} ],
+          body: [
+${(c.body && c.body.length ? c.body : [c.intro]).map((p) => `            ${tsStringLiteral(p)}`).join(',\n')},
+          ],
           ${c.figureUrl ? `figureUrl: ${tsStringLiteral(c.figureUrl)},\n          ` : ''}figureCaption: ${tsStringLiteral(c.figureCaption)},
+          figures: [
+${(c.figures || []).map((f) => `            { url: ${tsStringLiteral(f.url)}, caption: ${tsStringLiteral(f.caption)} }`).join(',\n')},
+          ],
           activity: ${tsStringLiteral(c.activity)},
           listenParts: [
 ${lp(c.listenParts)},
@@ -295,9 +533,27 @@ ${unitsSrc}
 ];
 `;
 
+  // Quota guard: if NO chapter produced a real body (all LLM calls failed,
+  // almost always daily-quota exhaustion), do NOT overwrite with empty content.
+  // Exit non-zero so the orchestrator marks this book for retry on the next
+  // pass (when quotas reset) instead of recording it as done.
+  const realBodies = results.filter((r) => (r.body || []).join(' ').trim().length >= MIN_BODY_CHARS).length;
+  if (results.length > 0 && realBodies === 0) {
+    console.error(`\n! ${VAR_NAME}: 0/${results.length} chapters got real content (quota exhausted) — NOT writing, will retry.`);
+    process.exit(3);
+  }
+
   fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   fs.writeFileSync(OUT_FILE, fileSrc);
   console.log(`\nWrote ${results.length}/${manifest.chapters.length} chapters → ${OUT_FILE}`);
+
+  const flagged = results.filter((r) => r.needsReview);
+  if (flagged.length) {
+    console.log(`\n⚠ ${flagged.length} chapter(s) flagged NEEDS REVIEW (published with best-effort content):`);
+    flagged.forEach((r) => console.log(`   - ${r.name}`));
+  } else {
+    console.log('\n✓ All chapters passed the pre-publish validation gate.');
+  }
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });

@@ -1,0 +1,79 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 4",
+  "subject": "Environmental Studies",
+  "code": "deev1",
+  "imageSubject": "EVS",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "deev101.pdf",
+      "title": "Chapter 1",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "deev102.pdf",
+      "title": "Chapter 2",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "deev103.pdf",
+      "title": "Chapter 3",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "deev104.pdf",
+      "title": "Chapter 4",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "deev105.pdf",
+      "title": "Chapter 5",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "deev106.pdf",
+      "title": "Chapter 6",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 7,
+      "pdfFile": "deev107.pdf",
+      "title": "Chapter 7",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 8,
+      "pdfFile": "deev108.pdf",
+      "title": "Chapter 8",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 9,
+      "pdfFile": "deev109.pdf",
+      "title": "Chapter 9",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 10,
+      "pdfFile": "deev110.pdf",
+      "title": "Chapter 10",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

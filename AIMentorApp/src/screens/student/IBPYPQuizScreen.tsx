@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import TransliterationInput, { detectLangCodeFromText } from '../../components/common/TransliterationInput';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentData } from '../../context/StudentDataContext';
 import Header from '../../components/common/Header';
@@ -670,16 +671,16 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
                 </View>
               ) : (
                 <>
-                  <TextInput
+                  <TransliterationInput
                     style={[styles.fillInput, { borderColor: fillFeedback !== 'idle' ? accent + '70' : accent + '50', color: colors.textMain, backgroundColor: isDark ? colors.bgDark : '#F8FAFA' }]}
                     placeholder="Type your answer here..."
                     placeholderTextColor={colors.textDim}
+                    colors={colors}
                     value={fillInput}
                     onChangeText={setFillInput}
-                    onSubmitEditing={handleFillSubmit}
-                    returnKeyType="done"
-                    editable={!fillValidating}
-                    autoCapitalize="none"
+                    // Language-Acquisition answers: if the question is in a native
+                    // script (e.g. Devanagari), let the student type it via English.
+                    langCode={subject === 'Language Acquisition' ? detectLangCodeFromText(q.question as string) : null}
                   />
                   {fillFeedback === 'wrong1' && (
                     <View style={styles.nudgeRow}>

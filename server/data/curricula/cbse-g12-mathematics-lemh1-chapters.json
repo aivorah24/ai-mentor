@@ -1,0 +1,51 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 12",
+  "subject": "Mathematics",
+  "code": "lemh1",
+  "imageSubject": "Mathematics",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "lemh101.pdf",
+      "title": "Chapter 1",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "lemh102.pdf",
+      "title": "Chapter 2",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "lemh103.pdf",
+      "title": "Chapter 3",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "lemh104.pdf",
+      "title": "Chapter 4",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "lemh105.pdf",
+      "title": "Chapter 5",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "lemh106.pdf",
+      "title": "Chapter 6",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

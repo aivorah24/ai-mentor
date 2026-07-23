@@ -16,23 +16,17 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import SERVER_URL from '../../config/serverUrl';
 import { AVATAR_STYLES } from '../../constants/avatarStyles';
-import { CURRICULA, getGradesForCurriculum, SUBJECTS, TEAL, DatePickerInput } from './OnboardingScreen';
-import { getSubjectsForEntry } from '../school-admin/TeachingEntriesEditor';
+import { TEAL, DatePickerInput } from './OnboardingScreen';
+import TeachingEntriesEditor, { TeachingEntry, emptyEntry } from '../school-admin/TeachingEntriesEditor';
 import {
   AutocompleteField, CardHeader, BBox, fetchCitySuggestions, fetchSchoolSuggestions, locateCity, locateFull,
   SelectField, COUNTRIES, INDIA_STATES, INDIA_CITIES, PhoneCodeSelect,
 } from './OnboardingSharedFields';
 import { PhoneOtpModal } from './phoneOtpVerification';
-import { useMobileOtpVerification } from './mobileOtpVerification';
+import { useMobileOtpVerification, MOBILE_VERIFICATION_ENABLED } from './mobileOtpVerification';
 
 const TEACHER_ROLES = ['Teacher', 'Coordinator', 'Principal'];
 const EXPERIENCE_RANGES = ['0 - 2 years', '3 - 5 years', '5 - 10 years', '10+ years'];
-const GRADE_GROUPS = [
-  { label: 'Early Years', grades: ['Nursery', 'LKG', 'UKG'] },
-  { label: 'Primary', grades: ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'] },
-  { label: 'Middle School', grades: ['Grade 6', 'Grade 7', 'Grade 8'] },
-  { label: 'Senior School', grades: ['Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'] },
-];
 
 export default function OnboardingTeacherBoxes() {
   const { user, updateUser, logout } = useAuth();
@@ -76,9 +70,12 @@ export default function OnboardingTeacherBoxes() {
   const [country, setCountry] = useState('India');
   const [teacherRole, setTeacherRole] = useState('Teacher');
   const [experience, setExperience] = useState('');
-  const [curriculum, setCurriculum] = useState((user as any)?.curriculum || '');
-  const [teachGrades, setTeachGrades] = useState<string[]>([]);
-  const [teachSubjects, setTeachSubjects] = useState<string[]>([]);
+  // Teaching info is now a repeatable list of {curriculum, grade, subjects}
+  // entries (a teacher can teach different curricula across different grades),
+  // matching the school-admin editor. `entries` is the single source of truth;
+  // the save payloads derive `teaches` + a primary curriculum/grade from it.
+  const [entries, setEntries] = useState<TeachingEntry[]>([emptyEntry((user as any)?.curriculum || '')]);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [avatarStyle, setAvatarStyle] = useState('default');
 
   // Hydrate fields that aren't carried on the `user` object (dob, mobile, state,
@@ -102,8 +99,15 @@ export default function OnboardingTeacherBoxes() {
         if (p.experience) setExperience(p.experience);
         if (p.avatarStyle) setAvatarStyle(p.avatarStyle);
         if (Array.isArray(p.teaches) && p.teaches.length > 0) {
-          setTeachGrades([...new Set(p.teaches.map((t: any) => t.grade).filter(Boolean))] as string[]);
-          setTeachSubjects([...new Set(p.teaches.flatMap((t: any) => t.subjects || []))] as string[]);
+          // Restore one editor row per saved teaching entry, preserving each
+          // entry's OWN curriculum + grade + subjects (previously these were
+          // flattened to a single curriculum, so multi-curriculum data never
+          // showed up on reload — the "not reflected" bug).
+          setEntries(p.teaches.map((t: any) => ({
+            curriculum: t.curriculum || '',
+            grade: t.grade || '',
+            subjectsInput: Array.isArray(t.subjects) ? t.subjects.join(', ') : '',
+          })));
         }
       })
       .catch(() => {});
@@ -113,27 +117,28 @@ export default function OnboardingTeacherBoxes() {
   const personalDone = fullName.trim().length >= 2 && dob.trim().length >= 6 && mobile.trim().length >= 7;
   const schoolDone = school.trim().length >= 2 && city.trim().length >= 2 && state.trim().length >= 2;
   const professionalDone = teacherRole.length > 0 && experience.length > 0;
-  const teachingDone = curriculum.length > 0 && teachGrades.length > 0 && teachSubjects.length > 0;
+
+  // Derive the save shapes from `entries`. A COMPLETE entry needs a curriculum,
+  // a grade, and at least one subject. `teaches` keeps each entry's own
+  // curriculum; the users-table `curriculum`/`grade` columns (single-valued) get
+  // the first complete entry as the teacher's primary.
+  const teachesFromEntries = entries
+    .filter(e => e.curriculum && e.grade)
+    .map(e => ({
+      curriculum: e.curriculum.trim(),
+      grade: e.grade.trim(),
+      subjects: e.subjectsInput.split(',').map(s => s.trim()).filter(Boolean),
+    }));
+  const completeEntries = teachesFromEntries.filter(t => t.subjects.length > 0);
+  const primaryCurriculum = completeEntries[0]?.curriculum || entries.find(e => e.curriculum)?.curriculum?.trim() || '';
+  const primaryGrade = completeEntries[0]?.grade || '';
+
+  const teachingDone = completeEntries.length > 0;
   const avatarDone = avatarStyle.length > 0;
 
   const requiredDone = personalDone && schoolDone && professionalDone && teachingDone;
   const doneCount = [personalDone, schoolDone, professionalDone, teachingDone, avatarDone].filter(Boolean).length;
   const completionPct = Math.round((doneCount / 5) * 100);
-
-  function toggleGrade(g: string) {
-    setTeachGrades(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]);
-  }
-
-  function toggleGradeGroup(groupGrades: string[]) {
-    const allSelected = groupGrades.every(g => teachGrades.includes(g));
-    setTeachGrades(prev => allSelected
-      ? prev.filter(x => !groupGrades.includes(x))
-      : [...prev, ...groupGrades.filter(g => !prev.includes(g))]);
-  }
-
-  function toggleSubject(s: string) {
-    setTeachSubjects(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
-  }
 
   // Saves whatever fields are filled in so far WITHOUT marking onboarding complete —
   // used by the "Save & Exit" leave-confirm path so partial progress isn't lost just
@@ -141,7 +146,6 @@ export default function OnboardingTeacherBoxes() {
   async function saveProgress() {
     try {
       const email = user?.email || '';
-      const teaches = teachGrades.map(g => ({ grade: g, curriculum: curriculum.trim(), subjects: teachSubjects }));
       await fetch(`${SERVER_URL}/user/profile`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -154,8 +158,9 @@ export default function OnboardingTeacherBoxes() {
           phone: mobile ? `${mobileCode} ${mobile}` : undefined,
           state: state || undefined,
           country: country || undefined,
-          curriculum: curriculum.trim() || undefined,
-          teaches,
+          curriculum: primaryCurriculum || undefined,
+          // Don't overwrite saved teaches with [] on a partial "Save & Exit".
+          teaches: teachesFromEntries.length ? teachesFromEntries : undefined,
         }),
       });
       await fetch(`${SERVER_URL}/user/preferences`, {
@@ -166,7 +171,7 @@ export default function OnboardingTeacherBoxes() {
           school: school || undefined, location: city || undefined,
           dob: dob || undefined, mobile: mobile ? `${mobileCode} ${mobile}` : undefined,
           state: state || undefined, country: country || undefined,
-          teacherRole, experience, curriculum: curriculum.trim() || undefined, avatarStyle,
+          teacherRole, experience, curriculum: primaryCurriculum || undefined, avatarStyle,
         }),
       }).catch(() => {});
     } catch (e) {
@@ -215,8 +220,8 @@ export default function OnboardingTeacherBoxes() {
         state: state || undefined,
         country: country || undefined,
         complete: true,
-        curriculum: curriculum.trim(),
-        teaches: teachGrades.map(g => ({ grade: g, curriculum: curriculum.trim(), subjects: teachSubjects })),
+        curriculum: primaryCurriculum,
+        teaches: teachesFromEntries,
       };
 
       const profileRes = await fetch(`${SERVER_URL}/user/profile`, {
@@ -245,7 +250,7 @@ export default function OnboardingTeacherBoxes() {
           country: country || undefined,
           teacherRole,
           experience,
-          curriculum: curriculum.trim(),
+          curriculum: primaryCurriculum,
           avatarStyle,
         }),
       }).catch(() => {});
@@ -256,9 +261,9 @@ export default function OnboardingTeacherBoxes() {
         location: city,
         onboardingComplete: true,
         avatarStyle,
-        curriculum: saved.curriculum || curriculum.trim(),
-        grade: teachGrades[0],
-        teaches: teachGrades.map(g => ({ grade: g, curriculum: curriculum.trim(), subjects: teachSubjects })),
+        curriculum: saved.curriculum || primaryCurriculum,
+        grade: primaryGrade,
+        teaches: teachesFromEntries,
       } as any);
     } catch (err: any) {
       console.error('Onboarding save error:', err);
@@ -333,7 +338,8 @@ export default function OnboardingTeacherBoxes() {
                 <PhoneCodeSelect value={mobileCode} onChange={setMobileCode} colors={colors} styles={styles} />
                 <TextInput style={[styles.input, styles.phoneInput]} value={mobile} onChangeText={onMobileChange}
                   placeholder="98765 43210" placeholderTextColor={colors.textDim} keyboardType="phone-pad" />
-                {mobileOtp.mobileVerified && mobile === mobileOtp.verifiedMobile ? (
+                {MOBILE_VERIFICATION_ENABLED && (
+                  mobileOtp.mobileVerified && mobile === mobileOtp.verifiedMobile ? (
                   <View style={styles.verifiedBadge}>
                     <Feather name="check-circle" size={14} color={TEAL} />
                     <Text style={styles.verifiedTxt}>Verified</Text>
@@ -347,9 +353,9 @@ export default function OnboardingTeacherBoxes() {
                   >
                     <Text style={styles.verifyBtnTxt}>{mobileOtp.otpSending ? 'Sending...' : 'Verify'}</Text>
                   </TouchableOpacity>
-                )}
+                ))}
               </View>
-              {mobileOtp.otpError ? <Text style={styles.warnTxt}>{mobileOtp.otpError}</Text> : null}
+              {MOBILE_VERIFICATION_ENABLED && mobileOtp.otpError ? <Text style={styles.warnTxt}>{mobileOtp.otpError}</Text> : null}
             </View>
           </View>
 
@@ -455,68 +461,24 @@ export default function OnboardingTeacherBoxes() {
           </View>
         </View>
 
-        {/* ── Row 2: Teaching Info ── */}
-        <View style={styles.rowWrap}>
-          <View style={[styles.card, styles.cardFull]}>
+        {/* ── Row 2: Teaching Info — repeatable curriculum + grade + subjects
+            rows so a teacher can teach different curricula across grades ──
+            When a dropdown is open, lift the WHOLE row above the later rows
+            (Avatar) so the menu overlays them instead of hiding behind. */}
+        <View style={[styles.rowWrap, { zIndex: openDropdown ? 50 : 1 }]}>
+          <View style={[styles.card, styles.cardFull, openDropdown ? { zIndex: 50 } : null]}>
             <CardHeader icon="book-open" title="Teaching Info" subtitle="What do you teach?" done={teachingDone} styles={styles} />
-            <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>Curriculum</Text>
-              <View style={styles.fieldBox}>
-                <View style={styles.chipRow}>
-                  {CURRICULA.map(c => (
-                    <TouchableOpacity key={c} style={[styles.chip, curriculum === c && styles.chipActive]}
-                      onPress={() => { setCurriculum(c); setTeachGrades([]); }} activeOpacity={0.8}>
-                      <Text style={[styles.chipTxt, curriculum === c && styles.chipTxtActive]}>{c}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>Grades You Teach</Text>
-              <View style={styles.gradeGroupsWrap}>
-                {GRADE_GROUPS.map(group => {
-                  const available = group.grades.filter(g => getGradesForCurriculum(curriculum).includes(g));
-                  if (available.length === 0) return null;
-                  const allSelected = available.every(g => teachGrades.includes(g));
-                  return (
-                    <View key={group.label} style={styles.gradeGroup}>
-                      <View style={styles.gradeGroupHead}>
-                        <View style={styles.gradeGroupDot} />
-                        <Text style={styles.gradeGroupLbl}>{group.label}</Text>
-                        <TouchableOpacity onPress={() => toggleGradeGroup(available)} activeOpacity={0.7}>
-                          <Text style={styles.gradeGroupSelectAll}>{allSelected ? 'Clear' : 'Select all'}</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles.chipRow}>
-                        {available.map(g => (
-                          <TouchableOpacity key={g} style={[styles.chip, teachGrades.includes(g) && styles.chipActive]}
-                            onPress={() => toggleGrade(g)} activeOpacity={0.8}>
-                            <Text style={[styles.chipTxt, teachGrades.includes(g) && styles.chipTxtActive]}>{g}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>Subjects</Text>
-              <View style={styles.fieldBox}>
-                <View style={styles.chipRow}>
-                  {(teachGrades.length > 0
-                    ? [...new Set(teachGrades.flatMap(g => getSubjectsForEntry(curriculum, g)))]
-                    : SUBJECTS
-                  ).map(s => (
-                    <TouchableOpacity key={s} style={[styles.chip, teachSubjects.includes(s) && styles.chipActive]}
-                      onPress={() => toggleSubject(s)} activeOpacity={0.8}>
-                      <Text style={[styles.chipTxt, teachSubjects.includes(s) && styles.chipTxtActive]}>{s}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            </View>
+            <Text style={styles.teachingHint}>
+              Add a row for each grade you teach. You can mix curricula — e.g. IB PYP Grade 3 and CBSE Grade 6.
+            </Text>
+            <TeachingEntriesEditor
+              entries={entries}
+              onChange={setEntries}
+              schoolCurriculumBase={null}
+              colors={colors}
+              openDropdown={openDropdown}
+              setOpenDropdown={setOpenDropdown}
+            />
           </View>
         </View>
 
@@ -770,6 +732,7 @@ function useStyles(colors: any) {
     gradeGroupDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: TEAL },
     gradeGroupLbl: { flex: 1, fontSize: 12, fontWeight: '800', color: colors.textMain, textTransform: 'uppercase', letterSpacing: 0.5 },
     gradeGroupSelectAll: { fontSize: 11, fontWeight: '700', color: TEAL },
+    teachingHint: { fontSize: 12.5, color: colors.textMuted, lineHeight: 18, marginBottom: 4 },
 
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 18, borderWidth: 1, borderColor: colors.borderColor, backgroundColor: colors.bgDark },

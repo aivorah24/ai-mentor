@@ -1,0 +1,107 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 11",
+  "subject": "Mathematics",
+  "code": "kemh1",
+  "imageSubject": "Mathematics",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "kemh101.pdf",
+      "title": "Chapter 1",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "kemh102.pdf",
+      "title": "Chapter 2",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "kemh103.pdf",
+      "title": "Chapter 3",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "kemh104.pdf",
+      "title": "Chapter 4",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "kemh105.pdf",
+      "title": "Chapter 5",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "kemh106.pdf",
+      "title": "Chapter 6",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 7,
+      "pdfFile": "kemh107.pdf",
+      "title": "Chapter 7",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 8,
+      "pdfFile": "kemh108.pdf",
+      "title": "Chapter 8",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 9,
+      "pdfFile": "kemh109.pdf",
+      "title": "Chapter 9",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 10,
+      "pdfFile": "kemh110.pdf",
+      "title": "Chapter 10",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 11,
+      "pdfFile": "kemh111.pdf",
+      "title": "Chapter 11",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 12,
+      "pdfFile": "kemh112.pdf",
+      "title": "Chapter 12",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 13,
+      "pdfFile": "kemh113.pdf",
+      "title": "Chapter 13",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 14,
+      "pdfFile": "kemh114.pdf",
+      "title": "Chapter 14",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

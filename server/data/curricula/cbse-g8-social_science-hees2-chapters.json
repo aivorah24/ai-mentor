@@ -1,0 +1,72 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 8",
+  "subject": "Social Science",
+  "code": "hees2",
+  "imageSubject": "Social_Science",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "hees201.pdf",
+      "title": "Chapter 1",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "hees202.pdf",
+      "title": "Chapter 2",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "hees203.pdf",
+      "title": "Chapter 3",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "hees204.pdf",
+      "title": "Chapter 4",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "hees205.pdf",
+      "title": "Chapter 5",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "hees206.pdf",
+      "title": "Chapter 6",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 7,
+      "pdfFile": "hees207.pdf",
+      "title": "India’s Urban Landscap e",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 8,
+      "pdfFile": "hees208.pdf",
+      "title": "Chapter 8",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    },
+    {
+      "chapter": 9,
+      "pdfFile": "hees209.pdf",
+      "title": "Chapter 9",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}
