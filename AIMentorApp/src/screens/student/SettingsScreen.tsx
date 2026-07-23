@@ -35,6 +35,7 @@ import {
   GoogleAuthProvider,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
+  signInWithPopup,
   deleteUser,
 } from 'firebase/auth';
 import { auth } from '../../config/firebase';
@@ -236,6 +237,13 @@ export default function SettingsScreen({ navigation, route }: any) {
     if (!email) { setEmailError('Please enter your new email.'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setEmailError('Please enter a valid email address.'); return; }
     if (email === (user?.email || '').toLowerCase()) { setEmailError('That is already your current email.'); return; }
+    // Google-SSO accounts can't change email here: the identity is the linked
+    // Google account, which the server can't re-point (see /change-email guard).
+    // Block up front so the user isn't walked through an OTP flow that would fail.
+    if (isGoogleUser) {
+      setEmailError('This account signs in with Google, so its email is tied to your Google account and can’t be changed here. To use a different address, sign in with that Google account instead.');
+      return;
+    }
     if (isPasswordUser && !emailPassword) { setEmailError('Please enter your current password.'); return; }
     setModalLoading(true);
     try {
@@ -303,6 +311,50 @@ export default function SettingsScreen({ navigation, route }: any) {
       setTimeout(() => { logout(); }, 150);
     } catch (e: any) {
       setEmailError(e.message || 'Failed to update email.');
+    } finally {
+      setModalLoading(false);
+    }
+  }
+
+  // Google-SSO "change email" = migrate the account onto a DIFFERENT Google
+  // account the user owns. There's no typed email or OTP: the user proves
+  // ownership by picking the destination account in a Google popup, and the
+  // server moves all data onto it (see POST /user/change-email-google). Example:
+  // kannansaimohan2003@gmail.com → parentaivorah@gmail.com migrates cleanly.
+  async function handleSwitchGoogleAccount() {
+    setEmailError('');
+    setModalLoading(true);
+    try {
+      const currentEmail = (user?.email || '').toLowerCase();
+      const provider = new GoogleAuthProvider();
+      // Force the account chooser so the user can pick a DIFFERENT account than
+      // the one already cached in the browser.
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, provider);
+      const newEmail = (result.user.email || '').toLowerCase();
+      if (!newEmail) throw new Error('That Google account has no email address.');
+      if (newEmail === currentEmail) throw new Error('That is the same Google account you already use. Pick a different one.');
+
+      const idToken = await result.user.getIdToken();
+      const res = await fetch(`${SERVER_URL}/user/change-email-google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentEmail, idToken }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'Could not switch your Google account.');
+
+      // Data now lives under the new address and the old Firebase user is gone.
+      // Sign out so the session re-establishes cleanly under the new account.
+      closeModal();
+      Alert.alert('Email Updated', `Your account is now linked to ${d.newEmail || newEmail}. For security, please sign in again with your new Google account.`);
+      setTimeout(() => { logout(); }, 150);
+    } catch (e: any) {
+      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+        setEmailError('Google selection was cancelled. Please try again.');
+      } else {
+        setEmailError(e.message || 'Failed to switch Google account.');
+      }
     } finally {
       setModalLoading(false);
     }
@@ -741,12 +793,30 @@ export default function SettingsScreen({ navigation, route }: any) {
       {/* ── Change Email Modal — two steps: confirm identity + new email,
           then verify the code we email to the NEW address before committing ── */}
       <AppModal visible={activeModal === 'email'} title="Change Email Address" onClose={closeModal} styles={styles} colors={colors}>
-        {emailStep === 'form' ? (
+        {isGoogleUser ? (
           <>
             <Text style={styles.modalNote}>
-              {isPasswordUser
-                ? 'Enter your new email and current password to confirm.'
-                : 'Enter your new email. Since you sign in with Google, confirm with Google instead of a password.'}
+              Your account signs in with Google, so its email is your Google account. To use a different
+              address, switch to another Google account you own — we'll move your account and all its data
+              onto it. You'll pick the account in a Google window.
+            </Text>
+            <View style={[styles.modalInput, { opacity: 0.7 }]}>
+              <Feather name="mail" size={15} color={colors.textDim} />
+              <Text style={[styles.modalTextInput, { color: colors.textDim }]} numberOfLines={1}>{user?.email}</Text>
+            </View>
+            {!!emailError && <Text style={{ fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{emailError}</Text>}
+            <ModalButtons
+              onCancel={closeModal}
+              onSave={handleSwitchGoogleAccount}
+              loading={modalLoading}
+              saveLabel="Switch Google Account"
+              styles={styles}
+            />
+          </>
+        ) : emailStep === 'form' ? (
+          <>
+            <Text style={styles.modalNote}>
+              Enter your new email and current password to confirm.
             </Text>
             <Text style={styles.modalFieldLabel}>New Email</Text>
             <View style={styles.modalInput}>
@@ -762,28 +832,24 @@ export default function SettingsScreen({ navigation, route }: any) {
                 autoFocus
               />
             </View>
-            {isPasswordUser && (
-              <>
-                <Text style={styles.modalFieldLabel}>Current Password</Text>
-                <View style={styles.modalInput}>
-                  <Feather name="lock" size={15} color={colors.textDim} />
-                  <TextInput
-                    style={styles.modalTextInput}
-                    value={emailPassword}
-                    onChangeText={setEmailPassword}
-                    placeholder="••••••••"
-                    placeholderTextColor={colors.textDim}
-                    secureTextEntry
-                  />
-                </View>
-              </>
-            )}
+            <Text style={styles.modalFieldLabel}>Current Password</Text>
+            <View style={styles.modalInput}>
+              <Feather name="lock" size={15} color={colors.textDim} />
+              <TextInput
+                style={styles.modalTextInput}
+                value={emailPassword}
+                onChangeText={setEmailPassword}
+                placeholder="••••••••"
+                placeholderTextColor={colors.textDim}
+                secureTextEntry
+              />
+            </View>
             {!!emailError && <Text style={{ fontSize: 12, color: colors.accentRed, marginTop: 6 }}>{emailError}</Text>}
             <ModalButtons
               onCancel={closeModal}
               onSave={handleSendEmailOtp}
               loading={modalLoading}
-              saveLabel={isGoogleUser ? 'Confirm with Google' : 'Send Verification Code'}
+              saveLabel="Send Verification Code"
               styles={styles}
             />
           </>

@@ -1,0 +1,65 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 7",
+  "subject": "Mathematics",
+  "code": "gegp1",
+  "imageSubject": "Mathematics",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "gegp101.pdf",
+      "title": "Large Numbers Around Us",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "gegp102.pdf",
+      "title": "Arithmetic Expressions",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "gegp103.pdf",
+      "title": "A Peek Beyond the Point",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "gegp104.pdf",
+      "title": "Expressions using Letter-Numbers",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "gegp105.pdf",
+      "title": "Parallel and Intersecting Lines",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "gegp106.pdf",
+      "title": "Number Play",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 7,
+      "pdfFile": "gegp107.pdf",
+      "title": "A Tale of Three Intersecting Lines",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 8,
+      "pdfFile": "gegp108.pdf",
+      "title": "Chapter 8",
+      "kind": "Non-fiction",
+      "needsTitleReview": true
+    }
+  ]
+}

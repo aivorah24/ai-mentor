@@ -26,7 +26,7 @@ import {
   SelectField, COUNTRIES, INDIA_STATES, INDIA_CITIES, PhoneCodeSelect,
 } from './OnboardingSharedFields';
 import { PhoneOtpModal } from './phoneOtpVerification';
-import { useMobileOtpVerification } from './mobileOtpVerification';
+import { useMobileOtpVerification, MOBILE_VERIFICATION_ENABLED } from './mobileOtpVerification';
 
 const FOREST = '#5A8A70';
 // Override imported TEAL with Aivorah gold for parent onboarding
@@ -770,7 +770,8 @@ export default function OnboardingParentBoxes() {
                   <TextInput style={[styles.input, styles.phoneInput]} value={mobile}
                     onChangeText={onMobileChange}
                     placeholder="98765 43210" placeholderTextColor={colors.textDim} keyboardType="phone-pad" />
-                  {mobileOtp.mobileVerified && mobile === mobileOtp.verifiedMobile ? (
+                  {MOBILE_VERIFICATION_ENABLED && (
+                    mobileOtp.mobileVerified && mobile === mobileOtp.verifiedMobile ? (
                     <View style={styles.verifiedBadge}>
                       <Feather name="check-circle" size={14} color={TEAL} />
                       <Text style={styles.verifiedTxt}>Verified</Text>
@@ -784,16 +785,16 @@ export default function OnboardingParentBoxes() {
                     >
                       <Text style={styles.verifyBtnTxt}>{mobileOtp.otpSending ? 'Sending...' : 'Verify'}</Text>
                     </TouchableOpacity>
-                  )}
+                  ))}
                 </View>
-                {mobileOtp.otpError ? <Text style={styles.warnTxt}>{mobileOtp.otpError}</Text> : null}
+                {MOBILE_VERIFICATION_ENABLED && mobileOtp.otpError ? <Text style={styles.warnTxt}>{mobileOtp.otpError}</Text> : null}
               </View>
             </View>
 
             <View style={[styles.hintBox, styles.hintBoxRow, { backgroundColor: TEAL + '10', borderColor: TEAL + '25' }]}>
               <Feather name="shield" size={16} color={TEAL} />
               <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 17, flex: 1 }}>
-                Your details help us personalise learning recommendations for your child and are kept private.
+                The details you provide are used to create and secure your account. Your information is stored securely and treated as strictly confidential.
               </Text>
             </View>
           </View>

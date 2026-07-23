@@ -1,0 +1,100 @@
+{
+  "curriculum": "CBSE",
+  "grade": "Grade 9",
+  "subject": "Science",
+  "code": "iesc1",
+  "imageSubject": "Science",
+  "chapters": [
+    {
+      "chapter": 1,
+      "pdfFile": "iesc101.pdf",
+      "title": "Exploration: Entering the World of Secondary Science",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 2,
+      "pdfFile": "iesc102.pdf",
+      "title": "Cell: The Building Block of Life",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 3,
+      "pdfFile": "iesc103.pdf",
+      "title": "Tissues in Action",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 4,
+      "pdfFile": "iesc104.pdf",
+      "title": "Describing Motion Around Us",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 5,
+      "pdfFile": "iesc105.pdf",
+      "title": "Exploring Mixtures and their Separation",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 6,
+      "pdfFile": "iesc106.pdf",
+      "title": "How Forces Affect Motion",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 7,
+      "pdfFile": "iesc107.pdf",
+      "title": "Work, Energy, and Simple Machines",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 8,
+      "pdfFile": "iesc108.pdf",
+      "title": "Journey Inside the Atom",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 9,
+      "pdfFile": "iesc109.pdf",
+      "title": "Atomic Foundations of Matter",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 10,
+      "pdfFile": "iesc110.pdf",
+      "title": "Sound Waves: Characteristics and Applications",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 11,
+      "pdfFile": "iesc111.pdf",
+      "title": "Reproduction: How Life Continues",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 12,
+      "pdfFile": "iesc112.pdf",
+      "title": "Patterns in Life: Diversity and Classification",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    },
+    {
+      "chapter": 13,
+      "pdfFile": "iesc113.pdf",
+      "title": "Earth as a System: Energy, Matter, and Life",
+      "kind": "Non-fiction",
+      "needsTitleReview": false
+    }
+  ]
+}

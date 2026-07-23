@@ -34,7 +34,22 @@ type Student = {
   lastActive: string;
   needsAttention: boolean;
   photoUrl?: string;
+  createdAt?: string | null;
+  hasStarted?: boolean;
 };
+
+// A student counts as "inactive" only if they have ALREADY engaged at least
+// once (a real last-active date) and haven't returned in 3+ days. A freshly
+// added student who has never logged in is NOT inactive — otherwise every new
+// student shows up under Inactive the moment the teacher adds them. Never-active
+// students that linger are surfaced via "Needs Attention" instead (after its own
+// grace window), so the two buckets don't both fire on brand-new accounts.
+const INACTIVE_DAYS = 3;
+function isInactiveStudent(s: Student): boolean {
+  if (!s.lastActive) return false; // never engaged yet → not "inactive"
+  const days = Math.floor((Date.now() - new Date(s.lastActive).getTime()) / 86400000);
+  return days >= INACTIVE_DAYS;
+}
 
 
 const TABS = ['All', 'Grade 3', 'Grade 4', 'Grade 5', 'Needs Attention'];
@@ -600,14 +615,11 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
 
   const filtered = students.filter(s => {
     const matchSearch = !search || s.name.toLowerCase().includes(search.toLowerCase());
-    const daysSinceActive = s.lastActive
-      ? Math.floor((Date.now() - new Date(s.lastActive).getTime()) / 86400000)
-      : 999;
     const matchTab =
       activeTab === 'All'             ? true :
       activeTab === 'Needs Attention' ? s.needsAttention :
       activeTab === 'Active Today'    ? s.lastActive?.startsWith(todayISO) :
-      activeTab === 'Inactive'        ? daysSinceActive >= 3 :
+      activeTab === 'Inactive'        ? isInactiveStudent(s) :
       activeTab === 'Streak Risk'     ? (s.currentStreak || 0) === 1 :
       activeTab === 'Top Performers'  ? (s.progressPct || 0) >= 50 :
       s.grade === activeTab;
@@ -622,10 +634,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
     onTrack: students.filter(s => !s.needsAttention).length,
     attention: students.filter(s => s.needsAttention).length,
     activeToday: students.filter(s => s.lastActive?.startsWith(todayISO)).length,
-    inactive: students.filter(s => {
-      const days = s.lastActive ? Math.floor((Date.now() - new Date(s.lastActive).getTime()) / 86400000) : 999;
-      return days >= 3;
-    }).length,
+    inactive: students.filter(isInactiveStudent).length,
     streakRisk: students.filter(s => (s.currentStreak || 0) === 1).length,
     topPerformers: students.filter(s => (s.progressPct || 0) >= 50).length,
     avgProgress: students.length
@@ -753,6 +762,14 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                       <View style={styles.attentionBadge}>
                         <Feather name="alert-circle" size={11} color="#B8797E" />
                         <Text style={[styles.badgeText, { color: '#B8797E' }]}>Attention</Text>
+                      </View>
+                    ) : s.hasStarted === false ? (
+                      // Brand-new student who hasn't engaged yet — show a neutral
+                      // "Getting Started" state instead of "On Track", which would
+                      // wrongly imply proven progress on a 0% account.
+                      <View style={styles.gettingStartedBadge}>
+                        <Feather name="play-circle" size={11} color="#9A7B2E" />
+                        <Text style={[styles.badgeText, { color: '#9A7B2E' }]}>Getting Started</Text>
                       </View>
                     ) : (
                       <View style={styles.onTrackBadge}>
@@ -1397,6 +1414,11 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: '#5A8A7018', borderRadius: 8,
     paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: '#5A8A7040',
+  },
+  gettingStartedBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: '#9A7B2E18', borderRadius: 8,
+    paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: '#9A7B2E40',
   },
   badgeText: { fontSize: 10, fontWeight: '700' },
 

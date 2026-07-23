@@ -24,8 +24,11 @@ export interface SyllabusTopic {
   readText: {
     intro: string;
     body:  string[];   // paragraphs
-    figureUrl?: string;      // real page image, extracted from the source PDF, hosted on Cloudinary
+    figureUrl?: string;      // real page image, extracted from the source PDF, hosted on Cloudinary (kept for back-compat = figures[0])
     figureCaption: string;
+    // Gallery of real chapter illustrations shown in the Learn panel. Preferred
+    // over the single figureUrl when present; falls back to figureUrl if empty.
+    figures?: { url: string; caption?: string }[];
     activity: string;
     // Optional Listen-tab enrichment — only curated for a few pilot stories so
     // far; the Listen tab falls back to the plain player when these are absent.

@@ -423,6 +423,12 @@ router.get('/students/template.xlsx', async (req, res) => {
     });
     headerRow.height = 22;
 
+    // Parent Phone values start with "+91 …". Excel treats a leading "+" as a
+    // formula and shows the "typo in your formula" prompt. Force that column to
+    // Text so the values (and future edits) are treated literally.
+    const PHONE_COL = TEMPLATE_HEADER.indexOf('Parent Phone') + 1;
+    if (PHONE_COL > 0) ws.getColumn(PHONE_COL).numFmt = '@';
+
     rows.forEach((rowValues, i) => {
       const row = ws.addRow(rowValues);
       const isSample = i < SAMPLE_ROW_COUNT;
@@ -433,6 +439,11 @@ router.get('/students/template.xlsx', async (req, res) => {
           cell.font = { italic: true, color: { argb: 'FF8A7550' } };
         }
       });
+      if (PHONE_COL > 0) {
+        const phoneCell = row.getCell(PHONE_COL);
+        phoneCell.numFmt = '@';
+        if (phoneCell.value != null) phoneCell.value = String(phoneCell.value);
+      }
     });
 
     ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: TEMPLATE_HEADER.length } };
@@ -1280,6 +1291,9 @@ router.get('/teachers/template.xlsx', async (req, res) => {
       cell.border = { top: THIN, left: THIN, right: THIN, bottom: THIN };
     });
     ws.getRow(1).height = 22;
+    // Phone column → Text, so a leading "+" isn't parsed as an Excel formula.
+    const TCH_PHONE_COL = TEACHER_TEMPLATE_HEADER.indexOf('Phone') + 1;
+    if (TCH_PHONE_COL > 0) ws.getColumn(TCH_PHONE_COL).numFmt = '@';
     rows.forEach((rowValues, i) => {
       const row = ws.addRow(rowValues);
       const isSample = i < TEACHER_SAMPLE_ROW_COUNT;
@@ -1287,6 +1301,11 @@ router.get('/teachers/template.xlsx', async (req, res) => {
         cell.border = { top: THIN, left: THIN, right: THIN, bottom: THIN };
         if (isSample) { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFBF0DA' } }; cell.font = { italic: true, color: { argb: 'FF8A7550' } }; }
       });
+      if (TCH_PHONE_COL > 0) {
+        const pc = row.getCell(TCH_PHONE_COL);
+        pc.numFmt = '@';
+        if (pc.value != null) pc.value = String(pc.value);
+      }
     });
     ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: TEACHER_TEMPLATE_HEADER.length } };
     const buffer = await wb.xlsx.writeBuffer();

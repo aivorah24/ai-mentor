@@ -70,6 +70,45 @@ async function searchContent({ vector, curriculum, grade, subject, topic, limit 
   return results;
 }
 
+// Robust grounding retrieval used by assignment/quiz generation. Routes to the
+// correct collection (the plain searchContent always defaulted to the NCERT one,
+// so IB/CBSE queries silently returned nothing → generic content), normalises the
+// grade/curriculum to how they're actually stored, and falls back progressively:
+//   1. native curriculum for the grade+subject
+//   2. IB PYP → its BASE standard (CBSE then NCERT) for the same grade+subject
+//      (per product rule "IB follows the NCERT/CBSE base standard")
+//   3. relax subject, then curriculum, as a last resort (still same grade)
+// Returns { chunks, source } — chunks empty only when nothing is ingested at all.
+async function searchGrounding({ vector, curriculum, grade, subject, topic, limit = 6 }) {
+  const rawCurr = String(curriculum || '').trim();
+  const norm = /ncert/i.test(rawCurr) ? 'NCERT'
+    : /ib[\s_]*pyp/i.test(rawCurr) ? 'IB PYP'
+    : /cbse/i.test(rawCurr) ? 'CBSE'
+    : rawCurr;
+  const gradeNum = (String(grade || '').match(/(\d+)/) || [])[1];
+
+  const primary = resolveCollection(norm, grade);
+  const attempts = [
+    { collection: primary.collection, curriculum: primary.qdrantCurriculum, grade: primary.qdrantGrade, subject, topic },
+  ];
+  if (norm === 'IB PYP') {
+    // IB PYP → CBSE base (same collection), then NCERT base.
+    attempts.push({ collection: IB_COLLECTION, curriculum: 'CBSE', grade: gradeNum ? `Grade ${gradeNum}` : grade, subject });
+    if (gradeNum) attempts.push({ collection: COLLECTION, curriculum: 'NCERT', grade: parseInt(gradeNum, 10), subject });
+  }
+  // Relax subject, then curriculum (keep grade), on the primary collection.
+  attempts.push({ collection: primary.collection, curriculum: primary.qdrantCurriculum, grade: primary.qdrantGrade });
+  attempts.push({ collection: primary.collection, grade: primary.qdrantGrade });
+
+  for (const a of attempts) {
+    try {
+      const res = await searchContent({ vector, limit, ...a });
+      if (res && res.length > 0) return { chunks: res, source: a };
+    } catch { /* try next */ }
+  }
+  return { chunks: [], source: null };
+}
+
 async function upsertContent(points) {
   await client.upsert(COLLECTION, { points, wait: true });
 }
@@ -78,4 +117,4 @@ async function getCollectionInfo() {
   return client.getCollection(COLLECTION);
 }
 
-module.exports = { initCollection, searchContent, upsertContent, getCollectionInfo, client, COLLECTION, IB_COLLECTION, resolveCollection };
+module.exports = { initCollection, searchContent, searchGrounding, upsertContent, getCollectionInfo, client, COLLECTION, IB_COLLECTION, resolveCollection };
