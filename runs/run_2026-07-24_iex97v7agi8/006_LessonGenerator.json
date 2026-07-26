@@ -1,0 +1,344 @@
+{
+  "package": {
+    "package_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+    "package_type": "LessonContent",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T13:30:00Z",
+    "produced_by": {
+      "agent": "lesson-generator-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "parent_package_id": "66666666-7777-8888-9999-000000000000"
+    }
+  },
+  "payload": {
+    "lesson_id": "lesson-shapes-space-grade1",
+    "stage_content": [
+      {
+        "stage_id": "screen_welcome"
+      },
+      {
+        "stage_id": "screen_goal"
+      },
+      {
+        "stage_id": "screen_circle"
+      },
+      {
+        "stage_id": "screen_triangle"
+      },
+      {
+        "stage_id": "screen_rectangle"
+      },
+      {
+        "stage_id": "screen_square"
+      },
+      {
+        "stage_id": "screen_space"
+      },
+      {
+        "stage_id": "screen_long_round"
+      },
+      {
+        "stage_id": "screen_reflection"
+      },
+      {
+        "stage_id": "screen_summary"
+      },
+      {
+        "stage_id": "screen_quiz"
+      }
+    ],
+    "populated_components": [
+      {
+        "component_id": "img_teacher",
+        "slots": {
+          "alt": "Friendly teacher character waving."
+        }
+      },
+      {
+        "component_id": "btn_start",
+        "slots": {
+          "label": "Start"
+        }
+      },
+      {
+        "component_id": "txt_goal",
+        "slots": {
+          "content": "Our Goal: Name and find circles, triangles, rectangles, and squares."
+        }
+      },
+      {
+        "component_id": "img_circle_scene",
+        "slots": {
+          "alt": "A scene showing various circular objects like sun, moon, bicycle wheels, and a ball."
+        }
+      },
+      {
+        "component_id": "img_triangle_scene",
+        "slots": {
+          "alt": "A scene showing triangular objects such as a roof slice, a pizza slice, and a warning sign."
+        }
+      },
+      {
+        "component_id": "img_rectangle_scene",
+        "slots": {
+          "alt": "A scene showing rectangular objects like a bookshelf, a door, and a picture frame."
+        }
+      },
+      {
+        "component_id": "img_square_scene",
+        "slots": {
+          "alt": "A scene showing square objects such as a window pane, a tile, and a square picture frame."
+        }
+      },
+      {
+        "component_id": "img_empty_box",
+        "slots": {
+          "alt": "An empty box representing space where shapes can be placed."
+        }
+      },
+      {
+        "component_id": "drag_shape1",
+        "slots": {
+          "alt": "A blue circle shape ready to be dragged."
+        }
+      },
+      {
+        "component_id": "drag_shape2",
+        "slots": {
+          "alt": "A red triangle shape ready to be dragged."
+        }
+      },
+      {
+        "component_id": "drag_shape3",
+        "slots": {
+          "alt": "A green square shape ready to be dragged."
+        }
+      },
+      {
+        "component_id": "drop_area_box",
+        "slots": {}
+      },
+      {
+        "component_id": "img_object_to_judge",
+        "slots": {
+          "alt": "An object (like a pencil) to judge whether it is long or round."
+        }
+      },
+      {
+        "component_id": "btn_long",
+        "slots": {
+          "label": "Long"
+        }
+      },
+      {
+        "component_id": "btn_round",
+        "slots": {
+          "label": "Round"
+        }
+      },
+      {
+        "component_id": "img_circle",
+        "slots": {
+          "alt": "Icon of a circle."
+        }
+      },
+      {
+        "component_id": "img_triangle",
+        "slots": {
+          "alt": "Icon of a triangle."
+        }
+      },
+      {
+        "component_id": "img_rectangle",
+        "slots": {
+          "alt": "Icon of a rectangle."
+        }
+      },
+      {
+        "component_id": "img_square",
+        "slots": {
+          "alt": "Icon of a square."
+        }
+      },
+      {
+        "component_id": "btn_tell_me",
+        "slots": {
+          "label": "Tell Me"
+        }
+      },
+      {
+        "component_id": "img_all_shapes",
+        "slots": {
+          "alt": "Icons of circle, triangle, rectangle, and square together."
+        }
+      },
+      {
+        "component_id": "img_space",
+        "slots": {
+          "alt": "Icon representing space as an empty box."
+        }
+      },
+      {
+        "component_id": "img_long_round",
+        "slots": {
+          "alt": "Icon showing a long object and a round object."
+        }
+      },
+      {
+        "component_id": "img_question1_options",
+        "slots": {
+          "alt": "Quiz question with multiple choice options about shapes."
+        }
+      }
+    ],
+    "source_references": [
+      {
+        "content_id": "Shapes and Space",
+        "chunk_id": "0"
+      },
+      {
+        "content_id": "Numbers from One to Nine",
+        "chunk_id": "3"
+      },
+      {
+        "content_id": "Shapes and Space",
+        "chunk_id": "1"
+      },
+      {
+        "content_id": "aejm102",
+        "chunk_id": "0"
+      }
+    ],
+    "validation_summary": {},
+    "handoff": {
+      "illustration_agent": {
+        "lesson_content_package_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+      },
+      "audio_agent": {
+        "lesson_content_package_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+      },
+      "quiz_agent": {
+        "lesson_content_package_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+      }
+    }
+  },
+  "lesson": {
+    "instructionalType": "Concept",
+    "intro": "Welcome to the world of shapes! Today we will learn about circles, triangles, rectangles, and squares, and explore how they fit in space.",
+    "keyLearnings": [
+      "You will identify circles, triangles, rectangles, and squares in everyday objects.",
+      "You will describe the properties of each shape (corners, sides).",
+      "You will understand what space is and how shapes can be placed in it.",
+      "You will play a game to decide if objects are long or round."
+    ],
+    "body": [
+      "A circle is a round shape with no corners or edges. You can see circles in the sun, the moon, and the wheels of a bicycle.",
+      "A triangle has three sides and three corners. Look for triangles in roofs, pizza slices, and warning signs.",
+      "A rectangle has four sides and four corners. A square also has four sides and four corners, and you can see it in picture frames.",
+      "Space is the area around us where we can place shapes, like an empty box. In our long‑and‑round game, we decide if an object is long (like a pencil) or round (like a ball)."
+    ],
+    "workedExamples": [
+      {
+        "problem": "How many sides does a triangle have?",
+        "steps": [
+          "Look at the triangle and count each side.",
+          "Count: 1, 2, 3."
+        ],
+        "answer": "3"
+      },
+      {
+        "problem": "How many corners does a rectangle have?",
+        "steps": [
+          "Look at the rectangle and count each corner where two sides meet.",
+          "Count: 1, 2, 3, 4."
+        ],
+        "answer": "4"
+      }
+    ],
+    "vocab": [
+      {
+        "word": "Circle",
+        "definition": "a round shape with no corners or edges."
+      },
+      {
+        "word": "Triangle",
+        "definition": "a shape with three sides and three corners."
+      },
+      {
+        "word": "Rectangle",
+        "definition": "a shape with four sides and four corners."
+      },
+      {
+        "word": "Square",
+        "definition": "a shape with four sides and four corners that you can see in picture frames."
+      },
+      {
+        "word": "Space",
+        "definition": "the area around us where we can place shapes, like an empty box."
+      },
+      {
+        "word": "Long",
+        "definition": "something that has a lot of length, like a pencil or a stick."
+      },
+      {
+        "word": "Round",
+        "definition": "something that is shaped like a circle or a ball."
+      }
+    ],
+    "thinkAndReflect": [
+      "Can you find a circle in the classroom?",
+      "What makes a triangle different from a rectangle?",
+      "How would you decide if a book is long or round?"
+    ],
+    "keyTakeaways": [
+      "Circles are round with no corners.",
+      "Triangles have three sides.",
+      "Rectangles have four sides.",
+      "Space is the empty area where shapes go."
+    ],
+    "quiz": [
+      {
+        "type": "mcq",
+        "question": "Which shape has no corners?",
+        "options": [
+          "Circle",
+          "Triangle",
+          "Rectangle",
+          "Square"
+        ],
+        "correct": 0,
+        "hint": "Look for a shape that is completely round.",
+        "explanation": "Evidence says a circle has no corners or edges."
+      },
+      {
+        "type": "mcq",
+        "question": "How many sides does a rectangle have?",
+        "options": [
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "correct": 2,
+        "hint": "Think of a door or a bookshelf.",
+        "explanation": "Evidence states a rectangle has four sides."
+      },
+      {
+        "type": "mcq",
+        "question": "In the long‑and‑round game, which of these would you call “round”?",
+        "options": [
+          "A pencil",
+          "A ball",
+          "A book",
+          "A ruler"
+        ],
+        "correct": 1,
+        "hint": "Think of something shaped like a circle.",
+        "explanation": "Evidence describes round objects like a tumbler or a ball."
+      }
+    ]
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "package": {
+    "package_id": "2f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842e",
+    "package_type": "IllustrationPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:15:00.239Z",
+    "produced_by": {
+      "agent": "illustration-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "x1u1l4cuzv",
+      "parent_package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842d"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "illustrations": [
+      {
+        "artifact_id": "subtraction_with_borrowing_1",
+        "stage_id": "1",
+        "component_id": "1",
+        "concept_id": "introduction_to_subtraction_with_borrowing",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A cartoon of a child borrowing apples from a neighbour to subtract 27 from 45.",
+        "consistency_tags": [
+          "character_child",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "grounded_evidence_1"
+        ]
+      },
+      {
+        "artifact_id": "subtraction_with_borrowing_2",
+        "stage_id": "2",
+        "component_id": "3",
+        "concept_id": "subtraction_with_borrowing_example",
+        "style_category": "diagram",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A diagram showing the steps to subtract 27 from 45 with borrowing.",
+        "consistency_tags": [
+          "character_child",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "grounded_evidence_3"
+        ]
+      },
+      {
+        "artifact_id": "subtraction_with_borrowing_3",
+        "stage_id": "3",
+        "component_id": "5",
+        "concept_id": "subtraction_with_borrowing_practice",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "An infographic showing different examples of subtraction with borrowing.",
+        "consistency_tags": [
+          "character_child",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "grounded_evidence_1"
+        ]
+      }
+    ],
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}

@@ -217,6 +217,15 @@ function SubjectCard({
     return completedSet.has(name) || [...completedSet].some(c => c.includes(name));
   }).length;
   const pct     = sub.topicCount > 0 ? Math.round((done / sub.topicCount) * 100) : 0;
+  // Real chapter count (CBSE) from the server, else units derived from topics
+  // (IB PYP). Never surface an overwhelming flat topic tally (founder feedback).
+  const chapterCount = sub.chapterCount ?? 0;
+  const unitCount    = sub.unitCount ?? new Set(topics.map((t: any) => (typeof t === 'string' ? '' : t.unit)).filter(Boolean)).size;
+  const countLabel =
+    chapterCount > 0 ? `${chapterCount} ${chapterCount === 1 ? 'chapter' : 'chapters'}`
+    : unitCount > 0  ? `${unitCount} ${unitCount === 1 ? 'unit' : 'units'}`
+    : sub.topicCount > 0 && sub.topicCount <= 40 ? `${sub.topicCount} topics`
+    : '';
 
   return (
     <View style={[cardStyles.wrapper, width ? { width } : undefined, isExpanded && { borderWidth: 2, borderColor: accent }]}>
@@ -234,7 +243,7 @@ function SubjectCard({
           </View>
           <View style={{ flex: 1 }}>
             <Text style={cardStyles.subjectName}>{sub.subject}</Text>
-            <Text style={cardStyles.subjectMeta}>{sub.topicCount} topics · {done} completed</Text>
+            <Text style={cardStyles.subjectMeta}>{countLabel ? `${countLabel} · ` : ''}{done} completed</Text>
           </View>
           <View style={cardStyles.rightCol}>
             <View style={[cardStyles.pctPill, { borderColor: accent + '88', backgroundColor: '#ffffff50' }]}>
@@ -274,6 +283,13 @@ function SubjectDetailPanel({
     return completedSet.has(name) || [...completedSet].some(c => c.includes(name));
   }).length;
   const pct = sub.topicCount > 0 ? Math.round((done / sub.topicCount) * 100) : 0;
+  const chapterCount = sub.chapterCount ?? 0;
+  const unitCount    = sub.unitCount ?? new Set(topics.map((t: any) => (typeof t === 'string' ? '' : t.unit)).filter(Boolean)).size;
+  const countLabel =
+    chapterCount > 0 ? `${chapterCount} ${chapterCount === 1 ? 'chapter' : 'chapters'}`
+    : unitCount > 0  ? `${unitCount} ${unitCount === 1 ? 'unit' : 'units'}`
+    : sub.topicCount > 0 && sub.topicCount <= 40 ? `${sub.topicCount} topics`
+    : '';
 
   return (
     <View style={[panelStyles.card, { backgroundColor: colors.cardDark, borderColor: accent + '55' }]}>
@@ -283,7 +299,7 @@ function SubjectDetailPanel({
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[panelStyles.title, { color: colors.textMain }]}>{sub.subject}</Text>
-          <Text style={[panelStyles.meta, { color: colors.textMuted }]}>{sub.topicCount} topics · {done} completed</Text>
+          <Text style={[panelStyles.meta, { color: colors.textMuted }]}>{countLabel ? `${countLabel} · ` : ''}{done} completed</Text>
         </View>
         <View style={[cardStyles.pctPill, { borderColor: accent + '88', backgroundColor: accent + '14', marginRight: 8 }]}>
           <Text style={[cardStyles.pctText, { color: accent }]}>{pct}%</Text>

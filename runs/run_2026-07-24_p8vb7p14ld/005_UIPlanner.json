@@ -1,0 +1,44 @@
+{
+  "package": {
+    "package_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "package_type": "UIPlanPackage",
+    "schema_version": "1.0",
+    "created_at": "2023-02-20T14:30:00Z",
+    "produced_by": {
+      "agent": "ui-planner-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "12345678-9012-3456-7890-123456789012",
+      "parent_package_id": "f2b3c4d5-e6f7-g8h9-i0j1"
+    }
+  },
+  "payload": {
+    "lesson_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "device_profiles": {
+      "desktop": {
+        "layout": "two-pane"
+      },
+      "tablet": {
+        "layout": "adaptive-two-pane"
+      },
+      "mobile": {
+        "layout": "single-column"
+      }
+    },
+    "theme": "light",
+    "accessibility_settings": [],
+    "rendering_constraints": {
+      "max_interactions": 2,
+      "allow_horizontal_scroll": false,
+      "animation_level": "medium"
+    },
+    "screens": [],
+    "handoff": {
+      "lesson_generator_agent": {
+        "lesson_experience_package_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+        "ui_plan_package_id": "f2b3c4d5-e6f7-g8h9-i0j1"
+      }
+    }
+  }
+}

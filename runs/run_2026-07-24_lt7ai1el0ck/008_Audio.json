@@ -1,0 +1,140 @@
+{
+  "package": {
+    "package_id": "audio-pkg-1234-5678-90ab-cdef",
+    "package_type": "AudioPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T15:45:00.000Z",
+    "produced_by": {
+      "agent": "audio-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "p1p2p3p4-p5p6-p7p8-p9p0-q1r2s3t4u5v6",
+      "parent_package_id": "ui-plan-pkg-2222-3333-4444-5555"
+    }
+  },
+  "payload": {
+    "lesson_id": "les-abcdef123456",
+    "audio_strategy": "Mathematics",
+    "narration_segments": [
+      {
+        "artifact_id": "artifact-welcome",
+        "stage_id": "welcome",
+        "component_id": "teacher_intro",
+        "ssml": "<s>Hello class! Today we will learn how to add small numbers using objects and pictures.</s>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "artifact-learning_goal",
+        "stage_id": "learning_goal",
+        "component_id": "learning_goal_text",
+        "ssml": "<s>You will learn to add two single-digit numbers using objects and pictures.</s>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "artifact-visual_intro",
+        "stage_id": "visual_intro",
+        "component_id": "step_by_step_text",
+        "ssml": "<s>Step 1: Look at the first group and count how many. Step 2: Look at the second group and count how many. Step 3: Count on from the first number by the second number to find the total.</s>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "artifact-concrete_example",
+        "stage_id": "concrete_example",
+        "component_id": "step_by_step_text",
+        "ssml": "<s>Step 1: Look at the first group and count how many. Step 2: Look at the second group and count how many. Step 3: Count on from the first number by the second number to find the total.</s>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "artifact-guided_example",
+        "stage_id": "guided_example",
+        "component_id": "step_by_step_text",
+        "ssml": "<s>Step 1: Look at the first group and count how many. Step 2: Look at the second group and count how many. Step 3: Count on from the first number by the second number to find the total.</s>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "artifact-guided_practice",
+        "stage_id": "guided_practice",
+        "component_id": "step_by_step_text",
+        "ssml": "<s>Step 1: Look at the first group and count how many. Step 2: Look at the second group and count how many. Step 3: Count on from the first number by the second number to find the total.</s>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "artifact-hint",
+        "stage_id": "hint",
+        "component_id": "hint_text",
+        "ssml": "<s>Remember, you can start with the bigger number and count on the smaller one to add quickly.</s>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "artifact-common_mistakes",
+        "stage_id": "common_mistakes",
+        "component_id": "next_lesson_info",
+        "ssml": "<s>Next lesson: Subtraction of Small Numbers.</s>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "artifact-challenge",
+        "stage_id": "challenge",
+        "component_id": "write_sentence",
+        "ssml": "<s>Write an addition sentence like 3 + 2 = 5.</s>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "artifact-summary",
+        "stage_id": "summary",
+        "component_id": "summary_text",
+        "ssml": "<s>We learned to add small numbers by counting objects and using pictures.</s>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "artifact-reflection",
+        "stage_id": "reflection",
+        "component_id": "next_lesson_info",
+        "ssml": "<s>Next lesson: Subtraction of Small Numbers.</s>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "artifact-transition",
+        "stage_id": "transition",
+        "component_id": "next_lesson_info",
+        "ssml": "<s>Next lesson: Subtraction of Small Numbers.</s>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      }
+    ],
+    "playback_profile": {
+      "voice": "en-US-Wavenet-D",
+      "base_speed": 1,
+      "pause_duration_ms": 500
+    },
+    "accessibility_metadata": {},
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}

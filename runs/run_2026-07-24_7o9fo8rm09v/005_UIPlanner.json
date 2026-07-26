@@ -1,0 +1,466 @@
+{
+  "package": {
+    "package_id": "987f6543-b21a-0987-6543-210987654321",
+    "package_type": "UIPlanPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T15:05:00.000Z",
+    "produced_by": {
+      "agent": "ui-planner-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+      "parent_package_id": "123e4567-e89b-12d3-a456-426614174000"
+    }
+  },
+  "payload": {
+    "lesson_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba",
+    "device_profiles": {},
+    "theme": "light",
+    "accessibility_settings": [],
+    "rendering_constraints": {
+      "max_interactions": 2,
+      "allow_horizontal_scroll": false,
+      "animation_level": "medium"
+    },
+    "screens": [
+      {
+        "screen_id": "welcome",
+        "stage_id": "welcome",
+        "layout": "default",
+        "components": [
+          {
+            "component_id": "wel_ill1",
+            "component_type": "illustration",
+            "stage_id": "welcome",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "wel_txt1",
+            "component_type": "text",
+            "stage_id": "welcome",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "wel_aud1",
+            "component_type": "audio_narration",
+            "stage_id": "welcome",
+            "priority": "high",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "",
+          "next_screen": "learning_goal",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "learning_goal",
+        "stage_id": "learning_goal",
+        "layout": "default",
+        "components": [
+          {
+            "component_id": "lg_txt1",
+            "component_type": "text",
+            "stage_id": "learning_goal",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "lg_ill1",
+            "component_type": "illustration",
+            "stage_id": "learning_goal",
+            "priority": "high",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "welcome",
+          "next_screen": "visual_introduction",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "visual_introduction",
+        "stage_id": "visual_introduction",
+        "layout": "default",
+        "components": [
+          {
+            "component_id": "vi_ill1",
+            "component_type": "illustration",
+            "stage_id": "visual_introduction",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "vi_txt1",
+            "component_type": "text",
+            "stage_id": "visual_introduction",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "vi_aud1",
+            "component_type": "audio_narration",
+            "stage_id": "visual_introduction",
+            "priority": "high",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "learning_goal",
+          "next_screen": "concrete_example",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "concrete_example",
+        "stage_id": "concrete_example",
+        "layout": "default",
+        "components": [
+          {
+            "component_id": "ce_ill1",
+            "component_type": "illustration",
+            "stage_id": "concrete_example",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "ce_txt1",
+            "component_type": "text",
+            "stage_id": "concrete_example",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "ce_aud1",
+            "component_type": "audio_narration",
+            "stage_id": "concrete_example",
+            "priority": "high",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "visual_introduction",
+          "next_screen": "guided_example",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "guided_example",
+        "stage_id": "guided_example",
+        "layout": "default",
+        "components": [
+          {
+            "component_id": "ge_ill1",
+            "component_type": "illustration",
+            "stage_id": "guided_example",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "ge_txt1",
+            "component_type": "text",
+            "stage_id": "guided_example",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "ge_aud1",
+            "component_type": "audio_narration",
+            "stage_id": "guided_example",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "ge_hint1",
+            "component_type": "hint_button",
+            "stage_id": "guided_example",
+            "priority": "medium",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "concrete_example",
+          "next_screen": "guided_practice",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "guided_practice",
+        "stage_id": "guided_practice",
+        "layout": "default",
+        "components": [
+          {
+            "component_id": "gp_ill1",
+            "component_type": "illustration",
+            "stage_id": "guided_practice",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "gp_txt1",
+            "component_type": "text",
+            "stage_id": "guided_practice",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "gp_in1",
+            "component_type": "input_field",
+            "stage_id": "guided_practice",
+            "priority": "medium",
+            "props": {}
+          },
+          {
+            "component_id": "gp_fb1",
+            "component_type": "feedback_message",
+            "stage_id": "guided_practice",
+            "priority": "medium",
+            "props": {}
+          },
+          {
+            "component_id": "gp_hint1",
+            "component_type": "hint_button",
+            "stage_id": "guided_practice",
+            "priority": "medium",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "guided_example",
+          "next_screen": "independent_practice",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "independent_practice",
+        "stage_id": "independent_practice",
+        "layout": "default",
+        "components": [
+          {
+            "component_id": "ip_ill1",
+            "component_type": "illustration",
+            "stage_id": "independent_practice",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "ip_txt1",
+            "component_type": "text",
+            "stage_id": "independent_practice",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "ip_in1",
+            "component_type": "input_field",
+            "stage_id": "independent_practice",
+            "priority": "medium",
+            "props": {}
+          },
+          {
+            "component_id": "ip_fb1",
+            "component_type": "feedback_message",
+            "stage_id": "independent_practice",
+            "priority": "medium",
+            "props": {}
+          },
+          {
+            "component_id": "ip_hint1",
+            "component_type": "hint_button",
+            "stage_id": "independent_practice",
+            "priority": "medium",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "guided_practice",
+          "next_screen": "hint_screen",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "hint_screen",
+        "stage_id": "hint_screen",
+        "layout": "default",
+        "components": [
+          {
+            "component_id": "hs_txt1",
+            "component_type": "text",
+            "stage_id": "hint_screen",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "hs_ill1",
+            "component_type": "illustration",
+            "stage_id": "hint_screen",
+            "priority": "high",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "independent_practice",
+          "next_screen": "common_mistakes",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "common_mistakes",
+        "stage_id": "common_mistakes",
+        "layout": "default",
+        "components": [
+          {
+            "component_id": "cm_ill1",
+            "component_type": "illustration",
+            "stage_id": "common_mistakes",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "cm_txt1",
+            "component_type": "text",
+            "stage_id": "common_mistakes",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "cm_aud1",
+            "component_type": "audio_narration",
+            "stage_id": "common_mistakes",
+            "priority": "high",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "hint_screen",
+          "next_screen": "challenge",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "challenge",
+        "stage_id": "challenge",
+        "layout": "default",
+        "components": [
+          {
+            "component_id": "ch_ill1",
+            "component_type": "illustration",
+            "stage_id": "challenge",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "ch_txt1",
+            "component_type": "text",
+            "stage_id": "challenge",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "ch_in1",
+            "component_type": "input_field",
+            "stage_id": "challenge",
+            "priority": "medium",
+            "props": {}
+          },
+          {
+            "component_id": "ch_fb1",
+            "component_type": "feedback_message",
+            "stage_id": "challenge",
+            "priority": "medium",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "common_mistakes",
+          "next_screen": "summary",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "summary",
+        "stage_id": "summary",
+        "layout": "default",
+        "components": [
+          {
+            "component_id": "su_ill1",
+            "component_type": "illustration",
+            "stage_id": "summary",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "su_txt1",
+            "component_type": "text",
+            "stage_id": "summary",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "su_aud1",
+            "component_type": "audio_narration",
+            "stage_id": "summary",
+            "priority": "high",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "challenge",
+          "next_screen": "quiz",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "quiz",
+        "stage_id": "quiz",
+        "layout": "default",
+        "components": [
+          {
+            "component_id": "qz_txt1",
+            "component_type": "text",
+            "stage_id": "quiz",
+            "priority": "high",
+            "props": {}
+          },
+          {
+            "component_id": "qz_in1",
+            "component_type": "input_field",
+            "stage_id": "quiz",
+            "priority": "medium",
+            "props": {}
+          },
+          {
+            "component_id": "qz_fb1",
+            "component_type": "feedback_message",
+            "stage_id": "quiz",
+            "priority": "medium",
+            "props": {}
+          },
+          {
+            "component_id": "qz_ill1",
+            "component_type": "illustration",
+            "stage_id": "quiz",
+            "priority": "high",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "summary",
+          "next_screen": "",
+          "exit_behavior": "exit_lesson"
+        }
+      }
+    ],
+    "handoff": {
+      "lesson_generator_agent": {
+        "lesson_experience_package_id": "123e4567-e89b-12d3-a456-426614174000",
+        "ui_plan_package_id": "987f6543-b21a-0987-6543-210987654321"
+      }
+    }
+  }
+}

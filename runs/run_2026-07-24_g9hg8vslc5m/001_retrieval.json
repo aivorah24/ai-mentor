@@ -1,0 +1,102 @@
+{
+  "package": {
+    "package_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+    "package_type": "RetrievalPackage",
+    "schema_version": "1.0",
+    "created_at": "2024-04-15T14:30:00Z",
+    "produced_by": {
+      "agent": "retrieval-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "13a3a8c3-8e9f-4211-93e2-631278c3f421",
+      "parent_package_id": "2f4a6c4d-6e7f-4832-9c3a-741278c3f421"
+    }
+  },
+  "payload": {
+    "request": {
+      "grade": 2,
+      "subject": "English",
+      "unit": 1,
+      "lesson": "My Bicycle"
+    },
+    "retrieval_summary": {
+      "confidence": 0.92,
+      "coverage": 0.85,
+      "semantic_similarity": 0.78,
+      "metadata_match": 0.95,
+      "expected_chunks": 5,
+      "chunks_retrieved": 4,
+      "missing_chunks": [
+        "chunk_3"
+      ],
+      "duplicates_removed": 1
+    },
+    "retrieved_chunks": [
+      {
+        "chunk_id": "chunk_1",
+        "content": "My bicycle is red and shiny.",
+        "source_document": "English Grade 2 Unit 1",
+        "page_number": 12
+      },
+      {
+        "chunk_id": "chunk_2",
+        "content": "I like to ride it in the park.",
+        "source_document": "English Grade 2 Unit 1",
+        "page_number": 13
+      },
+      {
+        "chunk_id": "chunk_4",
+        "content": "The park is near my house.",
+        "source_document": "English Grade 2 Unit 1",
+        "page_number": 15
+      },
+      {
+        "chunk_id": "chunk_5",
+        "content": "I ride my bicycle every day.",
+        "source_document": "English Grade 2 Unit 1",
+        "page_number": 16
+      }
+    ],
+    "source_metadata": [
+      {
+        "curriculum": "NCERT",
+        "grade": 2,
+        "subject": "English",
+        "unit": 1,
+        "lesson": "My Bicycle"
+      }
+    ],
+    "warnings": [
+      "Missing chunk 3 may affect lesson continuity."
+    ],
+    "handoff": {
+      "retrieval_validation_agent": {
+        "ordered_chunks": [
+          "chunk_1",
+          "chunk_2",
+          "chunk_4",
+          "chunk_5"
+        ],
+        "retrieval_summary": {
+          "confidence": 0.92,
+          "coverage": 0.85,
+          "semantic_similarity": 0.78,
+          "metadata_match": 0.95
+        },
+        "source_metadata": [
+          {
+            "curriculum": "NCERT",
+            "grade": 2,
+            "subject": "English",
+            "unit": 1,
+            "lesson": "My Bicycle"
+          }
+        ],
+        "warnings": [
+          "Missing chunk 3 may affect lesson continuity."
+        ]
+      }
+    }
+  }
+}

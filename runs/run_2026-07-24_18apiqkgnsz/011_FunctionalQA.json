@@ -1,0 +1,49 @@
+{
+  "package": {
+    "package_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
+    "package_type": "QAReportPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T12:00:00.000Z",
+    "produced_by": {
+      "agent": "functional-qa-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "18apiqkgnsz",
+      "parent_package_id": "c3d4e5f6-7890-1234-5678-9abcdef01234"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-borrowing-grade2",
+    "qa_scores": {
+      "integrity": 0,
+      "rendering": 0,
+      "assets": 100,
+      "navigation": 0,
+      "accessibility": 0,
+      "performance": 0,
+      "overall_score": 17
+    },
+    "status": "FAIL",
+    "failed_checks": [
+      {
+        "issue_id": "issue1",
+        "category": "integrity",
+        "description": "Missing required packages: Retrieval Package, Validated Retrieval Package, Lesson Blueprint, Lesson Experience, UI Plan, Quiz Review Package. LessonContent package missing status field.",
+        "target_agent": "regeneration_agent",
+        "error_code": "QA001"
+      },
+      {
+        "issue_id": "issue2",
+        "category": "accessibility",
+        "description": "Accessibility metadata missing: contrast and screen reader order not found in AudioPackage accessibility_metadata.",
+        "target_agent": "regeneration_agent",
+        "error_code": "QA005"
+      }
+    ],
+    "handoff": {
+      "final_audit_agent": {},
+      "regeneration_agent": {}
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "package": {
+    "package_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "package_type": "LessonBlueprint",
+    "schema_version": "1.0",
+    "created_at": "2023-02-20T14:30:00Z",
+    "produced_by": {
+      "agent": "curriculum-understanding-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "12345678-9012-3456-7890-123456789012",
+      "parent_package_id": "f2b3c4d5-e6f7-g8h9-i0j1"
+    }
+  },
+  "payload": {
+    "lesson_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "curriculum": "NCERT",
+    "grade": null,
+    "subject": null,
+    "chapter": null,
+    "lesson": null,
+    "lesson_type": null,
+    "lesson_type_evidence": null,
+    "lesson_type_confidence": 0,
+    "review_flags": [
+      "LESSON_TYPE_UNCERTAIN"
+    ],
+    "concept_map": [],
+    "learning_objectives": [],
+    "learning_outcomes": [],
+    "bloom_level": null,
+    "prerequisites": [],
+    "misconceptions": [],
+    "suggested_instructional_sequence": [],
+    "vocabulary_difficulty": null,
+    "available_images": [],
+    "source_chunk_references": [],
+    "handoff": {
+      "learning_experience_designer": {
+        "lesson_blueprint": {}
+      }
+    }
+  }
+}

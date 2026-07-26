@@ -1,0 +1,125 @@
+{
+  "package": {
+    "package_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
+    "package_type": "LessonBlueprint",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T15:05:00.000Z",
+    "produced_by": {
+      "agent": "curriculum-understanding-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+      "parent_package_id": "e3b2c1d4-5f6a-7b8c-9d0e-1f2a3b4c5d6e"
+    }
+  },
+  "payload": {
+    "lesson_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba",
+    "curriculum": "NCERT",
+    "grade": 2,
+    "subject": "Mathematics",
+    "chapter": "Subtraction with Borrowing",
+    "lesson": "Subtraction with Borrowing",
+    "lesson_type": "Mathematics",
+    "lesson_type_evidence": "We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees.",
+    "lesson_type_confidence": 0.96,
+    "review_flags": [],
+    "concept_map": [
+      {
+        "concept_id": "c1",
+        "concept": "Place Value (Tens and Ones)",
+        "depends_on": [],
+        "difficulty": "Easy"
+      },
+      {
+        "concept_id": "c2",
+        "concept": "Subtraction without Borrowing",
+        "depends_on": [
+          "c1"
+        ],
+        "difficulty": "Easy"
+      },
+      {
+        "concept_id": "c3",
+        "concept": "Subtraction with Borrowing (Regrouping)",
+        "depends_on": [
+          "c2"
+        ],
+        "difficulty": "Medium"
+      },
+      {
+        "concept_id": "c4",
+        "concept": "Mental Math Strategies (Doubles, Near Doubles)",
+        "depends_on": [
+          "c1"
+        ],
+        "difficulty": "Medium"
+      },
+      {
+        "concept_id": "c5",
+        "concept": "Subtracting Zero and Same Number",
+        "depends_on": [
+          "c2"
+        ],
+        "difficulty": "Easy"
+      },
+      {
+        "concept_id": "c6",
+        "concept": "Making Coin Combinations for a Given Amount",
+        "depends_on": [
+          "c1",
+          "c3"
+        ],
+        "difficulty": "Medium"
+      }
+    ],
+    "learning_objectives": [
+      "Students will be able to subtract two-digit numbers using borrowing/regrouping.",
+      "Students will apply mental math strategies (doubles, near doubles) for quick addition and subtraction.",
+      "Students will understand the concept of subtracting zero and subtracting a number from itself.",
+      "Students will be able to make different combinations of coins to make a given amount."
+    ],
+    "learning_outcomes": [
+      "Students can solve subtraction problems involving borrowing with accuracy.",
+      "Students use doubles and near doubles to compute sums and differences mentally.",
+      "Students explain why subtracting zero leaves a number unchanged and why subtracting a number from itself yields zero.",
+      "Students represent a given amount using various coin combinations and verify the total."
+    ],
+    "bloom_level": "Apply",
+    "prerequisites": [
+      "Understanding of place value (tens and ones)",
+      "Ability to subtract single-digit numbers",
+      "Familiarity with numbers up to 100"
+    ],
+    "misconceptions": [
+      "Students may forget to borrow from the tens place when needed.",
+      "Students may borrow from the wrong place value.",
+      "Students may subtract the smaller digit from the larger digit in each column without considering the need to borrow.",
+      "Students may think borrowing changes the value of the number incorrectly."
+    ],
+    "suggested_instructional_sequence": [
+      "Review place value and simple subtraction without borrowing.",
+      "Introduce borrowing concept using concrete manipulatives (e.g., base-ten blocks).",
+      "Demonstrate borrowing with two-digit numbers through guided examples.",
+      "Provide practice problems for subtraction with borrowing.",
+      "Introduce mental math strategies: doubles and near doubles.",
+      "Conduct mental math practice activities.",
+      "Explore subtracting zero and subtracting a number from itself with real-life examples.",
+      "Apply learning to money problems: making different coin combinations for a given amount.",
+      "Review and assess understanding through varied exercises."
+    ],
+    "vocabulary_difficulty": "Medium",
+    "available_images": [],
+    "source_chunk_references": [
+      "Subtraction with Borrowing",
+      "Mental Math",
+      "bejm106",
+      "bejm110"
+    ],
+    "handoff": {
+      "learning_experience_designer": {
+        "lesson_blueprint": {}
+      }
+    }
+  }
+}

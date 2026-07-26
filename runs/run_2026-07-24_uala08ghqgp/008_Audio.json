@@ -1,0 +1,119 @@
+{
+  "package": {
+    "package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f",
+    "package_type": "AudioPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:12:14.067Z",
+    "produced_by": {
+      "agent": "audio-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "uala08ghqgp",
+      "parent_package_id": "765847cf-9558-4ad6-a232-32c5c1da5074"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "audio_strategy": "Concept",
+    "narration_segments": [
+      {
+        "artifact_id": "segment-1",
+        "stage_id": "step-1",
+        "component_id": "component-1",
+        "ssml": "<speak><prosody rate='medium'><break time='0.5s'/></prosody>Imagine you have 72 rupees in your piggy bank and you want to subtract 47 rupees from it. But, you don't have enough rupees to subtract 47 from 72. What can you do?</speak>",
+        "timing_map": {
+          "0s": "Imagine you have 72 rupees in your piggy bank and you want to subtract 47 rupees from it.",
+          "2.5s": "But, you don't have enough rupees to subtract 47 from 72.",
+          "4.5s": "What can you do?"
+        },
+        "highlight_map": {
+          "0s": "72 rupees",
+          "1.5s": "47 rupees"
+        },
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "segment-2",
+        "stage_id": "step-2",
+        "component_id": "component-2",
+        "ssml": "<speak><prosody rate='medium'><break time='0.5s'/></prosody>When we subtract a bigger number from a smaller number, we need to borrow some quantity from our neighbour. Let's learn how to do it by regrouping the numbers correctly.</speak>",
+        "timing_map": {
+          "0s": "When we subtract a bigger number from a smaller number,",
+          "2.5s": "we need to borrow some quantity from our neighbour.",
+          "4.5s": "Let's learn how to do it by regrouping the numbers correctly."
+        },
+        "highlight_map": {
+          "0s": "bigger number",
+          "1.5s": "smaller number"
+        },
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "segment-3",
+        "stage_id": "step-3",
+        "component_id": "component-3",
+        "ssml": "<speak><prosody rate='medium'><break time='0.5s'/></prosody>Let's practice subtracting bigger numbers from smaller numbers using borrowing. For example, if we have 45 apples and we give 27 apples to our friend, we need to borrow some apples from our neighbour to subtract 27 from 45.</speak>",
+        "timing_map": {
+          "0s": "Let's practice subtracting bigger numbers from smaller numbers using borrowing.",
+          "3.5s": "For example, if we have 45 apples and we give 27 apples to our friend,",
+          "6.5s": "we need to borrow some apples from our neighbour to subtract 27 from 45."
+        },
+        "highlight_map": {
+          "0s": "bigger numbers",
+          "1.5s": "smaller numbers",
+          "3s": "45 apples",
+          "4.5s": "27 apples"
+        },
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "segment-4",
+        "stage_id": "step-4",
+        "component_id": "component-4",
+        "ssml": "<speak><prosody rate='medium'><break time='0.5s'/></prosody>Now, let's apply subtraction with borrowing in real-life situations. For instance, if we have 62 rupees in the piggy bank and we want to subtract 40 rupees, we need to borrow some rupees from our neighbour to make it easier.</speak>",
+        "timing_map": {
+          "0s": "Now, let's apply subtraction with borrowing in real-life situations.",
+          "3.5s": "For instance, if we have 62 rupees in the piggy bank and we want to subtract 40 rupees,",
+          "6.5s": "we need to borrow some rupees from our neighbour to make it easier."
+        },
+        "highlight_map": {
+          "0s": "real-life situations",
+          "1.5s": "62 rupees",
+          "2.5s": "40 rupees"
+        },
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "segment-5",
+        "stage_id": "step-5",
+        "component_id": "component-5",
+        "ssml": "<speak><prosody rate='medium'><break time='0.5s'/></prosody>Now, you know how to subtract bigger numbers from smaller numbers using borrowing. Practice it regularly to become a master!</speak>",
+        "timing_map": {
+          "0s": "Now, you know how to subtract bigger numbers from smaller numbers using borrowing.",
+          "4.5s": "Practice it regularly to become a master!"
+        },
+        "highlight_map": {
+          "0s": "bigger numbers",
+          "1.5s": "smaller numbers"
+        },
+        "pronunciation_overrides": {}
+      }
+    ],
+    "playback_profile": {
+      "voice": "en-US-AriaNeural",
+      "base_speed": 1,
+      "pause_duration_ms": 500
+    },
+    "accessibility_metadata": {
+      "text_to_speech": {
+        "language": "en-US",
+        "voice": "en-US-AriaNeural"
+      }
+    },
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}

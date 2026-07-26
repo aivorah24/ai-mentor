@@ -1,0 +1,27 @@
+{
+  "package": {
+    "package_id": "e3c4a5b6-c7d8-e9f0-1234-5678fedcba9",
+    "package_type": "IllustrationPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T13:20:00.000Z",
+    "produced_by": {
+      "agent": "illustration-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "illustration-agent-123",
+      "parent_package_id": "e3c4a5b6-c7d8-e9f0-1234-5678fedcba9"
+    }
+  },
+  "payload": {
+    "lesson_id": "missing-stage-lesson",
+    "illustrations": [],
+    "validation_summary": {
+      "status": "FAIL",
+      "checks": {
+        "ILL001": "Missing stage_id or component_id mapping",
+        "ILL005": "Illustration resolves to neither a reused book image nor a generatable image"
+      }
+    }
+  }
+}

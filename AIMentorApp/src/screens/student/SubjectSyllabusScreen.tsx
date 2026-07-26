@@ -48,7 +48,15 @@ async function fetchPublishedSyllabus(curriculum: string, grade: string, subject
   const res = await fetch(`${SERVER_URL}/teacher/syllabus/current?grade=${encodeURIComponent(grade)}&subject=${encodeURIComponent(subject)}&curriculum=${encodeURIComponent(curriculum)}`);
   if (!res.ok) return [];
   const data = await res.json();
-  return (data.units || []).filter((u: DbUnit) => u.topics?.length > 0);
+  // Keep chapters that have no lessons yet. The server now returns the book's
+  // FULL chapter list (empty ones flagged `pending`), and dropping those here
+  // put Class 11 Maths straight from Ch 1 Sets to Ch 3 Trigonometric Functions —
+  // Ch 2 Relations and Functions, Ch 5 and Ch 11 simply vanished, which reads as
+  // a missing syllabus rather than "not written yet".
+  const units = (data.units || []);
+  // If the server sent nothing usable at all, treat the subject as unpublished
+  // so the caller still falls back to the curated syllabus.
+  return units.some((u: DbUnit) => u.topics?.length > 0) ? units : [];
 }
 
 export default function SubjectSyllabusScreen({ navigation, route }: any) {
@@ -64,25 +72,59 @@ export default function SubjectSyllabusScreen({ navigation, route }: any) {
   const [dbChapters, setDbChapters] = useState<SyllabusChapter[] | null>(null);
   const [loadingDb, setLoadingDb] = useState(true);
 
+  const [loadError, setLoadError] = useState(false);
+
   useEffect(() => {
     let cancelled = false;
     setLoadingDb(true);
+    setLoadError(false);
     fetchPublishedSyllabus(curriculum, grade, subject).then((units) => {
       if (cancelled) return;
       // Real teacher-published content takes priority over the pre-pipeline
       // curated fallback — this is what makes the upload -> student loop real.
       setDbChapters(units.length > 0 ? (units as unknown as SyllabusChapter[]) : null);
       setLoadingDb(false);
-    }).catch(() => { if (!cancelled) setLoadingDb(false); });
+    }).catch(() => {
+      // A 404, a null body or a network failure must not leave the student on a
+      // blank screen — fall through to the "being prepared" state below.
+      if (cancelled) return;
+      setLoadError(true);
+      setLoadingDb(false);
+    });
     return () => { cancelled = true; };
   }, [curriculum, grade, subject]);
 
   const chapters = dbChapters ?? getCuratedSyllabus(curriculum, grade, subject) ?? [];
   const isDbBacked = !!dbChapters;
+  // Grade 1-2 NCERT books are genuinely two levels — a Unit (e.g. "My Family
+  // and Me") directly containing individual poems/stories, with no chapter
+  // tier between them. The database still stores one row per Unit with the
+  // real poems/stories as its "topics" (no schema change was available to add
+  // a proper Unit column), so here we only relabel: the row becomes "Unit N"
+  // and its topics become "Chapter N" instead of "Topic N", matching what the
+  // printed textbook page itself shows. Every other grade keeps the real
+  // Chapter -> Topic labels unchanged.
+  const isUnitShaped = curriculum === 'CBSE' && (grade === 'Grade 1' || grade === 'Grade 2');
+
+  // A subject with no syllabus used to be auto-forwarded to the flat topic list.
+  // When that list was empty too — Hindi, and any subject whose book has not been
+  // parsed yet — the student landed on a blank screen with no explanation. Show
+  // an explicit "being prepared" state instead, and keep the topic list as an
+  // option the student can choose rather than an invisible redirect.
   const stats = g6EnglishStats(completedSet);
 
   const [openChapters, setOpenChapters] = useState<Set<number>>(new Set([0]));
   const [query, setQuery] = useState('');
+
+  // Deep-link support: the Dashboard's Learning Path list links straight to a
+  // specific chapter (e.g. tapping "Fables and Folk Tales" there should land
+  // here with THAT chapter already expanded, not always chapter 1).
+  const wantChapterTitle = route?.params?.chapterTitle as string | undefined;
+  useEffect(() => {
+    if (!wantChapterTitle || chapters.length === 0) return;
+    const idx = chapters.findIndex(c => c.title === wantChapterTitle);
+    if (idx !== -1) setOpenChapters(new Set([idx]));
+  }, [wantChapterTitle, chapters]);
 
   function toggleChapter(idx: number) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -144,9 +186,11 @@ export default function SubjectSyllabusScreen({ navigation, route }: any) {
         <View style={styles.screen}>
           <Header title={subject} subtitle={`${curriculum} · ${grade}`} showBack onMenuPress={() => navigation.openDrawer()} />
           <View style={styles.emptyWrap}>
-            <Feather name="book" size={36} color={colors.textMuted} />
+            <Feather name={loadError ? 'alert-circle' : 'book'} size={36} color={colors.textMuted} />
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              A structured chapter-by-chapter syllabus for {subject} · {grade} · {curriculum} isn't built yet.
+              {loadError
+                ? `We couldn't load the ${subject} syllabus just now. Please try again in a moment.`
+                : `Syllabus content for ${subject} (${grade}) is currently being processed. Check back soon!`}
             </Text>
             <TouchableOpacity
               style={[styles.emptyBtn, { backgroundColor: colors.primary }]}
@@ -195,10 +239,10 @@ export default function SubjectSyllabusScreen({ navigation, route }: any) {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.progressLine, { color: colors.textMain }]}>
-                {startedChapters} of {chapters.length} chapters started
+                {startedChapters} of {chapters.length} {isUnitShaped ? 'units' : 'chapters'} started
               </Text>
               <Text style={[styles.progressSub, { color: colors.textMuted }]}>
-                {grade} {subject} · {chapters.length} chapters · {stats.totalTopics} topics total
+                {grade} {subject} · {chapters.length} {isUnitShaped ? 'units' : 'chapters'} · {stats.totalTopics} {isUnitShaped ? 'chapters' : 'topics'} total
               </Text>
             </View>
           </View>
@@ -210,6 +254,13 @@ export default function SubjectSyllabusScreen({ navigation, route }: any) {
             const doneCount = chapter.topics.filter(t => completedSet.has(t.name)).length;
             const pct = chapter.topics.length ? Math.round((doneCount / chapter.topics.length) * 100) : 0;
             const complete = pct === 100;
+            // `unitNo` is the textbook's chapter number, supplied by
+            // /teacher/syllabus/current. Fall back to position only for the
+            // older curated datasets that carry no number.
+            const chapterNo = (chapter as any).unitNo ?? (ci + 1);
+            // A chapter the book has but no lesson has been written for yet.
+            const isPending = !!(chapter as any).pending || chapter.topics.length === 0;
+            const subtopicNames: string[] = (chapter as any).subtopics || [];
 
             return (
               <View key={chapter.title} style={[styles.chapterCard, { borderColor: colors.borderColor, backgroundColor: colors.cardDark }]}>
@@ -221,11 +272,35 @@ export default function SubjectSyllabusScreen({ navigation, route }: any) {
                     style={{ transform: [{ rotate: isOpen ? '90deg' : '0deg' }] }}
                   />
                   <View style={[styles.chapterNum, { backgroundColor: complete ? colors.primary + '22' : colors.borderColor + '55' }]}>
-                    <Text style={[styles.chapterNumText, { color: complete ? colors.primary : colors.textMuted }]}>{ci + 1}</Text>
+                    <Text style={[styles.chapterNumText, { color: complete ? colors.primary : colors.textMuted }]}>{chapterNo}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.chapterTitle, { color: colors.textMain }]}>Unit {ci + 1} — {chapter.title}</Text>
-                    <Text style={[styles.chapterSub, { color: colors.textMuted }]}>{chapter.topics.length} topics</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      {/* The book's own chapter number, never the array index —
+                          a syllabus with any chapter still unwritten used to
+                          renumber every chapter after it, so Chapter 3 appeared
+                          as "Unit 2". */}
+                      {/* Where the book gave no readable heading the title is
+                          already "Chapter 7", so prefixing it produced
+                          "Chapter 7: Chapter 7". Show the number once. */}
+                      <Text style={[styles.chapterTitle, { color: colors.textMain }]}>
+                        {/^chapter\s*\d+$/i.test(String(chapter.title || '').trim())
+                          ? `${isUnitShaped ? 'Unit' : 'Chapter'} ${chapterNo}`
+                          : `${isUnitShaped ? 'Unit' : 'Chapter'} ${chapterNo}: ${chapter.title}`}
+                      </Text>
+                      {(chapter.comingSoon || isPending) && (
+                        <View style={[styles.comingSoonBadge, { borderColor: colors.borderColor, backgroundColor: colors.borderColor + '55' }]}>
+                          <Text style={[styles.comingSoonText, { color: colors.textMuted }]}>Coming soon</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={[styles.chapterSub, { color: colors.textMuted }]}>
+                      {isPending
+                        ? `${subtopicNames.length || 0} sub-topic${subtopicNames.length === 1 ? '' : 's'} in the textbook`
+                        : isUnitShaped
+                          ? `${chapter.topics.length} chapter${chapter.topics.length === 1 ? '' : 's'}`
+                          : `${chapter.topics.length} topic${chapter.topics.length === 1 ? '' : 's'}`}
+                    </Text>
                   </View>
                   <View style={styles.chapterProgress}>
                     <View style={[styles.progBarTrack, { backgroundColor: colors.borderColor }]}>
@@ -235,23 +310,65 @@ export default function SubjectSyllabusScreen({ navigation, route }: any) {
                   </View>
                 </TouchableOpacity>
 
-                {isOpen && (
+                {isOpen && isPending && (
+                  <View style={styles.topicGrid}>
+                    {/* The chapter exists in the textbook but has no lesson yet.
+                        Listing its real sub-topics tells the student what the
+                        chapter covers instead of opening onto nothing. */}
+                    {subtopicNames.length === 0 ? (
+                      <Text style={[styles.chapterSub, { color: colors.textMuted, paddingHorizontal: 4, paddingVertical: 8 }]}>
+                        Lessons for this chapter are being prepared.
+                      </Text>
+                    ) : subtopicNames.map((name, si) => (
+                      <View
+                        key={name}
+                        style={[styles.topicItem, { backgroundColor: colors.bgDark, borderColor: colors.borderColor, opacity: 0.6 }]}
+                      >
+                        <View style={[styles.topicDot, { backgroundColor: colors.borderColor }]} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.topicLabel, { color: colors.textMain }]} numberOfLines={1}>
+                            Sub-topic {si + 1}: {name}
+                          </Text>
+                          <Text style={[styles.topicKind, { color: colors.textMuted }]}>Being prepared</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {isOpen && !isPending && (
                   <View style={styles.topicGrid}>
                     {topics.map((t) => {
                       const ti = chapter.topics.indexOf(t);
+                      // A topic's own comingSoon flag wins when set; otherwise
+                      // it inherits the chapter's — lets one topic in an
+                      // otherwise-unready chapter go live on its own.
+                      const topicComingSoon = t.comingSoon ?? chapter.comingSoon;
                       return (
                         <TouchableOpacity
                           key={t.name}
-                          style={[styles.topicItem, { backgroundColor: colors.bgDark, borderColor: colors.borderColor }]}
-                          activeOpacity={0.7}
+                          style={[styles.topicItem, { backgroundColor: colors.bgDark, borderColor: colors.borderColor, opacity: topicComingSoon ? 0.6 : 1 }]}
+                          activeOpacity={topicComingSoon ? 1 : 0.7}
+                          disabled={!!topicComingSoon}
                           onPress={() => openLesson(chapter, ci, ti)}
                         >
                           <View style={[styles.topicDot, { backgroundColor: completedSet.has(t.name) ? colors.primary : colors.borderColor }]} />
                           <View style={{ flex: 1 }}>
-                            <Text style={[styles.topicLabel, { color: colors.textMain }]} numberOfLines={1}>{t.name}</Text>
-                            <Text style={[styles.topicKind, { color: colors.textMuted }]}>{t.kind}</Text>
+                            <Text style={[styles.topicLabel, { color: colors.textMain }]} numberOfLines={1}>
+                              {/^chapter\s*\d+$/i.test(String(t.name || '').trim())
+                                ? `${isUnitShaped ? 'Chapter' : 'Topic'} ${ti + 1}`
+                                : `${isUnitShaped ? 'Chapter' : 'Topic'} ${ti + 1}: ${t.name}`}
+                            </Text>
+                            {/* Only the "Coming soon" state is worth a second
+                                line. The `kind` field said "Chapter" on older
+                                rows and "Topic" on newer ones, so every item
+                                carried a stray, inconsistent word under a label
+                                that already reads "Topic 3: ...". */}
+                            {!!topicComingSoon && (
+                              <Text style={[styles.topicKind, { color: colors.textMuted }]}>Coming soon</Text>
+                            )}
                           </View>
-                          <Feather name="chevron-right" size={14} color={colors.textMuted} />
+                          {!topicComingSoon && <Feather name="chevron-right" size={14} color={colors.textMuted} />}
                         </TouchableOpacity>
                       );
                     })}
@@ -285,6 +402,8 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   chapterNumText: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700' },
   chapterTitle:   { fontFamily: fonts.serif, fontSize: 15.5, fontWeight: '700' },
   chapterSub:     { fontSize: 11.5, marginTop: 2 },
+  comingSoonBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, borderWidth: 1 },
+  comingSoonText:  { fontSize: 10, fontWeight: '600' },
   chapterProgress: { alignItems: 'flex-end', gap: 4, width: 60 },
   progBarTrack: { width: 56, height: 4, borderRadius: 3, overflow: 'hidden' },
   progBarFill:  { height: '100%', borderRadius: 3 },

@@ -1,0 +1,32 @@
+{
+  "package": {
+    "package_id": "dbb7a84b-f1e4-418e-ab10-d2fb40ae1d73",
+    "package_type": "ValidatedRetrievalPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T13:29:14.108Z",
+    "produced_by": {
+      "agent": "retrieval-validation-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "sh8puo72pai",
+      "parent_package_id": null
+    }
+  },
+  "payload": {
+    "status": "FAIL",
+    "error_code": "RV003",
+    "rejection_reason": "Missing chunk 3 of 8.",
+    "validation_report": {
+      "schema": "PASS",
+      "metadata": "PASS",
+      "ordering": "PASS",
+      "coverage": "FAIL",
+      "integrity": "PASS"
+    },
+    "re_retrieval_hints": {
+      "suggested_query_adjustments": [],
+      "missing_page_numbers": []
+    }
+  }
+}

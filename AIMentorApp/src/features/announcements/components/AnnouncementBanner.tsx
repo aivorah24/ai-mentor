@@ -33,6 +33,11 @@ export default function AnnouncementBanner({ onView, onViewAll }: Props) {
   const { colors } = useTheme();
 
   if (!bannerAnnouncements.length) return null;
+  // Hide announcement banners in the Playwright visual-QA preview so screenshots
+  // capture the lesson, not a downtime notice overlaying it.
+  if (Platform.OS === 'web') {
+    try { if (new URLSearchParams(window.location.search).get('qaPreview') === '1') return null; } catch {}
+  }
 
   const current = bannerAnnouncements[0];
   const moreCount = bannerAnnouncements.length - 1;

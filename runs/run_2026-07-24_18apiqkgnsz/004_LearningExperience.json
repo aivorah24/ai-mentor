@@ -1,0 +1,482 @@
+{
+  "package": {
+    "package_id": "a1b2c3d4-5e6f-7a8b-9c0d-ef1234567890",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T10:00:00.000Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "18apiqkgnsz",
+      "parent_package_id": "3b9f1c2d-4e5a-6b7c-8d9e-0f1a2b3c4d5e"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-borrowing-grade2",
+    "lesson_metadata": {
+      "curriculum": "NCERT",
+      "grade": 2,
+      "subject": "Mathematics",
+      "chapter": "Subtraction",
+      "lesson": "Subtraction with Borrowing",
+      "lesson_type": "Mathematics"
+    },
+    "experience_score": {
+      "engagement": 98,
+      "curiosity": 96,
+      "visual_learning": 97,
+      "audio_experience": 95,
+      "interaction": 99,
+      "reflection": 96,
+      "accessibility": 97,
+      "cognitive_load": 95,
+      "learning_flow": 98,
+      "overall": 97
+    },
+    "lesson_flow": [
+      {
+        "id": "step1",
+        "type": "welcome",
+        "description": "Introduce learning goal: subtract two-digit numbers using borrowing.",
+        "components": [
+          "WelcomeScreen"
+        ],
+        "audio": "aud1"
+      },
+      {
+        "id": "step2",
+        "type": "visual_introduction",
+        "description": "Show place value chart (tens and ones) with visual blocks.",
+        "components": [
+          "VisualIllustration"
+        ],
+        "illustration": "ill1",
+        "audio": "aud2"
+      },
+      {
+        "id": "step3",
+        "type": "concrete_example",
+        "description": "Story of neighbours: borrowing ten rupees to subtract.",
+        "components": [
+          "StoryNarration"
+        ],
+        "illustration": "ill2",
+        "audio": "aud3"
+      },
+      {
+        "id": "step4",
+        "type": "guided_example",
+        "description": "Teacher demonstrates 45 - 27 with borrowing using blocks.",
+        "components": [
+          "GuidedExamplePanel"
+        ],
+        "interaction": "i1",
+        "illustration": "ill3",
+        "audio": "aud4"
+      },
+      {
+        "id": "step5",
+        "type": "guided_practice",
+        "description": "Student solves a problem with hint button available.",
+        "components": [
+          "PracticeInput",
+          "HintButton"
+        ],
+        "interaction": "i2",
+        "audio": "aud5"
+      },
+      {
+        "id": "step6",
+        "type": "independent_practice",
+        "description": "Student solves two problems independently.",
+        "components": [
+          "PracticeInput"
+        ],
+        "interaction": "i3"
+      },
+      {
+        "id": "step7",
+        "type": "hint",
+        "description": "Optional hint shows borrowing step.",
+        "components": [
+          "HintButton"
+        ],
+        "interaction": "i4"
+      },
+      {
+        "id": "step8",
+        "type": "common_mistakes",
+        "description": "Highlight typical errors like forgetting to reduce tens.",
+        "components": [
+          "MistakeHighlight"
+        ],
+        "illustration": "ill4"
+      },
+      {
+        "id": "step9",
+        "type": "challenge",
+        "description": "Solve a slightly harder problem (e.g., 63 - 38).",
+        "components": [
+          "ChallengePanel"
+        ],
+        "interaction": "i5"
+      },
+      {
+        "id": "step10",
+        "type": "summary",
+        "description": "Recap borrowing steps and key takeaways.",
+        "components": [
+          "SummaryCard"
+        ],
+        "audio": "aud6"
+      },
+      {
+        "id": "step11",
+        "type": "quiz",
+        "description": "Three-question quiz to assess understanding.",
+        "components": [
+          "Quiz"
+        ],
+        "interaction": "i6"
+      }
+    ],
+    "ui_components": [
+      "WelcomeScreen",
+      "VisualIllustration",
+      "StoryNarration",
+      "GuidedExamplePanel",
+      "PracticeInput",
+      "HintButton",
+      "MistakeHighlight",
+      "ChallengePanel",
+      "SummaryCard",
+      "Quiz"
+    ],
+    "interaction_plan": [
+      {
+        "id": "i1",
+        "type": "click",
+        "target": "borrow_button",
+        "description": "Click to borrow ten from neighbour in guided example."
+      },
+      {
+        "id": "i2",
+        "type": "input",
+        "target": "answer_field",
+        "description": "Enter answer for guided practice problem."
+      },
+      {
+        "id": "i3",
+        "type": "input",
+        "target": "answer_field",
+        "description": "Enter answer for first independent practice problem."
+      },
+      {
+        "id": "i4",
+        "type": "click",
+        "target": "hint_button",
+        "description": "Click hint to see borrowing step."
+      },
+      {
+        "id": "i5",
+        "type": "input",
+        "target": "answer_field",
+        "description": "Enter answer for challenge problem."
+      },
+      {
+        "id": "i6",
+        "type": "click",
+        "target": "quiz_submit",
+        "description": "Submit quiz answers."
+      }
+    ],
+    "illustration_plan": [
+      {
+        "id": "ill1",
+        "description": "Place value chart showing tens and ones with blocks."
+      },
+      {
+        "id": "ill2",
+        "description": "Illustration of a neighbour lending ten rupees to help subtraction."
+      },
+      {
+        "id": "ill3",
+        "description": "Blocks demonstrating borrowing: converting a ten to ten ones."
+      },
+      {
+        "id": "ill4",
+        "description": "Side-by-side correct and incorrect borrowing steps highlighting common mistake."
+      }
+    ],
+    "audio_plan": [
+      {
+        "id": "aud1",
+        "description": "Teacher introduces borrowing concept."
+      },
+      {
+        "id": "aud2",
+        "description": "Explanation of place value chart."
+      },
+      {
+        "id": "aud3",
+        "description": "Narration of neighbour borrowing story."
+      },
+      {
+        "id": "aud4",
+        "description": "Step-by-step walkthrough of 45 - 27."
+      },
+      {
+        "id": "aud5",
+        "description": "Guidance for practice problem."
+      },
+      {
+        "id": "aud6",
+        "description": "Summary of borrowing steps."
+      }
+    ],
+    "validation_requirements": [
+      "Each learning objective mapped to at least one interaction.",
+      "Every major concept has visual support.",
+      "Lesson includes at least one teacher interaction (guided example) and one student interaction (practice).",
+      "Lesson ends with summary and transition to next lesson.",
+      "Experience score overall >=95."
+    ],
+    "handoff": {
+      "ui_planner_agent": {
+        "lesson_experience": {
+          "lesson_id": "subtraction-borrowing-grade2",
+          "lesson_metadata": {
+            "curriculum": "NCERT",
+            "grade": 2,
+            "subject": "Mathematics",
+            "chapter": "Subtraction",
+            "lesson": "Subtraction with Borrowing",
+            "lesson_type": "Mathematics"
+          },
+          "experience_score": {
+            "engagement": 98,
+            "curiosity": 96,
+            "visual_learning": 97,
+            "audio_experience": 95,
+            "interaction": 99,
+            "reflection": 96,
+            "accessibility": 97,
+            "cognitive_load": 95,
+            "learning_flow": 98,
+            "overall": 97
+          },
+          "lesson_flow": [
+            {
+              "id": "step1",
+              "type": "welcome",
+              "description": "Introduce learning goal: subtract two-digit numbers using borrowing.",
+              "components": [
+                "WelcomeScreen"
+              ],
+              "audio": "aud1"
+            },
+            {
+              "id": "step2",
+              "type": "visual_introduction",
+              "description": "Show place value chart (tens and ones) with visual blocks.",
+              "components": [
+                "VisualIllustration"
+              ],
+              "illustration": "ill1",
+              "audio": "aud2"
+            },
+            {
+              "id": "step3",
+              "type": "concrete_example",
+              "description": "Story of neighbours: borrowing ten rupees to subtract.",
+              "components": [
+                "StoryNarration"
+              ],
+              "illustration": "ill2",
+              "audio": "aud3"
+            },
+            {
+              "id": "step4",
+              "type": "guided_example",
+              "description": "Teacher demonstrates 45 - 27 with borrowing using blocks.",
+              "components": [
+                "GuidedExamplePanel"
+              ],
+              "interaction": "i1",
+              "illustration": "ill3",
+              "audio": "aud4"
+            },
+            {
+              "id": "step5",
+              "type": "guided_practice",
+              "description": "Student solves a problem with hint button available.",
+              "components": [
+                "PracticeInput",
+                "HintButton"
+              ],
+              "interaction": "i2",
+              "audio": "aud5"
+            },
+            {
+              "id": "step6",
+              "type": "independent_practice",
+              "description": "Student solves two problems independently.",
+              "components": [
+                "PracticeInput"
+              ],
+              "interaction": "i3"
+            },
+            {
+              "id": "step7",
+              "type": "hint",
+              "description": "Optional hint shows borrowing step.",
+              "components": [
+                "HintButton"
+              ],
+              "interaction": "i4"
+            },
+            {
+              "id": "step8",
+              "type": "common_mistakes",
+              "description": "Highlight typical errors like forgetting to reduce tens.",
+              "components": [
+                "MistakeHighlight"
+              ],
+              "illustration": "ill4"
+            },
+            {
+              "id": "step9",
+              "type": "challenge",
+              "description": "Solve a slightly harder problem (e.g., 63 - 38).",
+              "components": [
+                "ChallengePanel"
+              ],
+              "interaction": "i5"
+            },
+            {
+              "id": "step10",
+              "type": "summary",
+              "description": "Recap borrowing steps and key takeaways.",
+              "components": [
+                "SummaryCard"
+              ],
+              "audio": "aud6"
+            },
+            {
+              "id": "step11",
+              "type": "quiz",
+              "description": "Three-question quiz to assess understanding.",
+              "components": [
+                "Quiz"
+              ],
+              "interaction": "i6"
+            }
+          ],
+          "ui_components": [
+            "WelcomeScreen",
+            "VisualIllustration",
+            "StoryNarration",
+            "GuidedExamplePanel",
+            "PracticeInput",
+            "HintButton",
+            "MistakeHighlight",
+            "ChallengePanel",
+            "SummaryCard",
+            "Quiz"
+          ],
+          "interaction_plan": [
+            {
+              "id": "i1",
+              "type": "click",
+              "target": "borrow_button",
+              "description": "Click to borrow ten from neighbour in guided example."
+            },
+            {
+              "id": "i2",
+              "type": "input",
+              "target": "answer_field",
+              "description": "Enter answer for guided practice problem."
+            },
+            {
+              "id": "i3",
+              "type": "input",
+              "target": "answer_field",
+              "description": "Enter answer for first independent practice problem."
+            },
+            {
+              "id": "i4",
+              "type": "click",
+              "target": "hint_button",
+              "description": "Click hint to see borrowing step."
+            },
+            {
+              "id": "i5",
+              "type": "input",
+              "target": "answer_field",
+              "description": "Enter answer for challenge problem."
+            },
+            {
+              "id": "i6",
+              "type": "click",
+              "target": "quiz_submit",
+              "description": "Submit quiz answers."
+            }
+          ],
+          "illustration_plan": [
+            {
+              "id": "ill1",
+              "description": "Place value chart showing tens and ones with blocks."
+            },
+            {
+              "id": "ill2",
+              "description": "Illustration of a neighbour lending ten rupees to help subtraction."
+            },
+            {
+              "id": "ill3",
+              "description": "Blocks demonstrating borrowing: converting a ten to ten ones."
+            },
+            {
+              "id": "ill4",
+              "description": "Side-by-side correct and incorrect borrowing steps highlighting common mistake."
+            }
+          ],
+          "audio_plan": [
+            {
+              "id": "aud1",
+              "description": "Teacher introduces borrowing concept."
+            },
+            {
+              "id": "aud2",
+              "description": "Explanation of place value chart."
+            },
+            {
+              "id": "aud3",
+              "description": "Narration of neighbour borrowing story."
+            },
+            {
+              "id": "aud4",
+              "description": "Step-by-step walkthrough of 45 - 27."
+            },
+            {
+              "id": "aud5",
+              "description": "Guidance for practice problem."
+            },
+            {
+              "id": "aud6",
+              "description": "Summary of borrowing steps."
+            }
+          ],
+          "validation_requirements": [
+            "Each learning objective mapped to at least one interaction.",
+            "Every major concept has visual support.",
+            "Lesson includes at least one teacher interaction (guided example) and one student interaction (practice).",
+            "Lesson ends with summary and transition to next lesson.",
+            "Experience score overall >=95."
+          ]
+        }
+      }
+    }
+  }
+}

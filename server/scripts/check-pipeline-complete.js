@@ -1,12 +1,13 @@
-// Counts pending core books (grades 7-12). When zero, deletes the Windows
-// scheduled task so the pipeline self-terminates, and writes a DONE marker.
+// Counts pending core books (grades 1-12, all non-Mathematics subjects).
+// When zero, deletes the Windows scheduled task so the pipeline
+// self-terminates, and writes a DONE marker.
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const LIST = path.resolve(__dirname, '..', 'data/curricula/ncert_catalog/english_medium.txt');
 const CKPT = path.resolve(__dirname, '..', 'data/curricula/ncert_catalog/orchestrator_checkpoint.json');
 const DONE = path.resolve(__dirname, '..', 'data/curricula/ncert_catalog/PIPELINE_DONE.txt');
-const gmap = { g: 7, h: 8, i: 9, j: 10, k: 11, l: 12 };
+const gmap = { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7, h: 8, i: 9, j: 10, k: 11, l: 12 };
 const term = ['done', 'skipped-subject', 'no-chapters'];
 let c = {}; try { c = JSON.parse(fs.readFileSync(CKPT, 'utf8')); } catch (e) {}
 const lines = fs.readFileSync(LIST, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);

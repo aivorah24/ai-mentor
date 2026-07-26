@@ -33,11 +33,37 @@ async function callNvidiaNim(messages, maxTokens = 1024) {
   return data.choices?.[0]?.message?.content || '';
 }
 
+// The numeric grade, or null when it cannot be read. "Grade 11", "Class XI"
+// and "11" all appear in the data, so match digits and Roman numerals both.
+function gradeNumber(grade) {
+  const s = String(grade || '').trim();
+  const d = s.match(/\b(\d{1,2})\b/);
+  if (d) { const n = +d[1]; if (n >= 1 && n <= 12) return n; }
+  const roman = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10, xi: 11, xii: 12 };
+  const r = s.toLowerCase().match(/\b(x?i{0,3}v?i{0,3}|ix|iv|xi{0,2})\b/g) || [];
+  for (const t of r) if (roman[t]) return roman[t];
+  return null;
+}
+
+// Senior students are NOT small children. This tutor was written for IB PYP
+// primary and applied its persona to every grade, so a 17-year-old revising for
+// boards was told about lemonade stands and "You're doing amazing! 🌟". QA found
+// that register on ~21 of 22 sampled Grade 11-12 lessons; it reads as
+// condescending and costs the product credibility with exactly the students and
+// teachers who judge it most harshly. Grades 1-5 keep the warm playful voice —
+// that is deliberate and must not regress.
+const isSenior = (grade) => (gradeNumber(grade) || 0) >= 9;
+const isMiddle = (grade) => { const n = gradeNumber(grade) || 0; return n >= 6 && n <= 8; };
+
 function getAgeGuardrails(grade) {
-  const g = (grade || '').toLowerCase();
-  if (g.includes('3')) return 'Grade 3 (age 8-9): very simple words, max 8-word sentences, one idea at a time, fun daily-life comparisons.';
-  if (g.includes('4')) return 'Grade 4 (age 9-10): simple clear language, short sentences, everyday examples.';
-  if (g.includes('5')) return 'Grade 5 (age 10-11): clear language, slightly more detail, real-world examples.';
+  const n = gradeNumber(grade);
+  if (n === 1 || n === 2) return 'Grades 1-2 (age 6-8): very simple words, max 8-word sentences, one idea at a time, playful comparisons.';
+  if (n === 3) return 'Grade 3 (age 8-9): very simple words, max 8-word sentences, one idea at a time, fun daily-life comparisons.';
+  if (n === 4) return 'Grade 4 (age 9-10): simple clear language, short sentences, everyday examples.';
+  if (n === 5) return 'Grade 5 (age 10-11): clear language, slightly more detail, real-world examples.';
+  if (n >= 6 && n <= 8) return 'Grades 6-8 (age 11-14): precise subject vocabulary with brief definitions, multi-step explanations, examples drawn from science and everyday technology rather than toys.';
+  if (n >= 9 && n <= 10) return 'Grades 9-10 (age 14-16): full academic terminology, formal definitions, exam-style rigour, worked derivations. No childish analogies.';
+  if (n >= 11) return 'Grades 11-12 (age 16-18, board-exam year): university-preparatory register. Exact terminology, correct notation and units, complete derivations, and where relevant the standard exam-marking conventions. No childish analogies.';
   return 'Age-appropriate simple language. Be encouraging.';
 }
 
@@ -136,7 +162,15 @@ CRITICAL RULES:
 - NEVER mark a mathematically equivalent answer as wrong.
 - After feedback, ask if they want another question or a new topic.`;
     } else {
-      teachingRule = `Math teaching format:
+      teachingRule = isSenior(grade) ? `Mathematics teaching format (${gradeLabel}, board-exam level):
+1. State what the concept is and where it is used, in one or two precise sentences. No childish hook.
+2. Give the formal definition and the general formula with correct notation, naming every symbol.
+3. Work a complete example line by line, showing the algebra — not just the result — and stating the reason for each step.
+4. Work a second example that differs in kind (a case with a sign change, a boundary case, or a common exam variant).
+5. Name the mistake students most often make here and how to avoid it.
+6. End with one exam-style problem for the student to attempt.
+Use exact terminology, correct units, and standard notation throughout. Never invent a method: use the one the syllabus expects for this grade.`
+      : `Math teaching format:
 1. Start with a warm, curious hook that makes the student WANT to learn this ("Have you ever wondered how to share a chocolate bar equally? That's exactly what fractions are!").
 2. Explain the concept clearly in simple words — what it IS, why it matters in real life. Use 2-3 sentences. Make it feel like a story, not a textbook.
 3. Give a vivid real-life analogy the student can picture (using pizza, chocolate, money, toys, sports — things a ${gradeLabel} student loves). Paint the scene.
@@ -149,6 +183,14 @@ Never rush. Stay on one idea at a time. Be encouraging after every step. Explain
   } else {
     teachingRule = studentAnsweringPractice
       ? `Student answered your question. Evaluate first. Correct: praise warmly with "That's right!" and briefly explain why. Wrong: say "Almost! Let me help." then explain gently and give another chance. Do NOT move to a new topic.`
+      : isSenior(grade)
+      ? `1. Open by stating what this topic is and why it matters in the subject — one or two precise sentences, no childish hook.
+2. Explain the concept properly, using correct terminology and defining each term as it appears. Build the explanation in logical order rather than in "fun facts".
+3. Give a real example with specifics — actual figures, named cases, dates, or a short derivation as the subject requires.
+4. Where the syllabus expects a particular framework, method or terminology, use exactly that one and name it.
+5. Point out the distinction or exception most often confused here.
+6. End by checking understanding with a question at exam standard.
+Be accurate before being friendly. If a claim is contested or simplified, say so rather than stating it flatly.`
       : `1. Start with a fun, relatable hook that sparks curiosity — connect the topic to something the student already knows and loves (food, games, weather, animals, their daily life). Make them think "Wow, I never noticed that!"
 2. Explain the concept clearly in 3-4 sentences. Break it into small, digestible pieces. Use comparisons: "Think of it like..." or "Imagine if...". Make abstract ideas concrete.
 3. Give a vivid real-world example with specific details — not just "plants need sunlight" but "Think about a sunflower in your garden. It turns its face to follow the sun all day long! That's because it needs sunlight to make its own food through photosynthesis."
@@ -157,11 +199,30 @@ Never rush. Stay on one idea at a time. Be encouraging after every step. Explain
 6. End with an encouraging question to check understanding — make it feel like a conversation, not a quiz.`;
   }
 
-  const systemPrompt = `You are Ms. Zara — warm, enthusiastic, patient AI tutor for IB PYP ${gradeLabel} students on Aivorah.
+  // Persona/register split by grade band — see isSenior() above for why.
+  const senior = isSenior(grade), middle = isMiddle(grade);
+  const personaLine = senior
+    ? `You are Ms. Zara — a knowledgeable, respectful subject tutor for ${gradeLabel} students on Aivorah. Treat the student as a serious young adult preparing for board examinations.`
+    : middle
+      ? `You are Ms. Zara — a clear, encouraging subject tutor for ${gradeLabel} students on Aivorah.`
+      : `You are Ms. Zara — warm, enthusiastic, patient AI tutor for ${gradeLabel} students on Aivorah.`;
+
+  const languageLine = senior
+    ? `Precise academic language appropriate to ${gradeLabel}. Use correct subject terminology, notation, units and formulas — define a term the first time it appears, then use it properly. Analogies are allowed ONLY when they clarify a genuinely difficult abstraction, and must be drawn from the adult/scientific world — never toys, sweets, lemonade stands, playgrounds or pets. Do not use emoji.`
+    : middle
+      ? `Clear language a ${gradeLabel} student understands, using proper subject terms with short definitions. Relate ideas to science, technology and everyday life rather than toys.`
+      : `Simple words a ${gradeLabel} student understands. Short sentences. Relate to toys, food, animals, games, everyday life. No jargon. Always end with warmth and encouragement.`;
+
+  const styleLine = senior
+    ? `Be respectful, focused and precise — the tone of a good sixth-form or junior-college teacher. Encouragement is brief and earned ("Good question — this one catches people out"). Never use cheerleader phrases such as "You're doing amazing!", exclamation-heavy praise, or emoji. Accuracy matters more than warmth: if something is a common exam trap, say so plainly. If the student asks for step-by-step, number the steps. Never give a one-line answer — give enough depth to genuinely understand.`
+    : `Be warm and friendly like a favourite teacher. Use "Great question!", "You're doing amazing!", "Let's find out together!" naturally. If the student asks to explain "one by one" or "step by step", explain each part separately in order, numbered like Step 1, Step 2, etc. Never give a one-line answer — always give enough detail for the student to truly understand.`;
+
+  const systemPrompt = `${personaLine}
 
 SCOPE: ${scopeRule}
 
-LANGUAGE: Simple words a ${gradeLabel} student understands. Short sentences. Relate to toys, food, animals, games, everyday life. No jargon. Always end with warmth and encouragement.
+AUDIENCE: ${getAgeGuardrails(grade)}
+LANGUAGE: ${languageLine}
 FORMAT: Structure your responses clearly. Use **bold** for key terms and important words. Use bullet points (- ) for lists. Use numbered steps (1. 2. 3.) when explaining processes. Break your answer into short paragraphs. Never give a wall of text — make it easy to read and scan.
 WORD RULES: Never say "mice" when referring to a computer mouse — always say "a mouse" or "the mouse". Never use confusing animal words for tech terms. Say "press Enter" not "hit Enter". Say "computer mouse" on first mention so it's clear.
 
@@ -169,7 +230,7 @@ KNOWLEDGE: ${knowledgeRule}
 ${indianNumberRule ? `\nINDIAN NUMBERS: ${indianNumberRule}` : ''}
 TEACHING: ${teachingRule}
 
-STYLE: Be warm and friendly like a favourite teacher. Use "Great question!", "You're doing amazing!", "Let's find out together!" naturally. If the student asks to explain "one by one" or "step by step", explain each part separately in order, numbered like Step 1, Step 2, etc. Never give a one-line answer — always give enough detail for the student to truly understand.
+STYLE: ${styleLine}
 
 CONVERSATION: Read the chat history before replying. Never repeat the same example. If student says "more"/"again"/"example" — give a NEW example on the SAME concept.`;
 
@@ -281,9 +342,57 @@ async function generateAnswerStream({ question, context, grade, subject, topic, 
   return full;
 }
 
+/**
+ * Generic JSON-mode generation — used by content pipelines (e.g. the Math
+ * Learning Engine) that need structured output rather than a conversational
+ * reply. Reuses the same Groq→NVIDIA fallback as generateAnswer instead of
+ * standing up a separate LLM client.
+ */
+async function generateJSON({ systemPrompt, userPrompt, model = MODEL_POWER, maxTokens = 1500, _meta = {} }) {
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user',   content: userPrompt },
+  ];
+
+  const parse = (raw) => {
+    const cleaned = String(raw || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+    return JSON.parse(cleaned);
+  };
+
+  try {
+    const t0 = Date.now();
+    const response = await groq.chat.completions.create({
+      model, messages, temperature: 0.2, max_tokens: maxTokens,
+      response_format: { type: 'json_object' },
+    });
+    const usage = response.usage || {};
+    logLLMCall({
+      provider: 'groq', model, route: _meta.route,
+      promptTokens: usage.prompt_tokens || 0,
+      completionTokens: usage.completion_tokens || 0,
+      responseTimeMs: Date.now() - t0, streamed: false,
+    });
+    return parse(response.choices?.[0]?.message?.content);
+  } catch (err) {
+    const is429 = err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('rate_limit');
+    if (!is429) throw err;
+    console.warn('[LLM] Groq rate limit (JSON) — falling back to NVIDIA NIM');
+  }
+
+  const t0 = Date.now();
+  const text = await callNvidiaNim(messages, maxTokens);
+  logLLMCall({
+    provider: 'nvidia', model: NVIDIA_MODEL, route: _meta.route,
+    promptTokens: 0, completionTokens: 0,
+    responseTimeMs: Date.now() - t0, streamed: false,
+  });
+  return parse(text);
+}
+
 module.exports = {
   generateAnswer,
   generateAnswerStream,
+  generateJSON,
   getAgeGuardrails,
   buildPrompts,
   buildNoContextFallback,

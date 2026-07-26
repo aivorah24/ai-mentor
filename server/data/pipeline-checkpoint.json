@@ -1,0 +1,5800 @@
+{
+ "done": {
+  "G7|Science|Absorption of Nutrients": {
+   "status": "would-publish",
+   "at": 1784961365650
+  },
+  "G7|Science|Acidic, Basic, and Neutral Substances": {
+   "status": "would-publish",
+   "at": 1784961407656
+  },
+  "G7|Science|Adaptation in Respiratory System": {
+   "status": "would-publish",
+   "at": 1784961479979
+  },
+  "G7|Mathematics|Acute-Angled Triangles": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|AAS (Angle Angle Side) Condition": {
+   "status": "passing",
+   "at": 1784964679414
+  },
+  "G7|Mathematics|Adding and Subtracting Decimals": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Additive Inverse in Integer Multiplication": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Adding and Subtracting Algebraic Expressions": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Algebraic Equation": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Algebraic Expressions": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Algebraic Equations": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|AAS Condition": {
+   "status": "passing",
+   "at": 1784964679414
+  },
+  "G7|Mathematics|Adding and Subtracting Decimal Numbers": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|ASA Condition": {
+   "status": "passing",
+   "at": 1784964679416
+  },
+  "G7|Mathematics|ASA (Angle Side Angle) Condition": {
+   "status": "passing",
+   "at": 1784964679416
+  },
+  "G6|English|Benefits of Yoga": {
+   "status": "published-with-warnings",
+   "at": 1784961834736
+  },
+  "G6|English|Aipan Folk Art": {
+   "status": "published",
+   "at": 1784961836150
+  },
+  "G6|English|Accepting Defeat": {
+   "status": "published-with-warnings",
+   "at": 1784961837146
+  },
+  "G6|English|Alliteration in Poetry": {
+   "status": "published-with-warnings",
+   "at": 1784961839212
+  },
+  "G6|English|Adverbs": {
+   "status": "published-with-warnings",
+   "at": 1784961839221
+  },
+  "G6|English|Alliteration": {
+   "status": "published-with-warnings",
+   "at": 1784961843957
+  },
+  "G6|English|Breathing Techniques in Yoga": {
+   "status": "published",
+   "at": 1784961856735
+  },
+  "G6|English|Challenges in Friendship": {
+   "status": "published",
+   "at": 1784961857067
+  },
+  "G6|English|Bird's Perspective in Poetry": {
+   "status": "published",
+   "at": 1784961857135
+  },
+  "G6|English|Characteristics of a Good Friend": {
+   "status": "published-with-warnings",
+   "at": 1784961858963
+  },
+  "G6|English|Change of Heart": {
+   "status": "published-with-warnings",
+   "at": 1784961859059
+  },
+  "G6|English|Characteristics of Good Friends": {
+   "status": "published-with-warnings",
+   "at": 1784961873155
+  },
+  "G6|English|Attitude towards Winning and Losing": {
+   "status": "published-with-warnings",
+   "at": 1784961878165
+  },
+  "G6|English|Art and Challenges": {
+   "status": "published",
+   "at": 1784961878413
+  },
+  "G6|English|Consequences of Pride": {
+   "status": "published-with-warnings",
+   "at": 1784961886361
+  },
+  "G6|English|Contractions": {
+   "status": "published-with-warnings",
+   "at": 1784961896720
+  },
+  "G6|English|Compound Words in Language": {
+   "status": "published-with-warnings",
+   "at": 1784961911724
+  },
+  "G6|English|Creating Artwork": {
+   "status": "published",
+   "at": 1784961926130
+  },
+  "G6|English|Culture and Tradition": {
+   "status": "published-with-warnings",
+   "at": 1784961926733
+  },
+  "G6|English|Coconut Shell Craft": {
+   "status": "published",
+   "at": 1784961926895
+  },
+  "G6|English|Cheating in Games": {
+   "status": "published-with-warnings",
+   "at": 1784961927612
+  },
+  "G8|Science|Absorbing Carbon Dioxide from Air": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Antibiotic Resistance": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Air Pressure and Wind": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Air Flow and Pressure": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Analyzing Dengue Case Data": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Air Pressure and Movement": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Antibiotics": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Antibiotic Use for Viral Infections": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G9|Science|Action and Reaction Forces": {
+   "status": "passing",
+   "at": 1784964820055
+  },
+  "G9|Science|Acceleration Due to Gravity": {
+   "status": "published",
+   "at": 1784964822219
+  },
+  "G9|Science|Advantages and Disadvantages of Human Dependence": {
+   "status": "published-with-warnings",
+   "at": 1784964822525
+  },
+  "G9|Science|Acceleration from Velocity-Time Graph": {
+   "status": "published-with-warnings",
+   "at": 1784964822543
+  },
+  "G9|Science|Acceleration in Uniform Circular Motion": {
+   "status": "published",
+   "at": 1784964822351
+  },
+  "G9|Science|Airbags and Safety": {
+   "status": "passing",
+   "at": 1784964822220
+  },
+  "G9|Science|Albedo and Surface Temperature": {
+   "status": "published",
+   "at": 1784964823270
+  },
+  "G9|Science|Acceleration and Force Direction": {
+   "status": "unfixable",
+   "at": 1784962369754
+  },
+  "G6|English|Describing a Bird's Characteristics": {
+   "status": "published",
+   "at": 1784962442324
+  },
+  "G6|English|Describing Events": {
+   "status": "published",
+   "at": 1784962442509
+  },
+  "G6|English|Creating Sentences with Adjectives": {
+   "status": "published",
+   "at": 1784962442693
+  },
+  "G6|English|Describing Emotions": {
+   "status": "published",
+   "at": 1784962442787
+  },
+  "G6|English|Dangers of Believing in Magic": {
+   "status": "published",
+   "at": 1784962442931
+  },
+  "G6|English|Creating New Words with Suffixes": {
+   "status": "published",
+   "at": 1784962443442
+  },
+  "G6|English|Describing People and Things": {
+   "status": "published",
+   "at": 1784962446479
+  },
+  "G6|English|Dhokra Metal Craft": {
+   "status": "published",
+   "at": 1784962446480
+  },
+  "G6|English|Describing Words in Poetry": {
+   "status": "published-with-warnings",
+   "at": 1784962447658
+  },
+  "G6|Mathematics|360° as a universal angle of symmetry": {
+   "status": "published",
+   "at": 1784962452524
+  },
+  "G6|Mathematics|Absolute value of integers": {
+   "status": "published",
+   "at": 1784962452611
+  },
+  "G6|Mathematics|Absolute value and its role in comparisons": {
+   "status": "published",
+   "at": 1784962452736
+  },
+  "G6|Mathematics|Adding 5-digit numbers to get a 5-digit sum": {
+   "status": "published",
+   "at": 1784962453136
+  },
+  "G6|Mathematics|Adding a 5-digit and a 3-digit number to get a 6-digit sum": {
+   "status": "published",
+   "at": 1784962453632
+  },
+  "G6|Mathematics|5-digit palindrome puzzle": {
+   "status": "published",
+   "at": 1784962454100
+  },
+  "G6|Mathematics|Adding a positive and a negative integer using tokens": {
+   "status": "published",
+   "at": 1784962457298
+  },
+  "G6|Mathematics|Adding a positive number to a negative number": {
+   "status": "published",
+   "at": 1784962457897
+  },
+  "G6|Mathematics|Adding a number to its opposite": {
+   "status": "published",
+   "at": 1784962457933
+  },
+  "G6|Mathematics|Adding and subtracting integers using number lines": {
+   "status": "published",
+   "at": 1784962462061
+  },
+  "G6|Mathematics|Adding and subtracting negative numbers using a number line": {
+   "status": "published",
+   "at": 1784962462724
+  },
+  "G6|Mathematics|Adding and subtracting positive numbers": {
+   "status": "published",
+   "at": 1784962466889
+  },
+  "G6|Mathematics|Adding a number and its opposite": {
+   "status": "unfixable",
+   "at": 1784962468230
+  },
+  "G6|Mathematics|Adding areas of multiple rectangles": {
+   "status": "published",
+   "at": 1784962470453
+  },
+  "G6|Mathematics|Adding and subtracting negative numbers": {
+   "status": "published",
+   "at": 1784962486315
+  },
+  "G6|Mathematics|Adding and subtracting integers using a number line": {
+   "status": "published",
+   "at": 1784962487269
+  },
+  "G6|Mathematics|Adding fractions using Brahmagupta’s method": {
+   "status": "published",
+   "at": 1784962491537
+  },
+  "G6|Mathematics|Adding fractions with different denominators": {
+   "status": "published",
+   "at": 1784962492226
+  },
+  "G6|Mathematics|Adding fractions with like denominators": {
+   "status": "published",
+   "at": 1784962495291
+  },
+  "G6|Mathematics|Adding counting numbers to form triangular numbers": {
+   "status": "published",
+   "at": 1784962496587
+  },
+  "G6|Mathematics|Adding fractions with different denominators using Brahmagupta's method": {
+   "status": "published",
+   "at": 1784962496715
+  },
+  "G6|Mathematics|Adding hexagonal numbers to form a pattern": {
+   "status": "published",
+   "at": 1784962501654
+  },
+  "G6|Mathematics|Adding fractions with unlike denominators": {
+   "status": "published",
+   "at": 1784962502802
+  },
+  "G6|Mathematics|Adding integers with different signs": {
+   "status": "published",
+   "at": 1784962505811
+  },
+  "G6|Mathematics|Adding integers with opposite signs": {
+   "status": "published",
+   "at": 1784962506845
+  },
+  "G6|Mathematics|Adding integers with the same sign": {
+   "status": "published",
+   "at": 1784962510066
+  },
+  "G6|Mathematics|Adding fractions with the same denominator": {
+   "status": "published",
+   "at": 1784962524700
+  },
+  "G6|Mathematics|Adding counting numbers up and down to form squares": {
+   "status": "published",
+   "at": 1784962527809
+  },
+  "G6|Mathematics|Adding and subtracting positive numbers using a number line": {
+   "status": "published",
+   "at": 1784962540343
+  },
+  "G6|Mathematics|Adding a number and its inverse equals zero": {
+   "status": "unfixable",
+   "at": 1784962548341
+  },
+  "G6|Science|Adaptations": {
+   "status": "published",
+   "at": 1784962553306
+  },
+  "G6|Science|Advantages of a Tail in Tadpoles": {
+   "status": "published",
+   "at": 1784962553475
+  },
+  "G6|Science|Animal Movement": {
+   "status": "published",
+   "at": 1784962553491
+  },
+  "G6|Science|Analyzing Fortified Food": {
+   "status": "published",
+   "at": 1784962553570
+  },
+  "G6|Science|Asteroids": {
+   "status": "published",
+   "at": 1784962554384
+  },
+  "G6|Science|Air Composition": {
+   "status": "published",
+   "at": 1784962554587
+  },
+  "G6|Science|Attraction and Repulsion": {
+   "status": "published",
+   "at": 1784962557222
+  },
+  "G6|Science|Biodiversity": {
+   "status": "published",
+   "at": 1784962557716
+  },
+  "G6|Science|Biodiversity Conservation": {
+   "status": "published",
+   "at": 1784962557728
+  },
+  "G6|Science|Ayurvedic Properties of Materials": {
+   "status": "published",
+   "at": 1784962557966
+  },
+  "G6|Science|Characteristics of Living Beings": {
+   "status": "published",
+   "at": 1784962561190
+  },
+  "G6|Science|Churning": {
+   "status": "published",
+   "at": 1784962561780
+  },
+  "G6|Science|Choosing Fresh Fruit": {
+   "status": "published",
+   "at": 1784962561962
+  },
+  "G6|Science|Classification of Animals": {
+   "status": "published",
+   "at": 1784962565261
+  },
+  "G6|Science|Classification of Materials": {
+   "status": "published",
+   "at": 1784962565869
+  },
+  "G6|Science|Carbohydrates": {
+   "status": "published",
+   "at": 1784962584592
+  },
+  "G6|Science|Comets": {
+   "status": "published",
+   "at": 1784962585706
+  },
+  "G6|Science|Circular Motion": {
+   "status": "published",
+   "at": 1784962586177
+  },
+  "G6|Science|Clinical Thermometer": {
+   "status": "published",
+   "at": 1784962589406
+  },
+  "G6|Science|Condensation": {
+   "status": "published",
+   "at": 1784962589643
+  },
+  "G6|Science|Consequences of Deforestation": {
+   "status": "published",
+   "at": 1784962590021
+  },
+  "G6|Science|Conditions for Seed Germination": {
+   "status": "published",
+   "at": 1784962590340
+  },
+  "G6|Science|Curiosity and Observation": {
+   "status": "published",
+   "at": 1784962593589
+  },
+  "G6|Science|Decantation": {
+   "status": "published",
+   "at": 1784962594398
+  },
+  "G6|Science|Distinguishing Features in the Life Cycles of Mosquitoes and Frogs": {
+   "status": "published",
+   "at": 1784962598662
+  },
+  "G6|Science|Diversity in Food": {
+   "status": "published",
+   "at": 1784962598732
+  },
+  "G6|Science|Changing States of Water": {
+   "status": "published",
+   "at": 1784962608478
+  },
+  "G6|Science|Cooling Effect": {
+   "status": "published",
+   "at": 1784962614796
+  },
+  "G6|Science|Components of Food": {
+   "status": "published",
+   "at": 1784962617915
+  },
+  "G6|Science|Dark Sky Reserves": {
+   "status": "published",
+   "at": 1784962618449
+  },
+  "G6|Social Science|Characteristics of a Civilisation": {
+   "status": "published",
+   "at": 1784962622968
+  },
+  "G6|Social Science|Buddhist Values": {
+   "status": "published",
+   "at": 1784962623128
+  },
+  "G6|Social Science|Ancient Names for India": {
+   "status": "published",
+   "at": 1784962623212
+  },
+  "G6|Social Science|Attachment": {
+   "status": "published",
+   "at": 1784962623220
+  },
+  "G6|Social Science|Challenges of Living in Mountains": {
+   "status": "published",
+   "at": 1784962623481
+  },
+  "G6|Social Science|Classification of Economic Activities": {
+   "status": "published",
+   "at": 1784962627717
+  },
+  "G6|Social Science|Citizen Duties": {
+   "status": "published",
+   "at": 1784962627852
+  },
+  "G6|Social Science|Climate Change and Human History": {
+   "status": "published",
+   "at": 1784962628671
+  },
+  "G6|Social Science|Compensation for Economic Activities": {
+   "status": "published-with-warnings",
+   "at": 1784962632411
+  },
+  "G6|Social Science|Community Support": {
+   "status": "published",
+   "at": 1784962632886
+  },
+  "G6|Social Science|Concept of Higher Divinity": {
+   "status": "published",
+   "at": 1784962637128
+  },
+  "G6|Social Science|Consciousness": {
+   "status": "published",
+   "at": 1784962641775
+  },
+  "G6|Social Science|Continents and Island Counting": {
+   "status": "published",
+   "at": 1784962646922
+  },
+  "G6|Social Science|Cardinal Directions": {
+   "status": "published",
+   "at": 1784962648098
+  },
+  "G6|Social Science|Community Definition": {
+   "status": "published",
+   "at": 1784962649492
+  },
+  "G6|Social Science|Common Food Grains": {
+   "status": "published",
+   "at": 1784962651928
+  },
+  "G6|Social Science|Child-Friendly Panchayat": {
+   "status": "published",
+   "at": 1784962652079
+  },
+  "G6|Social Science|Cultural Significance of India's Name": {
+   "status": "published",
+   "at": 1784962653914
+  },
+  "G6|Social Science|Confluence": {
+   "status": "published",
+   "at": 1784962662135
+  },
+  "G6|Social Science|Definition of Ocean": {
+   "status": "published",
+   "at": 1784962666830
+  },
+  "G6|Social Science|Democracy": {
+   "status": "published",
+   "at": 1784962671412
+  },
+  "G6|Social Science|Defining India": {
+   "status": "published",
+   "at": 1784962672250
+  },
+  "G6|Social Science|Democracy Framework": {
+   "status": "published",
+   "at": 1784962677266
+  },
+  "G6|Social Science|Deserts": {
+   "status": "published",
+   "at": 1784962678006
+  },
+  "G6|Social Science|Continents and Oceans": {
+   "status": "published",
+   "at": 1784962678970
+  },
+  "G6|Social Science|Definition of Continent": {
+   "status": "published",
+   "at": 1784962680930
+  },
+  "G6|Social Science|Distribution of Water and Land": {
+   "status": "published",
+   "at": 1784962683387
+  },
+  "G6|Social Science|Definition of Island": {
+   "status": "published",
+   "at": 1784962683463
+  },
+  "G6|Social Science|Decentralised Governance": {
+   "status": "published",
+   "at": 1784962705595
+  },
+  "G6|Social Science|Disadvantaged Sections": {
+   "status": "published",
+   "at": 1784962708220
+  },
+  "G7|English|Amar Jawan Jyoti": {
+   "status": "passing",
+   "at": 1784964677911
+  },
+  "G7|English|Agartala Name Origin": {
+   "status": "published-with-warnings",
+   "at": 1784964677915
+  },
+  "G7|English|Alternative Sports Options": {
+   "status": "passing",
+   "at": 1784964677911
+  },
+  "G7|English|Alliteration in Poetry": {
+   "status": "published-with-warnings",
+   "at": 1784964678087
+  },
+  "G7|English|Analyzing Mary's Interactions": {
+   "status": "passing",
+   "at": 1784964677911
+  },
+  "G7|English|Agarwood Importance": {
+   "status": "passing",
+   "at": 1784964675704
+  },
+  "G7|English|Animal Communication": {
+   "status": "passing",
+   "at": 1784964677911
+  },
+  "G7|English|Animal Doctors": {
+   "status": "passing",
+   "at": 1784964677911
+  },
+  "G7|English|Benefits of Adventure Sports": {
+   "status": "passing",
+   "at": 1784964677911
+  },
+  "G7|English|Basic Manners": {
+   "status": "passing",
+   "at": 1784964677911
+  },
+  "G7|English|Binomials": {
+   "status": "published-with-warnings",
+   "at": 1784964679166
+  },
+  "G7|English|Burglar Alarm": {
+   "status": "passing",
+   "at": 1784964677917
+  },
+  "G7|English|Bloom's Taxonomy": {
+   "status": "passing",
+   "at": 1784964677916
+  },
+  "G7|English|Bravery and Sacrifices": {
+   "status": "passing",
+   "at": 1784964677916
+  },
+  "G7|English|Braille": {
+   "status": "passing",
+   "at": 1784964677916
+  },
+  "G7|English|Character Analysis": {
+   "status": "passing",
+   "at": 1784964677933
+  },
+  "G7|English|Causes and Effects": {
+   "status": "published-with-warnings",
+   "at": 1784964679213
+  },
+  "G7|English|Chakras at National War Memorial": {
+   "status": "passing",
+   "at": 1784964677933
+  },
+  "G7|English|Character Traits": {
+   "status": "passing",
+   "at": 1784964677933
+  },
+  "G7|English|Character Description": {
+   "status": "passing",
+   "at": 1784964677933
+  },
+  "G7|English|Changes in Society": {
+   "status": "passing",
+   "at": 1784964677933
+  },
+  "G7|English|Collocations and Word Pairs": {
+   "status": "published-with-warnings",
+   "at": 1784964679238
+  },
+  "G7|English|Compound Words": {
+   "status": "published-with-warnings",
+   "at": 1784964679408
+  },
+  "G7|English|Collective Nouns": {
+   "status": "passing",
+   "at": 1784964677933
+  },
+  "G7|English|Creating a Short Story": {
+   "status": "passing",
+   "at": 1784964679168
+  },
+  "G7|English|Critical Thinking": {
+   "status": "passing",
+   "at": 1784964679168
+  },
+  "G7|English|Creative Writing": {
+   "status": "passing",
+   "at": 1784964679168
+  },
+  "G7|English|Cultural Festivals": {
+   "status": "passing",
+   "at": 1784964679168
+  },
+  "G7|Mathematics|Algebraic Expressions and Formulas": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Algebraic Expressions in Real-Life Situations": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Algebraic Inequalities": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Algebraic Expressions and Problem-Solving": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Algebraic Manipulation": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Algebraic Functions": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Algebraic Modelling": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Algebraic Reasoning": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Analyzing Data": {
+   "status": "passing",
+   "at": 1784964679416
+  },
+  "G7|Mathematics|Analyzing Relationships": {
+   "status": "passing",
+   "at": 1784964679416
+  },
+  "G7|Mathematics|Angle Bisection": {
+   "status": "passing",
+   "at": 1784964679416
+  },
+  "G7|Mathematics|Angle Sum Property": {
+   "status": "passing",
+   "at": 1784964679416
+  },
+  "G7|Mathematics|Alternate Angles": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Altitude of a Triangle": {
+   "status": "passing",
+   "at": 1784964679415
+  },
+  "G7|Mathematics|Angle Sum of a Triangle": {
+   "status": "passing",
+   "at": 1784964679416
+  },
+  "G7|Mathematics|Angles in Equilateral Triangles": {
+   "status": "passing",
+   "at": 1784964679416
+  },
+  "G7|Mathematics|Analyzing Data Variability": {
+   "status": "passing",
+   "at": 1784964679416
+  },
+  "G7|Mathematics|Arch Designs": {
+   "status": "passing",
+   "at": 1784964679416
+  },
+  "G7|Science|Adolescence Definition": {
+   "status": "passing",
+   "at": 1784964679417
+  },
+  "G7|Science|Alimentary Canal": {
+   "status": "passing",
+   "at": 1784964679417
+  },
+  "G7|Science|Adolescence: A Stage of Growth and Change": {
+   "status": "passing",
+   "at": 1784964679417
+  },
+  "G7|Science|Asking Questions": {
+   "status": "passing",
+   "at": 1784964679417
+  },
+  "G7|Science|Average Speed": {
+   "status": "passing",
+   "at": 1784964679417
+  },
+  "G7|Science|Avoiding Harmful Substances": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Batteries": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Breathing and Respiration": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Apparent Size": {
+   "status": "passing",
+   "at": 1784964679417
+  },
+  "G7|Science|Aquifers": {
+   "status": "passing",
+   "at": 1784964679417
+  },
+  "G7|Science|Air Quality": {
+   "status": "passing",
+   "at": 1784964679417
+  },
+  "G7|Science|Atomic Clocks": {
+   "status": "passing",
+   "at": 1784964679417
+  },
+  "G7|Science|Carbon Dioxide Role": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Breathing Techniques": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Chemical Changes": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Changes and Processes": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Chameleons Changing Color": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Combination of Heat Transfer": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Breathing in Different Animals": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Components of an Electric Cell": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Conduction of Heat": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Conduction Process": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Calculating Speed": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Combustion": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Circulatory System": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Conduction of Electricity in Metals": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Science|Breathing Mechanism": {
+   "status": "passing",
+   "at": 1784964679418
+  },
+  "G7|Social Science|Accountability": {
+   "status": "passing",
+   "at": 1784964679419
+  },
+  "G7|Social Science|Air Transport": {
+   "status": "passing",
+   "at": 1784964679419
+  },
+  "G7|Social Science|African Connection in India": {
+   "status": "passing",
+   "at": 1784964679419
+  },
+  "G7|Social Science|Absolute Monarchy": {
+   "status": "passing",
+   "at": 1784964679419
+  },
+  "G7|Social Science|Accountability in Democracy": {
+   "status": "passing",
+   "at": 1784964679419
+  },
+  "G7|Social Science|Alexander's Campaign": {
+   "status": "passing",
+   "at": 1784964679419
+  },
+  "G7|Social Science|Alloy": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Arab Conquest": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Arab Merchant Community": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Aravalli Hills": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Art and Architecture": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Age of Reorganisation": {
+   "status": "published-with-warnings",
+   "at": 1784964680909
+  },
+  "G7|Social Science|Aśhoka's Edicts": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Assessing Product Quality": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Atmospheric Pressure": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Alexander's Conquests": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Baha'i Faith in India": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Automated Weather Stations": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Barter System": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Armenian Community in India": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Being Neighbours": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Bhakti Movement": {
+   "status": "passing",
+   "at": 1784964679421
+  },
+  "G7|Social Science|Bhakti Tradition": {
+   "status": "passing",
+   "at": 1784964679421
+  },
+  "G7|Social Science|Al-Biruni's Contributions": {
+   "status": "passing",
+   "at": 1784964679419
+  },
+  "G7|Social Science|Altitude and Climate": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Bakhtiyar Khilji's Campaigns": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Bharhut Stupa": {
+   "status": "passing",
+   "at": 1784964679421
+  },
+  "G7|Social Science|Banks and Their Functions": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Basava's Reforms": {
+   "status": "passing",
+   "at": 1784964679420
+  },
+  "G7|Social Science|Bhaskaracharya's Achievements": {
+   "status": "passing",
+   "at": 1784964679421
+  },
+  "G8|Mathematics|Algebra in Modeling": {
+   "status": "passing",
+   "at": 1784964768829
+  },
+  "G8|Mathematics|Algebra in Justifying Statements": {
+   "status": "passing",
+   "at": 1784964768829
+  },
+  "G8|Mathematics|Age Ratios": {
+   "status": "passing",
+   "at": 1784964768829
+  },
+  "G8|Mathematics|Abacus": {
+   "status": "passing",
+   "at": 1784964768829
+  },
+  "G8|Mathematics|Alternate Angles and Parallel Lines": {
+   "status": "passing",
+   "at": 1784964768829
+  },
+  "G8|Mathematics|Algebra Play": {
+   "status": "passing",
+   "at": 1784964768829
+  },
+  "G8|Mathematics|Angle Bisector": {
+   "status": "passing",
+   "at": 1784964768830
+  },
+  "G8|Mathematics|Algebraic Expressions and Equations": {
+   "status": "passing",
+   "at": 1784964768829
+  },
+  "G8|Mathematics|Applications of Baudhāyana-Pythagoras Theorem": {
+   "status": "passing",
+   "at": 1784964768831
+  },
+  "G8|Mathematics|Area and Population Density": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Area of Parallelogram by Dissection": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Area Conversion": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Advantages of a Base-n System": {
+   "status": "unfixable",
+   "at": 1784963068515
+  },
+  "G8|Mathematics|Area of a Spiral Tube": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Area of Polygon": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Area of Rectangles with Different Dimensions": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Average and Median Changes": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Average and Median of Cycle Rides": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Average Height Change": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Area of a Path Around a Rectangle": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Area of Rhombus": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Base-2 Number System": {
+   "status": "passing",
+   "at": 1784964768833
+  },
+  "G8|Mathematics|Base-7 Number System": {
+   "status": "passing",
+   "at": 1784964768833
+  },
+  "G8|Mathematics|Base-N Number System": {
+   "status": "passing",
+   "at": 1784964768833
+  },
+  "G8|Mathematics|Baudhāyana Triples": {
+   "status": "passing",
+   "at": 1784964768833
+  },
+  "G8|Mathematics|Base-10 Number System": {
+   "status": "passing",
+   "at": 1784964768833
+  },
+  "G8|Mathematics|Area of Trapezium": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Area of Triangle": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Mathematics|Base-5 Number System": {
+   "status": "passing",
+   "at": 1784964768833
+  },
+  "G8|Mathematics|Area of Triangles in a Rectangle": {
+   "status": "passing",
+   "at": 1784964768832
+  },
+  "G8|Science|Benefits of Sustainable Farming Practices": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Balance in Scientific Investigation": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Atmospheric Pressure Units": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Atmospheric Pressure": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Atoms and Molecules": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Artificial Satellites": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Calculating Density": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Biodiversity Loss": {
+   "status": "passing",
+   "at": 1784964768834
+  },
+  "G8|Science|Biosphere's Interdependence": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Buoyant Force": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Cell Variation": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Changing Friction": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Cell Structures in Microorganisms": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Clean Environment for Good Health": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Climate Change": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Classifying Substances in Reactions": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Combining Elements to Form Compounds": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Climate Change and Its Global Impact": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Cell as the Basic Unit of Life": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Cell Structure": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|Chronic Diseases": {
+   "status": "passing",
+   "at": 1784964768835
+  },
+  "G8|Science|CPR Sequence for Adults": {
+   "status": "published-with-warnings",
+   "at": 1784964770750
+  },
+  "G8|Social Science|Accessibility in Elections": {
+   "status": "passing",
+   "at": 1784964770751
+  },
+  "G8|Social Science|Aurangzeb's Legacy": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|Akbar's Religious Tolerance": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|Aurangzeb's Military Campaigns": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|Akbar's Reign": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|Aurangzeb's Religious Policies": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|British Colonial Domination": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|British Legal System": {
+   "status": "published-with-warnings",
+   "at": 1784964772069
+  },
+  "G8|Social Science|British Raj and Indian Army Reorganization": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|Anglo-Maratha Wars": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|British Response to the Rebellion": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|Aurangzeb's Rise to Power": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|Aurangzeb's Succession": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|Capital": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|British Takeover of India": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|Challenges in Exercising Voting Rights": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|Capital as a Factor of Production": {
+   "status": "published-with-warnings",
+   "at": 1784964772628
+  },
+  "G8|Social Science|Challenges in Indian Democracy": {
+   "status": "passing",
+   "at": 1784964770753
+  },
+  "G8|Social Science|Checks and Balances in Democracy": {
+   "status": "passing",
+   "at": 1784964770753
+  },
+  "G8|Social Science|Chhatrapati Shivaji's Early Life": {
+   "status": "passing",
+   "at": 1784964770753
+  },
+  "G8|Social Science|Chhatrapati Shivaji's Military Campaigns": {
+   "status": "passing",
+   "at": 1784964770753
+  },
+  "G8|Social Science|Citizen Engagement in Democracy": {
+   "status": "passing",
+   "at": 1784964770753
+  },
+  "G8|Social Science|Battle of Plassey": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|Challenges to Human Capital Development": {
+   "status": "published-with-warnings",
+   "at": 1784964772642
+  },
+  "G8|Social Science|Aurangzeb's Reign": {
+   "status": "passing",
+   "at": 1784964770752
+  },
+  "G8|Social Science|Challenges to the Effective Functioning of Legislatures": {
+   "status": "passing",
+   "at": 1784964770753
+  },
+  "G8|Social Science|Chhatrapati Shivaji's Coronation": {
+   "status": "passing",
+   "at": 1784964770753
+  },
+  "G8|Social Science|Colonialism in India": {
+   "status": "passing",
+   "at": 1784964770753
+  },
+  "G8|Social Science|Colonialism Definition": {
+   "status": "passing",
+   "at": 1784964770753
+  },
+  "G8|Social Science|Competing with New Businesses": {
+   "status": "published-with-warnings",
+   "at": 1784964772536
+  },
+  "G9|English|Ability Beyond Disability": {
+   "status": "passing",
+   "at": 1784964779856
+  },
+  "G9|English|Actions Speak Louder Than Words": {
+   "status": "passing",
+   "at": 1784964779856
+  },
+  "G9|English|Advantages of Home Gardens": {
+   "status": "passing",
+   "at": 1784964779857
+  },
+  "G9|English|Advantage and Disadvantage of Living in Town": {
+   "status": "published-with-warnings",
+   "at": 1784964781335
+  },
+  "G9|English|Active vs Passive Voice": {
+   "status": "published-with-warnings",
+   "at": 1784964781521
+  },
+  "G9|English|Allegory in Literature": {
+   "status": "passing",
+   "at": 1784964779857
+  },
+  "G9|English|Alliteration in Poetry": {
+   "status": "passing",
+   "at": 1784964779857
+  },
+  "G9|English|Artistic Energy in a Studio": {
+   "status": "passing",
+   "at": 1784964779857
+  },
+  "G9|English|Aside in Theatre": {
+   "status": "passing",
+   "at": 1784964779857
+  },
+  "G9|English|Belief in Oneself": {
+   "status": "published-with-warnings",
+   "at": 1784964781300
+  },
+  "G9|English|Body Language Book": {
+   "status": "passing",
+   "at": 1784964781425
+  },
+  "G9|English|Body Language's Role in Communication": {
+   "status": "passing",
+   "at": 1784964781425
+  },
+  "G9|English|Age and Learning": {
+   "status": "published-with-warnings",
+   "at": 1784964781423
+  },
+  "G9|English|Celebrating India's Natural Beauty": {
+   "status": "passing",
+   "at": 1784964781525
+  },
+  "G9|English|Body Language Reflects Confidence": {
+   "status": "passing",
+   "at": 1784964781425
+  },
+  "G9|English|Binomials in English": {
+   "status": "published-with-warnings",
+   "at": 1784964782644
+  },
+  "G9|English|Celebration of Vocations": {
+   "status": "passing",
+   "at": 1784964781526
+  },
+  "G9|English|Caring for the Elderly": {
+   "status": "passing",
+   "at": 1784964781425
+  },
+  "G9|English|Believing in Oneself": {
+   "status": "published-with-warnings",
+   "at": 1784964782908
+  },
+  "G9|English|Challenges Faced by Khetaram": {
+   "status": "published-with-warnings",
+   "at": 1784964782795
+  },
+  "G9|English|Character's Reaction to Death": {
+   "status": "published-with-warnings",
+   "at": 1784964784089
+  },
+  "G9|English|Choosing a Gift (Pankha)": {
+   "status": "passing",
+   "at": 1784964782904
+  },
+  "G9|English|Collocation in Language": {
+   "status": "published-with-warnings",
+   "at": 1784964784369
+  },
+  "G9|English|Compassion for Living Creatures": {
+   "status": "passing",
+   "at": 1784964782909
+  },
+  "G9|English|Condolence Message Format": {
+   "status": "passing",
+   "at": 1784964782910
+  },
+  "G9|English|Cost of Pursuing Dreams": {
+   "status": "published-with-warnings",
+   "at": 1784964784243
+  },
+  "G9|English|Changing Dreams": {
+   "status": "passing",
+   "at": 1784964782798
+  },
+  "G9|English|Challenging Stereotypes": {
+   "status": "published-with-warnings",
+   "at": 1784964784217
+  },
+  "G9|English|Carriers of Words": {
+   "status": "published-with-warnings",
+   "at": 1784964782902
+  },
+  "G9|English|Childhood Memories": {
+   "status": "passing",
+   "at": 1784964782904
+  },
+  "G9|Mathematics|Angle in Semicircle": {
+   "status": "passing",
+   "at": 1784964819971
+  },
+  "G9|Mathematics|Area of a Circular Segment": {
+   "status": "passing",
+   "at": 1784964819985
+  },
+  "G9|Mathematics|Area of a Cyclic 4-gon": {
+   "status": "passing",
+   "at": 1784964819987
+  },
+  "G9|Mathematics|Area of a Cyclic Quadrilateral": {
+   "status": "passing",
+   "at": 1784964819992
+  },
+  "G9|Mathematics|Algebraic Identities": {
+   "status": "passing",
+   "at": 1784964819968
+  },
+  "G9|Mathematics|Angle Subtended by an Arc at Centre": {
+   "status": "passing",
+   "at": 1784964819972
+  },
+  "G9|Mathematics|Angle Subtended by Arc at Centre": {
+   "status": "passing",
+   "at": 1784964819974
+  },
+  "G9|Mathematics|Area of a Parallelogram": {
+   "status": "passing",
+   "at": 1784964819993
+  },
+  "G9|Mathematics|Area of a Triangle": {
+   "status": "passing",
+   "at": 1784964819997
+  },
+  "G9|Mathematics|Area of Sector of a Circle": {
+   "status": "passing",
+   "at": 1784964819997
+  },
+  "G9|Mathematics|Arithmetic of Integers": {
+   "status": "passing",
+   "at": 1784964819998
+  },
+  "G9|Mathematics|Arithmetic Progression (AP)": {
+   "status": "passing",
+   "at": 1784964820000
+  },
+  "G9|Mathematics|Angle Subtended by Diameter": {
+   "status": "passing",
+   "at": 1784964819976
+  },
+  "G9|Mathematics|Area of a Circle": {
+   "status": "passing",
+   "at": 1784964819980
+  },
+  "G9|Mathematics|Area of a Rectangle": {
+   "status": "passing",
+   "at": 1784964819994
+  },
+  "G9|Mathematics|Cartesian Coordinate System": {
+   "status": "passing",
+   "at": 1784964820005
+  },
+  "G9|Mathematics|Arithmetic Sequence Pattern": {
+   "status": "passing",
+   "at": 1784964820001
+  },
+  "G9|Mathematics|Brahmagupta's Formula for Cyclic Quadrilateral": {
+   "status": "passing",
+   "at": 1784964820004
+  },
+  "G9|Mathematics|Bouncing Ball Heights as GP": {
+   "status": "passing",
+   "at": 1784964820003
+  },
+  "G9|Mathematics|Chords and Their Angles": {
+   "status": "passing",
+   "at": 1784964820007
+  },
+  "G9|Mathematics|Area of a Sector of a Disc": {
+   "status": "passing",
+   "at": 1784964819996
+  },
+  "G9|Mathematics|Circle Symmetry": {
+   "status": "passing",
+   "at": 1784964820007
+  },
+  "G9|Mathematics|Chords and Distance from Centre": {
+   "status": "passing",
+   "at": 1784964820006
+  },
+  "G9|Mathematics|Circumference of a Circle": {
+   "status": "passing",
+   "at": 1784964820017
+  },
+  "G9|Mathematics|Circle Definition": {
+   "status": "passing",
+   "at": 1784964820007
+  },
+  "G9|Mathematics|Chords of Equal Length are Equidistant from Centre": {
+   "status": "passing",
+   "at": 1784964820007
+  },
+  "G9|Mathematics|Area of a Quarter Circular Disc": {
+   "status": "unfixable",
+   "at": 1784963488422
+  },
+  "G9|Mathematics|Circle with Origin as Center": {
+   "status": "passing",
+   "at": 1784964820008
+  },
+  "G9|Mathematics|Circumcircle of a Triangle": {
+   "status": "passing",
+   "at": 1784964820017
+  },
+  "G9|Mathematics|Concept of Zero": {
+   "status": "passing",
+   "at": 1784964820023
+  },
+  "G9|Science|Alloys": {
+   "status": "passing",
+   "at": 1784964822352
+  },
+  "G9|Science|Animal Cell Flexibility": {
+   "status": "passing",
+   "at": 1784964822354
+  },
+  "G9|Science|Alloys and Metal Mixtures": {
+   "status": "passing",
+   "at": 1784964822352
+  },
+  "G9|Science|Animal Cell Vacuoles": {
+   "status": "passing",
+   "at": 1784964822354
+  },
+  "G9|Science|Angiosperm: Flowering Plants": {
+   "status": "passing",
+   "at": 1784964822354
+  },
+  "G9|Science|Animal Cell Regeneration": {
+   "status": "passing",
+   "at": 1784964822354
+  },
+  "G9|Science|Animal Sound Production": {
+   "status": "passing",
+   "at": 1784964822356
+  },
+  "G9|Science|Annelida: Segmentation and Body Cavities": {
+   "status": "passing",
+   "at": 1784964822358
+  },
+  "G9|Science|Animal Tissues and Their Functions": {
+   "status": "passing",
+   "at": 1784964822358
+  },
+  "G9|Science|Asexual Reproduction in Plants": {
+   "status": "passing",
+   "at": 1784964822361
+  },
+  "G9|Science|Atmosphere's Role in Protecting Earth": {
+   "status": "passing",
+   "at": 1784964822363
+  },
+  "G9|Science|Atomic Combination": {
+   "status": "passing",
+   "at": 1784964822363
+  },
+  "G9|Science|Atomic Number and Mass Number": {
+   "status": "passing",
+   "at": 1784964822363
+  },
+  "G9|Science|Atomic Theory Origins": {
+   "status": "passing",
+   "at": 1784964822363
+  },
+  "G9|Science|Average Acceleration": {
+   "status": "published-with-warnings",
+   "at": 1784964823646
+  },
+  "G9|Science|Arthropoda: Jointed Appendages and External Skeleton": {
+   "status": "passing",
+   "at": 1784964822360
+  },
+  "G9|Science|Apical Meristem": {
+   "status": "passing",
+   "at": 1784964822359
+  },
+  "G9|Science|Average Speed and Average Velocity": {
+   "status": "passing",
+   "at": 1784964822526
+  },
+  "G9|Science|Atomic Number": {
+   "status": "passing",
+   "at": 1784964822363
+  },
+  "G9|Science|Approximate vs Exact Values": {
+   "status": "passing",
+   "at": 1784964822360
+  },
+  "G9|Science|Average Atomic Mass": {
+   "status": "passing",
+   "at": 1784964822526
+  },
+  "G9|Science|Atmospheric Layers and Role": {
+   "status": "passing",
+   "at": 1784964822363
+  },
+  "G10|English|Adjectives -ing and -ed": {
+   "status": "published-with-warnings",
+   "at": 1784964831368
+  },
+  "G10|English|Afflicted with": {
+   "status": "published-with-warnings",
+   "at": 1784964831316
+  },
+  "G10|English|Anger Management": {
+   "status": "published-with-warnings",
+   "at": 1784964831203
+  },
+  "G10|English|Anil's Kindness": {
+   "status": "published-with-warnings",
+   "at": 1784964832683
+  },
+  "G10|English|Anil's Reaction": {
+   "status": "published-with-warnings",
+   "at": 1784964832628
+  },
+  "G10|English|Analyzing the Structure of a Poem": {
+   "status": "published-with-warnings",
+   "at": 1784964833844
+  },
+  "G10|English|Anne Frank's Diary": {
+   "status": "published-with-warnings",
+   "at": 1784964832676
+  },
+  "G10|English|Anne Frank's Personality": {
+   "status": "published-with-warnings",
+   "at": 1784964834146
+  },
+  "G10|English|Apartheid Definition": {
+   "status": "published-with-warnings",
+   "at": 1784964836115
+  },
+  "G10|English|Apartheid's Impact": {
+   "status": "published-with-warnings",
+   "at": 1784964834165
+  },
+  "G10|English|Ausable's Improvised Balcony Story": {
+   "status": "published-with-warnings",
+   "at": 1784964835538
+  },
+  "G10|English|Arab Origin of Macaques and Malabar Squirrels": {
+   "status": "published-with-warnings",
+   "at": 1784964837636
+  },
+  "G10|English|Ausable's Unconventional Appearance": {
+   "status": "published-with-warnings",
+   "at": 1784964837113
+  },
+  "G10|English|Ausable's Presence of Mind": {
+   "status": "published-with-warnings",
+   "at": 1784964835602
+  },
+  "G10|English|Bholi's Marriage Rejection": {
+   "status": "published-with-warnings",
+   "at": 1784964839028
+  },
+  "G10|English|Bholi's Marriage Proposal": {
+   "status": "published-with-warnings",
+   "at": 1784964838788
+  },
+  "G10|English|Bholi's School Experience": {
+   "status": "published-with-warnings",
+   "at": 1784964839616
+  },
+  "G10|English|Bholi's Transformation": {
+   "status": "published-with-warnings",
+   "at": 1784964839825
+  },
+  "G10|English|Books as Weapons": {
+   "status": "published-with-warnings",
+   "at": 1784964840657
+  },
+  "G10|English|Author's Intent and Language Choice": {
+   "status": "published-with-warnings",
+   "at": 1784964837433
+  },
+  "G10|English|Bee Navigation": {
+   "status": "published-with-warnings",
+   "at": 1784964838175
+  },
+  "G10|English|Bholi's Disabilities": {
+   "status": "published-with-warnings",
+   "at": 1784964838401
+  },
+  "G10|English|Books vs Electronic Media": {
+   "status": "published-with-warnings",
+   "at": 1784964841411
+  },
+  "G10|English|Borrowing the Necklace": {
+   "status": "published-with-warnings",
+   "at": 1784964841784
+  },
+  "G10|English|Characteristics of a Diary": {
+   "status": "published-with-warnings",
+   "at": 1784964842692
+  },
+  "G10|English|Change in Relationships": {
+   "status": "published-with-warnings",
+   "at": 1784964842392
+  },
+  "G10|English|Books as Companions": {
+   "status": "published-with-warnings",
+   "at": 1784964840309
+  },
+  "G10|English|Books Saving the World": {
+   "status": "published-with-warnings",
+   "at": 1784964841099
+  },
+  "G10|English|Ausable's Unexpected Help": {
+   "status": "published-with-warnings",
+   "at": 1784964836907
+  },
+  "G10|English|Bread-Baking Tradition": {
+   "status": "published-with-warnings",
+   "at": 1784964842099
+  },
+  "G10|Mathematics|Arithmetic Mean": {
+   "status": "passing",
+   "at": 1784964842694
+  },
+  "G10|Mathematics|Area of a Sector": {
+   "status": "passing",
+   "at": 1784964842694
+  },
+  "G10|Mathematics|Area of a Rhombus": {
+   "status": "passing",
+   "at": 1784964842694
+  },
+  "G10|Mathematics|Algebraic Methods for Solving Linear Equations": {
+   "status": "passing",
+   "at": 1784964842694
+  },
+  "G10|Mathematics|Arithmetic Progression (AP)": {
+   "status": "passing",
+   "at": 1784964842694
+  },
+  "G10|Mathematics|Calculate Mean, Median, and Mode in a Data Set": {
+   "status": "passing",
+   "at": 1784964842694
+  },
+  "G10|Mathematics|Basic Proportionality Theorem": {
+   "status": "passing",
+   "at": 1784964842694
+  },
+  "G10|Mathematics|Area of a Segment": {
+   "status": "passing",
+   "at": 1784964842694
+  },
+  "G10|Mathematics|Calculate Median in a Grouped Data Set": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Consistent and Inconsistent Equations": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Compare Measures of Central Tendency": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Complementary Events": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Consistent and Inconsistent Linear Equations": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Corresponding Angles and Parallel Lines": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Calculate Median with Given Median Value": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Converse of Basic Proportionality Theorem": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Calculate Median Height": {
+   "status": "passing",
+   "at": 1784964842694
+  },
+  "G10|Mathematics|Criteria for Similarity of Triangles - AAA": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Criteria for Similarity of Triangles - SAS": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Cubic Polynomials": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Criteria for Similarity of Triangles - SSS": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Discriminant of a Quadratic Equation": {
+   "status": "passing",
+   "at": 1784964842696
+  },
+  "G10|Mathematics|Distance Formula": {
+   "status": "passing",
+   "at": 1784964842696
+  },
+  "G10|Mathematics|Distance from Origin": {
+   "status": "passing",
+   "at": 1784964842696
+  },
+  "G10|Mathematics|Degree of a Polynomial": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Dependent and Independent Equations": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Determine Median and Mode in a Data Set": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Divisibility by Prime Numbers": {
+   "status": "passing",
+   "at": 1784964842696
+  },
+  "G10|Mathematics|Determining Heights and Distances using Trigonometry": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Mathematics|Dependent Linear Equations": {
+   "status": "passing",
+   "at": 1784964842695
+  },
+  "G10|Science|Accommodation of the Eye": {
+   "status": "passing",
+   "at": 1784964842700
+  },
+  "G10|Science|Acids and Bases in Everyday Life": {
+   "status": "passing",
+   "at": 1784964842700
+  },
+  "G10|Science|Acid Rain": {
+   "status": "passing",
+   "at": 1784964842700
+  },
+  "G10|Science|Acid-Base Indicators": {
+   "status": "passing",
+   "at": 1784964842700
+  },
+  "G10|Science|Acid-Base Neutralization": {
+   "status": "passing",
+   "at": 1784964842700
+  },
+  "G10|Science|Acids and Bases React with Each Other": {
+   "status": "published-with-warnings",
+   "at": 1784964844025
+  },
+  "G10|Science|Acids and Bases React with Each Other to Form Salts and Water": {
+   "status": "passing",
+   "at": 1784964842700
+  },
+  "G10|Science|Acids React with Metals to Produce Hydrogen Gas": {
+   "status": "published-with-warnings",
+   "at": 1784964844069
+  },
+  "G10|Science|Alimentary Canal in Humans": {
+   "status": "passing",
+   "at": 1784964842700
+  },
+  "G10|Science|Acids and Bases React with Metal Carbonates and Hydrogencarbonates": {
+   "status": "passing",
+   "at": 1784964842700
+  },
+  "G10|Science|Acids Change Litmus Color to Red": {
+   "status": "passing",
+   "at": 1784964842700
+  },
+  "G10|Science|Allotropes of Carbon": {
+   "status": "published-with-warnings",
+   "at": 1784964844125
+  },
+  "G10|Science|Alloys": {
+   "status": "passing",
+   "at": 1784964842702
+  },
+  "G10|Science|Atmospheric Refraction": {
+   "status": "passing",
+   "at": 1784964842702
+  },
+  "G10|Science|Balancing Chemical Equations": {
+   "status": "passing",
+   "at": 1784964842703
+  },
+  "G10|Science|Bases Change Litmus Color to Blue": {
+   "status": "passing",
+   "at": 1784964842703
+  },
+  "G10|Science|Benefits of Spores": {
+   "status": "passing",
+   "at": 1784964842703
+  },
+  "G10|Science|Addition Reactions": {
+   "status": "passing",
+   "at": 1784964842700
+  },
+  "G10|Science|Biodegradable vs Non-Biodegradable Substances": {
+   "status": "passing",
+   "at": 1784964842703
+  },
+  "G10|Science|Animal Hormones: Adrenaline": {
+   "status": "passing",
+   "at": 1784964842702
+  },
+  "G10|Science|Biodegradable Waste Disposal": {
+   "status": "passing",
+   "at": 1784964842703
+  },
+  "G10|Science|Aqua Regia": {
+   "status": "passing",
+   "at": 1784964842702
+  },
+  "G10|Science|Baking Soda Uses": {
+   "status": "passing",
+   "at": 1784964842703
+  },
+  "G10|Science|Carbon Compounds as Fuel Sources": {
+   "status": "published-with-warnings",
+   "at": 1784964845316
+  },
+  "G10|Science|Carbon Compounds as Fuels": {
+   "status": "published-with-warnings",
+   "at": 1784964845324
+  },
+  "G10|Science|Asexual Reproduction": {
+   "status": "passing",
+   "at": 1784964842702
+  },
+  "G10|Science|Brain Regions": {
+   "status": "passing",
+   "at": 1784964844026
+  },
+  "G10|Science|Blue Sky": {
+   "status": "passing",
+   "at": 1784964844026
+  },
+  "G10|Science|Budding in Organisms": {
+   "status": "passing",
+   "at": 1784964844027
+  },
+  "G10|Science|Blood Pressure": {
+   "status": "published-with-warnings",
+   "at": 1784964844095
+  },
+  "G10|Social Science|Advertisement": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Agricultural Diversification": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Air Pollution": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Agricultural Importance of India": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Agricultural Reforms in India": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Alluvial Soils": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Allegorical Representations of Nations: Marianne and Germania": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Air Travel in Remote Regions": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Automobile Industry": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Air Transport in India": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Average Income and Disparities": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Bardoli Satyagraha (1928) and Vallabhbhai Patel’s Leadership": {
+   "status": "published-with-warnings",
+   "at": 1784964846717
+  },
+  "G10|Social Science|British Nation-State Formation: Ethnic and Cultural Suppression": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Bretton Woods Institutions": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|British Cotton Goods in India": {
+   "status": "passing",
+   "at": 1784964845327
+  },
+  "G10|Social Science|Challenges for Small Producers in Globalization": {
+   "status": "passing",
+   "at": 1784964845328
+  },
+  "G10|Social Science|Cement Industry": {
+   "status": "passing",
+   "at": 1784964845328
+  },
+  "G10|Social Science|Cartoons as Social Commentary": {
+   "status": "passing",
+   "at": 1784964845328
+  },
+  "G10|Social Science|Case Study: Reji’s Medical Negligence": {
+   "status": "passing",
+   "at": 1784964845328
+  },
+  "G11|Accountancy|Accounting Equation": {
+   "status": "published-with-warnings",
+   "at": 1784982210209
+  },
+  "G11|Accountancy|Accounting Equation: Assets = Liabilities + Capital": {
+   "status": "published-with-warnings",
+   "at": 1784982210179
+  },
+  "G11|Accountancy|Account Format": {
+   "status": "published-with-warnings",
+   "at": 1784982210364
+  },
+  "G11|Accountancy|Accrued Income": {
+   "status": "published-with-warnings",
+   "at": 1784982209738
+  },
+  "G11|Accountancy|Accrued Income: Income Received in Advance": {
+   "status": "published-with-warnings",
+   "at": 1784982210959
+  },
+  "G11|Accountancy|Adjusting Cash Book Balance for Reconciliation": {
+   "status": "passing",
+   "at": 1784982210185
+  },
+  "G11|Accountancy|Adjusting Entries": {
+   "status": "published-with-warnings",
+   "at": 1784982211424
+  },
+  "G11|Accountancy|Adjusting for Errors in Bank Reconciliation": {
+   "status": "published-with-warnings",
+   "at": 1784982211433
+  },
+  "G11|Accountancy|Adjusting Entries: Ensuring Accurate Financial Statements": {
+   "status": "published-with-warnings",
+   "at": 1784982211501
+  },
+  "G11|Biology|Ammonotelism": {
+   "status": "passing",
+   "at": 1784982214954
+  },
+  "G11|Biology|Animal Classification": {
+   "status": "unfixable",
+   "at": 1784982253395
+  },
+  "G11|Biology|Animal Classification Challenges": {
+   "status": "published-with-warnings",
+   "at": 1784982217439
+  },
+  "G11|Business Studies|Advantages of Consumer Cooperative Stores": {
+   "status": "published-with-warnings",
+   "at": 1784982289639
+  },
+  "G11|Business Studies|Advantages of Chain Stores: Economies & Risk Reduction": {
+   "status": "unfixable",
+   "at": 1784982326296
+  },
+  "G11|Business Studies|Advantages of Commercial Bank Loans for Businesses": {
+   "status": "published-with-warnings",
+   "at": 1784982289624
+  },
+  "G11|Business Studies|Advantages of Joint Ventures": {
+   "status": "unfixable",
+   "at": 1784982322213
+  },
+  "G7|English|Adventure Activities": {
+   "status": "published",
+   "at": 1784964677909
+  },
+  "G7|English|Adventure Sports Risks": {
+   "status": "published",
+   "at": 1784964677931
+  },
+  "G8|English|AI in Accessibility": {
+   "status": "published",
+   "at": 1784964689523
+  },
+  "G8|English|Act of Bravery: Rohan's Story": {
+   "status": "published",
+   "at": 1784964689530
+  },
+  "G8|English|AI in Environmental Prediction": {
+   "status": "published",
+   "at": 1784964689680
+  },
+  "G8|English|AI in Education": {
+   "status": "published",
+   "at": 1784964689685
+  },
+  "G8|English|AI in Healthcare": {
+   "status": "published",
+   "at": 1784964690806
+  },
+  "G8|English|AI in Medicine Discovery": {
+   "status": "published-with-warnings",
+   "at": 1784964690944
+  },
+  "G8|English|AI in Resource Management": {
+   "status": "published",
+   "at": 1784964690952
+  },
+  "G8|English|AI in Renewable Energy": {
+   "status": "published-with-warnings",
+   "at": 1784964691216
+  },
+  "G8|English|AI in Teacher Assistance": {
+   "status": "published",
+   "at": 1784964691946
+  },
+  "G8|English|Animals' Ability to Sense Natural Calamities": {
+   "status": "published",
+   "at": 1784964692048
+  },
+  "G8|English|Art Exhibition Report": {
+   "status": "published",
+   "at": 1784964692096
+  },
+  "G8|English|Asking Questions to Enhance Observation": {
+   "status": "published",
+   "at": 1784964692243
+  },
+  "G8|English|Astronauts' Daily Life in Space": {
+   "status": "published",
+   "at": 1784964693168
+  },
+  "G8|English|Bibha Chowdhuri's Pioneering Role": {
+   "status": "published-with-warnings",
+   "at": 1784964693532
+  },
+  "G8|English|Birsa Munda's Role in India's Freedom Struggle": {
+   "status": "published",
+   "at": 1784964693538
+  },
+  "G8|English|Bravery Symbol: Param Vir Chakra": {
+   "status": "published",
+   "at": 1784964694384
+  },
+  "G8|English|Camel's Discomfort": {
+   "status": "published-with-warnings",
+   "at": 1784964694813
+  },
+  "G8|English|Camel's Eye Condition": {
+   "status": "published-with-warnings",
+   "at": 1784964694873
+  },
+  "G8|English|Camel's Tail Length": {
+   "status": "published-with-warnings",
+   "at": 1784964695655
+  },
+  "G8|English|Care for Plants": {
+   "status": "published",
+   "at": 1784964695835
+  },
+  "G8|English|Challenges Faced by Women Scientists": {
+   "status": "published",
+   "at": 1784964695954
+  },
+  "G8|English|Character Relationships": {
+   "status": "published",
+   "at": 1784964696852
+  },
+  "G8|English|Change in Crew's Reaction to Claribel": {
+   "status": "published-with-warnings",
+   "at": 1784964696915
+  },
+  "G8|English|Cherry Tree's Toughness": {
+   "status": "published",
+   "at": 1784964696996
+  },
+  "G8|English|Chorus in Poetry": {
+   "status": "published",
+   "at": 1784964697948
+  },
+  "G8|English|Chipko Movement": {
+   "status": "published-with-warnings",
+   "at": 1784964698147
+  },
+  "G8|English|Claribel's Role in Air Quality Monitoring": {
+   "status": "published-with-warnings",
+   "at": 1784964698253
+  },
+  "G8|English|Clues in Mysteries": {
+   "status": "published",
+   "at": 1784964698986
+  },
+  "G8|English|Collective Nouns for Groups of Animals": {
+   "status": "published",
+   "at": 1784964699160
+  },
+  "G8|English|Crew's Response to the Situation": {
+   "status": "published",
+   "at": 1784964699277
+  },
+  "G8|English|Dashes (En Dash and Em Dash)": {
+   "status": "published-with-warnings",
+   "at": 1784964700246
+  },
+  "G8|English|Determiners": {
+   "status": "published-with-warnings",
+   "at": 1784964700412
+  },
+  "G8|English|Differing Perspectives on the World": {
+   "status": "published-with-warnings",
+   "at": 1784964700522
+  },
+  "G8|English|Distributive Determiners": {
+   "status": "published-with-warnings",
+   "at": 1784964701512
+  },
+  "G8|English|Ebb Tide": {
+   "status": "published",
+   "at": 1784964701572
+  },
+  "G8|English|Early Winter's Effect on Grandfather": {
+   "status": "published-with-warnings",
+   "at": 1784964701635
+  },
+  "G8|English|Encyclopedia vs Dictionary": {
+   "status": "published",
+   "at": 1784964702524
+  },
+  "G8|English|Engage Reader's Curiosity": {
+   "status": "published",
+   "at": 1784964702590
+  },
+  "G8|English|Engaging All Senses in Observation": {
+   "status": "published",
+   "at": 1784964702658
+  },
+  "G8|English|Enigmatic": {
+   "status": "published",
+   "at": 1784964703543
+  },
+  "G8|English|Estuary": {
+   "status": "published",
+   "at": 1784964703588
+  },
+  "G8|English|Evidence Discovery": {
+   "status": "published",
+   "at": 1784964703672
+  },
+  "G8|English|Farmers' Dependence on Rain": {
+   "status": "published",
+   "at": 1784964704708
+  },
+  "G8|English|Falling Tone in Speech": {
+   "status": "published-with-warnings",
+   "at": 1784964704793
+  },
+  "G8|English|Fallowing": {
+   "status": "published-with-warnings",
+   "at": 1784964704834
+  },
+  "G8|English|Figuring Out Puzzles": {
+   "status": "published",
+   "at": 1784964705743
+  },
+  "G8|English|Final Match Description": {
+   "status": "published",
+   "at": 1784964705818
+  },
+  "G8|English|Financial Literacy": {
+   "status": "published",
+   "at": 1784964705847
+  },
+  "G8|English|Gallantry Awards in India": {
+   "status": "published",
+   "at": 1784964706886
+  },
+  "G8|English|Forgiveness and Moving On": {
+   "status": "published-with-warnings",
+   "at": 1784964707035
+  },
+  "G8|English|Future Tense with 'will'": {
+   "status": "published-with-warnings",
+   "at": 1784964707108
+  },
+  "G8|English|Glowing Waters of Kerala": {
+   "status": "published",
+   "at": 1784964707954
+  },
+  "G8|English|Gopi's Magic Brush": {
+   "status": "published",
+   "at": 1784964708044
+  },
+  "G8|English|Growth and Change": {
+   "status": "published-with-warnings",
+   "at": 1784964708378
+  },
+  "G8|English|Harvest Festival": {
+   "status": "published",
+   "at": 1784964709005
+  },
+  "G8|English|Hide-and-Seek": {
+   "status": "published-with-warnings",
+   "at": 1784964709273
+  },
+  "G8|English|Hiding Information": {
+   "status": "published-with-warnings",
+   "at": 1784964709655
+  },
+  "G8|English|Idiomatic Expressions with 'Eye'": {
+   "status": "published",
+   "at": 1784964710271
+  },
+  "G8|English|Hymn Structure": {
+   "status": "published-with-warnings",
+   "at": 1784964710280
+  },
+  "G8|English|Imaginative Essay": {
+   "status": "published",
+   "at": 1784964710684
+  },
+  "G8|English|Importance of Internet": {
+   "status": "published-with-warnings",
+   "at": 1784964711548
+  },
+  "G8|English|Impact of Not Using a Magnifying Glass": {
+   "status": "published-with-warnings",
+   "at": 1784964711562
+  },
+  "G8|English|Indirect Speech": {
+   "status": "published",
+   "at": 1784964711713
+  },
+  "G8|English|Instant vs. Written Communication": {
+   "status": "published",
+   "at": 1784964712614
+  },
+  "G8|English|Inferring Mrs. Jones' Taste in Gardening": {
+   "status": "published",
+   "at": 1784964712669
+  },
+  "G8|English|Integrity and Personal Growth": {
+   "status": "published",
+   "at": 1784964712719
+  },
+  "G8|English|King's Offer": {
+   "status": "published",
+   "at": 1784964713671
+  },
+  "G8|English|Land as a Living Entity": {
+   "status": "published",
+   "at": 1784964713732
+  },
+  "G8|English|Jim's Reaction to the Air Quality Issue": {
+   "status": "published-with-warnings",
+   "at": 1784964713864
+  },
+  "G8|English|Language Game - Name the Mystery Object": {
+   "status": "published",
+   "at": 1784964714715
+  },
+  "G8|English|Life in Himalayan Foothills Description": {
+   "status": "published",
+   "at": 1784964714905
+  },
+  "G8|English|Living Root Bridges": {
+   "status": "published",
+   "at": 1784964715754
+  },
+  "G8|English|Lonar Crater Lake": {
+   "status": "published-with-warnings",
+   "at": 1784964716171
+  },
+  "G8|English|Luck and Effort": {
+   "status": "published-with-warnings",
+   "at": 1784964717007
+  },
+  "G8|English|Magnetic Hills": {
+   "status": "published",
+   "at": 1784964717175
+  },
+  "G8|English|Magnifying Glass as a Tool for Discovery": {
+   "status": "published",
+   "at": 1784964718038
+  },
+  "G8|English|Magnifying Glass as a Tool for Observation": {
+   "status": "published",
+   "at": 1784964718238
+  },
+  "G8|English|Major General Amar Nath Sharma's Service": {
+   "status": "published",
+   "at": 1784964719099
+  },
+  "G8|English|Major Somnath Sharma's Bravery at Badgam": {
+   "status": "published",
+   "at": 1784964719295
+  },
+  "G8|English|Major Somnath Sharma's Leadership": {
+   "status": "published",
+   "at": 1784964720128
+  },
+  "G8|English|Merchant's Accusation": {
+   "status": "published",
+   "at": 1784964720299
+  },
+  "G8|English|Mindfulness for Improved Observation": {
+   "status": "published",
+   "at": 1784964721329
+  },
+  "G8|English|Merged Words": {
+   "status": "published-with-warnings",
+   "at": 1784964721404
+  },
+  "G8|English|Moon as a Symbol of Reachability": {
+   "status": "published",
+   "at": 1784964722429
+  },
+  "G8|English|Misunderstandings and Resolutions": {
+   "status": "published-with-warnings",
+   "at": 1784964722614
+  },
+  "G8|English|Motivation Analysis": {
+   "status": "published-with-warnings",
+   "at": 1784964723713
+  },
+  "G8|English|Mrs. Jones' Fondness for Unusual Items": {
+   "status": "published-with-warnings",
+   "at": 1784964723880
+  },
+  "G8|English|Mrs. Jones' Positive Attitude Towards Her Garden": {
+   "status": "published",
+   "at": 1784964724758
+  },
+  "G8|English|Mrs. Jones' Unique Garden": {
+   "status": "published",
+   "at": 1784964724932
+  },
+  "G8|English|Natural Phenomena": {
+   "status": "published",
+   "at": 1784964725964
+  },
+  "G8|English|Mystique": {
+   "status": "published-with-warnings",
+   "at": 1784964726029
+  },
+  "G8|English|Birsa Munda's Legacy": {
+   "status": "unfixable",
+   "at": 1784964726575
+  },
+  "G8|English|Note-Taking and Sketching for Memory Retention": {
+   "status": "published",
+   "at": 1784964727053
+  },
+  "G8|English|Nicknames and Real Names": {
+   "status": "published-with-warnings",
+   "at": 1784964727238
+  },
+  "G8|English|Observation Skills": {
+   "status": "published",
+   "at": 1784964728089
+  },
+  "G8|English|Observing Camel's Tracks": {
+   "status": "published",
+   "at": 1784964728761
+  },
+  "G8|English|Old Woman's Wisdom": {
+   "status": "published",
+   "at": 1784964729171
+  },
+  "G8|English|Optical Illusions": {
+   "status": "published",
+   "at": 1784964729792
+  },
+  "G8|English|Overcoming Disability: Evelyn Glennie's Journey": {
+   "status": "published",
+   "at": 1784964730220
+  },
+  "G8|English|Paddy Cultivation": {
+   "status": "published",
+   "at": 1784964730834
+  },
+  "G8|English|Patience and Growth": {
+   "status": "published-with-warnings",
+   "at": 1784964731490
+  },
+  "G8|English|Pausing and Chunking in Speaking": {
+   "status": "published-with-warnings",
+   "at": 1784964732132
+  },
+  "G8|English|Perception of Women in Traditionally Male-Dominated Fields": {
+   "status": "published",
+   "at": 1784964732559
+  },
+  "G8|English|Personification in Poetry": {
+   "status": "published",
+   "at": 1784964733186
+  },
+  "G8|English|Phrasal Verbs": {
+   "status": "published-with-warnings",
+   "at": 1784964733824
+  },
+  "G8|English|Planting a Seed": {
+   "status": "published",
+   "at": 1784964734217
+  },
+  "G8|English|Poet's Attitude Towards the Magnifying Glass": {
+   "status": "published",
+   "at": 1784964734862
+  },
+  "G8|English|Life as a Privilege": {
+   "status": "unfixable",
+   "at": 1784964748003
+  },
+  "G8|English|Prepositional Phrases": {
+   "status": "published-with-warnings",
+   "at": 1784964749816
+  },
+  "G8|English|Present Progressive for Future Actions": {
+   "status": "published",
+   "at": 1784964750863
+  },
+  "G8|English|Prize Giving Ceremony": {
+   "status": "published",
+   "at": 1784964751892
+  },
+  "G8|English|Public Perception of Women Scientists in the 1940s": {
+   "status": "published",
+   "at": 1784964752961
+  },
+  "G8|English|Purpose of Highlighting Women Scientists' Contributions": {
+   "status": "published",
+   "at": 1784964753995
+  },
+  "G8|English|Rain as a Blessing": {
+   "status": "published",
+   "at": 1784964755058
+  },
+  "G8|English|Rakesh's Age Comparison to Cherry Tree": {
+   "status": "published",
+   "at": 1784964756096
+  },
+  "G8|English|Rakesh's Feeling of Being God": {
+   "status": "published-with-warnings",
+   "at": 1784964757394
+  },
+  "G8|English|Observation Beyond Obvious": {
+   "status": "unfixable",
+   "at": 1784964760763
+  },
+  "G8|English|Possessive Forms ('s vs. it's, your vs. you're)": {
+   "status": "unfixable",
+   "at": 1784964768795
+  },
+  "G8|English|Praise for Divine Entities": {
+   "status": "unfixable",
+   "at": 1784964768826
+  },
+  "G9|English|Cultural Literacy": {
+   "status": "published",
+   "at": 1784964785263
+  },
+  "G9|English|Cross-cutting Themes in English Textbook": {
+   "status": "published",
+   "at": 1784964785392
+  },
+  "G9|English|Developing Communicative Skills": {
+   "status": "published",
+   "at": 1784964785473
+  },
+  "G9|English|Determination in Learning": {
+   "status": "published-with-warnings",
+   "at": 1784964785774
+  },
+  "G9|English|Digital Literacy": {
+   "status": "unfixable",
+   "at": 1784964819865
+  },
+  "G10|Social Science|Bhoodan-Gramdan Movement": {
+   "status": "published",
+   "at": 1784965615776
+  },
+  "G10|Social Science|Bamboo Drip Irrigation System": {
+   "status": "published",
+   "at": 1784965615906
+  },
+  "G10|Social Science|Barriers Poor Households Face in Accessing Formal Credit": {
+   "status": "published-with-warnings",
+   "at": 1784965616046
+  },
+  "G10|Social Science|Bharat Mata": {
+   "status": "published",
+   "at": 1784965616112
+  },
+  "G10|Social Science|Aluminium Production and Usage": {
+   "status": "published",
+   "at": 1784965616382
+  },
+  "G10|Social Science|Bank Deposits and Loans": {
+   "status": "published",
+   "at": 1784965616470
+  },
+  "G10|Social Science|Black Soil": {
+   "status": "published",
+   "at": 1784965619143
+  },
+  "G10|Social Science|Caricatures and Cartoons in India": {
+   "status": "published",
+   "at": 1784965619846
+  },
+  "G10|Social Science|Body Mass Index (BMI)": {
+   "status": "published",
+   "at": 1784965619852
+  },
+  "G10|Social Science|Biodiversity and Its Importance": {
+   "status": "published",
+   "at": 1784965620459
+  },
+  "G10|Social Science|Business Classes and the Civil Disobedience Movement": {
+   "status": "published",
+   "at": 1784965620822
+  },
+  "G11|Accountancy|Accounting as an Information System": {
+   "status": "passing",
+   "at": 1784982207554
+  },
+  "G11|Accountancy|Accounting Principles": {
+   "status": "passing",
+   "at": 1784982207556
+  },
+  "G11|Accountancy|Accounting as a Source of Information": {
+   "status": "passing",
+   "at": 1784982207554
+  },
+  "G11|Accountancy|Advantages of Maintaining a Petty Cash Book": {
+   "status": "passing",
+   "at": 1784982210961
+  },
+  "G11|Biology|Biology and Living Processes": {
+   "status": "unfixable",
+   "at": 1784982283898
+  },
+  "G11|Biology|Biomolecules": {
+   "status": "unfixable",
+   "at": 1784982284739
+  },
+  "G11|Biology|Biomacromolecules": {
+   "status": "unfixable",
+   "at": 1784982283901
+  },
+  "G11|Business Studies|Advantages of Departmental Stores: Convenience & Services": {
+   "status": "unfixable",
+   "at": 1784982322202
+  },
+  "G11|Business Studies|Advantages of Supermarkets": {
+   "status": "unfixable",
+   "at": 1784982323355
+  },
+  "G11|Business Studies|Bank Lending": {
+   "status": "published-with-warnings",
+   "at": 1784982301982
+  },
+  "G11|Business Studies|Arguments Supporting Business Social Responsibility": {
+   "status": "published-with-warnings",
+   "at": 1784982295831
+  },
+  "G11|Business Studies|Bank Loan Interest Rate Factors": {
+   "status": "passing",
+   "at": 1784982301986
+  },
+  "G11|Business Studies|Benefits of GST for Citizens": {
+   "status": "published-with-warnings",
+   "at": 1784982324026
+  },
+  "G11|Chemistry|Bohr Model of Hydrogen Atom": {
+   "status": "passing",
+   "at": 1784982356648
+  },
+  "G11|Chemistry|Atomic Spectra and Bohr's Model": {
+   "status": "unfixable",
+   "at": 1784982390936
+  },
+  "G11|Chemistry|Brönsted-Lowry Acids and Bases": {
+   "status": "unfixable",
+   "at": 1784982391006
+  },
+  "G11|Chemistry|Bonding and Antibonding Molecular Orbitals": {
+   "status": "passing",
+   "at": 1784982356649
+  },
+  "G11|Computer Science|Applications of hexadecimal in memory and color coding": {
+   "status": "published-with-warnings",
+   "at": 1784982392757
+  },
+  "G11|Computer Science|Argument vs Parameter": {
+   "status": "unfixable",
+   "at": 1784982425189
+  },
+  "G11|Computer Science|Central Processing Unit (CPU): The Brain of the Computer": {
+   "status": "published-with-warnings",
+   "at": 1784982435153
+  },
+  "G11|Economics|Agricultural Productivity and Employment": {
+   "status": "passing",
+   "at": 1784982467202
+  },
+  "G11|Accountancy|Accounting Process Start and End": {
+   "status": "published-with-warnings",
+   "at": 1784982210199
+  },
+  "G11|Accountancy|Accounting Measurement Units": {
+   "status": "passing",
+   "at": 1784982207556
+  },
+  "G11|Accountancy|Accounting Ledger": {
+   "status": "passing",
+   "at": 1784982207555
+  },
+  "G11|Accountancy|Accrued Commission": {
+   "status": "published-with-warnings",
+   "at": 1784982210398
+  },
+  "G11|Accountancy|Accounting System": {
+   "status": "passing",
+   "at": 1784982207557
+  },
+  "G11|Accountancy|Acquisition Value of a Building": {
+   "status": "passing",
+   "at": 1784982210184
+  },
+  "G11|Accountancy|Accounting Period": {
+   "status": "passing",
+   "at": 1784982207556
+  },
+  "G11|Accountancy|Accounting Period Concept": {
+   "status": "passing",
+   "at": 1784982207556
+  },
+  "G11|Accountancy|Adjustments for Outstanding Expenses": {
+   "status": "published-with-warnings",
+   "at": 1784982211645
+  },
+  "G11|Accountancy|Adjustments for Accrued Income (e.g., Interest on Investments)": {
+   "status": "published-with-warnings",
+   "at": 1784982211625
+  },
+  "G11|Accountancy|Accounting Process": {
+   "status": "passing",
+   "at": 1784982207556
+  },
+  "G11|Accountancy|Analytical Journal Entries with GST": {
+   "status": "passing",
+   "at": 1784982210962
+  },
+  "G11|Accountancy|Advantages of Written Down Value Method": {
+   "status": "passing",
+   "at": 1784982210962
+  },
+  "G11|Accountancy|Analyzing Compound Errors and Their Impact": {
+   "status": "passing",
+   "at": 1784982210962
+  },
+  "G11|Accountancy|Asset Disposal Account: Consolidating Transactions": {
+   "status": "published",
+   "at": 1784982214946
+  },
+  "G11|Accountancy|Asset Disposal: Journal Entries for Sale Before Useful Life": {
+   "status": "passing",
+   "at": 1784982211426
+  },
+  "G11|Accountancy|Annual Depreciation Charge Differences Between Methods": {
+   "status": "passing",
+   "at": 1784982210962
+  },
+  "G11|Biology|Adaptations of Amphibia": {
+   "status": "passing",
+   "at": 1784982214952
+  },
+  "G11|Biology|Aerobic Respiration": {
+   "status": "passing",
+   "at": 1784982214953
+  },
+  "G11|Biology|Abscisic Acid (ABA)": {
+   "status": "passing",
+   "at": 1784982214952
+  },
+  "G11|Biology|Algae Classification": {
+   "status": "unfixable",
+   "at": 1784982249415
+  },
+  "G11|Biology|Amphibolic Pathway": {
+   "status": "passing",
+   "at": 1784982214954
+  },
+  "G11|Biology|Adrenal Gland: Stress and Electrolyte Balance": {
+   "status": "passing",
+   "at": 1784982214952
+  },
+  "G11|Biology|Algae: Classification": {
+   "status": "published-with-warnings",
+   "at": 1784982216284
+  },
+  "G11|Biology|Algae: Diversity and Reproduction": {
+   "status": "published-with-warnings",
+   "at": 1784982216273
+  },
+  "G11|Biology|Asthma and Emphysema": {
+   "status": "passing",
+   "at": 1784982216287
+  },
+  "G11|Biology|Atrial Natriuretic Factor (ANF)": {
+   "status": "unfixable",
+   "at": 1784982250763
+  },
+  "G11|Biology|Algae: Usefulness to Humans": {
+   "status": "published-with-warnings",
+   "at": 1784982216199
+  },
+  "G11|Biology|Angiosperm Flowers and Fruits": {
+   "status": "passing",
+   "at": 1784982214954
+  },
+  "G11|Biology|Animal Classification: Pisces and Tetrapoda": {
+   "status": "unfixable",
+   "at": 1784982250896
+  },
+  "G11|Biology|Biological Classification": {
+   "status": "passing",
+   "at": 1784982249417
+  },
+  "G11|Biology|Autoregulatory Mechanism of GFR": {
+   "status": "passing",
+   "at": 1784982217441
+  },
+  "G11|Biology|Angiosperm Classification": {
+   "status": "unfixable",
+   "at": 1784982249423
+  },
+  "G11|Biology|Blood Composition": {
+   "status": "published-with-warnings",
+   "at": 1784982253234
+  },
+  "G11|Biology|Bones of the Limbs": {
+   "status": "passing",
+   "at": 1784982253239
+  },
+  "G11|Biology|Brain Divisions": {
+   "status": "published-with-warnings",
+   "at": 1784982254456
+  },
+  "G11|Biology|Blood Groups (ABO)": {
+   "status": "published-with-warnings",
+   "at": 1784982253440
+  },
+  "G11|Biology|Auxins": {
+   "status": "unfixable",
+   "at": 1784982251976
+  },
+  "G11|Biology|Bryophyte Plant Body": {
+   "status": "published-with-warnings",
+   "at": 1784982254679
+  },
+  "G11|Biology|Bryophytes: Economic Importance": {
+   "status": "unfixable",
+   "at": 1784982287892
+  },
+  "G11|Biology|Blood Coagulation": {
+   "status": "published-with-warnings",
+   "at": 1784982252199
+  },
+  "G11|Business Studies|Advantages of Exporting/Importing": {
+   "status": "passing",
+   "at": 1784982287895
+  },
+  "G11|Business Studies|Advantages of Lease Financing for Businesses": {
+   "status": "passing",
+   "at": 1784982289607
+  },
+  "G11|Business Studies|Advantages of Contract Manufacturing": {
+   "status": "passing",
+   "at": 1784982287895
+  },
+  "G11|Business Studies|Advantages of E-Commerce Over Traditional Business Methods": {
+   "status": "published-with-warnings",
+   "at": 1784982289605
+  },
+  "G11|Business Studies|Advantages of Wholly Owned Subsidiaries": {
+   "status": "passing",
+   "at": 1784982289641
+  },
+  "G11|Business Studies|Advertising and Public Relations": {
+   "status": "published-with-warnings",
+   "at": 1784982290872
+  },
+  "G11|Business Studies|Allotment of Shares Process and Legal Requirements": {
+   "status": "published-with-warnings",
+   "at": 1784982292112
+  },
+  "G11|Business Studies|Advantages of Licensing/Franchising in International Business": {
+   "status": "unfixable",
+   "at": 1784982323394
+  },
+  "G11|Business Studies|Arguments For and Against Business Social Responsibility": {
+   "status": "published-with-warnings",
+   "at": 1784982294580
+  },
+  "G11|Business Studies|Articles of Association: Definition and Flexibility": {
+   "status": "published-with-warnings",
+   "at": 1784982297084
+  },
+  "G11|Business Studies|Ancient Indian Trade": {
+   "status": "published-with-warnings",
+   "at": 1784982293343
+  },
+  "G11|Business Studies|Artificial Person - Company": {
+   "status": "published-with-warnings",
+   "at": 1784982299537
+  },
+  "G11|Business Studies|American Depository Receipts (ADRs): Trading Indian Shares in the US Market": {
+   "status": "passing",
+   "at": 1784982292113
+  },
+  "G11|Business Studies|Articles of Association: Internal rules of a company": {
+   "status": "published-with-warnings",
+   "at": 1784982298324
+  },
+  "G11|Business Studies|Auxiliaries to Trade": {
+   "status": "published-with-warnings",
+   "at": 1784982300779
+  },
+  "G11|Business Studies|Benefits of Converting to a Joint Stock Company": {
+   "status": "published-with-warnings",
+   "at": 1784982305693
+  },
+  "G11|Business Studies|Benefits of E-business for Businesses and Consumers": {
+   "status": "unfixable",
+   "at": 1784982343504
+  },
+  "G11|Business Studies|Bank Loans for Business Financing": {
+   "status": "published-with-warnings",
+   "at": 1784982303217
+  },
+  "G11|Business Studies|Banking Definition": {
+   "status": "published-with-warnings",
+   "at": 1784982304429
+  },
+  "G11|Chemistry|Acids and Bases (Brönsted-Lowry)": {
+   "status": "passing",
+   "at": 1784982356646
+  },
+  "G11|Chemistry|AntiLogarithms": {
+   "status": "passing",
+   "at": 1784982356647
+  },
+  "G11|Chemistry|Arrhenius Concept of Acids and Bases": {
+   "status": "passing",
+   "at": 1784982356647
+  },
+  "G11|Chemistry|Acids, Bases, and Salts": {
+   "status": "passing",
+   "at": 1784982356646
+  },
+  "G11|Chemistry|Amphoteric Species": {
+   "status": "passing",
+   "at": 1784982356647
+  },
+  "G11|Chemistry|Atomic Mass": {
+   "status": "passing",
+   "at": 1784982356647
+  },
+  "G11|Chemistry|Atomic Mass and Molar Mass": {
+   "status": "passing",
+   "at": 1784982356647
+  },
+  "G11|Chemistry|Atomic Mass and Molecular Mass": {
+   "status": "passing",
+   "at": 1784982356647
+  },
+  "G11|Chemistry|Arrhenius Acids and Bases": {
+   "status": "passing",
+   "at": 1784982356647
+  },
+  "G11|Chemistry|Atomic Number and Mass Number": {
+   "status": "passing",
+   "at": 1784982356648
+  },
+  "G11|Chemistry|Aufbau Principle": {
+   "status": "unfixable",
+   "at": 1784982390753
+  },
+  "G11|Chemistry|Atomic Radius Trends": {
+   "status": "unfixable",
+   "at": 1784982390818
+  },
+  "G11|Chemistry|Balanced Chemical Equation": {
+   "status": "passing",
+   "at": 1784982356648
+  },
+  "G11|Chemistry|Avogadro's Law": {
+   "status": "passing",
+   "at": 1784982356648
+  },
+  "G11|Chemistry|Attractive and Repulsive Forces in Bond Formation": {
+   "status": "passing",
+   "at": 1784982356648
+  },
+  "G11|Chemistry|Bohr's Model for Hydrogen Atom": {
+   "status": "passing",
+   "at": 1784982356649
+  },
+  "G11|Chemistry|Bond Enthalpy": {
+   "status": "passing",
+   "at": 1784982356649
+  },
+  "G11|Chemistry|Bond Length": {
+   "status": "passing",
+   "at": 1784982356649
+  },
+  "G11|Chemistry|Bond Enthalpy and Energy Release": {
+   "status": "passing",
+   "at": 1784982356649
+  },
+  "G11|Chemistry|Bohr's Theory for Hydrogen Atom": {
+   "status": "unfixable",
+   "at": 1784982391012
+  },
+  "G11|Chemistry|Bonding in Homonuclear Diatomic Molecules": {
+   "status": "unfixable",
+   "at": 1784982390800
+  },
+  "G11|Chemistry|Bond Length and Bond Order": {
+   "status": "passing",
+   "at": 1784982356649
+  },
+  "G11|Chemistry|Bond Angle": {
+   "status": "passing",
+   "at": 1784982356649
+  },
+  "G11|Chemistry|Buffer Solutions": {
+   "status": "passing",
+   "at": 1784982390755
+  },
+  "G11|Chemistry|Atomic Orbitals": {
+   "status": "passing",
+   "at": 1784982356648
+  },
+  "G11|Chemistry|Bond Order and Stability": {
+   "status": "passing",
+   "at": 1784982356649
+  },
+  "G11|Computer Science|Application Software: General vs. Customized": {
+   "status": "unfixable",
+   "at": 1784982425070
+  },
+  "G11|Computer Science|Arguments and Parameters": {
+   "status": "unfixable",
+   "at": 1784982429267
+  },
+  "G11|Computer Science|Artificial Intelligence (AI): Machine Learning & Reasoning": {
+   "status": "unfixable",
+   "at": 1784982426504
+  },
+  "G11|Computer Science|Algorithm Design Principles: Input, Process, Output": {
+   "status": "published-with-warnings",
+   "at": 1784982392732
+  },
+  "G11|Computer Science|Artificial Intelligence (AI) Basics": {
+   "status": "unfixable",
+   "at": 1784982426466
+  },
+  "G11|Computer Science|ASCII: Standard encoding for English characters": {
+   "status": "published-with-warnings",
+   "at": 1784982397652
+  },
+  "G11|Computer Science|ASCII and Unicode: Text Encoding in Computers": {
+   "status": "published-with-warnings",
+   "at": 1784982395191
+  },
+  "G11|Computer Science|Algorithm Verification: Dry Runs and Testing": {
+   "status": "published-with-warnings",
+   "at": 1784982392800
+  },
+  "G11|Computer Science|Big Data: Large-Scale Data Analysis": {
+   "status": "published-with-warnings",
+   "at": 1784982400123
+  },
+  "G11|Computer Science|Big Data: Volume and Velocity": {
+   "status": "unfixable",
+   "at": 1784982433868
+  },
+  "G11|Computer Science|Big Data: Variety, Veracity, and Value": {
+   "status": "passing",
+   "at": 1784982400124
+  },
+  "G11|Computer Science|ASCII Encoding and Binary Representation": {
+   "status": "published-with-warnings",
+   "at": 1784982396410
+  },
+  "G11|Computer Science|Assignment Operators: Shorthand Updates": {
+   "status": "published-with-warnings",
+   "at": 1784982398878
+  },
+  "G11|Computer Science|Binary to Hexadecimal Conversion Using 4-Bit Grouping": {
+   "status": "unfixable",
+   "at": 1784982460197
+  },
+  "G11|Computer Science|Binary-to-Octal/Hexadecimal Conversion Rules": {
+   "status": "unfixable",
+   "at": 1784982461074
+  },
+  "G11|Computer Science|Binary to Octal Conversion Using 3-Bit Grouping": {
+   "status": "unfixable",
+   "at": 1784982460988
+  },
+  "G11|Computer Science|Arithmetic Operators in Python": {
+   "status": "published-with-warnings",
+   "at": 1784982393946
+  },
+  "G11|Computer Science|Blockchain for Transparency: Scholarship Distribution": {
+   "status": "passing",
+   "at": 1784982429270
+  },
+  "G11|Computer Science|Blockchain: Decentralized and Secure Ledgers": {
+   "status": "passing",
+   "at": 1784982429270
+  },
+  "G11|Computer Science|Blockchain: Decentralized Secure Ledger System": {
+   "status": "passing",
+   "at": 1784982429270
+  },
+  "G11|Computer Science|Break and Continue Statements in Loops": {
+   "status": "published-with-warnings",
+   "at": 1784982430930
+  },
+  "G11|Computer Science|Break Statement": {
+   "status": "published-with-warnings",
+   "at": 1784982432138
+  },
+  "G11|Computer Science|Binary to Hexadecimal Conversion (Grouping Method)": {
+   "status": "unfixable",
+   "at": 1784982460165
+  },
+  "G11|Computer Science|Built-in Functions in Python": {
+   "status": "published-with-warnings",
+   "at": 1784982433390
+  },
+  "G11|Computer Science|Binary to Decimal Conversion Using Positional Values": {
+   "status": "published-with-warnings",
+   "at": 1784982426855
+  },
+  "G11|Computer Science|Binary number system and its role in computers": {
+   "status": "published-with-warnings",
+   "at": 1784982426799
+  },
+  "G11|Computer Science|Categories of Software: System vs. Application": {
+   "status": "unfixable",
+   "at": 1784982467196
+  },
+  "G11|Economics|Agriculture's Declining Role in Employment and GDP": {
+   "status": "passing",
+   "at": 1784982467202
+  },
+  "G11|Economics|Agricultural Stagnation in Colonial India": {
+   "status": "passing",
+   "at": 1784982467202
+  },
+  "G11|Economics|Agricultural Marketing": {
+   "status": "passing",
+   "at": 1784982467202
+  },
+  "G11|Economics|Budgetary Deficit": {
+   "status": "passing",
+   "at": 1784982467203
+  },
+  "G11|Economics|Colonialism": {
+   "status": "unfixable",
+   "at": 1784982502338
+  },
+  "G11|Economics|Commercialization of Agriculture": {
+   "status": "unfixable",
+   "at": 1784982529814
+  },
+  "G11|English|Absurdity in The Tale of Melon City": {
+   "status": "published-with-warnings",
+   "at": 1784982536015
+  },
+  "G11|English|Aram's Attempt to Ride Alone": {
+   "status": "published-with-warnings",
+   "at": 1784982536416
+  },
+  "G11|English|Mrs Pearson's Influence on Doris": {
+   "status": "published-with-warnings",
+   "at": 1784982543436
+  },
+  "G11|History|Artistic Innovation": {
+   "status": "published-with-warnings",
+   "at": 1784982577935
+  },
+  "G11|Business Studies|Benefits of E-Business: Lower Costs and Global Reach": {
+   "status": "unfixable",
+   "at": 1784982356642
+  },
+  "G11|Economics|Agricultural Diversification": {
+   "status": "published",
+   "at": 1784982495786
+  },
+  "G11|Economics|Agricultural Stagnation under British Rule": {
+   "status": "passing",
+   "at": 1784982467202
+  },
+  "G11|Economics|Agricultural Development in India (1950-1990)": {
+   "status": "passing",
+   "at": 1784982467202
+  },
+  "G11|Economics|Alternative Marketing Channels": {
+   "status": "passing",
+   "at": 1784982467202
+  },
+  "G11|Economics|ASEAN": {
+   "status": "unfixable",
+   "at": 1784982501131
+  },
+  "G11|Economics|Air Pollution from Vehicles": {
+   "status": "unfixable",
+   "at": 1784982501281
+  },
+  "G11|Economics|Balance of Payments (BOP)": {
+   "status": "unfixable",
+   "at": 1784982501162
+  },
+  "G11|Economics|Carrying Capacity": {
+   "status": "passing",
+   "at": 1784982467203
+  },
+  "G11|Economics|Biocomposting": {
+   "status": "passing",
+   "at": 1784982467203
+  },
+  "G11|Economics|Biopest Control": {
+   "status": "unfixable",
+   "at": 1784982501359
+  },
+  "G11|Economics|Barriers to Entry": {
+   "status": "passing",
+   "at": 1784982467202
+  },
+  "G11|Economics|Cascading Effect": {
+   "status": "published-with-warnings",
+   "at": 1784982468897
+  },
+  "G11|Economics|Casualisation of Workforce": {
+   "status": "passing",
+   "at": 1784982468900
+  },
+  "G11|Economics|China's Economic Growth and Poverty Alleviation": {
+   "status": "passing",
+   "at": 1784982468900
+  },
+  "G11|Economics|Causes of India's Economic Crisis": {
+   "status": "passing",
+   "at": 1784982468900
+  },
+  "G11|Economics|Cash Reserve Ratio (CRR)": {
+   "status": "passing",
+   "at": 1784982468899
+  },
+  "G11|Economics|China's Economic Transformation": {
+   "status": "passing",
+   "at": 1784982468900
+  },
+  "G11|Economics|China's Great Leap Forward Campaign": {
+   "status": "passing",
+   "at": 1784982468900
+  },
+  "G11|Economics|Chipko/Appiko Movement": {
+   "status": "passing",
+   "at": 1784982468900
+  },
+  "G11|Economics|China's Success in Reducing Poverty": {
+   "status": "passing",
+   "at": 1784982468900
+  },
+  "G11|Economics|China's Manufacturing and Service Sector Growth": {
+   "status": "passing",
+   "at": 1784982468900
+  },
+  "G11|Economics|Collaborative Learning": {
+   "status": "passing",
+   "at": 1784982468900
+  },
+  "G11|Economics|COVID-19 Pandemic Impact": {
+   "status": "published-with-warnings",
+   "at": 1784982502406
+  },
+  "G11|English|Andrew's First Birth Experience": {
+   "status": "published-with-warnings",
+   "at": 1784982531599
+  },
+  "G11|History|Causes of Early Urbanisation": {
+   "status": "unfixable",
+   "at": 1784982613144
+  },
+  "G11|History|Chief Seattle's Letter": {
+   "status": "unfixable",
+   "at": 1784982615388
+  },
+  "G11|History|City-States": {
+   "status": "published-with-warnings",
+   "at": 1784982618369
+  },
+  "G11|History|Colonialism": {
+   "status": "unfixable",
+   "at": 1784982647398
+  },
+  "G11|History|Communist Party of China": {
+   "status": "unfixable",
+   "at": 1784982647494
+  },
+  "G11|History|Confucianism": {
+   "status": "unfixable",
+   "at": 1784982647733
+  },
+  "G11|Physics|Angular Displacement, Velocity, and Acceleration": {
+   "status": "published-with-warnings",
+   "at": 1784982717662
+  },
+  "G11|Physics|Acceleration Due to Gravity of Earth": {
+   "status": "published-with-warnings",
+   "at": 1784982717592
+  },
+  "G11|Physics|Acceleration Due to Gravity Below and Above Earth's Surface": {
+   "status": "published-with-warnings",
+   "at": 1784982717586
+  },
+  "G11|English|Character Reaction to Horse's Return": {
+   "status": "published-with-warnings",
+   "at": 1784982532726
+  },
+  "G11|English|Andrew's Dilemma": {
+   "status": "published-with-warnings",
+   "at": 1784982531493
+  },
+  "G11|English|Andrew's Emotional Response": {
+   "status": "published-with-warnings",
+   "at": 1784982531565
+  },
+  "G11|English|Aram's Initial Skepticism": {
+   "status": "published-with-warnings",
+   "at": 1784982532698
+  },
+  "G11|English|Character Transformation in 'Mother's Day'": {
+   "status": "unfixable",
+   "at": 1784982569358
+  },
+  "G11|English|Andrew's Struggle with Marriage": {
+   "status": "published-with-warnings",
+   "at": 1784982531521
+  },
+  "G11|English|Decision to Forget": {
+   "status": "published-with-warnings",
+   "at": 1784982532865
+  },
+  "G11|English|Doris and Cyril's Reaction": {
+   "status": "published-with-warnings",
+   "at": 1784982533895
+  },
+  "G11|English|Family Dynamics Shift": {
+   "status": "published-with-warnings",
+   "at": 1784982534071
+  },
+  "G11|English|Drama as a Medium for Social Commentary": {
+   "status": "published-with-warnings",
+   "at": 1784982533906
+  },
+  "G11|English|Initial Rejection": {
+   "status": "published-with-warnings",
+   "at": 1784982535106
+  },
+  "G11|English|Irony in The Tale of Melon City": {
+   "status": "published-with-warnings",
+   "at": 1784982535114
+  },
+  "G11|English|Mourad's Plan": {
+   "status": "published-with-warnings",
+   "at": 1784982536288
+  },
+  "G11|English|Mr Pearson's Ignorance": {
+   "status": "published-with-warnings",
+   "at": 1784982536339
+  },
+  "G11|English|Mrs Pearson's Change in Behavior": {
+   "status": "published-with-warnings",
+   "at": 1784982537241
+  },
+  "G11|English|Mother's Belongings": {
+   "status": "published-with-warnings",
+   "at": 1784982535270
+  },
+  "G11|English|Mrs Fitzgerald's Role": {
+   "status": "published-with-warnings",
+   "at": 1784982536444
+  },
+  "G11|English|Mrs Pearson's Honesty": {
+   "status": "published-with-warnings",
+   "at": 1784982542531
+  },
+  "G11|English|Mrs Pearson's New Attitude": {
+   "status": "published-with-warnings",
+   "at": 1784982542540
+  },
+  "G11|English|Mrs Pearson's Transformation": {
+   "status": "unfixable",
+   "at": 1784982570897
+  },
+  "G11|English|Mrs Pearson's Newfound Confidence": {
+   "status": "unfixable",
+   "at": 1784982570176
+  },
+  "G11|English|Mrs. Fitzgerald's Influence": {
+   "status": "unfixable",
+   "at": 1784982576205
+  },
+  "G11|English|Mrs. Pearson's Struggle with Assertiveness": {
+   "status": "unfixable",
+   "at": 1784982576157
+  },
+  "G11|English|Post-War Visit": {
+   "status": "published-with-warnings",
+   "at": 1784982544602
+  },
+  "G11|English|Satire in 'Mother's Day'": {
+   "status": "published-with-warnings",
+   "at": 1784982547010
+  },
+  "G11|English|Return of a Stolen Horse": {
+   "status": "published-with-warnings",
+   "at": 1784982545828
+  },
+  "G11|History|Archaeology and the Study of Ancient Civilizations": {
+   "status": "published-with-warnings",
+   "at": 1784982577946
+  },
+  "G11|History|Apartheid": {
+   "status": "published-with-warnings",
+   "at": 1784982577984
+  },
+  "G11|History|Archaeology and Architecture": {
+   "status": "published-with-warnings",
+   "at": 1784982578090
+  },
+  "G11|History|Artists as Individuals": {
+   "status": "unfixable",
+   "at": 1784982611691
+  },
+  "G11|History|Alexander the Great’s Empire and Hellenistic Culture": {
+   "status": "unfixable",
+   "at": 1784982610439
+  },
+  "G11|History|'Westernization' vs. 'Tradition': Intellectual Debates in Meiji Japan": {
+   "status": "published-with-warnings",
+   "at": 1784982578005
+  },
+  "G11|History|Assurbanipal's Library": {
+   "status": "published-with-warnings",
+   "at": 1784982579190
+  },
+  "G11|History|Australian and Pacific Island History": {
+   "status": "published-with-warnings",
+   "at": 1784982579209
+  },
+  "G11|History|Benedictine Monasteries": {
+   "status": "published-with-warnings",
+   "at": 1784982579324
+  },
+  "G11|History|Case-Study Method": {
+   "status": "published-with-warnings",
+   "at": 1784982580417
+  },
+  "G11|History|Bhopal Gas Tragedy": {
+   "status": "unfixable",
+   "at": 1784982611880
+  },
+  "G11|History|Cathedral-Towns": {
+   "status": "published-with-warnings",
+   "at": 1784982580447
+  },
+  "G11|History|Challenging the Western Narrative": {
+   "status": "published-with-warnings",
+   "at": 1784982581680
+  },
+  "G11|History|Challenges of studying nomadic societies through written sources": {
+   "status": "published-with-warnings",
+   "at": 1784982581626
+  },
+  "G11|History|Changing Cultural Traditions": {
+   "status": "unfixable",
+   "at": 1784982623420
+  },
+  "G11|History|China’s Decline vs. Japan’s Modernization (19th Century)": {
+   "status": "published-with-warnings",
+   "at": 1784982612151
+  },
+  "G11|History|China’s Regional Diversity and Cuisine": {
+   "status": "published-with-warnings",
+   "at": 1784982612918
+  },
+  "G11|History|China’s Revolutionary Path to Modernity": {
+   "status": "published-with-warnings",
+   "at": 1784982613555
+  },
+  "G11|History|Christianization and religious diversity in the Roman Empire": {
+   "status": "published-with-warnings",
+   "at": 1784982613822
+  },
+  "G11|History|Chun Doo-hwan's Coup": {
+   "status": "published-with-warnings",
+   "at": 1784982614148
+  },
+  "G11|History|Constitutional Rights in the USA": {
+   "status": "published-with-warnings",
+   "at": 1784982616573
+  },
+  "G11|History|Constructing Timelines": {
+   "status": "published-with-warnings",
+   "at": 1784982617800
+  },
+  "G11|History|Copernicus' Heliocentric Theory": {
+   "status": "published-with-warnings",
+   "at": 1784982619024
+  },
+  "G11|Mathematics|Acceptance of Imaginary Numbers": {
+   "status": "passing",
+   "at": 1784982647735
+  },
+  "G11|Mathematics|Angle of Elevation in Height Calculation": {
+   "status": "passing",
+   "at": 1784982647736
+  },
+  "G11|Mathematics|Area of a Triangle": {
+   "status": "unfixable",
+   "at": 1784982681739
+  },
+  "G11|Mathematics|Assumptions in Mathematical Models": {
+   "status": "unfixable",
+   "at": 1784982681799
+  },
+  "G11|Physics|Centre of Mass (CM) for Particles in Equilateral Triangle": {
+   "status": "published-with-warnings",
+   "at": 1784982724893
+  },
+  "G11|Physics|Centre of Mass (CM) for Homogeneous Bodies": {
+   "status": "published-with-warnings",
+   "at": 1784982723846
+  },
+  "G11|Physics|Centre of Mass (CM) for Triangular Lamina": {
+   "status": "published-with-warnings",
+   "at": 1784982725047
+  },
+  "G11|Physics|Centre of Mass of a System of Particles": {
+   "status": "published-with-warnings",
+   "at": 1784982726101
+  },
+  "G11|Political Science|Affirmative Action": {
+   "status": "passing",
+   "at": 1784982755002
+  },
+  "G11|Political Science|Citizen Obligations": {
+   "status": "unfixable",
+   "at": 1784982789043
+  },
+  "G11|Political Science|Citizenship and Equality": {
+   "status": "published-with-warnings",
+   "at": 1784982756676
+  },
+  "G11|Political Science|Citizenship Rights": {
+   "status": "published-with-warnings",
+   "at": 1784982756778
+  },
+  "G11|Political Science|Equal Opportunities": {
+   "status": "passing",
+   "at": 1784982789031
+  },
+  "G11|Political Science|Equal Rights and Opportunities": {
+   "status": "published-with-warnings",
+   "at": 1784982790754
+  },
+  "G12|Accountancy|Adjusting Partners' Capital Accounts for Revaluation": {
+   "status": "published-with-warnings",
+   "at": 1784982837242
+  },
+  "G12|Accountancy|Adjustment for Revaluation of Assets and Liabilities": {
+   "status": "published-with-warnings",
+   "at": 1784982838486
+  },
+  "G12|Accountancy|Admission of a Partner with Goodwill": {
+   "status": "published-with-warnings",
+   "at": 1784982839886
+  },
+  "G12|Accountancy|Admission of a Partner": {
+   "status": "unfixable",
+   "at": 1784982872137
+  },
+  "G12|Accountancy|Admission of a New Partner": {
+   "status": "unfixable",
+   "at": 1784982872007
+  },
+  "G12|Biology|Biology and Human Welfare": {
+   "status": "unfixable",
+   "at": 1784982983411
+  },
+  "G12|Business Studies|Adaptability of Management Principles": {
+   "status": "published-with-warnings",
+   "at": 1784983008866
+  },
+  "G12|Business Studies|Better Coordination through Delegation": {
+   "status": "unfixable",
+   "at": 1784983041423
+  },
+  "G11|Mathematics|Analytical Solid Geometry": {
+   "status": "unfixable",
+   "at": 1784982681748
+  },
+  "G11|Mathematics|Algebra of Derivatives": {
+   "status": "unfixable",
+   "at": 1784982681847
+  },
+  "G11|Mathematics|Angle Measurement Units": {
+   "status": "passing",
+   "at": 1784982647735
+  },
+  "G11|Mathematics|Angle Between Two Lines": {
+   "status": "passing",
+   "at": 1784982647735
+  },
+  "G11|Mathematics|Area of Triangle formed by Lines": {
+   "status": "passing",
+   "at": 1784982647736
+  },
+  "G11|Mathematics|Arithmetic Sequence": {
+   "status": "unfixable",
+   "at": 1784982681815
+  },
+  "G11|Mathematics|Axiomatic Approach to Probability": {
+   "status": "unfixable",
+   "at": 1784982681771
+  },
+  "G11|Mathematics|Behavior of Cosecant Function in Fourth Quadrant": {
+   "status": "passing",
+   "at": 1784982681741
+  },
+  "G11|Mathematics|Behavior of Terms in Infinite G.P.": {
+   "status": "unfixable",
+   "at": 1784982715754
+  },
+  "G11|Mathematics|Addition of Complex Numbers": {
+   "status": "passing",
+   "at": 1784982647735
+  },
+  "G11|Mathematics|Binomial Theorem for any Index": {
+   "status": "passing",
+   "at": 1784982681773
+  },
+  "G11|Mathematics|Binomial Theorem for Positive Integral Indices": {
+   "status": "passing",
+   "at": 1784982681773
+  },
+  "G11|Mathematics|Bernays' Axiomatization": {
+   "status": "unfixable",
+   "at": 1784982715818
+  },
+  "G11|Mathematics|Calculating Mean Deviation for Grouped Data": {
+   "status": "passing",
+   "at": 1784982681774
+  },
+  "G11|Mathematics|Cantor's Set Theory in Modern Mathematics": {
+   "status": "passing",
+   "at": 1784982681774
+  },
+  "G11|Mathematics|Calculating Mean Deviation for Ungrouped Data": {
+   "status": "passing",
+   "at": 1784982681774
+  },
+  "G11|Mathematics|Cartesian Product of Sets": {
+   "status": "unfixable",
+   "at": 1784982715770
+  },
+  "G11|Mathematics|Binomial Coefficients": {
+   "status": "passing",
+   "at": 1784982681773
+  },
+  "G11|Mathematics|Choosing Face Cards": {
+   "status": "passing",
+   "at": 1784982681817
+  },
+  "G11|Mathematics|Choosing Cards by Individual Selection": {
+   "status": "unfixable",
+   "at": 1784982715773
+  },
+  "G11|Mathematics|Choosing Specific Colored Cards": {
+   "status": "passing",
+   "at": 1784982681817
+  },
+  "G11|Mathematics|Circle Definition and Equation": {
+   "status": "passing",
+   "at": 1784982681817
+  },
+  "G11|Mathematics|Choosing Red and Black Cards": {
+   "status": "passing",
+   "at": 1784982681817
+  },
+  "G11|Physics|Acceleration": {
+   "status": "unfixable",
+   "at": 1784982749912
+  },
+  "G11|Physics|Angular Momentum of a Particle": {
+   "status": "published-with-warnings",
+   "at": 1784982718916
+  },
+  "G11|Physics|Angular Momentum": {
+   "status": "published-with-warnings",
+   "at": 1784982718853
+  },
+  "G11|Physics|Angular Velocity": {
+   "status": "published-with-warnings",
+   "at": 1784982720025
+  },
+  "G11|Physics|Angular Speed and Linear Speed in Circular Motion": {
+   "status": "published-with-warnings",
+   "at": 1784982718844
+  },
+  "G11|Physics|Astronaut Health in Space": {
+   "status": "published-with-warnings",
+   "at": 1784982720090
+  },
+  "G11|Physics|Aristotle's Fallacy": {
+   "status": "published-with-warnings",
+   "at": 1784982720130
+  },
+  "G11|Physics|Astronaut's Acceleration": {
+   "status": "published-with-warnings",
+   "at": 1784982721248
+  },
+  "G11|Physics|Acceleration of Block and Trolley System": {
+   "status": "unfixable",
+   "at": 1784982749864
+  },
+  "G11|Physics|Angular Velocity and Linear Velocity": {
+   "status": "published-with-warnings",
+   "at": 1784982720110
+  },
+  "G11|Physics|Angular Acceleration": {
+   "status": "published-with-warnings",
+   "at": 1784982717621
+  },
+  "G11|Physics|Base and Derived Units": {
+   "status": "published-with-warnings",
+   "at": 1784982722542
+  },
+  "G11|Physics|Cavendish's Experiment": {
+   "status": "unfixable",
+   "at": 1784982755000
+  },
+  "G11|Physics|Average Acceleration and Speed in Intervals": {
+   "status": "published-with-warnings",
+   "at": 1784982721395
+  },
+  "G11|Physics|Centre of Mass (CM) for Thin Rods": {
+   "status": "published-with-warnings",
+   "at": 1784982724970
+  },
+  "G11|Physics|Centripetal Acceleration in Terms of Angular Speed": {
+   "status": "published-with-warnings",
+   "at": 1784982726162
+  },
+  "G11|Physics|Average Speed in Different Intervals": {
+   "status": "published-with-warnings",
+   "at": 1784982721320
+  },
+  "G11|Physics|Cavendish's Experiment to Measure G": {
+   "status": "published-with-warnings",
+   "at": 1784982722587
+  },
+  "G11|Physics|Centre of Mass": {
+   "status": "published-with-warnings",
+   "at": 1784982723767
+  },
+  "G11|Political Science|Citizenship and Land Distribution": {
+   "status": "passing",
+   "at": 1784982755002
+  },
+  "G11|Political Science|Basic Minimum Conditions for Social Justice": {
+   "status": "passing",
+   "at": 1784982755002
+  },
+  "G11|Political Science|Citizenship and Social Class": {
+   "status": "unfixable",
+   "at": 1784982789036
+  },
+  "G11|Political Science|Citizenship Definition": {
+   "status": "passing",
+   "at": 1784982755002
+  },
+  "G11|Political Science|Civil Liberties": {
+   "status": "passing",
+   "at": 1784982755002
+  },
+  "G11|Political Science|Basque Nationalism": {
+   "status": "passing",
+   "at": 1784982755002
+  },
+  "G11|Political Science|Citizenship Rights and Obligations": {
+   "status": "passing",
+   "at": 1784982755002
+  },
+  "G11|Political Science|Criticism of Affirmative Action": {
+   "status": "unfixable",
+   "at": 1784982790210
+  },
+  "G11|Political Science|Defining Nationalism": {
+   "status": "passing",
+   "at": 1784982756780
+  },
+  "G11|Political Science|Criticism of Indian Secularism": {
+   "status": "passing",
+   "at": 1784982756779
+  },
+  "G11|Political Science|Cultural Rights": {
+   "status": "passing",
+   "at": 1784982756780
+  },
+  "G11|Political Science|Definition of Rights": {
+   "status": "passing",
+   "at": 1784982756780
+  },
+  "G11|Political Science|Conflict of Ideas": {
+   "status": "unfixable",
+   "at": 1784982789012
+  },
+  "G11|Political Science|Economic Rights": {
+   "status": "unfixable",
+   "at": 1784982823161
+  },
+  "G11|Political Science|Equality": {
+   "status": "unfixable",
+   "at": 1784982823303
+  },
+  "G11|Political Science|Economic Rights in Democracies": {
+   "status": "passing",
+   "at": 1784982789031
+  },
+  "G11|Political Science|Distributive Justice": {
+   "status": "unfixable",
+   "at": 1784982790322
+  },
+  "G11|Political Science|Entrenched Inequalities": {
+   "status": "passing",
+   "at": 1784982789031
+  },
+  "G11|Political Science|Equality as a Moral and Political Ideal": {
+   "status": "passing",
+   "at": 1784982789045
+  },
+  "G11|Political Science|Equal Treatment for Equals": {
+   "status": "passing",
+   "at": 1784982789038
+  },
+  "G11|Political Science|Economic Inequality": {
+   "status": "passing",
+   "at": 1784982789019
+  },
+  "G11|Political Science|Equality of Opportunities": {
+   "status": "passing",
+   "at": 1784982789045
+  },
+  "G12|Accountancy|Accounting for Share Application": {
+   "status": "unfixable",
+   "at": 1784982869199
+  },
+  "G12|Accountancy|Accounting Ratios": {
+   "status": "passing",
+   "at": 1784982835540
+  },
+  "G12|Accountancy|Adjusting Capital Contributions in Partnership": {
+   "status": "published-with-warnings",
+   "at": 1784982837370
+  },
+  "G12|Accountancy|Accounting for Share Calls": {
+   "status": "passing",
+   "at": 1784982835540
+  },
+  "G12|Accountancy|Accounting Standard 26: Intangible Assets": {
+   "status": "published-with-warnings",
+   "at": 1784982837253
+  },
+  "G12|Accountancy|Adjusting Net Profit for Cash Flows": {
+   "status": "passing",
+   "at": 1784982835540
+  },
+  "G12|Accountancy|Adjustment Entries": {
+   "status": "unfixable",
+   "at": 1784982869661
+  },
+  "G12|Accountancy|Adjustment of Accumulated Profits/Losses": {
+   "status": "passing",
+   "at": 1784982837326
+  },
+  "G12|Accountancy|Adjustment for Accumulated Profits and Losses": {
+   "status": "passing",
+   "at": 1784982835541
+  },
+  "G12|Accountancy|Adjustment for Appreciation/Depreciation": {
+   "status": "published-with-warnings",
+   "at": 1784982837324
+  },
+  "G12|Accountancy|Adjustment of Accumulated Profits and Losses": {
+   "status": "unfixable",
+   "at": 1784982870943
+  },
+  "G12|Accountancy|Adjustment of Capitals": {
+   "status": "published-with-warnings",
+   "at": 1784982838621
+  },
+  "G12|Accountancy|Adjustment of Partners' Capitals": {
+   "status": "published-with-warnings",
+   "at": 1784982838557
+  },
+  "G12|Accountancy|Admitting a New Partner with a Profit Share": {
+   "status": "published-with-warnings",
+   "at": 1784982842358
+  },
+  "G12|Accountancy|Advantages of Ratio Analysis": {
+   "status": "passing",
+   "at": 1784982842361
+  },
+  "G12|Accountancy|Allotment of Shares": {
+   "status": "unfixable",
+   "at": 1784982875937
+  },
+  "G12|Accountancy|Applications Supported by Blocked Amount (ASBA)": {
+   "status": "passing",
+   "at": 1784982869203
+  },
+  "G12|Accountancy|Asset Realisation in Dissolution": {
+   "status": "published-with-warnings",
+   "at": 1784982870919
+  },
+  "G12|Accountancy|Admission of New Partner": {
+   "status": "published-with-warnings",
+   "at": 1784982841121
+  },
+  "G12|Accountancy|Average Interest on Drawings": {
+   "status": "published-with-warnings",
+   "at": 1784982871348
+  },
+  "G12|Accountancy|Average Profit Calculation": {
+   "status": "unfixable",
+   "at": 1784982904778
+  },
+  "G12|Accountancy|Balance Sheet Format": {
+   "status": "published-with-warnings",
+   "at": 1784982873237
+  },
+  "G12|Accountancy|Balance Sheet": {
+   "status": "published-with-warnings",
+   "at": 1784982873073
+  },
+  "G12|Accountancy|Bank Account": {
+   "status": "published-with-warnings",
+   "at": 1784982873406
+  },
+  "G12|Accountancy|Average Profits Method": {
+   "status": "unfixable",
+   "at": 1784982904782
+  },
+  "G12|Biology|Active and Passive Immunity": {
+   "status": "published-with-warnings",
+   "at": 1784982939118
+  },
+  "G12|Biology|Adaptive Radiation": {
+   "status": "published-with-warnings",
+   "at": 1784982906466
+  },
+  "G12|Biology|Advantages of Stirred Tank Bioreactors": {
+   "status": "published-with-warnings",
+   "at": 1784982906552
+  },
+  "G12|Biology|Addiction and Dependence": {
+   "status": "published-with-warnings",
+   "at": 1784982906541
+  },
+  "G12|Biology|Anabolic Steroids Side Effects": {
+   "status": "published-with-warnings",
+   "at": 1784982907826
+  },
+  "G12|Biology|Antibiotic Resistance in Bacteria": {
+   "status": "unfixable",
+   "at": 1784982945525
+  },
+  "G12|Biology|Androgen Production": {
+   "status": "published-with-warnings",
+   "at": 1784982907731
+  },
+  "G12|Biology|Alcohol and Drug Abuse Effects": {
+   "status": "unfixable",
+   "at": 1784982940013
+  },
+  "G12|Biology|Antibiotics": {
+   "status": "published-with-warnings",
+   "at": 1784982909055
+  },
+  "G12|Biology|Antibiotics from Microbes": {
+   "status": "published-with-warnings",
+   "at": 1784982910257
+  },
+  "G12|Biology|Antibody-Antigen Interaction in Disease Detection": {
+   "status": "published-with-warnings",
+   "at": 1784982911460
+  },
+  "G12|Biology|Arising of Modern Humans": {
+   "status": "published-with-warnings",
+   "at": 1784982915078
+  },
+  "G12|Biology|Assisted Reproductive Technologies (ART)": {
+   "status": "unfixable",
+   "at": 1784982948566
+  },
+  "G12|Biology|Apomixis and Its Importance": {
+   "status": "published-with-warnings",
+   "at": 1784982912678
+  },
+  "G12|Biology|Apomixis and Polyembryony": {
+   "status": "published-with-warnings",
+   "at": 1784982913875
+  },
+  "G12|Biology|Acquired Immunity": {
+   "status": "unfixable",
+   "at": 1784982938785
+  },
+  "G12|Biology|Biodiversity Conservation: Ex Situ": {
+   "status": "unfixable",
+   "at": 1784982973807
+  },
+  "G12|Biology|Adolescence and Drug/Alcohol Abuse": {
+   "status": "unfixable",
+   "at": 1784982938818
+  },
+  "G12|Biology|Biocontrol Agents": {
+   "status": "unfixable",
+   "at": 1784982973145
+  },
+  "G12|Biology|Biodiversity Conservation: In Situ": {
+   "status": "unfixable",
+   "at": 1784982974028
+  },
+  "G12|Biology|Biogas Production using Microbes": {
+   "status": "published-with-warnings",
+   "at": 1784982949777
+  },
+  "G12|Biology|Biogas Production": {
+   "status": "published-with-warnings",
+   "at": 1784982949270
+  },
+  "G12|Biology|Biodiversity Levels": {
+   "status": "published-with-warnings",
+   "at": 1784982948039
+  },
+  "G12|Biology|Biotechnology Definition": {
+   "status": "published-with-warnings",
+   "at": 1784982974847
+  },
+  "G12|Biology|Biodiversity Hotspots": {
+   "status": "published-with-warnings",
+   "at": 1784982946807
+  },
+  "G12|Biology|Biopiracy and Traditional Knowledge": {
+   "status": "unfixable",
+   "at": 1784983007150
+  },
+  "G12|Biology|Biological Products from Transgenic Animals": {
+   "status": "unfixable",
+   "at": 1784982983114
+  },
+  "G12|Biology|Autosomal and Sex-Linked Traits": {
+   "status": "published-with-warnings",
+   "at": 1784982940480
+  },
+  "G12|Biology|Baculoviruses": {
+   "status": "unfixable",
+   "at": 1784982972882
+  },
+  "G12|Business Studies|Advertising": {
+   "status": "published-with-warnings",
+   "at": 1784983008857
+  },
+  "G12|Business Studies|Branding": {
+   "status": "published-with-warnings",
+   "at": 1784983008913
+  },
+  "G12|Business Studies|Asset-based Approach": {
+   "status": "published-with-warnings",
+   "at": 1784983008928
+  },
+  "G12|Business Studies|Budget in Business": {
+   "status": "published-with-warnings",
+   "at": 1784983010062
+  },
+  "G12|Business Studies|Authority and Responsibility": {
+   "status": "passing",
+   "at": 1784983007156
+  },
+  "G12|Business Studies|Business Environment": {
+   "status": "published-with-warnings",
+   "at": 1784983010147
+  },
+  "G12|Business Studies|Capital Structure Decision": {
+   "status": "published-with-warnings",
+   "at": 1784983011333
+  },
+  "G12|Business Studies|Capital Structure": {
+   "status": "unfixable",
+   "at": 1784983043664
+  },
+  "G12|Business Studies|Capital Structure Decisions": {
+   "status": "unfixable",
+   "at": 1784983043796
+  },
+  "G12|Business Studies|Cash Flow and Financing Decisions": {
+   "status": "published-with-warnings",
+   "at": 1784983043072
+  },
+  "G12|Business Studies|Centralisation and Decentralisation": {
+   "status": "passing",
+   "at": 1784983041425
+  },
+  "G12|Business Studies|Centralisation vs Decentralisation": {
+   "status": "passing",
+   "at": 1784983041425
+  },
+  "G12|Business Studies|Basis of Management Hierarchy": {
+   "status": "unfixable",
+   "at": 1784983041374
+  },
+  "G12|Business Studies|Consumer Awareness": {
+   "status": "unfixable",
+   "at": 1784983076828
+  },
+  "G12|Business Studies|Common Sales Promotion Activities": {
+   "status": "published-with-warnings",
+   "at": 1784983043093
+  },
+  "G12|Business Studies|Business Finance Definition": {
+   "status": "published-with-warnings",
+   "at": 1784983010209
+  },
+  "G12|Business Studies|Consumer Court Jurisdiction": {
+   "status": "published-with-warnings",
+   "at": 1784983044700
+  },
+  "G12|Business Studies|Consumer Organisations": {
+   "status": "published-with-warnings",
+   "at": 1784983044905
+  },
+  "G12|Business Studies|Consumer Protection Act, 2019": {
+   "status": "published-with-warnings",
+   "at": 1784983045447
+  },
+  "G12|Business Studies|Consumer Protection Acts": {
+   "status": "published-with-warnings",
+   "at": 1784983045921
+  },
+  "G12|Business Studies|Consumer Protection Acts in India": {
+   "status": "unfixable",
+   "at": 1784983078528
+  },
+  "G12|Business Studies|Consumer Protection and Business": {
+   "status": "unfixable",
+   "at": 1784983078745
+  },
+  "G12|Business Studies|Consumer Protection and Business Interests": {
+   "status": "published-with-warnings",
+   "at": 1784983046646
+  },
+  "G12|Business Studies|Consumer Redressal Mechanism": {
+   "status": "published-with-warnings",
+   "at": 1784983047122
+  },
+  "G12|Business Studies|Components of Physical Distribution": {
+   "status": "published-with-warnings",
+   "at": 1784983043791
+  },
+  "G12|Business Studies|Consumer Products": {
+   "status": "unfixable",
+   "at": 1784983077448
+  },
+  "G12|Business Studies|Capital Structure Definition": {
+   "status": "unfixable",
+   "at": 1784983045081
+  },
+  "G12|Business Studies|Capital Budgeting": {
+   "status": "unfixable",
+   "at": 1784983042585
+  },
+  "G12|Chemistry|Absorption Wavelengths in Visible Region": {
+   "status": "passing",
+   "at": 1784983078749
+  },
+  "G12|Chemistry|Actinoid Metals' Reactivity": {
+   "status": "passing",
+   "at": 1784983078749
+  },
+  "G12|Chemistry|Arrhenius Equation and Collision Theory": {
+   "status": "published-with-warnings",
+   "at": 1784983080522
+  },
+  "G12|Chemistry|Average Rate of Reaction": {
+   "status": "unfixable",
+   "at": 1784983112906
+  },
+  "G12|Chemistry|Actinoid Series": {
+   "status": "passing",
+   "at": 1784983078749
+  },
+  "G12|Chemistry|Bonding in Coordination Compounds": {
+   "status": "passing",
+   "at": 1784983078750
+  },
+  "G12|Chemistry|Calculating Activation Energy (Ea)": {
+   "status": "unfixable",
+   "at": 1784983112917
+  },
+  "G12|Chemistry|Cell Constant (G*) Determination": {
+   "status": "published-with-warnings",
+   "at": 1784983081769
+  },
+  "G12|Chemistry|Chemical Kinetics: Study and Variables": {
+   "status": "unfixable",
+   "at": 1784983114232
+  },
+  "G12|Chemistry|Colligative Properties": {
+   "status": "passing",
+   "at": 1784983081770
+  },
+  "G12|Chemistry|Collision Theory of Chemical Reactions": {
+   "status": "unfixable",
+   "at": 1784983119665
+  },
+  "G12|Chemistry|Colour in Coordination Compounds": {
+   "status": "unfixable",
+   "at": 1784983147003
+  },
+  "G12|Chemistry|Batteries": {
+   "status": "passing",
+   "at": 1784983078750
+  },
+  "G12|Chemistry|Actinoid Oxidation States": {
+   "status": "unfixable",
+   "at": 1784983112798
+  },
+  "G12|Chemistry|Alternating Current (AC) for Conductivity Measurements": {
+   "status": "published-with-warnings",
+   "at": 1784983080598
+  },
+  "G12|Chemistry|Conductance of Electrolytic Solutions": {
+   "status": "passing",
+   "at": 1784983112908
+  },
+  "G12|Chemistry|Conductivity (k) and Molar Conductivity (Lm)": {
+   "status": "published-with-warnings",
+   "at": 1784983114693
+  },
+  "G12|Chemistry|Comparison with Lanthanoids": {
+   "status": "passing",
+   "at": 1784983112908
+  },
+  "G12|Chemistry|Conductivity Measurement Setup": {
+   "status": "published-with-warnings",
+   "at": 1784983114689
+  },
+  "G12|Chemistry|Chemical Reactivity of Transition Metals": {
+   "status": "unfixable",
+   "at": 1784983114145
+  },
+  "G12|Chemistry|Coordination Compounds in Biology": {
+   "status": "passing",
+   "at": 1784983114147
+  },
+  "G12|Chemistry|Coordination Compounds in Industry": {
+   "status": "unfixable",
+   "at": 1784983147661
+  },
+  "G12|Chemistry|Coordination Compounds in Medicine": {
+   "status": "passing",
+   "at": 1784983114234
+  },
+  "G12|Chemistry|Coordination Entity": {
+   "status": "passing",
+   "at": 1784983114235
+  },
+  "G12|Chemistry|Coordination Number": {
+   "status": "passing",
+   "at": 1784983114235
+  },
+  "G12|Chemistry|Azeotropes": {
+   "status": "published-with-warnings",
+   "at": 1784983080544
+  },
+  "G12|Chemistry|Coordination Compounds": {
+   "status": "passing",
+   "at": 1784983114147
+  },
+  "G12|Chemistry|Coordination Sphere": {
+   "status": "passing",
+   "at": 1784983114692
+  },
+  "G12|Chemistry|Coordination Polyhedron": {
+   "status": "unfixable",
+   "at": 1784983147813
+  },
+  "G12|Chemistry|Concentration Units": {
+   "status": "passing",
+   "at": 1784983112908
+  },
+  "G12|Computer Science|Adding Foreign Key to a Relation": {
+   "status": "published-with-warnings",
+   "at": 1784983154693
+  },
+  "G12|Computer Science|Adding a New Column to a Table": {
+   "status": "published-with-warnings",
+   "at": 1784983149579
+  },
+  "G12|Computer Science|Adding a New Column in SQL": {
+   "status": "published-with-warnings",
+   "at": 1784983149574
+  },
+  "G12|Computer Science|Adding UNIQUE Constraint to an Attribute": {
+   "status": "published-with-warnings",
+   "at": 1784983150760
+  },
+  "G12|Computer Science|ALTER Table": {
+   "status": "passing",
+   "at": 1784983149581
+  },
+  "G12|Computer Science|Adware Function": {
+   "status": "unfixable",
+   "at": 1784983183684
+  },
+  "G12|Computer Science|Antivirus Software": {
+   "status": "passing",
+   "at": 1784983149581
+  },
+  "G12|Computer Science|Adding Primary Key to a Relation": {
+   "status": "published-with-warnings",
+   "at": 1784983149604
+  },
+  "G12|Computer Science|Applications of Binary Search": {
+   "status": "published-with-warnings",
+   "at": 1784983150812
+  },
+  "G12|Computer Science|Antivirus Function": {
+   "status": "passing",
+   "at": 1784983149581
+  },
+  "G12|Computer Science|Arithmetic Expressions Notations": {
+   "status": "passing",
+   "at": 1784983149606
+  },
+  "G12|Computer Science|Automating Order Processing": {
+   "status": "unfixable",
+   "at": 1784983184783
+  },
+  "G12|Computer Science|Aggregate Functions": {
+   "status": "published-with-warnings",
+   "at": 1784983150800
+  },
+  "G12|Computer Science|Average Price": {
+   "status": "unfixable",
+   "at": 1784983184893
+  },
+  "G12|Computer Science|Adding Default Value to an Attribute": {
+   "status": "published-with-warnings",
+   "at": 1784983149567
+  },
+  "G12|Computer Science|Binary Search vs Linear Search": {
+   "status": "published-with-warnings",
+   "at": 1784983153270
+  },
+  "G12|Computer Science|Bluetooth Technology": {
+   "status": "passing",
+   "at": 1784983152056
+  },
+  "G12|Computer Science|Bubble Sort": {
+   "status": "published-with-warnings",
+   "at": 1784983153299
+  },
+  "G12|Computer Science|Built-in Exceptions": {
+   "status": "unfixable",
+   "at": 1784983195570
+  },
+  "G12|Computer Science|Binary Search": {
+   "status": "published-with-warnings",
+   "at": 1784983152036
+  },
+  "G12|Computer Science|Bus Topology": {
+   "status": "passing",
+   "at": 1784983154695
+  },
+  "G12|Computer Science|Calculating Commission": {
+   "status": "unfixable",
+   "at": 1784983188796
+  },
+  "G12|Computer Science|CREATE Database": {
+   "status": "published-with-warnings",
+   "at": 1784983185347
+  },
+  "G12|Computer Science|Bubble Sort Algorithm": {
+   "status": "published-with-warnings",
+   "at": 1784983154491
+  },
+  "G12|Computer Science|Built-in Exceptions in Python": {
+   "status": "published-with-warnings",
+   "at": 1784983155757
+  },
+  "G12|Computer Science|CREATE Table": {
+   "status": "passing",
+   "at": 1784983184788
+  },
+  "G12|Computer Science|Binary Search Algorithm": {
+   "status": "published-with-warnings",
+   "at": 1784983152055
+  },
+  "G12|Computer Science|Calculating GST in SQL": {
+   "status": "unfixable",
+   "at": 1784983190276
+  },
+  "G12|Economics|Aggregate Demand with Proportional Taxes": {
+   "status": "passing",
+   "at": 1784983195573
+  },
+  "G12|Economics|Aggregate Demand and Supply": {
+   "status": "passing",
+   "at": 1784983195573
+  },
+  "G12|Economics|Aggregate Demand": {
+   "status": "published-with-warnings",
+   "at": 1784983197283
+  },
+  "G12|Economics|Adam Smith and Wealth of Nations": {
+   "status": "unfixable",
+   "at": 1784983230210
+  },
+  "G12|Economics|Aggregate Demand (AD) Shift": {
+   "status": "published-with-warnings",
+   "at": 1784983197240
+  },
+  "G12|Economics|Aggregate Demand (AD)": {
+   "status": "published-with-warnings",
+   "at": 1784983197397
+  },
+  "G12|Economics|Aggregate Spending and Income": {
+   "status": "passing",
+   "at": 1784983195573
+  },
+  "G12|Economics|Balance of Payments (BoP)": {
+   "status": "passing",
+   "at": 1784983195574
+  },
+  "G12|Economics|Balance of Payments Surplus/Deficit": {
+   "status": "passing",
+   "at": 1784983195574
+  },
+  "G12|Economics|Balanced, Surplus, and Deficit Budgets": {
+   "status": "published",
+   "at": 1784983200553
+  },
+  "G12|Economics|Automatic Stabilizers": {
+   "status": "published-with-warnings",
+   "at": 1784983197277
+  },
+  "G12|Economics|Barter Exchange": {
+   "status": "passing",
+   "at": 1784983197279
+  },
+  "G12|Economics|Autonomous Expenditure Multiplier": {
+   "status": "passing",
+   "at": 1784983195573
+  },
+  "G12|Economics|Barter System Limitations": {
+   "status": "published-with-warnings",
+   "at": 1784983198466
+  },
+  "G12|Economics|Aggregate Money (M3)": {
+   "status": "passing",
+   "at": 1784983195573
+  },
+  "G12|Economics|Base Year": {
+   "status": "unfixable",
+   "at": 1784983231277
+  },
+  "G12|Economics|Bonds": {
+   "status": "unfixable",
+   "at": 1784983232610
+  },
+  "G12|Computer Science|Adding an Attribute to an Existing Table": {
+   "status": "published-with-warnings",
+   "at": 1784983149553
+  },
+  "G12|Computer Science|ATM Transaction Data": {
+   "status": "published-with-warnings",
+   "at": 1784983150818
+  },
+  "G12|Economics|Balance of Payments": {
+   "status": "passing",
+   "at": 1784983195574
+  },
+  "G12|Economics|Bank Rate": {
+   "status": "unfixable",
+   "at": 1784983231184
+  },
+  "G12|Economics|Balanced Budget Multiplier": {
+   "status": "passing",
+   "at": 1784983195574
+  },
+  "G12|Economics|Budget Deficit and Trade Deficit": {
+   "status": "passing",
+   "at": 1784983198615
+  },
+  "G12|Economics|Budget Deficit Implications and Measures": {
+   "status": "passing",
+   "at": 1784983198616
+  },
+  "G12|Economics|Bond Price and Interest Rate Relationship": {
+   "status": "published-with-warnings",
+   "at": 1784983198613
+  },
+  "G12|Economics|Capital Account Balance": {
+   "status": "unfixable",
+   "at": 1784983232690
+  },
+  "G12|Economics|Capital Goods and Production": {
+   "status": "passing",
+   "at": 1784983200556
+  },
+  "G12|Economics|Capitalist Economy": {
+   "status": "passing",
+   "at": 1784983200556
+  },
+  "G12|Economics|Capitalist Economy Definition": {
+   "status": "passing",
+   "at": 1784983200556
+  },
+  "G12|Economics|Cash Reserve Ratio (CRR)": {
+   "status": "passing",
+   "at": 1784983200556
+  },
+  "G12|Economics|Cashless Society": {
+   "status": "passing",
+   "at": 1784983200556
+  },
+  "G12|Economics|Central Bank's Role in Money Supply": {
+   "status": "passing",
+   "at": 1784983200556
+  },
+  "G12|English|Author's Humour in Writing": {
+   "status": "published-with-warnings",
+   "at": 1784983234465
+  },
+  "G12|English|Author's Discovery of Englishman's Identity": {
+   "status": "published-with-warnings",
+   "at": 1784983234487
+  },
+  "G12|English|Bangle Industry in Firozabad": {
+   "status": "published-with-warnings",
+   "at": 1784983235650
+  },
+  "G12|English|Beauty's Comfort": {
+   "status": "published-with-warnings",
+   "at": 1784983235806
+  },
+  "G12|English|Beauty's Enduring Nature": {
+   "status": "published-with-warnings",
+   "at": 1784983235713
+  },
+  "G12|English|Asokamitran's Role": {
+   "status": "published-with-warnings",
+   "at": 1784983234498
+  },
+  "G12|English|Celebrities and Interviews": {
+   "status": "published-with-warnings",
+   "at": 1784983235737
+  },
+  "G12|English|Author's Literary Inclinations": {
+   "status": "published-with-warnings",
+   "at": 1784983234492
+  },
+  "G12|English|Civil Disobedience in Champaran": {
+   "status": "published-with-warnings",
+   "at": 1784983236884
+  },
+  "G12|English|Beauty in Nature": {
+   "status": "published-with-warnings",
+   "at": 1784983235690
+  },
+  "G12|English|Comma Usage in Sentences": {
+   "status": "unfixable",
+   "at": 1784983270178
+  },
+  "G12|English|Change in Attitude": {
+   "status": "published-with-warnings",
+   "at": 1784983235758
+  },
+  "G12|English|Communication Barrier": {
+   "status": "published-with-warnings",
+   "at": 1784983237012
+  },
+  "G12|English|Conquering Fear Through Small Steps": {
+   "status": "published-with-warnings",
+   "at": 1784983237005
+  },
+  "G12|English|Contrast of Youth and Age": {
+   "status": "published-with-warnings",
+   "at": 1784983238106
+  },
+  "G12|English|Critique of War and Violence": {
+   "status": "published-with-warnings",
+   "at": 1784983238215
+  },
+  "G12|English|Colloquial Expressions in the Text": {
+   "status": "published-with-warnings",
+   "at": 1784983236994
+  },
+  "G12|English|Contrast": {
+   "status": "published-with-warnings",
+   "at": 1784983238065
+  },
+  "G12|English|Differences Between Sophie and Jansie": {
+   "status": "unfixable",
+   "at": 1784983271480
+  },
+  "G12|English|Emotions During Near-Drowning": {
+   "status": "published-with-warnings",
+   "at": 1784983240706
+  },
+  "G12|English|Digital Infrastructure": {
+   "status": "unfixable",
+   "at": 1784983271799
+  },
+  "G12|English|Empathy in Literature": {
+   "status": "unfixable",
+   "at": 1784983275219
+  },
+  "G12|English|Family Dynamics": {
+   "status": "published-with-warnings",
+   "at": 1784983272700
+  },
+  "G12|English|Endymion Legend": {
+   "status": "published-with-warnings",
+   "at": 1784983271914
+  },
+  "G12|English|Edla's Kindness": {
+   "status": "published-with-warnings",
+   "at": 1784983239490
+  },
+  "G12|English|Discussion Topics": {
+   "status": "unfixable",
+   "at": 1784983272644
+  },
+  "G12|History|Adolescent Development": {
+   "status": "published-with-warnings",
+   "at": 1784983281997
+  },
+  "G12|History|Access to Resources": {
+   "status": "unfixable",
+   "at": 1784983309769
+  },
+  "G12|History|Agrarian Society and the Mughal Empire": {
+   "status": "unfixable",
+   "at": 1784983310190
+  },
+  "G12|History|Agrahara System": {
+   "status": "unfixable",
+   "at": 1784983310240
+  },
+  "G12|History|Adoption (Goddhan)": {
+   "status": "unfixable",
+   "at": 1784983310381
+  },
+  "G12|History|Adaptability in the Workplace": {
+   "status": "published-with-warnings",
+   "at": 1784983276982
+  },
+  "G12|History|Agricultural Practices": {
+   "status": "unfixable",
+   "at": 1784983315509
+  },
+  "G12|History|Archaeogenetics": {
+   "status": "passing",
+   "at": 1784983310242
+  },
+  "G12|History|Agricultural Production in Ancient India": {
+   "status": "published-with-warnings",
+   "at": 1784983310329
+  },
+  "G12|History|Analyzing Recorded Public Service Announcements": {
+   "status": "published-with-warnings",
+   "at": 1784983311496
+  },
+  "G12|History|Ancient Authority and Power": {
+   "status": "passing",
+   "at": 1784983310192
+  },
+  "G12|History|Artefacts and Luxuries": {
+   "status": "passing",
+   "at": 1784983310331
+  },
+  "G12|History|Artificial Caves as Temples": {
+   "status": "passing",
+   "at": 1784983310331
+  },
+  "G12|History|Assessing and Modifying Diets for the Elderly": {
+   "status": "published-with-warnings",
+   "at": 1784983312710
+  },
+  "G12|History|Applying Ink to Block": {
+   "status": "unfixable",
+   "at": 1784983344908
+  },
+  "G12|History|Artisan Crafts in India": {
+   "status": "unfixable",
+   "at": 1784983345118
+  },
+  "G12|History|Archaeological Evidence": {
+   "status": "unfixable",
+   "at": 1784983345063
+  },
+  "G12|History|Authorship and Composition of Mahabharata": {
+   "status": "passing",
+   "at": 1784983312715
+  },
+  "G12|History|Awareness about Special Needs Individuals": {
+   "status": "published-with-warnings",
+   "at": 1784983313982
+  },
+  "G12|History|Balance in Design": {
+   "status": "passing",
+   "at": 1784983313983
+  },
+  "G12|History|Block Printing Process": {
+   "status": "passing",
+   "at": 1784983344913
+  },
+  "G12|History|Atithi Devo Bhava": {
+   "status": "unfixable",
+   "at": 1784976894477
+  },
+  "G12|History|Beyond the Four Varnas": {
+   "status": "unfixable",
+   "at": 1784983348362
+  },
+  "G12|History|Atithy Pramanan": {
+   "status": "unfixable",
+   "at": 1784976896348
+  },
+  "G12|History|Boundaries in Ancient India": {
+   "status": "unfixable",
+   "at": 1784983379752
+  },
+  "G12|History|Buddha's Last Instructions": {
+   "status": "passing",
+   "at": 1784983345057
+  },
+  "G12|History|Buddha's Teachings": {
+   "status": "unfixable",
+   "at": 1784983379720
+  },
+  "G12|Mathematics|Algebra of Continuous Functions": {
+   "status": "passing",
+   "at": 1784983379757
+  },
+  "G12|Mathematics|Absolute Maxima/Minima Procedure": {
+   "status": "passing",
+   "at": 1784983379757
+  },
+  "G12|Mathematics|Absolute Maximum/Minimum": {
+   "status": "passing",
+   "at": 1784983379757
+  },
+  "G12|Mathematics|Chain Rule for Derivatives": {
+   "status": "unfixable",
+   "at": 1784983414537
+  },
+  "G12|Mathematics|Chain Rule for Differentiation": {
+   "status": "unfixable",
+   "at": 1784983414668
+  },
+  "G12|Mathematics|Basic Concepts of Inverse Trigonometric Functions": {
+   "status": "passing",
+   "at": 1784983379758
+  },
+  "G12|Mathematics|Continuity of a Function": {
+   "status": "passing",
+   "at": 1784983379758
+  },
+  "G12|Mathematics|Continuity of Composite Functions": {
+   "status": "unfixable",
+   "at": 1784983414561
+  },
+  "G12|Mathematics|Continuity of Functions": {
+   "status": "passing",
+   "at": 1784983379758
+  },
+  "G12|Mathematics|Derivatives of Inverse Trigonometric Functions": {
+   "status": "unfixable",
+   "at": 1784983414566
+  },
+  "G12|Mathematics|Determinant of a 2x2 matrix": {
+   "status": "passing",
+   "at": 1784983414541
+  },
+  "G12|Mathematics|Derivative of Exponential Function": {
+   "status": "passing",
+   "at": 1784983379758
+  },
+  "G12|Mathematics|Determinant": {
+   "status": "passing",
+   "at": 1784983414541
+  },
+  "G12|Mathematics|Determinant of a 2x2 Matrix": {
+   "status": "passing",
+   "at": 1784983414541
+  },
+  "G12|Mathematics|Differentiability of a Function": {
+   "status": "unfixable",
+   "at": 1784983449219
+  },
+  "G12|Mathematics|Determinant of a 3x3 matrix (expanding along R1)": {
+   "status": "passing",
+   "at": 1784983414541
+  },
+  "G12|Mathematics|Differentiability Implies Continuity": {
+   "status": "unfixable",
+   "at": 1784983449275
+  },
+  "G12|Mathematics|Determinant of a Matrix": {
+   "status": "passing",
+   "at": 1784983414541
+  },
+  "G12|Mathematics|Differentiability of Functions": {
+   "status": "unfixable",
+   "at": 1784983449223
+  },
+  "G12|Physics|AC Ampere Definition": {
+   "status": "passing",
+   "at": 1784983449278
+  },
+  "G12|Physics|Adding AC Voltages": {
+   "status": "passing",
+   "at": 1784983449279
+  },
+  "G12|Physics|AC Generator Principle": {
+   "status": "passing",
+   "at": 1784983449279
+  },
+  "G12|Physics|Ampere's Law": {
+   "status": "passing",
+   "at": 1784983449279
+  },
+  "G12|Physics|Average Power in AC Circuit": {
+   "status": "passing",
+   "at": 1784983449279
+  },
+  "G12|Physics|Biot-Savart Law": {
+   "status": "passing",
+   "at": 1784983449280
+  },
+  "G12|Physics|Bose's Experiment": {
+   "status": "unfixable",
+   "at": 1784983484121
+  },
+  "G12|Physics|AC Voltage and Current": {
+   "status": "passing",
+   "at": 1784983449279
+  },
+  "G12|Physics|Capacitance Definition": {
+   "status": "published-with-warnings",
+   "at": 1784983451185
+  },
+  "G12|Physics|Capacitance and Capacitors": {
+   "status": "unfixable",
+   "at": 1784983484056
+  },
+  "G12|Physics|Bar Magnet as Equivalent Solenoid": {
+   "status": "passing",
+   "at": 1784983449279
+  },
+  "G12|Physics|Capacitive Reactance": {
+   "status": "passing",
+   "at": 1784983449281
+  },
+  "G12|Physics|Capacitor with Dielectric": {
+   "status": "unfixable",
+   "at": 1784983484009
+  },
+  "G12|Physics|Accelerated Charged Particles and Electromagnetic Waves": {
+   "status": "passing",
+   "at": 1784983449279
+  },
+  "G12|Physics|Cells in Series": {
+   "status": "passing",
+   "at": 1784983449282
+  },
+  "G12|Physics|Charge Induction": {
+   "status": "passing",
+   "at": 1784983449282
+  },
+  "G12|Physics|Conductors and Insulators": {
+   "status": "passing",
+   "at": 1784983449282
+  },
+  "G12|Physics|Conservative Forces": {
+   "status": "passing",
+   "at": 1784983449283
+  },
+  "G12|Physics|Continuous Charge Distribution": {
+   "status": "passing",
+   "at": 1784983449283
+  },
+  "G12|Physics|Coulomb's Law and Acceleration": {
+   "status": "published-with-warnings",
+   "at": 1784983451152
+  },
+  "G12|Physics|Coulomb's Law and Charge Distribution": {
+   "status": "passing",
+   "at": 1784983451155
+  },
+  "G12|Physics|Cells in Parallel": {
+   "status": "unfixable",
+   "at": 1784983484104
+  },
+  "G12|Physics|Coulomb's Law and Newton's Law": {
+   "status": "unfixable",
+   "at": 1784983485518
+  },
+  "G12|Physics|Coulomb's Law Vector Form": {
+   "status": "passing",
+   "at": 1784983452372
+  },
+  "G12|Physics|Coulomb's Law and Force Between Multiple Charges": {
+   "status": "published-with-warnings",
+   "at": 1784983452367
+  },
+  "G12|Political Science|Article 370": {
+   "status": "published-with-warnings",
+   "at": 1784983510443
+  },
+  "G12|Political Science|1962 India-China War": {
+   "status": "published-with-warnings",
+   "at": 1784977224208
+  },
+  "G12|Political Science|Agrarian Focus in Early Plans": {
+   "status": "published-with-warnings",
+   "at": 1784983487271
+  },
+  "G12|Political Science|Arms Control": {
+   "status": "published-with-warnings",
+   "at": 1784983487264
+  },
+  "G12|Political Science|1967 Elections: A Political Earthquake": {
+   "status": "published-with-warnings",
+   "at": 1784977251765
+  },
+  "G12|Political Science|ASEAN Establishment": {
+   "status": "published-with-warnings",
+   "at": 1784983512199
+  },
+  "G12|Political Science|Assassination and Military Rule in Bangladesh": {
+   "status": "published-with-warnings",
+   "at": 1784977268023
+  },
+  "G12|Political Science|Article 370 and Its Implications": {
+   "status": "published-with-warnings",
+   "at": 1784977268418
+  },
+  "G12|Political Science|1971 Election": {
+   "status": "published-with-warnings",
+   "at": 1784977268597
+  },
+  "G12|Political Science|Ayodhya Issue": {
+   "status": "published-with-warnings",
+   "at": 1784977281472
+  },
+  "G12|Political Science|B.P. Mandal": {
+   "status": "published-with-warnings",
+   "at": 1784977282194
+  },
+  "G12|Political Science|ASEAN Way": {
+   "status": "published-with-warnings",
+   "at": 1784977297640
+  },
+  "G12|Political Science|Bangladesh's Independence": {
+   "status": "published-with-warnings",
+   "at": 1784977302404
+  },
+  "G12|Political Science|Bharatiya Jana Sangh": {
+   "status": "published-with-warnings",
+   "at": 1784977311078
+  },
+  "G12|Political Science|Bipolarity in International Relations": {
+   "status": "published-with-warnings",
+   "at": 1784977315025
+  },
+  "G12|Political Science|Challenges of Nation-Building and Democracy": {
+   "status": "published-with-warnings",
+   "at": 1784977320774
+  },
+  "G12|Political Science|China's Challenges": {
+   "status": "published-with-warnings",
+   "at": 1784977324875
+  },
+  "G12|Political Science|China's Economic Rise": {
+   "status": "published-with-warnings",
+   "at": 1784977329133
+  },
+  "G12|Political Science|China's Impact on Asia": {
+   "status": "published-with-warnings",
+   "at": 1784977341542
+  },
+  "G12|Political Science|BJP's 2019 Victory": {
+   "status": "published-with-warnings",
+   "at": 1784977341588
+  },
+  "G12|Political Science|Coalition Governments": {
+   "status": "published-with-warnings",
+   "at": 1784977355108
+  },
+  "G12|Political Science|Chinese Claims on Tibet": {
+   "status": "published-with-warnings",
+   "at": 1784977359864
+  },
+  "G11|Mathematics|Choosing Cards by Suit": {
+   "status": "passing",
+   "at": 1784982681817
+  },
+  "G11|Mathematics|Calculating Combinations of Cards": {
+   "status": "passing",
+   "at": 1784982681774
+  },
+  "G11|Mathematics|Average Velocity": {
+   "status": "passing",
+   "at": 1784982647736
+  },
+  "G11|Physics|Angular Momentum in Rotational Motion": {
+   "status": "published-with-warnings",
+   "at": 1784982718789
+  },
+  "G11|Physics|Average Acceleration": {
+   "status": "published-with-warnings",
+   "at": 1784982721314
+  },
+  "G11|Physics|Average Speed vs Magnitude of Average Velocity": {
+   "status": "published-with-warnings",
+   "at": 1784982722467
+  },
+  "G11|Physics|Centre of Gravity": {
+   "status": "published-with-warnings",
+   "at": 1784982723682
+  },
+  "G11|Political Science|Characteristics of Nations": {
+   "status": "unfixable",
+   "at": 1784982789029
+  },
+  "G11|Political Science|Citizenship": {
+   "status": "passing",
+   "at": 1784982755002
+  },
+  "G12|English|Discourse Cohesion and Coherence": {
+   "status": "unfixable",
+   "at": 1784983272648
+  },
+  "G12|English|Author's Beliefs and Story Setting": {
+   "status": "published-with-warnings",
+   "at": 1784983234506
+  },
+  "G12|English|Children Not Wearing Footwear": {
+   "status": "published-with-warnings",
+   "at": 1784983236864
+  },
+  "G12|English|Argumentative Writing": {
+   "status": "published-with-warnings",
+   "at": 1784983234425
+  },
+  "G12|History|Asokan Inscriptions": {
+   "status": "passing",
+   "at": 1784983311497
+  },
+  "G12|History|Asoka's Dhamma": {
+   "status": "unfixable",
+   "at": 1784983345054
+  },
+  "G12|History|Block Printing Materials": {
+   "status": "unfixable",
+   "at": 1784983349921
+  },
+  "G12|Mathematics|Adjoint and Inverse of a Matrix": {
+   "status": "unfixable",
+   "at": 1784983414754
+  },
+  "G12|Mathematics|Continuous Function": {
+   "status": "passing",
+   "at": 1784983379758
+  },
+  "G12|Mathematics|Determinant of a 3x3 Matrix (Expansion by R1)": {
+   "status": "passing",
+   "at": 1784983414541
+  },
+  "G12|Mathematics|Determinant using Cofactors": {
+   "status": "passing",
+   "at": 1784983414541
+  },
+  "G12|Mathematics|Differentiating Implicit Functions": {
+   "status": "passing",
+   "at": 1784983414624
+  },
+  "G12|Mathematics|Derivative of Logarithmic Function": {
+   "status": "unfixable",
+   "at": 1784983414623
+  },
+  "G12|Physics|Additivity of Charges": {
+   "status": "passing",
+   "at": 1784983449279
+  },
+  "G12|Physics|Ampere's Circuital Law": {
+   "status": "passing",
+   "at": 1784983449279
+  },
+  "G12|Physics|Coulomb's Law": {
+   "status": "passing",
+   "at": 1784983449283
+  },
+  "G12|Physics|Conservation of Charge": {
+   "status": "passing",
+   "at": 1784983449282
+  },
+  "G12|Political Science|Balancing Industry and Agriculture": {
+   "status": "published-with-warnings",
+   "at": 1784977667622
+  },
+  "G12|Political Science|ASEAN Economic Growth": {
+   "status": "published-with-warnings",
+   "at": 1784977667764
+  },
+  "G12|Political Science|Assassination of Rajiv Gandhi": {
+   "status": "published-with-warnings",
+   "at": 1784977669302
+  },
+  "G12|Political Science|Autonomy Demands in North-East India": {
+   "status": "published-with-warnings",
+   "at": 1784977672991
+  },
+  "G12|Political Science|Backward Castes in Indian Politics": {
+   "status": "published-with-warnings",
+   "at": 1784977675166
+  },
+  "G12|Political Science|ASEAN's Success": {
+   "status": "published-with-warnings",
+   "at": 1784977688182
+  },
+  "G12|Political Science|BJP's Rise and Single-Party Majority": {
+   "status": "published-with-warnings",
+   "at": 1784977705290
+  },
+  "G12|Physics|Capacitance Formula": {
+   "status": "passing",
+   "at": 1784983449281
+  },
+  "G11|Mathematics|Cartesian Products of Sets": {
+   "status": "published",
+   "at": 1784997660889
+  },
+  "G11|Mathematics|Argand Plane and Polar Representation": {
+   "status": "published",
+   "at": 1784997661423
+  },
+  "G11|Mathematics|Angles": {
+   "status": "published",
+   "at": 1784997665854
+  },
+  "G11|Mathematics|Algebraic Solutions of Linear Inequalities in One": {
+   "status": "published",
+   "at": 1784997666048
+  },
+  "G11|Mathematics|Co-function Identities": {
+   "status": "published",
+   "at": 1784997666755
+  },
+  "G11|Mathematics|Circle": {
+   "status": "published",
+   "at": 1784997667896
+  },
+  "G11|Mathematics|Circle's Properties": {
+   "status": "published",
+   "at": 1784997671568
+  },
+  "G11|Mathematics|Algebra of Complex Numbers": {
+   "status": "published",
+   "at": 1784997671873
+  },
+  "G11|Mathematics|Combinations": {
+   "status": "published",
+   "at": 1784997672418
+  },
+  "G11|Mathematics|Complement of a Set": {
+   "status": "published",
+   "at": 1784997672768
+  },
+  "G11|Mathematics|Combinations with Repetition": {
+   "status": "published",
+   "at": 1784997673145
+  },
+  "G11|Mathematics|Combinations with Restrictions": {
+   "status": "published",
+   "at": 1784997673355
+  },
+  "G11|Mathematics|Constant Function": {
+   "status": "published",
+   "at": 1784997676828
+  },
+  "G11|Mathematics|Continuity of a Function": {
+   "status": "published",
+   "at": 1784997677168
+  },
+  "G11|Mathematics|Conjugate of a Complex Number": {
+   "status": "published",
+   "at": 1784997678329
+  },
+  "G11|Mathematics|Coordinate Axes and Coordinate Planes in Three Dimensional Spa": {
+   "status": "published",
+   "at": 1784997679303
+  },
+  "G11|Mathematics|Coordinates of a Point in Space": {
+   "status": "published",
+   "at": 1784997682324
+  },
+  "G11|Mathematics|Complex Numbers": {
+   "status": "unfixable",
+   "at": 1784997682377
+  },
+  "G11|Mathematics|Correcting Incorrect Observations": {
+   "status": "published",
+   "at": 1784997682606
+  },
+  "G11|Mathematics|Coordinate Axes and Planes in 3D": {
+   "status": "published",
+   "at": 1784997682823
+  },
+  "G11|Mathematics|Complex Number Equality": {
+   "status": "unfixable",
+   "at": 1784997684564
+  },
+  "G11|Mathematics|De Morgan's Laws": {
+   "status": "published",
+   "at": 1784997685374
+  },
+  "G11|Mathematics|Derivative of a Function": {
+   "status": "published",
+   "at": 1784997687571
+  },
+  "G11|Mathematics|Degree to Radian Conversion": {
+   "status": "published",
+   "at": 1784997688169
+  },
+  "G11|Mathematics|Difference of Sets": {
+   "status": "published",
+   "at": 1784997689028
+  },
+  "G11|Mathematics|Derivative of Polynomials and Trigonometric Functions": {
+   "status": "published",
+   "at": 1784997690086
+  },
+  "G11|Mathematics|Derivatives": {
+   "status": "published",
+   "at": 1784997690348
+  },
+  "G11|Mathematics|Definition of Complex Numbers by Hamilton": {
+   "status": "unfixable",
+   "at": 1784997691382
+  },
+  "G11|Mathematics|Diluting Solutions": {
+   "status": "published",
+   "at": 1784997692224
+  },
+  "G11|Mathematics|Difference-to-Sum Identities": {
+   "status": "published",
+   "at": 1784997697794
+  },
+  "G11|Psychology|ANALYSIS OF DATA": {
+   "status": "published-with-warnings",
+   "at": 1784998861219
+  },
+  "G11|Psychology|Moral Development": {
+   "status": "published-with-warnings",
+   "at": 1784998862011
+  },
+  "G11|Psychology|Concepts": {
+   "status": "published-with-warnings",
+   "at": 1784998862209
+  },
+  "G11|Psychology|Act like a boy if you are a girl or act like a girl if": {
+   "status": "published-with-warnings",
+   "at": 1784998862324
+  },
+  "G11|Psychology|Meaning of Development": {
+   "status": "published-with-warnings",
+   "at": 1784998862822
+  },
+  "G11|Psychology|Goals of Psychological Enquiry": {
+   "status": "published-with-warnings",
+   "at": 1784998863160
+  },
+  "G11|Psychology|Nature and Varieties of Stimulus": {
+   "status": "published-with-warnings",
+   "at": 1784998865337
+  },
+  "G11|Psychology|Nature of Motivation": {
+   "status": "published-with-warnings",
+   "at": 1784998866163
+  },
+  "G11|Psychology|NATURE OF EMOTIONS": {
+   "status": "published-with-warnings",
+   "at": 1784998867678
+  },
+  "G11|Psychology|Nature of Learning": {
+   "status": "published-with-warnings",
+   "at": 1784998867993
+  },
+  "G11|Psychology|Nature of Memory": {
+   "status": "published-with-warnings",
+   "at": 1784998868055
+  },
+  "G11|Psychology|Nature of Thinking": {
+   "status": "published-with-warnings",
+   "at": 1784998868676
+  },
+  "G11|Psychology|OVERVIEW OF DEVELOPMENTAL STAGES": {
+   "status": "published-with-warnings",
+   "at": 1784998869249
+  },
+  "G11|Psychology|Problem": {
+   "status": "published-with-warnings",
+   "at": 1784998871394
+  },
+  "G11|Psychology|Reprint": {
+   "status": "published-with-warnings",
+   "at": 1784998871533
+  },
+  "G11|Psychology|Socio-emotional Development": {
+   "status": "published-with-warnings",
+   "at": 1784998872590
+  },
+  "G11|Psychology|Process of Creative Thinking": {
+   "status": "published-with-warnings",
+   "at": 1784998873180
+  },
+  "G11|Psychology|POPULAR NOTIONS ABOUT THE DISCIPLINE": {
+   "status": "published-with-warnings",
+   "at": 1784998873436
+  },
+  "G11|Psychology|Telephone Survey": {
+   "status": "published-with-warnings",
+   "at": 1784998876032
+  },
+  "G11|Psychology|Understanding Mind and Behaviour": {
+   "status": "published-with-warnings",
+   "at": 1784998876302
+  },
+  "G11|Psychology|Two American psychologists, Bibb Latane and": {
+   "status": "published-with-warnings",
+   "at": 1784998876731
+  },
+  "G11|Sociology|Sociology and Society": {
+   "status": "published-with-warnings",
+   "at": 1784998904830
+  },
+  "G11|Sociology|Culture and Socialisation": {
+   "status": "published-with-warnings",
+   "at": 1784998905359
+  },
+  "G11|Sociology|Introducing Sociology": {
+   "status": "published-with-warnings",
+   "at": 1784998907958
+  },
+  "G11|Geography|Methods of Relief Representation": {
+   "status": "published-with-warnings",
+   "at": 1784998948077
+  },
+  "G11|Geography|Ert,": {
+   "status": "published-with-warnings",
+   "at": 1784998949710
+  },
+  "G11|Geography|Map Projection": {
+   "status": "published-with-warnings",
+   "at": 1784998950382
+  },
+  "G11|Geography|Causes, Consequences and Management": {
+   "status": "published-with-warnings",
+   "at": 1784998950757
+  },
+  "G11|Geography|Methods of Scale": {
+   "status": "published-with-warnings",
+   "at": 1784998951369
+  },
+  "G11|Geography|Natural Sensorobject Surface": {
+   "status": "published-with-warnings",
+   "at": 1784998952420
+  },
+  "G11|Geography|Climate and Vegetation": {
+   "status": "published-with-warnings",
+   "at": 1784998954637
+  },
+  "G11|Geography|Pushbroom Scanners": {
+   "status": "published-with-warnings",
+   "at": 1784998955157
+  },
+  "G11|Geography|Parallels of Latitudes": {
+   "status": "published-with-warnings",
+   "at": 1784998955186
+  },
+  "G11|Geography|Types of Forests": {
+   "status": "published-with-warnings",
+   "at": 1784998956415
+  },
+  "G11|Geography|Whiskbroom Scanners": {
+   "status": "published-with-warnings",
+   "at": 1784998957179
+  },
+  "G11|Geography|Ssentials of Map Making": {
+   "status": "published-with-warnings",
+   "at": 1784998962119
+  },
+  "G11|Biology|An Overview of": {
+   "status": "published",
+   "at": 1785000451275
+  },
+  "G11|Biology|Algae": {
+   "status": "published-with-warnings",
+   "at": 1785000452167
+  },
+  "G11|Biology|Amphibolic": {
+   "status": "published",
+   "at": 1785000453613
+  },
+  "G11|Biology|Aerobic": {
+   "status": "published",
+   "at": 1785000453860
+  },
+  "G11|Biology|Anatomy of": {
+   "status": "published",
+   "at": 1785000453986
+  },
+  "G11|Biology|BASIS OF CLASSIFICATION": {
+   "status": "published",
+   "at": 1785000458841
+  },
+  "G11|Biology|BLOOD": {
+   "status": "published-with-warnings",
+   "at": 1785000459391
+  },
+  "G11|Biology|Anatomy of Flowering Plants": {
+   "status": "published",
+   "at": 1785000459987
+  },
+  "G11|Biology|Animal Kingdom": {
+   "status": "published-with-warnings",
+   "at": 1785000460450
+  },
+  "G11|Biology|Body Fluids and Circulation": {
+   "status": "published-with-warnings",
+   "at": 1785000461401
+  },
+  "G11|Biology|Angiosperms": {
+   "status": "published-with-warnings",
+   "at": 1785000462699
+  },
+  "G11|Biology|Bryophytes": {
+   "status": "published-with-warnings",
+   "at": 1785000464075
+  },
+  "G11|Biology|C3 vs C4 Plants": {
+   "status": "published-with-warnings",
+   "at": 1785000464418
+  },
+  "G11|Biology|Bryophytes: Plant Body and Reproduction": {
+   "status": "published-with-warnings",
+   "at": 1785000465223
+  },
+  "G11|Biology|C3 and C4 Plants Comparison": {
+   "status": "published-with-warnings",
+   "at": 1785000466434
+  },
+  "G11|Political Science|CITIZEN AND NATION": {
+   "status": "published",
+   "at": 1785000536617
+  },
+  "G11|Political Science|EQUAL RIGHTS": {
+   "status": "published",
+   "at": 1785000536724
+  },
+  "G11|Political Science|CRITICISMS OF I": {
+   "status": "published",
+   "at": 1785000537022
+  },
+  "G11|Political Science|Equality vs Identical Treatment": {
+   "status": "published",
+   "at": 1785000537158
+  },
+  "G11|Political Science|Feminism": {
+   "status": "published",
+   "at": 1785000537178
+  },
+  "G11|Political Science|Demand for National Self-Determination in Basque": {
+   "status": "published",
+   "at": 1785000538018
+  },
+  "G11|Political Science|Free Markets vs. State Intervention": {
+   "status": "published",
+   "at": 1785000540106
+  },
+  "G11|Political Science|Freedom": {
+   "status": "published",
+   "at": 1785000540537
+  },
+  "G11|Political Science|Freedom and Equality": {
+   "status": "published",
+   "at": 1785000540664
+  },
+  "G11|Political Science|Freedom as Absence of Constraints": {
+   "status": "published",
+   "at": 1785000540788
+  },
+  "G11|Political Science|Freedom as Choice and Responsibility": {
+   "status": "published",
+   "at": 1785000540908
+  },
+  "G11|Political Science|Freedom as Personal Development": {
+   "status": "published",
+   "at": 1785000541775
+  },
+  "G11|Political Science|Freedom of Expression": {
+   "status": "published",
+   "at": 1785000543784
+  },
+  "G11|Political Science|FULL AND EQUAL MEMBERSHIP": {
+   "status": "published",
+   "at": 1785000544077
+  },
+  "G11|Political Science|Freedom Struggles": {
+   "status": "published",
+   "at": 1785000544135
+  },
+  "G11|Physics|Angular momentum in case": {
+   "status": "published-with-warnings",
+   "at": 1785000579553
+  },
+  "G11|Physics|An aircraft executes a horizontal loop of radius": {
+   "status": "published-with-warnings",
+   "at": 1785000579618
+  },
+  "G11|Physics|An aircraft is flying at a height of": {
+   "status": "published",
+   "at": 1785000580035
+  },
+  "G11|Physics|An electron and a proton are detected in a cosmic ray experime": {
+   "status": "published-with-warnings",
+   "at": 1785000580127
+  },
+  "G11|Physics|Acceleration due to": {
+   "status": "published-with-warnings",
+   "at": 1785000582038
+  },
+  "G11|Physics|Addition and subtraction of": {
+   "status": "unfixable",
+   "at": 1785000582315
+  },
+  "G11|Physics|Aristotle": {
+   "status": "published-with-warnings",
+   "at": 1785000583820
+  },
+  "G11|Physics|Applications of elastic": {
+   "status": "published-with-warnings",
+   "at": 1785000583968
+  },
+  "G11|Physics|Angular velocity and its": {
+   "status": "published-with-warnings",
+   "at": 1785000584208
+  },
+  "G11|Physics|Assuming the earth to be a sphere of uniform mass density, how": {
+   "status": "published-with-warnings",
+   "at": 1785000585890
+  },
+  "G11|Physics|Answer the following": {
+   "status": "published-with-warnings",
+   "at": 1785000585951
+  },
+  "G11|Physics|Beats": {
+   "status": "published-with-warnings",
+   "at": 1785000651389
+  },
+  "G11|Physics|At what temperature is the root mean square speed of": {
+   "status": "unfixable",
+   "at": 1785000684050
+  },
+  "G11|Chemistry|ACiDS, bASES AnD SAltS": {
+   "status": "published",
+   "at": 1785000757401
+  },
+  "G11|Chemistry|Among the following pairs of orbitals which orbital will exper": {
+   "status": "published",
+   "at": 1785000830817
+  },
+  "G11|Chemistry|An electron is in one of the": {
+   "status": "published",
+   "at": 1785000861679
+  },
+  "G11|Chemistry|An element with mass number": {
+   "status": "published",
+   "at": 1785000864507
+  },
+  "G11|Chemistry|APPliCAtiOnS OF EqUilibriUm": {
+   "status": "published",
+   "at": 1785000887417
+  },
+  "G11|Chemistry|Anything": {
+   "status": "unfixable",
+   "at": 1785000902025
+  },
+  "G11|Chemistry|Apart": {
+   "status": "unfixable",
+   "at": 1785000906752
+  },
+  "G11|Chemistry|Arrange": {
+   "status": "published",
+   "at": 1785000913571
+  },
+  "G11|History|Economic Modernization: Industry, Zaibatsu, and Urbanization": {
+   "status": "unfixable",
+   "at": 1785001082843
+  },
+  "G11|Accountancy|Bad Debts": {
+   "status": "published-with-warnings",
+   "at": 1785001101148
+  },
+  "G11|Accountancy|Assets and Liabilities": {
+   "status": "published-with-warnings",
+   "at": 1785001103135
+  },
+  "G11|Accountancy|Bad Debts Provision": {
+   "status": "published-with-warnings",
+   "at": 1785001129711
+  },
+  "G11|Accountancy|Bad Debts: Uncollectible Customer Accounts": {
+   "status": "published-with-warnings",
+   "at": 1785001133201
+  },
+  "G11|Accountancy|Balancing a Double Column Cash Book": {
+   "status": "published-with-warnings",
+   "at": 1785001136789
+  },
+  "G11|Accountancy|Balance Sheet: Liabilities vs. Assets Classification": {
+   "status": "published-with-warnings",
+   "at": 1785001136952
+  },
+  "G11|Accountancy|Balancing Cash Book and Ledger Accounts": {
+   "status": "published-with-warnings",
+   "at": 1785001139575
+  },
+  "G11|Accountancy|Balancing of Accounts": {
+   "status": "published-with-warnings",
+   "at": 1785001165201
+  },
+  "G11|Business Studies|Benefits of Licensing/Franchising": {
+   "status": "published",
+   "at": 1785001185843
+  },
+  "G11|Business Studies|Benefits of International Business for Countries": {
+   "status": "published-with-warnings",
+   "at": 1785001186121
+  },
+  "G11|Business Studies|Benefits of Pollution Control for Businesses": {
+   "status": "published-with-warnings",
+   "at": 1785001188266
+  },
+  "G11|Business Studies|Business Ethics: Balancing Profit and Social Good": {
+   "status": "published-with-warnings",
+   "at": 1785001208492
+  },
+  "G11|English|The Impact on Doris and Cyril": {
+   "status": "published-with-warnings",
+   "at": 1785001360637
+  }
+ }
+}

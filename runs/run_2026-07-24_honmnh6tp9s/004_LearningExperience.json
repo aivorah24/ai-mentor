@@ -1,0 +1,133 @@
+{
+  "package": {
+    "package_id": "uuid",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "ISO8601",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "honmnh6tp9s",
+      "parent_package_id": "8e50f7cb-ca9a-44d2-b865-b147cc02e9f3"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "lesson_metadata": {
+      "curriculum": "math",
+      "grade": 4,
+      "subject": "mathematics",
+      "chapter": "subtraction",
+      "lesson": "subtraction with borrowing"
+    },
+    "experience_score": {
+      "engagement": 90,
+      "curiosity": 85,
+      "visual_learning": 95,
+      "audio_experience": 80,
+      "interaction": 92,
+      "reflection": 88,
+      "accessibility": 95,
+      "cognitive_load": 80,
+      "learning_flow": 90
+    },
+    "lesson_flow": [
+      {
+        "step": "introduction",
+        "description": "Introduction to subtraction with borrowing",
+        "interaction": "video",
+        "visual_support": "animation"
+      },
+      {
+        "step": "practice_problems",
+        "description": "Practice problems with subtraction with borrowing",
+        "interaction": "interactive_exercise",
+        "visual_support": "worked_examples"
+      },
+      {
+        "step": "real_life_applications",
+        "description": "Real-life applications of subtraction with borrowing",
+        "interaction": "case_study",
+        "visual_support": "images"
+      }
+    ],
+    "ui_components": [
+      {
+        "component": "video_player",
+        "description": "Video player for introduction"
+      },
+      {
+        "component": "interactive_exercise",
+        "description": "Interactive exercise for practice problems"
+      },
+      {
+        "component": "case_study",
+        "description": "Case study for real-life applications"
+      }
+    ],
+    "interaction_plan": [
+      {
+        "interaction": "video",
+        "description": "Watch introduction video"
+      },
+      {
+        "interaction": "interactive_exercise",
+        "description": "Complete practice problems"
+      },
+      {
+        "interaction": "case_study",
+        "description": "Read and discuss real-life applications"
+      }
+    ],
+    "illustration_plan": [
+      {
+        "illustration": "animation",
+        "description": "Animation for introduction"
+      },
+      {
+        "illustration": "worked_examples",
+        "description": "Worked examples for practice problems"
+      },
+      {
+        "illustration": "images",
+        "description": "Images for real-life applications"
+      }
+    ],
+    "audio_plan": [
+      {
+        "audio": "narration",
+        "description": "Narration for introduction video"
+      },
+      {
+        "audio": "feedback",
+        "description": "Feedback for interactive exercise"
+      }
+    ],
+    "validation_requirements": [
+      {
+        "requirement": "completion",
+        "description": "Complete all interactions"
+      },
+      {
+        "requirement": "accuracy",
+        "description": "Achieve 80% accuracy on practice problems"
+      }
+    ],
+    "handoff": {
+      "ui_planner_agent": {
+        "lesson_experience": {
+          "lesson_id": "subtraction_with_borrowing",
+          "lesson_metadata": {
+            "curriculum": "math",
+            "grade": 4,
+            "subject": "mathematics",
+            "chapter": "subtraction",
+            "lesson": "subtraction with borrowing"
+          }
+        }
+      }
+    }
+  }
+}

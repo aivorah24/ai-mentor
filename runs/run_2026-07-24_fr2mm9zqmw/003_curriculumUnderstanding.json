@@ -1,0 +1,73 @@
+{
+  "package": {
+    "package_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i7",
+    "package_type": "LessonBlueprint",
+    "schema_version": "1.0",
+    "created_at": "2023-12-31T12:00:00Z",
+    "produced_by": {
+      "agent": "curriculum-understanding-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "123e4567-e89b-12d3-a456-426614174000",
+      "parent_package_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i7"
+    }
+  },
+  "payload": {
+    "lesson_id": "my-bicycle-lesson",
+    "curriculum": "NCERT",
+    "grade": 2,
+    "subject": "English",
+    "chapter": "My Bicycle",
+    "lesson": "My Bicycle",
+    "lesson_type": "Concept",
+    "concept_map": [
+      {
+        "concept_id": "my-bicycle-concept",
+        "concept": "My Bicycle",
+        "depends_on": [
+          "bicycles",
+          "transportation"
+        ],
+        "difficulty": "medium"
+      }
+    ],
+    "learning_objectives": [
+      "To understand the concept of a bicycle and its importance in daily life.",
+      "To describe the features of a bicycle and its uses."
+    ],
+    "learning_outcomes": [
+      "Students will be able to identify and describe the parts of a bicycle.",
+      "Students will be able to explain the importance of bicycles in transportation."
+    ],
+    "bloom_level": "Understand",
+    "prerequisites": [
+      "Basic understanding of transportation modes.",
+      "Familiarity with bicycles and their uses."
+    ],
+    "misconceptions": [
+      "Bicycles are only used for recreation.",
+      "Bicycles are not a reliable mode of transportation."
+    ],
+    "suggested_instructional_sequence": [
+      "Introduction to bicycles and their importance.",
+      "Description of bicycle parts and features.",
+      "Discussion on the uses of bicycles in daily life."
+    ],
+    "vocabulary_difficulty": "low-medium",
+    "available_images": [
+      "image1.jpg",
+      "image2.jpg"
+    ],
+    "source_chunk_references": [
+      "chunk_1",
+      "chunk_2",
+      "chunk_3"
+    ],
+    "handoff": {
+      "learning_experience_designer": {
+        "lesson_blueprint": {}
+      }
+    }
+  }
+}

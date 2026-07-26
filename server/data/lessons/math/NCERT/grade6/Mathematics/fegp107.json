@@ -1,0 +1,199 @@
+{
+  "meta": {
+    "curriculum": "NCERT",
+    "grade": "6",
+    "subject": "Mathematics",
+    "chapterCode": "fegp107",
+    "chapterTitle": "Understanding Fractions Through Equal Sharing",
+    "generatedAt": "2026-07-23T09:10:49.533Z"
+  },
+  "concept": {
+    "title": "Understanding Fractions Through Equal Sharing",
+    "description": "This lesson introduces fractions by exploring how whole items are divided equally among people, showing how the number of people affects the size of each share. Students compare unit fractions by reasoning about real-life sharing situations.",
+    "learningObjective": "Students will understand that a fraction represents a part of a whole when items are shared equally, and they will compare unit fractions by reasoning about the number of people sharing the same whole.",
+    "prerequisites": [
+      "Knowledge of whole numbers and equal division",
+      "Ability to compare quantities using terms like 'more' and 'less'"
+    ]
+  },
+  "formulas": [],
+  "properties": [
+    {
+      "title": "Fractional Unit",
+      "description": "When one whole item is divided into equal parts, each part is called a fractional unit. Examples include one half, one third, one fourth, and so on."
+    },
+    {
+      "title": "Unit Fraction Comparison",
+      "description": "When comparing unit fractions with the same numerator, the fraction with the smaller denominator represents a larger share because the whole is divided into fewer parts."
+    }
+  ],
+  "visuals": [],
+  "workedExamples": [
+    {
+      "problem": "Three guavas together weigh 1 kg. If they are roughly of the same size, each guava \nwill roughly weigh ____kg.",
+      "spokenIntro": "We know that three guavas together weigh one kilogram. Since the guavas are roughly the same size, we can find the weight of one guava by splitting the total weight evenly among them.",
+      "steps": [
+        {
+          "stepText": "Total weight = 1 kg",
+          "spokenExplanation": "We start with the total weight of all three guavas combined, which is one kilogram.",
+          "visual": "1 kg"
+        },
+        {
+          "stepText": "Number of guavas = 3",
+          "spokenExplanation": "There are three guavas in total, and they are roughly the same size.",
+          "visual": "3"
+        },
+        {
+          "stepText": "Weight of one guava = 1 ÷ 3",
+          "spokenExplanation": "To find the weight of one guava, we divide the total weight by the number of guavas.",
+          "visual": "1 ÷ 3"
+        },
+        {
+          "stepText": "Weight of one guava ≈ 0.333... kg",
+          "spokenExplanation": "When we divide one kilogram into three equal parts, each part is approximately zero point three three three kilograms.",
+          "visual": "0.333... kg"
+        },
+        {
+          "stepText": "Rounded weight = 1/3 kg",
+          "spokenExplanation": "Since the guavas are roughly the same size, we can express the weight as one third of a kilogram.",
+          "visual": "1/3 kg"
+        }
+      ],
+      "finalAnswer": "1/3"
+    },
+    {
+      "problem": "A wholesale merchant packed 1 kg of rice in four packets of equal weight. The weight \nof each packet is_______ kg.",
+      "spokenIntro": "Let's think about dividing one kilogram of rice into four equal packets. We need to figure out how much each packet will weigh.",
+      "steps": [
+        {
+          "stepText": "1 kg ÷ 4 = <span style='font-size: 1.5em;'>¼</span> kg",
+          "spokenExplanation": "We start with one whole kilogram and split it evenly into four identical parts. Each part must be one of those four equal pieces.",
+          "visual": "<div style='font-size: 2em; text-align: center;'>1 kg → <span style='border: 2px solid black; padding: 10px;'>¼ kg</span> <span style='border: 2px solid black; padding: 10px;'>¼ kg</span> <span style='border: 2px solid black; padding: 10px;'>¼ kg</span> <span style='border: 2px solid black; padding: 10px;'>¼ kg</span></div>"
+        },
+        {
+          "stepText": "<span style='font-size: 1.5em;'>¼</span> kg = <span style='font-size: 1.5em;'>1 4</span> kg",
+          "spokenExplanation": "When we write the weight as a mixed number, one quarter is the same as one over four, which is expressed as one and four.",
+          "visual": "<div style='font-size: 2em; text-align: center;'><span style='border: 2px solid black; padding: 10px;'>¼ kg</span> → <span style='border: 2px solid black; padding: 10px;'>1 4</span> kg</div>"
+        }
+      ],
+      "finalAnswer": "1 4"
+    }
+  ],
+  "exerciseQuestions": [
+    {
+      "problem": "Four friends ordered 3 glasses of sugarcane juice and shared it equally among \nthemselves. Each one drank ____ glass of sugarcane juice",
+      "officialAnswer": "3\n4",
+      "steps": [
+        {
+          "stepText": "Total glasses = 3",
+          "spokenExplanation": "First, we note how many glasses of sugarcane juice were ordered in total.",
+          "visual": "3"
+        },
+        {
+          "stepText": "Number of friends = 4",
+          "spokenExplanation": "Next, we identify how many friends are sharing the juice equally.",
+          "visual": "4"
+        },
+        {
+          "stepText": "Each friend's share = <span style='font-size: 1.5em;'>3</span> ÷ <span style='font-size: 1.5em;'>4</span>",
+          "spokenExplanation": "To find out how much each person gets, we divide the total glasses by the number of friends sharing them.",
+          "visual": "3 ÷ 4"
+        },
+        {
+          "stepText": "Each friend drank <span style='font-size: 1.5em;'>3/4</span> glass",
+          "spokenExplanation": "After dividing the three glasses into four equal parts, each friend receives three quarters of a glass.",
+          "visual": "¾"
+        }
+      ],
+      "commonMistake": "Some might think each person gets one full glass because there are three glasses, forgetting to divide them equally among four friends.",
+      "hint": "Remember, sharing equally means splitting the total amount into the same number of parts as there are people."
+    },
+    {
+      "problem": "The big fish weighs \n\n\n kg. The small one weighs \n\n\n kg. Together they weigh ____ kg.",
+      "officialAnswer": "3\n4",
+      "steps": [
+        {
+          "stepText": "Big fish = 2 ½ kg<br>Small fish = ½ kg",
+          "spokenExplanation": "First, let's write down how much each fish weighs. The big fish weighs two and a half kilograms, and the small fish weighs half a kilogram.",
+          "visual": "Big fish = 2½ kg<br>Small fish = ½ kg"
+        },
+        {
+          "stepText": "2½ kg + ½ kg = 3 kg",
+          "spokenExplanation": "Now we add the two weights together. Half plus half makes one whole, and two plus one makes three.",
+          "visual": "2½ + ½ = 3"
+        },
+        {
+          "stepText": "3 kg = 3 4",
+          "spokenExplanation": "The total weight is three kilograms, which we can write as the fraction three over one, or simply three and four over four.",
+          "visual": "3 = 3 4"
+        }
+      ],
+      "commonMistake": "Forgetting to convert the mixed number to an improper fraction before adding, which could lead to incorrect results.",
+      "hint": "Remember that two and a half is the same as five halves, and half is one half."
+    },
+    {
+      "problem": "Arrange these fraction words in order of size from the smallest to the biggest in the \nempty box below: \nOne and a half, three quarters, one and a quarter, half, quarter, two and a half.",
+      "officialAnswer": "1\n4\n, \n1\n2\n, \n3\n4\n, 1\n1\n4\n, 1\n1\n2\n, 2\n1\n2\n \n \n  Section 7.2 \nPage No. 154",
+      "steps": [
+        {
+          "stepText": "¼, ½, ¾, 1¼, 1½, 2½",
+          "spokenExplanation": "First, we list the fractions in their simplest form so we can compare them easily. This helps us see the order clearly.",
+          "visual": "¼, ½, ¾, 1¼, 1½, 2½"
+        },
+        {
+          "stepText": "¼ < ½ < ¾ < 1¼ < 1½ < 2½",
+          "spokenExplanation": "Now we compare each fraction to the next. We see that a quarter is smaller than a half, a half is smaller than three quarters, and so on.",
+          "visual": "¼ < ½ < ¾ < 1¼ < 1½ < 2½"
+        },
+        {
+          "stepText": "quarter, half, three quarters, one and a quarter, one and a half, two and a half",
+          "spokenExplanation": "Finally, we match the simplified fractions back to the original words to show the correct order from smallest to biggest.",
+          "visual": "quarter, half, three quarters, one and a quarter, one and a half, two and a half"
+        }
+      ],
+      "commonMistake": "Mixing up the order of fractions that are close in size, like one and a quarter and one and a half.",
+      "hint": "Remember to convert mixed numbers to improper fractions or compare the whole number part first before looking at the fractional part."
+    },
+    {
+      "problem": "By dividing the whole chikki into 6 equal parts in different ways, we get 1/6 chikki \npieces of different shapes. Are they of the same size?",
+      "officialAnswer": "Yes, they are of the same size.  \n \n \n \n\nPage No. 155",
+      "steps": [
+        {
+          "stepText": "Divide the whole chikki into 6 equal rectangular strips.",
+          "spokenExplanation": "When we cut the chikki into six long, thin rectangles, each piece looks different in shape but takes up the same amount of space.",
+          "visual": "🍫|🍫|🍫|🍫|🍫|🍫 (six equal rectangular strips)"
+        },
+        {
+          "stepText": "Divide the same whole chikki into 6 equal triangular pieces by cutting from the center to each corner.",
+          "spokenExplanation": "Now we rearrange the cuts to make six identical triangles. Each triangle covers the same area as one of the rectangular strips we made earlier.",
+          "visual": "⬠⬠⬠⬠⬠⬠ (six equal triangular pieces)"
+        },
+        {
+          "stepText": "Compare one rectangular piece with one triangular piece.",
+          "spokenExplanation": "If we take one rectangle and one triangle from the two different cuts, we can see they both fill exactly one sixth of the whole chikki. The shapes differ, but the space they occupy is identical.",
+          "visual": "🍫 vs ⬠ (both labeled as 1/6 of the whole chikki)"
+        },
+        {
+          "stepText": "Confirm by reassembling pieces.",
+          "spokenExplanation": "If we put all six rectangles back together, they perfectly rebuild the whole chikki. The same happens when we reassemble the six triangles. This shows each piece must be the same size.",
+          "visual": "🍫🍫🍫🍫🍫🍫 → whole chikki and ⬠⬠⬠⬠⬠⬠ → whole chikki"
+        }
+      ],
+      "commonMistake": "Thinking that different shapes mean different sizes, so pieces that look different must not be equal.",
+      "hint": "Try cutting a paper into six equal parts in two different ways and compare the areas of the pieces."
+    }
+  ],
+  "practiceProblems": [
+    {
+      "problem": "continue this table of \n\n\n for 2 more steps.",
+      "hint": "Each step adds exactly one more half to the sum. Count carefully to make sure you have the right number of halves in each row.",
+      "finalAnswer": "1 2 + 1 2 + 1 2 + 1 2 + 1 2 + 1 2 = 6 times 1 2 1 2 + 1 2 + 1 2 + 1 2 + 1 2 + 1 2 + 1 2 = 7 times 1 2"
+    },
+    {
+      "problem": "Can you create a similar table for \n\n\n ?",
+      "hint": "Each time you add another quarter, think about how many parts of the whole you now have.",
+      "finalAnswer": "1/4 = 1-time quarter\n1/4 + 1/4 = 2 times quarter\n1/4 + 1/4 + 1/4 = 3 times quarter\n1/4 + 1/4 + 1/4 + 1/4 = 4 times quarter\nTry Further!"
+    }
+  ],
+  "assessment": []
+}

@@ -1,0 +1,56 @@
+{
+  "package": {
+    "package_id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+    "package_type": "ReviewReport",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T15:00:00Z",
+    "produced_by": {
+      "agent": "teacher-review-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "parent_package_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+    }
+  },
+  "payload": {
+    "lesson_id": "lesson-shapes-space-grade1",
+    "review_scores": {
+      "curriculum_fidelity": 100,
+      "pedagogical_quality": 100,
+      "student_engagement": 100,
+      "visual_experience": 80,
+      "audio_experience": 100,
+      "assessment_quality": 90,
+      "accessibility": 95,
+      "overall_score": 95
+    },
+    "status": "FAIL",
+    "surgical_feedback": [
+      {
+        "issue_id": "vis-001",
+        "stage_id": "screen_circle",
+        "component_id": "img_circle_scene",
+        "severity": "medium",
+        "description": "Illustration consistency tags incorrectly reference shape_triangle and color_theme_red instead of shape_circle and appropriate color.",
+        "recommendation": "Update consistency_tags to [\"shape_circle\", \"color_theme_blue\\] to match the depicted circular objects.",
+        "target_agent": "illustration-agent",
+        "error_code": "TR005"
+      },
+      {
+        "issue_id": "assess-001",
+        "stage_id": "screen_quiz",
+        "component_id": "img_question1_options",
+        "severity": "medium",
+        "description": "Quiz contains only three questions, limiting coverage questions, limiting coverage of learning objectives and Bloom taxonomy depth.",
+        "recommendation": "Expand quiz to include at least 6-8 questions covering all shapes, properties, space concept, and include at least one higher-order question (e.g., compare shapes).",
+        "target_agent": "quiz-agent",
+        "error_code": "TR007"
+      }
+    ],
+    "handoff": {
+      "functional_qa_agent": {},
+      "regeneration_agent": {}
+    }
+  }
+}

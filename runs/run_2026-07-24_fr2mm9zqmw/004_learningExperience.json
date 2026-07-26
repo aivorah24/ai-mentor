@@ -1,0 +1,275 @@
+{
+  "package": {
+    "package_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i7",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "2023-12-31T12:00:00Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "123e4567-e89b-12d3-a456-426614174000",
+      "parent_package_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i7"
+    }
+  },
+  "payload": {
+    "lesson_id": "my-bicycle-lesson",
+    "lesson_metadata": {
+      "grade": 2,
+      "subject": "English",
+      "chapter": "My Bicycle",
+      "lesson": "My Bicycle",
+      "lesson_type": "Concept",
+      "concept_map": {
+        "my-bicycle-concept": {
+          "concept": "My Bicycle",
+          "depends_on": [
+            "bicycles",
+            "transportation"
+          ],
+          "difficulty": "medium"
+        }
+      },
+      "learning_objectives": [
+        "To understand the concept of a bicycle and its importance in daily life.",
+        "To describe the features of a bicycle and its uses."
+      ],
+      "learning_outcomes": [
+        "Students will be able to identify and describe the parts of a bicycle.",
+        "Students will be able to explain the importance of bicycles in transportation."
+      ],
+      "bloom_level": "Understand",
+      "prerequisites": [
+        "Basic understanding of transportation modes.",
+        "Familiarity with bicycles and their uses."
+      ],
+      "misconceptions": [
+        "Bicycles are only used for recreation.",
+        "Bicycles are not a reliable mode of transportation."
+      ],
+      "suggested_instructional_sequence": [
+        "Introduction to bicycles and their importance.",
+        "Description of bicycle parts and features.",
+        "Discussion on the uses of bicycles in daily life."
+      ],
+      "vocabulary_difficulty": "low-medium",
+      "available_images": [
+        "image1.jpg",
+        "image2.jpg"
+      ],
+      "source_chunk_references": [
+        "chunk_1",
+        "chunk_2",
+        "chunk_3"
+      ]
+    },
+    "experience_score": {
+      "engagement": 80,
+      "curiosity": 70,
+      "visual_learning": 90,
+      "audio_experience": 60,
+      "interaction": 85,
+      "reflection": 75,
+      "accessibility": 95,
+      "cognitive_load": 80,
+      "learning_flow": 90
+    },
+    "lesson_flow": [
+      {
+        "step_id": "step_1",
+        "step_type": "Introduction",
+        "description": "Introduction to bicycles and their importance.",
+        "ui_components": [
+          {
+            "component_id": "component_1",
+            "component_type": "Text",
+            "text": "Bicycles are an important mode of transportation."
+          }
+        ],
+        "interaction_plan": [
+          {
+            "interaction_id": "interaction_1",
+            "interaction_type": "Multiple Choice",
+            "question": "What is the main purpose of a bicycle?",
+            "options": [
+              "Recreation",
+              "Transportation",
+              "Shopping"
+            ],
+            "correct_answer": "Transportation"
+          }
+        ]
+      },
+      {
+        "step_id": "step_2",
+        "step_type": "Description",
+        "description": "Description of bicycle parts and features.",
+        "ui_components": [
+          {
+            "component_id": "component_2",
+            "component_type": "Image",
+            "image": "image1.jpg"
+          }
+        ],
+        "interaction_plan": [
+          {
+            "interaction_id": "interaction_2",
+            "interaction_type": "Drag and Drop",
+            "question": "Identify the parts of a bicycle.",
+            "options": [
+              "Wheel",
+              "Seat",
+              "Handlebars"
+            ],
+            "correct_answer": "Wheel, Seat, Handlebars"
+          }
+        ]
+      },
+      {
+        "step_id": "step_3",
+        "step_type": "Discussion",
+        "description": "Discussion on the uses of bicycles in daily life.",
+        "ui_components": [
+          {
+            "component_id": "component_3",
+            "component_type": "Text",
+            "text": "Bicycles are used for transportation, recreation, and exercise."
+          }
+        ],
+        "interaction_plan": [
+          {
+            "interaction_id": "interaction_3",
+            "interaction_type": "Short Answer",
+            "question": "What are some uses of bicycles in daily life?",
+            "answer": "Transportation, recreation, exercise"
+          }
+        ]
+      }
+    ],
+    "ui_components": [
+      {
+        "component_id": "component_1",
+        "component_type": "Text",
+        "text": "Bicycles are an important mode of transportation."
+      },
+      {
+        "component_id": "component_2",
+        "component_type": "Image",
+        "image": "image1.jpg"
+      },
+      {
+        "component_id": "component_3",
+        "component_type": "Text",
+        "text": "Bicycles are used for transportation, recreation, and exercise."
+      }
+    ],
+    "interaction_plan": [
+      {
+        "interaction_id": "interaction_1",
+        "interaction_type": "Multiple Choice",
+        "question": "What is the main purpose of a bicycle?",
+        "options": [
+          "Recreation",
+          "Transportation",
+          "Shopping"
+        ],
+        "correct_answer": "Transportation"
+      },
+      {
+        "interaction_id": "interaction_2",
+        "interaction_type": "Drag and Drop",
+        "question": "Identify the parts of a bicycle.",
+        "options": [
+          "Wheel",
+          "Seat",
+          "Handlebars"
+        ],
+        "correct_answer": "Wheel, Seat, Handlebars"
+      },
+      {
+        "interaction_id": "interaction_3",
+        "interaction_type": "Short Answer",
+        "question": "What are some uses of bicycles in daily life?",
+        "answer": "Transportation, recreation, exercise"
+      }
+    ],
+    "illustration_plan": [
+      {
+        "illustration_id": "illustration_1",
+        "illustration_type": "Image",
+        "image": "image1.jpg"
+      }
+    ],
+    "audio_plan": [
+      {
+        "audio_id": "audio_1",
+        "audio_type": "Narration",
+        "text": "Bicycles are an important mode of transportation."
+      }
+    ],
+    "validation_requirements": [
+      {
+        "requirement_id": "requirement_1",
+        "requirement_type": "Completion",
+        "description": "Complete all steps in the lesson flow."
+      }
+    ],
+    "handoff": {
+      "ui_planner_agent": {
+        "lesson_experience": {
+          "lesson_id": "my-bicycle-lesson",
+          "lesson_metadata": {
+            "grade": 2,
+            "subject": "English",
+            "chapter": "My Bicycle",
+            "lesson": "My Bicycle",
+            "lesson_type": "Concept",
+            "concept_map": {
+              "my-bicycle-concept": {
+                "concept": "My Bicycle",
+                "depends_on": [
+                  "bicycles",
+                  "transportation"
+                ],
+                "difficulty": "medium"
+              }
+            },
+            "learning_objectives": [
+              "To understand the concept of a bicycle and its importance in daily life.",
+              "To describe the features of a bicycle and its uses."
+            ],
+            "learning_outcomes": [
+              "Students will be able to identify and describe the parts of a bicycle.",
+              "Students will be able to explain the importance of bicycles in transportation."
+            ],
+            "bloom_level": "Understand",
+            "prerequisites": [
+              "Basic understanding of transportation modes.",
+              "Familiarity with bicycles and their uses."
+            ],
+            "misconceptions": [
+              "Bicycles are only used for recreation.",
+              "Bicycles are not a reliable mode of transportation."
+            ],
+            "suggested_instructional_sequence": [
+              "Introduction to bicycles and their importance.",
+              "Description of bicycle parts and features.",
+              "Discussion on the uses of bicycles in daily life."
+            ],
+            "vocabulary_difficulty": "low-medium",
+            "available_images": [
+              "image1.jpg",
+              "image2.jpg"
+            ],
+            "source_chunk_references": [
+              "chunk_1",
+              "chunk_2",
+              "chunk_3"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

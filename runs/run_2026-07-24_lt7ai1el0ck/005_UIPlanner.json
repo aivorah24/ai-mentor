@@ -1,0 +1,397 @@
+{
+  "package": {
+    "package_id": "ui-plan-pkg-2222-3333-4444-5555",
+    "package_type": "UIPlanPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T15:00:00.000Z",
+    "produced_by": {
+      "agent": "ui-planner-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "p1p2p3p4-p5p6-p7p8-p9p0-q1r2s3t4u5v6",
+      "parent_package_id": "pkg-2222-3333-4444-5555"
+    }
+  },
+  "payload": {
+    "lesson_id": "les-abcdef123456",
+    "device_profiles": {
+      "mobile": true
+    },
+    "theme": "light",
+    "accessibility_settings": [],
+    "rendering_constraints": {
+      "max_interactions": 2,
+      "allow_horizontal_scroll": false,
+      "animation_level": "medium"
+    },
+    "screens": [
+      {
+        "screen_id": "welcome",
+        "stage_id": "welcome",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "teacher_intro",
+            "component_type": "text",
+            "stage_id": "welcome",
+            "priority": "primary",
+            "props": {
+              "content": "Hello class! Today we will learn how to add small numbers."
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "",
+          "next_screen": "learning_goal",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "learning_goal",
+        "stage_id": "learning_goal",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "learning_goal_text",
+            "component_type": "text",
+            "stage_id": "learning_goal",
+            "priority": "primary",
+            "props": {
+              "content": "You will learn to add two single-digit numbers using objects and pictures."
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "welcome",
+          "next_screen": "visual_intro",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "visual_intro",
+        "stage_id": "visual_intro",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "image_bananas",
+            "component_type": "image",
+            "stage_id": "visual_intro",
+            "priority": "primary",
+            "props": {
+              "src": "bananas.png",
+              "alt": "Bananas"
+            }
+          },
+          {
+            "component_id": "audio_narration_visual_intro",
+            "component_type": "audio",
+            "stage_id": "visual_intro",
+            "priority": "secondary",
+            "props": {
+              "src": "bananas_narration.mp3"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "learning_goal",
+          "next_screen": "concrete_example",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "concrete_example",
+        "stage_id": "concrete_example",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "physical_objects",
+            "component_type": "image",
+            "stage_id": "concrete_example",
+            "priority": "primary",
+            "props": {
+              "src": "toy_cars.png",
+              "alt": "Toy Cars"
+            }
+          },
+          {
+            "component_id": "audio_narration_concrete_example",
+            "component_type": "audio",
+            "stage_id": "concrete_example",
+            "priority": "secondary",
+            "props": {
+              "src": "toy_cars_narration.mp3"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "visual_intro",
+          "next_screen": "guided_example",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "guided_example",
+        "stage_id": "guided_example",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "step_by_step_text",
+            "component_type": "text",
+            "stage_id": "guided_example",
+            "priority": "primary",
+            "props": {
+              "content": "Step 1: Count the first group. Step 2: Count the second group. Step 3: Combine."
+            }
+          },
+          {
+            "component_id": "audio_narration_guided_example",
+            "component_type": "audio",
+            "stage_id": "guided_example",
+            "priority": "secondary",
+            "props": {
+              "src": "guided_example.mp3"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "concrete_example",
+          "next_screen": "guided_practice",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "guided_practice",
+        "stage_id": "guided_practice",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "drag_drop_objects",
+            "component_type": "interactive",
+            "stage_id": "guided_practice",
+            "priority": "primary",
+            "props": {
+              "action": "drag_drop",
+              "objects": [
+                "car1",
+                "car2",
+                "car3",
+                "car4"
+              ],
+              "target": "group2"
+            }
+          },
+          {
+            "component_id": "audio_narration_guided_practice",
+            "component_type": "audio",
+            "stage_id": "guided_practice",
+            "priority": "secondary",
+            "props": {
+              "src": "guided_practice.mp3"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "guided_example",
+          "next_screen": "hint",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "hint",
+        "stage_id": "hint",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "hint_text",
+            "component_type": "text",
+            "stage_id": "hint",
+            "priority": "primary",
+            "props": {
+              "content": "Remember to count on: start with the first number and add the second."
+            }
+          },
+          {
+            "component_id": "audio_narration_hint",
+            "component_type": "audio",
+            "stage_id": "hint",
+            "priority": "secondary",
+            "props": {
+              "src": "hint.mp3"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "guided_practice",
+          "next_screen": "common_mistakes",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "common_mistakes",
+        "stage_id": "common_mistakes",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "mistake_examples",
+            "component_type": "image",
+            "stage_id": "common_mistakes",
+            "priority": "primary",
+            "props": {
+              "src": "plus_minus.png",
+              "alt": "Plus and Minus signs"
+            }
+          },
+          {
+            "component_id": "audio_narration_common_mistakes",
+            "component_type": "audio",
+            "stage_id": "common_mistakes",
+            "priority": "secondary",
+            "props": {
+              "src": "mistakes.mp3"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "hint",
+          "next_screen": "challenge",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "challenge",
+        "stage_id": "challenge",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "interactive_challenge",
+            "component_type": "interactive",
+            "stage_id": "challenge",
+            "priority": "primary",
+            "props": {
+              "action": "drag_drop",
+              "objects": [
+                "apple1",
+                "apple2",
+                "apple3",
+                "apple4",
+                "apple5"
+              ],
+              "target": "group2"
+            }
+          },
+          {
+            "component_id": "audio_narration_challenge",
+            "component_type": "audio",
+            "stage_id": "challenge",
+            "priority": "secondary",
+            "props": {
+              "src": "challenge.mp3"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "common_mistakes",
+          "next_screen": "summary",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "summary",
+        "stage_id": "summary",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "summary_text",
+            "component_type": "text",
+            "stage_id": "summary",
+            "priority": "primary",
+            "props": {
+              "content": "We added numbers using objects and pictures."
+            }
+          },
+          {
+            "component_id": "audio_narration_summary",
+            "component_type": "audio",
+            "stage_id": "summary",
+            "priority": "secondary",
+            "props": {
+              "src": "summary.mp3"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "challenge",
+          "next_screen": "reflection",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "reflection",
+        "stage_id": "reflection",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "write_sentence",
+            "component_type": "input",
+            "stage_id": "reflection",
+            "priority": "primary",
+            "props": {
+              "placeholder": "Write an addition sentence."
+            }
+          },
+          {
+            "component_id": "audio_narration_reflection",
+            "component_type": "audio",
+            "stage_id": "reflection",
+            "priority": "secondary",
+            "props": {
+              "src": "reflection.mp3"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "summary",
+          "next_screen": "transition",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "transition",
+        "stage_id": "transition",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "next_lesson_info",
+            "component_type": "text",
+            "stage_id": "transition",
+            "priority": "primary",
+            "props": {
+              "content": "Next lesson: Subtraction of Small Numbers."
+            }
+          },
+          {
+            "component_id": "audio_narration_transition",
+            "component_type": "audio",
+            "stage_id": "transition",
+            "priority": "secondary",
+            "props": {
+              "src": "transition.mp3"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "reflection",
+          "next_screen": "",
+          "exit_behavior": "exit"
+        }
+      }
+    ],
+    "handoff": {
+      "lesson_generator_agent": {
+        "lesson_experience_package_id": "pkg-2222-3333-4444-5555",
+        "ui_plan_package_id": "ui-plan-pkg-2222-3333-4444-5555"
+      }
+    }
+  }
+}

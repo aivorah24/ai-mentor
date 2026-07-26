@@ -1,0 +1,214 @@
+{
+  "package": {
+    "package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3e",
+    "package_type": "UIPlanPackage",
+    "schema_version": "1.0",
+    "created_at": "2023-12-24T14:30:00Z",
+    "produced_by": {
+      "agent": "ui-planner-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3e",
+      "parent_package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3d"
+    }
+  },
+  "payload": {
+    "lesson_id": "my-bicycle-lesson",
+    "device_profiles": {
+      "desktop": {
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "component_1",
+            "component_type": "Text",
+            "stage_id": "step_1",
+            "priority": "high",
+            "props": {
+              "text": "What is a bicycle?"
+            }
+          },
+          {
+            "component_id": "component_2",
+            "component_type": "Image",
+            "stage_id": "step_2",
+            "priority": "medium",
+            "props": {
+              "image": "image1.jpg"
+            }
+          },
+          {
+            "component_id": "component_3",
+            "component_type": "Text",
+            "stage_id": "step_3",
+            "priority": "low",
+            "props": {
+              "text": "Describe the features of a bicycle."
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": null,
+          "next_screen": "step_2",
+          "exit_behavior": "completion"
+        }
+      },
+      "tablet": {
+        "layout": "adaptive-two-pane",
+        "components": [
+          {
+            "component_id": "component_1",
+            "component_type": "Text",
+            "stage_id": "step_1",
+            "priority": "high",
+            "props": {
+              "text": "What is a bicycle?"
+            }
+          },
+          {
+            "component_id": "component_2",
+            "component_type": "Image",
+            "stage_id": "step_2",
+            "priority": "medium",
+            "props": {
+              "image": "image1.jpg"
+            }
+          },
+          {
+            "component_id": "component_3",
+            "component_type": "Text",
+            "stage_id": "step_3",
+            "priority": "low",
+            "props": {
+              "text": "Describe the features of a bicycle."
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": null,
+          "next_screen": "step_2",
+          "exit_behavior": "completion"
+        }
+      },
+      "mobile": {
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "component_1",
+            "component_type": "Text",
+            "stage_id": "step_1",
+            "priority": "high",
+            "props": {
+              "text": "What is a bicycle?"
+            }
+          },
+          {
+            "component_id": "component_2",
+            "component_type": "Image",
+            "stage_id": "step_2",
+            "priority": "medium",
+            "props": {
+              "image": "image1.jpg"
+            }
+          },
+          {
+            "component_id": "component_3",
+            "component_type": "Text",
+            "stage_id": "step_3",
+            "priority": "low",
+            "props": {
+              "text": "Describe the features of a bicycle."
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": null,
+          "next_screen": "step_2",
+          "exit_behavior": "completion"
+        }
+      }
+    },
+    "theme": "light",
+    "accessibility_settings": [
+      "dyslexia",
+      "high_contrast",
+      "large_text"
+    ],
+    "rendering_constraints": {
+      "max_interactions": 2,
+      "allow_horizontal_scroll": false,
+      "animation_level": "medium"
+    },
+    "screens": [
+      {
+        "screen_id": "step_1",
+        "stage_id": "step_1",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "component_1",
+            "component_type": "Text",
+            "stage_id": "step_1",
+            "priority": "high",
+            "props": {
+              "text": "What is a bicycle?"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": null,
+          "next_screen": "step_2",
+          "exit_behavior": "completion"
+        }
+      },
+      {
+        "screen_id": "step_2",
+        "stage_id": "step_2",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "component_2",
+            "component_type": "Image",
+            "stage_id": "step_2",
+            "priority": "medium",
+            "props": {
+              "image": "image1.jpg"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "step_1",
+          "next_screen": "step_3",
+          "exit_behavior": "completion"
+        }
+      },
+      {
+        "screen_id": "step_3",
+        "stage_id": "step_3",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "component_3",
+            "component_type": "Text",
+            "stage_id": "step_3",
+            "priority": "low",
+            "props": {
+              "text": "Describe the features of a bicycle."
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "step_2",
+          "next_screen": null,
+          "exit_behavior": "completion"
+        }
+      }
+    ],
+    "handoff": {
+      "lesson_generator_agent": {
+        "lesson_experience_package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3d",
+        "ui_plan_package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3e"
+      }
+    }
+  }
+}

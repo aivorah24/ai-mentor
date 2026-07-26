@@ -119,12 +119,19 @@ def get_model():
 
 
 # ── PDF / Image → page images ───────────────────────────────────────────────
-def pdf_to_images(pdf_bytes, dpi=DPI):
-    """Convert PDF bytes to list of PIL Images, one per page."""
+def pdf_to_images(pdf_bytes, dpi=DPI, max_pages=20, page_from=1):
+    """Convert PDF bytes to list of PIL Images, one per page.
+
+    `max_pages` defaults to 20 because the worksheet callers upload short
+    documents and must stay responsive. Book-figure extraction passes the real
+    page count instead — an NCERT textbook chapter runs well past 20 pages, and
+    silently truncating it drops most of the diagrams.
+    """
     doc = fitz.open(stream=pdf_bytes, filetype='pdf')
     pages = []
-    max_pages = min(doc.page_count, 20)
-    for i in range(max_pages):
+    start = max(0, page_from - 1)
+    end = min(doc.page_count, start + max_pages)
+    for i in range(start, end):
         page = doc[i]
         pix = page.get_pixmap(dpi=dpi)
         img = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
@@ -504,6 +511,75 @@ def crop():
         'pages': result_pages,
         'allCrops': all_crops,
         'timing_ms': elapsed,
+    })
+
+
+@app.route('/extract-book-figures', methods=['POST'])
+def extract_book_figures():
+    """
+    Extract figure crops from a WHOLE textbook chapter PDF, returned inline as
+    base64 so the caller can upload them straight to Cloudinary.
+
+    This exists because the Node extractor (extract-figures-to-cloudinary.js)
+    pulls embedded raster images via pdfjs `paintImageXObject` — which finds
+    essentially NOTHING in NCERT Mathematics, where diagrams are drawn as VECTOR
+    art rather than embedded pictures. Rendering the page first (PyMuPDF) and
+    detecting figure regions with YOLO recovers exactly those diagrams.
+
+    Unlike /crop this walks every page (no 20-page cap), writes nothing to the
+    quiz crop dir, and applies the same size/aspect filters the Node extractor
+    uses so both paths feed the index comparable figures.
+
+    Accepts: multipart file (field 'file') — a PDF.
+    Query params: conf, types (default 'figure'), padding, min_w, min_h,
+                  max_aspect, dpi, max_pages.
+    Returns: { figures: [{page, w, h, confidence, pngBase64}], pagesScanned }
+    """
+    start = time.time()
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded. Use multipart field "file"'}), 400
+
+    file_bytes = request.files['file'].read()
+    conf = float(request.args.get('conf', CONF_THRESHOLD))
+    padding = int(request.args.get('padding', 6))
+    dpi = int(request.args.get('dpi', DPI))
+    max_pages = int(request.args.get('max_pages', 400))
+    min_w = int(request.args.get('min_w', 90))
+    min_h = int(request.args.get('min_h', 90))
+    max_aspect = float(request.args.get('max_aspect', 6))
+    want = [t.strip() for t in request.args.get('types', 'figure').split(',') if t.strip()]
+
+    model = get_model()
+    pages = pdf_to_images(file_bytes, dpi=dpi, max_pages=max_pages)
+
+    figures = []
+    for page in pages:
+        for region in detect_page_layout(model, page['image'], conf=conf):
+            if region['type'] not in want:
+                continue
+            b = region['bbox']
+            if b['width'] < min_w or b['height'] < min_h:
+                continue          # icons, bullets, stray marks
+            ar = b['width'] / max(b['height'], 1)
+            if ar > max_aspect or ar < (1 / max_aspect):
+                continue          # banner strips and thin rules, not diagrams
+            cropped = crop_region(page['image'], b, padding=padding)
+            buf = BytesIO()
+            cropped.save(buf, 'PNG')
+            figures.append({
+                'page': page['pageNum'],
+                'w': cropped.width,
+                'h': cropped.height,
+                'type': region['type'],
+                'confidence': region['confidence'],
+                'pngBase64': base64.b64encode(buf.getvalue()).decode('ascii'),
+            })
+
+    print(f'[layout] /extract-book-figures: {len(figures)} figure(s) from {len(pages)} page(s)')
+    return jsonify({
+        'figures': figures,
+        'pagesScanned': len(pages),
+        'timing_ms': round((time.time() - start) * 1000),
     })
 
 

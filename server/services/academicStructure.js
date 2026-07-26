@@ -15,13 +15,50 @@ const supabase = require('./supabase');
 
 // Natural sort so "Grade 2" comes before "Grade 10" (plain string sort puts
 // "Grade 10" first). Falls back to locale compare for non-numeric names.
+//
+// Grade LABELS are curriculum-specific free text — never a hardcoded Grade
+// 1-12 range (a school may use "Stage 4", "PYP 3", "MYP 2", "DP 1", "IGCSE",
+// etc; see resolveCurriculum in routes/school-admin.js for how IB spans
+// PYP/MYP/DP within one school). Pure digit-extraction alone gets same-family
+// labels right (Stage 1..Stage 12, Grade 1..Grade 12) but would incorrectly
+// interleave a multi-track curriculum by number alone (e.g. "MYP 1" sorting
+// before "PYP 5", when the programs themselves have a fixed pedagogical
+// sequence). PROGRAM_TIER encodes just that known sequence as a tie-break —
+// it does NOT enumerate grades, so any grade count/label within a program
+// still sorts purely by its own number.
+const PROGRAM_TIER = { PYP: 0, MYP: 1, DP: 2 };
+
 function gradeSortKey(name) {
   const n = parseInt(String(name).replace(/\D/g, ''), 10);
   return Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
 }
+
+function gradeProgramTier(name) {
+  const m = String(name || '').trim().match(/^([A-Za-z]+)/);
+  const prefix = m ? m[1].toUpperCase() : '';
+  return Object.prototype.hasOwnProperty.call(PROGRAM_TIER, prefix) ? PROGRAM_TIER[prefix] : null;
+}
+
 function sortGradeNames(a, b) {
+  const ta = gradeProgramTier(a), tb = gradeProgramTier(b);
+  if (ta !== null && tb !== null && ta !== tb) return ta - tb; // PYP block, then MYP block, then DP block
   const ka = gradeSortKey(a), kb = gradeSortKey(b);
-  if (ka !== kb) return ka - kb;
+  if (ka !== kb) return ka - kb; // numeric within the same family/program (or both non-IB, e.g. "Grade N", "Stage N")
+  return String(a).localeCompare(String(b)); // stable fallback (e.g. "IGCSE" vs a numberless label)
+}
+
+// Distinct from sortGradeNames: this sorts the CURRICULUM column itself
+// ("IB PYP", "IB MYP", "IB DP", "CBSE", "ICSE", "Cambridge", ...), not the
+// grade label. "IB PYP" < "IB DP" alphabetically, which is the wrong
+// pedagogical order — so IB's fixed PYP→MYP→DP sequence is the only
+// hardcoded ordering here; every other curriculum name just sorts
+// alphabetically after the IB entries.
+const CURRICULUM_ORDER = ['IB PYP', 'IB MYP', 'IB DP'];
+function sortCurriculumNames(a, b) {
+  const ia = CURRICULUM_ORDER.indexOf(a), ib = CURRICULUM_ORDER.indexOf(b);
+  if (ia !== -1 && ib !== -1) return ia - ib;
+  if (ia !== -1) return -1;
+  if (ib !== -1) return 1;
   return String(a).localeCompare(String(b));
 }
 
@@ -97,4 +134,4 @@ async function saveStructure(schoolId, grades) {
   if (error) throw error;
 }
 
-module.exports = { gradeSortKey, sortGradeNames, emptyStructure, buildGradesSectionsView, saveStructure };
+module.exports = { gradeSortKey, sortGradeNames, sortCurriculumNames, emptyStructure, buildGradesSectionsView, saveStructure };

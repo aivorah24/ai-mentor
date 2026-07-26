@@ -1,0 +1,77 @@
+{
+  "package": {
+    "package_id": "8e50f7cb-ca9a-44d2-b865-b147cc02e9f3",
+    "package_type": "LessonBlueprint",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:02:28.000Z",
+    "produced_by": {
+      "agent": "curriculum-understanding-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "honmnh6tp9s",
+      "parent_package_id": "8e50f7cb-ca9a-44d2-b865-b147cc02e9f2"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "curriculum": "math",
+    "grade": 4,
+    "subject": "mathematics",
+    "chapter": "subtraction",
+    "lesson": "subtraction with borrowing",
+    "lesson_type": "Mathematics",
+    "lesson_type_evidence": "Subtraction with borrowing, subtracting big numbers",
+    "lesson_type_confidence": 0.9,
+    "review_flags": [],
+    "concept_map": [
+      {
+        "concept_id": "subtraction_with_borrowing",
+        "concept": "subtraction with borrowing",
+        "depends_on": [
+          "basic_subtraction",
+          "place_value"
+        ],
+        "difficulty": "medium"
+      },
+      {
+        "concept_id": "place_value",
+        "concept": "place value",
+        "depends_on": [],
+        "difficulty": "easy"
+      }
+    ],
+    "learning_objectives": [
+      "understand subtraction with borrowing",
+      "apply subtraction with borrowing to solve problems"
+    ],
+    "learning_outcomes": [
+      "students can subtract numbers with borrowing",
+      "students can apply subtraction with borrowing to real-life problems"
+    ],
+    "bloom_level": "apply",
+    "prerequisites": [
+      "basic addition and subtraction facts",
+      "place value understanding"
+    ],
+    "misconceptions": [
+      "students may struggle with regrouping",
+      "students may have difficulty with multi-digit subtraction"
+    ],
+    "suggested_instructional_sequence": [
+      "introduction to subtraction with borrowing",
+      "practice problems with subtraction with borrowing",
+      "real-life applications of subtraction with borrowing"
+    ],
+    "vocabulary_difficulty": "medium",
+    "available_images": [],
+    "source_chunk_references": [
+      "8e50f7cb-ca9a-44d2-b865-b147cc02e9f2"
+    ],
+    "handoff": {
+      "learning_experience_designer": {
+        "lesson_blueprint": {}
+      }
+    }
+  }
+}

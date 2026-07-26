@@ -170,7 +170,7 @@ export default function TeacherLearningPathsScreen({ navigation }: any) {
       </View>
 
       {/* ── Course detail modal ── */}
-      <Modal visible={!!active} animationType="slide" transparent onRequestClose={() => setActive(null)}>
+      <Modal visible={!!active} animationType="fade" transparent onRequestClose={() => setActive(null)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHeader}>
@@ -416,11 +416,13 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   },
   benefitText: { flex: 1, fontSize: 12.5, color: c.textMuted, lineHeight: 18 },
 
-  // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  // Modal — a compact centered card, not an edge-to-edge bottom sheet, so it
+  // doesn't dominate the whole viewport on wide (web/tablet) screens.
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
   modalSheet: {
-    backgroundColor: c.bgDark, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl,
-    maxHeight: '90%', borderWidth: 1, borderColor: c.borderColor,
+    backgroundColor: c.bgDark, borderRadius: radius.xl,
+    width: '100%', maxWidth: 640, maxHeight: '85%', borderWidth: 1, borderColor: c.borderColor,
+    overflow: 'hidden',
   },
   modalHeader: {
     flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md,

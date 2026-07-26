@@ -1,0 +1,45 @@
+{
+  "package": {
+    "package_id": "a3b4c5d6-e7f8-9012-3456-789abcdef012",
+    "package_type": "IllustrationPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T11:05:00.000Z",
+    "produced_by": {
+      "agent": "illustration-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "18apiqkgnsz",
+      "parent_package_id": "c3d4e5f6-7890-1234-5678-9abcdef01234"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-borrowing-grade2",
+    "illustrations": [
+      {
+        "artifact_id": "f9g0h1i2-j3k4-5l6m-7n8o-9p0q1r2s3t4u",
+        "stage_id": "step2",
+        "component_id": "comp-step2-visualillustration",
+        "concept_id": "borrowing-tens-ones",
+        "style_category": "diagram",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A clear, colorful diagram for Grade 2 students showing two vertical columns labeled 'Tens' and 'Ones'. In the Ones column, the top number is small (e.g., 5) and the bottom number is larger (e.g., 7), with an arrow pointing from the Tens column to the Ones column indicating borrowing of one ten (represented as ten ones) to make the top number sufficient for subtraction. The Tens column shows a reduction by one ten. Use simple, friendly icons (like small circles for ones and stacks of ten for tens) and a clean, educational style suitable for young children.",
+        "consistency_tags": [
+          "color_theme_blue",
+          "style_diagram",
+          "grade2"
+        ],
+        "source_references": [
+          "chunk0",
+          "chunk2"
+        ]
+      }
+    ],
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}

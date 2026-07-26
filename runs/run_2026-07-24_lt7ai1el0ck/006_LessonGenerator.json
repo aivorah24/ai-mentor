@@ -1,0 +1,219 @@
+{
+  "package": {
+    "package_id": "lesson-content-pkg-1111-2222-3333-4444",
+    "package_type": "LessonContent",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T15:30:00.000Z",
+    "produced_by": {
+      "agent": "lesson-generator-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "p1p2p3p4-p5p6-p7p8-p9p0-q1r2s3t4u5v6",
+      "parent_package_id": "ui-plan-pkg-2222-3333-4444-5555"
+    }
+  },
+  "payload": {
+    "lesson_id": "les-abcdef123456",
+    "stage_content": [
+      {
+        "stage_id": "welcome"
+      },
+      {
+        "stage_id": "learning_goal"
+      },
+      {
+        "stage_id": "visual_intro"
+      },
+      {
+        "stage_id": "concrete_example"
+      },
+      {
+        "stage_id": "guided_example"
+      },
+      {
+        "stage_id": "guided_practice"
+      },
+      {
+        "stage_id": "hint"
+      },
+      {
+        "stage_id": "common_mistakes"
+      },
+      {
+        "stage_id": "challenge"
+      },
+      {
+        "stage_id": "summary"
+      },
+      {
+        "stage_id": "reflection"
+      },
+      {
+        "stage_id": "transition"
+      }
+    ],
+    "populated_components": [
+      {
+        "component_id": "teacher_intro",
+        "slots": {
+          "content": "Hello class! Today we will learn how to add small numbers using objects and pictures."
+        }
+      },
+      {
+        "component_id": "learning_goal_text",
+        "slots": {
+          "content": "You will learn to add two single-digit numbers using objects and pictures."
+        }
+      },
+      {
+        "component_id": "step_by_step_text",
+        "slots": {
+          "content": "Step 1: Look at the first group and count how many. Step 2: Look at the second group and count how many. Step 3: Count on from the first number by the second number to find the total."
+        }
+      },
+      {
+        "component_id": "hint_text",
+        "slots": {
+          "content": "Remember, you can start with the bigger number and count on the smaller one to add quickly."
+        }
+      },
+      {
+        "component_id": "summary_text",
+        "slots": {
+          "content": "We learned to add small numbers by counting objects and using pictures."
+        }
+      },
+      {
+        "component_id": "next_lesson_info",
+        "slots": {
+          "content": "Next lesson: Subtraction of Small Numbers."
+        }
+      },
+      {
+        "component_id": "write_sentence",
+        "slots": {
+          "placeholder": "Write an addition sentence like 3 + 2 = 5."
+        }
+      }
+    ],
+    "source_references": [
+      {
+        "content_id": "Addition",
+        "chunk_id": "0"
+      },
+      {
+        "content_id": "Addition",
+        "chunk_id": "1"
+      },
+      {
+        "content_id": "aejm106",
+        "chunk_id": "4"
+      }
+    ],
+    "validation_summary": {},
+    "lesson": {
+      "instructionalType": "Mathematics",
+      "intro": "Hello friends! Today we are going to play with numbers and learn how to add them together. By the end of the lesson, you will be able to add two small numbers using objects or pictures.",
+      "keyLearnings": [
+        "You will add two single-digit numbers using objects like bananas or toy cars.",
+        "You will use pictures to show addition and find the total.",
+        "You will practice counting on to add numbers quickly.",
+        "You will write an addition sentence to show your work."
+      ],
+      "body": [
+        "Addition means putting two groups together to find how many in all. For example, if you have 3 bananas and you get 2 more bananas, you can put them together and count: 3, 4, 5. So you have 5 bananas.",
+        "You can also use pictures to help. Imagine you see 2 toy cars and your friend gives you 1 more toy car. Draw the 2 cars, then draw 1 more. Count all the cars: 1, 2, 3. There are 3 toy cars in total.",
+        "When you write an addition sentence, you use the plus sign (+) and the equals sign (=). The sentence 3 + 2 = 5 reads as 'three plus two equals five.' The number after the equals sign is the total."
+      ],
+      "workedExamples": [
+        {
+          "problem": "3 + 2 = ?",
+          "steps": [
+            "Start with the first number, 3.",
+            "Count on 2 more: 4, 5."
+          ],
+          "answer": "5"
+        },
+        {
+          "problem": "4 + 3 = ?",
+          "steps": [
+            "Start with the first number, 4.",
+            "Count on 3 more: 5, 6, 7."
+          ],
+          "answer": "7"
+        }
+      ],
+      "vocab": [
+        {
+          "word": "addition",
+          "definition": "Putting two or more groups together to find how many in all."
+        },
+        {
+          "word": "plus",
+          "definition": "The sign (+) that shows we are adding."
+        },
+        {
+          "word": "total",
+          "definition": "The final number after adding."
+        }
+      ],
+      "thinkAndReflect": [
+        "What happens to the total when you add zero to a number?",
+        "Can you think of a time you added things at home, like toys or snacks?",
+        "If you have 5 apples and get 2 more, how many apples do you have?"
+      ],
+      "keyTakeaways": [
+        "Addition means putting groups together to find how many in all.",
+        "The plus sign (+) shows addition.",
+        "When you add zero, the number stays the same."
+      ],
+      "quiz": [
+        {
+          "type": "mcq",
+          "question": "If you have 2 bananas and get 3 more bananas, how many bananas do you have?",
+          "options": [
+            "4",
+            "5",
+            "6",
+            "7"
+          ],
+          "correct": 1,
+          "hint": "Start with 2 and count on 3.",
+          "explanation": "2 + 3 = 5."
+        },
+        {
+          "type": "mcq",
+          "question": "What is 4 + 1?",
+          "options": [
+            "3",
+            "4",
+            "5",
+            "6"
+          ],
+          "correct": 2,
+          "hint": "Start with 4 and count on 1.",
+          "explanation": "4 + 1 = 5."
+        },
+        {
+          "type": "fill_blank",
+          "question": "6 + 2 = ___",
+          "correct": "8",
+          "hint": "Start with 6 and count on 2.",
+          "explanation": "6 + 2 = 8."
+        }
+      ]
+    },
+    "handoff": {
+      "illustration_agent": {
+        "lesson_content_package_id": "lesson-content-pkg-1111-2222-3333-4444"
+      },
+      "audio_agent": {
+        "lesson_content_package_id": "lesson-content-pkg-1111-2222-3333-4444"
+      },
+      "quiz_agent": {
+        "lesson_content_package_id": "lesson-content-pkg-1111-2222-3333-4444"
+      }
+    }
+  }
+}

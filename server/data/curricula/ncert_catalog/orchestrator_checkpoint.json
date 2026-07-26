@@ -40,16 +40,28 @@
     "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g7-mathematics-gegp2-chapters.json"
   },
   "gekb1": {
-    "status": "skipped-subject",
-    "grade": 7
+    "status": "done",
+    "grade": 7,
+    "subject": "Physical Education",
+    "chapters": 7,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g7-physical_education-gekb1-chapters.json"
   },
   "gekr1": {
-    "status": "skipped-subject",
-    "grade": 7
+    "status": "done",
+    "grade": 7,
+    "subject": "Fine Arts",
+    "chapters": 20,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g7-fine_arts-gekr1-chapters.json"
   },
   "geky1": {
-    "status": "skipped-subject",
-    "grade": 7
+    "status": "gen-failed",
+    "grade": 7,
+    "subject": "Physical Education",
+    "chapters": 6,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g7-physical_education-geky1-chapters.json"
   },
   "gemp1": {
     "status": "skipped-subject",
@@ -85,15 +97,12 @@
     "subject": "English"
   },
   "aejm1": {
-    "status": "foundation",
+    "status": "skipped-subject",
     "grade": 1,
-    "subject": "Mathematics",
-    "chapters": 13,
-    "hasImages": false,
-    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g1-mathematics-aejm1-chapters.json"
+    "subject": "Mathematics (separate pipeline)"
   },
   "aemr1": {
-    "status": "foundation",
+    "status": "done",
     "grade": 1,
     "subject": "English",
     "chapters": 9,
@@ -210,15 +219,12 @@
     "grade": 2
   },
   "bejm1": {
-    "status": "foundation",
+    "status": "skipped-subject",
     "grade": 2,
-    "subject": "Mathematics",
-    "chapters": 11,
-    "hasImages": false,
-    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g2-mathematics-bejm1-chapters.json"
+    "subject": "Mathematics (separate pipeline)"
   },
   "bemr1": {
-    "status": "foundation",
+    "status": "done",
     "grade": 2,
     "subject": "English",
     "chapters": 13,
@@ -384,8 +390,12 @@
     "subject": "Environmental Studies"
   },
   "cebu1": {
-    "status": "skipped-subject",
-    "grade": 3
+    "status": "done",
+    "grade": 3,
+    "subject": "Physical Education",
+    "chapters": 20,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g3-physical_education-cebu1-chapters.json"
   },
   "ceen1": {
     "status": "no-chapters",
@@ -393,7 +403,7 @@
     "subject": "English"
   },
   "ceev1": {
-    "status": "foundation",
+    "status": "done",
     "grade": 3,
     "subject": "Environmental Studies",
     "chapters": 12,
@@ -401,24 +411,25 @@
     "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g3-evs-ceev1-chapters.json"
   },
   "ceky1": {
-    "status": "skipped-subject",
-    "grade": 3
+    "status": "done",
+    "grade": 3,
+    "subject": "Physical Education",
+    "chapters": 7,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g3-physical_education-ceky1-chapters.json"
   },
   "cemh1": {
-    "status": "no-chapters",
+    "status": "skipped-subject",
     "grade": 3,
-    "subject": "Mathematics"
+    "subject": "Mathematics (separate pipeline)"
   },
   "cemm1": {
-    "status": "foundation",
+    "status": "skipped-subject",
     "grade": 3,
-    "subject": "Mathematics",
-    "chapters": 14,
-    "hasImages": false,
-    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g3-mathematics-cemm1-chapters.json"
+    "subject": "Mathematics (separate pipeline)"
   },
   "cesa1": {
-    "status": "foundation",
+    "status": "done",
     "grade": 3,
     "subject": "English",
     "chapters": 12,
@@ -546,24 +557,44 @@
     "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g8-mathematics-hegp2-chapters.json"
   },
   "hehd1": {
-    "status": "skipped-subject",
-    "grade": 8
+    "status": "done",
+    "grade": 8,
+    "subject": "English",
+    "chapters": 8,
+    "hasImages": true,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g8-english-hehd1-chapters.json"
   },
   "heih1": {
-    "status": "skipped-subject",
-    "grade": 8
+    "status": "done",
+    "grade": 8,
+    "subject": "English",
+    "chapters": 8,
+    "hasImages": true,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g8-english-heih1-chapters.json"
   },
   "hekb1": {
-    "status": "skipped-subject",
-    "grade": 8
+    "status": "done",
+    "grade": 8,
+    "subject": "Physical Education",
+    "chapters": 7,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g8-physical_education-hekb1-chapters.json"
   },
   "hekr1": {
-    "status": "skipped-subject",
-    "grade": 8
+    "status": "done",
+    "grade": 8,
+    "subject": "Fine Arts",
+    "chapters": 19,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g8-fine_arts-hekr1-chapters.json"
   },
   "heky1": {
-    "status": "skipped-subject",
-    "grade": 8
+    "status": "gen-failed",
+    "grade": 8,
+    "subject": "Physical Education",
+    "chapters": 6,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g8-physical_education-heky1-chapters.json"
   },
   "hemh1": {
     "status": "done",
@@ -639,12 +670,20 @@
     "subject": "Social Science"
   },
   "iehp1": {
-    "status": "skipped-subject",
-    "grade": 9
+    "status": "done",
+    "grade": 9,
+    "subject": "Physical Education",
+    "chapters": 6,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g9-physical_education-iehp1-chapters.json"
   },
   "iekv1": {
-    "status": "skipped-subject",
-    "grade": 9
+    "status": "gen-failed",
+    "grade": 9,
+    "subject": "Physical Education",
+    "chapters": 12,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g9-physical_education-iekv1-chapters.json"
   },
   "ielm1": {
     "status": "skipped-subject",
@@ -698,8 +737,12 @@
     "subject": "Social Science"
   },
   "iest1": {
-    "status": "skipped-subject",
-    "grade": 9
+    "status": "gen-failed",
+    "grade": 9,
+    "subject": "Physical Education",
+    "chapters": 9,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g9-physical_education-iest1-chapters.json"
   },
   "ieva1": {
     "status": "skipped-subject",
@@ -750,8 +793,12 @@
     "grade": 10
   },
   "jehp1": {
-    "status": "skipped-subject",
-    "grade": 10
+    "status": "gen-failed",
+    "grade": 10,
+    "subject": "Physical Education",
+    "chapters": 10,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g10-physical_education-jehp1-chapters.json"
   },
   "jelm1": {
     "status": "skipped-subject",
@@ -830,8 +877,12 @@
     "grade": 11
   },
   "kebt1": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "done",
+    "grade": 11,
+    "subject": "English",
+    "chapters": 12,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-english-kebt1-chapters.json"
   },
   "kech1": {
     "status": "done",
@@ -870,8 +921,12 @@
     "grade": 11
   },
   "keec1": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "gen-failed",
+    "grade": 11,
+    "subject": "Economics",
+    "chapters": 8,
+    "hasImages": true,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-economics-keec1-chapters.json"
   },
   "keep2": {
     "status": "skipped-subject",
@@ -890,8 +945,12 @@
     "grade": 11
   },
   "kefa1": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "gen-failed",
+    "grade": 11,
+    "subject": "Fine Arts",
+    "chapters": 8,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-fine_arts-kefa1-chapters.json"
   },
   "kefc1": {
     "status": "skipped-subject",
@@ -902,16 +961,24 @@
     "grade": 11
   },
   "kegy1": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "done",
+    "grade": 11,
+    "subject": "Geography",
+    "chapters": 6,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-geography-kegy1-chapters.json"
   },
   "kegy2": {
     "status": "skipped-subject",
     "grade": 11
   },
   "kegy3": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "gen-failed",
+    "grade": 11,
+    "subject": "Geography",
+    "chapters": 6,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-geography-kegy3-chapters.json"
   },
   "kehb1": {
     "status": "skipped-subject",
@@ -922,16 +989,28 @@
     "grade": 11
   },
   "kehe1": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "done",
+    "grade": 11,
+    "subject": "Home Science",
+    "chapters": 2,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-home_science-kehe1-chapters.json"
   },
   "kehe2": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "gen-failed",
+    "grade": 11,
+    "subject": "Home Science",
+    "chapters": 4,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-home_science-kehe2-chapters.json"
   },
   "kehp1": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "gen-failed",
+    "grade": 11,
+    "subject": "Physical Education",
+    "chapters": 11,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-physical_education-kehp1-chapters.json"
   },
   "kehs1": {
     "status": "skipped-subject",
@@ -962,7 +1041,7 @@
     "grade": 11
   },
   "kemh1": {
-    "status": "gen-failed",
+    "status": "done",
     "grade": 11,
     "subject": "Mathematics",
     "chapters": 14,
@@ -994,28 +1073,48 @@
     "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-physics-keph2-chapters.json"
   },
   "keps1": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "gen-failed",
+    "grade": 11,
+    "subject": "Political Science",
+    "chapters": 8,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-political_science-keps1-chapters.json"
   },
   "keps2": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "gen-failed",
+    "grade": 11,
+    "subject": "Science",
+    "chapters": 10,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-science-keps2-chapters.json"
   },
   "kepy1": {
     "status": "skipped-subject",
     "grade": 11
   },
   "kesp1": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "done",
+    "grade": 11,
+    "subject": "English",
+    "chapters": 5,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-english-kesp1-chapters.json"
   },
   "kest1": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "generating",
+    "grade": 11,
+    "subject": "Economics",
+    "chapters": 8,
+    "hasImages": true,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-economics-kest1-chapters.json"
   },
   "kesy1": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "gen-failed",
+    "grade": 11,
+    "subject": "Sociology",
+    "chapters": 5,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-sociology-kesy1-chapters.json"
   },
   "kesy2": {
     "status": "skipped-subject",
@@ -1026,8 +1125,12 @@
     "grade": 11
   },
   "keww1": {
-    "status": "skipped-subject",
-    "grade": 11
+    "status": "done",
+    "grade": 11,
+    "subject": "English",
+    "chapters": 20,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g11-english-keww1-chapters.json"
   },
   "leac1": {
     "status": "skipped-subject",
@@ -1070,7 +1173,7 @@
     "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-chemistry-lech1-chapters.json"
   },
   "lech2": {
-    "status": "gen-failed",
+    "status": "done",
     "grade": 12,
     "subject": "Chemistry",
     "chapters": 5,
@@ -1082,12 +1185,20 @@
     "grade": 12
   },
   "leec1": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "gen-failed",
+    "grade": 12,
+    "subject": "Economics",
+    "chapters": 6,
+    "hasImages": true,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-economics-leec1-chapters.json"
   },
   "leec2": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "gen-failed",
+    "grade": 12,
+    "subject": "Economics",
+    "chapters": 5,
+    "hasImages": true,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-economics-leec2-chapters.json"
   },
   "leep2": {
     "status": "skipped-subject",
@@ -1106,68 +1217,116 @@
     "grade": 12
   },
   "lefa1": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "gen-failed",
+    "grade": 12,
+    "subject": "Fine Arts",
+    "chapters": 8,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-fine_arts-lefa1-chapters.json"
   },
   "lefl1": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "done",
+    "grade": 12,
+    "subject": "English",
+    "chapters": 11,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-english-lefl1-chapters.json"
   },
   "legd1": {
     "status": "skipped-subject",
     "grade": 12
   },
   "legy1": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "gen-failed",
+    "grade": 12,
+    "subject": "Geography",
+    "chapters": 8,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-geography-legy1-chapters.json"
   },
   "legy2": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "gen-failed",
+    "grade": 12,
+    "subject": "Geography",
+    "chapters": 9,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-geography-legy2-chapters.json"
   },
   "legy3": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "gen-failed",
+    "grade": 12,
+    "subject": "Geography",
+    "chapters": 4,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-geography-legy3-chapters.json"
   },
   "lehc1": {
     "status": "skipped-subject",
     "grade": 12
   },
   "lehe1": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "done",
+    "grade": 12,
+    "subject": "Home Science",
+    "chapters": 7,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-home_science-lehe1-chapters.json"
   },
   "lehe2": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "gen-failed",
+    "grade": 12,
+    "subject": "Home Science",
+    "chapters": 7,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-home_science-lehe2-chapters.json"
   },
   "lehh1": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "gen-failed",
+    "grade": 12,
+    "subject": "Home Science",
+    "chapters": 7,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-home_science-lehh1-chapters.json"
   },
   "lehh2": {
     "status": "skipped-subject",
     "grade": 12
   },
   "lehs1": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "gen-failed",
+    "grade": 12,
+    "subject": "History",
+    "chapters": 4,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-history-lehs1-chapters.json"
   },
   "lehs2": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "gen-failed",
+    "grade": 12,
+    "subject": "History",
+    "chapters": 4,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-history-lehs2-chapters.json"
   },
   "lehs3": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "gen-failed",
+    "grade": 12,
+    "subject": "History",
+    "chapters": 4,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-history-lehs3-chapters.json"
   },
   "leip1": {
     "status": "skipped-subject",
     "grade": 12
   },
   "lekl1": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "done",
+    "grade": 12,
+    "subject": "English",
+    "chapters": 14,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-english-lekl1-chapters.json"
   },
   "lelm1": {
     "status": "skipped-subject",
@@ -1182,7 +1341,7 @@
     "grade": 12
   },
   "lemh1": {
-    "status": "gen-failed",
+    "status": "done",
     "grade": 12,
     "subject": "Mathematics",
     "chapters": 6,
@@ -1226,16 +1385,28 @@
     "grade": 12
   },
   "lesy1": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "done",
+    "grade": 12,
+    "subject": "Sociology",
+    "chapters": 7,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-sociology-lesy1-chapters.json"
   },
   "lesy2": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "gen-failed",
+    "grade": 12,
+    "subject": "Sociology",
+    "chapters": 8,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-sociology-lesy2-chapters.json"
   },
   "levt1": {
-    "status": "skipped-subject",
-    "grade": 12
+    "status": "done",
+    "grade": 12,
+    "subject": "English",
+    "chapters": 6,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g12-english-levt1-chapters.json"
   },
   "ckoky1": {
     "status": "skipped-subject",
@@ -1562,7 +1733,7 @@
     "grade": 4
   },
   "deap1": {
-    "status": "foundation",
+    "status": "done",
     "grade": 4,
     "subject": "Environmental Studies",
     "chapters": 27,
@@ -1570,8 +1741,12 @@
     "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g4-evs-deap1-chapters.json"
   },
   "debu1": {
-    "status": "skipped-subject",
-    "grade": 4
+    "status": "done",
+    "grade": 4,
+    "subject": "Fine Arts",
+    "chapters": 18,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g4-fine_arts-debu1-chapters.json"
   },
   "deen1": {
     "status": "no-chapters",
@@ -1579,7 +1754,7 @@
     "subject": "English"
   },
   "deev1": {
-    "status": "foundation",
+    "status": "done",
     "grade": 4,
     "subject": "Environmental Studies",
     "chapters": 10,
@@ -1587,24 +1762,25 @@
     "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g4-evs-deev1-chapters.json"
   },
   "deky1": {
-    "status": "skipped-subject",
-    "grade": 4
+    "status": "done",
+    "grade": 4,
+    "subject": "Physical Education",
+    "chapters": 3,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g4-physical_education-deky1-chapters.json"
   },
   "demh1": {
-    "status": "no-chapters",
+    "status": "skipped-subject",
     "grade": 4,
-    "subject": "Mathematics"
+    "subject": "Mathematics (separate pipeline)"
   },
   "demm1": {
-    "status": "foundation",
+    "status": "skipped-subject",
     "grade": 4,
-    "subject": "Mathematics",
-    "chapters": 14,
-    "hasImages": false,
-    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g4-mathematics-demm1-chapters.json"
+    "subject": "Mathematics (separate pipeline)"
   },
   "desa1": {
-    "status": "foundation",
+    "status": "done",
     "grade": 4,
     "subject": "English",
     "chapters": 12,
@@ -1890,5 +2066,148 @@
   "dust1": {
     "status": "skipped-subject",
     "grade": 4
+  },
+  "eeap1": {
+    "status": "done",
+    "grade": 5,
+    "subject": "Environmental Studies",
+    "chapters": 22,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g5-evs-eeap1-chapters.json"
+  },
+  "eebu1": {
+    "status": "done",
+    "grade": 5,
+    "subject": "Fine Arts",
+    "chapters": 19,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g5-fine_arts-eebu1-chapters.json"
+  },
+  "eeen1": {
+    "status": "done",
+    "grade": 5,
+    "subject": "English",
+    "chapters": 10,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g5-english-eeen1-chapters.json"
+  },
+  "eeev1": {
+    "status": "done",
+    "grade": 5,
+    "subject": "Environmental Studies",
+    "chapters": 10,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g5-evs-eeev1-chapters.json"
+  },
+  "eeky1": {
+    "status": "done",
+    "grade": 5,
+    "subject": "Physical Education",
+    "chapters": 3,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g5-physical_education-eeky1-chapters.json"
+  },
+  "eemh1": {
+    "status": "skipped-subject",
+    "grade": 5,
+    "subject": "Mathematics (separate pipeline)"
+  },
+  "eemm1": {
+    "status": "skipped-subject",
+    "grade": 5,
+    "subject": "Mathematics (separate pipeline)"
+  },
+  "eesa1": {
+    "status": "done",
+    "grade": 5,
+    "subject": "English",
+    "chapters": 10,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g5-english-eesa1-chapters.json"
+  },
+  "fecu1": {
+    "status": "done",
+    "grade": 6,
+    "subject": "Science",
+    "chapters": 12,
+    "hasImages": true,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g6-science-fecu1-chapters.json"
+  },
+  "feep1": {
+    "status": "skipped-subject",
+    "grade": 6
+  },
+  "feep2": {
+    "status": "skipped-subject",
+    "grade": 6
+  },
+  "fees1": {
+    "status": "gen-failed",
+    "grade": 6,
+    "subject": "Social Science",
+    "chapters": 14,
+    "hasImages": true,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g6-social_science-fees1-chapters.json"
+  },
+  "fegp1": {
+    "status": "skipped-subject",
+    "grade": 6,
+    "subject": "Mathematics (separate pipeline)"
+  },
+  "fehl1": {
+    "status": "skipped-subject",
+    "grade": 6
+  },
+  "fekb1": {
+    "status": "done",
+    "grade": 6,
+    "subject": "Physical Education",
+    "chapters": 6,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g6-physical_education-fekb1-chapters.json"
+  },
+  "fekr1": {
+    "status": "done",
+    "grade": 6,
+    "subject": "Physical Education",
+    "chapters": 22,
+    "hasImages": false,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g6-physical_education-fekr1-chapters.json"
+  },
+  "feky1": {
+    "status": "skipped-subject",
+    "grade": 6
+  },
+  "fepr1": {
+    "status": "gen-failed",
+    "grade": 6,
+    "subject": "English",
+    "chapters": 5,
+    "hasImages": true,
+    "manifestFile": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\server\\data\\curricula\\cbse-g6-english-fepr1-chapters.json"
+  },
+  "fepw1": {
+    "status": "skipped-subject",
+    "grade": 6
+  },
+  "fesc1": {
+    "status": "no-chapters",
+    "grade": 6,
+    "subject": "Science"
+  },
+  "fess1": {
+    "status": "no-chapters",
+    "grade": 6,
+    "subject": "Social Science"
+  },
+  "fess2": {
+    "status": "no-chapters",
+    "grade": 6,
+    "subject": "Social Science"
+  },
+  "fess3": {
+    "status": "no-chapters",
+    "grade": 6,
+    "subject": "Social Science"
   }
 }

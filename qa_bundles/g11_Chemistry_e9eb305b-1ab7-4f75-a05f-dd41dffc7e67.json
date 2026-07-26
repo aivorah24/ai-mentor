@@ -1,0 +1,150 @@
+{
+ "topicId": "e9eb305b-1ab7-4f75-a05f-dd41dffc7e67",
+ "grade": "Grade 11",
+ "subject": "Chemistry",
+ "curriculum": "CBSE",
+ "topicName": "Atomic Spectra and Bohr's Model",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "Rutherford’s model could not explain why atoms emit light at specific wavelengths. Bohr solved this by proposing that electrons move in circular orbits with quantized angular momentum, called stationary states.",
+   "When an electron jumps from a higher to a lower orbit, it releases a photon whose energy equals the difference between the two energy levels. This produces the line spectra observed for hydrogen.",
+   "Bohr’s model successfully predicts the hydrogen spectrum, but it cannot explain finer details such as the splitting of lines in magnetic fields, spectra of multi‑electron atoms, or chemical bonding."
+  ],
+  "grade": 11,
+  "intro": "In this lesson we explore how Bohr’s model explains atomic spectra and why it was a breakthrough after Rutherford’s model.",
+  "vocab": [
+   {
+    "word": "Bohr's model",
+    "definition": "A theory that electrons travel in fixed circular orbits with quantized angular momentum."
+   },
+   {
+    "word": "Atomic spectra",
+    "definition": "The set of discrete wavelengths of light emitted or absorbed by an atom."
+   },
+   {
+    "word": "Stationary states",
+    "definition": "Allowed energy levels where an electron can orbit without radiating energy."
+   },
+   {
+    "word": "Line spectra",
+    "definition": "Distinct lines of color representing specific photon energies emitted by an atom."
+   },
+   {
+    "word": "Quantized",
+    "definition": "Existing in discrete values rather than a continuous range."
+   }
+  ],
+  "subject": "Chemistry",
+  "activity": "Why do you think electrons cannot lose energy while moving in Bohr’s stationary orbits?",
+  "keyLearnings": [
+   "Bohr added fixed electron orbits to explain line spectra.",
+   "Electrons emit or absorb light when they jump between orbits.",
+   "The model works well for hydrogen but fails for heavier atoms and chemical bonding."
+  ],
+  "keyTakeaways": [
+   "Bohr’s model introduced quantized electron orbits to explain hydrogen’s line spectra.",
+   "Energy is emitted or absorbed as photons when electrons transition between orbits.",
+   "The model’s limitations highlight the need for quantum mechanics."
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "Think about the term 'stationary states'.",
+    "type": "mcq",
+    "correct": 1,
+    "options": [
+     "Electrons move randomly",
+     "Electrons travel in fixed circular orbits",
+     "Electrons spiral into the nucleus",
+     "Electrons are stationary"
+    ],
+    "question": "What does Bohr’s model assume about electron motion?",
+    "explanation": "Bohr proposed that electrons travel in fixed circular orbits with quantized angular momentum."
+   },
+   {
+    "hint": "Consider the model’s limitations.",
+    "type": "mcq",
+    "correct": 1,
+    "options": [
+     "Hydrogen line spectrum",
+     "Splitting of spectral lines in magnetic fields",
+     "Energy levels of hydrogen",
+     "Emission of photons during electron transitions"
+    ],
+    "question": "Which observation could NOT be explained by Bohr’s model?",
+    "explanation": "Bohr’s model cannot explain the Zeeman effect, i.e., splitting of lines in magnetic fields."
+   },
+   {
+    "hint": "It is a particle of light.",
+    "type": "fill_blank",
+    "correct": "photon",
+    "question": "When an electron drops to a lower orbit, it emits a _______.",
+    "explanation": "The energy difference between the two orbits is released as a photon."
+   }
+  ],
+  "originalLesson": [],
+  "whatYoullLearn": [
+   "Bohr added fixed electron orbits to explain line spectra.",
+   "Electrons emit or absorb light when they jump between orbits.",
+   "The model works well for hydrogen but fails for heavier atoms and chemical bonding."
+  ],
+  "workedExamples": [],
+  "thinkAndReflect": [
+   "Why do you think electrons cannot lose energy while moving in Bohr’s stationary orbits?",
+   "How would the spectrum change if electrons could occupy any orbit?"
+  ],
+  "instructionalType": "lesson",
+  "illustrationPrompts": [
+   {
+    "image": "https://res.cloudinary.com/di5iq2mmb/image/upload/v1779441201/ncert_images/ncert/g11/chemistry/kech1_ch02_p39_i0.png",
+    "score": 0.675,
+    "source": "NCERT Chemistry Grade 11 | kech102.pdf | Page 39",
+    "altText": "This image appears to be a diagram of the Bohr model of a hydrogen atom, which…"
+   },
+   {
+    "image": "https://res.cloudinary.com/di5iq2mmb/image/upload/v1779441201/ncert_images/ncert/g11/chemistry/kech1_ch02_p38_i7.jpg",
+    "score": 0.57,
+    "source": "NCERT Chemistry Grade 11 | kech102.pdf | Page 38",
+    "altText": "This image appears to be a placeholder and does not actually show any content…"
+   }
+  ]
+ },
+ "practiceQuiz": [
+  {
+   "hint": "Think about the term 'stationary states'.",
+   "type": "mcq",
+   "correct": 1,
+   "options": [
+    "Electrons move randomly",
+    "Electrons travel in fixed circular orbits",
+    "Electrons spiral into the nucleus",
+    "Electrons are stationary"
+   ],
+   "question": "What does Bohr’s model assume about electron motion?",
+   "explanation": "Bohr proposed that electrons travel in fixed circular orbits with quantized angular momentum."
+  },
+  {
+   "hint": "Consider the model’s limitations.",
+   "type": "mcq",
+   "correct": 1,
+   "options": [
+    "Hydrogen line spectrum",
+    "Splitting of spectral lines in magnetic fields",
+    "Energy levels of hydrogen",
+    "Emission of photons during electron transitions"
+   ],
+   "question": "Which observation could NOT be explained by Bohr’s model?",
+   "explanation": "Bohr’s model cannot explain the Zeeman effect, i.e., splitting of lines in magnetic fields."
+  },
+  {
+   "hint": "It is a particle of light.",
+   "type": "fill_blank",
+   "correct": "photon",
+   "question": "When an electron drops to a lower orbit, it emits a _______.",
+   "explanation": "The energy difference between the two orbits is released as a photon."
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "**Imagine this!**\nYou’re playing with your **glow-in-the-dark stars** on your bedroom ceiling. When you turn off the lights, they shine with a soft green light. That light isn’t random — it’s a very specific color! That’s a tiny clue about how atoms work. Atoms also give off light, but only at very specific colors or **wavelengths**. This is called an **atomic spectrum**, and it’s like the atom’s fingerprint!\n\n---\n\n**Let’s break it down:**\n\n- **Atomic spectra** are the unique set of colors (wavelengths) of light that atoms give off when they’re excited — like when you heat them or run electricity through them.\n- These colors appear as **lines** in a spectroscope (a special tool), not as a rainbow. That’s why it’s called a **line spectrum**.\n- Each element has its own pattern — like how each person has a unique face. Sodium gives a bright yellow line, hydrogen gives red and blue lines, and so on.\n\n---\n\n**Bohr’s Model — the “solar system” idea:**\nNiels Bohr fixed a big problem in Rutherford’s model. Rutherford said atoms have a tiny nucleus with electrons zooming around it — like planets around the Sun. But he couldn’t explain why atoms only give off certain colors of light.\n\nBohr said:\n1. Electrons can only move in **specific circular orbits** around the nucleus — like train tracks at a station.\n2. These orbits are called **stationary states** or **energy levels**.\n3. Electrons **don’t lose energy** while in these orbits — they’re stable.\n4. When an electron **jumps down** from a higher orbit to a lower one, it releases energy as a **photon** (a tiny packet of light).\n5. The **color (wavelength)** of the photon depends on the **difference in energy** between the two orbits.\n\nIt’s like going down a slide:\n- The higher you are, the more energy you have.\n- When you slide down, you release energy as sound or heat.\n- In an atom, that energy comes out as **light** — and only at specific colors!\n\n---\n\n**Worked Example: Hydrogen Atom**\n\nLet’s look at the simplest atom — **hydrogen** (just 1 proton and 1 electron).\n\n- The electron can be in different orbits: **n = 1, 2, 3, ...** (like floors in a building).\n- The energy of each level is known:\n  - n=1: -13.6 eV (lowest energy, ground state)\n  - n=2: -3.4 eV\n  - n=3: -1.51 eV\n- When the electron jumps from **n=3 → n=2**, it releases energy:\n  - Energy released = E₃ – E₂ = (-1.51) – (-3.4) = **1.89 eV**\n- That energy becomes a **photon** of light.\n- We can calculate the **wavelength** of that light using:\n  - E = hc/λ → λ = hc/E\n  - h = Planck’s constant, c = speed of light\n  - λ = (1240 eV·nm) / 1.89 eV ≈ **656 nm** → that’s **red light**!\n\nSo, hydrogen gives off red light when electrons jump from n=3 to n=2. That’s one line in its **atomic spectrum**!\n\n---\n\n**Did you know?**\nThe red line in hydrogen’s spectrum is called the **H-alpha line**. Astronomers use it to study stars and galaxies — even the Sun! When they see this red line, they know hydrogen is there.\n\n---\n\nYou just used Bohr’s model to predict a real color of light from an atom!\n**What color of light do you think is released when an electron jumps from n=2 → n=1 in hydrogen?** (Hint: it’s not red!)"
+}

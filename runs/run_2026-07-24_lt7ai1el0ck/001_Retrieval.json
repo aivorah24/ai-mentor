@@ -1,0 +1,130 @@
+{
+  "package": {
+    "package_id": "a868d887-ec00-4c16-bd0e-69aee7177adc",
+    "package_type": "RetrievalPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T16:53:38.869Z",
+    "produced_by": {
+      "agent": "grounded-retrieval",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "lt7ai1el0ck",
+      "parent_package_id": null
+    }
+  },
+  "payload": {
+    "request": {
+      "grade": 1,
+      "subject": "Mathematics",
+      "chapter": "Addition",
+      "lesson_id": "",
+      "lesson": "Addition"
+    },
+    "retrieval_summary": {
+      "confidence": 0.5696584,
+      "coverage": 1,
+      "chunks_retrieved": 5,
+      "collection_source": {
+        "collection": "aivorah_curriculum_chunks_v1",
+        "curriculum": "NCERT",
+        "grade": 1,
+        "subject": "Mathematics"
+      }
+    },
+    "retrieved_chunks": [
+      {
+        "chunk_id": "3e9ffe31-b69b-472d-a5c1-50ee2ca26114",
+        "page_number": null,
+        "section": "explanation",
+        "order": 0,
+        "content": "to practice addition. For instance, imagine you have 3 bananas and you get 2 more bananas from the kitchen. How many bananas do you have now? You can count them together like this: 3, 4, 5. So, you have 5 bananas now. In our daily lives, we use addition to solve many problems. For example, if you have 2 rupees and your friend gives you 1 more rupee, you can count them together to find out how much money you have now. Remember, addition is all abo…",
+        "embedding_score": 0.5696584,
+        "metadata": {
+          "grade": 1,
+          "subject": "Mathematics",
+          "topic": "Addition",
+          "curriculum": "NCERT"
+        }
+      },
+      {
+        "chunk_id": "c3de2273-7849-4175-aa9d-d960eac5aceb",
+        "page_number": null,
+        "section": "explanation",
+        "order": 1,
+        "content": "Addition is a fun way to count more things together. Think of it like this - imagine you have 3 apples in your basket and your friend gives you 2 more apples. How many apples do you have now? That's right, you have 5 apples. Let's use some pictures to help us understand addition better. Suppose we have 2 toy cars and our friend gives us 1 more toy car. We can draw 2 cars and then add 1 more to make it 3 cars. See how easy it is! Now, let's learn …",
+        "embedding_score": 0.5248922,
+        "metadata": {
+          "grade": 1,
+          "subject": "Mathematics",
+          "topic": "Addition",
+          "curriculum": "NCERT"
+        }
+      },
+      {
+        "chunk_id": "ec83420a-8330-4523-acb9-e4671a5bf745",
+        "page_number": null,
+        "section": "explanation",
+        "order": 2,
+        "content": "can solve these examples together, and I'm sure you will have lots of fun learning subtraction.",
+        "embedding_score": 0.5121263,
+        "metadata": {
+          "grade": 1,
+          "subject": "Mathematics",
+          "topic": "Subtraction",
+          "curriculum": "NCERT"
+        }
+      },
+      {
+        "chunk_id": "9ca1c4dc-f7e3-4796-9342-cd682d53be98",
+        "page_number": null,
+        "section": "explanation",
+        "order": 3,
+        "content": "How Many? 5 Let children look at the picture and share what activities they do in the park. They may also discuss the number of people joining in the park, for example, how many children are playing in the first picture and how many joined them. Let children discuss or share the importance of spending time with grandparents and discuss ways of showing respect to them. Going out with Grandfather! Chapter 5.indd 48Chapter 5.indd 4807-06-2023 10:49:…",
+        "embedding_score": 0.43516538,
+        "metadata": {
+          "grade": 1,
+          "subject": "Mathematics",
+          "topic": "aejm105",
+          "curriculum": "NCERT"
+        }
+      },
+      {
+        "chunk_id": "deb71fcf-bd4a-40ef-93c1-a28bda9c2a7e",
+        "page_number": null,
+        "section": "explanation",
+        "order": 4,
+        "content": "Vegetable Farm 6 Rumi and Shami helped each other taking out vegetables from the field. Each of them took a basket and plucked the vegetables. Let’s see how many vegetables they both took out. Chapter 6.indd 64Chapter 6.indd 6407-06-2023 10:56:5607-06-2023 10:56:56 Reprint 2026-27 65 Rumi’s BasketShami’s BasketBoth have A. 7 tomatoes and 5 tomatoes altogether make 12 tomatoes. 7 + 5 = ______ B. 9 carrots in one basket and 4 carrots in another bas…",
+        "embedding_score": 0.41024396,
+        "metadata": {
+          "grade": 1,
+          "subject": "Mathematics",
+          "topic": "aejm106",
+          "curriculum": "NCERT"
+        }
+      }
+    ],
+    "source_metadata": [
+      "{\"collection\":\"aivorah_curriculum_chunks_v1\",\"curriculum\":\"NCERT\",\"grade\":1,\"subject\":\"Mathematics\"}"
+    ],
+    "warnings": [],
+    "handoff": {
+      "curriculum_understanding_agent": {
+        "ordered_chunks": [
+          "3e9ffe31-b69b-472d-a5c1-50ee2ca26114",
+          "c3de2273-7849-4175-aa9d-d960eac5aceb",
+          "ec83420a-8330-4523-acb9-e4671a5bf745",
+          "9ca1c4dc-f7e3-4796-9342-cd682d53be98",
+          "deb71fcf-bd4a-40ef-93c1-a28bda9c2a7e"
+        ],
+        "retrieval_summary": {
+          "chunks_retrieved": 5
+        },
+        "source_metadata": [
+          "{\"collection\":\"aivorah_curriculum_chunks_v1\",\"curriculum\":\"NCERT\",\"grade\":1,\"subject\":\"Mathematics\"}"
+        ],
+        "warnings": []
+      }
+    }
+  }
+}

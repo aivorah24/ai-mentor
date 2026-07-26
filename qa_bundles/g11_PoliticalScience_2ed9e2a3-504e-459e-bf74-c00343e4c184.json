@@ -1,0 +1,127 @@
+{
+ "topicId": "2ed9e2a3-504e-459e-bf74-c00343e4c184",
+ "grade": "Grade 11",
+ "subject": "Political Science",
+ "curriculum": "CBSE",
+ "topicName": "Citizenship and Equality",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "Citizenship is about equal rights and duties for all members.",
+   "Marshall saw citizenship as a way to counter social class hierarchy.",
+   "There are three dimensions of equality: political, social, and economic.",
+   "Equality is a moral and political ideal, linked to human rights."
+  ],
+  "grade": 11,
+  "intro": "Citizenship is closely related to equality, ensuring all members have equal rights and duties.",
+  "vocab": [
+   {
+    "word": "Citizenship",
+    "definition": "Having equal rights and duties"
+   },
+   {
+    "word": "Equality",
+    "definition": "Having the same rights and opportunities"
+   }
+  ],
+  "subject": "Political Science",
+  "activity": "How does citizenship promote equality?",
+  "keyLearnings": [
+   "Citizenship ensures equality",
+   "Equality has three dimensions: political, social, and economic"
+  ],
+  "keyTakeaways": [
+   "Citizenship promotes equality",
+   "Equality has three dimensions"
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "Citizenship is about equal rights and duties.",
+    "type": "mcq",
+    "correct": 1,
+    "options": [
+     "a) Freedom",
+     "b) Equality",
+     "c) Justice",
+     "d) Rights"
+    ],
+    "question": "What is citizenship closely related to?",
+    "explanation": "Citizenship is closely related to equality."
+   },
+   {
+    "hint": "Marshall's view on citizenship is relevant.",
+    "type": "mcq",
+    "correct": 0,
+    "options": [
+     "a) Marshall",
+     "b) Marx",
+     "c) Lenin",
+     "d) Gandhi"
+    ],
+    "question": "Who saw citizenship as a way to counter social class hierarchy?",
+    "explanation": "Marshall saw citizenship as a way to counter social class hierarchy."
+   },
+   {
+    "hint": "Think about the types of equality.",
+    "type": "fill_blank",
+    "correct": "economic",
+    "question": "Equality has three dimensions: political, social, and ______",
+    "explanation": "Equality has three dimensions: political, social, and economic."
+   }
+  ],
+  "originalLesson": [
+   "Citizenship and Equality",
+   "Citizenship and Social Class",
+   "Three Dimensions of Equality",
+   "Citizenship",
+   "Equality as a Moral and Political Ideal"
+  ],
+  "whatYoullLearn": [
+   "Citizenship ensures equality",
+   "Equality has three dimensions: political, social, and economic"
+  ],
+  "thinkAndReflect": [
+   "How does citizenship promote equality?",
+   "What are the three dimensions of equality?"
+  ],
+  "instructionalType": "Social Science"
+ },
+ "practiceQuiz": [
+  {
+   "hint": "Citizenship is about equal rights and duties.",
+   "type": "mcq",
+   "correct": 1,
+   "options": [
+    "a) Freedom",
+    "b) Equality",
+    "c) Justice",
+    "d) Rights"
+   ],
+   "question": "What is citizenship closely related to?",
+   "explanation": "Citizenship is closely related to equality."
+  },
+  {
+   "hint": "Marshall's view on citizenship is relevant.",
+   "type": "mcq",
+   "correct": 0,
+   "options": [
+    "a) Marshall",
+    "b) Marx",
+    "c) Lenin",
+    "d) Gandhi"
+   ],
+   "question": "Who saw citizenship as a way to counter social class hierarchy?",
+   "explanation": "Marshall saw citizenship as a way to counter social class hierarchy."
+  },
+  {
+   "hint": "Think about the types of equality.",
+   "type": "fill_blank",
+   "correct": "economic",
+   "question": "Equality has three dimensions: political, social, and ______",
+   "explanation": "Equality has three dimensions: political, social, and economic."
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "**Great question!** Let’s think about **citizenship** and **equality** like a big, happy playground where everyone gets the same rules and chances to play.\n\n---\n\n### **What is Citizenship?**\n- **Citizenship** is like being part of a team where everyone has the same **rights** (things you’re allowed to do) and **duties** (things you must do).\n- Imagine a soccer team: every player has the right to play, but they also have the duty to follow the rules and cheer for their team.\n- **Marshall** (a smart thinker) said citizenship helps break down unfair social classes—like making sure no one is left out because of their family background.\n\n---\n\n### **What is Equality?**\n- **Equality** means treating everyone fairly and giving them the same opportunities.\n- There are **three types of equality**:\n  1. **Political equality**: Everyone gets the same say in decisions (like voting).\n  2. **Social equality**: Everyone is treated the same in society (no bullying or unfair treatment).\n  3. **Economic equality**: Everyone has a fair chance to earn and live well (like fair wages).\n\n---\n\n### **Worked Example: School Council Elections**\nImagine your school is picking a **Student Council** to represent your class.\n1. **Political equality**: Every student gets **one vote**—no one gets extra votes because they’re popular or rich.\n2. **Social equality**: No one is left out because of their background, gender, or abilities. Everyone can run for the council.\n3. **Economic equality**: The school makes sure all candidates have the same chance to campaign—no one gets extra money for posters or ads.\n\n**Result**: The council is fair, and everyone feels included!\n\n---\n**Did you know?** Some countries use **citizenship tests** to make sure newcomers understand the rules and values of their new home—like learning the rules of a new game before playing!\n\n---\n**Quick check**: If your school had a \"Best Student\" award, how would you make sure it’s fair for everyone? 😊"
+}

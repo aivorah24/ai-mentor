@@ -10,6 +10,7 @@
 import { CBSE_G6_ENGLISH_SYLLABUS, type SyllabusChapter } from './cbseG6EnglishSyllabus';
 import { CBSE_G6_SCIENCE_SYLLABUS } from './cbseG6ScienceSyllabus';
 import { CBSE_G6_SOCIAL_SCIENCE_SYLLABUS } from './cbseG6SocialScienceSyllabus';
+import { CBSE_G6_MATHEMATICS_SYLLABUS } from './cbseG6MathematicsSyllabus';
 
 export type { SyllabusChapter, SyllabusTopic, ListenPart, VocabWord } from './cbseG6EnglishSyllabus';
 
@@ -22,8 +23,6 @@ export function getSubjectSyllabus(curriculum: string, grade: string, subject: s
   if (/english/i.test(s)) return CBSE_G6_ENGLISH_SYLLABUS;
   if (/science/i.test(s) && !/social/i.test(s)) return CBSE_G6_SCIENCE_SYLLABUS;
   if (/social/i.test(s)) return CBSE_G6_SOCIAL_SCIENCE_SYLLABUS;
-  // Mathematics deliberately has no curated chapter syllabus here — its
-  // content (worked examples/problem sets) doesn't fit this narrative
-  // "read/listen along" shape, unlike English/Science/Social Science.
+  if (/math/i.test(s)) return CBSE_G6_MATHEMATICS_SYLLABUS;
   return [];
 }

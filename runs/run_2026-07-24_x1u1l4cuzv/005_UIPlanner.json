@@ -1,0 +1,193 @@
+{
+  "package": {
+    "package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842c",
+    "package_type": "UIPlanPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:10:00.239Z",
+    "produced_by": {
+      "agent": "ui-planner-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "x1u1l4cuzv",
+      "parent_package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842b"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "device_profiles": {
+      "desktop": true,
+      "tablet": true,
+      "mobile": true
+    },
+    "theme": "light",
+    "accessibility_settings": [
+      "dyslexia",
+      "high_contrast",
+      "large_text"
+    ],
+    "rendering_constraints": {
+      "max_interactions": 2,
+      "allow_horizontal_scroll": false,
+      "animation_level": "medium"
+    },
+    "screens": [
+      {
+        "screen_id": "introduction",
+        "stage_id": 1,
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": 1,
+            "component_type": "video_player",
+            "stage_id": 1,
+            "priority": "high",
+            "props": {
+              "video_url": "https://example.com/introduction.mp4"
+            }
+          },
+          {
+            "component_id": 2,
+            "component_type": "text",
+            "stage_id": 1,
+            "priority": "low",
+            "props": {
+              "text": "Introduction to subtraction with borrowing"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": null,
+          "next_screen": "example",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "example",
+        "stage_id": 2,
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": 3,
+            "component_type": "practice_problem",
+            "stage_id": 2,
+            "priority": "high",
+            "props": {
+              "problem_text": "Solve for x: 45 - 27 = ?"
+            }
+          },
+          {
+            "component_id": 4,
+            "component_type": "text",
+            "stage_id": 2,
+            "priority": "low",
+            "props": {
+              "text": "Example of subtraction with borrowing"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "introduction",
+          "next_screen": "practice",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "practice",
+        "stage_id": 3,
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": 5,
+            "component_type": "practice_problem",
+            "stage_id": 3,
+            "priority": "high",
+            "props": {
+              "problem_text": "Solve for x: 63 - 19 = ?"
+            }
+          },
+          {
+            "component_id": 6,
+            "component_type": "text",
+            "stage_id": 3,
+            "priority": "low",
+            "props": {
+              "text": "Practice problems for subtraction with borrowing"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "example",
+          "next_screen": "real-life-application",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "real-life-application",
+        "stage_id": 4,
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": 7,
+            "component_type": "discussion_forum",
+            "stage_id": 4,
+            "priority": "high",
+            "props": {
+              "forum_url": "https://example.com/discussion"
+            }
+          },
+          {
+            "component_id": 8,
+            "component_type": "text",
+            "stage_id": 4,
+            "priority": "low",
+            "props": {
+              "text": "Real-life application of subtraction with borrowing"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "practice",
+          "next_screen": "assessment",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "assessment",
+        "stage_id": 5,
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": 9,
+            "component_type": "quiz",
+            "stage_id": 5,
+            "priority": "high",
+            "props": {
+              "quiz_url": "https://example.com/quiz"
+            }
+          },
+          {
+            "component_id": 10,
+            "component_type": "text",
+            "stage_id": 5,
+            "priority": "low",
+            "props": {
+              "text": "Assessment of subtraction with borrowing"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "real-life-application",
+          "next_screen": null,
+          "exit_behavior": "exit"
+        }
+      }
+    ],
+    "handoff": {
+      "lesson_generator_agent": {
+        "lesson_experience_package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842b",
+        "ui_plan_package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842c"
+      }
+    }
+  }
+}

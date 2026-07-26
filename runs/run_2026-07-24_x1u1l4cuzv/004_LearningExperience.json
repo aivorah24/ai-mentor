@@ -1,0 +1,180 @@
+{
+  "package": {
+    "package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842b",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:10:00.239Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "x1u1l4cuzv",
+      "parent_package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842a"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "lesson_metadata": {
+      "curriculum": "mathematics",
+      "grade": 4,
+      "subject": "math",
+      "chapter": "subtraction",
+      "lesson": "subtraction with borrowing",
+      "lesson_type": "Mathematics"
+    },
+    "experience_score": {
+      "engagement": 90,
+      "curiosity": 85,
+      "visual_learning": 95,
+      "audio_experience": 80,
+      "interaction": 92,
+      "reflection": 88,
+      "accessibility": 95,
+      "cognitive_load": 80,
+      "learning_flow": 90
+    },
+    "lesson_flow": [
+      {
+        "step_id": 1,
+        "step_type": "introduction",
+        "description": "Introduction to subtraction with borrowing",
+        "interaction_type": "video",
+        "time_limit": 300
+      },
+      {
+        "step_id": 2,
+        "step_type": "example",
+        "description": "Example of subtraction with borrowing",
+        "interaction_type": "practice_problem",
+        "time_limit": 600
+      },
+      {
+        "step_id": 3,
+        "step_type": "practice",
+        "description": "Practice problems for subtraction with borrowing",
+        "interaction_type": "practice_problem",
+        "time_limit": 1200
+      },
+      {
+        "step_id": 4,
+        "step_type": "real-life_application",
+        "description": "Real-life application of subtraction with borrowing",
+        "interaction_type": "discussion",
+        "time_limit": 900
+      },
+      {
+        "step_id": 5,
+        "step_type": "assessment",
+        "description": "Assessment of subtraction with borrowing",
+        "interaction_type": "quiz",
+        "time_limit": 600
+      }
+    ],
+    "ui_components": [
+      {
+        "component_id": 1,
+        "component_type": "video_player",
+        "description": "Video player for introduction"
+      },
+      {
+        "component_id": 2,
+        "component_type": "practice_problem",
+        "description": "Practice problem for example and practice"
+      },
+      {
+        "component_id": 3,
+        "component_type": "discussion_forum",
+        "description": "Discussion forum for real-life application"
+      },
+      {
+        "component_id": 4,
+        "component_type": "quiz",
+        "description": "Quiz for assessment"
+      }
+    ],
+    "interaction_plan": [
+      {
+        "interaction_id": 1,
+        "interaction_type": "video",
+        "description": "Watch introduction video"
+      },
+      {
+        "interaction_id": 2,
+        "interaction_type": "practice_problem",
+        "description": "Solve example practice problem"
+      },
+      {
+        "interaction_id": 3,
+        "interaction_type": "practice_problem",
+        "description": "Solve practice problems"
+      },
+      {
+        "interaction_id": 4,
+        "interaction_type": "discussion",
+        "description": "Participate in real-life application discussion"
+      },
+      {
+        "interaction_id": 5,
+        "interaction_type": "quiz",
+        "description": "Take assessment quiz"
+      }
+    ],
+    "illustration_plan": [
+      {
+        "illustration_id": 1,
+        "illustration_type": "image",
+        "description": "Image for introduction"
+      },
+      {
+        "illustration_id": 2,
+        "illustration_type": "diagram",
+        "description": "Diagram for example"
+      },
+      {
+        "illustration_id": 3,
+        "illustration_type": "graph",
+        "description": "Graph for practice problems"
+      }
+    ],
+    "audio_plan": [
+      {
+        "audio_id": 1,
+        "audio_type": "narration",
+        "description": "Narration for introduction"
+      },
+      {
+        "audio_id": 2,
+        "audio_type": "feedback",
+        "description": "Feedback for practice problems"
+      }
+    ],
+    "validation_requirements": [
+      {
+        "requirement_id": 1,
+        "requirement_type": "completion",
+        "description": "Complete introduction"
+      },
+      {
+        "requirement_id": 2,
+        "requirement_type": "accuracy",
+        "description": "Achieve 80% accuracy on practice problems"
+      }
+    ],
+    "handoff": {
+      "ui_planner_agent": {
+        "lesson_experience": {
+          "lesson_id": "subtraction_with_borrowing",
+          "lesson_metadata": {
+            "curriculum": "mathematics",
+            "grade": 4,
+            "subject": "math",
+            "chapter": "subtraction",
+            "lesson": "subtraction with borrowing",
+            "lesson_type": "Mathematics"
+          }
+        }
+      }
+    }
+  }
+}

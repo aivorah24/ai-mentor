@@ -1,0 +1,135 @@
+{
+  "package": {
+    "package_id": "f0e1d2c3-b4a5-6789-0c1d2e3f4a5b6",
+    "package_type": "AudioPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T14:00:00Z",
+    "produced_by": {
+      "agent": "audio-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "parent_package_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+    }
+  },
+  "payload": {
+    "lesson_id": "lesson-shapes-space-grade1",
+    "audio_strategy": "Clear instructional delivery.",
+    "narration_segments": [
+      {
+        "artifact_id": "11111111-2222-3333-4444-555555555555",
+        "stage_id": "screen_welcome",
+        "component_id": "img_teacher",
+        "ssml": "<speak>Welcome to the world of shapes! <break time=\"300ms/> Today we will learn about circles, triangles, rectangles, and squares, and explore how they fit in space.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "22222222-3333-4444-5555-666666666666",
+        "stage_id": "screen_goal",
+        "component_id": "txt_goal",
+        "ssml": "<speak>Our Goal: Name and find circles, triangles, rectangles, and squares.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "33333333-4444-5555-6666-777777777777",
+        "stage_id": "screen_circle",
+        "component_id": "img_circle_scene",
+        "ssml": "<speak>A circle is a round shape with no corners or edges. <break time=\"300ms/> You can see circles in the sun, the moon, and the wheels of a bicycle.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "44444444-5555-6666-7777-888888888888",
+        "stage_id": "screen_triangle",
+        "component_id": "img_triangle_scene",
+        "ssml": "<speak>A triangle has three sides and three corners. <break time=\"300ms/> Look for triangles in roofs, pizza slices, and warning signs.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "55555555-6666-7777-8888-999999999999",
+        "stage_id": "screen_rectangle",
+        "component_id": "img_rectangle_scene",
+        "ssml": "<speak>A rectangle has four sides and four corners.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "66666666-7777-8888-9999-000000000000",
+        "stage_id": "screen_square",
+        "component_id": "img_square_scene",
+        "ssml": "<speak>A square also has four sides and four corners, and you can see it in picture frames.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "77777777-8888-9999-0000-111111111111",
+        "stage_id": "screen_space",
+        "component_id": "img_empty_box",
+        "ssml": "<speak>Space is the area around us where we can place shapes, like an empty box. <break time=\"300ms/> In our long‑and‑round game, we decide if an object is long (like a pencil) or round (like a ball).</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "88888888-9999-0000-1111-222222222222",
+        "stage_id": "screen_long_round",
+        "component_id": "img_long_round",
+        "ssml": "<speak>In the long‑and‑round game, we decide if an object is long (like a pencil) or round (like a ball).</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "99999999-0000-1111-2222-333333333333",
+        "stage_id": "screen_reflection",
+        "component_id": "img_object_to_judge",
+        "ssml": "<speak>Can you find a circle in the classroom? <break time=\"300ms/> What makes a triangle different from a rectangle? <break time=\"300ms/> How would you decide if a book is long or round?</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "stage_id": "screen_summary",
+        "component_id": "img_all_shapes",
+        "ssml": "<speak>Circles are round with no corners. <break time=\"300ms/> Triangles have three sides. <break time=\"300ms/> Rectangles have four sides. <break time=\"300ms/> Space is the empty area where shapes go.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "bbbbbbbb-cccc-dddd-eeee-ffff00000000",
+        "stage_id": "screen_quiz",
+        "component_id": "img_question1_options",
+        "ssml": "<speak>Now let's check your understanding with a quick quiz.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      }
+    ],
+    "playback_profile": {
+      "voice": "en-US-Standard-A",
+      "base_speed": 1,
+      "pause_duration_ms": 300
+    },
+    "accessibility_metadata": {},
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {
+        "narration_segments_count": 11,
+        "ssml_valid": true,
+        "timing_monotonic": true
+      }
+    }
+  }
+}

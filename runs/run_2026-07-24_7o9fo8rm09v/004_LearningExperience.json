@@ -1,0 +1,405 @@
+{
+  "package": {
+    "package_id": "123e4567-e89b-12d3-a456-426614174000",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T15:05:00.000Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+      "parent_package_id": "a1b2c3d4-5f6a-7b8c-9d0e-1f2a3b4c5d6e"
+    }
+  },
+  "payload": {
+    "lesson_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba",
+    "lesson_metadata": {
+      "curriculum": "NCERT",
+      "grade": 2,
+      "subject": "Mathematics",
+      "chapter": "Subtraction with Borrowing",
+      "lesson": "Subtraction with Borrowing",
+      "lesson_type": "Mathematics",
+      "lesson_type_evidence": "We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees.",
+      "lesson_type_confidence": 0.96,
+      "review_flags": [],
+      "concept_map": [
+        {
+          "concept_id": "c1",
+          "concept": "Place Value (Tens and Ones)",
+          "depends_on": [],
+          "difficulty": "Easy"
+        },
+        {
+          "concept_id": "c2",
+          "concept": "Subtraction without Borrowing",
+          "depends_on": [
+            "c1"
+          ],
+          "difficulty": "Easy"
+        },
+        {
+          "concept_id": "c3",
+          "concept": "Subtraction with Borrowing (Regrouping)",
+          "depends_on": [
+            "c2"
+          ],
+          "difficulty": "Medium"
+        },
+        {
+          "concept_id": "c4",
+          "concept": "Mental Math Strategies (Doubles, Near Doubles)",
+          "depends_on": [
+            "c1"
+          ],
+          "difficulty": "Medium"
+        },
+        {
+          "concept_id": "c5",
+          "concept": "Subtracting Zero and Same Number",
+          "depends_on": [
+            "c2"
+          ],
+          "difficulty": "Easy"
+        },
+        {
+          "concept_id": "c6",
+          "concept": "Making Coin Combinations for a Given Amount",
+          "depends_on": [
+            "c1",
+            "c3"
+          ],
+          "difficulty": "Medium"
+        }
+      ],
+      "learning_objectives": [
+        "Students will be able to subtract two-digit numbers using borrowing/regrouping.",
+        "Students will apply mental math strategies (doubles, near doubles) for quick addition and subtraction.",
+        "Students will understand the concept of subtracting zero and subtracting a number from itself.",
+        "Students will be able to make different combinations of coins to make a given amount."
+      ],
+      "learning_outcomes": [
+        "Students can solve subtraction problems involving borrowing with accuracy.",
+        "Students use doubles and near doubles to compute sums and differences mentally.",
+        "Students explain why subtracting zero leaves a number unchanged and why subtracting a number from itself yields zero.",
+        "Students represent a given amount using various coin combinations and verify the total."
+      ],
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "Understanding of place value (tens and ones)",
+        "Ability to subtract single-digit numbers",
+        "Familiarity with numbers up to 100"
+      ],
+      "misconceptions": [
+        "Students may forget to borrow from the tens place when needed.",
+        "Students may borrow from the wrong place value.",
+        "Students may subtract the smaller digit from the larger digit in each column without considering the need to borrow.",
+        "Students may think borrowing changes the value of the number incorrectly."
+      ],
+      "suggested_instructional_sequence": [
+        "Review place value and simple subtraction without borrowing.",
+        "Introduce borrowing concept using concrete manipulatives (e.g., base-ten blocks).",
+        "Demonstrate borrowing with two-digit numbers through guided examples.",
+        "Provide practice problems for subtraction with borrowing.",
+        "Introduce mental math strategies: doubles and near doubles.",
+        "Conduct mental math practice activities.",
+        "Explore subtracting zero and subtracting a number from itself with real-life examples.",
+        "Apply learning to money problems: making different coin combinations for a given amount.",
+        "Review and assess understanding through varied exercises."
+      ],
+      "vocabulary_difficulty": "Medium",
+      "available_images": [],
+      "source_chunk_references": [
+        "Subtraction with Borrowing",
+        "Mental Math",
+        "bejm106",
+        "bejm110"
+      ]
+    },
+    "experience_score": {
+      "overall": 96,
+      "engagement": 95,
+      "curiosity": 97,
+      "visual_learning": 96,
+      "audio_experience": 94,
+      "interaction": 97,
+      "reflection": 95,
+      "accessibility": 96,
+      "cognitive_load": 95,
+      "learning_flow": 96
+    },
+    "lesson_flow": [
+      {
+        "screen_id": "welcome",
+        "description": "Welcome screen with a friendly animated character (e.g., a piggy bank) that introduces the topic of subtraction with borrowing through a short story scenario.",
+        "purpose": "Engage the student, set the learning goal, and motivate learning.",
+        "estimated_duration_seconds": 60,
+        "ui_components_used": [
+          "illustration",
+          "text",
+          "audio_narration"
+        ]
+      },
+      {
+        "screen_id": "learning_goal",
+        "description": "Screen displaying the learning goal in child-friendly language: 'Today we will learn how to subtract big numbers by borrowing from our neighbour!'",
+        "purpose": "Clearly state what the student will learn.",
+        "estimated_duration_seconds": 20,
+        "ui_components_used": [
+          "text",
+          "illustration"
+        ]
+      },
+      {
+        "screen_id": "visual_introduction",
+        "description": "Visual introduction using base-ten blocks to show tens and ones. Example: Show 72 as 7 tens and 2 ones, and 47 as 4 tens and 7 ones.",
+        "purpose": "Review place value concept visually before introducing borrowing.",
+        "estimated_duration_seconds": 40,
+        "ui_components_used": [
+          "illustration",
+          "text",
+          "audio_narration"
+        ]
+      },
+      {
+        "screen_id": "concrete_example",
+        "description": "Concrete example story: 'You have 72 rupees in your piggy bank. You buy a toy for 47 rupees. How much money is left?' Use animated coins to represent the amounts.",
+        "purpose": "Present a real-life problem that requires borrowing.",
+        "estimated_duration_seconds": 50,
+        "ui_components_used": [
+          "illustration",
+          "text",
+          "audio_narration"
+        ]
+      },
+      {
+        "screen_id": "guided_example",
+        "description": "Step-by-step guided solution of 72 - 47 using borrowing. Show: 1) Can't subtract 7 ones from 2 ones, so borrow 1 ten (making 12 ones). 2) Subtract: 12-7=5 ones. 3) Subtract tens: 6-4=2 tens. Result: 25.",
+        "purpose": "Demonstrate the borrowing procedure with visual support and narration.",
+        "estimated_duration_seconds": 70,
+        "ui_components_used": [
+          "illustration",
+          "text",
+          "audio_narration",
+          "hint_button"
+        ]
+      },
+      {
+        "screen_id": "guided_practice",
+        "description": "Two guided practice problems with scaffolding. First problem: 53 - 28 (with hints at each step). Second problem: 84 - 57 (with less hints). Immediate feedback after each step.",
+        "purpose": "Let the student practice borrowing with support and feedback.",
+        "estimated_duration_seconds": 80,
+        "ui_components_used": [
+          "illustration",
+          "text",
+          "input_field",
+          "feedback_message",
+          "hint_button"
+        ]
+      },
+      {
+        "screen_id": "independent_practice",
+        "description": "Three independent practice problems for the student to solve on their own. Problems: 65 - 39, 92 - 48, 78 - 59. Access to hints and a 'check answer' button.",
+        "purpose": "Apply the borrowing procedure independently.",
+        "estimated_duration_seconds": 90,
+        "ui_components_used": [
+          "illustration",
+          "text",
+          "input_field",
+          "feedback_message",
+          "hint_button"
+        ]
+      },
+      {
+        "screen_id": "hint_screen",
+        "description": "A screen that reminds the student of the borrowing steps: 'Remember: If the bottom number is bigger in a column, borrow 1 from the column to the left!'",
+        "purpose": "Provide a quick reference for the borrowing procedure.",
+        "estimated_duration_seconds": 30,
+        "ui_components_used": [
+          "text",
+          "illustration"
+        ]
+      },
+      {
+        "screen_id": "common_mistakes",
+        "description": "Show two common mistakes: 1) Forgetting to borrow and subtracting 7-2 in the ones place. 2) Borrowing from the wrong column. Explain why each is wrong with visuals.",
+        "purpose": "Address and correct misconceptions.",
+        "estimated_duration_seconds": 50,
+        "ui_components_used": [
+          "illustration",
+          "text",
+          "audio_narration"
+        ]
+      },
+      {
+        "screen_id": "challenge",
+        "description": "Challenge problem: 'You want to buy a book that costs 65 rupees. You have 92 rupees. How much money will you have left after buying the book? If you save 10 rupees each day, how many days will it take to save 50 rupees?' (Part 1 requires borrowing, Part 2 uses mental math/doubles).",
+        "purpose": "Apply borrowing in a multi-step problem and connect to mental math.",
+        "estimated_duration_seconds": 60,
+        "ui_components_used": [
+          "illustration",
+          "text",
+          "input_field",
+          "feedback_message"
+        ]
+      },
+      {
+        "screen_id": "summary",
+        "description": "Summary screen: Recap the borrowing steps with a memorable rhyme or visual flowchart. 'When the top is small, borrow from the tall!'",
+        "purpose": "Reinforce the learning and aid retention.",
+        "estimated_duration_seconds": 40,
+        "ui_components_used": [
+          "illustration",
+          "text",
+          "audio_narration"
+        ]
+      },
+      {
+        "screen_id": "quiz",
+        "description": "Quiz with 3 multiple-choice questions: 1) What is 53 - 29? (Options: 24, 26, 34) 2) What is 84 - 57? (Options: 27, 37, 47) 3) If you have 100 rupees and spend 68, how much is left? (Options: 32, 42, 52). Immediate feedback and celebration for correct answers.",
+        "purpose": "Assess understanding of subtraction with borrowing.",
+        "estimated_duration_seconds": 60,
+        "ui_components_used": [
+          "text",
+          "input_field",
+          "feedback_message",
+          "illustration"
+        ]
+      }
+    ],
+    "ui_components": [
+      "illustration",
+      "text",
+      "audio_narration",
+      "input_field",
+      "feedback_message",
+      "hint_button"
+    ],
+    "interaction_plan": [
+      {
+        "interaction_id": "int1",
+        "description": "In guided practice, student inputs digits for each step of subtraction.",
+        "type": "step_by_step_input",
+        "feedback": "Immediate correctness feedback with explanation if wrong.",
+        "related_screen": "guided_practice"
+      },
+      {
+        "interaction_id": "int2",
+        "description": "In independent practice, student solves full problems and checks answer.",
+        "type": "free_input_with_check",
+        "feedback": "Correct/incorrect feedback with option to try again or see solution.",
+        "related_screen": "independent_practice"
+      },
+      {
+        "interaction_id": "int3",
+        "description": "In quiz, student selects answer from multiple choices.",
+        "type": "multiple_choice",
+        "feedback": "Immediate feedback with explanation and celebratory animation for correct answers.",
+        "related_screen": "quiz"
+      }
+    ],
+    "illustration_plan": [
+      {
+        "illustration_id": "ill1",
+        "description": "Animated piggy bank with coins showing 72 rupees (7 tens and 2 ones).",
+        "purpose": "Visual introduction to place value.",
+        "screen_used_in": [
+          "visual_introduction"
+        ]
+      },
+      {
+        "illustration_id": "ill2",
+        "description": "Step-by-step visual of borrowing: showing 72 as 6 tens and 12 ones, then subtracting 47.",
+        "purpose": "Illustrate the borrowing process.",
+        "screen_used_in": [
+          "guided_example",
+          "guided_practice",
+          "independent_practice"
+        ]
+      },
+      {
+        "illustration_id": "ill3",
+        "description": "Visual showing common mistake: subtracting 7-2 without borrowing.",
+        "purpose": "Highlight why borrowing is necessary.",
+        "screen_used_in": [
+          "common_mistakes"
+        ]
+      },
+      {
+        "illustration_id": "ill4",
+        "description": "Animated coins for the challenge problem showing 92 rupees and subtracting 65.",
+        "purpose": "Apply borrowing in a money context.",
+        "screen_used_in": [
+          "challenge"
+        ]
+      }
+    ],
+    "audio_plan": [
+      {
+        "audio_id": "aud1",
+        "description": "Narrator introducing the lesson and learning goal.",
+        "text": "Welcome! Today we're going to learn how to subtract big numbers by borrowing from our neighbour. Let's help the piggy bank!",
+        "screen_used_in": [
+          "welcome",
+          "learning_goal"
+        ]
+      },
+      {
+        "audio_id": "aud2",
+        "description": "Narrator explaining the place value visual.",
+        "text": "Look! 72 rupees is 7 tens and 2 ones. 47 rupees is 4 tens and 7 ones.",
+        "screen_used_in": [
+          "visual_introduction"
+        ]
+      },
+      {
+        "audio_id": "aud3",
+        "description": "Narrator guiding through the borrowing steps.",
+        "text": "First, we look at the ones place. Can we subtract 7 from 2? No, it's too big! So we borrow 1 ten from the tens place. Now we have 6 tens and 12 ones.",
+        "screen_used_in": [
+          "guided_example"
+        ]
+      },
+      {
+        "audio_id": "aud4",
+        "description": "Narrator explaining common mistakes.",
+        "text": "If we forget to borrow and subtract 7-2, we get 5, but that's not right because we didn't borrow when we needed to!",
+        "screen_used_in": [
+          "common_mistakes"
+        ]
+      },
+      {
+        "audio_id": "aud5",
+        "description": "Narrator summarizing the steps.",
+        "text": "Remember: When the top number is smaller, borrow from the neighbour on the left!",
+        "screen_used_in": [
+          "summary"
+        ]
+      },
+      {
+        "audio_id": "aud6",
+        "description": "Narrator reading the quiz questions and providing feedback.",
+        "text": "What is 53 minus 29? Is it 24, 26, or 34?",
+        "screen_used_in": [
+          "quiz"
+        ]
+      }
+    ],
+    "validation_requirements": [
+      {
+        "validation_id": "val1",
+        "type": "numerical_answer",
+        "description": "Validate the student's answer for subtraction problems requiring borrowing (e.g., 53-29=24).",
+        "note": "Specific problem numbers and answers are defined in the content but not generated here."
+      },
+      {
+        "validation_id": "val2",
+        "type": "multiple_choice",
+        "description": "Validate that the quiz questions have one correct answer and distractors are plausible.",
+        "note": "Correct answers and distractors are defined in the content."
+      }
+    ]
+  }
+}

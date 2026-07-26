@@ -1,0 +1,156 @@
+[
+ {
+  "grade": 11,
+  "subject": "Accountancy",
+  "topicId": "0f832a06-6555-4cb4-9bcc-808e03c7b69f",
+  "name": "Accounting Equation",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g11_Accountancy_0f832a06-6555-4cb4-9bcc-808e03c7b69f.json"
+ },
+ {
+  "grade": 11,
+  "subject": "Biology",
+  "topicId": "8e5ecda7-9f15-440f-8bdd-9b7b9aa619bf",
+  "name": "Ammonotelism",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g11_Biology_8e5ecda7-9f15-440f-8bdd-9b7b9aa619bf.json"
+ },
+ {
+  "grade": 11,
+  "subject": "Business Studies",
+  "topicId": "0691e4f8-7269-4e28-b43e-2651ca5535da",
+  "name": "Advantages of Consumer Cooperative Stores",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g11_BusinessStudies_0691e4f8-7269-4e28-b43e-2651ca5535da.json"
+ },
+ {
+  "grade": 11,
+  "subject": "Chemistry",
+  "topicId": "e9eb305b-1ab7-4f75-a05f-dd41dffc7e67",
+  "name": "Atomic Spectra and Bohr's Model",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g11_Chemistry_e9eb305b-1ab7-4f75-a05f-dd41dffc7e67.json"
+ },
+ {
+  "grade": 11,
+  "subject": "Computer Science",
+  "topicId": "c526daaa-7818-44df-87e2-e98aee6cb5b7",
+  "name": "Argument vs Parameter",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g11_ComputerScience_c526daaa-7818-44df-87e2-e98aee6cb5b7.json"
+ },
+ {
+  "grade": 11,
+  "subject": "Economics",
+  "topicId": "ac100be2-2ff5-492d-a852-b022a8b7da6c",
+  "name": "Agricultural Productivity and Employment",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g11_Economics_ac100be2-2ff5-492d-a852-b022a8b7da6c.json"
+ },
+ {
+  "grade": 11,
+  "subject": "English",
+  "topicId": "640292c1-5861-4f48-810d-13c6f0e2c533",
+  "name": "Mrs Pearson's Influence on Doris",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g11_English_640292c1-5861-4f48-810d-13c6f0e2c533.json"
+ },
+ {
+  "grade": 11,
+  "subject": "History",
+  "topicId": "cc762770-4983-4bee-8bc2-ce83f6520b7d",
+  "name": "Artistic Innovation",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g11_History_cc762770-4983-4bee-8bc2-ce83f6520b7d.json"
+ },
+ {
+  "grade": 11,
+  "subject": "Mathematics",
+  "topicId": "c6484437-6ca8-445a-8056-407b905847a5",
+  "name": "Area of a Triangle",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g11_Mathematics_c6484437-6ca8-445a-8056-407b905847a5.json"
+ },
+ {
+  "grade": 11,
+  "subject": "Physics",
+  "topicId": "197f79b3-6c2a-4bd9-b776-2986335c63b0",
+  "name": "Angular Displacement, Velocity, and Acceleration",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g11_Physics_197f79b3-6c2a-4bd9-b776-2986335c63b0.json"
+ },
+ {
+  "grade": 11,
+  "subject": "Political Science",
+  "topicId": "2ed9e2a3-504e-459e-bf74-c00343e4c184",
+  "name": "Citizenship and Equality",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g11_PoliticalScience_2ed9e2a3-504e-459e-bf74-c00343e4c184.json"
+ },
+ {
+  "grade": 12,
+  "subject": "Accountancy",
+  "topicId": "4f05dc6c-e2e8-4229-a3b4-87152e4d4f46",
+  "name": "Admission of a Partner with Goodwill",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g12_Accountancy_4f05dc6c-e2e8-4229-a3b4-87152e4d4f46.json"
+ },
+ {
+  "grade": 12,
+  "subject": "Biology",
+  "topicId": "e242a2d8-e73c-40b4-879d-58888d3fac5a",
+  "name": "Biology and Human Welfare",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g12_Biology_e242a2d8-e73c-40b4-879d-58888d3fac5a.json"
+ },
+ {
+  "grade": 12,
+  "subject": "Business Studies",
+  "topicId": "48e5ff5f-5800-4461-ad61-0bdbdebf3fb9",
+  "name": "Cash Flow and Financing Decisions",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g12_BusinessStudies_48e5ff5f-5800-4461-ad61-0bdbdebf3fb9.json"
+ },
+ {
+  "grade": 12,
+  "subject": "Chemistry",
+  "topicId": "2fc73a2f-2198-482e-89aa-548911664c99",
+  "name": "Bonding in Coordination Compounds",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g12_Chemistry_2fc73a2f-2198-482e-89aa-548911664c99.json"
+ },
+ {
+  "grade": 12,
+  "subject": "Computer Science",
+  "topicId": "bcd7fb8e-8af8-40cc-ae8e-7ca124bb248a",
+  "name": "Adding a New Column to a Table",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g12_ComputerScience_bcd7fb8e-8af8-40cc-ae8e-7ca124bb248a.json"
+ },
+ {
+  "grade": 12,
+  "subject": "Economics",
+  "topicId": "e69cbce8-0fd1-472a-ae39-340cab9ce14e",
+  "name": "Aggregate Demand",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g12_Economics_e69cbce8-0fd1-472a-ae39-340cab9ce14e.json"
+ },
+ {
+  "grade": 12,
+  "subject": "English",
+  "topicId": "6af059dc-5478-4a47-bbf1-714e9a17a78b",
+  "name": "Bangle Industry in Firozabad",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g12_English_6af059dc-5478-4a47-bbf1-714e9a17a78b.json"
+ },
+ {
+  "grade": 12,
+  "subject": "History",
+  "topicId": "37acea9b-f3ab-4c29-8448-3f373685535a",
+  "name": "Access to Resources",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g12_History_37acea9b-f3ab-4c29-8448-3f373685535a.json"
+ },
+ {
+  "grade": 12,
+  "subject": "Mathematics",
+  "topicId": "d56021af-5cb2-4dca-87aa-a6c6851490c6",
+  "name": "Absolute Maxima/Minima Procedure",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g12_Mathematics_d56021af-5cb2-4dca-87aa-a6c6851490c6.json"
+ },
+ {
+  "grade": 12,
+  "subject": "Physics",
+  "topicId": "25f1b444-cfc8-4851-bbbb-dd45be360679",
+  "name": "Adding AC Voltages",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g12_Physics_25f1b444-cfc8-4851-bbbb-dd45be360679.json"
+ },
+ {
+  "grade": 12,
+  "subject": "Political Science",
+  "topicId": "6613ce9b-c346-4a08-868d-9e800de57f01",
+  "name": "Bangladesh's Independence",
+  "bundle": "C:\\Users\\Asus\\Downloads\\Aivorah\\Aivorah\\qa_bundles\\g12_PoliticalScience_6613ce9b-c346-4a08-868d-9e800de57f01.json"
+ }
+]

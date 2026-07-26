@@ -1,0 +1,30 @@
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+const { createClient } = require('@supabase/supabase-js');
+const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+(async () => {
+  const grade = process.argv[2] || 'Grade 2';
+  const subject = process.argv[3] || 'English';
+  const unitIdx = parseInt(process.argv[4] || '1', 10) - 1;
+  const topicIdx = parseInt(process.argv[5] || '1', 10) - 1;
+  const { data: ch } = await sb.from('syllabus_chapters').select('id,unit_no,title').match({ grade, subject, curriculum: 'CBSE' }).order('unit_no');
+  const u = ch[unitIdx];
+  const { data: tp } = await sb.from('syllabus_topics').select('id,name,topic_order,kind').eq('chapter_id', u.id).order('topic_order');
+  const t = tp[topicIdx];
+  console.log(`UNIT ${unitIdx + 1}: ${u.title}  |  TOPIC ${topicIdx + 1}: ${t.name} (${t.kind})\n`);
+  const { data: rr } = await sb.from('topic_resources').select('resource_type,status,static_payload').eq('topic_id', t.id);
+  console.log('RESOURCE STATUS:');
+  for (const r of rr) console.log('  •', r.resource_type, '=', r.status);
+  const ex = (rr || []).find((r) => r.resource_type === 'AI_EXPLANATION');
+  const p = ex && ex.static_payload;
+  if (!p) { console.log('\n(no generated content yet)'); return; }
+  const show = (label, v) => console.log(`\n===== ${label} =====\n` + (typeof v === 'string' ? v : JSON.stringify(v, null, 1)));
+  show('INTRO', p.intro || '—');
+  show("WHAT YOU'LL LEARN", p.whatYoullLearn || p.learningObjectives || '—');
+  show('KEY LEARNINGS', p.keyLearnings || p.keyTakeaways || '—');
+  show('SIMPLIFIED BODY', p.body || p.simplifiedExplanation || '—');
+  show('VOCAB', p.vocab || p.vocabulary || '—');
+  if (Array.isArray(p.listenParts)) show('LISTEN', p.listenParts.map((x, i) => `Part ${i + 1}: ${x.text}`).join('\n\n'));
+  show('QUIZ', p.quiz || '—');
+  show('THINK & REFLECT', p.thinkAndReflect || '—');
+  show('META', { instructionalType: p.instructionalType, bloomLevel: p.bloomLevel, difficultyScore: p.difficultyScore, layout: p.layout && p.layout.layout_type, auditScore: p.auditScore, auditVerdict: p.auditVerdict });
+})().catch((e) => console.log('ERR', e.message));

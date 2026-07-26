@@ -1,0 +1,44 @@
+{
+  "package": {
+    "package_id": "e3c4a5b6-c7d8-e9f0-1234-5678fedcba9",
+    "package_type": "AudioPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T13:20:00.000Z",
+    "produced_by": {
+      "agent": "audio-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "audio-agent-123",
+      "parent_package_id": "e3c4a5b6-c7d8-e9f0-1234-5678fedcba9"
+    }
+  },
+  "payload": {
+    "lesson_id": "missing-stage-lesson",
+    "audio_strategy": "Concept",
+    "narration_segments": [],
+    "playback_profile": {
+      "voice": "English-US",
+      "base_speed": 1,
+      "pause_duration_ms": 500
+    },
+    "accessibility_metadata": {
+      "text_to_speech": {
+        "language": "en-US",
+        "voice": "English-US"
+      }
+    },
+    "validation_summary": {
+      "status": "FAIL",
+      "checks": {
+        "AUD001": "Missing narration for a stage",
+        "AUD002": "Highlight map mismatch (word not in text)",
+        "AUD003": "Invalid SSML",
+        "AUD004": "Broken timing (overlaps or negative durations)",
+        "AUD005": "Unsupported voice profile",
+        "AUD006": "Missing pronunciation metadata",
+        "AUD007": "Schema violation"
+      }
+    }
+  }
+}

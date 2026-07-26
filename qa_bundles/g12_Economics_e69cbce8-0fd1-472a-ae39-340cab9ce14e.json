@@ -1,0 +1,127 @@
+{
+ "topicId": "e69cbce8-0fd1-472a-ae39-340cab9ce14e",
+ "grade": "Grade 12",
+ "subject": "Economics",
+ "curriculum": "CBSE",
+ "topicName": "Aggregate Demand",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "Aggregate Demand (AD) is the sum of planned consumption and planned investment, plus government expenditure minus taxes.",
+   "In the short run, with a constant price and interest rate, aggregate output is determined solely by aggregate demand.",
+   "Understanding Aggregate Demand helps in analyzing the overall performance of an economy."
+  ],
+  "grade": 12,
+  "intro": "Aggregate Demand is the total demand for goods and services in an economy.",
+  "vocab": [
+   {
+    "word": "Aggregate Demand",
+    "definition": "The total demand for goods and services in an economy."
+   },
+   {
+    "word": "Consumption",
+    "definition": "The act of using goods and services to satisfy wants."
+   },
+   {
+    "word": "Investment",
+    "definition": "The act of spending money to earn more money in the future."
+   }
+  ],
+  "subject": "Economics",
+  "activity": "What are the factors that determine Aggregate Demand?",
+  "keyLearnings": [
+   "Aggregate Demand is calculated by adding consumption and investment.",
+   "It's determined by consumption, investment, government spending, and net exports."
+  ],
+  "keyTakeaways": [
+   "Aggregate Demand is the total demand for goods and services in an economy.",
+   "It's determined by consumption, investment, government spending, and net exports."
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "Aggregate Demand is related to the demand side of the economy.",
+    "type": "mcq",
+    "correct": 1,
+    "options": [
+     "The total supply of goods and services",
+     "The total demand for goods and services",
+     "The total investment in an economy",
+     "The total government expenditure"
+    ],
+    "question": "What is Aggregate Demand?",
+    "explanation": "Aggregate Demand is the total demand for goods and services in an economy."
+   },
+   {
+    "hint": "Aggregate Demand is determined by multiple factors.",
+    "type": "mcq",
+    "correct": 2,
+    "options": [
+     "Consumption and investment",
+     "Government spending and net exports",
+     "Consumption, investment, government spending, and net exports",
+     "Taxes and interest rates"
+    ],
+    "question": "What determines Aggregate Demand?",
+    "explanation": "Aggregate Demand is determined by consumption, investment, government spending, and net exports."
+   },
+   {
+    "hint": "The correct answer is a factor that affects government revenue.",
+    "type": "fill_blank",
+    "correct": "taxes",
+    "question": "Aggregate Demand is the sum of planned consumption and planned investment, plus government expenditure minus ___",
+    "explanation": "Aggregate Demand is the sum of planned consumption and planned investment, plus government expenditure minus taxes."
+   }
+  ],
+  "originalLesson": [
+   "Aggregate Demand (AD) is the total demand for goods and services in an economy, calculated by adding consumption and investment.",
+   "The total demand for goods and services in an economy at a given time. It's determined by consumption, investment, government spending, and net exports."
+  ],
+  "whatYoullLearn": [
+   "Aggregate Demand is calculated by adding consumption and investment.",
+   "It's determined by consumption, investment, government spending, and net exports."
+  ],
+  "thinkAndReflect": [
+   "What are the factors that determine Aggregate Demand?",
+   "How does Aggregate Demand affect the overall economy?"
+  ],
+  "instructionalType": "Conceptual Understanding"
+ },
+ "practiceQuiz": [
+  {
+   "hint": "Aggregate Demand is related to the demand side of the economy.",
+   "type": "mcq",
+   "correct": 1,
+   "options": [
+    "The total supply of goods and services",
+    "The total demand for goods and services",
+    "The total investment in an economy",
+    "The total government expenditure"
+   ],
+   "question": "What is Aggregate Demand?",
+   "explanation": "Aggregate Demand is the total demand for goods and services in an economy."
+  },
+  {
+   "hint": "Aggregate Demand is determined by multiple factors.",
+   "type": "mcq",
+   "correct": 2,
+   "options": [
+    "Consumption and investment",
+    "Government spending and net exports",
+    "Consumption, investment, government spending, and net exports",
+    "Taxes and interest rates"
+   ],
+   "question": "What determines Aggregate Demand?",
+   "explanation": "Aggregate Demand is determined by consumption, investment, government spending, and net exports."
+  },
+  {
+   "hint": "The correct answer is a factor that affects government revenue.",
+   "type": "fill_blank",
+   "correct": "taxes",
+   "question": "Aggregate Demand is the sum of planned consumption and planned investment, plus government expenditure minus ___",
+   "explanation": "Aggregate Demand is the sum of planned consumption and planned investment, plus government expenditure minus taxes."
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "Great question! Let’s imagine you’re planning a big **toy party** for all your friends.\n\n**Aggregate Demand (AD)** is like the **total shopping list** for the whole party. It’s the **sum** (that means adding up) of **four big things**:\n- **Consumption**: How much your friends will spend on toys, snacks, and games.\n- **Investment**: How much you’ll spend to buy extra toys or decorations for the party.\n- **Government spending**: If the government helps pay for something (like a park cleanup for the party).\n- **Net exports**: If you sell some of your old toys to friends from other countries (exports) minus what you buy from them (imports).\n\nIn simple terms, **AD = Consumption + Investment + Government Spending + (Exports – Imports)**.\n\n---\n\n### Why does AD matter?\nThink of AD like the **weather forecast** for the economy. If AD is high (everyone’s excited to spend!), the economy feels warm and sunny — businesses make more, jobs grow. If AD is low (everyone’s saving their pocket money), the economy feels cold and rainy — businesses slow down.\n\n---\n\n### Worked Example: The Toy Party Economy 🧸🎉\n\nLet’s say your town has 10 kids, and here’s what they plan to spend:\n\n1. **Consumption (C)**: Each kid plans to spend $10 on toys and snacks.\n   → 10 kids × $10 = **$100**\n\n2. **Investment (I)**: You (the host) plan to buy $50 worth of extra toys and balloons.\n   → **$50**\n\n3. **Government spending (G)**: The town gives $30 to clean up the park for the party.\n   → **$30**\n\n4. **Net exports (X – M)**: You sell 5 old toys to kids in another town for $2 each ($10 total), but you buy 3 new toys from them for $4 each ($12 total).\n   → Net exports = $10 – $12 = **–$2**\n\nNow, add them all up:\n**AD = C + I + G + (X – M)**\n**AD = $100 + $50 + $30 + (–$2) = $178**\n\nSo, the **total planned spending** for the toy party economy is **$178**.\n\n---\n\nDid you know? Just like your party budget, **AD can change** if kids decide to save more, or if the government spends less on parks. That’s why economists watch AD closely — it tells them if the economy is getting stronger or weaker!\n\n---\n\nYou’re doing amazing! 🌟\nNow, tell me: If each kid suddenly decides to spend $5 more, what happens to the AD? (Hint: Look at the Consumption part!)"
+}

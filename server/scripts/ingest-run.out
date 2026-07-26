@@ -1,0 +1,14 @@
+[2026-07-21T18:01:54.757Z] === ICSE + Cambridge bulk ingestion START ===
+[2026-07-21T18:01:54.763Z] ICSE / Class I: 6 subjects -> English, Hindi, Environmental Science, Mathematics, Social Studies, Computer Science
+Loading embedding model (first time only)...
+Embedding model ready.
+[2026-07-21T18:08:12.743Z]    + English: 28 topics, 15 embedded
+[2026-07-21T18:14:34.488Z]    + Hindi: 26 topics, 16 embedded
+[2026-07-21T18:22:47.386Z]    + Environmental Science: 24 topics, 20 embedded
+[2026-07-21T18:26:11.134Z]    + Mathematics: 21 topics, 14 embedded
+[2026-07-21T18:30:35.945Z]    + Social Studies: 27 topics, 23 embedded
+[2026-07-21T18:37:06.824Z]    + Computer Science: 46 topics, 41 embedded
+[2026-07-21T18:37:06.967Z] ICSE / Class II: 7 subjects -> English, Hindi, Mathematics, Science, Social Studies, Environmental Science, Computer Science
+[2026-07-21T18:42:27.450Z]    + English: 34 topics, 24 embedded
+[2026-07-21T18:43:29.846Z]    + Hindi: 21 topics, 2 embedded
+[2026-07-21T18:43:29.913Z] !!! Groq daily quota reached at ICSE/Class II/Mathematics. Progress saved — re-run to resume. (429 {"error":{"message":"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01kq0668tze4qb713ze5yrkdxs` service tier `on_demand` on tokens per day (TPD): Limit 500000, Used 499780, Requested 2429. Please try again in 6m21.7152s. Need more tokens? Upgrade to Dev Tier today at ht)

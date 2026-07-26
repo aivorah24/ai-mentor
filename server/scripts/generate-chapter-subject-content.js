@@ -37,51 +37,73 @@ const MAX_FIGURES = parseInt(argVal('--maxfigures', '6'), 10);
 const MIN_FIGURE_AREA = 20000; // ~140x140px — smaller entries are icons/decorations, not real figures
 
 const IMAGE_MANIFEST = path.join(__dirname, '../data/ncert_image_jsonl/ncert_images_index.json');
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const NVIDIA_API_KEY = process.env.NVIDIA_NIM_API_KEY;
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const NVIDIA_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
-// Ordered fallback chain. Free OpenRouter models come first — Nemotron 120B is
-// fast (~1.3s) and high quality, and its quota is separate from Groq's (whose
-// good 70b model hits a daily cap). Groq stays as the final backup. Each
-// endpoint is tried in order; on quota/unavailability we drop to the next.
+// Multiple free accounts per provider defeat the per-Gmail daily quota: paste
+// each account's key as PREFIX_1, PREFIX_2, ... in .env (the plain unnumbered
+// PREFIX is also accepted for backwards compatibility). We collect them all,
+// dedupe, and rotate through them when one key hits its daily cap.
+function collectKeys(prefix) {
+  const keys = [];
+  if (process.env[prefix]) keys.push(process.env[prefix]);
+  for (let i = 1; i <= 30; i++) {
+    const v = process.env[`${prefix}_${i}`];
+    if (v) keys.push(v);
+  }
+  return [...new Set(keys.map((k) => k.trim()).filter(Boolean))];
+}
+
+const GROQ_KEYS = collectKeys('GROQ_API_KEY');
+const OPENROUTER_KEYS = collectKeys('OPENROUTER_API_KEY');
+const NVIDIA_KEYS = collectKeys('NVIDIA_NIM_API_KEY');
+
+// Models per provider, strongest → weakest.
+const GROQ_MODELS = [
+  'llama-3.3-70b-versatile',
+  'deepseek-r1-distill-llama-70b',
+  'qwen-2.5-32b',
+  'gemma2-9b-it',
+  'llama-3.1-8b-instant',
+];
+const OPENROUTER_MODELS = [
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'openai/gpt-oss-20b:free',
+  'nvidia/nemotron-3-nano-30b-a3b:free',
+  'google/gemma-4-31b-it:free',
+  // qwen3-30b-a3b, deepseek-r1, and llama-3.3-70b-instruct free tiers were
+  // retired by OpenRouter (now 404) — replaced with the current free catalog.
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+  'google/gemma-4-26b-a4b-it:free',
+  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+  'nvidia/nemotron-nano-9b-v2:free',
+];
+// Verified live against https://integrate.api.nvidia.com/v1/models. The 49B
+// Nemotron-Super responds fast and reliably; the 70B and 9B are backups.
+const NVIDIA_MODELS = [
+  'nvidia/llama-3.3-nemotron-super-49b-v1',
+  'meta/llama-3.3-70b-instruct',
+  'nvidia/nvidia-nemotron-nano-9b-v2',
+];
+
+// Build the fallback chain "rotate key, keep best model": for each model we
+// try EVERY account key before dropping to a weaker model, so the strongest
+// model is exhausted across all Gmail accounts first. Provider order keeps
+// OpenRouter first (historically failed least), then Groq, then NVIDIA — both
+// now driven by multiple free accounts per the founder's directive.
+function buildEndpoints(provider, models, keys) {
+  const eps = [];
+  for (const model of models) {
+    keys.forEach((key, i) => eps.push({ provider, model, key, keyIndex: i + 1 }));
+  }
+  return eps;
+}
+
 const LLM_ENDPOINTS = [
-
-  ...(OPENROUTER_API_KEY ? [
-
-    { provider: 'openrouter', model: 'nvidia/nemotron-3-super-120b-a12b:free' },
-
-    { provider: 'openrouter', model: 'openai/gpt-oss-20b:free' },
-
-    { provider: 'openrouter', model: 'nvidia/nemotron-3-nano-30b-a3b:free' },
-
-    { provider: 'openrouter', model: 'google/gemma-4-31b-it:free' },
-
-    { provider: 'openrouter', model: 'qwen/qwen3-30b-a3b:free' },
-
-    { provider: 'openrouter', model: 'deepseek/deepseek-r1:free' },
-
-    { provider: 'openrouter', model: 'meta-llama/llama-3.3-70b-instruct:free' },
-
-  ] : []),
-
-  ...(GROQ_API_KEY ? [
-
-    { provider: 'groq', model: 'llama-3.3-70b-versatile' },
-
-    { provider: 'groq', model: 'deepseek-r1-distill-llama-70b' },
-
-    { provider: 'groq', model: 'qwen-2.5-32b' },
-
-    { provider: 'groq', model: 'gemma2-9b-it' },
-
-    { provider: 'groq', model: 'llama-3.1-8b-instant' },
-
-  ] : [])
-
+  ...buildEndpoints('openrouter', OPENROUTER_MODELS, OPENROUTER_KEYS),
+  ...buildEndpoints('groq', GROQ_MODELS, GROQ_KEYS),
+  ...buildEndpoints('nvidia', NVIDIA_MODELS, NVIDIA_KEYS),
 ];
  
 
@@ -189,11 +211,10 @@ async function callLLM(system, user) {
   if (LLM_ENDPOINTS.length === 0) throw new Error('No LLM API key set (OPENROUTER_API_KEY or GROQ_API_KEY)');
   let lastErr;
 for (const ep of LLM_ENDPOINTS) {
-    console.log(`\n=== Trying ${ep.provider}: ${ep.model} ===`);
+    console.log(`\n=== Trying ${ep.provider} [acct ${ep.keyIndex}]: ${ep.model} ===`);
 
     const url = ep.provider === 'groq' ? GROQ_URL : ep.provider === 'nvidia' ? NVIDIA_URL : OPENROUTER_URL;
-    const key = ep.provider === 'groq' ? GROQ_API_KEY : ep.provider === 'nvidia' ? NVIDIA_API_KEY : OPENROUTER_API_KEY;
-    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` };
+    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${ep.key}` };
     if (ep.provider === 'openrouter') {
       headers['HTTP-Referer'] = 'https://aivorah.app';
       headers['X-Title'] = 'Aivorah content pipeline';

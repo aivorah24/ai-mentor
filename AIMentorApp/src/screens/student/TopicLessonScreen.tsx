@@ -1875,7 +1875,9 @@ export default function TopicLessonScreen({ navigation, route }: any) {
                   <View style={[s.illustrationEmptyIcon, { backgroundColor: accent + '1A', borderColor: accent + '40' }]}>
                     <Feather name={icon as any} size={34} color={accent} />
                   </View>
-                  <Text style={[s.illustrationEmptyText, { color: colors.textDim }]}>Illustration coming soon</Text>
+                  {/* No caption here: the accent icon above stands on its own.
+                      "Illustration coming soon" promised art that never arrived
+                      and made a finished lesson look broken. */}
                 </View>
               )}
             </View>

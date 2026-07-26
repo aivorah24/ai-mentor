@@ -1,0 +1,354 @@
+{
+  "package": {
+    "package_id": "pkg-2222-3333-4444-5555",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T14:45:00.000Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "p1p2p3p4-p5p6-p7p8-p9p0-q1r2s3t4u5v6",
+      "parent_package_id": "les-abcdef123456"
+    }
+  },
+  "payload": {
+    "lesson_id": "les-abcdef123456",
+    "lesson_metadata": {
+      "learning_objectives": [
+        "Students will be able to add two single-digit numbers using concrete objects.",
+        "Students will be able to represent addition situations with pictures and symbols."
+      ]
+    },
+    "experience_score": {
+      "engagement": 100,
+      "curiosity": 100,
+      "visual_learning": 100,
+      "audio_experience": 100,
+      "interaction": 100,
+      "reflection": 100,
+      "accessibility": 100,
+      "cognitive_load": 100,
+      "learning_flow": 100
+    },
+    "lesson_flow": [
+      {
+        "screen_id": "welcome",
+        "title": "Welcome",
+        "components": [
+          "teacher_intro"
+        ],
+        "description": "Teacher greets students and introduces the lesson."
+      },
+      {
+        "screen_id": "learning_goal",
+        "title": "Learning Goal",
+        "components": [
+          "learning_goal_text"
+        ],
+        "description": "State the learning objectives."
+      },
+      {
+        "screen_id": "visual_intro",
+        "title": "Visual Introduction",
+        "components": [
+          "image_bananas",
+          "audio_narration"
+        ],
+        "description": "Show 3 bananas + 2 bananas with audio."
+      },
+      {
+        "screen_id": "concrete_example",
+        "title": "Concrete Example",
+        "components": [
+          "physical_objects",
+          "audio_narration"
+        ],
+        "description": "Teacher uses toy cars to model addition."
+      },
+      {
+        "screen_id": "guided_example",
+        "title": "Guided Example",
+        "components": [
+          "step_by_step_text",
+          "audio_narration"
+        ],
+        "description": "Step-by-step counting on strategy."
+      },
+      {
+        "screen_id": "guided_practice",
+        "title": "Guided Practice",
+        "components": [
+          "drag_drop_objects",
+          "audio_narration"
+        ],
+        "description": "Student drags objects to solve 4+3."
+      },
+      {
+        "screen_id": "hint",
+        "title": "Hint",
+        "components": [
+          "hint_text",
+          "audio_narration"
+        ],
+        "description": "Show counting on tip."
+      },
+      {
+        "screen_id": "common_mistakes",
+        "title": "Common Mistakes",
+        "components": [
+          "mistake_examples",
+          "audio_narration"
+        ],
+        "description": "Show + vs - confusion."
+      },
+      {
+        "screen_id": "challenge",
+        "title": "Challenge",
+        "components": [
+          "interactive_challenge",
+          "audio_narration"
+        ],
+        "description": "Student adds 5+4 with picture."
+      },
+      {
+        "screen_id": "summary",
+        "title": "Summary",
+        "components": [
+          "summary_text",
+          "audio_narration"
+        ],
+        "description": "Recap key points."
+      },
+      {
+        "screen_id": "reflection",
+        "title": "Reflection",
+        "components": [
+          "write_sentence",
+          "audio_narration"
+        ],
+        "description": "Student writes addition sentence."
+      },
+      {
+        "screen_id": "transition",
+        "title": "Next Lesson",
+        "components": [
+          "next_lesson_info"
+        ],
+        "description": "Prepare for next lesson."
+      }
+    ],
+    "ui_components": [
+      {
+        "component_id": "teacher_intro",
+        "type": "text",
+        "content": "Hello class! Today we will learn how to add small numbers."
+      },
+      {
+        "component_id": "learning_goal_text",
+        "type": "text",
+        "content": "You will learn to add two single-digit numbers using objects and pictures."
+      },
+      {
+        "component_id": "image_bananas",
+        "type": "image",
+        "src": "bananas.png",
+        "alt": "Bananas"
+      },
+      {
+        "component_id": "physical_objects",
+        "type": "image",
+        "src": "toy_cars.png",
+        "alt": "Toy Cars"
+      },
+      {
+        "component_id": "step_by_step_text",
+        "type": "text",
+        "content": "Step 1: Count the first group. Step 2: Count the second group. Step 3: Combine."
+      },
+      {
+        "component_id": "drag_drop_objects",
+        "type": "interactive",
+        "action": "drag_drop",
+        "objects": [
+          "car1",
+          "car2",
+          "car3",
+          "car4"
+        ],
+        "target": "group2"
+      },
+      {
+        "component_id": "hint_text",
+        "type": "text",
+        "content": "Remember to count on: start with the first number and add the second."
+      },
+      {
+        "component_id": "mistake_examples",
+        "type": "image",
+        "src": "plus_minus.png",
+        "alt": "Plus and Minus signs"
+      },
+      {
+        "component_id": "interactive_challenge",
+        "type": "interactive",
+        "action": "drag_drop",
+        "objects": [
+          "apple1",
+          "apple2",
+          "apple3",
+          "apple4",
+          "apple5"
+        ],
+        "target": "group2"
+      },
+      {
+        "component_id": "summary_text",
+        "type": "text",
+        "content": "We added numbers using objects and pictures."
+      },
+      {
+        "component_id": "write_sentence",
+        "type": "input",
+        "placeholder": "Write an addition sentence."
+      },
+      {
+        "component_id": "next_lesson_info",
+        "type": "text",
+        "content": "Next lesson: Subtraction of Small Numbers."
+      }
+    ],
+    "interaction_plan": [
+      {
+        "interaction_id": "i1",
+        "screen_id": "guided_practice",
+        "type": "drag_and_drop",
+        "description": "Student drags toy cars to form 4+3."
+      },
+      {
+        "interaction_id": "i2",
+        "screen_id": "hint",
+        "type": "click",
+        "description": "Student clicks to reveal hint."
+      },
+      {
+        "interaction_id": "i3",
+        "screen_id": "common_mistakes",
+        "type": "click",
+        "description": "Student clicks to see + vs - example."
+      },
+      {
+        "interaction_id": "i4",
+        "screen_id": "challenge",
+        "type": "drag_and_drop",
+        "description": "Student adds 5+4 using apples."
+      },
+      {
+        "interaction_id": "i5",
+        "screen_id": "reflection",
+        "type": "text_input",
+        "description": "Student writes addition sentence."
+      }
+    ],
+    "illustration_plan": [
+      {
+        "screen_id": "visual_intro",
+        "image": "bananas.png",
+        "description": "3 bananas + 2 bananas"
+      },
+      {
+        "screen_id": "concrete_example",
+        "image": "toy_cars.png",
+        "description": "Toy cars representing numbers"
+      },
+      {
+        "screen_id": "common_mistakes",
+        "image": "plus_minus.png",
+        "description": "Plus and minus signs"
+      },
+      {
+        "screen_id": "challenge",
+        "image": "apples.png",
+        "description": "Apples for 5+4"
+      }
+    ],
+    "audio_plan": [
+      {
+        "screen_id": "welcome",
+        "audio": "welcome.mp3"
+      },
+      {
+        "screen_id": "learning_goal",
+        "audio": "learning_goal.mp3"
+      },
+      {
+        "screen_id": "visual_intro",
+        "audio": "bananas_narration.mp3"
+      },
+      {
+        "screen_id": "concrete_example",
+        "audio": "toy_cars_narration.mp3"
+      },
+      {
+        "screen_id": "guided_example",
+        "audio": "guided_example.mp3"
+      },
+      {
+        "screen_id": "guided_practice",
+        "audio": "guided_practice.mp3"
+      },
+      {
+        "screen_id": "hint",
+        "audio": "hint.mp3"
+      },
+      {
+        "screen_id": "common_mistakes",
+        "audio": "mistakes.mp3"
+      },
+      {
+        "screen_id": "challenge",
+        "audio": "challenge.mp3"
+      },
+      {
+        "screen_id": "summary",
+        "audio": "summary.mp3"
+      },
+      {
+        "screen_id": "reflection",
+        "audio": "reflection.mp3"
+      },
+      {
+        "screen_id": "transition",
+        "audio": "transition.mp3"
+      }
+    ],
+    "validation_requirements": [
+      {
+        "requirement": "All learning objectives addressed",
+        "status": "pending"
+      },
+      {
+        "requirement": "Each concept has visual support",
+        "status": "pending"
+      },
+      {
+        "requirement": "At least one teacher interaction per lesson",
+        "status": "pending"
+      },
+      {
+        "requirement": "At least one student interaction per lesson",
+        "status": "pending"
+      },
+      {
+        "requirement": "Lesson ends with reinforcement and transition",
+        "status": "pending"
+      }
+    ],
+    "handoff": {
+      "ui_planner_agent": {
+        "lesson_experience": {}
+      }
+    }
+  }
+}

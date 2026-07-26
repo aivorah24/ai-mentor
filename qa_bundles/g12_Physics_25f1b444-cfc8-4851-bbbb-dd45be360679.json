@@ -1,0 +1,157 @@
+{
+ "topicId": "25f1b444-cfc8-4851-bbbb-dd45be360679",
+ "grade": "Grade 12",
+ "subject": "Physics",
+ "curriculum": "CBSE",
+ "topicName": "Adding AC Voltages",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "When two AC voltages are present, each can be written as v=Vm sin(ωt+φ). The angle φ is the phase. To add them, we resolve each into its cosine (real) component because the cosine represents the projection on the reference axis.",
+   "For an RC circuit, the resistor voltage VR is in phase with the current, while the capacitor voltage VC leads the current by 90°. Their sum is VR cosθ + VC cos(θ+π/2). This expression adds the two voltages correctly, respecting their phase difference.",
+   "The result can be expressed as a single sinusoid with its own amplitude and phase. Often we convert the sum to an RMS value, V_rms = V_peak/√2, to compare power ratings of components."
+  ],
+  "grade": 12,
+  "intro": "In AC circuits, voltages add like vectors, not simple numbers. Their magnitudes and phases must both be considered.",
+  "vocab": [
+   {
+    "word": "AC voltage",
+    "definition": "A voltage that varies sinusoidally with time, written v = Vm sin(ωt)."
+   },
+   {
+    "word": "phase",
+    "definition": "The angular position of a sinusoidal wave relative to a reference, measured in radians or degrees."
+   },
+   {
+    "word": "RMS",
+    "definition": "Root‑mean‑square value; the effective DC equivalent of an AC voltage, V_rms = V_peak/√2."
+   },
+   {
+    "word": "amplitude",
+    "definition": "The maximum value (peak) of a sinusoidal voltage or current, denoted Vm."
+   },
+   {
+    "word": "angular frequency",
+    "definition": "Rate of change of the sinusoid, ω = 2πf, where f is frequency in hertz."
+   },
+   {
+    "word": "RC circuit",
+    "definition": "A circuit containing a resistor (R) and a capacitor (C) in series or parallel, showing phase differences between voltage and current."
+   }
+  ],
+  "subject": "Physics",
+  "activity": "If two AC sources have the same amplitude but are 180° out of phase, what is the resulting voltage?",
+  "keyLearnings": [
+   "Voltage addition requires phase consideration",
+   "Use cosine components to combine sinusoidal voltages",
+   "RMS values give a common measure for AC voltages"
+  ],
+  "keyTakeaways": [
+   "Add AC voltages by combining their cosine components.",
+   "Remember the 90° phase shift between resistor and capacitor voltages in an RC circuit.",
+   "Use RMS values for practical power calculations."
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "Add the cosine components of each voltage.",
+    "type": "mcq",
+    "correct": 2,
+    "options": [
+     "VR + VC",
+     "√(VR²+VC²)",
+     "VR cosθ + VC cos(θ+π/2)",
+     "VR sinθ + VC sin(θ+π/2)"
+    ],
+    "question": "In an RC series circuit, the resistor voltage is VR and the capacitor voltage is VC. Which expression correctly gives the total voltage magnitude?",
+    "explanation": "The total voltage is the sum of the cosine projections: VR cosθ + VC cos(θ+π/2)."
+   },
+   {
+    "hint": "Use V_rms = V_peak/√2.",
+    "type": "mcq",
+    "correct": 0,
+    "options": [
+     "240 V",
+     "340 V",
+     "480 V",
+     "120 V"
+    ],
+    "question": "The RMS value of a sinusoidal voltage with peak 340 V is approximately:",
+    "explanation": "V_rms = 340 V / √2 ≈ 240 V, matching the given RMS reference."
+   },
+   {
+    "hint": "Vm denotes the amplitude (peak) of the voltage.",
+    "type": "fill_blank",
+    "correct": "Vm",
+    "question": "A sinusoidal voltage can be written as v = ___ sin(ωt).",
+    "explanation": "Vm is the amplitude, the maximum value of the sinusoid."
+   }
+  ],
+  "originalLesson": [],
+  "whatYoullLearn": [
+   "Voltage addition requires phase consideration",
+   "Use cosine components to combine sinusoidal voltages",
+   "RMS values give a common measure for AC voltages"
+  ],
+  "thinkAndReflect": [
+   "If two AC sources have the same amplitude but are 180° out of phase, what is the resulting voltage?",
+   "How does adding a capacitor change the phase of the total voltage in an RC circuit?",
+   "Why do we prefer RMS values when comparing power ratings of AC components?"
+  ],
+  "instructionalType": "Lesson",
+  "illustrationPrompts": [
+   {
+    "image": "https://res.cloudinary.com/di5iq2mmb/image/upload/v1784781774/ncert/grade12/Physics/leph107_p1_0.png",
+    "source": "leph107 p1",
+    "altText": "Picture 1 from your NCERT book — Adding AC Voltages (page 1)"
+   },
+   {
+    "image": "https://res.cloudinary.com/di5iq2mmb/image/upload/v1784781775/ncert/grade12/Physics/leph107_p2_1.png",
+    "source": "leph107 p2",
+    "altText": "Picture 2 from your NCERT book — Adding AC Voltages (page 2)"
+   },
+   {
+    "image": "https://res.cloudinary.com/di5iq2mmb/image/upload/v1784781776/ncert/grade12/Physics/leph107_p3_2.png",
+    "source": "leph107 p3",
+    "altText": "Picture 3 from your NCERT book — Adding AC Voltages (page 3)"
+   }
+  ]
+ },
+ "practiceQuiz": [
+  {
+   "hint": "Add the cosine components of each voltage.",
+   "type": "mcq",
+   "correct": 2,
+   "options": [
+    "VR + VC",
+    "√(VR²+VC²)",
+    "VR cosθ + VC cos(θ+π/2)",
+    "VR sinθ + VC sin(θ+π/2)"
+   ],
+   "question": "In an RC series circuit, the resistor voltage is VR and the capacitor voltage is VC. Which expression correctly gives the total voltage magnitude?",
+   "explanation": "The total voltage is the sum of the cosine projections: VR cosθ + VC cos(θ+π/2)."
+  },
+  {
+   "hint": "Use V_rms = V_peak/√2.",
+   "type": "mcq",
+   "correct": 0,
+   "options": [
+    "240 V",
+    "340 V",
+    "480 V",
+    "120 V"
+   ],
+   "question": "The RMS value of a sinusoidal voltage with peak 340 V is approximately:",
+   "explanation": "V_rms = 340 V / √2 ≈ 240 V, matching the given RMS reference."
+  },
+  {
+   "hint": "Vm denotes the amplitude (peak) of the voltage.",
+   "type": "fill_blank",
+   "correct": "Vm",
+   "question": "A sinusoidal voltage can be written as v = ___ sin(ωt).",
+   "explanation": "Vm is the amplitude, the maximum value of the sinusoid."
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "**Great question! Let’s explore *Adding AC Voltages* together — it’s like mixing two waves in a pool to make a bigger splash!**\n\nImagine you’re at a pool party, and two friends are jumping into the water at the same time. One jumps up and down **in sync** with the music (like a resistor in an AC circuit), while the other jumps **a little ahead** of the beat (like a capacitor). Even though they’re both jumping, their movements don’t line up perfectly — so when you add their heights together, you don’t just double the jump. You get a new, combined motion — sometimes higher, sometimes lower — depending on how much one leads or lags.\n\nThat’s exactly what happens when we **add AC voltages** in a circuit!\n\n---\n\n### 🔌 What is AC Voltage?\nAC voltage is like a wave that goes up and down smoothly — like a swing moving back and forth. It’s written as:\n**v = Vm sin(ωt + φ)**\n- **Vm** is the peak (highest) voltage — like how high the swing goes.\n- **ωt** is how fast it’s swinging (frequency).\n- **φ (phi)** is the **phase** — like whether the wave starts early or late compared to another.\n\n---\n\n### ⚡ Adding AC Voltages: Why Phase Matters\nWhen two AC voltages are in a circuit (like across a resistor and capacitor), they don’t always peak at the same time. Their **phase difference** (φ) changes how they add.\n\nIn an **RC circuit**:\n- The **resistor voltage (VR)** is **in phase** with the current — like your friend jumping exactly on the beat.\n- The **capacitor voltage (VC)** **leads** the current by 90° — like your friend jumping a quarter-beat early.\n\nSo to add them correctly, we use:\n**v_total = VR cos(θ) + VC cos(θ + π/2)**\n\nThis keeps the timing (phase) in mind — just like adding two jumps that aren’t perfectly in sync!\n\n---\n\n### 🧮 Worked Example: Adding VR and VC in an RC Circuit\n\nLet’s say:\n- VR = 5 V (peak)\n- VC = 3 V (peak)\n- The current has a phase angle θ = 30°\n\nWe want to find the **total voltage** across both components.\n\n**Step 1: Write each voltage as a cosine with phase**\n- vR = VR cos(θ) = 5 × cos(30°)\n- vC = VC cos(θ + 90°) = 3 × cos(120°)  *(since π/2 = 90°)*\n\n**Step 2: Calculate each term**\n- cos(30°) ≈ 0.866 → 5 × 0.866 = **4.33 V**\n- cos(120°) = -0.5 → 3 × (-0.5) = **-1.5 V**\n\n**Step 3: Add them**\nv_total = 4.33 + (-1.5) = **2.83 V (peak)**\n\nSo the combined voltage isn’t 5 + 3 = 8 V — it’s only **2.83 V peak** because they’re out of phase!\n\n---\n\n### 💡 Real-World Connection\nThink of **noise-cancelling headphones**. They add a sound wave that’s **exactly out of phase** with outside noise — so when they combine, the noise cancels out! That’s AC voltage addition in action — using phase to control the result.\n\n---\n\n### 🌟 Fun Fact:\nDid you know? The **RMS value** (Root Mean Square) is like the \"effective\" voltage — it tells us how much power a voltage can deliver, just like how a 230 V RMS AC supply can run a fridge safely, even though the peak is over 300 V!\n\n---\n\n**You're doing amazing!**\nSo, what do you think — why can’t we just add 5 V and 3 V directly in an AC circuit? What’s the big deal with the phase? 😊"
+}

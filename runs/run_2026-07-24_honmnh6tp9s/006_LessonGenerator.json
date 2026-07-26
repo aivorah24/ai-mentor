@@ -1,0 +1,81 @@
+{
+  "package": {
+    "package_id": "uuid",
+    "package_type": "LessonContent",
+    "schema_version": "1.0",
+    "created_at": "2024-03-16T14:30:00.000Z",
+    "produced_by": {
+      "agent": "lesson-generator-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "honmnh6tp9s",
+      "parent_package_id": "uuid"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "stage_content": [
+      {
+        "stage_id": "introduction",
+        "content": "Subtraction with borrowing is a way to subtract big numbers. Imagine you have 72 rupees in your piggy bank and you want to subtract 47 rupees. You can borrow some rupees from your neighbour and then subtract."
+      },
+      {
+        "stage_id": "practice_problems",
+        "content": "Let's practice subtracting big numbers. For example, 38 - 11 = ? We can subtract 11 from 38 by borrowing some numbers. First, we borrow 10 from 30, then we subtract 11 from 28, which gives us 17. So, 38 - 11 = 27."
+      },
+      {
+        "stage_id": "real_life_applications",
+        "content": "Subtraction with borrowing is used in real life. For example, if you have 45 apples in a basket and you give 27 apples to your friend, how many apples are left in the basket? We can subtract 27 from 45 by borrowing some apples from our neighbour."
+      }
+    ],
+    "populated_components": [
+      {
+        "component_id": "video_player",
+        "slots": {
+          "title": "Introduction to Subtraction with Borrowing",
+          "body": "Subtraction with borrowing is a way to subtract big numbers.",
+          "callout": "Watch the video to learn more."
+        }
+      },
+      {
+        "component_id": "interactive_exercise",
+        "slots": {
+          "title": "Practice Subtraction with Borrowing",
+          "body": "Let's practice subtracting big numbers. For example, 38 - 11 = ?",
+          "callout": "Try to solve the problem on your own."
+        }
+      },
+      {
+        "component_id": "case_study",
+        "slots": {
+          "title": "Real Life Applications of Subtraction with Borrowing",
+          "body": "Subtraction with borrowing is used in real life. For example, if you have 45 apples in a basket and you give 27 apples to your friend, how many apples are left in the basket?",
+          "callout": "Read the case study to learn more."
+        }
+      }
+    ],
+    "source_references": [
+      {
+        "content_id": "subtraction_with_borrowing",
+        "chunk_id": "grounded_evidence_0"
+      },
+      {
+        "content_id": "subtraction_with_borrowing",
+        "chunk_id": "grounded_evidence_2"
+      }
+    ],
+    "validation_summary": {},
+    "handoff": {
+      "illustration_agent": {
+        "lesson_content_package_id": "uuid"
+      },
+      "audio_agent": {
+        "lesson_content_package_id": "uuid"
+      },
+      "quiz_agent": {
+        "lesson_content_package_id": "uuid"
+      }
+    }
+  }
+}

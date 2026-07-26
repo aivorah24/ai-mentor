@@ -96,6 +96,9 @@ interface SubjectData {
   subject: string;
   topicCount: number;
   topics: TopicItem[];
+  chapterCount?: number;   // authoritative chapter count (CBSE); 0 for IB PYP
+  unitCount?: number;      // chapters if present, else distinct units from topics
+  units?: string[];        // chapter/unit names
 }
 
 const NCERT_SUBJECTS = [
@@ -267,6 +270,16 @@ function SubjectCard({
   const done   = data.topics.reduce((acc, topic) => acc + (completedSet.has(topic.topic) ? 1 : 0), 0);
   const pct    = data.topicCount > 0 ? Math.round((done / data.topicCount) * 100) : 0;
   const accent = isDark ? meta.accentDark : meta.accentLight;
+  // Founder feedback: a raw topic tally (e.g. "1906 topics") reads as overwhelming.
+  // Show the curriculum's real chapter count (CBSE), else the unit count derived
+  // from the topics (IB PYP). The server is the source of both.
+  const chapterCount = data.chapterCount ?? 0;
+  const unitCount    = data.unitCount ?? new Set(data.topics.map((t) => t.unit).filter(Boolean)).size;
+  const countLabel =
+    chapterCount > 0 ? `${chapterCount} ${chapterCount === 1 ? 'chapter' : 'chapters'}`
+    : unitCount > 0  ? `${unitCount} ${unitCount === 1 ? 'unit' : 'units'}`
+    : data.topicCount > 0 && data.topicCount <= 40 ? `${data.topicCount} topics`
+    : '';
 
   return (
     <TouchableOpacity style={[cardStyles.touch, { width }]} activeOpacity={isBlocked ? 1 : 0.86} onPress={isBlocked ? undefined : onPress}>
@@ -286,7 +299,7 @@ function SubjectCard({
         </View>
         <Text style={[cardStyles.subjectName, { color: '#1C2A28' }]} numberOfLines={2}>{data.subject}</Text>
         <View style={cardStyles.statRow}>
-          <Text style={[cardStyles.statMini, { color: '#3A5A56' }]}>{data.topicCount} topics</Text>
+          <Text style={[cardStyles.statMini, { color: '#3A5A56' }]}>{countLabel}</Text>
           <Text style={[cardStyles.statMini, { color: '#3A5A56' }]}>{done} completed</Text>
         </View>
         <View style={[cardStyles.track, { backgroundColor: accent + '40' }]}>
@@ -649,7 +662,9 @@ export default function LearningPathsScreen({ navigation }: any) {
                 </View>
               ) : (
               <View style={styles.subjectGrid}>
-                {subjects.map((subject) => (
+                {subjects.map((subject) => {
+                  const resolvedCurriculum = isCBSE ? 'CBSE' : curriculum;
+                  return (
                   <SubjectCard
                     key={subject.subject}
                     data={subject}
@@ -657,20 +672,21 @@ export default function LearningPathsScreen({ navigation }: any) {
                     width={cardWidth}
                     isBlocked={blockedSubjects.has(subject.subject)}
                     onPress={() => {
-                      const resolvedCurriculum = isCBSE ? 'CBSE' : curriculum;
-                      // Some subjects have a curated, chapter-accurate syllabus —
-                      // route through the textbook-first Syllabus screen instead of
-                      // the old flat topic list. Others fall back to the flat list
-                      // until they get the same curated treatment (see syllabusRegistry.ts).
-                      const hasCuratedSyllabus = getSubjectSyllabus(resolvedCurriculum, grade, subject.subject).length > 0;
-                      navigation.navigate(hasCuratedSyllabus ? 'SubjectSyllabus' : 'SubjectTopics', {
+                      // Always route through the textbook-first Syllabus screen: it
+                      // fetches the DB-published syllabus first (the real pipeline
+                      // output), falls back to the curated hardcode, and — when a
+                      // subject genuinely has neither — auto-forwards to the flat
+                      // topic list. Deciding here off the frontend hardcode alone
+                      // hid DB-published syllabi (e.g. Grade 1) behind raw book codes.
+                      navigation.navigate('SubjectSyllabus', {
                         subject: subject.subject,
                         curriculum: resolvedCurriculum,
                         grade,
                       });
                     }}
                   />
-                ))}
+                  );
+                })}
               </View>
               )}
 

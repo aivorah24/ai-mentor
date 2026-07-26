@@ -1,0 +1,154 @@
+{
+  "package": {
+    "package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f",
+    "package_type": "UIPlanPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:12:14.067Z",
+    "produced_by": {
+      "agent": "ui-planner-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "uala08ghqgp",
+      "parent_package_id": "765847cf-9558-4ad6-a232-32c5c1da5074"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "device_profiles": {
+      "desktop": {
+        "layout": "two-pane"
+      },
+      "tablet": {
+        "layout": "adaptive-two-pane"
+      },
+      "mobile": {
+        "layout": "single-column"
+      }
+    },
+    "theme": "light",
+    "accessibility_settings": [
+      "dyslexia",
+      "high_contrast",
+      "large_text"
+    ],
+    "rendering_constraints": {
+      "max_interactions": 2,
+      "allow_horizontal_scroll": false,
+      "animation_level": "medium"
+    },
+    "screens": [
+      {
+        "screen_id": "screen-1",
+        "stage_id": "step-1",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "component-1",
+            "component_type": "text",
+            "stage_id": "step-1",
+            "priority": "primary",
+            "props": {
+              "text": "Imagine you have 72 rupees in your piggy bank and you want to subtract 47 rupees from it. But, you don't have enough rupees to subtract 47 from 72. What can you do?"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": null,
+          "next_screen": "screen-2",
+          "exit_behavior": "close"
+        }
+      },
+      {
+        "screen_id": "screen-2",
+        "stage_id": "step-2",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "component-2",
+            "component_type": "text",
+            "stage_id": "step-2",
+            "priority": "primary",
+            "props": {
+              "text": "When we subtract a bigger number from a smaller number, we need to borrow some quantity from our neighbour. Let's learn how to do it."
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-1",
+          "next_screen": "screen-3",
+          "exit_behavior": "close"
+        }
+      },
+      {
+        "screen_id": "screen-3",
+        "stage_id": "step-3",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "component-3",
+            "component_type": "exercise",
+            "stage_id": "step-3",
+            "priority": "primary",
+            "props": {
+              "question": "Practice subtracting bigger numbers from smaller numbers using borrowing."
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-2",
+          "next_screen": "screen-4",
+          "exit_behavior": "close"
+        }
+      },
+      {
+        "screen_id": "screen-4",
+        "stage_id": "step-4",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "component-4",
+            "component_type": "text",
+            "stage_id": "step-4",
+            "priority": "primary",
+            "props": {
+              "text": "Let's learn how to apply subtraction with borrowing in real-life situations."
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-3",
+          "next_screen": "screen-5",
+          "exit_behavior": "close"
+        }
+      },
+      {
+        "screen_id": "screen-5",
+        "stage_id": "step-5",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "component-5",
+            "component_type": "text",
+            "stage_id": "step-5",
+            "priority": "primary",
+            "props": {
+              "text": "Now, you know how to subtract bigger numbers from smaller numbers using borrowing. Practice it regularly to become a master!"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-4",
+          "next_screen": null,
+          "exit_behavior": "close"
+        }
+      }
+    ],
+    "handoff": {
+      "lesson_generator_agent": {
+        "lesson_experience_package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f",
+        "ui_plan_package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f"
+      }
+    }
+  }
+}

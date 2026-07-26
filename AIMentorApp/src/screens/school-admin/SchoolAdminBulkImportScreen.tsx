@@ -51,6 +51,15 @@ interface InvalidRow {
   reason: string;
 }
 
+// A row that WILL still be imported, but is missing recommended (not required)
+// data — Section or Parent Phone — or had its login email auto-generated. Shown
+// as advisory notices on the Validate step; they never block the import.
+interface RowNotice {
+  rowNum: number;
+  student: string;
+  reason: string;
+}
+
 interface ImportError {
   row: number;
   error: string;
@@ -63,9 +72,17 @@ interface Credential {
   role: string;
 }
 
+interface SkippedRow {
+  row: number;
+  name: string;
+  email: string;
+  reason: string;
+}
+
 interface ImportResult {
   created: number;
   updated: number;
+  skipped: SkippedRow[];
   errors: ImportError[];
   credentials: Credential[];
 }
@@ -272,6 +289,7 @@ export default function SchoolAdminBulkImportScreen({ navigation }: any) {
   const [uploadError, setUploadError] = useState('');
   const [validRows, setValidRows] = useState<ParsedRow[]>([]);
   const [invalidRows, setInvalidRows] = useState<InvalidRow[]>([]);
+  const [noticeRows, setNoticeRows] = useState<RowNotice[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [result, setResult] = useState<ImportResult | null>(null);
@@ -291,6 +309,7 @@ export default function SchoolAdminBulkImportScreen({ navigation }: any) {
     setUploadError('');
     setValidRows([]);
     setInvalidRows([]);
+    setNoticeRows([]);
     setSubmitError('');
     setResult(null);
     setSubmitting(false);
@@ -431,6 +450,14 @@ export default function SchoolAdminBulkImportScreen({ navigation }: any) {
   function runValidation() {
     const valid: ParsedRow[] = [];
     const invalid: InvalidRow[] = [];
+    const notices: RowNotice[] = [];
+    // Track identifiers already seen IN THIS FILE so the same student can't be
+    // imported twice in one upload — a repeated email or admission number is
+    // skipped as a duplicate. (The server also blocks duplicates against the
+    // existing roster; this catches dupes within the sheet before submit.)
+    const seenEmails = new Set<string>();
+    const seenAdmissions = new Set<string>();
+
     rawGrid.forEach((cells, i) => {
       const rec = emptyRow();
       columnMap.forEach((field, c) => {
@@ -450,10 +477,37 @@ export default function SchoolAdminBulkImportScreen({ navigation }: any) {
         invalid.push({ rowNum, reason: `Invalid Parent Email "${rec.parentEmail}"` });
         return;
       }
+
+      // --- Duplicate-within-file guard ---
+      const emailKey = rec.studentEmail.toLowerCase();
+      const admKey = rec.admissionNo.toLowerCase();
+      if (emailKey && seenEmails.has(emailKey)) {
+        invalid.push({ rowNum, reason: `Duplicate of an earlier row (email "${rec.studentEmail}" appears more than once)` });
+        return;
+      }
+      if (admKey && seenAdmissions.has(admKey)) {
+        invalid.push({ rowNum, reason: `Duplicate of an earlier row (Admission No "${rec.admissionNo}" appears more than once)` });
+        return;
+      }
+      if (emailKey) seenEmails.add(emailKey);
+      if (admKey) seenAdmissions.add(admKey);
+
+      // --- Advisory notices (row still imports) ---
+      if (!rec.studentEmail) {
+        notices.push({ rowNum, student: rec.studentName, reason: 'No Student Email — a login email will be auto-generated' });
+      }
+      if (!rec.section) {
+        notices.push({ rowNum, student: rec.studentName, reason: 'Missing Section' });
+      }
+      if (rec.parentName && !rec.parentPhone) {
+        notices.push({ rowNum, student: rec.studentName, reason: 'Missing Parent Phone (mobile number)' });
+      }
+
       valid.push(rec);
     });
     setValidRows(valid);
     setInvalidRows(invalid);
+    setNoticeRows(notices);
     setStep(3);
   }
 
@@ -475,6 +529,7 @@ export default function SchoolAdminBulkImportScreen({ navigation }: any) {
       setResult({
         created: data.created || 0,
         updated: data.updated || 0,
+        skipped: Array.isArray(data.skipped) ? data.skipped : [],
         errors: Array.isArray(data.errors) ? data.errors : [],
         credentials: Array.isArray(data.credentials) ? data.credentials : [],
       });
@@ -665,6 +720,21 @@ export default function SchoolAdminBulkImportScreen({ navigation }: any) {
                 </View>
               )}
 
+              {noticeRows.length > 0 && (
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>Heads up ({noticeRows.length})</Text>
+                  <Text style={styles.cardSub}>These rows will still be imported — this is just missing recommended info you may want to add.</Text>
+                  <View style={styles.errorList}>
+                    {noticeRows.map((n, i) => (
+                      <View key={i} style={styles.errorRow}>
+                        <View style={styles.noticeBadge}><Text style={styles.noticeBadgeText}>Row {n.rowNum}</Text></View>
+                        <Text style={styles.errorMsg}><Text style={styles.tdStrong}>{n.student}</Text>: {n.reason}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
               <View style={styles.footerRow}>
                 <TouchableOpacity style={styles.secondaryBtn} onPress={() => setStep(mappingSkipped ? 1 : 2)} accessibilityRole="button">
                   <Text style={styles.secondaryBtnText}>Back</Text>
@@ -752,8 +822,8 @@ export default function SchoolAdminBulkImportScreen({ navigation }: any) {
                     <Text style={styles.statLabel}>Created</Text>
                   </View>
                   <View style={styles.statBox}>
-                    <Text style={styles.statNum}>{result.updated}</Text>
-                    <Text style={styles.statLabel}>Updated</Text>
+                    <Text style={styles.statNum}>{result.skipped.length}</Text>
+                    <Text style={styles.statLabel}>Skipped</Text>
                   </View>
                   <View style={styles.statBox}>
                     <Text style={[styles.statNum, result.errors.length > 0 && { color: colors.accentRed }]}>{result.errors.length}</Text>
@@ -761,6 +831,21 @@ export default function SchoolAdminBulkImportScreen({ navigation }: any) {
                   </View>
                 </View>
               </View>
+
+              {result.skipped.length > 0 && (
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>Already in your school ({result.skipped.length})</Text>
+                  <Text style={styles.cardSub}>These students are already imported, so they were skipped. To change their details, open the student and edit them there.</Text>
+                  <View style={styles.errorList}>
+                    {result.skipped.map((s, i) => (
+                      <View key={i} style={styles.errorRow}>
+                        <View style={styles.noticeBadge}><Text style={styles.noticeBadgeText}>Row {s.row}</Text></View>
+                        <Text style={styles.errorMsg}><Text style={styles.tdStrong}>{s.name}</Text> — {s.reason}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
 
               {result.errors.length > 0 && (
                 <View style={styles.card}>
@@ -990,6 +1075,8 @@ function makeStyles(colors: AppColors) {
     errorRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     errorBadge: { backgroundColor: `${colors.accentRed}18`, borderWidth: 1, borderColor: `${colors.accentRed}55`, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 3, flexShrink: 0 },
     errorBadgeText: { fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: colors.accentRed },
+    noticeBadge: { backgroundColor: `${colors.accentYellow}18`, borderWidth: 1, borderColor: `${colors.accentYellow}55`, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 3, flexShrink: 0 },
+    noticeBadgeText: { fontFamily: fonts.serif, fontSize: 11, fontWeight: '700', color: colors.accentYellow },
     errorMsg: { fontFamily: fonts.serif, fontSize: 12.5, color: colors.textMuted, flex: 1 },
 
     // ── Credentials ─────────────────────────────────────────────────────

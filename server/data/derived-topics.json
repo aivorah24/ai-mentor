@@ -1,0 +1,7975 @@
+{
+ "12|Geography": [
+  {
+   "topic": "Environmental Determinism",
+   "code": "legy101",
+   "chapterTitle": "Human Geography: Nature and Scope"
+  },
+  {
+   "topic": "Possibilism",
+   "code": "legy101",
+   "chapterTitle": "Human Geography: Nature and Scope"
+  },
+  {
+   "topic": "Neodeterminism (Stop‑and‑Go Determinism)",
+   "code": "legy101",
+   "chapterTitle": "Human Geography: Nature and Scope"
+  },
+  {
+   "topic": "Humanistic School of Thought",
+   "code": "legy101",
+   "chapterTitle": "Human Geography: Nature and Scope"
+  },
+  {
+   "topic": "Fields and Sub‑fields of Human Geography",
+   "code": "legy101",
+   "chapterTitle": "Human Geography: Nature and Scope"
+  },
+  {
+   "topic": "Naturalisation of Humans",
+   "code": "legy101",
+   "chapterTitle": "Human Geography: Nature and Scope"
+  },
+  {
+   "topic": "Demographic transition stages",
+   "code": "legy102",
+   "chapterTitle": "Population and Settlement"
+  },
+  {
+   "topic": "Population control measures",
+   "code": "legy102",
+   "chapterTitle": "Population and Settlement"
+  },
+  {
+   "topic": "Factors influencing population distribution",
+   "code": "legy102",
+   "chapterTitle": "Population and Settlement"
+  },
+  {
+   "topic": "Population density and growth",
+   "code": "legy102",
+   "chapterTitle": "Population and Settlement"
+  },
+  {
+   "topic": "Migration push and pull factors",
+   "code": "legy102",
+   "chapterTitle": "Population and Settlement"
+  },
+  {
+   "topic": "Family planning and contraceptives",
+   "code": "legy102",
+   "chapterTitle": "Population and Settlement"
+  },
+  {
+   "topic": "Human Development Index",
+   "code": "legy103",
+   "chapterTitle": "Human Development"
+  },
+  {
+   "topic": "Human Poverty Index",
+   "code": "legy103",
+   "chapterTitle": "Human Development"
+  },
+  {
+   "topic": "Income approach to development",
+   "code": "legy103",
+   "chapterTitle": "Human Development"
+  },
+  {
+   "topic": "Welfare approach to development",
+   "code": "legy103",
+   "chapterTitle": "Human Development"
+  },
+  {
+   "topic": "Pillars of human development",
+   "code": "legy103",
+   "chapterTitle": "Human Development"
+  },
+  {
+   "topic": "Negative urban growth due to disasters",
+   "code": "legy103",
+   "chapterTitle": "Human Development"
+  },
+  {
+   "topic": "Mechanised grain farming",
+   "code": "legy104",
+   "chapterTitle": "Agriculture"
+  },
+  {
+   "topic": "Mixed farming",
+   "code": "legy104",
+   "chapterTitle": "Agriculture"
+  },
+  {
+   "topic": "Subsistence agriculture",
+   "code": "legy104",
+   "chapterTitle": "Agriculture"
+  },
+  {
+   "topic": "Primitive subsistence agriculture (shifting cultivation)",
+   "code": "legy104",
+   "chapterTitle": "Agriculture"
+  },
+  {
+   "topic": "Plantation agriculture",
+   "code": "legy104",
+   "chapterTitle": "Agriculture"
+  },
+  {
+   "topic": "Crop rotation and intercropping",
+   "code": "legy104",
+   "chapterTitle": "Agriculture"
+  },
+  {
+   "topic": "Agglomeration economies",
+   "code": "legy105",
+   "chapterTitle": "Industrial Location"
+  },
+  {
+   "topic": "Footloose industries",
+   "code": "legy105",
+   "chapterTitle": "Industrial Location"
+  },
+  {
+   "topic": "Factors influencing industrial location",
+   "code": "legy105",
+   "chapterTitle": "Industrial Location"
+  },
+  {
+   "topic": "Classification of manufacturing industries",
+   "code": "legy105",
+   "chapterTitle": "Industrial Location"
+  },
+  {
+   "topic": "Raw material accessibility",
+   "code": "legy105",
+   "chapterTitle": "Industrial Location"
+  },
+  {
+   "topic": "Public sector industries",
+   "code": "legy105",
+   "chapterTitle": "Industrial Location"
+  },
+  {
+   "topic": "Growth of service sector",
+   "code": "legy106",
+   "chapterTitle": "Services Sector"
+  },
+  {
+   "topic": "Transport and logistics services",
+   "code": "legy106",
+   "chapterTitle": "Services Sector"
+  },
+  {
+   "topic": "Communication service sector",
+   "code": "legy106",
+   "chapterTitle": "Services Sector"
+  },
+  {
+   "topic": "Periodic market systems",
+   "code": "legy106",
+   "chapterTitle": "Services Sector"
+  },
+  {
+   "topic": "Urban marketing centres",
+   "code": "legy106",
+   "chapterTitle": "Services Sector"
+  },
+  {
+   "topic": "Retail trading activities",
+   "code": "legy106",
+   "chapterTitle": "Services Sector"
+  },
+  {
+   "topic": "Satellite communication systems",
+   "code": "legy107",
+   "chapterTitle": "Transport and Communication"
+  },
+  {
+   "topic": "Cyberspace and internet networks",
+   "code": "legy107",
+   "chapterTitle": "Transport and Communication"
+  },
+  {
+   "topic": "Major international sea routes",
+   "code": "legy107",
+   "chapterTitle": "Transport and Communication"
+  },
+  {
+   "topic": "Road transport developments",
+   "code": "legy107",
+   "chapterTitle": "Transport and Communication"
+  },
+  {
+   "topic": "Pipeline and cable transport",
+   "code": "legy107",
+   "chapterTitle": "Transport and Communication"
+  },
+  {
+   "topic": "Traditional pack animal usage",
+   "code": "legy107",
+   "chapterTitle": "Transport and Communication"
+  },
+  {
+   "topic": "World Trade Organization",
+   "code": "legy108",
+   "chapterTitle": "International Trade"
+  },
+  {
+   "topic": "General Agreement on Tariffs and Trade",
+   "code": "legy108",
+   "chapterTitle": "International Trade"
+  },
+  {
+   "topic": "History of slave trade",
+   "code": "legy108",
+   "chapterTitle": "International Trade"
+  },
+  {
+   "topic": "Stages of economic development",
+   "code": "legy108",
+   "chapterTitle": "International Trade"
+  },
+  {
+   "topic": "Foreign investment and trade",
+   "code": "legy108",
+   "chapterTitle": "International Trade"
+  },
+  {
+   "topic": "Transport and trade",
+   "code": "legy108",
+   "chapterTitle": "International Trade"
+  },
+  {
+   "topic": "Sources of Population Data",
+   "code": "legy201",
+   "chapterTitle": "Population: Distribution, Density, Growth and Composition"
+  },
+  {
+   "topic": "Work Participation Rate",
+   "code": "legy201",
+   "chapterTitle": "Population: Distribution, Density, Growth and Composition"
+  },
+  {
+   "topic": "Occupational Composition of Population",
+   "code": "legy201",
+   "chapterTitle": "Population: Distribution, Density, Growth and Composition"
+  },
+  {
+   "topic": "Physiological and Agricultural Density",
+   "code": "legy201",
+   "chapterTitle": "Population: Distribution, Density, Growth and Composition"
+  },
+  {
+   "topic": "Growth of Population",
+   "code": "legy201",
+   "chapterTitle": "Population: Distribution, Density, Growth and Composition"
+  },
+  {
+   "topic": "Distribution of Population",
+   "code": "legy201",
+   "chapterTitle": "Population: Distribution, Density, Growth and Composition"
+  },
+  {
+   "topic": "Development of ancient Indian towns",
+   "code": "legy202",
+   "chapterTitle": "Settlements"
+  },
+  {
+   "topic": "Growth of medieval fort towns",
+   "code": "legy202",
+   "chapterTitle": "Settlements"
+  },
+  {
+   "topic": "British colonial urban development",
+   "code": "legy202",
+   "chapterTitle": "Settlements"
+  },
+  {
+   "topic": "Classification of rural settlement types",
+   "code": "legy202",
+   "chapterTitle": "Settlements"
+  },
+  {
+   "topic": "Characteristics of clustered settlements",
+   "code": "legy202",
+   "chapterTitle": "Settlements"
+  },
+  {
+   "topic": "Social factors in hamleted settlements",
+   "code": "legy202",
+   "chapterTitle": "Settlements"
+  },
+  {
+   "topic": "Water Conservation",
+   "code": "legy204",
+   "chapterTitle": "Water Resources"
+  },
+  {
+   "topic": "Groundwater Utilisation",
+   "code": "legy204",
+   "chapterTitle": "Water Resources"
+  },
+  {
+   "topic": "Surface Water Resources",
+   "code": "legy204",
+   "chapterTitle": "Water Resources"
+  },
+  {
+   "topic": "Water Demand",
+   "code": "legy204",
+   "chapterTitle": "Water Resources"
+  },
+  {
+   "topic": "Watershed Management",
+   "code": "legy204",
+   "chapterTitle": "Water Resources"
+  },
+  {
+   "topic": "Water Pollution",
+   "code": "legy204",
+   "chapterTitle": "Water Resources"
+  },
+  {
+   "topic": "Sustainable Development",
+   "code": "legy206",
+   "chapterTitle": "Planning and Sustainable Development"
+  },
+  {
+   "topic": "Economic Growth",
+   "code": "legy206",
+   "chapterTitle": "Planning and Sustainable Development"
+  },
+  {
+   "topic": "Social Wellbeing",
+   "code": "legy206",
+   "chapterTitle": "Planning and Sustainable Development"
+  },
+  {
+   "topic": "Environmental Issues",
+   "code": "legy206",
+   "chapterTitle": "Planning and Sustainable Development"
+  },
+  {
+   "topic": "Ecological Sustainability",
+   "code": "legy206",
+   "chapterTitle": "Planning and Sustainable Development"
+  },
+  {
+   "topic": "Water Management",
+   "code": "legy206",
+   "chapterTitle": "Planning and Sustainable Development"
+  },
+  {
+   "topic": "National Highways",
+   "code": "legy207",
+   "chapterTitle": "Transport and Communication"
+  },
+  {
+   "topic": "Road Transport",
+   "code": "legy207",
+   "chapterTitle": "Transport and Communication"
+  },
+  {
+   "topic": "Railway Network",
+   "code": "legy207",
+   "chapterTitle": "Transport and Communication"
+  },
+  {
+   "topic": "Water Transport",
+   "code": "legy207",
+   "chapterTitle": "Transport and Communication"
+  },
+  {
+   "topic": "Satellite Communication",
+   "code": "legy207",
+   "chapterTitle": "Transport and Communication"
+  },
+  {
+   "topic": "Metro Rail",
+   "code": "legy207",
+   "chapterTitle": "Transport and Communication"
+  },
+  {
+   "topic": "Indian Ports",
+   "code": "legy208",
+   "chapterTitle": "India's Foreign Trade"
+  },
+  {
+   "topic": "Export Trade",
+   "code": "legy208",
+   "chapterTitle": "India's Foreign Trade"
+  },
+  {
+   "topic": "Import Trade",
+   "code": "legy208",
+   "chapterTitle": "India's Foreign Trade"
+  },
+  {
+   "topic": "Hinterland Development",
+   "code": "legy208",
+   "chapterTitle": "India's Foreign Trade"
+  },
+  {
+   "topic": "Petroleum Imports",
+   "code": "legy208",
+   "chapterTitle": "India's Foreign Trade"
+  },
+  {
+   "topic": "International Trade",
+   "code": "legy208",
+   "chapterTitle": "India's Foreign Trade"
+  },
+  {
+   "topic": "Wasteland Management",
+   "code": "legy209",
+   "chapterTitle": "Human Settlements"
+  },
+  {
+   "topic": "Air Pollution",
+   "code": "legy209",
+   "chapterTitle": "Human Settlements"
+  },
+  {
+   "topic": "Noise Pollution",
+   "code": "legy209",
+   "chapterTitle": "Human Settlements"
+  },
+  {
+   "topic": "Urban Waste Disposal",
+   "code": "legy209",
+   "chapterTitle": "Human Settlements"
+  },
+  {
+   "topic": "River Conservation",
+   "code": "legy209",
+   "chapterTitle": "Human Settlements"
+  }
+ ],
+ "5|Evs": [
+  {
+   "topic": "Pitcher Plant",
+   "code": "eeap105",
+   "chapterTitle": "Seeds and Plants"
+  },
+  {
+   "topic": "Seed Dispersal",
+   "code": "eeap105",
+   "chapterTitle": "Seeds and Plants"
+  },
+  {
+   "topic": "Plant Growth",
+   "code": "eeap105",
+   "chapterTitle": "Seeds and Plants"
+  },
+  {
+   "topic": "Seed Types",
+   "code": "eeap105",
+   "chapterTitle": "Seeds and Plants"
+  },
+  {
+   "topic": "Seed Germination",
+   "code": "eeap105",
+   "chapterTitle": "Seeds and Plants"
+  },
+  {
+   "topic": "Seed Classification",
+   "code": "eeap105",
+   "chapterTitle": "Seeds and Plants"
+  }
+ ],
+ "11|Mathematics": [
+  {
+   "topic": "Sets and their Representations",
+   "code": "kemh101",
+   "chapterTitle": "Sets"
+  },
+  {
+   "topic": "The Empty Set",
+   "code": "kemh101",
+   "chapterTitle": "Sets"
+  },
+  {
+   "topic": "Finite and Infinite Sets",
+   "code": "kemh101",
+   "chapterTitle": "Sets"
+  },
+  {
+   "topic": "Equal Sets",
+   "code": "kemh101",
+   "chapterTitle": "Sets"
+  },
+  {
+   "topic": "Subsets",
+   "code": "kemh101",
+   "chapterTitle": "Sets"
+  },
+  {
+   "topic": "Universal Set",
+   "code": "kemh101",
+   "chapterTitle": "Sets"
+  },
+  {
+   "topic": "Venn Diagrams",
+   "code": "kemh101",
+   "chapterTitle": "Sets"
+  },
+  {
+   "topic": "Operations on Sets",
+   "code": "kemh101",
+   "chapterTitle": "Sets"
+  },
+  {
+   "topic": "Complement of a Set",
+   "code": "kemh101",
+   "chapterTitle": "Sets"
+  },
+  {
+   "topic": "Cartesian Products of Sets",
+   "code": "kemh102",
+   "chapterTitle": "Relations and Functions"
+  },
+  {
+   "topic": "Relations",
+   "code": "kemh102",
+   "chapterTitle": "Relations and Functions"
+  },
+  {
+   "topic": "Functions",
+   "code": "kemh102",
+   "chapterTitle": "Relations and Functions"
+  },
+  {
+   "topic": "Angles",
+   "code": "kemh103",
+   "chapterTitle": "Trigonometric Functions"
+  },
+  {
+   "topic": "Trigonometric Functions",
+   "code": "kemh103",
+   "chapterTitle": "Trigonometric Functions"
+  },
+  {
+   "topic": "Trigonometric Functions of Sum and Difference of Two Angles",
+   "code": "kemh103",
+   "chapterTitle": "Trigonometric Functions"
+  },
+  {
+   "topic": "Complex Numbers",
+   "code": "kemh104",
+   "chapterTitle": "Complex Numbers and Quadratic Equations"
+  },
+  {
+   "topic": "Algebra of Complex Numbers",
+   "code": "kemh104",
+   "chapterTitle": "Complex Numbers and Quadratic Equations"
+  },
+  {
+   "topic": "The Modulus and the Conjugate of a Complex Number",
+   "code": "kemh104",
+   "chapterTitle": "Complex Numbers and Quadratic Equations"
+  },
+  {
+   "topic": "Argand Plane and Polar Representation",
+   "code": "kemh104",
+   "chapterTitle": "Complex Numbers and Quadratic Equations"
+  },
+  {
+   "topic": "Inequalities",
+   "code": "kemh105",
+   "chapterTitle": "Linear Inequalities"
+  },
+  {
+   "topic": "Algebraic Solutions of Linear Inequalities in One",
+   "code": "kemh105",
+   "chapterTitle": "Linear Inequalities"
+  },
+  {
+   "topic": "Fundamental Principle of Counting",
+   "code": "kemh106",
+   "chapterTitle": "Permutations and Combinations"
+  },
+  {
+   "topic": "Permutations",
+   "code": "kemh106",
+   "chapterTitle": "Permutations and Combinations"
+  },
+  {
+   "topic": "Combinations",
+   "code": "kemh106",
+   "chapterTitle": "Permutations and Combinations"
+  },
+  {
+   "topic": "Binomial Theorem for Positive Integral Indices",
+   "code": "kemh107",
+   "chapterTitle": "Binomial Theorem"
+  },
+  {
+   "topic": "Sequences",
+   "code": "kemh108",
+   "chapterTitle": "Sequences and Series"
+  },
+  {
+   "topic": "Series",
+   "code": "kemh108",
+   "chapterTitle": "Sequences and Series"
+  },
+  {
+   "topic": "Geometric Progression (G",
+   "code": "kemh108",
+   "chapterTitle": "Sequences and Series"
+  },
+  {
+   "topic": "Relationship Between A",
+   "code": "kemh108",
+   "chapterTitle": "Sequences and Series"
+  },
+  {
+   "topic": "Slope of a Line",
+   "code": "kemh109",
+   "chapterTitle": "Straight Lines"
+  },
+  {
+   "topic": "Various Forms of the Equation of a Line",
+   "code": "kemh109",
+   "chapterTitle": "Straight Lines"
+  },
+  {
+   "topic": "Distance of a Point From a Line",
+   "code": "kemh109",
+   "chapterTitle": "Straight Lines"
+  },
+  {
+   "topic": "Sections of a Cone",
+   "code": "kemh110",
+   "chapterTitle": "Conic Sections"
+  },
+  {
+   "topic": "Circle",
+   "code": "kemh110",
+   "chapterTitle": "Conic Sections"
+  },
+  {
+   "topic": "Parabola",
+   "code": "kemh110",
+   "chapterTitle": "Conic Sections"
+  },
+  {
+   "topic": "Hyperbola",
+   "code": "kemh110",
+   "chapterTitle": "Conic Sections"
+  },
+  {
+   "topic": "Coordinate Axes and Coordinate Planes in Three Dimensional Spa",
+   "code": "kemh111",
+   "chapterTitle": "Dimensional Geometry"
+  },
+  {
+   "topic": "Coordinates of a Point in Space",
+   "code": "kemh111",
+   "chapterTitle": "Dimensional Geometry"
+  },
+  {
+   "topic": "Distance between Two Points",
+   "code": "kemh111",
+   "chapterTitle": "Dimensional Geometry"
+  },
+  {
+   "topic": "Intuitive Idea of Derivatives",
+   "code": "kemh112",
+   "chapterTitle": "Limits and Derivatives"
+  },
+  {
+   "topic": "Limits",
+   "code": "kemh112",
+   "chapterTitle": "Limits and Derivatives"
+  },
+  {
+   "topic": "Limits of Trigonometric Functions",
+   "code": "kemh112",
+   "chapterTitle": "Limits and Derivatives"
+  },
+  {
+   "topic": "Derivatives",
+   "code": "kemh112",
+   "chapterTitle": "Limits and Derivatives"
+  },
+  {
+   "topic": "Measures of Dispersion",
+   "code": "kemh113",
+   "chapterTitle": "Statistics"
+  },
+  {
+   "topic": "Range",
+   "code": "kemh113",
+   "chapterTitle": "Statistics"
+  },
+  {
+   "topic": "Mean Deviation",
+   "code": "kemh113",
+   "chapterTitle": "Statistics"
+  },
+  {
+   "topic": "Variance and Standard Deviation",
+   "code": "kemh113",
+   "chapterTitle": "Statistics"
+  },
+  {
+   "topic": "Event",
+   "code": "kemh114",
+   "chapterTitle": "Probability"
+  },
+  {
+   "topic": "Axiomatic Approach to Probability",
+   "code": "kemh114",
+   "chapterTitle": "Probability"
+  }
+ ],
+ "12|Mathematics": [
+  {
+   "topic": "Types of Functions",
+   "code": "lemh101",
+   "chapterTitle": "Relations and Functions"
+  },
+  {
+   "topic": "Composition of Functions and Invertible Function",
+   "code": "lemh101",
+   "chapterTitle": "Relations and Functions"
+  },
+  {
+   "topic": "Basic Concepts",
+   "code": "lemh102",
+   "chapterTitle": "Inverse Trigonometric Functions"
+  },
+  {
+   "topic": "Properties of Inverse Trigonometric Functions",
+   "code": "lemh102",
+   "chapterTitle": "Inverse Trigonometric Functions"
+  },
+  {
+   "topic": "Matrix",
+   "code": "lemh103",
+   "chapterTitle": "Matrices"
+  },
+  {
+   "topic": "Types of Matrices",
+   "code": "lemh103",
+   "chapterTitle": "Matrices"
+  },
+  {
+   "topic": "Operations on Matrices",
+   "code": "lemh103",
+   "chapterTitle": "Matrices"
+  },
+  {
+   "topic": "Symmetric and Skew Symmetric Matrices",
+   "code": "lemh103",
+   "chapterTitle": "Matrices"
+  },
+  {
+   "topic": "Invertible Matrices",
+   "code": "lemh103",
+   "chapterTitle": "Matrices"
+  },
+  {
+   "topic": "Determinant",
+   "code": "lemh104",
+   "chapterTitle": "Determinants"
+  },
+  {
+   "topic": "Area of a Triangle",
+   "code": "lemh104",
+   "chapterTitle": "Determinants"
+  },
+  {
+   "topic": "Minors and Cofactors",
+   "code": "lemh104",
+   "chapterTitle": "Determinants"
+  },
+  {
+   "topic": "Adjoint and Inverse of a Matrix",
+   "code": "lemh104",
+   "chapterTitle": "Determinants"
+  },
+  {
+   "topic": "Applications of Determinants and Matrices",
+   "code": "lemh104",
+   "chapterTitle": "Determinants"
+  },
+  {
+   "topic": "Continuity",
+   "code": "lemh105",
+   "chapterTitle": "Continuity and Differentiability"
+  },
+  {
+   "topic": "Exponential and Logarithmic Functions",
+   "code": "lemh105",
+   "chapterTitle": "Continuity and Differentiability"
+  },
+  {
+   "topic": "Derivatives of Functions in Parametric Forms",
+   "code": "lemh105",
+   "chapterTitle": "Continuity and Differentiability"
+  },
+  {
+   "topic": "Second Order Derivative",
+   "code": "lemh105",
+   "chapterTitle": "Continuity and Differentiability"
+  },
+  {
+   "topic": "Rate of Change of Quantities",
+   "code": "lemh106",
+   "chapterTitle": "Application of Derivatives"
+  },
+  {
+   "topic": "Increasing and Decreasing Functions",
+   "code": "lemh106",
+   "chapterTitle": "Application of Derivatives"
+  },
+  {
+   "topic": "Maxima and Minima",
+   "code": "lemh106",
+   "chapterTitle": "Application of Derivatives"
+  },
+  {
+   "topic": "Integration as an Inverse Process of Differentiation",
+   "code": "lemh201",
+   "chapterTitle": "Integrals"
+  },
+  {
+   "topic": "Methods of Integration",
+   "code": "lemh201",
+   "chapterTitle": "Integrals"
+  },
+  {
+   "topic": "Integrals of Some Particular Functions",
+   "code": "lemh201",
+   "chapterTitle": "Integrals"
+  },
+  {
+   "topic": "Integration by Partial Fractions",
+   "code": "lemh201",
+   "chapterTitle": "Integrals"
+  },
+  {
+   "topic": "Integration by Parts",
+   "code": "lemh201",
+   "chapterTitle": "Integrals"
+  },
+  {
+   "topic": "Definite Integral",
+   "code": "lemh201",
+   "chapterTitle": "Integrals"
+  },
+  {
+   "topic": "Fundamental Theorem of Calculus",
+   "code": "lemh201",
+   "chapterTitle": "Integrals"
+  },
+  {
+   "topic": "Evaluation of Definite Integrals by Substitution",
+   "code": "lemh201",
+   "chapterTitle": "Integrals"
+  },
+  {
+   "topic": "Some Properties of Definite Integrals",
+   "code": "lemh201",
+   "chapterTitle": "Integrals"
+  },
+  {
+   "topic": "Area under Simple Curves",
+   "code": "lemh202",
+   "chapterTitle": "Application of Integrals"
+  },
+  {
+   "topic": "Some Basic Concepts",
+   "code": "lemh204",
+   "chapterTitle": "Vector Algebra"
+  },
+  {
+   "topic": "Addition of Vectors",
+   "code": "lemh204",
+   "chapterTitle": "Vector Algebra"
+  },
+  {
+   "topic": "Multiplication of a Vector by a Scalar",
+   "code": "lemh204",
+   "chapterTitle": "Vector Algebra"
+  },
+  {
+   "topic": "Product of Two Vectors",
+   "code": "lemh204",
+   "chapterTitle": "Vector Algebra"
+  },
+  {
+   "topic": "Direction Cosines and Direction Ratios of a Line",
+   "code": "lemh205",
+   "chapterTitle": "Three Dimensional Geometry"
+  },
+  {
+   "topic": "Equation of a Line in Space",
+   "code": "lemh205",
+   "chapterTitle": "Three Dimensional Geometry"
+  },
+  {
+   "topic": "Angle between Two Lines",
+   "code": "lemh205",
+   "chapterTitle": "Three Dimensional Geometry"
+  },
+  {
+   "topic": "Shortest Distance between Two Lines",
+   "code": "lemh205",
+   "chapterTitle": "Three Dimensional Geometry"
+  },
+  {
+   "topic": "Linear Programming Problem and its Mathematical Formulation",
+   "code": "lemh206",
+   "chapterTitle": "Linear Programming"
+  },
+  {
+   "topic": "Conditional Probability",
+   "code": "lemh207",
+   "chapterTitle": "Probability"
+  },
+  {
+   "topic": "Multiplication Theorem on Probability",
+   "code": "lemh207",
+   "chapterTitle": "Probability"
+  },
+  {
+   "topic": "Independent Events",
+   "code": "lemh207",
+   "chapterTitle": "Probability"
+  },
+  {
+   "topic": "Bayes' Theorem",
+   "code": "lemh207",
+   "chapterTitle": "Probability"
+  },
+  {
+   "topic": "Relations and Functions",
+   "code": "lemh101",
+   "chapterTitle": "Relations and Functions"
+  },
+  {
+   "topic": "Inverse Trigonometric Functions",
+   "code": "lemh102",
+   "chapterTitle": "Inverse Trigonometric Functions"
+  },
+  {
+   "topic": "Matrices",
+   "code": "lemh103",
+   "chapterTitle": "Matrices"
+  },
+  {
+   "topic": "Determinants",
+   "code": "lemh104",
+   "chapterTitle": "Determinants"
+  },
+  {
+   "topic": "Continuity and Differentiability",
+   "code": "lemh105",
+   "chapterTitle": "Continuity and Differentiability"
+  },
+  {
+   "topic": "Application of Derivatives",
+   "code": "lemh106",
+   "chapterTitle": "Application of Derivatives"
+  },
+  {
+   "topic": "Integrals",
+   "code": "lemh201",
+   "chapterTitle": "Integrals"
+  },
+  {
+   "topic": "Application of Integrals",
+   "code": "lemh202",
+   "chapterTitle": "Application of Integrals"
+  },
+  {
+   "topic": "Differential Equations",
+   "code": "lemh203",
+   "chapterTitle": "Differential Equations"
+  },
+  {
+   "topic": "Vector Algebra",
+   "code": "lemh204",
+   "chapterTitle": "Vector Algebra"
+  },
+  {
+   "topic": "Three Dimensional Geometry",
+   "code": "lemh205",
+   "chapterTitle": "Three Dimensional Geometry"
+  },
+  {
+   "topic": "Linear Programming",
+   "code": "lemh206",
+   "chapterTitle": "Linear Programming"
+  },
+  {
+   "topic": "Probability",
+   "code": "lemh207",
+   "chapterTitle": "Probability"
+  }
+ ],
+ "11|Psychology": [
+  {
+   "topic": "POPULAR NOTIONS ABOUT THE DISCIPLINE",
+   "code": "kepy101",
+   "chapterTitle": "Understanding Mind and Behaviour"
+  },
+  {
+   "topic": "Reprint",
+   "code": "kepy101",
+   "chapterTitle": "Understanding Mind and Behaviour"
+  },
+  {
+   "topic": "Two American psychologists, Bibb Latane and",
+   "code": "kepy102",
+   "chapterTitle": "Goals of Psychological Enquiry"
+  },
+  {
+   "topic": "Telephone Survey",
+   "code": "kepy102",
+   "chapterTitle": "Goals of Psychological Enquiry"
+  },
+  {
+   "topic": "ANALYSIS OF DATA",
+   "code": "kepy102",
+   "chapterTitle": "Goals of Psychological Enquiry"
+  },
+  {
+   "topic": "OVERVIEW OF DEVELOPMENTAL STAGES",
+   "code": "kepy103",
+   "chapterTitle": "Meaning of Development"
+  },
+  {
+   "topic": "Socio-emotional Development",
+   "code": "kepy103",
+   "chapterTitle": "Meaning of Development"
+  },
+  {
+   "topic": "Moral Development",
+   "code": "kepy103",
+   "chapterTitle": "Meaning of Development"
+  },
+  {
+   "topic": "Act like a boy if you are a girl or act like a girl if",
+   "code": "kepy103",
+   "chapterTitle": "Meaning of Development"
+  },
+  {
+   "topic": "Concepts",
+   "code": "kepy107",
+   "chapterTitle": "Nature of Thinking"
+  },
+  {
+   "topic": "Problem",
+   "code": "kepy107",
+   "chapterTitle": "Nature of Thinking"
+  },
+  {
+   "topic": "Process of Creative Thinking",
+   "code": "kepy107",
+   "chapterTitle": "Nature of Thinking"
+  },
+  {
+   "topic": "NATURE OF EMOTIONS",
+   "code": "kepy108",
+   "chapterTitle": "Nature of Motivation"
+  },
+  {
+   "topic": "Understanding Mind and Behaviour",
+   "code": "kepy101",
+   "chapterTitle": "Understanding Mind and Behaviour"
+  },
+  {
+   "topic": "Goals of Psychological Enquiry",
+   "code": "kepy102",
+   "chapterTitle": "Goals of Psychological Enquiry"
+  },
+  {
+   "topic": "Meaning of Development",
+   "code": "kepy103",
+   "chapterTitle": "Meaning of Development"
+  },
+  {
+   "topic": "Nature and Varieties of Stimulus",
+   "code": "kepy104",
+   "chapterTitle": "Nature and Varieties of Stimulus"
+  },
+  {
+   "topic": "Nature of Learning",
+   "code": "kepy105",
+   "chapterTitle": "Nature of Learning"
+  },
+  {
+   "topic": "Nature of Memory",
+   "code": "kepy106",
+   "chapterTitle": "Nature of Memory"
+  },
+  {
+   "topic": "Nature of Thinking",
+   "code": "kepy107",
+   "chapterTitle": "Nature of Thinking"
+  },
+  {
+   "topic": "Nature of Motivation",
+   "code": "kepy108",
+   "chapterTitle": "Nature of Motivation"
+  }
+ ],
+ "11|Sociology": [
+  {
+   "topic": "Sociology and Society",
+   "code": "kesy101",
+   "chapterTitle": "Sociology and Society"
+  },
+  {
+   "topic": "Introducing Sociology",
+   "code": "kesy102",
+   "chapterTitle": "Introducing Sociology"
+  },
+  {
+   "topic": "Culture and Socialisation",
+   "code": "kesy104",
+   "chapterTitle": "Culture and Socialisation"
+  }
+ ],
+ "11|Geography": [
+  {
+   "topic": "Whiskbroom Scanners",
+   "code": "kegy306",
+   "chapterTitle": "Natural Sensorobject Surface"
+  },
+  {
+   "topic": "Pushbroom Scanners",
+   "code": "kegy306",
+   "chapterTitle": "Natural Sensorobject Surface"
+  },
+  {
+   "topic": "Ssentials of Map Making",
+   "code": "kegy301",
+   "chapterTitle": "Ssentials of Map Making"
+  },
+  {
+   "topic": "Methods of Scale",
+   "code": "kegy302",
+   "chapterTitle": "Methods of Scale"
+  },
+  {
+   "topic": "Ert,",
+   "code": "kegy103",
+   "chapterTitle": "Ert,"
+  },
+  {
+   "topic": "Parallels of Latitudes",
+   "code": "kegy303",
+   "chapterTitle": "Parallels of Latitudes"
+  },
+  {
+   "topic": "Climate and Vegetation",
+   "code": "kegy104",
+   "chapterTitle": "Climate and Vegetation"
+  },
+  {
+   "topic": "Map Projection",
+   "code": "kegy304",
+   "chapterTitle": "Map Projection"
+  },
+  {
+   "topic": "Types of Forests",
+   "code": "kegy105",
+   "chapterTitle": "Types of Forests"
+  },
+  {
+   "topic": "Methods of Relief Representation",
+   "code": "kegy305",
+   "chapterTitle": "Methods of Relief Representation"
+  },
+  {
+   "topic": "Causes, Consequences and Management",
+   "code": "kegy106",
+   "chapterTitle": "Causes, Consequences and Management"
+  },
+  {
+   "topic": "Natural Sensorobject Surface",
+   "code": "kegy306",
+   "chapterTitle": "Natural Sensorobject Surface"
+  }
+ ],
+ "11|Biology": [
+  {
+   "topic": "DIVERSITY IN THE LIVING WORLD",
+   "code": "kebo101",
+   "chapterTitle": "Diversity in the Living World"
+  },
+  {
+   "topic": "Taxonomic",
+   "code": "kebo101",
+   "chapterTitle": "Diversity in the Living World"
+  },
+  {
+   "topic": "Kingdom Monera",
+   "code": "kebo102",
+   "chapterTitle": "Biological Classification"
+  },
+  {
+   "topic": "Kingdom Protista",
+   "code": "kebo102",
+   "chapterTitle": "Biological Classification"
+  },
+  {
+   "topic": "Kingdom Fungi",
+   "code": "kebo102",
+   "chapterTitle": "Biological Classification"
+  },
+  {
+   "topic": "Kingdom Plantae",
+   "code": "kebo102",
+   "chapterTitle": "Biological Classification"
+  },
+  {
+   "topic": "Kingdom",
+   "code": "kebo102",
+   "chapterTitle": "Biological Classification"
+  },
+  {
+   "topic": "Viruses, Viroids",
+   "code": "kebo102",
+   "chapterTitle": "Biological Classification"
+  },
+  {
+   "topic": "Biological Classification",
+   "code": "kebo102",
+   "chapterTitle": "Biological Classification"
+  },
+  {
+   "topic": "Algae",
+   "code": "kebo103",
+   "chapterTitle": "Plant Kingdom"
+  },
+  {
+   "topic": "Bryophytes",
+   "code": "kebo103",
+   "chapterTitle": "Plant Kingdom"
+  },
+  {
+   "topic": "Pteridophytes",
+   "code": "kebo103",
+   "chapterTitle": "Plant Kingdom"
+  },
+  {
+   "topic": "Gymnosperms",
+   "code": "kebo103",
+   "chapterTitle": "Plant Kingdom"
+  },
+  {
+   "topic": "Angiosperms",
+   "code": "kebo103",
+   "chapterTitle": "Plant Kingdom"
+  },
+  {
+   "topic": "Plant Kingdom",
+   "code": "kebo103",
+   "chapterTitle": "Plant Kingdom"
+  },
+  {
+   "topic": "BASIS OF CLASSIFICATION",
+   "code": "kebo104",
+   "chapterTitle": "Animal Kingdom"
+  },
+  {
+   "topic": "Classification of",
+   "code": "kebo104",
+   "chapterTitle": "Animal Kingdom"
+  },
+  {
+   "topic": "Animal Kingdom",
+   "code": "kebo104",
+   "chapterTitle": "Animal Kingdom"
+  },
+  {
+   "topic": "THE ROOT",
+   "code": "kebo105",
+   "chapterTitle": "Structural Organisation in Plants and Animals"
+  },
+  {
+   "topic": "The Stem",
+   "code": "kebo105",
+   "chapterTitle": "Structural Organisation in Plants and Animals"
+  },
+  {
+   "topic": "The Leaf",
+   "code": "kebo105",
+   "chapterTitle": "Structural Organisation in Plants and Animals"
+  },
+  {
+   "topic": "The Inflorescence",
+   "code": "kebo105",
+   "chapterTitle": "Structural Organisation in Plants and Animals"
+  },
+  {
+   "topic": "The Flower",
+   "code": "kebo105",
+   "chapterTitle": "Structural Organisation in Plants and Animals"
+  },
+  {
+   "topic": "The Fruit",
+   "code": "kebo105",
+   "chapterTitle": "Structural Organisation in Plants and Animals"
+  },
+  {
+   "topic": "The Seed",
+   "code": "kebo105",
+   "chapterTitle": "Structural Organisation in Plants and Animals"
+  },
+  {
+   "topic": "Semi-technical",
+   "code": "kebo105",
+   "chapterTitle": "Structural Organisation in Plants and Animals"
+  },
+  {
+   "topic": "Description of",
+   "code": "kebo105",
+   "chapterTitle": "Structural Organisation in Plants and Animals"
+  },
+  {
+   "topic": "Structural Organisation in Plants and Animals",
+   "code": "kebo105",
+   "chapterTitle": "Structural Organisation in Plants and Animals"
+  },
+  {
+   "topic": "THE TISSUE SYSTEM",
+   "code": "kebo106",
+   "chapterTitle": "Anatomy of Flowering Plants"
+  },
+  {
+   "topic": "Anatomy of",
+   "code": "kebo106",
+   "chapterTitle": "Anatomy of Flowering Plants"
+  },
+  {
+   "topic": "Anatomy of Flowering Plants",
+   "code": "kebo106",
+   "chapterTitle": "Anatomy of Flowering Plants"
+  },
+  {
+   "topic": "ORGAN AND ORGAN SYSTEM",
+   "code": "kebo107",
+   "chapterTitle": "Structural Organisation in Animals"
+  },
+  {
+   "topic": "Frogs",
+   "code": "kebo107",
+   "chapterTitle": "Structural Organisation in Animals"
+  },
+  {
+   "topic": "Structural Organisation in Animals",
+   "code": "kebo107",
+   "chapterTitle": "Structural Organisation in Animals"
+  },
+  {
+   "topic": "WHAT IS A CELL",
+   "code": "kebo108",
+   "chapterTitle": "Pplo"
+  },
+  {
+   "topic": "CELL THEORY",
+   "code": "kebo108",
+   "chapterTitle": "Pplo"
+  },
+  {
+   "topic": "An Overview of",
+   "code": "kebo108",
+   "chapterTitle": "Pplo"
+  },
+  {
+   "topic": "Prokaryotic Cells",
+   "code": "kebo108",
+   "chapterTitle": "Pplo"
+  },
+  {
+   "topic": "Eukaryotic Cells",
+   "code": "kebo108",
+   "chapterTitle": "Pplo"
+  },
+  {
+   "topic": "Pplo",
+   "code": "kebo108",
+   "chapterTitle": "Pplo"
+  },
+  {
+   "topic": "HOW TO ANALYSE CHEMICAL COMPOSITION",
+   "code": "kebo109",
+   "chapterTitle": "Biomolecules"
+  },
+  {
+   "topic": "Primary and",
+   "code": "kebo109",
+   "chapterTitle": "Biomolecules"
+  },
+  {
+   "topic": "Biomacromolecules",
+   "code": "kebo109",
+   "chapterTitle": "Biomolecules"
+  },
+  {
+   "topic": "Proteins",
+   "code": "kebo109",
+   "chapterTitle": "Biomolecules"
+  },
+  {
+   "topic": "Polysaccharides",
+   "code": "kebo109",
+   "chapterTitle": "Biomolecules"
+  },
+  {
+   "topic": "Nucleic Acids",
+   "code": "kebo109",
+   "chapterTitle": "Biomolecules"
+  },
+  {
+   "topic": "Structure of",
+   "code": "kebo109",
+   "chapterTitle": "Biomolecules"
+  },
+  {
+   "topic": "Enzymes",
+   "code": "kebo109",
+   "chapterTitle": "Biomolecules"
+  },
+  {
+   "topic": "Biomolecules",
+   "code": "kebo109",
+   "chapterTitle": "Biomolecules"
+  },
+  {
+   "topic": "CELL CYCLE",
+   "code": "kebo110",
+   "chapterTitle": "Cell Cycle and Cell Division"
+  },
+  {
+   "topic": "Significance of",
+   "code": "kebo110",
+   "chapterTitle": "Cell Cycle and Cell Division"
+  },
+  {
+   "topic": "Meiosis",
+   "code": "kebo110",
+   "chapterTitle": "Cell Cycle and Cell Division"
+  },
+  {
+   "topic": "Cell Cycle and Cell Division",
+   "code": "kebo110",
+   "chapterTitle": "Cell Cycle and Cell Division"
+  },
+  {
+   "topic": "WHAT DO WE KNOW",
+   "code": "kebo111",
+   "chapterTitle": "Plant Physiology"
+  },
+  {
+   "topic": "Early",
+   "code": "kebo111",
+   "chapterTitle": "Plant Physiology"
+  },
+  {
+   "topic": "Where does",
+   "code": "kebo111",
+   "chapterTitle": "Plant Physiology"
+  },
+  {
+   "topic": "How many",
+   "code": "kebo111",
+   "chapterTitle": "Plant Physiology"
+  },
+  {
+   "topic": "What is Light",
+   "code": "kebo111",
+   "chapterTitle": "Plant Physiology"
+  },
+  {
+   "topic": "The Electron",
+   "code": "kebo111",
+   "chapterTitle": "Plant Physiology"
+  },
+  {
+   "topic": "Where are the",
+   "code": "kebo111",
+   "chapterTitle": "Plant Physiology"
+  },
+  {
+   "topic": "The C",
+   "code": "kebo111",
+   "chapterTitle": "Plant Physiology"
+  },
+  {
+   "topic": "Photorespiration",
+   "code": "kebo111",
+   "chapterTitle": "Plant Physiology"
+  },
+  {
+   "topic": "Factors",
+   "code": "kebo111",
+   "chapterTitle": "Plant Physiology"
+  },
+  {
+   "topic": "Plant Physiology",
+   "code": "kebo111",
+   "chapterTitle": "Plant Physiology"
+  },
+  {
+   "topic": "Do Plants",
+   "code": "kebo112",
+   "chapterTitle": "Respiration in Plants"
+  },
+  {
+   "topic": "Glycolysis",
+   "code": "kebo112",
+   "chapterTitle": "Respiration in Plants"
+  },
+  {
+   "topic": "Fermentation",
+   "code": "kebo112",
+   "chapterTitle": "Respiration in Plants"
+  },
+  {
+   "topic": "Aerobic",
+   "code": "kebo112",
+   "chapterTitle": "Respiration in Plants"
+  },
+  {
+   "topic": "THE RESPIRATORY BALANCE SHEET",
+   "code": "kebo112",
+   "chapterTitle": "Respiration in Plants"
+  },
+  {
+   "topic": "Amphibolic",
+   "code": "kebo112",
+   "chapterTitle": "Respiration in Plants"
+  },
+  {
+   "topic": "Respiratory",
+   "code": "kebo112",
+   "chapterTitle": "Respiration in Plants"
+  },
+  {
+   "topic": "Respiration in Plants",
+   "code": "kebo112",
+   "chapterTitle": "Respiration in Plants"
+  },
+  {
+   "topic": "Growth",
+   "code": "kebo113",
+   "chapterTitle": "Plant Growth and Development"
+  },
+  {
+   "topic": "Differentiation",
+   "code": "kebo113",
+   "chapterTitle": "Plant Growth and Development"
+  },
+  {
+   "topic": "Development",
+   "code": "kebo113",
+   "chapterTitle": "Plant Growth and Development"
+  },
+  {
+   "topic": "Plant Growth",
+   "code": "kebo113",
+   "chapterTitle": "Plant Growth and Development"
+  },
+  {
+   "topic": "Plant Growth and Development",
+   "code": "kebo113",
+   "chapterTitle": "Plant Growth and Development"
+  },
+  {
+   "topic": "RESPIRATORY ORGANS",
+   "code": "kebo114",
+   "chapterTitle": "Human Physiology"
+  },
+  {
+   "topic": "Mechanism of",
+   "code": "kebo114",
+   "chapterTitle": "Human Physiology"
+  },
+  {
+   "topic": "Exchange of",
+   "code": "kebo114",
+   "chapterTitle": "Human Physiology"
+  },
+  {
+   "topic": "Transport of",
+   "code": "kebo114",
+   "chapterTitle": "Human Physiology"
+  },
+  {
+   "topic": "Regulation of",
+   "code": "kebo114",
+   "chapterTitle": "Human Physiology"
+  },
+  {
+   "topic": "Disorders of",
+   "code": "kebo114",
+   "chapterTitle": "Human Physiology"
+  },
+  {
+   "topic": "Human Physiology",
+   "code": "kebo114",
+   "chapterTitle": "Human Physiology"
+  },
+  {
+   "topic": "BLOOD",
+   "code": "kebo115",
+   "chapterTitle": "Body Fluids and Circulation"
+  },
+  {
+   "topic": "LYMPH (TISSUE FLUID)",
+   "code": "kebo115",
+   "chapterTitle": "Body Fluids and Circulation"
+  },
+  {
+   "topic": "Circulatory",
+   "code": "kebo115",
+   "chapterTitle": "Body Fluids and Circulation"
+  },
+  {
+   "topic": "Double",
+   "code": "kebo115",
+   "chapterTitle": "Body Fluids and Circulation"
+  },
+  {
+   "topic": "Body Fluids and Circulation",
+   "code": "kebo115",
+   "chapterTitle": "Body Fluids and Circulation"
+  },
+  {
+   "topic": "Human",
+   "code": "kebo116",
+   "chapterTitle": "Excretory Products and Their Elimination"
+  },
+  {
+   "topic": "Urine Formation",
+   "code": "kebo116",
+   "chapterTitle": "Excretory Products and Their Elimination"
+  },
+  {
+   "topic": "Function of the",
+   "code": "kebo116",
+   "chapterTitle": "Excretory Products and Their Elimination"
+  },
+  {
+   "topic": "Micturition",
+   "code": "kebo116",
+   "chapterTitle": "Excretory Products and Their Elimination"
+  },
+  {
+   "topic": "Role of other",
+   "code": "kebo116",
+   "chapterTitle": "Excretory Products and Their Elimination"
+  },
+  {
+   "topic": "Disorders of the",
+   "code": "kebo116",
+   "chapterTitle": "Excretory Products and Their Elimination"
+  },
+  {
+   "topic": "Excretory Products and Their Elimination",
+   "code": "kebo116",
+   "chapterTitle": "Excretory Products and Their Elimination"
+  },
+  {
+   "topic": "TYPES OF MOVEMENT",
+   "code": "kebo117",
+   "chapterTitle": "Locomotion and Movement"
+  },
+  {
+   "topic": "Muscle",
+   "code": "kebo117",
+   "chapterTitle": "Locomotion and Movement"
+  },
+  {
+   "topic": "Skeletal",
+   "code": "kebo117",
+   "chapterTitle": "Locomotion and Movement"
+  },
+  {
+   "topic": "Joints",
+   "code": "kebo117",
+   "chapterTitle": "Locomotion and Movement"
+  },
+  {
+   "topic": "Locomotion and Movement",
+   "code": "kebo117",
+   "chapterTitle": "Locomotion and Movement"
+  },
+  {
+   "topic": "Neural System",
+   "code": "kebo118",
+   "chapterTitle": "Neural Control and Coordination"
+  },
+  {
+   "topic": "Human Neural",
+   "code": "kebo118",
+   "chapterTitle": "Neural Control and Coordination"
+  },
+  {
+   "topic": "Neuron as",
+   "code": "kebo118",
+   "chapterTitle": "Neural Control and Coordination"
+  },
+  {
+   "topic": "Central Neural",
+   "code": "kebo118",
+   "chapterTitle": "Neural Control and Coordination"
+  },
+  {
+   "topic": "Neural Control and Coordination",
+   "code": "kebo118",
+   "chapterTitle": "Neural Control and Coordination"
+  },
+  {
+   "topic": "ENDOCRINE GLANDS AND HORMONES",
+   "code": "kebo119",
+   "chapterTitle": "Chemical Coordination and Integration"
+  },
+  {
+   "topic": "Hormones of",
+   "code": "kebo119",
+   "chapterTitle": "Chemical Coordination and Integration"
+  },
+  {
+   "topic": "Chemical Coordination and Integration",
+   "code": "kebo119",
+   "chapterTitle": "Chemical Coordination and Integration"
+  }
+ ],
+ "11|Political Science": [
+  {
+   "topic": "WHAT IS POLITICS",
+   "code": "keps101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "WHAT DO WE STUDY IN POLITICAL THEORY",
+   "code": "keps101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "PUTTING POLITICAL THEORY TO PRACTICE",
+   "code": "keps101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "WHY SHOULD WE STUDY POLITICAL THEORY",
+   "code": "keps101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "THE IDEAL OF FREEDOM",
+   "code": "keps102",
+   "chapterTitle": "Swaraj"
+  },
+  {
+   "topic": "WHAT IS FREEDOM",
+   "code": "keps102",
+   "chapterTitle": "Swaraj"
+  },
+  {
+   "topic": "WHY DO WE NEED CONSTRAINTS",
+   "code": "keps102",
+   "chapterTitle": "Swaraj"
+  },
+  {
+   "topic": "HARM PRINCIPLE",
+   "code": "keps102",
+   "chapterTitle": "Swaraj"
+  },
+  {
+   "topic": "NEGATIVE AND POSITIVE",
+   "code": "keps102",
+   "chapterTitle": "Swaraj"
+  },
+  {
+   "topic": "Swaraj",
+   "code": "keps102",
+   "chapterTitle": "Swaraj"
+  },
+  {
+   "topic": "WHY DOES EQUALITY MATTER",
+   "code": "keps103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "WHAT IS E",
+   "code": "keps103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "THREE DIMENSIONS OF EQUALITY",
+   "code": "keps103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "HOW CAN WE PROMOTE EQUALITY",
+   "code": "keps103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "WHAT IS JUSTICE",
+   "code": "keps104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "JUST DISTRIBUTION",
+   "code": "keps104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "JOHN RAWLS",
+   "code": "keps104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "PURSUING SOCIAL JUSTICE",
+   "code": "keps104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "WHAT ARE RIGHTS",
+   "code": "keps105",
+   "chapterTitle": "Kant On Human Dignity"
+  },
+  {
+   "topic": "WHERE DO",
+   "code": "keps105",
+   "chapterTitle": "Kant On Human Dignity"
+  },
+  {
+   "topic": "LEGAL RIGHTS AND THE STA TE",
+   "code": "keps105",
+   "chapterTitle": "Kant On Human Dignity"
+  },
+  {
+   "topic": "KINDS OF RIGHTS",
+   "code": "keps105",
+   "chapterTitle": "Kant On Human Dignity"
+  },
+  {
+   "topic": "RIGHTS AND RESPONSIBILITIES",
+   "code": "keps105",
+   "chapterTitle": "Kant On Human Dignity"
+  },
+  {
+   "topic": "Kant On Human Dignity",
+   "code": "keps105",
+   "chapterTitle": "Kant On Human Dignity"
+  },
+  {
+   "topic": "FULL AND EQUAL MEMBERSHIP",
+   "code": "keps106",
+   "chapterTitle": "Martin Luther King"
+  },
+  {
+   "topic": "EQUAL RIGHTS",
+   "code": "keps106",
+   "chapterTitle": "Martin Luther King"
+  },
+  {
+   "topic": "CITIZEN AND NATION",
+   "code": "keps106",
+   "chapterTitle": "Martin Luther King"
+  },
+  {
+   "topic": "UNIVERSAL CITIZENSHIP",
+   "code": "keps106",
+   "chapterTitle": "Martin Luther King"
+  },
+  {
+   "topic": "Martin Luther King",
+   "code": "keps106",
+   "chapterTitle": "Martin Luther King"
+  },
+  {
+   "topic": "INTRODUCING NATIONALISM",
+   "code": "keps107",
+   "chapterTitle": "Demand for National Self-Determination in Basque"
+  },
+  {
+   "topic": "NATIONS AND NATIONALISM",
+   "code": "keps107",
+   "chapterTitle": "Demand for National Self-Determination in Basque"
+  },
+  {
+   "topic": "NATIONAL SELF-DETERMINATION",
+   "code": "keps107",
+   "chapterTitle": "Demand for National Self-Determination in Basque"
+  },
+  {
+   "topic": "NATIONALISM AND PLURALISM",
+   "code": "keps107",
+   "chapterTitle": "Demand for National Self-Determination in Basque"
+  },
+  {
+   "topic": "Demand for National Self-Determination in Basque",
+   "code": "keps107",
+   "chapterTitle": "Demand for National Self-Determination in Basque"
+  },
+  {
+   "topic": "WHAT IS SECULARISM",
+   "code": "keps108",
+   "chapterTitle": "Secularism"
+  },
+  {
+   "topic": "SECULAR STA TE",
+   "code": "keps108",
+   "chapterTitle": "Secularism"
+  },
+  {
+   "topic": "THE WESTERN MODEL OF SECULARISM",
+   "code": "keps108",
+   "chapterTitle": "Secularism"
+  },
+  {
+   "topic": "THE INDIAN",
+   "code": "keps108",
+   "chapterTitle": "Secularism"
+  },
+  {
+   "topic": "CRITICISMS OF I",
+   "code": "keps108",
+   "chapterTitle": "Secularism"
+  },
+  {
+   "topic": "Secularism",
+   "code": "keps108",
+   "chapterTitle": "Secularism"
+  }
+ ],
+ "11|Physics": [
+  {
+   "topic": "Fill in the blanks",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "THE INTERNATIONAL SYSTEM OF UNITS",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "Significant figures",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "Dimensions of physical",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "Dimensional formulae and",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "Dimensional analysis and its",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "Answer the following",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "The photograph of a house occupies an area of",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "State the number of significant figures in the following",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "The length, breadth and thickness of a rectangular sheet of me",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "The mass of a box measured by a grocer",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "The unit of length convenient on the atomic scale is known as",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "One mole of an ideal gas at standard temperature and",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "Explain this common observation clearly",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "The Sun is a hot plasma (ionized matter) with its inner core a",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "Units and Measurement",
+   "code": "keph101",
+   "chapterTitle": "Units and Measurement"
+  },
+  {
+   "topic": "In which of the following examples of motion, can the",
+   "code": "keph102",
+   "chapterTitle": "Motion in a Straight Line"
+  },
+  {
+   "topic": "Instantaneous velocity and",
+   "code": "keph102",
+   "chapterTitle": "Motion in a Straight Line"
+  },
+  {
+   "topic": "Acceleration",
+   "code": "keph102",
+   "chapterTitle": "Motion in a Straight Line"
+  },
+  {
+   "topic": "Kinematic equations for",
+   "code": "keph102",
+   "chapterTitle": "Motion in a Straight Line"
+  },
+  {
+   "topic": "Relative velocity",
+   "code": "keph102",
+   "chapterTitle": "Motion in a Straight Line"
+  },
+  {
+   "topic": "Read each statement below carefully and state with reasons and",
+   "code": "keph102",
+   "chapterTitle": "Motion in a Straight Line"
+  },
+  {
+   "topic": "Explain clearly, with examples, the distinction between",
+   "code": "keph102",
+   "chapterTitle": "Motion in a Straight Line"
+  },
+  {
+   "topic": "In Exercises",
+   "code": "keph102",
+   "chapterTitle": "Motion in a Straight Line"
+  },
+  {
+   "topic": "Look at the graphs (a) to (d) (Fig",
+   "code": "keph102",
+   "chapterTitle": "Motion in a Straight Line"
+  },
+  {
+   "topic": "Figure",
+   "code": "keph102",
+   "chapterTitle": "Motion in a Straight Line"
+  },
+  {
+   "topic": "Suggest a suitable physical situation for each of the followin",
+   "code": "keph102",
+   "chapterTitle": "Motion in a Straight Line"
+  },
+  {
+   "topic": "Motion in a Straight Line",
+   "code": "keph102",
+   "chapterTitle": "Motion in a Straight Line"
+  },
+  {
+   "topic": "State, for each of the following physical quantities, if it is",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "SCALARS AND VECTORS",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "Multiplication of vectors by",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "Addition and subtraction of",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "Resolution of vectors",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "Vector addition",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "Motion in a plane",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "Motion in a plane with",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "Projectile motion",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "Uniform circular motion",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "The ceiling of a long hall is",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "An aircraft executes a horizontal loop of radius",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "Read each statement below carefully and state, with reasons, i",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "The position of a particle is given by",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "For any arbitrary motion in space, which of the following rela",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "Read each statement below carefully and state, with reasons an",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "An aircraft is flying at a height of",
+   "code": "keph103",
+   "chapterTitle": "Motion in a Plane"
+  },
+  {
+   "topic": "Give the magnitude and direction of the net force acting on",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "Aristotle",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "The law of inertia",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "Newton",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "Conservation of momentum",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "Equilibrium of a particle",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "Common forces in mechanics",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "Circular motion",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "Solving problems in",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "Two bodies of masses",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "Two masses",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "Two billiard balls each of mass",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "If, in Exercise",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "Explain why",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "Laws of Motion",
+   "code": "keph104",
+   "chapterTitle": "Laws of Motion"
+  },
+  {
+   "topic": "The sign of work done by a force on a body is important to und",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "Notions of work and kinetic",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "Given in Fig",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "Kinetic energy",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "Work done by a variable force",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "The work-energy theorem for",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "The concept of potential",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "The conservation of",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "The potential energy of a",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "Power",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "Collisions",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "An electron and a proton are detected in a cosmic ray experime",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "Two identical ball bearings in contact with each other",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "The bob A of a pendulum released from",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "The bob of a pendulum is released from a horizontal",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "The blades of a windmill sweep out a circle of area",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "Work, Energy and Power",
+   "code": "keph105",
+   "chapterTitle": "Work, Energy and Power"
+  },
+  {
+   "topic": "Give the location of the centre of mass of a (i) sphere, (ii)",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Centre of mass",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Motion of centre of mass",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Linear momentum of a",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Vector product of two vectors",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Angular velocity and its",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Torque and angular",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Equilibrium of a rigid body",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Moment of inertia",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Kinematics of rotational",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Dynamics of rotational",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Angular momentum in case",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "To maintain a rotor at a uniform angular speed of",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "From a uniform disk of radius R, a circular hole of radius R",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "The oxygen molecule has a mass of",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Systems of Particles and Rotational Motion",
+   "code": "keph106",
+   "chapterTitle": "Systems of Particles and Rotational Motion"
+  },
+  {
+   "topic": "Kepler",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "Universal law of",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "The gravitational",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "Acceleration due to",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "Gravitational potential",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "Escape speed",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "Earth satellites",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "Energy of an orbiting",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "For the above problem, the direction of the gravitatio",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "How will you",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "Assuming the earth to be a sphere of uniform mass density, how",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "The escape speed of a projectile on the earth",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "Two stars each of one solar mass (",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "Two heavy spheres each of mass",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "Gravitation",
+   "code": "keph107",
+   "chapterTitle": "Gravitation"
+  },
+  {
+   "topic": "Stress and strain",
+   "code": "keph201",
+   "chapterTitle": "Mechanical Properties of Solids"
+  },
+  {
+   "topic": "Hooke",
+   "code": "keph201",
+   "chapterTitle": "Mechanical Properties of Solids"
+  },
+  {
+   "topic": "Stress-strain curve",
+   "code": "keph201",
+   "chapterTitle": "Mechanical Properties of Solids"
+  },
+  {
+   "topic": "Elastic moduli",
+   "code": "keph201",
+   "chapterTitle": "Mechanical Properties of Solids"
+  },
+  {
+   "topic": "Applications of elastic",
+   "code": "keph201",
+   "chapterTitle": "Mechanical Properties of Solids"
+  },
+  {
+   "topic": "Four identical hollow cylindrical columns of mild steel suppor",
+   "code": "keph201",
+   "chapterTitle": "Mechanical Properties of Solids"
+  },
+  {
+   "topic": "Compute the bulk modulus of water from the following",
+   "code": "keph201",
+   "chapterTitle": "Mechanical Properties of Solids"
+  },
+  {
+   "topic": "What is the density of water at a depth where pressu",
+   "code": "keph201",
+   "chapterTitle": "Mechanical Properties of Solids"
+  },
+  {
+   "topic": "Compute the fractional change in volume of a glass slab, when",
+   "code": "keph201",
+   "chapterTitle": "Mechanical Properties of Solids"
+  },
+  {
+   "topic": "Determine the volume contraction of a solid copper cub",
+   "code": "keph201",
+   "chapterTitle": "Mechanical Properties of Solids"
+  },
+  {
+   "topic": "How much should the pressure on a litre of water be changed to",
+   "code": "keph201",
+   "chapterTitle": "Mechanical Properties of Solids"
+  },
+  {
+   "topic": "Mechanical Properties of Solids",
+   "code": "keph201",
+   "chapterTitle": "Mechanical Properties of Solids"
+  },
+  {
+   "topic": "PRESSURE",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "Streamline flow",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "Bernoulli",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "Viscosity",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "Surface tension",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "In the previous problem, if",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "Can Bernoulli",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "Does it matter if one uses gauge instead of absolute pressures",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "Glycerine flows steadily through a horizontal tube of length",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "In a test experiment on a model aeroplane in a wind tunnel, th",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "Figures",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "The cylindrical tube of a spray pump has a cross-sect",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "What is the pressure inside the drop of mercury of radius",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "What is the excess pressure inside a bubble of soap solution o",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "Mechanical Properties of Fluids",
+   "code": "keph202",
+   "chapterTitle": "Mechanical Properties of Fluids"
+  },
+  {
+   "topic": "The triple points of neon and carbon dioxide are",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "TEMPERATURE AND HEAT",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "Measurement of",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "Ideal-gas equation and",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "Thermal expansion",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "Specific heat capacity",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "Calorimetry",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "Change of state",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "Heat transfer",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "The coefficient of volume expansion of glycerine is",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "In an experiment on the specific heat of a metal, a",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "Given below are observations on molar specific heats at room t",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "Thermal Properties of Matter",
+   "code": "keph203",
+   "chapterTitle": "Thermal Properties of Matter"
+  },
+  {
+   "topic": "Thermal equilibrium",
+   "code": "keph204",
+   "chapterTitle": "Thermodynamics"
+  },
+  {
+   "topic": "Zeroth law of",
+   "code": "keph204",
+   "chapterTitle": "Thermodynamics"
+  },
+  {
+   "topic": "Heat, internal energy and",
+   "code": "keph204",
+   "chapterTitle": "Thermodynamics"
+  },
+  {
+   "topic": "First law of",
+   "code": "keph204",
+   "chapterTitle": "Thermodynamics"
+  },
+  {
+   "topic": "Thermodynamic state",
+   "code": "keph204",
+   "chapterTitle": "Thermodynamics"
+  },
+  {
+   "topic": "Thermodynamic processes",
+   "code": "keph204",
+   "chapterTitle": "Thermodynamics"
+  },
+  {
+   "topic": "Second law of",
+   "code": "keph204",
+   "chapterTitle": "Thermodynamics"
+  },
+  {
+   "topic": "Reversible and irreversible",
+   "code": "keph204",
+   "chapterTitle": "Thermodynamics"
+  },
+  {
+   "topic": "Carnot engine",
+   "code": "keph204",
+   "chapterTitle": "Thermodynamics"
+  },
+  {
+   "topic": "Thermodynamics",
+   "code": "keph204",
+   "chapterTitle": "Thermodynamics"
+  },
+  {
+   "topic": "Estimate the fraction of molecular volume to the actual volume",
+   "code": "keph205",
+   "chapterTitle": "Kinetic Theory"
+  },
+  {
+   "topic": "MOLECULAR NATURE OF MATTER",
+   "code": "keph205",
+   "chapterTitle": "Kinetic Theory"
+  },
+  {
+   "topic": "Behaviour of gases",
+   "code": "keph205",
+   "chapterTitle": "Kinetic Theory"
+  },
+  {
+   "topic": "Kinetic theory of an ideal gas",
+   "code": "keph205",
+   "chapterTitle": "Kinetic Theory"
+  },
+  {
+   "topic": "Law of equipartition of energy",
+   "code": "keph205",
+   "chapterTitle": "Kinetic Theory"
+  },
+  {
+   "topic": "Mean free path",
+   "code": "keph205",
+   "chapterTitle": "Kinetic Theory"
+  },
+  {
+   "topic": "Three vessels of equal capacity have gases at the same tempera",
+   "code": "keph205",
+   "chapterTitle": "Kinetic Theory"
+  },
+  {
+   "topic": "At what temperature is the root mean square speed of",
+   "code": "keph205",
+   "chapterTitle": "Kinetic Theory"
+  },
+  {
+   "topic": "Estimate the mean free path and collision frequency of",
+   "code": "keph205",
+   "chapterTitle": "Kinetic Theory"
+  },
+  {
+   "topic": "Kinetic Theory",
+   "code": "keph205",
+   "chapterTitle": "Kinetic Theory"
+  },
+  {
+   "topic": "Which of the following examples represent periodic motion",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "Periodic and oscillatory",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "Simple harmonic motion",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "Velocity and acceleration",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "Force law for simple",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "Energy in simple harmonic",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "The simple pendulum",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "In Exercise",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "Plot the corresponding reference circle for each of the follow",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "The piston in the cylinder head of a locomotive has a stroke (",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "The acceleration due to gravity on the surface of moon is",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "One end of a U-tube containing mercury is connected to a sucti",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "Oscillations",
+   "code": "keph206",
+   "chapterTitle": "Oscillations"
+  },
+  {
+   "topic": "Transverse and",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  },
+  {
+   "topic": "Displacement relation in a",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  },
+  {
+   "topic": "The speed of a travelling",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  },
+  {
+   "topic": "The principle of",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  },
+  {
+   "topic": "Reflection of waves",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  },
+  {
+   "topic": "Beats",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  },
+  {
+   "topic": "For the wave described in Exercise",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  },
+  {
+   "topic": "For the travelling harmonic wave",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  },
+  {
+   "topic": "The transverse displacement of a string (clamped at its both e",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  },
+  {
+   "topic": "Given below are some functions of x and t to represent the dis",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  },
+  {
+   "topic": "Two sitar strings A and B playing the note",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  },
+  {
+   "topic": "Explain why (or how)",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  },
+  {
+   "topic": "Waves",
+   "code": "keph207",
+   "chapterTitle": "Waves"
+  }
+ ],
+ "11|Chemistry": [
+  {
+   "topic": "Calculate the molar mass of the following",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Calculate the mass per cent of different elements pres",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Determine the empirical formula of",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Uncertainty in meaSUrement",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Calculate the mass of sodium acetate (CH",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Dalton",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "How much copper can be obtained from",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Determine the molecular formula of an oxide of iron, in which",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Calculate the atomic mass (average) of chlorine using the foll",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Stoichiometry anD",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "What is the concentration of sugar (C",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "If the density of methanol",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Pressure is determined as force per unit area of the surface",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "What is the SI unit of mass",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Match the following prefixes with their multiples",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "What do you mean by significant figures",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Express the following in the scientific notation",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "How many significant figures are present in the following",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Round up the following upto three significant figures",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "The following data are obtained when dinitrogen and dioxygen r",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "If the speed of light is",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "In a reaction",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Dinitrogen and dihydrogen react with",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "How are",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Convert the following into basic units",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Which one of the following will have the largest number of ato",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Calculate the molarity of a",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "What will be the mass of one",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "How many significant figures should be present in the answer o",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Use the data given in the following table to calculate the mol",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Calculate the number of atoms in each of the following (i)",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Calcium carbonate reacts with aqueous HCl to give CaCl",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Chlorine is prepared in the laboratory by treating man",
+   "code": "kech101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Discovery of sUb-atomic",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "DeveloPments leaDing to tHe",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Write the complete symbol for the atom with the given atomic n",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Yellow light emitted from a sodium lamp has a wavelength (",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "QUantUm mecHanical moDel of",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Calculate the wavelength, frequency and wavenumber of a light",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "What is the number of photons of light with a wavelength of",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Electromagnetic",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Electrons are emitted with zero velocity from a metal surface",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "What is t",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "How much energy is required to ionise a H atom if the electro",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "What is the maximum number of emission lines when the excited",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Calculate the wavenumber for the longest wavelength transition",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "What is the energy in joules, required to shift the electron o",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "The electron energy in hydrogen atom is given by E",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Calculate the wavelength of an electron moving with a velocity",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "The mass of an electron is",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Which of the following are isoelectronic species",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "What is the lowest value of n that allows g orbitals to exist",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "An electron is in one of the",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Give the number of electrons in the species",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Using s, p",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Explain, giving reasons, which of the following sets of quantu",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "How many electrons in an atom may have the following quantum n",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Show that the circumference of the Bohr orbit for the hydrogen",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "What transition in the hydrogen spectrum",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Calculate the energy required for the process",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "If the diameter of a carbon atom is",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "The diameter of zinc atom is",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "In Milikan",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "In Rutherford",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Symbols",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "An element with mass number",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "An ion with mass number",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Arrange the following type of radiations in increasing order o",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Nitrogen laser produces a radiation at a wavelength of",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Neon gas is generally used in the sign boards",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "In astronomical observations, signals observed from the distan",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Lifetimes of the molecules in the excited states are often mea",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "The longest wavelength doublet absorption transition is observ",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "The work function for caesium atom is",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Following results are observed when sodium metal is ir",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "The ejection of the photoelectron from the silver meta",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "If the photon of the wavelength",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Emission transitions in the Paschen series end at orbit n",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Calculate the wavelength for the emission transition if it sta",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Similar to electron diffraction, neutron diffraction microscop",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "The velocity associated with a proton moving in a pot",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "If the position of the electron is measured within an accuracy",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "The quantum numbers of six electrons are given below",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "The bromine atom possesses",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Among the following pairs of orbitals which orbital will exper",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "The unpaired electrons in Al and Si are present in",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Indicate the number of unpaired electrons in",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "Structure of Atom",
+   "code": "kech102",
+   "chapterTitle": "Structure of Atom"
+  },
+  {
+   "topic": "WHy do WE nEEd to Classify ElEmEnts",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "GEnEsis of PEriodiC",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "What is the basic difference in approach between the Mendeleev",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "On the basis of quantum numbers, justify that the sixth period",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "ElECtroniC ConfiGUrations",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "ElECtroniC ConfiGUrat",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "PEriodiC trEnds in ProPErtiEs",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Why do elements in the same group have similar physical and ch",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "What does atomic radius and ionic radius really mean to you",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "How do atomic radius vary in a period and in a group",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "What do you understand by isoelectronic species",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Consider",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Explain why cation are smaller and anions larger in radii than",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Among the second period elements the actual ionization enthalp",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "What are the various factors due to which the ionization entha",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Which of the following pairs of elements would have a more neg",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Would you expect the second electron gain enthalpy of O as pos",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "What is the basic difference between the terms electro",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "How would you react to the statement that the electronegativit",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Describe the theory associated with the radius of an atom as i",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "What are the major differences between metals and non-metals",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Use the periodic table to answer the following questions",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "The increasing order of reactivity among group",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Write",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Predict the formulas of the stable binary compounds that would",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Which of the following statements related to the modern period",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Anything",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Considering",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Periodic System",
+   "code": "kech103",
+   "chapterTitle": "Periodic System"
+  },
+  {
+   "topic": "Explain",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "Define",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "HyBRiDiSAtiOn",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "MOLECULAR ORBitAL tHEORy",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "BOnDinG in SOME HOMOnUCLEAR",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "HyDROGEn BOnDinG",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "Although",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "Arrange",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "Apart",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "Which",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "Describe",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "Distinguish",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "Compare",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "Chemical Bonding and Molecular Structure",
+   "code": "kech104",
+   "chapterTitle": "Chemical Bonding and Molecular Structure"
+  },
+  {
+   "topic": "Thermodynamic Terms",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "For the process to occur under adiabatic conditions, the corre",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "The enthalpies of all elements in their standard states are",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "The enthalpy of combustion of methane, graphite and dihydrogen",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "In a process",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "The reaction of cyanamide, NH",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "Calculate the number of kJ of heat necessary to raise",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "Calculate the enthalpy change on freezing of",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "Enthalpy of combustion of carbon to CO",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "Enthalpies of formation of CO(g), CO",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "Given",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "Calculate the standard enthalpy of formation of CH",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "Calculate the enthalpy change for the process",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "For an isolated system",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "For the reaction at",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "For the reaction",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "The equilibrium constant for a reaction is",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "Comment on the thermodynamic stability of NO(g), given",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "Calculate the entropy change in surroundings when",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "Ctu",
+   "code": "kech105",
+   "chapterTitle": "Ctu"
+  },
+  {
+   "topic": "EqUilibriUm in PHYSiCAl",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "EQUILIBRIUM IN CHEMICAL",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "At a certain temperature and total pressure of",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "HOMOGENEOUS EQUILIBRIA",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "HEtErOGEnEOUS EqUilibriA",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "APPliCAtiOnS OF EqUilibriUm",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Explain why pure liquids and solids can be ignored wh",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "FACtOrS AFFECtinG EqUilibriA",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "IONIC EQUILIBRIUM IN SOLUTION",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "ACiDS, bASES AnD SAltS",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "SOlUbilitY EqUilibriA OF",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "One mole of H",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "What is the equilibrium concentration of each of the substance",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Ethyl acetate is formed by the reaction between ethano",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "One of the reaction that takes place in producing steel from i",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Equilibrium constant, K",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Bromine monochloride, BrCl decomposes into bromine and chlorin",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Calculate a)",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Does the number of moles of reaction products increase, decrea",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Which of the following reactions will get affected by",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The equilibrium constant for the following reaction is",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Dihydrogen gas is obtained from natural gas by partial oxidati",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Describe the effect of",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Dihydrogen gas used in Haber",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Predict which of the following reaction will have appreciable",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The value of K",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The reaction, CO(g)",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "What is meant by the conjugate acid-base pair",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Which of the followings are Lewis acids",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "What will be the conjugate bases for the Br",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Write the conjugate acids for the following Br",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The species",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Classify the following species into Lewis acids and Lewis base",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The concentration of hydrogen ion in a sample of soft drink is",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The pH of a sample of vinegar",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The ionization constant of HF, HCOOH and HCN at",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The ionization constant of phenol is",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The first ionization constant of H",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The ionization constant of acetic acid is",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "It has been found that the pH of a",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Assuming complete dissociation, calculate the pH of the follow",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Calculate the pH of the following solutions",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The degree of ionization of a",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The pH of",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "What is the pH of",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Calculate the degree of ionization of",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The ionization constant of dimethylamine is",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Calculate the hydrogen ion concentration in the following biol",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The pH of milk, black coffee, tomato juice, lemon juice and eg",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The solubility of Sr(OH)",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The ionization constant of propanoic acid is",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The ionization constant of nitrous acid is",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Predict if the solutions of the following salts are neutral, a",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The ionization constant of chloroacetic acid is",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Ionic product of water at",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Calculate the pH of the resultant mixtures",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Determine the solubilities of silver chromate, barium chromate",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The solubilit",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "Equal",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The ionization constant of benzoic acid is",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "What is the maximum concentration of equimolar solutions of fe",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "What is the minimum volume of water required to dissolve",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "The concentration of sulphide ion in",
+   "code": "kech106",
+   "chapterTitle": "Equilibrium in Chemical"
+  },
+  {
+   "topic": "CLASSICAL IDEA OF REDOX REACTIONS",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "REDOX REACTIONS IN TERMS OF",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "OXIDATION NUMBER",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "REDOX REACTIONS AND ELECTRODE",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Calculate the oxidation number of sulphur, chromium and nitrog",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Write formulas for the following compounds",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "While sulphur dioxide and hydrogen peroxide can act as oxidisi",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Consider the reactions",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "The compound AgF",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Whenever a reaction between an oxidising agent and a reducing",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "How do you count for the following observations",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Identify the substance oxidised reduced, oxidising agent and r",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Justify giving reactions that among halogens, fluorine is the",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Why does the following reaction occur",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Balance the following equations in basic medium by ion-electro",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "What sorts of informations can you draw from the following rea",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "The Mn",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Consider the elements",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Chlorine is used to purify drinking water",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Refer to the periodic table given in your book and now answer",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "In Ostwald",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Using the standard electrode potentials given in the Table",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Predict the products of electrolysis in each of the following",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Arrange the following metals in the order in which they displa",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Given the standard electrode potentials",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Depict the galvanic cell in which the reaction Zn(s)",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Oxidation and Reduction Reactions",
+   "code": "kech201",
+   "chapterTitle": "Oxidation and Reduction Reactions"
+  },
+  {
+   "topic": "Fundamental cOncePts in",
+   "code": "kech202",
+   "chapterTitle": "Chapter 8"
+  },
+  {
+   "topic": "CLASSIFICATION",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "ALKANES",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "ALKENES",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "ALKYNES",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "AROMATIC HYDROCARBON",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "CARCINOGENICITY AND TOXICITY",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Propanal and pentan-",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Write chemical equations for combustion reaction of the follow",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Draw the cis and trans structures of hex-",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Why is benzene extra ordinarily stable though it contains thre",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "What are the necessary conditions for any system to be aromati",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Explain why the following systems are not aromatic",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "How will you convert benzene into",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "In the alkane H",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "What effect does branching of an alkane chain has on its boili",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Addition of HBr to propene yields",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Write down the products of ozonolysis of",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Arrange benzene, n-hexane and ethyne in decreasing order of ac",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Why does benzene undergo electrophilic substitution reactions",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "How would you convert the following compounds into benzene",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Write structures of all the alkenes which on hydrogenation giv",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Arrange the following set of compounds in order of their decre",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Out of benzene, m",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Suggest the name of a Lewis acid other than anhydrous aluminiu",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Why is Wurtz reaction not preferred for the preparation of alk",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  },
+  {
+   "topic": "Hydrocarbons",
+   "code": "kech203",
+   "chapterTitle": "Hydrocarbons"
+  }
+ ],
+ "11|History": [
+  {
+   "topic": "Early Societies",
+   "code": "kehs101",
+   "chapterTitle": "Early Societies"
+  },
+  {
+   "topic": "Empires",
+   "code": "kehs102",
+   "chapterTitle": "Empires"
+  },
+  {
+   "topic": "Changing Traditions",
+   "code": "kehs103",
+   "chapterTitle": "Changing Traditions"
+  },
+  {
+   "topic": "The Three Orders",
+   "code": "kehs104",
+   "chapterTitle": "The Three Orders"
+  },
+  {
+   "topic": "Theme",
+   "code": "kehs105",
+   "chapterTitle": "Theme"
+  },
+  {
+   "topic": "Towards Modernisation",
+   "code": "kehs106",
+   "chapterTitle": "Towards Modernisation"
+  }
+ ],
+ "11|Accountancy": [
+  {
+   "topic": "Meaning of Accounting",
+   "code": "keac101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Accounting as a Source of Information",
+   "code": "keac101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Objectives of Accounting",
+   "code": "keac101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Role of Accounting",
+   "code": "keac101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Basic Terms in Accounting",
+   "code": "keac101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Generally Accepted Accounting Principles",
+   "code": "keac102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Basic Accounting Concepts",
+   "code": "keac102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Systems of Accounting",
+   "code": "keac102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Basis of Accounting",
+   "code": "keac102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Accounting Standards",
+   "code": "keac102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Business Transactions and Source Document",
+   "code": "keac103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Accounting Equation",
+   "code": "keac103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Using Debit and Credit",
+   "code": "keac103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Books of Original Entry",
+   "code": "keac103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The Ledger",
+   "code": "keac103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Posting from Journal",
+   "code": "keac103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Cash Book",
+   "code": "keac104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "Purchases (Journal) Book",
+   "code": "keac104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "Purchases Return (Journal) Book",
+   "code": "keac104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "Sales (Journal) Book",
+   "code": "keac104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "Sales Return (Journal) Book",
+   "code": "keac104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "Journal Proper",
+   "code": "keac104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "Balancing the Accounts",
+   "code": "keac104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "Need for Reconciliation",
+   "code": "keac105",
+   "chapterTitle": "Chapter 5"
+  },
+  {
+   "topic": "Preparation of Bank Reconciliation Statement",
+   "code": "keac105",
+   "chapterTitle": "Chapter 5"
+  },
+  {
+   "topic": "Meaning of Trial Balance",
+   "code": "keac106",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Objectives of Preparing the Trial Balance",
+   "code": "keac106",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Preparation of Trial Balance",
+   "code": "keac106",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Searching of Errors",
+   "code": "keac106",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Rectification of Errors",
+   "code": "keac106",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Depreciation",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Depreciation and other Similar Terms",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Causes of Depreciation",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Need for Depreciation",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Factors Affecting the Amount of Depreciation",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Methods of Calculating Depreciation Amount",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Straight Line Method and Written Down Method",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Methods of Recording Depreciation",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Disposal of Asset",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Effect of any Addition or Extension to the Existing Asset",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Provisions",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Reserves",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Secret Reserve",
+   "code": "keac107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Stakeholders and their",
+   "code": "keac201",
+   "chapterTitle": "Chapter 8"
+  },
+  {
+   "topic": "Distinction between Capital and Revenue",
+   "code": "keac201",
+   "chapterTitle": "Chapter 8"
+  },
+  {
+   "topic": "Financial Statements",
+   "code": "keac201",
+   "chapterTitle": "Chapter 8"
+  },
+  {
+   "topic": "Trading and Profit and Loss Account",
+   "code": "keac201",
+   "chapterTitle": "Chapter 8"
+  },
+  {
+   "topic": "Operating Profit (EBIT)",
+   "code": "keac201",
+   "chapterTitle": "Chapter 8"
+  },
+  {
+   "topic": "Balance Sheet",
+   "code": "keac201",
+   "chapterTitle": "Chapter 8"
+  },
+  {
+   "topic": "Opening Entry",
+   "code": "keac201",
+   "chapterTitle": "Chapter 8"
+  },
+  {
+   "topic": "Need for Adjustments",
+   "code": "keac202",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "Closing Stock",
+   "code": "keac202",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "Outstanding Expenses",
+   "code": "keac202",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "Prepaid Expenses",
+   "code": "keac202",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "Accrued Income",
+   "code": "keac202",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "Income Received in Advance",
+   "code": "keac202",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "Bad Debts",
+   "code": "keac202",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "Provision for Bad and Doubtful Debts",
+   "code": "keac202",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "Provision for Discount on Debtors",
+   "code": "keac202",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "Manager",
+   "code": "keac202",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "Interest on Capital",
+   "code": "keac202",
+   "chapterTitle": "Chapter 9"
+  }
+ ],
+ "11|Business Studies": [
+  {
+   "topic": "ConCepT of Business",
+   "code": "kebs101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "ClassifiCaTion of Business",
+   "code": "kebs101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "ClassifiCation of objeCtives of",
+   "code": "kebs101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Business risk",
+   "code": "kebs101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "Joint hindu Family Business",
+   "code": "kebs102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "PartnershiP",
+   "code": "kebs102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Cooperative SoCiety",
+   "code": "kebs102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Joint Stock company",
+   "code": "kebs102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "ChoiCe of form of Business",
+   "code": "kebs102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "PrIvate Sector and PublIc",
+   "code": "kebs103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Forms oF orGanisinG Public",
+   "code": "kebs103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Global enterPrises",
+   "code": "kebs103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Joint ventures",
+   "code": "kebs103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Public Private PartnershiP (PPP)",
+   "code": "kebs103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Banking",
+   "code": "kebs104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "TransporTaTion",
+   "code": "kebs104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "BEnEfits of E-BusinEss",
+   "code": "kebs105",
+   "chapterTitle": "Chapter 5"
+  },
+  {
+   "topic": "Limitations of E-BusinEss",
+   "code": "kebs105",
+   "chapterTitle": "Chapter 5"
+  },
+  {
+   "topic": "KindS of Social ReSponSibility",
+   "code": "kebs106",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Social ReSponSibility towaRdS",
+   "code": "kebs106",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Formation oF a Company",
+   "code": "kebs107",
+   "chapterTitle": "Chapter 7"
+  },
+  {
+   "topic": "Meaning, nature and Significance",
+   "code": "kebs108",
+   "chapterTitle": "Chapter 8"
+  },
+  {
+   "topic": "SourceS of finance",
+   "code": "kebs108",
+   "chapterTitle": "Chapter 8"
+  },
+  {
+   "topic": "Micro, SMall and MEdiuM",
+   "code": "kebs109",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "MSME and EntrEprEnEurShip",
+   "code": "kebs109",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "Intellectual ProPerty rIghts",
+   "code": "kebs109",
+   "chapterTitle": "Chapter 9"
+  },
+  {
+   "topic": "Internal trade",
+   "code": "kebs110",
+   "chapterTitle": "Chapter 10"
+  },
+  {
+   "topic": "Wholesale trade",
+   "code": "kebs110",
+   "chapterTitle": "Chapter 10"
+  },
+  {
+   "topic": "Modes of entry Into",
+   "code": "kebs111",
+   "chapterTitle": "Chapter 11"
+  }
+ ],
+ "11|English": [
+  {
+   "topic": "Howard Garrideb",
+   "code": "keww104",
+   "chapterTitle": "Howard Garrideb"
+  },
+  {
+   "topic": "Bout the Author",
+   "code": "keww105",
+   "chapterTitle": "Bout the Author"
+  },
+  {
+   "topic": "Poetry",
+   "code": "keww111",
+   "chapterTitle": "Poetry"
+  },
+  {
+   "topic": "About the Poet",
+   "code": "keww112",
+   "chapterTitle": "About the Poet"
+  },
+  {
+   "topic": "Bout the Poet",
+   "code": "keww114",
+   "chapterTitle": "Bout the Poet"
+  }
+ ],
+ "12|Biology": [
+  {
+   "topic": "FLOWER",
+   "code": "lebo101",
+   "chapterTitle": "Panchanan Maheshwari"
+  },
+  {
+   "topic": "Pre-fertilisation",
+   "code": "lebo101",
+   "chapterTitle": "Panchanan Maheshwari"
+  },
+  {
+   "topic": "Double Fertilisation",
+   "code": "lebo101",
+   "chapterTitle": "Panchanan Maheshwari"
+  },
+  {
+   "topic": "Post-fertilisation",
+   "code": "lebo101",
+   "chapterTitle": "Panchanan Maheshwari"
+  },
+  {
+   "topic": "Apomixis and",
+   "code": "lebo101",
+   "chapterTitle": "Panchanan Maheshwari"
+  },
+  {
+   "topic": "Panchanan Maheshwari",
+   "code": "lebo101",
+   "chapterTitle": "Panchanan Maheshwari"
+  },
+  {
+   "topic": "THE MALE REPRODUCTIVE SYSTEM",
+   "code": "lebo102",
+   "chapterTitle": "Human Reproduction"
+  },
+  {
+   "topic": "The Female Reproductive",
+   "code": "lebo102",
+   "chapterTitle": "Human Reproduction"
+  },
+  {
+   "topic": "Menstrual Cycle",
+   "code": "lebo102",
+   "chapterTitle": "Human Reproduction"
+  },
+  {
+   "topic": "Fertilisation and",
+   "code": "lebo102",
+   "chapterTitle": "Human Reproduction"
+  },
+  {
+   "topic": "Pregnancy and Embryonic",
+   "code": "lebo102",
+   "chapterTitle": "Human Reproduction"
+  },
+  {
+   "topic": "Parturition and Lactation",
+   "code": "lebo102",
+   "chapterTitle": "Human Reproduction"
+  },
+  {
+   "topic": "Human Reproduction",
+   "code": "lebo102",
+   "chapterTitle": "Human Reproduction"
+  },
+  {
+   "topic": "REPRODUCTIVE HEALTH",
+   "code": "lebo103",
+   "chapterTitle": "Strategies"
+  },
+  {
+   "topic": "Population Explosion and",
+   "code": "lebo103",
+   "chapterTitle": "Strategies"
+  },
+  {
+   "topic": "Medical Termination of",
+   "code": "lebo103",
+   "chapterTitle": "Strategies"
+  },
+  {
+   "topic": "Sexually Transmitted",
+   "code": "lebo103",
+   "chapterTitle": "Strategies"
+  },
+  {
+   "topic": "Infertility",
+   "code": "lebo103",
+   "chapterTitle": "Strategies"
+  },
+  {
+   "topic": "Strategies",
+   "code": "lebo103",
+   "chapterTitle": "Strategies"
+  },
+  {
+   "topic": "Mendel",
+   "code": "lebo104",
+   "chapterTitle": "James Watson Francis Crick"
+  },
+  {
+   "topic": "Inheritance of One Gene",
+   "code": "lebo104",
+   "chapterTitle": "James Watson Francis Crick"
+  },
+  {
+   "topic": "INHERITANCE OF TWO GENES",
+   "code": "lebo104",
+   "chapterTitle": "James Watson Francis Crick"
+  },
+  {
+   "topic": "Sex Determination",
+   "code": "lebo104",
+   "chapterTitle": "James Watson Francis Crick"
+  },
+  {
+   "topic": "PLEIOTROPY",
+   "code": "lebo104",
+   "chapterTitle": "James Watson Francis Crick"
+  },
+  {
+   "topic": "MUTATION",
+   "code": "lebo104",
+   "chapterTitle": "James Watson Francis Crick"
+  },
+  {
+   "topic": "GENETIC DISORDERS",
+   "code": "lebo104",
+   "chapterTitle": "James Watson Francis Crick"
+  },
+  {
+   "topic": "James Watson Francis Crick",
+   "code": "lebo104",
+   "chapterTitle": "James Watson Francis Crick"
+  },
+  {
+   "topic": "The DNA",
+   "code": "lebo105",
+   "chapterTitle": "Molecular Basis of Inheritance"
+  },
+  {
+   "topic": "THE SEARCH FOR GENETIC MATERIAL",
+   "code": "lebo105",
+   "chapterTitle": "Molecular Basis of Inheritance"
+  },
+  {
+   "topic": "RNA WORLD",
+   "code": "lebo105",
+   "chapterTitle": "Molecular Basis of Inheritance"
+  },
+  {
+   "topic": "REPLICATION",
+   "code": "lebo105",
+   "chapterTitle": "Molecular Basis of Inheritance"
+  },
+  {
+   "topic": "Transcription",
+   "code": "lebo105",
+   "chapterTitle": "Molecular Basis of Inheritance"
+  },
+  {
+   "topic": "Genetic Code",
+   "code": "lebo105",
+   "chapterTitle": "Molecular Basis of Inheritance"
+  },
+  {
+   "topic": "Translation",
+   "code": "lebo105",
+   "chapterTitle": "Molecular Basis of Inheritance"
+  },
+  {
+   "topic": "Regulation of Gene",
+   "code": "lebo105",
+   "chapterTitle": "Molecular Basis of Inheritance"
+  },
+  {
+   "topic": "Human Genome Project",
+   "code": "lebo105",
+   "chapterTitle": "Molecular Basis of Inheritance"
+  },
+  {
+   "topic": "DNA Fingerprinting",
+   "code": "lebo105",
+   "chapterTitle": "Molecular Basis of Inheritance"
+  },
+  {
+   "topic": "Molecular Basis of Inheritance",
+   "code": "lebo105",
+   "chapterTitle": "Molecular Basis of Inheritance"
+  },
+  {
+   "topic": "ORIGIN OF LIFE",
+   "code": "lebo106",
+   "chapterTitle": "Evolution"
+  },
+  {
+   "topic": "Evolution of Life Forms - A",
+   "code": "lebo106",
+   "chapterTitle": "Evolution"
+  },
+  {
+   "topic": "What are the Evidences",
+   "code": "lebo106",
+   "chapterTitle": "Evolution"
+  },
+  {
+   "topic": "What is Adaptive",
+   "code": "lebo106",
+   "chapterTitle": "Evolution"
+  },
+  {
+   "topic": "Biological Evolution",
+   "code": "lebo106",
+   "chapterTitle": "Evolution"
+  },
+  {
+   "topic": "Mechanism of Evolution",
+   "code": "lebo106",
+   "chapterTitle": "Evolution"
+  },
+  {
+   "topic": "Hardy - Weinberg",
+   "code": "lebo106",
+   "chapterTitle": "Evolution"
+  },
+  {
+   "topic": "Origin and Evolution of",
+   "code": "lebo106",
+   "chapterTitle": "Evolution"
+  },
+  {
+   "topic": "Evolution",
+   "code": "lebo106",
+   "chapterTitle": "Evolution"
+  },
+  {
+   "topic": "Common Diseases in",
+   "code": "lebo107",
+   "chapterTitle": "Human Health and Disease"
+  },
+  {
+   "topic": "Immunity",
+   "code": "lebo107",
+   "chapterTitle": "Human Health and Disease"
+  },
+  {
+   "topic": "Cancer",
+   "code": "lebo107",
+   "chapterTitle": "Human Health and Disease"
+  },
+  {
+   "topic": "Drugs and Alcohol Abuse",
+   "code": "lebo107",
+   "chapterTitle": "Human Health and Disease"
+  },
+  {
+   "topic": "Human Health and Disease",
+   "code": "lebo107",
+   "chapterTitle": "Human Health and Disease"
+  },
+  {
+   "topic": "Microbes in Household",
+   "code": "lebo108",
+   "chapterTitle": "Microbes in Human Welfare"
+  },
+  {
+   "topic": "Microbes in Industrial",
+   "code": "lebo108",
+   "chapterTitle": "Microbes in Human Welfare"
+  },
+  {
+   "topic": "Microbes in Sewage",
+   "code": "lebo108",
+   "chapterTitle": "Microbes in Human Welfare"
+  },
+  {
+   "topic": "Microbes in Production of",
+   "code": "lebo108",
+   "chapterTitle": "Microbes in Human Welfare"
+  },
+  {
+   "topic": "Microbes as Biocontrol",
+   "code": "lebo108",
+   "chapterTitle": "Microbes in Human Welfare"
+  },
+  {
+   "topic": "Microbes as Biofertilisers",
+   "code": "lebo108",
+   "chapterTitle": "Microbes in Human Welfare"
+  },
+  {
+   "topic": "Microbes in Human Welfare",
+   "code": "lebo108",
+   "chapterTitle": "Microbes in Human Welfare"
+  },
+  {
+   "topic": "PRINCIPLES OF BIOTECHNOLOGY",
+   "code": "lebo109",
+   "chapterTitle": "Herbert Boyer"
+  },
+  {
+   "topic": "Tools of Recombinant DNA",
+   "code": "lebo109",
+   "chapterTitle": "Herbert Boyer"
+  },
+  {
+   "topic": "Processes of Recombinant",
+   "code": "lebo109",
+   "chapterTitle": "Herbert Boyer"
+  },
+  {
+   "topic": "Herbert Boyer",
+   "code": "lebo109",
+   "chapterTitle": "Herbert Boyer"
+  },
+  {
+   "topic": "BIOTECHNOLOGICAL APPLICATIONS IN",
+   "code": "lebo110",
+   "chapterTitle": "Agriculture"
+  },
+  {
+   "topic": "Biotechnological",
+   "code": "lebo110",
+   "chapterTitle": "Agriculture"
+  },
+  {
+   "topic": "Transgenic Animals",
+   "code": "lebo110",
+   "chapterTitle": "Agriculture"
+  },
+  {
+   "topic": "Ethical Issues",
+   "code": "lebo110",
+   "chapterTitle": "Agriculture"
+  },
+  {
+   "topic": "Agriculture",
+   "code": "lebo110",
+   "chapterTitle": "Agriculture"
+  },
+  {
+   "topic": "Populations",
+   "code": "lebo111",
+   "chapterTitle": "Ramdeo Misra"
+  },
+  {
+   "topic": "Ramdeo Misra",
+   "code": "lebo111",
+   "chapterTitle": "Ramdeo Misra"
+  },
+  {
+   "topic": "Ecosystem",
+   "code": "lebo112",
+   "chapterTitle": "Ecosystem"
+  },
+  {
+   "topic": "PRODUCTIVITY",
+   "code": "lebo112",
+   "chapterTitle": "Ecosystem"
+  },
+  {
+   "topic": "Decomposition",
+   "code": "lebo112",
+   "chapterTitle": "Ecosystem"
+  },
+  {
+   "topic": "Energy Flow",
+   "code": "lebo112",
+   "chapterTitle": "Ecosystem"
+  },
+  {
+   "topic": "Ecological Pyramids",
+   "code": "lebo112",
+   "chapterTitle": "Ecosystem"
+  },
+  {
+   "topic": "BIODIVERSITY",
+   "code": "lebo113",
+   "chapterTitle": "Biodiversity and Conservation"
+  },
+  {
+   "topic": "Biodiversity Conservation",
+   "code": "lebo113",
+   "chapterTitle": "Biodiversity and Conservation"
+  },
+  {
+   "topic": "Biodiversity and Conservation",
+   "code": "lebo113",
+   "chapterTitle": "Biodiversity and Conservation"
+  }
+ ],
+ "12|Chemistry": [
+  {
+   "topic": "Types ofTypes of",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Expressing",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Solubility",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Calculate the mass of urea (NH",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Calculate (a) molality (b) molarity and (c) mole fraction of K",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Colligative",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Henry",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "The vapour pressure of pure liquids A and B are",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Vapour pressure of pure water at",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Boiling point of water at",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Calculate the mass of ascorbic acid (Vitamin C, C",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Calculate the osmotic pressure in pascals exerted by a solutio",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "The partial pressure of ethane over a solution containing",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "What is meant by positive and negative deviations from Raoult'",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "An aqueous solution of",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Heptane and octane form an ideal solution",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "The vapour pressure of water is",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Calculate the mass of a non-volatile solute (molar mas",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Two elements A and B form compounds having formula AB",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Suggest the most important type of intermolecular attra",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Based on solute-solvent interactions, arrange the following in",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Amongst the following compounds, identify which are ins",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "If the density of some lake water is",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "If the solubility product of CuS is",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Calculate the mass percentage of aspirin (C",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Nalorphene (C",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Calculate the amount of benzoic acid (C",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "The depression in freezing point of water observed for",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Calculate the depression in the freezing point of wate",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Vapour pressure of water at",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Vapour pressures of pure acetone and chloroform at",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Benzene and toluene form ideal solution over the entire range",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "The air is a mixture of a number of gases",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Determine the amount of CaCl",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Determine the osmotic pressure of a solution prepared by disso",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "Conh",
+   "code": "lech101",
+   "chapterTitle": "Conh"
+  },
+  {
+   "topic": "ElectrochemicalElectrochemical",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Galvanic Cells",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Consult the table of standard electrode potentials and",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "ConductanceConductance",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Calculate the emf of the cell in which the following reaction",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "The cell in which the following reaction occurs",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Why does the conductivity of a solution decrease with dilution",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Suggest a way to determine the",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "The molar conductivity of",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "If a current of",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Suggest a list of metals that are extracted electrolytically",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Consider the reaction",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Write the chemistry of recharging the lead storage battery, hi",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Suggest two materials other than hydrogen that can be used as",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Explain how rusting of iron is envisaged as setting u",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Three electrolytic cells A,B,C containing solutions of ZnSO",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Using the standard electrode potentials given in Table",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Predict the products of electrolysis in each of the f",
+   "code": "lech102",
+   "chapterTitle": "Chapter 2"
+  },
+  {
+   "topic": "Rate of aRate of a",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "In a reaction",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "For a reaction, A",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The conversion of molecules X to Y follows second ord",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Collision",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Time required to decompose SO",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "What will be the effect of temperature on rate constant",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The rate of the chemical reaction doubles for an increase of",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The activation energy for the reaction",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "In a reaction between A and B, the initial rate of",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The following results have been obtained during the kinetic st",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The reaction between A and B is first order with res",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Calculate the half-life of a first order reaction from",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The half-life for radioactive decay of",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The experimental data for decomposition of N",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The rate constant for a first order reaction is",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "During nuclear explosion, one of the products is",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "For a first order reaction, show that time required f",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "For the decomposition of azoisopropane to hexane and n",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The following data were obtained during the first orde",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The rate constant for the decomposition of N",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The rate constant for the decomposition of hydrocarbons",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Consider a certain reaction A",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Sucrose decomposes in acid solution into glucose and f",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The decomposition of hydrocarbon follows the equation",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The rate constant for the first order decomposition of",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The decomposition of A into product has value of k as",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The time required for",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "The rate of a reaction quadruples when the temperature",
+   "code": "lech103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "Position in thePosition in the",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "ElectronicElectronic",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "GeneralGeneral",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "The E",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "How would you account for the irregular variation of",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Why is the highest oxidation state of a metal exhibit",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Which is a stronger reducing agent Cr",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Calculate the",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Explain why Cu",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Actinoid contraction is greater from element to element",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Explain giving reasons",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "What are interstitial compounds",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "How is the variability in oxidation states of transiti",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Describe the preparation of potassium dichromate from i",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Describe the oxidising action of potassium dichromate a",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Describe the preparation of potassium permanganate",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "For M",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Predict which of the following will be coloured in aq",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Compare the stability of",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Compare the chemistry of actinoids with that of the l",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "How would you account for the following",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "What is meant by",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Which metal in the first series of transition metals",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Calculate the number of unpaired electrons in the foll",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Give examples and suggest reasons for the following features o",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Indicate the steps in the preparation of",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "What are alloys",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "What are inner transition elements",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "The chemistry of the actinoid elements is not so smoo",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Which is the last element in the series of the actin",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Use Hund",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Name the members of the lanthanoid series which exhibi",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Compare the chemistry of the actinoids with that of l",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Write the electronic configurations of the elements wit",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Compare the general characteristics of the first series",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Write down the number of",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Comment on the statement that elements of the first t",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "What can be inferred from the magnetic moment values of the fo",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Vii",
+   "code": "lech104",
+   "chapterTitle": "Vii"
+  },
+  {
+   "topic": "Werner",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Definitions ofDefinitions of",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "NomenclatureNomenclature",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Isomerism inIsomerism in",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Bonding inBonding in",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Bonding in",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "ImportanceImportance",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Explain",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Predict the number of unpaired electrons in the square planar",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "The hexaquo manganese(II) ion contains five unpaired electrons",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Write all the geometrical isomers of",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Aqueous copper sulphate solution (blue in colour) gives",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "What is the coordination entity formed when excess of",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Discuss the nature of bonding in the following coordin",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Draw figure to show the splitting of d orbitals in a",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "What is spectrochemical series",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "What is crystal field splitting energy",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Give the oxidation state, d orbital occupation and coo",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Write down the IUPAC name for each of the following complexes",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Explain the violet colour of the complex",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "What is meant by the chelate effect",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Discuss briefly giving an example in each case the ro",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "Nch",
+   "code": "lech105",
+   "chapterTitle": "Nch"
+  },
+  {
+   "topic": "ClassificationClassification",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Nomenclature",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Nature ofNature of",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Methods of",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Preparation ofPreparation of",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "PhysicalPhysical",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "ChemicalChemical",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "In the following pairs of halogen compounds, which compound un",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Identify A, B, C, D, E, R and R",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Predict all the alkenes that would be formed by dehyd",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "How will you bring about the following conversions",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Explain why",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Give the uses of freon",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Write the structure of the major organic product in each of th",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Write the mechanism of the following reaction",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Arrange the compounds of each set in order of reactiv",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Out of C",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "How the following conversions can be carried out",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "The treatment of alkyl chlorides with aqueous KOH lead",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Primary alkyl halide C",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "What happens when",
+   "code": "lech201",
+   "chapterTitle": "Chapter 6"
+  },
+  {
+   "topic": "Identify allylic alcohols in the above examples",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Name the following compounds according to IUPAC system",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Alcohols andAlcohols and",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Write structures of the products of the following reactions",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Give structures of the products you would expect when each of",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Predict the major product of acid catalysed dehydration of",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Ortho and para nitrophenols are more acidic than pheno",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Write the equations involved in the following reactions",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Write the reactions of Williamson synthesis of",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Which of the following is an appropriate set of react",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Predict the products of the following reactions",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Show how will you synthesise",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Give two reactions that show the acidic nature of phe",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Explain why is ortho nitrophenol more acidic than orth",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Explain how does the",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Give equations of the following reactions",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Explain the following with an example",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Write the mechanism of acid dehydration of ethanol to",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "How are the following conversions carried out",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Name the reagents used in the following reactions",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Give reason for the higher boiling point of ethanol i",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Give IUPAC names of the following ethers",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Write the names of reagents and equations for the preparation",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Illustrate with examples the limitations of Williamson",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "How is",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Preparation of ethers by acid dehydration of secondary",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Write the equation of the reaction of hydrogen iodide",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Explain the fact that in aryl alkyl ethers (i) the a",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Write the mechanism of the reaction of HI with methox",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Write equations of the following reactions",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Show how would you synthesise the following alcohols f",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Och",
+   "code": "lech202",
+   "chapterTitle": "Och"
+  },
+  {
+   "topic": "Nomenclature and Structure of Carbonyl GroupNomenclature",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Preparation of AldehydesPreparation of Aldehydes",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Physical",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Chemical",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Nomenclature and Structure of Carboxyl GroupNomenclature",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Chemical ReactionsChemical Reactions",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Uses ofUses of",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "An organic compound (A) (molecular formula C",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Arrange the following compounds in increasing order of their p",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Give simple chemical tests to distinguish between the followin",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "How will you prepare the following compounds from benz",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "How will you bring about the following conversions in not more",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Describe the following",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Complete each synthesis by giving missing starting mate",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Give plausible explanation for each of the following",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "An organic compound contains",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Although phenoxide ion has more number of resonating s",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Coch",
+   "code": "lech203",
+   "chapterTitle": "Coch"
+  },
+  {
+   "topic": "Structure of Amines",
+   "code": "lech204",
+   "chapterTitle": "Nhch"
+  },
+  {
+   "topic": "PreparationPreparation",
+   "code": "lech204",
+   "chapterTitle": "Nhch"
+  },
+  {
+   "topic": "Write chemical reaction of aniline with benzoyl chloride and w",
+   "code": "lech204",
+   "chapterTitle": "Nhch"
+  },
+  {
+   "topic": "Write structures of different isomers corresponding to the mol",
+   "code": "lech204",
+   "chapterTitle": "Nhch"
+  },
+  {
+   "topic": "An aromatic compound",
+   "code": "lech204",
+   "chapterTitle": "Nhch"
+  },
+  {
+   "topic": "Complete the following reactions",
+   "code": "lech204",
+   "chapterTitle": "Nhch"
+  },
+  {
+   "topic": "Why cannot aromatic primary amines be prepared by Gabr",
+   "code": "lech204",
+   "chapterTitle": "Nhch"
+  },
+  {
+   "topic": "Write the reactions of (i) aromatic and (ii) aliphatic",
+   "code": "lech204",
+   "chapterTitle": "Nhch"
+  },
+  {
+   "topic": "Nhch",
+   "code": "lech204",
+   "chapterTitle": "Nhch"
+  },
+  {
+   "topic": "CarbohydratesCarbohydrates",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "What are the expected products of hydrolysis of lactose",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "How do you explain the absence of aldehyde group in",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "The melting points and solubility in water of amino a",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "Where does the water present in the egg go after boiling the e",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "Hormones",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "What products would be formed when a nucleotide from",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "When RNA is hydrolysed, there is no relationship among the qua",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "What happens when D-glucose is treated with the follow",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "Enumerate the reactions of D-glucose which cannot be e",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "What are essential and non-essential amino acids",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "Define the following as related to proteins",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "What are the common types of secondary structure of p",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "What type of bonding helps in stabilising the a-helix structur",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "Differentiate between globular and fibrous proteins",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "How do you explain the amphoteric behaviour of amino",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "What are enzymes",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "What is the effect of denaturation on the structure o",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "How are vitamins classified",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "Why are vitamin A and vitamin C essential to us",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "What are nucleic acids",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "What is the difference between a nucleoside and a nuc",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "The two strands in DNA are not identical but are com",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "Write the important structural and functional difference",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "What are the different types of RNA found in the cel",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  },
+  {
+   "topic": "Cho",
+   "code": "lech205",
+   "chapterTitle": "Cho"
+  }
+ ],
+ "12|Physics": [
+  {
+   "topic": "What is the force between two small charged spheres",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "ELECTRIC CHARGE",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "CONDUCTORS AND INSULATORS",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "BASIC PROPERTIES OF ELECTRIC",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "COULOMB",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "FORCES BETWEEN MULTIPLE CHARGES",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "ELECTRIC",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "ELECTRIC FIELD LINES",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "ELECTRIC FLUX",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "ELECTRIC DIPOLE",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "DIPOLE IN A UNIFORM EXTERNAL",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "CONTINUOUS CHARGE DISTRIBUTION",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "GAUSS",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "APPLICATIONS OF GAUSS",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "What is the net flux of the uniform electric field o",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "Careful measurement of the electric field at the surfa",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "An infinite line charge produces a field of",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "Two large, thin metal plates are parallel and close to each ot",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "Electric Charges and Fields",
+   "code": "leph101",
+   "chapterTitle": "Electric Charges and Fields"
+  },
+  {
+   "topic": "Equation (",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "ELECTROSTATIC POTENTIAL",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "POTENTIAL DUE TO A POINT CHARGE",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "POTENTIAL DUE TO",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "POTENTIAL DUE TO A SYSTEM OF CHARGES",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "EQUIPOTENTIAL SURFACES",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "POTENTIAL ENERGY OF A SYSTEM OF CHARGES",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "POTENTIAL ENERGY IN AN EXTERNAL FIELD",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "ELECTROSTATICS OF CONDUCTORS",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "DIELECTRICS AND POLARISATION",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "CAPACITORS AND CAPACITANCE",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "THE PARALLEL PLATE CAPACITOR",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "EFFECT OF DIELECTRIC ON CAPACITANCE",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "COMBINATION OF CAPACITORS",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "ENERGY STORED IN A CAPACITOR",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "Ntroductionntroduction Ntroductionntroduction Ntroduction",
+   "code": "leph102",
+   "chapterTitle": "Ntroductionntroduction Ntroductionntroduction Ntroduction"
+  },
+  {
+   "topic": "The storage battery of a car has an emf of",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "ELECTRIC CURRENT",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "ELECTRIC CURRENTS IN CONDUCTORS",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "Example",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "DRIFT OF ELECTRONS AND THE ORIGIN",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "LIMITATIONS OF OHM",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "RESISTIVITY OF VARIOUS MATERIALS",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "TEMPERATURE DEPENDENCE OF RESISTIVITY",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "ELECTRICAL ENERGY, POWER",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "CELLS, EMF, INTERNAL RESISTANCE",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "KIRCHHOFF",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "Two cells of emf",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "Current Electricity",
+   "code": "leph103",
+   "chapterTitle": "Current Electricity"
+  },
+  {
+   "topic": "MAGNETIC FORCE",
+   "code": "leph104",
+   "chapterTitle": "Moving Charges and Magnetism"
+  },
+  {
+   "topic": "MOTION IN A MAGNETIC FIELD",
+   "code": "leph104",
+   "chapterTitle": "Moving Charges and Magnetism"
+  },
+  {
+   "topic": "MAGNETIC FIELD DUE TO A CURRENT",
+   "code": "leph104",
+   "chapterTitle": "Moving Charges and Magnetism"
+  },
+  {
+   "topic": "MAGNETIC FIELD ON THE AXIS OF A CIRCULAR",
+   "code": "leph104",
+   "chapterTitle": "Moving Charges and Magnetism"
+  },
+  {
+   "topic": "AMPERE",
+   "code": "leph104",
+   "chapterTitle": "Moving Charges and Magnetism"
+  },
+  {
+   "topic": "Solution (a) Consider the case r",
+   "code": "leph104",
+   "chapterTitle": "Moving Charges and Magnetism"
+  },
+  {
+   "topic": "FORCE BETWEEN TWO PARALLEL",
+   "code": "leph104",
+   "chapterTitle": "Moving Charges and Magnetism"
+  },
+  {
+   "topic": "The ampere is the value of that steady current which, when mai",
+   "code": "leph104",
+   "chapterTitle": "Moving Charges and Magnetism"
+  },
+  {
+   "topic": "Solution",
+   "code": "leph104",
+   "chapterTitle": "Moving Charges and Magnetism"
+  },
+  {
+   "topic": "In a chamber, a uniform magnetic field of",
+   "code": "leph104",
+   "chapterTitle": "Moving Charges and Magnetism"
+  },
+  {
+   "topic": "Reprint",
+   "code": "leph104",
+   "chapterTitle": "Moving Charges and Magnetism"
+  },
+  {
+   "topic": "Moving Charges and Magnetism",
+   "code": "leph104",
+   "chapterTitle": "Moving Charges and Magnetism"
+  },
+  {
+   "topic": "The arrangement",
+   "code": "leph105",
+   "chapterTitle": "Magnetism and Matter"
+  },
+  {
+   "topic": "MAGNETISM AND GAUSS",
+   "code": "leph105",
+   "chapterTitle": "Magnetism and Matter"
+  },
+  {
+   "topic": "MAGNETISATION AND MAGNETIC INTENSITY",
+   "code": "leph105",
+   "chapterTitle": "Magnetism and Matter"
+  },
+  {
+   "topic": "Magnetism and Matter",
+   "code": "leph105",
+   "chapterTitle": "Magnetism and Matter"
+  },
+  {
+   "topic": "The magnitude of the induced emf in a circuit is equal",
+   "code": "leph106",
+   "chapterTitle": "Electromagnetic Induction"
+  },
+  {
+   "topic": "THE EXPERIMENTS OF FARADAY AND",
+   "code": "leph106",
+   "chapterTitle": "Electromagnetic Induction"
+  },
+  {
+   "topic": "MAGNETIC FLUX",
+   "code": "leph106",
+   "chapterTitle": "Electromagnetic Induction"
+  },
+  {
+   "topic": "FARADAY",
+   "code": "leph106",
+   "chapterTitle": "Electromagnetic Induction"
+  },
+  {
+   "topic": "MOTIONAL ELECTROMOTIVE FORCE",
+   "code": "leph106",
+   "chapterTitle": "Electromagnetic Induction"
+  },
+  {
+   "topic": "We explained the above example with air as the medium within t",
+   "code": "leph106",
+   "chapterTitle": "Electromagnetic Induction"
+  },
+  {
+   "topic": "Electromagnetic Induction",
+   "code": "leph106",
+   "chapterTitle": "Electromagnetic Induction"
+  },
+  {
+   "topic": "AC VOLTAGE APPLIED TO A RESISTOR",
+   "code": "leph107",
+   "chapterTitle": "Alternating Current"
+  },
+  {
+   "topic": "AC VOLTAGE APPLIED TO AN INDUCTOR",
+   "code": "leph107",
+   "chapterTitle": "Alternating Current"
+  },
+  {
+   "topic": "AC VOLTAGE APPLIED",
+   "code": "leph107",
+   "chapterTitle": "Alternating Current"
+  },
+  {
+   "topic": "AC VOLTAGE APPLIED TO A SERIES LCR CIRCUIT",
+   "code": "leph107",
+   "chapterTitle": "Alternating Current"
+  },
+  {
+   "topic": "POWER IN AC CIRCUIT",
+   "code": "leph107",
+   "chapterTitle": "Alternating Current"
+  },
+  {
+   "topic": "FIGURE",
+   "code": "leph107",
+   "chapterTitle": "Alternating Current"
+  },
+  {
+   "topic": "Since f is negative, the current in the circuit lags",
+   "code": "leph107",
+   "chapterTitle": "Alternating Current"
+  },
+  {
+   "topic": "Alternating Current",
+   "code": "leph107",
+   "chapterTitle": "Alternating Current"
+  },
+  {
+   "topic": "Heinrich Rudolf Hertz",
+   "code": "leph108",
+   "chapterTitle": "Electromagnetic Waves"
+  },
+  {
+   "topic": "DISPLACEMENT CURRENT",
+   "code": "leph108",
+   "chapterTitle": "Electromagnetic Waves"
+  },
+  {
+   "topic": "ELECTROMAGNETIC WAVES",
+   "code": "leph108",
+   "chapterTitle": "Electromagnetic Waves"
+  },
+  {
+   "topic": "ELECTROMAGNETIC SPECTRUM",
+   "code": "leph108",
+   "chapterTitle": "Electromagnetic Waves"
+  },
+  {
+   "topic": "The amplitude of the magnetic field part of a harmoni",
+   "code": "leph108",
+   "chapterTitle": "Electromagnetic Waves"
+  },
+  {
+   "topic": "Suppose that the electric field amplitude of an electromagneti",
+   "code": "leph108",
+   "chapterTitle": "Electromagnetic Waves"
+  },
+  {
+   "topic": "The terminology of different parts of the electromagnet",
+   "code": "leph108",
+   "chapterTitle": "Electromagnetic Waves"
+  },
+  {
+   "topic": "In a plane electromagnetic wave, the electric field os",
+   "code": "leph108",
+   "chapterTitle": "Electromagnetic Waves"
+  },
+  {
+   "topic": "REFLECTION OF LIGHT",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "REFRACTION",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "REFRACTION THROUGH A PRISM",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "The image formed by the first lens serves as the object for th",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "An object of size",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "What is the focal length of a convex lens of focal",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "Observing total internal",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "Prisms designed to bend rays by",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "Use the mirror equation to deduce that",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "The image of a small electric bulb fixed on the wall of a room",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "At what angle should a ray of light be incident on the face of",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "What should be the distance between the object in Exercise",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "Answer the following questions",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "An angular magnification (magnifying power) of",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "Light incident normally on a plane mirror attached to a galvan",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "Ray Optics and Optical Instruments",
+   "code": "leph201",
+   "chapterTitle": "Ray Optics and Optical Instruments"
+  },
+  {
+   "topic": "HUYGENS PRINCIPLE",
+   "code": "leph202",
+   "chapterTitle": "Wave Optics"
+  },
+  {
+   "topic": "REFRACTION AND REFLECTION OF",
+   "code": "leph202",
+   "chapterTitle": "Wave Optics"
+  },
+  {
+   "topic": "COHERENT AND INCOHERENT",
+   "code": "leph202",
+   "chapterTitle": "Wave Optics"
+  },
+  {
+   "topic": "INTERFERENCE",
+   "code": "leph202",
+   "chapterTitle": "Wave Optics"
+  },
+  {
+   "topic": "DIFFRACTION",
+   "code": "leph202",
+   "chapterTitle": "Wave Optics"
+  },
+  {
+   "topic": "Holding two blades to",
+   "code": "leph202",
+   "chapterTitle": "Wave Optics"
+  },
+  {
+   "topic": "Wave Optics",
+   "code": "leph202",
+   "chapterTitle": "Wave Optics"
+  },
+  {
+   "topic": "Find the",
+   "code": "leph203",
+   "chapterTitle": "Dual Nature of Radiation and Matter"
+  },
+  {
+   "topic": "ELECTRON",
+   "code": "leph203",
+   "chapterTitle": "Dual Nature of Radiation and Matter"
+  },
+  {
+   "topic": "PHOTOELECTRIC EFFECT",
+   "code": "leph203",
+   "chapterTitle": "Dual Nature of Radiation and Matter"
+  },
+  {
+   "topic": "EXPERIMENTAL STUDY OF PHOTOELECTRIC",
+   "code": "leph203",
+   "chapterTitle": "Dual Nature of Radiation and Matter"
+  },
+  {
+   "topic": "PHOTOELECTRIC EFFECT AND WAVE THEORY",
+   "code": "leph203",
+   "chapterTitle": "Dual Nature of Radiation and Matter"
+  },
+  {
+   "topic": "EINSTEIN",
+   "code": "leph203",
+   "chapterTitle": "Dual Nature of Radiation and Matter"
+  },
+  {
+   "topic": "PARTICLE NATURE OF LIGHT",
+   "code": "leph203",
+   "chapterTitle": "Dual Nature of Radiation and Matter"
+  },
+  {
+   "topic": "WAVE NATURE OF MATTER",
+   "code": "leph203",
+   "chapterTitle": "Dual Nature of Radiation and Matter"
+  },
+  {
+   "topic": "Light of wavelength",
+   "code": "leph203",
+   "chapterTitle": "Dual Nature of Radiation and Matter"
+  },
+  {
+   "topic": "What is the de Broglie wavelength of",
+   "code": "leph203",
+   "chapterTitle": "Dual Nature of Radiation and Matter"
+  },
+  {
+   "topic": "Show that the wavelength of electromagnetic radiation i",
+   "code": "leph203",
+   "chapterTitle": "Dual Nature of Radiation and Matter"
+  },
+  {
+   "topic": "Dual Nature of Radiation and Matter",
+   "code": "leph203",
+   "chapterTitle": "Dual Nature of Radiation and Matter"
+  },
+  {
+   "topic": "The magnitude of this force is",
+   "code": "leph204",
+   "chapterTitle": "Atoms"
+  },
+  {
+   "topic": "Experimental data points (shown by",
+   "code": "leph204",
+   "chapterTitle": "Atoms"
+  },
+  {
+   "topic": "THE LINE SPECTRA OF THE HYDROGEN ATOM",
+   "code": "leph204",
+   "chapterTitle": "Atoms"
+  },
+  {
+   "topic": "DE BROGLIE",
+   "code": "leph204",
+   "chapterTitle": "Atoms"
+  },
+  {
+   "topic": "The radius of the innermost electron orbit of a hydro",
+   "code": "leph204",
+   "chapterTitle": "Atoms"
+  },
+  {
+   "topic": "In accordance with the Bohr",
+   "code": "leph204",
+   "chapterTitle": "Atoms"
+  },
+  {
+   "topic": "Atoms",
+   "code": "leph204",
+   "chapterTitle": "Atoms"
+  },
+  {
+   "topic": "ATOMIC MASSES AND COMPOSITION OF NUCLEUS",
+   "code": "leph205",
+   "chapterTitle": "Nuclei"
+  },
+  {
+   "topic": "SIZE OF THE NUCLEUS",
+   "code": "leph205",
+   "chapterTitle": "Nuclei"
+  },
+  {
+   "topic": "MASS-E",
+   "code": "leph205",
+   "chapterTitle": "Nuclei"
+  },
+  {
+   "topic": "NUCLEAR FORCE",
+   "code": "leph205",
+   "chapterTitle": "Nuclei"
+  },
+  {
+   "topic": "RADIOACTIVITY",
+   "code": "leph205",
+   "chapterTitle": "Nuclei"
+  },
+  {
+   "topic": "NUCLEAR ENERGY",
+   "code": "leph205",
+   "chapterTitle": "Nuclei"
+  },
+  {
+   "topic": "How long can an electric lamp of",
+   "code": "leph205",
+   "chapterTitle": "Nuclei"
+  },
+  {
+   "topic": "Calculate the height of the potential barrier for a h",
+   "code": "leph205",
+   "chapterTitle": "Nuclei"
+  },
+  {
+   "topic": "From the relation R",
+   "code": "leph205",
+   "chapterTitle": "Nuclei"
+  },
+  {
+   "topic": "Nuclei",
+   "code": "leph205",
+   "chapterTitle": "Nuclei"
+  },
+  {
+   "topic": "An intrinsic semiconductor",
+   "code": "leph206",
+   "chapterTitle": "Semiconductor"
+  },
+  {
+   "topic": "CLASSIFICATION OF METALS, CONDUCTORS AND",
+   "code": "leph206",
+   "chapterTitle": "Semiconductor"
+  },
+  {
+   "topic": "INTRINSIC SEMICONDUCTOR",
+   "code": "leph206",
+   "chapterTitle": "Semiconductor"
+  },
+  {
+   "topic": "EXTRINSIC SEMICONDUCTOR",
+   "code": "leph206",
+   "chapterTitle": "Semiconductor"
+  },
+  {
+   "topic": "When a forward bias is applied to a p-n junction, it",
+   "code": "leph206",
+   "chapterTitle": "Semiconductor"
+  },
+  {
+   "topic": "SEMICONDUCTOR DIODE",
+   "code": "leph206",
+   "chapterTitle": "Semiconductor"
+  },
+  {
+   "topic": "APPLICATION OF JUNCTION DIODE AS A RECTIFIER",
+   "code": "leph206",
+   "chapterTitle": "Semiconductor"
+  },
+  {
+   "topic": "Semiconductor",
+   "code": "leph206",
+   "chapterTitle": "Semiconductor"
+  }
+ ],
+ "12|History": [
+  {
+   "topic": "An auction in Burdwan",
+   "code": "lehs301",
+   "chapterTitle": "Theme Nine"
+  },
+  {
+   "topic": "The problem of unpaid revenue",
+   "code": "lehs301",
+   "chapterTitle": "Theme Nine"
+  },
+  {
+   "topic": "Why zamindars defaulted on payments",
+   "code": "lehs301",
+   "chapterTitle": "Theme Nine"
+  },
+  {
+   "topic": "The rise of the jotedars",
+   "code": "lehs301",
+   "chapterTitle": "Theme Nine"
+  },
+  {
+   "topic": "The zamindars resist",
+   "code": "lehs301",
+   "chapterTitle": "Theme Nine"
+  },
+  {
+   "topic": "The Fifth Report",
+   "code": "lehs301",
+   "chapterTitle": "Theme Nine"
+  },
+  {
+   "topic": "Theme Nine",
+   "code": "lehs301",
+   "chapterTitle": "Theme Nine"
+  },
+  {
+   "topic": "The Alvars and Nayanars of Tamil Nadu",
+   "code": "lehs202",
+   "chapterTitle": "Theme Six"
+  },
+  {
+   "topic": "Attitudes towards caste",
+   "code": "lehs202",
+   "chapterTitle": "Theme Six"
+  },
+  {
+   "topic": "Women devotees",
+   "code": "lehs202",
+   "chapterTitle": "Theme Six"
+  },
+  {
+   "topic": "Relations with the state",
+   "code": "lehs202",
+   "chapterTitle": "Theme Six"
+  },
+  {
+   "topic": "Theme Six",
+   "code": "lehs202",
+   "chapterTitle": "Theme Six"
+  },
+  {
+   "topic": "Laying out drains",
+   "code": "lehs101",
+   "chapterTitle": "Theme One"
+  },
+  {
+   "topic": "Domestic architecture",
+   "code": "lehs101",
+   "chapterTitle": "Theme One"
+  },
+  {
+   "topic": "The Citadel",
+   "code": "lehs101",
+   "chapterTitle": "Theme One"
+  },
+  {
+   "topic": "Theme One",
+   "code": "lehs101",
+   "chapterTitle": "Theme One"
+  },
+  {
+   "topic": "Looking for sources",
+   "code": "lehs204",
+   "chapterTitle": "Theme Eight"
+  },
+  {
+   "topic": "Peasants and their lands",
+   "code": "lehs204",
+   "chapterTitle": "Theme Eight"
+  },
+  {
+   "topic": "Irrigation and technology",
+   "code": "lehs204",
+   "chapterTitle": "Theme Eight"
+  },
+  {
+   "topic": "An abundance of crops",
+   "code": "lehs204",
+   "chapterTitle": "Theme Eight"
+  },
+  {
+   "topic": "Theme Eight",
+   "code": "lehs204",
+   "chapterTitle": "Theme Eight"
+  },
+  {
+   "topic": "Popular perceptions of kings",
+   "code": "lehs102",
+   "chapterTitle": "Themes in Indian History"
+  },
+  {
+   "topic": "Strategies for increasing production",
+   "code": "lehs102",
+   "chapterTitle": "Themes in Indian History"
+  },
+  {
+   "topic": "Differences in rural society",
+   "code": "lehs102",
+   "chapterTitle": "Themes in Indian History"
+  },
+  {
+   "topic": "Land grants and new rural elites",
+   "code": "lehs102",
+   "chapterTitle": "Themes in Indian History"
+  },
+  {
+   "topic": "Themes in Indian History",
+   "code": "lehs102",
+   "chapterTitle": "Themes in Indian History"
+  },
+  {
+   "topic": "The coconut and the paan",
+   "code": "lehs201",
+   "chapterTitle": "Theme Five"
+  },
+  {
+   "topic": "Ibn Battuta and Indian cities",
+   "code": "lehs201",
+   "chapterTitle": "Theme Five"
+  },
+  {
+   "topic": "Theme Five",
+   "code": "lehs201",
+   "chapterTitle": "Theme Five"
+  },
+  {
+   "topic": "Celebrating the saviours",
+   "code": "lehs302",
+   "chapterTitle": "Theme Ten"
+  },
+  {
+   "topic": "English women and the honour of Britain",
+   "code": "lehs302",
+   "chapterTitle": "Theme Ten"
+  },
+  {
+   "topic": "Vengeance and retribution",
+   "code": "lehs302",
+   "chapterTitle": "Theme Ten"
+  },
+  {
+   "topic": "The performance of terror",
+   "code": "lehs302",
+   "chapterTitle": "Theme Ten"
+  },
+  {
+   "topic": "No time for clemency",
+   "code": "lehs302",
+   "chapterTitle": "Theme Ten"
+  },
+  {
+   "topic": "Nationalist imageries",
+   "code": "lehs302",
+   "chapterTitle": "Theme Ten"
+  },
+  {
+   "topic": "Theme Ten",
+   "code": "lehs302",
+   "chapterTitle": "Theme Ten"
+  },
+  {
+   "topic": "Finding out about families",
+   "code": "lehs103",
+   "chapterTitle": "Theme Two"
+  },
+  {
+   "topic": "The ideal of patriliny",
+   "code": "lehs103",
+   "chapterTitle": "Theme Two"
+  },
+  {
+   "topic": "Rules of marriage",
+   "code": "lehs103",
+   "chapterTitle": "Theme Two"
+  },
+  {
+   "topic": "The gotra of women",
+   "code": "lehs103",
+   "chapterTitle": "Theme Two"
+  },
+  {
+   "topic": "Were mothers important",
+   "code": "lehs103",
+   "chapterTitle": "Theme Two"
+  },
+  {
+   "topic": "Theme Two",
+   "code": "lehs103",
+   "chapterTitle": "Theme Two"
+  },
+  {
+   "topic": "Public voice and private scripts",
+   "code": "lehs303",
+   "chapterTitle": "Theme Eleven"
+  },
+  {
+   "topic": "Framing a picture",
+   "code": "lehs303",
+   "chapterTitle": "Theme Eleven"
+  },
+  {
+   "topic": "Through police eyes",
+   "code": "lehs303",
+   "chapterTitle": "Theme Eleven"
+  },
+  {
+   "topic": "From newspapers",
+   "code": "lehs303",
+   "chapterTitle": "Theme Eleven"
+  },
+  {
+   "topic": "Theme Eleven",
+   "code": "lehs303",
+   "chapterTitle": "Theme Eleven"
+  },
+  {
+   "topic": "Theme Twelve",
+   "code": "lehs304",
+   "chapterTitle": "Theme Twelve"
+  }
+ ],
+ "12|English": [
+  {
+   "topic": "Task",
+   "code": "lekl102",
+   "chapterTitle": "Task"
+  },
+  {
+   "topic": "Iii",
+   "code": "levt102",
+   "chapterTitle": "Iii"
+  },
+  {
+   "topic": "Omorrow",
+   "code": "lekl104",
+   "chapterTitle": "Omorrow"
+  },
+  {
+   "topic": "Poetry",
+   "code": "lefl111",
+   "chapterTitle": "Poetry"
+  }
+ ],
+ "12|Business Studies": [
+  {
+   "topic": "Nature and Significance of Management Learning",
+   "code": "lebs101",
+   "chapterTitle": "Nature and Significance of Management Learning"
+  },
+  {
+   "topic": "Principles of Management",
+   "code": "lebs102",
+   "chapterTitle": "Principles of Management"
+  },
+  {
+   "topic": "Business Studies",
+   "code": "lebs202",
+   "chapterTitle": "Business Studies"
+  },
+  {
+   "topic": "Business Environment",
+   "code": "lebs103",
+   "chapterTitle": "Business Environment"
+  },
+  {
+   "topic": "Organising",
+   "code": "lebs105",
+   "chapterTitle": "Organising"
+  },
+  {
+   "topic": "Staffing",
+   "code": "lebs106",
+   "chapterTitle": "Staffing"
+  }
+ ],
+ "12|Economics": [
+  {
+   "topic": "EMERGENCE OF MACROECONOMICS",
+   "code": "leec101",
+   "chapterTitle": "Kkkk"
+  },
+  {
+   "topic": "CONTEXT OF THE PRESENT BOOK OF MACROECONOMICS",
+   "code": "leec101",
+   "chapterTitle": "Kkkk"
+  },
+  {
+   "topic": "Kkkk",
+   "code": "leec101",
+   "chapterTitle": "Kkkk"
+  },
+  {
+   "topic": "CENTRAL PROBLEMS OF AN ECONOMY",
+   "code": "leec201",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "ORGANISATION OF ECONOMIC ACTIVITIES",
+   "code": "leec201",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "POSITIVE AND NORMATIVE ECONOMICS",
+   "code": "leec201",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "MICROECONOMICS AND MACROECONOMICS",
+   "code": "leec201",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "PLAN OF THE BOOK",
+   "code": "leec201",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "Example",
+   "code": "leec201",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "CIRCULAR FLOW OF INCOME AND METHODS",
+   "code": "leec102",
+   "chapterTitle": "Ome Basic Concepts of Macroeconomics"
+  },
+  {
+   "topic": "SOME MACROECONOMIC IDENTITIES",
+   "code": "leec102",
+   "chapterTitle": "Ome Basic Concepts of Macroeconomics"
+  },
+  {
+   "topic": "NOMINAL AND REAL GDP",
+   "code": "leec102",
+   "chapterTitle": "Ome Basic Concepts of Macroeconomics"
+  },
+  {
+   "topic": "GDP AND WELFARE",
+   "code": "leec102",
+   "chapterTitle": "Ome Basic Concepts of Macroeconomics"
+  },
+  {
+   "topic": "Ome Basic Concepts of Macroeconomics",
+   "code": "leec102",
+   "chapterTitle": "Ome Basic Concepts of Macroeconomics"
+  },
+  {
+   "topic": "UTILITY",
+   "code": "leec202",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "THE CONSUMER",
+   "code": "leec202",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "OPTIMAL CHOICE OF THE CONSUMER",
+   "code": "leec202",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "DEMAND",
+   "code": "leec202",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "MARKET DEMAND",
+   "code": "leec202",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "ELASTICITY OF DEMAND",
+   "code": "leec202",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "FUNCTIONS",
+   "code": "leec103",
+   "chapterTitle": "Of Money"
+  },
+  {
+   "topic": "DEMAND FOR MONEY AND SUPPLY OF MONEY",
+   "code": "leec103",
+   "chapterTitle": "Of Money"
+  },
+  {
+   "topic": "MONEY CREATION BY BANKING SYSTEM",
+   "code": "leec103",
+   "chapterTitle": "Of Money"
+  },
+  {
+   "topic": "Of Money",
+   "code": "leec103",
+   "chapterTitle": "Of Money"
+  },
+  {
+   "topic": "PRODUCTION FUNCTION",
+   "code": "leec203",
+   "chapterTitle": "The Law of Variable Proportions"
+  },
+  {
+   "topic": "THE SHORT RUN AND THE LONG RUN",
+   "code": "leec203",
+   "chapterTitle": "The Law of Variable Proportions"
+  },
+  {
+   "topic": "TOTAL PRODUCT, AVERAGE PRODUCT AND MARGINAL PRODUCT",
+   "code": "leec203",
+   "chapterTitle": "The Law of Variable Proportions"
+  },
+  {
+   "topic": "THE LAW OF DIMINISHING MARGINAL PRODUCT AND",
+   "code": "leec203",
+   "chapterTitle": "The Law of Variable Proportions"
+  },
+  {
+   "topic": "SHAPES OF TOTAL PRODUCT, MARGINAL PRODUCT",
+   "code": "leec203",
+   "chapterTitle": "The Law of Variable Proportions"
+  },
+  {
+   "topic": "RETURNS TO SCALE",
+   "code": "leec203",
+   "chapterTitle": "The Law of Variable Proportions"
+  },
+  {
+   "topic": "COSTS",
+   "code": "leec203",
+   "chapterTitle": "The Law of Variable Proportions"
+  },
+  {
+   "topic": "The Law of Variable Proportions",
+   "code": "leec203",
+   "chapterTitle": "The Law of Variable Proportions"
+  },
+  {
+   "topic": "AGGREGATE DEMAND AND ITS COMPONENTS",
+   "code": "leec104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "DETERMINATION OF INCOME IN TWO-SECTOR MODEL",
+   "code": "leec104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "SOME MORE CONCEPTS",
+   "code": "leec104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "PERFECT COMPETITION",
+   "code": "leec204",
+   "chapterTitle": "Smc"
+  },
+  {
+   "topic": "REVENUE",
+   "code": "leec204",
+   "chapterTitle": "Smc"
+  },
+  {
+   "topic": "PROFIT MAXIMISATION",
+   "code": "leec204",
+   "chapterTitle": "Smc"
+  },
+  {
+   "topic": "SUPPLY CURVE OF A FIRM",
+   "code": "leec204",
+   "chapterTitle": "Smc"
+  },
+  {
+   "topic": "DETERMINANTS",
+   "code": "leec204",
+   "chapterTitle": "Smc"
+  },
+  {
+   "topic": "MARKET SUPPLY CURVE",
+   "code": "leec204",
+   "chapterTitle": "Smc"
+  },
+  {
+   "topic": "PRICE",
+   "code": "leec204",
+   "chapterTitle": "Smc"
+  },
+  {
+   "topic": "Smc",
+   "code": "leec204",
+   "chapterTitle": "Smc"
+  },
+  {
+   "topic": "GOVERNMENT BUDGET",
+   "code": "leec105",
+   "chapterTitle": "Urplus and Deficit Budget"
+  },
+  {
+   "topic": "BALANCED, S",
+   "code": "leec105",
+   "chapterTitle": "Urplus and Deficit Budget"
+  },
+  {
+   "topic": "Urplus and Deficit Budget",
+   "code": "leec105",
+   "chapterTitle": "Urplus and Deficit Budget"
+  },
+  {
+   "topic": "EQUILIBRIUM, EXCESS DEMAND, EXCESS SUPPLY",
+   "code": "leec205",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "Consider the example of a market for wheat such that the deman",
+   "code": "leec205",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "THE BALANCE OF PAYMENTS",
+   "code": "leec106",
+   "chapterTitle": "Example"
+  },
+  {
+   "topic": "THE FOREIGN EXCHANGE MARKET",
+   "code": "leec106",
+   "chapterTitle": "Example"
+  }
+ ],
+ "12|Computer Science": [
+  {
+   "topic": "Syntax ErrorS",
+   "code": "lecs101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "ExcEptIonS",
+   "code": "lecs101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "BuIlt-In ExcEptIonS",
+   "code": "lecs101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "HandlIng ExcEptIonS",
+   "code": "lecs101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "FInally clauSE",
+   "code": "lecs101",
+   "chapterTitle": "Chapter 1"
+  },
+  {
+   "topic": "IntroductIon to FIles",
+   "code": "lecs102",
+   "chapterTitle": "File Handling in Python"
+  },
+  {
+   "topic": "WrItIng to a text FIle",
+   "code": "lecs102",
+   "chapterTitle": "File Handling in Python"
+  },
+  {
+   "topic": "CREATING AND TRAVERSING A TEXT FILE",
+   "code": "lecs102",
+   "chapterTitle": "File Handling in Python"
+  },
+  {
+   "topic": "File Handling in Python",
+   "code": "lecs102",
+   "chapterTitle": "File Handling in Python"
+  },
+  {
+   "topic": "Stack",
+   "code": "lecs103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "ImplementatIon of Stack In python",
+   "code": "lecs103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "NotatioNs for arithmetic expressioNs",
+   "code": "lecs103",
+   "chapterTitle": "Chapter 3"
+  },
+  {
+   "topic": "IntroductIon to Queue",
+   "code": "lecs104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "ImplementatIon of Queue usIng python",
+   "code": "lecs104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "IntroductIon to deQue",
+   "code": "lecs104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "ImplementatIon of deQue usIng python",
+   "code": "lecs104",
+   "chapterTitle": "Chapter 4"
+  },
+  {
+   "topic": "BuBBle Sort",
+   "code": "lecs105",
+   "chapterTitle": "Chapter 5"
+  },
+  {
+   "topic": "Selection Sort",
+   "code": "lecs105",
+   "chapterTitle": "Chapter 5"
+  },
+  {
+   "topic": "InsertIon sort",
+   "code": "lecs105",
+   "chapterTitle": "Chapter 5"
+  },
+  {
+   "topic": "Time ComplexiTy of AlgoriThms",
+   "code": "lecs105",
+   "chapterTitle": "Chapter 5"
+  },
+  {
+   "topic": "LInear Search",
+   "code": "lecs106",
+   "chapterTitle": "Stop Else"
+  },
+  {
+   "topic": "BInary Search",
+   "code": "lecs106",
+   "chapterTitle": "Stop Else"
+  },
+  {
+   "topic": "Search By haShIng",
+   "code": "lecs106",
+   "chapterTitle": "Stop Else"
+  },
+  {
+   "topic": "Stop Else",
+   "code": "lecs106",
+   "chapterTitle": "Stop Else"
+  },
+  {
+   "topic": "IntroductIon to data",
+   "code": "lecs107",
+   "chapterTitle": "Raw Data"
+  },
+  {
+   "topic": "Raw Data",
+   "code": "lecs107",
+   "chapterTitle": "Raw Data"
+  },
+  {
+   "topic": "FIle SyStem",
+   "code": "lecs108",
+   "chapterTitle": "Studentguardianattendance"
+  },
+  {
+   "topic": "KeyS In a relatIonal databaSe",
+   "code": "lecs108",
+   "chapterTitle": "Studentguardianattendance"
+  },
+  {
+   "topic": "Studentguardianattendance",
+   "code": "lecs108",
+   "chapterTitle": "Studentguardianattendance"
+  },
+  {
+   "topic": "Structured Query Language (SQL)",
+   "code": "lecs109",
+   "chapterTitle": "Int"
+  },
+  {
+   "topic": "SQL for data defInItIon",
+   "code": "lecs109",
+   "chapterTitle": "Int"
+  },
+  {
+   "topic": "SQL for data ManIpuLatIon",
+   "code": "lecs109",
+   "chapterTitle": "Int"
+  },
+  {
+   "topic": "SQL for data Query",
+   "code": "lecs109",
+   "chapterTitle": "Int"
+  },
+  {
+   "topic": "Int",
+   "code": "lecs109",
+   "chapterTitle": "Int"
+  },
+  {
+   "topic": "IntroductIon to computer networks",
+   "code": "lecs110",
+   "chapterTitle": "Sri"
+  },
+  {
+   "topic": "IdentIfyIng nodes In a networked",
+   "code": "lecs110",
+   "chapterTitle": "Sri"
+  },
+  {
+   "topic": "Sri",
+   "code": "lecs110",
+   "chapterTitle": "Sri"
+  },
+  {
+   "topic": "ConCept of CommuniCation",
+   "code": "lecs111",
+   "chapterTitle": "Chapter 11"
+  },
+  {
+   "topic": "Components of Data CommuniCation",
+   "code": "lecs111",
+   "chapterTitle": "Chapter 11"
+  },
+  {
+   "topic": "ThreaTs and PrevenTion",
+   "code": "lecs112",
+   "chapterTitle": "Lan"
+  },
+  {
+   "topic": "Malware",
+   "code": "lecs112",
+   "chapterTitle": "Lan"
+  },
+  {
+   "topic": "Firewall",
+   "code": "lecs112",
+   "chapterTitle": "Lan"
+  },
+  {
+   "topic": "Cookies",
+   "code": "lecs112",
+   "chapterTitle": "Lan"
+  },
+  {
+   "topic": "Lan",
+   "code": "lecs112",
+   "chapterTitle": "Lan"
+  },
+  {
+   "topic": "ApproAches for solvIng projects",
+   "code": "lecs113",
+   "chapterTitle": "Chapter 13"
+  }
+ ],
+ "12|Political Science": [
+  {
+   "topic": "Leaders of the Soviet Union",
+   "code": "leps101",
+   "chapterTitle": "Leaders of the Soviet Union"
+  },
+  {
+   "topic": "Timeline of European Integration",
+   "code": "leps102",
+   "chapterTitle": "Timeline of European Integration"
+  },
+  {
+   "topic": "Hdi",
+   "code": "leps103",
+   "chapterTitle": "Hdi"
+  },
+  {
+   "topic": "Imf Imf",
+   "code": "leps104",
+   "chapterTitle": "Imf Imf"
+  },
+  {
+   "topic": "Tibet",
+   "code": "leps204",
+   "chapterTitle": "Tibet"
+  },
+  {
+   "topic": "Steps",
+   "code": "leps105",
+   "chapterTitle": "Steps"
+  },
+  {
+   "topic": "Antarctica",
+   "code": "leps106",
+   "chapterTitle": "Antarctica"
+  }
+ ]
+}

@@ -1,0 +1,109 @@
+{
+  "package": {
+    "package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f",
+    "package_type": "LessonContentPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:12:14.067Z",
+    "produced_by": {
+      "agent": "lesson-generator-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "uala08ghqgp",
+      "parent_package_id": "765847cf-9558-4ad6-a232-32c5c1da5074"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "stage_content": [
+      {
+        "stage_id": "step-1",
+        "content": "Imagine you have 72 rupees in your piggy bank and you want to subtract 47 rupees from it. But, you don't have enough rupees to subtract 47 from 72. What can you do?"
+      },
+      {
+        "stage_id": "step-2",
+        "content": "When we subtract a bigger number from a smaller number, we need to borrow some quantity from our neighbour. Let's learn how to do it by regrouping the numbers correctly."
+      },
+      {
+        "stage_id": "step-3",
+        "content": "Let's practice subtracting bigger numbers from smaller numbers using borrowing. For example, if we have 45 apples and we give 27 apples to our friend, we need to borrow some apples from our neighbour to subtract 27 from 45."
+      },
+      {
+        "stage_id": "step-4",
+        "content": "Now, let's apply subtraction with borrowing in real-life situations. For instance, if we have 62 rupees in the piggy bank and we want to subtract 40 rupees, we need to borrow some rupees from our neighbour to make it easier."
+      },
+      {
+        "stage_id": "step-5",
+        "content": "Now, you know how to subtract bigger numbers from smaller numbers using borrowing. Practice it regularly to become a master!"
+      }
+    ],
+    "populated_components": [
+      {
+        "component_id": "component-1",
+        "slots": {
+          "title": "Subtracting Bigger Numbers from Smaller Numbers",
+          "body": "Imagine you have 72 rupees in your piggy bank and you want to subtract 47 rupees from it. But, you don't have enough rupees to subtract 47 from 72. What can you do?",
+          "callout": "Borrow some quantity from our neighbour to make it easier."
+        }
+      },
+      {
+        "component_id": "component-2",
+        "slots": {
+          "title": "Regrouping Numbers for Borrowing",
+          "body": "When we subtract a bigger number from a smaller number, we need to borrow some quantity from our neighbour. Let's learn how to do it by regrouping the numbers correctly.",
+          "callout": "Regrouping is the key to borrowing."
+        }
+      },
+      {
+        "component_id": "component-3",
+        "slots": {
+          "title": "Practice Subtracting Bigger Numbers",
+          "body": "Let's practice subtracting bigger numbers from smaller numbers using borrowing. For example, if we have 45 apples and we give 27 apples to our friend, we need to borrow some apples from our neighbour to subtract 27 from 45.",
+          "callout": "Practice makes perfect!"
+        }
+      },
+      {
+        "component_id": "component-4",
+        "slots": {
+          "title": "Applying Borrowing in Real-Life Situations",
+          "body": "Now, let's apply subtraction with borrowing in real-life situations. For instance, if we have 62 rupees in the piggy bank and we want to subtract 40 rupees, we need to borrow some rupees from our neighbour to make it easier.",
+          "callout": "Borrowing is essential in real-life situations."
+        }
+      },
+      {
+        "component_id": "component-5",
+        "slots": {
+          "title": "Mastering Borrowing",
+          "body": "Now, you know how to subtract bigger numbers from smaller numbers using borrowing. Practice it regularly to become a master!",
+          "callout": "Practice and patience are key!"
+        }
+      }
+    ],
+    "source_references": [
+      {
+        "content_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f",
+        "chunk_id": "subtraction-with-borrowing"
+      },
+      {
+        "content_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f",
+        "chunk_id": "Mental Math"
+      },
+      {
+        "content_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f",
+        "chunk_id": "Subtraction with Borrowing"
+      }
+    ],
+    "validation_summary": {},
+    "handoff": {
+      "illustration_agent": {
+        "lesson_content_package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f"
+      },
+      "audio_agent": {
+        "lesson_content_package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f"
+      },
+      "quiz_agent": {
+        "lesson_content_package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f"
+      }
+    }
+  }
+}

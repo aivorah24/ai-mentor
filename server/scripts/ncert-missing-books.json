@@ -1,0 +1,27 @@
+{
+  "_note": "Missing text-based NCERT books to download from ncert.nic.in and ingest. Each entry: grade, subject folder, and book code PREFIXES (chapters auto-fetched as <prefix>01, <prefix>02 … until 404). Urdu/Geography/Sociology excluded — image-based, need OCR.",
+  "books": [
+    { "grade": 5,  "subject": "Hindi",       "folder": "hindi",     "prefixes": ["ehhn1"] },
+
+    { "grade": 6,  "subject": "Hindi",       "folder": "hindi",     "prefixes": ["fhvs1","fhdv1","fhbr1","fhml1"] },
+    { "grade": 6,  "subject": "Sanskrit",    "folder": "sanskrit",  "prefixes": ["fsrc1","fsde1"] },
+
+    { "grade": 7,  "subject": "Hindi",       "folder": "hindi",     "prefixes": ["ghvs1","ghdv1","ghbm1"] },
+    { "grade": 7,  "subject": "Sanskrit",    "folder": "sanskrit",  "prefixes": ["gsrc1"] },
+
+    { "grade": 8,  "subject": "Hindi",       "folder": "hindi",     "prefixes": ["hhvs1","hhdv1","hhbk1"] },
+    { "grade": 8,  "subject": "Sanskrit",    "folder": "sanskrit",  "prefixes": ["hsrc1"] },
+
+    { "grade": 9,  "subject": "Hindi",       "folder": "hindi",     "prefixes": ["ihks1","ihkt1","ihsp1","ihsc1"] },
+    { "grade": 9,  "subject": "Sanskrit",    "folder": "sanskrit",  "prefixes": ["issh1","isma1","isvv1"] },
+
+    { "grade": 10, "subject": "Hindi",       "folder": "hindi",     "prefixes": ["jhks1","jhkt1","jhsp1","jhsc1"] },
+    { "grade": 10, "subject": "Sanskrit",    "folder": "sanskrit",  "prefixes": ["jssh1","jsma1"] },
+
+    { "grade": 11, "subject": "Hindi",       "folder": "hindi",     "prefixes": ["khar1","khvt1","khan1","khal1","kham1"] },
+    { "grade": 11, "subject": "Psychology",  "folder": "psychology","prefixes": ["kepy1"] },
+
+    { "grade": 12, "subject": "Hindi",       "folder": "hindi",     "prefixes": ["lhar1","lhvt1","lhan1","lhal1"] },
+    { "grade": 12, "subject": "Psychology",  "folder": "psychology","prefixes": ["lepy1"] }
+  ]
+}
