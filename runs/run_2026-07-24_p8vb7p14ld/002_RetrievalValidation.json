@@ -1,0 +1,32 @@
+{
+  "package": {
+    "package_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "package_type": "ValidatedRetrievalPackage",
+    "schema_version": "1.0",
+    "created_at": "2023-02-20T14:30:00Z",
+    "produced_by": {
+      "agent": "retrieval-validation-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "12345678-9012-3456-7890-123456789012",
+      "parent_package_id": "f2b3c4d5-e6f7-g8h9-i0j1"
+    }
+  },
+  "payload": {
+    "status": "FAIL",
+    "error_code": "RV004",
+    "rejection_reason": "Coverage below threshold",
+    "validation_report": {
+      "schema": "PASS",
+      "metadata": "PASS",
+      "ordering": "PASS",
+      "coverage": "FAIL",
+      "integrity": "PASS"
+    },
+    "re_retrieval_hints": {
+      "suggested_query_adjustments": [],
+      "missing_page_numbers": []
+    }
+  }
+}

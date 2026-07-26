@@ -1,0 +1,117 @@
+{
+  "package": {
+    "package_id": "e3f4g5h6-i7j8-9012-3456-7890abcdef12",
+    "package_type": "LessonBlueprint",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T12:40:00Z",
+    "produced_by": {
+      "agent": "curriculum-understanding-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "parent_package_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0"
+    }
+  },
+  "payload": {
+    "lesson_id": "lesson-shapes-space-grade1",
+    "curriculum": "NCERT",
+    "grade": 1,
+    "subject": "Mathematics",
+    "chapter": "Shapes and Space",
+    "lesson": "Shapes and Space",
+    "lesson_type": "Mathematics",
+    "lesson_type_evidence": "Shapes and Space is a fun topic in Mathematics that helps us understand the world around us.",
+    "lesson_type_confidence": 0.95,
+    "review_flags": [],
+    "concept_map": [
+      {
+        "concept_id": "circle",
+        "concept": "Circle",
+        "depends_on": [],
+        "difficulty": "easy"
+      },
+      {
+        "concept_id": "triangle",
+        "concept": "Triangle",
+        "depends_on": [],
+        "difficulty": "easy"
+      },
+      {
+        "concept_id": "rectangle",
+        "concept": "Rectangle",
+        "depends_on": [],
+        "difficulty": "easy"
+      },
+      {
+        "concept_id": "square",
+        "concept": "Square",
+        "depends_on": [],
+        "difficulty": "easy"
+      },
+      {
+        "concept_id": "space",
+        "concept": "Space",
+        "depends_on": [],
+        "difficulty": "easy"
+      },
+      {
+        "concept_id": "long_objects",
+        "concept": "Long objects",
+        "depends_on": [],
+        "difficulty": "easy"
+      },
+      {
+        "concept_id": "round_objects",
+        "concept": "Round objects",
+        "depends_on": [],
+        "difficulty": "easy"
+      }
+    ],
+    "learning_objectives": [
+      "Identify and name basic 2D shapes: circle, triangle, rectangle, square.",
+      "Recognize and describe shapes found in everyday objects and surroundings.",
+      "Understand the concept of space as the area where objects exist.",
+      "Differentiate objects based on attributes such as long and round."
+    ],
+    "learning_outcomes": [
+      "Students can point out circles, triangles, rectangles, and squares in the classroom and at home.",
+      "Students can explain why a shape is a circle (no corners) etc.",
+      "Students can describe space around them.",
+      "Students can classify objects as long or round and justify their choice."
+    ],
+    "bloom_level": "Understand",
+    "prerequisites": [
+      "Ability to recognize everyday objects.",
+      "Basic vocabulary of shape names.",
+      "Ability to observe and describe surroundings."
+    ],
+    "misconceptions": [
+      "Believing a square is not a rectangle.",
+      "Thinking a circle has corners.",
+      "Confusing rectangle with square based on orientation.",
+      "Thinking long means only tall, not wide.",
+      "Thinking round objects must be circular (like ball) ignoring cylindrical shapes."
+    ],
+    "suggested_instructional_sequence": [
+      "Begin with showing real objects (ball, plate, box) and ask students to describe their shape.",
+      "Introduce each shape with definition and examples.",
+      "Conduct a shape hunt: students find shapes in the classroom.",
+      "Discuss space: show an empty box, place shapes inside, talk about area.",
+      "Play the \"Long and Round\" game: students name objects and explain why they are long or round.",
+      "Conclude with drawing shapes and labeling them."
+    ],
+    "vocabulary_difficulty": "Low",
+    "available_images": [],
+    "source_chunk_references": [
+      "Shapes and Space",
+      "aejm102",
+      "Numbers from One to Nine"
+    ],
+    "handoff": {
+      "learning_experience_designer": {
+        "lesson_blueprint": {}
+      }
+    }
+  }
+}

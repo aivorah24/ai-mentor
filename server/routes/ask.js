@@ -60,6 +60,30 @@ async function incrementDailyUsage(email) {
   } catch (err) { console.error('[incrementDailyUsage]', err?.message); }
 }
 
+// Authoritative lesson grounding: when a topic has a published Aivorah lesson,
+// return ITS verified content (worked examples + body) so the AI Coach teaches
+// the same correct method and answers — never inventing a wrong method or a
+// wrong calculation (the bug QA caught: "45 - 3 = 32"). Best-effort; '' on miss.
+async function getLessonGrounding(topic) {
+  try {
+    if (!topic) return '';
+    const { data: tp } = await supabase.from('syllabus_topics').select('id').eq('name', topic).limit(1).maybeSingle();
+    if (!tp?.id) return '';
+    const { data: rr } = await supabase.from('topic_resources').select('static_payload')
+      .eq('topic_id', tp.id).eq('resource_type', 'AI_EXPLANATION').maybeSingle();
+    const L = rr?.static_payload;
+    if (!L) return '';
+    const parts = [];
+    if (Array.isArray(L.body) && L.body.length) parts.push(L.body.join(' '));
+    if (Array.isArray(L.workedExamples) && L.workedExamples.length) {
+      parts.push('Worked examples (use THIS exact method and these correct answers — do not invent another method or miscalculate):');
+      L.workedExamples.forEach(e => parts.push(`${e.problem} → ${(e.steps || []).join(' ')} Answer: ${e.answer}.`));
+    }
+    if (!parts.length) return '';
+    return `AUTHORITATIVE LESSON CONTENT for "${topic}" — teach strictly from this, using the same method and matching answers:\n${parts.join('\n')}\n\n`;
+  } catch { return ''; }
+}
+
 // POST /ask
 // Body: { question, curriculum?, grade?, subject?, topic? }
 router.post('/', async (req, res) => {
@@ -157,16 +181,15 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // 2. Generate answer + fetch web images IN PARALLEL for speed
-    // Only fetch Wikipedia images when RAG found real curriculum context — avoids off-topic images
-    const needsWebImages = images.length === 0 && !!context;
-    const [answer, webImagesResult] = await Promise.all([
-      generateAnswer({ question, context, grade, subject, topic, history, _meta: { route: '/ask', studentEmail: userEmail } }),
-      needsWebImages
-        ? retrieveWebImages({ question, topic, subject, grade }).catch(() => [])
-        : Promise.resolve([]),
-    ]);
-    if (needsWebImages && webImagesResult.length > 0) images = webImagesResult;
+    // 2. Generate the answer. We deliberately DO NOT fall back to Wikipedia web
+    // images: they pull in off-topic/stock pictures (e.g. a penny-farthing or a
+    // branded tyre for "bicycle") that don't belong in Aivorah. Only real
+    // curriculum images from RAG are shown; when there are none, we show none.
+    // Prepend the topic's authoritative lesson (verified method + answers) so the
+    // Coach can't drift to a wrong method/calculation.
+    const lessonGrounding = await getLessonGrounding(topic);
+    const groundedContext = lessonGrounding ? lessonGrounding + (context || '') : context;
+    const answer = await generateAnswer({ question, context: groundedContext, grade, subject, topic, history, _meta: { route: '/ask', studentEmail: userEmail } });
 
     // Never show images alongside an off-topic redirect or no-context fallback
     const isRedirectAnswer = /I'm your school AI Coach|Let's finish|Great curiosity!/i.test(answer);
@@ -445,14 +468,9 @@ router.post('/stream', async (req, res) => {
       } catch (_) { /* silent */ }
     }
 
-    // Web image fallback — only fetch Wikipedia images when RAG returned real curriculum context.
-    // If Qdrant had nothing (no context), Wikipedia images are likely off-topic too — skip them.
-    if (images.length === 0 && context) {
-      try {
-        const webImages = await retrieveWebImages({ question, topic, subject, grade });
-        if (webImages.length > 0) images = webImages;
-      } catch (_) { /* silent */ }
-    }
+    // NO Wikipedia web-image fallback — those pull off-topic/stock pictures
+    // (a penny-farthing, a branded tyre for "bicycle") that don't belong in
+    // Aivorah. Only real curriculum images from RAG are shown; otherwise none.
 
     // 1b. Curriculum-aware web search fallback when RAG has no context
     if (!context) {
@@ -477,10 +495,15 @@ router.post('/stream', async (req, res) => {
     // Send sources + images first
     res.write(`data: ${JSON.stringify({ type: 'sources', sources, images })}\n\n`);
 
+    // Prepend the topic's authoritative lesson so the streamed Coach answer uses
+    // the same verified method + correct answers as the lesson.
+    const lessonGroundingS = await getLessonGrounding(topic);
+    const groundedContextS = lessonGroundingS ? lessonGroundingS + (context || '') : context;
+
     // 2. Stream answer tokens
     await generateAnswerStream({
       question,
-      context,
+      context: groundedContextS,
       grade,
       subject,
       topic,

@@ -1,0 +1,45 @@
+{
+  "package": {
+    "package_id": "f4d9a5a1-5f4c-4c4f-8c4c-5f4c4c4c",
+    "package_type": "ReleasePackage",
+    "schema_version": "1.0",
+    "created_at": "2024-03-16T14:36:00.000Z",
+    "produced_by": {
+      "agent": "final-audit-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "honmnh6tp9s",
+      "parent_package_id": "uuid"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "release_version": "1.0.0",
+    "build_timestamp": "2024-03-16T14:35:00.000Z",
+    "package_manifest": {
+      "retrieval": "uuid",
+      "lesson_blueprint": "uuid",
+      "lesson_experience": "uuid",
+      "ui_plan": "uuid",
+      "lesson_content": "uuid",
+      "illustration": "uuid",
+      "audio": "uuid",
+      "quiz_review": "uuid",
+      "review_report": "uuid",
+      "qa_report": "uuid"
+    },
+    "package_references": [
+      "uuid"
+    ],
+    "audit_summary": {
+      "status": "APPROVED",
+      "checks": {
+        "package_integrity": true,
+        "qa_status": true,
+        "traceability": true
+      }
+    },
+    "deployment_status": "READY"
+  }
+}

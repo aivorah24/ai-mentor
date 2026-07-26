@@ -18,6 +18,7 @@ const {
   toTitleCase, generateAdmissionNumber,
 } = require('../services/studentAccounts');
 const { sendCredentialsEmail, sendOwnAccountCredentialsEmail, sendB2BConversionWelcomeEmail } = require('../services/mailer');
+const { sortGradeNames, sortCurriculumNames } = require('../services/academicStructure');
 
 router.use(requireAdminScope);
 
@@ -234,14 +235,14 @@ function displayStatus(dbStatus, mustChangePassword) {
   return mustChangePassword ? 'invited' : 'active';
 }
 
-// GET /school-admin/students?adminEmail=&search=&grade=&section=&status=&sort=name|grade&dir=asc|desc&page=&limit=
+// GET /school-admin/students?adminEmail=&search=&grade=&section=&curriculum=&status=&sort=name|grade&dir=asc|desc&page=&limit=
 router.get('/students', async (req, res) => {
   const schoolId = effectiveSchoolId(req);
   if (!schoolId) return res.status(400).json({ error: 'schoolId required for platform admins' });
   try {
     let query = supabase
       .from('users')
-      .select('id, name, email, grade, section, status, admission_number, created_at, last_active_at')
+      .select('id, name, email, grade, section, curriculum, status, admission_number, created_at, last_active_at')
       .eq('school_id', schoolId)
       .eq('role', 'student');
 
@@ -249,6 +250,7 @@ router.get('/students', async (req, res) => {
     if (search) query = query.or(`name.ilike.%${search}%,admission_number.ilike.%${search}%`);
     if (req.query.grade && req.query.grade !== 'all') query = query.eq('grade', req.query.grade);
     if (req.query.section && req.query.section !== 'all') query = query.eq('section', req.query.section);
+    if (req.query.curriculum && req.query.curriculum !== 'all') query = query.eq('curriculum', req.query.curriculum);
 
     const { data, error } = await query;
     if (error) throw error;
@@ -262,6 +264,7 @@ router.get('/students', async (req, res) => {
       admissionNumber: r.admission_number,
       grade: r.grade,
       section: r.section,
+      curriculum: r.curriculum,
       status: displayStatus(r.status, mustChangeMap.get(r.email) ?? true),
       joinedAt: r.created_at,
       lastActiveAt: r.last_active_at,
@@ -275,7 +278,9 @@ router.get('/students', async (req, res) => {
     const dir = req.query.dir === 'desc' ? -1 : 1;
     items.sort((a, b) => {
       if (sortKey === 'grade') {
-        const g = (a.grade || '').localeCompare(b.grade || '') || (a.section || '').localeCompare(b.section || '');
+        // Natural/curriculum-aware compare (Grade 2 before Grade 10; IB's
+        // PYP/MYP/DP stay in program order) — see sortGradeNames.
+        const g = sortGradeNames(a.grade || '', b.grade || '') || (a.section || '').localeCompare(b.section || '');
         return (g || a.name.localeCompare(b.name)) * dir;
       }
       if (sortKey === 'admissionNumber') {
@@ -301,6 +306,75 @@ router.get('/students', async (req, res) => {
   }
 });
 
+// GET /school-admin/students/facets — the FULL set of Grade/Section/
+// Curriculum filter options for the school, independent of the current page,
+// filters, or search on the Students list, AND independent of which programs
+// happen to already have enrolled students. The list-filter dropdowns must
+// call THIS, not derive options from whatever rows happen to be loaded —
+// GET /students is paginated (100 rows) and often already filtered, so
+// deriving from it silently hides values that exist beyond the current page
+// or outside the current filter (e.g. "All grades" showing only Grade 6
+// because that's all that was loaded).
+//
+// Grade/Section stay genuinely data-driven (free text, no fixed range for
+// either — a school defines whatever grades/sections it actually uses).
+// CURRICULUM is different: it's a STRUCTURAL fact of the school, not a
+// derived tally of who's enrolled. An IB school always has three programs —
+// PYP, MYP, DP — even on day one before a single DP-age student exists; if
+// the dropdown were built from `users.curriculum` values like Grade/Section
+// are, IB DP would silently vanish until someone happened to be admitted at
+// that level. So Curriculum options come from the SCHOOL's own base type
+// (schools.curriculum), expanded to the fixed IB PYP/MYP/DP triad when the
+// base is 'IB' (mirrors resolveCurriculum's existing PYP/MYP/DP split above —
+// same domain fact, not new hardcoding), or the single base value for a
+// single-track curriculum (CBSE, ICSE, Cambridge, ...). Registered BEFORE
+// /students/:id for the same reason as template.csv/xlsx below (Express
+// matches by registration order, not specificity).
+router.get('/students/facets', async (req, res) => {
+  const schoolId = effectiveSchoolId(req);
+  if (!schoolId) return res.status(400).json({ error: 'schoolId required for platform admins' });
+  try {
+    const [{ data: school }, { data, error }] = await Promise.all([
+      supabase.from('schools').select('curriculum').eq('id', schoolId).maybeSingle(),
+      supabase.from('users').select('grade, section, curriculum').eq('school_id', schoolId).eq('role', 'student'),
+    ]);
+    if (error) throw error;
+    const gradeSet = new Set();
+    const sectionSet = new Set();
+    const curriculumSet = new Set(); // used only as a fallback below
+    for (const r of data || []) {
+      const g = String(r.grade || '').trim();
+      if (g) gradeSet.add(g);
+      const s = String(r.section || '').trim();
+      if (s) sectionSet.add(s);
+      const c = String(r.curriculum || '').trim();
+      if (c) curriculumSet.add(c);
+    }
+
+    const baseCurriculum = school?.curriculum || null;
+    let curriculums;
+    if (baseCurriculum === 'IB') {
+      curriculums = ['IB PYP', 'IB MYP', 'IB DP'];
+    } else if (baseCurriculum) {
+      curriculums = [baseCurriculum];
+    } else {
+      // School has no base curriculum configured yet — fall back to whatever
+      // curriculum values actually appear on students, so the filter still
+      // works instead of coming back empty.
+      curriculums = [...curriculumSet].sort(sortCurriculumNames);
+    }
+
+    res.json({
+      grades: [...gradeSet].sort(sortGradeNames),
+      sections: [...sectionSet].sort((a, b) => a.localeCompare(b)),
+      curriculums,
+    });
+  } catch (err) {
+    console.error('[GET /school-admin/students/facets] error:', err.message);
+    res.status(500).json({ error: 'Failed to load grade/section/curriculum options' });
+  }
+});
+
 // GET /school-admin/students/template.csv|.xlsx — download a pre-filled
 // roster the admin can edit and re-upload via POST /students/bulk (upsert
 // semantics). Registered BEFORE /students/:id so Express doesn't match
@@ -315,13 +389,22 @@ const TEMPLATE_HEADER = ['Student Name', 'Student Email', 'Admission No', 'Curri
 // student rather than failing silently. The Curriculum cell is derived from
 // THIS school's board (an IB school's samples show "IB PYP", never "CBSE"),
 // so the example never suggests a curriculum the school doesn't follow.
-const SAMPLE_ROW_COUNT = 2;
+const SAMPLE_ROW_COUNT = 4;
 function buildSampleRows(baseCurriculum) {
+  const c2 = resolveCurriculum(baseCurriculum, 'Grade 2') || '';
   const c3 = resolveCurriculum(baseCurriculum, 'Grade 3') || '';
+  const c4 = resolveCurriculum(baseCurriculum, 'Grade 4') || '';
   const c5 = resolveCurriculum(baseCurriculum, 'Grade 5') || '';
+  // Four fully-filled example rows so admins see every column populated the
+  // way we expect (name, email, admission no, curriculum, grade, section,
+  // parent name/email/phone). They're clearly marked "(delete before
+  // uploading)" and are the first SAMPLE_ROW_COUNT rows so the .xlsx styling
+  // tints them as placeholders.
   return [
-    ['Aarav Sample (delete before uploading)', '', '', c3, 'Grade 3', 'A', 'Ravi Sample', 'ravi.sample@example.com', '+91 90000 00001'],
-    ['Diya Sample (delete before uploading)', '', '', c5, 'Grade 5', 'B', '', '', ''],
+    ['Aarav Sample (delete before uploading)', 'aarav.sample@example.com', 'ADM-0001', c3, 'Grade 3', 'A', 'Ravi Sample', 'ravi.sample@example.com', '+91 90000 00001'],
+    ['Diya Sample (delete before uploading)', 'diya.sample@example.com', 'ADM-0002', c5, 'Grade 5', 'B', 'Meera Sample', 'meera.sample@example.com', '+91 90000 00002'],
+    ['Kabir Sample (delete before uploading)', 'kabir.sample@example.com', 'ADM-0003', c2, 'Grade 2', 'A', 'Arjun Sample', 'arjun.sample@example.com', '+91 90000 00003'],
+    ['Saanvi Sample (delete before uploading)', 'saanvi.sample@example.com', 'ADM-0004', c4, 'Grade 4', 'C', 'Nisha Sample', 'nisha.sample@example.com', '+91 90000 00004'],
   ];
 }
 
@@ -336,42 +419,15 @@ function toCsv(header, rows) {
   return lines.join('\r\n');
 }
 
+// The template is a blank, sample-only roster for ADDING new students. It no
+// longer lists the school's existing students: bulk import skips anyone already
+// in the roster (editing an existing student is done from their details
+// screen), so pre-filling them would only produce a wall of rows that all get
+// skipped on re-upload. Just the 4 clearly-marked sample rows, curriculum
+// derived from the school's board.
 async function buildTemplateRows(schoolId) {
   const { data: school } = await supabase.from('schools').select('curriculum').eq('id', schoolId).maybeSingle();
-  const sampleRows = buildSampleRows(school?.curriculum || null);
-
-  const { data: students, error } = await supabase
-    .from('users')
-    .select('id, name, email, admission_number, curriculum, grade, section')
-    .eq('school_id', schoolId)
-    .eq('role', 'student')
-    .order('name');
-  if (error) throw error;
-
-  const childIds = (students || []).map((s) => s.id);
-  const { data: links } = childIds.length
-    ? await supabase.from('parent_children').select('parent_email, child_id').in('child_id', childIds)
-    : { data: [] };
-  const parentEmailByChild = new Map();
-  for (const l of links || []) {
-    if (!parentEmailByChild.has(l.child_id)) parentEmailByChild.set(l.child_id, l.parent_email);
-  }
-  const parentEmails = [...new Set([...parentEmailByChild.values()].filter(Boolean))];
-  const { data: parents } = parentEmails.length
-    ? await supabase.from('users').select('name, email, phone').in('email', parentEmails)
-    : { data: [] };
-  const parentByEmail = new Map((parents || []).map((p) => [p.email, p]));
-
-  const realRows = (students || []).map((s) => {
-    const pEmail = parentEmailByChild.get(s.id) || '';
-    const parent = pEmail ? parentByEmail.get(pEmail) : null;
-    return [
-      s.name || '', s.email || '', s.admission_number || '', s.curriculum || '', s.grade || '', s.section || '',
-      parent?.name || '', parent?.email || pEmail || '', parent?.phone || '',
-    ];
-  });
-
-  return [...sampleRows, ...realRows];
+  return buildSampleRows(school?.curriculum || null);
 }
 
 router.get('/students/template.csv', async (req, res) => {
@@ -475,13 +531,13 @@ router.get('/students/:id', async (req, res) => {
       .from('parent_children').select('parent_email').eq('child_id', u.id);
     let parent = null;
     if (links?.length) {
-      const { data: p } = await supabase.from('users').select('name, email').eq('email', links[0].parent_email).maybeSingle();
-      if (p) parent = { name: p.name, email: p.email };
+      const { data: p } = await supabase.from('users').select('name, email, phone').eq('email', links[0].parent_email).maybeSingle();
+      if (p) parent = { name: p.name, email: p.email, phone: p.phone || '' };
     }
 
     res.json({
       id: u.id, name: u.name, email: u.email, admissionNumber: u.admission_number,
-      grade: u.grade, section: u.section,
+      grade: u.grade, section: u.section, curriculum: u.curriculum,
       status: displayStatus(u.status, mustChangeMap.get(u.email) ?? true),
       joinedAt: u.created_at,
       lastActiveAt: u.last_active_at,
@@ -501,7 +557,7 @@ router.post('/students', async (req, res) => {
   const {
     firstName, lastName, grade, section, email: emailOverride, initialStatus,
     parentName: parentNameIn, parentEmail: parentEmailInRaw, notes,
-    curriculum: curriculumIn,
+    curriculum: curriculumIn, admissionNumber: admissionNumberIn,
   } = req.body || {};
   if (!String(firstName || '').trim() || !String(lastName || '').trim()) return res.status(400).json({ error: 'First and last name are required' });
   if (!grade) return res.status(400).json({ error: 'Grade is required' });
@@ -535,8 +591,16 @@ router.post('/students', async (req, res) => {
       }
     }
 
+    // Admin-provided admission number wins when given; otherwise auto-generate the
+    // next one, same as before. Must still be unique within the school.
+    const admissionNumberTrimmed = String(admissionNumberIn || '').trim();
+    if (admissionNumberTrimmed) {
+      const { data: admDup } = await supabase.from('users').select('id')
+        .eq('school_id', schoolId).eq('role', 'student').eq('admission_number', admissionNumberTrimmed).maybeSingle();
+      if (admDup) return res.status(409).json({ error: `Admission number "${admissionNumberTrimmed}" is already in use` });
+    }
     const { count } = await supabase.from('users').select('id', { count: 'exact', head: true }).eq('school_id', schoolId).eq('role', 'student');
-    const admissionNumber = generateAdmissionNumber(schoolName, count || 0);
+    const admissionNumber = admissionNumberTrimmed || generateAdmissionNumber(schoolName, count || 0);
 
     const firebaseUid = await createFirebaseAccount(email, password);
     const userId = randomUUID();
@@ -660,6 +724,136 @@ router.patch('/students/:id/status', async (req, res) => {
   }
 });
 
+// PATCH /school-admin/students/:id  — edit an existing student's details.
+// Only the fields present in the body are changed (partial update). Student
+// identity fields live on `users`; parent Name/Phone are applied to the LINKED
+// parent account when one exists. Changing the student's or parent's login
+// email is intentionally NOT supported here — that's an account-migration
+// concern, not a routine roster edit.
+router.patch('/students/:id', async (req, res) => {
+  if (req.adminScope.scopeType !== 'school') return res.status(400).json({ error: 'Only a school administrator can update students' });
+  const schoolId = req.adminScope.schoolId;
+  const { name, grade, section, admissionNumber, curriculum, parentName, parentPhone } = req.body || {};
+  try {
+    const { owned } = await assertOwnedStudents([req.params.id], schoolId);
+    if (!owned.length) return res.status(403).json({ error: 'Not authorized to manage this student' });
+
+    // Build the student patch from only the provided fields. Empty strings for
+    // grade/section/admission are treated as "clear it"; an omitted key leaves
+    // the column untouched.
+    const patch = {};
+    if (name !== undefined) {
+      const trimmed = toTitleCase(String(name).trim());
+      if (!trimmed) return res.status(400).json({ error: 'Student name cannot be empty' });
+      patch.name = trimmed;
+    }
+    if (grade !== undefined) patch.grade = String(grade).trim() || null;
+    if (section !== undefined) patch.section = String(section).trim() || null;
+    if (curriculum !== undefined) patch.curriculum = String(curriculum).trim() || null;
+    if (admissionNumber !== undefined) {
+      const adm = String(admissionNumber).trim();
+      if (adm) {
+        // Admission number must stay unique within the school.
+        const { data: clash } = await supabase.from('users')
+          .select('id').eq('school_id', schoolId).eq('role', 'student').eq('admission_number', adm)
+          .neq('id', req.params.id).maybeSingle();
+        if (clash) return res.status(409).json({ error: `Admission No "${adm}" is already used by another student` });
+      }
+      patch.admission_number = adm || null;
+    }
+
+    if (Object.keys(patch).length) {
+      const { error: upErr } = await supabase.from('users').update(patch).eq('id', req.params.id);
+      if (upErr) throw upErr;
+    }
+
+    // --- Parent name / phone edits, applied to the linked parent account ---
+    if (parentName !== undefined || parentPhone !== undefined) {
+      const { data: links } = await supabase.from('parent_children').select('parent_email').eq('child_id', req.params.id);
+      const parentEmail = links?.[0]?.parent_email;
+      if (parentEmail) {
+        const pPatch = {};
+        if (parentName !== undefined && String(parentName).trim()) pPatch.name = toTitleCase(String(parentName).trim());
+        if (parentPhone !== undefined) pPatch.phone = String(parentPhone).trim() || null;
+        if (Object.keys(pPatch).length) {
+          await supabase.from('users').update(pPatch).eq('email', parentEmail).eq('role', 'parent');
+        }
+      }
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[PATCH /school-admin/students/:id] error:', err.message);
+    res.status(500).json({ error: err.message || 'Failed to update student' });
+  }
+});
+
+// DELETE /school-admin/students/:id — permanently delete a student account and
+// its data. This is a hard delete (distinct from Archive, which is a
+// recoverable status). The linked PARENT account is NOT deleted — a parent can
+// have other children and is a separate account; we only remove the link.
+async function deleteStudentRows(userId, email) {
+  const delById = async (table, column) => {
+    try { await supabase.from(table).delete().eq(column, userId); }
+    catch (e) { console.warn(`[delete student] ${table}.${column}: ${e.message}`); }
+  };
+  const delByEmail = async (table, column, val) => {
+    try { await supabase.from(table).delete().eq(column, val); }
+    catch (e) { console.warn(`[delete student] ${table}.${column}: ${e.message}`); }
+  };
+  // FK-referencing rows keyed by the student id.
+  await delById('assignment_submissions', 'student_id');
+  await delById('assignments', 'student_id');
+  await delById('challenge_assignments', 'student_id');
+  await delById('topic_attempts', 'student_id');
+  await delById('messages', 'student_id');
+  await delById('student_daily_log', 'student_id');
+  await delById('student_stats', 'student_id');
+  await delById('student_subject_time', 'student_id');
+  await delById('parent_daily_tasks', 'child_id');
+  await delById('parent_children', 'child_id');
+  await delById('teacher_student', 'student_id');
+  await delById('teacher_students', 'student_id');
+  // Email-keyed rows.
+  if (email) {
+    await delByEmail('user_preferences', 'user_email', email);
+    await delByEmail('student_preferences', 'user_email', email);
+    await delByEmail('parent_children', 'child_email', email);
+  }
+}
+
+async function deleteFirebaseAccountByEmail(email) {
+  try {
+    const admin = require('firebase-admin');
+    if (!admin.apps.length) return; // no credential configured — skip silently
+    const fbUser = await admin.auth().getUserByEmail(email);
+    await admin.auth().deleteUser(fbUser.uid);
+  } catch (err) {
+    if (err.code !== 'auth/user-not-found') console.warn(`[delete student] firebase auth: ${err.message}`);
+  }
+}
+
+router.delete('/students/:id', async (req, res) => {
+  if (req.adminScope.scopeType !== 'school') return res.status(400).json({ error: 'Only a school administrator can delete students' });
+  const schoolId = req.adminScope.schoolId;
+  try {
+    // Look up (and ownership-check) the student before deleting anything.
+    const { data: student } = await supabase.from('users')
+      .select('id, email').eq('id', req.params.id).eq('school_id', schoolId).eq('role', 'student').maybeSingle();
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+
+    await deleteStudentRows(student.id, student.email);
+    const { error: delErr } = await supabase.from('users').delete().eq('id', student.id);
+    if (delErr) throw delErr;
+    await deleteFirebaseAccountByEmail(student.email);
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[DELETE /school-admin/students/:id] error:', err.message);
+    res.status(500).json({ error: err.message || 'Failed to delete student' });
+  }
+});
+
 // POST /school-admin/students/bulk-status  { adminEmail, studentIds: [], status }
 router.post('/students/bulk-status', async (req, res) => {
   if (req.adminScope.scopeType !== 'school') return res.status(400).json({ error: 'Only a school administrator can update students' });
@@ -676,6 +870,36 @@ router.post('/students/bulk-status', async (req, res) => {
   } catch (err) {
     console.error('[POST /school-admin/students/bulk-status] error:', err.message);
     res.status(500).json({ error: 'Failed to update students' });
+  }
+});
+
+// POST /school-admin/students/bulk-grade  { adminEmail, studentIds: [], grade, section? }
+// "Promote Students" — year-end grade/section move for a batch of students in
+// one write. Mirrors bulk-status's ownership-checked pattern exactly. Only
+// `grade` (and `section`, when provided) are changed on `users` — id, email,
+// admission number, curriculum, and every other table (assignments,
+// submissions, attendance, stats, parent links, reports) are untouched, so
+// all learning history/IDs survive the move unmodified. `section` is
+// optional: omit it to keep each student's current section while only the
+// grade changes.
+router.post('/students/bulk-grade', async (req, res) => {
+  if (req.adminScope.scopeType !== 'school') return res.status(400).json({ error: 'Only a school administrator can promote students' });
+  const { studentIds, grade, section } = req.body || {};
+  if (!Array.isArray(studentIds) || !studentIds.length) return res.status(400).json({ error: 'studentIds required' });
+  const targetGrade = String(grade || '').trim();
+  if (!targetGrade) return res.status(400).json({ error: 'Target grade required' });
+  try {
+    const { owned, skipped } = await assertOwnedStudents(studentIds, req.adminScope.schoolId);
+    if (owned.length) {
+      const patch = { grade: targetGrade };
+      if (section !== undefined) patch.section = String(section || '').trim() || null;
+      const { error } = await supabase.from('users').update(patch).in('id', owned);
+      if (error) throw error;
+    }
+    res.json({ promoted: owned.length, skipped, grade: targetGrade, section: section !== undefined ? (String(section || '').trim() || null) : undefined });
+  } catch (err) {
+    console.error('[POST /school-admin/students/bulk-grade] error:', err.message);
+    res.status(500).json({ error: 'Failed to promote students' });
   }
 });
 
@@ -711,6 +935,7 @@ router.post('/students/bulk', async (req, res) => {
 
     const created = [];
     const updated = [];
+    const skipped = [];
     const errors = [];
     const credentials = [];
 
@@ -756,18 +981,15 @@ router.post('/students/bulk', async (req, res) => {
         let newStudentCreds = null; // { email, password } — set only on create
 
         if (student) {
-          // --- UPDATE: only overwrite when the CSV cell is non-empty ---
-          studentUserId = student.id;
-          const patch = { name };
-          if (grade) patch.grade = grade;
-          if (section) patch.section = section;
-          // Prefer an explicit Curriculum cell; else derive from the school
-          // base type + grade. Only write it when we actually have a value.
-          const updCurriculum = rowCurriculum || (grade ? resolveCurriculum(schoolBaseCurriculum, grade) : '');
-          if (updCurriculum) patch.curriculum = updCurriculum;
-          const { error: upErr } = await supabase.from('users').update(patch).eq('id', student.id);
-          if (upErr) throw upErr;
-          updated.push({ id: student.id, name, email: student.email });
+          // --- SKIP: this student is already in the roster ---
+          // Bulk import only ever ADDS new students. An already-imported
+          // student (matched by email, then admission number) is left
+          // untouched and reported as skipped — re-uploading a roster that
+          // overlaps the existing one won't silently rewrite records. To edit
+          // an existing student, the admin opens their details and edits them
+          // there. (Parent linking below is also skipped via `continue`.)
+          skipped.push({ row: i + 1, name, email: student.email, reason: 'Student already exists' });
+          continue;
         } else {
           // --- CREATE new student (mirrors POST /students) ---
           const email = studentEmail || generateStudentEmail(name, schoolName);
@@ -872,10 +1094,10 @@ router.post('/students/bulk', async (req, res) => {
 
     await logImportRun({
       schoolId, type: 'students', fileName, runByEmail: req.adminScope.email,
-      importedCount: created.length + updated.length, skippedCount: errors.length,
+      importedCount: created.length + updated.length, skippedCount: skipped.length + errors.length,
     });
 
-    res.json({ created: created.length, updated: updated.length, errors, credentials });
+    res.json({ created: created.length, updated: updated.length, skipped, errors, credentials });
   } catch (err) {
     console.error('[POST /school-admin/students/bulk] error:', err.message);
     res.status(500).json({ error: err.message || 'Failed to bulk import students' });
@@ -1514,34 +1736,105 @@ router.get('/parents', async (req, res) => {
 router.post('/parents', async (req, res) => {
   if (req.adminScope.scopeType !== 'school') return res.status(400).json({ error: 'Only a school administrator can invite a parent' });
   const schoolId = req.adminScope.schoolId;
-  const { firstName, lastName, email: emailOverride, studentId } = req.body || {};
+  // children: how the admin identifies each kid to link — typed, not picked
+  // from a list — { admissionNumber?, name?, grade?, section? }. Admission
+  // number is exact and preferred; name (+ optional grade/section to
+  // disambiguate same-name students) is the fallback. Every entry must
+  // resolve to EXACTLY one student in this school or nothing is created —
+  // a typo should never silently link the wrong child or create an orphaned
+  // parent account.
+  // studentIds/studentId: still accepted for any older caller (e.g. a
+  // pick-list flow), folded in as already-resolved ids alongside `children`.
+  const { firstName, lastName, email: emailOverride, phone, studentId, studentIds, children } = req.body || {};
   if (!String(firstName || '').trim() || !String(lastName || '').trim()) return res.status(400).json({ error: 'First and last name are required' });
+
+  const presetIds = Array.from(new Set([
+    ...(Array.isArray(studentIds) ? studentIds : []),
+    ...(studentId ? [studentId] : []),
+  ].filter(Boolean)));
+  const childEntries = Array.isArray(children) ? children : [];
+
   try {
+    // Resolve each typed child entry to exactly one student in this school.
+    const resolvedIds = [];
+    const unresolved = [];
+    for (let i = 0; i < childEntries.length; i++) {
+      const entry = childEntries[i] || {};
+      const admissionNumber = String(entry.admissionNumber || '').trim();
+      const name = String(entry.name || '').trim();
+      const grade = String(entry.grade || '').trim();
+      const section = String(entry.section || '').trim();
+
+      if (!admissionNumber && !name) {
+        unresolved.push({ index: i, reason: 'Enter an admission number or a student name.' });
+        continue;
+      }
+
+      let query = supabase.from('users').select('id, name, grade, section')
+        .eq('school_id', schoolId).eq('role', 'student');
+      if (admissionNumber) {
+        query = query.ilike('admission_number', admissionNumber);
+      } else {
+        query = query.ilike('name', name);
+        if (grade) query = query.eq('grade', grade);
+        if (section) query = query.eq('section', section);
+      }
+      const { data: matches, error: matchErr } = await query;
+      if (matchErr) throw matchErr;
+
+      if (!matches || matches.length === 0) {
+        unresolved.push({
+          index: i,
+          reason: admissionNumber
+            ? `No student found with admission number "${admissionNumber}".`
+            : `No student found named "${name}"${grade ? ` in ${grade}` : ''}${section ? ` · ${section}` : ''}.`,
+        });
+      } else if (matches.length > 1) {
+        unresolved.push({
+          index: i,
+          reason: `${matches.length} students match "${name || admissionNumber}" — add grade and section to narrow it down.`,
+        });
+      } else {
+        resolvedIds.push(matches[0].id);
+      }
+    }
+
+    if (unresolved.length > 0) {
+      return res.status(400).json({ error: 'Could not match one or more children to a student record.', unresolved });
+    }
+
+    const linkIds = Array.from(new Set([...presetIds, ...resolvedIds]));
+
     const { data: school, error: schoolErr } = await supabase.from('schools').select('name').eq('id', schoolId).maybeSingle();
     if (schoolErr) throw schoolErr;
     const schoolName = school?.name || 'School';
     const name = toTitleCase(`${firstName.trim()} ${lastName.trim()}`);
     const email = String(emailOverride || '').trim().toLowerCase() || await generateParentLoginId(supabase);
+    const cleanPhone = String(phone || '').trim() || null;
     const password = generateSecurePassword();
 
     const { data: dup } = await supabase.from('users').select('id').eq('email', email).maybeSingle();
     if (dup) return res.status(409).json({ error: 'A user with this email already exists' });
 
-    if (studentId) {
-      const { data: student } = await supabase.from('users').select('id').eq('id', studentId).eq('school_id', schoolId).eq('role', 'student').maybeSingle();
-      if (!student) return res.status(400).json({ error: 'Selected student was not found in your school' });
+    if (presetIds.length) {
+      // Verify any already-resolved (pick-list) ids actually belong to this
+      // school — resolvedIds above are already scoped by the query itself.
+      const { data: matched } = await supabase.from('users').select('id').in('id', presetIds).eq('school_id', schoolId).eq('role', 'student');
+      const matchedIds = new Set((matched || []).map((s) => s.id));
+      const missing = presetIds.filter((id) => !matchedIds.has(id));
+      if (missing.length) return res.status(400).json({ error: 'One or more selected students were not found in your school' });
     }
 
     const firebaseUid = await createFirebaseAccount(email, password);
     const userId = randomUUID();
     const { error: userErr } = await supabase.from('users').insert({
-      id: userId, name, email, role: 'parent',
+      id: userId, name, email, role: 'parent', phone: cleanPhone,
       school: schoolName, school_id: schoolId, status: 'active', onboarding_complete: true,
     });
     if (userErr) throw userErr;
 
-    if (studentId) {
-      await supabase.from('parent_children').insert({ parent_email: email, child_id: studentId });
+    if (linkIds.length) {
+      await supabase.from('parent_children').insert(linkIds.map((childId) => ({ parent_email: email, child_id: childId })));
     }
 
     await supabase.from('user_preferences').upsert({

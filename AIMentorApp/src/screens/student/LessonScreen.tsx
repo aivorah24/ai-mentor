@@ -17,6 +17,9 @@ import { useStudentData } from '../../context/StudentDataContext';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import TopicAICoach from '../../components/common/TopicAICoach';
+import ImageZoomModal from '../../components/common/ImageZoomModal';
+import LessonRenderer from './lesson/LessonRenderer';
+import { buildLessonComponents } from './lesson/lessonComponents';
 import { spacing, radius, fonts } from '../../theme';
 import type { AppColors } from '../../theme';
 import { CBSE_G6_ENGLISH_SYLLABUS } from '../../data/cbseG6EnglishSyllabus';
@@ -45,9 +48,20 @@ function speakWithBoundary(
   const synth = (window as any).speechSynthesis as SpeechSynthesis;
   synth.cancel();
   const utter = new SpeechSynthesisUtterance(text);
-  utter.rate = rate; utter.pitch = 1.05;
+  utter.rate = rate; utter.pitch = 1.08;
   const voices = synth.getVoices();
-  const pick = voices.find(v => /zira/i.test(v.name)) || voices.find(v => /en[-_]US/i.test(v.lang));
+  // Prefer the warmer, more natural neural voices when the browser/OS has them,
+  // in quality order, before falling back to the older robotic default. These
+  // sound far better for a young child than "Microsoft David/Zira".
+  const PREFERRED = [
+    /aria/i, /jenny/i, /michelle/i, /natural/i,      // Microsoft Edge neural voices
+    /google us english/i, /google uk english female/i, // Google (Chrome)
+    /samantha/i, /karen/i, /moira/i,                 // Apple
+    /zira/i,                                          // last-resort Windows default
+  ];
+  let pick: SpeechSynthesisVoice | undefined;
+  for (const re of PREFERRED) { pick = voices.find(v => re.test(v.name) && /^en/i.test(v.lang)); if (pick) break; }
+  if (!pick) pick = voices.find(v => /en[-_]US/i.test(v.lang)) || voices.find(v => /^en/i.test(v.lang));
   if (pick) utter.voice = pick;
   utter.onboundary = (e: any) => { if (e.name === 'word' || e.charIndex !== undefined) onWordBoundary(e.charIndex ?? 0); };
   utter.onend = () => onEnd();
@@ -96,11 +110,32 @@ function formatTime(totalSeconds: number): string {
 // Science" → "social_science"), so this maps between them.
 function subjectToBookFolder(subject: string): string {
   const s = subject.trim().toLowerCase();
+  // The compound "... Science" subjects must be matched BEFORE the bare
+  // `includes('science')` test, or Computer Science and Political Science both
+  // resolve to the /science/ folder and their textbooks 404 — which is most of
+  // the senior-grade catalogue.
+  if (s.includes('computer')) return 'computer_science';
+  if (s.includes('political')) return 'political_science';
   if (s.includes('social')) return 'social_science';
+  if (s.includes('home')) return 'home_science';
+  if (s.includes('evs') || s.includes('environ')) return 'evs';
   if (s.includes('science')) return 'science';
   if (s.includes('math')) return 'mathematics';
   if (s.includes('english')) return 'english';
+  if (s.includes('business')) return 'business_studies';
+  if (s.includes('physical education')) return 'physical_education';
+  if (s.includes('fine art')) return 'fine_arts';
   return s.replace(/\s+/g, '_');
+}
+
+// Where the textbook PDF lives. The lesson payload carries `bookPath`
+// ("grade11/mathematics/kemh101.pdf") resolved from the syllabus map, which is
+// authoritative; only fall back to rebuilding the path from grade+subject for
+// older lessons published before the map existed.
+function bookSrc(topic: any, grade: string, subject: string): string {
+  const rel = topic?.bookPath
+    || `grade${grade.replace(/[^0-9]/g, '')}/${subjectToBookFolder(subject)}/${topic?.pdfFile}`;
+  return `${SERVER_URL}/data/ncert_books/${rel}`;
 }
 
 // The real NCERT book title varies by grade + subject — "Poorvi" is only the
@@ -124,12 +159,86 @@ function bookTitleFor(grade: string, subject: string): string {
   return `${grade} ${subject} Textbook`;
 }
 
+// Visual column subtraction — how a teacher actually solves it on the board for
+// a child: numbers stacked in Tens/Ones columns, the borrow shown by crossing
+// out the ten and writing the small carried "1". Parses "45 - 27" from a problem.
+function parseSubtraction(problem: string): { top: number; bottom: number } | null {
+  const m = String(problem || '').replace(/[^0-9\-]/g, ' ').match(/(\d+)\s*-\s*(\d+)/);
+  if (!m) return null;
+  const top = parseInt(m[1], 10), bottom = parseInt(m[2], 10);
+  if (isNaN(top) || isNaN(bottom) || top < bottom || top > 99 || bottom > 99) return null;
+  return { top, bottom };
+}
+function ColumnSubtraction({ top, bottom, colors }: { top: number; bottom: number; colors: AppColors }) {
+  const tT = Math.floor(top / 10), tO = top % 10;
+  const bT = Math.floor(bottom / 10), bO = bottom % 10;
+  const borrow = tO < bO;
+  const onesTop = borrow ? tO + 10 : tO;
+  const tensReduced = borrow ? tT - 1 : tT;
+  const ans = top - bottom;
+  const aT = Math.floor(ans / 10), aO = ans % 10;
+  const green = colors.accentGreen, rose = '#C1666B', dim = colors.textDim, main = colors.textMain;
+  const Cell = ({ children, style }: any) => (
+    <View style={{ width: 44, alignItems: 'center', justifyContent: 'center', ...style }}>{children}</View>
+  );
+  const Digit = ({ v, color = main }: any) => (
+    <Text style={{ fontSize: 30, fontWeight: '800', color, fontVariant: ['tabular-nums'] as any }}>{v}</Text>
+  );
+  return (
+    <View style={{ alignSelf: 'flex-start', backgroundColor: colors.cardDark, borderWidth: 1, borderColor: colors.borderColor, borderRadius: radius.lg, padding: 16, gap: 2 }}>
+      {/* column headers */}
+      <View style={{ flexDirection: 'row', paddingLeft: 44 }}>
+        <Cell><Text style={{ fontSize: 11, fontWeight: '700', color: dim }}>Tens</Text></Cell>
+        <Cell><Text style={{ fontSize: 11, fontWeight: '700', color: dim }}>Ones</Text></Cell>
+      </View>
+      {/* borrow annotations row */}
+      <View style={{ flexDirection: 'row', height: 22 }}>
+        <Cell />
+        <Cell>{borrow ? <Text style={{ fontSize: 15, fontWeight: '800', color: green }}>{tensReduced}</Text> : null}</Cell>
+        <Cell>{borrow ? <Text style={{ fontSize: 13, fontWeight: '800', color: rose }}>¹</Text> : null}</Cell>
+      </View>
+      {/* top number (with the borrowed ten crossed out) */}
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Cell />
+        <Cell>
+          {borrow
+            ? <Text style={{ fontSize: 30, fontWeight: '800', color: rose, textDecorationLine: 'line-through' }}>{tT}</Text>
+            : <Digit v={tT} />}
+        </Cell>
+        <Cell><Digit v={tO} /></Cell>
+      </View>
+      {/* minus bottom number */}
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Cell><Text style={{ fontSize: 26, fontWeight: '800', color: main }}>−</Text></Cell>
+        <Cell><Digit v={bT} /></Cell>
+        <Cell><Digit v={bO} /></Cell>
+      </View>
+      {/* line */}
+      <View style={{ height: 3, backgroundColor: main, marginLeft: 44, borderRadius: 2 }} />
+      {/* answer */}
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Cell />
+        <Cell><Digit v={aT} color={green} /></Cell>
+        <Cell><Digit v={aO} color={green} /></Cell>
+      </View>
+      {borrow && (
+        <Text style={{ fontSize: 11, color: dim, marginTop: 6, maxWidth: 200 }}>
+          {tO} is smaller than {bO}, so we cross out the {tT} tens, make it {tensReduced}, and the {tO} becomes {onesTop}.
+        </Text>
+      )}
+    </View>
+  );
+}
+
 export default function LessonScreen({ navigation, route }: any) {
   const subject      = (route?.params?.subject      ?? 'English') as string;
   const curriculum   = (route?.params?.curriculum   ?? 'CBSE')    as string;
   const grade        = (route?.params?.grade        ?? 'Grade 6') as string;
-  const chapterIndex = (route?.params?.chapterIndex ?? 0)         as number;
-  const topicIndex   = (route?.params?.topicIndex   ?? 0)         as number;
+  // Number(...), not just a type cast — URL-based navigation (deep links,
+  // page refresh) delivers these as strings ("6"), and `"6" + 1` silently
+  // produces "61" instead of 7 wherever the index is used arithmetically.
+  const chapterIndex = Number(route?.params?.chapterIndex ?? 0);
+  const topicIndex   = Number(route?.params?.topicIndex ?? 0);
   const topicId      = route?.params?.topicId as string | undefined;
   const chapterTitleParam = route?.params?.chapterTitle as string | undefined;
 
@@ -137,6 +246,10 @@ export default function LessonScreen({ navigation, route }: any) {
   // Read/Listen/Practice content instead of the static curated dataset —
   // this is what makes an uploaded book actually reach students.
   const [dbTopic, setDbTopic] = useState<typeof CBSE_G6_ENGLISH_SYLLABUS[0]['topics'][0] | null>(null);
+  // Raw AI_EXPLANATION payload — fed to the type-driven LessonRenderer so the
+  // Learn view is composed from canonical components (poem/story/math layouts),
+  // not a hardcoded flat template.
+  const [rawPayload, setRawPayload] = useState<any>(null);
   const [loadingDbTopic, setLoadingDbTopic] = useState(!!topicId);
   useEffect(() => {
     if (!topicId) { setLoadingDbTopic(false); return; }
@@ -150,16 +263,46 @@ export default function LessonScreen({ navigation, route }: any) {
         for (const r of data.resources || []) byType[r.resourceType] = r;
         const explanation = byType.AI_EXPLANATION;
         const images = byType.IMAGES;
+        // The RAG-grounded G1 pipeline stores a rich payload on AI_EXPLANATION
+        // (intro, keyLearnings, body, activity, vocab, listenParts, mathHelper).
+        // Older imported topics only carry { text } — handle both. We never
+        // synthesize a blank figure box: figureUrl stays undefined unless a real
+        // image exists.
+        const p = explanation?.status === 'READY' ? (explanation.payload || {}) : {};
+        setRawPayload(p);
+        const hasRich = Array.isArray(p.body) && p.body.length > 0;
+        const realImg = images?.status === 'READY' ? images.payload?.items?.[0]?.description : undefined;
         setDbTopic({
           name: route?.params?.topicName || 'This topic',
           kind: 'Chapter',
           page: images?.payload?.pageRef ? String(images.payload.pageRef) : '',
+          // Real source PDF → the "View in Book" right pane shows the actual
+          // NCERT book (with its illustrations), same as the curated G6 topics.
+          pdfFile: p.pdfFile || undefined,
+          pdfPage: p.pdfFile ? (p.pdfPage || 1) : undefined,
+          // Exact storage path from the syllabus map, so the reader opens the
+          // right book without the client re-deriving a folder name.
+          bookPath: p.bookPath || undefined,
           readText: {
-            intro: explanation?.status === 'READY' ? explanation.payload?.text : '',
-            body: [],
-            figureUrl: images?.status === 'READY' ? images.payload?.items?.[0]?.description : undefined,
-            figureCaption: images?.status === 'READY' ? (images.payload?.items?.[0]?.description || '') : '',
-            activity: '',
+            intro: p.intro || (typeof p.text === 'string' ? p.text : '') || '',
+            keyLearnings: Array.isArray(p.keyLearnings) ? p.keyLearnings : [],
+            body: hasRich ? p.body : [],
+            figureUrl: realImg || undefined,
+            figureCaption: realImg || '',
+            activity: p.activity || '',
+            vocab: Array.isArray(p.vocab) ? p.vocab : [],
+            listenParts: Array.isArray(p.listenParts) ? p.listenParts : undefined,
+            example: p.mathHelper?.example || undefined,
+            mathHelper: p.mathHelper || undefined,
+            // Richer schema fields the Curriculum Intelligence pipeline emits —
+            // now carried through so the Learn view can render the full lesson
+            // (poem lines, takeaways, reflection) instead of silently dropping them.
+            originalLesson: Array.isArray(p.originalLesson) ? p.originalLesson : undefined,
+            keyTakeaways: Array.isArray(p.keyTakeaways) ? p.keyTakeaways : [],
+            thinkAndReflect: Array.isArray(p.thinkAndReflect) ? p.thinkAndReflect : [],
+            workedExamples: Array.isArray(p.workedExamples) ? p.workedExamples : undefined,
+            illustrationPrompts: Array.isArray(p.illustrationPrompts) ? p.illustrationPrompts : [],
+            instructionalType: typeof p.instructionalType === 'string' ? p.instructionalType : undefined,
           },
         } as any);
         setLoadingDbTopic(false);
@@ -171,12 +314,20 @@ export default function LessonScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const { completeLesson } = useStudentData();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const [mode, setMode] = useState<Mode>('read');
+  // Allow the visual-QA harness (and deep links) to open a specific tab directly
+  // via ?mode=listen|practice|ask — far more reliable than simulating tab clicks.
+  const initialMode = ((): Mode => {
+    const m = route?.params?.mode;
+    if (m === 'listen' || m === 'practice' || m === 'ask' || m === 'read') return m;
+    return 'read';
+  })();
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [speaking, setSpeaking] = useState(false);
   const [fullBookView, setFullBookView] = useState(false);
   const [listenStep, setListenStep] = useState(0);
   const [listenPlaying, setListenPlaying] = useState(false);
   const [listenCharIndex, setListenCharIndex] = useState(0);
+  const [sentenceIdx, setSentenceIdx] = useState(0);
   const [fontLarge, setFontLarge] = useState(false);
   const [pauseAnswer, setPauseAnswer] = useState<number | null>(null);
   const [vocabIndex, setVocabIndex] = useState(0);
@@ -187,8 +338,14 @@ export default function LessonScreen({ navigation, route }: any) {
   const [stepDurations, setStepDurations] = useState<Record<number, number>>({});
   const [clockTick, setClockTick] = useState(0);
   const [hasPausedUtterance, setHasPausedUtterance] = useState(false);
-  const [playbackRate, setPlaybackRate] = useState(0.78);
+  const [playbackRate, setPlaybackRate] = useState(1.0);
   const [speedMenuOpen, setSpeedMenuOpen] = useState(false);
+  const [zoomImage, setZoomImage] = useState<{ uri: string; caption?: string } | null>(null);
+  const [whyOpen, setWhyOpen] = useState(false);
+  const [explainOpen, setExplainOpen] = useState(false);
+  const [hintOpen, setHintOpen] = useState(false);
+  const [exampleOpen, setExampleOpen] = useState(false);
+  const isMath = /math/i.test(subject);
   const playStartRef = useRef<number | null>(null);
   // Seconds already elapsed before the current play/resume segment started —
   // carries over across pause/resume so the clock never snaps back to 0:00.
@@ -212,6 +369,20 @@ export default function LessonScreen({ navigation, route }: any) {
         label: p.heading, heading: p.heading, text: p.text, keyIdea: p.keyIdea, pauseThink: p.pauseThink,
       }));
     }
+    // Maths/Concept lessons: the AI Tutor walks through each WORKED EXAMPLE
+    // step-by-step (that's what a tutor does), not just the intro theory.
+    const worked = (topic.readText as any).workedExamples as any[] | undefined;
+    if (worked && worked.length > 0) {
+      return [
+        { label: 'Introduction', heading: 'Introduction', text: topic.readText.intro },
+        ...worked.map((ex, i) => ({
+          label: `Example ${i + 1}`,
+          heading: `Example ${i + 1}: ${ex.problem}`,
+          text: `${ex.problem}. ${(ex.steps || []).join(' ')} So the answer is ${ex.answer}.`,
+        })),
+        { label: 'Your turn', heading: 'Your turn', text: topic.readText.activity || 'Now try a subtraction with borrowing on your own.' },
+      ];
+    }
     return [
       { label: 'Introduction', heading: 'Introduction', text: topic.readText.intro },
       ...topic.readText.body.map((p, i) => ({ label: `Part ${i + 1}`, heading: `Part ${i + 1}`, text: p })),
@@ -221,145 +392,130 @@ export default function LessonScreen({ navigation, route }: any) {
 
   const vocab = topic?.readText.vocab ?? [];
 
+  // Poem lessons are recited, not read: slower pace + a short breath between
+  // lines so it lands as a rhythmic recitation rather than flat narration.
+  const isPoem = ((rawPayload?.instructionalType as string) || '').toLowerCase().includes('poem');
+  const isPoemRef = useRef(isPoem);
+  isPoemRef.current = isPoem;
+  // Default speed stays 1× (normal); the poem cadence comes from the short
+  // between-line pause below, not from slowing the voice down.
+
+  // Practice tab: go straight to the quiz — no intermediate "Start Practice"
+  // card. We flip mode back to 'read' right after launching so returning from
+  // the quiz doesn't immediately re-trigger navigation (no loop).
+  useEffect(() => {
+    if (mode !== 'practice' || !topic) return;
+    setMode('read');
+    navigation.navigate('IBPYPQuiz', {
+      topic: topic.name, grade, subject, curriculum, topicId,
+      passageText: (topic as any).readText
+        ? `${(topic as any).readText.intro} ${(topic as any).readText.body?.join(' ') ?? ''}`.trim()
+        : undefined,
+      returnTo: 'LessonScreen',
+      returnParams: { subject, curriculum, grade, chapterIndex, topicIndex },
+    });
+  }, [mode, topic]);
+
   const currentListenStep = listenSteps[listenStep];
   const listenSentences = useMemo(
     () => (currentListenStep ? sentencesWithOffsets(currentListenStep.text) : []),
     [currentListenStep],
   );
-  const curSentenceIdx = listenSentences.reduce((best, s, i) => (s.start <= listenCharIndex ? i : best), 0);
+  // ── Sentence-by-sentence narration engine ────────────────────────────────
+  // Each SENTENCE is spoken as its own short utterance, then the engine
+  // advances to the next. This is the reliable, premium approach (Khan Kids /
+  // Read-Along style): pause/resume never desync, the highlighted line is
+  // exact (we drive it), seeking maps to whole lines, and pauses fall only at
+  // punctuation — no robotic word-by-word gaps. `curSentenceIdx` is the single
+  // source of truth for which line is active.
+  const curSentenceIdx = sentenceIdx;
+  const playSeqRef = useRef(0);           // token invalidates stale onEnd callbacks
+  const listenSentencesRef = useRef(listenSentences);
+  listenSentencesRef.current = listenSentences;
+  const playbackRateRef = useRef(playbackRate);
+  playbackRateRef.current = playbackRate;
 
+  // Speak sentence `idx` of the current step, then chain to the next.
+  function speakFromSentence(idx: number) {
+    const sents = listenSentencesRef.current;
+    if (!sents.length) return;
+    const clamped = Math.max(0, Math.min(sents.length - 1, idx));
+    const seq = ++playSeqRef.current;      // start a fresh sequence
+    setSentenceIdx(clamped);
+    setListenPlaying(true);
+    const speakIdx = (i: number) => {
+      if (seq !== playSeqRef.current) return;        // superseded — stop
+      if (i >= sents.length) {                        // reached the end
+        setListenPlaying(false);
+        setVisitedSteps(prev => new Set(prev).add(listenStep));
+        return;
+      }
+      setSentenceIdx(i);
+      speakWithBoundary(
+        sents[i].sentence.trim(),
+        () => {},                                     // highlight is line-level, not word-level
+        () => {
+          if (seq !== playSeqRef.current) return;
+          // Poem cadence: a short breath between lines; prose flows straight on.
+          if (isPoemRef.current) setTimeout(() => { if (seq === playSeqRef.current) speakIdx(i + 1); }, 450);
+          else speakIdx(i + 1);
+        },
+        playbackRateRef.current,
+      );
+    };
+    speakIdx(clamped);
+  }
+  function stopNarration() {
+    playSeqRef.current++;                             // invalidate any pending onEnd
+    stopSpeaking();
+    setListenPlaying(false);
+  }
   function playListenStep(i: number) {
     if (!listenSteps[i]) return;
+    stopNarration();
     setListenStep(i);
-    setListenCharIndex(0);
-    setListenPlaying(true);
+    setSentenceIdx(0);
     setVisitedSteps(prev => new Set(prev).add(i));
-    accumulatedRef.current = 0;
-    charOffsetRef.current = 0;
-    playStartRef.current = Date.now();
-    setHasPausedUtterance(false);
-    speakWithBoundary(
-      listenSteps[i].text,
-      (charIndex) => setListenCharIndex(charIndex),
-      () => {
-        const measured = accumulatedRef.current + (playStartRef.current ? (Date.now() - playStartRef.current) / 1000 : 0);
-        setStepDurations(prev => ({ ...prev, [i]: measured }));
-        accumulatedRef.current = 0;
-        charOffsetRef.current = 0;
-        playStartRef.current = null;
-        setHasPausedUtterance(false);
-        setListenPlaying(false);
-      },
-      playbackRate,
-    );
+    // let the new step's sentences settle into the ref before speaking
+    setTimeout(() => speakFromSentence(0), 0);
   }
   function toggleListenPlay() {
     if (listenPlaying) {
-      // Pause in place — keeps the utterance's spoken position so resume
-      // continues from here, and the elapsed time doesn't jump back to 0:00.
-      if (playStartRef.current) accumulatedRef.current += (Date.now() - playStartRef.current) / 1000;
-      playStartRef.current = null;
-      pauseSpeakingInPlace();
-      setHasPausedUtterance(true);
-      setListenPlaying(false);
-    } else if (hasPausedUtterance) {
-      playStartRef.current = Date.now();
-      resumeSpeakingInPlace();
-      setListenPlaying(true);
+      stopNarration();                               // clean pause — no desync
     } else {
-      playListenStep(listenStep);
+      speakFromSentence(sentenceIdx);                // resume from current line
     }
+  }
+  function repeatStep() {
+    stopNarration();
+    setSentenceIdx(0);
+    setTimeout(() => speakFromSentence(0), 0);
   }
   function goToListenStep(i: number) {
     if (i < 0 || i >= listenSteps.length) return;
-    stopSpeaking();
-    accumulatedRef.current = 0;
-    charOffsetRef.current = 0;
-    playStartRef.current = null;
-    setHasPausedUtterance(false);
-    setListenPlaying(false);
+    stopNarration();
     setListenStep(i);
-    setListenCharIndex(0);
+    setSentenceIdx(0);
     setVisitedSteps(prev => new Set(prev).add(i));
+    setWhyOpen(false);
+    setExplainOpen(false);
+    setHintOpen(false);
+    setExampleOpen(false);
   }
-  // Current elapsed seconds into the step, whether playing, paused, or idle —
-  // shared by the transport display and the skip/seek logic below.
-  function currentElapsedSec(totalSec: number): number {
-    if (listenPlaying && playStartRef.current) {
-      return Math.min(accumulatedRef.current + (Date.now() - playStartRef.current) / 1000, totalSec);
-    }
-    if (hasPausedUtterance) return Math.min(accumulatedRef.current, totalSec);
-    return Math.min(stepDurations[listenStep] ?? 0, totalSec);
-  }
-  // Jumps playback forward/back by deltaSec (YouTube-style ±10s), by
-  // re-starting the utterance from an estimated character position — the Web
-  // Speech API has no real seek, so this maps time to a proportional offset
-  // into the step's text.
+  // Previous / Next line (wired to the ⟲10 / ⟳10 transport buttons). Jumping
+  // by whole sentences is accurate and meaningful for a Grade-1 reader, unlike
+  // the old proportional char-offset guess the Web Speech API forced.
   function skipBy(deltaSec: number) {
-    const step = listenSteps[listenStep];
-    if (!step) return;
-    const wordCount = step.text.trim().split(/\s+/).length;
-    const estimateSec = Math.max(1, wordCount / (1.9 * (playbackRate / 0.78)));
-    const totalSec = stepDurations[listenStep] ?? estimateSec;
-    const targetSec = Math.min(totalSec, Math.max(0, currentElapsedSec(totalSec) + deltaSec));
-    const targetCharIndex = Math.min(step.text.length - 1, Math.max(0, Math.round((targetSec / totalSec) * step.text.length)));
-    stopSpeaking();
-    charOffsetRef.current = targetCharIndex;
-    accumulatedRef.current = targetSec;
-    playStartRef.current = Date.now();
-    setListenCharIndex(targetCharIndex);
-    setListenPlaying(true);
-    setHasPausedUtterance(false);
-    setVisitedSteps(prev => new Set(prev).add(listenStep));
-    speakWithBoundary(
-      step.text.slice(targetCharIndex),
-      (charIndex) => setListenCharIndex(charOffsetRef.current + charIndex),
-      () => {
-        const measured = accumulatedRef.current + (playStartRef.current ? (Date.now() - playStartRef.current) / 1000 : 0);
-        setStepDurations(prev => ({ ...prev, [listenStep]: measured }));
-        accumulatedRef.current = 0;
-        charOffsetRef.current = 0;
-        playStartRef.current = null;
-        setHasPausedUtterance(false);
-        setListenPlaying(false);
-      },
-      playbackRate,
-    );
+    const sents = listenSentencesRef.current;
+    if (!sents.length) return;
+    const target = Math.max(0, Math.min(sents.length - 1, sentenceIdx + (deltaSec < 0 ? -1 : 1)));
+    if (listenPlaying) speakFromSentence(target);
+    else setSentenceIdx(target);
   }
-  // Sets an exact speed (chosen from the speed menu). If mid-playback,
-  // restarts the utterance from the current position at the new rate (Web
-  // Speech API can't change an in-flight utterance's rate).
   function changePlaybackRate(nextRate: number) {
     setPlaybackRate(nextRate);
-    setStepDurations({}); // durations were measured at the old rate — stale now
-    if (listenPlaying || hasPausedUtterance) {
-      const step = listenSteps[listenStep];
-      if (!step) return;
-      const wordCount = step.text.trim().split(/\s+/).length;
-      const estimateSec = Math.max(1, wordCount / (1.9 * (nextRate / 0.78)));
-      const resumeSec = currentElapsedSec(estimateSec);
-      const resumeCharIndex = Math.min(step.text.length - 1, Math.max(0, Math.round((resumeSec / estimateSec) * step.text.length)));
-      stopSpeaking();
-      charOffsetRef.current = resumeCharIndex;
-      accumulatedRef.current = resumeSec;
-      playStartRef.current = Date.now();
-      setListenPlaying(true);
-      setHasPausedUtterance(false);
-      speakWithBoundary(
-        step.text.slice(resumeCharIndex),
-        (charIndex) => setListenCharIndex(charOffsetRef.current + charIndex),
-        () => {
-          const measured = accumulatedRef.current + (playStartRef.current ? (Date.now() - playStartRef.current) / 1000 : 0);
-          setStepDurations(prev => ({ ...prev, [listenStep]: measured }));
-          accumulatedRef.current = 0;
-          charOffsetRef.current = 0;
-          playStartRef.current = null;
-          setHasPausedUtterance(false);
-          setListenPlaying(false);
-        },
-        nextRate,
-      );
-    }
+    playbackRateRef.current = nextRate;
+    if (listenPlaying) speakFromSentence(sentenceIdx);   // restart current line at new rate
   }
 
   // Ticks every 200ms while a part is actually playing, so the elapsed-time
@@ -382,12 +538,14 @@ export default function LessonScreen({ navigation, route }: any) {
     leftScrollRef.current?.scrollTo?.({ y: target, animated: true });
   }, [curSentenceIdx, listenPlaying]);
 
-  useEffect(() => () => stopSpeaking(), []);
+  useEffect(() => () => { playSeqRef.current++; stopSpeaking(); }, []);
   useEffect(() => {
+    playSeqRef.current++;
     stopSpeaking();
     setSpeaking(false);
     setListenPlaying(false);
     setListenStep(0);
+    setSentenceIdx(0);
     setListenCharIndex(0);
     setPauseAnswer(null);
     setVocabIndex(0);
@@ -427,7 +585,7 @@ export default function LessonScreen({ navigation, route }: any) {
 
   const tabs: { key: Mode; label: string; icon: any }[] = [
     { key: 'read',     label: 'Learn',    icon: 'book-open' },
-    { key: 'listen',   label: 'Listen',   icon: 'headphones' },
+    { key: 'listen',   label: isMath ? 'AI Tutor' : 'Listen', icon: isMath ? 'cpu' : 'headphones' },
     { key: 'ask',      label: 'Ask Aivorah', icon: 'message-circle' },
     { key: 'practice', label: 'Practice', icon: 'check-square' },
   ];
@@ -480,11 +638,56 @@ export default function LessonScreen({ navigation, route }: any) {
                 <Feather name="book-open" size={12} color={colors.primary} />
                 <Text style={[styles.paneLabelText, { color: colors.textMuted }]}>Learn with Aivorah — simplified</Text>
               </View>
-              <View style={[styles.card, { borderColor: colors.borderColor, backgroundColor: colors.cardDark }]}>
-                <Text style={[styles.introText, { color: colors.textMain }]}>{topic.readText.intro}</Text>
-                {topic.readText.body.map((p, i) => (
-                  <Text key={i} style={[styles.bodyText, { color: colors.textMuted }]}>{p}</Text>
-                ))}
+              <View style={{ gap: spacing.md }}>
+                {/* A sample module must never be mistaken for real NCERT
+                    content. Chapters whose textbook text is too sparse to ground
+                    a lesson (or whose PDF was never shipped) get a placeholder
+                    so the layout is complete — and it says so, on screen, above
+                    the content rather than buried in it. */}
+                {rawPayload?.isSample && (
+                  <View style={{
+                    flexDirection: 'row', alignItems: 'center', gap: 8,
+                    paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10,
+                    borderWidth: 1, borderColor: colors.borderColor, backgroundColor: colors.cardDark,
+                  }}>
+                    <Feather name="info" size={15} color={colors.textMuted} />
+                    <Text style={{ flex: 1, fontSize: 12.5, fontWeight: '600', color: colors.textMuted }}>
+                      {rawPayload.sampleLabel || 'Interactive Practice Module — Sample Lesson'}
+                    </Text>
+                  </View>
+                )}
+                {/* Type-driven lesson body: the LessonRenderer composes canonical
+                    components (poem / story / math / science layouts) from the
+                    lesson's instructional type — the frontend half of the
+                    Curriculum Intelligence pipeline contract. */}
+                {rawPayload && (
+                  <LessonRenderer
+                    components={buildLessonComponents(rawPayload).components}
+                    grade={rawPayload?.grade ?? (parseInt((grade || '').replace(/[^0-9]/g, ''), 10) || undefined)}
+                    colors={colors}
+                  />
+                )}
+                {!!(topic.readText as any).mathHelper && (() => {
+                  const mh = (topic.readText as any).mathHelper;
+                  return (
+                    <View style={[styles.card, { borderColor: colors.accentGreen + '40', backgroundColor: colors.accentGreen + '0d', marginTop: 12 }]}>
+                      <Text style={[styles.activityLabel, { color: colors.accentGreen, marginBottom: 6 }]}>Math Helper — step by step</Text>
+                      {!!mh.formula && <Text style={[styles.bodyText, { color: colors.textMain, fontWeight: '600' }]}>Rule: {mh.formula}</Text>}
+                      {(mh.keyIdeas || []).map((k: string, i: number) => (
+                        <Text key={i} style={[styles.bodyText, { color: colors.textMuted }]}>{'•'} {k}</Text>
+                      ))}
+                      {!!mh.example && (
+                        <View style={{ marginTop: 8 }}>
+                          <Text style={[styles.bodyText, { color: colors.textMain, fontWeight: '600' }]}>{mh.example.problem}</Text>
+                          {(mh.example.steps || []).map((s: string, i: number) => (
+                            <Text key={i} style={[styles.bodyText, { color: colors.textMuted, marginTop: 2 }]}>{s}</Text>
+                          ))}
+                          {!!mh.example.answer && <Text style={[styles.bodyText, { color: colors.accentGreen, fontWeight: '600', marginTop: 4 }]}>{mh.example.answer}</Text>}
+                        </View>
+                      )}
+                    </View>
+                  );
+                })()}
                 {(() => {
                   // Prefer the multi-image gallery; fall back to the single
                   // figureUrl for older content that predates `figures`.
@@ -494,7 +697,15 @@ export default function LessonScreen({ navigation, route }: any) {
                   if (gallery.length === 0) return null; // no blank placeholder box when there's genuinely no image
                   return gallery.map((fig, i) => (
                     <View key={i} style={[styles.figure, { borderColor: colors.borderColor, backgroundColor: colors.bgDark }]}>
-                      <Image source={{ uri: fig.url }} style={styles.figureImg} resizeMode="contain" />
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => setZoomImage({ uri: fig.url, caption: fig.caption || topic.readText.figureCaption })}
+                      >
+                        <Image source={{ uri: fig.url }} style={styles.figureImg} resizeMode="contain" />
+                        <View style={styles.zoomHint}>
+                          <Feather name="maximize-2" size={11} color="#fff" />
+                        </View>
+                      </TouchableOpacity>
                       {!!(fig.caption || topic.readText.figureCaption) && (
                         <Text style={[styles.figureCaption, { color: colors.textMuted }]}>
                           {fig.caption || topic.readText.figureCaption}
@@ -528,7 +739,7 @@ export default function LessonScreen({ navigation, route }: any) {
                   </TouchableOpacity>
                 </View>
                 {React.createElement('iframe', {
-                  src: `${SERVER_URL}/data/ncert_books/grade${grade.replace(/[^0-9]/g, '')}/${subjectToBookFolder(subject)}/${topic.pdfFile}#page=${topic.pdfPage}&view=FitH`,
+                  src: `${bookSrc(topic, grade, subject)}#page=${topic.pdfPage}&view=FitH`,
                   style: { flex: 1, border: 'none', width: '100%', height: '100%', backgroundColor: colors.cardDark },
                   title: `${topic.name} — real textbook page`,
                 })}
@@ -551,7 +762,7 @@ export default function LessonScreen({ navigation, route }: any) {
               <View style={{ width: 130 }} />
             </View>
             {React.createElement('iframe', {
-              src: `${SERVER_URL}/data/ncert_books/grade${grade.replace(/[^0-9]/g, '')}/${subjectToBookFolder(subject)}/${topic.pdfFile}#page=${topic.pdfPage ?? 1}&view=FitH`,
+              src: `${bookSrc(topic, grade, subject)}#page=${topic.pdfPage ?? 1}&view=FitH`,
               style: { flex: 1, border: 'none', width: '100%', height: '100%' },
               title: `Full book — ${topic.pdfFile}`,
             })}
@@ -598,7 +809,7 @@ export default function LessonScreen({ navigation, route }: any) {
                   </TouchableOpacity>
                 </View>
                 {React.createElement('iframe', {
-                  src: `${SERVER_URL}/data/ncert_books/grade${grade.replace(/[^0-9]/g, '')}/${subjectToBookFolder(subject)}/${topic.pdfFile}#page=${topic.pdfPage}&view=FitH`,
+                  src: `${bookSrc(topic, grade, subject)}#page=${topic.pdfPage}&view=FitH`,
                   style: { flex: 1, border: 'none', width: '100%', height: '100%', backgroundColor: colors.cardDark },
                   title: `${topic.name} — real textbook page`,
                 })}
@@ -611,17 +822,15 @@ export default function LessonScreen({ navigation, route }: any) {
         {mode === 'listen' && (() => {
           const step = currentListenStep;
           const sentences = listenSentences;
-          // Real duration once this part has been played through at least once
-          // (measured wall-clock time of the actual TTS playback); before that,
-          // a rough word-count estimate so the transport bar isn't empty.
-          const wordCount = step ? step.text.trim().split(/\s+/).length : 0;
-          const estimateSec = Math.max(1, wordCount / (1.9 * (playbackRate / 0.78)));
-          const measuredSec = stepDurations[listenStep];
-          const totalSec = measuredSec ?? estimateSec;
-          const elapsedSec = currentElapsedSec(totalSec);
-          void clockTick; // referenced only to force a re-render tick while playing
+          // Progress is line-based now (reliable), not a wall-clock guess: the
+          // current line out of the step's lines. A completed line counts as
+          // done; the active line counts as half so the bar always moves.
+          const lineCount = Math.max(1, sentences.length);
+          const lineProgress = Math.min(100, ((sentenceIdx + (listenPlaying ? 0.5 : 1)) / lineCount) * 100);
+          void clockTick;
           const word = vocab[vocabIndex];
           const isLastStep = listenStep === listenSteps.length - 1;
+          const isFirstStep = listenStep === 0;
           return (
           <View style={styles.listenModeWrap}>
           <View style={styles.dualPane}>
@@ -629,23 +838,46 @@ export default function LessonScreen({ navigation, route }: any) {
               <View style={styles.listenTopRow}>
                 <View style={[styles.listeningToChip, { backgroundColor: colors.accentGreen + '1c' }]}>
                   <Text style={[styles.listeningToText, { color: colors.accentGreen }]}>
-                    Listening to: {step?.label} of {listenSteps.length}
+                    {isMath ? `Step ${listenStep + 1} of ${listenSteps.length}: ${step?.label}` : `Listening to: ${step?.label} of ${listenSteps.length}`}
                   </Text>
                 </View>
-                <TouchableOpacity
-                  style={[styles.aaBtn, { borderColor: colors.borderColor, backgroundColor: colors.cardDark }]}
-                  onPress={() => setFontLarge(v => !v)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.aaBtnText, { color: colors.textMain }]}>Aa</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TouchableOpacity
+                    style={[styles.aaBtn, { borderColor: colors.borderColor, backgroundColor: colors.cardDark }]}
+                    onPress={() => setFontLarge(v => !v)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.aaBtnText, { color: colors.textMain }]}>Aa</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
+
+              {isMath && (
+                <View style={[styles.aiTutorBadge, { backgroundColor: colors.primary + '14', borderColor: colors.primary + '30' }]}>
+                  <Feather name="cpu" size={12} color={colors.primary} />
+                  <Text style={[styles.aiTutorBadgeText, { color: colors.primary }]}>AI Tutor — let's understand this step by step</Text>
+                </View>
+              )}
 
               <Text style={[styles.listenHeading, { color: colors.textMain }]}>{step?.heading}</Text>
 
+              {/* Visual column subtraction — solve it on the board like a teacher
+                  would for a young child, not as a wall of text. */}
+              {isMath && (() => {
+                const worked = (topic.readText as any).workedExamples as any[] | undefined;
+                const ex = worked?.[Math.max(0, Math.min((worked?.length || 1) - 1, listenStep - 1))];
+                const parsed = ex ? parseSubtraction(ex.problem) : null;
+                if (!parsed || listenStep === 0) return null;
+                return (
+                  <View style={{ marginVertical: 14 }}>
+                    <ColumnSubtraction top={parsed.top} bottom={parsed.bottom} colors={colors} />
+                  </View>
+                );
+              })()}
+
               <View style={styles.listenBodyRow}>
                 {sentences.map((s, i) => {
-                  const active = i === curSentenceIdx && listenPlaying;
+                  const active = i === curSentenceIdx;
                   return (
                     <View key={i} onLayout={(e) => { sentenceYRef.current[i] = e.nativeEvent.layout.y; }}>
                       <Text
@@ -665,28 +897,75 @@ export default function LessonScreen({ navigation, route }: any) {
                 })}
               </View>
 
-              {/* ── Player ── */}
+              {/* ── Maths AI Tutor: compact "Listen" so the tutor can read the
+                  current step aloud (age 7 benefits from hearing it). ── */}
+              {isMath && (
+                <TouchableOpacity
+                  onPress={toggleListenPlay}
+                  activeOpacity={0.85}
+                  style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8, marginTop: 14,
+                    paddingVertical: 8, paddingHorizontal: 14, borderRadius: 22,
+                    backgroundColor: colors.primary + '18', borderWidth: 1, borderColor: colors.primary + '40' }}
+                >
+                  <Feather name={listenPlaying ? 'pause' : 'volume-2'} size={15} color={colors.primary} />
+                  <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>
+                    {listenPlaying ? 'Pause' : 'Listen to this step'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Step navigation — placed right under the content so the student
+                  moves through steps without scrolling to a far footer. */}
+              {isMath && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 }}>
+                  <TouchableOpacity
+                    style={[styles.mathFooterBtn, { borderColor: colors.borderColor }, listenStep === 0 && { opacity: 0.4 }]}
+                    onPress={() => goToListenStep(listenStep - 1)}
+                    disabled={listenStep === 0}
+                    activeOpacity={0.85}
+                  >
+                    <Feather name="arrow-left" size={14} color={colors.textMain} />
+                    <Text style={[styles.mathFooterBtnText, { color: colors.textMain }]}>Previous</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.mathFooterBtnPrimary, { backgroundColor: colors.accentGreen }, isLastStep && { opacity: 0.5 }]}
+                    onPress={() => goToListenStep(listenStep + 1)}
+                    disabled={isLastStep}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.nextPartText}>{isLastStep ? 'Finished' : 'Next'}</Text>
+                    {!isLastStep && <Feather name="arrow-right" size={13} color="#fff" />}
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* ── Player (Science/English/etc — full audiobook transport) ── */}
+              {!isMath && (
               <View style={[styles.card, { borderColor: colors.borderColor, backgroundColor: colors.cardDark, marginTop: 16 }]}>
                 <View style={styles.playerTimeRow}>
-                  <Text style={[styles.playerTimeText, { color: colors.textMuted }]}>{formatTime(elapsedSec)}</Text>
-                  <Text style={[styles.playerTimeText, { color: colors.textMuted }]}>{formatTime(totalSec)}</Text>
+                  <Text style={[styles.playerTimeText, { color: colors.textMuted }]}>Line {Math.min(sentenceIdx + 1, lineCount)} of {lineCount}</Text>
+                  <Text style={[styles.playerTimeText, { color: colors.textMuted }]}>{listenPlaying ? 'Reading…' : 'Paused'}</Text>
                 </View>
                 <View style={[styles.listenProgressTrack, { backgroundColor: colors.textDim + '35' }]}>
-                  <View style={[styles.listenProgressFill, { backgroundColor: colors.accentGreen, width: `${Math.min(100, (elapsedSec / totalSec) * 100)}%` }]} />
-                  <View style={[styles.progressThumb, { left: `${Math.min(100, (elapsedSec / totalSec) * 100)}%`, backgroundColor: colors.accentGreen }]} />
+                  <View style={[styles.listenProgressFill, { backgroundColor: colors.accentGreen, width: `${lineProgress}%` }]} />
+                  <View style={[styles.progressThumb, { left: `${lineProgress}%`, backgroundColor: colors.accentGreen }]} />
                 </View>
 
                 <View style={[styles.playerRow, { marginTop: 14 }]}>
-                  <TouchableOpacity style={styles.skipBtn} onPress={() => skipBy(-10)} activeOpacity={0.7}>
-                    <Feather name="rotate-ccw" size={20} color={colors.textMuted} />
-                    <Text style={[styles.skipBtnLabel, { color: colors.textMuted }]}>10</Text>
+                  <TouchableOpacity style={styles.skipBtn} onPress={() => skipBy(-10)} activeOpacity={0.7} disabled={sentenceIdx === 0}>
+                    <Feather name="skip-back" size={20} color={sentenceIdx === 0 ? colors.borderColor : colors.textMuted} />
+                    <Text style={[styles.skipBtnLabel, { color: colors.textMuted }]}>Line</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={[styles.playBtn, { backgroundColor: colors.accentGreen }]} onPress={toggleListenPlay} activeOpacity={0.85}>
                     <Feather name={listenPlaying ? 'pause' : 'play'} size={18} color="#fff" />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.skipBtn} onPress={() => skipBy(10)} activeOpacity={0.7}>
-                    <Feather name="rotate-cw" size={20} color={colors.textMuted} />
-                    <Text style={[styles.skipBtnLabel, { color: colors.textMuted }]}>10</Text>
+                  <TouchableOpacity style={styles.skipBtn} onPress={() => skipBy(10)} activeOpacity={0.7} disabled={sentenceIdx >= lineCount - 1}>
+                    <Feather name="skip-forward" size={20} color={sentenceIdx >= lineCount - 1 ? colors.borderColor : colors.textMuted} />
+                    <Text style={[styles.skipBtnLabel, { color: colors.textMuted }]}>Line</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.skipBtn} onPress={repeatStep} activeOpacity={0.7}>
+                    <Feather name="rotate-ccw" size={18} color={colors.textMuted} />
+                    <Text style={[styles.skipBtnLabel, { color: colors.textMuted }]}>Repeat</Text>
                   </TouchableOpacity>
                   <View style={styles.speedBtn}>
                     <TouchableOpacity onPress={() => setSpeedMenuOpen(v => !v)} activeOpacity={0.7}>
@@ -713,6 +992,105 @@ export default function LessonScreen({ navigation, route }: any) {
                   </View>
                 </View>
               </View>
+              )}
+
+              {/* Step navigation for Listen — SAME inline pattern as the Math AI
+                  Tutor (Grade 2 Subtraction with Borrowing): compact Previous +
+                  primary Next sitting directly under the content, so a young
+                  reader never hunts for a far-away footer. */}
+              {!isMath && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 }}>
+                  <TouchableOpacity
+                    style={[styles.mathFooterBtn, { borderColor: colors.borderColor }, isFirstStep && { opacity: 0.4 }]}
+                    onPress={() => goToListenStep(listenStep - 1)}
+                    disabled={isFirstStep}
+                    activeOpacity={0.85}
+                  >
+                    <Feather name="arrow-left" size={14} color={colors.textMain} />
+                    <Text style={[styles.mathFooterBtnText, { color: colors.textMain }]}>Previous</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.mathFooterBtnPrimary, { backgroundColor: colors.accentGreen }, isLastStep && { opacity: 0.5 }]}
+                    onPress={() => goToListenStep(listenStep + 1)}
+                    disabled={isLastStep}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.nextPartText}>{isLastStep ? 'Finished' : 'Next'}</Text>
+                    {!isLastStep && <Feather name="arrow-right" size={13} color="#fff" />}
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* ── "Explain This Step" — written, not spoken. No audio anywhere
+                  in Math: the AI Tutor teaches by showing text/steps, never by
+                  reading them aloud. ── */}
+              {isMath && explainOpen && (
+                <View style={[styles.whyBox, { borderColor: colors.accentGreen + '40', backgroundColor: colors.accentGreen + '0d' }]}>
+                  <Text style={[styles.whyLabel, { color: colors.accentGreen }]}>Explanation</Text>
+                  <Text style={[styles.whyText, { color: colors.textMain }]}>
+                    {step?.text || step?.heading}
+                  </Text>
+                </View>
+              )}
+
+              {/* ── "Why?" — expands this step's key idea inline, no tab switch. ── */}
+              {isMath && whyOpen && (
+                <View style={[styles.whyBox, { borderColor: colors.primary + '40', backgroundColor: colors.primary + '0d' }]}>
+                  <Text style={[styles.whyLabel, { color: colors.primary }]}>Why?</Text>
+                  <Text style={[styles.whyText, { color: colors.textMain }]}>
+                    {step?.keyIdea || 'This step follows directly from the one before it — look at the reasoning in the step above.'}
+                  </Text>
+                </View>
+              )}
+
+              {/* ── "Give Me a Hint" — a real hint drawn from the first step of
+                  the current example / the first key learning. ── */}
+              {isMath && hintOpen && (() => {
+                const worked = (topic.readText as any).workedExamples as any[] | undefined;
+                const curEx = worked?.[Math.max(0, Math.min((worked?.length || 1) - 1, listenStep - 1))];
+                const hint = (topic.readText as any).hint
+                  || curEx?.steps?.[1]   // the "borrow" step is the real hint
+                  || (topic.readText as any).keyLearnings?.[1]
+                  || 'When the top ones digit is smaller than the bottom, borrow 1 ten first.';
+                return (
+                  <View style={[styles.whyBox, { borderColor: colors.accentYellow + '50', backgroundColor: colors.accentYellow + '0d' }]}>
+                    <Text style={[styles.whyLabel, { color: colors.accentYellow }]}>Hint</Text>
+                    <Text style={[styles.whyText, { color: colors.textMain }]}>{hint}</Text>
+                  </View>
+                );
+              })()}
+
+              {/* ── "Show Another Example" — shows a DIFFERENT worked example than
+                  the current step, structured as problem + steps. ── */}
+              {isMath && exampleOpen && (() => {
+                const worked = ((topic.readText as any).workedExamples as any[]) || [];
+                const curIdx = Math.max(0, listenStep - 1);
+                const other = worked.filter((_, i) => i !== curIdx);
+                const ex = other[0] || worked[0];
+                return (
+                  <View style={[styles.whyBox, { borderColor: colors.accentGreen + '50', backgroundColor: colors.accentGreen + '0d' }]}>
+                    <Text style={[styles.whyLabel, { color: colors.accentGreen }]}>Another Example</Text>
+                    {ex ? (() => {
+                      const parsed = parseSubtraction(ex.problem);
+                      return (
+                        <>
+                          <Text style={[styles.whyText, { color: colors.textMain, fontWeight: '700', marginBottom: 10 }]}>{ex.problem}</Text>
+                          {parsed
+                            ? <ColumnSubtraction top={parsed.top} bottom={parsed.bottom} colors={colors} />
+                            : <>
+                                {(ex.steps || []).map((s: string, i: number) => (
+                                  <Text key={i} style={[styles.whyText, { color: colors.textMain, marginTop: 4 }]}>{i + 1}. {s}</Text>
+                                ))}
+                                {ex.answer != null && <Text style={[styles.whyText, { color: colors.accentGreen, fontWeight: '800', marginTop: 6 }]}>= {ex.answer}</Text>}
+                              </>}
+                        </>
+                      );
+                    })() : (
+                      <Text style={[styles.whyText, { color: colors.textMain }]}>No further example is ready for this topic yet.</Text>
+                    )}
+                  </View>
+                );
+              })()}
 
               {/* ── Pause & Think ── */}
               {!!step?.pauseThink && (
@@ -773,23 +1151,85 @@ export default function LessonScreen({ navigation, route }: any) {
 
             {/* ── Right pane: illustration + New Word ── */}
             <ScrollView style={styles.rightPane} contentContainerStyle={{ gap: 14 }} showsVerticalScrollIndicator={false}>
-              <View>
-                <View style={[styles.illustrationBox, { borderColor: colors.borderColor, backgroundColor: colors.bgDark }]}>
-                  {topic.readText.figureUrl ? (
+              {(() => {
+                // Per-stanza illustration for the current Listen step — map the
+                // active stanza to its book image so the panel shows the real
+                // picture, not "coming soon".
+                const prompts = (topic.readText as any).illustrationPrompts as any[] | undefined;
+                const withImg = (prompts || []).filter(p => p?.image || p?.image_ref || p?.url);
+                if (withImg.length === 0) return null;
+                const pick = withImg[Math.min(listenStep, withImg.length - 1)];
+                const raw = pick.image || pick.image_ref || pick.url;
+                const uri = /^https?:/.test(raw) ? raw : `${SERVER_URL}${raw}`;
+                return (
+                  <View>
+                    <TouchableOpacity
+                      style={[styles.illustrationBox, { borderColor: colors.borderColor, backgroundColor: colors.bgDark }]}
+                      activeOpacity={0.85}
+                      onPress={() => setZoomImage({ uri, caption: pick.altText })}
+                    >
+                      <Image source={{ uri }} style={styles.figureImg} resizeMode="contain" />
+                      <View style={styles.zoomHint}><Feather name="maximize-2" size={11} color="#fff" /></View>
+                    </TouchableOpacity>
+                    {!!pick.altText && (
+                      <View style={[styles.captionBox, { borderColor: colors.accentYellow + '30', backgroundColor: colors.accentYellow + '10' }]}>
+                        <Text style={[styles.captionText, { color: colors.textMain }]}>{pick.altText}</Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })() || (topic.readText.figureUrl ? (
+                <View>
+                  <TouchableOpacity
+                    style={[styles.illustrationBox, { borderColor: colors.borderColor, backgroundColor: colors.bgDark }]}
+                    activeOpacity={0.85}
+                    onPress={() => setZoomImage({ uri: topic.readText.figureUrl!, caption: topic.readText.figureCaption })}
+                  >
                     <Image source={{ uri: topic.readText.figureUrl }} style={styles.figureImg} resizeMode="contain" />
-                  ) : (
-                    <>
-                      <Feather name="image" size={32} color={colors.textMuted} />
-                      <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 8 }}>Illustration coming soon</Text>
-                    </>
+                    <View style={styles.zoomHint}>
+                      <Feather name="maximize-2" size={11} color="#fff" />
+                    </View>
+                  </TouchableOpacity>
+                  {!!topic.readText.figureCaption && (
+                    <View style={[styles.captionBox, { borderColor: colors.accentYellow + '30', backgroundColor: colors.accentYellow + '10' }]}>
+                      <Text style={[styles.captionText, { color: colors.textMain }]}>{topic.readText.figureCaption}</Text>
+                    </View>
                   )}
                 </View>
-                {!!topic.readText.figureCaption && (
-                  <View style={[styles.captionBox, { borderColor: colors.accentYellow + '30', backgroundColor: colors.accentYellow + '10' }]}>
-                    <Text style={[styles.captionText, { color: colors.textMain }]}>{topic.readText.figureCaption}</Text>
-                  </View>
-                )}
-              </View>
+              ) : (() => {
+                // Maths AI Tutor: no illustration — show the worked example being
+                // taught, solved step-by-step on a "whiteboard" card that follows
+                // the current tutor step. This is the AI explaining, not an image.
+                const worked = (topic.readText as any).workedExamples as any[] | undefined;
+                if (worked && worked.length > 0) {
+                  const ex = worked[Math.max(0, Math.min(worked.length - 1, listenStep - 1))];
+                  return (
+                    <View style={[styles.card, { borderColor: colors.accentGreen + '40', backgroundColor: colors.accentGreen + '0a' }]}>
+                      <View style={styles.newWordHeader}>
+                        <Feather name="edit-3" size={13} color={colors.accentGreen} />
+                        <Text style={[styles.newWordLabel, { color: colors.accentGreen }]}>Let's solve it together</Text>
+                      </View>
+                      <Text style={[styles.whyText, { color: colors.textMain, fontWeight: '800', fontSize: 18, marginTop: 8 }]}>
+                        {ex.problem}
+                      </Text>
+                      {(ex.steps || []).map((s: string, i: number) => (
+                        <View key={i} style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                          <Text style={{ color: colors.accentGreen, fontWeight: '800', fontSize: 13 }}>{i + 1}</Text>
+                          <Text style={[styles.whyText, { color: colors.textMuted, flex: 1 }]}>{s}</Text>
+                        </View>
+                      ))}
+                      {ex.answer != null && (
+                        <Text style={{ color: colors.accentGreen, fontWeight: '800', fontSize: 16, marginTop: 10 }}>= {ex.answer}</Text>
+                      )}
+                    </View>
+                  );
+                }
+                // No picture exists for this lesson (senior-grade NCERT chapters
+                // are often text-only). Render NOTHING rather than an empty grey
+                // frame promising art that isn't coming — the placeholder read as
+                // a broken page. The right pane still shows New Word etc.
+                return null;
+              })())}
 
               {!!word && (
                 <View style={[styles.card, { borderColor: colors.borderColor, backgroundColor: colors.cardDark }]}>
@@ -832,7 +1272,9 @@ export default function LessonScreen({ navigation, route }: any) {
             </ScrollView>
           </View>
 
-          {/* ── Bottom bar ── */}
+          {/* ── Bottom bar: audiobook progress for Science/English, a
+              step-notebook footer (Previous/Hint/Try Yourself/Next) for Math ── */}
+          {!isMath && (
           <View style={[styles.listenBottomBar, { borderColor: colors.borderColor, backgroundColor: colors.bgDark }]}>
             <View style={styles.listenBottomProgress}>
               <Feather name="headphones" size={13} color={colors.textMuted} />
@@ -846,26 +1288,66 @@ export default function LessonScreen({ navigation, route }: any) {
               <Feather name="star" size={12} color={colors.accentYellow} />
               <Text style={[styles.listenToastText, { color: colors.textMain }]}>Great! You are building strong listening skills.</Text>
             </View>
+            {/* Step navigation now lives inline under the content (Math pattern).
+                The footer keeps only the replay control so there is exactly ONE
+                Previous/Next control on screen. */}
             <View style={styles.listenBottomActions}>
               <TouchableOpacity
                 style={[styles.listenAgainBtn, { borderColor: colors.borderColor }]}
-                onPress={() => goToListenStep(listenStep)}
+                onPress={repeatStep}
                 activeOpacity={0.8}
               >
                 <Feather name="rotate-ccw" size={13} color={colors.textMain} />
                 <Text style={[styles.listenAgainText, { color: colors.textMain }]}>Listen Again</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.nextPartBtn, { backgroundColor: colors.accentGreen }, isLastStep && { opacity: 0.5 }]}
-                onPress={() => goToListenStep(listenStep + 1)}
-                disabled={isLastStep}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.nextPartText}>{isLastStep ? 'Finished' : 'Next Part'}</Text>
-                {!isLastStep && <Feather name="arrow-right" size={13} color="#fff" />}
-              </TouchableOpacity>
             </View>
           </View>
+          )}
+
+          {isMath && (
+          <View style={[styles.mathFooter, { borderColor: colors.borderColor, backgroundColor: colors.bgDark }]}>
+            <View style={styles.mathActionGrid}>
+              <TouchableOpacity
+                style={[styles.mathActionChip, { borderColor: colors.borderColor }]}
+                onPress={() => { setWhyOpen(false); setHintOpen(false); setExampleOpen(false); setExplainOpen(v => !v); }}
+                activeOpacity={0.8}
+              >
+                <Feather name="zap" size={13} color={colors.primary} />
+                <Text style={[styles.mathActionChipText, { color: colors.textMain }]}>Explain This Step</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.mathActionChip, { borderColor: colors.borderColor }]}
+                onPress={() => { setExplainOpen(false); setHintOpen(false); setExampleOpen(false); setWhyOpen(v => !v); }}
+                activeOpacity={0.8}
+              >
+                <Feather name="help-circle" size={13} color={colors.accentYellow} />
+                <Text style={[styles.mathActionChipText, { color: colors.textMain }]}>Why?</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.mathActionChip, { borderColor: colors.borderColor }]}
+                onPress={() => { setExplainOpen(false); setWhyOpen(false); setExampleOpen(false); setHintOpen(v => !v); }}
+                activeOpacity={0.8}
+              >
+                <Feather name="compass" size={13} color={colors.accentYellow} />
+                <Text style={[styles.mathActionChipText, { color: colors.textMain }]}>Give Me a Hint</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.mathActionChip, { borderColor: colors.borderColor }]}
+                onPress={() => { setExplainOpen(false); setWhyOpen(false); setHintOpen(false); setExampleOpen(v => !v); }}
+                activeOpacity={0.8}
+              >
+                <Feather name="repeat" size={13} color={colors.accentGreen} />
+                <Text style={[styles.mathActionChipText, { color: colors.textMain }]}>Show Another Example</Text>
+              </TouchableOpacity>
+            </View>
+            {/* Try Yourself / Ask Aivorah — de-emphasized into one small link for now,
+                not prominent buttons; the practice/chat experience needs real
+                per-problem content before it deserves equal billing above. */}
+            <TouchableOpacity onPress={() => setMode('practice')} activeOpacity={0.7}>
+              <Text style={[styles.learnDeeperLink, { color: colors.textMuted }]}>Want to go deeper? Try a problem yourself, or ask Aivorah →</Text>
+            </TouchableOpacity>
+          </View>
+          )}
           </View>
           );
         })()}
@@ -882,6 +1364,16 @@ export default function LessonScreen({ navigation, route }: any) {
                 style={[styles.practiceBtn, { backgroundColor: colors.accentGreen }]}
                 onPress={() => navigation.navigate('IBPYPQuiz', {
                   topic: topic.name, grade, subject, curriculum,
+                  // Lets the quiz endpoint prefer the book's own grounded
+                  // exercises stored for this topic over LLM-generated ones.
+                  topicId,
+                  // Ground the quiz in the REAL lesson text (not just the topic name) —
+                  // without this the quiz LLM had nothing to go on but "Change of Heart"
+                  // as a bare string, and produced unrelated filler questions (a math
+                  // word problem lifted straight from the generic prompt's own example).
+                  passageText: (topic as any).readText
+                    ? `${(topic as any).readText.intro} ${(topic as any).readText.body?.join(' ') ?? ''}`.trim()
+                    : undefined,
                   // So the quiz's back button returns here instead of the old
                   // SubjectTopics list — it only knew that one hardcoded target before.
                   returnTo: 'LessonScreen',
@@ -897,6 +1389,12 @@ export default function LessonScreen({ navigation, route }: any) {
         </ScrollView>
         )}
       </View>
+      <ImageZoomModal
+        visible={!!zoomImage}
+        uri={zoomImage?.uri || ''}
+        caption={zoomImage?.caption}
+        onClose={() => setZoomImage(null)}
+      />
     </ScreenLayout>
   );
 }
@@ -1002,9 +1500,29 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   card: { borderWidth: 1, borderRadius: radius.lg, padding: 20, gap: 12 },
   introText: { fontFamily: fonts.serif, fontSize: 16, fontWeight: '700', lineHeight: 23 },
   bodyText:  { fontSize: 14, lineHeight: 22 },
+  poemLine:  { fontFamily: fonts.serif, fontSize: 17, lineHeight: 30 },
+  illusRow:  { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
+  illusSlot: { flex: 1, minWidth: 120, aspectRatio: 1.2, borderWidth: 1.5, borderStyle: 'dashed',
+               borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', gap: 6, padding: 8 },
+  illusCap:  { fontSize: 10.5, lineHeight: 14, textAlign: 'center' },
 
   figure: { borderWidth: 1, borderRadius: radius.md, padding: 20, alignItems: 'center', gap: 8 },
   figureImg: { width: '100%', height: 260, borderRadius: radius.sm ?? 8 },
+  zoomHint: { position: 'absolute', bottom: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 12, padding: 5 },
+  mathFooter: { gap: 10, padding: 12, borderTopWidth: 1 },
+  mathFooterBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: radius.md, paddingVertical: 8, paddingHorizontal: 12 },
+  mathFooterBtnText: { fontSize: 12.5, fontWeight: '600' },
+  mathFooterBtnPrimary: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.md, paddingVertical: 8, paddingHorizontal: 16 },
+  mathNavRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 10 },
+  mathActionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  mathActionChip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: radius.md, paddingVertical: 7, paddingHorizontal: 11 },
+  mathActionChipText: { fontSize: 12, fontWeight: '600' },
+  learnDeeperLink: { fontSize: 12, textDecorationLine: 'underline' },
+  aiTutorBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', borderWidth: 1, borderRadius: radius.sm ?? 8, paddingVertical: 5, paddingHorizontal: 10, marginBottom: 10 },
+  aiTutorBadgeText: { fontSize: 11.5, fontWeight: '600' },
+  whyBox: { borderWidth: 1, borderRadius: radius.md, padding: 12, marginTop: 10 },
+  whyLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 },
+  whyText: { fontSize: 13, lineHeight: 19 },
   figureCaption: { fontSize: 11.5, textAlign: 'center' },
 
   activityBox: { borderWidth: 1, borderRadius: radius.md, padding: 14, gap: 4 },

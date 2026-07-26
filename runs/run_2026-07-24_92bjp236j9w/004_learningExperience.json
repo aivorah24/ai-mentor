@@ -1,0 +1,154 @@
+{
+  "package": {
+    "package_id": "f2d9a5c4-7b3d-4d6b-8c4d-7b3d4d6b8c4d",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "2023-07-24T14:30:00Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "123e4567-e89b-12d3-a456-426614174000",
+      "parent_package_id": "f2d9a5c4-7b3d-4d6b-8c4d-7b3d4d6b8c4d"
+    }
+  },
+  "payload": {
+    "lesson_id": "my-bicycle-lesson",
+    "lesson_metadata": {
+      "grade": 2,
+      "subject": "English",
+      "chapter": "My Bicycle",
+      "lesson": "My Bicycle",
+      "lesson_type": "Concept",
+      "concept_map": {
+        "my-bicycle-concept": {
+          "concept": "My Bicycle",
+          "depends_on": [
+            "bicycles",
+            "transportation"
+          ],
+          "difficulty": "Medium"
+        }
+      },
+      "learning_objectives": [
+        "To understand the concept of a bicycle as a mode of transportation.",
+        "To describe the features of a bicycle."
+      ],
+      "learning_outcomes": [
+        "Students will be able to identify the key components of a bicycle.",
+        "Students will be able to explain the purpose of a bicycle."
+      ],
+      "bloom_level": "Understand",
+      "prerequisites": [
+        "Basic understanding of transportation modes.",
+        "Familiarity with bicycles."
+      ],
+      "misconceptions": [
+        "Bicycles are only for adults.",
+        "Bicycles are not a safe mode of transportation."
+      ],
+      "suggested_instructional_sequence": [
+        "Introduce the concept of a bicycle as a mode of transportation.",
+        "Show pictures of different types of bicycles.",
+        "Have students describe the features of a bicycle."
+      ],
+      "vocabulary_difficulty": "Low",
+      "available_images": [
+        "bicycle-image-1.jpg",
+        "bicycle-image-2.jpg"
+      ],
+      "source_chunk_references": [
+        "chunk_1",
+        "chunk_2",
+        "chunk_3"
+      ]
+    },
+    "experience_score": 100,
+    "lesson_flow": [
+      {
+        "step_id": "step_1",
+        "title": "What is a Bicycle?",
+        "description": "A bicycle is a mode of transportation.",
+        "type": "Concept",
+        "interaction": "Drag-and-Drop",
+        "illustration": "bicycle-image-1.jpg",
+        "audio": "bicycle-audio.mp3",
+        "reflection": "What do you think is the main purpose of a bicycle?"
+      },
+      {
+        "step_id": "step_2",
+        "title": "Features of a Bicycle",
+        "description": "A bicycle has wheels, a seat, and handlebars.",
+        "type": "Concept",
+        "interaction": "Multiple Choice",
+        "illustration": "bicycle-image-2.jpg",
+        "audio": "bicycle-audio.mp3",
+        "reflection": "Can you name three features of a bicycle?"
+      }
+    ],
+    "ui_components": [
+      {
+        "component_id": "component_1",
+        "type": "Text",
+        "content": "Welcome to the My Bicycle lesson!"
+      },
+      {
+        "component_id": "component_2",
+        "type": "Image",
+        "content": "bicycle-image-1.jpg"
+      }
+    ],
+    "interaction_plan": [
+      {
+        "interaction_id": "interaction_1",
+        "type": "Drag-and-Drop",
+        "description": "Drag the bicycle parts to their correct locations."
+      },
+      {
+        "interaction_id": "interaction_2",
+        "type": "Multiple Choice",
+        "description": "Choose the correct feature of a bicycle."
+      }
+    ],
+    "illustration_plan": [
+      {
+        "illustration_id": "illustration_1",
+        "type": "Image",
+        "content": "bicycle-image-1.jpg"
+      },
+      {
+        "illustration_id": "illustration_2",
+        "type": "Image",
+        "content": "bicycle-image-2.jpg"
+      }
+    ],
+    "audio_plan": [
+      {
+        "audio_id": "audio_1",
+        "type": "Audio",
+        "content": "bicycle-audio.mp3"
+      }
+    ],
+    "validation_requirements": [
+      {
+        "requirement_id": "requirement_1",
+        "type": "Concept",
+        "description": "The student must understand the concept of a bicycle."
+      },
+      {
+        "requirement_id": "requirement_2",
+        "type": "Concept",
+        "description": "The student must be able to describe the features of a bicycle."
+      }
+    ],
+    "handoff": {
+      "ui_planner_agent": {
+        "lesson_experience": {
+          "lesson_id": "my-bicycle-lesson",
+          "lesson_metadata": {}
+        }
+      }
+    }
+  }
+}

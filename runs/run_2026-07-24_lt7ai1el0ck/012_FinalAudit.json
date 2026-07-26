@@ -1,0 +1,72 @@
+{
+  "package": {
+    "package_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
+    "package_type": "ReleasePackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T17:05:00.000Z",
+    "produced_by": {
+      "agent": "final-audit-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "p1p2p3p4-p5p6-p7p8-p9p0-q1r2s3t4u5v6",
+      "parent_package_id": "qa-report-pkg-1111-2222-3333-4444"
+    }
+  },
+  "payload": {
+    "lesson_id": "les-abcdef123456",
+    "release_version": "0.0.0",
+    "build_timestamp": "2026-08-27T17:05:00.000Z",
+    "package_manifest": {
+      "retrieval": "",
+      "lesson_blueprint": "",
+      "lesson_experience": "",
+      "ui_plan": "",
+      "lesson_content": "",
+      "illustration": "",
+      "audio": "",
+      "quiz_review": "",
+      "review_report": "",
+      "qa_report": "qa-report-pkg-1111-2222-3333-4444"
+    },
+    "package_references": [],
+    "audit_summary": {
+      "status": "FAILED",
+      "checks": {
+        "qa_report_status": "FAIL",
+        "reason": "QA report indicates missing upstream packages and failed checks",
+        "failed_checks": [
+          {
+            "issue_id": "issue-int-001",
+            "category": "integrity",
+            "description": "Required upstream packages (Retrieval Package, Validated Retrieval Package, Lesson Blueprint, Lesson Experience, UI Plan, Quiz Review Package) are missing or have non-PASS status.",
+            "target_agent": "pipeline-coordinator",
+            "error_code": "QA001"
+          },
+          {
+            "issue_id": "issue-render-001",
+            "category": "rendering",
+            "description": "UI Plan and Lesson Experience packages missing; cannot verify component slots or slot population.",
+            "target_agent": "ui-plan-agent",
+            "error_code": "QA002"
+          },
+          {
+            "issue_id": "issue-nav-001",
+            "category": "navigation",
+            "description": "Screen graph unavailable due to missing UI Plan/Lesson Experience; potential dead ends or orphan screens.",
+            "target_agent": "ui-plan-agent",
+            "error_code": "QA004"
+          },
+          {
+            "issue_id": "issue-a11y-001",
+            "category": "accessibility",
+            "description": "Accessibility metadata (contrast, screen reader order) not present in available JSON.",
+            "target_agent": "ui-plan-agent",
+            "error_code": "QA005"
+          }
+        ]
+      }
+    },
+    "deployment_status": "BLOCKED"
+  }
+}

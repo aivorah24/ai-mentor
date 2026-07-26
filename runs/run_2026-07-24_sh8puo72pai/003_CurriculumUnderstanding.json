@@ -1,0 +1,81 @@
+{
+  "package": {
+    "package_id": "dbb7a84b-f1e4-418e-ab10-d2fb40ae1d73",
+    "package_type": "LessonBlueprint",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T13:29:14.108Z",
+    "produced_by": {
+      "agent": "curriculum-understanding-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "curriculum-understanding-pipeline",
+      "parent_package_id": "dbb7a84b-f1e4-418e-ab10-d2fb40ae1d73"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "curriculum": "NCERT",
+    "grade": 4,
+    "subject": "Mathematics",
+    "chapter": "Subtraction",
+    "lesson": "Subtraction with Borrowing",
+    "lesson_type": "Concept",
+    "lesson_type_evidence": "The text explains the concept of subtraction with borrowing, which is a mathematical operation.",
+    "lesson_type_confidence": 0.9,
+    "review_flags": [],
+    "concept_map": [
+      {
+        "concept_id": "subtraction-with-borrowing",
+        "concept": "Subtraction with Borrowing",
+        "depends_on": [
+          "subtraction"
+        ],
+        "difficulty": "medium"
+      }
+    ],
+    "learning_objectives": [
+      "Understand the concept of subtraction with borrowing.",
+      "Learn how to subtract big numbers using borrowing."
+    ],
+    "learning_outcomes": [
+      "Students will be able to subtract big numbers using borrowing.",
+      "Students will understand the concept of subtraction with borrowing."
+    ],
+    "bloom_level": "Apply",
+    "prerequisites": [
+      "Understanding of basic subtraction concepts.",
+      "Ability to perform simple subtraction operations."
+    ],
+    "misconceptions": [
+      "Students may think that borrowing is only used when subtracting big numbers.",
+      "Students may struggle with understanding the concept of borrowing."
+    ],
+    "suggested_instructional_sequence": [
+      "Introduce the concept of subtraction with borrowing.",
+      "Provide examples of subtraction with borrowing.",
+      "Have students practice subtraction with borrowing."
+    ],
+    "vocabulary_difficulty": "medium",
+    "available_images": [],
+    "source_chunk_references": [
+      {
+        "chunk_id": "grounded_evidence[0]",
+        "chunk_reference": "The first chunk explains the concept of subtraction with borrowing."
+      },
+      {
+        "chunk_id": "grounded_evidence[1]",
+        "chunk_reference": "The second chunk mentions mental math strategies, including subtraction."
+      },
+      {
+        "chunk_id": "grounded_evidence[2]",
+        "chunk_reference": "The third chunk provides another example of subtraction with borrowing."
+      }
+    ],
+    "handoff": {
+      "learning_experience_designer": {
+        "lesson_blueprint": {}
+      }
+    }
+  }
+}

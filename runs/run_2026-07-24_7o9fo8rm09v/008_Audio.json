@@ -1,0 +1,148 @@
+{
+  "package": {
+    "package_id": "11111111-2222-3333-4444-555555555555",
+    "package_type": "AudioPackage",
+    "schema_version": "1.0",
+    "created_at": "2024-07-30T12:00:00Z",
+    "produced_by": {
+      "agent": "audio-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+      "parent_package_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba"
+    }
+  },
+  "payload": {
+    "lesson_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba",
+    "audio_strategy": "Mathematics",
+    "narration_segments": [
+      {
+        "artifact_id": "wel_txt1",
+        "stage_id": "welcome",
+        "component_id": "wel_txt1",
+        "ssml": "<speak><p>Hello, young mathematicians! Today, we're going on an adventure to learn a super useful math trick. Have you ever tried to subtract and found that you couldn't take a bigger number from a smaller one? Don't worry, we'll learn how to get a little &apos;help&apos; to solve those tricky problems!</p></speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "lg_txt1",
+        "stage_id": "learning_goal",
+        "component_id": "lg_txt1",
+        "ssml": "<speak><p>In this lesson, you will:</p><p>- Understand when you need to &apos;borrow&apos; in subtraction.</p><p>- Learn the step-by-step process of subtracting two-digit numbers with borrowing.</p><p>- Practice solving different subtraction problems using this new skill.</p></speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "vi_txt1",
+        "stage_id": "visual_introduction",
+        "component_id": "vi_txt1",
+        "ssml": "<speak><p>Imagine you have a piggy bank with 72 rupees, and you want to spend 47 rupees. How much money would be left? It might seem tricky at first, especially when you look at the ones place. We can't take 7 rupees from 2 rupees directly, can we? This is where our special trick comes in handy!</p></speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "ce_txt1",
+        "stage_id": "concrete_example",
+        "component_id": "ce_txt1",
+        "ssml": "<speak><p>Let's look at our piggy bank problem: 72 rupees minus 47 rupees. To solve this, we need to &apos;borrow&apos; from the tens place. Think of it like exchanging one 10-rupee note for ten 1-rupee coins. This way, you'll have enough 1-rupee coins to subtract from!</p></speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "ge_txt1",
+        "stage_id": "guided_example",
+        "component_id": "ge_txt1",
+        "ssml": "<speak><p>Let's try 45 - 27 together. First, write the numbers one above the other, lining up the ones and tens places. Can you take 7 from 5 in the ones place? No. So, we borrow 1 ten from the 4 tens, making it 3 tens. The 5 ones become 15 ones. Now, 15 - 7 = 8. In the tens place, 3 - 2 = 1. So, 45 - 27 = 18.</p></speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "gp_txt1",
+        "stage_id": "guided_practice",
+        "component_id": "gp_txt1",
+        "ssml": "<speak><p>Now it's your turn! Try to solve this problem using the borrowing method we just learned: 61 - 28 = ?</p></speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "ip_txt1",
+        "stage_id": "independent_practice",
+        "component_id": "ip_txt1",
+        "ssml": "<speak><p>Great job! Here's another one for you to solve on your own: 54 - 19 = ?</p></speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "hs_txt1",
+        "stage_id": "hint_screen",
+        "component_id": "hs_txt1",
+        "ssml": "<speak><p>Remember, when the top digit is smaller than the bottom digit in a column, you need to borrow. Take 1 from the digit to its left (the tens place), and add 10 to the current digit (the ones place). Don't forget to reduce the digit you borrowed from!</p></speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "cm_txt1",
+        "stage_id": "common_mistakes",
+        "component_id": "cm_txt1",
+        "ssml": "<speak><p>A common mistake is forgetting to reduce the tens digit after borrowing. For example, if you have 45 and borrow from the 4 tens, it becomes 3 tens. If you forget this step, your answer will be wrong! Always double-check your tens place after borrowing.</p></speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "ch_txt1",
+        "stage_id": "challenge",
+        "component_id": "ch_txt1",
+        "ssml": "<speak><p>You're doing great! Here's a challenge problem for you: 90 - 37 = ?</p></speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "su_txt1",
+        "stage_id": "summary",
+        "component_id": "su_txt1",
+        "ssml": "<speak><p>You've learned a powerful math trick today! Remember, borrowing helps us subtract when the top number is too small. We take 1 ten from the tens place, add 10 to the ones place, and then subtract. Keep practicing, and you'll be a borrowing expert in no time!</p></speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "qz_txt1",
+        "stage_id": "quiz",
+        "component_id": "qz_txt1",
+        "ssml": "<speak><p>Let's see how much you've learned about subtraction with borrowing! Answer these questions.</p></speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      }
+    ],
+    "playback_profile": {
+      "voice": "en-US-Standard-B",
+      "base_speed": 1,
+      "pause_duration_ms": 300
+    },
+    "accessibility_metadata": {},
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {
+        "segment_count_match": true,
+        "text_fidelity": true,
+        "ssml_valid": true,
+        "timing_monotonic": true,
+        "highlight_words_in_text": true,
+        "audio_strategy_applied": true,
+        "accessibility_satisfied": true
+      }
+    }
+  }
+}

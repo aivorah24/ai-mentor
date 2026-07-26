@@ -1,0 +1,183 @@
+{
+  "package": {
+    "package_id": "51535b34-6365-4224-abdb-43882882af9d",
+    "package_type": "RetrievalPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T13:16:59.969Z",
+    "produced_by": {
+      "agent": "grounded-retrieval",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "rlpokzky6pl",
+      "parent_package_id": null
+    }
+  },
+  "payload": {
+    "request": {
+      "grade": 2,
+      "subject": "Mathematics",
+      "chapter": "Subtraction with Borrowing",
+      "lesson_id": "",
+      "lesson": "Subtraction with Borrowing"
+    },
+    "retrieval_summary": {
+      "confidence": 0.63722986,
+      "coverage": 1,
+      "chunks_retrieved": 8,
+      "collection_source": {
+        "collection": "aivorah_curriculum_chunks_v1",
+        "curriculum": "NCERT",
+        "grade": 2,
+        "subject": "Mathematics"
+      }
+    },
+    "retrieved_chunks": [
+      {
+        "chunk_id": "04749b62-1c12-443f-a7f1-8ac48fc15c01",
+        "page_number": null,
+        "section": "explanation",
+        "order": 0,
+        "content": "in the piggy bank? We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees. We can borrow 4 rupees from our neighbour and take away 10 rupees from the piggy bank. Now we have 62 rupees in the piggy bank. We can subtract 40 from 62, which is easy. We have 22 rupees left in the piggy bank. So, in subtraction with borrowing, we borrow some quantity from our neighbour and take it away from the number we are subtracting. This helps us to subtract the bigger number from the smaller number. Remember, borrowing is like asking our neighbour for help when we need it. Let's practice with a few more examples: * 56 - 34 = ? * 93 - 57 = ? * 75 - 43 = ? Try to solve these examples on your own and then check your answers with your friends or teacher. Remember, practice makes perfect! Subtraction with borrowing is an important concept in mathematics that helps us to solve real-world problems. It's like helping our neighbours by borrowing something from them when we need it.",
+        "embedding_score": 0.63722986,
+        "metadata": {
+          "grade": 2,
+          "subject": "Mathematics",
+          "topic": "Subtraction with Borrowing",
+          "curriculum": "NCERT",
+          "source_reference": "groq_llm_generated_ncert_aligned"
+        }
+      },
+      {
+        "chunk_id": "a61d3c74-4bd8-4c27-a055-2e57cbe141f0",
+        "page_number": null,
+        "section": "explanation",
+        "order": 1,
+        "content": "Quick addition and subtraction strategies, doubles, near doubles",
+        "embedding_score": 0.5841478,
+        "metadata": {
+          "grade": 2,
+          "subject": "Mathematics",
+          "topic": "Mental Math",
+          "curriculum": "NCERT",
+          "source_reference": "groq_llm_generated_ncert_aligned"
+        }
+      },
+      {
+        "chunk_id": "1c5dd3c5-8ef4-4411-a542-504cc5e26259",
+        "page_number": null,
+        "section": "explanation",
+        "order": 2,
+        "content": "Let's Learn About Subtracting Big Numbers with a Little Help from Our Neighbours! Do you know how to subtract big numbers? Let's say we have 45 apples in a basket and we give 27 apples to our friend. How many apples are left in the basket? We can subtract 27 from 45, but it's a bit tricky because 45 is much bigger than 27. That's where borrowing comes in. When we subtract a bigger number from a smaller number, we need to borrow some apples from our neighbour, who has 10 apples. We can borrow 1 apple from our neighbour and give it to the basket with 5 apples. Now we have 15 apples in the basket, but we still need to give 27 apples to our friend. So, we borrow 1 apple from the neighbour and take away 10 apples from the basket. Now we have 5 apples in the basket. We can subtract 20 from 15, which is easy. We have 5 apples left in the basket. Let's do another example. Suppose we have 72 rupees in our piggy bank and we need to buy a toy that costs 47 rupees. How much money will we have left in the piggy bank? We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees. We can borrow 4 rupees from our neighbour and take away 10 rupees from the piggy bank. Now we have 62 rupees in the piggy bank.",
+        "embedding_score": 0.49264732,
+        "metadata": {
+          "grade": 2,
+          "subject": "Mathematics",
+          "topic": "Subtraction with Borrowing",
+          "curriculum": "NCERT",
+          "source_reference": "groq_llm_generated_ncert_aligned"
+        }
+      },
+      {
+        "chunk_id": "d377520f-7908-4288-b7e0-740b4f1b4c8d",
+        "page_number": null,
+        "section": "explanation",
+        "order": 3,
+        "content": "10 D. 38 − 11 = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 E. 22 − 22 = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 F. 14 − 0 = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 G. 35 − 12 = Discuss with children about subtracting zero and subtracting the number with itself by taking examples from daily life situations, like, spending all money or spending no money. Chapter_06.indd 6209-06-2023 16:19:03 Reprint 2026-27 63 Playing with Blocks 10 1 I have 45 I give 12 to my friend. I am left with A. Shikha has `82. She bought pencils for `22. How much money is she left with? B. Ruby has `60. She bought a notebook for `20. How much money is she left with? T O 4 5 − 1 2 T O 4 5 − 1 2 3 T O 4 5 − 1 2 3 3 2 4 – 1 3 5 4 – 3 1 3 2 – 1 2 4 6 – 3 4 Subtract 24 from 37 3 tens 7 ones 2 tens 4 ones T O 3 7 − 2 4 Let us Do Chapter_06.indd 6309-06-2023 16:19:04 Reprint 2026-27 64 Jyoti, can I have 1 and 8 ? I have only 6 loose . I think I should open a . Now I can give 8 to mummy. Decorating with Garlands Chapter_06.indd 6412/5/2024 3:18:55 PM Reprint 2026-27 65 46 To give 18 4 6 − 1 8 (opens 1 = 16 ) 16 − 8 = 8 4 6 − 1 8 2 8 16 3 4 6 − 1 8 8 3",
+        "embedding_score": 0.45116258,
+        "metadata": {
+          "grade": 2,
+          "subject": "Mathematics",
+          "topic": "bejm106",
+          "curriculum": "NCERT",
+          "source_reference": "ncert_books/grade2/mathematics/bejm106.pdf"
+        }
+      },
+      {
+        "chunk_id": "aab2be1a-92fd-4171-b681-cce076feeab6",
+        "page_number": null,
+        "section": "explanation",
+        "order": 4,
+        "content": "17:37:28 Reprint 2026-27 120 Let us look at how `66 can be paid in different ways. Make different combinations to make the given amount. Let us Do Amount `54 `85 `1 — `2 2 `5 — `10 3 `20 1 `50 — Chapter_10.indd 12009-06-2023 17:37:28 Reprint 2026-27 121 `28 `20 `55 `10 `3 `30 `32 `10 `15 `15 `20 `5 `10 Let us Buy Items Money left/More money needed Money you have Money needed to buy these items `15 `28 `30 `10 `20 `20 ` ________` ________ ` ________` ________ ` ________` ________ `55 Chapter_10.indd 12109-06-2023 17:37:28 Reprint 2026-27 122 ` 1 8 + ` 3 2 ` 4 7 + ` 5 0 ` 1 5 + ` 2 7 ` 2 2 + ` 3 5 Let us Do Create more such contexts and ask questions whether children will add or subtract. Inculcate the value of saving money in the children through a discussion. Project Work Whenever you go to the market or shop with your parents, make a list of the things that you buy and the total money you spend. Have you seen that sometimes we pay using mobile phones? A. Jayant spent `25 on pens and `40 on notebooks. How much money did he spend in total? B. Meera has `43 with her. Kanika has `14 more than Meera. How much money does Kanika have? C. A packet of bread costs `30 and a chocolate costs `60. How much money does Vivek need to buy these items? D. Ajay has `58 with him. He spent `48 in the market. How much money is left with him now? Chapter_10.indd 12209-06-2023 17:37:29 Reprint 2026-27",
+        "embedding_score": 0.44369903,
+        "metadata": {
+          "grade": 2,
+          "subject": "Mathematics",
+          "topic": "bejm110",
+          "curriculum": "NCERT",
+          "source_reference": "ncert_books/grade2/mathematics/bejm110.pdf"
+        }
+      },
+      {
+        "chunk_id": "0dbc0413-93a4-426d-a922-8c520bf1a87a",
+        "page_number": null,
+        "section": "explanation",
+        "order": 5,
+        "content": "20 + 30 = ____ 30 + ____ = 50 50 − ____ = 20 ____ − 20 = 30 30 20, 30, 50 100 80 20 20, 80, 100 30 10 20 10 + 20 = ____ ___ + ___ = ___ 30 − ____ = 10 30 − ____ = 20 10, 20, 30 Addition and Subtraction Pyramid 8 53 14 68 10 64 11 38 Addition pyramid Subtraction pyramid 37 16 11 43 50 9 24 11 5 Chapter_06.indd 6912/5/2024 3:22:43 PM Reprint 2026-27 70 Now complete the following diagrams. A. B. Hania and Mansi’s Gift Hania and Mansi want to give a gift to their mother. For its decoration, they purchased some ribbons and a gift wrapper. There are `78 in the purse. The cost of a gift wrapper is `24 and the cost of ribbons is `37. A. How much money did they spend? B. How much money is left with them? Here, 3 + 9 = 12 9 + 6 = 15 6 + 5 = 11 5 + 3 = 8 Project Work Daljeet has solved some questions and writen down their answers. What do you think? Are they correct? Verify the answers. Correct it if you find them wrong. 25 + 36 511 37 + 58 131 35 − 17 22 57 − 78 21 30 − 17 27 Look at this diagram. 3 8 5 12 11 9 15 6 1 9 5 14 109 10 12 13 Chapter_06.indd 7019-06-2023 15:39:39 Reprint 2026-27",
+        "embedding_score": 0.4401669,
+        "metadata": {
+          "grade": 2,
+          "subject": "Mathematics",
+          "topic": "bejm106",
+          "curriculum": "NCERT",
+          "source_reference": "ncert_books/grade2/mathematics/bejm106.pdf"
+        }
+      },
+      {
+        "chunk_id": "cd773d17-2d25-442c-ac0d-0719660b1a78",
+        "page_number": null,
+        "section": "explanation",
+        "order": 6,
+        "content": "how you did it? But, I don’t have a ginladi at my home. If I want to take away 15 from 19, I count till 19 first, then move 15 steps backward. Let us make a ginladi on the paper then. 19 − 15 = 4 I have another way of doing subtraction on the number line. We can directly jump back 10 steps and then go 5 steps back to reach 4. 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 11111 10 Chapter_06.indd 6119-06-2023 16:05:10 Reprint 2026-27 62 Let us do some practice on number line. Read the number line and fill the boxes. 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 A. 26 − = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 B. 39 − 28 = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 C. − = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 1 10 D. 38 − 11 = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 E. 22 − 22 = 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29",
+        "embedding_score": 0.42425174,
+        "metadata": {
+          "grade": 2,
+          "subject": "Mathematics",
+          "topic": "bejm106",
+          "curriculum": "NCERT",
+          "source_reference": "ncert_books/grade2/mathematics/bejm106.pdf"
+        }
+      },
+      {
+        "chunk_id": "d21e2a68-425d-4b55-a87b-5ef43c8a15e4",
+        "page_number": null,
+        "section": "explanation",
+        "order": 7,
+        "content": "as a digit? 20 80 Let us Play Chapter_03.indd 2409-06-2023 16:16:03 Reprint 2026-27 25 Look! How Jumpy, the frog is jumping. Do you observe a pattern here? 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 Encourage children to make their own number line on the ground and ask them to jump on it. Ask them questions such as if you jump in steps of two, which numbers will you step on, etc. Complete the following patterns. 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 A. 1, 4, 7, _______, _________, ________, _______ 40 45 50 55 60 65 70 75 B. 40, 45, 50, _______, _________, ________, _______, _______ 50 60 70 80 90 C. 50, 60, _______, _________, ________ Chapter_03.indd 2509-06-2023 16:16:03 Reprint 2026-27 26 A. On the number chart, use skip counting in two and draw on the numbers. Now use skip counting in five and draw on the numbers in the number chart. B. Write down the numbers that are common to the skips in twos and fives. ___________________________ C. Write down the numbers that are common to the skips in twos, threes and fives. ___________________________ D. Write down the numbers common to the skips of fives and sevens? ___________________________ Jump and find the answers. Write ‘Yes’ or ‘No’. Make a number line on the ground and jump on it. A. If you start from 10 and jump counting in tens, will you land on number 100 at any time? B. Jump and find out if you start at 5 and count in fives, will you jump on number 40 at any time? C. If you start from 0 and count in fives, will you jump on number 55 at any time? D. If you start from 4 and count in twos, will you jump on number 17 at any time? E. If",
+        "embedding_score": 0.40503353,
+        "metadata": {
+          "grade": 2,
+          "subject": "Mathematics",
+          "topic": "bejm103",
+          "curriculum": "NCERT",
+          "source_reference": "ncert_books/grade2/mathematics/bejm103.pdf"
+        }
+      }
+    ],
+    "source_metadata": [
+      "{\"collection\":\"aivorah_curriculum_chunks_v1\",\"curriculum\":\"NCERT\",\"grade\":2,\"subject\":\"Mathematics\"}"
+    ],
+    "warnings": [],
+    "handoff": {
+      "curriculum_understanding_agent": {
+        "ordered_chunks": [
+          "04749b62-1c12-443f-a7f1-8ac48fc15c01",
+          "a61d3c74-4bd8-4c27-a055-2e57cbe141f0",
+          "1c5dd3c5-8ef4-4411-a542-504cc5e26259",
+          "d377520f-7908-4288-b7e0-740b4f1b4c8d",
+          "aab2be1a-92fd-4171-b681-cce076feeab6",
+          "0dbc0413-93a4-426d-a922-8c520bf1a87a",
+          "cd773d17-2d25-442c-ac0d-0719660b1a78",
+          "d21e2a68-425d-4b55-a87b-5ef43c8a15e4"
+        ],
+        "retrieval_summary": {
+          "chunks_retrieved": 8
+        },
+        "source_metadata": [
+          "{\"collection\":\"aivorah_curriculum_chunks_v1\",\"curriculum\":\"NCERT\",\"grade\":2,\"subject\":\"Mathematics\"}"
+        ],
+        "warnings": []
+      }
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "package": {
+    "package_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "package_type": "IllustrationPackage",
+    "schema_version": "1.0",
+    "created_at": "2023-02-20T14:30:00Z",
+    "produced_by": {
+      "agent": "illustration-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "12345678-9012-3456-7890-123456789012",
+      "parent_package_id": "f2b3c4d5-e6f7-g8h9-i0j1"
+    }
+  },
+  "payload": {
+    "lesson_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "illustrations": [
+      {
+        "artifact_id": "illustration-1",
+        "stage_id": "stage-1",
+        "component_id": "component-1",
+        "concept_id": "fractions",
+        "style_category": "diagram",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A diagram showing a circle divided into equal parts to represent fractions.",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "chunk-1"
+        ]
+      },
+      {
+        "artifact_id": "illustration-2",
+        "stage_id": "stage-2",
+        "component_id": "component-2",
+        "concept_id": "evidence",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "An infographic showing the evidence supporting the learning objective.",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "chunk-2"
+        ]
+      },
+      {
+        "artifact_id": "illustration-3",
+        "stage_id": "stage-3",
+        "component_id": "component-3",
+        "concept_id": "ui_component",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A scene showing a UI component populated with content.",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "chunk-3"
+        ]
+      }
+    ],
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}

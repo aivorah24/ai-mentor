@@ -1,0 +1,67 @@
+{
+  "ICSE|Class I|__subjects__": [
+    "English",
+    "Hindi",
+    "Environmental Science",
+    "Mathematics",
+    "Social Studies",
+    "Computer Science"
+  ],
+  "ICSE|Class I|English": {
+    "status": "done",
+    "topics": 28,
+    "qdrant": 15,
+    "held": false
+  },
+  "ICSE|Class I|Hindi": {
+    "status": "done",
+    "topics": 26,
+    "qdrant": 16,
+    "held": false
+  },
+  "ICSE|Class I|Environmental Science": {
+    "status": "done",
+    "topics": 24,
+    "qdrant": 20,
+    "held": false
+  },
+  "ICSE|Class I|Mathematics": {
+    "status": "done",
+    "topics": 21,
+    "qdrant": 14,
+    "held": false
+  },
+  "ICSE|Class I|Social Studies": {
+    "status": "done",
+    "topics": 27,
+    "qdrant": 23,
+    "held": false
+  },
+  "ICSE|Class I|Computer Science": {
+    "status": "done",
+    "topics": 46,
+    "qdrant": 41,
+    "held": false
+  },
+  "ICSE|Class II|__subjects__": [
+    "English",
+    "Hindi",
+    "Mathematics",
+    "Science",
+    "Social Studies",
+    "Environmental Science",
+    "Computer Science"
+  ],
+  "ICSE|Class II|English": {
+    "status": "done",
+    "topics": 34,
+    "qdrant": 24,
+    "held": false
+  },
+  "ICSE|Class II|Hindi": {
+    "status": "done",
+    "topics": 21,
+    "qdrant": 2,
+    "held": false
+  }
+}

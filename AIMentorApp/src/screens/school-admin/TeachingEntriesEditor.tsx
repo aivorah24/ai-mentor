@@ -139,7 +139,7 @@ export default function TeachingEntriesEditor({
                 <Text style={styles.formLabel}>Curriculum</Text>
                 <FormDropdown
                   value={entry.curriculum} placeholder="Select curriculum" options={curriculumOptions}
-                  onChange={(v) => updateEntry(idx, { curriculum: v, grade: '' })} colors={colors}
+                  onChange={(v) => updateEntry(idx, { curriculum: v, grade: '', subjectsInput: '' })} colors={colors}
                   open={openDropdown === curriculumKey} onToggle={() => setOpenDropdown(openDropdown === curriculumKey ? null : curriculumKey)}
                 />
               </View>
@@ -147,7 +147,7 @@ export default function TeachingEntriesEditor({
                 <Text style={styles.formLabel}>Grade</Text>
                 <FormDropdown
                   value={entry.grade} placeholder={entry.curriculum ? 'Select grade' : 'Pick curriculum first'} options={gradeOptions}
-                  onChange={(v) => updateEntry(idx, { grade: v })} colors={colors}
+                  onChange={(v) => updateEntry(idx, { grade: v, subjectsInput: '' })} colors={colors}
                   open={openDropdown === gradeKey} onToggle={() => { if (entry.curriculum) setOpenDropdown(openDropdown === gradeKey ? null : gradeKey); }}
                 />
               </View>

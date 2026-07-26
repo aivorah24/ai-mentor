@@ -16,6 +16,11 @@ export interface SyllabusTopic {
   kind:  string;   // Story / Poem / Conversation / Non-fiction / Letter / Real-life story
   page:  string;
   done?: boolean;
+  // Per-topic override of the chapter's `comingSoon` — lets one topic in an
+  // otherwise-not-ready chapter go live individually (e.g. one curated topic
+  // while its siblings are still placeholders) without needing the whole
+  // chapter finished first. Falls back to the chapter's own flag when unset.
+  comingSoon?: boolean;
   // Real book PDF location — only set once the exact file+page has been
   // verified against the source PDF (don't guess; a wrong page here would
   // reintroduce the same content-mismatch problem we fixed earlier).
@@ -34,6 +39,11 @@ export interface SyllabusTopic {
     // far; the Listen tab falls back to the plain player when these are absent.
     listenParts?: ListenPart[];
     vocab?: VocabWord[];
+    // AI Tutor quick-actions (Math): a real hint for the topic's practice sum
+    // (`activity`), and a second worked example from the book — both shown
+    // inline in the step view, never routed out to a generic chat.
+    hint?: string;
+    example?: { problem: string; steps: string[] };
   };
 }
 

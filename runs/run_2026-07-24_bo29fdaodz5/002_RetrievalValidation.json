@@ -1,0 +1,32 @@
+{
+  "package": {
+    "package_id": "c3f1a9b2-7d4e-4f6a-9b1c-2d3e4f5a6b7c",
+    "package_type": "ValidatedRetrievalPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T14:30:00.000Z",
+    "produced_by": {
+      "agent": "retrieval-validation-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+      "parent_package_id": "4e6624f2-aa8c-4fc1-9835-de03b9cc2d93"
+    }
+  },
+  "payload": {
+    "status": "FAIL",
+    "error_code": "RV001",
+    "rejection_reason": "Schema validation failed: unexpected top-level field 'grounded_evidence' not defined in Retrieval Package schema.",
+    "validation_report": {
+      "schema": "FAIL",
+      "metadata": "PASS",
+      "ordering": "PASS",
+      "coverage": "PASS",
+      "integrity": "PASS"
+    },
+    "re_retrieval_hints": {
+      "suggested_query_adjustments": [],
+      "missing_page_numbers": []
+    }
+  }
+}

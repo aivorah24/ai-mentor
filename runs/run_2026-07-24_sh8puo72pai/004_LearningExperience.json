@@ -1,0 +1,185 @@
+{
+  "package": {
+    "package_id": "uuid",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:00:00.000Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "learning-experience-design-pipeline",
+      "parent_package_id": "dbb7a84b-f1e4-418e-ab10-d2fb40ae1d73"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "lesson_metadata": {
+      "grade": 4,
+      "subject": "Mathematics",
+      "chapter": "Subtraction",
+      "lesson": "Subtraction with Borrowing",
+      "lesson_type": "Concept",
+      "bloom_level": "Apply"
+    },
+    "experience_score": {
+      "engagement": 90,
+      "curiosity": 85,
+      "visual_learning": 80,
+      "audio_experience": 70,
+      "interaction": 95,
+      "reflection": 90,
+      "accessibility": 95,
+      "cognitive_load": 80,
+      "learning_flow": 90
+    },
+    "lesson_flow": [
+      {
+        "step_id": "welcome",
+        "step_type": "Welcome",
+        "description": "Welcome students to the lesson on subtraction with borrowing."
+      },
+      {
+        "step_id": "introduction",
+        "step_type": "Introduction",
+        "description": "Introduce the concept of subtraction with borrowing."
+      },
+      {
+        "step_id": "example-1",
+        "step_type": "Example",
+        "description": "Provide an example of subtraction with borrowing using the piggy bank scenario."
+      },
+      {
+        "step_id": "example-2",
+        "step_type": "Example",
+        "description": "Provide another example of subtraction with borrowing using the apples scenario."
+      },
+      {
+        "step_id": "practice",
+        "step_type": "Practice",
+        "description": "Have students practice subtraction with borrowing using interactive exercises."
+      },
+      {
+        "step_id": "reflection",
+        "step_type": "Reflection",
+        "description": "Have students reflect on what they have learned about subtraction with borrowing."
+      },
+      {
+        "step_id": "summary",
+        "step_type": "Summary",
+        "description": "Summarize the key points of the lesson on subtraction with borrowing."
+      }
+    ],
+    "ui_components": [
+      {
+        "component_id": "welcome-screen",
+        "component_type": "Screen",
+        "description": "Welcome screen with a title and a brief introduction."
+      },
+      {
+        "component_id": "introduction-screen",
+        "component_type": "Screen",
+        "description": "Introduction screen with a video or animation explaining the concept of subtraction with borrowing."
+      },
+      {
+        "component_id": "example-1-screen",
+        "component_type": "Screen",
+        "description": "Example screen with a scenario and interactive exercises for subtraction with borrowing."
+      },
+      {
+        "component_id": "example-2-screen",
+        "component_type": "Screen",
+        "description": "Example screen with another scenario and interactive exercises for subtraction with borrowing."
+      },
+      {
+        "component_id": "practice-screen",
+        "component_type": "Screen",
+        "description": "Practice screen with interactive exercises for subtraction with borrowing."
+      },
+      {
+        "component_id": "reflection-screen",
+        "component_type": "Screen",
+        "description": "Reflection screen with a quiz or assessment to evaluate student understanding."
+      },
+      {
+        "component_id": "summary-screen",
+        "component_type": "Screen",
+        "description": "Summary screen with a review of the key points of the lesson."
+      }
+    ],
+    "interaction_plan": [
+      {
+        "interaction_id": "example-1-interaction",
+        "interaction_type": "Interactive Exercise",
+        "description": "Interactive exercise for subtraction with borrowing using the piggy bank scenario."
+      },
+      {
+        "interaction_id": "example-2-interaction",
+        "interaction_type": "Interactive Exercise",
+        "description": "Interactive exercise for subtraction with borrowing using the apples scenario."
+      },
+      {
+        "interaction_id": "practice-interaction",
+        "interaction_type": "Interactive Exercise",
+        "description": "Interactive exercise for subtraction with borrowing using a variety of scenarios."
+      },
+      {
+        "interaction_id": "reflection-interaction",
+        "interaction_type": "Quiz",
+        "description": "Quiz to evaluate student understanding of subtraction with borrowing."
+      }
+    ],
+    "illustration_plan": [
+      {
+        "illustration_id": "piggy-bank-illustration",
+        "illustration_type": "Image",
+        "description": "Illustration of a piggy bank with rupees."
+      },
+      {
+        "illustration_id": "apples-illustration",
+        "illustration_type": "Image",
+        "description": "Illustration of apples in a basket."
+      }
+    ],
+    "audio_plan": [
+      {
+        "audio_id": "introduction-audio",
+        "audio_type": "Video",
+        "description": "Video introduction to the concept of subtraction with borrowing."
+      },
+      {
+        "audio_id": "example-1-audio",
+        "audio_type": "Audio",
+        "description": "Audio explanation of the piggy bank scenario."
+      },
+      {
+        "audio_id": "example-2-audio",
+        "audio_type": "Audio",
+        "description": "Audio explanation of the apples scenario."
+      }
+    ],
+    "validation_requirements": [
+      {
+        "requirement_id": "engagement",
+        "requirement_type": "Engagement",
+        "description": "Ensure that students are engaged throughout the lesson."
+      },
+      {
+        "requirement_id": "curiosity",
+        "requirement_type": "Curiosity",
+        "description": "Encourage students to be curious about the concept of subtraction with borrowing."
+      },
+      {
+        "requirement_id": "visual_learning",
+        "requirement_type": "Visual Learning",
+        "description": "Use visual aids to help students understand the concept of subtraction with borrowing."
+      }
+    ],
+    "handoff": {
+      "ui_planner_agent": {
+        "lesson_experience": {}
+      }
+    }
+  }
+}

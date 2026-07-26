@@ -1,0 +1,147 @@
+{
+  "package": {
+    "package_id": "123e4567-e89b-12d3-a456-426614174000",
+    "package_type": "AudioPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T10:35:00.000Z",
+    "produced_by": {
+      "agent": "audio-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "18apiqkgnsz",
+      "parent_package_id": "a1b2c3d4-5e6f-7a8b-9c0d-ef1234567890"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-borrowing-grade2",
+    "audio_strategy": "Concept",
+    "narration_segments": [
+      {
+        "artifact_id": "seg-1",
+        "stage_id": "step1",
+        "component_id": "comp-step1-welcome",
+        "ssml": "<speak>Let's Learn Subtraction with Borrowing! Today we will learn how to subtract big numbers by borrowing from our neighbour, just like sharing rupees or apples.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "seg-2",
+        "stage_id": "step2",
+        "component_id": "comp-step2-visualillustration",
+        "ssml": "<speak>Borrowing a ten to help subtract.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "seg-3",
+        "stage_id": "step3",
+        "component_id": "comp-step3-storynarration",
+        "ssml": "<speak>Imagine you have 45 apples in a basket and you give 27 apples to your friend. How many apples are left? We need to borrow to find the answer.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "seg-4",
+        "stage_id": "step4",
+        "component_id": "comp-step4-guidedexamplepanel",
+        "ssml": "<speak>Example: 45 minus 27. Look at the ones: 5 is less than 7, so borrow 1 ten from the 4 tens. The 4 tens become 3 tens, and the ones become 15. Subtract the ones: 15 minus 7 equals 8. Subtract the tens: 3 minus 2 equals 1. Answer: 18.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "seg-5",
+        "stage_id": "step5",
+        "component_id": "comp-step5-practiceinput",
+        "ssml": "<speak>Solve: 53 minus 28 equals question mark.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "seg-6",
+        "stage_id": "step5",
+        "component_id": "comp-step5-hintbutton",
+        "ssml": "<speak>Remember to borrow from the tens if the top ones digit is smaller.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "seg-7",
+        "stage_id": "step6",
+        "component_id": "comp-step6-practiceinput",
+        "ssml": "<speak>Solve: 64 minus 39 equals question mark.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "seg-8",
+        "stage_id": "step7",
+        "component_id": "comp-step7-hintbutton",
+        "ssml": "<speak>Remember to borrow from the tens if the top ones digit is smaller.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "seg-9",
+        "stage_id": "step8",
+        "component_id": "comp-step8-mistakehighlight",
+        "ssml": "<speak>A common mistake is to subtract the smaller number from the larger one in each column without borrowing. Always start with the ones column and borrow when needed.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "seg-10",
+        "stage_id": "step9",
+        "component_id": "comp-step9-challengepanel",
+        "ssml": "<speak>Challenge: If you have 82 marbles and you lose 47, how many marbles do you have left? Show your borrowing steps.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "seg-11",
+        "stage_id": "step10",
+        "component_id": "comp-step10-summarycard",
+        "ssml": "<speak>Today we learned how to borrow from the tens column to subtract two-digit numbers. Remember to check your work by adding!</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "seg-12",
+        "stage_id": "step11",
+        "component_id": "comp-step11-quiz",
+        "ssml": "<speak>Question 1: In 53 minus 28, what do you do first? Option A: Subtract 3-8 directly Option B: Borrow 1 ten from the 5 tens Option C: Subtract 5-2 first Option D: Add the numbers Question 2: What is 64 minus 39? Option A: 25 Option B: 35 Option C: 24 Option D: 15 Question 3: When you borrow 1 ten, you add blank ones to the ones column.</speak>",
+        "timing_map": {},
+        "highlight_map": {},
+        "pronunciation_overrides": {}
+      }
+    ],
+    "playback_profile": {
+      "voice": "en-US-Standard-B",
+      "base_speed": 1,
+      "pause_duration_ms": 500
+    },
+    "accessibility_metadata": {},
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {
+        "stage_coverage": "PASS",
+        "text_fidelity": "PASS",
+        "highlight_map_words_in_text": "PASS",
+        "timing_monotonic": "PASS",
+        "audio_strategy_applied": "PASS",
+        "schema_valid": "PASS"
+      }
+    }
+  }
+}

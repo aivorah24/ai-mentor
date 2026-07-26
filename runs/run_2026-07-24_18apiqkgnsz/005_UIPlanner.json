@@ -1,0 +1,277 @@
+{
+  "package": {
+    "package_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "package_type": "UIPlanPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T10:30:00.000Z",
+    "produced_by": {
+      "agent": "ui-planner-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "18apiqkgnsz",
+      "parent_package_id": "a1b2c3d4-5e6f-7a8b-9c0d-ef1234567890"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-borrowing-grade2",
+    "device_profiles": {
+      "desktop": {
+        "layout": "two-pane"
+      },
+      "tablet": {
+        "layout": "adaptive-two-pane"
+      },
+      "mobile": {
+        "layout": "single-column"
+      }
+    },
+    "theme": "light",
+    "accessibility_settings": [],
+    "rendering_constraints": {
+      "max_interactions": 2,
+      "allow_horizontal_scroll": false,
+      "animation_level": "medium"
+    },
+    "screens": [
+      {
+        "screen_id": "screen-step1",
+        "stage_id": "step1",
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "comp-step1-welcome",
+            "component_type": "WelcomeScreen",
+            "stage_id": "step1",
+            "priority": "high",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": null,
+          "next_screen": "screen-step2",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "screen-step2",
+        "stage_id": "step2",
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "comp-step2-visualillustration",
+            "component_type": "VisualIllustration",
+            "stage_id": "step2",
+            "priority": "high",
+            "props": {
+              "illustration_id": "ill1"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-step1",
+          "next_screen": "screen-step3",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "screen-step3",
+        "stage_id": "step3",
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "comp-step3-storynarration",
+            "component_type": "StoryNarration",
+            "stage_id": "step3",
+            "priority": "high",
+            "props": {
+              "illustration_id": "ill2"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-step2",
+          "next_screen": "screen-step4",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "screen-step4",
+        "stage_id": "step4",
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "comp-step4-guidedexamplepanel",
+            "component_type": "GuidedExamplePanel",
+            "stage_id": "step4",
+            "priority": "high",
+            "props": {
+              "illustration_id": "ill3",
+              "interaction_id": "i1"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-step3",
+          "next_screen": "screen-step5",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "screen-step5",
+        "stage_id": "step5",
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "comp-step5-practiceinput",
+            "component_type": "PracticeInput",
+            "stage_id": "step5",
+            "priority": "high",
+            "props": {
+              "interaction_id": "i2"
+            }
+          },
+          {
+            "component_id": "comp-step5-hintbutton",
+            "component_type": "HintButton",
+            "stage_id": "step5",
+            "priority": "medium",
+            "props": {
+              "interaction_id": "i4"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-step4",
+          "next_screen": "screen-step6",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "screen-step6",
+        "stage_id": "step6",
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "comp-step6-practiceinput",
+            "component_type": "PracticeInput",
+            "stage_id": "step6",
+            "priority": "high",
+            "props": {
+              "interaction_id": "i3"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-step5",
+          "next_screen": "screen-step7",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "screen-step7",
+        "stage_id": "step7",
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "comp-step7-hintbutton",
+            "component_type": "HintButton",
+            "stage_id": "step7",
+            "priority": "high",
+            "props": {
+              "interaction_id": "i4"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-step6",
+          "next_screen": "screen-step8",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "screen-step8",
+        "stage_id": "step8",
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "comp-step8-mistakehighlight",
+            "component_type": "MistakeHighlight",
+            "stage_id": "step8",
+            "priority": "high",
+            "props": {
+              "illustration_id": "ill4"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-step7",
+          "next_screen": "screen-step9",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "screen-step9",
+        "stage_id": "step9",
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "comp-step9-challengepanel",
+            "component_type": "ChallengePanel",
+            "stage_id": "step9",
+            "priority": "high",
+            "props": {
+              "interaction_id": "i5"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-step8",
+          "next_screen": "screen-step10",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "screen-step10",
+        "stage_id": "step10",
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "comp-step10-summarycard",
+            "component_type": "SummaryCard",
+            "stage_id": "step10",
+            "priority": "high",
+            "props": {}
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-step9",
+          "next_screen": "screen-step11",
+          "exit_behavior": "continue"
+        }
+      },
+      {
+        "screen_id": "screen-step11",
+        "stage_id": "step11",
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "comp-step11-quiz",
+            "component_type": "Quiz",
+            "stage_id": "step11",
+            "priority": "high",
+            "props": {
+              "interaction_id": "i6"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen-step10",
+          "next_screen": null,
+          "exit_behavior": "exit"
+        }
+      },
+      "handoff\": {\"lesson_generator_agent\": {\"lesson_experience_package_id\": \"a1b2c3d4-5e6f-7a8b-9c0d-ef1234567890\", \"ui_plan_package_id\": \"f47ac10b-58cc-4372-a567-0e02b2c3d479\"}}}}]}"
+    ]
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "package": {
+    "package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3f",
+    "package_type": "LessonContentPackage",
+    "schema_version": "1.0",
+    "created_at": "2023-12-24T14:30:00Z",
+    "produced_by": {
+      "agent": "lesson-generator-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3f",
+      "parent_package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3e"
+    }
+  },
+  "payload": {
+    "lesson_id": "my-bicycle-lesson",
+    "stage_content": [
+      {
+        "stage_id": "step_1",
+        "content": "A bicycle is a vehicle with two wheels, powered by pedaling. It is a popular mode of transportation and recreation."
+      },
+      {
+        "stage_id": "step_2",
+        "content": "Bicycles have several features, including a frame, wheels, pedals, and a seat. They come in different types, such as road bikes and mountain bikes."
+      },
+      {
+        "stage_id": "step_3",
+        "content": "When describing the features of a bicycle, consider its design, materials, and functionality. This will help you understand its purpose and how it is used."
+      }
+    ],
+    "populated_components": [
+      {
+        "component_id": "component_1",
+        "slots": {
+          "title": "What is a bicycle?",
+          "body": "A bicycle is a vehicle with two wheels, powered by pedaling. It is a popular mode of transportation and recreation.",
+          "callout": ""
+        }
+      },
+      {
+        "component_id": "component_2",
+        "slots": {
+          "title": "What are the features of a bicycle?",
+          "body": "Bicycles have several features, including a frame, wheels, pedals, and a seat. They come in different types, such as road bikes and mountain bikes.",
+          "callout": ""
+        }
+      },
+      {
+        "component_id": "component_3",
+        "slots": {
+          "title": "How to describe the features of a bicycle?",
+          "body": "When describing the features of a bicycle, consider its design, materials, and functionality. This will help you understand its purpose and how it is used.",
+          "callout": ""
+        }
+      }
+    ],
+    "source_references": [
+      {
+        "content_id": "my-bicycle-lesson",
+        "chunk_id": "step_1"
+      },
+      {
+        "content_id": "my-bicycle-lesson",
+        "chunk_id": "step_2"
+      },
+      {
+        "content_id": "my-bicycle-lesson",
+        "chunk_id": "step_3"
+      }
+    ],
+    "validation_summary": {},
+    "handoff": {
+      "illustration_agent": {
+        "lesson_content_package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3f"
+      },
+      "audio_agent": {
+        "lesson_content_package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3f"
+      },
+      "quiz_agent": {
+        "lesson_content_package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3f"
+      }
+    }
+  }
+}

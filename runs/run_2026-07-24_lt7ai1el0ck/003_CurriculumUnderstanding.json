@@ -1,0 +1,100 @@
+{
+  "package": {
+    "package_id": "pkg-1111-2222-3333-4444",
+    "package_type": "LessonBlueprint",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T14:30:00.000Z",
+    "produced_by": {
+      "agent": "curriculum-understanding-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "p1p2p3p4-p5p6-p7p8-p9p0-q1r2s3t4u5v6",
+      "parent_package_id": "c1a2b3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+    }
+  },
+  "payload": {
+    "lesson_id": "les-abcdef123456",
+    "curriculum": "NCERT",
+    "grade": 1,
+    "subject": "Mathematics",
+    "chapter": "Addition",
+    "lesson": "Addition of Small Numbers",
+    "lesson_type": "Mathematics",
+    "lesson_type_evidence": "imagine you have 3 bananas and you get 2 more bananas from the kitchen. How many bananas do you have now? You can count them together like this: 3, 4, 5.",
+    "lesson_type_confidence": 0.95,
+    "review_flags": [],
+    "concept_map": [
+      {
+        "concept_id": "c1",
+        "concept": "Addition as combining quantities",
+        "depends_on": [],
+        "difficulty": "Easy"
+      },
+      {
+        "concept_id": "c2",
+        "concept": "Counting on strategy",
+        "depends_on": [
+          "c1"
+        ],
+        "difficulty": "Easy"
+      },
+      {
+        "concept_id": "c3",
+        "concept": "Symbolic representation of addition (+)",
+        "depends_on": [
+          "c1",
+          "c2"
+        ],
+        "difficulty": "Medium"
+      },
+      {
+        "concept_id": "c4",
+        "concept": "Equal sign meaning",
+        "depends_on": [
+          "c3"
+        ],
+        "difficulty": "Medium"
+      }
+    ],
+    "learning_objectives": [
+      "Students will be able to add two single-digit numbers using concrete objects.",
+      "Students will be able to represent addition situations with pictures and symbols."
+    ],
+    "learning_outcomes": [
+      "Students will solve real‑life addition problems with objects and drawings.",
+      "Students will write correct addition sentences for given situations."
+    ],
+    "bloom_level": "Apply",
+    "prerequisites": [
+      "Ability to count numbers 1-10",
+      "Understanding of more and less"
+    ],
+    "misconceptions": [
+      "Students may think that addition always results in a larger number without considering zero.",
+      "Students may confuse the plus (+) and minus (−) signs."
+    ],
+    "suggested_instructional_sequence": [
+      "Begin with a story problem using bananas or apples.",
+      "Use physical objects to model the problem.",
+      "Draw pictures to represent the objects.",
+      "Introduce the addition symbol and equal sign.",
+      "Practice with similar problems."
+    ],
+    "vocabulary_difficulty": "Low",
+    "available_images": [
+      "bananas",
+      "apples",
+      "toy cars"
+    ],
+    "source_chunk_references": [
+      "Addition chunk 0",
+      "Addition chunk 1"
+    ],
+    "handoff": {
+      "learning_experience_designer": {
+        "lesson_blueprint": {}
+      }
+    }
+  }
+}

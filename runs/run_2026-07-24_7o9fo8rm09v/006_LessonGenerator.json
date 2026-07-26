@@ -1,0 +1,328 @@
+{
+  "package": {
+    "package_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba",
+    "package_type": "LessonContent",
+    "schema_version": "1.0",
+    "created_at": "2024-07-30T12:00:00Z",
+    "produced_by": {
+      "agent": "lesson-generator-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+      "parent_package_id": "987f6543-b21a-0987-6543-210987654321"
+    }
+  },
+  "payload": {
+    "lesson_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba",
+    "stage_content": [
+      {
+        "stage_id": "welcome"
+      },
+      {
+        "stage_id": "learning_goal"
+      },
+      {
+        "stage_id": "visual_introduction"
+      },
+      {
+        "stage_id": "concrete_example"
+      },
+      {
+        "stage_id": "guided_example"
+      },
+      {
+        "stage_id": "guided_practice"
+      },
+      {
+        "stage_id": "independent_practice"
+      },
+      {
+        "stage_id": "hint_screen"
+      },
+      {
+        "stage_id": "common_mistakes"
+      },
+      {
+        "stage_id": "challenge"
+      },
+      {
+        "stage_id": "summary"
+      },
+      {
+        "stage_id": "quiz"
+      }
+    ],
+    "populated_components": [
+      {
+        "component_id": "wel_txt1",
+        "slots": {
+          "body": "Hello, young mathematicians! Today, we're going on an adventure to learn a super useful math trick. Have you ever tried to subtract and found that you couldn't take a bigger number from a smaller one? Don't worry, we'll learn how to get a little 'help' to solve those tricky problems!"
+        }
+      },
+      {
+        "component_id": "lg_txt1",
+        "slots": {
+          "body": "In this lesson, you will:\n- Understand when you need to 'borrow' in subtraction.\n- Learn the step-by-step process of subtracting two-digit numbers with borrowing.\n- Practice solving different subtraction problems using this new skill."
+        }
+      },
+      {
+        "component_id": "vi_txt1",
+        "slots": {
+          "body": "Imagine you have a piggy bank with 72 rupees, and you want to spend 47 rupees. How much money would be left? It might seem tricky at first, especially when you look at the ones place. We can't take 7 rupees from 2 rupees directly, can we? This is where our special trick comes in handy!"
+        }
+      },
+      {
+        "component_id": "ce_txt1",
+        "slots": {
+          "body": "Let's look at our piggy bank problem: 72 rupees minus 47 rupees. To solve this, we need to 'borrow' from the tens place. Think of it like exchanging one 10-rupee note for ten 1-rupee coins. This way, you'll have enough 1-rupee coins to subtract from!"
+        }
+      },
+      {
+        "component_id": "ge_txt1",
+        "slots": {
+          "body": "Let's try 45 - 27 together. First, write the numbers one above the other, lining up the ones and tens places. Can you take 7 from 5 in the ones place? No. So, we borrow 1 ten from the 4 tens, making it 3 tens. The 5 ones become 15 ones. Now, 15 - 7 = 8. In the tens place, 3 - 2 = 1. So, 45 - 27 = 18."
+        }
+      },
+      {
+        "component_id": "gp_txt1",
+        "slots": {
+          "body": "Now it's your turn! Try to solve this problem using the borrowing method we just learned: 61 - 28 = ?"
+        }
+      },
+      {
+        "component_id": "ip_txt1",
+        "slots": {
+          "body": "Great job! Here's another one for you to solve on your own: 54 - 19 = ?"
+        }
+      },
+      {
+        "component_id": "hs_txt1",
+        "slots": {
+          "body": "Remember, when the top digit is smaller than the bottom digit in a column, you need to borrow. Take 1 from the digit to its left (the tens place), and add 10 to the current digit (the ones place). Don't forget to reduce the digit you borrowed from!"
+        }
+      },
+      {
+        "component_id": "cm_txt1",
+        "slots": {
+          "body": "A common mistake is forgetting to reduce the tens digit after borrowing. For example, if you have 45 and borrow from the 4 tens, it becomes 3 tens. If you forget this step, your answer will be wrong! Always double-check your tens place after borrowing."
+        }
+      },
+      {
+        "component_id": "ch_txt1",
+        "slots": {
+          "body": "You're doing great! Here's a challenge problem for you: 90 - 37 = ?"
+        }
+      },
+      {
+        "component_id": "su_txt1",
+        "slots": {
+          "body": "You've learned a powerful math trick today! Remember, borrowing helps us subtract when the top number is too small. We take 1 ten from the tens place, add 10 to the ones place, and then subtract. Keep practicing, and you'll be a borrowing expert in no time!"
+        }
+      },
+      {
+        "component_id": "qz_txt1",
+        "slots": {
+          "body": "Let's see how much you've learned about subtraction with borrowing! Answer these questions."
+        }
+      }
+    ],
+    "source_references": [
+      {
+        "content_id": "wel_txt1",
+        "chunk_id": "N/A"
+      },
+      {
+        "content_id": "lg_txt1",
+        "chunk_id": "N/A"
+      },
+      {
+        "content_id": "vi_txt1",
+        "chunk_id": "in the piggy bank? We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees."
+      },
+      {
+        "content_id": "ce_txt1",
+        "chunk_id": "in the piggy bank? We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees."
+      },
+      {
+        "content_id": "ge_txt1",
+        "chunk_id": "Let's Learn About Subtracting Big Numbers with a Little Help from Our Neighbours! Do you know how to subtract big numbers? Let's say we have 45 apples in a basket and we give 27 apples to our friend."
+      },
+      {
+        "content_id": "gp_txt1",
+        "chunk_id": "N/A"
+      },
+      {
+        "content_id": "ip_txt1",
+        "chunk_id": "N/A"
+      },
+      {
+        "content_id": "hs_txt1",
+        "chunk_id": "N/A"
+      },
+      {
+        "content_id": "cm_txt1",
+        "chunk_id": "N/A"
+      },
+      {
+        "content_id": "ch_txt1",
+        "chunk_id": "N/A"
+      },
+      {
+        "content_id": "su_txt1",
+        "chunk_id": "N/A"
+      },
+      {
+        "content_id": "qz_txt1",
+        "chunk_id": "N/A"
+      }
+    ],
+    "validation_summary": {},
+    "handoff": {
+      "illustration_agent": {
+        "lesson_content_package_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba"
+      },
+      "audio_agent": {
+        "lesson_content_package_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba"
+      },
+      "quiz_agent": {
+        "lesson_content_package_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba"
+      }
+    },
+    "lesson": {
+      "instructionalType": "Mathematics",
+      "intro": "Have you ever needed to subtract a big number from a smaller one? Sometimes, we need a little help from our 'neighbors' to make it work! Today, we'll learn how to subtract big numbers using a clever trick called borrowing.",
+      "keyLearnings": [
+        "You will understand when to use borrowing in subtraction.",
+        "You will learn the steps to subtract two-digit numbers using borrowing.",
+        "You will practice solving subtraction problems that require borrowing."
+      ],
+      "body": [
+        "Imagine you have 45 apples, and you want to give away 27. If you try to take 7 apples from 5, you can't! That's when we need to 'borrow' from the tens place. Borrowing helps us make the number in the ones place big enough to subtract from.",
+        "When we borrow, we take one 'ten' from the tens place and add it to the ones place. This makes the ones digit 10 bigger. Remember to reduce the tens digit by one because you borrowed from it!",
+        "This method helps us solve subtraction problems that look tricky at first. It's like exchanging a 10-rupee note for ten 1-rupee coins so you can give someone 7 rupees."
+      ],
+      "workedExamples": [
+        {
+          "problem": "45 − 27 = ?",
+          "steps": [
+            "Line up the numbers by their place value: ones under ones, tens under tens.",
+            "Start with the ones place: Can you subtract 7 from 5? No, because 5 is smaller than 7.",
+            "Borrow 1 ten from the tens place. The 4 tens become 3 tens. The 5 ones become 15 ones (because 10 + 5 = 15).",
+            "Now subtract in the ones place: 15 − 7 = 8.",
+            "Move to the tens place: Subtract 2 tens from 3 tens: 3 − 2 = 1."
+          ],
+          "answer": "18"
+        },
+        {
+          "problem": "72 − 47 = ?",
+          "steps": [
+            "Line up the numbers: 72 above 47.",
+            "Look at the ones place: Can you subtract 7 from 2? No, 2 is smaller than 7.",
+            "Borrow 1 ten from the tens place. The 7 tens become 6 tens. The 2 ones become 12 ones (because 10 + 2 = 12).",
+            "Subtract in the ones place: 12 − 7 = 5.",
+            "Move to the tens place: Subtract 4 tens from 6 tens: 6 − 4 = 2."
+          ],
+          "answer": "25"
+        }
+      ],
+      "vocab": [
+        {
+          "word": "Borrowing",
+          "definition": "In subtraction, when the top digit in a place value column is smaller than the bottom digit, we take 1 from the next place value to the left (like taking 1 ten from the tens place to add to the ones place)."
+        },
+        {
+          "word": "Regrouping",
+          "definition": "Another word for borrowing, where you rearrange numbers into different place values to make subtraction easier."
+        }
+      ],
+      "thinkAndReflect": [
+        "Why do we need to borrow in subtraction sometimes?",
+        "Can you think of a real-life situation where borrowing money or items might be like borrowing in math?"
+      ],
+      "keyTakeaways": [
+        "Borrowing helps us subtract when the top digit is smaller than the bottom digit in a place value column.",
+        "When you borrow 1 ten, you add 10 to the ones place and reduce the tens place by 1.",
+        "Always start subtracting from the ones place and move to the left."
+      ],
+      "quiz": [
+        {
+          "type": "mcq",
+          "question": "What do you do first if the top digit in the ones place is smaller than the bottom digit?",
+          "options": [
+            "Subtract the tens first",
+            "Borrow from the tens place",
+            "Swap the numbers",
+            "Ignore the ones place"
+          ],
+          "correct": 1,
+          "hint": "Think about how we make the top digit bigger in the ones column.",
+          "explanation": "If the top digit in the ones place is smaller, you need to borrow 1 ten from the tens place to make it larger."
+        },
+        {
+          "type": "fill_blank",
+          "question": "When you borrow 1 ten from the tens place, the ones place increases by ___.",
+          "correct": "10",
+          "hint": "How many ones are in one ten?",
+          "explanation": "One ten is equal to ten ones, so borrowing 1 ten adds 10 to the ones place."
+        },
+        {
+          "type": "mcq",
+          "question": "Solve: 63 - 19 = ?",
+          "options": [
+            "44",
+            "54",
+            "43",
+            "53"
+          ],
+          "correct": 0,
+          "hint": "Remember to borrow from the tens place for the ones column.",
+          "explanation": "Borrow 1 ten from 6 (making it 5), so 3 becomes 13. 13 - 9 = 4. Then 5 - 1 = 4. The answer is 44."
+        },
+        {
+          "type": "mcq",
+          "question": "There were 50 birds on a tree. 15 birds flew away. How many birds are left on the tree?",
+          "options": [
+            "35",
+            "45",
+            "25",
+            "65"
+          ],
+          "correct": 0,
+          "hint": "Set up the subtraction problem: 50 - 15. You'll need to borrow.",
+          "explanation": "To solve 50 - 15: Borrow 1 ten from 5 (making it 4), so 0 becomes 10. 10 - 5 = 5. Then 4 - 1 = 3. So, 35 birds are left."
+        },
+        {
+          "type": "mcq",
+          "question": "A student solved 42 - 18 like this: Ones: 8 - 2 = 6. Tens: 4 - 1 = 3. Answer: 36. What was their mistake?",
+          "options": [
+            "They subtracted tens first",
+            "They didn't borrow",
+            "They added instead of subtracted",
+            "The answer is correct"
+          ],
+          "correct": 1,
+          "hint": "Can you subtract 8 from 2 directly?",
+          "explanation": "The student tried to subtract 2 from 8 instead of 8 from 2. They needed to borrow from the tens place to make the 2 into 12 before subtracting 8."
+        },
+        {
+          "type": "mcq",
+          "question": "Solve: 80 - 35 = ?",
+          "options": [
+            "45",
+            "55",
+            "35",
+            "40"
+          ],
+          "correct": 0,
+          "hint": "Start with the ones place and remember to borrow.",
+          "explanation": "Borrow 1 ten from 8 (making it 7), so 0 becomes 10. 10 - 5 = 5. Then 7 - 3 = 4. The answer is 45."
+        }
+      ],
+      "accessibility": {
+        "text_scaling": "scalable to 200% without loss of content or functionality",
+        "contrast_ratio": "at least 4.5:1 for normal text"
+      }
+    }
+  }
+}

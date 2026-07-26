@@ -1,0 +1,171 @@
+{
+ "topicId": "d56021af-5cb2-4dca-87aa-a6c6851490c6",
+ "grade": "Grade 12",
+ "subject": "Mathematics",
+ "curriculum": "CBSE",
+ "topicName": "Absolute Maxima/Minima Procedure",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "The absolute maximum (or minimum) of a function on a closed interval [a,b] is the greatest (or least) value the function attains on that interval. To locate it, first find the critical points where the derivative is zero or undefined inside (a,b). Then compute the function’s value at each critical point and at the endpoints a and b. The largest of these values is the absolute maximum; the smallest is the absolute minimum.",
+   "Why do we check the endpoints? A closed interval includes its boundary points, so the function can achieve its highest or lowest value there even if the derivative does not vanish. Ignoring the endpoints may miss the true absolute extremum.",
+   "Remember: only a closed interval guarantees that absolute extrema exist for continuous functions. If the interval is open, the function might not attain a maximum or minimum within the interval."
+  ],
+  "grade": 12,
+  "intro": "In this lesson you will learn how to find the absolute maximum and minimum values of a function on a closed interval using derivatives.",
+  "vocab": [
+   {
+    "word": "Absolute maximum",
+    "definition": "The greatest value a function attains on a given closed interval."
+   },
+   {
+    "word": "Absolute minimum",
+    "definition": "The least value a function attains on a given closed interval."
+   },
+   {
+    "word": "Critical point",
+    "definition": "A point in the interior of the interval where the derivative is zero or undefined."
+   },
+   {
+    "word": "Endpoint",
+    "definition": "The boundary points a and b of a closed interval [a,b]."
+   },
+   {
+    "word": "Closed interval",
+    "definition": "An interval that includes its endpoints, written as [a,b]."
+   }
+  ],
+  "subject": "Mathematics",
+  "activity": "Why might the absolute maximum occur at an endpoint even if the derivative is not zero there?",
+  "keyLearnings": [
+   "Identify critical points inside the interval",
+   "Evaluate the function at critical points and at the endpoints",
+   "Compare all values to determine absolute extrema"
+  ],
+  "keyTakeaways": [
+   "Find critical points by setting f'(x)=0 or undefined.",
+   "Always evaluate the function at critical points and at both endpoints.",
+   "The largest value among these is the absolute maximum; the smallest is the absolute minimum."
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "Compute f at the critical point and at the endpoints.",
+    "type": "mcq",
+    "correct": 1,
+    "options": [
+     "x=−2",
+     "x=0",
+     "x=2",
+     "x=3"
+    ],
+    "question": "For f(x)=x^2 on [−2,3], which point gives the absolute minimum?",
+    "explanation": "f'(x)=2x=0 ⇒ x=0. f(0)=0, f(−2)=4, f(3)=9. Minimum is 0 at x=0."
+   },
+   {
+    "hint": "Think about the definition of a closed interval.",
+    "type": "mcq",
+    "correct": 2,
+    "options": [
+     "Only at a",
+     "Only at b",
+     "At either a or b",
+     "Nowhere",
+     "At any interior point"
+    ],
+    "question": "If a function is continuous on [a,b] and has no critical points inside, where must its absolute extrema lie?",
+    "explanation": "Without interior critical points, the only candidates are the endpoints a and b."
+   },
+   {
+    "hint": "They are the interior candidates for extrema.",
+    "type": "fill_blank",
+    "correct": "critical points",
+    "question": "The points where f'(x)=0 or f'(x) is undefined are called ___ .",
+    "explanation": "Critical points are where the derivative vanishes or does not exist, and they are examined for local and absolute extrema."
+   }
+  ],
+  "originalLesson": [],
+  "whatYoullLearn": [
+   "Identify critical points inside the interval",
+   "Evaluate the function at critical points and at the endpoints",
+   "Compare all values to determine absolute extrema"
+  ],
+  "workedExamples": [
+   {
+    "steps": [
+     "Compute f'(x)=6x^2-30x+36 and set it to zero: 6x^2-30x+36=0 ⇒ x^2-5x+6=0 ⇒ (x-2)(x-3)=0 ⇒ x=2,3 (critical points).",
+     "Evaluate f at x=1,2,3,5: f(1)=24, f(2)=29, f(3)=28, f(5)=56. Compare: maximum 56 at x=5, minimum 24 at x=1."
+    ],
+    "answer": "Absolute maximum =56 at x=5; absolute minimum =24 at x=1.",
+    "problem": "Find the absolute maximum and minimum of f(x)=2x^3-15x^2+36x+1 on [1,5]."
+   },
+   {
+    "steps": [
+     "g'(x)=3x^2-6x=3x(x-2). Set to zero → x=0 or x=2 (critical points inside).",
+     "Compute values: g(0)=4, g(2)=0, g(3)=4. Compare: maximum 4 at x=0 and x=3, minimum 0 at x=2."
+    ],
+    "answer": "Absolute maximum =4 at x=0 and x=3; absolute minimum =0 at x=2.",
+    "problem": "Find absolute extrema of g(x)=x^3-3x^2+4 on [0,3]."
+   },
+   {
+    "steps": [
+     "h'(x)=-2x+4=0 ⇒ x=2 (critical point).",
+     "Evaluate: h(0)=0, h(2)=4, h(5)=-5. Compare: maximum 4 at x=2, minimum -5 at x=5."
+    ],
+    "answer": "Absolute maximum =4 at x=2; absolute minimum =-5 at x=5.",
+    "problem": "Determine absolute extrema of h(x)=-x^2+4x on [0,5]."
+   }
+  ],
+  "thinkAndReflect": [
+   "Why might the absolute maximum occur at an endpoint even if the derivative is not zero there?",
+   "If a function has no critical points inside the interval, where can its absolute extrema be?",
+   "How does continuity of the function affect the existence of absolute extrema on a closed interval?"
+  ],
+  "instructionalType": "Lesson",
+  "illustrationPrompts": [
+   {
+    "image": "https://res.cloudinary.com/di5iq2mmb/image/upload/v1784781658/ncert/grade12/Mathematics/lemh106_p1_0.png",
+    "source": "lemh106 p1",
+    "altText": "Picture 1 from your NCERT book — Absolute Maxima/Minima Procedure (page 1)"
+   }
+  ]
+ },
+ "practiceQuiz": [
+  {
+   "hint": "Compute f at the critical point and at the endpoints.",
+   "type": "mcq",
+   "correct": 1,
+   "options": [
+    "x=−2",
+    "x=0",
+    "x=2",
+    "x=3"
+   ],
+   "question": "For f(x)=x^2 on [−2,3], which point gives the absolute minimum?",
+   "explanation": "f'(x)=2x=0 ⇒ x=0. f(0)=0, f(−2)=4, f(3)=9. Minimum is 0 at x=0."
+  },
+  {
+   "hint": "Think about the definition of a closed interval.",
+   "type": "mcq",
+   "correct": 2,
+   "options": [
+    "Only at a",
+    "Only at b",
+    "At either a or b",
+    "Nowhere",
+    "At any interior point"
+   ],
+   "question": "If a function is continuous on [a,b] and has no critical points inside, where must its absolute extrema lie?",
+   "explanation": "Without interior critical points, the only candidates are the endpoints a and b."
+  },
+  {
+   "hint": "They are the interior candidates for extrema.",
+   "type": "fill_blank",
+   "correct": "critical points",
+   "question": "The points where f'(x)=0 or f'(x) is undefined are called ___ .",
+   "explanation": "Critical points are where the derivative vanishes or does not exist, and they are examined for local and absolute extrema."
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "Great question! Let’s imagine you’re baking a cake and want to know the **highest** and **lowest** temperatures your oven reaches during the baking time. That’s exactly what the **Absolute Maxima/Minima Procedure** does for functions! It helps you find the **highest (maximum)** and **lowest (minimum)** values a function can take on a specific interval, like your oven’s temperature range.\n\n---\n\n### Why does this matter?\nThink of a rollercoaster track. The **absolute maximum** is the highest point the rollercoaster reaches, and the **absolute minimum** is the lowest point. If you only look at the middle of the track (where the slope is zero), you might miss the highest hill at the end! That’s why we check **both the critical points (where the slope is zero or undefined) AND the endpoints** of the interval.\n\n---\n\n### Key terms to remember:\n- **Critical points**: Points inside the interval where the function’s slope is zero or doesn’t exist (like a flat spot on a rollercoaster).\n- **Absolute maximum**: The highest value the function reaches on the interval.\n- **Absolute minimum**: The lowest value the function reaches on the interval.\n\n---\n\n### Step-by-step procedure:\n1. **Find the derivative** of the function (this gives the slope at any point).\n2. **Find critical points** by setting the derivative to zero or finding where it’s undefined.\n3. **Evaluate the function** at:\n   - All critical points inside the interval.\n   - The endpoints of the interval.\n4. **Compare all values** to find the absolute maximum and minimum.\n\n---\n\n### Worked example:\nLet’s find the absolute maximum and minimum of the function:\n**f(x) = 2x³ - 15x² + 36x + 1** on the interval **[1, 5]**.\n\n#### Step 1: Find the derivative\nThe derivative tells us the slope of the function at any point.\nf'(x) = 6x² - 30x + 36.\n\n#### Step 2: Find critical points\nSet the derivative equal to zero and solve for x:\n6x² - 30x + 36 = 0\nDivide by 6 to simplify:\nx² - 5x + 6 = 0\nFactor:\n(x - 2)(x - 3) = 0\nSo, x = 2 and x = 3 are the critical points.\n\n#### Step 3: Evaluate the function at critical points and endpoints\nWe need to check:\n- The endpoints: x = 1 and x = 5.\n- The critical points: x = 2 and x = 3.\n\nCalculate f(x) for each:\n- f(1) = 2(1)³ - 15(1)² + 36(1) + 1 = 2 - 15 + 36 + 1 = **24**\n- f(2) = 2(2)³ - 15(2)² + 36(2) + 1 = 16 - 60 + 72 + 1 = **29**\n- f(3) = 2(3)³ - 15(3)² + 36(3) + 1 = 54 - 135 + 108 + 1 = **28**\n- f(5) = 2(5)³ - 15(5)² + 36(5) + 1 = 250 - 375 + 180 + 1 = **56**\n\n#### Step 4: Compare all values\n- Values: 24, 29, 28, 56.\n- **Absolute maximum** is the largest value: **56** at x = 5.\n- **Absolute minimum** is the smallest value: **24** at x = 1.\n\n---\n### Answer:\n- Absolute maximum = **56** at x = 5.\n- Absolute minimum = **24** at x = 1.\n\n---\nYou’re doing amazing! Want to try a practice question to test your understanding? Here it is"
+}

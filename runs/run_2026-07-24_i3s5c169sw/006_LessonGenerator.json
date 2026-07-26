@@ -1,0 +1,38 @@
+{
+  "package": {
+    "package_id": "e3c4a5b6-c7d8-e9f0-1234-5678fedcba9",
+    "package_type": "LessonContent",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T13:20:00.000Z",
+    "produced_by": {
+      "agent": "lesson-generator-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "lesson-generator-agent-123",
+      "parent_package_id": "3137580f-a1a2-4936-87de-93f944fd084f"
+    }
+  },
+  "payload": {
+    "lesson_id": "missing-stage-lesson",
+    "stage_content": [],
+    "populated_components": [],
+    "source_references": [],
+    "validation_summary": {
+      "status": "FAIL",
+      "rejection_reason": "Input package is incomplete, preventing lesson generation.",
+      "validation_report": {
+        "schema": "PASS",
+        "metadata": "PASS",
+        "ordering": "PASS",
+        "coverage": "FAIL",
+        "integrity": "PASS"
+      }
+    },
+    "handoff": {
+      "illustration_agent": null,
+      "audio_agent": null,
+      "quiz_agent": null
+    }
+  }
+}

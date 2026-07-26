@@ -52,7 +52,7 @@ const SUBJECT_ICON: Record<string, string> = {
 };
 
 export default function IBPYPQuizScreen({ navigation, route }: any) {
-  const { topic, grade = 'Grade 3', subject = 'Mathematics', curriculum = 'IB PYP', returnTo, returnParams } = route?.params ?? {};
+  const { topic, grade = 'Grade 3', subject = 'Mathematics', curriculum = 'IB PYP', returnTo, returnParams, passageText, topicId } = route?.params ?? {};
   // Whoever launched this quiz — SubjectTopics by default, but LessonScreen's
   // Practice tab passes its own returnTo/returnParams so back lands there
   // instead of always dumping the student back on the topic list.
@@ -137,6 +137,17 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
 
   function normalizeQuizQuestions(rawQs: any[]): Question[] {
     return (rawQs || []).map((q: any) => {
+      // Fill-blank answers are free-text strings (e.g. "happily") — never coerce
+      // them to an MCQ index, or the reveal shows "Answer: 0". Only MCQ answers
+      // get letter/index normalization.
+      if (q.type === 'fill_blank') {
+        return {
+          ...q,
+          question: q.question || '',
+          options: [],
+          correct: typeof q.correct === 'string' ? q.correct.trim() : String(q.correct ?? ''),
+        };
+      }
       let opts: string[] = Array.isArray(q.options) ? q.options.map((o: any) => typeof o === 'string' ? o : (o?.label || String(o || ''))) : [];
       let correct = typeof q.correct === 'number' ? q.correct : 0;
       if (typeof q.correct === 'string') {
@@ -160,7 +171,13 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
         }
       }
 
-      const cleaned = opts.map(opt => String(opt || '').replace(/^\[?[A-Da-d0-4]\]?[.)\-:]?\s*/, '').trim()).filter(Boolean);
+      // Strip an option-letter prefix ONLY when it's a real prefix with a
+      // delimiter — "A) ", "B.", "(C)", "[D]", "2." — NEVER a bare leading
+      // character. The old regex stripped any leading A–D/0–4, which corrupted
+      // real options ("Borrow"→"orrow") and numeric answers ("25"→"5").
+      const cleaned = opts.map(opt => String(opt || '')
+        .replace(/^\s*(?:\[[A-Da-d0-4]\]|\([A-Da-d0-4]\)|[A-Da-d0-4][.)\-:])\s*/, '')
+        .trim()).filter(Boolean);
 
       return {
         ...q,
@@ -184,7 +201,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
     try {
       const res  = await fetch(`${SERVER_URL}/ibpyp/quiz`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, grade, subject, userEmail: user?.email, role: user?.role }),
+        body: JSON.stringify({ topic, grade, subject, curriculum, passageText, topicId, userEmail: user?.email, role: user?.role }),
       });
       const data = await res.json();
       if (!data.questions?.length) throw new Error('No questions');
@@ -194,7 +211,7 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
       Alert.alert('Error', 'Could not generate quiz. Please try again.');
       navigation.goBack();
     }
-  }, [topic, grade, subject, user?.email]);
+  }, [topic, grade, subject, curriculum, passageText, user?.email]);
 
   useEffect(() => { fetchQuiz(); }, [fetchQuiz]);
 
@@ -279,6 +296,29 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
     } else {
       finishQuiz(newScore);
     }
+  }
+
+  // Go back to a previously-answered question and restore it in review mode
+  // (their recorded answer shown, locked — no re-scoring).
+  function goPrev() {
+    if (currentQ === 0) return;
+    const prevIdx = currentQ - 1;
+    const rec = perQuestionResultsRef.current[prevIdx];
+    setCurrentQ(prevIdx);
+    resetQuestionState();
+    if (!rec) return;
+    const q = questions[prevIdx];
+    // Restore the locked answer so the review shows what the student chose.
+    if (q.type === 'fill_blank') {
+      setFillInput(rec.studentAnswer || '');
+      setFillFeedback(rec.isCorrect ? 'correct' : 'revealed');
+    } else {
+      const idx = q.options.findIndex((o: string) => o === rec.studentAnswer);
+      setMcqSelected(idx >= 0 ? idx : null);
+      setMcqDone(true);
+    }
+    setExplanation(explanationsRef.current[prevIdx] || q.explanation || '');
+    questionStartTimeRef.current = Date.now();
   }
 
   // ── MCQ handlers ────────────────────────────────────────────────
@@ -729,17 +769,29 @@ export default function IBPYPQuizScreen({ navigation, route }: any) {
             </View>
           )}
 
-          {/* Next button — bottom of card */}
-          {showNext && (
-            <TouchableOpacity
-              style={[styles.nextBtn, { backgroundColor: accent, alignSelf: 'flex-end' }]}
-              onPress={() => goNext(isFill ? fillFeedback === 'correct' : mcqCorrect)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.nextBtnText}>{currentQ < questions.length - 1 ? 'Next Question' : 'See Results'}</Text>
-              <Feather name="arrow-right" size={15} color="#fff" />
-            </TouchableOpacity>
-          )}
+          {/* Footer nav — Previous (review earlier questions) + Next */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+            {currentQ > 0 ? (
+              <TouchableOpacity
+                style={[styles.nextBtn, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.borderColor }]}
+                onPress={goPrev}
+                activeOpacity={0.85}
+              >
+                <Feather name="arrow-left" size={15} color={colors.textMain} />
+                <Text style={[styles.nextBtnText, { color: colors.textMain }]}>Previous</Text>
+              </TouchableOpacity>
+            ) : <View />}
+            {showNext ? (
+              <TouchableOpacity
+                style={[styles.nextBtn, { backgroundColor: accent }]}
+                onPress={() => goNext(isFill ? fillFeedback === 'correct' : mcqCorrect)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.nextBtnText}>{currentQ < questions.length - 1 ? 'Next Question' : 'See Results'}</Text>
+                <Feather name="arrow-right" size={15} color="#fff" />
+              </TouchableOpacity>
+            ) : <View />}
+          </View>
 
           </View>{/* end rightPanel */}
 
@@ -804,8 +856,8 @@ const makeStyles = (c: AppColors, isDark: boolean) => StyleSheet.create({
 
   // Hint
   hintBanner: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 11, marginHorizontal: spacing.xl, marginVertical: 6, borderRadius: 9, borderWidth: 1 },
-  hintBannerLabel: { fontSize: 10, fontWeight: '900', color: '#fff', textTransform: 'uppercase', letterSpacing: 0.4 },
-  hintBannerText: { fontSize: 13, fontWeight: '500', color: 'rgba(255,255,255,0.85)', lineHeight: 18 },
+  hintBannerLabel: { fontSize: 10, fontWeight: '900', color: c.textMain, textTransform: 'uppercase', letterSpacing: 0.4 },
+  hintBannerText: { fontSize: 13, fontWeight: '600', color: c.textMain, lineHeight: 18 },
   retryChip: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 10, borderWidth: 1 },
   retryChipText: { fontSize: 10, fontWeight: '700' },
 

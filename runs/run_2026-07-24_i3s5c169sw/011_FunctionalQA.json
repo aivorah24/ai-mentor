@@ -1,0 +1,81 @@
+{
+  "package": {
+    "package_id": "e3c4a5b6-c7d8-e9f0-1234-5678fedcba9",
+    "package_type": "QAReportPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T13:20:00.000Z",
+    "produced_by": {
+      "agent": "functional-qa-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "functional-qa-agent-123",
+      "parent_package_id": "e3c4a5b6-c7d8-e9f0-1234-5678fedcba9"
+    }
+  },
+  "payload": {
+    "lesson_id": "missing-stage-lesson",
+    "qa_scores": {
+      "rendering": 0,
+      "assets": 0,
+      "performance": 0,
+      "accessibility": 0,
+      "integrity": 0,
+      "navigation": 0,
+      "overall_score": 0
+    },
+    "status": "FAIL",
+    "failed_checks": [
+      {
+        "issue_id": "QA001",
+        "category": "Package Integrity",
+        "description": "Missing package or broken trace",
+        "target_agent": "regeneration-agent",
+        "error_code": "QA001"
+      },
+      {
+        "issue_id": "QA002",
+        "category": "Rendering",
+        "description": "Missing slots or mismatch with UI plan",
+        "target_agent": "regeneration-agent",
+        "error_code": "QA002"
+      },
+      {
+        "issue_id": "QA003",
+        "category": "Asset Validation",
+        "description": "Missing image or audio ID",
+        "target_agent": "regeneration-agent",
+        "error_code": "QA003"
+      },
+      {
+        "issue_id": "QA004",
+        "category": "Navigation",
+        "description": "Dead ends or orphans in navigation graph",
+        "target_agent": "regeneration-agent",
+        "error_code": "QA004"
+      },
+      {
+        "issue_id": "QA005",
+        "category": "Accessibility Metadata",
+        "description": "Missing accessibility metadata",
+        "target_agent": "regeneration-agent",
+        "error_code": "QA005"
+      },
+      {
+        "issue_id": "QA006",
+        "category": "Performance Limits",
+        "description": "Performance limits exceeded",
+        "target_agent": "regeneration-agent",
+        "error_code": "QA006"
+      }
+    ],
+    "handoff": {
+      "final_audit_agent": {},
+      "regeneration_agent": {
+        "stage_id": "stage_content",
+        "component_id": "stage_content",
+        "target_agent": "lesson-generator-agent"
+      }
+    }
+  }
+}

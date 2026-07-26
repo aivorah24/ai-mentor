@@ -1,0 +1,70 @@
+{
+  "package": {
+    "package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f",
+    "package_type": "LessonBlueprint",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:12:14.067Z",
+    "produced_by": {
+      "agent": "curriculum-understanding-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "uala08ghqgp",
+      "parent_package_id": "765847cf-9558-4ad6-a232-32c5c1da5074"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "curriculum": "Mathematics",
+    "grade": 4,
+    "subject": "Math",
+    "chapter": "Subtraction",
+    "lesson": "Subtraction with Borrowing",
+    "lesson_type": "Concept",
+    "lesson_type_evidence": "The text explains the concept of subtraction with borrowing, using real-life examples.",
+    "lesson_type_confidence": 0.9,
+    "review_flags": [],
+    "concept_map": [
+      {
+        "concept_id": "subtraction-with-borrowing",
+        "concept": "Subtraction with Borrowing",
+        "depends_on": [
+          "subtraction"
+        ],
+        "difficulty": "medium"
+      }
+    ],
+    "learning_objectives": [
+      "Understand the concept of subtraction with borrowing.",
+      "Learn to apply subtraction with borrowing in real-life situations."
+    ],
+    "learning_outcomes": [
+      "Students will be able to subtract bigger numbers from smaller numbers using borrowing.",
+      "Students will understand the concept of borrowing in subtraction."
+    ],
+    "bloom_level": "Apply",
+    "prerequisites": [
+      "Subtraction"
+    ],
+    "misconceptions": [
+      "Students may think that borrowing means taking money from someone else.",
+      "Students may struggle with understanding the concept of borrowing in subtraction."
+    ],
+    "suggested_instructional_sequence": [
+      "Introduce the concept of subtraction with borrowing using real-life examples.",
+      "Provide practice exercises for students to apply subtraction with borrowing."
+    ],
+    "vocabulary_difficulty": "medium",
+    "available_images": [],
+    "source_chunk_references": [
+      "Chunk 1: in the piggy bank? We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees.",
+      "Chunk 2: Quick addition and subtraction strategies, doubles, near doubles",
+      "Chunk 3: Let's Learn About Subtracting Big Numbers with a Little Help from Our Neighbours!"
+    ],
+    "handoff": {
+      "learning_experience_designer": {
+        "lesson_blueprint": {}
+      }
+    }
+  }
+}

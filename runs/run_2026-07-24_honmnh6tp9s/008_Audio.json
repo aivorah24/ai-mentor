@@ -1,0 +1,93 @@
+{
+  "package": {
+    "package_id": "uuid",
+    "package_type": "AudioPackage",
+    "schema_version": "1.0",
+    "created_at": "2024-03-16T14:30:00.000Z",
+    "produced_by": {
+      "agent": "audio-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "honmnh6tp9s",
+      "parent_package_id": "uuid"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "audio_strategy": "Concept",
+    "narration_segments": [
+      {
+        "artifact_id": "introduction_narration",
+        "stage_id": "introduction",
+        "component_id": "video_player",
+        "ssml": "<speak>Subtraction with borrowing is a way to subtract big numbers. Imagine you have 72 rupees in your piggy bank and you want to subtract 47 rupees. You can borrow some rupees from your neighbour and then subtract.</speak>",
+        "timing_map": {
+          "start_time": 0,
+          "end_time": 15000
+        },
+        "highlight_map": {
+          "subtraction with borrowing": "0-3000",
+          "72 rupees": "4000-6000",
+          "47 rupees": "7000-9000"
+        },
+        "pronunciation_overrides": {
+          "rupees": "ROO-pees"
+        }
+      },
+      {
+        "artifact_id": "practice_problems_narration",
+        "stage_id": "practice_problems",
+        "component_id": "interactive_exercise",
+        "ssml": "<speak>Let's practice subtracting big numbers. For example, 38 - 11 = ? We can subtract 11 from 38 by borrowing some numbers. First, we borrow 10 from 30, then we subtract 11 from 28, which gives us 17. So, 38 - 11 = 27.</speak>",
+        "timing_map": {
+          "start_time": 15000,
+          "end_time": 35000
+        },
+        "highlight_map": {
+          "17": "28000-30000",
+          "38 - 11": "15000-18000",
+          "borrowing some numbers": "20000-22000"
+        },
+        "pronunciation_overrides": {
+          "38 - 11": "thirty-eight minus eleven"
+        }
+      },
+      {
+        "artifact_id": "real_life_applications_narration",
+        "stage_id": "real_life_applications",
+        "component_id": "case_study",
+        "ssml": "<speak>Subtraction with borrowing is used in real life. For example, if you have 45 apples in a basket and you give 27 apples to your friend, how many apples are left in the basket? We can subtract 27 from 45 by borrowing some apples from our neighbour.</speak>",
+        "timing_map": {
+          "start_time": 35000,
+          "end_time": 50000
+        },
+        "highlight_map": {
+          "45 apples": "35000-38000",
+          "27 apples": "40000-42000",
+          "borrowing some apples": "44000-46000"
+        },
+        "pronunciation_overrides": {
+          "45 apples": "forty-five apples"
+        }
+      }
+    ],
+    "playback_profile": {
+      "voice": "default",
+      "base_speed": 1,
+      "pause_duration_ms": 1000
+    },
+    "accessibility_metadata": {
+      "screen_reader_enabled": true,
+      "closed_captions_enabled": true
+    },
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {
+        "narration_segments_valid": true,
+        "timing_map_valid": true,
+        "highlight_map_valid": true
+      }
+    }
+  }
+}

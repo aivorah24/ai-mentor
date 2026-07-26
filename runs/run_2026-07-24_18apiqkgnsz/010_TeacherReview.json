@@ -1,0 +1,35 @@
+{
+  "package": {
+    "package_id": "f4g5h6i7-j8k9-l0m1-n2o3-p4q5r6s7t8u9",
+    "package_type": "ReviewReport",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T11:30:00.000Z",
+    "produced_by": {
+      "agent": "teacher-review-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "18apiqkgnsz",
+      "parent_package_id": "c3d4e5f6-7890-1234-5678-9abcdef01234"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-borrowing-grade2",
+    "review_scores": {
+      "curriculum_fidelity": 95,
+      "pedagogical_quality": 95,
+      "student_engagement": 95,
+      "visual_experience": 95,
+      "audio_experience": 95,
+      "assessment_quality": 95,
+      "accessibility": 95,
+      "overall_score": 95
+    },
+    "status": "PASS",
+    "surgical_feedback": [],
+    "handoff": {
+      "functional_qa_agent": {},
+      "regeneration_agent": {}
+    }
+  }
+}

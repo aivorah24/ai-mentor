@@ -3,12 +3,16 @@ const router   = express.Router();
 const { client, searchContent, resolveCollection } = require('../services/qdrant');
 const { embed } = require('../services/embeddings');
 const { normalizeCurriculum } = require('../utils/curriculum');
+const { getChapters } = require('../services/chapters');
 
 // Curriculum content changes rarely (only on re-ingestion), but this endpoint
 // scrolls thousands of Qdrant points per request — cache each grade+curriculum
 // combo for a few minutes so repeat screen visits don't re-pay that cost.
 const subjectsCache = new Map(); // key -> { at: number, data: object }
 const SUBJECTS_CACHE_TTL_MS = 5 * 60 * 1000;
+// The full-tree endpoint below walks every chunk for the grade, so a senior
+// grade cost ~27s and 1.5MB on EVERY dashboard load. Cache it the same way.
+const treeCache = new Map(); // key -> { at: number, data: object }
 
 // ── GET /curriculum?curriculum=IB_PYP ─────────────────────────────
 // Returns all unique topics grouped by grade → subject
@@ -19,6 +23,10 @@ router.get('/', async (req, res) => {
     const { grade } = req.query;
     const normCurr = normalizeCurriculum(req.query.curriculum, 'IB PYP');
     const { collection, qdrantCurriculum, qdrantGrade } = resolveCollection(normCurr, grade || null);
+
+    const cacheKey = `${normCurr}|${grade || 'all'}`;
+    const cached = treeCache.get(cacheKey);
+    if (cached && Date.now() - cached.at < SUBJECTS_CACHE_TTL_MS) return res.json(cached.data);
 
     const seen   = new Set();
     const topics = [];
@@ -31,7 +39,11 @@ router.get('/', async (req, res) => {
     do {
       const result = await client.scroll(collection, {
         filter:       { must: mustFilters, must_not: mustNotFilters },
-        limit:        100,
+        // 100 meant ~110 sequential round-trips for a senior grade (Grade 11 has
+        // roughly 10,000 chunks), which is why this endpoint took 27 seconds and
+        // the dashboard sat blank until it returned. Same data, a tenth of the
+        // trips.
+        limit:        1000,
         offset:       offset ?? undefined,
         with_payload: true,
         with_vector:  false,
@@ -81,7 +93,9 @@ router.get('/', async (req, res) => {
     const grades      = Object.keys(grouped).sort();
     const totalTopics = topics.length;
 
-    res.json({ curriculum: normCurr, grades, topics, grouped, totalTopics });
+    const payload = { curriculum: normCurr, grades, topics, grouped, totalTopics };
+    treeCache.set(cacheKey, { at: Date.now(), data: payload });
+    res.json(payload);
   } catch (err) {
     console.error('Error in GET /curriculum:', err.message);
     res.status(500).json({ error: 'Failed to fetch curriculum data' });
@@ -145,13 +159,43 @@ router.get('/subjects', async (req, res) => {
       offset = result.next_page_offset ?? null;
     } while (offset !== null);
 
-    const subjects = Object.entries(topicMap).map(([subject, topics]) => ({
-      subject,
-      topicCount: topics.length,
-      topics:     topics.sort((a, b) => (a.chapter ?? 0) - (b.chapter ?? 0) || a.topic.localeCompare(b.topic)),
-    })).sort((a, b) => a.subject.localeCompare(b.subject));
+    const subjects = Object.entries(topicMap).map(([subject, topics]) => {
+      // Chapter/unit list is the authoritative curriculum structure (from the
+      // verified manifests). Prefer it for display counts; fall back to the units
+      // embedded in the topic payloads (used by IB PYP, which has no manifests).
+      const chapters   = getChapters(normCurr2, grade, subject);
+      const unitNames  = [...new Set(topics.map((t) => (t.unit || '').trim()).filter(Boolean))];
+      const unitCount  = chapters.length > 0 ? chapters.length : unitNames.length;
+      return {
+        subject,
+        topicCount: topics.length,
+        chapterCount: chapters.length,
+        unitCount,
+        chapters,                        // [{chapter, title}] — chapter/unit names for the UI
+        units: chapters.length > 0 ? chapters.map((c) => c.title) : unitNames,
+        topics: topics.sort((a, b) => (a.chapter ?? 0) - (b.chapter ?? 0) || a.topic.localeCompare(b.topic)),
+      };
+    }).sort((a, b) => a.subject.localeCompare(b.subject));
 
-    const responseBody = { grade, curriculum: normCurr2, subjects };
+    // For CBSE/NCERT, show ONLY the subjects that officially exist for this grade
+    // (per ncert-official-subjects.json, confirmed against ncert.nic.in). This
+    // drops IB-PYP subjects that leak in (Arts/PE/CS) and mis-ingested ones
+    // (G1 Environmental Studies, G5 Science/Social). IB PYP keeps its own list.
+    let outSubjects = subjects;
+    try {
+      const isNcert = /ncert|cbse/i.test(String(normCurr2 || ''));
+      if (isNcert) {
+        const OFFICIAL = require('../scripts/ncert-official-subjects.json').byGrade;
+        const gNum = (String(grade).match(/(\d+)/) || [])[1];
+        const allowed = (OFFICIAL[gNum] || []).map(s => s.toLowerCase());
+        if (allowed.length) {
+          const norm = s => s.toLowerCase() === 'evs' ? 'environmental studies' : s.toLowerCase();
+          outSubjects = subjects.filter(sub => allowed.includes(norm(sub.subject)));
+        }
+      }
+    } catch (_) { /* on any error, fall back to unfiltered */ }
+
+    const responseBody = { grade, curriculum: normCurr2, subjects: outSubjects };
     subjectsCache.set(cacheKey, { at: Date.now(), data: responseBody });
     res.json(responseBody);
   } catch (err) {

@@ -1,0 +1,85 @@
+{
+  "package": {
+    "package_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i8",
+    "package_type": "LessonContentPackage",
+    "schema_version": "1.0",
+    "created_at": "2023-12-31T12:00:00Z",
+    "produced_by": {
+      "agent": "lesson-generator-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "123e4567-e89b-12d3-a456-426614174001",
+      "parent_package_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i7"
+    }
+  },
+  "payload": {
+    "lesson_id": "my-bicycle-lesson",
+    "stage_content": [
+      {
+        "stage_id": "step_1",
+        "content": "Bicycles are an important mode of transportation. They provide a fun and healthy way to get around, and they are also good for the environment."
+      },
+      {
+        "stage_id": "step_2",
+        "content": "Bicycles have been around for a long time and have been used for many different purposes. They are a great way to get exercise and enjoy the outdoors."
+      },
+      {
+        "stage_id": "step_3",
+        "content": "In addition to being a fun and healthy way to get around, bicycles are also a great way to reduce our carbon footprint. They produce no emissions and require very little maintenance."
+      }
+    ],
+    "populated_components": [
+      {
+        "component_id": "component_1",
+        "slots": {
+          "title": "Bicycles are an important mode of transportation.",
+          "body": "Bicycles are an important mode of transportation. They provide a fun and healthy way to get around, and they are also good for the environment.",
+          "callout": ""
+        }
+      },
+      {
+        "component_id": "component_2",
+        "slots": {
+          "title": "Bicycles have been around for a long time.",
+          "body": "Bicycles have been around for a long time and have been used for many different purposes. They are a great way to get exercise and enjoy the outdoors.",
+          "callout": ""
+        }
+      },
+      {
+        "component_id": "component_3",
+        "slots": {
+          "title": "Bicycles are a great way to reduce our carbon footprint.",
+          "body": "In addition to being a fun and healthy way to get around, bicycles are also a great way to reduce our carbon footprint. They produce no emissions and require very little maintenance.",
+          "callout": ""
+        }
+      }
+    ],
+    "source_references": [
+      {
+        "content_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i8",
+        "chunk_id": "chunk_1"
+      },
+      {
+        "content_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i8",
+        "chunk_id": "chunk_2"
+      },
+      {
+        "content_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i8",
+        "chunk_id": "chunk_3"
+      }
+    ],
+    "validation_summary": {},
+    "handoff": {
+      "illustration_agent": {
+        "lesson_content_package_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i8"
+      },
+      "audio_agent": {
+        "lesson_content_package_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i8"
+      },
+      "quiz_agent": {
+        "lesson_content_package_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i8"
+      }
+    }
+  }
+}

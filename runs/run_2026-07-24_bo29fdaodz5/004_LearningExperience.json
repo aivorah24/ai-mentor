@@ -1,0 +1,336 @@
+{
+  "package": {
+    "package_id": "f0e1d2c3-b4a5-6789-0123-456789abcdef",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T15:30:00.000Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "1a2b3c4d-5e6f-7890-1234-56789abcdef0",
+      "parent_package_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-borrowing-grade2",
+    "lesson_metadata": {
+      "curriculum": "NCERT",
+      "grade": 2,
+      "subject": "Mathematics",
+      "chapter": "Subtraction",
+      "lesson": "Subtraction with Borrowing",
+      "lesson_type": "Mathematics",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "Understanding place value (tens and ones)",
+        "Basic subtraction without borrowing"
+      ],
+      "misconceptions": [
+        "Students may try to subtract the smaller digit from the larger digit in each column without borrowing.",
+        "Students may think borrowing changes the overall value of the number incorrectly."
+      ],
+      "vocabulary_difficulty": "Medium"
+    },
+    "experience_score": {
+      "score": 96
+    },
+    "lesson_flow": [
+      {
+        "id": "screen1",
+        "type": "welcome",
+        "title": "Welcome to Subtraction Adventure!",
+        "description": "Meet our friend Penny the Piggy Bank who will guide us through learning subtraction with borrowing.",
+        "primary_objective": "Engage the student and set the context for the lesson.",
+        "ui_component_refs": [
+          "uc_welcome_illustration",
+          "uc_welcome_character",
+          "uc_start_button"
+        ],
+        "interaction_refs": [
+          "i_start_lesson"
+        ],
+        "illustration_refs": [
+          "ill_welcome_scene"
+        ],
+        "audio_refs": [
+          "audio_welcome_narration"
+        ]
+      },
+      {
+        "id": "screen2",
+        "type": "learning_goal",
+        "title": "Today's Goal",
+        "description": "Penny explains what we will learn: how to subtract big numbers by borrowing from our neighbour!",
+        "primary_objective": "State the learning goal in child-friendly language.",
+        "ui_component_refs": [
+          "uc_goal_text",
+          "uc_goal_illustration"
+        ],
+        "interaction_refs": [],
+        "illustration_refs": [
+          "ill_goal_neighbours"
+        ],
+        "audio_refs": [
+          "audio_goal_narration"
+        ]
+      },
+      {
+        "id": "screen3",
+        "type": "place_value_review",
+        "title": "Let's Remember Tens and Ones",
+        "description": "Penny shows how numbers are made of tens and ones using coins.",
+        "primary_objective": "Review that a two-digit number has tens and ones places.",
+        "ui_component_refs": [
+          "uc_pv_illustration",
+          "uc_pv_interactive_area"
+        ],
+        "interaction_refs": [
+          "i_pv_identify_tens_ones"
+        ],
+        "illustration_refs": [
+          "ill_pv_number_45"
+        ],
+        "audio_refs": [
+          "audio_pv_narration",
+          "audio_pv_feedback_correct",
+          "audio_pv_feedback_incorrect"
+        ]
+      },
+      {
+        "id": "screen4",
+        "type": "visual_introduction",
+        "title": "Uh-oh! Not Enough Ones!",
+        "description": "We have 45 apples and want to give 27 to a friend. Do we have enough loose apples?",
+        "primary_objective": "Visualize the subtraction problem and recognize when borrowing is needed.",
+        "ui_component_refs": [
+          "uc_vi_illustration",
+          "uc_vi_question_button"
+        ],
+        "interaction_refs": [
+          "i_vi_check_ones"
+        ],
+        "illustration_refs": [
+          "ill_vi_apples_45_and_27"
+        ],
+        "audio_refs": [
+          "audio_vi_narration",
+          "audio_vi_feedback_need_to_borrow"
+        ]
+      },
+      {
+        "id": "screen5",
+        "type": "concrete_example",
+        "title": "Let's Borrow from Our Neighbour!",
+        "description": "Penny shows how to borrow one ten to make ten ones, so we can subtract.",
+        "primary_objective": "Demonstrate the borrowing process step by step using manipulatives.",
+        "ui_component_refs": [
+          "uc_ce_illustration",
+          "uc_ce_borrow_button",
+          "uc_ce_subtract_button"
+        ],
+        "interaction_refs": [
+          "i_ce_borrow_ten",
+          "i_ce_subtract_ones",
+          "i_ce_subtract_tens"
+        ],
+        "illustration_refs": [
+          "ill_ce_borrowing_step1",
+          "ill_ce_borrowing_step2",
+          "ill_ce_borrowing_step3"
+        ],
+        "audio_refs": [
+          "audio_ce_narration_step1",
+          "audio_ce_narration_step2",
+          "audio_ce_narration_step3"
+        ]
+      },
+      {
+        "id": "screen6",
+        "type": "guided_example",
+        "title": "Let's Try Together: 52 - 38",
+        "description": "Penny guides us through solving 52 - 38 with hints at each step.",
+        "primary_objective": "Practice the borrowing steps with guidance.",
+        "ui_component_refs": [
+          "uc_ge_problem_display",
+          "uc_ge_step_indicator",
+          "uc_ge_hint_button",
+          "uc_ge_input_ones",
+          "uc_ge_input_tens"
+        ],
+        "interaction_refs": [
+          "i_ge_check_ones_need_borrow",
+          "i_ge_borrow_ten",
+          "i_ge_subtract_ones",
+          "i_ge_subtract_tens",
+          "i_ge_show_hint"
+        ],
+        "illustration_refs": [
+          "ill_ge_apples_52_and_38"
+        ],
+        "audio_refs": [
+          "audio_ge_narration_intro",
+          "audio_ge_feedback_step1",
+          "audio_ge_feedback_step2",
+          "audio_ge_feedback_step3",
+          "audio_ge_hint_1",
+          "audio_ge_hint_2",
+          "audio_ge_hint_3"
+        ]
+      },
+      {
+        "id": "screen7",
+        "type": "guided_practice",
+        "title": "Practice Time! (With Help)",
+        "description": "Solve 2-3 problems with hints available if you get stuck.",
+        "primary_objective": "Apply the borrowing steps with the option to get hints.",
+        "ui_component_refs": [
+          "uc_gp_problem_display",
+          "uc_gp_worksheet_area",
+          "uc_gp_hint_button",
+          "uc_gp_check_button"
+        ],
+        "interaction_refs": [
+          "i_gp_solve_problem",
+          "i_gp_use_hint",
+          "i_gp_check_answer"
+        ],
+        "illustration_refs": [],
+        "audio_refs": [
+          "audio_gp_encouragement",
+          "audio_gp_correct",
+          "audio_gp_incorrect_try_again"
+        ]
+      },
+      {
+        "id": "screen8",
+        "type": "independent_practice",
+        "title": "On Your Own!",
+        "description": "Solve 3 problems by yourself. You can use the hint button if needed.",
+        "primary_objective": "Demonstrate independent ability to solve subtraction with borrowing.",
+        "ui_component_refs": [
+          "uc_ip_problem_display",
+          "uc_ip_worksheet_area",
+          "uc_ip_hint_button",
+          "uc_ip_check_button"
+        ],
+        "interaction_refs": [
+          "i_ip_solve_problem",
+          "i_ip_use_hint",
+          "i_ip_check_answer"
+        ],
+        "illustration_refs": [],
+        "audio_refs": [
+          "audio_ip_encouragement",
+          "audio_ip_correct",
+          "audio_ip_incorrect_try_again"
+        ]
+      },
+      {
+        "id": "screen9",
+        "type": "common_mistakes",
+        "title": "Watch Out for These Tricks!",
+        "description": "Penny shows common mistakes and how to avoid them.",
+        "primary_objective": "Identify and avoid common errors in subtraction with borrowing.",
+        "ui_component_refs": [
+          "uc_cm_illustration",
+          "uc_cm_mistake_button1",
+          "uc_cm_mistake_button2"
+        ],
+        "interaction_refs": [
+          "i_cm_identify_mistake1",
+          "i_cm_identify_mistake2"
+        ],
+        "illustration_refs": [
+          "ill_cm_mistake1_no_borrow",
+          "ill_cm_mistake2_wrong_place"
+        ],
+        "audio_refs": [
+          "audio_cm_narration",
+          "audio_cm_feedback_mistake1",
+          "audio_cm_feedback_mistake2"
+        ]
+      },
+      {
+        "id": "screen10",
+        "type": "challenge",
+        "title": "Challenge Time!",
+        "description": "Solve a word problem: You have 63 marbles. You give 27 to your friend. How many marbles do you have left?",
+        "primary_objective": "Apply subtraction with borrowing to a real-world word problem.",
+        "ui_component_refs": [
+          "uc_challenge_problem_display",
+          "uc_challenge_worksheet_area",
+          "uc_challenge_hint_button",
+          "uc_challenge_check_button"
+        ],
+        "interaction_refs": [
+          "i_challenge_solve",
+          "i_challenge_use_hint",
+          "i_challenge_check_answer"
+        ],
+        "illustration_refs": [
+          "ill_challenge_marbles"
+        ],
+        "audio_refs": [
+          "audio_challenge_narration",
+          "audio_challenge_feedback_correct",
+          "audio_challenge_feedback_incorrect"
+        ]
+      },
+      {
+        "id": "screen11",
+        "type": "summary",
+        "title": "Let's Remember the Steps",
+        "description": "Penny summarizes the steps of borrowing.",
+        "primary_objective": "Recall the steps for subtraction with borrowing.",
+        "ui_component_refs": [
+          "uc_summary_illustration",
+          "uc_summary_text"
+        ],
+        "interaction_refs": [],
+        "illustration_refs": [
+          "ill_summary_steps"
+        ],
+        "audio_refs": [
+          "audio_summary_narration"
+        ]
+      },
+      {
+        "id": "screen12",
+        "type": "quiz",
+        "title": "Time for a Quiz!",
+        "description": "Answer 3 questions to show what you've learned.",
+        "primary_objective": "Assess understanding of subtraction with borrowing.",
+        "ui_component_refs": [
+          "uc_quiz_question_display",
+          "uc_quiz_options",
+          "uc_quiz_next_button",
+          "uc_quiz_feedback"
+        ],
+        "interaction_refs": [
+          "i_quiz_answer_question",
+          "i_quiz_next_question"
+        ],
+        "illustration_refs": [],
+        "audio_refs": [
+          "audio_quiz_intro",
+          "audio_quiz_feedback_correct",
+          "audio_quiz_feedback_incorrect",
+          "audio_quiz_final_feedback"
+        ]
+      },
+      "ui_components': [{",
+      "id",
+      ": ",
+      ""
+    ],
+    "type": "illustration",
+    "properties": {
+      "description": "Penny the Piggy Bank smiling",
+      "alt_text": "Penny the Piggy Bank"
+    }
+  },
+  "{": "id",
+  ": ": ""
+}

@@ -1,0 +1,54 @@
+{
+  "package": {
+    "package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842e",
+    "package_type": "ReleasePackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:30:00.240Z",
+    "produced_by": {
+      "agent": "final-audit-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "x1u1l4cuzv",
+      "parent_package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842d"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "release_version": "1.0.0",
+    "build_timestamp": "2026-07-24T14:30:00.240Z",
+    "package_manifest": {
+      "retrieval": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842f",
+      "lesson_blueprint": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8430",
+      "lesson_experience": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8431",
+      "ui_plan": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8432",
+      "lesson_content": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8433",
+      "illustration": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8434",
+      "audio": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8435",
+      "quiz_review": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8436",
+      "review_report": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8437",
+      "qa_report": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842d"
+    },
+    "package_references": [
+      "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842f",
+      "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8430",
+      "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8431",
+      "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8432",
+      "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8433",
+      "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8434",
+      "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8435",
+      "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8436",
+      "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a8437",
+      "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842d"
+    ],
+    "audit_summary": {
+      "status": "APPROVED",
+      "checks": {
+        "package_manifest": "COMPLETE",
+        "package_references": "COMPLETE",
+        "qa_report": "PASS"
+      }
+    },
+    "deployment_status": "READY"
+  }
+}

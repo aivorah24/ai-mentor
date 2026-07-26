@@ -1,0 +1,130 @@
+{
+  "package": {
+    "package_id": "06cb0670-7f53-4586-8fff-8129bbf7ac8c",
+    "package_type": "RetrievalPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T16:30:22.408Z",
+    "produced_by": {
+      "agent": "grounded-retrieval",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "iex97v7agi8",
+      "parent_package_id": null
+    }
+  },
+  "payload": {
+    "request": {
+      "grade": 1,
+      "subject": "Mathematics",
+      "chapter": "Shapes and Space",
+      "lesson_id": "",
+      "lesson": "Shapes and Space"
+    },
+    "retrieval_summary": {
+      "confidence": 0.6170217,
+      "coverage": 1,
+      "chunks_retrieved": 5,
+      "collection_source": {
+        "collection": "aivorah_curriculum_chunks_v1",
+        "curriculum": "NCERT",
+        "grade": 1,
+        "subject": "Mathematics"
+      }
+    },
+    "retrieved_chunks": [
+      {
+        "chunk_id": "0995411b-0ca6-4979-ac74-2f6148d98943",
+        "page_number": null,
+        "section": "explanation",
+        "order": 0,
+        "content": "Shapes and Space is a fun topic in Mathematics that helps us understand the world around us. You might have noticed that everything we see is made up of different shapes. Let's explore these shapes and learn to identify them. First, let's talk about a Circle. A circle is a round shape that has no corners or edges. It's like the shape of a ball or a coin. We see circles everywhere - in the sun, the moon, and even in the wheels of our bicycles. Nex…",
+        "embedding_score": 0.6170217,
+        "metadata": {
+          "grade": 1,
+          "subject": "Mathematics",
+          "topic": "Shapes and Space",
+          "curriculum": "NCERT"
+        }
+      },
+      {
+        "chunk_id": "8c40c93c-a537-4d9a-acae-71dbe2edd88d",
+        "page_number": null,
+        "section": "explanation",
+        "order": 1,
+        "content": "pictures we draw. Can you find these shapes in your surroundings? Look around you and see how many circles, triangles, rectangles, and squares you can spot. You might see a round plate, a triangular roof, a rectangular bookshelf, or a square picture frame. When we move around, we need to understand how these shapes fit together in space. Space is the area around us where everything exists. It's like an empty box where we can put all our shapes. L…",
+        "embedding_score": 0.5817535,
+        "metadata": {
+          "grade": 1,
+          "subject": "Mathematics",
+          "topic": "Shapes and Space",
+          "curriculum": "NCERT"
+        }
+      },
+      {
+        "chunk_id": "e23b4904-a307-4d9a-b8a6-6fa2f8fb7ee1",
+        "page_number": null,
+        "section": "explanation",
+        "order": 2,
+        "content": "What is Long? What is Round? 2 Ask children to play this game in the class. Let the children name two things — one long and one round. Every time, they can take the name of a new thing and avoid repetition. For long objects, children may focus on one dimension like tall, wide, etc. For example, some may say a tumbler is long whereas for some others, it may be round. Both views need to be considered. Let children explain their logic of saying so. …",
+        "embedding_score": 0.4709634,
+        "metadata": {
+          "grade": 1,
+          "subject": "Mathematics",
+          "topic": "aejm102",
+          "curriculum": "NCERT"
+        }
+      },
+      {
+        "chunk_id": "686d7ad7-9a1a-447d-aeec-83f271e6e5ae",
+        "page_number": null,
+        "section": "explanation",
+        "order": 3,
+        "content": "shapes. Do you know what a rectangle is? A rectangle has four sides. We can draw four sides using a pencil. If we have four apples, we can draw a rectangle with four apples inside it. We can write the number four next to the rectangle. Let's learn another example. Suppose you have three books on your bookshelf. You can count them: one, two, three. We can write the number three next to the three books. Do you know what a triangle is? A triangle ha…",
+        "embedding_score": 0.43061668,
+        "metadata": {
+          "grade": 1,
+          "subject": "Mathematics",
+          "topic": "Numbers from One to Nine",
+          "curriculum": "NCERT"
+        }
+      },
+      {
+        "chunk_id": "3ef212fa-975b-4946-a757-71596336aa52",
+        "page_number": null,
+        "section": "explanation",
+        "order": 4,
+        "content": "Let's Learn Numbers from One to Nine Do you know how many fingers you have on one hand? You have five fingers! Let's count them together: one, two, three, four, five. We use numbers to count things. Numbers help us tell how many things we have. Today, we are going to learn about numbers from one to nine. First, let's learn the numbers from one to nine: one, two, three, four, five, six, seven, eight, nine. We can write these numbers using digits. …",
+        "embedding_score": 0.41883752,
+        "metadata": {
+          "grade": 1,
+          "subject": "Mathematics",
+          "topic": "Numbers from One to Nine",
+          "curriculum": "NCERT"
+        }
+      }
+    ],
+    "source_metadata": [
+      "{\"collection\":\"aivorah_curriculum_chunks_v1\",\"curriculum\":\"NCERT\",\"grade\":1,\"subject\":\"Mathematics\"}"
+    ],
+    "warnings": [],
+    "handoff": {
+      "curriculum_understanding_agent": {
+        "ordered_chunks": [
+          "0995411b-0ca6-4979-ac74-2f6148d98943",
+          "8c40c93c-a537-4d9a-acae-71dbe2edd88d",
+          "e23b4904-a307-4d9a-b8a6-6fa2f8fb7ee1",
+          "686d7ad7-9a1a-447d-aeec-83f271e6e5ae",
+          "3ef212fa-975b-4946-a757-71596336aa52"
+        ],
+        "retrieval_summary": {
+          "chunks_retrieved": 5
+        },
+        "source_metadata": [
+          "{\"collection\":\"aivorah_curriculum_chunks_v1\",\"curriculum\":\"NCERT\",\"grade\":1,\"subject\":\"Mathematics\"}"
+        ],
+        "warnings": []
+      }
+    }
+  }
+}

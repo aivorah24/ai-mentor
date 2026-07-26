@@ -1,0 +1,31 @@
+{
+  "package": {
+    "package_id": "3137580f-a1a2-4936-87de-93f944fd084f",
+    "package_type": "ErrorReport",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T13:18:16.405Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "i3s5c169sw",
+      "parent_package_id": "3137580f-a1a2-4936-87de-93f944fd084f"
+    }
+  },
+  "payload": {
+    "error_code": "LE001",
+    "error_message": "Failed to design lesson experience due to missing input package chunk.",
+    "validation_error": {
+      "status": "FAIL",
+      "rejection_reason": "Input package is incomplete.",
+      "validation_report": {
+        "schema": "PASS",
+        "metadata": "PASS",
+        "ordering": "PASS",
+        "coverage": "FAIL",
+        "integrity": "PASS"
+      }
+    }
+  }
+}

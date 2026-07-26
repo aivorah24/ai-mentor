@@ -1,10 +1,11 @@
 /**
  * School Admin — Parents (dedicated screen per the approved Claude Design
  * IA). "Linked students" is real data from the parent_children table.
- * Invite Parent optionally links one student at creation time.
+ * "Add Parent" is its own full-page screen (SchoolAdminAddParentScreen),
+ * matching how Add Student works — not a popup here.
  */
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity, RefreshControl, TextInput, Modal } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity, RefreshControl, Modal } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import Header from '../../components/common/Header';
@@ -24,8 +25,6 @@ interface ParentRow {
   joinedAt: string;
 }
 
-interface StudentOption { id: string; name: string; }
-
 const STATUS_LABEL: Record<string, string> = { invited: 'Invited', active: 'Active', inactive: 'Inactive', archived: 'Archived' };
 function statusTint(colors: AppColors, status: string): string {
   if (status === 'active') return colors.accentGreen;
@@ -41,8 +40,7 @@ export default function SchoolAdminParentsScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
-  const [addOpen, setAddOpen] = useState(false);
-  const [createdCreds, setCreatedCreds] = useState<{ name: string; email: string; password: string } | null>(null);
+  const [selectedParent, setSelectedParent] = useState<ParentRow | null>(null);
 
   const load = useCallback(async () => {
     if (!user?.email) return;
@@ -73,9 +71,9 @@ export default function SchoolAdminParentsScreen({ navigation }: any) {
         >
           <View style={styles.toolbar}>
             <View style={{ flex: 1 }} />
-            <TouchableOpacity style={styles.addBtn} onPress={() => setAddOpen(true)} accessibilityRole="button">
+            <TouchableOpacity style={styles.addBtn} onPress={() => navigation?.navigate?.('SchoolAdminAddParent')} accessibilityRole="button">
               <Feather name="user-plus" size={14} color="#0B0B0B" />
-              <Text style={styles.addBtnText}>Invite Parent</Text>
+              <Text style={styles.addBtnText}>Add Parent</Text>
             </TouchableOpacity>
           </View>
 
@@ -89,7 +87,7 @@ export default function SchoolAdminParentsScreen({ navigation }: any) {
           ) : items.length === 0 ? (
             <View style={styles.emptyBox}>
               <Feather name="heart" size={28} color={colors.textDim} />
-              <Text style={styles.emptyText}>No parents yet. Invite your first parent to get started.</Text>
+              <Text style={styles.emptyText}>No parents yet. Add your first parent to get started.</Text>
             </View>
           ) : (
             <View style={styles.table}>
@@ -101,7 +99,12 @@ export default function SchoolAdminParentsScreen({ navigation }: any) {
               {items.map((p, i) => {
                 const tint = statusTint(colors, p.status);
                 return (
-                  <View key={p.id} style={[styles.tr, i === items.length - 1 && styles.trLast]}>
+                  <TouchableOpacity
+                    key={p.id}
+                    style={[styles.tr, i === items.length - 1 && styles.trLast]}
+                    onPress={() => setSelectedParent(p)}
+                    activeOpacity={0.7}
+                  >
                     <View style={styles.thNameCol}>
                       <View style={styles.nameCell}>
                         <View style={styles.avatar}><Text style={styles.avatarText}>{(p.name || '?').slice(0, 2).toUpperCase()}</Text></View>
@@ -119,132 +122,68 @@ export default function SchoolAdminParentsScreen({ navigation }: any) {
                         <Text style={[styles.statusPillText, { color: tint }]}>{STATUS_LABEL[p.status]}</Text>
                       </View>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </View>
           )}
         </ScrollView>
-      </View>
 
-      <InviteParentModal
-        visible={addOpen}
-        colors={colors}
-        adminEmail={user?.email}
-        onClose={() => setAddOpen(false)}
-        onCreated={(c) => { setAddOpen(false); setCreatedCreds(c); load(); }}
-      />
+        {/* Parent detail — rows had no onPress at all before; tapping one did nothing. */}
+        <Modal visible={!!selectedParent} transparent animationType="fade" onRequestClose={() => setSelectedParent(null)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalBox}>
+              {selectedParent && (
+                <>
+                  <View style={styles.modalHeader}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                      <View style={styles.avatar}><Text style={styles.avatarText}>{(selectedParent.name || '?').slice(0, 2).toUpperCase()}</Text></View>
+                      <View style={{ minWidth: 0 }}>
+                        <Text style={styles.modalTitle} numberOfLines={1}>{selectedParent.name}</Text>
+                        <Text style={styles.tdSub} numberOfLines={1}>{selectedParent.email}</Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity onPress={() => setSelectedParent(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <Feather name="x" size={20} color={colors.textMuted} />
+                    </TouchableOpacity>
+                  </View>
 
-      <Modal visible={!!createdCreds} transparent animationType="fade" onRequestClose={() => setCreatedCreds(null)}>
-        <View style={styles.overlay}>
-          <View style={styles.credCard}>
-            <View style={styles.credIcon}><Feather name="check" size={20} color="#0B0B0B" /></View>
-            <Text style={styles.credTitle}>Parent invited</Text>
-            <Text style={styles.credSub}>Share these sign-in details with the parent. The password won't be shown again.</Text>
-            <View style={styles.credRow}><Text style={styles.credLabel}>Name</Text><Text style={styles.credValue}>{createdCreds?.name}</Text></View>
-            <View style={styles.credRow}><Text style={styles.credLabel}>Login email</Text><Text style={styles.credValue} selectable>{createdCreds?.email}</Text></View>
-            <View style={styles.credRow}><Text style={styles.credLabel}>Password</Text><Text style={styles.credValue} selectable>{createdCreds?.password}</Text></View>
-            <TouchableOpacity style={styles.credDoneBtn} onPress={() => setCreatedCreds(null)}>
-              <Text style={styles.credDoneText}>Done</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </ScreenLayout>
-  );
-}
+                  <View style={styles.modalRow}>
+                    <Text style={styles.modalLabel}>Status</Text>
+                    <View style={[styles.statusPill, { borderColor: `${statusTint(colors, selectedParent.status)}55`, backgroundColor: `${statusTint(colors, selectedParent.status)}18` }]}>
+                      <Text style={[styles.statusPillText, { color: statusTint(colors, selectedParent.status) }]}>{STATUS_LABEL[selectedParent.status]}</Text>
+                    </View>
+                  </View>
 
-function InviteParentModal({ visible, colors, adminEmail, onClose, onCreated }: {
-  visible: boolean; colors: AppColors; adminEmail?: string;
-  onClose: () => void; onCreated: (c: { name: string; email: string; password: string }) => void;
-}) {
-  const styles = useMemo(() => makeStyles(colors), [colors]);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [students, setStudents] = useState<StudentOption[]>([]);
-  const [studentId, setStudentId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState('');
+                  {!!selectedParent.joinedAt && (
+                    <View style={styles.modalRow}>
+                      <Text style={styles.modalLabel}>Joined</Text>
+                      <Text style={styles.modalValue}>{selectedParent.joinedAt}</Text>
+                    </View>
+                  )}
 
-  useFocusEffect(useCallback(() => {
-    if (!visible || !adminEmail) return;
-    fetch(`${SERVER_URL}/school-admin/students?adminEmail=${encodeURIComponent(adminEmail)}&limit=100`)
-      .then((r) => r.json())
-      .then((d) => setStudents((d.items || []).map((s: any) => ({ id: s.id, name: s.name }))))
-      .catch(() => {});
-  }, [visible, adminEmail]));
+                  <Text style={[styles.modalLabel, { marginTop: 14, marginBottom: 6 }]}>Linked students</Text>
+                  {selectedParent.linkedStudents.length === 0 ? (
+                    <Text style={styles.modalValue}>None linked yet.</Text>
+                  ) : (
+                    selectedParent.linkedStudents.map((s) => (
+                      <View key={s} style={styles.linkedStudentRow}>
+                        <Feather name="user" size={13} color={colors.textDim} />
+                        <Text style={styles.modalValue}>{s}</Text>
+                      </View>
+                    ))
+                  )}
 
-  async function submit() {
-    if (!adminEmail) return;
-    if (!firstName.trim() || !lastName.trim()) { setFormError('First and last name are required.'); return; }
-    setSubmitting(true);
-    setFormError('');
-    try {
-      const res = await fetch(`${SERVER_URL}/school-admin/parents?adminEmail=${encodeURIComponent(adminEmail)}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim(), studentId: studentId || undefined }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setFormError(data?.error || 'Failed to invite parent'); return; }
-      onCreated({ name: data.name, email: data.email, password: data.password });
-      setFirstName(''); setLastName(''); setStudentId(null);
-    } catch {
-      setFormError('Failed to invite parent. Check your connection.');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.formCard}>
-          <View style={styles.formHeader}>
-            <Text style={styles.formTitle}>Invite Parent</Text>
-            <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
-              <Feather name="x" size={18} color={colors.textDim} />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.formRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.formLabel}>First name</Text>
-              <TextInput value={firstName} onChangeText={setFirstName} style={styles.formInput} placeholderTextColor={colors.textDim} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.formLabel}>Last name</Text>
-              <TextInput value={lastName} onChangeText={setLastName} style={styles.formInput} placeholderTextColor={colors.textDim} />
-            </View>
-          </View>
-          {students.length > 0 && (
-            <>
-              <Text style={styles.formLabel}>Link to student (optional)</Text>
-              <ScrollView style={{ maxHeight: 140 }} showsVerticalScrollIndicator={false}>
-                {students.map((s) => (
-                  <TouchableOpacity
-                    key={s.id}
-                    style={[styles.studentOption, studentId === s.id && styles.studentOptionActive]}
-                    onPress={() => setStudentId(studentId === s.id ? null : s.id)}
-                  >
-                    <Feather name={studentId === s.id ? 'check-square' : 'square'} size={14} color={studentId === s.id ? colors.accentYellow : colors.textDim} />
-                    <Text style={styles.studentOptionText}>{s.name}</Text>
+                  <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setSelectedParent(null)}>
+                    <Text style={styles.modalCloseBtnText}>Close</Text>
                   </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </>
-          )}
-          <Text style={styles.formHint}>A secure temporary password is generated automatically and shown once after creation.</Text>
-          {!!formError && <Text style={styles.formError}>{formError}</Text>}
-          <View style={styles.formFooter}>
-            <TouchableOpacity style={styles.formCancelBtn} onPress={onClose}>
-              <Text style={styles.formCancelText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.formSubmitBtn} onPress={submit} disabled={submitting}>
-              {submitting ? <ActivityIndicator color="#0B0B0B" size="small" /> : <Text style={styles.formSubmitText}>Invite Parent</Text>}
-            </TouchableOpacity>
+                </>
+              )}
+            </View>
           </View>
-        </View>
+        </Modal>
       </View>
-    </Modal>
+    </ScreenLayout>
   );
 }
 
@@ -277,33 +216,15 @@ function makeStyles(colors: AppColors) {
     emptyBox: { alignItems: 'center', paddingTop: 56, gap: 10, paddingHorizontal: 24 },
     emptyText: { fontFamily: fonts.serif, fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 19 },
 
-    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-    formCard: { backgroundColor: colors.cardDark, borderRadius: 20, borderWidth: 1, borderColor: colors.borderColor, padding: 24, width: '100%', maxWidth: 420 },
-    formHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-    formTitle: { fontFamily: fonts.serif, fontSize: 18, fontWeight: '700', color: colors.textHeading },
-    formRow: { flexDirection: 'row', gap: 12 },
-    formLabel: { fontFamily: fonts.serif, fontSize: 11.5, fontWeight: '600', color: colors.textMuted, marginBottom: 5, marginTop: 8 },
-    formInput: { fontFamily: fonts.serif, fontSize: 13, color: colors.textMain, borderWidth: 1, borderColor: colors.borderColor, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 9, backgroundColor: colors.bgDark },
-    formHint: { fontFamily: fonts.serif, fontSize: 11, color: colors.textDim, marginTop: 8, lineHeight: 16 },
-    formError: { fontFamily: fonts.serif, fontSize: 12, color: colors.accentRed, marginTop: 12 },
-    formFooter: { flexDirection: 'row', gap: 10, marginTop: 18 },
-    formCancelBtn: { flex: 1, borderWidth: 1, borderColor: colors.borderColor, borderRadius: radius.sm, paddingVertical: 11, alignItems: 'center' },
-    formCancelText: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '600', color: colors.textMuted },
-    formSubmitBtn: { flex: 1, backgroundColor: colors.accentYellow, borderRadius: radius.sm, paddingVertical: 11, alignItems: 'center' },
-    formSubmitText: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: '#0B0B0B' },
-
-    studentOption: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, paddingHorizontal: 6, borderRadius: radius.sm },
-    studentOptionActive: { backgroundColor: `${colors.accentYellow}14` },
-    studentOptionText: { fontFamily: fonts.serif, fontSize: 12.5, color: colors.textMain },
-
-    credCard: { backgroundColor: colors.cardDark, borderRadius: 20, borderWidth: 1, borderColor: colors.borderColor, padding: 26, width: '100%', maxWidth: 380, alignItems: 'center', gap: 4 },
-    credIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accentGreen, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-    credTitle: { fontFamily: fonts.serif, fontSize: 17, fontWeight: '700', color: colors.textHeading },
-    credSub: { fontFamily: fonts.serif, fontSize: 12, color: colors.textMuted, textAlign: 'center', lineHeight: 17, marginBottom: 12 },
-    credRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.borderColor },
-    credLabel: { fontFamily: fonts.serif, fontSize: 12, color: colors.textDim },
-    credValue: { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', color: colors.textHeading },
-    credDoneBtn: { marginTop: 16, backgroundColor: colors.accentYellow, borderRadius: radius.sm, paddingVertical: 10, paddingHorizontal: 28 },
-    credDoneText: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: '#0B0B0B' },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 20 },
+    modalBox: { width: '100%', maxWidth: 420, backgroundColor: colors.cardDark, borderRadius: radius.md, borderWidth: 1, borderColor: colors.borderColor, padding: 20 },
+    modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+    modalTitle: { fontFamily: fonts.serif, fontSize: 16, fontWeight: '700', color: colors.textHeading },
+    modalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
+    modalLabel: { fontFamily: fonts.serif, fontSize: 11.5, color: colors.textDim },
+    modalValue: { fontFamily: fonts.serif, fontSize: 13, color: colors.textMuted },
+    linkedStudentRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
+    modalCloseBtn: { marginTop: 18, alignSelf: 'center', borderRadius: 20, paddingVertical: 9, paddingHorizontal: 22, backgroundColor: colors.accentYellow },
+    modalCloseBtnText: { fontFamily: fonts.serif, fontSize: 13, fontWeight: '700', color: '#0B0B0B' },
   });
 }

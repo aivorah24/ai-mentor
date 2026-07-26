@@ -1,0 +1,32 @@
+{
+  "package": {
+    "package_id": "3137580f-a1a2-4936-87de-93f944fd084f",
+    "package_type": "ValidatedRetrievalPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T13:18:16.405Z",
+    "produced_by": {
+      "agent": "retrieval-validation-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "i3s5c169sw",
+      "parent_package_id": "3137580f-a1a2-4936-87de-93f944fd084f"
+    }
+  },
+  "payload": {
+    "status": "FAIL",
+    "error_code": "RV003",
+    "rejection_reason": "Missing chunk 8 of 8.",
+    "validation_report": {
+      "schema": "PASS",
+      "metadata": "PASS",
+      "ordering": "PASS",
+      "coverage": "FAIL",
+      "integrity": "PASS"
+    },
+    "re_retrieval_hints": {
+      "suggested_query_adjustments": [],
+      "missing_page_numbers": []
+    }
+  }
+}

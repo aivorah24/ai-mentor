@@ -1,0 +1,175 @@
+{
+  "package": {
+    "package_id": "c3d4e5f6-7890-1234-5678-9abcdef01234",
+    "package_type": "LessonContent",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T10:35:00.000Z",
+    "produced_by": {
+      "agent": "lesson-generator-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "18apiqkgnsz",
+      "parent_package_id": "a1b2c3d4-5e6f-7a8b-9c0d-ef1234567890"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-borrowing-grade2",
+    "stage_content": [
+      {
+        "stage_id": "step1"
+      },
+      {
+        "stage_id": "step2"
+      },
+      {
+        "stage_id": "step3"
+      },
+      {
+        "stage_id": "step4"
+      },
+      {
+        "stage_id": "step5"
+      },
+      {
+        "stage_id": "step6"
+      },
+      {
+        "stage_id": "step7"
+      },
+      {
+        "stage_id": "step8"
+      },
+      {
+        "stage_id": "step9"
+      },
+      {
+        "stage_id": "step10"
+      },
+      {
+        "stage_id": "step11"
+      }
+    ],
+    "populated_components": [
+      {
+        "component_id": "comp-step1-welcome",
+        "slots": {
+          "title": "Let's Learn Subtraction with Borrowing!",
+          "body": "Today we will learn how to subtract big numbers by borrowing from our neighbour, just like sharing rupees or apples."
+        }
+      },
+      {
+        "component_id": "comp-step2-visualillustration",
+        "slots": {
+          "illustration_description": "Illustration showing two columns: tens and ones, with arrows indicating borrowing from tens to ones.",
+          "caption": "Borrowing a ten to help subtract."
+        }
+      },
+      {
+        "component_id": "comp-step3-storynarration",
+        "slots": {
+          "narration_text": "Imagine you have 45 apples in a basket and you give 27 apples to your friend. How many apples are left? We need to borrow to find the answer."
+        }
+      },
+      {
+        "component_id": "comp-step4-guidedexamplepanel",
+        "slots": {
+          "example_title": "Example: 45 − 27",
+          "steps": [
+            "Look at the ones: 5 is less than 7, so borrow 1 ten from the 4 tens.",
+            "The 4 tens become 3 tens, and the ones become 15.",
+            "Subtract the ones: 15 − 7 = 8.",
+            "Subtract the tens: 3 − 2 = 1.",
+            "Answer: 18."
+          ],
+          "answer": "18"
+        }
+      },
+      {
+        "component_id": "comp-step5-practiceinput",
+        "slots": {
+          "problem": "Solve: 53 − 28 = ?",
+          "input_placeholder": "Enter your answer"
+        }
+      },
+      {
+        "component_id": "comp-step5-hintbutton",
+        "slots": {
+          "hint_text": "Remember to borrow from the tens if the top ones digit is smaller."
+        }
+      },
+      {
+        "component_id": "comp-step6-practiceinput",
+        "slots": {
+          "problem": "Solve: 64 − 39 = ?",
+          "input_placeholder": "Enter your answer"
+        }
+      },
+      {
+        "component_id": "comp-step7-hintbutton",
+        "slots": {
+          "hint_text": "Remember to borrow from the tens if the top ones digit is smaller."
+        }
+      },
+      {
+        "component_id": "comp-step8-mistakehighlight",
+        "slots": {
+          "mistake_explanation": "A common mistake is to subtract the smaller number from the larger one in each column without borrowing. Always start with the ones column and borrow when needed."
+        }
+      },
+      {
+        "component_id": "comp-step9-challengepanel",
+        "slots": {
+          "challenge_question": "Challenge: If you have 82 marbles and you lose 47, how many marbles do you have left? Show your borrowing steps."
+        }
+      },
+      {
+        "component_id": "comp-step10-summarycard",
+        "slots": {
+          "summary_text": "Today we learned how to borrow from the tens column to subtract two-digit numbers. Remember to check your work by adding!"
+        }
+      },
+      {
+        "component_id": "comp-step11-quiz",
+        "slots": {
+          "quiz_questions": [
+            {
+              "type": "mcq",
+              "question": "In 53 - 28, what do you do first?",
+              "options": [
+                "A) Subtract 3-8 directly",
+                "B) Borrow 1 ten from the 5 tens",
+                "C) Subtract 5-2 first",
+                "D) Add the numbers"
+              ],
+              "correct": 1,
+              "hint": "Look at the ones column.",
+              "explanation": "Since 3 is less than 8, we need to borrow 1 ten from the 5 tens."
+            },
+            {
+              "type": "mcq",
+              "question": "What is 64 - 39?",
+              "options": [
+                "A) 25",
+                "B) 35",
+                "C) 24",
+                "D) 15"
+              ],
+              "correct": 0,
+              "hint": "Borrow from the tens.",
+              "explanation": "Borrow 1 ten from the 6 tens: 5 tens left, ones become 14. 14-9=5, 5-3=2 → 25."
+            },
+            {
+              "type": "fill_blank",
+              "question": "When you borrow 1 ten, you add ___ ones to the ones column.",
+              "correct": "10",
+              "hint": "One ten equals ten ones.",
+              "explanation": "Borrowing 1 ten gives you 10 extra ones in the ones column."
+            }
+          ]
+        }
+      },
+      "source_references': [{'content_id': 'subtraction-with-borrowing-1', 'chunk_id': 'chunk0'}, {'content_id': 'subtraction-with-borrowing-2', 'chunk_id': 'chunk2'}], "
+    ]
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "package": {
+    "package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f",
+    "package_type": "ReviewReport",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:12:14.067Z",
+    "produced_by": {
+      "agent": "teacher-review-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "uala08ghqgp",
+      "parent_package_id": "765847cf-9558-4ad6-a232-32c5c1da5074"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "review_scores": {
+      "curriculum_fidelity": 80,
+      "pedagogical_quality": 60,
+      "student_engagement": 90,
+      "visual_experience": 95,
+      "audio_experience": 95,
+      "assessment_quality": 100,
+      "accessibility": 100,
+      "overall_score": 85
+    },
+    "status": "FAIL",
+    "surgical_feedback": [
+      {
+        "issue_id": "TR001",
+        "stage_id": "step-1",
+        "component_id": "component-1",
+        "severity": "MEDIUM",
+        "description": "Learning objective insufficiently addressed",
+        "recommendation": "Clearly state the learning objective and ensure it is addressed throughout the lesson",
+        "target_agent": "lesson-generator-agent",
+        "error_code": "TR001"
+      },
+      {
+        "issue_id": "TR002",
+        "stage_id": "step-2",
+        "component_id": "component-2",
+        "severity": "HIGH",
+        "description": "Pedagogical progression issue",
+        "recommendation": "Reorder the stages to ensure a logical progression of concepts",
+        "target_agent": "lesson-generator-agent",
+        "error_code": "TR002"
+      },
+      {
+        "issue_id": "TR005",
+        "stage_id": "illustration-1",
+        "component_id": "component-1",
+        "severity": "LOW",
+        "description": "Visual support insufficient",
+        "recommendation": "Add more illustrations to support the concepts",
+        "target_agent": "illustration-agent",
+        "error_code": "TR005"
+      },
+      {
+        "issue_id": "TR006",
+        "stage_id": "segment-1",
+        "component_id": "component-1",
+        "severity": "LOW",
+        "description": "Audio experience issue",
+        "recommendation": "Improve the audio quality and ensure it is synchronized with the visuals",
+        "target_agent": "audio-agent",
+        "error_code": "TR006"
+      }
+    ],
+    "handoff": {
+      "functional_qa_agent": {},
+      "regeneration_agent": {
+        "stage_id": "step-1",
+        "component_id": "component-1",
+        "error_code": "TR001"
+      }
+    }
+  }
+}

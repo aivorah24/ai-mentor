@@ -48,30 +48,70 @@ const UNIT_SKILL = {
   'Digital Citizenship':       'safe and responsible use of technology',
 };
 
-// ── Helper: fetch chapter text content from Qdrant ─────────────────────────
-async function getChapterContext(topic, maxChars = 2500) {
+// ── Helper: pull the payload text regardless of which field/schema stored it.
+// Different ingestion passes wrote the chunk text to either `payload.text`
+// (newer) or `payload.content` (the G1-G5 NCERT ingestion), so read whichever
+// is present — reading only one silently returned "" and made the LLM
+// hallucinate (the Word Wizard "aemr" fabrication bug).
+function chunkText(pt) {
+  return pt?.payload?.text || pt?.payload?.content || '';
+}
+
+// ── Helper: scroll all NCERT chunks that match a filter, concatenating text ─
+async function scrollChunks(must, maxChars) {
   const chunks = [];
   let offset = null;
   do {
     const result = await client.scroll(COLLECTION, {
-      filter: {
-        must: [
-          { key: 'curriculum',   match: { value: 'NCERT' } },
-          { key: 'topic',        match: { value: topic   } },
-          { key: 'content_type', match: { value: 'text'  } },
-        ],
-      },
+      filter: { must },
       limit: 20,
       offset: offset ?? undefined,
       with_payload: true,
       with_vector: false,
     });
     for (const pt of result.points) {
-      if (pt.payload?.content) chunks.push(pt.payload.content);
+      const t = chunkText(pt);
+      if (t) chunks.push(t);
     }
     offset = result.next_page_offset ?? null;
   } while (offset !== null && chunks.join(' ').length < maxChars);
-  return chunks.join('\n\n').slice(0, maxChars);
+  return chunks.join('\n\n');
+}
+
+// ── Helper: fetch chapter text content from Qdrant ─────────────────────────
+// `topic` may be either the raw book code (aemr101…) that chunks are keyed by,
+// OR the real chapter title ("Two Little Hands"). We try the exact `topic`
+// field first; if that yields nothing (title was passed, chunks keyed by code),
+// fall back to a grade+subject keyword scan that keeps only chunks whose text
+// actually mentions the title — real extracted text, never invented.
+// NOTE: the old code also filtered content_type='text', but the G1-G5 chunks
+// are stored as content_type='explanation', so that filter alone zeroed out
+// every result — it is intentionally dropped here.
+async function getChapterContext(topic, maxChars = 2500, opts = {}) {
+  if (!topic) return '';
+  // 1. Exact topic-field match (works when `topic` is the book code).
+  let text = await scrollChunks([{ key: 'topic', match: { value: topic } }], maxChars);
+  if (text.trim().length >= 120) return text.slice(0, maxChars);
+
+  // 2. Title was passed but chunks are code-keyed — scan the grade+subject
+  //    corpus and keep only chunks mentioning the title's distinctive words.
+  const { grade, subject } = opts;
+  const must = [];
+  const gradeNum = (String(grade || '').match(/(\d+)/) || [])[1];
+  if (gradeNum) must.push({ key: 'grade', match: { value: parseInt(gradeNum, 10) } });
+  if (subject) must.push({ key: 'subject', match: { value: subject } });
+  if (must.length) {
+    const corpus = await scrollChunks(must, maxChars * 8);
+    const title = String(topic).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+    const tokens = title.split(/\s+/).filter((w) => w.length > 3);
+    const paras = corpus.split('\n\n');
+    const hits = paras.filter((p) => {
+      const low = p.toLowerCase();
+      return low.includes(title) || tokens.some((t) => low.includes(t));
+    });
+    if (hits.join(' ').trim().length >= 120) return hits.join('\n\n').slice(0, maxChars);
+  }
+  return text.slice(0, maxChars); // best effort (may be short)
 }
 
 // ── POST /modules/math-helper ──────────────────────────────────────────────
@@ -296,23 +336,25 @@ IMPORTANT: Choices must be ACTIONS (what the character does), never maths answer
 // Key vocabulary from the chapter + an interactive mini-challenge per word
 router.post('/word-wizard', async (req, res) => {
   try {
-    const { topic, unit, word } = req.body;
+    const { topic, unit, word, grade, subject } = req.body;
     if (!topic) return res.status(400).json({ error: 'topic is required' });
 
-    const context = await getChapterContext(topic);
+    const context = await getChapterContext(topic, 2500, { grade, subject });
     const skill   = UNIT_SKILL[unit] || topic;
 
-    const prompt = `You are Ms. Zara, a friendly Grade 3 teacher.
+    const gradeNumWW = (String(grade || '').match(/\d+/) || ['3'])[0];
+    const ageWW = ({ '1': '6', '2': '7', '3': '8', '4': '9', '5': '10' }[gradeNumWW]) || '8';
+    const prompt = `You are Ms. Zara, a friendly Grade ${gradeNumWW} teacher.
 
 Chapter: "${topic}"
 This chapter teaches: ${skill}
 
-Textbook content:
+Textbook content (REAL text extracted from this chapter):
 ${context}
 
 ${word
   ? `Explain the word: "${word}" from this chapter.`
-  : `Pick exactly 4 key words from this chapter that an 8-year-old MUST understand to master "${topic}".`
+  : `Pick exactly 4 key words that appear IN the textbook content above and that a ${ageWW}-year-old MUST understand to master "${topic}". Prefer words the chapter itself introduces (e.g. a "New words" / "Sight words" list, or nouns/verbs the lesson repeats). Do NOT invent words that are not in the content above.`
 }
 
 For each word provide:

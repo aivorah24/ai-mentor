@@ -1,0 +1,36 @@
+{
+  "package": {
+    "package_id": "e3b2c1d4-5f6a-7b8c-9d0e-1f2a3b4c5d6e",
+    "package_type": "ValidatedRetrievalPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T15:00:00.000Z",
+    "produced_by": {
+      "agent": "retrieval-validation-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+      "parent_package_id": "2d65361f-075f-4bae-876d-5ba8a57645e0"
+    }
+  },
+  "payload": {
+    "status": "FAIL",
+    "error_code": "RV005",
+    "rejection_reason": "Confidence score below threshold (0.637 < 0.90).",
+    "validation_report": {
+      "schema": "PASS",
+      "metadata": "PASS",
+      "ordering": "PASS",
+      "coverage": "PASS",
+      "integrity": "PASS"
+    },
+    "re_retrieval_hints": {
+      "suggested_query_adjustments": [
+        "Increase specificity: include grade level and exact chapter title",
+        "Use synonyms for borrowing: regrouping, carrying",
+        "Limit to NCERT class 2 mathematics subtraction with borrowing"
+      ],
+      "missing_page_numbers": []
+    }
+  }
+}

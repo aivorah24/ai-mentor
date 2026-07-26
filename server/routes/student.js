@@ -1084,6 +1084,144 @@ router.get('/by-teacher/:teacherId', async (req, res) => {
   }
 });
 
+// ── GET /student/by-teacher/:teacherId/heatmap ─────────────
+// Class heatmap grid: for every student the teacher is linked to, a per-topic
+// mastery status computed from topic_attempts (+ completed_topics fallback).
+// Status classification lives in utils/topicStatus.js (mastered/trying/
+// dropped/stuck/not_started) — kept dependency-free so it's unit-testable
+// without a live DB connection; see server/tests/compute-topic-status.test.js.
+//
+// Query params: ?subject=Mathematics (scope columns to one subject, for a
+// subject-teacher view) and ?grade=Grade 3.
+const { computeTopicStatus } = require('../utils/topicStatus');
+
+router.get('/by-teacher/:teacherId/heatmap', async (req, res) => {
+  try {
+    const rawId = req.params.teacherId;
+    const teacherId = await resolveTeacherId(rawId);
+    const subjectFilter = req.query.subject && isRealSubject(req.query.subject) ? req.query.subject : null;
+    const gradeFilter   = req.query.grade || null;
+
+    const { data: links, error } = await supabase
+      .from('teacher_student')
+      .select('student_id, subject, users!teacher_student_student_id_fkey(id, name, grade, curriculum, photo_url)')
+      .eq('teacher_id', teacherId ?? rawId);
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Which real subjects does this teacher teach? (Staff Subject Mapping first,
+    // teacher_student.subject as fallback) — same source of truth as the main
+    // by-teacher route so scoping stays consistent across screens.
+    const { data: teacherUser } = await supabase.from('users').select('email').eq('id', teacherId ?? rawId).maybeSingle();
+    let teacherTeaches = [];
+    if (teacherUser?.email) {
+      const { data: teacherPrefs } = await supabase
+        .from('user_preferences').select('data').eq('user_email', teacherUser.email).maybeSingle();
+      teacherTeaches = teacherPrefs?.data?.teaches || [];
+    }
+    function subjectsForGradeCurriculum(grade, curriculum) {
+      const subjects = new Set();
+      teacherTeaches.forEach(entry => {
+        if (entry.grade === grade && entry.curriculum === curriculum) {
+          (entry.subjects || []).forEach(s => subjects.add(s));
+        }
+      });
+      return subjects;
+    }
+    const teacherSubjectsByStudent = {};
+    links.forEach(l => {
+      const info = l.users ?? {};
+      const fromMapping = subjectsForGradeCurriculum(info.grade, info.curriculum);
+      if (fromMapping.size > 0) teacherSubjectsByStudent[l.student_id] = fromMapping;
+      else if (isRealSubject(l.subject) && !teacherSubjectsByStudent[l.student_id]) {
+        teacherSubjectsByStudent[l.student_id] = new Set([l.subject]);
+      }
+    });
+
+    // Deduplicate to one row per student, honoring the optional grade filter.
+    const seen = new Set();
+    const uniqueLinks = links.filter(l => {
+      if (seen.has(l.student_id)) return false;
+      if (gradeFilter && (l.users?.grade ?? '') !== gradeFilter) return false;
+      seen.add(l.student_id);
+      return true;
+    });
+    const studentIds = uniqueLinks.map(l => l.student_id);
+    if (studentIds.length === 0) return res.json({ students: [], topics: [] });
+
+    // Full attempt history (need score / attempt_number / created_at for the composite).
+    const { data: allAttempts } = await supabase
+      .from('topic_attempts')
+      .select('student_id, topic, subject, grade, score, passed, attempt_number, created_at')
+      .in('student_id', studentIds);
+
+    // completed_topics from student_stats — topics finished via the Learning Path
+    // that may never have generated a quiz attempt row.
+    const { data: stats } = await supabase
+      .from('student_stats').select('student_id, completed_topics').in('student_id', studentIds);
+    const completedMap = {};
+    (stats ?? []).forEach(s => { completedMap[s.student_id] = new Set(s.completed_topics ?? []); });
+
+    // student_id → topic → { subject, attempts[] }
+    const byStudentTopic = {};
+    const topicSubject = {}; // topic → subject (for the column list)
+    (allAttempts ?? []).forEach(a => {
+      if (!byStudentTopic[a.student_id]) byStudentTopic[a.student_id] = {};
+      if (!byStudentTopic[a.student_id][a.topic]) byStudentTopic[a.student_id][a.topic] = { subject: a.subject || null, attempts: [] };
+      byStudentTopic[a.student_id][a.topic].attempts.push({
+        score: a.score != null ? parseFloat(a.score) : null,
+        passed: a.passed,
+        attemptNumber: a.attempt_number,
+        date: a.created_at,
+      });
+      if (a.subject && !topicSubject[a.topic]) topicSubject[a.topic] = a.subject;
+    });
+
+    // Union of topic columns across the whole class (so a topic only one student
+    // has touched still appears as a column, gray for everyone else).
+    const topicSet = new Set();
+
+    const students = uniqueLinks.map(link => {
+      const user = link.users ?? {};
+      const scoped = teacherSubjectsByStudent[link.student_id]
+        ? [...teacherSubjectsByStudent[link.student_id]] : [];
+      const topicMap = byStudentTopic[link.student_id] ?? {};
+      const completed = completedMap[link.student_id] ?? new Set();
+
+      // Every topic this student has any signal for.
+      const topicNames = new Set([...Object.keys(topicMap), ...completed]);
+      const topicStatus = {};
+      topicNames.forEach(topic => {
+        const entry = topicMap[topic];
+        const subj = entry?.subject || topicSubject[topic] || null;
+        // Subject scoping: an explicit ?subject= wins; otherwise a subject-teacher
+        // only sees their scoped subjects; a class teacher (no scope) sees all.
+        if (subjectFilter && subj !== subjectFilter) return;
+        if (!subjectFilter && scoped.length > 0 && subj && !scoped.includes(subj)) return;
+        const attempts = (entry?.attempts ?? []).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+        const st = computeTopicStatus(attempts, { completedViaPath: completed.has(topic) });
+        topicStatus[topic] = { ...st, subject: subj };
+        topicSet.add(topic);
+      });
+
+      return {
+        id: link.student_id,
+        name: user.name,
+        grade: user.grade ?? null,
+        curriculum: user.curriculum ?? null,
+        photoUrl: user.photo_url ?? null,
+        scopedSubjects: scoped,
+        topicStatus,
+      };
+    });
+
+    const topics = [...topicSet].map(t => ({ topic: t, subject: topicSubject[t] || null }));
+    res.json({ students, topics });
+  } catch (err) {
+    console.error('GET /student/by-teacher/:teacherId/heatmap error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── GET /student/by-teacher/:teacherId/insights ─────────────
 // Returns aggregated assignment + challenge data for all students of a teacher.
 // Used by TeacherDashboardScreen to populate Assignment & Challenge insight tiles.
@@ -1515,3 +1653,4 @@ router.get('/:id/mistake-trends', async (req, res) => {
 
 module.exports = router;
 module.exports.fetchTotalTopicsFromQdrant = fetchTotalTopicsFromQdrant;
+module.exports.computeTopicStatus = computeTopicStatus;

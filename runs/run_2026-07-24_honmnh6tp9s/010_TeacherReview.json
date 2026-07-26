@@ -1,0 +1,62 @@
+{
+  "package": {
+    "package_id": "uuid",
+    "package_type": "ReviewReport",
+    "schema_version": "1.0",
+    "created_at": "2024-03-16T14:30:00.000Z",
+    "produced_by": {
+      "agent": "teacher-review-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "honmnh6tp9s",
+      "parent_package_id": "uuid"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "review_scores": {
+      "curriculum_fidelity": 95,
+      "pedagogical_quality": 90,
+      "student_engagement": 92,
+      "visual_experience": 96,
+      "audio_experience": 94,
+      "assessment_quality": 88,
+      "accessibility": 98,
+      "overall_score": 92
+    },
+    "status": "FAIL",
+    "surgical_feedback": [
+      {
+        "issue_id": "TR002",
+        "stage_id": "practice_problems",
+        "component_id": "interactive_exercise",
+        "severity": "Major",
+        "description": "Pedagogical progression issue: The example problem 38 - 11 = ? is not clearly explained and may cause confusion for students.",
+        "recommendation": "Revise the explanation to clearly show the borrowing process and provide a step-by-step solution.",
+        "target_agent": "lesson-generator-agent",
+        "error_code": "TR002"
+      },
+      {
+        "issue_id": "TR007",
+        "stage_id": "real_life_applications",
+        "component_id": "case_study",
+        "severity": "Minor",
+        "description": "Assessment misalignment: The real-life application example does not provide a clear assessment of the student's understanding of subtraction with borrowing.",
+        "recommendation": "Add a question or prompt to assess the student's understanding of the concept in real-life scenarios.",
+        "target_agent": "quiz-agent",
+        "error_code": "TR007"
+      }
+    ],
+    "handoff": {
+      "functional_qa_agent": {},
+      "regeneration_agent": {
+        "lesson_content_package_id": "uuid",
+        "issues_to_address": [
+          "TR002",
+          "TR007"
+        ]
+      }
+    }
+  }
+}

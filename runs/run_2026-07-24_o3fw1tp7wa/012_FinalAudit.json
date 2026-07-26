@@ -1,0 +1,43 @@
+{
+  "package": {
+    "package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d41",
+    "package_type": "ReleasePackage",
+    "schema_version": "1.0",
+    "created_at": "2023-12-24T14:30:00Z",
+    "produced_by": {
+      "agent": "final-audit-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d41",
+      "parent_package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d40"
+    }
+  },
+  "payload": {
+    "lesson_id": "my-bicycle-lesson",
+    "release_version": "1.0",
+    "build_timestamp": "2023-12-24T14:30:00Z",
+    "package_manifest": {
+      "retrieval": "uuid",
+      "lesson_blueprint": "uuid",
+      "lesson_experience": "uuid",
+      "ui_plan": "uuid",
+      "lesson_content": "uuid",
+      "illustration": "uuid",
+      "audio": "uuid",
+      "quiz_review": "uuid",
+      "review_report": "uuid",
+      "qa_report": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d40"
+    },
+    "package_references": [
+      "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d40"
+    ],
+    "audit_summary": {
+      "status": "APPROVED",
+      "checks": {
+        "qa_report": "PASS"
+      }
+    },
+    "deployment_status": "READY"
+  }
+}

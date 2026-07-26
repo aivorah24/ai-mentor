@@ -7,8 +7,30 @@ const express = require('express');
 const router  = express.Router();
 const Groq    = require('groq-sdk');
 const { logEvent } = require('../services/analytics');
+const supabase = require('../services/supabase');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const { findFigures } = require('../services/figuresIndex');
+
+// Assigns Cloudinary images (from the shared NCERT figures index) to scenes
+// that don't already carry one, so lessons generated from NCERT-grounded
+// chunks actually show the diagrams instead of just text.
+function attachFigures(lesson, grade, subject, code) {
+  if (!lesson?.scenes?.length) return lesson;
+  const candidates = findFigures({ grade, subject, code });
+  if (!candidates.length) return lesson;
+
+  let i = 0;
+  for (const scene of lesson.scenes) {
+    if (scene.imageUrl) continue;
+    if (scene.type === 'intro' || scene.type === 'summary') continue;
+    if (i >= candidates.length) break;
+    const fig = candidates[i++];
+    scene.imageUrl = fig.url;
+    scene.imageCaption = `${subject || ''} — ${fig.code} p.${fig.page}`.trim();
+  }
+  return lesson;
+}
 
 // Subject-specific instructions for better quiz quality
 const SUBJECT_CONTEXT = {
@@ -52,21 +74,60 @@ router.post('/quiz', async (req, res) => {
   try {
     const {
       topic,
-      grade   = 'Grade 3',
-      subject = 'Mathematics',
+      grade       = 'Grade 3',
+      subject     = 'Mathematics',
+      curriculum  = 'IB PYP',
+      // Real lesson text (story/passage/chapter content) forwarded by the client
+      // when available — e.g. LessonScreen sends the curated CBSE story text.
+      // Without this, the model had NOTHING but the bare topic string to go on
+      // and would fall back on its own generic knowledge (or, worse, copy the
+      // prompt's own illustrative example verbatim — this is why an English
+      // story quiz once produced "If 3 cats have 4 legs each..." unrelated math).
+      passageText,
+      topicId,
       userEmail,
       role,
     } = req.body;
     if (!topic) return res.status(400).json({ error: 'topic is required' });
 
+    // Prefer the textbook's OWN exercises when we've stored them for this topic —
+    // a question lifted straight from the NCERT book ("Let us write") is the most
+    // grounded question possible, so we serve it verbatim instead of generating.
+    // Falls through to LLM generation when no stored practiceQuiz exists.
+    if (topicId) {
+      try {
+        const { data: r } = await supabase
+          .from('topic_resources')
+          .select('static_payload')
+          .eq('topic_id', topicId)
+          .eq('resource_type', 'AI_EXPLANATION')
+          .maybeSingle();
+        const pq = r?.static_payload?.practiceQuiz;
+        if (Array.isArray(pq) && pq.length > 0) {
+          return res.json({ questions: pq, source: 'textbook_exercises' });
+        }
+      } catch (e) { /* fall back to generation */ }
+    }
+
     const ctx      = SUBJECT_CONTEXT[subject] || { focus: `key concepts in ${subject}`, rule: 'Test conceptual understanding.' };
     const ageRange = GRADE_AGE[grade] || '8-11';
+    const isIB     = /ib[\s_]?pyp/i.test(curriculum);
+    const programLabel = isIB ? 'IB PYP' : String(curriculum || 'CBSE').toUpperCase();
+    // The arithmetic double-check instruction is Maths-specific — including it
+    // for every subject was priming the model to reach for its own math-word-
+    // problem example even when quizzing an English story or a Science topic.
+    const arithmeticRule = subject === 'Mathematics'
+      ? '\n6. CRITICAL for fill_blank: double-check your arithmetic before writing the "correct" value. If a question involves calculation (e.g. "2 cats have ___ legs total"), compute the exact answer (2×4=8, so correct:"8"). Never write a wrong answer.'
+      : '';
+    const groundingBlock = passageText
+      ? `\n\nSource material — base EVERY question strictly on this text, do not invent facts outside it or drift to an unrelated topic/subject:\n"""\n${String(passageText).slice(0, 4000)}\n"""`
+      : '';
 
-    const prompt = `You are an expert IB PYP ${grade} ${subject} teacher. Create a practice quiz for the topic: "${topic}".
+    const prompt = `You are an expert ${programLabel} ${grade} ${subject} teacher. Create a practice quiz for the topic: "${topic}".
 
-Student profile: IB PYP ${grade}, ages ${ageRange}
+Student profile: ${programLabel} ${grade}, ages ${ageRange}
 Subject focus: ${ctx.focus}
-Teaching rule: ${ctx.rule}
+Teaching rule: ${ctx.rule}${groundingBlock}
 
 Generate EXACTLY 5 questions — a mix of:
 - 3 multiple-choice questions (type "mcq"): 4 options each, correct is 0-based index
@@ -77,8 +138,7 @@ Requirements:
 2. Questions increase slightly in difficulty from Q1 to Q5
 3. Each question must have a "hint" — one gentle clue that does NOT give away the answer
 4. Each explanation must be encouraging and use a real-world example
-5. Questions must directly test the topic "${topic}" — IB PYP style (concept-based, inquiry-driven)
-6. CRITICAL for fill_blank: double-check your arithmetic before writing the "correct" value. If a question involves calculation (e.g. "2 cats have ___ legs total"), compute the exact answer (2×4=8, so correct:"8"). Never write a wrong answer.
+5. Questions must directly test the topic "${topic}"${passageText ? ' using ONLY the source material above' : ` — ${programLabel} style (concept-based, inquiry-driven)`}${arithmeticRule}
 
 Return ONLY valid JSON — no markdown, no extra text:
 {
@@ -279,7 +339,10 @@ router.get('/lesson-content', async (req, res) => {
   for (const gs of [gradeSlugA, gradeSlugB]) {
     const name = `pyp_${gs}_${subjectSlug}_${topicSlug}.json`;
     const file = path.join(dir, name);
-    if (fs.existsSync(file)) return res.json(JSON.parse(fs.readFileSync(file, 'utf8')));
+    if (fs.existsSync(file)) {
+      const lesson = JSON.parse(fs.readFileSync(file, 'utf8'));
+      return res.json(attachFigures(lesson, grade, subject, topic));
+    }
   }
 
   // 2. Fuzzy match — but ONLY within the same grade AND subject, scored by
@@ -313,7 +376,8 @@ router.get('/lesson-content', async (req, res) => {
   }
 
   if (bestFile && bestScore > 0) {
-    return res.json(JSON.parse(fs.readFileSync(path.join(dir, bestFile), 'utf8')));
+    const lesson = JSON.parse(fs.readFileSync(path.join(dir, bestFile), 'utf8'));
+    return res.json(attachFigures(lesson, grade, subject, topic));
   }
 
   // No pre-built lesson file — generate dynamically using Groq, GROUNDED in the
@@ -402,7 +466,7 @@ The "words" array should have 3-4 KEY WORDS from the concept being taught (all u
     // Strip markdown fences
     raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
     const lesson = JSON.parse(raw);
-    return res.json(lesson);
+    return res.json(attachFigures(lesson, grade, subject, topic));
   } catch (err) {
     console.error('Dynamic lesson generation failed:', err.message);
     res.status(404).json({ error: `No lesson found for "${topic}" / ${grade}`, topicSlug, gradeSlugB });

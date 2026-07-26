@@ -1,0 +1,130 @@
+{
+ "topicId": "197f79b3-6c2a-4bd9-b776-2986335c63b0",
+ "grade": "Grade 11",
+ "subject": "Physics",
+ "curriculum": "CBSE",
+ "topicName": "Angular Displacement, Velocity, and Acceleration",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "Angular displacement, velocity, and acceleration are related to each other. Angular velocity is the rate of change of angular displacement.",
+   "The relationship between angular velocity and linear velocity is given by v = Rω, where v is the linear velocity, R is the radius, and ω is the angular velocity.",
+   "Centripetal acceleration can be expressed in terms of angular speed: ac = ω^2R.",
+   "The time taken by an object to make one revolution is known as its time period T."
+  ],
+  "grade": 11,
+  "intro": "Angular displacement, velocity, and acceleration are key concepts in rotational motion.",
+  "vocab": [
+   {
+    "word": "Angular Displacement",
+    "definition": "The change in the orientation of a rotating body."
+   },
+   {
+    "word": "Angular Velocity",
+    "definition": "The rate of change of angular displacement."
+   },
+   {
+    "word": "Angular Acceleration",
+    "definition": "The rate of change of angular velocity."
+   }
+  ],
+  "subject": "Physics",
+  "activity": "How do angular displacement, velocity, and acceleration relate to each other?",
+  "keyLearnings": [
+   "Angular displacement is the change in orientation of a rotating body.",
+   "Angular velocity is the rate of change of angular displacement.",
+   "Angular acceleration is the rate of change of angular velocity."
+  ],
+  "keyTakeaways": [
+   "Angular displacement, velocity, and acceleration are fundamental concepts in rotational motion.",
+   "The relationship between angular velocity and linear velocity is crucial in understanding rotational motion."
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "Recall the equation that relates angular velocity and linear velocity.",
+    "type": "mcq",
+    "correct": 0,
+    "options": [
+     "v = Rω",
+     "v = ω/R",
+     "v = 2Rω",
+     "v = ω^2R"
+    ],
+    "question": "What is the relationship between angular velocity and linear velocity?",
+    "explanation": "The correct answer is v = Rω, which shows that linear velocity is directly proportional to angular velocity and radius."
+   },
+   {
+    "hint": "Recall the definition of angular acceleration.",
+    "type": "mcq",
+    "correct": 1,
+    "options": [
+     "m/s^2",
+     "rad/s^2",
+     "m/s",
+     "rad/s"
+    ],
+    "question": "What is the unit of angular acceleration?",
+    "explanation": "The correct answer is rad/s^2, which is the unit of angular acceleration."
+   },
+   {
+    "hint": "Recall the definition of time period.",
+    "type": "fill_blank",
+    "correct": "T",
+    "question": "The time taken by an object to make one revolution is known as its time period ___",
+    "explanation": "The correct answer is T, which represents the time period of an object."
+   }
+  ],
+  "originalLesson": [
+   "Angular displacement (θ) is the change in the orientation of a rotating body.",
+   "Angular velocity (ω) is the rate of change of angular displacement, and angular acceleration (α) is the rate of change of angular velocity"
+  ],
+  "whatYoullLearn": [
+   "Angular displacement is the change in orientation of a rotating body.",
+   "Angular velocity is the rate of change of angular displacement.",
+   "Angular acceleration is the rate of change of angular velocity."
+  ],
+  "thinkAndReflect": [
+   "How do angular displacement, velocity, and acceleration relate to each other?",
+   "What is the relationship between angular velocity and linear velocity?"
+  ],
+  "instructionalType": "Physics Lesson"
+ },
+ "practiceQuiz": [
+  {
+   "hint": "Recall the equation that relates angular velocity and linear velocity.",
+   "type": "mcq",
+   "correct": 0,
+   "options": [
+    "v = Rω",
+    "v = ω/R",
+    "v = 2Rω",
+    "v = ω^2R"
+   ],
+   "question": "What is the relationship between angular velocity and linear velocity?",
+   "explanation": "The correct answer is v = Rω, which shows that linear velocity is directly proportional to angular velocity and radius."
+  },
+  {
+   "hint": "Recall the definition of angular acceleration.",
+   "type": "mcq",
+   "correct": 1,
+   "options": [
+    "m/s^2",
+    "rad/s^2",
+    "m/s",
+    "rad/s"
+   ],
+   "question": "What is the unit of angular acceleration?",
+   "explanation": "The correct answer is rad/s^2, which is the unit of angular acceleration."
+  },
+  {
+   "hint": "Recall the definition of time period.",
+   "type": "fill_blank",
+   "correct": "T",
+   "question": "The time taken by an object to make one revolution is known as its time period ___",
+   "explanation": "The correct answer is T, which represents the time period of an object."
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "**Great question! Let’s spin into the world of rotation — just like a spinning top or a pizza dough twirling in the air!**\n\n---\n\n### **🌀 What are Angular Displacement, Velocity, and Acceleration?**\n\nImagine you're playing with a **frisbee** on the beach. When you throw it, it spins in the air. The way it turns — how much it rotates — is what we call **angular displacement**.\n\n- **Angular Displacement (θ)** → How much an object has rotated, measured in **degrees** or **radians**.\n  - Think of it like the angle your frisbee turns from where it started.\n  - Example: If your frisbee spins halfway around, that’s 180° or π radians.\n\nNow, how fast is it spinning? That’s **angular velocity (ω)** — the **rate** of change of angular displacement.\n\n- **Angular Velocity (ω)** → How fast the angle changes per second.\n  - Measured in **radians per second (rad/s)**.\n  - Example: If the frisbee spins 2π radians in 1 second, its angular velocity is 2π rad/s.\n\nBut what if the frisbee is speeding up or slowing down as it spins? That’s where **angular acceleration (α)** comes in.\n\n- **Angular Acceleration (α)** → How fast the angular velocity changes per second.\n  - Measured in **radians per second squared (rad/s²)**.\n  - Example: If the frisbee starts slow and speeds up to 2π rad/s in 2 seconds, its angular acceleration is (2π rad/s) / 2 s = π rad/s².\n\n---\n\n### 🎯 Real-life example: A Merry-Go-Round!\n\nThink about a **merry-go-round** at the park.\n\n- When you push it, it starts slow, then spins faster — that’s **angular acceleration**.\n- Once it’s spinning fast, the speed stays steady — that’s **constant angular velocity**.\n- The angle it turns every second is its **angular displacement per second** → angular velocity.\n\n---\n\n### 🧮 Worked Example:\n\n**Problem:**\nA bicycle wheel rotates 5 full turns in 2 seconds. Find its **angular velocity (ω)** in radians per second.\n\n**Step 1:** Understand what’s given.\n- Number of turns = 5\n- Time = 2 seconds\n\n**Step 2:** Convert turns to radians.\n- 1 full turn = 2π radians\n- So, 5 turns = 5 × 2π = 10π radians\n\n**Step 3:** Use the formula for angular velocity:\n> **ω = θ / t**\nwhere θ = angular displacement, t = time\n\n**Step 4:** Plug in the numbers:\n> ω = 10π radians / 2 seconds = **5π rad/s**\n\n✅ Answer: The angular velocity of the wheel is **5π radians per second**.\n\n---\n\n### 💡 Did you know?\nThe Earth spins once every 24 hours — that’s an **angular displacement** of 2π radians per day! So its **angular velocity** is about **7.27 × 10⁻⁵ rad/s** — super slow, but it adds up over time!\n\n---\n\nYou're doing amazing! 🌟\nNow, tell me — if a fan blade turns 3 times in 1 second, what’s its angular velocity? Can you calculate it?"
+}

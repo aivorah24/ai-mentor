@@ -1,0 +1,88 @@
+{
+  "package": {
+    "package_id": "3b9f1c2d-4e5a-6b7c-8d9e-0f1a2b3c4d5e",
+    "package_type": "LessonBlueprint",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T15:10:00.000Z",
+    "produced_by": {
+      "agent": "curriculum-understanding-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "18apiqkgnsz",
+      "parent_package_id": "f4e2a1b0-9c3d-4f6a-8b2e-1d5e6f7a8b9c"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-borrowing-grade2",
+    "curriculum": "NCERT",
+    "grade": 2,
+    "subject": "Mathematics",
+    "chapter": "Subtraction",
+    "lesson": "Subtraction with Borrowing",
+    "lesson_type": "Mathematics",
+    "lesson_type_evidence": "We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees.",
+    "lesson_type_confidence": 0.85,
+    "review_flags": [],
+    "concept_map": [
+      {
+        "concept_id": "c1",
+        "concept": "Understanding borrowing in subtraction",
+        "depends_on": [],
+        "difficulty": "Medium"
+      },
+      {
+        "concept_id": "c2",
+        "concept": "Subtracting two-digit numbers with borrowing",
+        "depends_on": [
+          "c1"
+        ],
+        "difficulty": "Medium"
+      },
+      {
+        "concept_id": "c3",
+        "concept": "Subtracting zero and subtracting the same number",
+        "depends_on": [
+          "c1"
+        ],
+        "difficulty": "Easy"
+      }
+    ],
+    "learning_objectives": [
+      "Students will be able to subtract two-digit numbers using borrowing.",
+      "Students will understand the concept of borrowing from a neighboring place value."
+    ],
+    "learning_outcomes": [
+      "Students can solve subtraction problems that require borrowing accurately.",
+      "Students can explain why borrowing is needed and how it works."
+    ],
+    "bloom_level": "Apply",
+    "prerequisites": [
+      "Understanding place value (tens and ones)",
+      "Basic subtraction without borrowing"
+    ],
+    "misconceptions": [
+      "Students may think borrowing changes the value of the number incorrectly.",
+      "Students may forget to reduce the borrowed place by one."
+    ],
+    "suggested_instructional_sequence": [
+      "Introduce the concept of place value using concrete objects.",
+      "Demonstrate borrowing with a story of neighbours.",
+      "Guided practice with two-digit subtraction problems.",
+      "Independent practice and error analysis."
+    ],
+    "vocabulary_difficulty": "Medium",
+    "available_images": [],
+    "source_chunk_references": [
+      "Subtraction with Borrowing",
+      "Mental Math",
+      "bejm106",
+      "bejm110"
+    ],
+    "handoff": {
+      "learning_experience_designer": {
+        "lesson_blueprint": {}
+      }
+    }
+  }
+}

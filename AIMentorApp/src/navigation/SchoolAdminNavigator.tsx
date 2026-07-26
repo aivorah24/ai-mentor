@@ -16,6 +16,7 @@ import SchoolAdminPeopleScreen from '../screens/school-admin/SchoolAdminPeopleSc
 import SchoolAdminStudentsScreen from '../screens/school-admin/SchoolAdminStudentsScreen';
 import SchoolAdminTeachersScreen from '../screens/school-admin/SchoolAdminTeachersScreen';
 import SchoolAdminParentsScreen from '../screens/school-admin/SchoolAdminParentsScreen';
+import SchoolAdminAddParentScreen from '../screens/school-admin/SchoolAdminAddParentScreen';
 import SchoolAdminSettingsScreen from '../screens/school-admin/SchoolAdminSettingsScreen';
 import SchoolAdminComingSoonScreen from '../screens/school-admin/SchoolAdminComingSoonScreen';
 import SchoolAdminImportHistoryScreen from '../screens/school-admin/SchoolAdminImportHistoryScreen';
@@ -46,6 +47,7 @@ export type SchoolAdminDrawerParamList = {
   SchoolAdminEditTeacher: { teacher: { id: string; name: string; email: string; teaches?: { curriculum: string; grade: string; subjects: string[] }[] } };
   SchoolAdminTeacherBulkImport: undefined;
   SchoolAdminParents: undefined;
+  SchoolAdminAddParent: undefined;
   SchoolAdminBulkImport: { title?: string; icon?: string; description?: string } | undefined;
   SchoolAdminGradesSections: { title?: string; icon?: string; description?: string } | undefined;
   SchoolAdminClasses: { title?: string; icon?: string; description?: string } | undefined;
@@ -93,6 +95,7 @@ export default function SchoolAdminNavigator() {
       <Drawer.Screen name="SchoolAdminEditTeacher" component={SchoolAdminEditTeacherScreen} />
       <Drawer.Screen name="SchoolAdminTeacherBulkImport" component={SchoolAdminTeacherBulkImportScreen} />
       <Drawer.Screen name="SchoolAdminParents" component={SchoolAdminParentsScreen} />
+      <Drawer.Screen name="SchoolAdminAddParent" component={SchoolAdminAddParentScreen} />
       <Drawer.Screen
         name="SchoolAdminBulkImport"
         component={SchoolAdminBulkImportScreen}

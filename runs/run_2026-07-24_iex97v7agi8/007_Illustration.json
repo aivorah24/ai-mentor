@@ -1,0 +1,377 @@
+{
+  "package": {
+    "package_id": "e1f2g3h4-i5j6-7890-k1l2-m3n4o5p6q7r8",
+    "package_type": "IllustrationPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T14:00:00Z",
+    "produced_by": {
+      "agent": "illustration-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "parent_package_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+    }
+  },
+  "payload": {
+    "lesson_id": "lesson-shapes-space-grade1",
+    "illustrations": [
+      {
+        "artifact_id": "ill_teacher_001",
+        "stage_id": "screen_welcome",
+        "component_id": "img_teacher",
+        "concept_id": "teacher_character",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A friendly teacher character waving, simple cartoon style, bright colors, suitable for Grade 1 students.",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_bright"
+        ],
+        "source_references": [
+          "0",
+          "1",
+          "3"
+        ]
+      },
+      {
+        "artifact_id": "ill_circle_scene_001",
+        "stage_id": "screen_circle",
+        "component_id": "img_circle_scene",
+        "concept_id": "circle_objects",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A scene showing various circular objects like sun, moon, bicycle wheels, and a ball, flat illustration style, bright primary colors, Grade 1 appropriate.",
+        "consistency_tags": [
+          "shape_triangle",
+          "color_theme_red"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_rectangle_scene_001",
+        "stage_id": "screen_rectangle",
+        "component_id": "img_rectangle_scene",
+        "concept_id": "rectangle_objects",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A scene showing rectangular objects like a bookshelf, a door, and a picture frame, flat illustration style.",
+        "consistency_tags": [
+          "shape_rectangle",
+          "color_theme_green"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_square_scene_001",
+        "stage_id": "screen_square",
+        "component_id": "img_square_scene",
+        "concept_id": "square_objects",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A scene showing square objects such as a window pane, a tile, and a square picture frame, flat illustration style.",
+        "consistency_tags": [
+          "shape_square",
+          "color_theme_yellow"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_empty_box_001",
+        "stage_id": "screen_space",
+        "component_id": "img_empty_box",
+        "concept_id": "empty_box_space",
+        "style_category": "diagram",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "An empty box representing space where shapes can be placed, simple line drawing, light gray outline.",
+        "consistency_tags": [
+          "space",
+          "color_theme_gray"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_drag_circle_001",
+        "stage_id": "screen_circle",
+        "component_id": "drag_shape1",
+        "concept_id": "draggable_circle",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A blue circle shape ready to be dragged, flat design, solid fill, no outline, Grade 1 UI element.",
+        "consistency_tags": [
+          "shape_circle",
+          "draggable",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_drag_triangle_001",
+        "stage_id": "screen_triangle",
+        "component_id": "drag_shape2",
+        "concept_id": "draggable_triangle",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A red triangle shape ready to be dragged, flat design.",
+        "consistency_tags": [
+          "shape_triangle",
+          "draggable",
+          "color_theme_red"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_drag_square_001",
+        "stage_id": "screen_square",
+        "component_id": "drag_shape3",
+        "concept_id": "draggable_square",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A green square shape ready to be dragged, flat design.",
+        "consistency_tags": [
+          "shape_square",
+          "draggable",
+          "color_theme_green"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_drop_area_001",
+        "stage_id": "screen_space",
+        "component_id": "drop_area_box",
+        "concept_id": "drop_area",
+        "style_category": "diagram",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A dashed rectangular drop area where shapes can be placed, light blue dashed line.",
+        "consistency_tags": [
+          "drop_area",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_object_judge_001",
+        "stage_id": "screen_long_round",
+        "component_id": "img_object_to_judge",
+        "concept_id": "judge_object",
+        "style_category": "photograph",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "An object like a pencil to judge whether it is long or round, simple illustration, side view of a yellow pencil.",
+        "consistency_tags": [
+          "object_judge",
+          "color_theme_yellow"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_icon_circle_001",
+        "stage_id": "screen_summary",
+        "component_id": "img_circle",
+        "concept_id": "icon_circle",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "Icon of a circle, flat blue circle with white border, simple.",
+        "consistency_tags": [
+          "icon",
+          "shape_circle",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_icon_triangle_001",
+        "stage_id": "screen_summary",
+        "component_id": "img_triangle",
+        "concept_id": "icon_triangle",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "Icon of a triangle, flat red triangle.",
+        "consistency_tags": [
+          "icon",
+          "shape_triangle",
+          "color_theme_red"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_icon_rectangle_001",
+        "stage_id": "screen_summary",
+        "component_id": "img_rectangle",
+        "concept_id": "icon_rectangle",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "Icon of a rectangle, flat green rectangle.",
+        "consistency_tags": [
+          "icon",
+          "shape_rectangle",
+          "color_theme_green"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_icon_square_001",
+        "stage_id": "screen_summary",
+        "component_id": "img_square",
+        "concept_id": "icon_square",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "Icon of a square, flat yellow square.",
+        "consistency_tags": [
+          "icon",
+          "shape_square",
+          "color_theme_yellow"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_icon_allshapes_001",
+        "stage_id": "screen_summary",
+        "component_id": "img_all_shapes",
+        "concept_id": "icon_all_shapes",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "Icons of circle, triangle, rectangle, and square together arranged in a row, flat colors.",
+        "consistency_tags": [
+          "icon_set",
+          "color_theme_mixed"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_icon_space_001",
+        "stage_id": "screen_space",
+        "component_id": "img_space",
+        "concept_id": "icon_space",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "Icon representing space as an empty box, simple square outline.",
+        "consistency_tags": [
+          "icon",
+          "space",
+          "color_theme_gray"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_icon_longround_001",
+        "stage_id": "screen_long_round",
+        "component_id": "img_long_round",
+        "concept_id": "icon_long_round",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "Icon showing a long object (like a pencil) and a round object (like a ball) side by side.",
+        "consistency_tags": [
+          "icon",
+          "long_round",
+          "color_theme_mixed"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "ill_quiz_q1_options_001",
+        "stage_id": "screen_quiz",
+        "component_id": "img_question1_options",
+        "concept_id": "quiz_options",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "Quiz question with multiple choice options about shapes, showing four shape icons as options, simple layout.",
+        "consistency_tags": [
+          "quiz",
+          "color_theme_mixed"
+        ],
+        "source_references": [
+          "0",
+          "1"
+        ]
+      }
+    ],
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "package": {
+    "package_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
+    "package_type": "LessonBlueprint",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T15:00:00.000Z",
+    "produced_by": {
+      "agent": "curriculum-understanding-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "b2c3d4e5-f6g7-8901-h2i3-j4k5l6m7n8o9",
+      "parent_package_id": "c3f1a9b2-7d4e-4f6a-9b1c-2d3e4f5a6b7c"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-borrowing-grade2",
+    "curriculum": "NCERT",
+    "grade": 2,
+    "subject": "Mathematics",
+    "chapter": "Subtraction",
+    "lesson": "Subtraction with Borrowing",
+    "lesson_type": "Mathematics",
+    "lesson_type_evidence": "We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees.",
+    "lesson_type_confidence": 0.95,
+    "review_flags": [],
+    "concept_map": [
+      {
+        "concept_id": "place-value",
+        "concept": "Place value (tens and ones)",
+        "depends_on": [],
+        "difficulty": "Easy"
+      },
+      {
+        "concept_id": "borrowing-concept",
+        "concept": "Understanding borrowing in subtraction",
+        "depends_on": [
+          "place-value"
+        ],
+        "difficulty": "Medium"
+      },
+      {
+        "concept_id": "two-digit-sub",
+        "concept": "Subtracting two-digit numbers with borrowing",
+        "depends_on": [
+          "borrowing-concept"
+        ],
+        "difficulty": "Medium"
+      }
+    ],
+    "learning_objectives": [
+      "Students will be able to subtract two-digit numbers using the borrowing method.",
+      "Students will explain the process of borrowing from the tens place to the ones place."
+    ],
+    "learning_outcomes": [
+      "Given any two-digit subtraction problem requiring borrowing, students will compute the correct difference.",
+      "Students will demonstrate borrowing using concrete objects or drawings."
+    ],
+    "bloom_level": "Apply",
+    "prerequisites": [
+      "Understanding place value (tens and ones)",
+      "Basic subtraction without borrowing"
+    ],
+    "misconceptions": [
+      "Students may try to subtract the smaller digit from the larger digit in each column without borrowing.",
+      "Students may think borrowing changes the overall value of the number incorrectly."
+    ],
+    "suggested_instructional_sequence": [
+      "Review place value concepts with tens and ones blocks.",
+      "Demonstrate borrowing using physical manipulatives (e.g., base-ten blocks).",
+      "Guided practice with step-by-step two-digit subtraction problems.",
+      "Independent practice with a variety of subtraction problems.",
+      "Apply skills to word problems involving subtraction with borrowing."
+    ],
+    "vocabulary_difficulty": "Medium",
+    "available_images": [],
+    "source_chunk_references": [
+      "Subtraction with Borrowing",
+      "Mental Math",
+      "bejm106",
+      "bejm110"
+    ],
+    "handoff": {
+      "learning_experience_designer": {
+        "lesson_blueprint": {}
+      }
+    }
+  }
+}
