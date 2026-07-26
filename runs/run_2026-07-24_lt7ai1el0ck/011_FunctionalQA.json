@@ -1,0 +1,63 @@
+{
+  "package": {
+    "package_id": "qa-report-pkg-1111-2222-3333-4444",
+    "package_type": "QAReportPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T17:00:00.000Z",
+    "produced_by": {
+      "agent": "functional-qa-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "p1p2p3p4-p5p6-p7p8-p9p0-q1r2s3t4u5v6",
+      "parent_package_id": "lesson-content-pkg-1111-2222-3333-4444"
+    }
+  },
+  "payload": {
+    "lesson_id": "les-abcdef123456",
+    "qa_scores": {
+      "rendering": 0,
+      "assets": 100,
+      "performance": 100,
+      "accessibility": 0,
+      "integrity": 0,
+      "navigation": 0,
+      "overall_score": 33
+    },
+    "status": "FAIL",
+    "failed_checks": [
+      {
+        "issue_id": "issue-int-001",
+        "category": "integrity",
+        "description": "Required upstream packages (Retrieval Package, Validated Retrieval Package, Lesson Blueprint, Lesson Experience, UI Plan, Quiz Review Package) are missing or have non-PASS status.",
+        "target_agent": "pipeline-coordinator",
+        "error_code": "QA001"
+      },
+      {
+        "issue_id": "issue-render-001",
+        "category": "rendering",
+        "description": "UI Plan and Lesson Experience packages missing; cannot verify component slots or slot population.",
+        "target_agent": "ui-plan-agent",
+        "error_code": "QA002"
+      },
+      {
+        "issue_id": "issue-nav-001",
+        "category": "navigation",
+        "description": "Screen graph unavailable due to missing UI Plan/Lesson Experience; potential dead ends or orphan screens.",
+        "target_agent": "ui-plan-agent",
+        "error_code": "QA004"
+      },
+      {
+        "issue_id": "issue-a11y-001",
+        "category": "accessibility",
+        "description": "Accessibility metadata (contrast, screen reader order) not present in available JSON.",
+        "target_agent": "ui-plan-agent",
+        "error_code": "QA005"
+      }
+    ],
+    "handoff": {
+      "final_audit_agent": {},
+      "regeneration_agent": {}
+    }
+  }
+}

@@ -1,0 +1,410 @@
+{
+  "package": {
+    "package_id": "66666666-7777-8888-9999-000000000000",
+    "package_type": "UIPlanPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T13:00:00Z",
+    "produced_by": {
+      "agent": "ui-planner-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "parent_package_id": "11111111-2222-3333-4444-555555555555"
+    }
+  },
+  "payload": {
+    "lesson_id": "lesson-shapes-space-grade1",
+    "device_profiles": {},
+    "theme": "light",
+    "accessibility_settings": [],
+    "rendering_constraints": {
+      "max_interactions": 2,
+      "allow_horizontal_scroll": false,
+      "animation_level": "medium"
+    },
+    "screens": [
+      {
+        "screen_id": "screen_welcome",
+        "stage_id": "screen_welcome",
+        "layout": "single_column",
+        "components": [
+          {
+            "component_id": "img_teacher",
+            "component_type": "image",
+            "stage_id": "screen_welcome",
+            "priority": "medium",
+            "props": {
+              "url": "teacher_char.png",
+              "alt": "Friendly teacher character"
+            }
+          },
+          {
+            "component_id": "btn_start",
+            "component_type": "button",
+            "stage_id": "screen_welcome",
+            "priority": "medium",
+            "props": {
+              "label": "Start",
+              "action": "navigate_to_next_screen"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "",
+          "next_screen": "screen_goal",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "screen_goal",
+        "stage_id": "screen_goal",
+        "layout": "single_column",
+        "components": [
+          {
+            "component_id": "txt_goal",
+            "component_type": "text",
+            "stage_id": "screen_goal",
+            "priority": "medium",
+            "props": {
+              "content": "Our Goal: Name and find circles, triangles, rectangles, and squares.",
+              "style": {
+                "fontSize": "24px",
+                "color": "#000000"
+              }
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen_welcome",
+          "next_screen": "screen_circle",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "screen_circle",
+        "stage_id": "screen_circle",
+        "layout": "single_column",
+        "components": [
+          {
+            "component_id": "img_circle_scene",
+            "component_type": "image",
+            "stage_id": "screen_circle",
+            "priority": "medium",
+            "props": {
+              "url": "circle_scene.png",
+              "alt": "Objects including circles"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen_goal",
+          "next_screen": "screen_triangle",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "screen_triangle",
+        "stage_id": "screen_triangle",
+        "layout": "single_column",
+        "components": [
+          {
+            "component_id": "img_triangle_scene",
+            "component_type": "image",
+            "stage_id": "screen_triangle",
+            "priority": "medium",
+            "props": {
+              "url": "triangle_scene.png",
+              "alt": "Objects including triangles"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen_circle",
+          "next_screen": "screen_rectangle",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "screen_rectangle",
+        "stage_id": "screen_rectangle",
+        "layout": "single_column",
+        "components": [
+          {
+            "component_id": "img_rectangle_scene",
+            "component_type": "image",
+            "stage_id": "screen_rectangle",
+            "priority": "medium",
+            "props": {
+              "url": "rectangle_scene.png",
+              "alt": "Objects including rectangles"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen_triangle",
+          "next_screen": "screen_square",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "screen_square",
+        "stage_id": "screen_square",
+        "layout": "single_column",
+        "components": [
+          {
+            "component_id": "img_square_scene",
+            "component_type": "image",
+            "stage_id": "screen_square",
+            "priority": "medium",
+            "props": {
+              "url": "square_scene.png",
+              "alt": "Objects including squares"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen_rectangle",
+          "next_screen": "screen_space",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "screen_space",
+        "stage_id": "screen_space",
+        "layout": "single_column",
+        "components": [
+          {
+            "component_id": "img_empty_box",
+            "component_type": "image",
+            "stage_id": "screen_space",
+            "priority": "medium",
+            "props": {
+              "url": "empty_box.png",
+              "alt": "An empty box"
+            }
+          },
+          {
+            "component_id": "drag_shape1",
+            "component_type": "image",
+            "stage_id": "screen_space",
+            "priority": "medium",
+            "props": {
+              "url": "drag_shape_circle.png",
+              "alt": "A circle shape to drag"
+            }
+          },
+          {
+            "component_id": "drag_shape2",
+            "component_type": "image",
+            "stage_id": "screen_space",
+            "priority": "medium",
+            "props": {
+              "url": "drag_shape_triangle.png",
+              "alt": "A triangle shape to drag"
+            }
+          },
+          {
+            "component_id": "drag_shape3",
+            "component_type": "image",
+            "stage_id": "screen_space",
+            "priority": "medium",
+            "props": {
+              "url": "drag_shape_square.png",
+              "alt": "A square shape to drag"
+            }
+          },
+          {
+            "component_id": "drop_area_box",
+            "component_type": "area",
+            "stage_id": "screen_space",
+            "priority": "medium",
+            "props": {
+              "url": "drop_box.png",
+              "alt": "Drop area for shapes"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen_square",
+          "next_screen": "screen_long_round",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "screen_long_round",
+        "stage_id": "screen_long_round",
+        "layout": "single_column",
+        "components": [
+          {
+            "component_id": "img_object_to_judge",
+            "component_type": "image",
+            "stage_id": "screen_long_round",
+            "priority": "medium",
+            "props": {
+              "url": "object_judge.png",
+              "alt": "Object to judge as long or round"
+            }
+          },
+          {
+            "component_id": "btn_long",
+            "component_type": "button",
+            "stage_id": "screen_long_round",
+            "priority": "medium",
+            "props": {
+              "label": "Long",
+              "action": "register_choice"
+            }
+          },
+          {
+            "component_id": "btn_round",
+            "component_type": "button",
+            "stage_id": "screen_long_round",
+            "priority": "medium",
+            "props": {
+              "label": "Round",
+              "action": "register_choice"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen_space",
+          "next_screen": "screen_reflection",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "screen_reflection",
+        "stage_id": "screen_reflection",
+        "layout": "single_column",
+        "components": [
+          {
+            "component_id": "img_circle",
+            "component_type": "image",
+            "stage_id": "screen_reflection",
+            "priority": "medium",
+            "props": {
+              "url": "icon_circle.png",
+              "alt": "Circle icon"
+            }
+          },
+          {
+            "component_id": "img_triangle",
+            "component_type": "image",
+            "stage_id": "screen_reflection",
+            "priority": "medium",
+            "props": {
+              "url": "icon_triangle.png",
+              "alt": "Triangle icon"
+            }
+          },
+          {
+            "component_id": "img_rectangle",
+            "component_type": "image",
+            "stage_id": "screen_reflection",
+            "priority": "medium",
+            "props": {
+              "url": "icon_rectangle.png",
+              "alt": "Rectangle icon"
+            }
+          },
+          {
+            "component_id": "img_square",
+            "component_type": "image",
+            "stage_id": "screen_reflection",
+            "priority": "medium",
+            "props": {
+              "url": "icon_square.png",
+              "alt": "Square icon"
+            }
+          },
+          {
+            "component_id": "btn_tell_me",
+            "component_type": "button",
+            "stage_id": "screen_reflection",
+            "priority": "medium",
+            "props": {
+              "label": "Tell Me",
+              "action": "record_choice"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen_long_round",
+          "next_screen": "screen_summary",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "screen_summary",
+        "stage_id": "screen_summary",
+        "layout": "single_column",
+        "components": [
+          {
+            "component_id": "img_all_shapes",
+            "component_type": "image",
+            "stage_id": "screen_summary",
+            "priority": "medium",
+            "props": {
+              "url": "all_shapes.png",
+              "alt": "All four shapes"
+            }
+          },
+          {
+            "component_id": "img_space",
+            "component_type": "image",
+            "stage_id": "screen_summary",
+            "priority": "medium",
+            "props": {
+              "url": "icon_space.png",
+              "alt": "Space icon"
+            }
+          },
+          {
+            "component_id": "img_long_round",
+            "component_type": "image",
+            "stage_id": "screen_summary",
+            "priority": "medium",
+            "props": {
+              "url": "icon_long_round.png",
+              "alt": "Long and round icon"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen_reflection",
+          "next_screen": "screen_quiz",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "screen_quiz",
+        "stage_id": "screen_quiz",
+        "layout": "single_column",
+        "components": [
+          {
+            "component_id": "img_question1_options",
+            "component_type": "image",
+            "stage_id": "screen_quiz",
+            "priority": "medium",
+            "props": {
+              "url": "quiz_q1.png",
+              "alt": "Quiz question 1 options"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "screen_summary",
+          "next_screen": "",
+          "exit_behavior": "none"
+        }
+      }
+    ],
+    "handoff": {
+      "lesson_generator_agent": {
+        "lesson_experience_package_id": "11111111-2222-3333-4444-555555555555",
+        "ui_plan_package_id": "66666666-7777-8888-9999-000000000000"
+      }
+    }
+  }
+}

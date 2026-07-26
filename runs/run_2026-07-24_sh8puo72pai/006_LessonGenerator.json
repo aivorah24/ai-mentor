@@ -1,0 +1,165 @@
+{
+  "package": {
+    "package_id": "uuid",
+    "package_type": "LessonContent",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:00:00.000Z",
+    "produced_by": {
+      "agent": "lesson-generator-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "lesson-generator-pipeline",
+      "parent_package_id": "uuid"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "stage_content": [
+      {
+        "stage_id": "welcome",
+        "content": "Welcome students to the lesson on subtraction with borrowing."
+      },
+      {
+        "stage_id": "introduction",
+        "content": "Subtraction with borrowing is a strategy used to subtract bigger numbers from smaller numbers. It involves borrowing some quantity from our neighbour and taking it away from the number we are subtracting."
+      },
+      {
+        "stage_id": "example-1",
+        "content": "We have 72 rupees in the piggy bank. We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees. We can borrow 4 rupees from our neighbour and take away 10 rupees from the piggy bank. Now we have 62 rupees in the piggy bank. We can subtract 40 from 62, which is easy. We have 22 rupees left in the piggy bank."
+      },
+      {
+        "stage_id": "example-2",
+        "content": "We have 45 apples in a basket. We give 27 apples to our friend. How many apples are left in the basket? We can subtract 27 from 45, but it's a bit tricky because 45 is much bigger than 27. That's where borrowing comes in. When we subtract a bigger number from a smaller number, we need to borrow some apples from our neighbour."
+      },
+      {
+        "stage_id": "practice",
+        "content": "Practice subtraction with borrowing using a variety of scenarios."
+      },
+      {
+        "stage_id": "reflection",
+        "content": "What did you learn about subtraction with borrowing?"
+      },
+      {
+        "stage_id": "summary",
+        "content": "Summary of the key points of the lesson on subtraction with borrowing."
+      }
+    ],
+    "populated_components": [
+      {
+        "component_id": "welcome-title",
+        "slots": {
+          "title": "Welcome to Subtraction with Borrowing"
+        }
+      },
+      {
+        "component_id": "welcome-intro",
+        "slots": {
+          "body": "Welcome students to the lesson on subtraction with borrowing."
+        }
+      },
+      {
+        "component_id": "introduction-video",
+        "slots": {
+          "body": "Subtraction with borrowing is a strategy used to subtract bigger numbers from smaller numbers. It involves borrowing some quantity from our neighbour and taking it away from the number we are subtracting."
+        }
+      },
+      {
+        "component_id": "example-1-scenario",
+        "slots": {
+          "body": "We have 72 rupees in the piggy bank. We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees. We can borrow 4 rupees from our neighbour and take away 10 rupees from the piggy bank. Now we have 62 rupees in the piggy bank. We can subtract 40 from 62, which is easy. We have 22 rupees left in the piggy bank."
+        }
+      },
+      {
+        "component_id": "example-1-exercise",
+        "slots": {
+          "body": "How many rupees do we have left in the piggy bank?"
+        }
+      },
+      {
+        "component_id": "example-2-scenario",
+        "slots": {
+          "body": "We have 45 apples in a basket. We give 27 apples to our friend. How many apples are left in the basket? We can subtract 27 from 45, but it's a bit tricky because 45 is much bigger than 27. That's where borrowing comes in. When we subtract a bigger number from a smaller number, we need to borrow some apples from our neighbour."
+        }
+      },
+      {
+        "component_id": "example-2-exercise",
+        "slots": {
+          "body": "How many apples are left in the basket?"
+        }
+      },
+      {
+        "component_id": "practice-exercise",
+        "slots": {
+          "body": "Practice subtraction with borrowing using a variety of scenarios."
+        }
+      },
+      {
+        "component_id": "reflection-quiz",
+        "slots": {
+          "body": "What did you learn about subtraction with borrowing?"
+        }
+      },
+      {
+        "component_id": "summary-review",
+        "slots": {
+          "body": "Summary of the key points of the lesson on subtraction with borrowing."
+        }
+      }
+    ],
+    "source_references": [
+      {
+        "content_id": "uuid",
+        "chunk_id": "uuid"
+      },
+      {
+        "content_id": "uuid",
+        "chunk_id": "uuid"
+      },
+      {
+        "content_id": "uuid",
+        "chunk_id": "uuid"
+      },
+      {
+        "content_id": "uuid",
+        "chunk_id": "uuid"
+      },
+      {
+        "content_id": "uuid",
+        "chunk_id": "uuid"
+      },
+      {
+        "content_id": "uuid",
+        "chunk_id": "uuid"
+      },
+      {
+        "content_id": "uuid",
+        "chunk_id": "uuid"
+      },
+      {
+        "content_id": "uuid",
+        "chunk_id": "uuid"
+      },
+      {
+        "content_id": "uuid",
+        "chunk_id": "uuid"
+      },
+      {
+        "content_id": "uuid",
+        "chunk_id": "uuid"
+      }
+    ],
+    "validation_summary": {},
+    "handoff": {
+      "illustration_agent": {
+        "lesson_content_package_id": "uuid"
+      },
+      "audio_agent": {
+        "lesson_content_package_id": "uuid"
+      },
+      "quiz_agent": {
+        "lesson_content_package_id": "uuid"
+      }
+    }
+  }
+}

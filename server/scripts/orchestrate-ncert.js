@@ -47,6 +47,21 @@ const SUBJECTS = {
   biology: { folder: 'biology', image: 'Biology', label: 'Biology' },
   science: { folder: 'science', image: 'Science', label: 'Science' },
   english: { folder: 'english', image: 'English', label: 'English' },
+  // Grade 8-12 elective/humanities subjects — added so "all subjects except
+  // Mathematics" is actually covered instead of silently flagged unknown.
+  history: { folder: 'history', image: 'History', label: 'History' },
+  geography: { folder: 'geography', image: 'Geography', label: 'Geography' },
+  economics: { folder: 'economics', image: 'Economics', label: 'Economics' },
+  political_science: { folder: 'political_science', image: 'Political_Science', label: 'Political Science' },
+  sociology: { folder: 'sociology', image: 'Sociology', label: 'Sociology' },
+  psychology: { folder: 'psychology', image: 'Psychology', label: 'Psychology' },
+  business_studies: { folder: 'business_studies', image: 'Business_Studies', label: 'Business Studies' },
+  accountancy: { folder: 'accountancy', image: 'Accountancy', label: 'Accountancy' },
+  computer_science: { folder: 'computer_science', image: 'Computer_Science', label: 'Computer Science' },
+  physical_education: { folder: 'physical_education', image: 'Physical_Education', label: 'Physical Education' },
+  home_science: { folder: 'home_science', image: 'Home_Science', label: 'Home Science' },
+  fine_arts: { folder: 'fine_arts', image: 'Fine_Arts', label: 'Fine Arts' },
+  vocational_education: { folder: 'vocational_education', image: 'Vocational_Education', label: 'Vocational Education' },
 };
 function classify(s) {
   if (/social\s*science/.test(s)) return SUBJECTS.social_science;
@@ -58,6 +73,21 @@ function classify(s) {
   if (/biology/.test(s)) return SUBJECTS.biology;
   if (/\bscience\b/.test(s)) return SUBJECTS.science;
   if (/\benglish\b/.test(s)) return SUBJECTS.english;
+  if (/history/.test(s)) return SUBJECTS.history;
+  if (/geography/.test(s)) return SUBJECTS.geography;
+  if (/economic/.test(s)) return SUBJECTS.economics;
+  if (/political\s*science|\bpolitics\b/.test(s)) return SUBJECTS.political_science;
+  if (/sociology/.test(s)) return SUBJECTS.sociology;
+  if (/psychology/.test(s)) return SUBJECTS.psychology;
+  if (/business\s*studies/.test(s)) return SUBJECTS.business_studies;
+  if (/accountancy/.test(s)) return SUBJECTS.accountancy;
+  if (/computer\s*science|informatics\s*practices/.test(s)) return SUBJECTS.computer_science;
+  // "Physcial Education" is a genuine typo present in the actual NCERT G7
+  // prelims PDF — match loosely enough to survive it.
+  if (/phys\w*\s*education/.test(s)) return SUBJECTS.physical_education;
+  if (/human\s*ecology|home\s*science/.test(s)) return SUBJECTS.home_science;
+  if (/fine\s*arts|painting|\barts\b/.test(s)) return SUBJECTS.fine_arts;
+  if (/vocational\s*education/.test(s)) return SUBJECTS.vocational_education;
   return null;
 }
 // First-priority, deterministic override: the book code's subject infix (after
@@ -84,15 +114,38 @@ function codeSubject(code) {
 // page — NOT loose keyword matching (the copyright boilerplate mentions
 // "social science", which made every book match Social Science before).
 function mapSubject(text) {
-  const t = text.toLowerCase();
-  const m = t.match(/textbook of ([a-z ]+?)(?:\s+(?:grade|for|part|class|\d)|\s*$)/);
+  // Some NCERT prelims render the title with drop-cap spacing, e.g.
+  // "T EXTBOOK IN G EOGRAPHY" — merge "<CAP> <CAPS...>" back into one word
+  // before matching, then collapse repeated whitespace.
+  const merged = text.replace(/\b([A-Z]) (?=[A-Z]{2,})/g, '$1');
+  const t = merged.toLowerCase().replace(/\s+/g, ' ');
+  // "Textbook of/in/for <Subject>" — the G11/12 elective prelims vary the
+  // preposition ("Textbook in History for Class XII", "Textbook of Biology").
+  const m = t.match(/textbook\s+(?:of|in)\s+([a-z ]+?)(?:\s+(?:grade|for|part|class|\d)|\s*$)/);
   if (m) { const r = classify(m[1].trim()); if (r) return r; }
-  // Fallback: recognisable NCERT book names on the title page.
+  // Supplementary/literature readers phrase it as "<Reader Name> Supplementary
+  // Reader in <Subject> for Class N" instead of "Textbook of/in".
+  const m2 = t.match(/(?:supplementary\s+)?reader\s+in\s+([a-z ]+?)(?:\s+(?:grade|for|part|class|\d)|\s*$)/);
+  if (m2) { const r = classify(m2[1].trim()); if (r) return r; }
+  // Fallback: recognisable NCERT book names/title-page phrases (many G8-12
+  // elective prelims just say "Textbook for Class XI/XII" with the subject
+  // only appearing as the book's own title, e.g. "Indian Economic Development").
   if (/ganita\s*prakash/.test(t)) return SUBJECTS.mathematics;
   if (/curiosity/.test(t)) return SUBJECTS.science;
   if (/exploring\s*society/.test(t)) return SUBJECTS.social_science;
-  if (/poorvi|santoor|mridang|marigold|honeydew|honeycomb/.test(t)) return SUBJECTS.english;
+  if (/poorvi|santoor|mridang|marigold|honeydew|honeycomb|beehive|hornbill|flamingo|vistas|woven\s*words|kaleidoscope/.test(t)) return SUBJECTS.english;
   if (/looking\s*around/.test(t)) return SUBJECTS.evs;
+  if (/india\s*physical\s*environment|fundamentals\s*of\s*human\s*geography|fundamentals\s*of\s*physical\s*geography|practical\s*work\s*in\s*geography/.test(t)) return SUBJECTS.geography;
+  if (/indian\s*economic\s*development|introductory\s*microeconomics|introductory\s*macroeconomics|statistics\s*for\s*economics/.test(t)) return SUBJECTS.economics;
+  if (/human\s*ecology\s*and\s*family\s*sciences/.test(t)) return SUBJECTS.home_science;
+  if (/indian\s*society|introducing\s*sociology|social\s*change/.test(t)) return SUBJECTS.sociology;
+  if (/political\s*theory|contemporary\s*world\s*politics|indian\s*constitution|politics\s*in\s*india/.test(t)) return SUBJECTS.political_science;
+  // Some short-title prelims (Physical Education, Vocational Education, Arts
+  // activity books) never say "Textbook of/in X" or "Reader in X" at all —
+  // the subject is just the bare cover title. Safe to match directly since
+  // these phrases are specific enough not to appear in copyright boilerplate.
+  if (/phys\w*\s*education/.test(t)) return SUBJECTS.physical_education;
+  if (/vocational\s*education/.test(t)) return SUBJECTS.vocational_education;
   return null;
 }
 
@@ -166,6 +219,8 @@ async function processBook(code, first, last, ckpt) {
     } catch (e) { console.log(`  ! prelims parse failed: ${e.message}`); }
   }
   if (!subject) { console.log(`  ! subject not detected/core — flagging`); ckpt[code] = { status: 'skipped-subject', grade }; saveCkpt(ckpt); return; }
+  // Mathematics runs on a separate, dedicated pipeline — never touch it here.
+  if (subject.folder === 'mathematics') { console.log(`  [skip] Mathematics is handled by a separate pipeline`); ckpt[code] = { status: 'skipped-subject', grade, subject: 'Mathematics (separate pipeline)' }; saveCkpt(ckpt); return; }
   console.log(`  subject: ${subject.label} | ${Object.keys(titles).length} TOC titles found`);
 
   // 2. download chapters into the real book dir

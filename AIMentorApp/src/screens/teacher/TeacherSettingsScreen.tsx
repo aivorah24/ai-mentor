@@ -1399,7 +1399,7 @@ function ModalButtons({ onCancel, onSave, loading, saveLabel = 'Save Changes', c
 const makeStyles = (c: AppColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bgDark },
   scroll: { flex: 1 },
-  content: { padding: spacing.xl, paddingBottom: 48 },
+  content: { padding: spacing.xl, paddingBottom: 60, flexGrow: 1 },
   columns: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-start' },
   col: { flex: 1, flexBasis: 0, minWidth: 340, gap: spacing.md },
 

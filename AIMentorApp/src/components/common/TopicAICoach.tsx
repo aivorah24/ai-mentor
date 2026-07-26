@@ -284,8 +284,10 @@ export default function TopicAICoach({
     }
   }, [input]);
 
-  async function send() {
-    const q = input.trim();
+  // `override` lets the quick-prompt chips send their exact wording without
+  // first pushing it through the input box (which would race the state update).
+  async function send(override?: string) {
+    const q = (typeof override === 'string' ? override : input).trim();
     if (!q || loading) return;
     onMessageSent?.(q);
     Keyboard.dismiss();
@@ -429,7 +431,7 @@ export default function TopicAICoach({
             {messages.map((msg, i) => {
               const shownText = msg.role === 'ai' ? sanitizeDisplayedAIText(msg.text) : msg.text;
               return (
-              <View key={i} style={{ alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '88%' }}>
+              <View key={i} style={{ width: '100%', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 <View
                   style={[
                     styles.bubble,
@@ -554,6 +556,29 @@ export default function TopicAICoach({
               </View>
             )}
           </ScrollView>
+
+          {/* Quick prompts — the four things a stuck student most often needs,
+              one tap instead of typing. They send their exact wording, so the
+              tutor treats them the same as a typed question. */}
+          <View style={[styles.quickRow, { backgroundColor: panelBg }]}>
+            {['Give me a hint', 'Show another example', 'Explain step-by-step', 'Explain differently'].map(label => (
+              <TouchableOpacity
+                key={label}
+                style={[styles.quickChip, {
+                  borderColor: colors.borderColor,
+                  backgroundColor: colors.bgDark,
+                  opacity: loading ? 0.5 : 1,
+                }]}
+                onPress={() => send(label)}
+                disabled={loading}
+                accessibilityRole="button"
+                accessibilityLabel={label}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.quickChipText, { color: colors.textMain }]}>{label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           {/* Input row */}
           <View style={[styles.inputRow, { borderTopColor: colors.borderColor, backgroundColor: panelBg }]}>
@@ -709,6 +734,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#121923',
   },
+  quickRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 2,
+  },
+  quickChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  quickChipText: { fontSize: 11.5, fontWeight: '600' },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',

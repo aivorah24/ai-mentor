@@ -1,0 +1,2472 @@
+{
+  "done": {
+    "grade6/english/fepr101.pdf": {
+      "figures": 4,
+      "at": "2026-07-22T23:56:44.413Z"
+    },
+    "grade6/english/fepr102.pdf": {
+      "figures": 1,
+      "at": "2026-07-22T23:56:51.542Z"
+    },
+    "grade6/english/fepr103.pdf": {
+      "figures": 0,
+      "at": "2026-07-22T23:56:55.667Z"
+    },
+    "grade6/english/fepr104.pdf": {
+      "figures": 2,
+      "at": "2026-07-22T23:57:02.398Z"
+    },
+    "grade6/english/fepr105.pdf": {
+      "figures": 8,
+      "at": "2026-07-22T23:57:15.476Z"
+    },
+    "grade6/science/fecu101.pdf": {
+      "figures": 28,
+      "at": "2026-07-23T01:33:10.921Z"
+    },
+    "grade6/science/fecu103.pdf": {
+      "figures": 63,
+      "at": "2026-07-23T01:34:39.499Z"
+    },
+    "grade6/science/fecu104.pdf": {
+      "figures": 78,
+      "at": "2026-07-23T01:36:03.995Z"
+    },
+    "grade6/science/fecu105.pdf": {
+      "figures": 49,
+      "at": "2026-07-23T01:36:59.481Z"
+    },
+    "grade6/science/fecu106.pdf": {
+      "figures": 46,
+      "at": "2026-07-23T01:37:51.173Z"
+    },
+    "grade6/science/fecu108.pdf": {
+      "figures": 43,
+      "at": "2026-07-23T01:38:59.705Z"
+    },
+    "grade6/science/fecu109.pdf": {
+      "figures": 49,
+      "at": "2026-07-23T01:39:51.250Z"
+    },
+    "grade6/science/fecu111.pdf": {
+      "figures": 59,
+      "at": "2026-07-23T01:41:12.803Z"
+    },
+    "grade6/science/fecu112.pdf": {
+      "figures": 60,
+      "at": "2026-07-23T01:42:13.913Z"
+    },
+    "grade6/social_science/fees103.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T01:42:56.165Z"
+    },
+    "grade6/social_science/fees105.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T01:43:19.012Z"
+    },
+    "grade6/social_science/fees111.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T01:45:02.884Z"
+    },
+    "grade6/social_science/fees112.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T01:45:06.823Z"
+    },
+    "grade6/social_science/fees113.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T01:45:08.330Z"
+    },
+    "grade6/social_science/fees114.pdf": {
+      "figures": 54,
+      "at": "2026-07-23T01:46:17.500Z"
+    },
+    "grade6/social_science/fepr101.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T01:48:27.537Z"
+    },
+    "grade6/social_science/fepr102.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T01:48:34.712Z"
+    },
+    "grade6/social_science/fepr103.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T01:48:39.311Z"
+    },
+    "grade6/social_science/fepr104.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T01:48:45.886Z"
+    },
+    "grade6/social_science/fepr105.pdf": {
+      "figures": 8,
+      "at": "2026-07-23T01:48:59.146Z"
+    },
+    "grade7/mathematics/gegp201.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T01:51:42.348Z"
+    },
+    "grade7/mathematics/gegp204.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T01:52:26.872Z"
+    },
+    "grade7/mathematics/gegp205.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T01:52:32.359Z"
+    },
+    "grade7/mathematics/gegp206.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T01:52:38.281Z"
+    },
+    "grade7/mathematics/gegp207.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T01:52:46.063Z"
+    },
+    "grade7/social_science/gees104.pdf": {
+      "figures": 24,
+      "at": "2026-07-23T01:58:14.171Z"
+    },
+    "grade7/social_science/gees208.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T02:03:21.776Z"
+    },
+    "grade7/social_science/gekb105.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T02:07:30.635Z"
+    },
+    "grade7/social_science/gekb107.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T02:07:52.802Z"
+    },
+    "grade7/social_science/gekr103.pdf": {
+      "figures": 35,
+      "at": "2026-07-23T02:09:13.375Z"
+    },
+    "grade7/social_science/gekr104.pdf": {
+      "figures": 22,
+      "at": "2026-07-23T02:09:38.054Z"
+    },
+    "grade7/social_science/gekr105.pdf": {
+      "figures": 22,
+      "at": "2026-07-23T02:10:03.007Z"
+    },
+    "grade7/social_science/gekr106.pdf": {
+      "figures": 13,
+      "at": "2026-07-23T02:10:18.821Z"
+    },
+    "grade7/social_science/gekr108.pdf": {
+      "figures": 43,
+      "at": "2026-07-23T02:11:25.910Z"
+    },
+    "grade7/social_science/gekr109.pdf": {
+      "figures": 13,
+      "at": "2026-07-23T02:11:41.037Z"
+    },
+    "grade7/social_science/gekr112.pdf": {
+      "figures": 22,
+      "at": "2026-07-23T02:12:45.999Z"
+    },
+    "grade7/social_science/gekr113.pdf": {
+      "figures": 5,
+      "at": "2026-07-23T02:12:52.962Z"
+    },
+    "grade7/social_science/gekr114.pdf": {
+      "figures": 18,
+      "at": "2026-07-23T02:13:12.609Z"
+    },
+    "grade7/social_science/gekr119.pdf": {
+      "figures": 37,
+      "at": "2026-07-23T02:15:15.184Z"
+    },
+    "grade7/social_science/gekr120.pdf": {
+      "figures": 16,
+      "at": "2026-07-23T02:15:34.517Z"
+    },
+    "grade8/mathematics/hemh102.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T02:24:19.014Z"
+    },
+    "grade8/mathematics/hemh106.pdf": {
+      "figures": 6,
+      "at": "2026-07-23T02:25:26.698Z"
+    },
+    "grade8/mathematics/hemh107.pdf": {
+      "figures": 21,
+      "at": "2026-07-23T02:25:50.517Z"
+    },
+    "grade8/mathematics/hemh108.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T02:25:52.716Z"
+    },
+    "grade8/mathematics/hemh110.pdf": {
+      "figures": 7,
+      "at": "2026-07-23T02:26:21.402Z"
+    },
+    "grade8/mathematics/hemh111.pdf": {
+      "figures": 26,
+      "at": "2026-07-23T02:26:48.340Z"
+    },
+    "grade8/mathematics/hemh113.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T02:27:11.777Z"
+    },
+    "grade8/science/hecu101.pdf": {
+      "figures": 21,
+      "at": "2026-07-23T02:27:38.036Z"
+    },
+    "grade8/science/hecu103.pdf": {
+      "figures": 77,
+      "at": "2026-07-23T02:29:21.714Z"
+    },
+    "grade8/science/hecu106.pdf": {
+      "figures": 65,
+      "at": "2026-07-23T02:31:12.898Z"
+    },
+    "grade8/science/hecu109.pdf": {
+      "figures": 65,
+      "at": "2026-07-23T02:33:05.733Z"
+    },
+    "grade8/science/hecu112.pdf": {
+      "figures": 77,
+      "at": "2026-07-23T02:35:05.885Z"
+    },
+    "grade8/science/hecu113.pdf": {
+      "figures": 43,
+      "at": "2026-07-23T02:35:59.492Z"
+    },
+    "grade8/science/hemh102.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T02:36:24.409Z"
+    },
+    "grade8/science/hemh106.pdf": {
+      "figures": 6,
+      "at": "2026-07-23T02:37:32.471Z"
+    },
+    "grade8/science/hemh107.pdf": {
+      "figures": 21,
+      "at": "2026-07-23T02:37:54.994Z"
+    },
+    "grade8/science/hemh108.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T02:37:58.816Z"
+    },
+    "grade8/science/hemh110.pdf": {
+      "figures": 7,
+      "at": "2026-07-23T02:38:28.601Z"
+    },
+    "grade8/science/hemh111.pdf": {
+      "figures": 26,
+      "at": "2026-07-23T02:38:55.142Z"
+    },
+    "grade8/science/hemh113.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T02:39:19.321Z"
+    },
+    "grade8/science/hesc103.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T02:40:00.950Z"
+    },
+    "grade8/science/hesc105.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T02:40:23.532Z"
+    },
+    "grade8/science/hesc106.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T02:40:25.871Z"
+    },
+    "grade8/science/hesc107.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T02:40:28.056Z"
+    },
+    "grade8/science/hesc109.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T02:40:51.112Z"
+    },
+    "grade8/science/hesc112.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T02:41:34.008Z"
+    },
+    "grade8/science/hesc113.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T02:41:36.721Z"
+    },
+    "grade8/social_science/hecu101.pdf": {
+      "figures": 21,
+      "at": "2026-07-23T02:42:03.413Z"
+    },
+    "grade8/social_science/hecu103.pdf": {
+      "figures": 77,
+      "at": "2026-07-23T02:43:45.081Z"
+    },
+    "grade8/social_science/hecu106.pdf": {
+      "figures": 65,
+      "at": "2026-07-23T02:45:45.084Z"
+    },
+    "grade8/social_science/hecu109.pdf": {
+      "figures": 65,
+      "at": "2026-07-23T02:47:31.413Z"
+    },
+    "grade8/social_science/hecu112.pdf": {
+      "figures": 77,
+      "at": "2026-07-23T02:49:29.031Z"
+    },
+    "grade8/social_science/hecu113.pdf": {
+      "figures": 43,
+      "at": "2026-07-23T02:50:21.618Z"
+    },
+    "grade8/social_science/hees206.pdf": {
+      "figures": 18,
+      "at": "2026-07-23T02:54:45.577Z"
+    },
+    "grade8/social_science/hees207.pdf": {
+      "figures": 55,
+      "at": "2026-07-23T02:55:46.951Z"
+    },
+    "grade8/social_science/hekb107.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:00:51.820Z"
+    },
+    "grade8/social_science/hekr103.pdf": {
+      "figures": 31,
+      "at": "2026-07-23T03:02:18.191Z"
+    },
+    "grade8/social_science/hekr104.pdf": {
+      "figures": 13,
+      "at": "2026-07-23T03:02:41.814Z"
+    },
+    "grade8/social_science/hekr105.pdf": {
+      "figures": 14,
+      "at": "2026-07-23T03:03:00.767Z"
+    },
+    "grade8/social_science/hekr106.pdf": {
+      "figures": 41,
+      "at": "2026-07-23T03:03:47.665Z"
+    },
+    "grade8/social_science/hekr107.pdf": {
+      "figures": 10,
+      "at": "2026-07-23T03:04:02.790Z"
+    },
+    "grade8/social_science/hekr108.pdf": {
+      "figures": 13,
+      "at": "2026-07-23T03:04:18.437Z"
+    },
+    "grade8/social_science/hekr109.pdf": {
+      "figures": 9,
+      "at": "2026-07-23T03:04:30.337Z"
+    },
+    "grade8/social_science/hekr110.pdf": {
+      "figures": 67,
+      "at": "2026-07-23T03:06:10.653Z"
+    },
+    "grade8/social_science/hekr111.pdf": {
+      "figures": 28,
+      "at": "2026-07-23T03:06:45.354Z"
+    },
+    "grade8/social_science/hekr114.pdf": {
+      "figures": 14,
+      "at": "2026-07-23T03:07:45.390Z"
+    },
+    "grade8/social_science/hekr117.pdf": {
+      "figures": 28,
+      "at": "2026-07-23T03:09:03.429Z"
+    },
+    "grade8/social_science/hekr119.pdf": {
+      "figures": 13,
+      "at": "2026-07-23T03:09:40.076Z"
+    },
+    "grade8/social_science/hess201.pdf": {
+      "figures": 12,
+      "at": "2026-07-23T03:13:39.198Z"
+    },
+    "grade8/social_science/hess203.pdf": {
+      "figures": 20,
+      "at": "2026-07-23T03:14:26.155Z"
+    },
+    "grade8/social_science/hess204.pdf": {
+      "figures": 18,
+      "at": "2026-07-23T03:14:51.138Z"
+    },
+    "grade8/social_science/hess205.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T03:14:53.394Z"
+    },
+    "grade8/social_science/hess208.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T03:15:36.080Z"
+    },
+    "grade8/social_science/hess301.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:15:39.669Z"
+    },
+    "grade8/social_science/hess302.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:15:41.579Z"
+    },
+    "grade8/social_science/hess303.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T03:15:44.112Z"
+    },
+    "grade8/social_science/hess304.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T03:15:46.083Z"
+    },
+    "grade8/social_science/hess305.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:15:49.748Z"
+    },
+    "grade8/social_science/hess306.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:15:52.015Z"
+    },
+    "grade8/social_science/hess307.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:15:55.435Z"
+    },
+    "grade8/social_science/hess308.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T03:15:59.463Z"
+    },
+    "grade9/mathematics/iemh101.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:17:43.128Z"
+    },
+    "grade9/mathematics/iemh102.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:17:47.642Z"
+    },
+    "grade9/mathematics/iemh103.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:17:52.270Z"
+    },
+    "grade9/mathematics/iemh104.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:17:56.609Z"
+    },
+    "grade9/mathematics/iemh105.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:18:01.616Z"
+    },
+    "grade9/mathematics/iemh106.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:18:08.260Z"
+    },
+    "grade9/mathematics/iemh107.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:18:11.458Z"
+    },
+    "grade9/social_science/iehp105.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T03:26:56.732Z"
+    },
+    "grade9/social_science/iemh101.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:31:22.951Z"
+    },
+    "grade9/social_science/iemh102.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:31:30.493Z"
+    },
+    "grade9/social_science/iemh103.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:31:38.519Z"
+    },
+    "grade9/social_science/iemh104.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:31:45.813Z"
+    },
+    "grade9/social_science/iemh105.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:31:52.826Z"
+    },
+    "grade9/social_science/iemh106.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:32:02.873Z"
+    },
+    "grade9/social_science/iemh107.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:32:07.877Z"
+    },
+    "grade10/mathematics/jemh101.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:45:36.406Z"
+    },
+    "grade10/mathematics/jemh102.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:45:50.392Z"
+    },
+    "grade10/mathematics/jemh103.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T03:46:03.600Z"
+    },
+    "grade10/mathematics/jemh104.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:46:12.471Z"
+    },
+    "grade10/mathematics/jemh105.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T03:46:23.392Z"
+    },
+    "grade10/mathematics/jemh106.pdf": {
+      "figures": 9,
+      "at": "2026-07-23T03:46:48.963Z"
+    },
+    "grade10/mathematics/jemh108.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T03:47:23.028Z"
+    },
+    "grade10/mathematics/jemh109.pdf": {
+      "figures": 7,
+      "at": "2026-07-23T03:47:35.649Z"
+    },
+    "grade10/mathematics/jemh110.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:47:40.666Z"
+    },
+    "grade10/mathematics/jemh111.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T03:47:50.592Z"
+    },
+    "grade10/mathematics/jemh112.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:47:58.530Z"
+    },
+    "grade10/mathematics/jemh113.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:48:09.213Z"
+    },
+    "grade10/mathematics/jemh114.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T03:48:17.706Z"
+    },
+    "grade10/science/jemh101.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:48:21.623Z"
+    },
+    "grade10/science/jemh102.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:48:26.821Z"
+    },
+    "grade10/science/jemh103.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T03:48:32.640Z"
+    },
+    "grade10/science/jemh104.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:48:36.837Z"
+    },
+    "grade10/science/jemh105.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T03:48:46.529Z"
+    },
+    "grade10/science/jemh106.pdf": {
+      "figures": 9,
+      "at": "2026-07-23T03:49:04.824Z"
+    },
+    "grade10/science/jemh108.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T03:49:33.438Z"
+    },
+    "grade10/science/jemh109.pdf": {
+      "figures": 7,
+      "at": "2026-07-23T03:49:43.322Z"
+    },
+    "grade10/science/jemh110.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:49:47.012Z"
+    },
+    "grade10/science/jemh111.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T03:49:51.851Z"
+    },
+    "grade10/science/jemh112.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:49:56.102Z"
+    },
+    "grade10/science/jemh113.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:50:10.921Z"
+    },
+    "grade10/science/jemh114.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T03:50:24.398Z"
+    },
+    "grade10/science/jesc101.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T03:50:40.300Z"
+    },
+    "grade10/science/jesc102.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T03:51:03.563Z"
+    },
+    "grade10/science/jesc103.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T03:51:18.721Z"
+    },
+    "grade10/science/jesc106.pdf": {
+      "figures": 5,
+      "at": "2026-07-23T03:52:14.863Z"
+    },
+    "grade10/science/jesc107.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T03:52:26.558Z"
+    },
+    "grade10/science/jesc110.pdf": {
+      "figures": 5,
+      "at": "2026-07-23T03:53:49.844Z"
+    },
+    "grade10/science/jesc111.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:54:05.730Z"
+    },
+    "grade10/science/jesc112.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T03:54:18.978Z"
+    },
+    "grade10/science/jesc113.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T03:54:29.601Z"
+    },
+    "grade10/social_science/jess201.pdf": {
+      "figures": 17,
+      "at": "2026-07-23T03:57:18.057Z"
+    },
+    "grade10/social_science/jess202.pdf": {
+      "figures": 17,
+      "at": "2026-07-23T03:57:47.562Z"
+    },
+    "grade10/social_science/jess203.pdf": {
+      "figures": 26,
+      "at": "2026-07-23T03:58:14.316Z"
+    },
+    "grade10/social_science/jess204.pdf": {
+      "figures": 24,
+      "at": "2026-07-23T03:58:39.810Z"
+    },
+    "grade10/social_science/jess205.pdf": {
+      "figures": 27,
+      "at": "2026-07-23T03:59:07.606Z"
+    },
+    "grade10/social_science/jess2ps.pdf": {
+      "figures": 21,
+      "at": "2026-07-23T03:59:27.869Z"
+    },
+    "grade10/social_science/jess301.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:59:33.105Z"
+    },
+    "grade10/social_science/jess302.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:59:36.925Z"
+    },
+    "grade10/social_science/jess303.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:59:41.841Z"
+    },
+    "grade10/social_science/jess304.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T03:59:46.909Z"
+    },
+    "grade10/social_science/jess305.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T03:59:51.465Z"
+    },
+    "grade11/accountancy/keac101.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:01:37.905Z"
+    },
+    "grade11/accountancy/keac102.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:01:42.357Z"
+    },
+    "grade11/accountancy/keac103.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:01:52.257Z"
+    },
+    "grade11/accountancy/keac104.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:02:01.898Z"
+    },
+    "grade11/accountancy/keac105.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:02:05.650Z"
+    },
+    "grade11/accountancy/keac106.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:02:12.990Z"
+    },
+    "grade11/accountancy/keac107.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:02:20.640Z"
+    },
+    "grade11/accountancy/keac1ps.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:02:22.959Z"
+    },
+    "grade11/accountancy/keac201.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:02:29.614Z"
+    },
+    "grade11/biology/kebo101.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T04:02:57.905Z"
+    },
+    "grade11/biology/kebo102.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:03:01.867Z"
+    },
+    "grade11/biology/kebo103.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:03:04.625Z"
+    },
+    "grade11/biology/kebo104.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:03:10.066Z"
+    },
+    "grade11/biology/kebo105.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:03:14.398Z"
+    },
+    "grade11/biology/kebo106.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:03:16.726Z"
+    },
+    "grade11/biology/kebo107.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:03:18.574Z"
+    },
+    "grade11/biology/kebo108.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:03:22.953Z"
+    },
+    "grade11/biology/kebo109.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:03:28.970Z"
+    },
+    "grade11/biology/kebo110.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:03:33.930Z"
+    },
+    "grade11/biology/kebo111.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:03:39.110Z"
+    },
+    "grade11/biology/kebo112.pdf": {
+      "figures": 6,
+      "at": "2026-07-23T04:03:47.571Z"
+    },
+    "grade11/biology/kebo113.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:03:51.960Z"
+    },
+    "grade11/biology/kebo114.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:04:01.262Z"
+    },
+    "grade11/biology/kebo115.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:04:05.558Z"
+    },
+    "grade11/biology/kebo116.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:04:10.394Z"
+    },
+    "grade11/biology/kebo117.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T04:04:26.378Z"
+    },
+    "grade11/biology/kebo118.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:04:30.514Z"
+    },
+    "grade11/biology/kebo119.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:04:37.374Z"
+    },
+    "grade11/biology/kebs101.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:04:41.154Z"
+    },
+    "grade11/biology/kebs102.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:04:45.330Z"
+    },
+    "grade11/biology/kebs103.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:04:48.281Z"
+    },
+    "grade11/biology/kebs104.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:04:53.375Z"
+    },
+    "grade11/biology/kebs105.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:04:56.103Z"
+    },
+    "grade11/biology/kebs106.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:04:59.835Z"
+    },
+    "grade11/biology/kebs107.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:05:02.418Z"
+    },
+    "grade11/biology/kebs108.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:05:07.426Z"
+    },
+    "grade11/biology/kebs109.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:05:09.539Z"
+    },
+    "grade11/biology/kebs110.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:05:13.569Z"
+    },
+    "grade11/biology/kebs111.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:05:20.290Z"
+    },
+    "grade11/business_studies/kebs101.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:05:23.417Z"
+    },
+    "grade11/business_studies/kebs102.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:05:27.741Z"
+    },
+    "grade11/business_studies/kebs103.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:05:30.524Z"
+    },
+    "grade11/business_studies/kebs104.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:05:34.919Z"
+    },
+    "grade11/business_studies/kebs105.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:05:37.702Z"
+    },
+    "grade11/business_studies/kebs106.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:05:41.354Z"
+    },
+    "grade11/business_studies/kebs107.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:05:44.286Z"
+    },
+    "grade11/business_studies/kebs108.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:05:49.772Z"
+    },
+    "grade11/business_studies/kebs109.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:05:52.074Z"
+    },
+    "grade11/business_studies/kebs110.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:05:56.042Z"
+    },
+    "grade11/business_studies/kebs111.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:06:02.603Z"
+    },
+    "grade11/business_studies/kebs1ps.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:06:03.962Z"
+    },
+    "grade11/chemistry/kech101.pdf": {
+      "figures": 21,
+      "at": "2026-07-23T04:06:28.617Z"
+    },
+    "grade11/chemistry/kech103.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:06:54.313Z"
+    },
+    "grade11/chemistry/kech104.pdf": {
+      "figures": 5,
+      "at": "2026-07-23T04:07:05.981Z"
+    },
+    "grade11/chemistry/kech106.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T04:07:39.438Z"
+    },
+    "grade11/chemistry/kech202.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:08:07.361Z"
+    },
+    "grade11/chemistry/kech203.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:08:14.940Z"
+    },
+    "grade11/computer_science/kecs101.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:08:19.232Z"
+    },
+    "grade11/computer_science/kecs102.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:08:22.272Z"
+    },
+    "grade11/computer_science/kecs103.pdf": {
+      "figures": 11,
+      "at": "2026-07-23T04:08:36.816Z"
+    },
+    "grade11/computer_science/kecs104.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:08:40.604Z"
+    },
+    "grade11/computer_science/kecs105.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:08:45.397Z"
+    },
+    "grade11/computer_science/kecs106.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:08:48.391Z"
+    },
+    "grade11/computer_science/kecs107.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:08:52.796Z"
+    },
+    "grade11/economics/keec101.pdf": {
+      "figures": 7,
+      "at": "2026-07-23T04:09:03.749Z"
+    },
+    "grade11/economics/keec102.pdf": {
+      "figures": 6,
+      "at": "2026-07-23T04:09:12.822Z"
+    },
+    "grade11/economics/keec103.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:09:18.946Z"
+    },
+    "grade11/economics/keec104.pdf": {
+      "figures": 10,
+      "at": "2026-07-23T04:09:32.085Z"
+    },
+    "grade11/economics/keec105.pdf": {
+      "figures": 7,
+      "at": "2026-07-23T04:09:42.761Z"
+    },
+    "grade11/economics/keec106.pdf": {
+      "figures": 10,
+      "at": "2026-07-23T04:09:57.259Z"
+    },
+    "grade11/economics/keec107.pdf": {
+      "figures": 6,
+      "at": "2026-07-23T04:10:08.102Z"
+    },
+    "grade11/economics/keec108.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:10:13.513Z"
+    },
+    "grade11/economics/keec1gl.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:10:14.788Z"
+    },
+    "grade11/economics/keec1ps.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:10:19.000Z"
+    },
+    "grade11/history/kehs101.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:10:22.604Z"
+    },
+    "grade11/history/kehs102.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:10:28.753Z"
+    },
+    "grade11/history/kehs103.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:10:32.168Z"
+    },
+    "grade11/history/kehs104.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:10:34.690Z"
+    },
+    "grade11/history/kehs105.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:10:36.883Z"
+    },
+    "grade11/history/kehs106.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:10:40.651Z"
+    },
+    "grade11/history/kehs107.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:10:45.681Z"
+    },
+    "grade11/history/kehs1ps.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:11:11.829Z"
+    },
+    "grade11/physics/keph101.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:17:33.960Z"
+    },
+    "grade11/physics/keph102.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:17:35.899Z"
+    },
+    "grade11/physics/keph103.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:17:39.130Z"
+    },
+    "grade11/physics/keph104.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:17:42.312Z"
+    },
+    "grade11/physics/keph105.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:17:45.402Z"
+    },
+    "grade11/physics/keph106.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:17:52.382Z"
+    },
+    "grade11/physics/keph107.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:17:54.841Z"
+    },
+    "grade11/physics/keph201.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:17:56.698Z"
+    },
+    "grade11/physics/keph202.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T04:18:04.164Z"
+    },
+    "grade11/physics/keph203.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:18:07.313Z"
+    },
+    "grade11/physics/keph204.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:18:09.642Z"
+    },
+    "grade11/physics/keph205.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:18:11.659Z"
+    },
+    "grade11/physics/keph206.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:18:14.026Z"
+    },
+    "grade11/physics/keph207.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:18:16.918Z"
+    },
+    "grade11/political_science/keps101.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:18:20.390Z"
+    },
+    "grade11/political_science/keps102.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:18:23.914Z"
+    },
+    "grade11/political_science/keps103.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:18:29.540Z"
+    },
+    "grade11/political_science/keps104.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:18:32.195Z"
+    },
+    "grade11/political_science/keps105.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:18:34.566Z"
+    },
+    "grade11/political_science/keps106.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:18:38.043Z"
+    },
+    "grade11/political_science/keps107.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:18:40.753Z"
+    },
+    "grade11/political_science/keps108.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:18:44.036Z"
+    },
+    "grade12/accountancy/leac101..pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:21:50.543Z"
+    },
+    "grade12/accountancy/leac101.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:21:56.714Z"
+    },
+    "grade12/accountancy/leac102.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:22:04.472Z"
+    },
+    "grade12/accountancy/leac103.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:22:10.503Z"
+    },
+    "grade12/accountancy/leac104.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:22:15.705Z"
+    },
+    "grade12/accountancy/leac1ps.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:22:17.119Z"
+    },
+    "grade12/accountancy/leac201.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:22:28.391Z"
+    },
+    "grade12/accountancy/leac202.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:22:38.580Z"
+    },
+    "grade12/accountancy/leac203.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:22:42.114Z"
+    },
+    "grade12/accountancy/leac204.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:22:46.756Z"
+    },
+    "grade12/accountancy/leac205.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:22:54.779Z"
+    },
+    "grade12/accountancy/leac206.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:23:02.025Z"
+    },
+    "grade12/accountancy/leac2ps.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:23:04.013Z"
+    },
+    "grade12/biology/lebs101.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:27:49.146Z"
+    },
+    "grade12/biology/lebs102.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:27:54.490Z"
+    },
+    "grade12/biology/lebs103.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:27:57.492Z"
+    },
+    "grade12/biology/lebs104.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:27:59.814Z"
+    },
+    "grade12/biology/lebs105.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:28:08.019Z"
+    },
+    "grade12/biology/lebs106.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:28:14.914Z"
+    },
+    "grade12/biology/lebs107.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:28:18.987Z"
+    },
+    "grade12/biology/lebs108.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:28:25.047Z"
+    },
+    "grade12/business_studies/lebs101.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:28:28.828Z"
+    },
+    "grade12/business_studies/lebs102.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:28:33.657Z"
+    },
+    "grade12/business_studies/lebs103.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:28:36.369Z"
+    },
+    "grade12/business_studies/lebs104.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:28:38.635Z"
+    },
+    "grade12/business_studies/lebs105.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:28:46.631Z"
+    },
+    "grade12/business_studies/lebs106.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:28:53.189Z"
+    },
+    "grade12/computer_science/lecs101.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:33:15.931Z"
+    },
+    "grade12/computer_science/lecs102.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:33:18.699Z"
+    },
+    "grade12/computer_science/lecs103.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:33:22.853Z"
+    },
+    "grade12/computer_science/lecs104.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:33:25.179Z"
+    },
+    "grade12/computer_science/lecs105.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:33:27.370Z"
+    },
+    "grade12/computer_science/lecs106.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:33:29.863Z"
+    },
+    "grade12/computer_science/lecs107.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:33:32.086Z"
+    },
+    "grade12/computer_science/lecs108.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:33:34.900Z"
+    },
+    "grade12/computer_science/lecs109.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:33:41.903Z"
+    },
+    "grade12/computer_science/lecs110.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:33:47.945Z"
+    },
+    "grade12/computer_science/lecs111.pdf": {
+      "figures": 15,
+      "at": "2026-07-23T04:34:05.281Z"
+    },
+    "grade12/computer_science/lecs112.pdf": {
+      "figures": 5,
+      "at": "2026-07-23T04:34:12.768Z"
+    },
+    "grade12/computer_science/lecs113.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:34:14.725Z"
+    },
+    "grade12/computer_science/lecs1ps.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:34:16.475Z"
+    },
+    "grade12/history/lehh101.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:37:01.108Z"
+    },
+    "grade12/history/lehh102.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:37:03.542Z"
+    },
+    "grade12/history/lehh103.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:37:05.772Z"
+    },
+    "grade12/history/lehh104.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:37:07.799Z"
+    },
+    "grade12/history/lehh105.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:37:11.552Z"
+    },
+    "grade12/history/lehh106.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:37:13.840Z"
+    },
+    "grade12/history/lehh107.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:37:17.683Z"
+    },
+    "grade12/history/lehh201.pdf": {
+      "figures": 5,
+      "at": "2026-07-23T04:37:29.877Z"
+    },
+    "grade12/history/lehh202.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:37:32.966Z"
+    },
+    "grade12/history/lehh203.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:37:37.309Z"
+    },
+    "grade12/history/lehh204.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:37:43.433Z"
+    },
+    "grade12/history/lehh205.pdf": {
+      "figures": 10,
+      "at": "2026-07-23T04:37:55.296Z"
+    },
+    "grade12/history/lehh206.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:38:01.193Z"
+    },
+    "grade12/history/lehh207.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:38:05.585Z"
+    },
+    "grade12/history/lehs101.pdf": {
+      "figures": 34,
+      "at": "2026-07-23T04:38:43.445Z"
+    },
+    "grade12/history/lehs102.pdf": {
+      "figures": 16,
+      "at": "2026-07-23T04:39:05.879Z"
+    },
+    "grade12/history/lehs103.pdf": {
+      "figures": 16,
+      "at": "2026-07-23T04:39:26.507Z"
+    },
+    "grade12/history/lehs104.pdf": {
+      "figures": 34,
+      "at": "2026-07-23T04:40:08.385Z"
+    },
+    "grade12/history/lehs1ps.pdf": {
+      "figures": 5,
+      "at": "2026-07-23T04:40:16.766Z"
+    },
+    "grade12/mathematics/lemh101.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:40:21.056Z"
+    },
+    "grade12/mathematics/lemh102.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:40:25.490Z"
+    },
+    "grade12/mathematics/lemh103.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:40:33.090Z"
+    },
+    "grade12/mathematics/lemh104.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:40:39.003Z"
+    },
+    "grade12/mathematics/lemh105.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:40:49.668Z"
+    },
+    "grade12/mathematics/lemh106.pdf": {
+      "figures": 1,
+      "at": "2026-07-23T04:40:57.055Z"
+    },
+    "grade12/mathematics/lemh1a1.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:40:58.396Z"
+    },
+    "grade12/mathematics/lemh1a2.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:41:00.308Z"
+    },
+    "grade12/mathematics/lemh1an.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:41:02.769Z"
+    },
+    "grade12/mathematics/lemh1ps.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:41:07.066Z"
+    },
+    "grade12/mathematics/lemh201.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:41:19.611Z"
+    },
+    "grade12/mathematics/lemh202.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:41:22.664Z"
+    },
+    "grade12/mathematics/lemh203.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:41:30.802Z"
+    },
+    "grade12/mathematics/lemh204.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T04:41:40.932Z"
+    },
+    "grade12/mathematics/lemh205.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:41:45.599Z"
+    },
+    "grade12/mathematics/lemh206.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:41:49.041Z"
+    },
+    "grade12/mathematics/lemh207.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:41:55.407Z"
+    },
+    "grade12/physics/leph101.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T04:42:08.652Z"
+    },
+    "grade12/physics/leph102.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:42:17.600Z"
+    },
+    "grade12/physics/leph103.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:42:25.154Z"
+    },
+    "grade12/physics/leph104.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T04:42:33.635Z"
+    },
+    "grade12/physics/leph105.pdf": {
+      "figures": 5,
+      "at": "2026-07-23T04:42:41.298Z"
+    },
+    "grade12/physics/leph106.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:42:48.331Z"
+    },
+    "grade12/physics/leph107.pdf": {
+      "figures": 3,
+      "at": "2026-07-23T04:42:54.869Z"
+    },
+    "grade12/physics/leph108.pdf": {
+      "figures": 4,
+      "at": "2026-07-23T04:43:01.207Z"
+    },
+    "grade12/physics/leph201.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:43:06.127Z"
+    },
+    "grade12/physics/leph202.pdf": {
+      "figures": 2,
+      "at": "2026-07-23T04:43:12.554Z"
+    },
+    "grade12/physics/leph203.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:43:14.745Z"
+    },
+    "grade12/physics/leph204.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:43:17.357Z"
+    },
+    "grade12/physics/leph205.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:43:19.807Z"
+    },
+    "grade12/political_science/leps101.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:43:41.666Z"
+    },
+    "grade12/political_science/leps1ps.pdf": {
+      "figures": 0,
+      "at": "2026-07-23T04:45:44.858Z"
+    },
+    "grade6/physical_education/fekr101.pdf": {
+      "figures": 25,
+      "at": "2026-07-25T05:51:25.679Z"
+    },
+    "grade6/physical_education/fekr102.pdf": {
+      "figures": 62,
+      "at": "2026-07-25T05:52:38.600Z"
+    },
+    "grade6/physical_education/fekr103.pdf": {
+      "figures": 16,
+      "at": "2026-07-25T05:52:56.493Z"
+    },
+    "grade6/physical_education/fekr104.pdf": {
+      "figures": 13,
+      "at": "2026-07-25T05:53:10.488Z"
+    },
+    "grade6/physical_education/fekr105.pdf": {
+      "figures": 18,
+      "at": "2026-07-25T05:53:27.248Z"
+    },
+    "grade6/physical_education/fekr106.pdf": {
+      "figures": 24,
+      "at": "2026-07-25T05:53:53.055Z"
+    },
+    "grade1/mathematics/aejm101.pdf": {
+      "figures": 40,
+      "at": "2026-07-25T06:10:36.722Z"
+    },
+    "grade1/mathematics/aejm102.pdf": {
+      "figures": 58,
+      "at": "2026-07-25T06:13:15.123Z"
+    },
+    "grade1/mathematics/aejm103.pdf": {
+      "figures": 100,
+      "at": "2026-07-25T06:25:36.483Z"
+    },
+    "grade1/mathematics/aejm104.pdf": {
+      "figures": 75,
+      "at": "2026-07-25T06:26:52.164Z"
+    },
+    "grade1/mathematics/aejm105.pdf": {
+      "figures": 68,
+      "at": "2026-07-25T06:28:20.394Z"
+    },
+    "grade1/mathematics/aejm106.pdf": {
+      "figures": 33,
+      "at": "2026-07-25T06:28:47.563Z"
+    },
+    "grade1/mathematics/aejm107.pdf": {
+      "figures": 86,
+      "at": "2026-07-25T06:29:46.038Z"
+    },
+    "grade1/mathematics/aejm108.pdf": {
+      "figures": 64,
+      "at": "2026-07-25T06:31:01.287Z"
+    },
+    "grade1/mathematics/aejm109.pdf": {
+      "figures": 29,
+      "at": "2026-07-25T06:31:42.791Z"
+    },
+    "grade1/mathematics/aejm110.pdf": {
+      "figures": 47,
+      "at": "2026-07-25T06:32:16.346Z"
+    },
+    "grade1/mathematics/aejm111.pdf": {
+      "figures": 19,
+      "at": "2026-07-25T06:32:28.139Z"
+    },
+    "grade1/mathematics/aejm112.pdf": {
+      "figures": 40,
+      "at": "2026-07-25T06:32:54.565Z"
+    },
+    "grade1/mathematics/aejm113.pdf": {
+      "figures": 44,
+      "at": "2026-07-25T06:33:28.326Z"
+    },
+    "grade2/hindi/bhsr101.pdf": {
+      "figures": 32,
+      "at": "2026-07-25T06:34:33.733Z"
+    },
+    "grade2/hindi/bhsr102.pdf": {
+      "figures": 15,
+      "at": "2026-07-25T06:34:46.314Z"
+    },
+    "grade2/hindi/bhsr103.pdf": {
+      "figures": 29,
+      "at": "2026-07-25T06:35:34.325Z"
+    },
+    "grade2/hindi/bhsr104.pdf": {
+      "figures": 19,
+      "at": "2026-07-25T06:35:45.528Z"
+    },
+    "grade2/hindi/bhsr105.pdf": {
+      "figures": 23,
+      "at": "2026-07-25T06:36:20.297Z"
+    },
+    "grade2/hindi/bhsr106.pdf": {
+      "figures": 18,
+      "at": "2026-07-25T06:36:46.421Z"
+    },
+    "grade2/hindi/bhsr107.pdf": {
+      "figures": 18,
+      "at": "2026-07-25T06:37:22.155Z"
+    },
+    "grade2/hindi/bhsr108.pdf": {
+      "figures": 19,
+      "at": "2026-07-25T06:38:19.499Z"
+    },
+    "grade2/hindi/bhsr109.pdf": {
+      "figures": 11,
+      "at": "2026-07-25T06:38:26.488Z"
+    },
+    "grade2/hindi/bhsr110.pdf": {
+      "figures": 22,
+      "at": "2026-07-25T06:38:52.951Z"
+    },
+    "grade2/hindi/bhsr111.pdf": {
+      "figures": 23,
+      "at": "2026-07-25T06:40:00.617Z"
+    },
+    "grade2/hindi/bhsr112.pdf": {
+      "figures": 28,
+      "at": "2026-07-25T06:41:10.989Z"
+    },
+    "grade2/hindi/bhsr113.pdf": {
+      "figures": 31,
+      "at": "2026-07-25T06:42:41.917Z"
+    },
+    "grade2/hindi/bhsr114.pdf": {
+      "figures": 24,
+      "at": "2026-07-25T06:42:54.819Z"
+    },
+    "grade2/hindi/bhsr115.pdf": {
+      "figures": 22,
+      "at": "2026-07-25T06:43:47.559Z"
+    },
+    "grade2/hindi/bhsr116.pdf": {
+      "figures": 19,
+      "at": "2026-07-25T06:44:07.328Z"
+    },
+    "grade2/hindi/bhsr117.pdf": {
+      "figures": 21,
+      "at": "2026-07-25T06:44:59.566Z"
+    },
+    "grade2/hindi/bhsr118.pdf": {
+      "figures": 28,
+      "at": "2026-07-25T06:46:55.822Z"
+    },
+    "grade2/hindi/bhsr119.pdf": {
+      "figures": 40,
+      "at": "2026-07-25T06:48:43.751Z"
+    },
+    "grade2/hindi/bhsr120.pdf": {
+      "figures": 35,
+      "at": "2026-07-25T06:50:02.239Z"
+    },
+    "grade2/hindi/bhsr121.pdf": {
+      "figures": 25,
+      "at": "2026-07-25T06:51:05.985Z"
+    },
+    "grade2/hindi/bhsr122.pdf": {
+      "figures": 15,
+      "at": "2026-07-25T06:51:19.271Z"
+    },
+    "grade2/hindi/bhsr123.pdf": {
+      "figures": 15,
+      "at": "2026-07-25T06:51:42.688Z"
+    },
+    "grade2/hindi/bhsr124.pdf": {
+      "figures": 17,
+      "at": "2026-07-25T06:51:57.615Z"
+    },
+    "grade2/hindi/bhsr125.pdf": {
+      "figures": 30,
+      "at": "2026-07-25T06:52:49.283Z"
+    },
+    "grade2/mathematics/bejm101.pdf": {
+      "figures": 39,
+      "at": "2026-07-25T06:53:46.127Z"
+    },
+    "grade2/mathematics/bejm102.pdf": {
+      "figures": 39,
+      "at": "2026-07-25T06:54:10.155Z"
+    },
+    "grade2/mathematics/bejm103.pdf": {
+      "figures": 17,
+      "at": "2026-07-25T06:54:40.022Z"
+    },
+    "grade2/mathematics/bejm104.pdf": {
+      "figures": 35,
+      "at": "2026-07-25T06:55:24.137Z"
+    },
+    "grade2/mathematics/bejm105.pdf": {
+      "figures": 15,
+      "at": "2026-07-25T06:55:43.802Z"
+    },
+    "grade2/mathematics/bejm106.pdf": {
+      "figures": 50,
+      "at": "2026-07-25T06:56:26.971Z"
+    },
+    "grade2/mathematics/bejm107.pdf": {
+      "figures": 46,
+      "at": "2026-07-25T06:57:30.110Z"
+    },
+    "grade2/mathematics/bejm108.pdf": {
+      "figures": 42,
+      "at": "2026-07-25T06:58:30.980Z"
+    },
+    "grade2/mathematics/bejm109.pdf": {
+      "figures": 51,
+      "at": "2026-07-25T06:59:31.549Z"
+    },
+    "grade2/mathematics/bejm110.pdf": {
+      "figures": 38,
+      "at": "2026-07-25T07:00:13.091Z"
+    },
+    "grade2/mathematics/bejm111.pdf": {
+      "figures": 35,
+      "at": "2026-07-25T07:01:00.738Z"
+    },
+    "grade2/urdu/bush101.pdf": {
+      "figures": 65,
+      "at": "2026-07-25T07:01:30.453Z"
+    },
+    "grade2/urdu/bush102.pdf": {
+      "figures": 77,
+      "at": "2026-07-25T07:02:24.804Z"
+    },
+    "grade2/urdu/bush103.pdf": {
+      "figures": 74,
+      "at": "2026-07-25T07:03:07.516Z"
+    },
+    "grade2/urdu/bush104.pdf": {
+      "figures": 72,
+      "at": "2026-07-25T07:03:42.753Z"
+    },
+    "grade2/urdu/bush105.pdf": {
+      "figures": 72,
+      "at": "2026-07-25T07:04:19.703Z"
+    },
+    "grade2/urdu/bush106.pdf": {
+      "figures": 84,
+      "at": "2026-07-25T07:04:56.015Z"
+    },
+    "grade2/urdu/bush107.pdf": {
+      "figures": 45,
+      "at": "2026-07-25T07:05:21.056Z"
+    },
+    "grade2/urdu/bush108.pdf": {
+      "figures": 70,
+      "at": "2026-07-25T07:06:13.997Z"
+    },
+    "grade2/urdu/bush109.pdf": {
+      "figures": 81,
+      "at": "2026-07-25T07:07:09.227Z"
+    },
+    "grade2/urdu/bush110.pdf": {
+      "figures": 53,
+      "at": "2026-07-25T07:07:32.153Z"
+    },
+    "grade2/urdu/bush111.pdf": {
+      "figures": 62,
+      "at": "2026-07-25T07:08:12.991Z"
+    },
+    "grade2/urdu/bush112.pdf": {
+      "figures": 51,
+      "at": "2026-07-25T07:09:04.282Z"
+    },
+    "grade2/urdu/bush113.pdf": {
+      "figures": 48,
+      "at": "2026-07-25T07:09:16.657Z"
+    },
+    "grade2/urdu/bush114.pdf": {
+      "figures": 51,
+      "at": "2026-07-25T07:10:06.220Z"
+    },
+    "grade2/urdu/bush115.pdf": {
+      "figures": 49,
+      "at": "2026-07-25T07:10:56.110Z"
+    },
+    "grade2/urdu/bush116.pdf": {
+      "figures": 61,
+      "at": "2026-07-25T07:11:18.672Z"
+    },
+    "grade2/urdu/bush117.pdf": {
+      "figures": 6,
+      "at": "2026-07-25T07:11:20.689Z"
+    },
+    "grade2/urdu/bush118.pdf": {
+      "figures": 30,
+      "at": "2026-07-25T07:11:25.721Z"
+    },
+    "grade2/urdu/bush119.pdf": {
+      "figures": 7,
+      "at": "2026-07-25T07:11:28.511Z"
+    },
+    "grade3/evs/ceev101.pdf": {
+      "figures": 45,
+      "at": "2026-07-25T07:12:24.099Z"
+    },
+    "grade3/evs/ceev102.pdf": {
+      "figures": 49,
+      "at": "2026-07-25T07:13:04.144Z"
+    },
+    "grade3/evs/ceev103.pdf": {
+      "figures": 42,
+      "at": "2026-07-25T07:13:32.673Z"
+    },
+    "grade3/evs/ceev104.pdf": {
+      "figures": 70,
+      "at": "2026-07-25T07:14:26.977Z"
+    },
+    "grade3/evs/ceev105.pdf": {
+      "figures": 40,
+      "at": "2026-07-25T07:14:55.523Z"
+    },
+    "grade3/evs/ceev106.pdf": {
+      "figures": 25,
+      "at": "2026-07-25T07:15:33.716Z"
+    },
+    "grade3/evs/ceev107.pdf": {
+      "figures": 48,
+      "at": "2026-07-25T07:16:17.800Z"
+    },
+    "grade3/evs/ceev108.pdf": {
+      "figures": 57,
+      "at": "2026-07-25T07:16:44.586Z"
+    },
+    "grade3/evs/ceev109.pdf": {
+      "figures": 44,
+      "at": "2026-07-25T07:17:13.930Z"
+    },
+    "grade3/evs/ceev110.pdf": {
+      "figures": 31,
+      "at": "2026-07-25T07:18:03.204Z"
+    },
+    "grade3/evs/ceev111.pdf": {
+      "figures": 66,
+      "at": "2026-07-25T07:18:43.464Z"
+    },
+    "grade3/evs/ceev112.pdf": {
+      "figures": 30,
+      "at": "2026-07-25T07:19:25.303Z"
+    },
+    "grade3/evs/cuev101.pdf": {
+      "figures": 43,
+      "at": "2026-07-25T07:20:29.940Z"
+    },
+    "grade3/evs/cuev102.pdf": {
+      "figures": 46,
+      "at": "2026-07-25T07:21:23.154Z"
+    },
+    "grade3/evs/cuev103.pdf": {
+      "figures": 44,
+      "at": "2026-07-25T07:22:05.540Z"
+    },
+    "grade3/evs/cuev104.pdf": {
+      "figures": 64,
+      "at": "2026-07-25T07:23:10.201Z"
+    },
+    "grade3/evs/cuev105.pdf": {
+      "figures": 40,
+      "at": "2026-07-25T07:23:45.035Z"
+    },
+    "grade3/evs/cuev106.pdf": {
+      "figures": 28,
+      "at": "2026-07-25T07:24:29.043Z"
+    },
+    "grade3/evs/cuev107.pdf": {
+      "figures": 43,
+      "at": "2026-07-25T07:25:19.609Z"
+    },
+    "grade3/evs/cuev108.pdf": {
+      "figures": 55,
+      "at": "2026-07-25T07:25:51.723Z"
+    },
+    "grade3/evs/cuev109.pdf": {
+      "figures": 41,
+      "at": "2026-07-25T07:26:36.277Z"
+    },
+    "grade3/evs/cuev110.pdf": {
+      "figures": 30,
+      "at": "2026-07-25T07:27:25.827Z"
+    },
+    "grade3/evs/cuev111.pdf": {
+      "figures": 63,
+      "at": "2026-07-25T07:28:19.436Z"
+    },
+    "grade3/evs/cuev112.pdf": {
+      "figures": 28,
+      "at": "2026-07-25T07:29:10.274Z"
+    },
+    "grade3/mathematics/cemm101.pdf": {
+      "figures": 66,
+      "at": "2026-07-25T07:29:26.706Z"
+    },
+    "grade3/mathematics/cemm102.pdf": {
+      "figures": 65,
+      "at": "2026-07-25T07:29:45.304Z"
+    },
+    "grade3/mathematics/cemm103.pdf": {
+      "figures": 38,
+      "at": "2026-07-25T07:30:07.225Z"
+    },
+    "grade3/mathematics/cemm104.pdf": {
+      "figures": 73,
+      "at": "2026-07-25T07:30:48.354Z"
+    },
+    "grade3/mathematics/cemm105.pdf": {
+      "figures": 52,
+      "at": "2026-07-25T07:31:35.048Z"
+    },
+    "grade3/mathematics/cemm106.pdf": {
+      "figures": 41,
+      "at": "2026-07-25T07:32:24.050Z"
+    },
+    "grade3/mathematics/cemm107.pdf": {
+      "figures": 63,
+      "at": "2026-07-25T07:32:51.412Z"
+    },
+    "grade3/mathematics/cemm108.pdf": {
+      "figures": 79,
+      "at": "2026-07-25T07:33:13.149Z"
+    },
+    "grade3/mathematics/cemm109.pdf": {
+      "figures": 29,
+      "at": "2026-07-25T07:33:33.379Z"
+    },
+    "grade3/mathematics/cemm110.pdf": {
+      "figures": 25,
+      "at": "2026-07-25T07:33:55.799Z"
+    },
+    "grade3/mathematics/cemm111.pdf": {
+      "figures": 58,
+      "at": "2026-07-25T07:34:24.805Z"
+    },
+    "grade3/mathematics/cemm112.pdf": {
+      "figures": 36,
+      "at": "2026-07-25T07:35:01.556Z"
+    },
+    "grade3/mathematics/cemm113.pdf": {
+      "figures": 44,
+      "at": "2026-07-25T07:35:25.348Z"
+    },
+    "grade3/mathematics/cemm114.pdf": {
+      "figures": 72,
+      "at": "2026-07-25T07:37:08.036Z"
+    },
+    "grade3/mathematics/cumm101.pdf": {
+      "figures": 67,
+      "at": "2026-07-25T07:38:35.381Z"
+    },
+    "grade6/mathematics/fegp101.pdf": {
+      "figures": 5,
+      "at": "2026-07-25T07:47:06.145Z"
+    },
+    "grade4/evs/deap101.pdf": {
+      "figures": 15,
+      "at": "2026-07-25T07:49:34.678Z"
+    },
+    "grade4/evs/deap102.pdf": {
+      "figures": 14,
+      "at": "2026-07-25T07:49:56.966Z"
+    },
+    "grade4/evs/deap103.pdf": {
+      "figures": 10,
+      "at": "2026-07-25T07:50:20.179Z"
+    },
+    "grade4/evs/deap104.pdf": {
+      "figures": 7,
+      "at": "2026-07-25T07:50:36.435Z"
+    },
+    "grade4/evs/deap105.pdf": {
+      "figures": 10,
+      "at": "2026-07-25T07:51:01.692Z"
+    },
+    "grade4/evs/deap106.pdf": {
+      "figures": 16,
+      "at": "2026-07-25T07:51:30.808Z"
+    },
+    "grade4/evs/deap107.pdf": {
+      "figures": 13,
+      "at": "2026-07-25T07:51:56.852Z"
+    },
+    "grade4/evs/deap108.pdf": {
+      "figures": 5,
+      "at": "2026-07-25T07:52:09.512Z"
+    },
+    "grade4/evs/deap109.pdf": {
+      "figures": 14,
+      "at": "2026-07-25T07:52:35.801Z"
+    },
+    "grade4/evs/deap110.pdf": {
+      "figures": 6,
+      "at": "2026-07-25T07:52:50.798Z"
+    },
+    "grade4/evs/deap111.pdf": {
+      "figures": 20,
+      "at": "2026-07-25T07:53:18.433Z"
+    },
+    "grade4/evs/deap112.pdf": {
+      "figures": 9,
+      "at": "2026-07-25T07:53:40.481Z"
+    },
+    "grade4/evs/deap113.pdf": {
+      "figures": 6,
+      "at": "2026-07-25T07:53:55.742Z"
+    },
+    "grade4/evs/deap114.pdf": {
+      "figures": 15,
+      "at": "2026-07-25T07:54:11.719Z"
+    },
+    "grade4/evs/deap115.pdf": {
+      "figures": 11,
+      "at": "2026-07-25T07:54:29.390Z"
+    },
+    "grade4/evs/deap116.pdf": {
+      "figures": 12,
+      "at": "2026-07-25T07:54:50.252Z"
+    },
+    "grade4/evs/deap117.pdf": {
+      "figures": 9,
+      "at": "2026-07-25T07:55:09.762Z"
+    },
+    "grade4/evs/deap118.pdf": {
+      "figures": 11,
+      "at": "2026-07-25T07:55:43.675Z"
+    },
+    "grade4/evs/deap119.pdf": {
+      "figures": 18,
+      "at": "2026-07-25T07:56:11.258Z"
+    },
+    "grade4/evs/deap120.pdf": {
+      "figures": 8,
+      "at": "2026-07-25T07:56:27.821Z"
+    },
+    "grade4/evs/deap121.pdf": {
+      "figures": 6,
+      "at": "2026-07-25T07:56:38.748Z"
+    },
+    "grade4/evs/deap122.pdf": {
+      "figures": 9,
+      "at": "2026-07-25T07:56:53.467Z"
+    },
+    "grade4/evs/deap123.pdf": {
+      "figures": 2,
+      "at": "2026-07-25T07:57:04.184Z"
+    },
+    "grade4/evs/deap124.pdf": {
+      "figures": 24,
+      "at": "2026-07-25T07:57:25.703Z"
+    },
+    "grade4/evs/deap125.pdf": {
+      "figures": 8,
+      "at": "2026-07-25T07:57:47.284Z"
+    },
+    "grade4/evs/deap126.pdf": {
+      "figures": 5,
+      "at": "2026-07-25T07:58:20.758Z"
+    },
+    "grade4/evs/deap127.pdf": {
+      "figures": 6,
+      "at": "2026-07-25T07:58:49.551Z"
+    },
+    "grade4/evs/deev101.pdf": {
+      "figures": 35,
+      "at": "2026-07-25T07:59:36.878Z"
+    },
+    "grade4/evs/deev102.pdf": {
+      "figures": 32,
+      "at": "2026-07-25T08:00:28.178Z"
+    },
+    "grade4/evs/deev103.pdf": {
+      "figures": 123,
+      "at": "2026-07-25T08:01:44.096Z"
+    },
+    "grade4/evs/deev104.pdf": {
+      "figures": 42,
+      "at": "2026-07-25T08:02:35.090Z"
+    },
+    "grade4/evs/deev105.pdf": {
+      "figures": 39,
+      "at": "2026-07-25T08:03:25.844Z"
+    },
+    "grade4/evs/deev106.pdf": {
+      "figures": 57,
+      "at": "2026-07-25T08:04:37.940Z"
+    },
+    "grade4/evs/deev107.pdf": {
+      "figures": 47,
+      "at": "2026-07-25T08:05:22.933Z"
+    },
+    "grade4/evs/deev108.pdf": {
+      "figures": 32,
+      "at": "2026-07-25T08:06:01.478Z"
+    },
+    "grade4/evs/deev109.pdf": {
+      "figures": 67,
+      "at": "2026-07-25T08:07:22.207Z"
+    },
+    "grade4/evs/deev110.pdf": {
+      "figures": 38,
+      "at": "2026-07-25T08:08:05.716Z"
+    },
+    "grade4/fine_arts/debu101.pdf": {
+      "figures": 33,
+      "at": "2026-07-25T08:08:48.523Z"
+    },
+    "grade4/fine_arts/debu102.pdf": {
+      "figures": 13,
+      "at": "2026-07-25T08:09:08.946Z"
+    },
+    "grade4/fine_arts/debu103.pdf": {
+      "figures": 15,
+      "at": "2026-07-25T08:09:24.526Z"
+    },
+    "grade4/fine_arts/debu104.pdf": {
+      "figures": 32,
+      "at": "2026-07-25T08:10:06.907Z"
+    },
+    "grade4/fine_arts/debu105.pdf": {
+      "figures": 29,
+      "at": "2026-07-25T08:10:27.304Z"
+    },
+    "grade4/fine_arts/debu106.pdf": {
+      "figures": 25,
+      "at": "2026-07-25T08:10:42.325Z"
+    },
+    "grade4/fine_arts/debu107.pdf": {
+      "figures": 20,
+      "at": "2026-07-25T08:10:59.326Z"
+    },
+    "grade4/fine_arts/debu108.pdf": {
+      "figures": 17,
+      "at": "2026-07-25T08:11:17.506Z"
+    },
+    "grade4/fine_arts/debu109.pdf": {
+      "figures": 17,
+      "at": "2026-07-25T08:11:46.450Z"
+    },
+    "grade4/fine_arts/debu110.pdf": {
+      "figures": 13,
+      "at": "2026-07-25T08:12:02.708Z"
+    },
+    "grade4/fine_arts/debu111.pdf": {
+      "figures": 14,
+      "at": "2026-07-25T08:12:21.367Z"
+    },
+    "grade4/fine_arts/debu112.pdf": {
+      "figures": 23,
+      "at": "2026-07-25T08:12:45.205Z"
+    },
+    "grade4/fine_arts/debu113.pdf": {
+      "figures": 31,
+      "at": "2026-07-25T08:13:23.863Z"
+    },
+    "grade4/fine_arts/debu114.pdf": {
+      "figures": 62,
+      "at": "2026-07-25T08:15:07.528Z"
+    },
+    "grade4/fine_arts/debu115.pdf": {
+      "figures": 20,
+      "at": "2026-07-25T08:15:40.240Z"
+    },
+    "grade4/fine_arts/debu116.pdf": {
+      "figures": 38,
+      "at": "2026-07-25T08:16:38.055Z"
+    },
+    "grade4/fine_arts/debu117.pdf": {
+      "figures": 15,
+      "at": "2026-07-25T08:17:14.430Z"
+    },
+    "grade4/fine_arts/debu118.pdf": {
+      "figures": 11,
+      "at": "2026-07-25T08:17:28.034Z"
+    },
+    "grade4/mathematics/demm101.pdf": {
+      "figures": 133,
+      "at": "2026-07-25T08:18:45.493Z"
+    },
+    "grade4/mathematics/demm102.pdf": {
+      "figures": 59,
+      "at": "2026-07-25T08:19:44.619Z"
+    },
+    "grade4/mathematics/demm103.pdf": {
+      "figures": 20,
+      "at": "2026-07-25T08:20:14.600Z"
+    },
+    "grade4/mathematics/demm104.pdf": {
+      "figures": 43,
+      "at": "2026-07-25T08:21:13.790Z"
+    },
+    "grade4/mathematics/demm105.pdf": {
+      "figures": 74,
+      "at": "2026-07-25T08:21:54.784Z"
+    },
+    "grade4/mathematics/demm106.pdf": {
+      "figures": 38,
+      "at": "2026-07-25T08:22:17.757Z"
+    },
+    "grade4/mathematics/demm107.pdf": {
+      "figures": 27,
+      "at": "2026-07-25T08:22:32.348Z"
+    },
+    "grade4/mathematics/demm108.pdf": {
+      "figures": 79,
+      "at": "2026-07-25T08:22:55.509Z"
+    },
+    "grade4/mathematics/demm109.pdf": {
+      "figures": 55,
+      "at": "2026-07-25T08:23:21.807Z"
+    },
+    "grade4/mathematics/demm110.pdf": {
+      "figures": 16,
+      "at": "2026-07-25T08:23:35.978Z"
+    },
+    "grade4/mathematics/demm111.pdf": {
+      "figures": 51,
+      "at": "2026-07-25T08:23:59.577Z"
+    },
+    "grade4/mathematics/demm112.pdf": {
+      "figures": 19,
+      "at": "2026-07-25T08:24:13.774Z"
+    },
+    "grade4/mathematics/demm113.pdf": {
+      "figures": 36,
+      "at": "2026-07-25T08:24:37.895Z"
+    },
+    "grade4/mathematics/demm114.pdf": {
+      "figures": 21,
+      "at": "2026-07-25T08:24:54.067Z"
+    },
+    "grade4/mathematics/dumm101.pdf": {
+      "figures": 134,
+      "at": "2026-07-25T08:25:37.736Z"
+    },
+    "grade4/mathematics/dumm102.pdf": {
+      "figures": 60,
+      "at": "2026-07-25T08:26:00.477Z"
+    },
+    "grade4/mathematics/dumm103.pdf": {
+      "figures": 19,
+      "at": "2026-07-25T08:26:08.556Z"
+    },
+    "grade4/mathematics/dumm104.pdf": {
+      "figures": 42,
+      "at": "2026-07-25T08:26:32.093Z"
+    },
+    "grade4/mathematics/dumm105.pdf": {
+      "figures": 75,
+      "at": "2026-07-25T08:27:03.593Z"
+    },
+    "grade4/mathematics/dumm106.pdf": {
+      "figures": 39,
+      "at": "2026-07-25T08:27:23.314Z"
+    },
+    "grade4/mathematics/dumm107.pdf": {
+      "figures": 30,
+      "at": "2026-07-25T08:27:38.513Z"
+    },
+    "grade4/mathematics/dumm108.pdf": {
+      "figures": 82,
+      "at": "2026-07-25T08:28:00.499Z"
+    },
+    "grade4/mathematics/dumm109.pdf": {
+      "figures": 55,
+      "at": "2026-07-25T08:28:27.065Z"
+    },
+    "grade4/mathematics/dumm110.pdf": {
+      "figures": 16,
+      "at": "2026-07-25T08:28:40.189Z"
+    },
+    "grade4/mathematics/dumm111.pdf": {
+      "figures": 52,
+      "at": "2026-07-25T08:28:57.376Z"
+    },
+    "grade4/mathematics/dumm112.pdf": {
+      "figures": 20,
+      "at": "2026-07-25T08:29:13.300Z"
+    },
+    "grade4/mathematics/dumm113.pdf": {
+      "figures": 37,
+      "at": "2026-07-25T08:29:35.682Z"
+    },
+    "grade4/mathematics/dumm114.pdf": {
+      "figures": 22,
+      "at": "2026-07-25T08:29:50.074Z"
+    },
+    "grade4/physical_education/deky101.pdf": {
+      "figures": 68,
+      "at": "2026-07-25T08:31:19.099Z"
+    },
+    "grade4/physical_education/deky102.pdf": {
+      "figures": 22,
+      "at": "2026-07-25T08:32:19.483Z"
+    },
+    "grade4/physical_education/deky103.pdf": {
+      "figures": 136,
+      "at": "2026-07-25T08:34:54.170Z"
+    },
+    "grade5/evs/eeap101.pdf": {
+      "figures": 42,
+      "at": "2026-07-25T08:35:57.224Z"
+    },
+    "grade5/evs/eeap102.pdf": {
+      "figures": 17,
+      "at": "2026-07-25T08:36:23.121Z"
+    },
+    "grade5/evs/eeap103.pdf": {
+      "figures": 29,
+      "at": "2026-07-25T08:37:07.014Z"
+    },
+    "grade5/evs/eeap104.pdf": {
+      "figures": 27,
+      "at": "2026-07-25T08:37:34.410Z"
+    },
+    "grade5/evs/eeap105.pdf": {
+      "figures": 40,
+      "at": "2026-07-25T08:38:19.492Z"
+    },
+    "grade5/evs/eeap106.pdf": {
+      "figures": 30,
+      "at": "2026-07-25T08:38:47.453Z"
+    },
+    "grade5/evs/eeap107.pdf": {
+      "figures": 13,
+      "at": "2026-07-25T08:39:08.661Z"
+    },
+    "grade5/evs/eeap108.pdf": {
+      "figures": 26,
+      "at": "2026-07-25T08:39:51.676Z"
+    },
+    "grade5/evs/eeap109.pdf": {
+      "figures": 25,
+      "at": "2026-07-25T08:40:32.876Z"
+    },
+    "grade5/evs/eeap110.pdf": {
+      "figures": 24,
+      "at": "2026-07-25T08:41:16.440Z"
+    },
+    "grade5/evs/eeap111.pdf": {
+      "figures": 35,
+      "at": "2026-07-25T08:42:01.152Z"
+    },
+    "grade5/evs/eeap112.pdf": {
+      "figures": 25,
+      "at": "2026-07-25T08:42:29.048Z"
+    },
+    "grade5/evs/eeap113.pdf": {
+      "figures": 24,
+      "at": "2026-07-25T08:43:04.002Z"
+    },
+    "grade5/evs/eeap114.pdf": {
+      "figures": 13,
+      "at": "2026-07-25T08:43:33.713Z"
+    },
+    "grade5/evs/eeap115.pdf": {
+      "figures": 27,
+      "at": "2026-07-25T08:43:58.604Z"
+    },
+    "grade5/evs/eeap116.pdf": {
+      "figures": 19,
+      "at": "2026-07-25T08:44:24.014Z"
+    },
+    "grade5/evs/eeap117.pdf": {
+      "figures": 19,
+      "at": "2026-07-25T08:44:59.951Z"
+    },
+    "grade5/evs/eeap118.pdf": {
+      "figures": 16,
+      "at": "2026-07-25T08:45:30.160Z"
+    },
+    "grade5/evs/eeap119.pdf": {
+      "figures": 29,
+      "at": "2026-07-25T08:46:01.453Z"
+    },
+    "grade5/evs/eeap120.pdf": {
+      "figures": 25,
+      "at": "2026-07-25T08:46:44.314Z"
+    },
+    "grade5/evs/eeap121.pdf": {
+      "figures": 24,
+      "at": "2026-07-25T08:47:06.378Z"
+    },
+    "grade5/evs/eeap122.pdf": {
+      "figures": 11,
+      "at": "2026-07-25T08:47:25.676Z"
+    },
+    "grade5/evs/eeev101.pdf": {
+      "figures": 61,
+      "at": "2026-07-25T08:48:06.276Z"
+    },
+    "grade5/evs/eeev102.pdf": {
+      "figures": 35,
+      "at": "2026-07-25T08:48:53.994Z"
+    },
+    "grade5/evs/eeev103.pdf": {
+      "figures": 22,
+      "at": "2026-07-25T08:49:26.288Z"
+    },
+    "grade5/evs/eeev104.pdf": {
+      "figures": 15,
+      "at": "2026-07-25T08:50:04.923Z"
+    },
+    "grade5/evs/eeev105.pdf": {
+      "figures": 51,
+      "at": "2026-07-25T08:50:49.424Z"
+    },
+    "grade5/evs/eeev106.pdf": {
+      "figures": 34,
+      "at": "2026-07-25T08:51:35.199Z"
+    },
+    "grade5/evs/eeev107.pdf": {
+      "figures": 22,
+      "at": "2026-07-25T08:52:10.908Z"
+    },
+    "grade5/evs/eeev108.pdf": {
+      "figures": 51,
+      "at": "2026-07-25T08:52:50.789Z"
+    },
+    "grade5/evs/eeev109.pdf": {
+      "figures": 25,
+      "at": "2026-07-25T08:53:25.367Z"
+    },
+    "grade5/evs/eeev110.pdf": {
+      "figures": 21,
+      "at": "2026-07-25T08:54:05.343Z"
+    },
+    "grade5/fine_arts/eebu101.pdf": {
+      "figures": 29,
+      "at": "2026-07-25T08:54:31.016Z"
+    },
+    "grade5/fine_arts/eebu102.pdf": {
+      "figures": 16,
+      "at": "2026-07-25T08:54:46.763Z"
+    },
+    "grade5/fine_arts/eebu103.pdf": {
+      "figures": 13,
+      "at": "2026-07-25T08:55:01.647Z"
+    },
+    "grade5/fine_arts/eebu104.pdf": {
+      "figures": 8,
+      "at": "2026-07-25T08:55:15.446Z"
+    },
+    "grade5/fine_arts/eebu105.pdf": {
+      "figures": 12,
+      "at": "2026-07-25T08:55:23.852Z"
+    },
+    "grade5/fine_arts/eebu106.pdf": {
+      "figures": 24,
+      "at": "2026-07-25T08:55:40.771Z"
+    },
+    "grade5/fine_arts/eebu107.pdf": {
+      "figures": 18,
+      "at": "2026-07-25T08:55:51.361Z"
+    },
+    "grade5/fine_arts/eebu108.pdf": {
+      "figures": 30,
+      "at": "2026-07-25T08:56:08.509Z"
+    },
+    "grade5/fine_arts/eebu109.pdf": {
+      "figures": 24,
+      "at": "2026-07-25T08:56:26.979Z"
+    },
+    "grade5/fine_arts/eebu110.pdf": {
+      "figures": 8,
+      "at": "2026-07-25T08:56:53.575Z"
+    },
+    "grade5/fine_arts/eebu111.pdf": {
+      "figures": 3,
+      "at": "2026-07-25T08:56:58.163Z"
+    },
+    "grade5/fine_arts/eebu112.pdf": {
+      "figures": 11,
+      "at": "2026-07-25T08:57:10.062Z"
+    },
+    "grade5/fine_arts/eebu113.pdf": {
+      "figures": 8,
+      "at": "2026-07-25T08:57:19.262Z"
+    },
+    "grade5/fine_arts/eebu114.pdf": {
+      "figures": 10,
+      "at": "2026-07-25T08:57:30.057Z"
+    },
+    "grade5/fine_arts/eebu115.pdf": {
+      "figures": 52,
+      "at": "2026-07-25T08:57:49.487Z"
+    },
+    "grade5/fine_arts/eebu116.pdf": {
+      "figures": 26,
+      "at": "2026-07-25T08:58:05.213Z"
+    },
+    "grade5/fine_arts/eebu117.pdf": {
+      "figures": 14,
+      "at": "2026-07-25T08:58:12.258Z"
+    },
+    "grade5/fine_arts/eebu118.pdf": {
+      "figures": 26,
+      "at": "2026-07-25T08:58:28.904Z"
+    },
+    "grade5/fine_arts/eebu119.pdf": {
+      "figures": 14,
+      "at": "2026-07-25T08:58:33.813Z"
+    },
+    "grade5/physical_education/eeky101.pdf": {
+      "figures": 92,
+      "at": "2026-07-25T09:01:23.492Z"
+    },
+    "grade5/physical_education/eeky102.pdf": {
+      "figures": 24,
+      "at": "2026-07-25T09:03:06.313Z"
+    },
+    "grade5/physical_education/eeky103.pdf": {
+      "figures": 165,
+      "at": "2026-07-25T09:05:15.453Z"
+    }
+  }
+}

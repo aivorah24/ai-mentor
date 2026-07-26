@@ -1,0 +1,46 @@
+{
+  "package": {
+    "package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f",
+    "package_type": "QAReportPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:12:14.067Z",
+    "produced_by": {
+      "agent": "functional-qa-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "uala08ghqgp",
+      "parent_package_id": "765847cf-9558-4ad6-a232-32c5c1da5074"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "qa_scores": {
+      "rendering": 100,
+      "assets": 100,
+      "performance": 100,
+      "accessibility": 100,
+      "integrity": 100,
+      "navigation": 100,
+      "overall_score": 100
+    },
+    "status": "FAIL",
+    "failed_checks": [
+      {
+        "issue_id": "QA004",
+        "category": "Navigation",
+        "description": "Dead end in navigation graph",
+        "target_agent": "lesson-generator-agent",
+        "error_code": "QA004"
+      }
+    ],
+    "handoff": {
+      "final_audit_agent": {},
+      "regeneration_agent": {
+        "stage_id": "step-1",
+        "component_id": "component-1",
+        "error_code": "QA004"
+      }
+    }
+  }
+}

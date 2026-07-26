@@ -1,0 +1,91 @@
+{
+  "package": {
+    "package_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "package_type": "LessonContentPackage",
+    "schema_version": "1.0",
+    "created_at": "2023-02-20T14:30:00Z",
+    "produced_by": {
+      "agent": "lesson-generator-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "12345678-9012-3456-7890-123456789012",
+      "parent_package_id": "f2b3c4d5-e6f7-g8h9-i0j1"
+    }
+  },
+  "payload": {
+    "lesson_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "stage_content": [
+      {
+        "stage_id": "stage-1",
+        "title": "What is the Learning Objective?",
+        "body": "The learning objective for this stage is to understand the concept of fractions.",
+        "callout": "Fractions are a way to represent part of a whole."
+      },
+      {
+        "stage_id": "stage-2",
+        "title": "Evidence Supporting the Learning Objective",
+        "body": "The evidence supporting this learning objective is from the curriculum, which states that fractions are a way to represent part of a whole.",
+        "callout": "This is a key concept in mathematics."
+      },
+      {
+        "stage_id": "stage-3",
+        "title": "UI Component Populated with Content",
+        "body": "The UI component has been populated with content, including a title, body, and callout.",
+        "callout": "This is an example of a populated UI component."
+      }
+    ],
+    "populated_components": [
+      {
+        "component_id": "component-1",
+        "slots": {
+          "title": "Fractions",
+          "body": "Fractions are a way to represent part of a whole.",
+          "callout": "This is a key concept in mathematics."
+        }
+      },
+      {
+        "component_id": "component-2",
+        "slots": {
+          "title": "Evidence",
+          "body": "The evidence supporting this learning objective is from the curriculum, which states that fractions are a way to represent part of a whole.",
+          "callout": "This is a key concept in mathematics."
+        }
+      },
+      {
+        "component_id": "component-3",
+        "slots": {
+          "title": "UI Component",
+          "body": "The UI component has been populated with content, including a title, body, and callout.",
+          "callout": "This is an example of a populated UI component."
+        }
+      }
+    ],
+    "source_references": [
+      {
+        "content_id": "content-1",
+        "chunk_id": "chunk-1"
+      },
+      {
+        "content_id": "content-2",
+        "chunk_id": "chunk-2"
+      },
+      {
+        "content_id": "content-3",
+        "chunk_id": "chunk-3"
+      }
+    ],
+    "validation_summary": {},
+    "handoff": {
+      "illustration_agent": {
+        "lesson_content_package_id": "f2b3c4d5-e6f7-g8h9-i0j1"
+      },
+      "audio_agent": {
+        "lesson_content_package_id": "f2b3c4d5-e6f7-g8h9-i0j1"
+      },
+      "quiz_agent": {
+        "lesson_content_package_id": "f2b3c4d5-e6f7-g8h9-i0j1"
+      }
+    }
+  }
+}

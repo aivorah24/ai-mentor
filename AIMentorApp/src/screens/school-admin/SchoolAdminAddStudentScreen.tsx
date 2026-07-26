@@ -21,8 +21,9 @@
  * input so admins aren't stuck with zero options.
  */
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity, TextInput, Pressable, Platform } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity, TextInput, Pressable, Platform, Share, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import Header from '../../components/common/Header';
 import ScreenLayout from '../../components/common/ScreenLayout';
 import { useTheme } from '../../context/ThemeContext';
@@ -175,6 +176,7 @@ export default function SchoolAdminAddStudentScreen({ navigation }: any) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [curriculum, setCurriculum] = useState('');
+  const [admissionNumber, setAdmissionNumber] = useState('');
   const [grade, setGrade] = useState('');
   const [section, setSection] = useState('');
   const [emailOverride, setEmailOverride] = useState('');
@@ -226,6 +228,19 @@ export default function SchoolAdminAddStudentScreen({ navigation }: any) {
   const [formError, setFormError] = useState('');
   const [result, setResult] = useState<CreateResult | null>(null);
 
+  // React Navigation reuses this screen instance rather than remounting it —
+  // without this, tapping "Add Student" again after a successful create kept
+  // showing the PREVIOUS student's "Student added" success screen (with their
+  // real password still on it) instead of a fresh blank form.
+  useFocusEffect(useCallback(() => {
+    setFirstName(''); setLastName(''); setAdmissionNumber('');
+    setGrade(''); setSection(''); setEmailOverride(''); setStatus('invited');
+    setParentName(''); setParentEmail(''); setNotes(''); setParentSectionOpen(false);
+    setSubmitting(false); setFormError(''); setResult(null);
+    // Curriculum is left as-is — it's re-derived from the school's base type
+    // by the effect above, not user-typed state worth wiping every focus.
+  }, []));
+
   const canSubmit = firstName.trim().length > 0 && lastName.trim().length > 0 && curriculum.trim().length > 0 && grade.trim().length > 0;
 
   const submit = useCallback(async () => {
@@ -240,6 +255,7 @@ export default function SchoolAdminAddStudentScreen({ navigation }: any) {
         curriculum: curriculum.trim(),
       };
       if (section.trim()) body.section = section.trim();
+      if (admissionNumber.trim()) body.admissionNumber = admissionNumber.trim();
       if (emailOverride.trim()) body.email = emailOverride.trim();
       if (status === 'active') body.initialStatus = 'active';
       if (parentName.trim()) body.parentName = parentName.trim();
@@ -258,10 +274,31 @@ export default function SchoolAdminAddStudentScreen({ navigation }: any) {
     } finally {
       setSubmitting(false);
     }
-  }, [user?.email, canSubmit, submitting, firstName, lastName, curriculum, grade, section, emailOverride, status, parentName, parentEmail, notes]);
+  }, [user?.email, canSubmit, submitting, firstName, lastName, curriculum, admissionNumber, grade, section, emailOverride, status, parentName, parentEmail, notes]);
 
   function goToStudents() {
     navigation?.navigate?.('SchoolAdminStudents');
+  }
+
+  // Same share pattern as Add Parent / Teacher Add Student — Web Share API when
+  // available, clipboard fallback otherwise. Includes the parent's credentials
+  // too when a parent/guardian account was created alongside the student.
+  async function shareCredentials() {
+    if (!result) return;
+    let message = `${result.name}'s Aivorah login:\nEmail: ${result.email}\nPassword: ${result.password}`;
+    if (result.parent) {
+      message += `\n\n${result.parent.name}'s (Parent) Aivorah login:\nEmail: ${result.parent.email}\nPassword: ${result.parent.password}`;
+    }
+    if (Platform.OS === 'web') {
+      const nav: any = typeof navigator !== 'undefined' ? navigator : null;
+      if (nav?.share) {
+        try { await nav.share({ text: message }); return; } catch { /* cancelled or unsupported */ }
+      }
+      if (nav?.clipboard) nav.clipboard.writeText(message).catch(() => {});
+      Alert.alert('Copied', 'Sharing is not available in this browser — the login details were copied instead, so you can paste them anywhere.');
+      return;
+    }
+    try { await Share.share({ message }); } catch { /* cancelled */ }
   }
 
   return (
@@ -298,9 +335,14 @@ export default function SchoolAdminAddStudentScreen({ navigation }: any) {
                     <View style={styles.credRow}><Text style={styles.credLabel}>Password</Text><Text style={styles.credValueMono} selectable>{result.parent.password}</Text></View>
                   </View>
                 )}
+
+                <TouchableOpacity style={styles.shareBtn} onPress={shareCredentials} activeOpacity={0.8}>
+                  <Feather name="share-2" size={13} color={colors.accentYellow} />
+                  <Text style={styles.shareBtnText}>Share Login Details</Text>
+                </TouchableOpacity>
               </View>
 
-              <View style={styles.footerRow}>
+              <View style={[styles.footerRow, { justifyContent: 'center' }]}>
                 <TouchableOpacity style={styles.primaryBtn} onPress={goToStudents} accessibilityRole="button">
                   <Text style={styles.primaryBtnText}>Done</Text>
                 </TouchableOpacity>
@@ -324,17 +366,30 @@ export default function SchoolAdminAddStudentScreen({ navigation }: any) {
 
               <View style={[styles.card, { zIndex: (openDropdown === 'curriculum' || openDropdown === 'grade' || openDropdown === 'section') ? 30 : 1 }]}>
                 <Text style={styles.cardTitle}>Academic Placement</Text>
-                <View style={[{ marginBottom: 2 }, openDropdown === 'curriculum' && { zIndex: 22 }]}>
-                  <Text style={styles.formLabel}>Curriculum *</Text>
-                  <FormDropdown
-                    value={curriculum}
-                    placeholder="Select curriculum"
-                    options={curriculumOptions}
-                    onChange={(v) => { setCurriculum(v); setGrade(''); }}
-                    colors={colors}
-                    open={openDropdown === 'curriculum'}
-                    onToggle={() => setOpenDropdown((p) => (p === 'curriculum' ? null : 'curriculum'))}
-                  />
+                <View style={[styles.formRow, openDropdown === 'curriculum' && { zIndex: 22 }]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.formLabel}>Curriculum *</Text>
+                    <FormDropdown
+                      value={curriculum}
+                      placeholder="Select curriculum"
+                      options={curriculumOptions}
+                      onChange={(v) => { setCurriculum(v); setGrade(''); }}
+                      colors={colors}
+                      open={openDropdown === 'curriculum'}
+                      onToggle={() => setOpenDropdown((p) => (p === 'curriculum' ? null : 'curriculum'))}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.formLabel}>Admission Number</Text>
+                    <TextInput
+                      value={admissionNumber}
+                      onChangeText={setAdmissionNumber}
+                      style={styles.textInput}
+                      placeholder="Optional — auto-generated if left blank"
+                      placeholderTextColor={colors.textDim}
+                      autoCapitalize="characters"
+                    />
+                  </View>
                 </View>
                 <View style={styles.formRow}>
                   <View style={[{ flex: 1 }, openDropdown === 'grade' && { zIndex: 21 }]}>
@@ -537,5 +592,11 @@ function makeStyles(colors: AppColors) {
     credLabel: { fontFamily: fonts.serif, fontSize: 12, color: colors.textDim },
     credValue: { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', color: colors.textHeading },
     credValueMono: { fontFamily: Platform.select({ web: 'monospace', default: fonts.serif }), fontSize: 12, fontWeight: '700', color: colors.textHeading },
+    shareBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', gap: 6,
+      backgroundColor: `${colors.accentYellow}18`, borderRadius: 20,
+      paddingVertical: 8, paddingHorizontal: 16, marginTop: 14,
+    },
+    shareBtnText: { fontFamily: fonts.serif, fontSize: 12, fontWeight: '700', color: colors.accentYellow },
   });
 }

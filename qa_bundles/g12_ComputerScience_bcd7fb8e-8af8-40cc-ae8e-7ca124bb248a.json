@@ -1,0 +1,134 @@
+{
+ "topicId": "bcd7fb8e-8af8-40cc-ae8e-7ca124bb248a",
+ "grade": "Grade 12",
+ "subject": "Computer Science",
+ "curriculum": "CBSE",
+ "topicName": "Adding a New Column to a Table",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "The command ALTER TABLE is used to change the definition of a table that already exists. To add a column, you write ALTER TABLE table_name ADD column_name data_type; The keyword ADD can be followed by the column definition, for example ADD Income INT. This follows the evidence that the Income attribute of type INT was added to the GUARDIAN table.",
+   "When you add a column, all existing rows receive a NULL value for that column unless you define a DEFAULT value. You can also add constraints such as NOT NULL or UNIQUE while adding the column. The syntax works the same in MySQL, PostgreSQL, and other SQL databases.",
+   "Consider the PROJECT_ASSIGNED table that already stores Registration_ID and ProjectNo. If you need to store the date a project was assigned, you could run ALTER TABLE PROJECT_ASSIGNED ADD AssignedDate DATE; After execution, the table will have a new column ready for data entry."
+  ],
+  "grade": 12,
+  "intro": "In this lesson you will learn how to add a new column to an existing SQL table using the ALTER TABLE statement.",
+  "vocab": [
+   {
+    "word": "ALTER TABLE",
+    "definition": "SQL statement that changes the structure of an existing table"
+   },
+   {
+    "word": "ADD COLUMN",
+    "definition": "Clause used with ALTER TABLE to introduce a new column"
+   },
+   {
+    "word": "Attribute",
+    "definition": "Another term for a column or field in a table"
+   },
+   {
+    "word": "Constraint",
+    "definition": "Rule that limits the values allowed in a column, e.g., NOT NULL"
+   }
+  ],
+  "subject": "Computer Science",
+  "activity": "Why might you prefer to add a column with a DEFAULT value instead of leaving it NULL?",
+  "keyLearnings": [
+   "ALTER TABLE modifies table structure",
+   "ADD or ADD COLUMN adds a new attribute",
+   "You must specify data type and any constraints",
+   "Existing rows get NULL for the new column unless a default is set"
+  ],
+  "keyTakeaways": [
+   "Use ALTER TABLE followed by ADD to introduce a new column",
+   "Always specify the data type and any needed constraints",
+   "Existing rows get NULL unless a DEFAULT is provided"
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "Look for the keyword that changes table structure",
+    "type": "mcq",
+    "correct": 2,
+    "options": [
+     "CREATE TABLE",
+     "DROP TABLE",
+     "ALTER TABLE",
+     "SELECT *"
+    ],
+    "question": "Which SQL statement adds a new column to an existing table?",
+    "explanation": "ALTER TABLE is used to modify an existing table, and ADD adds the new column."
+   },
+   {
+    "hint": "Think of missing data",
+    "type": "mcq",
+    "correct": 2,
+    "options": [
+     "Zero",
+     "Empty string",
+     "NULL",
+     "Previous value"
+    ],
+    "question": "If you add a column without a DEFAULT value, what will existing rows contain in that column?",
+    "explanation": "When a column is added, existing rows receive NULL unless a DEFAULT is specified."
+   },
+   {
+    "hint": "The keyword that introduces a new column",
+    "type": "fill_blank",
+    "correct": "ADD",
+    "question": "To add an INT column named Age to the STUDENT table, you write: ALTER TABLE STUDENT ____ Age INT;",
+    "explanation": "The correct syntax is ALTER TABLE STUDENT ADD Age INT;"
+   }
+  ],
+  "originalLesson": [],
+  "whatYoullLearn": [
+   "ALTER TABLE modifies table structure",
+   "ADD or ADD COLUMN adds a new attribute",
+   "You must specify data type and any constraints",
+   "Existing rows get NULL for the new column unless a default is set"
+  ],
+  "thinkAndReflect": [
+   "Why might you prefer to add a column with a DEFAULT value instead of leaving it NULL?",
+   "How would adding a NOT NULL constraint affect existing rows?",
+   "Can you think of a situation where removing a column is safer than adding one?"
+  ],
+  "instructionalType": "Lesson"
+ },
+ "practiceQuiz": [
+  {
+   "hint": "Look for the keyword that changes table structure",
+   "type": "mcq",
+   "correct": 2,
+   "options": [
+    "CREATE TABLE",
+    "DROP TABLE",
+    "ALTER TABLE",
+    "SELECT *"
+   ],
+   "question": "Which SQL statement adds a new column to an existing table?",
+   "explanation": "ALTER TABLE is used to modify an existing table, and ADD adds the new column."
+  },
+  {
+   "hint": "Think of missing data",
+   "type": "mcq",
+   "correct": 2,
+   "options": [
+    "Zero",
+    "Empty string",
+    "NULL",
+    "Previous value"
+   ],
+   "question": "If you add a column without a DEFAULT value, what will existing rows contain in that column?",
+   "explanation": "When a column is added, existing rows receive NULL unless a DEFAULT is specified."
+  },
+  {
+   "hint": "The keyword that introduces a new column",
+   "type": "fill_blank",
+   "correct": "ADD",
+   "question": "To add an INT column named Age to the STUDENT table, you write: ALTER TABLE STUDENT ____ Age INT;",
+   "explanation": "The correct syntax is ALTER TABLE STUDENT ADD Age INT;"
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "**Great question!** Let’s imagine your favorite toy box is like a table in a computer. Right now, it only has space for **toys** and **colors**. But what if you want to add a new section for **toys’ prices**? That’s exactly what **adding a new column** does in a table!\n\n---\n\n### **What does \"Adding a New Column\" mean?**\nThink of a table like a **spreadsheet** (like Excel). Each **column** is a category — like \"Name,\" \"Age,\" or \"Favorite Food.\" If you want to add a new category (like \"Phone Number\"), you **add a new column**.\n\n- **ALTER TABLE** is like saying: *\"Hey computer, I want to change this table!\"*\n- **ADD** is the command that tells the computer: *\"Add this new column!\"*\n- **column_name** is what you’ll call the new column (like \"PhoneNumber\").\n- **data_type** is what kind of data goes in it — like text (VARCHAR), numbers (INT), or dates (DATE).\n\nWhen you add a new column, **all the old rows get a blank space (NULL)** in that column — like leaving empty slots in your toy box until you fill them!\n\n---\n\n### **Real-World Example: Adding a Birthday Column**\nImagine you have a table called **STUDENT** that stores:\n- StudentID (number)\n- StudentName (text)\n\nBut now you want to add **Birthday** (a date). You’d write:\n\n```sql\nALTER TABLE STUDENT ADD Birthday DATE;\n```\n\nNow every student has a new empty \"Birthday\" column — like adding a new pocket in your backpack, but it’s empty until you write in it!\n\n---\n\n### **Worked Example: Adding a New Column to a Project Table**\nLet’s say you have a table called **PROJECT_ASSIGNED** that stores:\n- Registration_ID (number)\n- ProjectNo (number)\n\nYou want to add when the project was assigned — so you add a **date** column.\n\nYou write:\n\n```sql\nALTER TABLE PROJECT_ASSIGNED ADD AssignedDate DATE;\n```\n\n✅ **What happens?**\n- The table now has 3 columns: Registration_ID, ProjectNo, and **AssignedDate**.\n- All old rows get **AssignedDate = NULL** (empty) because no one entered dates yet.\n- You can now fill in the dates!\n\n---\n\n💡 **Did you know?**\nYou can even set a **default value** so new rows get a value automatically. For example:\n```sql\nALTER TABLE PROJECT_ASSIGNED ADD AssignedDate DATE DEFAULT '2025-01-01';\n```\nNow every new project gets assigned on January 1, 2025 — unless you change it!\n\n---\n\nYou're doing amazing! 🌟\nNow, tell me: **If you had a table called PETS with Name and Type, and you wanted to add a column for Age, what would the ALTER TABLE command look like?**"
+}

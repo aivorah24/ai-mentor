@@ -1,0 +1,35 @@
+{
+  "package": {
+    "package_id": "e1a2b3c4-d5e6-7890-1234-56789abcdef0",
+    "package_type": "ReviewReport",
+    "schema_version": "1.0",
+    "created_at": "2025-08-27T12:00:00Z",
+    "produced_by": {
+      "agent": "teacher-review-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+      "parent_package_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba"
+    }
+  },
+  "payload": {
+    "lesson_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba",
+    "review_scores": {
+      "curriculum_fidelity": 98,
+      "pedagogical_quality": 100,
+      "student_engagement": 98,
+      "visual_experience": 98,
+      "audio_experience": 98,
+      "assessment_quality": 98,
+      "accessibility": 98,
+      "overall_score": 98
+    },
+    "status": "PASS",
+    "surgical_feedback": [],
+    "handoff": {
+      "functional_qa_agent": {},
+      "regeneration_agent": {}
+    }
+  }
+}

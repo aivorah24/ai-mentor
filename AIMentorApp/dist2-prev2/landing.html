@@ -1,0 +1,1386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Aivorah: AI-Powered Adaptive Learning</title>
+<meta name="description" content="A patient, personalised AI tutor for every student, with real-time classroom insight for teachers and weekly progress for parents. Aligned to IB, CBSE, ICSE and Cambridge." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0B0B;
+    --surface:#141414;
+    --surface-2:#181818;
+    --line:rgba(245,243,238,0.08);
+    --line-strong:rgba(245,243,238,0.14);
+    --text:#F5F3EE;
+    --muted:#A9B0AC;
+    --sage:#9FB2A4;
+    --sage-soft:rgba(159,178,164,0.14);
+    --gold:#BAA467;
+    --gold-soft:rgba(186,164,103,0.14);
+    --radius:22px;
+    --radius-lg:28px;
+    --max:1200px;
+    --ease:cubic-bezier(.2,.7,.2,1);
+    --serif:"Fraunces", ui-serif, Georgia, serif;
+    --sans:"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  section[id]{scroll-margin-top:84px}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--sage-soft);color:var(--text)}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit}
+  img{max-width:100%;display:block}
+  h1,h2,h3,h4{font-family:var(--serif);font-weight:400;letter-spacing:-0.02em;margin:0;color:var(--text)}
+  p{margin:0;color:var(--muted)}
+  .container{max-width:var(--max);margin:0 auto;padding:0 28px}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:10px;
+    font-size:11px;letter-spacing:0.22em;text-transform:uppercase;
+    color:var(--muted);font-weight:500;
+    padding:7px 12px;border:1px solid var(--line);border-radius:999px;
+    background:rgba(245,243,238,0.02);
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--sage);box-shadow:0 0 14px var(--sage)}
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:13px 20px;border-radius:999px;border:1px solid transparent;
+    font-size:14px;font-weight:500;letter-spacing:0.01em;cursor:pointer;
+    transition:transform .25s var(--ease), background .25s var(--ease), border-color .25s var(--ease), color .25s var(--ease);
+  }
+  .btn-primary{background:var(--text);color:#0B0B0B}
+  .btn-primary:hover{transform:translateY(-1px);background:#fff}
+  .btn-ghost{background:transparent;color:var(--text);border-color:var(--line-strong)}
+  .btn-ghost:hover{border-color:rgba(245,243,238,0.35);background:rgba(245,243,238,0.03)}
+  .btn-sage{background:var(--sage);color:#0B0B0B}
+  .btn-sage:hover{transform:translateY(-1px);filter:brightness(1.05)}
+  .btn svg{width:16px;height:16px}
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .9s var(--ease), transform .9s var(--ease)}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none}
+    *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+  }
+
+  /* NAV */
+  .nav-wrap{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    background:rgba(11,11,11,0.55);border-bottom:1px solid transparent;transition:border-color .3s var(--ease), background .3s var(--ease)}
+  .nav-wrap.scrolled{border-color:var(--line);background:rgba(11,11,11,0.78)}
+  nav{display:flex;align-items:center;justify-content:space-between;height:72px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:22px;letter-spacing:-0.02em}
+  .logo-mark{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--sage),var(--gold));color:#0B0B0B;font-family:var(--serif);font-weight:600;font-size:16px}
+  .nav-links{display:flex;gap:32px}
+  .nav-links a{font-size:14px;color:var(--muted);transition:color .2s var(--ease);position:relative}
+  .nav-links a:hover{color:var(--text)}
+  .nav-cta{display:flex;gap:10px;align-items:center}
+  .menu-btn{display:none;background:none;border:1px solid var(--line);border-radius:10px;width:40px;height:40px;color:var(--text);cursor:pointer;align-items:center;justify-content:center}
+  @media (max-width:900px){
+    .nav-links,.nav-cta .btn-ghost{display:none}
+    .menu-btn{display:inline-flex}
+  }
+  .mobile-menu{display:none;border-top:1px solid var(--line);padding:18px 28px 26px;background:rgba(11,11,11,0.95)}
+  .mobile-menu.open{display:block}
+  .mobile-menu a{display:block;padding:12px 0;color:var(--muted);border-bottom:1px solid var(--line)}
+
+  /* HERO */
+  .hero{position:relative;padding:96px 0 80px;overflow:hidden}
+  .hero::before,.hero::after{content:"";position:absolute;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0}
+  .hero::before{width:620px;height:620px;background:radial-gradient(circle,rgba(159,178,164,0.18),transparent 70%);top:-160px;left:-200px}
+  .hero::after{width:520px;height:520px;background:radial-gradient(circle,rgba(186,164,103,0.12),transparent 70%);bottom:-160px;right:-160px}
+  .hero-inner{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr 1fr;gap:72px;align-items:center}
+  @media (max-width:980px){.hero-inner{grid-template-columns:1fr;gap:56px}}
+  .hero h1{
+    font-size:clamp(48px,7.2vw,92px);
+    line-height:0.98;letter-spacing:-0.035em;margin-top:24px;font-weight:400;
+  }
+  .hero h1 .grad{
+    background:linear-gradient(120deg,var(--sage) 0%,#cdd9d0 40%,var(--gold) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;font-style:italic;font-weight:300;
+  }
+  .hero .sub{margin-top:26px;font-size:18px;line-height:1.6;max-width:520px;color:var(--muted)}
+  .hero-ctas{margin-top:34px;display:flex;flex-wrap:wrap;gap:12px}
+  .hero-trust{margin-top:30px;display:flex;align-items:center;gap:14px;color:var(--muted);font-size:13px;max-width:520px}
+  .hero-trust svg{flex-shrink:0;color:var(--sage)}
+
+  /* ADAPTIVE SIM */
+  .sim{
+    position:relative;border:1px solid var(--line-strong);border-radius:var(--radius-lg);
+    background:linear-gradient(180deg,#161616,#101010);padding:22px;
+    box-shadow:0 30px 80px -30px rgba(0,0,0,0.7), inset 0 1px 0 rgba(245,243,238,0.04);
+  }
+  .sim-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  .sim-head .who{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .sim-head .who .pulse{width:8px;height:8px;border-radius:50%;background:var(--sage);box-shadow:0 0 0 0 rgba(159,178,164,.5);animation:pulse 2.2s var(--ease) infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(159,178,164,.55)}80%{box-shadow:0 0 0 12px rgba(159,178,164,0)}100%{box-shadow:0 0 0 0 rgba(159,178,164,0)}}
+  .confidence{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
+  .conf-bar{width:96px;height:6px;border-radius:999px;background:rgba(245,243,238,0.08);overflow:hidden}
+  .conf-fill{height:100%;width:25%;background:linear-gradient(90deg,var(--sage),var(--gold));transition:width 1s var(--ease);border-radius:999px}
+  .turn{display:flex;gap:12px;margin-top:18px;opacity:0;transform:translateY(8px);transition:all .5s var(--ease)}
+  .turn.show{opacity:1;transform:none}
+  .avatar{width:32px;height:32px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;font-size:12px;font-weight:600;font-family:var(--serif)}
+  .av-ai{background:var(--sage-soft);color:var(--sage);border:1px solid rgba(159,178,164,0.3)}
+  .av-st{background:var(--gold-soft);color:var(--gold);border:1px solid rgba(186,164,103,0.3)}
+  .bubble{padding:12px 16px;border-radius:14px;font-size:14.5px;line-height:1.55;max-width:78%}
+  .bubble.ai{background:rgba(159,178,164,0.06);border:1px solid rgba(159,178,164,0.18);color:var(--text)}
+  .bubble.st{background:rgba(245,243,238,0.04);border:1px solid var(--line);color:var(--text)}
+  .bubble.wrong{border-color:rgba(220,140,120,0.35);background:rgba(220,140,120,0.06)}
+  .bubble.right{border-color:rgba(159,178,164,0.45);background:rgba(159,178,164,0.1)}
+  .tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .pizza{display:flex;gap:14px;align-items:center;margin-top:8px;padding:10px;border-radius:10px;background:rgba(186,164,103,0.05);border:1px dashed rgba(186,164,103,0.3)}
+  .pizza svg{flex-shrink:0}
+  .pizza span{font-size:13px;color:var(--muted)}
+  .question{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:14px;border:1px solid var(--line);margin-top:18px;background:rgba(245,243,238,0.02)}
+  .question .q{font-family:var(--serif);font-size:20px;letter-spacing:-0.01em}
+  .question .meta{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+  .retry{margin-top:14px;display:flex;justify-content:flex-end}
+  .retry button{
+    background:rgba(159,178,164,0.1);color:var(--sage);border:1px solid rgba(159,178,164,0.3);
+    padding:7px 12px;border-radius:999px;font-size:12px;cursor:pointer;font-weight:500;
+  }
+
+  /* SECTIONS */
+  section{padding:120px 0;position:relative}
+  @media (max-width:760px){section{padding:88px 0}}
+  #about{padding-top:0}
+  #about .section-head{margin-bottom:44px}
+  .section-head{max-width:720px;margin:0 auto 64px;text-align:center}
+  .section-head h2{font-size:clamp(34px,4.6vw,56px);line-height:1.05;letter-spacing:-0.03em;margin-top:18px}
+  .section-head h2 em{font-style:italic;font-weight:300;color:var(--sage)}
+  .section-head p{margin-top:18px;font-size:17px;color:var(--muted)}
+
+  /* TRUST BAR */
+  .trust{padding:64px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(245,243,238,0.015)}
+  .trust-inner{display:flex;flex-direction:column;align-items:center;gap:28px}
+  .trust-label{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+  .trust-note{font-size:13px;color:var(--muted);text-align:center;max-width:560px}
+
+  /* Curriculum marquee */
+  .marquee{position:relative;width:100%;overflow:hidden;
+    mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);}
+  .marquee-track{display:flex;gap:72px;width:max-content;animation:marq 38s linear infinite;will-change:transform}
+  .marquee:hover .marquee-track{animation-play-state:paused}
+  @keyframes marq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion: reduce){.marquee-track{animation:none}}
+  .crest{display:inline-flex;align-items:center;gap:14px;color:var(--text);opacity:.78;
+    transition:opacity .3s var(--ease),transform .3s var(--ease);flex-shrink:0}
+  .crest:hover{opacity:1;transform:translateY(-2px)}
+  .crest svg{width:54px;height:54px;display:block;flex-shrink:0}
+  .crest .lbl{display:flex;flex-direction:column;line-height:1.15}
+  .crest .lbl b{font-family:var(--serif);font-size:17px;font-weight:500;letter-spacing:.01em;color:var(--text)}
+  .crest .lbl small{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+
+  /* EDITORIAL BLOCKS */
+  .block{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+  .block.reverse{direction:rtl}
+  .block.reverse > *{direction:ltr}
+  @media (max-width:980px){.block,.block.reverse{grid-template-columns:1fr;gap:48px;direction:ltr}}
+  .block h2{font-size:clamp(34px,4.4vw,52px);line-height:1.05;letter-spacing:-0.03em;margin-top:18px}
+  .block h2 em{font-style:italic;font-weight:300;color:var(--sage)}
+  .block .lead{margin-top:20px;font-size:17px;color:var(--muted);max-width:480px}
+  .feature-list{margin-top:30px;display:grid;gap:14px}
+  .feature-list li{list-style:none;display:flex;align-items:flex-start;gap:14px;font-size:15px;color:var(--text)}
+  .feature-list li .ck{
+    flex-shrink:0;width:24px;height:24px;border-radius:8px;display:grid;place-items:center;
+    background:var(--sage-soft);color:var(--sage);border:1px solid rgba(159,178,164,0.25);
+  }
+  .feature-list li .ck svg{width:13px;height:13px}
+  .feature-list li small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+
+  /* Visual containers */
+  .visual{
+    position:relative;border-radius:var(--radius-lg);
+    padding:34px;min-height:440px;
+    border:1px solid var(--line-strong);
+    background:linear-gradient(180deg,#161616,#101010);
+    overflow:hidden;
+    box-shadow:0 30px 80px -30px rgba(0,0,0,0.7);
+  }
+  .visual::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;
+    background:linear-gradient(160deg,rgba(159,178,164,0.25),transparent 40%,rgba(186,164,103,0.18));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+
+  /* Student visual */
+  .v-student{display:flex;flex-direction:column;justify-content:space-between}
+  .xp-card{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-radius:14px;border:1px solid var(--line);background:rgba(245,243,238,0.025)}
+  .xp-card .l{font-size:12px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+  .xp-card .v{font-family:var(--serif);font-size:32px;color:var(--gold);letter-spacing:-0.02em}
+  .streak{display:flex;gap:6px;margin-top:18px}
+  .streak div{flex:1;height:38px;border-radius:8px;background:rgba(245,243,238,0.04);border:1px solid var(--line);display:grid;place-items:center;font-size:11px;color:var(--muted)}
+  .streak div.on{background:var(--sage-soft);color:var(--sage);border-color:rgba(159,178,164,0.3)}
+  .path-card{margin-top:22px;padding:18px;border-radius:14px;border:1px solid var(--line);background:rgba(245,243,238,0.02)}
+  .path-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+  .path-row:last-child{border-bottom:0}
+  .path-row .ico{width:30px;height:30px;border-radius:8px;background:var(--sage-soft);color:var(--sage);display:grid;place-items:center}
+  .path-row .ico svg{width:15px;height:15px}
+  .path-row .t{flex:1;font-size:14px}
+  .path-row .t small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .path-row .pct{font-family:var(--serif);font-size:18px;color:var(--text)}
+
+  /* Teacher visual */
+  .v-teacher{display:flex;flex-direction:column;gap:18px}
+  .upload{display:flex;align-items:center;gap:14px;padding:18px;border-radius:14px;border:1px dashed rgba(186,164,103,0.35);background:rgba(186,164,103,0.05)}
+  .upload .ic{width:42px;height:42px;border-radius:10px;background:var(--gold-soft);color:var(--gold);display:grid;place-items:center}
+  .upload .tx{flex:1}
+  .upload .tx b{font-family:var(--serif);font-size:16px;font-weight:500}
+  .upload .tx small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .upload .arrow{color:var(--muted)}
+  .quizgen{padding:18px;border-radius:14px;border:1px solid var(--line);background:rgba(245,243,238,0.025)}
+  .quizgen .h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .quizgen .h .label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .quizgen .h .pill{font-size:11px;padding:4px 9px;border-radius:999px;background:var(--sage-soft);color:var(--sage);border:1px solid rgba(159,178,164,0.3)}
+  .qrow{padding:9px 0;border-top:1px dashed var(--line);font-size:13.5px;display:flex;justify-content:space-between;color:var(--text)}
+  .qrow span{color:var(--muted);font-size:12px}
+  .analytics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .stat{padding:14px;border-radius:12px;border:1px solid var(--line);background:rgba(245,243,238,0.02)}
+  .stat .n{font-family:var(--serif);font-size:24px;letter-spacing:-0.02em}
+  .stat .l{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+
+  /* Parent visual */
+  .v-parent{display:flex;flex-direction:column;gap:18px}
+  .report{padding:20px;border-radius:14px;border:1px solid var(--line);background:rgba(245,243,238,0.025)}
+  .report .head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px}
+  .report .head h4{font-family:var(--serif);font-size:20px;font-weight:400}
+  .report .head small{color:var(--muted);font-size:12px}
+  .chart{display:flex;align-items:flex-end;gap:8px;height:120px;padding-top:8px;border-top:1px dashed var(--line)}
+  .chart div{flex:1;background:linear-gradient(180deg,var(--sage),rgba(159,178,164,0.2));border-radius:6px 6px 0 0;position:relative;transition:height 1s var(--ease)}
+  .chart div::after{content:attr(data-day);position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted);letter-spacing:.05em}
+  .goal{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:rgba(245,243,238,0.02)}
+  .goal .ring{width:38px;height:38px;flex-shrink:0}
+  .goal .t{flex:1;font-size:14px}
+  .goal .t small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .goal .coins{display:flex;align-items:center;gap:6px;color:var(--gold);font-family:var(--serif);font-size:18px}
+
+  /* HOW IT WORKS */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  @media (max-width:880px){.steps{grid-template-columns:1fr}}
+  .step{
+    position:relative;padding:36px 30px 32px;border-radius:var(--radius-lg);
+    border:1px solid var(--line);background:linear-gradient(180deg,#141414,#101010);
+    transition:transform .35s var(--ease), border-color .35s var(--ease);
+  }
+  .step:hover{transform:translateY(-4px);border-color:var(--line-strong)}
+  .step .num{font-family:var(--serif);font-size:64px;letter-spacing:-0.04em;line-height:1;
+    background:linear-gradient(135deg,var(--sage),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .step h3{font-size:24px;margin-top:18px;letter-spacing:-0.02em}
+  .step p{margin-top:12px;font-size:15px;color:var(--muted)}
+  .step .corner{position:absolute;top:24px;right:24px;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center;color:var(--sage)}
+
+  /* FEATURES GRID */
+  .features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media (max-width:980px){.features{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:620px){.features{grid-template-columns:1fr}}
+  .f{padding:30px;border-radius:var(--radius);border:1px solid var(--line);background:#121212;transition:all .35s var(--ease);min-height:220px;display:flex;flex-direction:column}
+  .f:hover{border-color:var(--line-strong);background:#161616;transform:translateY(-3px)}
+  .f .ic{width:42px;height:42px;border-radius:11px;background:var(--sage-soft);color:var(--sage);display:grid;place-items:center;border:1px solid rgba(159,178,164,0.2)}
+  .f h3{font-size:20px;margin-top:22px;letter-spacing:-0.02em}
+  .f p{margin-top:10px;font-size:14.5px;color:var(--muted);flex:1}
+
+  /* CLOSING CTA */
+  .closing{position:relative;overflow:hidden;border-radius:var(--radius-lg);
+    padding:100px 60px;text-align:center;
+    background:
+      radial-gradient(ellipse at 20% 20%,rgba(159,178,164,0.22),transparent 55%),
+      radial-gradient(ellipse at 80% 80%,rgba(186,164,103,0.18),transparent 55%),
+      linear-gradient(180deg,#171717,#111);
+    border:1px solid var(--line-strong);
+  }
+  .closing h2{font-size:clamp(40px,5.2vw,68px);line-height:1.04;letter-spacing:-0.035em}
+  .closing h2 em{font-style:italic;font-weight:300;color:var(--sage)}
+  .closing p{margin:22px auto 0;max-width:520px;font-size:17px;color:var(--muted)}
+  .closing .btn-row{margin-top:36px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+  @media (max-width:720px){.closing{padding:70px 26px}}
+
+  /* FOOTER */
+  footer{padding:80px 0 40px;border-top:1px solid var(--line);margin-top:40px}
+  .foot-top{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;gap:48px}
+  @media (max-width:880px){.foot-top{grid-template-columns:1fr 1fr;gap:36px}}
+  .foot-mission{font-family:var(--serif);font-size:20px;letter-spacing:-0.015em;color:var(--text);margin-top:18px;max-width:300px;line-height:1.35}
+  .foot-col h5{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-family:var(--sans);font-weight:500;margin-bottom:18px}
+  .foot-col a{display:block;font-size:14px;color:var(--muted);padding:6px 0;transition:color .2s var(--ease)}
+  .foot-col a:hover{color:var(--text)}
+  .foot-bot{margin-top:60px;padding-top:28px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--muted)}
+
+
+
+</style>
+</head>
+<body>
+
+<div class="nav-wrap" id="navWrap">
+  <div class="container">
+    <nav>
+      <a href="#" class="logo"><span class="logo-mark">Æ</span> Aivorah</a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how">How It Works</a>
+        <a href="#platform">For Students</a>
+        <a href="#schools">Schools</a>
+        <a href="#about">About</a>
+      </div>
+      <div class="nav-cta">
+        <button class="btn btn-ghost">Login</button>
+        <button class="btn btn-primary">Join Early Access</button>
+        <button class="menu-btn" id="menuBtn" aria-label="Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </div>
+    </nav>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#features">Features</a>
+    <a href="#how">How It Works</a>
+    <a href="#platform">For Students</a>
+    <a href="#schools">Schools</a>
+    <a href="#about">About</a>
+    <a href="#">Login</a>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="container hero-inner">
+    <div class="reveal">
+      <span class="eyebrow"><span class="dot"></span> Private Beta · India 2026</span>
+      <h1>AI-Powered<br/>Learning,<br/><span class="grad">for everyone.</span></h1>
+      <p class="sub">A patient, personalised AI tutor for every student, with real-time classroom insight for teachers and weekly progress for parents.</p>
+      <div class="hero-ctas">
+        <button class="btn btn-primary">Get Early Access for Free
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+        <button class="btn btn-ghost">Book a Demo</button>
+      </div>
+      <div class="hero-trust">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+        <span>Aligned to <b style="color:var(--text);font-weight:500">IB, CBSE, ICSE and Cambridge</b>. Content grounded in NCERT and official board textbooks.</span>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="sim" id="sim">
+        <div class="sim-head">
+          <div class="who"><span class="pulse"></span> Aivorah Tutor · Grade 5 Maths</div>
+          <div class="confidence">Confidence <div class="conf-bar"><div class="conf-fill" id="confFill"></div></div> <span id="confPct">25%</span></div>
+        </div>
+        <div class="question">
+          <div class="q">What is <em>¾ + ½</em>?</div>
+          <div class="meta">Fractions · Q3 of 10</div>
+        </div>
+        <div class="turn" id="t1">
+          <div class="avatar av-st">A</div>
+          <div class="bubble st wrong">
+            <div class="tag">Aarav's answer</div>
+            ¾ + ½ = <b>⅘</b>
+          </div>
+        </div>
+        <div class="turn" id="t2">
+          <div class="avatar av-ai">Æ</div>
+          <div class="bubble ai">
+            <div class="tag">Aivorah</div>
+            Not quite. Let's try a simpler way. Imagine a pizza cut into equal slices…
+            <div class="pizza" aria-hidden="true">
+              <svg width="44" height="44" viewBox="0 0 44 44">
+                <circle cx="22" cy="22" r="20" fill="none" stroke="#BAA467" stroke-width="1.4" opacity=".5"/>
+                <path d="M22 22 L22 2 A20 20 0 0 1 39.3 32 Z" fill="#BAA467" opacity=".55"/>
+                <line x1="22" y1="2" x2="22" y2="42" stroke="#BAA467" stroke-width="1" opacity=".4"/>
+                <line x1="2" y1="22" x2="42" y2="22" stroke="#BAA467" stroke-width="1" opacity=".4"/>
+              </svg>
+              <span>Make both fractions share the same slice size, quarters. Then count the shaded slices.</span>
+            </div>
+          </div>
+        </div>
+        <div class="turn" id="t3">
+          <div class="avatar av-st">A</div>
+          <div class="bubble st right">
+            <div class="tag">Aarav retries</div>
+            ¾ + 2/4 = <b>5/4</b>, that's one and a quarter pizzas.
+          </div>
+        </div>
+        <div class="turn" id="t4">
+          <div class="avatar av-ai">Æ</div>
+          <div class="bubble ai">
+            <div class="tag">Aivorah</div>
+            Beautifully done. You found a common denominator on your own. That's the real skill. Ready for the next one?
+          </div>
+        </div>
+        <div class="retry"><button id="replay">↻ Replay</button></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="trust">
+  <div class="container trust-inner">
+    <div class="trust-label">Aligned with the boards Indian families trust</div>
+
+    <div class="marquee" aria-label="Curriculum boards: IB, CBSE, ICSE, Cambridge, NCERT">
+      <div class="marquee-track" id="curriculumTrack">
+        <!-- group 1 -->
+        <span class="crest" title="International Baccalaureate">
+          <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="32" cy="32" r="22" stroke="currentColor" stroke-width="1" opacity=".5"/>
+            <path d="M14 32 Q32 18 50 32 Q32 46 14 32 Z" stroke="currentColor" stroke-width="1" opacity=".55" fill="none"/>
+            <path d="M32 8 Q24 32 32 56 M32 8 Q40 32 32 56" stroke="currentColor" stroke-width="1" opacity=".45" fill="none"/>
+            <text x="32" y="38" text-anchor="middle" font-family="Georgia,serif" font-size="16" font-weight="700" fill="currentColor" letter-spacing="1">IB</text>
+          </svg>
+          <span class="lbl"><b>International Baccalaureate</b><small>PYP · MYP · DP</small></span>
+        </span>
+
+        <span class="crest" title="Central Board of Secondary Education">
+          <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <path d="M32 4 L56 12 V32 C56 46 45 56 32 60 C19 56 8 46 8 32 V12 Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+            <path d="M32 10 L50 16 V32 C50 43 41 51 32 54 C23 51 14 43 14 32 V16 Z" stroke="currentColor" stroke-width=".8" opacity=".4" fill="none"/>
+            <circle cx="32" cy="26" r="5" stroke="currentColor" stroke-width="1" opacity=".6"/>
+            <path d="M28 26 L32 22 L36 26 L32 30 Z" fill="currentColor" opacity=".55"/>
+            <text x="32" y="44" text-anchor="middle" font-family="Georgia,serif" font-size="9" font-weight="700" fill="currentColor" letter-spacing="1.4">CBSE</text>
+          </svg>
+          <span class="lbl"><b>CBSE</b><small>Classes I to XII</small></span>
+        </span>
+
+        <span class="crest" title="Indian Certificate of Secondary Education">
+          <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <path d="M10 10 H54 V36 C54 48 44 56 32 60 C20 56 10 48 10 36 Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+            <path d="M10 18 H54 M10 30 H54" stroke="currentColor" stroke-width=".7" opacity=".35"/>
+            <path d="M22 44 Q18 50 22 56 M42 44 Q46 50 42 56" stroke="currentColor" stroke-width="1" opacity=".5" fill="none"/>
+            <text x="32" y="27" text-anchor="middle" font-family="Georgia,serif" font-size="7" font-weight="600" fill="currentColor" letter-spacing="2">CISCE</text>
+            <text x="32" y="42" text-anchor="middle" font-family="Georgia,serif" font-size="9" font-weight="700" fill="currentColor" letter-spacing="1.4">ICSE</text>
+          </svg>
+          <span class="lbl"><b>ICSE / ISC</b><small>CISCE Council</small></span>
+        </span>
+
+        <span class="crest" title="Cambridge Assessment International Education">
+          <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <path d="M12 8 H52 V34 C52 46 43 55 32 58 C21 55 12 46 12 34 Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+            <path d="M32 8 V58 M12 24 H52" stroke="currentColor" stroke-width=".7" opacity=".35"/>
+            <path d="M20 14 L26 20 M44 14 L38 20 M20 44 L26 38 M44 44 L38 38" stroke="currentColor" stroke-width="1" opacity=".55"/>
+            <circle cx="32" cy="32" r="4.5" stroke="currentColor" stroke-width="1" fill="none"/>
+            <path d="M30 30 L32 32 L36 28" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+          <span class="lbl"><b>Cambridge</b><small>IGCSE · A Level</small></span>
+        </span>
+
+        <span class="crest" title="National Council of Educational Research and Training">
+          <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="1.4"/>
+            <g stroke="currentColor" stroke-width="1" opacity=".7" fill="none">
+              <path d="M32 14 C28 22 28 30 32 36 C36 30 36 22 32 14 Z"/>
+              <path d="M18 26 C24 28 30 32 32 36 C30 32 26 26 18 26 Z"/>
+              <path d="M46 26 C40 28 34 32 32 36 C34 32 38 26 46 26 Z"/>
+              <path d="M22 18 C24 24 28 30 32 36 C30 30 28 22 22 18 Z"/>
+              <path d="M42 18 C40 24 36 30 32 36 C34 30 36 22 42 18 Z"/>
+            </g>
+            <path d="M18 42 H46" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M20 44 H44 V50 H20 Z" stroke="currentColor" stroke-width=".8" fill="none" opacity=".6"/>
+          </svg>
+          <span class="lbl"><b>NCERT</b><small>National Framework</small></span>
+        </span>
+
+        <span class="crest" title="Oxford University Press">
+          <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <rect x="10" y="12" width="44" height="40" rx="4" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M10 20 H54 M10 44 H54" stroke="currentColor" stroke-width=".8" opacity=".4"/>
+            <path d="M32 12 V52" stroke="currentColor" stroke-width=".8" opacity=".3"/>
+            <path d="M18 30 Q24 24 30 30 Q24 36 18 30 Z" fill="currentColor" opacity=".5"/>
+            <text x="40" y="36" text-anchor="middle" font-family="Georgia,serif" font-size="14" font-weight="700" fill="currentColor" letter-spacing=".5">OUP</text>
+          </svg>
+          <span class="lbl"><b>Oxford</b><small>University Press</small></span>
+        </span>
+
+        <span class="crest" title="Pearson">
+          <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M32 12 V24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="32" cy="32" r="5" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M32 37 L32 44" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M28 40 L36 40" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+          <span class="lbl"><b>Pearson</b><small>Always Learning</small></span>
+        </span>
+
+        <span class="crest" title="Hodder Education">
+          <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <path d="M14 10 H50 V54 H14 Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+            <path d="M14 18 H50" stroke="currentColor" stroke-width=".8" opacity=".4"/>
+            <path d="M22 30 V46 M22 34 H30 M22 42 H30" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M38 30 V46 M34 34 H42 M34 42 H42" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="lbl"><b>Hodder</b><small>Education</small></span>
+        </span>
+      </div>
+    </div>
+
+    <div class="trust-note">Content grounded in NCERT and official board textbooks, taught the way each board expects.</div>
+  </div>
+</section>
+
+<!-- STUDENT -->
+<section id="platform">
+  <div class="container">
+    <div class="block reveal">
+      <div class="visual v-student">
+        <div>
+          <div class="xp-card">
+            <div>
+              <div class="l">Today's XP</div>
+              <div class="v">+ 240</div>
+            </div>
+            <div style="text-align:right">
+              <div class="l">Streak</div>
+              <div class="v" style="color:var(--sage)">17 days</div>
+            </div>
+          </div>
+          <div class="streak" aria-hidden="true">
+            <div class="on">M</div><div class="on">T</div><div class="on">W</div><div class="on">T</div><div class="on">F</div><div>S</div><div>S</div>
+          </div>
+        </div>
+        <div class="path-card">
+          <div class="tag" style="margin-bottom:12px">Your learning path · Grade 5</div>
+          <div class="path-row">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5a2 2 0 0 1 2-2h14v18H6a2 2 0 0 1-2-2z"/></svg></div>
+            <div class="t">Fractions & Decimals <small>Mastery building · 6 lessons left</small></div>
+            <div class="pct">82%</div>
+          </div>
+          <div class="path-row">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a13 13 0 0 1 0 18M12 3a13 13 0 0 0 0 18"/></svg></div>
+            <div class="t">Earth & Space <small>NCERT EVS · Chapter 4</small></div>
+            <div class="pct">54%</div>
+          </div>
+          <div class="path-row">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h14v16H5z"/><path d="M9 4v16M14 8h3M14 12h3"/></svg></div>
+            <div class="t">English Reading Fluency <small>Read-aloud · 12 stories</small></div>
+            <div class="pct">36%</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <span class="eyebrow"><span class="dot"></span> For Students · Nursery → Grade 12</span>
+        <h2>Every child gets a <em>patient</em> AI coach.</h2>
+        <p class="lead">No child should leave a lesson feeling defeated. Aivorah meets your child exactly where they are, explaining, re-explaining, and rebuilding confidence one small step at a time.</p>
+        <ul class="feature-list">
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Adaptive explanations <small>The same idea told five different ways, until it clicks.</small></div></li>
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Real-world examples <small>From cricket scores to chapati fractions, concepts grounded in the everyday.</small></div></li>
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Curriculum learning paths <small>Built around your board: IB, CBSE, ICSE, Cambridge.</small></div></li>
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>XP, streaks &amp; Olympiad prep <small>Effort celebrated. Mastery earned. Competitions made approachable.</small></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEACHER -->
+<section id="teachers">
+  <div class="container">
+    <div class="block reverse reveal">
+      <div class="visual v-teacher">
+        <div class="upload">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15l3-3 3 3"/></svg></div>
+          <div class="tx"><b>Worksheet_Ch4_Fractions.pdf</b><small>Uploaded · Generating 12-question adaptive quiz…</small></div>
+          <div class="arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+        <div class="quizgen">
+          <div class="h">
+            <span class="label">Generated quiz · 5B Maths</span>
+            <span class="pill">Auto-graded</span>
+          </div>
+          <div class="qrow">Q1 · Add unlike fractions <span>MCQ</span></div>
+          <div class="qrow">Q2 · Word problem: sharing rotis <span>Short answer</span></div>
+          <div class="qrow">Q3 · Equivalent fractions <span>Drag &amp; drop</span></div>
+          <div class="qrow">Q4 · Compare ¾ vs ⅔ <span>True / False</span></div>
+        </div>
+        <div class="analytics">
+          <div class="stat"><div class="n">28</div><div class="l">Students</div></div>
+          <div class="stat"><div class="n" style="color:var(--sage)">87%</div><div class="l">Avg mastery</div></div>
+          <div class="stat"><div class="n" style="color:var(--gold)">4</div><div class="l">Need support</div></div>
+        </div>
+      </div>
+      <div>
+        <span class="eyebrow"><span class="dot"></span> For Teachers</span>
+        <h2>Teach <em>smarter</em>, not harder.</h2>
+        <p class="lead">Give your classroom hours back. Upload a worksheet, get an adaptive quiz. Watch mastery rise in real-time, and know exactly which student needs you next.</p>
+        <ul class="feature-list">
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>AI auto-graded assignments <small>Hand-written and typed responses, scored with rubric-level nuance.</small></div></li>
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Upload worksheet or PDF → instant quiz <small>Any textbook page becomes a personalised assessment in seconds.</small></div></li>
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Class analytics &amp; learning insights <small>See concept gaps before they harden into struggles.</small></div></li>
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Bulk student import &amp; progress tracking <small>Roll out across a section, grade or school in one click.</small></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PARENT -->
+<section id="parents">
+  <div class="container">
+    <div class="block reveal">
+      <div class="visual v-parent">
+        <div class="report">
+          <div class="head">
+            <div>
+              <h4>Aarav's week</h4>
+              <small>Nov 11 to 17 · Grade 5</small>
+            </div>
+            <small style="color:var(--sage)">Mastery <b style="color:var(--text);font-family:var(--serif);font-size:18px">↑ 12%</b></small>
+          </div>
+          <div class="chart" aria-hidden="true">
+            <div data-day="M" style="height:35%"></div>
+            <div data-day="T" style="height:55%"></div>
+            <div data-day="W" style="height:45%"></div>
+            <div data-day="T" style="height:72%"></div>
+            <div data-day="F" style="height:88%"></div>
+            <div data-day="S" style="height:60%"></div>
+            <div data-day="S" style="height:78%"></div>
+          </div>
+        </div>
+        <div class="goal">
+          <svg class="ring" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(245,243,238,0.08)" stroke-width="3"/>
+            <circle cx="18" cy="18" r="15" fill="none" stroke="#9FB2A4" stroke-width="3" stroke-linecap="round" stroke-dasharray="94.2" stroke-dashoffset="22" transform="rotate(-90 18 18)"/>
+          </svg>
+          <div class="t">Today's learning goal <small>22 of 30 minutes complete</small></div>
+          <div class="coins">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M8 10h6a2 2 0 0 1 0 4H9a2 2 0 0 0 0 4h7"/></svg>
+            +85
+          </div>
+        </div>
+        <div class="goal">
+          <svg class="ring" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(245,243,238,0.08)" stroke-width="3"/>
+            <circle cx="18" cy="18" r="15" fill="none" stroke="#BAA467" stroke-width="3" stroke-linecap="round" stroke-dasharray="94.2" stroke-dashoffset="0" transform="rotate(-90 18 18)"/>
+          </svg>
+          <div class="t">Weekly AI report <small>Ready to read · 2 min</small></div>
+          <a class="btn btn-ghost" style="padding:8px 14px;font-size:12px" href="#">Open</a>
+        </div>
+      </div>
+      <div>
+        <span class="eyebrow"><span class="dot"></span> For Parents</span>
+        <h2>Never wonder <em>how your child is doing</em>.</h2>
+        <p class="lead">A calm, honest window into your child's learning week. No guesswork, no jargon. Just real progress, written like a thoughtful teacher would.</p>
+        <ul class="feature-list">
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Weekly AI reports <small>Plain-language summaries of strengths, struggles and breakthroughs.</small></div></li>
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Daily learning goals <small>Right-sized practice that is never overwhelming and never empty.</small></div></li>
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Reward coins &amp; consistency tracking <small>Effort recognised. Habits built. Confidence grown.</small></div></li>
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Full progress visibility <small>Every quiz, every retry, every win, quietly and beautifully tracked.</small></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCHOOLS -->
+<section id="schools">
+  <div class="container">
+    <div class="block reverse reveal">
+      <div class="visual v-teacher">
+        <div class="quizgen">
+          <div class="h">
+            <span class="label">Greenwood International · IB PYP</span>
+            <span class="pill">Live pilot</span>
+          </div>
+          <div class="qrow">Grade 3 · Mathematics <span>92% engaged</span></div>
+          <div class="qrow">Grade 4 · Science <span>88% engaged</span></div>
+          <div class="qrow">Grade 5 · English <span>90% engaged</span></div>
+        </div>
+        <div class="analytics">
+          <div class="stat"><div class="n">1,200</div><div class="l">Students</div></div>
+          <div class="stat"><div class="n" style="color:var(--sage)">48</div><div class="l">Classrooms</div></div>
+          <div class="stat"><div class="n" style="color:var(--gold)">+14%</div><div class="l">Avg mastery</div></div>
+        </div>
+      </div>
+      <div>
+        <span class="eyebrow"><span class="dot"></span> For Schools</span>
+        <h2>Personalised learning, <em>at every desk</em>.</h2>
+        <p class="lead">Bring an adaptive AI tutor to every classroom: curriculum-aligned, teacher-led and measurable. Aivorah supports your educators, keeps parents engaged, and helps your institution raise outcomes at scale.</p>
+        <ul class="feature-list">
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Curriculum-aligned content <small>Mapped to IB, CBSE, ICSE and Cambridge, ready for your grades.</small></div></li>
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>School-wide rollout &amp; admin controls <small>Onboard sections, grades or the whole institution in one place.</small></div></li>
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Institution-level analytics <small>Track mastery and engagement across classrooms and cohorts.</small></div></li>
+          <li><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-11"/></svg></span><div>Dedicated onboarding &amp; support <small>A guided pilot with hands-on help for your teachers.</small></div></li>
+        </ul>
+        <div class="btn-row" style="margin-top:24px">
+          <button class="btn btn-sage" id="schoolsDemo">Book a Demo
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span> How Adaptive Learning Works</span>
+      <h2>A teaching loop that <em>never gives up</em>.</h2>
+      <p>Three quiet, deliberate steps that turn every wrong answer into the start of real understanding.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="corner"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <div class="num">01</div>
+        <h3>Understand the learner</h3>
+        <p>A gentle diagnostic reads how your child thinks, not just what they know. Pace, gaps, strengths, and confidence are all mapped.</p>
+      </div>
+      <div class="step reveal">
+        <div class="corner"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5a2 2 0 0 1 2-2h14v18H6a2 2 0 0 1-2-2z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div>
+        <div class="num">02</div>
+        <h3>Adapt and teach</h3>
+        <p>When something doesn't land, Aivorah switches its approach with a simpler explanation, a real-world example or smaller steps, until it does.</p>
+      </div>
+      <div class="step reveal">
+        <div class="corner"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></div>
+        <div class="num">03</div>
+        <h3>Measure real progress</h3>
+        <p>Mastery is tracked at the concept level, not the chapter level, so growth is honest, visible and shared with parents and teachers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES GRID -->
+<section id="features">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span> The Platform</span>
+      <h2>Everything a modern <em>learner</em> needs.</h2>
+      <p>Designed with educators. Aligned to your board. Built to grow with your child from nursery to Grade 12.</p>
+    </div>
+    <div class="features">
+      <div class="f reveal"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a5 5 0 0 1 5 5v3a5 5 0 1 1-10 0V7a5 5 0 0 1 5-5z"/><path d="M5 21c1.5-3 4-5 7-5s5.5 2 7 5"/></svg></div><h3>Adaptive AI Coach</h3><p>A patient tutor that re-explains, simplifies and encourages, never moving on until your child is ready.</p></div>
+      <div class="f reveal"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg></div><h3>Curriculum-Aligned Paths</h3><p>Learning journeys built to IB, CBSE, ICSE and Cambridge, grounded in NCERT and official textbooks.</p></div>
+      <div class="f reveal"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><path d="M4 7h16v13H4z"/><path d="M8 7V4h8v3"/></svg></div><h3>AI Auto-Graded Assignments</h3><p>From handwritten worksheets to typed responses, graded with rubric-level care in seconds.</p></div>
+      <div class="f reveal"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .9-4.5 4.2 1 6.4L12 16.8 6.5 19.5l1-6.4L3 8.9 9 8z"/></svg></div><h3>Olympiad &amp; Challenge Prep</h3><p>Stretch goals, past papers and Olympiad-grade problems, approachable and beautifully sequenced.</p></div>
+      <div class="f reveal"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 15l4-6 4 3 5-8"/></svg></div><h3>Scientific Progress Reports</h3><p>Honest, concept-level mastery with no inflated badges and no vanity scores. Just real growth, weekly.</p></div>
+      <div class="f reveal"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10v4M7 6v12M11 3v18M15 7v10M19 10v4"/></svg></div><h3>Read-Aloud Fluency</h3><p>Story-led reading practice with real-time pronunciation feedback in English and Indian languages.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span> About Aivorah</span>
+      <h2>Built so that <em>no child learns alone</em>.</h2>
+      <p>Aivorah is an AI-powered adaptive learning platform on a simple mission: to give every child a patient, personalised tutor, while giving teachers and parents the insight to help them thrive. We believe every learner can flourish when taught at their own pace, in their own way.</p>
+    </div>
+    <div class="features">
+      <div class="f reveal">
+        <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .9-4.5 4.2 1 6.4L12 16.8 6.5 19.5l1-6.4L3 8.9 9 8z"/></svg></div>
+        <h3>Our mission</h3>
+        <p>To make high-quality, personalised education accessible to every child, meeting them exactly where they are and building real confidence, one concept at a time.</p>
+      </div>
+      <div class="f reveal">
+        <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a5 5 0 0 1 5 5v3a5 5 0 1 1-10 0V7a5 5 0 0 1 5-5z"/><path d="M5 21c1.5-3 4-5 7-5s5.5 2 7 5"/></svg></div>
+        <h3>Our approach</h3>
+        <p>We pair a compassionate AI tutor with curriculum-aligned content and honest, concept-level progress, augmenting great teaching rather than replacing it.</p>
+      </div>
+      <div class="f reveal">
+        <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <h3>Our promise</h3>
+        <p>No child should leave a lesson feeling defeated. We measure success by growth and confidence, not vanity scores or inflated badges.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLOSING -->
+<section id="cta">
+  <div class="container">
+    <div class="closing reveal">
+      <span class="eyebrow"><span class="dot"></span> Now in Private Beta</span>
+      <h2>Give every child <em>their own tutor</em>.</h2>
+      <p>Patient. Personalised. Powerful. Built for Indian classrooms, kitchens and quiet weekend mornings alike.</p>
+      <div class="btn-row">
+        <button class="btn btn-sage">Get Early Access for Free
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+        <button class="btn btn-ghost">Book a Demo</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="foot-top">
+      <div>
+        <a href="#" class="logo"><span class="logo-mark">Æ</span> Aivorah</a>
+        <p class="foot-mission">AI-powered adaptive learning for every child, teacher and parent.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Product</h5>
+        <a href="#features">Features</a><a href="#how">How It Works</a><a href="#">Pricing</a><a href="#">Changelog</a>
+      </div>
+      <div class="foot-col">
+        <h5>Platform</h5>
+        <a href="#platform">For Students</a><a href="#teachers">For Teachers</a><a href="#parents">For Parents</a><a href="#schools">For Schools</a>
+      </div>
+      <div class="foot-col">
+        <h5>Company</h5>
+        <a href="#about">About</a><a href="#">Careers</a><a href="#">Press</a><a href="#">Contact</a>
+      </div>
+      <div class="foot-col">
+        <h5>Legal</h5>
+        <a href="#">Privacy</a><a href="#">Terms</a><a href="#">Safeguarding</a><a href="#">DPDP</a>
+      </div>
+    </div>
+    <div class="foot-bot">
+      <div>© 2026 Aivorah · Made with care in India</div>
+      <div><a href="mailto:aivorah24@gmail.com">aivorah24@gmail.com</a></div>
+    </div>
+  </div>
+</footer>
+
+<!-- COMING SOON overlay for footer links that don't have a page yet -->
+<style>
+  .cs-overlay{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:24px;
+    background:rgba(7,7,7,0.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .cs-overlay.open{display:flex}
+  .cs-card{position:relative;width:100%;max-width:440px;max-height:88vh;overflow-y:auto;border-radius:22px;
+    padding:38px 34px 32px;text-align:center;
+    background:linear-gradient(180deg,#161616,#0d0d0d);border:1px solid rgba(245,243,238,0.14);
+    box-shadow:0 40px 100px -30px rgba(0,0,0,0.8);
+    scrollbar-width:none;-ms-overflow-style:none}
+  .cs-card::-webkit-scrollbar{width:0;height:0;display:none}
+  .cs-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);cursor:pointer;font-size:18px;line-height:1}
+  .cs-close:hover{color:var(--text);border-color:var(--line-strong)}
+  .cs-badge{display:inline-flex;align-items:center;gap:8px;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--gold);border:1px solid rgba(186,164,103,0.4);border-radius:999px;padding:6px 12px;margin-bottom:16px}
+  .cs-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold)}
+  .cs-title{font-family:var(--serif);font-size:30px;letter-spacing:-0.02em;margin:0 0 10px;color:var(--text)}
+  .cs-text{font-size:14.5px;line-height:1.55;color:var(--muted);margin:0 auto 22px;max-width:340px}
+  .cs-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  /* Contact form */
+  .cs-form{display:none;text-align:left;margin:0 auto 6px;max-width:360px}
+  .cs-form.show{display:block}
+  .cs-form .cs-field{margin-bottom:12px}
+  .cs-form .cs-row{display:flex;gap:10px}
+  .cs-form .cs-row .cs-field{flex:1}
+  .cs-form .cs-demo-only{display:none}
+  .cs-form.demo .cs-demo-only{display:block}
+  .cs-form.demo .cs-row.cs-demo-only{display:flex}
+  /* Custom date picker (Aivorah-themed; replaces the native white calendar) */
+  .cs-datepick{position:relative}
+  .cs-dateinput{width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
+    background:rgba(255,255,255,0.04);border:1px solid rgba(245,243,238,0.18);border-radius:11px;
+    padding:11px 13px;color:var(--text);font-size:14px;font-family:inherit;cursor:pointer;text-align:left}
+  .cs-dateinput:hover{border-color:rgba(245,243,238,0.32)}
+  .cs-dateinput svg{color:var(--muted);flex:0 0 auto}
+  .cs-dateinput.placeholder #csDateLabel{color:#7e7a72}
+  .cs-cal{position:absolute;z-index:10;top:calc(100% + 6px);left:0;width:280px;max-width:100%;
+    background:#1a1a1a;border:1px solid rgba(245,243,238,0.16);border-radius:14px;padding:14px;
+    box-shadow:0 24px 60px -20px rgba(0,0,0,0.85)}
+  .cs-cal[hidden]{display:none}
+  .cs-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .cs-cal-head span{font-size:14px;font-weight:600;color:var(--text)}
+  .cs-cal-nav{width:28px;height:28px;border-radius:8px;border:1px solid rgba(245,243,238,0.14);
+    background:transparent;color:var(--text);font-size:18px;line-height:1;cursor:pointer}
+  .cs-cal-nav:hover{border-color:var(--gold);color:var(--gold)}
+  .cs-cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+  .cs-cal-dow span{text-align:center;font-size:11px;color:#7e7a72;padding:4px 0}
+  .cs-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+  .cs-cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border:0;background:transparent;
+    color:var(--text);font-size:13px;border-radius:8px;cursor:pointer;font-family:inherit}
+  .cs-cal-day:hover:not(.disabled):not(.empty){background:rgba(255,255,255,0.08)}
+  .cs-cal-day.disabled{color:#4d4a45;cursor:default}
+  .cs-cal-day.empty{cursor:default}
+  .cs-cal-day.sel{background:var(--sage);color:#0b0b0b;font-weight:700}
+  .cs-cal-day.today:not(.sel){box-shadow:inset 0 0 0 1px rgba(186,164,103,0.5)}
+  .cs-slots{display:flex;flex-wrap:wrap;gap:7px}
+  .cs-slot{border:1px solid rgba(245,243,238,0.18);background:rgba(255,255,255,0.04);color:var(--text);
+    border-radius:9px;padding:7px 12px;font-size:13px;cursor:pointer;transition:border-color .15s,background .15s}
+  .cs-slot:hover{border-color:var(--gold)}
+  .cs-slot.sel{background:var(--sage);color:#0b0b0b;border-color:var(--sage);font-weight:600}
+  .cs-slot.empty{color:#7e7a72;border:0;background:none;padding:7px 0;cursor:default}
+  .cs-form label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .cs-form input,.cs-form textarea{width:100%;box-sizing:border-box;background:rgba(255,255,255,0.04);
+    border:1px solid rgba(245,243,238,0.16);border-radius:11px;padding:11px 13px;color:var(--text);
+    font-size:14px;font-family:inherit;outline:none;transition:border-color .15s,background .15s}
+  .cs-form input:focus,.cs-form textarea:focus{border-color:var(--gold);background:rgba(255,255,255,0.06)}
+  .cs-form textarea{resize:vertical;min-height:92px}
+  .cs-form .btn-sage{width:100%;margin-top:4px;display:flex;align-items:center;justify-content:center;text-align:center}
+  .cs-form .btn-sage[disabled]{opacity:.6;cursor:default}
+  .cs-note{font-size:13px;line-height:1.5;color:var(--muted);margin:10px 0 0;text-align:center}
+  .cs-note a{color:var(--gold);text-decoration:none}
+  .cs-note a:hover{text-decoration:underline}
+  .cs-status{font-size:13.5px;margin:14px 0 0;text-align:center;display:none}
+  .cs-status.ok{display:block;color:#a7d3a0}
+  .cs-status.err{display:block;color:#e2a0a0}
+</style>
+<div class="cs-overlay" id="comingSoon" role="dialog" aria-modal="true" aria-label="Coming soon">
+  <div class="cs-card">
+    <button class="cs-close" id="csClose" aria-label="Close">&times;</button>
+    <span class="cs-badge"><span class="dot"></span> Coming Soon</span>
+    <h3 class="cs-title" id="csTitle">This page</h3>
+    <p class="cs-text" id="csText">We're putting the finishing touches on this. Aivorah is in private beta. Join early access and we'll let you know the moment it's ready.</p>
+
+    <form class="cs-form" id="csForm" novalidate>
+      <div class="cs-field">
+        <label for="csName">Your name</label>
+        <input type="text" id="csName" name="name" autocomplete="name" required>
+      </div>
+      <div class="cs-field">
+        <label for="csEmailIn">Email</label>
+        <input type="email" id="csEmailIn" name="email" autocomplete="email" required>
+      </div>
+      <!-- Demo-only fields -->
+      <div class="cs-field cs-demo-only">
+        <label for="csSchool">School / organisation</label>
+        <input type="text" id="csSchool" name="school" autocomplete="organization">
+      </div>
+      <div class="cs-row cs-demo-only">
+        <div class="cs-field">
+          <label for="csRole">Your role</label>
+          <input type="text" id="csRole" name="role" placeholder="e.g. Principal, Coordinator">
+        </div>
+        <div class="cs-field">
+          <label for="csSize">No. of students</label>
+          <input type="text" id="csSize" name="size" placeholder="e.g. 500">
+        </div>
+      </div>
+      <div class="cs-field cs-demo-only">
+        <label>Preferred date</label>
+        <div class="cs-datepick" id="csDatePick">
+          <button type="button" class="cs-dateinput placeholder" id="csDateBtn">
+            <span id="csDateLabel">Select a date</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="17" height="17"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          </button>
+          <div class="cs-cal" id="csCal" hidden>
+            <div class="cs-cal-head">
+              <button type="button" class="cs-cal-nav" id="csCalPrev" aria-label="Previous month">‹</button>
+              <span id="csCalMonth"></span>
+              <button type="button" class="cs-cal-nav" id="csCalNext" aria-label="Next month">›</button>
+            </div>
+            <div class="cs-cal-dow"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+            <div class="cs-cal-grid" id="csCalGrid"></div>
+          </div>
+        </div>
+        <input type="hidden" id="csDate" name="date">
+      </div>
+      <div class="cs-field cs-demo-only" id="csSlotsField" style="display:none">
+        <label>Preferred time <span style="text-transform:none;letter-spacing:0;color:#7e7a72">(IST · we'll confirm)</span></label>
+        <div class="cs-slots" id="csSlots"></div>
+        <input type="hidden" id="csSlot" name="slot">
+      </div>
+      <div class="cs-field">
+        <label for="csMsg" id="csMsgLabel">Message</label>
+        <textarea id="csMsg" name="message" required></textarea>
+      </div>
+      <button type="submit" class="btn btn-sage" id="csSubmit">Send message</button>
+      <p class="cs-status" id="csStatus"></p>
+      <p class="cs-note">Or email us directly at <a href="mailto:aivorah24@gmail.com" id="csMailto">aivorah24@gmail.com</a></p>
+    </form>
+
+    <div class="cs-actions" id="csActions">
+      <button class="btn btn-sage" id="csJoin">Join Early Access</button>
+      <button class="btn btn-ghost" id="csBack">Back to site</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var cs = document.getElementById('comingSoon');
+  var csBadge = cs.querySelector('.cs-badge');
+  var csTitle = document.getElementById('csTitle');
+  var csText = document.getElementById('csText');
+  var csJoin = document.getElementById('csJoin');
+  var csForm = document.getElementById('csForm');
+  var csActions = document.getElementById('csActions');
+  var csStatus = document.getElementById('csStatus');
+  var csSubmit = document.getElementById('csSubmit');
+
+  var DEFAULT_BADGE = 'Coming Soon';
+  var DEFAULT_TEXT = "We're putting the finishing touches on this. Aivorah is in private beta. Join early access and we'll let you know the moment it's ready.";
+
+  // Per-link copy. CTA "join" shows the early-access button; "email" shows a contact form.
+  var CONTENT = {
+    'Book a Demo': {
+      badge: 'For Schools',
+      title: 'Book a Demo',
+      text: "Tell us about your school and we'll set up a personalised walkthrough. Once our team confirms a time, we'll email you a calendar invite with a Google Meet link.",
+      cta: 'email',
+      kind: 'demo'
+    },
+    'Careers': {
+      badge: "We're Hiring Soon",
+      title: 'Careers',
+      text: "We're a small team building something we care deeply about. We don't have open roles posted just yet, but we're always glad to hear from thoughtful people who want to help shape education. Send us a note and we'll reach out when a role opens.",
+      cta: 'email'
+    },
+    'Press': {
+      badge: 'Press & Media',
+      title: 'Press',
+      text: "For press enquiries, brand assets, or interview requests, reach out to our team and we'll get back to you.",
+      cta: 'email'
+    },
+    'Contact': {
+      badge: 'Get in Touch',
+      title: 'Contact Us',
+      text: "Questions, partnerships, or feedback? We'd love to hear from you. Drop us a message any time.",
+      cta: 'email'
+    },
+    'Pricing': {
+      badge: 'Pricing',
+      title: 'Simple, Transparent Pricing',
+      text: "Aivorah is currently in private beta and free for our early users. Clear, fair pricing for families and schools will be announced at public launch. For institutional or pilot pricing, get in touch and our team will share the details.",
+      cta: 'email'
+    },
+    'Changelog': {
+      badge: "What's New",
+      title: 'Changelog',
+      text: "We're building Aivorah thoughtfully and in the open. Once we launch publicly, every product update and release note will be published here. Join early access to be the first to know what's new.",
+      cta: 'join'
+    },
+    'Privacy': {
+      badge: 'Coming Soon',
+      title: 'Privacy Policy',
+      text: "Our Privacy Policy is being finalised ahead of public launch. We take the protection of your data seriously, and the full policy will be published here shortly. For any questions in the meantime, please write to aivorah24@gmail.com.",
+      cta: 'info'
+    },
+    'Terms': {
+      badge: 'Coming Soon',
+      title: 'Terms of Service',
+      text: "Our Terms of Service are currently being prepared and will be published here before public launch. If you have any questions in the meantime, please reach us at aivorah24@gmail.com.",
+      cta: 'info'
+    },
+    'Safeguarding': {
+      badge: 'Coming Soon',
+      title: 'Safeguarding',
+      text: "The safety and wellbeing of every child is central to Aivorah. Our detailed Safeguarding Policy is being finalised and will be published here shortly. For any concerns or questions, please contact aivorah24@gmail.com.",
+      cta: 'info'
+    },
+    'DPDP': {
+      badge: 'Coming Soon',
+      title: 'DPDP Compliance',
+      text: "Our compliance documentation under India's Digital Personal Data Protection Act is being prepared and will be published here ahead of public launch. For any data protection queries, please write to aivorah24@gmail.com.",
+      cta: 'info'
+    }
+  };
+
+  var csMsgLabel = document.getElementById('csMsgLabel');
+  var currentTopic = null;
+  var isDemo = false;
+  function show(name){
+    var c = CONTENT[name] || { badge: DEFAULT_BADGE, title: (name || 'This page'), text: DEFAULT_TEXT, cta: 'join' };
+    csBadge.lastChild.textContent = ' ' + c.badge;
+    csTitle.textContent = c.title;
+    csText.textContent = c.text;
+    var useEmail = c.cta === 'email';
+    isDemo = c.kind === 'demo';
+    currentTopic = useEmail ? c.title : null;
+    // Reset form state each time
+    csForm.reset();
+    csStatus.className = 'cs-status';
+    csStatus.textContent = '';
+    csSubmit.disabled = false;
+    csSubmit.textContent = isDemo ? 'Request demo' : 'Send message';
+    csMsgLabel.textContent = isDemo ? 'Anything else? (optional)' : 'Message';
+    csForm.classList.toggle('show', useEmail);
+    csForm.classList.toggle('demo', isDemo);
+    csActions.style.display = useEmail ? 'none' : '';
+    // Only the "join" CTA shows the Join Early Access button; info pages show just "Back to site".
+    csJoin.style.display = (c.cta === 'join') ? '' : 'none';
+    if(isDemo){
+      if(typeof resetDatePicker === 'function') resetDatePicker();
+      if(csSlotsField) csSlotsField.style.display = 'none';
+      if(csSlots) csSlots.innerHTML = '';
+    }
+    cs.classList.add('open');
+  }
+  function hide(){ cs.classList.remove('open'); }
+  // Exposed for the "Book a Demo" buttons wired by the host-integration script.
+  window.__aivOpenDemo = function(){ show('Book a Demo'); };
+
+  /* ── Demo slot picker (preferred time; founder confirms the final time) ──────
+     Availability is expressed in IST. Edit AVAILABILITY to change demo windows.
+     Keys are weekdays (0=Sun … 6=Sat); values are [startHour, endHour] ranges. */
+  var AVAILABILITY = {
+    1: [[10, 13], [15, 18]], // Mon
+    2: [[10, 13], [15, 18]], // Tue
+    3: [[10, 13], [15, 18]], // Wed
+    4: [[10, 13], [15, 18]], // Thu
+    5: [[10, 13], [15, 18]], // Fri
+  };
+  var SLOT_MINUTES = 30;
+  var csDate = document.getElementById('csDate');
+  var csSlotsField = document.getElementById('csSlotsField');
+  var csSlots = document.getElementById('csSlots');
+  var csSlot = document.getElementById('csSlot');
+
+  function renderSlots(dateStr){
+    csSlots.innerHTML = '';
+    csSlot.value = '';
+    if(!dateStr){ csSlotsField.style.display = 'none'; return; }
+    // Weekday of the picked calendar date (parse as UTC so no timezone shift).
+    var wd = new Date(dateStr + 'T00:00:00Z').getUTCDay();
+    var windows = AVAILABILITY[wd];
+    csSlotsField.style.display = 'block';
+    if(!windows){
+      var none = document.createElement('div');
+      none.className = 'cs-slot empty';
+      none.textContent = 'No demo slots on this day. Please pick a weekday.';
+      csSlots.appendChild(none);
+      return;
+    }
+    var now = Date.now();
+    windows.forEach(function(rng){
+      for(var h = rng[0]; h < rng[1]; h++){
+        for(var m = 0; m < 60; m += SLOT_MINUTES){
+          var hh = String(h).padStart(2, '0'), mm = String(m).padStart(2, '0');
+          var iso = dateStr + 'T' + hh + ':' + mm + ':00+05:30';
+          if(new Date(iso).getTime() < now + 3600000) continue; // hide past / <1h away
+          var label = (h % 12 === 0 ? 12 : h % 12) + ':' + mm + ' ' + (h < 12 ? 'AM' : 'PM');
+          var chip = document.createElement('button');
+          chip.type = 'button'; chip.className = 'cs-slot'; chip.textContent = label;
+          chip.setAttribute('data-iso', iso);
+          chip.addEventListener('click', function(){
+            Array.prototype.forEach.call(csSlots.children, function(c){ c.classList.remove('sel'); });
+            this.classList.add('sel');
+            csSlot.value = this.getAttribute('data-iso');
+          });
+          csSlots.appendChild(chip);
+        }
+      }
+    });
+    if(!csSlots.children.length){
+      var e = document.createElement('div');
+      e.className = 'cs-slot empty';
+      e.textContent = 'No slots left for this date. Try another day.';
+      csSlots.appendChild(e);
+    }
+  }
+  // ── Custom themed calendar ──────────────────────────────────────────────
+  var csDateBtn = document.getElementById('csDateBtn');
+  var csDateLabel = document.getElementById('csDateLabel');
+  var csCal = document.getElementById('csCal');
+  var csCalGrid = document.getElementById('csCalGrid');
+  var csCalMonth = document.getElementById('csCalMonth');
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var calView;   // {y, m} currently displayed month
+  var minDate;   // earliest selectable (tomorrow, midnight)
+
+  function pad2(n){ return String(n).padStart(2, '0'); }
+  function ymd(y, m, d){ return y + '-' + pad2(m + 1) + '-' + pad2(d); }
+
+  function renderCalendar(){
+    if(!calView) return;
+    var y = calView.y, m = calView.m;
+    csCalMonth.textContent = MONTHS[m] + ' ' + y;
+    csCalGrid.innerHTML = '';
+    var first = new Date(Date.UTC(y, m, 1)).getUTCDay();
+    var days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    var todayStr = ymd(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+    for(var i = 0; i < first; i++){ var b = document.createElement('span'); b.className = 'cs-cal-day empty'; csCalGrid.appendChild(b); }
+    for(var d = 1; d <= days; d++){
+      var cell = document.createElement('button');
+      cell.type = 'button'; cell.className = 'cs-cal-day'; cell.textContent = d;
+      var iso = ymd(y, m, d);
+      var wd = new Date(iso + 'T00:00:00Z').getUTCDay();
+      var dateObj = new Date(iso + 'T00:00:00');
+      var noWindows = !AVAILABILITY[wd];
+      var tooEarly = dateObj < minDate;
+      if(tooEarly || noWindows){ cell.classList.add('disabled'); }
+      else { cell.addEventListener('click', (function(s){ return function(){ pickDate(s); }; })(iso)); }
+      if(iso === todayStr) cell.classList.add('today');
+      if(csDate.value === iso) cell.classList.add('sel');
+      csCalGrid.appendChild(cell);
+    }
+  }
+  function pickDate(iso){
+    csDate.value = iso;
+    var dt = new Date(iso + 'T00:00:00');
+    csDateLabel.textContent = dt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    csDateBtn.classList.remove('placeholder');
+    closeCal();
+    renderSlots(iso);
+  }
+  function openCal(){
+    minDate = new Date(); minDate.setHours(0,0,0,0); minDate.setDate(minDate.getDate() + 1);
+    var base = csDate.value ? new Date(csDate.value + 'T00:00:00') : minDate;
+    calView = { y: base.getFullYear(), m: base.getMonth() };
+    renderCalendar();
+    csCal.hidden = false;
+  }
+  function closeCal(){ csCal.hidden = true; }
+  function resetDatePicker(){
+    csDate.value = '';
+    csDateLabel.textContent = 'Select a date';
+    csDateBtn.classList.add('placeholder');
+    closeCal();
+  }
+  if(csDateBtn){
+    csDateBtn.addEventListener('click', function(e){ e.stopPropagation(); if(csCal.hidden) openCal(); else closeCal(); });
+    document.getElementById('csCalPrev').addEventListener('click', function(){ calView.m--; if(calView.m < 0){ calView.m = 11; calView.y--; } renderCalendar(); });
+    document.getElementById('csCalNext').addEventListener('click', function(){ calView.m++; if(calView.m > 11){ calView.m = 0; calView.y++; } renderCalendar(); });
+    csCal.addEventListener('click', function(e){ e.stopPropagation(); });
+    document.addEventListener('click', function(){ if(!csCal.hidden) closeCal(); });
+  }
+
+  csForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = document.getElementById('csName').value.trim();
+    var email = document.getElementById('csEmailIn').value.trim();
+    var message = document.getElementById('csMsg').value.trim();
+    // For demos the message is optional; name + email always required.
+    if(!name || !email || (!isDemo && !message)){
+      csStatus.className = 'cs-status err';
+      csStatus.textContent = 'Please fill in your name and email.';
+      return;
+    }
+    var endpoint, payload, restoreLabel;
+    if(isDemo){
+      endpoint = '/api/demo-request';
+      restoreLabel = 'Request demo';
+      payload = {
+        name: name, email: email, message: message,
+        school: document.getElementById('csSchool').value.trim(),
+        role: document.getElementById('csRole').value.trim(),
+        size: document.getElementById('csSize').value.trim(),
+        slot: csSlot.value || ''
+      };
+    } else {
+      endpoint = '/api/contact';
+      restoreLabel = 'Send message';
+      payload = { name: name, email: email, message: message, topic: currentTopic };
+    }
+    csSubmit.disabled = true;
+    csSubmit.textContent = isDemo ? 'Sending…' : 'Sending…';
+    csStatus.className = 'cs-status';
+    csStatus.textContent = '';
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+    .then(function(res){
+      if(res.ok){
+        csForm.reset();
+        csStatus.className = 'cs-status ok';
+        csStatus.textContent = isDemo
+          ? "Thanks! We've received your request. Our team will confirm a time and email you a Google Meet invite shortly."
+          : "Thanks! Your message is on its way. We'll get back to you soon.";
+        csSubmit.textContent = isDemo ? 'Request sent' : 'Sent';
+      } else {
+        csStatus.className = 'cs-status err';
+        csStatus.textContent = (res.d && res.d.error) || 'Something went wrong. Please try again.';
+        csSubmit.disabled = false;
+        csSubmit.textContent = restoreLabel;
+      }
+    })
+    .catch(function(){
+      csStatus.className = 'cs-status err';
+      csStatus.textContent = 'Network error. You can email us directly at aivorah24@gmail.com.';
+      csSubmit.disabled = false;
+      csSubmit.textContent = restoreLabel;
+    });
+  });
+  // Any footer link still pointing at "#" has no page yet → show contextual dialog.
+  document.querySelectorAll('.foot-col a').forEach(function(a){
+    if(a.getAttribute('href') === '#'){
+      a.addEventListener('click', function(e){ e.preventDefault(); show((a.textContent||'').trim()); });
+    }
+  });
+  document.getElementById('csClose').addEventListener('click', hide);
+  document.getElementById('csBack').addEventListener('click', hide);
+  // "Book a Demo" buttons across the page are wired to window.__aivOpenDemo by the
+  // host-integration script below.
+  csJoin.addEventListener('click', function(){ hide(); try{ window.parent.postMessage({type:'aivorah-auth', mode:'signup'}, '*'); }catch(e){} });
+  cs.addEventListener('click', function(e){ if(e.target === cs) hide(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') hide(); });
+})();
+</script>
+
+
+<script>
+(function(){
+  // Nav scroll
+  const nav = document.getElementById('navWrap');
+  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 8);
+  document.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+  // Mobile menu
+  const mb = document.getElementById('menuBtn'), mm = document.getElementById('mobileMenu');
+  mb?.addEventListener('click', () => mm.classList.toggle('open'));
+  mm?.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mm.classList.remove('open')));
+
+  // Reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  }, {threshold:.12, rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Adaptive sim
+  const turns = ['t1','t2','t3','t4'].map(id => document.getElementById(id));
+  const conf = document.getElementById('confFill');
+  const confPct = document.getElementById('confPct');
+  const seq = [
+    {delay:600, w:'25%'},
+    {delay:1500, w:'18%'},
+    {delay:1500, w:'62%'},
+    {delay:1400, w:'92%'},
+  ];
+  function play(){
+    turns.forEach(t => t.classList.remove('show'));
+    conf.style.width='25%'; confPct.textContent='25%';
+    let acc = 300;
+    turns.forEach((t,i) => {
+      acc += seq[i].delay;
+      setTimeout(() => {
+        t.classList.add('show');
+        conf.style.width = seq[i].w;
+        confPct.textContent = seq[i].w;
+      }, acc);
+    });
+  }
+  setTimeout(play, 400);
+  document.getElementById('replay').addEventListener('click', play);
+
+})();
+
+
+/* Duplicate curriculum marquee for seamless loop */
+(function(){
+  var track = document.getElementById('curriculumTrack');
+  if(track) track.innerHTML += track.innerHTML;
+})();
+
+/* Aivorah host-app integration: route auth buttons to the REAL Login / Sign-up
+   modal living in the host app (this page is embedded in an iframe). */
+(function(){
+  function send(mode){ try { window.parent.postMessage({ type:'aivorah-auth', mode:mode }, '*'); } catch(e){} }
+  function wire(){
+    document.querySelectorAll('button, a').forEach(function(el){
+      if(el.__aivWired) return; el.__aivWired = true;
+      var t = (el.textContent||'').trim().toLowerCase();
+      if(t === 'login'){ el.addEventListener('click', function(e){ e.preventDefault(); send('login'); }); }
+      else if(t.indexOf('book a demo') >= 0){ el.addEventListener('click', function(e){ e.preventDefault(); if(window.__aivOpenDemo) window.__aivOpenDemo(); }); }
+      else if(t.indexOf('early access') >= 0){ el.addEventListener('click', function(e){ e.preventDefault(); send('signup'); }); }
+    });
+  }
+  wire(); setTimeout(wire, 600);
+})();
+</script>
+</body>
+</html>

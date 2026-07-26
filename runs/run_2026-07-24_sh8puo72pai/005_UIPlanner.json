@@ -1,0 +1,222 @@
+{
+  "package": {
+    "package_id": "uuid",
+    "package_type": "UIPlanPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:00:00.000Z",
+    "produced_by": {
+      "agent": "ui-planner-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "ui-planner-pipeline",
+      "parent_package_id": "uuid"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "device_profiles": {
+      "desktop": {
+        "layout": "two-pane"
+      },
+      "tablet": {
+        "layout": "adaptive-two-pane"
+      },
+      "mobile": {
+        "layout": "single-column"
+      }
+    },
+    "theme": "light",
+    "accessibility_settings": [
+      "dyslexia",
+      "high_contrast",
+      "large_text"
+    ],
+    "rendering_constraints": {
+      "max_interactions": 2,
+      "allow_horizontal_scroll": false,
+      "animation_level": "medium"
+    },
+    "screens": [
+      {
+        "screen_id": "welcome-screen",
+        "stage_id": "welcome",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "welcome-title",
+            "component_type": "Heading",
+            "stage_id": "welcome",
+            "priority": "primary",
+            "props": {
+              "text": "Welcome to Subtraction with Borrowing"
+            }
+          },
+          {
+            "component_id": "welcome-intro",
+            "component_type": "Text",
+            "stage_id": "welcome",
+            "priority": "secondary",
+            "props": {
+              "text": "Welcome students to the lesson on subtraction with borrowing."
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": null,
+          "next_screen": "introduction-screen",
+          "exit_behavior": "dismiss"
+        }
+      },
+      {
+        "screen_id": "introduction-screen",
+        "stage_id": "introduction",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "introduction-video",
+            "component_type": "Video",
+            "stage_id": "introduction",
+            "priority": "primary",
+            "props": {
+              "src": "https://example.com/introduction-video.mp4"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "welcome-screen",
+          "next_screen": "example-1-screen",
+          "exit_behavior": "dismiss"
+        }
+      },
+      {
+        "screen_id": "example-1-screen",
+        "stage_id": "example-1",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "example-1-scenario",
+            "component_type": "Text",
+            "stage_id": "example-1",
+            "priority": "primary",
+            "props": {
+              "text": "We have 72 rupees in the piggy bank. We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees."
+            }
+          },
+          {
+            "component_id": "example-1-exercise",
+            "component_type": "Interactive Exercise",
+            "stage_id": "example-1",
+            "priority": "secondary",
+            "props": {
+              "question": "How many rupees do we have left in the piggy bank?"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "introduction-screen",
+          "next_screen": "example-2-screen",
+          "exit_behavior": "dismiss"
+        }
+      },
+      {
+        "screen_id": "example-2-screen",
+        "stage_id": "example-2",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "example-2-scenario",
+            "component_type": "Text",
+            "stage_id": "example-2",
+            "priority": "primary",
+            "props": {
+              "text": "We have 45 apples in a basket. We give 27 apples to our friend. How many apples are left in the basket?"
+            }
+          },
+          {
+            "component_id": "example-2-exercise",
+            "component_type": "Interactive Exercise",
+            "stage_id": "example-2",
+            "priority": "secondary",
+            "props": {
+              "question": "How many apples are left in the basket?"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "example-1-screen",
+          "next_screen": "practice-screen",
+          "exit_behavior": "dismiss"
+        }
+      },
+      {
+        "screen_id": "practice-screen",
+        "stage_id": "practice",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "practice-exercise",
+            "component_type": "Interactive Exercise",
+            "stage_id": "practice",
+            "priority": "primary",
+            "props": {
+              "question": "Practice subtraction with borrowing using a variety of scenarios."
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "example-2-screen",
+          "next_screen": "reflection-screen",
+          "exit_behavior": "dismiss"
+        }
+      },
+      {
+        "screen_id": "reflection-screen",
+        "stage_id": "reflection",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "reflection-quiz",
+            "component_type": "Quiz",
+            "stage_id": "reflection",
+            "priority": "primary",
+            "props": {
+              "question": "What did you learn about subtraction with borrowing?"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "practice-screen",
+          "next_screen": "summary-screen",
+          "exit_behavior": "dismiss"
+        }
+      },
+      {
+        "screen_id": "summary-screen",
+        "stage_id": "summary",
+        "layout": "desktop",
+        "components": [
+          {
+            "component_id": "summary-review",
+            "component_type": "Text",
+            "stage_id": "summary",
+            "priority": "primary",
+            "props": {
+              "text": "Summary of the key points of the lesson on subtraction with borrowing."
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "reflection-screen",
+          "next_screen": null,
+          "exit_behavior": "dismiss"
+        }
+      }
+    ],
+    "handoff": {
+      "ui_planner_agent": {
+        "lesson_experience": {}
+      }
+    }
+  }
+}

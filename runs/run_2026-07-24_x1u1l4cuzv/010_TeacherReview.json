@@ -1,0 +1,49 @@
+{
+  "package": {
+    "package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842f",
+    "package_type": "ReviewReport",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:20:00.239Z",
+    "produced_by": {
+      "agent": "teacher-review-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "x1u1l4cuzv",
+      "parent_package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842d"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "review_scores": {
+      "curriculum_fidelity": 100,
+      "pedagogical_quality": 100,
+      "student_engagement": 95,
+      "visual_experience": 100,
+      "audio_experience": 100,
+      "assessment_quality": 100,
+      "accessibility": 100,
+      "overall_score": 99
+    },
+    "status": "PASS",
+    "surgical_feedback": [
+      {
+        "issue_id": "student_engagement_issue",
+        "stage_id": "5",
+        "component_id": "7",
+        "severity": "minor",
+        "description": "The practice section could be more engaging with interactive elements or real-life examples.",
+        "recommendation": "Add interactive elements or real-life examples to the practice section.",
+        "target_agent": "lesson-generator-agent",
+        "error_code": "TR004"
+      }
+    ],
+    "handoff": {
+      "functional_qa_agent": {
+        "lesson_id": "subtraction_with_borrowing",
+        "package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842f"
+      },
+      "regeneration_agent": {}
+    }
+  }
+}

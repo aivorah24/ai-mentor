@@ -9,6 +9,7 @@ import TopicAICoach from '../../components/common/TopicAICoach';
 import { spacing, radius, fonts } from '../../theme';
 
 import SERVER_URL from '../../config/serverUrl';
+import { getMathChapterCode } from '../../config/mathChapterMap';
 
 // ── Video map: topic → Cloudinary URL ────────────────────────
 // Add new videos here as they are produced
@@ -235,7 +236,18 @@ export default function VideoLessonScreen({ navigation, route }: any) {
             <View style={[s.ctaRow, !isWide && { flexDirection: 'column' }]}>
               <TouchableOpacity
                 style={[s.cta, { backgroundColor: accent + (isDark ? '1F' : '14'), borderColor: accent + '55' }]}
-                onPress={() => navigation.navigate('TopicLesson', { topic, grade, subject, curriculum })}
+                onPress={() => {
+                  // Maths gets the step-driven Math Learning Engine instead of the
+                  // narrated card viewer, wherever a generated chapter exists for
+                  // this grade/topic (see mathChapterMap.ts) — everything else
+                  // keeps using TopicLesson unchanged.
+                  const mathCode = subject === 'Mathematics' ? getMathChapterCode(curriculum, grade, subject, topic) : null;
+                  if (mathCode) {
+                    navigation.navigate('MathLesson', { topic: mathCode, grade, subject, curriculum });
+                  } else {
+                    navigation.navigate('TopicLesson', { topic, grade, subject, curriculum });
+                  }
+                }}
                 activeOpacity={0.85}
               >
                 <Feather name="play-circle" size={18} color={accent} />

@@ -1,0 +1,30 @@
+{
+  "package": {
+    "package_id": "9b9b9b9b-9b9b-9b9b-9b9b-9b9b9b9b9b9b",
+    "package_type": "ReleasePackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:12:15.067Z",
+    "produced_by": {
+      "agent": "final-audit-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "uala08ghqgp",
+      "parent_package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "release_version": "1.0",
+    "build_timestamp": "2026-07-24T14:12:15.067Z",
+    "package_manifest": {},
+    "package_references": [],
+    "audit_summary": {
+      "status": "REJECTED",
+      "checks": {
+        "qa_status": "FAIL"
+      }
+    },
+    "deployment_status": "NOT_READY"
+  }
+}

@@ -33,6 +33,7 @@ import RewardsScreen from '../screens/student/RewardsScreen';
 import IBPYPQuizScreen from '../screens/student/IBPYPQuizScreen';
 import WorldAndYouScreen from '../screens/student/WorldAndYouScreen';
 import TopicLessonScreen from '../screens/student/TopicLessonScreen';
+import MathLessonScreen from '../screens/student/MathLessonScreen';
 import BhagavathaStoriesScreen from '../screens/student/BhagavathaStoriesScreen';
 import StoryReaderScreen from '../screens/student/StoryReaderScreen';
 import ReadAloudScreen from '../screens/student/ReadAloudScreen';
@@ -99,6 +100,7 @@ export default function AppNavigator() {
       <Drawer.Screen name="IBPYPQuiz" component={IBPYPQuizScreen} />
       <Drawer.Screen name="WorldAndYou" component={WorldAndYouScreen} />
       <Drawer.Screen name="TopicLesson" component={TopicLessonScreen} />
+      <Drawer.Screen name="MathLesson" component={MathLessonScreen} />
       <Drawer.Screen name="BhagavathaStories" component={BhagavathaStoriesScreen} />
       <Drawer.Screen name="StoryReader" component={StoryReaderScreen} />
       <Drawer.Screen name="ReadAloud" component={ReadAloudScreen} />

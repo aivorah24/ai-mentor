@@ -1,0 +1,259 @@
+{
+  "package": {
+    "package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3d",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "2023-12-24T14:30:00Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3d",
+      "parent_package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3c"
+    }
+  },
+  "payload": {
+    "lesson_id": "my-bicycle-lesson",
+    "lesson_metadata": {
+      "grade": 2,
+      "subject": "English",
+      "chapter": "My Bicycle",
+      "lesson": "My Bicycle",
+      "lesson_type": "Concept",
+      "concept_map": {
+        "my-bicycle-concept": {
+          "concept": "My Bicycle",
+          "depends_on": [
+            "bicycles",
+            "transportation"
+          ],
+          "difficulty": "medium"
+        }
+      },
+      "learning_objectives": [
+        "To understand the concept of a bicycle as a mode of transportation.",
+        "To describe the features of a bicycle."
+      ],
+      "learning_outcomes": [
+        "Students will be able to identify the key components of a bicycle.",
+        "Students will be able to explain the purpose of a bicycle."
+      ],
+      "bloom_level": "Understand",
+      "prerequisites": [
+        "Basic understanding of transportation modes.",
+        "Familiarity with bicycles."
+      ],
+      "misconceptions": [
+        "Bicycles are only used for recreation.",
+        "Bicycles are not a reliable mode of transportation."
+      ],
+      "suggested_instructional_sequence": [
+        "Introduce the concept of a bicycle as a mode of transportation.",
+        "Show examples of different types of bicycles.",
+        "Have students describe the features of a bicycle."
+      ],
+      "vocabulary_difficulty": "low",
+      "available_images": [
+        "image1.jpg",
+        "image2.jpg"
+      ],
+      "source_chunk_references": [
+        "chunk_1",
+        "chunk_2",
+        "chunk_3"
+      ]
+    },
+    "experience_score": 100,
+    "lesson_flow": [
+      {
+        "step_id": "step_1",
+        "step_type": "Introduction",
+        "description": "Introduce the concept of a bicycle as a mode of transportation.",
+        "ui_components": [
+          {
+            "component_id": "component_1",
+            "component_type": "Text",
+            "text": "What is a bicycle?"
+          }
+        ],
+        "interaction_plan": [
+          {
+            "interaction_id": "interaction_1",
+            "interaction_type": "Multiple Choice",
+            "question": "What is a bicycle?",
+            "options": [
+              "A mode of transportation",
+              "A recreational vehicle",
+              "A type of food"
+            ],
+            "correct_answer": "A mode of transportation"
+          }
+        ]
+      },
+      {
+        "step_id": "step_2",
+        "step_type": "Explanation",
+        "description": "Show examples of different types of bicycles.",
+        "ui_components": [
+          {
+            "component_id": "component_2",
+            "component_type": "Image",
+            "image": "image1.jpg"
+          }
+        ],
+        "interaction_plan": [
+          {
+            "interaction_id": "interaction_2",
+            "interaction_type": "Drag and Drop",
+            "question": "Identify the different parts of a bicycle.",
+            "options": [
+              "Wheel",
+              "Seat",
+              "Handlebars"
+            ],
+            "correct_answer": "Wheel, Seat, Handlebars"
+          }
+        ]
+      },
+      {
+        "step_id": "step_3",
+        "step_type": "Practice",
+        "description": "Have students describe the features of a bicycle.",
+        "ui_components": [
+          {
+            "component_id": "component_3",
+            "component_type": "Text",
+            "text": "Describe the features of a bicycle."
+          }
+        ],
+        "interaction_plan": [
+          {
+            "interaction_id": "interaction_3",
+            "interaction_type": "Short Answer",
+            "question": "Describe the features of a bicycle.",
+            "answer": "The features of a bicycle include the wheel, seat, handlebars, and pedals."
+          }
+        ]
+      }
+    ],
+    "ui_components": [
+      {
+        "component_id": "component_1",
+        "component_type": "Text",
+        "text": "What is a bicycle?"
+      },
+      {
+        "component_id": "component_2",
+        "component_type": "Image",
+        "image": "image1.jpg"
+      },
+      {
+        "component_id": "component_3",
+        "component_type": "Text",
+        "text": "Describe the features of a bicycle."
+      }
+    ],
+    "interaction_plan": [
+      {
+        "interaction_id": "interaction_1",
+        "interaction_type": "Multiple Choice",
+        "question": "What is a bicycle?",
+        "options": [
+          "A mode of transportation",
+          "A recreational vehicle",
+          "A type of food"
+        ],
+        "correct_answer": "A mode of transportation"
+      },
+      {
+        "interaction_id": "interaction_2",
+        "interaction_type": "Drag and Drop",
+        "question": "Identify the different parts of a bicycle.",
+        "options": [
+          "Wheel",
+          "Seat",
+          "Handlebars"
+        ],
+        "correct_answer": "Wheel, Seat, Handlebars"
+      },
+      {
+        "interaction_id": "interaction_3",
+        "interaction_type": "Short Answer",
+        "question": "Describe the features of a bicycle.",
+        "answer": "The features of a bicycle include the wheel, seat, handlebars, and pedals."
+      }
+    ],
+    "illustration_plan": [
+      {
+        "illustration_id": "illustration_1",
+        "illustration_type": "Image",
+        "image": "image1.jpg"
+      }
+    ],
+    "audio_plan": [],
+    "validation_requirements": [
+      {
+        "requirement_id": "requirement_1",
+        "requirement_type": "Completion",
+        "description": "Complete the lesson to unlock the next step."
+      }
+    ],
+    "handoff": {
+      "ui_planner_agent": {
+        "lesson_experience": {
+          "lesson_id": "my-bicycle-lesson",
+          "lesson_metadata": {
+            "grade": 2,
+            "subject": "English",
+            "chapter": "My Bicycle",
+            "lesson": "My Bicycle",
+            "lesson_type": "Concept",
+            "concept_map": {
+              "my-bicycle-concept": {
+                "concept": "My Bicycle",
+                "depends_on": [
+                  "bicycles",
+                  "transportation"
+                ],
+                "difficulty": "medium"
+              }
+            },
+            "learning_objectives": [
+              "To understand the concept of a bicycle as a mode of transportation.",
+              "To describe the features of a bicycle."
+            ],
+            "learning_outcomes": [
+              "Students will be able to identify the key components of a bicycle.",
+              "Students will be able to explain the purpose of a bicycle."
+            ],
+            "bloom_level": "Understand",
+            "prerequisites": [
+              "Basic understanding of transportation modes.",
+              "Familiarity with bicycles."
+            ],
+            "misconceptions": [
+              "Bicycles are only used for recreation.",
+              "Bicycles are not a reliable mode of transportation."
+            ],
+            "suggested_instructional_sequence": [
+              "Introduce the concept of a bicycle as a mode of transportation.",
+              "Show examples of different types of bicycles.",
+              "Have students describe the features of a bicycle."
+            ],
+            "vocabulary_difficulty": "low",
+            "available_images": [
+              "image1.jpg",
+              "image2.jpg"
+            ],
+            "source_chunk_references": [
+              "chunk_1",
+              "chunk_2",
+              "chunk_3"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

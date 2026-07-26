@@ -1,0 +1,93 @@
+{
+  "package": {
+    "package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d40",
+    "package_type": "AudioPackage",
+    "schema_version": "1.0",
+    "created_at": "2023-12-24T14:30:00Z",
+    "produced_by": {
+      "agent": "audio-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3f",
+      "parent_package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3e"
+    }
+  },
+  "payload": {
+    "lesson_id": "my-bicycle-lesson",
+    "audio_strategy": "Concept",
+    "narration_segments": [
+      {
+        "artifact_id": "segment_1",
+        "stage_id": "step_1",
+        "component_id": "component_1",
+        "ssml": "<speak><prosody rate='medium'><break time='500ms'/></prosody>A bicycle is a vehicle with two wheels, powered by pedaling. It is a popular mode of transportation and recreation.</speak>",
+        "timing_map": {
+          "0s": "A bicycle is a vehicle with two wheels, powered by pedaling.",
+          "5s": "It is a popular mode of transportation and recreation."
+        },
+        "highlight_map": {
+          "0s": "bicycle"
+        },
+        "pronunciation_overrides": {
+          "bicycle": "BI-si-kul"
+        }
+      },
+      {
+        "artifact_id": "segment_2",
+        "stage_id": "step_2",
+        "component_id": "component_2",
+        "ssml": "<speak><prosody rate='medium'><break time='500ms'/></prosody>Bicycles have several features, including a frame, wheels, pedals, and a seat. They come in different types, such as road bikes and mountain bikes.</speak>",
+        "timing_map": {
+          "0s": "Bicycles have several features, including a frame, wheels, pedals, and a seat.",
+          "5s": "They come in different types, such as road bikes and mountain bikes."
+        },
+        "highlight_map": {
+          "0s": "features"
+        },
+        "pronunciation_overrides": {
+          "features": "FEE-churz"
+        }
+      },
+      {
+        "artifact_id": "segment_3",
+        "stage_id": "step_3",
+        "component_id": "component_3",
+        "ssml": "<speak><prosody rate='medium'><break time='500ms'/></prosody>When describing the features of a bicycle, consider its design, materials, and functionality. This will help you understand its purpose and how it is used.</speak>",
+        "timing_map": {
+          "0s": "When describing the features of a bicycle, consider its design, materials, and functionality.",
+          "5s": "This will help you understand its purpose and how it is used."
+        },
+        "highlight_map": {
+          "0s": "features"
+        },
+        "pronunciation_overrides": {
+          "features": "FEE-churz"
+        }
+      }
+    ],
+    "playback_profile": {
+      "voice": "English-US-Amy",
+      "base_speed": 1,
+      "pause_duration_ms": 500
+    },
+    "accessibility_metadata": {
+      "text_to_speech": {
+        "language": "en-US",
+        "voice": "English-US-Amy"
+      }
+    },
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {
+        "AUD001": "No missing narration for a stage",
+        "AUD002": "No highlight map mismatch",
+        "AUD003": "No invalid SSML",
+        "AUD004": "No broken timing",
+        "AUD005": "No unsupported voice profile",
+        "AUD006": "No missing pronunciation metadata",
+        "AUD007": "No schema violation"
+      }
+    }
+  }
+}

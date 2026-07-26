@@ -1,0 +1,139 @@
+{
+ "topicId": "4f05dc6c-e2e8-4229-a3b4-87152e4d4f46",
+ "grade": "Grade 12",
+ "subject": "Accountancy",
+ "curriculum": "CBSE",
+ "topicName": "Admission of a Partner with Goodwill",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "Goodwill represents the reputation and customer base of a business. In partnership accounting, it is recorded as an asset. When a new partner is admitted, the firm must decide how much goodwill the new partner will pay.",
+   "The new partner’s payment is called a premium. This premium is first credited to the new partner’s capital account. After that, the goodwill amount is transferred to the existing partners’ capital accounts in their sacrificing ratio, which may differ from the profit‑sharing ratio.",
+   "The sacrificing ratio shows how much each existing partner gives up to let the new partner join. It is calculated by subtracting each partner’s old profit‑sharing share from the new share they will have after admission. The transferred goodwill strengthens the capital of the existing partners.",
+   "Finally, the capital accounts are reconstituted to reflect the new structure. The firm’s total net assets remain the same, but the composition of capital changes because of the goodwill adjustment."
+  ],
+  "grade": 12,
+  "intro": "When a new partner joins a firm, the existing goodwill must be handled correctly. This lesson explains how goodwill is valued, shared, and recorded in the books.",
+  "vocab": [
+   {
+    "word": "Goodwill",
+    "definition": "An intangible asset representing the firm’s reputation and customer relationships."
+   },
+   {
+    "word": "Sacrificing Ratio",
+    "definition": "The ratio in which existing partners give up part of their profit share to admit a new partner."
+   },
+   {
+    "word": "Profit Sharing Ratio",
+    "definition": "The agreed proportion of profit each partner receives."
+   },
+   {
+    "word": "Capital Account",
+    "definition": "An account that records each partner’s investment and share of profits or losses."
+   },
+   {
+    "word": "Reconstituted",
+    "definition": "Adjusted to show the new capital structure after a partner’s admission."
+   }
+  ],
+  "subject": "Accountancy",
+  "activity": "Why do you think goodwill is treated as an asset rather than an expense?",
+  "keyLearnings": [
+   "Goodwill is treated as an asset of the firm.",
+   "Existing partners share goodwill in their sacrificing ratio.",
+   "The new partner pays a premium for goodwill.",
+   "Journal entries first credit the new partner’s capital, then transfer goodwill to existing partners."
+  ],
+  "keyTakeaways": [
+   "Goodwill is an asset shared by existing partners in their sacrificing ratio.",
+   "The new partner’s goodwill premium is first credited to his/her capital account.",
+   "Journal entries move goodwill from the new partner’s capital to the existing partners’ capitals.",
+   "The capital accounts are reconstituted to reflect the new partnership structure."
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "Think about the first step after receiving the premium.",
+    "type": "mcq",
+    "correct": 0,
+    "options": [
+     "In the new partner’s capital account",
+     "In the profit and loss account",
+     "In the existing partners’ capital accounts",
+     "In the goodwill asset account"
+    ],
+    "question": "When a new partner pays goodwill, where is this amount first recorded?",
+    "explanation": "The goodwill premium is first credited to the new partner’s capital account before being transferred."
+   },
+   {
+    "hint": "Consider what each partner gives up.",
+    "type": "mcq",
+    "correct": 0,
+    "options": [
+     "Subtracting old profit share from new profit share",
+     "Adding old profit share to new profit share",
+     "Dividing goodwill by total capital",
+     "Multiplying capital by profit share"
+    ],
+    "question": "The sacrificing ratio is calculated by:",
+    "explanation": "Sacrificing ratio = old profit‑sharing ratio – new profit‑sharing ratio for each existing partner."
+   },
+   {
+    "hint": "It is not an expense.",
+    "type": "fill_blank",
+    "correct": "asset",
+    "question": "Goodwill is treated as a ___ of the firm.",
+    "explanation": "Goodwill is recorded as an intangible asset on the balance sheet."
+   }
+  ],
+  "originalLesson": [],
+  "whatYoullLearn": [
+   "Goodwill is treated as an asset of the firm.",
+   "Existing partners share goodwill in their sacrificing ratio.",
+   "The new partner pays a premium for goodwill.",
+   "Journal entries first credit the new partner’s capital, then transfer goodwill to existing partners."
+  ],
+  "thinkAndReflect": [
+   "Why do you think goodwill is treated as an asset rather than an expense?",
+   "How would the journal entries differ if the new partner did not pay any goodwill premium?"
+  ],
+  "instructionalType": "Lesson"
+ },
+ "practiceQuiz": [
+  {
+   "hint": "Think about the first step after receiving the premium.",
+   "type": "mcq",
+   "correct": 0,
+   "options": [
+    "In the new partner’s capital account",
+    "In the profit and loss account",
+    "In the existing partners’ capital accounts",
+    "In the goodwill asset account"
+   ],
+   "question": "When a new partner pays goodwill, where is this amount first recorded?",
+   "explanation": "The goodwill premium is first credited to the new partner’s capital account before being transferred."
+  },
+  {
+   "hint": "Consider what each partner gives up.",
+   "type": "mcq",
+   "correct": 0,
+   "options": [
+    "Subtracting old profit share from new profit share",
+    "Adding old profit share to new profit share",
+    "Dividing goodwill by total capital",
+    "Multiplying capital by profit share"
+   ],
+   "question": "The sacrificing ratio is calculated by:",
+   "explanation": "Sacrificing ratio = old profit‑sharing ratio – new profit‑sharing ratio for each existing partner."
+  },
+  {
+   "hint": "It is not an expense.",
+   "type": "fill_blank",
+   "correct": "asset",
+   "question": "Goodwill is treated as a ___ of the firm.",
+   "explanation": "Goodwill is recorded as an intangible asset on the balance sheet."
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "**Imagine this:** You and your best friend run a tiny toy shop together. Your shop is famous because you always pick the coolest toys and your customers love you. One day, your cousin wants to join and open a new section for board games. But to join, your cousin must pay extra money to thank you both for the shop’s good name and all the loyal customers you already have. That extra money is called **goodwill**!\n\n---\n\n### What is **Admission of a Partner with Goodwill**?\n\n- **Goodwill** is like the “secret sauce” of your business. It’s the extra value of your shop’s name, customers, and reputation that makes it worth more than just the toys on the shelf.\n- When a **new partner** joins, they often pay a **premium** (extra money) for this goodwill.\n- This premium is first put into the **new partner’s capital account** (like a piggy bank for their share).\n- Then, the goodwill amount is **shared** with the **existing partners** in their **sacrificing ratio** — this shows how much each old partner “gives up” to let the new partner in.\n- The capital accounts are then updated, and the business keeps running — just with a new team!\n\n---\n\n### Real-life example: The Board Game Bonanza!\n\nLet’s say:\n- You (Partner A) and your friend (Partner B) run a toy shop.\n- You share profits 3:2 (you get 3 parts, your friend gets 2).\n- Your shop’s goodwill is valued at **$5,000**.\n- Your cousin (Partner C) wants to join and bring in $5,000 as **premium for goodwill**.\n\n**Step 1: New partner pays the premium**\n- Partner C pays $5,000 → this goes into their capital account.\n\n**Step 2: Share the goodwill with old partners**\n- The $5,000 goodwill is now shared between you and Partner B in your **old profit-sharing ratio (3:2)**.\n- Total parts = 3 + 2 = 5\n- You get: (3/5) × $5,000 = **$3,000**\n- Partner B gets: (2/5) × $5,000 = **$2,000**\n\n**Step 3: Update capital accounts**\n- Partner C’s capital: $5,000 (from premium)\n- Your capital: increases by $3,000 → now higher!\n- Partner B’s capital: increases by $2,000 → now higher!\n\nThe shop’s total value didn’t change — but now everyone’s capital reflects the new team and the value of the shop’s good name!\n\n---\n\n💡 **Did you know?**\nGoodwill is like the “brand magic” — you can’t touch it, but it makes your business more valuable! Even big companies like Coca-Cola have huge goodwill because of their brand power.\n\n---\n\nYou're doing amazing! Let’s check your understanding:\n**If the old profit-sharing ratio was 4:1 and goodwill was $10,000, how much would each old partner receive?**\nTake your time — you’ve got this! 🌟"
+}

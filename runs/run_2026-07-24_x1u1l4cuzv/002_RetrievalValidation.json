@@ -1,0 +1,32 @@
+{
+  "package": {
+    "package_id": "ac30e536-b752-4182-ba2c-aababb4b8668",
+    "package_type": "ValidatedRetrievalPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:10:00.239Z",
+    "produced_by": {
+      "agent": "retrieval-validation-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "x1u1l4cuzv",
+      "parent_package_id": "ac30e536-b752-4182-ba2c-aababb4b8668"
+    }
+  },
+  "payload": {
+    "status": "FAIL",
+    "error_code": "RV005",
+    "rejection_reason": "Confidence score is below the threshold of 0.90.",
+    "validation_report": {
+      "schema": "PASS",
+      "metadata": "PASS",
+      "ordering": "PASS",
+      "coverage": "PASS",
+      "integrity": "PASS"
+    },
+    "re_retrieval_hints": {
+      "suggested_query_adjustments": [],
+      "missing_page_numbers": []
+    }
+  }
+}

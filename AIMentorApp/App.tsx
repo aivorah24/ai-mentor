@@ -49,6 +49,7 @@ const LINKING_SCREENS = {
   IBPYPQuiz: 'quiz',
   WorldAndYou: 'world-and-you',
   TopicLesson: 'topic-lesson',
+  MathLesson: 'math-lesson',
   BhagavathaStories: 'stories',
   StoryReader: 'story-reader',
   DailyHabits: 'daily-habits',
@@ -697,6 +698,24 @@ function WebBackGuard({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Which roles may open a given URL area. A path with no prefix listed here is a
+// shared/student screen and stays open to everyone signed in.
+const ROLE_AREAS: { prefix: string; roles: string[] }[] = [
+  { prefix: '/teacher/',      roles: ['teacher', 'school_admin', 'super_admin'] },
+  { prefix: '/parent/',       roles: ['parent', 'school_admin', 'super_admin'] },
+  { prefix: '/school-admin/', roles: ['school_admin', 'super_admin'] },
+  { prefix: '/super-admin/',  roles: ['super_admin'] },
+  { prefix: '/admin/',        roles: ['super_admin'] },
+];
+
+export function isPathAllowedForRole(path: string, role?: string): boolean {
+  const p = String(path || '').split('?')[0].toLowerCase();
+  const area = ROLE_AREAS.find(a => p.startsWith(a.prefix));
+  if (!area) return true;                 // shared screen
+  if (!role) return false;                // role unknown — do not guess upward
+  return area.roles.includes(role);
+}
+
 function RootNavigator() {
   const { isAuthenticated, loading, user, logout } = useAuth();
   const { colors: c } = useTheme();
@@ -805,6 +824,17 @@ function RootNavigator() {
       if (cancelled) return;
       if (navigationRef.isReady()) {
         try {
+          // Only restore a URL this user is actually allowed to be on. Without
+          // this check the path alone decided the screen, so ANY signed-in user
+          // who opened /teacher/dashboard was dropped into the teacher app —
+          // a student saw a TEACHER badge and an empty class list (their email
+          // has no teacher_student rows), which looked like their account had
+          // been switched to a teacher. It is also a privilege hole: staff-only
+          // screens were reachable by typing the address.
+          if (!isPathAllowedForRole(path, user?.role)) {
+            console.warn('[Nav] Ignoring deep link not permitted for role', user?.role, '→', path);
+            return;
+          }
           const target = getStateFromPath(path, { screens: LINKING_SCREENS }) as any;
           const targetRoute = target?.routes?.[target.routes.length - 1];
           const current = navigationRef.getCurrentRoute();
@@ -819,7 +849,7 @@ function RootNavigator() {
     };
     tryRestore();
     return () => { cancelled = true; };
-  }, [loading, isAuthenticated]);
+  }, [loading, isAuthenticated, user?.role]);
 
   const isWebAdminPath =
     Platform.OS === 'web' &&

@@ -1,0 +1,161 @@
+{
+ "topicId": "ac100be2-2ff5-492d-a852-b022a8b7da6c",
+ "grade": "Grade 11",
+ "subject": "Economics",
+ "curriculum": "CBSE",
+ "topicName": "Agricultural Productivity and Employment",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "Agricultural productivity measures how much output is obtained from a given amount of land and inputs. Employment in agriculture counts the people who work on farms. The evidence notes that very poor farmers cannot afford required inputs without subsidies, and removing subsidies would increase inequality and breach equity goals.",
+   "Over the last five decades, output and employment have moved from agriculture to industry and services. The evidence calls this a \"Shift in Employment and Output from Agriculture to Services\" and shows that fewer people now work in farming while services employ more workers.",
+   "An image in the evidence shows two farmers with equal plots. The farmer using a tractor and modern equipment harvests more than the farmer using manual labor. This illustrates how modern technology raises productivity compared to traditional methods.",
+   "Agriculture’s role in employment and GDP is declining in India, China, and Pakistan. The evidence states that the sector employs fewer people and contributes less to GDP over time."
+  ],
+  "grade": 11,
+  "intro": "This lesson explores how agricultural productivity and employment have changed in India and other countries.",
+  "vocab": [
+   {
+    "word": "agricultural productivity",
+    "definition": "The amount of agricultural output produced per unit of input such as land, labor, or capital."
+   },
+   {
+    "word": "employment",
+    "definition": "The number of people working in a particular sector or activity."
+   },
+   {
+    "word": "subsidies",
+    "definition": "Financial assistance from the government to reduce the cost of inputs for farmers."
+   },
+   {
+    "word": "equity",
+    "definition": "Fairness or justice in the distribution of resources and opportunities."
+   },
+   {
+    "word": "GDP",
+    "definition": "Gross Domestic Product, the total value of goods and services produced in a country."
+   },
+   {
+    "word": "services",
+    "definition": "Economic activities that provide intangible goods such as banking, education, and health care."
+   },
+   {
+    "word": "policy failure",
+    "definition": "When a government policy does not achieve its intended goals, often harming certain groups."
+   }
+  ],
+  "subject": "Economics",
+  "activity": "How might modern technology change the lives of small farmers?",
+  "keyLearnings": [
+   "Link between agricultural productivity and employment",
+   "Shift of labour from agriculture to services",
+   "Impact of subsidies and policy on poor farmers",
+   "Why agriculture’s share in GDP and jobs is falling"
+  ],
+  "keyTakeaways": [
+   "Modern technology boosts agricultural productivity.",
+   "Subsidies help poor farmers but can be misused if not targeted.",
+   "Employment is moving from agriculture to services over decades.",
+   "Agriculture’s share of GDP and jobs is falling in several countries."
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "The image compares a tractor-using farmer with a manual farmer.",
+    "type": "mcq",
+    "correct": 0,
+    "options": [
+     "Use of modern technology like tractors",
+     "Traditional manual labor",
+     "Higher rainfall",
+     "Larger land area"
+    ],
+    "question": "According to the image description, what most directly increases a farmer’s harvest?",
+    "explanation": "The modern equipment allows the farmer to produce a larger harvest on the same land."
+   },
+   {
+    "hint": "Look at the evidence about employment shifts.",
+    "type": "mcq",
+    "correct": 2,
+    "options": [
+     "Increasing",
+     "Stable",
+     "Declining",
+     "Fluctuating"
+    ],
+    "question": "What has been the trend in agriculture’s share of employment over the last five decades?",
+    "explanation": "The evidence states that agriculture employs fewer people over time."
+   },
+   {
+    "hint": "Think about who can afford inputs without help.",
+    "type": "fill_blank",
+    "correct": "rich, poor",
+    "question": "Eliminating subsidies may increase inequality between ___ and ___ farmers.",
+    "explanation": "Without subsidies, rich farmers can still buy inputs, while poor farmers cannot, widening the gap."
+   }
+  ],
+  "whatYoullLearn": [
+   "Link between agricultural productivity and employment",
+   "Shift of labour from agriculture to services",
+   "Impact of subsidies and policy on poor farmers",
+   "Why agriculture’s share in GDP and jobs is falling"
+  ],
+  "thinkAndReflect": [
+   "How might modern technology change the lives of small farmers?",
+   "Why could removing subsidies hurt poor farmers more than rich ones?",
+   "What reasons could explain the shift of workers from agriculture to services?"
+  ],
+  "instructionalType": "lesson",
+  "illustrationPrompts": [
+   {
+    "image": "https://res.cloudinary.com/di5iq2mmb/image/upload/v1779441244/ncert_images/ncert/g11/economics/keec1_ch04_p3_i0.jpg",
+    "score": 0.585,
+    "source": "NCERT Economics Grade 11 | keec104.pdf | Page 3",
+    "altText": "The concept of differences in agricultural productivity…"
+   },
+   {
+    "image": "https://res.cloudinary.com/di5iq2mmb/image/upload/v1779441264/ncert_images/ncert/g11/economics/keec1_ch06_p10_i0.png",
+    "score": 0.532,
+    "source": "NCERT Economics Grade 11 | keec106.pdf | Page 10",
+    "altText": "A line graph illustrating the relationship between GDP growth…"
+   }
+  ]
+ },
+ "practiceQuiz": [
+  {
+   "hint": "The image compares a tractor-using farmer with a manual farmer.",
+   "type": "mcq",
+   "correct": 0,
+   "options": [
+    "Use of modern technology like tractors",
+    "Traditional manual labor",
+    "Higher rainfall",
+    "Larger land area"
+   ],
+   "question": "According to the image description, what most directly increases a farmer’s harvest?",
+   "explanation": "The modern equipment allows the farmer to produce a larger harvest on the same land."
+  },
+  {
+   "hint": "Look at the evidence about employment shifts.",
+   "type": "mcq",
+   "correct": 2,
+   "options": [
+    "Increasing",
+    "Stable",
+    "Declining",
+    "Fluctuating"
+   ],
+   "question": "What has been the trend in agriculture’s share of employment over the last five decades?",
+   "explanation": "The evidence states that agriculture employs fewer people over time."
+  },
+  {
+   "hint": "Think about who can afford inputs without help.",
+   "type": "fill_blank",
+   "correct": "rich, poor",
+   "question": "Eliminating subsidies may increase inequality between ___ and ___ farmers.",
+   "explanation": "Without subsidies, rich farmers can still buy inputs, while poor farmers cannot, widening the gap."
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "Great question! Let’s explore **Agricultural Productivity and Employment** together — it’s like figuring out how much food a toy farm can produce and who gets to work on it!\n\n---\n\n### 🌱 What is **Agricultural Productivity**?\nThink of a **toy farm** in your room.\n- If you plant 10 seeds and get 50 tomatoes, your farm is **productive**.\n- If you plant the same 10 seeds but only get 10 tomatoes, your farm isn’t very productive.\n\n**Agricultural productivity** is how much food, crops, or animals a farm can produce using the same amount of land, water, and tools.\n- High productivity = more food with the same effort.\n- Low productivity = less food even with hard work.\n\nIt’s measured by **output per unit of input** — like how many kilograms of wheat you get from one hectare of land.\n\n---\n\n### 👩🌾 What is **Employment in Agriculture**?\nNow imagine your toy farm again.\n- If you and your friends spend all day planting, watering, and harvesting, then **employment in agriculture** is high.\n- If most of your friends go to work in a shop or a factory instead, then **employment in agriculture** is low.\n\n**Employment in agriculture** means the number of people who work on farms — planting, growing, harvesting, or taking care of animals.\n\n---\n\n### 🧩 How Are They Connected?\nThey work like a team:\n- When farms are **productive**, they need fewer workers to grow the same amount of food.\n- But if there aren’t enough jobs in cities or factories, people keep working on farms even if it’s not very productive.\n\nThis is called **policy failure** — when government plans don’t create enough new jobs outside farming, so too many people stay in agriculture even when it’s not efficient.\n\n---\n\n### 🌍 Real-World Example: Two Farmers, Same Land\nImagine two farmers in India:\n- **Farmer A** uses a **tractor**, modern seeds, and fertilizer.\n- **Farmer B** uses a plow pulled by oxen and old seeds.\n\nBoth have **1 hectare** of land.\n- Farmer A harvests **3,000 kg of rice**.\n- Farmer B harvests only **800 kg of rice**.\n\n👉 **Farmer A’s productivity is much higher** because of better tools and technology.\n👉 But if there are no jobs in the city, both might still work in farming — even though Farmer B is less productive.\n\nThis shows how **technology boosts productivity**, but **lack of other jobs keeps people in low-productivity farming**.\n\n---\n\n### 💡 Did You Know?\nIn the 1950s–1990s, India tried to grow more food (Green Revolution), but didn’t create enough factory or office jobs. So even though farms produced more, **too many people stayed in farming** — that’s the **policy failure** we talked about!\n\n---\n\n🌟 You're doing amazing! Let’s check your understanding:\n**If a farmer uses a computer to track water and soil, does that raise or lower productivity? Why?**\n(Think: more food with less waste = higher productivity!)"
+}

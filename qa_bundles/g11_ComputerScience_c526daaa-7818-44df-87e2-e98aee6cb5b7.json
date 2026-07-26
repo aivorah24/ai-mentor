@@ -1,0 +1,130 @@
+{
+ "topicId": "c526daaa-7818-44df-87e2-e98aee6cb5b7",
+ "grade": "Grade 11",
+ "subject": "Computer Science",
+ "curriculum": "CBSE",
+ "topicName": "Argument vs Parameter",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "A function is a reusable block of code. When you call the function, you give it data. That data is called an argument. Inside the function, a variable named a parameter receives the argument’s value.",
+   "Parameters act like placeholders. They let the function work with different data each time it runs. If you do not give an argument, the function can use a default parameter, which is a value set when the function was defined.",
+   "Using arguments, parameters, and default values makes programs shorter and easier to understand. It also reduces errors because the function always has a value to work with."
+  ],
+  "grade": 11,
+  "intro": "In this lesson we will explore the difference between arguments and parameters in functions, and see how default values work.",
+  "vocab": [
+   {
+    "word": "argument",
+    "definition": "A value passed to a function during a call."
+   },
+   {
+    "word": "parameter",
+    "definition": "A variable in a function definition that receives an argument."
+   },
+   {
+    "word": "default parameter",
+    "definition": "A pre‑decided value assigned to a parameter when the call provides no argument."
+   },
+   {
+    "word": "function",
+    "definition": "A named block of code that performs a specific task."
+   }
+  ],
+  "subject": "Computer Science",
+  "activity": "How would a program behave if a function expected an argument but none was given?",
+  "keyLearnings": [
+   "An argument is the actual value given to a function when it is called.",
+   "A parameter is the variable in the function definition that receives the argument.",
+   "Default parameters provide a pre‑decided value when no argument is supplied."
+  ],
+  "keyTakeaways": [
+   "Arguments are the actual values you send to a function.",
+   "Parameters are the variables that receive those values inside the function.",
+   "Default parameters supply a fallback value when no argument is provided."
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "Think about what you provide during a function call.",
+    "type": "mcq",
+    "correct": 1,
+    "options": [
+     "A variable inside a function",
+     "A value passed to a function when it is called",
+     "A default value for a parameter",
+     "A type of loop"
+    ],
+    "question": "What is an argument in programming?",
+    "explanation": "An argument is the actual value you give to a function at the time of calling it."
+   },
+   {
+    "hint": "Consider the role of the variable inside the function definition.",
+    "type": "mcq",
+    "correct": 1,
+    "options": [
+     "It is defined outside the function",
+     "It receives the argument’s value inside the function",
+     "It is always a constant",
+     "It cannot have a default value"
+    ],
+    "question": "Which statement is true about a parameter?",
+    "explanation": "A parameter is the variable in the function definition that receives the value of the argument."
+   },
+   {
+    "hint": "Think of a pre‑decided value set in the function definition.",
+    "type": "fill_blank",
+    "correct": "default",
+    "question": "When a function call does not provide an argument, the function uses a _______ value if one is defined.",
+    "explanation": "If no argument is supplied, the function uses the default parameter value that was defined."
+   }
+  ],
+  "whatYoullLearn": [
+   "An argument is the actual value given to a function when it is called.",
+   "A parameter is the variable in the function definition that receives the argument.",
+   "Default parameters provide a pre‑decided value when no argument is supplied."
+  ],
+  "thinkAndReflect": [
+   "How would a program behave if a function expected an argument but none was given?",
+   "Can you think of a real‑life situation where a default value is useful?"
+  ],
+  "instructionalType": "Lesson"
+ },
+ "practiceQuiz": [
+  {
+   "hint": "Think about what you provide during a function call.",
+   "type": "mcq",
+   "correct": 1,
+   "options": [
+    "A variable inside a function",
+    "A value passed to a function when it is called",
+    "A default value for a parameter",
+    "A type of loop"
+   ],
+   "question": "What is an argument in programming?",
+   "explanation": "An argument is the actual value you give to a function at the time of calling it."
+  },
+  {
+   "hint": "Consider the role of the variable inside the function definition.",
+   "type": "mcq",
+   "correct": 1,
+   "options": [
+    "It is defined outside the function",
+    "It receives the argument’s value inside the function",
+    "It is always a constant",
+    "It cannot have a default value"
+   ],
+   "question": "Which statement is true about a parameter?",
+   "explanation": "A parameter is the variable in the function definition that receives the value of the argument."
+  },
+  {
+   "hint": "Think of a pre‑decided value set in the function definition.",
+   "type": "fill_blank",
+   "correct": "default",
+   "question": "When a function call does not provide an argument, the function uses a _______ value if one is defined.",
+   "explanation": "If no argument is supplied, the function uses the default parameter value that was defined."
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "Great question! Let’s make **arguments** and **parameters** super easy to understand—just like how you share snacks with friends!\n\n---\n\n### 🌟 Imagine a Pizza Party!\nYou’re hosting a pizza party. You tell your friend:\n“Hey, bring me a pizza with **3 toppings**!”\n\n- **What you say (“3 toppings”)** is like an **argument** — it’s the *actual value* you’re giving.\n- Your friend’s *pizza box* has a label that says “**number of toppings**” — that label is like a **parameter** — it’s a *placeholder* inside the function (or in this case, the pizza box) that will receive the value you give.\n\nSo:\n- **Argument** = the real thing you pass in (like “3 toppings”).\n- **Parameter** = the empty box label that says “how many toppings?” and waits to be filled.\n\n---\n\n### 🧩 Real Code Example (Step by Step)\n\nLet’s say we have a function called `make_pizza` that adds toppings to a pizza.\n\n```python\ndef make_pizza(topping_count):\n    print(\"Making a pizza with\", topping_count, \"toppings!\")\n```\n\n- `topping_count` is the **parameter** — it’s like the empty label on the pizza box.\n- When you *call* the function, you give it a real number — that’s the **argument**.\n\nNow, let’s *call* the function:\n\n```python\nmake_pizza(3)\n```\n\n- **Argument** = `3` (you’re saying “I want 3 toppings”).\n- **Parameter** = `topping_count` (it receives the value `3` and uses it inside the function).\n\n👉 So the function prints:\n> Making a pizza with 3 toppings!\n\n---\n\n### 🧠 Did You Know?\nJust like you can say “make me a pizza with 3 toppings” or “make me one with 5 toppings”, the same function (`make_pizza`) can make different pizzas — all thanks to **arguments** and **parameters**!\n\n---\n\nYou're doing amazing! 🎉\nReady to try a quick check?\nIf the function is `greet(name)` and you call it as `greet(\"Alex\")`, what is the **argument**?"
+}

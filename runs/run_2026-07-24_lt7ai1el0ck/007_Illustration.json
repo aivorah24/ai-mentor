@@ -1,0 +1,79 @@
+{
+  "package": {
+    "package_id": "illustration-pkg-abcdef-1234-5678-90ab-cdef12345678",
+    "package_type": "IllustrationPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T16:00:00.000Z",
+    "produced_by": {
+      "agent": "illustration-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "p1p2p3p4-p5p6-p7p8-p9p0-q1r2s3t4u5v6",
+      "parent_package_id": "lesson-content-pkg-1111-2222-3333-4444"
+    }
+  },
+  "payload": {
+    "lesson_id": "les-abcdef123456",
+    "illustrations": [
+      {
+        "artifact_id": "illust-banana-example",
+        "stage_id": "visual_intro",
+        "component_id": "step_by_step_text",
+        "concept_id": "concept-banana-addition",
+        "style_category": "scene",
+        "reuse_source": "ncert://image/addition_bananas_3_2",
+        "image_ref": null,
+        "requires_generation": false,
+        "visual_prompt": "Illustration showing 3 bananas and 2 bananas grouped together, total 5 bananas, simple flat style suitable for early grade math.",
+        "consistency_tags": [
+          "color_theme_primary",
+          "style_simple"
+        ],
+        "source_references": [
+          "0"
+        ]
+      },
+      {
+        "artifact_id": "illust-toycar-example",
+        "stage_id": "visual_intro",
+        "component_id": "step_by_step_text",
+        "concept_id": "concept-toycar-addition",
+        "style_category": "scene",
+        "reuse_source": "ncert://image/addition_toycars_2_1",
+        "image_ref": null,
+        "requires_generation": false,
+        "visual_prompt": "Illustration showing 2 toy cars and 1 toy car grouped together, total 3 toy cars, simple flat style.",
+        "consistency_tags": [
+          "color_theme_primary",
+          "style_simple"
+        ],
+        "source_references": [
+          "1"
+        ]
+      },
+      {
+        "artifact_id": "illust-addition-sentence",
+        "stage_id": "guided_example",
+        "component_id": "write_sentence",
+        "concept_id": "concept-addition-sentence",
+        "style_category": "diagram",
+        "reuse_source": "ncert://image/addition_sentence_3_2_5",
+        "image_ref": null,
+        "requires_generation": false,
+        "visual_prompt": "Diagram showing the addition sentence 3 + 2 = 5 with corresponding objects (bananas) above each number.",
+        "consistency_tags": [
+          "color_theme_primary",
+          "style_simple"
+        ],
+        "source_references": [
+          "4"
+        ]
+      }
+    ],
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}

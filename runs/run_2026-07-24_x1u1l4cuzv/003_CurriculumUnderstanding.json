@@ -1,0 +1,76 @@
+{
+  "package": {
+    "package_id": "9f4e2a8d-4e2f-4c2a-842a-4e2f4c2a842a",
+    "package_type": "LessonBlueprint",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:10:00.239Z",
+    "produced_by": {
+      "agent": "curriculum-understanding-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "x1u1l4cuzv",
+      "parent_package_id": "ac30e536-b752-4182-ba2c-aababb4b8668"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "curriculum": "mathematics",
+    "grade": 4,
+    "subject": "math",
+    "chapter": "subtraction",
+    "lesson": "subtraction with borrowing",
+    "lesson_type": "Mathematics",
+    "lesson_type_evidence": "Subtraction with borrowing, subtract 47 from 72, borrow some rupees",
+    "lesson_type_confidence": 0.95,
+    "review_flags": [],
+    "concept_map": [
+      {
+        "concept_id": "subtraction_with_borrowing",
+        "concept": "subtraction with borrowing",
+        "depends_on": [
+          "basic_subtraction"
+        ],
+        "difficulty": "medium"
+      },
+      {
+        "concept_id": "basic_subtraction",
+        "concept": "basic subtraction",
+        "depends_on": [],
+        "difficulty": "easy"
+      }
+    ],
+    "learning_objectives": [
+      "understand the concept of subtraction with borrowing",
+      "apply subtraction with borrowing to solve problems"
+    ],
+    "learning_outcomes": [
+      "students can subtract numbers with borrowing",
+      "students can apply subtraction with borrowing to real-life problems"
+    ],
+    "bloom_level": "apply",
+    "prerequisites": [
+      "basic subtraction"
+    ],
+    "misconceptions": [
+      "students may think that subtraction with borrowing is only used for large numbers",
+      "students may have difficulty understanding the concept of borrowing"
+    ],
+    "suggested_instructional_sequence": [
+      "introduce the concept of subtraction with borrowing",
+      "provide examples and practice problems",
+      "apply subtraction with borrowing to real-life problems"
+    ],
+    "vocabulary_difficulty": "medium",
+    "available_images": [],
+    "source_chunk_references": [
+      "grounded_evidence_0",
+      "grounded_evidence_2"
+    ],
+    "handoff": {
+      "learning_experience_designer": {
+        "lesson_blueprint": {}
+      }
+    }
+  }
+}

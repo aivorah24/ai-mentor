@@ -1,0 +1,69 @@
+{
+  "package": {
+    "package_id": "f1e2d3c4-b5a6-9876-5432-10fedcba9876",
+    "package_type": "ReleasePackage",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T12:05:00.000Z",
+    "produced_by": {
+      "agent": "final-audit-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "18apiqkgnsz",
+      "parent_package_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-borrowing-grade2",
+    "release_version": "1.0.0",
+    "build_timestamp": "2026-08-27T12:05:00.000Z",
+    "package_manifest": {
+      "retrieval": "00000000-0000-0000-0000-000000000000",
+      "lesson_blueprint": "00000000-0000-0000-0000-000000000000",
+      "lesson_experience": "00000000-0000-0000-0000-000000000000",
+      "ui_plan": "00000000-0000-0000-0000-000000000000",
+      "lesson_content": "00000000-0000-0000-0000-000000000000",
+      "illustration": "00000000-0000-0000-0000-000000000000",
+      "audio": "00000000-0000-0000-0000-000000000000",
+      "quiz_review": "00000000-0000-0000-0000-000000000000",
+      "review_report": "00000000-0000-0000-0000-000000000000",
+      "qa_report": "a1b2c3d4-e5f6-7890-1234-56789abcdef0"
+    },
+    "package_references": [
+      "a1b2c3d4-e5f6-7890-1234-56789abcdef0"
+    ],
+    "audit_summary": {
+      "status": "FAILED",
+      "checks": {
+        "failed_qa_report": true,
+        "qa_status": "FAIL",
+        "failed_checks": [
+          {
+            "issue_id": "issue1",
+            "category": "integrity",
+            "description": "Missing required packages: Retrieval Package, Validated Retrieval Package, Lesson Blueprint, Lesson Experience, UI Plan, Quiz Review Package. LessonContent package missing status field.",
+            "target_agent": "regeneration_agent",
+            "error_code": "QA001"
+          },
+          {
+            "issue_id": "issue2",
+            "category": "accessibility",
+            "description": "Accessibility metadata missing: contrast and screen reader order not found in AudioPackage accessibility_metadata.",
+            "target_agent": "regeneration_agent",
+            "error_code": "QA005"
+          }
+        ],
+        "missing_packages": [
+          "retrieval",
+          "lesson_blueprint",
+          "lesson_experience",
+          "ui_plan",
+          "lesson_content",
+          "quiz_review"
+        ],
+        "note": "LessonContent package exists but missing status field"
+      }
+    },
+    "deployment_status": "BLOCKED"
+  }
+}

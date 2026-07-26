@@ -1,0 +1,139 @@
+{
+  "package": {
+    "package_id": "uuid",
+    "package_type": "UIPlanPackage",
+    "schema_version": "1.0",
+    "created_at": "2024-03-16T14:30:00.000Z",
+    "produced_by": {
+      "agent": "ui-planner-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "honmnh6tp9s",
+      "parent_package_id": "uuid"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "device_profiles": {
+      "desktop": {
+        "layout": "two-pane"
+      },
+      "tablet": {
+        "layout": "adaptive-two-pane"
+      },
+      "mobile": {
+        "layout": "single-column"
+      }
+    },
+    "theme": "light",
+    "accessibility_settings": [
+      "dyslexia",
+      "high_contrast",
+      "large_text"
+    ],
+    "rendering_constraints": {
+      "max_interactions": 2,
+      "allow_horizontal_scroll": false,
+      "animation_level": "medium"
+    },
+    "screens": [
+      {
+        "screen_id": "introduction",
+        "stage_id": "introduction",
+        "layout": "two-pane",
+        "components": [
+          {
+            "component_id": "video_player",
+            "component_type": "video",
+            "stage_id": "introduction",
+            "priority": "primary",
+            "props": {
+              "video_url": "https://example.com/introduction-video.mp4"
+            }
+          },
+          {
+            "component_id": "animation",
+            "component_type": "animation",
+            "stage_id": "introduction",
+            "priority": "secondary",
+            "props": {
+              "animation_url": "https://example.com/introduction-animation.gif"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": null,
+          "next_screen": "practice_problems",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "practice_problems",
+        "stage_id": "practice_problems",
+        "layout": "single-column",
+        "components": [
+          {
+            "component_id": "interactive_exercise",
+            "component_type": "interactive_exercise",
+            "stage_id": "practice_problems",
+            "priority": "primary",
+            "props": {
+              "exercise_url": "https://example.com/practice-problems-exercise.html"
+            }
+          },
+          {
+            "component_id": "worked_examples",
+            "component_type": "worked_examples",
+            "stage_id": "practice_problems",
+            "priority": "secondary",
+            "props": {
+              "examples_url": "https://example.com/practice-problems-examples.pdf"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "introduction",
+          "next_screen": "real_life_applications",
+          "exit_behavior": "none"
+        }
+      },
+      {
+        "screen_id": "real_life_applications",
+        "stage_id": "real_life_applications",
+        "layout": "adaptive-two-pane",
+        "components": [
+          {
+            "component_id": "case_study",
+            "component_type": "case_study",
+            "stage_id": "real_life_applications",
+            "priority": "primary",
+            "props": {
+              "case_study_url": "https://example.com/real-life-applications-case-study.pdf"
+            }
+          },
+          {
+            "component_id": "images",
+            "component_type": "images",
+            "stage_id": "real_life_applications",
+            "priority": "secondary",
+            "props": {
+              "images_url": "https://example.com/real-life-applications-images.jpg"
+            }
+          }
+        ],
+        "navigation": {
+          "previous_screen": "practice_problems",
+          "next_screen": null,
+          "exit_behavior": "none"
+        }
+      }
+    ],
+    "handoff": {
+      "lesson_generator_agent": {
+        "lesson_experience_package_id": "uuid",
+        "ui_plan_package_id": "uuid"
+      }
+    }
+  }
+}

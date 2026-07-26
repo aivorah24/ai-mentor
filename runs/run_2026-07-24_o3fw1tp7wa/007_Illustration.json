@@ -1,0 +1,73 @@
+{
+  "package": {
+    "package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d40",
+    "package_type": "IllustrationPackage",
+    "schema_version": "1.0",
+    "created_at": "2023-12-24T14:30:00Z",
+    "produced_by": {
+      "agent": "illustration-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d41",
+      "parent_package_id": "f7a4d3b6-3b5a-4d3b-3b5a-4d3b3b5a4d3f"
+    }
+  },
+  "payload": {
+    "lesson_id": "my-bicycle-lesson",
+    "illustrations": [
+      {
+        "artifact_id": "illustration_1",
+        "stage_id": "step_1",
+        "component_id": "component_1",
+        "concept_id": "bicycle-definition",
+        "style_category": "photograph",
+        "visual_prompt": "A bicycle with two wheels, powered by pedaling, in a park or open area.",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "my-bicycle-lesson",
+          "step_1"
+        ]
+      },
+      {
+        "artifact_id": "illustration_2",
+        "stage_id": "step_2",
+        "component_id": "component_2",
+        "concept_id": "bicycle-features",
+        "style_category": "infographic",
+        "visual_prompt": "A diagram showing the features of a bicycle, including frame, wheels, pedals, and seat.",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "my-bicycle-lesson",
+          "step_2"
+        ]
+      },
+      {
+        "artifact_id": "illustration_3",
+        "stage_id": "step_3",
+        "component_id": "component_3",
+        "concept_id": "bicycle-description",
+        "style_category": "diagram",
+        "visual_prompt": "A diagram showing how to describe the features of a bicycle, considering design, materials, and functionality.",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "my-bicycle-lesson",
+          "step_3"
+        ]
+      }
+    ],
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}

@@ -200,6 +200,11 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
   const [selectedStudents, setSelectedStudents] = useState<any[]>([]);
   // Remove student
   const [removingId, setRemovingId] = useState<string | null>(null);
+  // Promote (grade/section move) — mirrors School Admin's bulk-grade flow but
+  // scoped server-side to only this teacher's own linked students.
+  const [promoteMode, setPromoteMode] = useState(false);
+  const [selectedForPromote, setSelectedForPromote] = useState<Set<string>>(new Set());
+  const [promoteDialogOpen, setPromoteDialogOpen] = useState(false);
   // Credentials popup after creating
   const [credsModal,    setCredsModal]    = useState(false);
   const [credsEmail,    setCredsEmail]    = useState('');
@@ -611,6 +616,41 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
     setRemovingId(null);
   }
 
+  function togglePromoteSelect(id: string) {
+    setSelectedForPromote((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function exitPromoteMode() {
+    setPromoteMode(false);
+    setSelectedForPromote(new Set());
+    setPromoteDialogOpen(false);
+  }
+
+  // Returns an error string on failure, null on success — mirrors the School
+  // Admin promote flow so the dialog can stay open and show the message.
+  async function applyPromote(targetGrade: string, targetSection: string): Promise<string | null> {
+    if (!user?.email || selectedForPromote.size === 0) return 'Nothing selected';
+    try {
+      const body: any = { studentIds: Array.from(selectedForPromote), grade: targetGrade };
+      if (targetSection.trim()) body.section = targetSection.trim();
+      const res = await fetch(`${SERVER_URL}/teacher/${encodeURIComponent(user.email)}/students/promote`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return data?.error || 'Failed to promote selected students.';
+      exitPromoteMode();
+      load(); // refetch — the students' new grade/section shows up immediately, same source the student's own dashboard reads from
+      return null;
+    } catch {
+      return 'Failed to promote. Check your connection.';
+    }
+  }
+
   const todayISO = new Date().toISOString().split('T')[0];
 
   const filtered = students.filter(s => {
@@ -650,11 +690,42 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
           subtitle={`${stats.total} enrolled`}
           onMenuPress={() => navigation.openDrawer()}
         />
-        {/* Add Student button */}
-        <TouchableOpacity style={styles.addBtn} onPress={openAddModal} activeOpacity={0.8}>
-          <Feather name="user-plus" size={14} color={gold} />
-          <Text style={styles.addBtnText}>Add Student</Text>
-        </TouchableOpacity>
+        {/* Add Student / Promote Students buttons */}
+        <View style={{ flexDirection: 'row', gap: 8, alignSelf: 'flex-end', marginHorizontal: spacing.xl, marginBottom: 4 }}>
+          <TouchableOpacity style={[styles.addBtn, { marginHorizontal: 0, marginBottom: 0, alignSelf: 'auto' }]} onPress={openAddModal} activeOpacity={0.8}>
+            <Feather name="user-plus" size={14} color={gold} />
+            <Text style={styles.addBtnText}>Add Student</Text>
+          </TouchableOpacity>
+          {students.length > 0 && (
+            promoteMode ? (
+              <TouchableOpacity style={styles.promoteBtnActive} onPress={exitPromoteMode} activeOpacity={0.8}>
+                <Feather name="x" size={14} color={colors.textMuted} />
+                <Text style={styles.promoteBtnActiveText}>Cancel</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.promoteBtn} onPress={() => setPromoteMode(true)} activeOpacity={0.8}>
+                <Feather name="arrow-up-circle" size={14} color={gold} />
+                <Text style={styles.promoteBtnText}>Promote Students</Text>
+              </TouchableOpacity>
+            )
+          )}
+        </View>
+
+        {promoteMode && (
+          <View style={styles.promoteBar}>
+            <Text style={styles.promoteBarText}>
+              {selectedForPromote.size === 0 ? 'Tap students to select them' : `${selectedForPromote.size} selected`}
+            </Text>
+            <TouchableOpacity
+              style={[styles.promoteConfirmBtn, selectedForPromote.size === 0 && { opacity: 0.5 }]}
+              onPress={() => setPromoteDialogOpen(true)}
+              disabled={selectedForPromote.size === 0}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.promoteConfirmBtnText}>Promote</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <ScrollView
           style={styles.scroll}
@@ -744,15 +815,24 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
             {filtered.map((s) => {
               const displayName = toTitleCase(s.name);
               const grad = avatarGradient(displayName);
+              const isSelectedForPromote = selectedForPromote.has(s.id);
               return (
                 <TouchableOpacity
                   key={s.id}
-                  style={styles.studentCard}
+                  style={[styles.studentCard, promoteMode && isSelectedForPromote && styles.studentCardSelected]}
                   activeOpacity={0.85}
-                  onPress={() => navigation.navigate('TeacherProgress' as any, { studentId: s.id })}
+                  onPress={() => promoteMode ? togglePromoteSelect(s.id) : navigation.navigate('TeacherProgress' as any, { studentId: s.id })}
                 >
                   {/* Top row */}
                   <View style={styles.cardTop}>
+                    {promoteMode && (
+                      <Feather
+                        name={isSelectedForPromote ? 'check-square' : 'square'}
+                        size={16}
+                        color={isSelectedForPromote ? gold : colors.textDim}
+                        style={{ marginRight: 2 }}
+                      />
+                    )}
                     <StudentAvatar photoUrl={s.photoUrl} name={displayName} grad={grad} styles={styles} />
                     <View style={styles.cardInfo}>
                       <Text style={styles.studentName}>{displayName}</Text>
@@ -777,16 +857,18 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
                         <Text style={[styles.badgeText, { color: '#5A8A70' }]}>On Track</Text>
                       </View>
                     )}
-                    <TouchableOpacity
-                      onPress={() => handleRemoveStudent(s.id)}
-                      disabled={removingId === s.id}
-                      style={{ padding: 4, marginLeft: 4 }}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      {removingId === s.id
-                        ? <ActivityIndicator size="small" color={colors.accentRed} />
-                        : <Feather name="user-minus" size={15} color={colors.accentRed} />}
-                    </TouchableOpacity>
+                    {!promoteMode && (
+                      <TouchableOpacity
+                        onPress={() => handleRemoveStudent(s.id)}
+                        disabled={removingId === s.id}
+                        style={{ padding: 4, marginLeft: 4 }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        {removingId === s.id
+                          ? <ActivityIndicator size="small" color={colors.accentRed} />
+                          : <Feather name="user-minus" size={15} color={colors.accentRed} />}
+                      </TouchableOpacity>
+                    )}
                   </View>
 
                   {/* Progress bar */}
@@ -1320,12 +1402,12 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
             ))}
 
             <TouchableOpacity
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: gold + '18', borderRadius: 8, paddingVertical: 10, marginTop: 2, marginBottom: 4 }}
+              style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'center', justifyContent: 'center', gap: 6, backgroundColor: gold + '18', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 16, marginTop: 2, marginBottom: 4 }}
               onPress={() => shareCredsToStudent(credsName, credsEmail, credsPassword)}
               activeOpacity={0.8}
             >
-              <Feather name="share-2" size={15} color={gold} />
-              <Text style={{ fontSize: 13, fontWeight: '700', color: gold }}>Share Login Details</Text>
+              <Feather name="share-2" size={13} color={gold} />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: gold }}>Share Login Details</Text>
             </TouchableOpacity>
 
             <View style={{ backgroundColor: gold + '18', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: gold + '30', marginTop: 4 }}>
@@ -1345,9 +1427,161 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
           </View>
         </View>
       </Modal>
+
+      <TeacherPromoteDialog
+        visible={promoteDialogOpen}
+        selectedStudents={students.filter((s) => selectedForPromote.has(s.id))}
+        colors={colors}
+        onClose={() => setPromoteDialogOpen(false)}
+        onConfirm={applyPromote}
+      />
     </ScreenLayout>
   );
 }
+
+// Pulls the first number out of a grade label ("Grade 4" -> 4) — promotion
+// targets are always a move FORWARD, so grades at or below the student's
+// current one are dropped from the picker.
+function gradeNum(g: string | null | undefined): number | null {
+  if (!g) return null;
+  const m = String(g).match(/\d+/);
+  return m ? parseInt(m[0], 10) : null;
+}
+const IB_PROGRAMS = ['IB PYP', 'IB MYP', 'IB DP'];
+function gradesForProgram(p: string): string[] {
+  if (p === 'IB PYP') return ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'];
+  if (p === 'IB MYP') return ['Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'];
+  if (p === 'IB DP') return ['Grade 11', 'Grade 12'];
+  return [];
+}
+
+function TeacherPromoteDialog({ visible, selectedStudents, colors, onClose, onConfirm }: {
+  visible: boolean; selectedStudents: Student[]; colors: AppColors;
+  onClose: () => void; onConfirm: (targetGrade: string, targetSection: string) => Promise<string | null>;
+}) {
+  const gold = colors.accentYellow;
+  const [targetGrade, setTargetGrade] = useState('');
+  const [targetProgram, setTargetProgram] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    if (visible) { setTargetGrade(''); setTargetProgram(''); setErr(''); }
+  }, [visible]);
+
+  const currentGrades = useMemo(() => Array.from(new Set(selectedStudents.map((s) => s.grade).filter(Boolean))), [selectedStudents]);
+  const maxCurrentGradeNum = useMemo(() => {
+    const nums = currentGrades.map(gradeNum).filter((n): n is number => n !== null);
+    return nums.length ? Math.max(...nums) : null;
+  }, [currentGrades]);
+  const isIBSelection = useMemo(
+    () => selectedStudents.some((s) => (s.curriculum || '').toUpperCase().startsWith('IB')),
+    [selectedStudents]
+  );
+  const gradeChoices = useMemo(() => {
+    const pool = isIBSelection
+      ? (targetProgram ? gradesForProgram(targetProgram) : [])
+      : ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
+    if (maxCurrentGradeNum === null) return pool;
+    return pool.filter((g) => {
+      const n = gradeNum(g);
+      return n === null || n > maxCurrentGradeNum;
+    });
+  }, [isIBSelection, targetProgram, maxCurrentGradeNum]);
+
+  async function handleConfirm() {
+    if (!targetGrade.trim()) { setErr('Pick a target grade.'); return; }
+    setErr('');
+    setSubmitting(true);
+    const error = await onConfirm(targetGrade.trim(), '');
+    setSubmitting(false);
+    if (error) setErr(error);
+  }
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={dialogStyles.overlay}>
+        <View style={[dialogStyles.card, { backgroundColor: colors.cardDark, borderColor: colors.borderColor }]}>
+          <View style={dialogStyles.header}>
+            <Text style={[dialogStyles.title, { color: colors.textHeading }]}>Promote Students</Text>
+            <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
+              <Feather name="x" size={18} color={colors.textDim} />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={[dialogStyles.hint, { color: colors.textDim }]}>
+            {selectedStudents.length} student{selectedStudents.length === 1 ? '' : 's'} selected · currently {currentGrades.length > 0 ? currentGrades.join(', ') : 'an unset grade'}
+          </Text>
+
+          {isIBSelection && (
+            <>
+              <Text style={[dialogStyles.label, { color: colors.textMuted }]}>Target programme</Text>
+              <View style={dialogStyles.chipRow}>
+                {IB_PROGRAMS.map((p) => (
+                  <TouchableOpacity
+                    key={p}
+                    style={[dialogStyles.chip, { borderColor: colors.borderColor }, targetProgram === p && { borderColor: gold, backgroundColor: gold + '18' }]}
+                    onPress={() => { setTargetProgram(p); setTargetGrade(''); }}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: targetProgram === p ? gold : colors.textMuted }}>{p}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
+
+          <Text style={[dialogStyles.label, { color: colors.textMuted }]}>Target grade</Text>
+          {gradeChoices.length > 0 ? (
+            <View style={dialogStyles.chipRow}>
+              {gradeChoices.map((g) => (
+                <TouchableOpacity
+                  key={g}
+                  style={[dialogStyles.chip, { borderColor: colors.borderColor }, targetGrade === g && { borderColor: gold, backgroundColor: gold + '18' }]}
+                  onPress={() => setTargetGrade(g)}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: targetGrade === g ? gold : colors.textMuted }}>{g}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <Text style={{ fontSize: 12, color: colors.textDim, marginBottom: 8 }}>
+              {isIBSelection && !targetProgram ? 'Pick a programme above to see its grades.' : 'No higher grade available.'}
+            </Text>
+          )}
+
+          {!!err && <Text style={{ color: colors.accentRed, fontSize: 12, marginTop: 8 }}>{err}</Text>}
+
+          <View style={dialogStyles.footer}>
+            <TouchableOpacity style={[dialogStyles.cancelBtn, { borderColor: colors.borderColor }]} onPress={onClose} disabled={submitting}>
+              <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 13 }}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[dialogStyles.submitBtn, { backgroundColor: gold }, (submitting || !targetGrade.trim()) && { opacity: 0.5 }]}
+              onPress={handleConfirm}
+              disabled={submitting || !targetGrade.trim()}
+            >
+              {submitting ? <ActivityIndicator color="#0B0B0B" size="small" /> : <Text style={{ color: '#0B0B0B', fontWeight: '700', fontSize: 13 }}>Promote</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const dialogStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  card: { width: '100%', maxWidth: 420, borderRadius: 16, borderWidth: 1, padding: 20 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  title: { fontSize: 17, fontWeight: '700' },
+  hint: { fontSize: 12, marginBottom: 14, lineHeight: 17 },
+  label: { fontSize: 11.5, fontWeight: '600', marginBottom: 6, marginTop: 4 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 },
+  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
+  footer: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  cancelBtn: { flex: 1, borderWidth: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+  submitBtn: { flex: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+});
 
 const makeStyles = (c: AppColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bgDark },
@@ -1440,6 +1674,31 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     borderColor: c.accentYellow + '40', backgroundColor: c.accentYellow + '18',
   },
   addBtnText: { fontSize: 13, fontWeight: '600', color: c.accentYellow },
+
+  promoteBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: spacing.md, paddingVertical: 8,
+    borderRadius: radius.md, borderWidth: 1,
+    borderColor: c.accentYellow + '40', backgroundColor: c.accentYellow + '18',
+  },
+  promoteBtnText: { fontSize: 13, fontWeight: '600', color: c.accentYellow },
+  promoteBtnActive: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: spacing.md, paddingVertical: 8,
+    borderRadius: radius.md, borderWidth: 1, borderColor: c.borderColor,
+  },
+  promoteBtnActiveText: { fontSize: 13, fontWeight: '600', color: c.textMuted },
+  promoteBar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginHorizontal: spacing.xl, marginBottom: 8,
+    paddingHorizontal: spacing.md, paddingVertical: 10,
+    borderRadius: radius.md, backgroundColor: c.accentYellow + '12',
+    borderWidth: 1, borderColor: c.accentYellow + '30',
+  },
+  promoteBarText: { fontSize: 12.5, fontWeight: '600', color: c.textMuted },
+  promoteConfirmBtn: { backgroundColor: c.accentYellow, borderRadius: radius.sm, paddingHorizontal: 16, paddingVertical: 7 },
+  promoteConfirmBtnText: { fontSize: 12.5, fontWeight: '700', color: '#0B0B0B' },
+  studentCardSelected: { borderColor: c.accentYellow, backgroundColor: c.accentYellow + '0D' },
 
   // Empty state add button
   emptyAddBtn: {

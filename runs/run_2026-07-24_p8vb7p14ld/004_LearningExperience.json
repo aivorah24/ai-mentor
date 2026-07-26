@@ -1,0 +1,53 @@
+{
+  "package": {
+    "package_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "2023-02-20T14:30:00Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "12345678-9012-3456-7890-123456789012",
+      "parent_package_id": "f2b3c4d5-e6f7-g8h9-i0j1"
+    }
+  },
+  "payload": {
+    "lesson_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "lesson_metadata": {
+      "grade": null,
+      "subject": null,
+      "chapter": null,
+      "lesson": null,
+      "lesson_type": null,
+      "bloom_level": null,
+      "vocabulary_difficulty": null
+    },
+    "experience_score": {
+      "engagement": 0,
+      "curiosity": 0,
+      "visual_learning": 0,
+      "audio_experience": 0,
+      "interaction": 0,
+      "reflection": 0,
+      "accessibility": 0,
+      "cognitive_load": 0,
+      "learning_flow": 0
+    },
+    "lesson_flow": [],
+    "ui_components": [],
+    "interaction_plan": [],
+    "illustration_plan": [],
+    "audio_plan": [],
+    "validation_requirements": [],
+    "handoff": {
+      "ui_planner_agent": {
+        "lesson_experience": {
+          "status": "FAIL",
+          "reason": "Missing required information in the input package"
+        }
+      }
+    }
+  }
+}

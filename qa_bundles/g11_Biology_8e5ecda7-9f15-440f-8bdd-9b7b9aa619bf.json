@@ -1,0 +1,142 @@
+{
+ "topicId": "8e5ecda7-9f15-440f-8bdd-9b7b9aa619bf",
+ "grade": "Grade 11",
+ "subject": "Biology",
+ "curriculum": "CBSE",
+ "topicName": "Ammonotelism",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "Ammonotelism is the process of excreting ammonia as the primary nitrogenous waste. Many aquatic animals, such as bony fishes and aquatic amphibians, use this method. The term combines \"ammonia\" with \"-telism\" to indicate the type of waste expelled.",
+   "Because the waste is ammonia, it must be released into water where it can be diluted quickly. Aquatic animals that live in water can afford to lose ammonia directly because the surrounding water carries it away, preventing toxic buildup. This strategy differs from other waste‑excretion methods like urea or uric acid, which are used by terrestrial organisms."
+  ],
+  "grade": 11,
+  "intro": "Ammonotelism is the way some animals get rid of nitrogen by excreting ammonia directly. It is common in many aquatic animals.",
+  "vocab": [
+   {
+    "word": "ammonia",
+    "definition": "A nitrogenous compound that is highly soluble in water and toxic at high concentrations."
+   },
+   {
+    "word": "ammonotelism",
+    "definition": "The biological process of excreting ammonia as the primary nitrogenous waste."
+   },
+   {
+    "word": "aquatic animals",
+    "definition": "Animals that live in water environments, such as bony fishes and aquatic amphibians."
+   },
+   {
+    "word": "excrete",
+    "definition": "To eliminate waste products from the body."
+   }
+  ],
+  "subject": "Biology",
+  "activity": "Why do you think releasing ammonia directly is suitable for animals that live in water but not for most land animals?",
+  "keyLearnings": [
+   "Ammonotelism means excreting ammonia as the main nitrogenous waste.",
+   "Bony fishes and aquatic amphibians are typical ammonotelic animals.",
+   "Ammonia is released directly into the surrounding water."
+  ],
+  "keyTakeaways": [
+   "Ammonotelism = excretion of ammonia as main waste.",
+   "Common in bony fishes and aquatic amphibians.",
+   "Water dilutes ammonia, making direct excretion safe for aquatic life."
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "Think of animals that live in water.",
+    "type": "mcq",
+    "correct": 1,
+    "options": [
+     "Mammals",
+     "Bony fishes",
+     "Birds",
+     "Reptiles"
+    ],
+    "question": "Which of the following groups primarily uses ammonotelism?",
+    "explanation": "Bony fishes are aquatic animals that excrete ammonia directly, as stated in the evidence."
+   },
+   {
+    "hint": "It is a nitrogenous waste that is highly soluble in water.",
+    "type": "mcq",
+    "correct": 2,
+    "options": [
+     "Urea",
+     "Uric acid",
+     "Ammonia",
+     "Glucose"
+    ],
+    "question": "Ammonotelism involves excreting which compound?",
+    "explanation": "The definition specifies that ammonotelism is the excretion of ammonia."
+   },
+   {
+    "hint": "Consider the environment where the waste is diluted.",
+    "type": "fill_blank",
+    "correct": "water",
+    "question": "Ammonotelic animals release ammonia directly into the ___ .",
+    "explanation": "The evidence notes that aquatic animals excrete ammonia into the surrounding water."
+   }
+  ],
+  "originalLesson": [],
+  "whatYoullLearn": [
+   "Ammonotelism means excreting ammonia as the main nitrogenous waste.",
+   "Bony fishes and aquatic amphibians are typical ammonotelic animals.",
+   "Ammonia is released directly into the surrounding water."
+  ],
+  "workedExamples": [],
+  "thinkAndReflect": [
+   "Why do you think releasing ammonia directly is suitable for animals that live in water but not for most land animals?"
+  ],
+  "instructionalType": "lesson",
+  "illustrationPrompts": [
+   {
+    "image": "https://res.cloudinary.com/di5iq2mmb/image/upload/v1784779442/ncert/grade11/Biology/kebo114_p3_0.png",
+    "source": "kebo114 p3",
+    "altText": "Picture 1 from your NCERT book — Ammonotelism (page 3)"
+   },
+   {
+    "image": "https://res.cloudinary.com/di5iq2mmb/image/upload/v1784779395/ncert/grade11/Biology/kebo105_p3_0.png",
+    "source": "kebo105 p3",
+    "altText": "Picture 2 from your NCERT book — Ammonotelism (page 3)"
+   }
+  ]
+ },
+ "practiceQuiz": [
+  {
+   "hint": "Think of animals that live in water.",
+   "type": "mcq",
+   "correct": 1,
+   "options": [
+    "Mammals",
+    "Bony fishes",
+    "Birds",
+    "Reptiles"
+   ],
+   "question": "Which of the following groups primarily uses ammonotelism?",
+   "explanation": "Bony fishes are aquatic animals that excrete ammonia directly, as stated in the evidence."
+  },
+  {
+   "hint": "It is a nitrogenous waste that is highly soluble in water.",
+   "type": "mcq",
+   "correct": 2,
+   "options": [
+    "Urea",
+    "Uric acid",
+    "Ammonia",
+    "Glucose"
+   ],
+   "question": "Ammonotelism involves excreting which compound?",
+   "explanation": "The definition specifies that ammonotelism is the excretion of ammonia."
+  },
+  {
+   "hint": "Consider the environment where the waste is diluted.",
+   "type": "fill_blank",
+   "correct": "water",
+   "question": "Ammonotelic animals release ammonia directly into the ___ .",
+   "explanation": "The evidence notes that aquatic animals excrete ammonia into the surrounding water."
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "**🌊 Imagine your fish tank at home!**\nYou know how sometimes the water smells a little after a few days? That’s because your fish are doing something called **ammonotelism** — they’re getting rid of waste in a very special way. Let’s dive in!\n\n---\n\n### **What is Ammonotelism?**\n- **Ammonotelism** is when animals get rid of **ammonia** as their main waste.\n- **Ammonia** is like the \"leftover\" from breaking down food — it’s toxic, like spoiled milk in your fridge!\n- Many **aquatic animals** (those that live in water) use this method because water can wash the ammonia away fast.\n\nThink of it like this:\n🧊 *Ice cubes melt quickly in water, but stay solid on a plate.*\nAmmonia is like the ice cube — it dissolves fast in water, so aquatic animals can safely release it!\n\n---\n\n### **Why do aquatic animals do this?**\n- Ammonia is **super toxic** — even a little can hurt cells.\n- But in water, ammonia spreads out and gets diluted. It’s like pouring a drop of food coloring into a big glass of water — it disappears!\n- So, fish and frogs living in rivers or oceans can just let ammonia flow out with the water.\n\n---\n\n### **Worked Example: A Goldfish in a Bowl**\nLet’s say you have a goldfish named Bubbles.\n\n1. **Bubbles eats fish food.**\n   The food has protein. Her body breaks it down to get energy and building blocks.\n\n2. **Extra nitrogen is left over.**\n   This nitrogen turns into **ammonia** — like the smell when you leave milk out too long.\n\n3. **Bubbles releases ammonia into the water.**\n   She doesn’t store it. She just lets it go through her gills into the water around her.\n\n4. **The water carries it away.**\n   You don’t smell anything because the water in the bowl (or a big river) spreads the ammonia out fast.\n\n✅ So, Bubbles stays healthy — all thanks to **ammonotelism**!\n\n---\n\n💡 **Did you know?**\nSome fish can release ammonia so fast that their gills act like tiny “ammonia faucets” — always dripping waste away!\n\n---\n**You're doing amazing!**\nSo, what do you think — why can’t humans do ammonotelism too? 😊\n(Think about where we live — on land!)"
+}

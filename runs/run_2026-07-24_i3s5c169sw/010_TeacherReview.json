@@ -1,0 +1,130 @@
+{
+  "package": {
+    "package_id": "e3c4a5b6-c7d8-e9f0-1234-5678fedcba9",
+    "package_type": "ReviewReport",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T13:20:00.000Z",
+    "produced_by": {
+      "agent": "teacher-review-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "teacher-review-agent-123",
+      "parent_package_id": "e3c4a5b6-c7d8-e9f0-1234-5678fedcba9"
+    }
+  },
+  "payload": {
+    "lesson_id": "missing-stage-lesson",
+    "review_scores": {
+      "curriculum_fidelity": 0,
+      "pedagogical_quality": 0,
+      "student_engagement": 0,
+      "visual_experience": 0,
+      "audio_experience": 0,
+      "assessment_quality": 0,
+      "accessibility": 0,
+      "overall_score": 0
+    },
+    "status": "FAIL",
+    "surgical_feedback": [
+      {
+        "issue_id": "TR001",
+        "stage_id": "stage_content",
+        "component_id": "stage_content",
+        "severity": "CRITICAL",
+        "description": "Learning objective insufficiently addressed",
+        "recommendation": "Ensure all stages have a clear learning objective",
+        "target_agent": "lesson-generator-agent",
+        "error_code": "TR001"
+      },
+      {
+        "issue_id": "TR002",
+        "stage_id": "stage_content",
+        "component_id": "stage_content",
+        "severity": "CRITICAL",
+        "description": "Pedagogical progression issue",
+        "recommendation": "Review the lesson's logical progression and ensure it is sound",
+        "target_agent": "lesson-generator-agent",
+        "error_code": "TR002"
+      },
+      {
+        "issue_id": "TR003",
+        "stage_id": "stage_content",
+        "component_id": "stage_content",
+        "severity": "CRITICAL",
+        "description": "Cognitive load too high",
+        "recommendation": "Reduce the cognitive load by breaking down complex concepts",
+        "target_agent": "lesson-generator-agent",
+        "error_code": "TR003"
+      },
+      {
+        "issue_id": "TR004",
+        "stage_id": "stage_content",
+        "component_id": "stage_content",
+        "severity": "CRITICAL",
+        "description": "Age-inappropriate language",
+        "recommendation": "Review the language used and ensure it is suitable for the target age group",
+        "target_agent": "lesson-generator-agent",
+        "error_code": "TR004"
+      },
+      {
+        "issue_id": "TR005",
+        "stage_id": "illustration",
+        "component_id": "illustrations",
+        "severity": "CRITICAL",
+        "description": "Visual support insufficient",
+        "recommendation": "Add illustrations to support the learning objectives",
+        "target_agent": "illustration-agent",
+        "error_code": "TR005"
+      },
+      {
+        "issue_id": "TR006",
+        "stage_id": "audio",
+        "component_id": "narration_segments",
+        "severity": "CRITICAL",
+        "description": "Audio experience issue",
+        "recommendation": "Add narration to support the learning objectives",
+        "target_agent": "audio-agent",
+        "error_code": "TR006"
+      },
+      {
+        "issue_id": "TR007",
+        "stage_id": "audio",
+        "component_id": "narration_segments",
+        "severity": "CRITICAL",
+        "description": "Assessment misalignment",
+        "recommendation": "Review the assessment strategy and ensure it aligns with the learning objectives",
+        "target_agent": "quiz-agent",
+        "error_code": "TR007"
+      },
+      {
+        "issue_id": "TR008",
+        "stage_id": "audio",
+        "component_id": "narration_segments",
+        "severity": "CRITICAL",
+        "description": "Accessibility concern",
+        "recommendation": "Review the audio accessibility metadata and ensure it meets the required standards",
+        "target_agent": "audio-agent",
+        "error_code": "TR008"
+      },
+      {
+        "issue_id": "TR009",
+        "stage_id": "stage_content",
+        "component_id": "stage_content",
+        "severity": "CRITICAL",
+        "description": "Lesson type misclassified (layout does not match source form)",
+        "recommendation": "Review the lesson type and ensure it matches the layout",
+        "target_agent": "curriculum-understanding-agent",
+        "error_code": "TR009"
+      }
+    ],
+    "handoff": {
+      "functional_qa_agent": {},
+      "regeneration_agent": {
+        "stage_id": "stage_content",
+        "component_id": "stage_content",
+        "target_agent": "lesson-generator-agent"
+      }
+    }
+  }
+}

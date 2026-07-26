@@ -1,0 +1,220 @@
+{
+  "package": {
+    "package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:12:14.067Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "uala08ghqgp",
+      "parent_package_id": "765847cf-9558-4ad6-a232-32c5c1da5074"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "lesson_metadata": {
+      "grade": 4,
+      "subject": "Math",
+      "chapter": "Subtraction",
+      "lesson": "Subtraction with Borrowing",
+      "lesson_type": "Concept",
+      "bloom_level": "Apply",
+      "prerequisites": [
+        "Subtraction"
+      ],
+      "misconceptions": [
+        "Students may think that borrowing means taking money from someone else.",
+        "Students may struggle with understanding the concept of borrowing in subtraction."
+      ]
+    },
+    "experience_score": {
+      "engagement": 90,
+      "curiosity": 80,
+      "visual_learning": 85,
+      "audio_experience": 70,
+      "interaction": 95,
+      "reflection": 80,
+      "accessibility": 90,
+      "cognitive_load": 80,
+      "learning_flow": 95
+    },
+    "lesson_flow": [
+      {
+        "step_id": "step-1",
+        "title": "Introduction to Subtraction with Borrowing",
+        "description": "Introduce the concept of subtraction with borrowing using real-life examples.",
+        "type": "text",
+        "content": "Imagine you have 72 rupees in your piggy bank and you want to subtract 47 rupees from it. But, you don't have enough rupees to subtract 47 from 72. What can you do?",
+        "next_step": "step-2"
+      },
+      {
+        "step_id": "step-2",
+        "title": "Borrowing in Subtraction",
+        "description": "Explain the concept of borrowing in subtraction.",
+        "type": "text",
+        "content": "When we subtract a bigger number from a smaller number, we need to borrow some quantity from our neighbour. Let's learn how to do it.",
+        "next_step": "step-3"
+      },
+      {
+        "step_id": "step-3",
+        "title": "Practice Exercise",
+        "description": "Provide practice exercises for students to apply subtraction with borrowing.",
+        "type": "exercise",
+        "content": "Practice subtracting bigger numbers from smaller numbers using borrowing.",
+        "next_step": "step-4"
+      },
+      {
+        "step_id": "step-4",
+        "title": "Real-Life Application",
+        "description": "Provide real-life examples of subtraction with borrowing.",
+        "type": "text",
+        "content": "Let's learn how to apply subtraction with borrowing in real-life situations.",
+        "next_step": "step-5"
+      },
+      {
+        "step_id": "step-5",
+        "title": "Conclusion",
+        "description": "Summarize the concept of subtraction with borrowing.",
+        "type": "text",
+        "content": "Now, you know how to subtract bigger numbers from smaller numbers using borrowing. Practice it regularly to become a master!",
+        "next_step": null
+      }
+    ],
+    "ui_components": [
+      {
+        "component_id": "component-1",
+        "type": "text",
+        "content": "Imagine you have 72 rupees in your piggy bank and you want to subtract 47 rupees from it. But, you don't have enough rupees to subtract 47 from 72. What can you do?"
+      },
+      {
+        "component_id": "component-2",
+        "type": "text",
+        "content": "When we subtract a bigger number from a smaller number, we need to borrow some quantity from our neighbour. Let's learn how to do it."
+      },
+      {
+        "component_id": "component-3",
+        "type": "exercise",
+        "content": "Practice subtracting bigger numbers from smaller numbers using borrowing."
+      },
+      {
+        "component_id": "component-4",
+        "type": "text",
+        "content": "Let's learn how to apply subtraction with borrowing in real-life situations."
+      },
+      {
+        "component_id": "component-5",
+        "type": "text",
+        "content": "Now, you know how to subtract bigger numbers from smaller numbers using borrowing. Practice it regularly to become a master!"
+      }
+    ],
+    "interaction_plan": [
+      {
+        "interaction_id": "interaction-1",
+        "type": "multiple-choice",
+        "question": "What can you do when you want to subtract 47 rupees from 72 rupees but don't have enough rupees?",
+        "options": [
+          "Borrow some quantity from your neighbour",
+          "Take some rupees from your piggy bank",
+          "Ask your friend for help"
+        ],
+        "correct_answer": "Borrow some quantity from your neighbour"
+      },
+      {
+        "interaction_id": "interaction-2",
+        "type": "short-answer",
+        "question": "Explain the concept of borrowing in subtraction.",
+        "answer": "When we subtract a bigger number from a smaller number, we need to borrow some quantity from our neighbour."
+      },
+      {
+        "interaction_id": "interaction-3",
+        "type": "exercise",
+        "question": "Practice subtracting bigger numbers from smaller numbers using borrowing.",
+        "answer": "Practice subtracting bigger numbers from smaller numbers using borrowing."
+      },
+      {
+        "interaction_id": "interaction-4",
+        "type": "multiple-choice",
+        "question": "What is the main idea of subtraction with borrowing?",
+        "options": [
+          "Subtracting smaller numbers from bigger numbers",
+          "Borrowing some quantity from our neighbour",
+          "Taking some rupees from our piggy bank"
+        ],
+        "correct_answer": "Borrowing some quantity from our neighbour"
+      }
+    ],
+    "illustration_plan": [
+      {
+        "illustration_id": "illustration-1",
+        "type": "image",
+        "content": "A piggy bank with 72 rupees and a neighbour with 10 rupees."
+      },
+      {
+        "illustration_id": "illustration-2",
+        "type": "image",
+        "content": "A piggy bank with 72 rupees and a neighbour with 10 rupees, with a red arrow pointing to the neighbour's rupees."
+      },
+      {
+        "illustration_id": "illustration-3",
+        "type": "image",
+        "content": "A piggy bank with 72 rupees and a neighbour with 10 rupees, with a red arrow pointing to the neighbour's rupees and a green arrow pointing to the piggy bank's rupees."
+      }
+    ],
+    "audio_plan": [
+      {
+        "audio_id": "audio-1",
+        "type": "mp3",
+        "content": "A voice explaining the concept of subtraction with borrowing."
+      },
+      {
+        "audio_id": "audio-2",
+        "type": "mp3",
+        "content": "A voice explaining the concept of borrowing in subtraction."
+      },
+      {
+        "audio_id": "audio-3",
+        "type": "mp3",
+        "content": "A voice explaining the concept of subtraction with borrowing in real-life situations."
+      }
+    ],
+    "validation_requirements": [
+      {
+        "requirement_id": "requirement-1",
+        "type": "multiple-choice",
+        "question": "What can you do when you want to subtract 47 rupees from 72 rupees but don't have enough rupees?",
+        "options": [
+          "Borrow some quantity from your neighbour",
+          "Take some rupees from your piggy bank",
+          "Ask your friend for help"
+        ],
+        "correct_answer": "Borrow some quantity from your neighbour"
+      },
+      {
+        "requirement_id": "requirement-2",
+        "type": "short-answer",
+        "question": "Explain the concept of borrowing in subtraction.",
+        "answer": "When we subtract a bigger number from a smaller number, we need to borrow some quantity from our neighbour."
+      },
+      {
+        "requirement_id": "requirement-3",
+        "type": "exercise",
+        "question": "Practice subtracting bigger numbers from smaller numbers using borrowing.",
+        "answer": "Practice subtracting bigger numbers from smaller numbers using borrowing."
+      },
+      {
+        "requirement_id": "requirement-4",
+        "type": "multiple-choice",
+        "question": "What is the main idea of subtraction with borrowing?",
+        "options": [
+          "Subtracting smaller numbers from bigger numbers",
+          "Borrowing some quantity from our neighbour",
+          "Taking some rupees from our piggy bank"
+        ],
+        "correct_answer": "Borrowing some quantity from our neighbour"
+      }
+    ]
+  }
+}

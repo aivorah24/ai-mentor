@@ -1,0 +1,149 @@
+{
+ "topicId": "2fc73a2f-2198-482e-89aa-548911664c99",
+ "grade": "Grade 12",
+ "subject": "Chemistry",
+ "curriculum": "CBSE",
+ "topicName": "Bonding in Coordination Compounds",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "Coordination compounds occur in minerals, plants, animals and many industrial processes. They are crucial in analytical chemistry, metallurgy, biology, medicine and technology. Their wide use makes them a key topic in modern inorganic chemistry.",
+   "Valence Bond Theory states that the metal ion uses its atomic orbitals to form hybrid orbitals. These hybrid orbitals overlap with orbitals of ligands, allowing electron‑pair sharing and bond formation. The theory helps us understand why many transition metals form stable complexes.",
+   "The type of hybrid orbitals determines the shape of the complex. By observing magnetic behavior—whether a compound is paramagnetic or diamagnetic—we can infer the number of unpaired electrons and thus predict the geometry of the complex."
+  ],
+  "grade": 12,
+  "intro": "Coordination compounds are molecules where a central metal ion is surrounded by attached atoms or molecules called ligands.",
+  "vocab": [
+   {
+    "word": "Coordination compound",
+    "definition": "A complex in which a central metal ion is bonded to surrounding ligands through coordinate covalent bonds."
+   },
+   {
+    "word": "Ligand",
+    "definition": "An atom, ion or molecule that donates a pair of electrons to the metal ion in a coordination compound."
+   },
+   {
+    "word": "Valence Bond Theory",
+    "definition": "A model that explains bonding in coordination compounds by the formation of hybrid orbitals on the metal ion that overlap with ligand orbitals."
+   },
+   {
+    "word": "Hybrid orbital",
+    "definition": "An orbital formed by mixing atomic orbitals on the metal ion; its shape dictates the geometry of the complex."
+   },
+   {
+    "word": "Magnetic behavior",
+    "definition": "The response of a compound to a magnetic field, indicating the presence of unpaired electrons and helping predict geometry."
+   }
+  ],
+  "subject": "Chemistry",
+  "activity": "How does the number of unpaired electrons affect the colour of a coordination compound?",
+  "keyLearnings": [
+   "Define coordination compounds and their importance",
+   "Explain Valence Bond Theory for these compounds",
+   "Link hybrid orbitals and magnetic behavior to geometry"
+  ],
+  "keyTakeaways": [
+   "Coordination compounds are vital in many natural and industrial contexts.",
+   "Valence Bond Theory uses hybrid orbitals to describe metal‑ligand bonding.",
+   "Magnetic behavior reveals unpaired electrons and helps predict complex geometry."
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "Look for the theory that mentions hybrid orbitals on the metal ion.",
+    "type": "mcq",
+    "correct": 1,
+    "options": [
+     "VSEPR theory",
+     "Valence Bond Theory",
+     "Molecular Orbital Theory",
+     "Dalton's atomic theory"
+    ],
+    "question": "Which theory explains bonding in coordination compounds?",
+    "explanation": "Valence Bond Theory describes how metal ions form hybrid orbitals that overlap with ligand orbitals."
+   },
+   {
+    "hint": "Think about what tells us about unpaired electrons.",
+    "type": "mcq",
+    "correct": 1,
+    "options": [
+     "colour",
+     "magnetic behavior",
+     "melting point",
+     "solubility"
+    ],
+    "question": "The geometry of a complex can be predicted from its:",
+    "explanation": "Magnetic behavior indicates the number of unpaired electrons, which correlates with the geometry of the complex."
+   },
+   {
+    "hint": "These are the entities that bind to the metal.",
+    "type": "fill_blank",
+    "correct": "ligands",
+    "question": "In a coordination compound, the metal ion is surrounded by ____ that donate electron pairs.",
+    "explanation": "Ligands are atoms, ions, or molecules that provide a pair of electrons to the metal ion, forming coordinate covalent bonds."
+   }
+  ],
+  "originalLesson": [],
+  "whatYoullLearn": [
+   "Define coordination compounds and their importance",
+   "Explain Valence Bond Theory for these compounds",
+   "Link hybrid orbitals and magnetic behavior to geometry"
+  ],
+  "thinkAndReflect": [
+   "How does the number of unpaired electrons affect the colour of a coordination compound?",
+   "Why might a chemist prefer Valence Bond Theory over Molecular Orbital Theory for simple complexes?"
+  ],
+  "instructionalType": "lesson",
+  "illustrationPrompts": [
+   {
+    "image": "https://res.cloudinary.com/di5iq2mmb/image/upload/v1779441390/ncert_images/ncert/g12/chemistry/lech1_ch04_p6_i15.png",
+    "score": 0.422,
+    "source": "NCERT Chemistry Grade 12 | lech104.pdf | Page 6",
+    "altText": "This image appears to be a gradient background, likely intended for a textbook…"
+   },
+   {
+    "image": "https://res.cloudinary.com/di5iq2mmb/image/upload/v1779441414/ncert_images/ncert/g12/chemistry/lech1_ch05_p7_i13.png",
+    "score": 0.401,
+    "source": "NCERT Chemistry Grade 12 | lech105.pdf | Page 7",
+    "altText": "This image appears to be a gradient or placeholder and does not actually…"
+   }
+  ]
+ },
+ "practiceQuiz": [
+  {
+   "hint": "Look for the theory that mentions hybrid orbitals on the metal ion.",
+   "type": "mcq",
+   "correct": 1,
+   "options": [
+    "VSEPR theory",
+    "Valence Bond Theory",
+    "Molecular Orbital Theory",
+    "Dalton's atomic theory"
+   ],
+   "question": "Which theory explains bonding in coordination compounds?",
+   "explanation": "Valence Bond Theory describes how metal ions form hybrid orbitals that overlap with ligand orbitals."
+  },
+  {
+   "hint": "Think about what tells us about unpaired electrons.",
+   "type": "mcq",
+   "correct": 1,
+   "options": [
+    "colour",
+    "magnetic behavior",
+    "melting point",
+    "solubility"
+   ],
+   "question": "The geometry of a complex can be predicted from its:",
+   "explanation": "Magnetic behavior indicates the number of unpaired electrons, which correlates with the geometry of the complex."
+  },
+  {
+   "hint": "These are the entities that bind to the metal.",
+   "type": "fill_blank",
+   "correct": "ligands",
+   "question": "In a coordination compound, the metal ion is surrounded by ____ that donate electron pairs.",
+   "explanation": "Ligands are atoms, ions, or molecules that provide a pair of electrons to the metal ion, forming coordinate covalent bonds."
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "**Let’s play “Build-a-Metal!” 🧱✨**\n\nImagine you have a box of **Lego bricks** and a set of **special connectors** (those little round pegs and holes). The metal ion at the center is like the **big Lego baseplate**. The ligands (the molecules or ions that stick to the metal) are like the **colored bricks** you snap onto the baseplate. How do they stick? That’s **bonding in coordination compounds**!\n\n---\n\n### What is **bonding in coordination compounds**?\n\n- **Coordination compounds** are like tiny **molecular teams** where a **central metal ion** (like Fe²⁺ or Cu²⁺) is surrounded by **ligands** (like NH₃ or H₂O).\n- **Valence Bond Theory (VBT)** says the metal uses its **atomic orbitals** to make **hybrid orbitals** (like mixing two different Lego shapes into one new shape).\n- These **hybrid orbitals** then **overlap** with orbitals from the ligands — like snapping bricks together.\n- The **type of hybrid orbital** decides the **shape** of the complex — like whether your Lego tower is flat, square, or pointy!\n\n---\n\n### Why does this matter?\n\nThese compounds are everywhere!\n- In **your blood**, hemoglobin has iron (Fe) at the center — it carries oxygen like a delivery truck!\n- In **medicine**, cisplatin (a platinum complex) helps fight cancer.\n- In **industrial dyes**, cobalt complexes give bright blue colors.\n\nSo understanding how they bond helps us design better medicines, materials, and technologies!\n\n---\n\n### Let’s break it down step by step:\n\n1. **Metal ion** (e.g., Fe²⁺) has empty orbitals.\n2. It **mixes its s, p, and d orbitals** to form **hybrid orbitals** (like blending colors to make a new shade).\n3. **Ligands** (like NH₃) donate **electron pairs** into these hybrid orbitals — like plugging a USB cable into a port.\n4. The **geometry** (shape) of the complex depends on the **type of hybrid orbital** formed.\n\n---\n\n### Types of hybrid orbitals and shapes:\n\n| Hybrid Type | Shape | Example Complex |\n|-----------|-------|----------------|\n| sp | Linear | [Ag(NH₃)₂]⁺ |\n| sp² | Trigonal planar | [CuCl₃]²⁻ |\n| sp³ | Tetrahedral | [Zn(NH₃)₄]²⁺ |\n| dsp² | Square planar | [Ni(CN)₄]²⁻ |\n| d²sp³ | Octahedral | [Co(NH₃)₆]³⁺ |\n\n---\n\n### Magnetic behavior tells us about electrons!\n\n- **Paramagnetic**: Has **unpaired electrons** → attracted to magnets.\n- **Diamagnetic**: All electrons **paired** → not attracted to magnets.\n\nThis helps us **predict the geometry** of the complex!\n\n---\n\n### Worked Example: [Co(NH₃)₆]³⁺\n\n**Step 1: Identify the metal and ligands**\n- Metal: Co³⁺ (cobalt ion)\n- Ligands: 6 NH₃ molecules\n\n**Step 2: Determine the oxidation state**\n- Co is +3 → it has lost 3 electrons.\n\n**Step 3: Count d-electrons**\n- Co³⁺ has electron configuration: [Ar] 3d⁶\n- So, it has **6 d-electrons**.\n\n**Step 4: Predict hybridization and geometry**\n- To form 6 bonds, Co³⁺ uses **six orbitals**.\n- It mixes **two 3d orbitals**, one 4s, and three 4p orbitals → forms **d²sp³ hybrid orbitals**.\n- These point toward the corners of an **octahedron** (like 6 arms of a robot reaching out equally in all directions).\n\n**Step 5: Magnetic behavior**\n- In d²sp³, all 6 d-electrons are **paired** in lower energy orbitals.\n- So, the complex is **diamagnetic** (no unpaired electrons).\n\n✅ Final Answer:\n["
+}

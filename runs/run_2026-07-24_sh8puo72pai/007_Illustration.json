@@ -1,0 +1,163 @@
+{
+  "package": {
+    "package_id": "uuid",
+    "package_type": "IllustrationPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:00:00.000Z",
+    "produced_by": {
+      "agent": "illustration-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "illustration-pipeline",
+      "parent_package_id": "uuid"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "illustrations": [
+      {
+        "artifact_id": "welcome-title",
+        "stage_id": "welcome",
+        "component_id": "welcome-title",
+        "concept_id": "welcome",
+        "style_category": "photograph",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": false,
+        "visual_prompt": null,
+        "consistency_tags": [],
+        "source_references": []
+      },
+      {
+        "artifact_id": "welcome-intro",
+        "stage_id": "welcome",
+        "component_id": "welcome-intro",
+        "concept_id": "welcome",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": false,
+        "visual_prompt": null,
+        "consistency_tags": [],
+        "source_references": []
+      },
+      {
+        "artifact_id": "introduction-video",
+        "stage_id": "introduction",
+        "component_id": "introduction-video",
+        "concept_id": "introduction",
+        "style_category": "diagram",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": false,
+        "visual_prompt": null,
+        "consistency_tags": [],
+        "source_references": []
+      },
+      {
+        "artifact_id": "example-1-scenario",
+        "stage_id": "example-1",
+        "component_id": "example-1-scenario",
+        "concept_id": "example-1",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A piggy bank with 72 rupees and a neighbour with 10 rupees. Borrow 4 rupees from the neighbour and take away 10 rupees from the piggy bank.",
+        "consistency_tags": [
+          "character_aivorah"
+        ],
+        "source_references": [
+          "uuid"
+        ]
+      },
+      {
+        "artifact_id": "example-1-exercise",
+        "stage_id": "example-1",
+        "component_id": "example-1-exercise",
+        "concept_id": "example-1",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": false,
+        "visual_prompt": null,
+        "consistency_tags": [],
+        "source_references": []
+      },
+      {
+        "artifact_id": "example-2-scenario",
+        "stage_id": "example-2",
+        "component_id": "example-2-scenario",
+        "concept_id": "example-2",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A basket with 45 apples and a friend with 27 apples. Borrow some apples from the neighbour to subtract 27 from 45.",
+        "consistency_tags": [
+          "character_aivorah"
+        ],
+        "source_references": [
+          "uuid"
+        ]
+      },
+      {
+        "artifact_id": "example-2-exercise",
+        "stage_id": "example-2",
+        "component_id": "example-2-exercise",
+        "concept_id": "example-2",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": false,
+        "visual_prompt": null,
+        "consistency_tags": [],
+        "source_references": []
+      },
+      {
+        "artifact_id": "practice-exercise",
+        "stage_id": "practice",
+        "component_id": "practice-exercise",
+        "concept_id": "practice",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": false,
+        "visual_prompt": null,
+        "consistency_tags": [],
+        "source_references": []
+      },
+      {
+        "artifact_id": "reflection-quiz",
+        "stage_id": "reflection",
+        "component_id": "reflection-quiz",
+        "concept_id": "reflection",
+        "style_category": "photograph",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": false,
+        "visual_prompt": null,
+        "consistency_tags": [],
+        "source_references": []
+      },
+      {
+        "artifact_id": "summary-review",
+        "stage_id": "summary",
+        "component_id": "summary-review",
+        "concept_id": "summary",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": false,
+        "visual_prompt": null,
+        "consistency_tags": [],
+        "source_references": []
+      }
+    ],
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}

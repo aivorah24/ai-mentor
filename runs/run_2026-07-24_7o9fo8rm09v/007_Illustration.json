@@ -1,0 +1,116 @@
+{
+  "package": {
+    "package_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
+    "package_type": "IllustrationPackage",
+    "schema_version": "1.0",
+    "created_at": "2025-08-27T10:00:00Z",
+    "produced_by": {
+      "agent": "illustration-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+      "parent_package_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba"
+    }
+  },
+  "payload": {
+    "lesson_id": "f4e3d2c1-b0a9-8-7-6-5-4-3-2-1-0-fedcba",
+    "illustrations": [
+      {
+        "artifact_id": "ill_vi_001",
+        "stage_id": "visual_introduction",
+        "component_id": "vi_txt1",
+        "concept_id": "concept_piggybank_borrow",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A friendly cartoon piggy bank filled with colorful coins, showing 72 rupees inside. A hand is about to take out 47 rupees, with a visual indication that borrowing is needed (e.g., a small speech bubble showing 'need to borrow 10 rupees'). Bright, inviting colors suitable for young learners.",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue",
+          "math_lesson"
+        ],
+        "source_references": [
+          "in the piggy bank? We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees."
+        ]
+      },
+      {
+        "artifact_id": "ill_ce_001",
+        "stage_id": "concrete_example",
+        "component_id": "ce_txt1",
+        "concept_id": "concept_borrow_exchange",
+        "style_category": "diagram",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A clear place-value diagram showing the number 72 split into 7 tens and 2 ones. An arrow indicates exchanging one ten (a 10-rupee note) for ten ones (ten 1-rupee coins), resulting in 6 tens and 12 ones. Use simple icons: stacks of ten blocks and single blocks, with labels 'Tens' and 'Ones'.",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue",
+          "math_lesson"
+        ],
+        "source_references": [
+          "in the piggy bank? We can subtract 47 from 72, but we need to borrow some rupees from our neighbour, who has 10 rupees."
+        ]
+      },
+      {
+        "artifact_id": "ill_ge_001",
+        "stage_id": "guided_example",
+        "component_id": "ge_txt1",
+        "concept_id": "concept_45minus27_borrow",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "Step-by-step infographic illustrating the subtraction 45 - 27 with borrowing. Step 1: Write 45 above 27 aligned by place value. Step 2: Show borrowing: arrow from tens column crossing out 4 and writing 3, and adding 10 to ones column changing 5 to 15. Step 3: Subtract ones: 15 - 7 = 8. Step 4: Subtract tens: 3 - 2 = 1. Final answer 18. Use colorful blocks for tens and ones, with clear labels and arrows.",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue",
+          "math_lesson"
+        ],
+        "source_references": [
+          "Let's Learn About Subtracting Big Numbers with a Little Help from Our Neighbours! Do you know how to subtract big numbers? Let's say we have 45 apples in a basket and we give 27 apples to our friend."
+        ]
+      },
+      {
+        "artifact_id": "ill_hs_001",
+        "stage_id": "hint_screen",
+        "component_id": "hs_txt1",
+        "concept_id": "concept_borrow_rule",
+        "style_category": "diagram",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A simple diagram reminding the borrowing rule: If the top digit is smaller than the bottom digit in a column, borrow 1 from the left column, add 10 to the current column, and reduce the left column by 1. Show two columns labeled 'Tens' and 'Ones' with example numbers and arrows indicating the borrowing process.",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue",
+          "math_lesson"
+        ],
+        "source_references": []
+      },
+      {
+        "artifact_id": "ill_cm_001",
+        "stage_id": "common_mistakes",
+        "component_id": "cm_txt1",
+        "concept_id": "concept_borrow_mistake",
+        "style_category": "diagram",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "Side-by-side diagrams showing correct and incorrect borrowing. Left (correct): 45 - 27, after borrowing tens digit reduced from 4 to 3. Right (incorrect): forgetting to reduce tens digit, showing tens digit still 4, leading to wrong answer. Use clear labels and a red 'X' on the incorrect side, green check on correct side.",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue",
+          "math_lesson"
+        ],
+        "source_references": []
+      }
+    ],
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}

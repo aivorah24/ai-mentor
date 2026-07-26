@@ -1,0 +1,82 @@
+{
+  "package": {
+    "package_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "package_type": "AudioPackage",
+    "schema_version": "1.0",
+    "created_at": "2023-02-20T14:30:00Z",
+    "produced_by": {
+      "agent": "audio-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "12345678-9012-3456-7890-123456789012",
+      "parent_package_id": "f2b3c4d5-e6f7-g8h9-i0j1"
+    }
+  },
+  "payload": {
+    "lesson_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "audio_strategy": "Concept",
+    "narration_segments": [
+      {
+        "artifact_id": "segment-1",
+        "stage_id": "stage-1",
+        "component_id": "component-1",
+        "ssml": "<speak><prosody rate='x-slow'>The learning objective for this stage is to understand the concept of fractions.</prosody><break time='500ms'/></speak>",
+        "timing_map": {
+          "start": 0,
+          "end": 5000
+        },
+        "highlight_map": {
+          "0": "What is the Learning Objective?",
+          "5000": "Fractions are a way to represent part of a whole."
+        },
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "segment-2",
+        "stage_id": "stage-2",
+        "component_id": "component-2",
+        "ssml": "<speak><prosody rate='x-slow'>The evidence supporting this learning objective is from the curriculum, which states that fractions are a way to represent part of a whole.</prosody><break time='500ms'/></speak>",
+        "timing_map": {
+          "start": 5000,
+          "end": 10000
+        },
+        "highlight_map": {
+          "5000": "Evidence Supporting the Learning Objective",
+          "10000": "This is a key concept in mathematics."
+        },
+        "pronunciation_overrides": {}
+      },
+      {
+        "artifact_id": "segment-3",
+        "stage_id": "stage-3",
+        "component_id": "component-3",
+        "ssml": "<speak><prosody rate='x-slow'>The UI component has been populated with content, including a title, body, and callout.</prosody><break time='500ms'/></speak>",
+        "timing_map": {
+          "start": 10000,
+          "end": 15000
+        },
+        "highlight_map": {
+          "10000": "UI Component Populated with Content",
+          "15000": "This is an example of a populated UI component."
+        },
+        "pronunciation_overrides": {}
+      }
+    ],
+    "playback_profile": {
+      "voice": "en-US-Amy",
+      "base_speed": 0.9,
+      "pause_duration_ms": 500
+    },
+    "accessibility_metadata": {
+      "text_to_speech": {
+        "language_code": "en-US",
+        "ssml_support": true
+      }
+    },
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}

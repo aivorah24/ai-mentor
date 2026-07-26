@@ -1,0 +1,116 @@
+{
+  "package": {
+    "package_id": "f2d3c4b5-6e78-9a0b-c1d2-e3f4g5h6i7",
+    "package_type": "RetrievalPackage",
+    "schema_version": "1.0",
+    "created_at": "2023-12-31T12:00:00Z",
+    "produced_by": {
+      "agent": "retrieval-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "123e4567-e89b-12d3-a456-426614174000",
+      "parent_package_id": "null"
+    }
+  },
+  "payload": {
+    "request": {
+      "grade": 2,
+      "subject": "English",
+      "unit": 1,
+      "lesson": "My Bicycle"
+    },
+    "retrieval_summary": {
+      "confidence": 0.95,
+      "coverage": 0.8,
+      "semantic_similarity": 0.9,
+      "metadata_match": 1,
+      "expected_chunks": 3,
+      "chunks_retrieved": 3,
+      "missing_chunks": [],
+      "duplicates_removed": 0
+    },
+    "retrieved_chunks": [
+      {
+        "chunk_id": "chunk_1",
+        "source_document": "NCERT English textbook",
+        "page_number": 12,
+        "curriculum": "NCERT",
+        "grade": 2,
+        "subject": "English",
+        "chapter": "My Bicycle",
+        "lesson": "My Bicycle"
+      },
+      {
+        "chunk_id": "chunk_2",
+        "source_document": "NCERT English textbook",
+        "page_number": 13,
+        "curriculum": "NCERT",
+        "grade": 2,
+        "subject": "English",
+        "chapter": "My Bicycle",
+        "lesson": "My Bicycle"
+      },
+      {
+        "chunk_id": "chunk_3",
+        "source_document": "NCERT English textbook",
+        "page_number": 14,
+        "curriculum": "NCERT",
+        "grade": 2,
+        "subject": "English",
+        "chapter": "My Bicycle",
+        "lesson": "My Bicycle"
+      }
+    ],
+    "source_metadata": [],
+    "warnings": [],
+    "handoff": {
+      "retrieval_validation_agent": {
+        "ordered_chunks": [
+          {
+            "chunk_id": "chunk_1",
+            "source_document": "NCERT English textbook",
+            "page_number": 12,
+            "curriculum": "NCERT",
+            "grade": 2,
+            "subject": "English",
+            "chapter": "My Bicycle",
+            "lesson": "My Bicycle"
+          },
+          {
+            "chunk_id": "chunk_2",
+            "source_document": "NCERT English textbook",
+            "page_number": 13,
+            "curriculum": "NCERT",
+            "grade": 2,
+            "subject": "English",
+            "chapter": "My Bicycle",
+            "lesson": "My Bicycle"
+          },
+          {
+            "chunk_id": "chunk_3",
+            "source_document": "NCERT English textbook",
+            "page_number": 14,
+            "curriculum": "NCERT",
+            "grade": 2,
+            "subject": "English",
+            "chapter": "My Bicycle",
+            "lesson": "My Bicycle"
+          }
+        ],
+        "retrieval_summary": {
+          "confidence": 0.95,
+          "coverage": 0.8,
+          "semantic_similarity": 0.9,
+          "metadata_match": 1,
+          "expected_chunks": 3,
+          "chunks_retrieved": 3,
+          "missing_chunks": [],
+          "duplicates_removed": 0
+        },
+        "source_metadata": [],
+        "warnings": []
+      }
+    }
+  }
+}

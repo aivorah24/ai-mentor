@@ -29,6 +29,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import SERVER_URL from '../../config/serverUrl';
+import { curriculumCacheKey, getMemoryCurriculum, getMemorySubjectChapters } from '../../utils/curriculumPrefetch';
+import { getSubjectSyllabus } from '../../data/syllabusRegistry';
 
 // ─────────────────────────────────────────────────────────
 // Types
@@ -268,15 +270,45 @@ export default function DashboardScreen({ navigation, route }: any) {
     todayStudyMinutes: childOverride.todayStudyMinutes ?? 0,
   } : ctxStats;
 
+  // ── Data fetching (cache-first) — derived up-front so the lazy state
+  // initializers below can synchronously check the in-memory cache that
+  // AuthContext warms right after login (see utils/curriculumPrefetch.ts).
+  // If the prefetch already landed, Dashboard renders real data on its very
+  // first paint — no "Loading your dashboard" spinner.
+  const childCurriculum = childOverride?.curriculum ?? user?.curriculum;
+  const isIBPYP = !childCurriculum || childCurriculum.toLowerCase().includes('ib');
+  const studentGrade = childOverride?.grade ?? user?.grade ?? 'Grade 3';
+  // Early Years grades have no curriculum content yet — show "coming soon" copy
+  // instead of mock topic counts. (client feedback)
+  const noContentGrade = ['Nursery', 'LKG', 'UKG'].includes(studentGrade);
+  const CACHE_KEY = curriculumCacheKey(isIBPYP, studentGrade);
+  const CACHE_TTL = 5 * 60 * 1000; // 5 min
+  const prefetchedCurriculum = !childOverride ? getMemoryCurriculum(CACHE_KEY) : undefined;
+  const prefetchedSubjects = !childOverride ? getMemorySubjectChapters(CACHE_KEY) : undefined;
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [curriculum, setCurriculum] = useState<CurriculumData>(FALLBACK_CURRICULUM);
-  const [loading, setLoading] = useState(true);
+  const [curriculum, setCurriculum] = useState<CurriculumData>(() => {
+    if (prefetchedCurriculum) {
+      return prefetchedCurriculum.type === 'ibpyp'
+        ? parseIBPYPCurriculum(prefetchedCurriculum.data)
+        : parseNCERTCurriculum(prefetchedCurriculum.data);
+    }
+    return FALLBACK_CURRICULUM;
+  });
+  const [loading, setLoading] = useState(!prefetchedCurriculum);
   const [error, setError] = useState('');
   const [upcomingDeadlines, setUpcomingDeadlines] = useState<{ id: string; title: string; date: string; note: string }[]>([]);
   // Per-topic quiz scores from analytics events
   const [perfData, setPerfData] = useState<{ topics: Record<string, { avgScore: number | null; quizCount: number; sessions: number; lastActivity?: string }>; avgScore: number | null }>({ topics: {}, avgScore: null });
   const [barSubjectFilter, setBarSubjectFilter] = useState<string>('All');
-  const [lessonSubjectFilter, setLessonSubjectFilter] = useState<string>('All');
+  // '' = not chosen yet — effectiveLessonSubjectFilter below picks the most
+  // recently studied subject as the real default instead of a generic "All".
+  const [lessonSubjectFilter, setLessonSubjectFilter] = useState<string>('');
+  // Real chapter/unit names per subject — from the authoritative manifests (same
+  // source as Learning Paths / Subject Topics), not the raw per-topic `unit` tag
+  // which is empty for most ingested CBSE content and would otherwise collapse
+  // every subject into a single fake "General" chapter.
+  const [subjectChapters, setSubjectChapters] = useState<{ subject: string; chapters: string[] }[]>(prefetchedSubjects ?? []);
 
   const heroAnim  = useRef(new Animated.Value(0)).current;
   const bodyAnim  = useRef(new Animated.Value(0)).current;
@@ -297,16 +329,6 @@ export default function DashboardScreen({ navigation, route }: any) {
   const goalDimText   = '#9FB0A4';
   const goalRingTrack = 'rgba(0,0,0,0.07)';
   const contentMax = isMobile ? undefined : isTablet ? 920 : 1080;
-
-  // ── Data fetching (cache-first) ──────────────────────────
-  const childCurriculum = childOverride?.curriculum ?? user?.curriculum;
-  const isIBPYP = !childCurriculum || childCurriculum.toLowerCase().includes('ib');
-  const studentGrade = childOverride?.grade ?? user?.grade ?? 'Grade 3';
-  // Early Years grades have no curriculum content yet — show "coming soon" copy
-  // instead of mock topic counts. (client feedback)
-  const noContentGrade = ['Nursery', 'LKG', 'UKG'].includes(studentGrade);
-  const CACHE_KEY = `dashboard_curriculum_${isIBPYP ? 'ibpyp' : 'ncert'}_${studentGrade}_v1`;
-  const CACHE_TTL = 5 * 60 * 1000; // 5 min
 
   function parseNCERTCurriculum(data: any): CurriculumData {
     const chs: { id: number; topic: string; unit: string }[] = data.chapters || [];
@@ -384,6 +406,25 @@ export default function DashboardScreen({ navigation, route }: any) {
     })();
   }, [user?.curriculum, user?.grade, childOverride?.curriculum, childOverride?.grade]);
 
+  // Real chapter counts + names across ALL subjects (English/Maths/Science/Social
+  // Science, etc.) for this grade — drives the "Chapters" tile total and the
+  // Performance bar labels so they match the actual textbook, not raw topic tags.
+  useEffect(() => {
+    if (noContentGrade) { setSubjectChapters([]); return; }
+    const curricParam = encodeURIComponent(isIBPYP ? 'IB_PYP' : (childCurriculum ?? 'NCERT'));
+    const gradeParam = encodeURIComponent(studentGrade);
+    fetch(`${SERVER_URL}/curriculum/subjects?grade=${gradeParam}&curriculum=${curricParam}`)
+      .then(r => r.json())
+      .then(d => {
+        if (!Array.isArray(d.subjects)) return;
+        setSubjectChapters(d.subjects.map((s: any) => ({
+          subject: s.subject,
+          chapters: (s.chapters?.length ? s.chapters.map((c: any) => c.title) : s.units) || [],
+        })));
+      })
+      .catch(() => {});
+  }, [isIBPYP, childCurriculum, studentGrade, noContentGrade]);
+
   useEffect(() => {
     if (!studentId || childOverride) return;
     fetch(`${SERVER_URL}/schedule/upcoming?studentId=${studentId}`)
@@ -428,24 +469,92 @@ export default function DashboardScreen({ navigation, route }: any) {
     });
   }, [curriculum, completedSet, perfData]);
 
+  // Real, chapter-mapped topic names this student's grade/curriculum actually has a
+  // working lesson page for (see syllabusRegistry.ts). "Continue Learning" must only
+  // ever pick from THESE — picking from the full raw ~2403 ingested topics (most of
+  // which are AI-extracted sub-concepts, not real textbook lessons) was routing
+  // students into the broken generic VideoLesson "Coming Soon" placeholder instead
+  // of the real Learn/Practice/Master experience.
+  const curatedTopicNames = useMemo(() => {
+    const curriculumLabel = isIBPYP ? 'IB PYP' : 'CBSE';
+    const set = new Set<string>();
+    subjectChapters.forEach(({ subject }) => {
+      getSubjectSyllabus(curriculumLabel, studentGrade, subject).forEach(ch => {
+        ch.topics.forEach(t => set.add(t.name));
+      });
+    });
+    return set;
+  }, [subjectChapters, isIBPYP, studentGrade]);
+
   const featuredLesson = useMemo(() => {
+    // Restrict to topics with a real curated lesson, when any exist for this grade.
+    const candidates = curatedTopicNames.size > 0
+      ? allLessons.filter(l => curatedTopicNames.has(l.topic))
+      : allLessons;
     // Pick the most recently attempted topic (by lastActivity from perfData)
-    const withActivity = allLessons
+    const withActivity = candidates
       .filter(l => perfData.topics[l.topic]?.lastActivity)
       .sort((a, b) => {
         const ta = perfData.topics[a.topic]?.lastActivity ?? '';
         const tb = perfData.topics[b.topic]?.lastActivity ?? '';
         return tb.localeCompare(ta); // most recent first
       });
-    return withActivity[0] ?? allLessons.find(l => l.progress > 0) ?? allLessons[0];
-  }, [allLessons, perfData]);
+    return withActivity[0] ?? candidates.find(l => l.progress > 0) ?? candidates[0] ?? allLessons[0];
+  }, [allLessons, perfData, curatedTopicNames]);
+
+  // The REAL chapter that featuredLesson.topic actually belongs to — not just
+  // chapters[0]. Previously the headline always showed the first chapter
+  // ("Fables and Folk Tales") regardless of which lesson was actually next,
+  // so it visibly disagreed with the "Next lesson" line and never advanced
+  // as the student progressed through later units.
+  const featuredChapter = useMemo(() => {
+    if (!featuredLesson) return null;
+    const curriculumLabel = isIBPYP ? 'IB PYP' : 'CBSE';
+    const chapters = getSubjectSyllabus(curriculumLabel, studentGrade, featuredLesson.subject);
+    return chapters.find(ch => ch.topics.some(t => t.name === featuredLesson.topic)) ?? null;
+  }, [featuredLesson, isIBPYP, studentGrade]);
+
+  // Tapping "Continue Learning" should open the ACTUAL lesson, not just the
+  // subject's syllabus screen. Where a curated chapter-accurate syllabus exists
+  // for this subject/grade (see syllabusRegistry.ts), route straight into
+  // LessonScreen at the right chapter+topic; otherwise fall back to the
+  // existing flat VideoLesson route so nothing regresses for subjects/grades
+  // without curated data yet (e.g. Mathematics).
+  function openFeaturedLesson() {
+    if (!featuredLesson) return;
+    const curriculumLabel = isIBPYP ? 'IB PYP' : 'CBSE';
+    const chapters = getSubjectSyllabus(curriculumLabel, studentGrade, featuredLesson.subject);
+    for (let ci = 0; ci < chapters.length; ci++) {
+      const ti = chapters[ci].topics.findIndex(t => t.name === featuredLesson.topic);
+      if (ti !== -1) {
+        navigation.navigate('LessonScreen', {
+          subject: featuredLesson.subject, curriculum: curriculumLabel, grade: studentGrade,
+          chapterTitle: chapters[ci].title, chapterIndex: ci, topicIndex: ti,
+        });
+        return;
+      }
+    }
+    navigation.navigate('VideoLesson', { topic: featuredLesson.topic, grade: featuredLesson.grade, subject: featuredLesson.subject, curriculum: isIBPYP ? 'IB_PYP' : 'NCERT' });
+  }
 
   const query = normalizeSearchText(searchQuery);
   const queryTerms = query ? query.split(' ') : [];
 
-  const lessonSubjects = useMemo(() =>
-    ['All', ...Array.from(new Set(allLessons.map(l => l.subject))).sort()],
-  [allLessons]);
+  // No "All" chip — with a subject like Mathematics carrying ~1900 topics, "All"
+  // just dumps everything together. Instead, the subject the student most
+  // recently studied (same signal as "Continue Learning") leads the list, so
+  // whatever they were last working on is the default view, not a random pick.
+  const lessonSubjects = useMemo(() => {
+    const subjects = Array.from(new Set(allLessons.map(l => l.subject))).sort();
+    const recent = featuredLesson?.subject;
+    return recent && subjects.includes(recent)
+      ? [recent, ...subjects.filter(s => s !== recent)]
+      : subjects;
+  }, [allLessons, featuredLesson]);
+
+  const effectiveLessonSubjectFilter = lessonSubjects.includes(lessonSubjectFilter)
+    ? lessonSubjectFilter
+    : (lessonSubjects[0] ?? 'All');
 
   const filteredLessons = useMemo(() => {
     let list = allLessons;
@@ -455,11 +564,37 @@ export default function DashboardScreen({ navigation, route }: any) {
         return queryTerms.every(term => haystack.includes(term));
       });
     }
-    if (lessonSubjectFilter !== 'All') {
-      list = list.filter(l => l.subject === lessonSubjectFilter);
-    }
+    list = list.filter(l => l.subject === effectiveLessonSubjectFilter);
     return list;
-  }, [allLessons, queryTerms, lessonSubjectFilter]);
+  }, [allLessons, queryTerms, effectiveLessonSubjectFilter]);
+
+  // Learning Path preview — one row per REAL chapter (from subjectChapters),
+  // not per topic. A subject can have 1000+ ingested topics (Maths alone has
+  // ~1900 for CBSE Grade 6); listing them all here doesn't scale, so this
+  // mirrors the same chapter-level approach already used for the Performance
+  // bars above.
+  const allChapterRows = useMemo(() => {
+    return subjectChapters.flatMap(({ subject, chapters }) =>
+      chapters.map((title, i) => ({
+        title, subject,
+        color: SUBJECT_COLORS[subject] ?? BRAND.violet,
+        icon: SUBJECT_ICONS[subject] ?? 'book-open' as const,
+        chapterNo: i + 1,
+      }))
+    );
+  }, [subjectChapters]);
+
+  const filteredChapterRows = useMemo(() => {
+    let list = allChapterRows;
+    if (queryTerms.length > 0) {
+      list = list.filter(c => {
+        const haystack = normalizeSearchText(`${c.title} ${c.subject}`);
+        return queryTerms.every(term => haystack.includes(term));
+      });
+    }
+    list = list.filter(c => c.subject === effectiveLessonSubjectFilter);
+    return list;
+  }, [allChapterRows, queryTerms, effectiveLessonSubjectFilter]);
 
   const filteredDeadlines = queryTerms.length > 0
     ? upcomingDeadlines.filter((u) => {
@@ -468,18 +603,30 @@ export default function DashboardScreen({ navigation, route }: any) {
       })
     : upcomingDeadlines.slice(0, 4);
 
-  // Performance bar data — topics the student has actually interacted with (has quiz or session)
+  // Performance bar data — one bar per REAL textbook chapter/unit (from the
+  // authoritative manifests in subjectChapters), across every subject for this
+  // grade. Raw ingested Qdrant topics aren't tagged with which chapter they
+  // belong to, BUT where a curated syllabus exists for this subject/grade (see
+  // syllabusRegistry.ts — currently CBSE Grade 6 English/Science/Social
+  // Science), we DO have a real topic→chapter mapping, so those chapters get
+  // real attributed scores from perfData instead of a flat 0%. Chapters with
+  // no curated mapping yet (e.g. Mathematics) still show 0%/no-data — honest,
+  // not fabricated — until that subject gets the same curated treatment.
   const allBarTopics = useMemo(() => {
-    if (!curriculum) return [];
-    return curriculum.topics.map(t => {
-      const perf = perfData.topics[t.topic];
-      // Always use actual quiz score — completion status does NOT override performance
-      const pct     = perf?.avgScore ?? 0;
-      const hasData = pct > 0 || (perf?.sessions ?? 0) > 0;
-      const mastered = completedSet.has(t.topic) || pct >= 80;
-      return { label: t.topic.split(' ').slice(0, 2).join(' '), fullLabel: t.topic, subject: t.subject, pct, hasData, mastered };
-    }).sort((a, b) => (b.hasData ? 1 : 0) - (a.hasData ? 1 : 0));
-  }, [curriculum, completedSet, perfData]);
+    const curriculumLabel = isIBPYP ? 'IB PYP' : 'CBSE';
+    return subjectChapters.flatMap(({ subject, chapters }) => {
+      const curated = getSubjectSyllabus(curriculumLabel, studentGrade, subject);
+      return chapters.map(unit => {
+        const curatedChapter = curated.find(ch => ch.title === unit);
+        if (!curatedChapter) return { label: unit, fullLabel: unit, subject, pct: 0, hasData: false, mastered: false };
+        const scored = curatedChapter.topics.map(t => perfData.topics[t.name]?.avgScore ?? 0).filter(n => n > 0);
+        const hasData = scored.length > 0 || curatedChapter.topics.some(t => (perfData.topics[t.name]?.sessions ?? 0) > 0);
+        const pct = scored.length ? Math.round(scored.reduce((s, n) => s + n, 0) / scored.length) : 0;
+        const mastered = curatedChapter.topics.every(t => completedSet.has(t.name) || (perfData.topics[t.name]?.avgScore ?? 0) >= 80);
+        return { label: unit, fullLabel: unit, subject, pct, hasData, mastered };
+      });
+    });
+  }, [subjectChapters, isIBPYP, studentGrade, perfData, completedSet]);
 
   const barSubjects = useMemo(() => ['All', ...Array.from(new Set(allBarTopics.map(t => t.subject))).sort()], [allBarTopics]);
 
@@ -487,49 +634,87 @@ export default function DashboardScreen({ navigation, route }: any) {
     barSubjectFilter === 'All' ? allBarTopics : allBarTopics.filter(t => t.subject === barSubjectFilter),
   [allBarTopics, barSubjectFilter]);
 
+  // Real per-topic quiz results (independent of chapter grouping) — drives every
+  // metric below the bars (average score, consistency, best score, insight text).
+  // These stay accurate even though the bars themselves can't yet be attributed
+  // to a specific chapter (see note on allBarTopics above).
+  const realTopicPerf = useMemo(() => {
+    if (!curriculum) return [];
+    return curriculum.topics.map(t => {
+      const perf = perfData.topics[t.topic];
+      const pct = perf?.avgScore ?? 0;
+      return { label: t.topic, fullLabel: t.topic, subject: t.subject, pct };
+    }).filter(t => t.pct > 0);
+  }, [curriculum, perfData]);
+
   const avgScore = useMemo(() => {
-    // Use real overall avg from analytics if available, else compute from bar
+    // Use real overall avg from analytics if available, else compute from per-topic scores
     if (perfData.avgScore != null) return perfData.avgScore;
-    const scored = barTopics.filter(t => t.pct > 0);
-    return scored.length ? Math.round(scored.reduce((sum, t) => sum + t.pct, 0) / scored.length) : 0;
-  }, [barTopics, perfData.avgScore]);
+    return realTopicPerf.length ? Math.round(realTopicPerf.reduce((sum, t) => sum + t.pct, 0) / realTopicPerf.length) : 0;
+  }, [realTopicPerf, perfData.avgScore]);
 
-  // Mastered = max of topics explored (real count) or topics with ≥80% quiz score
+  // Mastered chapters — estimated per subject as (completed topics / total topics in that
+  // subject) × that subject's real chapter count, since individual topics aren't tagged
+  // with which chapter they belong to yet (see note on allBarTopics). This is a genuine
+  // progress-based estimate, not tied to any specific named chapter.
   const masteredTopics = useMemo(() => {
-    const topicsCap = curriculum ? Math.max(curriculum.totalTopics, 1) : 1;
-    const highScoreCount = Object.values(perfData.topics).filter(p => (p.avgScore ?? 0) >= 80).length;
-    return Math.min(Math.max(stats.topicsExplored ?? 0, highScoreCount), topicsCap);
-  }, [perfData, stats.topicsExplored, curriculum]);
+    if (!curriculum) return 0;
+    let total = 0;
+    subjectChapters.forEach(({ subject, chapters }) => {
+      if (!chapters.length) return;
+      const subjectTopics = curriculum.topics.filter(t => t.subject === subject);
+      if (!subjectTopics.length) return;
+      const completedInSubject = subjectTopics.filter(t => completedSet.has(t.topic)).length;
+      total += Math.floor((completedInSubject / subjectTopics.length) * chapters.length);
+    });
+    return total;
+  }, [subjectChapters, curriculum, completedSet]);
 
+  // % of attempted quizzes scoring ≥60% — always a real, live number (0% is a
+  // genuine value here, not a placeholder) so it visibly moves as the student
+  // takes more quizzes, same as every other stat on this card.
   const consistency = useMemo(() => {
-    const attempted = barTopics.filter(t => t.pct > 0);
-    if (!attempted.length) return 0;
-    return Math.round((attempted.filter(t => t.pct >= 60).length / attempted.length) * 100);
-  }, [barTopics]);
+    if (!realTopicPerf.length) return 0;
+    return Math.round((realTopicPerf.filter(t => t.pct >= 60).length / realTopicPerf.length) * 100);
+  }, [realTopicPerf]);
+
+  // Real weekly activity — days active this week, same signal as the hero's
+  // "X of 7 days active" bar. Previously this pill just re-displayed the quiz-score
+  // `consistency` value above (so both pills always matched, both always 0% with
+  // only one quiz attempted) instead of being its own real weekly metric.
+  const weeklyConsistency = Math.round((Math.min(stats.currentStreak, 7) / 7) * 100);
 
   // Best topic — only topics with real quiz data
   const bestTopic = useMemo(() => {
-    const withScores = barTopics.filter(t => t.pct > 0);
-    return withScores.length ? [...withScores].sort((a, b) => b.pct - a.pct)[0] : null;
-  }, [barTopics]);
+    return realTopicPerf.length ? [...realTopicPerf].sort((a, b) => b.pct - a.pct)[0] : null;
+  }, [realTopicPerf]);
+
+  // Real chapter that the best-scoring topic belongs to (not the raw topic name) —
+  // same curated-syllabus lookup used for featuredChapter, so this stays consistent
+  // with how the rest of the dashboard names units/chapters instead of topics.
+  const bestChapter = useMemo(() => {
+    if (!bestTopic) return null;
+    const curriculumLabel = isIBPYP ? 'IB PYP' : 'CBSE';
+    const chapters = getSubjectSyllabus(curriculumLabel, studentGrade, bestTopic.subject);
+    return chapters.find(ch => ch.topics.some(t => t.name === bestTopic.label))?.title ?? null;
+  }, [bestTopic, isIBPYP, studentGrade]);
 
   // Dynamic insight message below bars
   const perfInsight = useMemo(() => {
-    const attempted = barTopics.filter(t => t.pct > 0);
-    if (!attempted.length) return 'Start a quiz on any topic to see your scores here.';
-    const weak = [...attempted].sort((a, b) => a.pct - b.pct)[0];
-    const strong = [...attempted].sort((a, b) => b.pct - a.pct)[0];
+    if (!realTopicPerf.length) return 'Start a quiz on any chapter to see your scores here.';
+    const weak = [...realTopicPerf].sort((a, b) => a.pct - b.pct)[0];
+    const strong = [...realTopicPerf].sort((a, b) => b.pct - a.pct)[0];
     if (avgScore >= 80) return `Outstanding! You're mastering ${strong.fullLabel ?? strong.label}. Keep it up!`;
     if (avgScore >= 60) return `Good progress! Focus a bit more on ${weak.fullLabel ?? weak.label} to level up.`;
     return `Keep practising! ${weak.fullLabel ?? weak.label} needs more attention — you can do it!`;
-  }, [barTopics, avgScore]);
+  }, [realTopicPerf, avgScore]);
 
-  // Goals — Study Time is daily; Topics and XP are lifetime totals
+  // Goals — Study Time is daily; Chapters and XP are lifetime totals
   const studyGoal  = 60;  const studyDone  = Math.min(stats.todayStudyMinutes, studyGoal);
-  // Topics goal = total topics in student's curriculum for their grade (dynamic)
-  const topicsGoal = curriculum ? Math.max(curriculum.totalTopics, 1) : 1;
-  // "Mastered" topics — same count used in the hero ("X of Y topics mastered")
-  const topicsMastered = completedSet.size;
+  // Chapters goal = total units/chapters in student's curriculum for their grade (not raw topic count)
+  const topicsGoal = Math.max(allBarTopics.length, 1);
+  // "Mastered" chapters — same count used in the hero ("X of Y chapters mastered")
+  const topicsMastered = masteredTopics;
   const topicsDone = Math.min(topicsMastered, topicsGoal);
   // Badge thresholds: 25%, 50%, 100% of curriculum — purely percentage-based
   const t25 = Math.floor(topicsGoal * 0.25);
@@ -547,6 +732,9 @@ export default function DashboardScreen({ navigation, route }: any) {
   const xp50   = Math.floor(xpGoal * 0.50);
   // Max level reachable for this grade — the level the XP cap falls into
   const maxLevel = xpForNextLevel(xpGoal).level;
+  // Real progress toward the NEXT level — {current, needed} XP within the current level.
+  // Drives the "Level N → N+1" bar so it actually reflects XP, not the weekly streak.
+  const levelProgress = xpForNextLevel(stats.xpPoints);
 
   const GOALS = [
     { label: 'Study Time', val: formatStudyTime(studyDone), target: '1h',
@@ -559,15 +747,16 @@ export default function DashboardScreen({ navigation, route }: any) {
         { icon: 'sun'   as const, label: 'Half Hour',  color: BRAND.teal, bg: PASTEL.teal, unlocked: stats.todayStudyMinutes >= 30, tip: '30 min today' },
         { icon: 'award' as const, label: 'Study Hero', color: BRAND.teal, bg: PASTEL.teal, unlocked: stats.todayStudyMinutes >= 60, tip: '60 min today' },
       ]},
-    { label: 'Topics', val: `${topicsDone} / ${topicsGoal}`, target: `${topicsGoal} topics`,
-      sub: 'total', caption: 'topics mastered', raw: topicsDone, goal: topicsGoal,
+    { label: 'Chapters', val: `${topicsDone} / ${topicsGoal}`, target: `${topicsGoal} chapters`,
+      route: 'LearningPaths' as const,
+      sub: 'total', caption: 'chapters mastered', raw: topicsDone, goal: topicsGoal,
       pct: topicsDone / topicsGoal,
       color: BRAND.rose, pastel: PASTEL.pink, icon: 'book-open' as const,
       badges: [
         // 25% → Explorer, 50% → Deep Diver, 100% → Scholar — all badges share the card's rose theme
-        { icon: 'compass' as const, label: 'Explorer',   color: BRAND.rose, bg: PASTEL.pink, unlocked: topicsMastered >= t25,       tip: `Master ${t25} topics`       },
-        { icon: 'layers'  as const, label: 'Deep Diver', color: BRAND.rose, bg: PASTEL.pink, unlocked: topicsMastered >= t50,       tip: `Master ${t50} topics`       },
-        { icon: 'book'    as const, label: 'Scholar',    color: BRAND.rose, bg: PASTEL.pink, unlocked: topicsMastered >= topicsGoal, tip: `Master all ${topicsGoal} topics` },
+        { icon: 'compass' as const, label: 'Explorer',   color: BRAND.rose, bg: PASTEL.pink, unlocked: topicsMastered >= t25,       tip: `Master ${t25} chapters`       },
+        { icon: 'layers'  as const, label: 'Deep Diver', color: BRAND.rose, bg: PASTEL.pink, unlocked: topicsMastered >= t50,       tip: `Master ${t50} chapters`       },
+        { icon: 'book'    as const, label: 'Scholar',    color: BRAND.rose, bg: PASTEL.pink, unlocked: topicsMastered >= topicsGoal, tip: `Master all ${topicsGoal} chapters` },
       ]},
     { label: 'XP Earned', val: stats.xpPoints.toLocaleString(), target: `${xpGoal.toLocaleString()} XP`,
       sub: 'total', caption: 'XP earned', raw: xpDone, goal: xpGoal,
@@ -585,7 +774,7 @@ export default function DashboardScreen({ navigation, route }: any) {
     { icon: 'clock'       as const, val: formatStudyTime(stats.studyTimeMinutes), label: 'Study Time',  color: BRAND.teal,   pastel: PASTEL.teal,   sub: 'this week',     pct: Math.min(stats.studyTimeMinutes / (7 * 60), 1) },
     { icon: 'zap'         as const, val: String(stats.currentStreak),             label: 'Day Streak',  color: BRAND.rose,   pastel: PASTEL.pink,   sub: 'days in a row', pct: Math.min(stats.currentStreak / 14, 1) },
     { icon: 'star'        as const, val: stats.xpPoints.toLocaleString(),         label: 'Total XP',    color: BRAND.gold,   pastel: PASTEL.yellow, sub: 'points earned', pct: Math.min(stats.xpPoints / 5000, 1) },
-    { icon: 'book-open'   as const, val: String(topicsMastered),                  label: 'Topics Done', color: BRAND.forest, pastel: PASTEL.green,  sub: 'mastered',      pct: curriculum ? Math.min(topicsMastered / Math.max(curriculum.totalTopics, 1), 1) : 0 },
+    { icon: 'book-open'   as const, val: String(topicsMastered),                  label: 'Chapters Done', color: BRAND.forest, pastel: PASTEL.green,  sub: 'mastered',      pct: Math.min(topicsMastered / topicsGoal, 1) },
   ];
 
 
@@ -635,25 +824,20 @@ export default function DashboardScreen({ navigation, route }: any) {
   notificationCount={childOverride ? 0 : unreadCount}
 />
 
-        {/* ── Loading ─────────────────────────────────────── */}
-        {loading && (
-          <View style={styles.stateCenter}>
-            <View style={[styles.stateIconWrap, { backgroundColor: BRAND.violet + '18' }]}>
-              <ActivityIndicator size="large" color={BRAND.violet} />
-            </View>
-            <Text style={styles.stateTitle}>Loading your dashboard</Text>
-            <Text style={styles.stateSub}>Fetching your curriculum…</Text>
-          </View>
-        )}
-
-        {/* ── Error ───────────────────────────────────────── */}
-        {!loading && error !== '' && (
-          <View style={styles.stateCenter}>
-            <View style={[styles.stateIconWrap, { backgroundColor: BRAND.red + '18' }]}>
-              <Feather name="wifi-off" size={26} color={BRAND.red} />
-            </View>
-            <Text style={styles.stateTitle}>Connection Error</Text>
-            <Text style={styles.stateSub}>{error}</Text>
+        {/* ── Main content ─────────────────────────────────────
+            Always rendered immediately — `curriculum` is never null (it starts
+            as either the prefetched cache or a static fallback, see useState
+            above), so there is no reason to block the whole screen behind a
+            spinner while the real fetch is still in flight. Real numbers swap
+            in silently via setCurriculum once the network call resolves.
+            Previously this blocked on `loading`, which showed a full-screen
+            "Loading your dashboard" spinner on every login because the
+            curriculum prefetch (fired in AuthContext right after setUser)
+            rarely wins the race against React Navigation mounting this
+            screen a moment later — defeating the whole point of prefetching. */}
+        {error !== '' && (
+          <View style={[styles.stateCenter, { paddingVertical: 12 }]}>
+            <Text style={[styles.stateSub, { color: BRAND.red }]}>{error} — showing your last known curriculum.</Text>
             <TouchableOpacity style={styles.retryBtn} onPress={() => setError('')} activeOpacity={0.82}>
               <Feather name="refresh-cw" size={13} color="#fff" />
               <Text style={styles.retryText}>Retry</Text>
@@ -661,8 +845,7 @@ export default function DashboardScreen({ navigation, route }: any) {
           </View>
         )}
 
-        {/* ── Main content ─────────────────────────────────── */}
-        {!loading && !error && curriculum && (
+        {curriculum && (
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollPad} showsVerticalScrollIndicator={false}>
             <View style={[styles.pageWrap, contentMax ? { maxWidth: contentMax } : undefined]}>
 
@@ -700,21 +883,46 @@ export default function DashboardScreen({ navigation, route }: any) {
                   <Text style={styles.heroSub}>
                     {(() => {
                       if (noContentGrade) return `Content for ${studentGrade} is on the way — we're adding it now!`;
-                      const total = curriculum.totalTopics;
-                      const done  = completedSet.size;
-                      if (done === 0)              return `${total} topics ready for your first sprint.`;
-                      if (done >= total)           return `You've nailed it! All ${total} topics mastered.`;
+                      const total = topicsGoal;
+                      const done  = topicsMastered;
+                      // Tiered so every badge threshold (Explorer 25% / Deep Diver 50% / Scholar 100%)
+                      // gets its own call-out — motivation shouldn't only show up at the very end.
+                      if (done === 0)              return `${total} chapters ready for your first sprint.`;
+                      if (done >= total)            return `🏆 You've nailed it! All ${total} chapters mastered — you're a true Scholar!`;
                       const pct = Math.round((done / total) * 100);
-                      if (pct >= 80)               return `So close! ${total - done} topic${total - done === 1 ? '' : 's'} left to complete.`;
-                      return `${done} of ${total} topics mastered. Keep going!`;
+                      if (pct >= 80)                return `So close! ${total - done} chapter${total - done === 1 ? '' : 's'} left to become a Scholar.`;
+                      if (done >= t50)              return `Deep Diver unlocked! ${done} of ${total} chapters mastered — past the halfway mark!`;
+                      if (done >= t25)              return `Explorer unlocked! ${done} of ${total} chapters mastered — keep exploring!`;
+                      return `${done} of ${total} chapters mastered. Keep going!`;
                     })()}
                   </Text>
 
-                  {/* Level + weekly consistency bar */}
+                  {/* Level progress — driven by real XP earned toward the next level threshold
+                      (xpForNextLevel), NOT the weekly streak. Previously this bar filled based
+                      on days-active-this-week while labeled "Level 1 → 2", so nobody — including
+                      us — could tell how much XP was actually needed to level up. */}
                   <View style={styles.xpBlock}>
                     <View style={styles.xpLabelRow}>
                       <Text style={styles.xpLbl}>{stats.level >= maxLevel ? `Level ${maxLevel} · Max Level` : `Level ${stats.level} → ${stats.level + 1}`}</Text>
-                      <Text style={styles.xpNum}>{Math.min(stats.currentStreak, 7)} of 7 days active this week</Text>
+                      <Text style={styles.xpNum}>
+                        {stats.level >= maxLevel ? `${xpGoal.toLocaleString()} XP cap` : `${levelProgress.current} / ${levelProgress.needed} XP`}
+                      </Text>
+                    </View>
+                    <View style={styles.xpTrack}>
+                      <View style={[styles.xpFill, { width: `${stats.level >= maxLevel ? 100 : Math.max((levelProgress.current / levelProgress.needed) * 100, 2)}%` as any }]} />
+                    </View>
+                    <Text style={styles.xpTotal}>
+                      {stats.level >= maxLevel
+                        ? 'Max level reached for this grade!'
+                        : `${Math.max(levelProgress.needed - levelProgress.current, 0)} more XP to Level ${stats.level + 1}`}
+                    </Text>
+                  </View>
+
+                  {/* Weekly activity streak — separate from leveling, so the two never get conflated */}
+                  <View style={styles.xpBlock}>
+                    <View style={styles.xpLabelRow}>
+                      <Text style={styles.xpLbl}>This week</Text>
+                      <Text style={styles.xpNum}>{Math.min(stats.currentStreak, 7)} of 7 days active</Text>
                     </View>
                     <View style={styles.xpTrack}>
                       <View style={[styles.xpFill, { width: `${Math.max((Math.min(stats.currentStreak, 7) / 7) * 100, 2)}%` as any }]} />
@@ -728,8 +936,8 @@ export default function DashboardScreen({ navigation, route }: any) {
 
                   {/* CTA — label and destination change based on completion state */}
                   {(() => {
-                    const done  = completedSet.size;
-                    const total = curriculum.totalTopics;
+                    const done  = topicsMastered;
+                    const total = topicsGoal;
                     const isComplete = done >= total && total > 0;
                     const isNew      = done === 0;
                     return (
@@ -768,7 +976,7 @@ export default function DashboardScreen({ navigation, route }: any) {
                       const left = Math.max(g.goal - g.raw, 0);
                       const helper = left === 0 ? 'Goal unlocked' : `${g.label === 'Study Time' ? formatStudyTime(left) : left} left`;
                       return (
-                        <TouchableOpacity key={g.label} style={[styles.goalCardMobile, { borderColor: cardBorder }]} onPress={() => navigation.navigate('Progress')} activeOpacity={0.8}>
+                        <TouchableOpacity key={g.label} style={[styles.goalCardMobile, { borderColor: cardBorder }]} onPress={() => navigation.navigate((g as any).route ?? 'Progress')} activeOpacity={0.8}>
                           <LinearGradient
                             colors={isDark ? [g.pastel, '#FFFFFF'] : [g.color + '24', g.pastel]}
                             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -815,7 +1023,7 @@ export default function DashboardScreen({ navigation, route }: any) {
                     const left = Math.max(g.goal - g.raw, 0);
                     const helper = left === 0 ? 'Goal unlocked' : `${g.label === 'Study Time' ? formatStudyTime(left) : left} left`;
                     return (
-                      <TouchableOpacity key={g.label} style={[styles.goalCard, { borderColor: cardBorder }]} onPress={() => navigation.navigate('Progress')} activeOpacity={0.8}>
+                      <TouchableOpacity key={g.label} style={[styles.goalCard, { borderColor: cardBorder }]} onPress={() => navigation.navigate((g as any).route ?? 'Progress')} activeOpacity={0.8}>
                         <LinearGradient
                           colors={isDark ? [g.pastel, '#FFFFFF'] : [g.color + '24', g.pastel]}
                           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -902,11 +1110,8 @@ export default function DashboardScreen({ navigation, route }: any) {
                   >
                     <View>
                       <Text style={[styles.perfCardTitle, { color: colors.textMain }]}>Performance</Text>
-                      <Text style={[styles.perfCardSub, { color: colors.textMuted }]}>Topic scores at a glance</Text>
+                      <Text style={[styles.perfCardSub, { color: colors.textMuted }]}>Unit scores at a glance</Text>
                     </View>
-                    <TouchableOpacity style={[styles.perfViewAll, { backgroundColor: isDark ? BRAND.indigo + '35' : BRAND.indigo + '15', borderColor: isDark ? BRAND.indigo + '65' : BRAND.indigo + '40' }]} onPress={() => navigation.navigate('Progress')} activeOpacity={0.75}>
-                      <Text style={[styles.perfViewAllTxt, { color: BRAND.indigo }]}>View all</Text>
-                    </TouchableOpacity>
                   </LinearGradient>
 
                   <View style={styles.perfInsightRow}>
@@ -924,27 +1129,24 @@ export default function DashboardScreen({ navigation, route }: any) {
                     </View>
                   </View>
 
-                  <View style={[styles.bestScoreRow, { backgroundColor: isDark ? BRAND.indigo + '20' : BRAND.indigo + '10', borderColor: isDark ? BRAND.indigo + '50' : BRAND.indigo + '30' }]}>
-                    <View style={[styles.bestScoreIcon, { backgroundColor: isDark ? BRAND.indigo + '40' : BRAND.indigo + '20' }]}>
-                      <Feather name="award" size={14} color={BRAND.indigo} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.bestScoreLabel, { color: colors.textMuted }]}>Best score</Text>
-                      <Text style={[styles.bestScoreVal, { color: colors.textMain }]}>
-                        {bestTopic ? `${bestTopic.pct}%` : '—'}{' '}
-                        <Text style={[styles.bestScoreTopic, { color: colors.textMuted }]}>
-                          {bestTopic ? (bestTopic.fullLabel ?? bestTopic.label) : 'No quizzes yet'}
-                        </Text>
+                  {/* Compact best-score pill — was a full-width row before; the real chapter
+                      name (via bestChapter) replaces the raw topic name, matching how the
+                      rest of the dashboard names units rather than individual topics. */}
+                  <View style={styles.bestScoreCompactRow}>
+                    <View style={[styles.bestScorePill, { backgroundColor: isDark ? BRAND.indigo + '20' : BRAND.indigo + '10', borderColor: isDark ? BRAND.indigo + '50' : BRAND.indigo + '30' }]}>
+                      <Feather name="award" size={12} color={BRAND.indigo} />
+                      <Text style={[styles.bestScoreCompactVal, { color: colors.textMain }]}>
+                        {bestTopic ? `${bestTopic.pct}%` : '—'}
+                      </Text>
+                      <Text style={[styles.bestScoreCompactTopic, { color: colors.textMuted }]} numberOfLines={1}>
+                        {bestTopic ? (bestChapter ?? bestTopic.fullLabel ?? bestTopic.label) : 'No quizzes yet'}
                       </Text>
                     </View>
-                    <View style={styles.bestScoreSplit} />
-                    <View style={styles.bestScoreMeta}>
-                      <Text style={[styles.bestScoreMetaVal, { color: colors.textMain }]}>{consistency}%</Text>
-                      <Text style={[styles.bestScoreMetaLbl, { color: colors.textMuted }]}>weekly consistency</Text>
+                    <View style={[styles.bestScorePill, { backgroundColor: isDark ? BRAND.teal + '20' : BRAND.teal + '10', borderColor: isDark ? BRAND.teal + '50' : BRAND.teal + '30' }]}>
+                      <Feather name="calendar" size={12} color={BRAND.teal} />
+                      <Text style={[styles.bestScoreCompactVal, { color: colors.textMain }]}>{weeklyConsistency}%</Text>
+                      <Text style={[styles.bestScoreCompactTopic, { color: colors.textMuted }]}>this week</Text>
                     </View>
-                    <TouchableOpacity style={[styles.allLessonsBtn, { borderColor: cardBorder }]} onPress={() => navigation.navigate('LearningPaths')} activeOpacity={0.78}>
-                      <Text style={[styles.allLessonsTxt, { color: colors.textMuted }]}>All topics</Text>
-                    </TouchableOpacity>
                   </View>
 
                   {/* Subject filter chips */}
@@ -1028,7 +1230,7 @@ export default function DashboardScreen({ navigation, route }: any) {
                     <SectionHeader title="Continue Learning" sub="Pick up where you left off" />
                     <TouchableOpacity
                       style={[styles.clCard, { backgroundColor: cardBg, borderColor: featuredLesson.color + '30' }]}
-                      onPress={() => navigation.navigate('VideoLesson', { topic: featuredLesson.topic, grade: featuredLesson.grade, subject: featuredLesson.subject, curriculum: isIBPYP ? 'IB_PYP' : 'NCERT' })}
+                      onPress={openFeaturedLesson}
                       activeOpacity={0.86}
                     >
                       <View style={[styles.clStrip, { backgroundColor: featuredLesson.color }]} />
@@ -1039,8 +1241,19 @@ export default function DashboardScreen({ navigation, route }: any) {
                               <Feather name={featuredLesson.icon} size={11} color={featuredLesson.color} />
                               <Text style={[styles.clSubText, { color: featuredLesson.color }]}>{featuredLesson.subject} · {featuredLesson.grade}</Text>
                             </View>
-                            <Text style={[styles.clTopic, { color: colors.textMain }]}>{featuredLesson.topic}</Text>
-                            <Text style={[styles.clUnit, { color: colors.textMuted }]}>{featuredLesson.unit}</Text>
+                            {/* Headline shows the chapter that featuredLesson.topic actually belongs
+                                to (featuredChapter, resolved above) — NOT always the first chapter.
+                                This is what makes it advance as the student progresses: once every
+                                topic in "Fables and Folk Tales" is done, featuredLesson moves on to a
+                                topic in the next chapter and this headline follows it automatically. */}
+                            {featuredChapter ? (
+                              <>
+                                <Text style={[styles.clTopic, { color: colors.textMain }]} numberOfLines={2}>{featuredChapter.title}</Text>
+                                <Text style={[styles.clUnit, { color: colors.textMuted }]}>Next lesson: {featuredLesson.topic}</Text>
+                              </>
+                            ) : (
+                              <Text style={[styles.clTopic, { color: colors.textMain }]}>{featuredLesson.topic}</Text>
+                            )}
                           </View>
                           {/* Ring on right */}
                           <View style={styles.clRingWrap}>
@@ -1052,10 +1265,22 @@ export default function DashboardScreen({ navigation, route }: any) {
                           </View>
                         </View>
 
-                        {/* Stage dots */}
+                        {/* Stage dots — each stage means something specific, not just a %
+                            threshold on one blended "progress" number (that hid students who'd
+                            read the lesson but not quizzed yet: sessions-only progress was 30%,
+                            under the old 33% cutoff, so Learn stayed unlit even though they'd
+                            started):
+                              Learn    = has read/opened the lesson OR attempted a quiz
+                              Practice = has taken at least one quiz (any score)
+                              Master   = quiz average is ≥80% */}
                         <View style={styles.stageRow}>
                           {['Learn', 'Practice', 'Master'].map((s, i, arr) => {
-                            const done = featuredLesson.progress >= (i + 1) * 33;
+                            const stageDone = [
+                              featuredLesson.progress > 0 || featuredLesson.quizCount > 0,
+                              featuredLesson.quizCount > 0,
+                              featuredLesson.quizScore != null && featuredLesson.quizScore >= 80,
+                            ];
+                            const done = stageDone[i];
                             return (
                               <React.Fragment key={s}>
                                 <View style={styles.stageNode}>
@@ -1073,7 +1298,10 @@ export default function DashboardScreen({ navigation, route }: any) {
                         {/* Bottom row */}
                         <View style={styles.clBottomRow}>
                           <Text style={[styles.clHint, { color: colors.textMuted }]}>
-                            {featuredLesson.progress >= 100 ? 'Mastered! Review to retain.' : featuredLesson.progress > 0 ? 'Great progress — keep going.' : 'Start to build your foundation.'}
+                            {featuredLesson.quizScore != null && featuredLesson.quizScore >= 80 ? 'Mastered! Review to retain.'
+                              : featuredLesson.quizCount > 0 ? 'Quiz taken — keep practising to master it.'
+                              : featuredLesson.progress > 0 ? "You've read this — take the quiz to test yourself."
+                              : 'Start to build your foundation.'}
                           </Text>
                           <View style={[styles.clCtaBtn, { backgroundColor: featuredLesson.color }]}>
                             <Text style={styles.clCtaTxt}>{featuredLesson.progress >= 100 ? 'Review' : featuredLesson.progress > 0 ? 'Continue' : 'Start'}</Text>
@@ -1130,12 +1358,12 @@ export default function DashboardScreen({ navigation, route }: any) {
                   </View>
                 ) : (
                 <>
-                <SectionHeader title="Learning Path" sub={`${curriculum.totalTopics} topics in your curriculum`} onPress={() => navigation.navigate('LearningPaths')} linkLabel={`See all ${curriculum.totalTopics}`} />
+                <SectionHeader title="Learning Path" sub={`${topicsGoal} chapters in your curriculum`} onPress={() => navigation.navigate('LearningPaths')} linkLabel={`See all ${topicsGoal}`} />
 
                 {/* Subject filter chips */}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
                   {lessonSubjects.map(subj => {
-                    const active = lessonSubjectFilter === subj;
+                    const active = effectiveLessonSubjectFilter === subj;
                     return (
                       <TouchableOpacity
                         key={subj}
@@ -1149,92 +1377,47 @@ export default function DashboardScreen({ navigation, route }: any) {
                   })}
                 </ScrollView>
 
-                {filteredLessons.length === 0 ? (
+                {filteredChapterRows.length === 0 ? (
                   <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
                     <Feather name="search" size={22} color={colors.textDim} />
-                    <Text style={[styles.emptyTxt, { color: colors.textMuted }]}>No topics match "{searchQuery}"</Text>
+                    <Text style={[styles.emptyTxt, { color: colors.textMuted }]}>No chapters match "{searchQuery}"</Text>
                   </View>
                 ) : (
                   <View style={[styles.lessonContainer, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                    {filteredLessons.map((item, idx) => {
-                      const stage = item.progress >= 100 ? 'Mastered' : item.progress > 0 ? 'In Progress' : 'Not Started';
-                      const cta   = item.progress >= 100 ? 'Review' : item.progress > 0 ? 'Continue' : 'Start';
-                      const scoreLabel = (item as any).quizScore != null ? `${(item as any).quizScore}%` : null;
-                      return (
-                        <TouchableOpacity
-                          key={`${item.grade}-${item.topic}`}
-                          style={[styles.lessonRow, idx < filteredLessons.length - 1 && { borderBottomWidth: 1, borderBottomColor: cardBorder }]}
-                          onPress={() => navigation.navigate('VideoLesson', { topic: item.topic, grade: item.grade, subject: item.subject, curriculum: isIBPYP ? 'IB_PYP' : 'NCERT' })}
-                          activeOpacity={0.78}
-                        >
-                          <View style={[styles.lessonDot, { backgroundColor: item.color }]} />
-                          <View style={[styles.lessonIconBox, { backgroundColor: item.color + '15' }]}>
-                            <Feather name={item.icon} size={15} color={item.color} />
+                    {/* One row per REAL chapter (not per topic) — same reasoning as the
+                        Performance bars: a subject can have 1000+ ingested topics, so this
+                        list must stay chapter-scale to be browsable. Individual topics inside
+                        a chapter aren't tagged at ingestion time (see notes on allBarTopics
+                        above), so tapping a chapter opens that SUBJECT's topic list rather
+                        than a specific lesson directly. */}
+                    {filteredChapterRows.map((item, idx) => (
+                      <TouchableOpacity
+                        key={`${item.subject}-${item.title}`}
+                        style={[styles.lessonRow, idx < filteredChapterRows.length - 1 && { borderBottomWidth: 1, borderBottomColor: cardBorder }]}
+                        onPress={() => navigation.navigate('SubjectSyllabus', { subject: item.subject, grade: studentGrade, curriculum: isIBPYP ? 'IB PYP' : 'CBSE', chapterTitle: item.title })}
+                        activeOpacity={0.78}
+                      >
+                        <View style={[styles.lessonDot, { backgroundColor: item.color }]} />
+                        <View style={[styles.lessonIconBox, { backgroundColor: item.color + '15' }]}>
+                          <Feather name={item.icon} size={15} color={item.color} />
+                        </View>
+                        <View style={styles.lessonMid}>
+                          <Text style={[styles.lessonTopic, { color: colors.textMain }]} numberOfLines={1}>{item.title}</Text>
+                          <Text style={[styles.lessonMeta, { color: colors.textMuted }]}>{item.subject} · Chapter {item.chapterNo}</Text>
+                        </View>
+                        <View style={styles.lessonRight}>
+                          <View style={[styles.stagePill, { backgroundColor: subtleBg, borderColor: cardBorder }]}>
+                            <Text style={[styles.stagePillTxt, { color: colors.textDim }]}>Not Started</Text>
                           </View>
-                          <View style={styles.lessonMid}>
-                            <Text style={[styles.lessonTopic, { color: colors.textMain }]} numberOfLines={1}>{item.topic}</Text>
-                            <Text style={[styles.lessonMeta, { color: colors.textMuted }]}>{item.subject} · {item.grade}</Text>
-                            <View style={[styles.lessonBar, { backgroundColor: item.color + '15' }]}>
-                              <View style={[styles.lessonBarFill, { width: `${Math.max(item.progress, 3)}%` as any, backgroundColor: item.color }]} />
-                            </View>
+                          <View style={[styles.lessonCta, { backgroundColor: item.color + '12', borderColor: item.color + '35' }]}>
+                            <Text style={[styles.lessonCtaTxt, { color: item.color }]}>Start</Text>
                           </View>
-                          <View style={styles.lessonRight}>
-                            <View style={[styles.stagePill, {
-                              backgroundColor: item.progress >= 100 ? BRAND.green + '18' : item.progress > 0 ? BRAND.blue + '18' : subtleBg,
-                              borderColor:     item.progress >= 100 ? BRAND.green + '45' : item.progress > 0 ? BRAND.blue + '45' : cardBorder,
-                            }]}>
-                              <Text style={[styles.stagePillTxt, { color: item.progress >= 100 ? BRAND.green : item.progress > 0 ? BRAND.blue : colors.textDim }]}>
-                                {scoreLabel ? `${scoreLabel} · ${stage}` : stage}
-                              </Text>
-                            </View>
-                            <View style={[styles.lessonCta, { backgroundColor: item.color + '12', borderColor: item.color + '35' }]}>
-                              <Text style={[styles.lessonCtaTxt, { color: item.color }]}>{cta}</Text>
-                            </View>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
+                        </View>
+                      </TouchableOpacity>
+                    ))}
                   </View>
                 )}
                 </>
-                )}
-
-                {/* ── UPCOMING DEADLINES ──────────────────────── */}
-                <SectionHeader title="Upcoming Deadlines" sub="Assignments & tasks" onPress={() => navigation.navigate('Assignments')} linkLabel="View all" />
-
-                {filteredDeadlines.length === 0 ? (
-                  <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                    <Feather name="calendar" size={22} color={colors.textDim} />
-                    <Text style={[styles.emptyTxt, { color: colors.textMuted }]}>
-                      {query ? `No deadlines match "${searchQuery}"` : 'No upcoming deadlines. Your teacher will assign work here.'}
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={[styles.deadlineCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                    {filteredDeadlines.map((item, idx) => {
-                      const urgent = isDueToday(item.date);
-                      return (
-                        <TouchableOpacity
-                          key={item.id}
-                          style={[styles.deadlineRow, idx < filteredDeadlines.length - 1 && { borderBottomWidth: 1, borderBottomColor: cardBorder }]}
-                          onPress={() => navigation.navigate('Schedule')}
-                          activeOpacity={0.75}
-                        >
-                          <View style={styles.deadlineTimeline}>
-                            <View style={[styles.deadlineDot, { backgroundColor: urgent ? BRAND.red : BRAND.green }]} />
-                            {idx < filteredDeadlines.length - 1 && <View style={[styles.deadlineLine, { backgroundColor: cardBorder }]} />}
-                          </View>
-                          <View style={styles.deadlineBody}>
-                            <Text style={[styles.deadlineTitle, { color: colors.textMain }]}>{item.title}</Text>
-                            {item.note ? <Text style={[styles.deadlineNote, { color: colors.textMuted }]}>{item.note}</Text> : null}
-                          </View>
-                          <View style={[styles.dueBadge, { backgroundColor: (urgent ? BRAND.red : BRAND.green) + '15', borderColor: (urgent ? BRAND.red : BRAND.green) + '35' }]}>
-                            <Text style={[styles.dueTxt, { color: urgent ? BRAND.red : BRAND.green }]}>{formatDeadline(item.date)}</Text>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
                 )}
 
                 <View style={{ height: 36 }} />
@@ -1405,7 +1588,11 @@ const makeStyles = (c: AppColors, isMobile: boolean, isDark: boolean) => StyleSh
   bestScoreMeta:   { marginRight: 4 },
   bestScoreMetaVal:{ fontSize: 15, fontWeight: '900', letterSpacing: -0.4 },
   bestScoreMetaLbl:{ fontSize: 9, marginTop: 1 },
-  allLessonsBtn:   { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
+  bestScoreCompactRow:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' },
+  bestScorePill:        { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, maxWidth: 200 },
+  bestScoreCompactVal:  { fontSize: 13, fontWeight: '800' },
+  bestScoreCompactTopic:{ fontSize: 11, fontWeight: '500', flexShrink: 1 },
+  allLessonsBtn:   { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, marginLeft: 'auto' },
   allLessonsTxt:   { fontSize: 11, fontWeight: '600' },
   perfInsightText: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginTop: 4 },
   perfInsightMsg:  { flex: 1, fontSize: 12, lineHeight: 18, fontWeight: '500' },

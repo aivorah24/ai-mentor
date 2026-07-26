@@ -1,0 +1,35 @@
+{
+  "package": {
+    "package_id": "f4e2a1b0-9c3d-4f6a-8b2e-1d5e6f7a8b9c",
+    "package_type": "ValidatedRetrievalPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T15:06:56.479Z",
+    "produced_by": {
+      "agent": "retrieval-validation-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "18apiqkgnsz",
+      "parent_package_id": "a3f8c587-d7aa-4b65-aa3f-510093c6228f"
+    }
+  },
+  "payload": {
+    "status": "FAIL",
+    "error_code": "RV005",
+    "rejection_reason": "Confidence score below threshold (0.637 < 0.90)",
+    "validation_report": {
+      "schema": "PASS",
+      "metadata": "PASS",
+      "ordering": "PASS",
+      "coverage": "PASS",
+      "integrity": "PASS"
+    },
+    "re_retrieval_hints": {
+      "suggested_query_adjustments": [
+        "Increase specificity to subtraction borrowing concepts",
+        "Filter out unrelated topics like Mental Math, bejm106, bejm110"
+      ],
+      "missing_page_numbers": []
+    }
+  }
+}

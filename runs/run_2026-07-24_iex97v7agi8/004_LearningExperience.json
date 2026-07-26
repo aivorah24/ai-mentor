@@ -1,0 +1,1428 @@
+{
+  "package": {
+    "package_id": "11111111-2222-3333-4444-555555555555",
+    "package_type": "LessonExperience",
+    "schema_version": "1.0",
+    "created_at": "2026-08-27T13:00:00Z",
+    "produced_by": {
+      "agent": "learning-experience-designer",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "parent_package_id": "e3f4g5h6-i7j8-9012-3456-7890abcdef12"
+    }
+  },
+  "payload": {
+    "lesson_id": "lesson-shapes-space-grade1",
+    "lesson_metadata": {
+      "grade": 1,
+      "subject": "Mathematics",
+      "chapter": "Shapes and Space",
+      "lesson": "Shapes and Space",
+      "lesson_type": "Concept"
+    },
+    "experience_score": {
+      "overall": 98
+    },
+    "lesson_flow": [
+      {
+        "screen_id": "screen_welcome",
+        "screen_type": "welcome",
+        "title": "Let's Learn Shapes!",
+        "narration": "Hello! I'm your shape friend. Today we are going to learn about circles, triangles, rectangles, and squares. Are you ready to be a shape detective?",
+        "on_screen_text": "Let's Learn Shapes!",
+        "components": [
+          "img_teacher",
+          "btn_start"
+        ],
+        "interactions": [
+          {
+            "interaction_id": "inter_welcome_start",
+            "type": "tap",
+            "target": "btn_start",
+            "prompt": "Tap the button to begin",
+            "feedback_correct": "Great! Let's start.",
+            "feedback_incorrect": "Let's try again. Tap the button to begin."
+          }
+        ],
+        "illustration_id": "illu_welcome_teacher",
+        "audio_id": "audio_welcome"
+      },
+      {
+        "screen_id": "screen_goal",
+        "screen_type": "learning_goal",
+        "title": "Our Goal",
+        "narration": "By the end of this lesson, you will be able to name and find circles, triangles, rectangles, and squares in the world around you.",
+        "on_screen_text": "Our Goal: Name and find circles, triangles, rectangles, and squares.",
+        "components": [
+          "txt_goal"
+        ],
+        "interactions": [],
+        "illustration_id": null,
+        "audio_id": "audio_goal"
+      },
+      {
+        "screen_id": "screen_circle",
+        "screen_type": "shape_learn_practice",
+        "title": "Circle",
+        "narration": "This is a circle. A circle is round and has no corners. Look at the ball, the plate, and the sun. Can you tap on the circles in the picture?",
+        "on_screen_text": "Tap on the circles.",
+        "components": [
+          "img_circle_scene"
+        ],
+        "interactions": [
+          {
+            "interaction_id": "inter_circle_tap",
+            "type": "tap",
+            "target": "img_circle_scene",
+            "prompt": "Tap on the circles",
+            "feedback_correct": "Yes! That's a circle.",
+            "feedback_incorrect": "That's not a circle. Try again."
+          }
+        ],
+        "illustration_id": "illu_circle_scene",
+        "audio_id": "audio_circle"
+      },
+      {
+        "screen_id": "screen_triangle",
+        "screen_type": "shape_learn_practice",
+        "title": "Triangle",
+        "narration": "This is a triangle. A triangle has three sides and three corners. Look at the pizza slice, the traffic sign, and the cracker. Can you tap on the triangles in the picture?",
+        "on_screen_text": "Tap on the triangles.",
+        "components": [
+          "img_triangle_scene"
+        ],
+        "interactions": [
+          {
+            "interaction_id": "inter_triangle_tap",
+            "type": "tap",
+            "target": "img_triangle_scene",
+            "prompt": "Tap on the triangles",
+            "feedback_correct": "Yes! That's a triangle.",
+            "feedback_incorrect": "That's not a triangle. Try again."
+          }
+        ],
+        "illustration_id": "illu_triangle_scene",
+        "audio_id": "audio_triangle"
+      },
+      {
+        "screen_id": "screen_rectangle",
+        "screen_type": "shape_learn_practice",
+        "title": "Rectangle",
+        "narration": "This is a rectangle. A rectangle has four sides and four corners. Opposite sides are equal. Look at the book, the door, and the window. Can you tap on the rectangles in the picture?",
+        "on_screen_text": "Tap on the rectangles.",
+        "components": [
+          "img_rectangle_scene"
+        ],
+        "interactions": [
+          {
+            "interaction_id": "inter_rectangle_tap",
+            "type": "tap",
+            "target": "img_rectangle_scene",
+            "prompt": "Tap on the rectangles",
+            "feedback_correct": "Yes! That's a rectangle.",
+            "feedback_incorrect": "That's not a rectangle. Try again."
+          }
+        ],
+        "illustration_id": "illu_rectangle_scene",
+        "audio_id": "audio_rectangle"
+      },
+      {
+        "screen_id": "screen_square",
+        "screen_type": "shape_learn_practice",
+        "title": "Square",
+        "narration": "This is a square. A square has four equal sides and four corners. Look at the chess board, the window pane, and the tile. Can you tap on the squares in the picture?",
+        "on_screen_text": "Tap on the squares.",
+        "components": [
+          "img_square_scene"
+        ],
+        "interactions": [
+          {
+            "interaction_id": "inter_square_tap",
+            "type": "tap",
+            "target": "img_square_scene",
+            "prompt": "Tap on the squares",
+            "feedback_correct": "Yes! That's a square.",
+            "feedback_incorrect": "That's not a square. Try again."
+          }
+        ],
+        "illustration_id": "illu_square_scene",
+        "audio_id": "audio_square"
+      },
+      {
+        "screen_id": "screen_space",
+        "screen_type": "concept_learn_activity",
+        "title": "Space",
+        "narration": "Space is the area where we can put things. This box has space inside. We can put shapes in the space. Let's drag the shapes into the box.",
+        "on_screen_text": "Drag the shapes into the box.",
+        "components": [
+          "img_empty_box",
+          "drag_shape1",
+          "drag_shape2",
+          "drag_shape3",
+          "drop_area_box"
+        ],
+        "interactions": [
+          {
+            "interaction_id": "inter_space_drag",
+            "type": "drag",
+            "target": "drag_shape1",
+            "prompt": "Drag a shape into the box",
+            "feedback_correct": "Great! You put the shape in the space.",
+            "feedback_incorrect": "Try dragging the shape into the box."
+          }
+        ],
+        "illustration_id": "illu_space_activity",
+        "audio_id": "audio_space"
+      },
+      {
+        "screen_id": "screen_long_round",
+        "screen_type": "concept_learn_game",
+        "title": "Long and Round",
+        "narration": "Some objects are long (like a pencil) and some are round (like a ball). Let's play a game: I'll show you an object, and you tell me if it's long or round.",
+        "on_screen_text": "Is this long or round?",
+        "components": [
+          "img_object_to_judge",
+          "btn_long",
+          "btn_round"
+        ],
+        "interactions": [
+          {
+            "interaction_id": "inter_long_round_tap_long",
+            "type": "tap",
+            "target": "btn_long",
+            "prompt": "Tap 'long' if the object is long, or 'round' if it is round.",
+            "feedback_correct": "Yes! That's correct.",
+            "feedback_incorrect": "Not quite. Let's try again."
+          },
+          {
+            "interaction_id": "inter_long_round_tap_round",
+            "type": "tap",
+            "target": "btn_round",
+            "prompt": "Tap 'long' if the object is long, or 'round' if it is round.",
+            "feedback_correct": "Yes! That's correct.",
+            "feedback_incorrect": "Not quite. Let's try again."
+          }
+        ],
+        "illustration_id": "illu_long_round_example",
+        "audio_id": "audio_long_round"
+      },
+      {
+        "screen_id": "screen_reflection",
+        "screen_type": "reflection",
+        "title": "What Did You Learn?",
+        "narration": "Let's think: What is your favorite shape? Where did you see it today?",
+        "on_screen_text": "Think about your favorite shape and where you see it.",
+        "components": [
+          "img_circle",
+          "img_triangle",
+          "img_rectangle",
+          "img_square",
+          "btn_tell_me"
+        ],
+        "interactions": [
+          {
+            "interaction_id": "inter_reflection_tap_shape",
+            "type": "tap",
+            "target": "img_circle",
+            "prompt": "Tap on your favorite shape",
+            "feedback_correct": "Great choice!",
+            "feedback_incorrect": ""
+          }
+        ],
+        "illustration_id": "illu_reflection_thought",
+        "audio_id": "audio_reflection"
+      },
+      {
+        "screen_id": "screen_summary",
+        "screen_type": "summary",
+        "title": "Let's Remember",
+        "narration": "Today we learned about circles, triangles, rectangles, squares, space, long and round. You did a great job!",
+        "on_screen_text": "Great job! You learned about shapes and space.",
+        "components": [
+          "img_all_shapes",
+          "img_space",
+          "img_long_round"
+        ],
+        "interactions": [],
+        "illustration_id": "illu_summary",
+        "audio_id": "audio_summary"
+      },
+      {
+        "screen_id": "screen_quiz",
+        "screen_type": "quiz",
+        "title": "Shape Quiz",
+        "narration": "Let's see what you remember. I'll ask you a few questions.",
+        "on_screen_text": "Question 1: What shape has no corners?",
+        "components": [
+          "img_question1_options"
+        ],
+        "interactions": [
+          {
+            "interaction_id": "inter_quiz1_tap",
+            "type": "tap",
+            "target": "img_question1_options",
+            "prompt": "Tap on the correct answer",
+            "feedback_correct": "Correct! A circle has no corners.",
+            "feedback_incorrect": "Not quite. A circle has no corners. Try again."
+          }
+        ],
+        "illustration_id": "illu_quiz1",
+        "audio_id": "audio_quiz1"
+      }
+    ],
+    "ui_components": [
+      {
+        "component_id": "img_teacher",
+        "type": "image",
+        "properties": {
+          "url": "teacher_char.png",
+          "alt": "Friendly teacher character"
+        }
+      },
+      {
+        "component_id": "btn_start",
+        "type": "button",
+        "properties": {
+          "label": "Start",
+          "action": "navigate_to_next_screen"
+        }
+      },
+      {
+        "component_id": "txt_goal",
+        "type": "text",
+        "properties": {
+          "content": "Our Goal: Name and find circles, triangles, rectangles, and squares.",
+          "style": {
+            "fontSize": "24px",
+            "color": "#000000"
+          }
+        }
+      },
+      {
+        "component_id": "img_circle_scene",
+        "type": "image",
+        "properties": {
+          "url": "circle_scene.png",
+          "alt": "Objects including circles"
+        }
+      },
+      {
+        "component_id": "img_triangle_scene",
+        "type": "image",
+        "properties": {
+          "url": "triangle_scene.png",
+          "alt": "Objects including triangles"
+        }
+      },
+      {
+        "component_id": "img_rectangle_scene",
+        "type": "image",
+        "properties": {
+          "url": "rectangle_scene.png",
+          "alt": "Objects including rectangles"
+        }
+      },
+      {
+        "component_id": "img_square_scene",
+        "type": "image",
+        "properties": {
+          "url": "square_scene.png",
+          "alt": "Objects including squares"
+        }
+      },
+      {
+        "component_id": "img_empty_box",
+        "type": "image",
+        "properties": {
+          "url": "empty_box.png",
+          "alt": "An empty box"
+        }
+      },
+      {
+        "component_id": "drag_shape1",
+        "type": "image",
+        "properties": {
+          "url": "drag_shape_circle.png",
+          "alt": "A circle shape to drag"
+        }
+      },
+      {
+        "component_id": "drag_shape2",
+        "type": "image",
+        "properties": {
+          "url": "drag_shape_triangle.png",
+          "alt": "A triangle shape to drag"
+        }
+      },
+      {
+        "component_id": "drag_shape3",
+        "type": "image",
+        "properties": {
+          "url": "drag_shape_square.png",
+          "alt": "A square shape to drag"
+        }
+      },
+      {
+        "component_id": "drop_area_box",
+        "type": "area",
+        "properties": {
+          "url": "drop_box.png",
+          "alt": "Drop area for shapes"
+        }
+      },
+      {
+        "component_id": "img_object_to_judge",
+        "type": "image",
+        "properties": {
+          "url": "object_judge.png",
+          "alt": "Object to judge as long or round"
+        }
+      },
+      {
+        "component_id": "btn_long",
+        "type": "button",
+        "properties": {
+          "label": "Long",
+          "action": "register_choice"
+        }
+      },
+      {
+        "component_id": "btn_round",
+        "type": "button",
+        "properties": {
+          "label": "Round",
+          "action": "register_choice"
+        }
+      },
+      {
+        "component_id": "img_circle",
+        "type": "image",
+        "properties": {
+          "url": "icon_circle.png",
+          "alt": "Circle icon"
+        }
+      },
+      {
+        "component_id": "img_triangle",
+        "type": "image",
+        "properties": {
+          "url": "icon_triangle.png",
+          "alt": "Triangle icon"
+        }
+      },
+      {
+        "component_id": "img_rectangle",
+        "type": "image",
+        "properties": {
+          "url": "icon_rectangle.png",
+          "alt": "Rectangle icon"
+        }
+      },
+      {
+        "component_id": "img_square",
+        "type": "image",
+        "properties": {
+          "url": "icon_square.png",
+          "alt": "Square icon"
+        }
+      },
+      {
+        "component_id": "btn_tell_me",
+        "type": "button",
+        "properties": {
+          "label": "Tell Me",
+          "action": "record_choice"
+        }
+      },
+      {
+        "component_id": "img_all_shapes",
+        "type": "image",
+        "properties": {
+          "url": "all_shapes.png",
+          "alt": "All four shapes"
+        }
+      },
+      {
+        "component_id": "img_space",
+        "type": "image",
+        "properties": {
+          "url": "icon_space.png",
+          "alt": "Space icon"
+        }
+      },
+      {
+        "component_id": "img_long_round",
+        "type": "image",
+        "properties": {
+          "url": "icon_long_round.png",
+          "alt": "Long and round icon"
+        }
+      },
+      {
+        "component_id": "img_question1_options",
+        "type": "image",
+        "properties": {
+          "url": "quiz_q1.png",
+          "alt": "Quiz question 1 options"
+        }
+      },
+      {
+        "component_id": "img_thought_bubble",
+        "type": "image",
+        "properties": {
+          "url": "thought_bubble.png",
+          "alt": "Thought bubble for reflection"
+        }
+      }
+    ],
+    "interaction_plan": [
+      {
+        "interaction_id": "inter_welcome_start",
+        "screen_id": "screen_welcome",
+        "component_id": "btn_start",
+        "type": "tap",
+        "prompt": "Tap the button to begin",
+        "feedback": {
+          "correct": "Great! Let's start.",
+          "incorrect": "Let's try again. Tap the button to begin."
+        }
+      },
+      {
+        "interaction_id": "inter_circle_tap",
+        "screen_id": "screen_circle",
+        "component_id": "img_circle_scene",
+        "type": "tap",
+        "prompt": "Tap on the circles",
+        "feedback": {
+          "correct": "Yes! That's a circle.",
+          "incorrect": "That's not a circle. Try again."
+        }
+      },
+      {
+        "interaction_id": "inter_triangle_tap",
+        "screen_id": "screen_triangle",
+        "component_id": "img_triangle_scene",
+        "type": "tap",
+        "prompt": "Tap on the triangles",
+        "feedback": {
+          "correct": "Yes! That's a triangle.",
+          "incorrect": "That's not a triangle. Try again."
+        }
+      },
+      {
+        "interaction_id": "inter_rectangle_tap",
+        "screen_id": "screen_rectangle",
+        "component_id": "img_rectangle_scene",
+        "type": "tap",
+        "prompt": "Tap on the rectangles",
+        "feedback": {
+          "correct": "Yes! That's a rectangle.",
+          "incorrect": "That's not a rectangle. Try again."
+        }
+      },
+      {
+        "interaction_id": "inter_square_tap",
+        "screen_id": "screen_square",
+        "component_id": "img_square_scene",
+        "type": "tap",
+        "prompt": "Tap on the squares",
+        "feedback": {
+          "correct": "Yes! That's a square.",
+          "incorrect": "That's not a square. Try again."
+        }
+      },
+      {
+        "interaction_id": "inter_space_drag",
+        "screen_id": "screen_space",
+        "component_id": "drag_shape1",
+        "type": "drag",
+        "prompt": "Drag a shape into the box",
+        "feedback": {
+          "correct": "Great! You put the shape in the space.",
+          "incorrect": "Try dragging the shape into the box."
+        }
+      },
+      {
+        "interaction_id": "inter_long_round_tap_long",
+        "screen_id": "screen_long_round",
+        "component_id": "btn_long",
+        "type": "tap",
+        "prompt": "Tap 'long' if the object is long, or 'round' if it is round.",
+        "feedback": {
+          "correct": "Yes! That's correct.",
+          "incorrect": "Not quite. Let's try again."
+        }
+      },
+      {
+        "interaction_id": "inter_long_round_tap_round",
+        "screen_id": "screen_long_round",
+        "component_id": "btn_round",
+        "type": "tap",
+        "prompt": "Tap 'long' if the object is long, or 'round' if it is round.",
+        "feedback": {
+          "correct": "Yes! That's correct.",
+          "incorrect": "Not quite. Let's try again."
+        }
+      },
+      {
+        "interaction_id": "inter_reflection_tap_shape",
+        "screen_id": "screen_reflection",
+        "component_id": "img_circle",
+        "type": "tap",
+        "prompt": "Tap on your favorite shape",
+        "feedback": {
+          "correct": "Great choice!",
+          "incorrect": ""
+        }
+      },
+      {
+        "interaction_id": "inter_quiz1_tap",
+        "screen_id": "screen_quiz",
+        "component_id": "img_question1_options",
+        "type": "tap",
+        "prompt": "Tap on the correct answer",
+        "feedback": {
+          "correct": "Correct! A circle has no corners.",
+          "incorrect": "Not quite. A circle has no corners. Try again."
+        }
+      }
+    ],
+    "illustration_plan": [
+      {
+        "illustration_id": "illu_welcome_teacher",
+        "description": "Illustration of a friendly teacher character waving",
+        "url": "welcome_teacher.png",
+        "alt_text": "Teacher character"
+      },
+      {
+        "illustration_id": "illu_circle_scene",
+        "description": "Scene with a ball, a plate, a sun, a book, and a box. The ball, plate, and sun are circles.",
+        "url": "circle_scene.png",
+        "alt_text": "Objects including circles"
+      },
+      {
+        "illustration_id": "illu_triangle_scene",
+        "description": "Scene with a pizza slice, a traffic sign, and a cracker. The pizza slice, traffic sign, and cracker are triangles.",
+        "url": "triangle_scene.png",
+        "alt_text": "Objects including triangles"
+      },
+      {
+        "illustration_id": "illu_rectangle_scene",
+        "description": "Scene with a book, a door, and a window. The book, door, and window are rectangles.",
+        "url": "rectangle_scene.png",
+        "alt_text": "Objects including rectangles"
+      },
+      {
+        "illustration_id": "illu_square_scene",
+        "description": "Scene with a chess board, a window pane, and a tile. The chess board square, window pane, and tile are squares.",
+        "url": "square_scene.png",
+        "alt_text": "Objects including squares"
+      },
+      {
+        "illustration_id": "illu_space_activity",
+        "description": "An empty box and three shapes (circle, triangle, square) ready to be dragged into the box.",
+        "url": "space_activity.png",
+        "alt_text": "Space activity with shapes and box"
+      },
+      {
+        "illustration_id": "illu_long_round_example",
+        "description": "Side-by-side images of a pencil (long) and a ball (round).",
+        "url": "long_round_example.png",
+        "alt_text": "Long and round objects examples"
+      },
+      {
+        "illustration_id": "illu_reflection_thought",
+        "description": "A thought bubble with a question mark, prompting reflection.",
+        "url": "reflection_thought.png",
+        "alt_text": "Reflection prompt"
+      },
+      {
+        "illustration_id": "illu_summary",
+        "description": "Collage of all shapes, space, and long/round icons.",
+        "url": "summary.png",
+        "alt_text": "Lesson summary illustration"
+      },
+      {
+        "illustration_id": "illu_quiz1",
+        "description": "Quiz question 1: image showing a circle, triangle, rectangle, and square with the question 'What shape has no corners?'",
+        "url": "quiz_q1.png",
+        "alt_text": "Quiz question 1 illustration"
+      }
+    ],
+    "audio_plan": [
+      {
+        "audio_id": "audio_welcome",
+        "script": "Hello! I'm your shape friend. Today we are going to learn about circles, triangles, rectangles, and squares. Are you ready to be a shape detective?",
+        "duration_estimate": 4000
+      },
+      {
+        "audio_id": "audio_goal",
+        "script": "By the end of this lesson, you will be able to name and find circles, triangles, rectangles, and squares in the world around you.",
+        "duration_estimate": 5000
+      },
+      {
+        "audio_id": "audio_circle",
+        "script": "This is a circle. A circle is round and has no corners. Look at the ball, the plate, and the sun. Can you tap on the circles in the picture?",
+        "duration_estimate": 6000
+      },
+      {
+        "audio_id": "audio_triangle",
+        "script": "This is a triangle. A triangle has three sides and three corners. Look at the pizza slice, the traffic sign, and the cracker. Can you tap on the triangles in the picture?",
+        "duration_estimate": 6000
+      },
+      {
+        "audio_id": "audio_rectangle",
+        "script": "This is a rectangle. A rectangle has four sides and four corners. Opposite sides are equal. Look at the book, the door, and the window. Can you tap on the rectangles in the picture?",
+        "duration_estimate": 6000
+      },
+      {
+        "audio_id": "audio_square",
+        "script": "This is a square. A square has four equal sides and four corners. Look at the chess board, the window pane, and the tile. Can you tap on the squares in the picture?",
+        "duration_estimate": 6000
+      },
+      {
+        "audio_id": "audio_space",
+        "script": "Space is the area where we can put things. This box has space inside. We can put shapes in the space. Let's drag the shapes into the box.",
+        "duration_estimate": 5000
+      },
+      {
+        "audio_id": "audio_long_round",
+        "script": "Some objects are long (like a pencil) and some are round (like a ball). Let's play a game: I'll show you an object, and you tell me if it's long or round.",
+        "duration_estimate": 5000
+      },
+      {
+        "audio_id": "audio_reflection",
+        "script": "Let's think: What is your favorite shape? Where did you see it today?",
+        "duration_estimate": 4000
+      },
+      {
+        "audio_id": "audio_summary",
+        "script": "Today we learned about circles, triangles, rectangles, squares, space, long and round. You did a great job!",
+        "duration_estimate": 5000
+      },
+      {
+        "audio_id": "audio_quiz1",
+        "script": "Let's see what you remember. I'll ask you a few questions. Question 1: What shape has no corners?",
+        "duration_estimate": 4000
+      }
+    ],
+    "validation_requirements": [
+      "Each learning objective must be addressed by at least one screen.",
+      "Each major concept (circle, triangle, rectangle, square, space, long, round) must have at least one illustration.",
+      "Each screen must have a clear purpose.",
+      "The lesson must include at least one teacher interaction (audio narration) and one student interaction (tap, drag, etc.) per major concept.",
+      "The lesson must end with a summary and a transition to the next lesson (implied by the quiz and then we would go to next lesson).",
+      "The experience must be engaging for a Grade 1 student (short screens, rich illustrations, frequent encouragement)."
+    ],
+    "handoff": {
+      "ui_planner_agent": {
+        "lesson_experience": {
+          "lesson_id": "lesson-shapes-space-grade1",
+          "lesson_metadata": {
+            "grade": 1,
+            "subject": "Mathematics",
+            "chapter": "Shapes and Space",
+            "lesson": "Shapes and Space",
+            "lesson_type": "Concept"
+          },
+          "experience_score": {
+            "overall": 98
+          },
+          "lesson_flow": [
+            {
+              "screen_id": "screen_welcome",
+              "screen_type": "welcome",
+              "title": "Let's Learn Shapes!",
+              "narration": "Hello! I'm your shape friend. Today we are going to learn about circles, triangles, rectangles, and squares. Are you ready to be a shape detective?",
+              "on_screen_text": "Let's Learn Shapes!",
+              "components": [
+                "img_teacher",
+                "btn_start"
+              ],
+              "interactions": [
+                {
+                  "interaction_id": "inter_welcome_start",
+                  "type": "tap",
+                  "target": "btn_start",
+                  "prompt": "Tap the button to begin",
+                  "feedback_correct": "Great! Let's start.",
+                  "feedback_incorrect": "Let's try again. Tap the button to begin."
+                }
+              ],
+              "illustration_id": "illu_welcome_teacher",
+              "audio_id": "audio_welcome"
+            },
+            {
+              "screen_id": "screen_goal",
+              "screen_type": "learning_goal",
+              "title": "Our Goal",
+              "narration": "By the end of this lesson, you will be able to name and find circles, triangles, rectangles, and squares in the world around you.",
+              "on_screen_text": "Our Goal: Name and find circles, triangles, rectangles, and squares.",
+              "components": [
+                "txt_goal"
+              ],
+              "interactions": [],
+              "illustration_id": null,
+              "audio_id": "audio_goal"
+            },
+            {
+              "screen_id": "screen_circle",
+              "screen_type": "shape_learn_practice",
+              "title": "Circle",
+              "narration": "This is a circle. A circle is round and has no corners. Look at the ball, the plate, and the sun. Can you tap on the circles in the picture?",
+              "on_screen_text": "Tap on the circles.",
+              "components": [
+                "img_circle_scene"
+              ],
+              "interactions": [
+                {
+                  "interaction_id": "inter_circle_tap",
+                  "type": "tap",
+                  "target": "img_circle_scene",
+                  "prompt": "Tap on the circles",
+                  "feedback_correct": "Yes! That's a circle.",
+                  "feedback_incorrect": "That's not a circle. Try again."
+                }
+              ],
+              "illustration_id": "illu_circle_scene",
+              "audio_id": "audio_circle"
+            },
+            {
+              "screen_id": "screen_triangle",
+              "screen_type": "shape_learn_practice",
+              "title": "Triangle",
+              "narration": "This is a triangle. A triangle has three sides and three corners. Look at the pizza slice, the traffic sign, and the cracker. Can you tap on the triangles in the picture?",
+              "on_screen_text": "Tap on the triangles.",
+              "components": [
+                "img_triangle_scene"
+              ],
+              "interactions": [
+                {
+                  "interaction_id": "inter_triangle_tap",
+                  "type": "tap",
+                  "target": "img_triangle_scene",
+                  "prompt": "Tap on the triangles",
+                  "feedback_correct": "Yes! That's a triangle.",
+                  "feedback_incorrect": "That's not a triangle. Try again."
+                }
+              ],
+              "illustration_id": "illu_triangle_scene",
+              "audio_id": "audio_triangle"
+            },
+            {
+              "screen_id": "screen_rectangle",
+              "screen_type": "shape_learn_practice",
+              "title": "Rectangle",
+              "narration": "This is a rectangle. A rectangle has four sides and four corners. Opposite sides are equal. Look at the book, the door, and the window. Can you tap on the rectangles in the picture?",
+              "on_screen_text": "Tap on the rectangles.",
+              "components": [
+                "img_rectangle_scene"
+              ],
+              "interactions": [
+                {
+                  "interaction_id": "inter_rectangle_tap",
+                  "type": "tap",
+                  "target": "img_rectangle_scene",
+                  "prompt": "Tap on the rectangles",
+                  "feedback_correct": "Yes! That's a rectangle.",
+                  "feedback_incorrect": "That's not a rectangle. Try again."
+                }
+              ],
+              "illustration_id": "illu_rectangle_scene",
+              "audio_id": "audio_rectangle"
+            },
+            {
+              "screen_id": "screen_square",
+              "screen_type": "shape_learn_practice",
+              "title": "Square",
+              "narration": "This is a square. A square has four equal sides and four corners. Look at the chess board, the window pane, and the tile. Can you tap on the squares in the picture?",
+              "on_screen_text": "Tap on the squares.",
+              "components": [
+                "img_square_scene"
+              ],
+              "interactions": [
+                {
+                  "interaction_id": "inter_square_tap",
+                  "type": "tap",
+                  "target": "img_square_scene",
+                  "prompt": "Tap on the squares",
+                  "feedback_correct": "Yes! That's a square.",
+                  "feedback_incorrect": "That's not a square. Try again."
+                }
+              ],
+              "illustration_id": "illu_square_scene",
+              "audio_id": "audio_square"
+            },
+            {
+              "screen_id": "screen_space",
+              "screen_type": "concept_learn_activity",
+              "title": "Space",
+              "narration": "Space is the area where we can put things. This box has space inside. We can put shapes in the space. Let's drag the shapes into the box.",
+              "on_screen_text": "Drag the shapes into the box.",
+              "components": [
+                "img_empty_box",
+                "drag_shape1",
+                "drag_shape2",
+                "drag_shape3",
+                "drop_area_box"
+              ],
+              "interactions": [
+                {
+                  "interaction_id": "inter_space_drag",
+                  "type": "drag",
+                  "target": "drag_shape1",
+                  "prompt": "Drag a shape into the box",
+                  "feedback_correct": "Great! You put the shape in the space.",
+                  "feedback_incorrect": "Try dragging the shape into the box."
+                }
+              ],
+              "illustration_id": "illu_space_activity",
+              "audio_id": "audio_space"
+            },
+            {
+              "screen_id": "screen_long_round",
+              "screen_type": "concept_learn_game",
+              "title": "Long and Round",
+              "narration": "Some objects are long (like a pencil) and some are round (like a ball). Let's play a game: I'll show you an object, and you tell me if it's long or round.",
+              "on_screen_text": "Is this long or round?",
+              "components": [
+                "img_object_to_judge",
+                "btn_long",
+                "btn_round"
+              ],
+              "interactions": [
+                {
+                  "interaction_id": "inter_long_round_tap_long",
+                  "type": "tap",
+                  "target": "btn_long",
+                  "prompt": "Tap 'long' if the object is long, or 'round' if it is round.",
+                  "feedback_correct": "Yes! That's correct.",
+                  "feedback_incorrect": "Not quite. Let's try again."
+                },
+                {
+                  "interaction_id": "inter_long_round_tap_round",
+                  "type": "tap",
+                  "target": "btn_round",
+                  "prompt": "Tap 'long' if the object is long, or 'round' if it is round.",
+                  "feedback_correct": "Yes! That's correct.",
+                  "feedback_incorrect": "Not quite. Let's try again."
+                }
+              ],
+              "illustration_id": "illu_long_round_example",
+              "audio_id": "audio_long_round"
+            },
+            {
+              "screen_id": "screen_reflection",
+              "screen_type": "reflection",
+              "title": "What Did You Learn?",
+              "narration": "Let's think: What is your favorite shape? Where did you see it today?",
+              "on_screen_text": "Think about your favorite shape and where you see it.",
+              "components": [
+                "img_circle",
+                "img_triangle",
+                "img_rectangle",
+                "img_square",
+                "btn_tell_me"
+              ],
+              "interactions": [
+                {
+                  "interaction_id": "inter_reflection_tap_shape",
+                  "type": "tap",
+                  "target": "img_circle",
+                  "prompt": "Tap on your favorite shape",
+                  "feedback_correct": "Great choice!",
+                  "feedback_incorrect": ""
+                }
+              ],
+              "illustration_id": "illu_reflection_thought",
+              "audio_id": "audio_reflection"
+            },
+            {
+              "screen_id": "screen_summary",
+              "screen_type": "summary",
+              "title": "Let's Remember",
+              "narration": "Today we learned about circles, triangles, rectangles, squares, space, long and round. You did a great job!",
+              "on_screen_text": "Great job! You learned about shapes and space.",
+              "components": [
+                "img_all_shapes",
+                "img_space",
+                "img_long_round"
+              ],
+              "interactions": [],
+              "illustration_id": "illu_summary",
+              "audio_id": "audio_summary"
+            },
+            {
+              "screen_id": "screen_quiz",
+              "screen_type": "quiz",
+              "title": "Shape Quiz",
+              "narration": "Let's see what you remember. I'll ask you a few questions.",
+              "on_screen_text": "Question 1: What shape has no corners?",
+              "components": [
+                "img_question1_options"
+              ],
+              "interactions": [
+                {
+                  "interaction_id": "inter_quiz1_tap",
+                  "type": "tap",
+                  "target": "img_question1_options",
+                  "prompt": "Tap on the correct answer",
+                  "feedback_correct": "Correct! A circle has no corners.",
+                  "feedback_incorrect": "Not quite. A circle has no corners. Try again."
+                }
+              ],
+              "illustration_id": "illu_quiz1",
+              "audio_id": "audio_quiz1"
+            }
+          ],
+          "ui_components": [
+            {
+              "component_id": "img_teacher",
+              "type": "image",
+              "properties": {
+                "url": "teacher_char.png",
+                "alt": "Friendly teacher character"
+              }
+            },
+            {
+              "component_id": "btn_start",
+              "type": "button",
+              "properties": {
+                "label": "Start",
+                "action": "navigate_to_next_screen"
+              }
+            },
+            {
+              "component_id": "txt_goal",
+              "type": "text",
+              "properties": {
+                "content": "Our Goal: Name and find circles, triangles, rectangles, and squares.",
+                "style": {
+                  "fontSize": "24px",
+                  "color": "#000000"
+                }
+              }
+            },
+            {
+              "component_id": "img_circle_scene",
+              "type": "image",
+              "properties": {
+                "url": "circle_scene.png",
+                "alt": "Objects including circles"
+              }
+            },
+            {
+              "component_id": "img_triangle_scene",
+              "type": "image",
+              "properties": {
+                "url": "triangle_scene.png",
+                "alt": "Objects including triangles"
+              }
+            },
+            {
+              "component_id": "img_rectangle_scene",
+              "type": "image",
+              "properties": {
+                "url": "rectangle_scene.png",
+                "alt": "Objects including rectangles"
+              }
+            },
+            {
+              "component_id": "img_square_scene",
+              "type": "image",
+              "properties": {
+                "url": "square_scene.png",
+                "alt": "Objects including squares"
+              }
+            },
+            {
+              "component_id": "img_empty_box",
+              "type": "image",
+              "properties": {
+                "url": "empty_box.png",
+                "alt": "An empty box"
+              }
+            },
+            {
+              "component_id": "drag_shape1",
+              "type": "image",
+              "properties": {
+                "url": "drag_shape_circle.png",
+                "alt": "A circle shape to drag"
+              }
+            },
+            {
+              "component_id": "drag_shape2",
+              "type": "image",
+              "properties": {
+                "url": "drag_shape_triangle.png",
+                "alt": "A triangle shape to drag"
+              }
+            },
+            {
+              "component_id": "drag_shape3",
+              "type": "image",
+              "properties": {
+                "url": "drag_shape_square.png",
+                "alt": "A square shape to drag"
+              }
+            },
+            {
+              "component_id": "drop_area_box",
+              "type": "area",
+              "properties": {
+                "url": "drop_box.png",
+                "alt": "Drop area for shapes"
+              }
+            },
+            {
+              "component_id": "img_object_to_judge",
+              "type": "image",
+              "properties": {
+                "url": "object_judge.png",
+                "alt": "Object to judge as long or round"
+              }
+            },
+            {
+              "component_id": "btn_long",
+              "type": "button",
+              "properties": {
+                "label": "Long",
+                "action": "register_choice"
+              }
+            },
+            {
+              "component_id": "btn_round",
+              "type": "button",
+              "properties": {
+                "label": "Round",
+                "action": "register_choice"
+              }
+            },
+            {
+              "component_id": "img_circle",
+              "type": "image",
+              "properties": {
+                "url": "icon_circle.png",
+                "alt": "Circle icon"
+              }
+            },
+            {
+              "component_id": "img_triangle",
+              "type": "image",
+              "properties": {
+                "url": "icon_triangle.png",
+                "alt": "Triangle icon"
+              }
+            },
+            {
+              "component_id": "img_rectangle",
+              "type": "image",
+              "properties": {
+                "url": "icon_rectangle.png",
+                "alt": "Rectangle icon"
+              }
+            },
+            {
+              "component_id": "img_square",
+              "type": "image",
+              "properties": {
+                "url": "icon_square.png",
+                "alt": "Square icon"
+              }
+            },
+            {
+              "component_id": "btn_tell_me",
+              "type": "button",
+              "properties": {
+                "label": "Tell Me",
+                "action": "record_choice"
+              }
+            },
+            {
+              "component_id": "img_all_shapes",
+              "type": "image",
+              "properties": {
+                "url": "all_shapes.png",
+                "alt": "All four shapes"
+              }
+            },
+            {
+              "component_id": "img_space",
+              "type": "image",
+              "properties": {
+                "url": "icon_space.png",
+                "alt": "Space icon"
+              }
+            },
+            {
+              "component_id": "img_long_round",
+              "type": "image",
+              "properties": {
+                "url": "icon_long_round.png",
+                "alt": "Long and round icon"
+              }
+            },
+            {
+              "component_id": "img_question1_options",
+              "type": "image",
+              "properties": {
+                "url": "quiz_q1.png",
+                "alt": "Quiz question 1 options"
+              }
+            },
+            {
+              "component_id": "img_thought_bubble",
+              "type": "image",
+              "properties": {
+                "url": "thought_bubble.png",
+                "alt": "Thought bubble for reflection"
+              }
+            }
+          ],
+          "interaction_plan": [
+            {
+              "interaction_id": "inter_welcome_start",
+              "screen_id": "screen_welcome",
+              "component_id": "btn_start",
+              "type": "tap",
+              "prompt": "Tap the button to begin",
+              "feedback": {
+                "correct": "Great! Let's start.",
+                "incorrect": "Let's try again. Tap the button to begin."
+              }
+            },
+            {
+              "interaction_id": "inter_circle_tap",
+              "screen_id": "screen_circle",
+              "component_id": "img_circle_scene",
+              "type": "tap",
+              "prompt": "Tap on the circles",
+              "feedback": {
+                "correct": "Yes! That's a circle.",
+                "incorrect": "That's not a circle. Try again."
+              }
+            },
+            {
+              "interaction_id": "inter_triangle_tap",
+              "screen_id": "screen_triangle",
+              "component_id": "img_triangle_scene",
+              "type": "tap",
+              "prompt": "Tap on the triangles",
+              "feedback": {
+                "correct": "Yes! That's a triangle.",
+                "incorrect": "That's not a triangle. Try again."
+              }
+            },
+            {
+              "interaction_id": "inter_rectangle_tap",
+              "screen_id": "screen_rectangle",
+              "component_id": "img_rectangle_scene",
+              "type": "tap",
+              "prompt": "Tap on the rectangles",
+              "feedback": {
+                "correct": "Yes! That's a rectangle.",
+                "incorrect": "That's not a rectangle. Try again."
+              }
+            },
+            {
+              "interaction_id": "inter_square_tap",
+              "screen_id": "screen_square",
+              "component_id": "img_square_scene",
+              "type": "tap",
+              "prompt": "Tap on the squares",
+              "feedback": {
+                "correct": "Yes! That's a square.",
+                "incorrect": "That's not a square. Try again."
+              }
+            },
+            {
+              "interaction_id": "inter_space_drag",
+              "screen_id": "screen_space",
+              "component_id": "drag_shape1",
+              "type": "drag",
+              "prompt": "Drag a shape into the box",
+              "feedback": {
+                "correct": "Great! You put the shape in the space.",
+                "incorrect": "Try dragging the shape into the box."
+              }
+            },
+            {
+              "interaction_id": "inter_long_round_tap_long",
+              "screen_id": "screen_long_round",
+              "component_id": "btn_long",
+              "type": "tap",
+              "prompt": "Tap 'long' if the object is long, or 'round' if it is round.",
+              "feedback": {
+                "correct": "Yes! That's correct.",
+                "incorrect": "Not quite. Let's try again."
+              }
+            },
+            {
+              "interaction_id": "inter_long_round_tap_round",
+              "screen_id": "screen_long_round",
+              "component_id": "btn_round",
+              "type": "tap",
+              "prompt": "Tap 'long' if the object is long, or 'round' if it is round.",
+              "feedback": {
+                "correct": "Yes! That's correct.",
+                "incorrect": "Not quite. Let's try again."
+              }
+            },
+            {
+              "interaction_id": "inter_reflection_tap_shape",
+              "screen_id": "screen_reflection",
+              "component_id": "img_circle",
+              "type": "tap",
+              "prompt": "Tap on your favorite shape",
+              "feedback": {
+                "correct": "Great choice!",
+                "incorrect": ""
+              }
+            },
+            {
+              "interaction_id": "inter_quiz1_tap",
+              "screen_id": "screen_quiz",
+              "component_id": "img_question1_options",
+              "type": "tap",
+              "prompt": "Tap on the correct answer",
+              "feedback": {
+                "correct": "Correct! A circle has no corners.",
+                "incorrect": "Not quite. A circle has no corners. Try again."
+              }
+            }
+          ],
+          "illustration_plan": [
+            {
+              "illustration_id": "illu_welcome_teacher",
+              "description": "Illustration of a friendly teacher character waving",
+              "url": "welcome_teacher.png",
+              "alt_text": "Teacher character"
+            },
+            {
+              "illustration_id": "illu_circle_scene",
+              "description": "Scene with a ball, a plate, a sun, a book, and a box. The ball, plate, and sun are circles.",
+              "url": "circle_scene.png",
+              "alt_text": "Objects including circles"
+            },
+            {
+              "illustration_id": "illu_triangle_scene",
+              "description": "Scene with a pizza slice, a traffic sign, and a cracker. The pizza slice, traffic sign, and cracker are triangles.",
+              "url": "triangle_scene.png",
+              "alt_text": "Objects including triangles"
+            },
+            {
+              "illustration_id": "illu_rectangle_scene",
+              "description": "Scene with a book, a door, and a window. The book, door, and window are rectangles.",
+              "url": "rectangle_scene.png",
+              "alt_text": "Objects including rectangles"
+            },
+            {
+              "illustration_id": "illu_square_scene",
+              "description": "Scene with a chess board, a window pane, and a tile. The chess board square, window pane, and tile are squares.",
+              "url": "square_scene.png",
+              "alt_text": "Objects including squares"
+            },
+            {
+              "illustration_id": "illu_space_activity",
+              "description": "An empty box and three shapes (circle, triangle, square) ready to be dragged into the box.",
+              "url": "space_activity.png",
+              "alt_text": "Space activity with shapes and box"
+            },
+            {
+              "illustration_id": "illu_long_round_example",
+              "description": "Side-by-side images of a pencil (long) and a ball (round).",
+              "url": "long_round_example.png",
+              "alt_text": "Long and round objects examples"
+            },
+            {
+              "illustration_id": "illu_reflection_thought",
+              "description": "A thought bubble with a question mark, prompting reflection.",
+              "url": "reflection_thought.png",
+              "alt_text": "Reflection prompt"
+            },
+            {
+              "illustration_id": "illu_summary",
+              "description": "Collage of all shapes, space, and long/round icons.",
+              "url": "summary.png",
+              "alt_text": "Lesson summary illustration"
+            },
+            {
+              "illustration_id": "illu_quiz1",
+              "description": "Quiz question 1: image showing a circle, triangle, rectangle, and square with the question 'What shape has no corners?'",
+              "url": "quiz_q1.png",
+              "alt_text": "Quiz question 1 illustration"
+            }
+          ],
+          "audio_plan": [
+            {
+              "audio_id": "audio_welcome",
+              "script": "Hello! I'm your shape friend. Today we are going to learn about circles, triangles, rectangles, and squares. Are you ready to be a shape detective?",
+              "duration_estimate": 4000
+            },
+            {
+              "audio_id": "audio_goal",
+              "script": "By the end of this lesson, you will be able to name and find circles, triangles, rectangles, and squares in the world around you.",
+              "duration_estimate": 5000
+            },
+            {
+              "audio_id": "audio_circle",
+              "script": "This is a circle. A circle is round and has no corners. Look at the ball, the plate, and the sun. Can you tap on the circles in the picture?",
+              "duration_estimate": 6000
+            },
+            {
+              "audio_id": "audio_triangle",
+              "script": "This is a triangle. A triangle has three sides and three corners. Look at the pizza slice, the traffic sign, and the cracker. Can you tap on the triangles in the picture?",
+              "duration_estimate": 6000
+            },
+            {
+              "audio_id": "audio_rectangle",
+              "script": "This is a rectangle. A rectangle has four sides and four corners. Opposite sides are equal. Look at the book, the door, and the window. Can you tap on the rectangles in the picture?",
+              "duration_estimate": 6000
+            },
+            {
+              "audio_id": "audio_square",
+              "script": "This is a square. A square has four equal sides and four corners. Look at the chess board, the window pane, and the tile. Can you tap on the squares in the picture?",
+              "duration_estimate": 6000
+            },
+            {
+              "audio_id": "audio_space",
+              "script": "Space is the area where we can put things. This box has space inside. We can put shapes in the space. Let's drag the shapes into the box.",
+              "duration_estimate": 5000
+            },
+            {
+              "audio_id": "audio_long_round",
+              "script": "Some objects are long (like a pencil) and some are round (like a ball). Let's play a game: I'll show you an object, and you tell me if it's long or round.",
+              "duration_estimate": 5000
+            },
+            {
+              "audio_id": "audio_reflection",
+              "script": "Let's think: What is your favorite shape? Where did you see it today?",
+              "duration_estimate": 4000
+            },
+            {
+              "audio_id": "audio_summary",
+              "script": "Today we learned about circles, triangles, rectangles, squares, space, long and round. You did a great job!",
+              "duration_estimate": 5000
+            },
+            {
+              "audio_id": "audio_quiz1",
+              "script": "Let's see what you remember. I'll ask you a few questions. Question 1: What shape has no corners?",
+              "duration_estimate": 4000
+            }
+          ],
+          "validation_requirements": [
+            "Each learning objective must be addressed by at least one screen.",
+            "Each major concept (circle, triangle, rectangle, square, space, long, round) must have at least one illustration.",
+            "Each screen must have a clear purpose.",
+            "The lesson must include at least one teacher interaction (audio narration) and one student interaction (tap, drag, etc.) per major concept.",
+            "The lesson must end with a summary and a transition to the next lesson (implied by the quiz and then we would go to next lesson).",
+            "The experience must be engaging for a Grade 1 student (short screens, rich illustrations, frequent encouragement)."
+          ]
+        }
+      }
+    }
+  }
+}

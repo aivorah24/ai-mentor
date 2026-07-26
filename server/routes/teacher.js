@@ -197,6 +197,50 @@ router.delete('/:teacherEmail/students/:studentId', async (req, res) => {
   }
 });
 
+// ── POST /teacher/:teacherEmail/students/promote ───────────────────────────────
+// A teacher's own version of school-admin's bulk-grade — only Grade (and
+// optionally Section) change; id, email, admission number, and every other
+// table (assignments, submissions, attendance, stats, parent links, reports)
+// are untouched, so the student's dashboard picks up the new grade on its
+// next fetch without anything else moving. Scoped to teacher_student: a
+// teacher can only promote students actually linked to them, never the whole
+// school's roster (that's still school-admin-only via /school-admin/students/bulk-grade).
+// Body: { studentIds: [], grade, section? }
+router.post('/:teacherEmail/students/promote', async (req, res) => {
+  try {
+    const cleanTeacherEmail = String(req.params.teacherEmail).toLowerCase().trim();
+    const { studentIds, grade, section } = req.body || {};
+    if (!Array.isArray(studentIds) || !studentIds.length) return res.status(400).json({ error: 'studentIds required' });
+    const targetGrade = String(grade || '').trim();
+    if (!targetGrade) return res.status(400).json({ error: 'Target grade required' });
+
+    const { data: teacher } = await supabase.from('users').select('id').eq('email', cleanTeacherEmail).maybeSingle();
+    if (!teacher) return res.status(404).json({ error: 'Teacher not found.' });
+
+    const { data: links, error: linkErr } = await supabase
+      .from('teacher_student')
+      .select('student_id')
+      .eq('teacher_id', teacher.id)
+      .in('student_id', studentIds);
+    if (linkErr) return res.status(500).json({ error: linkErr.message });
+
+    const owned = Array.from(new Set((links || []).map((l) => l.student_id)));
+    const skipped = studentIds.filter((id) => !owned.includes(id));
+
+    if (owned.length) {
+      const patch = { grade: targetGrade };
+      if (section !== undefined) patch.section = String(section || '').trim() || null;
+      const { error } = await supabase.from('users').update(patch).in('id', owned);
+      if (error) return res.status(500).json({ error: error.message });
+    }
+
+    res.json({ promoted: owned.length, skipped, grade: targetGrade, section: section !== undefined ? (String(section || '').trim() || null) : undefined });
+  } catch (err) {
+    console.error('[POST /teacher/:teacherEmail/students/promote] error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── POST /teacher/:teacherEmail/students/link-existing ────────────────────────
 // Link an existing Aivorah student (by their email) to this teacher's class.
 // Body: { studentEmail }

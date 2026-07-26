@@ -1,0 +1,48 @@
+{
+  "package": {
+    "package_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "package_type": "ReleasePackage",
+    "schema_version": "1.0",
+    "created_at": "2023-02-20T14:30:00Z",
+    "produced_by": {
+      "agent": "final-audit-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "12345678-9012-3456-7890-123456789012",
+      "parent_package_id": "f2b3c4d5-e6f7-g8h9-i0j1"
+    }
+  },
+  "payload": {
+    "lesson_id": "f2b3c4d5-e6f7-g8h9-i0j1",
+    "release_version": "1.0",
+    "build_timestamp": "2023-02-20T14:30:00Z",
+    "package_manifest": {
+      "retrieval": "uuid-1",
+      "lesson_blueprint": "uuid-2",
+      "lesson_experience": "uuid-3",
+      "ui_plan": "uuid-4",
+      "lesson_content": "uuid-5",
+      "illustration": "uuid-6",
+      "audio": "uuid-7",
+      "quiz_review": "uuid-8",
+      "review_report": "uuid-9",
+      "qa_report": "f2b3c4d5-e6f7-g8h9-i0j1"
+    },
+    "package_references": [
+      "f2b3c4d5-e6f7-g8h9-i0j1"
+    ],
+    "audit_summary": {
+      "status": "APPROVED",
+      "checks": {
+        "rendering": "PASSED",
+        "assets": "PASSED",
+        "performance": "PASSED",
+        "accessibility": "PASSED",
+        "integrity": "PASSED",
+        "navigation": "PASSED"
+      }
+    },
+    "deployment_status": "READY"
+  }
+}

@@ -1,0 +1,127 @@
+{
+ "topicId": "0f832a06-6555-4cb4-9bcc-808e03c7b69f",
+ "grade": "Grade 11",
+ "subject": "Accountancy",
+ "curriculum": "CBSE",
+ "topicName": "Accounting Equation",
+ "bookLinked": false,
+ "pdfFile": null,
+ "lesson": {
+  "body": [
+   "The accounting equation is used to analyze transactions.",
+   "It helps maintain balance between debits and credits.",
+   "Assets, liabilities, and capital are key terms in this equation.",
+   "The equation ensures financial statements are accurate."
+  ],
+  "grade": 11,
+  "intro": "The accounting equation is a fundamental concept in accounting.",
+  "vocab": [
+   {
+    "word": "Assets",
+    "definition": "Resources owned by a business"
+   },
+   {
+    "word": "Liabilities",
+    "definition": "Debts or obligations of a business"
+   },
+   {
+    "word": "Capital",
+    "definition": "Owner's investment in the business"
+   }
+  ],
+  "subject": "Accountancy",
+  "activity": "Why is the accounting equation important in accounting?",
+  "keyLearnings": [
+   "Assets = Liabilities + Capital",
+   "Importance of accounting equation in balancing accounts"
+  ],
+  "keyTakeaways": [
+   "The accounting equation is a fundamental concept in accounting.",
+   "It helps in maintaining the balance between debits and credits."
+  ],
+  "practiceQuiz": [
+   {
+    "hint": "Review the accounting equation formula.",
+    "type": "mcq",
+    "correct": 1,
+    "options": [
+     "Assets = Liabilities - Capital",
+     "Assets = Liabilities + Capital",
+     "Assets = Capital - Liabilities",
+     "Assets = Liabilities / Capital"
+    ],
+    "question": "What does the accounting equation state?",
+    "explanation": "The accounting equation states that assets are equal to liabilities plus capital."
+   },
+   {
+    "hint": "Review the purpose of the accounting equation.",
+    "type": "fill_blank",
+    "correct": "debits",
+    "question": "The accounting equation helps in maintaining the balance between _______ and credits.",
+    "explanation": "The accounting equation helps in maintaining the balance between debits and credits."
+   },
+   {
+    "hint": "Review the importance of the accounting equation.",
+    "type": "mcq",
+    "correct": 2,
+    "options": [
+     "To calculate profits",
+     "To analyze transactions",
+     "To balance accounts",
+     "To prepare financial statements"
+    ],
+    "question": "What is the main purpose of the accounting equation?",
+    "explanation": "The main purpose of the accounting equation is to balance accounts."
+   }
+  ],
+  "originalLesson": [
+   "The accounting equation is a fundamental concept in accounting that states that assets = liabilities + capital."
+  ],
+  "whatYoullLearn": [
+   "Assets = Liabilities + Capital",
+   "Importance of accounting equation in balancing accounts"
+  ],
+  "thinkAndReflect": [
+   "Why is the accounting equation important in accounting?",
+   "How does the accounting equation help in financial statement preparation?"
+  ],
+  "instructionalType": "Conceptual Understanding"
+ },
+ "practiceQuiz": [
+  {
+   "hint": "Review the accounting equation formula.",
+   "type": "mcq",
+   "correct": 1,
+   "options": [
+    "Assets = Liabilities - Capital",
+    "Assets = Liabilities + Capital",
+    "Assets = Capital - Liabilities",
+    "Assets = Liabilities / Capital"
+   ],
+   "question": "What does the accounting equation state?",
+   "explanation": "The accounting equation states that assets are equal to liabilities plus capital."
+  },
+  {
+   "hint": "Review the purpose of the accounting equation.",
+   "type": "fill_blank",
+   "correct": "debits",
+   "question": "The accounting equation helps in maintaining the balance between _______ and credits.",
+   "explanation": "The accounting equation helps in maintaining the balance between debits and credits."
+  },
+  {
+   "hint": "Review the importance of the accounting equation.",
+   "type": "mcq",
+   "correct": 2,
+   "options": [
+    "To calculate profits",
+    "To analyze transactions",
+    "To balance accounts",
+    "To prepare financial statements"
+   ],
+   "question": "What is the main purpose of the accounting equation?",
+   "explanation": "The main purpose of the accounting equation is to balance accounts."
+  }
+ ],
+ "bookText": null,
+ "askAivorahResponse": "Great question! Let’s explore the **Accounting Equation** together — it’s like the *balance scale* of a business’s money world!\n\n---\n\n### 🌟 What is the Accounting Equation?\nImagine your toy shop has:\n- **Toys (Assets)**: These are things you own that bring value, like your toy collection or cash in your piggy bank.\n- **Debts (Liabilities)**: These are things you owe, like money you borrowed to buy more toys.\n- **Your Own Money (Capital/Equity)**: This is what you’ve put in yourself — your savings used to start or grow the shop.\n\nThe **Accounting Equation** says:\n> **Assets = Liabilities + Capital**\n\nIt’s like saying:\n> *All the good stuff you own = All the money you owe + All the money you’ve put in yourself.*\n\nThis keeps everything **balanced** — like a seesaw that never tips over!\n\n---\n\n### 🧩 Real-Life Analogy: The Lemonade Stand\nYou start a lemonade stand!\n- You buy a **lemon squeezer** (an **asset**) for $20.\n- You borrowed $10 from your friend (**liability**).\n- You put in $10 of your own money (**capital**).\n\nNow:\n- **Total Assets** = $20 (the squeezer)\n- **Liabilities** = $10 (you owe your friend)\n- **Capital** = $10 (your own money)\n\nCheck the equation:\n> $20 (Assets) = $10 (Liabilities) + $10 (Capital) ✅\nIt balances! Like a perfectly balanced lemonade pitcher.\n\n---\n\n### 📝 Worked Example (Step by Step)\n\n**Business Name:** Zara’s Toy Shop\n**Starting Point:**\n- Cash (money in the bank): $500\n- Toys (inventory): $300\n- Owed to supplier (liability): $200\n- Owner’s money (capital): ?\n\n**Step 1: Find the total Assets**\nAssets = Cash + Toys\n= $500 + $300\n= **$800**\n\n**Step 2: Write the Accounting Equation**\nAssets = Liabilities + Capital\n$800 = $200 + Capital\n\n**Step 3: Solve for Capital**\nCapital = $800 – $200\nCapital = **$600**\n\n✅ So, the owner has put in $600 of their own money.\n\n---\n\n### 🧠 Why does this matter?\nThis equation helps you:\n- Track what you own vs. what you owe.\n- Keep records accurate — like making sure your lemonade recipe is always right!\n- Prepare financial reports (like a *balance sheet*) so you know if your business is healthy.\n\n---\n\n### 🎯 Your Turn! Try This Fun Practice:\nYou start a small book-selling business.\n- You have $1,000 in cash.\n- You bought books worth $600.\n- You still owe the publisher $200.\n\n**What is your Capital (your own money invested)?**\nTake your time — write it down like we did!\n\nYou’re doing amazing! Let me know your answer, and we’ll check it together. 🌟"
+}

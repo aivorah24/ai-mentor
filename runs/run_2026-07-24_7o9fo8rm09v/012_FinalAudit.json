@@ -1,0 +1,40 @@
+{
+  "package": {
+    "package_id": "b1c2d3e4-f5g6-7890-1234-56789abcdef0",
+    "package_type": "ErrorPackage",
+    "schema_version": "1.0",
+    "created_at": "2024-07-30T12:05:00Z",
+    "produced_by": {
+      "agent": "final-audit-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+      "parent_package_id": "a3b4c5d6-e7f8-9012-3456-789012345678"
+    }
+  },
+  "payload": {
+    "error_code": "FA002",
+    "message": "QA report failed: status FAIL",
+    "details": {
+      "qa_report_package_id": "a3b4c5d6-e7f8-9012-3456-789012345678",
+      "status": "FAIL",
+      "failed_checks": [
+        {
+          "issue_id": "QA001-001",
+          "category": "integrity",
+          "description": "Missing required packages: Retrieval Package, Validated Retrieval Package, Lesson Blueprint, Lesson Experience, UI Plan, Quiz Review Package",
+          "target_agent": "regeneration_agent",
+          "error_code": "QA001"
+        },
+        {
+          "issue_id": "QA001-002",
+          "category": "integrity",
+          "description": "Invalid pipeline_id in provided packages: contains non-hex characters",
+          "target_agent": "regeneration_agent",
+          "error_code": "QA001"
+        }
+      ]
+    }
+  }
+}

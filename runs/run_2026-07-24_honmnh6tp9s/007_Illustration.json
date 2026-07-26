@@ -1,0 +1,79 @@
+{
+  "package": {
+    "package_id": "uuid",
+    "package_type": "IllustrationPackage",
+    "schema_version": "1.0",
+    "created_at": "2024-03-16T14:30:00.000Z",
+    "produced_by": {
+      "agent": "illustration-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "honmnh6tp9s",
+      "parent_package_id": "uuid"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction_with_borrowing",
+    "illustrations": [
+      {
+        "artifact_id": "introduction_illustration",
+        "stage_id": "introduction",
+        "component_id": "video_player",
+        "concept_id": "subtraction_with_borrowing",
+        "style_category": "diagram",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A diagram showing the concept of subtraction with borrowing, with numbers and arrows to illustrate the process.",
+        "consistency_tags": [
+          "color_theme_blue",
+          "font_open_sans"
+        ],
+        "source_references": [
+          "grounded_evidence_0"
+        ]
+      },
+      {
+        "artifact_id": "practice_problems_illustration",
+        "stage_id": "practice_problems",
+        "component_id": "interactive_exercise",
+        "concept_id": "subtraction_with_borrowing",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "An infographic showing a subtraction problem with borrowing, with visual aids to help students understand the concept.",
+        "consistency_tags": [
+          "color_theme_blue",
+          "font_open_sans"
+        ],
+        "source_references": [
+          "grounded_evidence_2"
+        ]
+      },
+      {
+        "artifact_id": "real_life_applications_illustration",
+        "stage_id": "real_life_applications",
+        "component_id": "case_study",
+        "concept_id": "subtraction_with_borrowing",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A scene showing a real-life application of subtraction with borrowing, such as a person giving apples to a friend.",
+        "consistency_tags": [
+          "color_theme_blue",
+          "font_open_sans"
+        ],
+        "source_references": [
+          "grounded_evidence_0"
+        ]
+      }
+    ],
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}

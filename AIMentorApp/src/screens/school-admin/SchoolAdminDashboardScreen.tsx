@@ -70,11 +70,6 @@ interface ManageRow {
   onPress: () => void;
 }
 
-function announcementStatusLabel(a: RecentAnnouncement) {
-  if (a.status === 'scheduled') return 'Scheduled';
-  return 'Published';
-}
-
 export default function SchoolAdminDashboardScreen({ navigation }: any) {
   const { colors } = useTheme();
   const { isMobile } = useResponsive();
@@ -84,7 +79,6 @@ export default function SchoolAdminDashboardScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
-  const [query, setQuery] = useState('');
   // Pending B2C → B2B "Connect to My School" requests awaiting this admin's review.
   const [accessRequests, setAccessRequests] = useState<AccessRequest[]>([]);
   const [actioningId, setActioningId] = useState<string | null>(null);
@@ -158,18 +152,11 @@ export default function SchoolAdminDashboardScreen({ navigation }: any) {
     },
   ], [overview, activeAnnouncements, navigation]);
 
-  const filteredRows = query.trim()
-    ? manageRows.filter((t) => `${t.title} ${t.caption}`.toLowerCase().includes(query.trim().toLowerCase()))
-    : manageRows;
-
   return (
     <ScreenLayout>
       <View style={styles.screen}>
         <Header
           title="Overview"
-          showSearch
-          searchPlaceholder="Search people, announcements, or settings"
-          onSearchChange={setQuery}
           onMenuPress={() => navigation?.openDrawer?.()}
         />
 
@@ -214,18 +201,11 @@ export default function SchoolAdminDashboardScreen({ navigation }: any) {
               <View style={[styles.bodyRow, isMobile && styles.bodyRowMobile]}>
                 <View style={styles.mainCol}>
                   <Text style={styles.sectionLabel}>MANAGE</Text>
-                  {filteredRows.length === 0 ? (
-                    <View style={styles.emptyBox}>
-                      <Feather name="search" size={26} color={colors.textDim} />
-                      <Text style={styles.emptyText}>Nothing matches "{query}"</Text>
-                    </View>
-                  ) : (
-                    <View style={styles.manageList}>
-                      {filteredRows.map((row, i) => (
-                        <ManageListRow key={row.key} row={row} colors={colors} isLast={i === filteredRows.length - 1} />
-                      ))}
-                    </View>
-                  )}
+                  <View style={styles.manageList}>
+                    {manageRows.map((row, i) => (
+                      <ManageListRow key={row.key} row={row} colors={colors} isLast={i === manageRows.length - 1} />
+                    ))}
+                  </View>
                 </View>
 
                 <View style={[styles.rail, isMobile && styles.railMobile]}>
@@ -306,40 +286,6 @@ export default function SchoolAdminDashboardScreen({ navigation }: any) {
                         })}
                       </View>
                     </>
-                  )}
-
-                  <Text style={styles.sectionLabel}>QUICK ACTIONS</Text>
-                  <TouchableOpacity
-                    style={styles.primaryAction}
-                    onPress={() => navigation.navigate('SchoolAdminStudents', { openAdd: true })}
-                    accessibilityRole="button"
-                  >
-                    <Feather name="user-plus" size={14} color="#0B0B0B" />
-                    <Text style={styles.primaryActionText}>Add Student</Text>
-                  </TouchableOpacity>
-                  <RailLink icon="plus" label="Create announcement" colors={colors} onPress={() => navigation.navigate('AnnouncementManager', { openComposer: true })} />
-                  <RailLink icon="upload" label="Import students" colors={colors} disabled disabledHint="Coming soon" onPress={() => navigation.navigate('SchoolAdminBulkImport')} />
-
-                  <Text style={[styles.sectionLabel, { marginTop: spacing.lg }]}>RECENT ANNOUNCEMENTS</Text>
-                  {overview && overview.recentAnnouncements.length > 0 ? (
-                    <View style={styles.announcementList}>
-                      {overview.recentAnnouncements.map((a, i) => (
-                        <Pressable
-                          key={a.id}
-                          onPress={() => navigation.navigate('AnnouncementManager')}
-                          style={({ hovered }: any) => [
-                            styles.announcementRow,
-                            i === overview.recentAnnouncements.length - 1 && styles.announcementRowLast,
-                            Platform.OS === 'web' && hovered && { backgroundColor: colors.cardHover },
-                          ]}
-                        >
-                          <Text style={styles.announcementTitle} numberOfLines={1}>{a.title}</Text>
-                          <Text style={styles.announcementMeta}>{announcementStatusLabel(a)}</Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  ) : (
-                    <Text style={styles.railEmpty}>No announcements yet.</Text>
                   )}
                 </View>
               </View>
@@ -485,29 +431,6 @@ function ManageListRow({ row, colors, isLast }: { row: ManageRow; colors: AppCol
       </View>
       {row.meta && <Text style={[rowStyles.meta, { color: colors.textDim }]}>{row.meta}</Text>}
       <Feather name="chevron-right" size={16} color={colors.textDim} />
-    </Pressable>
-  );
-}
-
-function RailLink({ icon, label, onPress, colors, disabled, disabledHint }: {
-  icon: string; label: string; onPress: () => void; colors: AppColors; disabled?: boolean; disabledHint?: string;
-}) {
-  const styles = tileStyles;
-  return (
-    <Pressable
-      onPress={disabled ? undefined : onPress}
-      accessibilityRole="button"
-      accessibilityLabel={disabled ? `${label} (coming soon)` : label}
-      accessibilityState={{ disabled }}
-      style={({ hovered }: any) => [
-        styles.railLink,
-        Platform.OS === 'web' && hovered && !disabled && { backgroundColor: colors.cardHover },
-        disabled && { opacity: 0.5 },
-      ]}
-    >
-      <Feather name={icon as any} size={14} color={colors.textDim} />
-      <Text style={[styles.railLinkText, { color: colors.textMuted }]}>{label}</Text>
-      {disabled && disabledHint && <Text style={[styles.railLinkHint, { color: colors.textDim }]}>{disabledHint}</Text>}
     </Pressable>
   );
 }

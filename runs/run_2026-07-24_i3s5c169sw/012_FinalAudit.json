@@ -1,0 +1,46 @@
+{
+  "package": {
+    "package_id": "e3c4a5b6-c7d8-e9f0-1234-5678fedcba9",
+    "package_type": "ReleasePackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T13:20:00.000Z",
+    "produced_by": {
+      "agent": "final-audit-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "final-audit-agent-123",
+      "parent_package_id": "e3c4a5b6-c7d8-e9f0-1234-5678fedcba9"
+    }
+  },
+  "payload": {
+    "lesson_id": "missing-stage-lesson",
+    "release_version": "1.0",
+    "build_timestamp": "2026-07-24T13:20:00.000Z",
+    "package_manifest": {
+      "retrieval": "uuid",
+      "lesson_blueprint": "uuid",
+      "lesson_experience": "uuid",
+      "ui_plan": "uuid",
+      "lesson_content": "uuid",
+      "illustration": "uuid",
+      "audio": "uuid",
+      "quiz_review": "uuid",
+      "review_report": "uuid",
+      "qa_report": "uuid"
+    },
+    "package_references": [],
+    "audit_summary": {
+      "status": "FAILED",
+      "checks": {
+        "QA001": "Package Integrity",
+        "QA002": "Rendering",
+        "QA003": "Asset Validation",
+        "QA004": "Navigation",
+        "QA005": "Accessibility Metadata",
+        "QA006": "Performance Limits"
+      }
+    },
+    "deployment_status": "FAILED"
+  }
+}

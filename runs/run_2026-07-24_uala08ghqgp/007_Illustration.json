@@ -1,0 +1,115 @@
+{
+  "package": {
+    "package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f",
+    "package_type": "IllustrationPackage",
+    "schema_version": "1.0",
+    "created_at": "2026-07-24T14:12:14.067Z",
+    "produced_by": {
+      "agent": "illustration-agent",
+      "version": "1.0.0"
+    },
+    "trace": {
+      "pipeline_id": "uala08ghqgp",
+      "parent_package_id": "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f"
+    }
+  },
+  "payload": {
+    "lesson_id": "subtraction-with-borrowing",
+    "illustrations": [
+      {
+        "artifact_id": "illustration-1",
+        "stage_id": "step-1",
+        "component_id": "component-1",
+        "concept_id": "subtraction-with-borrowing",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A piggy bank with 72 rupees and a person trying to subtract 47 rupees",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f"
+        ]
+      },
+      {
+        "artifact_id": "illustration-2",
+        "stage_id": "step-2",
+        "component_id": "component-2",
+        "concept_id": "regrouping-numbers",
+        "style_category": "diagram",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A diagram showing regrouping of numbers for borrowing",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f"
+        ]
+      },
+      {
+        "artifact_id": "illustration-3",
+        "stage_id": "step-3",
+        "component_id": "component-3",
+        "concept_id": "practice-subtraction",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A person practicing subtraction with borrowing",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f"
+        ]
+      },
+      {
+        "artifact_id": "illustration-4",
+        "stage_id": "step-4",
+        "component_id": "component-4",
+        "concept_id": "real-life-situations",
+        "style_category": "infographic",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "An infographic showing real-life situations for subtraction with borrowing",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f"
+        ]
+      },
+      {
+        "artifact_id": "illustration-5",
+        "stage_id": "step-5",
+        "component_id": "component-5",
+        "concept_id": "mastering-borrowing",
+        "style_category": "scene",
+        "reuse_source": null,
+        "image_ref": null,
+        "requires_generation": true,
+        "visual_prompt": "A person mastering subtraction with borrowing",
+        "consistency_tags": [
+          "character_aivorah",
+          "color_theme_blue"
+        ],
+        "source_references": [
+          "e5f5f5f5-5f5f-5f5f-5f5f-5f5f5f5f5f5f"
+        ]
+      }
+    ],
+    "validation_summary": {
+      "status": "PASS",
+      "checks": {}
+    }
+  }
+}
