@@ -136,7 +136,7 @@ export default function TeachingEntriesEditor({
             )}
             <View style={[styles.formRow, rowOpen && { zIndex: 23 }]}>
               <View style={[{ flex: 1 }, openDropdown === curriculumKey && { zIndex: 22 }]}>
-                <Text style={styles.formLabel}>Curriculum</Text>
+                <Text style={styles.formLabel}>Curriculum <Text style={{ color: '#ef4444', fontSize: 13 }}>*</Text></Text>
                 <FormDropdown
                   value={entry.curriculum} placeholder="Select curriculum" options={curriculumOptions}
                   onChange={(v) => updateEntry(idx, { curriculum: v, grade: '', subjectsInput: '' })} colors={colors}
@@ -144,7 +144,7 @@ export default function TeachingEntriesEditor({
                 />
               </View>
               <View style={[{ flex: 1 }, openDropdown === gradeKey && { zIndex: 21 }]}>
-                <Text style={styles.formLabel}>Grade</Text>
+                <Text style={styles.formLabel}>Grade <Text style={{ color: '#ef4444', fontSize: 13 }}>*</Text></Text>
                 <FormDropdown
                   value={entry.grade} placeholder={entry.curriculum ? 'Select grade' : 'Pick curriculum first'} options={gradeOptions}
                   onChange={(v) => updateEntry(idx, { grade: v, subjectsInput: '' })} colors={colors}

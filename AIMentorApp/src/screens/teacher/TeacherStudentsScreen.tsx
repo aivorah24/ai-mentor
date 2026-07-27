@@ -693,7 +693,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
         {/* Add Student / Promote Students buttons */}
         <View style={{ flexDirection: 'row', gap: 8, alignSelf: 'flex-end', marginHorizontal: spacing.xl, marginBottom: 4 }}>
           <TouchableOpacity style={[styles.addBtn, { marginHorizontal: 0, marginBottom: 0, alignSelf: 'auto' }]} onPress={openAddModal} activeOpacity={0.8}>
-            <Feather name="user-plus" size={14} color={gold} />
+            <Feather name="user-plus" size={14} color="#0B0B0B" />
             <Text style={styles.addBtnText}>Add Student</Text>
           </TouchableOpacity>
           {students.length > 0 && (
@@ -704,7 +704,7 @@ export default function TeacherStudentsScreen({ navigation, route }: any) {
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={styles.promoteBtn} onPress={() => setPromoteMode(true)} activeOpacity={0.8}>
-                <Feather name="arrow-up-circle" size={14} color={gold} />
+                <Feather name="arrow-up-circle" size={14} color="#0B0B0B" />
                 <Text style={styles.promoteBtnText}>Promote Students</Text>
               </TouchableOpacity>
             )
@@ -1670,18 +1670,16 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-end',
     marginHorizontal: spacing.xl, marginBottom: 4,
     paddingHorizontal: spacing.md, paddingVertical: 8,
-    borderRadius: radius.md, borderWidth: 1,
-    borderColor: c.accentYellow + '40', backgroundColor: c.accentYellow + '18',
+    borderRadius: radius.md, backgroundColor: c.accentYellow,
   },
-  addBtnText: { fontSize: 13, fontWeight: '600', color: c.accentYellow },
+  addBtnText: { fontSize: 13, fontWeight: '700', color: '#0B0B0B' },
 
   promoteBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: spacing.md, paddingVertical: 8,
-    borderRadius: radius.md, borderWidth: 1,
-    borderColor: c.accentYellow + '40', backgroundColor: c.accentYellow + '18',
+    borderRadius: radius.md, backgroundColor: c.accentYellow,
   },
-  promoteBtnText: { fontSize: 13, fontWeight: '600', color: c.accentYellow },
+  promoteBtnText: { fontSize: 13, fontWeight: '700', color: '#0B0B0B' },
   promoteBtnActive: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: spacing.md, paddingVertical: 8,
