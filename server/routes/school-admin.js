@@ -939,6 +939,35 @@ router.post('/students/bulk', async (req, res) => {
     const errors = [];
     const credentials = [];
 
+    // Pre-load grade+section -> class-teacher id, so newly created students
+    // land in `teacher_student` immediately instead of being invisible to
+    // their teacher until a later manual re-link (same root cause as the
+    // class-teacher auto-link above: teacher_student is the only thing the
+    // teacher roster query reads, it is never derived from grade/section).
+    const classTeacherIdByGradeSection = new Map();
+    try {
+      const grades = await buildGradesSectionsView(schoolId);
+      const teacherEmails = new Set();
+      for (const g of grades) {
+        for (const s of g.sections || []) {
+          if (s.classTeacherEmail) teacherEmails.add(s.classTeacherEmail);
+        }
+      }
+      if (teacherEmails.size) {
+        const { data: teachers } = await supabase.from('users')
+          .select('id, email').in('email', [...teacherEmails]).eq('role', 'teacher').eq('school_id', schoolId);
+        const teacherIdByEmail = new Map((teachers || []).map((t) => [t.email, t.id]));
+        for (const g of grades) {
+          for (const s of g.sections || []) {
+            const teacherId = s.classTeacherEmail ? teacherIdByEmail.get(s.classTeacherEmail) : null;
+            if (teacherId) classTeacherIdByGradeSection.set(`${g.name}||${s.name}`, teacherId);
+          }
+        }
+      }
+    } catch (linkPreloadErr) {
+      console.error('[POST /school-admin/students/bulk] class-teacher preload failed:', linkPreloadErr.message);
+    }
+
     for (let i = 0; i < rows.length; i++) {
       const raw = rows[i] || {};
       const studentName = String(raw.studentName || '').trim();
@@ -1018,6 +1047,16 @@ router.post('/students/bulk', async (req, res) => {
           created.push({ id: studentUserId, name, email });
           credentials.push({ name, email, password, role: 'student' });
           newStudentCreds = { email, password };
+
+          // --- Auto-link to the class teacher of this grade+section (if any) ---
+          if (grade && section) {
+            const classTeacherId = classTeacherIdByGradeSection.get(`${grade}||${section}`);
+            if (classTeacherId) {
+              await supabase.from('teacher_student')
+                .upsert({ teacher_id: classTeacherId, student_id: studentUserId, subject: 'Homeroom' },
+                  { onConflict: 'teacher_id,student_id,subject', ignoreDuplicates: true });
+            }
+          }
         }
 
         // --- PARENT (only when a parent name is supplied) ---

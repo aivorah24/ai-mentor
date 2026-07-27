@@ -115,8 +115,8 @@ export default function OnboardingTeacherBoxes() {
 
   // ── Per-card completion ────────────────────────────
   const personalDone = fullName.trim().length >= 2 && dob.trim().length >= 6 && mobile.trim().length >= 7;
-  const schoolDone = school.trim().length >= 2 && city.trim().length >= 2 && state.trim().length >= 2;
-  const professionalDone = teacherRole.length > 0 && experience.length > 0;
+  const schoolDone = school.trim().length >= 2 && city.trim().length >= 2 && state.trim().length >= 2 && country.trim().length >= 2;
+  const professionalDone = teacherRole.length > 0;
 
   // Derive the save shapes from `entries`. A COMPLETE entry needs a curriculum,
   // a grade, and at least one subject. `teaches` keeps each entry's own
@@ -319,7 +319,7 @@ export default function OnboardingTeacherBoxes() {
           <View style={[styles.card, styles.card3]}>
             <CardHeader icon="user" title="Personal Info" subtitle="Tell us about yourself." done={personalDone} styles={styles} />
             <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>Name</Text>
+              <Text style={styles.lbl}>Name <Text style={{ color: '#ef4444', fontSize: 13 }}>*</Text></Text>
               <TextInput style={styles.input} value={fullName} onChangeText={setFullName}
                 placeholder="Your name" placeholderTextColor={colors.textDim} autoCapitalize="words" />
             </View>
@@ -363,7 +363,7 @@ export default function OnboardingTeacherBoxes() {
           <View style={[styles.card, styles.card3, { zIndex: 10 }]}>
             <CardHeader icon="home" title="School Details" subtitle="Where do you teach?" done={schoolDone} styles={styles} />
             <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>School Name</Text>
+              <Text style={styles.lbl}>School Name <Text style={{ color: '#ef4444', fontSize: 13 }}>*</Text></Text>
               <AutocompleteField
                 value={school}
                 onChange={setSchool}
@@ -384,7 +384,7 @@ export default function OnboardingTeacherBoxes() {
             )}
             <View style={[styles.fieldRow, { zIndex: 10 }]}>
               <View style={[styles.fieldGroup, { flex: 1, zIndex: 20 }]}>
-                <Text style={styles.lbl}>Country</Text>
+                <Text style={styles.lbl}>Country <Text style={{ color: '#ef4444', fontSize: 13 }}>*</Text></Text>
                 <SelectField
                   value={country}
                   onChange={(c) => { setCountry(c); if (c !== 'India') setState(''); setCity(''); }}
@@ -437,7 +437,7 @@ export default function OnboardingTeacherBoxes() {
           <View style={[styles.card, styles.card3]}>
             <CardHeader icon="briefcase" title="Professional Info" subtitle="Your role and experience." done={professionalDone} styles={styles} />
             <View style={styles.fieldGroup}>
-              <Text style={styles.lbl}>Your Role</Text>
+              <Text style={styles.lbl}>Your Role <Text style={{ color: '#ef4444', fontSize: 13 }}>*</Text></Text>
               <View style={styles.chipRow}>
                 {TEACHER_ROLES.map(r => (
                   <TouchableOpacity key={r} style={[styles.chip, teacherRole === r && styles.chipActive]}
