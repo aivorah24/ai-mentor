@@ -27,9 +27,10 @@ interface Props {
   onChange: (v: string) => void;
   placeholder?: string;
   minDate?: string;              // 'YYYY-MM-DD' — dates before this are disabled
+  testID?: string;                // base testID; the popover's "Today" button gets `${testID}-today`
 }
 
-export default function DatePicker({ value, onChange, placeholder = 'Select a date', minDate }: Props) {
+export default function DatePicker({ value, onChange, placeholder = 'Select a date', minDate, testID }: Props) {
   const { colors } = useTheme();
   const [open, setOpen] = useState(false);
   const today = new Date();
@@ -68,6 +69,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select a da
     // @ts-ignore — data attr for web outside-click
     <View data-datepicker={uid} style={{ position: 'relative', zIndex: open ? 1000 : 1 }}>
       <TouchableOpacity
+        testID={testID}
         style={[s.field, { backgroundColor: colors.cardDark, borderColor: open ? colors.accentYellow : colors.borderColor }]}
         onPress={() => setOpen(o => !o)}
         activeOpacity={0.8}
@@ -144,7 +146,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select a da
             <TouchableOpacity onPress={() => { onChange(''); setOpen(false); }} activeOpacity={0.7}>
               <Text style={[s.footerBtn, { color: colors.textMuted }]}>Clear</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { onChange(todayKey); setOpen(false); }} activeOpacity={0.7}>
+            <TouchableOpacity testID={testID ? `${testID}-today` : undefined} onPress={() => { onChange(todayKey); setOpen(false); }} activeOpacity={0.7}>
               <Text style={[s.footerBtn, { color: colors.accentYellow }]}>Today</Text>
             </TouchableOpacity>
           </View>
