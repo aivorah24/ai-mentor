@@ -2814,6 +2814,10 @@ export default function AssignmentsScreen({ navigation, route }: any) {
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
+  // Distinct from "no assignments" - set when the last load() attempt
+  // failed, so the screen can tell the student "couldn't load" instead of
+  // the misleading "you have nothing assigned" empty state.
+  const [loadError, setLoadError] = useState(false);
   const [activeAssignment, setActiveAssignment] = useState<Assignment | null>(null);
   // Latest progress reported by the interactive-quiz iframe — used to gate the
   // "Submit Assignment" button so the student confirms submission explicitly
@@ -2875,10 +2879,16 @@ export default function AssignmentsScreen({ navigation, route }: any) {
       .then(data => {
         if (Array.isArray(data)) {
           setAssignments(data);
+          setLoadError(false);
+        } else {
+          // Non-array response (e.g. an { error } body from a failed
+          // request) - surface it rather than silently pretending the
+          // student has zero assignments.
+          setLoadError(true);
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => { setLoadError(true); setLoading(false); });
   }
 
   useEffect(() => {
@@ -3089,7 +3099,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
   if (loading) {
     return (
       <ScreenLayout>
-        <View style={[styles.screen, { alignItems: 'center', justifyContent: 'center' }]}>
+        <View testID="assignments-loading" style={[styles.screen, { alignItems: 'center', justifyContent: 'center' }]}>
           <ActivityIndicator size="large" color={colors.accentYellow} />
         </View>
       </ScreenLayout>
@@ -3113,10 +3123,10 @@ export default function AssignmentsScreen({ navigation, route }: any) {
               { label: 'Completed', value: completed, color: colors.accentGreen,  icon: 'check-circle' as const },
               { label: 'Ready',     value: overdue,   color: colors.accentYellow,   icon: 'zap' as const },
             ].map((s) => (
-              <View key={s.label} style={[styles.statCard, { borderTopWidth: 2, borderTopColor: s.color }]}>
+              <View key={s.label} testID={`assignments-stat-${s.label.toLowerCase()}`} style={[styles.statCard, { borderTopWidth: 2, borderTopColor: s.color }]}>
                 <View>
                   <Text style={styles.statLabel}>{s.label}</Text>
-                  <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
+                  <Text testID={`assignments-stat-${s.label.toLowerCase()}-value`} style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
                 </View>
                 <View style={[styles.statIcon, { backgroundColor: s.color + '18', borderColor: s.color + '33' }]}>
                   <Feather name={s.icon} size={20} color={s.color} />
@@ -3130,6 +3140,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
             {FILTERS.map((f) => (
               <TouchableOpacity
                 key={f}
+                testID={`assignments-filter-${f.toLowerCase()}`}
                 style={[styles.filterTab, activeFilter === f && styles.filterTabActive]}
                 onPress={() => setActiveFilter(f)}
                 activeOpacity={0.7}
@@ -3140,8 +3151,24 @@ export default function AssignmentsScreen({ navigation, route }: any) {
           </ScrollView>
 
           {/* Assignment list */}
-          {filtered.length === 0 ? (
-            <View style={{ alignItems: 'center', paddingVertical: 48 }}>
+          {loadError && assignments.length === 0 ? (
+            <View testID="assignments-error-state" style={{ alignItems: 'center', paddingVertical: 48, gap: 12 }}>
+              <Feather name="alert-triangle" size={36} color={colors.accentRed} />
+              <Text style={[styles.sectionTitle, { color: colors.textMuted, fontWeight: '400', textAlign: 'center' }]}>
+                Couldn't load your assignments. Check your connection and try again.
+              </Text>
+              <TouchableOpacity
+                testID="assignments-retry-button"
+                onPress={() => { setLoading(true); load(); }}
+                activeOpacity={0.8}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10, backgroundColor: colors.accentYellow }}
+              >
+                <Feather name="refresh-cw" size={14} color="#fff" />
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Try again</Text>
+              </TouchableOpacity>
+            </View>
+          ) : filtered.length === 0 ? (
+            <View testID="assignments-empty-state" style={{ alignItems: 'center', paddingVertical: 48 }}>
               <Feather name="check-square" size={36} color={colors.textDim} />
               <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: 12, fontWeight: '400' }]}>
                 {activeFilter === 'Completed' ? 'No completed assignments yet.' : 'No assignments yet. Your teacher will assign work soon.'}
@@ -3184,7 +3211,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
 
                 return (
                   /* Outer wrapper provides the colored left accent bar */
-                  <TouchableOpacity key={item.id} style={[styles.cardWrapper, { borderColor: color + '35', backgroundColor: color + '07' }]}
+                  <TouchableOpacity key={item.id} testID={`assignments-card-${item.id}`} style={[styles.cardWrapper, { borderColor: color + '35', backgroundColor: color + '07' }]}
                     activeOpacity={item.status === 'completed' ? 0.7 : 1}
                     onPress={item.status === 'completed' ? () => setViewingResult(item) : undefined}
                   >
@@ -3236,6 +3263,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                       </View>
                       {item.status === 'pending' && !isClosed && (
                         <TouchableOpacity
+                          testID={`assignments-card-${item.id}-start`}
                           style={[styles.actionBtn, { backgroundColor: color, borderColor: color + '80', borderWidth: 1 }]}
                           activeOpacity={0.7}
                           onPress={() => openAssignment(item)}
@@ -3332,6 +3360,7 @@ export default function AssignmentsScreen({ navigation, route }: any) {
                     {quizProgress ? `${quizProgress.attemptedCount}/${quizProgress.total} answered` : 'Answer every question to submit'}
                   </Text>
                   <TouchableOpacity
+                    testID="assignments-interactive-submit"
                     disabled={!quizProgress?.completed || submittingQuiz}
                     onPress={() => {
                       if (!quizProgress?.completed || !activeAssignment) return;
