@@ -1897,6 +1897,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
               ))}
             </ScrollView>
             <TouchableOpacity
+              testID="teacher-quiz-library-tab"
               style={[styles.createBtn, activeTab === 'Quiz Library' ? { backgroundColor: gold } : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: gold }]}
               onPress={() => setActiveTab(activeTab === 'Quiz Library' ? 'All' : 'Quiz Library')}
               activeOpacity={0.85}
@@ -1965,7 +1966,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     const subjectColor = SUBJECT_COLORS[q.subject] || gold;
                     const questionCount = q.quiz_data?.tasks?.reduce((s: number, t: any) => s + (t.questions?.length || 0), 0) || 0;
                     return (
-                      <TouchableOpacity key={q.id} style={[styles.card, { width: '47.5%', minWidth: 280 }]} activeOpacity={0.85} onPress={async () => {
+                      <TouchableOpacity key={q.id} testID={`library-quiz-card-${q.id}`} style={[styles.card, { width: '47.5%', minWidth: 280 }]} activeOpacity={0.85} onPress={async () => {
                           setLibraryPreviewQuiz(q);
                           setLibraryPreviewLoading(true);
                           try {
@@ -1992,15 +1993,36 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                               </Text>
                             </View>
                             <TouchableOpacity
+                              testID={`library-quiz-assign-${q.id}`}
                               style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, backgroundColor: subjectColor, alignItems: 'center', justifyContent: 'center' }}
                               activeOpacity={0.8}
-                              onPress={() => {
+                              onPress={async () => {
                                 // Pre-load quiz, open the wizard at Step 3, AND open the same
                                 // Preview/Edit Answers screen the normal upload flow uses —
                                 // previously this only set wizard state and never opened that
                                 // modal, so a reused-from-library quiz landed on a bare "assign"
                                 // step with no way to edit answers/hints before publishing.
-                                setInteractiveQuiz({ ...q.quiz_data, _editMode: false });
+                                //
+                                // q.quiz_data is ALWAYS undefined here - GET /quiz/list (which
+                                // populates libraryQuizzes) deliberately omits quiz_data for
+                                // listing performance (see routes/quiz.js). Without this fetch,
+                                // interactiveQuiz ends up with no `tasks` at all, and Publish
+                                // Assignment always failed with "This quiz has no tasks. Please
+                                // re-generate before publishing." - reproduced directly via this
+                                // exact button before this fix (confirmed 2026-08-13).
+                                let fullQuiz = q.quiz_data;
+                                if (!fullQuiz) {
+                                  try {
+                                    const r = await fetch(`${SERVER_URL}/quiz/${q.id}`);
+                                    const d = await r.json();
+                                    fullQuiz = d.quiz?.quiz_data;
+                                  } catch {}
+                                }
+                                if (!fullQuiz) {
+                                  Alert.alert('Could not load quiz', 'This saved quiz could not be loaded. Please try again.');
+                                  return;
+                                }
+                                setInteractiveQuiz({ ...fullQuiz, _editMode: false });
                                 setSubject(q.subject || 'Mathematics');
                                 setGrade(q.grade || defaultGrade);
                                 setCurriculum(q.curriculum || teacherCurriculum);
@@ -2991,7 +3013,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                     <Feather name="external-link" size={14} color="#fff" />
                     <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>Open in Tab</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={closeInteractivePreviewModal} activeOpacity={0.75}>
+                  <TouchableOpacity testID="teacher-interactive-preview-close" onPress={closeInteractivePreviewModal} activeOpacity={0.75}>
                     <Feather name="x" size={22} color="#8b949e" />
                   </TouchableOpacity>
                 </View>
@@ -3894,6 +3916,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                   {(createMode === 'ai' || uploadStep === 3) && (<>
                   <Text style={styles.fieldLabel}>Due Date *</Text>
                   <DatePicker
+                    testID="teacher-assignment-due-date"
                     value={dueDate}
                     onChange={setDueDate}
                     placeholder="Select a due date"
@@ -4756,6 +4779,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       <Text style={[styles.chipText, assignTo === 'all' && { color: gold }]}>All students</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
+                      testID="teacher-assign-specific-student"
                       style={[styles.chip, assignTo === 'specific' && { backgroundColor: gold + '18', borderColor: gold }]}
                       onPress={() => setAssignTo('specific')}
                       activeOpacity={0.75}
@@ -4777,6 +4801,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       ) : (
                         <>
                           <TextInput
+                            testID="teacher-assign-student-search"
                             style={styles.studentSearch}
                             placeholder="Search student by name..."
                             placeholderTextColor={colors.textDim}
@@ -4803,6 +4828,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                               .map(s => (
                                 <TouchableOpacity
                                   key={s.id}
+                                  testID={`teacher-assign-student-row-${s.id}`}
                                   style={styles.studentRow}
                                   onPress={() => {
                                     setSelectedStudent(s);
@@ -4910,6 +4936,7 @@ export default function TeacherAssignmentsScreen({ navigation }: any) {
                       </TouchableOpacity>
                     ) : (
                       <TouchableOpacity
+                        testID="teacher-publish-assignment"
                         style={[styles.submitBtn, { flex: 2, marginTop: 0, backgroundColor: creating ? colors.borderColor : colors.accentGreen }]}
                         onPress={() => {
                           if (!title.trim()) { setFormError('Title is required'); return; }
