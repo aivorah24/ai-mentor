@@ -25,6 +25,7 @@ try {
 }
 
 // Core routes — always loaded
+const supabase          = require('./services/supabase');
 const lessonRoute      = require('./routes/lesson');
 const studentRoute     = require('./routes/student');
 const scheduleRoute    = require('./routes/schedule');
@@ -96,8 +97,32 @@ app.use('/data/read-aloud/audio', express.static(path.join(__dirname, 'data/read
 app.use('/data/uploads', express.static(path.join(__dirname, 'data/uploads')));
 // Serve UI sounds
 app.use('/sounds', express.static(path.join(__dirname, 'public/sounds')));
-// Serve the real NCERT textbook PDFs (for the "real book" pane in the reading experience)
+// Serve the real NCERT textbook PDFs (for the "real book" pane in the reading experience).
+// Local disk is checked first (fast path, and how local dev always worked),
+// but data/ncert_books is gitignored and NOT baked into the deployed image -
+// on Cloud Run/Vercel it's empty on every fresh instance. The real source of
+// truth is Supabase Storage (bucket "ncert-books" - see
+// scripts/upload-pdfs-to-supabase.js, which uploads every file under this
+// exact grade/subject/file.pdf path). Without this fallback, a missing local
+// file fell through to the SPA catch-all further down, which returned
+// index.html (200 OK) - the iframe rendered that HTML page instead of a PDF,
+// silently showing the landing page where a real book page should be.
 app.use('/data/ncert_books', express.static(path.join(__dirname, 'data/ncert_books')));
+const NCERT_BOOKS_BUCKET = 'ncert-books';
+app.get('/data/ncert_books/*', async (req, res) => {
+  const key = req.path.replace(/^\/data\/ncert_books\//, '');
+  try {
+    const { data, error } = await supabase.storage
+      .from(NCERT_BOOKS_BUCKET)
+      .createSignedUrl(key, 600); // 10 min - plenty for one page view
+    if (error || !data?.signedUrl) {
+      return res.status(404).json({ error: 'Book page not found' });
+    }
+    return res.redirect(302, data.signedUrl);
+  } catch (e) {
+    return res.status(404).json({ error: 'Book page not found' });
+  }
+});
 
 // Redirect browser direct-navigation to SPA paths back to index.html
 // This prevents API routes from returning errors when user refreshes /assignments, /teacher/assignments, etc.
