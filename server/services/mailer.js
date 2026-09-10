@@ -80,7 +80,7 @@ async function sendEmail({ to, subject, html, replyTo, attachments }, retries = 
     }
   }
 
-  console.warn(`[mailer] No email provider configured — skipping email to ${to}`);
+  throw new Error(`No email provider configured — cannot send to ${to}`);
 }
 
 // ── Email functions (templates unchanged) ───────────────────────────────────
@@ -369,14 +369,17 @@ async function sendWelcomeEmail({ to, name, role }) {
 }
 
 async function sendPasswordResetEmail({ to, resetLink, childName }) {
-  if (!to || !resetLink) return;
+  if (!to || !resetLink) throw new Error('sendPasswordResetEmail requires both "to" and "resetLink"');
   const isChildReset = !!childName;
   const subject = isChildReset ? `Reset ${childName}'s Aivorah password` : 'Reset your Aivorah password';
   const bodyText = isChildReset
     ? `You requested a password reset for your child <strong>${childName}</strong>'s Aivorah account. Click the button below to set a new password.`
     : `We received a request to reset the password for your Aivorah account (<strong>${to}</strong>). Click the button below to set a new password.`;
-  try {
-    await sendEmail({
+  // Unlike the other email helpers in this file, a reset-password send failure
+  // must NOT be swallowed here — the caller (routes/parent.js, routes/user.js)
+  // reports { ok: true } to the frontend as soon as this resolves, so a
+  // swallowed error here silently tells the user "email sent" when it wasn't.
+  return sendEmail({
       to,
       subject,
       html: `
@@ -404,10 +407,7 @@ async function sendPasswordResetEmail({ to, resetLink, childName }) {
           </p>
         </div>
       `,
-    });
-  } catch (err) {
-    console.warn('[mailer] sendPasswordResetEmail failed:', err.message);
-  }
+  });
 }
 
 async function sendRecoveryOtpEmail({ to, otp }) {
