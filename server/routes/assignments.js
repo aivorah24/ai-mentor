@@ -458,7 +458,7 @@ Return ONLY valid JSON with exactly these keys — use the EXACT type names show
 
   try {
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
       max_tokens: 500,
@@ -930,7 +930,7 @@ ABSOLUTE RULES — violation = wrong output:
     });
     let completion;
     try {
-      completion = await genWithModel('llama-3.3-70b-versatile');
+      completion = await genWithModel('openai/gpt-oss-120b');
     } catch (primaryErr) {
       console.warn('[generate-ibpyp] primary model failed, falling back to 8B:', primaryErr.status || '', primaryErr.message);
       completion = await genWithModel('llama-3.1-8b-instant');
@@ -1125,7 +1125,7 @@ Respond ONLY as valid JSON: {"questions":[{"id":"q1","question":"...","type":"mc
     const mcqCompletion = async (content) => {
       const opts = { messages: [{ role: 'user', content }], response_format: { type: 'json_object' } };
       try {
-        return await groq.chat.completions.create({ model: 'llama-3.3-70b-versatile', ...opts });
+        return await groq.chat.completions.create({ model: 'openai/gpt-oss-120b', ...opts });
       } catch (primaryErr) {
         console.warn('[generate-quiz] primary model failed, falling back to 8B:', primaryErr.status || '', primaryErr.message);
         return await groq.chat.completions.create({ model: 'llama-3.1-8b-instant', ...opts });
@@ -1289,7 +1289,7 @@ GENERAL RULES:
         if (!text) return null;
 
         const completion = await groq.chat.completions.create({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           messages: [{ role: 'user', content: `${extractPrompt}\n\nAssignment text:\n${text.slice(0, 4000)}` }],
           response_format: { type: 'json_object' },
         });
@@ -1302,7 +1302,7 @@ GENERAL RULES:
         if (!text) return null;
 
         const completion = await groq.chat.completions.create({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           messages: [{ role: 'user', content: `${extractPrompt}\n\nAssignment text:\n${text.slice(0, 4000)}` }],
           response_format: { type: 'json_object' },
         });
@@ -1616,7 +1616,7 @@ Respond ONLY as valid JSON:
 }`;
 
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
     });
@@ -2214,7 +2214,7 @@ router.post('/:id/submit', async (req, res) => {
               ? `\nExpected answer (from teacher): "${expectedAns}"\nGrade the student's answer STRICTLY against this expected answer. Match = correct, mismatch = incorrect.`
               : `\nNo expected answer provided by teacher. Use your knowledge of ${assignment.subject || 'the subject'} to determine if the answer is correct. Be fair and accurate — do NOT hallucinate or guess answers.`;
             const comp = await groq.chat.completions.create({
-              model: 'llama-3.3-70b-versatile',
+              model: 'openai/gpt-oss-120b',
               messages: [{ role: 'user', content: `You are an IB PYP ${assignment.grade || 'Grade 3'} ${assignment.subject || ''} teacher grading a student's answer.\nQuestion: "${qText}"${expectedBlock}\nStudent answer: "${studentAns}"\nGrade fairly for a young learner. Respond ONLY as JSON: {"score":0-100,"correct":bool,"comment":"one warm encouraging sentence"}` }],
               response_format: { type: 'json_object' },
             });
@@ -2228,7 +2228,7 @@ router.post('/:id/submit', async (req, res) => {
         score = graded.length > 0 ? Math.round(graded.reduce((s, q) => s + q.score, 0) / graded.length) : 50;
         try {
           const summaryComp = await groq.chat.completions.create({
-            model: 'llama-3.3-70b-versatile',
+            model: 'openai/gpt-oss-120b',
             messages: [{ role: 'user', content: `IB PYP ${assignment.grade||'Grade 3'} student scored ${score}% on "${assignment.title}" (${assignment.subject}). Write 2 warm encouraging sentences for a young learner. JSON: {"text":"...","stamp":"Amazing Work! or Good Effort! or Keep Trying!","wellDone":"...","improve":"..."}` }],
             response_format: { type: 'json_object' },
           });
@@ -2336,7 +2336,7 @@ Is the student's answer correct or mostly correct?
 Respond ONLY as JSON: {"score":0-100,"correct":bool,"comment":"one warm, specific sentence for an 8-year-old","explanation":"${q.explanation || ''}"}`;
 
             const comp = await groq.chat.completions.create({
-              model: 'llama-3.3-70b-versatile',
+              model: 'openai/gpt-oss-120b',
               messages: [{ role: 'user', content: gradingPrompt }],
               response_format: { type: 'json_object' },
             });
@@ -2366,7 +2366,7 @@ Respond ONLY as JSON: {"score":0-100,"correct":bool,"comment":"one warm, specifi
 
       try {
         const summaryComp = await groq.chat.completions.create({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           messages: [{ role: 'user', content: `Grade ${assignment.grade || '3'} student scored ${score}% on a quiz about "${assignment.chapter || assignment.title}" (${assignment.subject}). Got ${correctCount} out of ${graded.length} correct (${answeredCount} attempted).
 Write 2 warm sentences of feedforward for an 8-year-old.
 JSON: {"text":"...","wellDone":"specific strength","improve":"one specific topic to review","stamp":"Amazing Work! or Good Effort! or Keep Trying!"}` }],
@@ -2617,11 +2617,11 @@ Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"third-pers
         try {
           const model = contentParts.some(p => p.type === 'image_url')
             ? 'meta-llama/llama-4-scout-17b-16e-instruct'
-            : 'llama-3.3-70b-versatile';
+            : 'openai/gpt-oss-120b';
           const completion = await groq.chat.completions.create({
             model,
             messages: [{ role: 'user', content: contentParts.length === 1 ? contentParts[0].text : contentParts }],
-            ...(model === 'llama-3.3-70b-versatile' ? { response_format: { type: 'json_object' } } : {}),
+            ...(model === 'openai/gpt-oss-120b' ? { response_format: { type: 'json_object' } } : {}),
           });
           const raw = completion.choices[0].message.content.replace(/```json[\s\S]*?```|```/g, '').trim();
           const result = JSON.parse(raw);
@@ -2657,7 +2657,7 @@ Respond ONLY as JSON: {"answered":true,"score":0-100,"studentAnswer":"third-pers
         : '';
 
       const summaryComp = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         messages: [{ role: 'user', content: `Grade 3 student completed a scaffolded assignment "${assignment.title}" (${assignment.subject}).
 Steps completed: ${answeredSteps.length}/${stepAnswers.length}.
 Scores: ${perQuestion.map(q => `${q.stepLabel}=${q.score}%`).join(', ')}.
@@ -2692,7 +2692,7 @@ Respond ONLY as JSON: {"text":"...student-facing...","teacherSummary":"...teache
             ? `\nExpected answer (from teacher): "${expectedAns}"\nGrade the student's answer STRICTLY against this expected answer. Match = correct, mismatch = incorrect.`
             : `\nNo expected answer provided by teacher. Use your knowledge of ${assignment.subject || 'the subject'} to determine if the answer is correct. Be fair and accurate.`;
           const comp = await groq.chat.completions.create({
-            model: 'llama-3.3-70b-versatile',
+            model: 'openai/gpt-oss-120b',
             messages: [{ role: 'user', content: `You are an IB PYP ${assignment.grade || 'Grade 3'} ${assignment.subject || ''} teacher grading a student's answer.\nQuestion: "${qText}"${expectedBlock}\nStudent answer: "${studentAns}"\nGrade fairly for a young learner. Respond ONLY as JSON: {"score":0-100,"correct":true/false,"comment":"one warm encouraging sentence"}` }],
             response_format: { type: 'json_object' },
           });
@@ -2708,7 +2708,7 @@ Respond ONLY as JSON: {"text":"...student-facing...","teacherSummary":"...teache
       score = answeredGraded.length > 0 ? Math.round(answeredGraded.reduce((s, q) => s + q.score, 0) / graded.length) : 0;
       try {
         const summaryComp = await groq.chat.completions.create({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           messages: [{ role: 'user', content: `IB PYP ${assignment.grade||'Grade 3'} student scored ${score}% on "${assignment.title}" (${assignment.subject}). ${answeredGraded.length}/${graded.length} questions answered. Write 2 warm encouraging sentences for a young learner. JSON: {"text":"...","stamp":"Amazing Work! or Good Effort! or Keep Trying!","wellDone":"...","improve":"..."}` }],
           response_format: { type: 'json_object' },
         });
@@ -2892,7 +2892,7 @@ Also provide: a "wellDone" (one specific strength), and an "improve" (one specif
 Respond ONLY as JSON: {"text": "...", "wellDone": "...", "improve": "..."}`;
 
       const summaryComp = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         messages: [{ role: 'user', content: summaryPrompt }],
         response_format: { type: 'json_object' },
       });
@@ -3407,7 +3407,7 @@ router.post('/:id/explain-question', async (req, res) => {
   if (!question) return res.status(400).json({ error: 'question is required' });
   try {
     const comp = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       messages: [{ role: 'user', content: `You are Aivorah, a warm, patient, encouraging IB PYP ${grade || 'Grade 3'} ${subject || 'Mathematics'} tutor.
 
 A student scored ${score ?? 0}% on this question and needs help understanding how to get 100%.
