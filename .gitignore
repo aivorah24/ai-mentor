@@ -135,3 +135,8 @@ bulk_import_test_sample.xlsx
 /subjects*.png
 /test-result.png
 server/data/test-screenshots/
+
+# AI assistant files (kept local, never committed)
+CLAUDE.md
+CLAUDE.local.md
+.claude/
