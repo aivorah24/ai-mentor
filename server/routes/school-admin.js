@@ -815,10 +815,12 @@ async function deleteStudentRows(userId, email) {
   await delById('teacher_student', 'student_id');
   await delById('teacher_students', 'student_id');
   // Email-keyed rows.
+  // Note: parent_children has no child_email column (only child_id, already
+  // deleted above via delById) — a stray email-keyed delete here used to
+  // silently no-op against a nonexistent column.
   if (email) {
     await delByEmail('user_preferences', 'user_email', email);
     await delByEmail('student_preferences', 'user_email', email);
-    await delByEmail('parent_children', 'child_email', email);
   }
 }
 
