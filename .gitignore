@@ -135,3 +135,7 @@ bulk_import_test_sample.xlsx
 /subjects*.png
 /test-result.png
 server/data/test-screenshots/
+
+# Personal AI assistant files (a team CLAUDE.md, if added, is committed)
+CLAUDE.local.md
+.claude/settings.local.json
