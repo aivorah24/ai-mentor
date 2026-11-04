@@ -485,14 +485,16 @@ router.post('/:parentEmail/children', async (req, res) => {
 
     if (!childEmail) return res.status(400).json({ error: 'childEmail required' });
 
-    // Look up child in users table
+    // Look up child in users table — role must be 'student'. Without this
+    // filter, any registered email (a teacher's, another parent's) would
+    // link as if it were a child, since this was a plain email lookup.
     const { data: child, error: lookupErr } = await supabase
       .from('users')
-      .select('id, name, email, grade, school')
+      .select('id, name, email, grade, school, role')
       .eq('email', childEmail.toLowerCase().trim())
-      .single();
+      .maybeSingle();
 
-    if (lookupErr || !child) {
+    if (lookupErr || !child || child.role !== 'student') {
       return res.status(404).json({ error: 'No student found with that email. Ask your child to register first.' });
     }
 
@@ -1367,7 +1369,7 @@ Return ONLY valid JSON, no markdown:
 }`;
 
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       messages: [
         {
           role: 'system',

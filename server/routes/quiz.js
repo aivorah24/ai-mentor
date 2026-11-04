@@ -346,6 +346,22 @@ if (!fs.existsSync(QUIZ_IMG_DIR)) fs.mkdirSync(QUIZ_IMG_DIR, { recursive: true }
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
+// /quiz/generate's own handler rejects PDFs > 4MB internally (see the "Guard"
+// comment below) — but multer's shared 10MB limit above let a 4-10MB file
+// finish uploading, get buffered, and (for .docx) go through a full
+// mammoth+puppeteer conversion before that late rejection fired. This
+// dedicated 4MB multer instance rejects oversized files immediately instead.
+const uploadQuizGenerate = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024 } });
+function handleQuizGenerateUpload(req, res, next) {
+  uploadQuizGenerate.single('pdf')(req, res, (err) => {
+    if (err && err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'File too large (max 4MB). Please upload a smaller worksheet.' });
+    }
+    if (err) return next(err);
+    next();
+  });
+}
+
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 
 // Hugging Face router — serves the Qwen vision fallback (first fallback after Gemini)
@@ -368,7 +384,7 @@ async function callGroq(prompt, { vision = false, imageBuffers = [] } = {}) {
       image_url: { url: `data:${mime || 'image/png'};base64,${buffer.toString('base64')}` },
     }));
     const completion = await groq.chat.completions.create({
-      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      model: 'openai/gpt-oss-120b',
       messages: [{ role: 'user', content: [...imageBlocks, { type: 'text', text: prompt }] }],
       temperature: 0.3,
       max_tokens: 8192,
@@ -378,7 +394,7 @@ async function callGroq(prompt, { vision = false, imageBuffers = [] } = {}) {
 
   // Text-only — llama-3.3-70b (max 32k output)
   const completion = await groq.chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
+    model: 'openai/gpt-oss-120b',
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.3,
     max_tokens: 8192,
@@ -2428,7 +2444,7 @@ async function generateQuizHandler(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
-router.post('/generate', upload.single('pdf'), generateQuizHandler);
+router.post('/generate', handleQuizGenerateUpload, generateQuizHandler);
 
 // ── POST /quiz/generate-async — same as /generate, but QUEUED (via the
 // swappable db/Kafka job queue) instead of blocking the request. Returns
@@ -3056,7 +3072,7 @@ Reply with ONLY this JSON, no markdown:
 {"verdict": "correct" or "partial" or "incorrect", "reason": "one short sentence, written directly to the student, explaining why (for partial, name what's missing)"}`;
 
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0,
       max_tokens: 150,
